@@ -2,10 +2,11 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
 import { useCallback, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './RenderTables.module.scss';
 import { ReactComponent as ArrowIcon } from '../../../../assets/row_arrow.svg';
 import { GENERAL } from '../../../../utils/appConstants';
-import { WLF_TABS } from '../../../../utils/consts';
+import { DBType, WLF_TABS } from '../../../../utils/consts';
 import { expandTableRow } from '../../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../../store/storeHooks';
 import RecommendationTable from '../../../GetWell/RecommendationTable/RecommendationTable';
@@ -21,21 +22,29 @@ import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
+import { engineTypeBasedResourceStr } from '../../../WellArchitectedTab/WellArchitectedTabUtils';
 
 const OperatingSystemTable = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
 
-    const { allmssqlHostAssessmentData, inventoryTableData, getDatabaseHosts } = useAppSelector(
-        state => state.inventoryV2
-    );
+    const { allmssqlHostAssessmentData, allOracleHostAssessmentData, inventoryTableData, getDatabaseHosts } =
+        useAppSelector(state => state.inventoryV2);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { credentialData } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
+    const { configEngineType } = useAppSelector(state => state.getWellOptimize);
 
     const tableData = useMemo(() => {
         const OSAssessmentData: any = [];
         const uniqueResourceList: Array<string> = [];
-        allmssqlHostAssessmentData?.map((hostData: any) => {
+        let assessmentRows = null;
+        if (configEngineType === DBType.ORACLE) {
+            assessmentRows = allOracleHostAssessmentData;
+        } else {
+            assessmentRows = allmssqlHostAssessmentData;
+        }
+        assessmentRows?.map((hostData: any) => {
             if (
                 !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
                 !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
@@ -88,6 +97,7 @@ const OperatingSystemTable = () => {
         return disableOfflineRows(tableRows);
     }, [
         allmssqlHostAssessmentData,
+        allOracleHostAssessmentData,
         inventoryTableData,
         getDatabaseHosts,
         headerSelectedMultiCredIdsList,
@@ -134,7 +144,11 @@ const OperatingSystemTable = () => {
 
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'SQL Server instance name ',
+            Header: `${engineTypeBasedResourceStr(
+                configEngineType,
+                t('databases.well-architect.dashboard-table-headers.sql-server-instance-name'),
+                t('databases.well-architect.dashboard-table-headers.sql-server-database-name')
+            )}`,
             accessor: 'serverInstanceName',
             id: '1',
             isSortable: false,
@@ -144,14 +158,14 @@ const OperatingSystemTable = () => {
             renderCell: (cellData: any, rowData: any) => <FirstColumnComponent rowData={rowData} />
         },
         {
-            Header: 'Host name',
+            Header: `${t('databases.well-architect.dashboard-table-headers.host-name')}`,
             accessor: 'hostName',
             id: '2',
             width: '200px',
             filterOptions: 'auto'
         },
         {
-            Header: 'Not-optimized configuration',
+            Header: `${t('databases.well-architect.dashboard-table-headers.not-optimized-configuration')}`,
             accessor: 'configuration',
             id: '3',
             width: '250px',
@@ -160,21 +174,21 @@ const OperatingSystemTable = () => {
         },
         {
             id: '4',
-            Header: 'AWS credentials',
+            Header: `${t('databases.well-architect.dashboard-table-headers.aws-credentials')}`,
             accessor: 'credentialName',
             filterOptions: 'auto',
             width: '180px'
         },
         {
             id: '5',
-            Header: 'AWS account',
+            Header: `${t('databases.well-architect.dashboard-table-headers.aws-account')}`,
             accessor: 'accountId',
             filterOptions: 'auto',
             width: '180px'
         },
         {
             id: '6',
-            Header: 'Region',
+            Header: `${t('databases.well-architect.dashboard-table-headers.region')}`,
             accessor: 'regionName',
             filterOptions: 'auto',
             width: '180px'
@@ -202,6 +216,7 @@ const OperatingSystemTable = () => {
                 from={WLF_TABS.DASHBOARD}
                 hostId={rowData?.databaseHostId}
                 instanceId={rowData?.instanceId}
+                engineType={configEngineType}
             />
         );
     }, []);
@@ -229,8 +244,16 @@ const OperatingSystemTable = () => {
             <TableTopBar
                 // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle="Not-optimized instances"
-                singularTitle="Not-optimized instance"
+                pluralTitle={engineTypeBasedResourceStr(
+                    configEngineType,
+                    t('databases.well-architect.not-optimized-instances'),
+                    t('databases.well-architect.not-optimized-databases')
+                )}
+                singularTitle={engineTypeBasedResourceStr(
+                    configEngineType,
+                    t('databases.well-architect.not-optimized-instance'),
+                    t('databases.well-architect.not-optimized-database')
+                )}
             />
             <Table
                 // @ts-ignore

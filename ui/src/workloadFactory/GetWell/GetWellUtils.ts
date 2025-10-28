@@ -21,7 +21,11 @@ import {
     setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../store/workloadFactory/getWellOptimizeSlice';
-import { addAllMssqlHostAssessmentData, setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
+import {
+    addAllMssqlHostAssessmentData,
+    addAllOracleHostAssessmentData,
+    setSelectedHeaderTab
+} from '../../store/workloadFactory/inventoryV2Slice';
 import { setInstanceDetailsData } from '../../store/workloadFactory/workloadFactoryResourceSlice';
 import { GENERAL } from '../../utils/appConstants';
 import {
@@ -3872,7 +3876,7 @@ const updateAssessmentWithCompletedJobs = (
     engineType: string | undefined
 ) => {
     const state = store.getState();
-    const { allmssqlHostAssessmentData } = state.inventoryV2;
+    const { allmssqlHostAssessmentData, allOracleHostAssessmentData } = state.inventoryV2;
     const {
         jobToInstanceMap,
         jobToInstanceMapForBulk,
@@ -3880,7 +3884,11 @@ const updateAssessmentWithCompletedJobs = (
         inProgressHostData,
         optimizingData
     } = state.getWellOptimize;
-    dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+    if (engineType === DBType.ORACLE) {
+        dispatch(addAllOracleHostAssessmentData(allOracleHostAssessmentData));
+    } else {
+        dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+    }
 
     if (operation === 'bulk') {
         updateProgressForBulk(
@@ -3892,7 +3900,7 @@ const updateAssessmentWithCompletedJobs = (
             inProgressHostData
         );
         bulkRowData?.map((row: any) => {
-            updateOptimizationStatus(row, dispatch);
+            updateOptimizationStatus(row, dispatch, engineType);
         });
         setTimeout(() => {
             formatAssessmentData(engineType, dispatch);
@@ -3919,7 +3927,7 @@ const updateAssessmentWithCompletedJobs = (
             inProgressHostData
         );
 
-        updateOptimizationStatus(rowData, dispatch);
+        updateOptimizationStatus(rowData, dispatch, engineType);
         formatAssessmentData(engineType, dispatch);
         dispatch(
             addNotification({
@@ -3970,7 +3978,7 @@ const updateAssessmentWithWarningJobs = (
             );
             if (isSuccess?.length) {
                 successJobCount++;
-                updateOptimizationStatus(row, dispatch);
+                updateOptimizationStatus(row, dispatch, engineType);
             }
         });
         setTimeout(() => {
@@ -3997,7 +4005,7 @@ const updateAssessmentWithWarningJobs = (
             jobToInstanceMap,
             inProgressHostData
         );
-        updateOptimizationStatus(rowData, dispatch);
+        updateOptimizationStatus(rowData, dispatch, engineType);
         formatAssessmentData(engineType, dispatch);
         dispatch(
             addNotification({
@@ -4078,7 +4086,8 @@ export const handleOptimizeResourceJob = (
     getJobDetailApi: any,
     dispatch: any,
     type?: any,
-    bulkRowData?: any
+    bulkRowData?: any,
+    engineType?: string
 ) => {
     const state = store.getState();
     const optimizingData = state.getWellOptimize.optimizingData || {};
@@ -4109,7 +4118,7 @@ export const handleOptimizeResourceJob = (
                             inProgressResourceOptimizeData
                         );
                         bulkRowData?.map((row: any) => {
-                            updateOptimizationStatus(row, dispatch);
+                            updateOptimizationStatus(row, dispatch, engineType);
                         });
                         setTimeout(() => {
                             formatGetWellData(dispatch);
@@ -4144,7 +4153,7 @@ export const handleOptimizeResourceJob = (
                             );
                             if (isSuccess?.length) {
                                 successJobCount++;
-                                updateOptimizationStatus(row, dispatch);
+                                updateOptimizationStatus(row, dispatch, engineType);
                             }
                         });
                         setTimeout(() => {
@@ -4383,9 +4392,15 @@ export const handleOptimizeStorageJob = (
     }, 10);
 };
 
-export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
+export const updateOptimizationStatus = (rowData: any, dispatch: any, engineType?: string) => {
     const state = store.getState();
-    const updatedAsessmentData = state.inventoryV2.allmssqlHostAssessmentData?.map((hostData: any) => {
+    let assessmentData = null;
+    if (engineType === DBType.ORACLE) {
+        assessmentData = state.inventoryV2.allOracleHostAssessmentData;
+    } else {
+        assessmentData = state.inventoryV2.allmssqlHostAssessmentData;
+    }
+    const updatedAsessmentData = assessmentData?.map((hostData: any) => {
         if (
             hostData?.databaseHostId === rowData?.hostId &&
             hostData?.credentialId === rowData?.credentialId &&
@@ -4547,7 +4562,11 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any) => {
         }
         return hostData;
     });
-    dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
+    if (engineType === DBType.ORACLE) {
+        dispatch(addAllOracleHostAssessmentData(updatedAsessmentData));
+    } else {
+        dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
+    }
 };
 
 export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any, apiResponseData?: any) => {
@@ -5517,10 +5536,18 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             configKey = 'tempdbPlacement';
             break;
         case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
-            configKey = 'ontapConfiguration';
+            if (dbType === DBType.ORACLE) {
+                configKey = 'oracleOntapConfiguration';
+            } else {
+                configKey = 'ontapConfiguration';
+            }
             break;
         case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM:
-            configKey = 'operatingSystem';
+            if (dbType === DBType.ORACLE) {
+                configKey = 'oracleOperatingSystem';
+            } else {
+                configKey = 'operatingSystem';
+            }
             break;
         case GENERAL.COMPUTE_RIGHTSIZING:
             configKey = 'computeRightsizing';

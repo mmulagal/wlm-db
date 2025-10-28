@@ -31,6 +31,7 @@ import {
     useOptimizeHAMssqlMutation,
     useOptimizeOperatingSystemMutation,
     useOptimizeOracleOperatingSystemMutation,
+    useOptimizeOracleStorageConfigMutation,
     useOptimizeStorageConfigMutation
 } from '../../../utils/apiService';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -111,6 +112,7 @@ const RecommendationTable = ({
     const fullCardData = useAppSelector(state => state.getWellOptimize.cardData);
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
+    const [optimizeOracleStorageConfig] = useOptimizeOracleStorageConfigMutation();
     const [optimizeOs] = useOptimizeOperatingSystemMutation();
     const [optimizeOracleOs] = useOptimizeOracleOperatingSystemMutation();
     const [optimizeHAMssql] = useOptimizeHAMssqlMutation();
@@ -186,44 +188,7 @@ const RecommendationTable = ({
         let apiCall = null;
         let statusType = '';
 
-        if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE) {
-            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
-            apiCall = optimizeHAMssql;
-            payload = getSharedStoragePayload(rowData);
-            apiInput = { configName: 'shared-storage', payload };
-        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM) {
-            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
-            apiCall = optimizeHAMssql;
-            payload = getHaPayload('cluster-quorum');
-            apiInput = { configName: 'cluster-quorum', payload };
-        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS) {
-            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
-            apiCall = optimizeHAMssql;
-            payload = getHaPayload('heartbeat-settings');
-            apiInput = { configName: 'heartbeat', payload };
-        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE) {
-            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
-            apiCall = optimizeHAMssql;
-            payload = getHaPayload('sqlServer-service');
-            apiInput = { configName: 'sqlserver-service', payload };
-        } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
-            statusType = ASSESSMENT_CONFIG_NAMES.ONTAP;
-            apiCall = optimizeStorageConfig;
-            apiInput = {
-                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-                databaseHostId: selectedResourceId || hostId,
-                instanceId: selectedDatabaseInstance || instanceId,
-                payload: {
-                    assessments: [
-                        {
-                            configurationName: rowData?.id,
-                            objectsToOptimize: rowData?.objectsInViolation
-                        }
-                    ]
-                }
-            };
-        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS) {
+        if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS) {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOracleOs;
             payload = getOracleOsPayload('tcp-advanced-options');
@@ -317,6 +282,60 @@ const RecommendationTable = ({
             apiCall = optimizeOracleOs;
             payload = getOracleOsPayload('nfsv4-domain-name');
             apiInput = { payload };
+        } else if (engineType === DBType.ORACLE && (rowData?.type === 'volume' || rowData?.type === 'lun')) {
+            statusType = ASSESSMENT_CONFIG_NAMES.ONTAP;
+            apiCall = optimizeOracleStorageConfig;
+            apiInput = {
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                databaseHostId: selectedResourceId || hostId,
+                instanceId: selectedDatabaseInstance || instanceId,
+                payload: {
+                    assessments: [
+                        {
+                            configurationName: rowData?.id,
+                            objectsToOptimize: rowData?.objectsInViolation
+                        }
+                    ]
+                }
+            };
+        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE) {
+            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
+            apiCall = optimizeHAMssql;
+            payload = getSharedStoragePayload(rowData);
+            apiInput = { configName: 'shared-storage', payload };
+        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM) {
+            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
+            apiCall = optimizeHAMssql;
+            payload = getHaPayload('cluster-quorum');
+            apiInput = { configName: 'cluster-quorum', payload };
+        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS) {
+            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
+            apiCall = optimizeHAMssql;
+            payload = getHaPayload('heartbeat-settings');
+            apiInput = { configName: 'heartbeat', payload };
+        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE) {
+            statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
+            apiCall = optimizeHAMssql;
+            payload = getHaPayload('sqlServer-service');
+            apiInput = { configName: 'sqlserver-service', payload };
+        } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
+            statusType = ASSESSMENT_CONFIG_NAMES.ONTAP;
+            apiCall = optimizeStorageConfig;
+            apiInput = {
+                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
+                databaseHostId: selectedResourceId || hostId,
+                instanceId: selectedDatabaseInstance || instanceId,
+                payload: {
+                    assessments: [
+                        {
+                            configurationName: rowData?.id,
+                            objectsToOptimize: rowData?.objectsInViolation
+                        }
+                    ]
+                }
+            };
         } else {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOs;

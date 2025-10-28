@@ -411,7 +411,7 @@ export const WLF_TABS = {
     MSSQL_FSX_FOR_WINDOWS: 'SQL Server on FSx for Windows',
     MSSQL_ON_PREMISES: 'SQL Server On-Premises',
     REGISTER_COMPONENT: 'Register Component',
-    //This is added for the left nav to work
+    // This is added for the left nav to work
     OPTIMIZE_FROM_WELL_ARCHITECTED_TAB: 'Optimize from Well-architected tab',
     ORACLE_WELL_ARCHITECTED_FROM_WELL_ARCHITECTED_TAB: 'Oracle Well Architected from Well-architected tab'
 };

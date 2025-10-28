@@ -1196,7 +1196,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         'wlm-db-optimize-oracle-ontap',
                         'ONTAP',
                         ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS,
-                        true
+                        false
                     )}
 
                 {configEngineType === DBType.ORACLE &&
@@ -1206,7 +1206,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         'wlm-db-optimize-oracle-operating-system',
                         'Operating system',
                         ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
-                        true
+                        false
                     )}
             </div>
         </div>

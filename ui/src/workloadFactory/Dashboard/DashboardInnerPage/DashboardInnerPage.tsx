@@ -1121,7 +1121,11 @@ const DashboardInnerPage = () => {
                     tagHeight: '209px',
                     data: {
                         title: 'Recommendations',
-                        description: t('databases.well-architect.general-recommendations')
+                        description: engineTypeBasedResourceStr(
+                            configEngineType,
+                            t('databases.well-architect.general-recommendations'),
+                            t('databases.well-architect.general-databases-recommendations')
+                        )
                     }
                 });
                 break;
@@ -1146,7 +1150,11 @@ const DashboardInnerPage = () => {
                     tagHeight: '209px',
                     data: {
                         title: 'Recommendations',
-                        description: t('databases.well-architect.general-recommendations')
+                        description: engineTypeBasedResourceStr(
+                            configEngineType,
+                            t('databases.well-architect.general-recommendations'),
+                            t('databases.well-architect.general-databases-recommendations')
+                        )
                     }
                 });
                 break;
@@ -1695,7 +1703,7 @@ const DashboardInnerPage = () => {
                         </div>
                     </div>
                     <div className={styles.rightSection} style={{ width: '32%' }}>
-                        <TagComponent tagHeight={valueCardData.tagHeight} />
+                        <TagComponent tagHeight={valueCardData.tagHeight} engineType={configEngineType} />
                     </div>
                 </div>
 

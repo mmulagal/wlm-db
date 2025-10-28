@@ -22,6 +22,7 @@ import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { useLazyGetSubTaskListQuery, useOptimizeCloneCleanupMutation } from '../../../utils/apiService';
 import {
     ASSESSMENT_CONFIG_NAMES,
+    DBType,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     WLF_TABS
@@ -266,7 +267,8 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 getJobDetailApi,
                 dispatch,
                 ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
-                getBulkInstanceList(payload?.hostsToOptimize, ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT)
+                getBulkInstanceList(payload?.hostsToOptimize, ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT),
+                DBType.MSSQL
             );
         });
     };
