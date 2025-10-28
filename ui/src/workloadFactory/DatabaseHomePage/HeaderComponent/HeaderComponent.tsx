@@ -1269,7 +1269,10 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                     selectedHeaderTab === WLF_TABS.INVENTORY ||
                                                     selectedHeaderTab === WLF_TABS.OVERVIEW ||
                                                     selectedHeaderTab === WLF_TABS.OPTIMIZE ||
-                                                    selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED
+                                                    selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED ||
+                                                    selectedHeaderTab ===
+                                                        WLF_TABS.ORACLE_WELL_ARCHITECTED_FROM_WELL_ARCHITECTED_TAB ||
+                                                    selectedHeaderTab === WLF_TABS.OPTIMIZE_FROM_WELL_ARCHITECTED_TAB
                                                         ? `${
                                                               isWorkloadFactory
                                                                   ? styles.headerPart2
@@ -1534,10 +1537,16 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                     {/* For optimize tab */}
 
-                    {selectedHeaderTab === WLF_TABS.OPTIMIZE && <WellArchitectDashboard />}
+                    {(selectedHeaderTab === WLF_TABS.OPTIMIZE ||
+                        selectedHeaderTab === WLF_TABS.OPTIMIZE_FROM_WELL_ARCHITECTED_TAB) && (
+                        <WellArchitectDashboard />
+                    )}
 
                     {/* Route for oracle resource screen */}
-                    {selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED && <OracleResourcePages />}
+                    {(selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED ||
+                        selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED_FROM_WELL_ARCHITECTED_TAB) && (
+                        <OracleResourcePages />
+                    )}
 
                     {selectedHeaderTab === WLF_TABS.DASHBOARD_INNER_PAGE && <DashboardInnerPage />}
 

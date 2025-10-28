@@ -100,10 +100,10 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
 export const redirectToGetWellPage = (dispatch: any, selectedAssessmentRow: any) => {
     dashboardRedirectionToWellArchitected();
     if (selectedAssessmentRow?.type === DBType.ORACLE) {
-        dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+        dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED_FROM_WELL_ARCHITECTED_TAB));
         dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
     } else {
-        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_FROM_WELL_ARCHITECTED_TAB));
         dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
     }
 

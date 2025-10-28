@@ -410,7 +410,10 @@ export const WLF_TABS = {
     MSSQL_ELASTIC_BLOCK_STORE: 'SQL Server on Elastic Block Store (EBS)',
     MSSQL_FSX_FOR_WINDOWS: 'SQL Server on FSx for Windows',
     MSSQL_ON_PREMISES: 'SQL Server On-Premises',
-    REGISTER_COMPONENT: 'Register Component'
+    REGISTER_COMPONENT: 'Register Component',
+    //This is added for the left nav to work
+    OPTIMIZE_FROM_WELL_ARCHITECTED_TAB: 'Optimize from Well-architected tab',
+    ORACLE_WELL_ARCHITECTED_FROM_WELL_ARCHITECTED_TAB: 'Oracle Well Architected from Well-architected tab'
 };
 
 export const DRIVE_LETTER_TYPE = {
