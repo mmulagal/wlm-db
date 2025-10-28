@@ -886,7 +886,10 @@ export const formatOracleOptimizationBreakDown = (
             // Use proper display names for parent cards
             if (cardItem?.id === 'ontap_configuration' || cardItem?.id === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
                 storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
-            } else if (cardItem?.id === 'os_configuration') {
+            } else if (
+                cardItem?.id === 'os_configuration' ||
+                cardItem?.id === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
+            ) {
                 storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
             } else {
                 storageCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);

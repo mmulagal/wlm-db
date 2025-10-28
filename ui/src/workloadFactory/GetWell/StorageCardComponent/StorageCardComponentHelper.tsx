@@ -331,7 +331,7 @@ export const handleDismissResponse = (
             id: targetId,
             name: cardData?.mapName
         };
-        updateConfigStateStatus([perObj], dispatch, updatedState, res?.data);
+        updateConfigStateStatus([perObj], dispatch, updatedState, res?.data, engineType);
 
         // Check if we're reactivating and this is the last dismissed configuration
         if (action === CONFIG_STATE_ACTIONS.ACTIVE && showDismissedConfigurations && setShowDismissedConfigurations) {
@@ -344,8 +344,17 @@ export const handleDismissResponse = (
                 setShowDismissedConfigurations(false);
             }
         }
+        let notificationCardname = '';
+        if (
+            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
+            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
+        ) {
+            notificationCardname = cardData?.block_one?.value;
+        } else {
+            notificationCardname = cardData?.mapName || cardData?.name;
+        }
 
-        addSuccessNotification(action, cardData?.mapName || cardData?.name, dispatch, t, isBulkAction);
+        addSuccessNotification(action, notificationCardname, dispatch, t, isBulkAction);
     } else {
         dispatch(
             addNotification({

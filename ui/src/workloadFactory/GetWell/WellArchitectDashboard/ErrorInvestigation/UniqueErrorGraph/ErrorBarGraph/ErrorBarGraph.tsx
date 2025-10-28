@@ -167,7 +167,7 @@ const ErrorBarGraph: React.FC<{ errorCardsData?: ErrorInvestigationGetApiRespons
                     // Compute stepSize based on visible (displayed) data so the scale matches filtered bars
                     stepSize: Math.max(1, Math.ceil(Math.max(...displayedData) / 5)) as unknown as number,
                     // callback signature: (this, value, index, ticks)
-                    callback: function (this: any, tickValue: string | number) {
+                    callback(this: any, tickValue: string | number) {
                         const value = typeof tickValue === 'string' ? Number(tickValue) : tickValue;
                         return `${value} Error${value !== 1 ? 's' : ''}`;
                     },
@@ -185,14 +185,15 @@ const ErrorBarGraph: React.FC<{ errorCardsData?: ErrorInvestigationGetApiRespons
     };
 
     // Ensure we remove any external tooltip element when the component unmounts
-    useEffect(() => {
-        return () => {
+    useEffect(
+        () => () => {
             const el = document.getElementById('chartjs-external-tooltip');
             if (el && el.parentNode) {
                 el.parentNode.removeChild(el);
             }
-        };
-    }, []);
+        },
+        []
+    );
 
     return (
         <div className={styles.chartBarContainer}>

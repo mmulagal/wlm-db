@@ -48,7 +48,7 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
     useEffect(() => {
         const onOtherOpen = (e: Event) => {
             try {
-                const detail = (e as CustomEvent).detail;
+                const { detail } = e as CustomEvent;
                 if (!detail) return;
                 const { id: openId } = detail;
 

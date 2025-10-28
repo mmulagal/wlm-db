@@ -4569,7 +4569,13 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any, engineType
     }
 };
 
-export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any, apiResponseData?: any) => {
+export const updateConfigStateStatus = (
+    rowList: any,
+    dispatch: any,
+    action: any,
+    apiResponseData?: any,
+    engineType?: string
+) => {
     let setAction = '';
     if (action === CONFIG_STATE_ACTIONS.DISMISS) {
         setAction = CONFIG_STATES.DISMISSED;
@@ -4592,10 +4598,15 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
             const endTime = apiResponseData?.dismissedConfigurations?.[0]?.endTime || null;
 
             // Call the special card-level handling
-            const updatedData = updateConfigStatePerInstance(setAction, rowData.name, endTime);
+            const updatedData = updateConfigStatePerInstance(setAction, rowData.name, endTime, engineType);
             if (updatedData) {
                 dispatch(setDriftAssessmentData(updatedData));
-                formatGetWellData(dispatch, updatedData);
+                // Use the appropriate format function based on engine type
+                if (engineType === DBType.ORACLE) {
+                    formatOracleWellArchitectedData(dispatch, updatedData as AssessmentResponseInterface);
+                } else {
+                    formatGetWellData(dispatch, updatedData as AssessmentResponseInterface);
+                }
                 return; // Skip the normal bulk processing for this card-level operation
             }
         }
@@ -4611,11 +4622,17 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
             const updatedData = updateConfigStatePerInstance(
                 setAction,
                 ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
-                endTime
+                endTime,
+                engineType
             );
             if (updatedData) {
                 dispatch(setDriftAssessmentData(updatedData));
-                formatGetWellData(dispatch, updatedData);
+                // Use the appropriate format function based on engine type
+                if (engineType === DBType.ORACLE) {
+                    formatOracleWellArchitectedData(dispatch, updatedData as AssessmentResponseInterface);
+                } else {
+                    formatGetWellData(dispatch, updatedData as AssessmentResponseInterface);
+                }
                 return; // Skip the normal bulk processing for this card-level operation
             }
         }
