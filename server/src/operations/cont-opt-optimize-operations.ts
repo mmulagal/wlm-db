@@ -378,9 +378,9 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                         newJobStatus = JOBSTATUS.FAILED;
                         newJobError = optimizeErrorMessage;
                     } else {
-                        const unOptimizedObjects = objectsToOptimize.filter(
-                            obj => !parsedResp.cli_output.includes(obj)
-                        );
+                        const unOptimizedObjects = parsedResp?.cli_output
+                            ? objectsToOptimize.filter(obj => !parsedResp.cli_output.includes(obj))
+                            : objectsToOptimize.slice(objectsOptimized);
                         const optimizeErrorMessage = `Failed to fix ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
                         newJobStatus = JOBSTATUS.FAILED;
                         newJobError = optimizeErrorMessage;

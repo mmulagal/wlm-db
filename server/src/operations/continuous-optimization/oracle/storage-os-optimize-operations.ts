@@ -1357,9 +1357,10 @@ async function enableMultipathIo(params: OptimizeOSParams) {
                 jobStatus = JOBSTATUS.WARNING;
                 break;
             case 'restart-required':
-                jobError = 'Aborting the fix, it requires restart to take effect.';
+                jobError =
+                    'Fix aborted. Multipath enablement requires removing "multipath=off" from GRUB configuration and restarting the instance. Manual intervention required.';
                 logger.info(jobError);
-                jobStatus = JOBSTATUS.WARNING;
+                jobStatus = JOBSTATUS.FAILED;
                 break;
 
             default:

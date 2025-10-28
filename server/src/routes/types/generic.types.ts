@@ -83,8 +83,8 @@ type JobIdResponseType = Static<typeof JobIdResponse>;
 
 const OptimizationResponse = {
     200: JobIdResponse,
-    400: { type: 'object', properties: { error: { type: 'string' } } },
-    404: { type: 'object', properties: { error: { type: 'string' } } }
+    400: { type: 'object', properties: { message: { type: 'string' } } },
+    404: { type: 'object', properties: { message: { type: 'string' } } }
 };
 
 export {
