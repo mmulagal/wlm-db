@@ -172,6 +172,10 @@ async function oracleOptimizeStorageOS(
         case OptimizeOracleiSCSIStorageOperatingSystem.FILESYSTEM_IO_OPTIONS:
             jobDescription = `Fix Storage Operating System Oracle filesystem I/O options for ${serverNameWithHostName}`;
             break;
+        case OptimizeOracleiSCSIStorageOperatingSystem.HOST_UTILITIES:
+            jobDescription = `Fix Storage Operating System Install Host Utilities for ${serverNameWithHostName}`;
+            break;
+
         default:
             jobDescription = '';
             break;

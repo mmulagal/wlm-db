@@ -79,8 +79,7 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
             // Find the parent job for iSCSI replacement timeout optimization
             const iscsiOptimizeJob = jobItems?.find(
                 (job: any) =>
-                    (job.description?.includes('iSCSI replacement timeout') ||
-                        job.description?.includes('Fix completed for')) &&
+                    job.description?.includes('iSCSI replacement timeout') &&
                     job.type === JOBTYPE.WELL_ARCHITECTED &&
                     job.resourceName === dbInstanceSid
             );
@@ -130,8 +129,7 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
             // Find the parent job for multipath IO sessions optimization
             const multipathOptimizeJob = jobItems?.find(
                 (job: any) =>
-                    (job.description?.includes('multipath IO sessions') ||
-                        job.description?.includes('Fix completed for')) &&
+                    job.description?.includes('multipath IO sessions') &&
                     job.type === JOBTYPE.WELL_ARCHITECTED &&
                     job.resourceName === dbInstanceSid
             );
@@ -180,7 +178,7 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
             // Find the parent job for TCP options optimization
             const tcpOptimizeJob = jobItems?.find(
                 (job: any) =>
-                    (job.description?.includes('TCP options') || job.description?.includes('Fix completed for')) &&
+                    job.description?.includes('TCP options') &&
                     job.type === JOBTYPE.WELL_ARCHITECTED &&
                     job.resourceName === dbInstanceSid
             );
@@ -230,8 +228,7 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
             // Find the parent job for host utilities installation
             const hostUtilitiesJob = jobItems?.find(
                 (job: any) =>
-                    (job.description?.includes('Install Host Utilities') ||
-                        job.description?.includes('Fix completed for')) &&
+                    job.description?.includes('Install Host Utilities') &&
                     job.type === JOBTYPE.WELL_ARCHITECTED &&
                     job.resourceName === dbInstanceSid
             );
@@ -281,8 +278,7 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
             // Find the parent job for kernel TCP sunrpc slots optimization
             const tcpSunrpcOptimizeJob = jobItems?.find(
                 (job: any) =>
-                    (job.description.toLowerCase().includes('tcp sunrpc slots') ||
-                        job.description?.includes('Fix completed for')) &&
+                    job.description.toLowerCase().includes('kernel parameters') &&
                     job.type === JOBTYPE.WELL_ARCHITECTED &&
                     job.resourceName === dbInstanceSid
             );
@@ -312,7 +308,7 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
         });
     });
 
-    describe.skip('Enable Multipath IO', () => {
+    describe('Enable Multipath IO', () => {
         it('should enable multipath IO successfully', async () => {
             await oracleOptimizeStorageOS(
                 ACCOUNT_ID,
@@ -364,7 +360,7 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
         });
     });
 
-    describe.skip('Disable SELinux', () => {
+    describe('Disable SELinux', () => {
         it('should disable SELinux successfully', async () => {
             await oracleOptimizeStorageOS(
                 ACCOUNT_ID,
@@ -384,9 +380,7 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
             // Find the parent job for SELinux disable
             const selinuxDisableJob = jobItems?.find(
                 (job: any) =>
-                    (job.description?.toLowerCase().includes('SELinux') ||
-                        job.description?.toLowerCase().includes('disable selinux') ||
-                        job.description?.includes('Optimization completed for')) &&
+                    job.description?.toLowerCase().includes('selinux disable ') &&
                     job.type === JOBTYPE.WELL_ARCHITECTED &&
                     job.resourceName === dbInstanceSid
             );
@@ -437,8 +431,7 @@ describe('Multipath Configuration Optimization', () => {
         // Find the parent job for multipath configuration optimization
         const multipathConfigOptimizeJob = jobItems?.find(
             (job: any) =>
-                (job.description?.includes('multipath configuration') ||
-                    job.description?.includes('Fix completed for')) &&
+                job.description?.includes('multipath configuration') &&
                 job.type === JOBTYPE.WELL_ARCHITECTED &&
                 job.resourceName === dbInstanceSid
         );
@@ -488,8 +481,7 @@ describe('Multipath Friendly Names Optimization', () => {
         // Find the parent job for multipath friendly names optimization
         const multipathFriendlyNamesOptimizeJob = jobItems?.find(
             (job: any) =>
-                (job.description?.includes('multipath friendly names') ||
-                    job.description?.includes('Fix completed for')) &&
+                job.description?.includes('multipath friendly names') &&
                 job.type === JOBTYPE.WELL_ARCHITECTED &&
                 job.resourceName === dbInstanceSid
         );
