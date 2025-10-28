@@ -67,7 +67,6 @@ interface OptimizeAsmConfigParams {
     node1InstanceId: string;
     instanceMetadata: unknown;
     parentJobId: string;
-    shouldRestart: boolean;
 }
 
 async function handleAfdDriftOptimization(params: OptimizeAsmConfigParams) {
@@ -79,8 +78,7 @@ async function handleAfdDriftOptimization(params: OptimizeAsmConfigParams) {
         databaseInstanceId,
         node1InstanceId,
         instanceMetadata,
-        parentJobId,
-        shouldRestart
+        parentJobId
     } = params;
     logger.info('Handle Afd config drift optimization');
     const jobName = `Fix Afd Config param for ${databaseInstanceId}`;
@@ -103,7 +101,7 @@ async function handleAfdDriftOptimization(params: OptimizeAsmConfigParams) {
             throw Error(errorMessage);
         }
 
-        const optimizeAfdDriftParam = optimizeAfdDriftConfigParam(shouldRestart);
+        const optimizeAfdDriftParam = optimizeAfdDriftConfigParam;
         const optimizeAfdDriftParamComment = 'Optimize AFD Drift Config Param';
         const response = await callSsmExecution(
             credentialsId,
@@ -159,8 +157,7 @@ async function handleAsmLibDriftOptimization(params: OptimizeAsmConfigParams) {
         databaseInstanceId,
         node1InstanceId,
         instanceMetadata,
-        parentJobId,
-        shouldRestart
+        parentJobId
     } = params;
     const jobName = `Fix Asm lib Config param for ${databaseInstanceId}`;
     const jobDescription = `Fix Oracle Asm lib Config param for DB Instance ${databaseInstanceId}`;
@@ -181,7 +178,7 @@ async function handleAsmLibDriftOptimization(params: OptimizeAsmConfigParams) {
             const errorMessage = `No EC2 instance id found for resource ${resourceId} in account ${accountId}.`;
             throw Error(errorMessage);
         }
-        const optimizeAsmLibParam = optimizeAsmLibDriftConfigParam(shouldRestart);
+        const optimizeAsmLibParam = optimizeAsmLibDriftConfigParam;
         const optimizeAsmLibParamComment = 'Optimize Asm Lib Config Param';
         const response = await callSsmExecution(
             credentialsId,

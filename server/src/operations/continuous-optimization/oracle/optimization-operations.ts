@@ -90,14 +90,13 @@ async function handleBulkOptimization(
     let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
 
     const flattenedTasks = hostsToOptimize.flatMap(({ configurationName: optimizationSubcategory, databaseHosts }) =>
-        databaseHosts.flatMap(({ id: databaseHostId, databases, credentialsId, region, shouldRestart }) =>
+        databaseHosts.flatMap(({ id: databaseHostId, databases, credentialsId, region }) =>
             databases.map(databaseInstanceId => ({
                 databaseHostId,
                 databaseInstanceId,
                 credentialsId,
                 region,
-                optimizationSubcategory,
-                shouldRestart
+                optimizationSubcategory
             }))
         )
     );
@@ -107,14 +106,7 @@ async function handleBulkOptimization(
             flattenedTasks.map(
                 throat(
                     3,
-                    async ({
-                        databaseHostId,
-                        databaseInstanceId,
-                        credentialsId,
-                        region,
-                        optimizationSubcategory,
-                        shouldRestart
-                    }) => {
+                    async ({ databaseHostId, databaseInstanceId, credentialsId, region, optimizationSubcategory }) => {
                         try {
                             switch (optimizationCategory) {
                                 case OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM: {
@@ -125,8 +117,7 @@ async function handleBulkOptimization(
                                         databaseHostId,
                                         databaseInstanceId,
                                         optimizationSubcategory,
-                                        masterOptimizeParentId,
-                                        shouldRestart
+                                        masterOptimizeParentId
                                     );
                                     break;
                                 }

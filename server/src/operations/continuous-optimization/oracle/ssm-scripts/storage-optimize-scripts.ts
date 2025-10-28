@@ -391,12 +391,11 @@ for diskGrp in diskGroups:
             continue
 `;
 
-const oracleAsmLibOptimizeScript = (shouldRestart: boolean) => `
+const oracleAsmLibOptimizeScript = `
 
 config_file = "/etc/sysconfig/oracleasm"
 result = {}
 
-shouldRestart = ${shouldRestart ? 'True' : 'False'}
 def restart_oracleasm_service():
     # Check if service is active
     cmd = ["systemctl", "is-active", "oracleasm"]
@@ -452,8 +451,7 @@ if os.path.exists(config_file):
         if command_result.returncode == 0:
             log(f"Successfully modified ORACLEASM_USE_LOGICAL_BLOCK_SIZE to true in {config_file}")
             result['success'] = "Successfully modified ORACLEASM_USE_LOGICAL_BLOCK_SIZE to true"
-            if shouldRestart:
-                restart_oracleasm_service()
+            restart_oracleasm_service()
         else:
             result['error'] = "Failed to modify oracleasm lib config file"
             log(f"Error: Failed to modify file - {command_result.stderr}")
@@ -469,13 +467,12 @@ else:
 print(json.dumps(result))
 `;
 
-const oracleAfdOptimizeScript = (shouldRestart: boolean) => `
+const oracleAfdOptimizeScript = `
 
 CONF_FILE = "/etc/modprobe.d/oracleafd.conf"
 REQ_LINE = "options oracleafd oracleafd_use_logical_block_size=1"
 result = {}
 
-shouldRestart = ${shouldRestart ? 'True' : 'False'}
 def restart_oracleafd_module():
     # Unload & reload the kernel module
     # Check if crsctl exists
@@ -587,8 +584,7 @@ if os.path.exists(CONF_FILE):
             )
             
             if command_result.returncode == 0:
-                if shouldRestart:
-                        restart_oracleafd_module()
+                restart_oracleafd_module()
                 result['success'] = "Successfully updated oracleafd_use_logical_block_size to 1"
                 log(f"Successfully updated oracleafd_use_logical_block_size to 1")
             else:
@@ -602,8 +598,7 @@ if os.path.exists(CONF_FILE):
         log(f"Adding parameter to config file")
         with open(CONF_FILE, 'a') as f:
             f.write(f"\\n{REQ_LINE}\\n")
-        if shouldRestart:
-            restart_oracleafd_module()
+        restart_oracleafd_module()
         result['success'] = "Successfully added oracleafd_use_logical_block_size=1 to conf file"
         log(f"Successfully added oracleafd_use_logical_block_size=1 to config file")
 else:
@@ -657,16 +652,16 @@ ${pythonScriptInit(addDiskToDiskGroupsScript(diskGroups), 'wlmdb-oracle-storage-
 ORACLE_SHELL
 `;
 
-const optimizeAsmLibDriftConfigParam = (shouldRestart: boolean) => `
+const optimizeAsmLibDriftConfigParam = `
 #!/bin/bash
 ${logFileCheck()}
-${pythonScriptInit(oracleAsmLibOptimizeScript(shouldRestart), 'wlmdb-oracle-asmlib-drift-optimization')}
+${pythonScriptInit(oracleAsmLibOptimizeScript, 'wlmdb-oracle-asmlib-drift-optimization')}
 `;
 
-const optimizeAfdDriftConfigParam = (shouldRestart: boolean) => `
+const optimizeAfdDriftConfigParam = `
 #!/bin/bash
 ${logFileCheck()}
-${pythonScriptInit(oracleAfdOptimizeScript(shouldRestart), 'wlmdb-oracle-afd-drift-optimization')}
+${pythonScriptInit(oracleAfdOptimizeScript, 'wlmdb-oracle-afd-drift-optimization')}
 `;
 
 export {

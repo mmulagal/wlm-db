@@ -82,10 +82,7 @@ const OptimizePerHostRequestBody = Type.Object({
     id: Type.String({ minLength: 1, description: 'WLMDB registered database host identifier' }),
     region: Type.String({ minLength: 1, description: 'AWS region of the database host' }),
     credentialsId: Type.String({ minLength: 1, description: 'WLMDB registered credentials identifier' }),
-    databases: Type.Array(Type.String({ minLength: 1, description: 'Oracle database sid' })),
-    shouldRestart: Type.Optional(
-        Type.Boolean({ default: false, description: 'Whether to restart the database after optimization' })
-    )
+    databases: Type.Array(Type.String({ minLength: 1, description: 'Oracle database sid' }))
 });
 
 const HostsToOptimize = Type.Array(
@@ -103,16 +100,11 @@ const HostsToOptimize = Type.Array(
                     '- selinux-disable\n' +
                     '- iscsi-replacement-timeout\n' +
                     '- multipath-io-sessions\n' +
-                    '- filesystems-io-options\n' +
                     '- multipath-configuration\n' +
                     '- multipath-friendly-names\n' +
                     '- multiblock-readcount\n\n' +
                     'For nfs-storage-operating-system type, valid values are:\n' +
-                    '- kernel-parameters\n' +
-                    '- nfs-mount-options-databasefiles\n' +
-                    '- nfs-mount-options-adrhome\n' +
-                    '- nfsv4-domain-name\n' +
-                    '- nfs-caching-options'
+                    '- kernel-parameters\n'
             }
         ),
         databaseHosts: Type.Array(OptimizePerHostRequestBody)

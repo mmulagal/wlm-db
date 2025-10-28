@@ -60,8 +60,7 @@ async function oracleOptimizeStorageOS(
     databaseHostId: string,
     databaseInstanceId: string,
     configurationName: string,
-    masterJobId?: string,
-    shouldRestart: boolean = false
+    masterJobId?: string
 ) {
     logger.info(
         `Optimizing operating system settings for ${accountId}, ${credentialsId} ${databaseHostId} ${databaseInstanceId} in ${region} for configuration ${configurationName}`
@@ -204,6 +203,7 @@ async function oracleOptimizeStorageOS(
 
     let parentJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let parentJobError = '';
+    const isProdEnv = process.env.NODE_ENV === 'production';
     switch (configurationName) {
         case OptimizeOracleiSCSIStorageOperatingSystem.TCP_OPTIONS: {
             try {
@@ -292,6 +292,9 @@ async function oracleOptimizeStorageOS(
 
         case OptimizeOracleiSCSIStorageOperatingSystem.ORACLE_AFD_LOGICAL_BLOCK_SIZE: {
             try {
+                if (isProdEnv) {
+                    throw new Error('AFD logical block size optimization is not supported');
+                }
                 await handleAfdDriftOptimization({
                     accountId,
                     region,
@@ -300,8 +303,7 @@ async function oracleOptimizeStorageOS(
                     databaseInstanceId,
                     node1InstanceId,
                     instanceMetadata,
-                    parentJobId,
-                    shouldRestart
+                    parentJobId
                 });
             } catch (error) {
                 parentJobError = String(error);
@@ -313,6 +315,9 @@ async function oracleOptimizeStorageOS(
 
         case OptimizeOracleiSCSIStorageOperatingSystem.ORACLE_ASM_LOGICAL_BLOCK_SIZE: {
             try {
+                if (isProdEnv) {
+                    throw new Error('Asmlib logical block size optimization is not supported');
+                }
                 await handleAsmLibDriftOptimization({
                     accountId,
                     region,
@@ -321,8 +326,7 @@ async function oracleOptimizeStorageOS(
                     databaseInstanceId,
                     node1InstanceId,
                     instanceMetadata,
-                    parentJobId,
-                    shouldRestart
+                    parentJobId
                 });
             } catch (error) {
                 parentJobError = String(error);
@@ -462,6 +466,9 @@ async function oracleOptimizeStorageOS(
 
         case OptimizeOracleiSCSIStorageOperatingSystem.FILESYSTEM_IO_OPTIONS: {
             try {
+                if (isProdEnv) {
+                    throw new Error('Filesystems I/O options optimization is not supported');
+                }
                 await optimizeFilesystemioOptions({
                     accountId,
                     credentialsId,
