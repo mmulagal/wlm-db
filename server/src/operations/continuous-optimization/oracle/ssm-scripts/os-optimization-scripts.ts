@@ -1537,6 +1537,22 @@ def enable_multipath_io():
             log('Multipath I/O already enabled')
             return {"status": "optimized-offline"}
 
+        # Check reboot required
+        log('Checking GRUB configuration for multipath=off parameter')
+        grub_file = '/etc/default/grub'
+        if os.path.exists(grub_file):
+            try:
+                with open(grub_file, 'r') as f:
+                    grub_content = f.read()
+                
+                if 'multipath=off' in grub_content:
+                    log('System restart required due to multipath=off in GRUB configuration')
+                    return {"status": "restart-required"}
+
+            except Exception as e:
+                log(f'Error checking GRUB configuration: {str(e)}')
+                return {"status": "failed", "error": f"Failed to check GRUB configuration: {str(e)}"}
+                    
         # Enable and start service
         os_info = get_os_info()
         os_version = os_info.get("os-version", "").lower()            
@@ -1554,8 +1570,9 @@ def enable_multipath_io():
         # Verify
         final = check_multipath_io()
         if final.get("error") or not (final.get("multipath-io-is-active") and final.get("multipath-io-is-enabled")):
-            return {"status": "failed", "error": final.get("error", "Verification failed")}
-        
+            errMsg = final.get("error") or ""
+            return {"status": "failed", "error": "Failed to activate multipath I/O; " + errMsg}
+
         log('Multipath I/O successfully enabled')
         return {"status": "optimized"}
         

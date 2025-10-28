@@ -1341,13 +1341,21 @@ async function enableMultipathIo(params: OptimizeOSParams) {
 
         const { status, error } = parsedResponse;
 
-        if (error || status === 'failed') {
-            throw new Error(`Multipath IO enabling failed: ${error}`);
-        }
-        if (status === 'optimised-offline') {
-            jobError = 'Multipath IO is already enabled. No further action needed.';
-            logger.info(jobError);
-            jobStatus = JOBSTATUS.WARNING;
+        switch (status) {
+            case 'failed':
+                throw new Error(`Multipath IO enabling failed: ${error}`);
+            case 'optimised-offline':
+                jobError = 'Multipath IO is already enabled. No further action needed.';
+                logger.info(jobError);
+                jobStatus = JOBSTATUS.WARNING;
+                break;
+            case 'restart-required':
+                jobError = 'Aborting the fix, it requires restart to take effect.';
+                logger.info(jobError);
+                jobStatus = JOBSTATUS.WARNING;
+                break;
+
+            default:
         }
 
         if (IS_DEMO_FLOW) {
