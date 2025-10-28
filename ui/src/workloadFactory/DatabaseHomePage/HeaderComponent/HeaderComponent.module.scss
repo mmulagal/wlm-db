@@ -266,6 +266,7 @@
         // overflow-y: auto;
         .dashboardSection {
             background-color: var(--main-background);
+            width: 100vw;
 
             .spaceArea {
                 display: flex;
@@ -366,7 +367,7 @@
             display: flex;
             padding: 40px 0;
             justify-content: center;
-            width: 100%;
+            width: 100vw;
             background-color: var(--main-background);
 
             .contentArea {
@@ -396,10 +397,11 @@
         }
 
         .sandboxSection {
+            width: 100vw;
             display: flex;
             padding: 40px 0;
             justify-content: center;
-            width: 100%;
+
             background-color: var(--main-background);
 
             .contentArea {
@@ -431,7 +433,7 @@
             display: flex;
             padding: 40px 0;
             justify-content: center;
-            width: 100%;
+            width: 100vw;
             background-color: var(--main-background);
 
             .contentArea {
@@ -541,6 +543,7 @@
 @media screen and (max-width: 1428px) {
     .headerComponent {
         .dashboardSection {
+            width: 100vw;
             .contentArea {
                 width: 744px !important;
             }
@@ -565,6 +568,7 @@
 @media screen and (min-width: 1920px) {
     .headerComponent {
         .sandboxSection {
+            width: 100vw;
             .contentArea {
                 max-width: unset !important;
             }

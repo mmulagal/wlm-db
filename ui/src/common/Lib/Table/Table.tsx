@@ -228,8 +228,26 @@ const useHorizontalScroll = (columns: ColumnProps[], pagesCount: number) => {
     // Allow only vertical scrolling with mouse wheel
     useLayoutEffect(() => {
         const handleWheel = (event: WheelEvent) => {
-            if (tableBodyRef.current) {
-                tableBodyRef.current.scrollTop += event.deltaY; // Only vertical scrolling
+            const table = tableBodyRef.current;
+            if (!table) return;
+
+            const hasHorizontal = table.scrollWidth > table.clientWidth;
+
+            // Apply horizontal scroll if available (touchpad deltaX or shift+wheel)
+            if (hasHorizontal && (event.deltaX !== 0 || event.shiftKey)) {
+                const horizDelta = event.deltaX !== 0 ? event.deltaX : event.deltaY;
+                table.scrollLeft += horizDelta;
+
+                if (tableHeaderRef.current) tableHeaderRef.current.scrollLeft = table.scrollLeft;
+                if (bottomScrollbarRef.current) bottomScrollbarRef.current.scrollLeft = table.scrollLeft;
+
+                // prevent the default browser behavior (page scroll) when we handled horizontal
+                event.preventDefault();
+            }
+
+            // Always apply vertical scrolling
+            if (event.deltaY !== 0) {
+                table.scrollTop += event.deltaY;
             }
         };
 
