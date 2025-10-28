@@ -1,5 +1,6 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './PotentialSavings.module.scss';
@@ -18,6 +19,7 @@ import ComparisonChart from '../../../ui-components/Charts/ComparisionChart';
 
 const NewPotentialSavings = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const dispatch = useDispatch();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
@@ -36,6 +38,9 @@ const NewPotentialSavings = () => {
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
         dashboardRedirection('explore-savings/explore-savings-ebs');
+        if (isWorkloadFactory) {
+            navigate('../../databases/explore-savings/explore-savings-ebs');
+        }
     };
 
     useEffect(() => {
