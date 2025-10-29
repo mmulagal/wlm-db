@@ -514,7 +514,7 @@ function getOSConfigDrift(
                 } else {
                     const targetSessions = iscsiTargetSessions?.['iscsi-sessions-per-target'] || {};
                     violationDetails = Object.entries(targetSessions)
-                        .filter(([, sessions]) => sessions !== 4)
+                        .filter(([, sessions]) => sessions < 4)
                         .map(([target, sessions]) =>
                             createViolationDetail(target, 'iscsi target', sessions.toString(), '4')
                         );

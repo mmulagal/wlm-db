@@ -862,7 +862,9 @@ async function optimizeMultipathIoSessions(params: OptimizeOSParams) {
             );
         }
     } catch (error) {
-        jobError = jobError || `Error while fixing multipath IO sessions ${error}`;
+        jobError = jobError
+            ? `${jobError}; Error while fixing multipath IO sessions ${error}`
+            : `Error while fixing multipath IO sessions ${error}`;
         jobStatus = JOBSTATUS.FAILED;
     } finally {
         await updateJobDetails(accountId, jobId, {

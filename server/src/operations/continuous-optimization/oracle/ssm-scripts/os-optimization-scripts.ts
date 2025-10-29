@@ -568,6 +568,12 @@ const INCREASE_MULTIPATH_IO_SESSIONS_TO_4 = `
 # Optimize iSCSI targets and sessions to 4
 def increase_iscsi_sessions_to_4():
     log('Starting multipath IO sessions optimization to increase sessions to 4')
+    # Check multipathd status 
+    log('Checking if multipathd is running')
+    multipath_status = check_multipath_io()
+    if multipath_status.get("error") or not multipath_status.get("multipath-io-is-active"):
+        log('multipathd daemon is not running. Exiting.')
+        return {"overall_status": "failed", "error": "multipathd daemon is not running"}
     result = check_iscsi_targets_sessions()
     targets = result.get("iscsi-targets", [])
     log(f'Found {len(targets)} iSCSI targets to process')
@@ -580,8 +586,8 @@ def increase_iscsi_sessions_to_4():
             portal_full = portal_parts[0]
             target_iqn = portal_parts[1]
 
-            if t["active_sessions"] == 4:
-                log(f'Target {target_iqn} already has 4 sessions, skipping')
+            if t["active_sessions"] >= 4:
+                log(f'Target {target_iqn} already has at least 4 sessions; skipping.')
                 summary.append({
                     "target": target_iqn,
                     "portal": portal_full,
@@ -698,6 +704,7 @@ set_iscsi_replacement_timeout()
 `;
 
 const optimizeOracleMultipathIoSessionsTemplate = `
+${CHECK_MULTIPATH_IO_STATUS}
 ${CHECK_ISCSI_TARGETS_SESSIONS}
 ${INCREASE_MULTIPATH_IO_SESSIONS_TO_4}
 
