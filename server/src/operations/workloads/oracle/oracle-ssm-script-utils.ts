@@ -1144,6 +1144,22 @@ EOF
         )
         echo "$result" | grep -q "true" && echo "true" || echo "false"
     }
+
+    check_for_alter_system_permission() {
+        local result=$(sudo -i -u oracle bash <<EOF
+            set -e
+            export ORACLE_SID="$oracleSid"
+            $sqlplus_command
+            WHENEVER SQLERROR EXIT SQL.SQLCODE
+            SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+            SELECT CASE WHEN COUNT(*) > 0 THEN 'true' ELSE 'false' END
+            FROM session_privs
+            WHERE privilege = 'ALTER SYSTEM';
+            EXIT;
+EOF
+        )
+        echo "$result" | grep -q "true" && echo "true" || echo "false"
+}
 `;
 
 const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string) => `
@@ -1160,14 +1176,22 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
     # Extract username from sqlplus_command
     username=$(sed -n 's/.* -S \\([^/]*\\)\\/.*/\\1/p' <<< "$sqlplus_command")
     isCreateSessionRoleGranted=$(is_create_session_granted)
+    remediationMissingPermissions="[]"
 
     if [ "$username" == "sys" ]; then
         # SYS user has all privileges, so we don't need to check for permissions.
         missingPermissions="[]"
+        remediationMissingPermissions="[]"
     elif [ "$isCreateSessionRoleGranted" == "false" ]; then
         missingPermissions="[\\"CREATE SESSION\\"]"
+        remediationMissingPermissions="[\\"ALTER SYSTEM\\"]"
     else
         isSelectCatalogRoleGranted=$(check_for_select_catalog_permission)
+        isAlterSystemGranted=$(check_for_alter_system_permission)
+
+        if [ "$isAlterSystemGranted" == "false" ]; then
+            remediationMissingPermissions="[\\"ALTER SYSTEM\\"]"
+        fi
 
         isCDBInstance=$(is_cdb_instance)
 
@@ -1198,7 +1222,7 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
         fi
     fi
 
-    missingOracleUserPermissions="{\\"instanceSid\\": \\"$oracleSid\\", \\"missingPermissions\\": $missingPermissions}"
+    missingOracleUserPermissions="{\\"instanceSid\\": \\"$oracleSid\\", \\"missingPermissions\\": $missingPermissions, \\"remediationMissingPermissions\\": $remediationMissingPermissions}"
 
     resultObject=$(echo "$resultObject" | jq --argjson permissions "$(echo "$missingOracleUserPermissions" | jq '.')" '.missingOracleUserPermissions += [$permissions]')
 `;

@@ -146,6 +146,10 @@ describe('Manage operations', () => {
                     oracle: {
                         missingPermissions: [],
                         missingModules: []
+                    },
+                    remediation: {
+                        missingModules: [],
+                        missingSqlPermissions: []
                     }
                 }
             }

@@ -2665,6 +2665,7 @@ async function validateOracleCredentials(
     const instancesToBeDeleted: string[] = [];
 
     const instanceIdToMissingPermissionsMap = new Map<string, string[]>();
+    const instanceIdToRemediationMissingPermissionsMap = new Map<string, string[]>();
     let missingModules: string[] = [];
 
     if (checkManageReadiness) {
@@ -2678,8 +2679,9 @@ async function validateOracleCredentials(
 
         if (missingOracleUserPermissions && missingOracleUserPermissions.length) {
             for (const permission of missingOracleUserPermissions) {
-                const { instanceSid, missingPermissions } = permission;
+                const { instanceSid, missingPermissions, remediationMissingPermissions } = permission;
                 instanceIdToMissingPermissionsMap.set(instanceSid, missingPermissions);
+                instanceIdToRemediationMissingPermissionsMap.set(instanceSid, remediationMissingPermissions);
             }
         }
 
@@ -2742,6 +2744,8 @@ async function validateOracleCredentials(
             } else if (instance.oracleInstanceConnectivity === true) {
                 const { oracleInstanceName, oracleEdition } = instance;
                 const missingPermissions = instanceIdToMissingPermissionsMap.get(oracleInstanceName) || [];
+                const remediationMissingPermissions =
+                    instanceIdToRemediationMissingPermissionsMap.get(oracleInstanceName) || [];
                 response.push({
                     resourceId: oracleInstanceName,
                     resourceType: RESOURCESTYPE.ORACLE,
@@ -2750,6 +2754,10 @@ async function validateOracleCredentials(
                         oracle: {
                             missingPermissions,
                             missingModules
+                        },
+                        remediation: {
+                            missingSqlPermissions: remediationMissingPermissions,
+                            missingModules: []
                         }
                     }
                 });

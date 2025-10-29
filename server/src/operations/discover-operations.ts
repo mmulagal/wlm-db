@@ -1745,7 +1745,8 @@ async function discoverOracleResources(
                             storage_details: instanceStorageDetails,
                             is_default_auth: isDefaultAuthentication,
                             modules_availability: modulesAvailability,
-                            missing_permissions: missingPermissions
+                            missing_permissions: missingPermissions,
+                            remediation_missing_permissions: remediationMissingPermissions
                         } = dbInstance;
 
                         const { isAwsCliInstalled, isJqInstalled, isPythonInstalled } = modulesAvailability || {};
@@ -1830,6 +1831,10 @@ async function discoverOracleResources(
                                         isPythonInstalled === 'false' ? 'python' : null
                                     ].filter(Boolean) as string[],
                                     missingPermissions
+                                },
+                                remediation: {
+                                    missingSqlPermissions: remediationMissingPermissions,
+                                    missingModules: []
                                 }
                             }
                         });

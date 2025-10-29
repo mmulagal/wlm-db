@@ -377,7 +377,8 @@ const OracleDatabaseInstance = Type.Object({
                 missingPermissions: Type.Optional(
                     Type.Array(Type.String({ description: 'List of missing permissions on the instance' }))
                 )
-            })
+            }),
+            remediation: Type.Optional(ManageReadinessObject)
         })
     )
 });

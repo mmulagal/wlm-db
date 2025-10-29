@@ -1038,6 +1038,28 @@ const checkOraclePermissionsInDiscovery = `
 
         echo "$missingPermissions"
     }
+
+    check_remediation_missing_permissions() {
+        local oracleSid="$1"
+        result=$(get_oracle_user_auth_login_command "$oracleSid" "$ec2InstanceId")
+        sqlplus_command=$(echo "$result" | cut -d'|' -f1)
+
+        # Extract username from sqlplus_command
+        username=$(sed -n 's/.* -S \\([^/]*\\)\\/.*/\\1/p' <<< "$sqlplus_command")
+        remediationMissingPermissions="[]"
+        if [ -z "$username" ]; then
+            # credentials not available, so cannot check permissions.
+            remediationMissingPermissions="[\\"ALTER SYSTEM\\"]"
+        else
+            isAlterSystemGranted=$(check_for_alter_system_permission)
+
+            if [ "$isAlterSystemGranted" == "false" ]; then
+                remediationMissingPermissions="[\\"ALTER SYSTEM\\"]"
+            fi
+        fi
+
+        echo "$remediationMissingPermissions"
+    }
 `;
 
 const discoverOracleHosts = `
@@ -1118,6 +1140,7 @@ EOF
                 ${getInstanceStorageDetails}
                 # Default auth enabled means the user has sysdba privileges, so no missing permissions.
                 missingPermissions="[]"
+                remediationMissingPermissions="[]"
             else
                 ${getStorageWithoutCreds}
                 ${checkOraclePermissionsInDiscovery}
@@ -1125,6 +1148,7 @@ EOF
                 isJqInstalled=$(echo "$modulesAvailability" | grep -o '"isJqInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
                 if [[ "$isAwsCliInstalled" == "true"  && "$isJqInstalled" == "true" ]]; then
                     missingPermissions=$(check_oracle_missing_permissions "$sid")
+                    remediationMissingPermissions=$(check_remediation_missing_permissions "$sid")
                 else
                     missingPermissions="[\\"na\\"]"
                 fi
@@ -1134,7 +1158,7 @@ EOF
             continue
         }
 
-        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions}"
+        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions, \\"remediation_missing_permissions\\": $remediationMissingPermissions}"
 
         # If not the first object, prepend a comma in the JSON array.
         if [ $FIRST -eq 1 ]; then
