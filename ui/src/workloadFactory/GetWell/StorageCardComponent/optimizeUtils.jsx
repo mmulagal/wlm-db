@@ -114,8 +114,6 @@ const isDialogPrimaryBtnDisabled = rowData => {
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION ||
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME)
     ) {
         return true;
@@ -125,7 +123,9 @@ const isDialogPrimaryBtnDisabled = rowData => {
 
 export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData, operation, singleRowData) => {
     // Check if this is an ASM configuration that should only have a Close button
-    const isCloseButton = rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY;
+    const isCloseButton =
+        rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
+        rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES;
     if (isCloseButton) {
         setDialog(
             <DialogComponent

@@ -505,7 +505,10 @@ const RecommendationTable = ({
             name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
             name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
             name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
-            name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE
+            name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
+            name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
+            name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
+            name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS
         ) {
             return 'View';
         }
@@ -521,7 +524,10 @@ const RecommendationTable = ({
         const isCloseButton =
             rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE;
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS;
         if (isCloseButton) {
             setDialog(
                 <DialogComponent

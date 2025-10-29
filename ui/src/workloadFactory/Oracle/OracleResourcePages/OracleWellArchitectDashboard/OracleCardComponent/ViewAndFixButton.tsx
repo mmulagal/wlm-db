@@ -39,7 +39,10 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
             type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
-            type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
+            type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
+            type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
+            type === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS
         ) {
             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
             dispatch(setSelectedOptimizeConfig({ type, data: cardData, engineType: DBType.ORACLE }));
