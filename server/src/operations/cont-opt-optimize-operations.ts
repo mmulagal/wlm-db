@@ -119,7 +119,9 @@ interface OptimizeStorageAttributeParams {
     svmName: string;
     serverNameWithHostName: string;
     resourceType: RESOURCESTYPE;
-    recommendationMap?: { [key: string]: Record<string, string[]> };
+    recommendationMap?: {
+        [key: string]: { objectsToOptimize: string[]; recommended: string; additionalInfo: Record<string, unknown> };
+    };
 }
 
 interface OptimizeStorageOperationParams {
@@ -149,11 +151,176 @@ function getApiQueryFilter(
     value: string,
     queryParamKey: string
 ) {
-    return ['DEDUPLICATION', 'COMPACTION'].includes(configKey) || (value === 'none' && configKey === 'COMPRESSION')
+    return ['DEDUPLICATION', 'COMPACTION', 'EXPORT_POLICY'].includes(configKey) ||
+        (value === 'none' && configKey === 'COMPRESSION')
         ? `svm=${svmName}&name=${objectsToOptimize.join('|')}`
         : ['NFS_ROOTONLY'].includes(configKey)
         ? `vserver=${svmName}`
         : `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
+}
+
+async function getExportPolicyRules(
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    activeNodeInstanceId: string,
+    svmName: string,
+    existingPolicyName: string
+) {
+    logger.info(`Getting export policy rules for policy ${existingPolicyName} in SVM ${svmName}`);
+
+    const commandToFetchExistingPolicyDetails = [
+        optimizeStorageConfigParamsOracle({
+            fsxId,
+            region,
+            apiEndpoint: '/protocols/nfs/export-policies',
+            apiQueryFilter: `svm=${svmName}&name=${existingPolicyName}&fields=rules`,
+            apiBody: '',
+            apiType: 'GET'
+        })
+    ];
+
+    const existingPolicyResponse = await retryWithDelay(
+        callSsmExecution.bind(
+            null,
+            credentialsId,
+            region,
+            commandToFetchExistingPolicyDetails,
+            activeNodeInstanceId,
+            'Fetch existing export policy details',
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            SSM_RUN_SHELL_SCRIPT_DOC,
+            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        )
+    );
+
+    const parsedExistingPolicyResponse = sqlResponseParsing(existingPolicyResponse);
+
+    let existingRules = [];
+    if (parsedExistingPolicyResponse?.records?.[0]?.rules) {
+        existingRules = parsedExistingPolicyResponse.records[0].rules;
+    }
+
+    return existingRules;
+}
+
+async function createExportPolicy(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    fsxId: string,
+    activeNodeInstanceId: string,
+    svmName: string,
+    clients: string[],
+    existingPolicyName: string,
+    policyName: string,
+    parentJobId?: string
+) {
+    logger.info(`Creating new export policy in SVM ${svmName} for FSx ${fsxId} `);
+    const jobDescription = `Create export policy in SVM ${svmName} for FSx ${fsxId} `;
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let jobError: string = '';
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: jobDescription,
+        description: jobDescription,
+        resourceName: fsxId,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.OPTIMIZATION,
+        parentJobId
+    });
+
+    try {
+        const existingRules = await getExportPolicyRules(
+            credentialsId,
+            region,
+            fsxId,
+            activeNodeInstanceId,
+            svmName,
+            existingPolicyName
+        );
+
+        let newRules = [];
+        newRules = clients.map(client => {
+            const existingRule = existingRules.find(
+                (rule: any) => rule.clients && rule.clients.some((c: any) => c.match === client)
+            );
+
+            if (existingRule) {
+                return {
+                    ...existingRule,
+                    clients: [{ match: client }],
+                    allow_suid: true,
+                    superuser: ['sys']
+                };
+            }
+            // Not excepting this case will ever be hit
+            const templateRule = existingRules[0] || {};
+            return {
+                ...templateRule,
+                clients: [{ match: client }],
+                allow_suid: true,
+                superuser: ['sys']
+            };
+        });
+
+        const commands = [
+            optimizeStorageConfigParamsOracle({
+                fsxId,
+                region,
+                apiEndpoint: '/protocols/nfs/export-policies',
+                apiQueryFilter: '',
+                apiBody: JSON.stringify({
+                    name: policyName,
+                    svm: { name: svmName },
+                    rules: newRules
+                }),
+                apiType: 'POST'
+            })
+        ];
+
+        const resp = await retryWithDelay(
+            callSsmExecution.bind(
+                null,
+                credentialsId,
+                region,
+                commands,
+                activeNodeInstanceId,
+                jobDescription,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                SSM_RUN_SHELL_SCRIPT_DOC,
+                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            )
+        );
+
+        const parsedResp = sqlResponseParsing(resp);
+        // Check if parsedResp is empty object
+        if (!parsedResp.hasOwnProperty('error')) {
+            jobStatus = JOBSTATUS.COMPLETED;
+            logger.info(`Export policy ${policyName} created successfully in SVM ${svmName}`);
+        } else {
+            jobStatus = JOBSTATUS.FAILED;
+            jobError = `Failed to create export policy: ${
+                parsedResp.hasOwnProperty('error') ? JSON.stringify(parsedResp.error) : 'unknown error'
+            }`;
+        }
+    } catch (error) {
+        jobError = `Error while creating export policy: ${error}`;
+        logger.error(jobError);
+        jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status: jobStatus,
+            endTime: Date.now(),
+            error: jobError
+        });
+    }
 }
 
 async function optimizeStorageAttributes(params: OptimizeStorageOperationParams) {
@@ -311,7 +478,10 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                     throw new Error('Storage configuration not found');
                 }
 
-                const recommendedValues: Record<string, string[]> = {};
+                const recommendedValues: Record<
+                    string,
+                    { objectsToOptimize: string[]; additionalInfo: Record<string, unknown> }
+                > = {};
                 if (
                     resourceType === RESOURCESTYPE.ORACLE &&
                     oracleSpecialStorageConfigNames.includes(configurationName as OptimizeStorageConfigs)
@@ -325,11 +495,15 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                         throw new Error(newJobError);
                     }
                     const map = recommendationMap[configurationName];
-                    Object.entries(map).forEach(([recommendedValue, objectNames]) => {
-                        recommendedValues[recommendedValue] = objectNames;
-                    });
+                    recommendedValues[map.recommended] = {
+                        objectsToOptimize: map.objectsToOptimize,
+                        additionalInfo: map.additionalInfo
+                    };
                 } else {
-                    recommendedValues[''] = objectsToOptimize;
+                    recommendedValues[''] = {
+                        objectsToOptimize,
+                        additionalInfo: {}
+                    };
                 }
 
                 let objectsOptimized = 0;
@@ -338,11 +512,27 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
 
                 const apiResults = await Promise.all(
                     Object.entries(recommendedValues).map(
-                        throat(3, async ([value, objects]) => {
+                        throat(3, async ([value, { objectsToOptimize: volumesLunsToOptimize, additionalInfo }]) => {
+                            if (configurationName === OptimizeStorageConfigs.EXPORT_POLICY) {
+                                const { vserverName, exportPolicyName: existingPolicyName, clients } = additionalInfo;
+                                value = `wlmdb_export_policy_${Date.now()}`;
+                                await createExportPolicy(
+                                    accountId,
+                                    region,
+                                    credentialsId,
+                                    fsxId,
+                                    activeNodeInstanceId,
+                                    vserverName as string,
+                                    clients as string[],
+                                    existingPolicyName as string,
+                                    value,
+                                    parentJobId
+                                );
+                            }
                             const result = await callOntapApi(
                                 apiRequestData,
                                 configKey!,
-                                objects,
+                                volumesLunsToOptimize,
                                 svmName,
                                 resourceType,
                                 fsxId,

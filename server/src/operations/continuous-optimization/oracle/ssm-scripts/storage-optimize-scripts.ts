@@ -21,12 +21,16 @@ region = '${params.region}'
 apiPath = '${params.apiEndpoint}'[1:]
 query = '${params.apiQueryFilter}'
 body = '${params.apiBody}'
+method = '${params.apiType || 'PATCH'}'
+url = apiPath
 
 if query:
     url = f"{apiPath}?{query}"
 
-log(f"Sending PATCH request to: {url} with body: {body}")
-response, error = ontapRestApiRequest(fsxId, region, 'PATCH', url, body)
+log(f"Sending {method} request to: {url} with body: {body}")
+if method in ["GET"]:
+    body = None
+response, error = ontapRestApiRequest(fsxId, region, method, url, body)
 if error:
     log(f"Error occurred: {error}")
     print(json.dumps(error))

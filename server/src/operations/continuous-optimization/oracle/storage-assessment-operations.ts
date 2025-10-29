@@ -899,7 +899,7 @@ function getNfsVolumeConfigDrift(storageAssessmentData: StorageNfsAssessment) {
                 totalObjectsAssessed = nfsMountedVolumes.length;
 
                 nfsMountedVolumes.forEach(volume => {
-                    const { rules, exportPolicyName } = volume.nfsInfo || {};
+                    const { rules, exportPolicyName, svmName } = volume.nfsInfo || {};
                     if (!rules) {
                         logger.info(`Skipping export-policy check for volume ${volume.volumeName} as no rules found`);
                         return;
@@ -915,7 +915,7 @@ function getNfsVolumeConfigDrift(storageAssessmentData: StorageNfsAssessment) {
                             rule => !rule.superuser?.includes('sys') || rule.allow_suid !== true
                         );
 
-                        const currentRules = `export-policy: ${exportPolicyName}, ${violatingRules
+                        const currentRules = `vserver: ${svmName}, export-policy: ${exportPolicyName}, ${violatingRules
                             .map(
                                 rule =>
                                     `clients: [${rule.clients?.join(',')}], superuser: ${rule.superuser?.join(
@@ -928,7 +928,12 @@ function getNfsVolumeConfigDrift(storageAssessmentData: StorageNfsAssessment) {
                             objectName: volume.volumeName,
                             value: currentRules,
                             objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                            recommended
+                            recommended,
+                            additionalInfo: {
+                                vserverName: svmName,
+                                exportPolicyName,
+                                clients: violatingRules.map(({ clients }) => clients || []).flat()
+                            }
                         });
                         objectsInViolation.push(volume.volumeName);
                     }

@@ -639,6 +639,7 @@ interface OntapRequestParams {
 }
 interface OptimizeStorageParams extends OntapRequestParams {
     apiBody: string;
+    apiType?: string;
 }
 
 type VolumeSpaceRecord = {

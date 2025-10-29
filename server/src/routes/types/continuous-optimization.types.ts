@@ -32,7 +32,8 @@ const GenericViolationResponse = Type.Object({
     value: Type.String(),
     objectType: Type.String(),
     recommended: Type.Optional(Type.String()),
-    dataCategory: Type.Optional(Type.String()) // Applicable in volume assessment for Oracle
+    dataCategory: Type.Optional(Type.String()), // Applicable in volume assessment for Oracle
+    additionalInfo: Type.Optional(Type.Record(Type.String(), Type.Any()))
 });
 
 type GenericViolationResponseType = Static<typeof GenericViolationResponse>;

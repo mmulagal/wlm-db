@@ -290,6 +290,11 @@ const OptimizeStorageApiData = {
         api: '/private/cli/vserver/nfs',
         body: { 'nfs-rootonly': 'disabled' },
         type: VSERVER
+    }),
+    EXPORT_POLICY: (value?: string) => ({
+        api: '/storage/volumes',
+        body: { nas: { export_policy: { name: value } } },
+        type: VOLUME
     })
 };
 

@@ -55,7 +55,8 @@ const oracleSpecialStorageConfigNames = [
     OptimizeStorageConfigs.COMPRESSION,
     OptimizeStorageConfigs.DEDUPLICATION,
     OptimizeStorageConfigs.COMPACTION,
-    OptimizeStorageConfigs.NFS_ROOTONLY
+    OptimizeStorageConfigs.NFS_ROOTONLY,
+    OptimizeStorageConfigs.EXPORT_POLICY
 ];
 
 interface OptimizeAsmConfigParams {
@@ -651,7 +652,13 @@ async function getOracleStorageConfigRecommendationMap(
         );
 
         // recommendation map: config -> {recommendedValue -> [objectName]}
-        const recommendationMap: { [key in OptimizeStorageConfigs]?: Record<string, string[]> } = {};
+        const recommendationMap: {
+            [key in OptimizeStorageConfigs]?: {
+                objectsToOptimize: string[];
+                recommended: string;
+                additionalInfo: Record<string, unknown>;
+            };
+        } = {};
 
         const storageDriftTyped = storageDrift as StorageParameterDriftResponseType;
         if (isEmpty(storageDriftTyped.configuration)) {
@@ -679,14 +686,19 @@ async function getOracleStorageConfigRecommendationMap(
                                 ({ objectName, recommended }) =>
                                     objectName && recommended && objectsToOptimize.includes(objectName)
                             )
-                            .forEach(({ objectName, recommended }) => {
+                            .forEach(({ objectName, recommended, additionalInfo }) => {
                                 if (!recommended) {
                                     return;
                                 }
                                 const key = configKey as OptimizeStorageConfigs;
-                                recommendationMap[key] ??= {};
-                                recommendationMap[key][recommended] ??= [];
-                                recommendationMap[key][recommended].push(objectName);
+                                if (!recommendationMap[key]) {
+                                    recommendationMap[key] = {
+                                        objectsToOptimize: [],
+                                        recommended,
+                                        additionalInfo: additionalInfo ?? {}
+                                    };
+                                }
+                                recommendationMap[key].objectsToOptimize.push(objectName as string);
                             });
                     });
             });
