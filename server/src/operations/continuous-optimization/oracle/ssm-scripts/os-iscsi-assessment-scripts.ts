@@ -424,7 +424,7 @@ EXIT;
             else:
                 result["error"] = f"No valid JSON found in output: {output}"
         else:
-            result["error"] = f"sqlplus failed: {result_proc.stderr}"
+            result["error"] = f"sqlplus command failed while getting parameters"
             
     except Exception as e:
         result["error"] = f"Error: {str(e)}"
@@ -461,7 +461,7 @@ def check_multipath_io():
             "multipath-io-is-enabled": False,
             "multipath-io-active-value": "unknown",
             "multipath-io-enabled-value": "unknown", 
-            "error": str(e)
+            "error": "error occurred while checking multipath I/O status"
         }
 `;
 
@@ -802,7 +802,8 @@ def check_multipath_configuration():
     try:
         response = subprocess.run(['multipathd', 'show', 'config'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
         if response.returncode != 0:
-            return {"multipath-config-found": False, "error": response.stderr.strip(), "config": None}
+            log(f'multipathd command failed or not found: {response.stderr.strip()}')
+            return {"multipath-config-found": False, "error": "multipathd not found", "config": None}
 
         text = response.stdout
         parsed = parse(text)
@@ -873,7 +874,7 @@ def check_multipath_configuration():
         return {"multipath-config-found": False, "error": "multipathd not found", "defaults": None, "netapp-device": None}
     except Exception as e:
         log(f'Exception while checking multipath configuration: {str(e)}')
-        return {"multipath-config-found": False, "error": str(e), "defaults": None, "netapp-device": None}
+        return {"multipath-config-found": False, "error": "multipathd not found", "defaults": None, "netapp-device": None}
 
 `;
 
