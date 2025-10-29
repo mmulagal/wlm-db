@@ -508,7 +508,8 @@ const RecommendationTable = ({
             name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
             name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
             name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
-            name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS
+            name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
+            name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS
         ) {
             return 'View';
         }
@@ -527,7 +528,8 @@ const RecommendationTable = ({
             rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS;
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS;
         if (isCloseButton) {
             setDialog(
                 <DialogComponent

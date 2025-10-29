@@ -850,7 +850,8 @@ const StorageCardComponent = ({
             type === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
             type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
             type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
-            type === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS
+            type === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
+            type === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS
         ) {
             return 'View';
         }
