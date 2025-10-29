@@ -3192,8 +3192,37 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
     binaryVolumes: {
         data: [
             {
-                volumeId: '6264d520-3fb9-423f-8ab8-7a0a8e3d3562',
-                volumeName: 'root'
+                nfsInfo: {
+                    rules: [
+                        {
+                            clients: ['10.0.140.145'],
+                            superuser: ['any'],
+                            allow_suid: false
+                        },
+                        {
+                            clients: ['13.127.25.212'],
+                            superuser: ['none'],
+                            allow_suid: false
+                        }
+                    ],
+                    svmName: 'wlmdb_sqlsvm_1737955690776',
+                    svmUuid: '2b2ae63e-dc72-11ef-b430-bb0ad6a3b8df',
+                    volumeId: 'a678830e-a9e0-11f0-bb42-83fc639f5501',
+                    instanceInfo: {
+                        domain: 'ap-south-1.compute.internal',
+                        hostname: 'ip-10-0-140-145.ap-south-1.compute.internal',
+                        publicIp: '13.127.25.212',
+                        privateIp: '10.0.140.145'
+                    },
+                    exportPolicyName: 'wf2_policy'
+                },
+                volumeId: 'a678830e-a9e0-11f0-bb42-83fc639f5501',
+                mountPath: '/mnt/orahome',
+                oracleSid: 'ordbsdl',
+                isNfsMount: true,
+                oracleHome: '/mnt/orahome/app/oracle/product/19c/db_1',
+                volumeName: 'orahome',
+                hasBinaries: true
             }
         ],
         error: ''
@@ -3303,22 +3332,26 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         },
         'adr-info': {
             error: null,
-            'adr-home': '/u01/app/oracle/diag/rdbms/ordbsdl/ordbsdl',
-            'adr-home-mount': '/dev/nvme0n1p3',
+            'adr-home': '/mnt/orahome/app/oracle/diag/rdbms/ordbsdl/ordbsdl',
+            'adr-home-mount': '198.19.255.89:/orahome',
             'adr-home-mount-info': {
                 error: null,
-                'mount-point': '/dev/nvme0n1p3',
+                'mount-point': '198.19.255.89:/orahome',
                 'mount-options': {
+                    bg: true,
                     rw: true,
-                    attr2: true,
-                    inode64: true,
-                    logbufs: '8',
-                    noquota: true,
-                    logbsize: '32k',
-                    relatime: true,
-                    seclabel: true
+                    hard: true,
+                    vers: '3',
+                    proto: 'tcp',
+                    rsize: '32768',
+                    timeo: '600',
+                    wsize: '32768',
+                    acdirmax: '0',
+                    acdirmin: '0',
+                    acregmax: '0',
+                    acregmin: '0'
                 },
-                'filesystem-type': 'xfs'
+                'filesystem-type': 'nfs'
             }
         },
         'kernel-parameters': {
@@ -3347,7 +3380,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                         retrans: '2',
                         relatime: true,
                         clientaddr: '172.31.48.99',
-                        local_lock: 'none'
+                        local_lock: 'none',
+                        noac: true
                     },
                     'mount-point': '/mnt/oradata',
                     'remote-path': '/oracledata2',
@@ -3369,7 +3403,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                         retrans: '2',
                         relatime: true,
                         clientaddr: '172.31.48.99',
-                        local_lock: 'none'
+                        local_lock: 'none',
+                        noac: true
                     },
                     'mount-point': '/mnt/oraarch',
                     'remote-path': '/oraclearch2',
@@ -3391,7 +3426,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                         retrans: '2',
                         relatime: true,
                         clientaddr: '172.31.48.99',
-                        local_lock: 'none'
+                        local_lock: 'none',
+                        noac: true
                     },
                     'mount-point': '/mnt/oraredoctl',
                     'remote-path': '/oracleredo2',
@@ -3429,7 +3465,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         data: {
             v40Enabled: true,
             v41Enabled: true,
-            v4IdDomain: 'dbsqa.mssql.com'
+            v4IdDomain: 'ap-south-1.compute.internal'
         },
         error: ''
     },

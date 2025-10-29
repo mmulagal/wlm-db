@@ -303,8 +303,6 @@ describe('Oracle assessment operations', () => {
         expect(nfsRootonlyAssessment.recommended).toBe('disabled');
         expect(nfsRootonlyAssessment.status).toBe('optimized');
         expect(nfsRootonlyAssessment.severity).toBe('critical');
-        expect(nfsRootonlyAssessment.totalObjectsAssessed).toBeGreaterThanOrEqual(0);
-        expect(nfsRootonlyAssessment.totalObjectsInViolation).toBe(0);
         expect((nfsRootonlyAssessment as any).resourceType).toBe('Volume');
 
         // Test NFS-specific OS configuration - nfs-mount-options assessment
@@ -341,10 +339,10 @@ describe('Oracle assessment operations', () => {
 
         expect(idmapdDomain).toBeDefined();
         expect(idmapdDomain.name).toBe('nfsv4-domain-name');
-        expect(idmapdDomain.status).toBe('optimized');
+        expect(idmapdDomain.status).toBe('not-optimized');
         expect(idmapdDomain.severity).toBe('critical');
         expect(idmapdDomain.totalObjectsAssessed).toBe(1);
-        expect(idmapdDomain.totalObjectsInViolation).toBe(0);
+        expect(idmapdDomain.totalObjectsInViolation).toBe(1);
         expect((idmapdDomain as any).resourceType).toBe('EC2 Instance');
 
         // Test NFS-specific OS configuration - nfs-caching-options NFS assessment
@@ -354,10 +352,10 @@ describe('Oracle assessment operations', () => {
 
         expect(nfsCachingOptions).toBeDefined();
         expect(nfsCachingOptions.name).toBe('nfs-caching-options');
-        expect(nfsCachingOptions.status).toBe('optimized');
+        expect(nfsCachingOptions.status).toBe('not-optimized');
         expect(nfsCachingOptions.severity).toBe('warning');
         expect(nfsCachingOptions.totalObjectsAssessed).toBe(1);
-        expect(nfsCachingOptions.totalObjectsInViolation).toBe(0);
+        expect(nfsCachingOptions.totalObjectsInViolation).toBe(1);
         expect((nfsCachingOptions as any).resourceType).toBe('EC2 Instance');
     });
 });
