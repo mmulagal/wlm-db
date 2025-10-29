@@ -19,16 +19,14 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                     t,
                     t('databases.well-architect.oracle-multipath-io-action-summary'),
                     t('databases.well-architect.oracle-multipath-io-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
+                    createStandardNotesSection()
                 );
             case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
                 return createStandardDialog(
                     t,
                     t('databases.well-architect.oracle-host-utility-action-summary'),
                     t('databases.well-architect.oracle-host-utility-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
+                    createStandardNotesSection()
                 );
             case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
                 return createStandardDialog(
