@@ -15,7 +15,7 @@ type ChartType = {
     data2: any;
     data3: any;
     centerText: string;
-    centerValue?: string;
+    centerValue?: string | number;
     loading?: boolean;
     isDisabled?: boolean;
 };

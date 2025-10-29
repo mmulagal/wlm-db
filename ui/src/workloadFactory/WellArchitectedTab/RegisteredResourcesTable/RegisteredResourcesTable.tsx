@@ -123,7 +123,7 @@ const RegisteredResourcesTable = () => {
         },
         {
             Header: t('databases.well-architected-tab.optimization-score'),
-            accessor: 'score',
+            accessor: 'scoreForSorting',
             id: '4',
             width: '347px',
             isSortable: true,
