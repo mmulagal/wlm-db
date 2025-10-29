@@ -693,10 +693,7 @@ ssmMock
     .resolves(listSendCommandCommandResponse.clusterNetwokIpInfo)
     .on(SendCommandCommand, { Parameters: getOntapSandboxVolumeSavingsParams })
     .resolves(listSendCommandCommandResponse.ontapSandboxVolumesSavings)
-    .on(SendCommandCommand, params => {
-        const commandRegex = /#Get sandboxes script/;
-        return commandRegex.test(params.Parameters.commands?.[0]);
-    })
+    .on(SendCommandCommand, ({ Comment }) => Comment === 'Get sandbox details')
     .resolves(listSendCommandCommandResponse.getSandboxDetails)
     .on(SendCommandCommand, { Parameters: instanceDetails })
     .resolves(listSendCommandCommandResponse.instanceDetails)
