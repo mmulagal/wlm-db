@@ -20,9 +20,9 @@ const FilterComponent = () => {
         selectedTimeFrame,
         selectedErrorCodes,
         investigationDatesLoading,
-        noErrorsDetected,
-        selectedErrorTags
+        noErrorsDetected
     } = useAppSelector(state => state.agenticAI);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
     const loading = investigationDatesLoading || errorInvestigationLoading;
 
@@ -67,7 +67,11 @@ const FilterComponent = () => {
         <div className={styles.filterComponent}>
             <div className={styles.leftSide}>
                 <div className={styles.item}>
-                    <div className={loading || noData || noErrorsDetected ? styles.disabled : ''}>
+                    <div
+                        className={`${loading || noData || noErrorsDetected ? styles.disabled : ''} ${
+                            isDarkTheme ? styles.darkSupport : ''
+                        }`}
+                    >
                         <Union />
                     </div>
 

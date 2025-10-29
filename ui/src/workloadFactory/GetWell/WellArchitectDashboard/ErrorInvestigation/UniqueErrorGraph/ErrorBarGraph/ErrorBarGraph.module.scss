@@ -4,6 +4,25 @@
     min-height: 200px;
     position: relative;
 
+    .noData {
+        position: absolute;
+        left: 45%;
+        top: 40%;
+
+        .loadingText {
+            margin-left: -30%;
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+        }
+
+        svg {
+            path {
+                fill: var(--grey-30);
+            }
+        }
+    }
+
     canvas {
         width: 100% !important;
         height: 100% !important;

@@ -14,11 +14,19 @@ import {
 import styles from './ErrorBarGraph.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { ErrorInvestigationGetApiResponse } from '../../../../../../utils/types/agenticAITypes';
+import { ReactComponent as LoadingEmptyGraph } from '../../../../../../assets/loading_empty_graph.svg';
+import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
+import { useTranslation } from 'react-i18next';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const ErrorBarGraph: React.FC<{ errorCardsData?: ErrorInvestigationGetApiResponse[] }> = ({ errorCardsData }) => {
+    const { t } = useTranslation();
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { selectedErrorTags } = useAppSelector(state => state.agenticAI);
+    const { noData, investigationDatesLoading } = useAppSelector(state => state?.agenticAI);
+    const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
+    const loading = errorInvestigationLoading || investigationDatesLoading;
     // Function to count tags from errorInvestigationData
     const tagCounts = useMemo(() => {
         const counts = {
@@ -42,6 +50,22 @@ const ErrorBarGraph: React.FC<{ errorCardsData?: ErrorInvestigationGetApiRespons
 
         return counts;
     }, [errorCardsData]);
+
+    const disableColor = () => {
+        let tickColor;
+        if (loading) {
+            if (isDarkTheme) {
+                tickColor = '#ffffff';
+            } else {
+                tickColor = '#1C1C1C';
+            }
+        } else if (isDarkTheme) {
+            tickColor = '#858C95';
+        } else {
+            tickColor = '#A7A7A7';
+        }
+        return tickColor;
+    };
 
     const labels = ['Compute', 'Storage', 'Network', 'Security'];
 
@@ -156,15 +180,22 @@ const ErrorBarGraph: React.FC<{ errorCardsData?: ErrorInvestigationGetApiRespons
                         family: 'Inter, sans-serif',
                         size: 14
                     },
-                    color: '#3C3C3C'
+                    color: disableColor()
                 }
             },
             y: {
+                border: {
+                    color: isDarkTheme ? '#858C95' : '#222',
+                    width: 1
+                },
                 beginAtZero: true,
+                grid: {
+                    color: '#e0e0e0',
+                    tickLength: 0
+                },
                 grace: '5%',
                 ticks: {
-                    // stepSize expects number | undefined
-                    // Compute stepSize based on visible (displayed) data so the scale matches filtered bars
+                    color: disableColor(),
                     stepSize: Math.max(1, Math.ceil(Math.max(...displayedData) / 5)) as unknown as number,
                     // callback signature: (this, value, index, ticks)
                     callback(this: any, tickValue: string | number) {
@@ -174,11 +205,7 @@ const ErrorBarGraph: React.FC<{ errorCardsData?: ErrorInvestigationGetApiRespons
                     font: {
                         family: 'Inter, sans-serif',
                         size: 13
-                    },
-                    color: '#3C3C3C'
-                },
-                grid: {
-                    color: '#E6E6E6'
+                    }
                 }
             }
         }
@@ -197,6 +224,21 @@ const ErrorBarGraph: React.FC<{ errorCardsData?: ErrorInvestigationGetApiRespons
 
     return (
         <div className={styles.chartBarContainer}>
+            {noData && (
+                <div className={styles.noData}>
+                    <LoadingEmptyGraph />
+                    <DsTypography variant="Regular_14">{t('databases.log-analyzer.n/a')}</DsTypography>
+                </div>
+            )}
+            {loading && (
+                <div className={styles.noData}>
+                    <LoadingEmptyGraph />
+                    <div className={styles.loadingText}>
+                        <DsTypography variant="Regular_14">{t('databases.log-analyzer.loading-data')}</DsTypography>
+                        <DsFlashingDotsLoader />
+                    </div>
+                </div>
+            )}
             <Bar data={data} options={options} />
         </div>
     );

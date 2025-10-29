@@ -53,6 +53,7 @@ import {
     RSSConfigAdapterInterface
 } from '../../utils/types/getWellTypes';
 import {
+    dashboardRedirection,
     formatDateWithTime,
     formatNumberWithCustomComma,
     getCurrentDateTime,
@@ -5785,6 +5786,7 @@ export const selectHeaderTabFromBreadCrumb = (breadCrumbSelectedFrom: string, di
     } else if (breadCrumbSelectedFrom === WLF_TABS.WELL_ARCHITECTED_TAB) {
         dispatch(setSelectedHeaderTab(WLF_TABS.WELL_ARCHITECTED_TAB));
     } else {
+        dashboardRedirection('dashboard');
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
     }
 };

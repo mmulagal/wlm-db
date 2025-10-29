@@ -24,7 +24,10 @@ const UniqueErrorGraph = ({
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-    const { uniqueErrorGraphType } = useAppSelector(state => state.agenticAI);
+    const { uniqueErrorGraphType, investigationDatesLoading } = useAppSelector(state => state.agenticAI);
+
+    const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
+    const loading = errorInvestigationLoading || investigationDatesLoading;
 
     return (
         <div className={styles.graph}>
@@ -43,6 +46,7 @@ const UniqueErrorGraph = ({
                         }}
                         children={t('databases.log-analyzer.unique-errors-over-time')}
                         className=""
+                        isDisabled={loading}
                     />
                     <RadioButton
                         id="select-unique-error-by-tags"
@@ -52,6 +56,7 @@ const UniqueErrorGraph = ({
                         }}
                         children={t('databases.log-analyzer.unique-errors-by-tags')}
                         className=""
+                        isDisabled={loading}
                     />
                 </div>
                 <div className={styles['chart-container']}>

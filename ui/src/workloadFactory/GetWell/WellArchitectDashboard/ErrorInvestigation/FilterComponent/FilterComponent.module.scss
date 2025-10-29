@@ -22,6 +22,14 @@
         }
     }
 
+    .darkSupport {
+        svg {
+            path {
+                fill: var(--white) !important;
+            }
+        }
+    }
+
     .tagContainer {
         width: 90%;
         display: flex;
