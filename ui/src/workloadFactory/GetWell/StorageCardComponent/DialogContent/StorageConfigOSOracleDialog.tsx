@@ -216,7 +216,8 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                         {createNumberedActionSteps([
                             t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step1'),
                             t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step2'),
-                            t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step3')
+                            t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step3'),
+                            t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step4')
                         ])}
                     </>,
                     createSection(

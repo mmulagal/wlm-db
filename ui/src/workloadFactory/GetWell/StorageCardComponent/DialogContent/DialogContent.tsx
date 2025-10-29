@@ -214,11 +214,7 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
                     return ['sunrpc.tcp_max_slot_table_entries = 128', 'sunrpc.tcp_slot_table_entries = 128'];
                 case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
-                    return [
-                        'rw,bg,hard,[vers=3,vers=4.1],proto=tcp,',
-                        'timeo=600,rsize=262144,wsize=262144,',
-                        'nointr'
-                    ];
+                    return ['rw,bg,hard,[vers=3,vers=4.1],proto=tcp,', 'timeo=600,rsize=262144,wsize=262144,'];
                 case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:
                     return ['rw,bg,hard,[vers=3,vers=4.1],proto=tcp,', 'timeo=600,rsize=262144,wsize=262144'];
             }
