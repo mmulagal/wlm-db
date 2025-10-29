@@ -20,6 +20,7 @@ import { instanceNameHyperLink, optimizeAction, protectionTooltipText } from './
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import {
     setBreadCrumbSelectedFrom,
     setManageSingleInstanceData,
@@ -242,21 +243,31 @@ export function getPgsqlInstanceTableColumns({
                     <>
                         {!loading && rowData?.fsxId && (
                             <div className={styles.fsxNameContainer}>
-                                <TooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
-                                    <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
-                                        <DsTypography variant="Regular_13">{`ID: ${rowData?.fsxId}`}</DsTypography>
-                                        <Popover
-                                            popoverClass={styles['copy-popover']}
-                                            children="Copied"
-                                            container={
-                                                <CopyToClipboardCommon
-                                                    value={rowData?.fsxId}
-                                                    iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                <div className={styles.ssmOffline}>
+                                    <Popover
+                                        popoverClass=""
+                                        children={
+                                            <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
+                                                <DsTypography variant="Regular_13">{`ID: ${rowData?.fsxId}`}</DsTypography>
+                                                <Popover
+                                                    popoverClass={styles['copy-popover']}
+                                                    children="Copied"
+                                                    container={
+                                                        <CopyToClipboardCommon
+                                                            value={rowData?.fsxId}
+                                                            iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                                        />
+                                                    }
                                                 />
-                                            }
-                                        />
-                                    </div>
-                                </TooltipInfo>
+                                            </div>
+                                        }
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive
+                                        isAppendedToBody={false}
+                                        container={<TooltipIcon />}
+                                    />
+                                </div>
                                 <div className={styles.fsxName}>
                                     <DsTypography
                                         className={styles.fsxNameText}
