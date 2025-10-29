@@ -211,10 +211,6 @@ const DialogContent = ({
                     return 'filesystemio_options = setall';
                 case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
                     return ['net.ipv4.tcp_timestamps = 1', 'net.ipv4.tcp_sack = 1', 'net.ipv4.tcp_window_scaling = 1'];
-                case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
-                    return 'oracleafd_use_logical_block_size=1';
-                case ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE:
-                    return 'ORACLEASM_USE_LOGICAL_BLOCK_SIZE=true';
                 case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
                     return ['sunrpc.tcp_max_slot_table_entries = 128', 'sunrpc.tcp_slot_table_entries = 128'];
                 case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
@@ -354,10 +350,10 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
-                case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
-                case ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE:
                 case ASSESSMENT_CONFIG_NAMES.ASM_SETUP:
                 case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
+                case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
+                case ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE:
                 case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
                 case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
                 case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:

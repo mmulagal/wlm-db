@@ -845,7 +845,9 @@ const StorageCardComponent = ({
             type === GENERAL.MICROSOFT_SQL_PATCH ||
             type === GENERAL.CRR ||
             type === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
-            type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY
+            type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
+            type === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
+            type === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE
         ) {
             return 'View';
         }

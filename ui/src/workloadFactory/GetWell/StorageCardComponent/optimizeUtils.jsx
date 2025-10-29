@@ -113,8 +113,6 @@ const isDialogPrimaryBtnDisabled = rowData => {
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS ||
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
             rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||

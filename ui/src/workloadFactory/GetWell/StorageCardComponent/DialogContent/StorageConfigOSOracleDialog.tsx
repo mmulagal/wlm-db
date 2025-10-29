@@ -148,26 +148,54 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                     </>
                 );
             case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
-                return createStandardDialog(
-                    t,
-                    t('databases.well-architect.oracle-afd-logical-block-size-action-summary'),
-                    t('databases.well-architect.oracle-afd-logical-block-size-what-will-happen'),
-                    createSection(
-                        t('databases.well-architect.note'),
-                        t('databases.well-architect.oracle-afd-logical-block-size-note')
-                    ),
-                    createOSConfigSection()
+                return (
+                    <>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.oracle-afd-logical-block-size-action-summary')
+                        )}
+                        {createSection(
+                            t('databases.well-architect.what-will-happen'),
+                            t('databases.well-architect.oracle-afd-logical-block-size-what-will-happen')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                            t('databases.well-architect.oracle-asm-adf-optimization-step1'),
+                            t('databases.well-architect.oracle-asm-adf-optimization-step2'),
+                            t('databases.well-architect.oracle-asm-adf-optimization-step3'),
+                            t('databases.well-architect.oracle-asm-adf-optimization-step4'),
+                            t('databases.well-architect.oracle-asm-adf-optimization-step5'),
+                            t('databases.well-architect.oracle-asm-adf-optimization-step6')
+                        ])}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-afd-logical-block-size-note')
+                        )}
+                    </>
                 );
             case ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE:
-                return createStandardDialog(
-                    t,
-                    t('databases.well-architect.oracle-asmlib-logical-block-size-action-summary'),
-                    t('databases.well-architect.oracle-asmlib-logical-block-size-what-will-happen'),
-                    createSection(
-                        t('databases.well-architect.note'),
-                        t('databases.well-architect.oracle-afd-logical-block-size-note')
-                    ),
-                    createOSConfigSection()
+                return (
+                    <>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.oracle-asmlib-logical-block-size-action-summary')
+                        )}
+                        {createSection(
+                            t('databases.well-architect.what-will-happen'),
+                            t('databases.well-architect.oracle-asmlib-logical-block-size-what-will-happen')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                            t('databases.well-architect.oracle-asm-adf-optimization-step1'),
+                            t('databases.well-architect.oracle-asm-adf-optimization-step2'),
+                            t('databases.well-architect.oracle-asm-lib-optimization-step3'),
+                            t('databases.well-architect.oracle-asm-lib-optimization-step4'),
+                            t('databases.well-architect.oracle-asm-lib-optimization-step5'),
+                            t('databases.well-architect.oracle-asm-adf-optimization-step6')
+                        ])}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-afd-logical-block-size-note')
+                        )}
+                    </>
                 );
             case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
                 return createStandardDialog(

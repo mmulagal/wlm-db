@@ -503,7 +503,9 @@ const RecommendationTable = ({
         if (
             name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
             name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
-            name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY
+            name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
+            name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
+            name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE
         ) {
             return 'View';
         }
@@ -516,7 +518,10 @@ const RecommendationTable = ({
 
     const handleOntapDialog = (rowData: any) => {
         // Check if this is an ASM configuration that should only have a Close button
-        const isCloseButton = rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP;
+        const isCloseButton =
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE;
         if (isCloseButton) {
             setDialog(
                 <DialogComponent
