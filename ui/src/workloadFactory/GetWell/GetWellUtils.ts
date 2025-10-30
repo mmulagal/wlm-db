@@ -1913,7 +1913,7 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
         'Export policy': 'export-policy',
 
         // OS configurations for Oracle
-        'Kernel parameters': 'kernel-parameters',
+        'TCP slot table': 'kernel-parameters',
         'NFS mount options - database files': 'nfs-mount-options-databasefiles',
         'NFS mount options - ADR home': 'nfs-mount-options-adrhome',
         'NFS caching options': 'nfs-caching-options',
