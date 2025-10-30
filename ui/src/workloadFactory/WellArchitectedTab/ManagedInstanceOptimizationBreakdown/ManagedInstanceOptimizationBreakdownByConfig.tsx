@@ -273,6 +273,16 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         return '';
     };
 
+    const naCheck = useMemo(() => {
+        if (showNA) {
+            return true;
+        }
+        if (!loading && configData?.oracleTotal + configData?.total === 0) {
+            return true;
+        }
+        return false;
+    }, [configData, showNA]);
+
     const renderOptimizationBar = (assessmentKey: string, headingText: string, key: string, type?: string) => {
         const optimizedCount =
             (configData?.[key]?.optimized || 0) +
@@ -305,16 +315,16 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 color="#5E8DCD"
                 headingText={headingText}
                 percentage={
-                    showNA
+                    naCheck
                         ? t('databases.general.not-available')
                         : dismissedOrPostponedText
                         ? 0
                         : Math.round((optimizedCount / total) * 100)
                 }
-                beforeOutOf={showNA ? undefined : dismissedOrPostponedText ? undefined : optimizedCount}
-                afterOutOf={showNA ? undefined : dismissedOrPostponedText ? undefined : afterOutOfTotal}
+                beforeOutOf={naCheck ? undefined : dismissedOrPostponedText ? undefined : optimizedCount}
+                afterOutOf={naCheck ? undefined : dismissedOrPostponedText ? undefined : afterOutOfTotal}
                 bottomText={
-                    showNA
+                    naCheck
                         ? undefined
                         : dismissedOrPostponedText
                         ? undefined
@@ -322,12 +332,12 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 }
                 width={width}
                 from="dashboard"
-                optimizePercentage={showNA ? 100 : dismissedOrPostponedText ? 0 : optimizePercentage}
+                optimizePercentage={naCheck ? 100 : dismissedOrPostponedText ? 0 : optimizePercentage}
                 loading={dismissedOrPostponedText ? loading : isLoading}
-                textMessage={showNA ? undefined : dismissedOrPostponedText || undefined}
-                textMessageVariant={showNA ? 'Regular_14' : undefined}
+                textMessage={naCheck ? undefined : dismissedOrPostponedText || undefined}
+                textMessageVariant={naCheck ? 'Regular_14' : undefined}
                 tooltipMessage={dismissedOrPostponedText ? undefined : hasMixedState(configStateKey)}
-                isDisabled={showNA}
+                isDisabled={naCheck}
                 type={identifyType}
                 severity={identifySeverity}
             />
@@ -363,7 +373,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 isThin
                                 onClick={() => {}}
                                 data-testid={testId}
-                                isDisabled={isDisabled}
+                                isDisabled={isDisabled || configData?.oracleTotal === 0}
                             >
                                 {t('databases.well-architect.view-and-fix')}
                             </DsButton>
@@ -377,7 +387,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 handleOptimize(handleOptimizeClick, DBType.ORACLE);
                             }}
                             data-testid={testId}
-                            isDisabled={loading || inProgressOptimizationData[assessmentConfigName]?.length > 0}
+                            isDisabled={
+                                loading ||
+                                inProgressOptimizationData[assessmentConfigName]?.length > 0 ||
+                                configData?.oracleTotal === 0
+                            }
                         >
                             {t('databases.well-architect.view-and-fix')}
                         </DsButton>
@@ -388,7 +402,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     };
 
     return (
-        <div className={`${styles.managedBreakdown} ${showNA ? CommonStyles.notAvailable : ''}`}>
+        <div className={`${styles.managedBreakdown} ${naCheck ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16">
                     {t('databases.dashboard.well-architected-breakdown-by-configurations')}{' '}
@@ -531,7 +545,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 data-testid="wlm-db-optimize-storage-tier"
                                 isDisabled={
                                     loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]?.length > 0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -560,7 +575,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 }}
                                 isDisabled={
                                     loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length > 0
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]?.length >
+                                        0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -589,7 +606,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 data-testid="wlm-db-optimize-log-drive-size"
                                 isDisabled={
                                     loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length > 0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -618,7 +636,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 }}
                                 isDisabled={
                                     loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length > 0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -646,7 +665,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 }}
                                 isDisabled={
                                     loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]?.length > 0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -670,7 +690,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 }}
                                 isDisabled={
                                     loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]?.length > 0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -698,7 +719,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 }}
                                 isDisabled={
                                     loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]?.length > 0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -721,7 +743,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 onClick={() => {
                                     handleOptimize(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
                                 }}
-                                isDisabled={loading}
+                                isDisabled={loading || configData?.total === 0}
                             >
                                 {t('databases.well-architect.view-and-fix')}
                             </DsButton>
@@ -743,7 +765,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 onClick={() => {
                                     handleOptimize(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
                                 }}
-                                isDisabled={loading}
+                                isDisabled={loading || configData?.total === 0}
                             >
                                 {t('databases.well-architect.view-and-fix')}
                             </DsButton>
@@ -771,7 +793,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 }}
                                 isDisabled={
                                     loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length > 0
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]?.length >
+                                        0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -802,7 +826,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     isDisabled={
                                         loading ||
                                         inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]
-                                            ?.length > 0
+                                            ?.length > 0 ||
+                                        configData?.total === 0
                                     }
                                 >
                                     {t('databases.well-architect.view-and-fix')}
@@ -831,7 +856,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 data-testid="wlm-db-optimize-rss-configuration"
                                 isDisabled={
                                     loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]?.length > 0
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]?.length > 0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -856,7 +882,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     handleOptimize(ASSESSMENT_CONFIG_NAMES.MTU);
                                 }}
                                 isDisabled={
-                                    loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MTU]?.length > 0
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MTU]?.length > 0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -883,7 +911,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     handleOptimize(ASSESSMENT_CONFIG_NAMES.LICENSE);
                                 }}
                                 isDisabled={
-                                    loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LICENSE]?.length > 0
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.LICENSE]?.length > 0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -913,7 +943,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     isDisabled={
                                         loading ||
                                         inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]
-                                            ?.length > 0
+                                            ?.length > 0 ||
+                                        configData?.total === 0
                                     }
                                 >
                                     {t('databases.well-architect.view-and-fix')}
@@ -941,7 +972,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 }}
                                 data-testid="wlm-db-optimize-maxdop"
                                 isDisabled={
-                                    loading || inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0
+                                    loading ||
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MAXDOP]?.length > 0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}
@@ -972,7 +1005,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     isDisabled={
                                         loading ||
                                         inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]
-                                            ?.length > 0
+                                            ?.length > 0 ||
+                                        configData?.total === 0
                                     }
                                 >
                                     {t('databases.well-architect.view-and-fix')}
@@ -999,7 +1033,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                         }}
                                         isDisabled={
                                             loading ||
-                                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CRR]?.length > 0
+                                            inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CRR]?.length > 0 ||
+                                            configData?.total === 0
                                         }
                                     >
                                         {t('databases.well-architect.view-and-fix')}
@@ -1033,7 +1068,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                         loading ||
                                         inProgressOptimizationData[
                                             ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
-                                        ]?.length > 0
+                                        ]?.length > 0 ||
+                                        configData?.total === 0
                                     }
                                 >
                                     {t('databases.well-architect.view-and-fix')}
@@ -1063,7 +1099,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     isDisabled={
                                         loading ||
                                         inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]
-                                            ?.length > 0
+                                            ?.length > 0 ||
+                                        configData?.total === 0
                                     }
                                 >
                                     {t('databases.well-architect.view-and-fix')}
@@ -1092,7 +1129,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 data-testid="wlm-db-optimize-clone"
                                 isDisabled={
                                     loading ||
-                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0
+                                    inProgressOptimizationData[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0 ||
+                                    configData?.total === 0
                                 }
                             >
                                 {t('databases.well-architect.view-and-fix')}

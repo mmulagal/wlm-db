@@ -93,6 +93,10 @@
                     .error {
                         background-color: var(--notification-error);
                     }
+
+                    .naCheck {
+                        background-color: var(--text-disabled);
+                    }
                 }
 
                 [class*='tag'] {

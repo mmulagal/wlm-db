@@ -56,6 +56,35 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL }: TagCompone
                         }
                     ]);
                     break;
+                case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' },
+                        {
+                            label: t('databases.well-architect.tags.operationalExcellence'),
+                            value: 'operationalExcellence'
+                        },
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        },
+                        { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
+                        { label: t('databases.well-architect.tags.security'), value: 'security' }
+                    ]);
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        },
+                        {
+                            label: t('databases.well-architect.tags.operationalExcellence'),
+                            value: 'operationalExcellence'
+                        },
+                        { label: t('databases.well-architect.tags.security'), value: 'security' }
+                    ]);
+                    break;
                 default:
                     // Default oracle has all 3 tags. Once we get different configs for oracle, we can update the tags accordingly using switch case.
                     setTagData([

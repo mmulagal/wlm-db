@@ -38,28 +38,38 @@ const ManagedInstanceOptimization = () => {
         [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading]
     );
 
+    const naCheck = useMemo(() => {
+        if (showNA) {
+            return true;
+        }
+        if (!loading && instanceOptimizationSummary?.totalInstances === 0) {
+            return true;
+        }
+        return false;
+    }, [instanceOptimizationSummary, showNA]);
+
     const ChartComponent = useMemo(() => {
         const setColor = () => '#68C6B3';
         return () => (
             <HostDistributionChart
-                color1={showNA ? 'var(--border)' : setColor()}
+                color1={naCheck ? 'var(--border)' : setColor()}
                 color2="#E0E0E0"
-                data1={showNA ? 0 : instanceOptimizationSummary?.optimizedPercent}
-                data2={showNA ? 100 : 100 - instanceOptimizationSummary?.optimizedPercent}
+                data1={naCheck ? 0 : instanceOptimizationSummary?.optimizedPercent}
+                data2={naCheck ? 100 : 100 - instanceOptimizationSummary?.optimizedPercent}
                 centerText="Total score"
                 centerValue={
-                    showNA
+                    naCheck
                         ? t('databases.general.not-available')
                         : `${instanceOptimizationSummary?.optimizedPercent || 0}%`
                 }
                 loading={loading}
-                isDisabled={showNA}
+                isDisabled={naCheck}
             />
         );
-    }, [instanceOptimizationSummary, loading, showNA]);
+    }, [instanceOptimizationSummary, loading, naCheck]);
 
     return (
-        <div className={`${styles.managedInstance} ${showNA ? CommonStyles.notAvailable : ''}`}>
+        <div className={`${styles.managedInstance} ${naCheck ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
                     {t('databases.general.manage-instances-well-architected-score')}
@@ -74,7 +84,7 @@ const ManagedInstanceOptimization = () => {
                     <div className={styles.contentSection}>
                         <SquareComponent
                             value={
-                                showNA
+                                naCheck
                                     ? t('databases.general.not-available')
                                     : String(instanceOptimizationSummary?.optimizedInstances)
                             }
@@ -82,21 +92,21 @@ const ManagedInstanceOptimization = () => {
                             text="Well-architected resources"
                             isLoading={false}
                             loadingInFirstRow={loading}
-                            showNA={showNA}
+                            showNA={naCheck}
                         />
 
                         <SeparatorComponent variant="vertical" height="48px" />
                         <SquareComponent
                             value={
-                                showNA
+                                naCheck
                                     ? t('databases.general.not-available')
                                     : String(instanceOptimizationSummary?.notOptimizedInstances)
                             }
                             color="var(--chart-disabled)"
-                            text="Not-optimized resources"
+                            text="Not optimized resources"
                             isLoading={false}
                             loadingInFirstRow={loading}
-                            showNA={showNA}
+                            showNA={naCheck}
                         />
                     </div>
                 </div>

@@ -56,7 +56,7 @@
             "protected": "Protected",
             "not_protected": "Not protected",
             "manage-analysis-state": "Manage Analysis State",
-            "not-available": "N/A",
+            "not-available": "n/a",
             "not-available-table-columns": "n/a",
             "mssql-high-availability": "Microsoft SQL Server High Availability",
             "mtu": "MTU alignment",
@@ -561,7 +561,7 @@
             "databases": "Databases",
             "dashboard-table-headers": {
                 "sql-server-instance-name": "SQL Server instance name",
-                "sql-server-database-name": "SQL Server database name",
+                "oracle-database-name": "Oracle database name",
                 "host-name": "Host name",
                 "not-optimized-configuration": "Not optimized configuration",
                 "aws-credentials": "AWS credentials",

@@ -80,7 +80,11 @@ const HostDistributionChart = ({
                     {centerValue}
                 </Typography>
 
-                <Typography variant="Regular_14" style={{ lineHeight: 'unset', marginTop: '4px' }}>
+                <Typography
+                    variant="Regular_14"
+                    style={{ lineHeight: 'unset', marginTop: '4px' }}
+                    className={isDisabled ? CommonStyles.notAvailable : ''}
+                >
                     {centerText}
                 </Typography>
 

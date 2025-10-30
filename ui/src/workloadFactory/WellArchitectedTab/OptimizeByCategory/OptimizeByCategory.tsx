@@ -33,8 +33,18 @@ const OptimizeByCategory = () => {
         [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading]
     );
 
+    const naCheck = useMemo(() => {
+        if (showNA) {
+            return true;
+        }
+        if (!loading && categoryData.mssqlTotal + categoryData.oracleTotal === 0) {
+            return true;
+        }
+        return false;
+    }, [categoryData, showNA]);
+
     return (
-        <div className={`${styles.optimizeByCategory} ${showNA ? CommonStyles.notAvailable : ''}`}>
+        <div className={`${styles.optimizeByCategory} ${naCheck ? CommonStyles.notAvailable : ''}`}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
                     {GENERAL.WELL_ARCHITECTED_BREAKDOWN_BY_CATEGORY}
@@ -52,10 +62,10 @@ const OptimizeByCategory = () => {
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
-                                    variant={showNA ? 'Regular_14' : 'Regular_20'}
-                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                    variant={naCheck ? 'Regular_14' : 'Regular_20'}
+                                    className={naCheck ? CommonStyles.notAvailable : ''}
                                 >
-                                    {showNA
+                                    {naCheck
                                         ? t('databases.general.not-available')
                                         : `${Math.round(
                                               ((categoryData.mssqlStorage + categoryData.oracleStorage || 0) /
@@ -66,7 +76,7 @@ const OptimizeByCategory = () => {
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
 
-                            <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                            <DsTypography variant="Regular_14" className={naCheck ? CommonStyles.notAvailable : ''}>
                                 {GENERAL.STORAGE}
                             </DsTypography>
                         </div>
@@ -79,10 +89,10 @@ const OptimizeByCategory = () => {
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
-                                    variant={showNA ? 'Regular_14' : 'Regular_20'}
-                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                    variant={naCheck ? 'Regular_14' : 'Regular_20'}
+                                    className={naCheck ? CommonStyles.notAvailable : ''}
                                 >
-                                    {showNA
+                                    {naCheck
                                         ? t('databases.general.not-available')
                                         : `${Math.round(
                                               ((categoryData.compute || 0) / (categoryData.mssqlTotal || 1)) * 100
@@ -90,7 +100,7 @@ const OptimizeByCategory = () => {
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                            <DsTypography variant="Regular_14" className={naCheck ? CommonStyles.notAvailable : ''}>
                                 {GENERAL.COMPUTE}
                             </DsTypography>
                         </div>
@@ -103,10 +113,10 @@ const OptimizeByCategory = () => {
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
-                                    variant={showNA ? 'Regular_14' : 'Regular_20'}
-                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                    variant={naCheck ? 'Regular_14' : 'Regular_20'}
+                                    className={naCheck ? CommonStyles.notAvailable : ''}
                                 >
-                                    {showNA
+                                    {naCheck
                                         ? t('databases.general.not-available')
                                         : `${Math.round(
                                               ((categoryData.application || 0) / (categoryData.mssqlTotal || 1)) * 100
@@ -114,7 +124,7 @@ const OptimizeByCategory = () => {
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                            <DsTypography variant="Regular_14" className={naCheck ? CommonStyles.notAvailable : ''}>
                                 {t('databases.well-architected-tab.application')}
                             </DsTypography>
                         </div>
@@ -131,10 +141,10 @@ const OptimizeByCategory = () => {
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
-                                    variant={showNA ? 'Regular_14' : 'Regular_20'}
-                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                    variant={naCheck ? 'Regular_14' : 'Regular_20'}
+                                    className={naCheck ? CommonStyles.notAvailable : ''}
                                 >
-                                    {showNA
+                                    {naCheck
                                         ? t('databases.general.not-available')
                                         : `${Math.round(
                                               ((categoryData.resiliency || 0) / (categoryData.mssqlTotal || 1)) * 100
@@ -142,7 +152,7 @@ const OptimizeByCategory = () => {
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                            <DsTypography variant="Regular_14" className={naCheck ? CommonStyles.notAvailable : ''}>
                                 {GENERAL.RESILIENCY}
                             </DsTypography>
                         </div>
@@ -155,10 +165,10 @@ const OptimizeByCategory = () => {
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
-                                    variant={showNA ? 'Regular_14' : 'Regular_20'}
-                                    className={showNA ? CommonStyles.notAvailable : ''}
+                                    variant={naCheck ? 'Regular_14' : 'Regular_20'}
+                                    className={naCheck ? CommonStyles.notAvailable : ''}
                                 >
-                                    {showNA
+                                    {naCheck
                                         ? t('databases.general.not-available')
                                         : `${Math.round(
                                               ((categoryData.cloning || 0) / (categoryData.mssqlTotal || 1)) * 100
@@ -166,7 +176,7 @@ const OptimizeByCategory = () => {
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
-                            <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                            <DsTypography variant="Regular_14" className={naCheck ? CommonStyles.notAvailable : ''}>
                                 {GENERAL.CLONING}
                             </DsTypography>
                         </div>

@@ -1355,8 +1355,8 @@ const DashboardInnerPage = () => {
                 setValueCardData({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '176px',
-                    tagHeight: '273px',
+                    cardHeight: '196px',
+                    tagHeight: '293px',
                     data: {
                         title: 'Recommendations',
                         description: oracleCardData?.archive_placement?.recommendation?.description

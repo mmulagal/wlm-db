@@ -814,7 +814,7 @@ const DashboardConfigsTable = ({
             Header: `${engineTypeBasedResourceStr(
                 configEngineType,
                 t('databases.well-architect.dashboard-table-headers.sql-server-instance-name'),
-                t('databases.well-architect.dashboard-table-headers.sql-server-database-name')
+                t('databases.well-architect.dashboard-table-headers.oracle-database-name')
             )}`,
             accessor: 'serverInstanceName',
             id: '1',
