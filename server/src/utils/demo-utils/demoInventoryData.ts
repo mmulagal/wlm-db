@@ -721,11 +721,11 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
             {
                 svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
                 svmName: 'wlmdb_sqlsvm_1735809893269',
-                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
-                volumeName: 'oracleredo2',
-                lunName: '/vol/wlmdb_oracleredo_1735809893269/lun1',
-                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
-                diskGroup: 'DISK1',
+                volumeId: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
+                volumeName: 'oraclearch2',
+                lunName: '/vol/wlmdb_oraclearch_1735809893269/lun4',
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7d',
+                diskGroup: 'DISK4',
                 diskName: 'DISK1',
                 copiesCount: 1
             }
@@ -778,6 +778,17 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
                 lunName: '/vol/wlmdb_oraclectrl_1735809893269/lun5',
                 lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7e',
                 diskGroup: 'DISK5',
+                diskName: 'DISK1',
+                copiesCount: 1
+            },
+            {
+                svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+                svmName: 'wlmdb_sqlsvm_1735809893269',
+                volumeId: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
+                volumeName: 'oraclearch2',
+                lunName: '/vol/wlmdb_oraclearch_1735809893269/lun4',
+                lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7d',
+                diskGroup: 'DISK4',
                 diskName: 'DISK1',
                 copiesCount: 1
             }
@@ -3260,18 +3271,18 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         'tcp-advanced-options': {
             error: null,
             'tcp-features': {
-                'tcp-sack-value': '1',
-                'tcp-sack-enabled': true,
-                'tcp-timestamps-value': '1',
-                'tcp-timestamps-enabled': true,
-                'tcp-window-scaling-value': '1',
-                'tcp-window-scaling-enabled': true
+                'tcp-sack-value': '0',
+                'tcp-sack-enabled': false,
+                'tcp-timestamps-value': '0',
+                'tcp-timestamps-enabled': false,
+                'tcp-window-scaling-value': '0',
+                'tcp-window-scaling-enabled': false
             }
         },
         'transparent-hugepages': {
             error: null,
-            'thp-status': 'disabled',
-            'thp-disabled': true
+            'thp-status': 'enabled',
+            'thp-disabled': false
         },
         'iscsi-targets-sessions': {
             error: null,
@@ -3325,8 +3336,8 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 {
                     path: '/u01/app/oracle/product/19c/db_1/dbs/spfilepdbnas1.ora',
                     error: null,
-                    'parameter-found': false,
-                    'parameter-value': 'Parameter not found in SPFile'
+                    'parameter-found': true,
+                    'parameter-value': '128'
                 }
             ]
         },

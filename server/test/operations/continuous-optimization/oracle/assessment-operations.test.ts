@@ -173,9 +173,9 @@ describe('Oracle assessment operations', () => {
         ) as OracleGenericParameterDriftResponseType;
         expect(hugepages).toBeDefined();
 
-        expect(hugepages.status).toBe('optimized');
+        expect(hugepages.status).toBe('not-optimized');
         expect(hugepages.recommended).toBe('disabled');
-        expect(hugepages.totalObjectsInViolation).toBe(0);
+        expect(hugepages.totalObjectsInViolation).toBe(1);
 
         // Test selinux assessment
         const selinux = osAssessment.find(item => item.name === 'selinux') as OracleGenericParameterDriftResponseType;
@@ -215,9 +215,9 @@ describe('Oracle assessment operations', () => {
         ) as OracleGenericParameterDriftResponseType;
         expect(tcpOptions).toBeDefined();
 
-        expect(tcpOptions.status).toBe('optimized');
+        expect(tcpOptions.status).toBe('not-optimized');
         expect(tcpOptions.recommended).toBe('enabled');
-        expect(tcpOptions.totalObjectsInViolation).toBe(0);
+        expect(tcpOptions.totalObjectsInViolation).toBe(1);
 
         // Test filesystems-io-options assessment (Database specific)
         const filesystemIo = osAssessment.find(
@@ -236,10 +236,10 @@ describe('Oracle assessment operations', () => {
         ) as OracleGenericParameterDriftResponseType;
         expect(multipathReadcount).toBeDefined();
 
-        expect(multipathReadcount.status).toBe('optimized');
+        expect(multipathReadcount.status).toBe('not-optimized');
         expect(multipathReadcount.recommended).toBe('disabled');
         expect((multipathReadcount as any).resourceType).toBe('EC2 Instance');
-        expect(multipathReadcount.totalObjectsInViolation).toBe(0);
+        expect(multipathReadcount.totalObjectsInViolation).toBe(1);
 
         // Test multipath-configuration assessment
         const multipathConfig = osAssessment.find(
