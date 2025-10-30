@@ -795,7 +795,7 @@ async function getStorageSavingsCalculationMetrics(
 
         const computeAndLicenseCostList = await Promise.all(
             ec2HostDetails.map(host =>
-                retrieveComputeAndLicenseCost(accountId, credentialsId, region, host, params.monthlySqlByolCost)
+                retrieveComputeAndLicenseCost(accountId, credentialsId, region, host, undefined, true)
             )
         );
 

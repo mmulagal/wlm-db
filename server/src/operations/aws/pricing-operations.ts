@@ -963,7 +963,8 @@ async function getSqlInstancePricingDetails(
                 const { unit, pricePerUnit } = priceDimensions[Object.keys(priceDimensions)[0]];
                 const { preInstalledSw, instanceType: ec2InstType, licenseModel } = product.attributes;
                 if (licenseModel === 'No License required') {
-                    // Windows Server as BYOL- no windows license included Windows Server as BYOL (Bring Your Own License) - RunInstances:0800
+                    // Filter for instances with license included (licenseModel: 'No License required').
+                    // Operation codes: SQL Web (RunInstances:0202), SQL Std (RunInstances:0006), SQL Ent (RunInstances:0102), Windows only (RunInstances:0002)
                     if (!pricingDetails[ec2InstType]) {
                         pricingDetails[ec2InstType] = {};
                     }
