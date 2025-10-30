@@ -13,17 +13,24 @@ import {
     setSelectedResourcePageHostData
 } from '../../store/workloadFactory/workloadFactoryResourceSlice';
 import { DBType, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
-import { dashboardRedirection, dashboardRedirectionToWellArchitected } from '../../utils/utilityFunctions';
+import {
+    dashboardRedirection,
+    dashboardRedirectionToWellArchitected,
+    sortListOfDict
+} from '../../utils/utilityFunctions';
+import { mapHostStatusToAssessmentData } from '../DatabaseHomePage/DatabaseHomeUtils';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
+import { sortAnalyzedResourceData } from '../InventoryV2/InventoryUtilsV2';
 import {
     formatOracleOptimizationBreakDown,
     getOracleCardsData
 } from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 
 export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentData: any) => {
-    const tableData: any = [];
+    let tableData: any = [];
     let id = 1;
     const state = store.getState();
+    const { inventoryTableData, getDatabaseHosts } = state.inventoryV2;
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
     const uniqueResourceList: Array<string> = [];
 
@@ -50,7 +57,7 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
                     score,
                     optimized,
                     scoreForSorting: score ? Number(score) : 0,
-                    databaseInstanceName: instance?.databaseInstanceName,
+                    serverInstanceName: instance?.databaseInstanceName,
                     databaseHostId: databaseHost?.databaseHostId,
                     instanceId: instance?.databaseInstanceId,
                     credentialId: databaseHost?.credentialId,
@@ -85,7 +92,7 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
                     score,
                     scoreForSorting: score ? Number(score) : 0,
                     optimized,
-                    databaseInstanceName: instance?.databaseInstanceName,
+                    serverInstanceName: instance?.databaseInstanceName,
                     databaseHostId: databaseHost?.databaseHostId,
                     instanceId: instance?.databaseInstanceId,
                     credentialId: databaseHost?.credentialId,
@@ -96,7 +103,13 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
             }
         });
     });
-    return tableData;
+
+    tableData = mapHostStatusToAssessmentData(
+        inventoryTableData,
+        tableData,
+        getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
+    );
+    return sortAnalyzedResourceData(tableData);
 };
 
 export const redirectToGetWellPage = (dispatch: any, selectedAssessmentRow: any) => {

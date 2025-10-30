@@ -9,6 +9,8 @@ import { useTable } from '../../../common/Lib/Table/useTable';
 import styles from './RegisteredResourcesTable.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { getAllAssessmentResources, redirectToGetWellPage } from '../WellArchitectedTabUtils';
+import FirstColumnComponent from '../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnComponent';
+import { INVENTORY_STATUS } from '../../../utils/consts';
 
 const RegisteredResourcesTable = () => {
     const dispatch = useDispatch();
@@ -22,10 +24,13 @@ const RegisteredResourcesTable = () => {
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, showNA } = useAppSelector(
         state => state.headers
     );
+    const { inventoryTableData, getDatabaseHosts } = useAppSelector(state => state.inventoryV2);
 
-    const assessmentResourceData = useMemo(
+    const assessmentResourceData: any = useMemo(
         () => getAllAssessmentResources(allmssqlHostAssessmentData, allOracleHostAssessmentData),
         [
+            inventoryTableData,
+            getDatabaseHosts,
             allmssqlHostAssessmentData,
             allOracleHostAssessmentData,
             headerSelectedMultiCredIdsList,
@@ -100,10 +105,13 @@ const RegisteredResourcesTable = () => {
     const TableColDefs: ColumnProps[] = [
         {
             Header: t('databases.well-architected-tab.resource-name'),
-            accessor: 'databaseInstanceName',
+            accessor: 'serverInstanceName',
             id: '1',
             isSortable: true,
-            width: '320px'
+            width: '320px',
+            renderCell: (cellData: any, rowData: any) => (
+                <FirstColumnComponent rowData={rowData} showDismissed={false} />
+            )
         },
 
         {
@@ -143,31 +151,45 @@ const RegisteredResourcesTable = () => {
             id: '5',
             width: '248px',
             isSortable: false,
-            renderCell: (_: any, rowData: any) => (
-                <div className={styles.buttonContainer}>
-                    <div />
-                    <Popover
-                        isAppendedToBody
-                        children={
-                            <DsTypography variant="Regular_14">
-                                {t('databases.well-architected-tab.resource-view-fix-hover-msg')}
-                            </DsTypography>
-                        }
-                        trigger="hover"
-                        container={
-                            <DsButton
-                                variant="secondary"
-                                isThin
-                                onClick={() => {
-                                    redirectToGetWellPage(dispatch, rowData);
-                                }}
-                            >
-                                {t('databases.general.view-and-fix')}
-                            </DsButton>
-                        }
-                    />
-                </div>
-            )
+            renderCell: (_: any, rowData: any) => {
+                let isOffline = false;
+                if (
+                    rowData?.loadingStatus ||
+                    rowData?.status === INVENTORY_STATUS.STOPPED ||
+                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+                ) {
+                    isOffline = true;
+                }
+
+                return (
+                    <div className={styles.buttonContainer}>
+                        <div />
+                        <Popover
+                            isAppendedToBody
+                            children={
+                                <DsTypography variant="Regular_14">
+                                    {isOffline
+                                        ? t('databases.well-architect.only-online-instances')
+                                        : t('databases.well-architected-tab.resource-view-fix-hover-msg')}
+                                </DsTypography>
+                            }
+                            trigger="hover"
+                            container={
+                                <DsButton
+                                    variant="secondary"
+                                    isThin
+                                    onClick={() => {
+                                        redirectToGetWellPage(dispatch, rowData);
+                                    }}
+                                    isDisabled={isOffline}
+                                >
+                                    {t('databases.general.view-and-fix')}
+                                </DsButton>
+                            }
+                        />
+                    </div>
+                );
+            }
         }
     ];
 
@@ -194,6 +216,7 @@ const RegisteredResourcesTable = () => {
             <Table
                 // @ts-ignore
                 tableProps={tableProps}
+                isDoubleRow
             />
         </div>
     );

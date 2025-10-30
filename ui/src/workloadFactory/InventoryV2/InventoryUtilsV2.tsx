@@ -1965,6 +1965,42 @@ export const sortDatabaseTableData = (data: Array<InventoryTableData>) => {
     return result;
 };
 
+export const sortAnalyzedResourceData = (data: Array<InventoryTableData>) => {
+    if (!data || data.length < 2) {
+        return data;
+    }
+
+    const databasesWeights: any = {
+        [DBType.MSSQL.toLowerCase()]: 30000,
+        [DBType.ORACLE.toLowerCase()]: 20000,
+        [DBType.POSTGRESQL.toLowerCase()]: 10000
+    };
+
+    const statusWeights: any = {
+        [INVENTORY_STATUS.CASE_SENSITIVE_UP.toLowerCase()]: 3000,
+        [INVENTORY_STATUS.RUNNING.toLowerCase()]: 3000,
+        [INVENTORY_STATUS.CASE_SENSITIVE_DOWN.toLowerCase()]: 2000,
+        [INVENTORY_STATUS.STOPPED.toLowerCase()]: 2000,
+        [INVENTORY_STATUS.UNKNOWN.toLowerCase()]: 1000,
+
+        '': 0
+    };
+
+    const result = data.slice().sort((a, b) => {
+        const weightA =
+            (databasesWeights[(a?.hostType || '').toLowerCase()] || 0) +
+            (statusWeights[(a?.status || '').toLowerCase()] || 0);
+
+        const weightB =
+            (databasesWeights[(b?.hostType || '').toLowerCase()] || 0) +
+            (statusWeights[(b?.status || '').toLowerCase()] || 0);
+
+        return weightB - weightA;
+    });
+
+    return result;
+};
+
 export const getMhUnmanagedInstances = (
     databaseHostsData: { [key: string]: InventoryTableData },
     runningInstanceList: Array<string>
