@@ -1,6 +1,7 @@
 .contentHeadingContainer {
     display: flex;
-    gap: 560px;
+    gap: 50%;
+    max-width: 1114px;
 
     .addNewButton span {
         text-transform: none;

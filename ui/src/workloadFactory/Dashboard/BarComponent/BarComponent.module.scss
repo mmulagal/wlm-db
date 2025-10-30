@@ -106,6 +106,13 @@
                     width: 97px;
                     height: 24px;
                 }
+
+                .tagContainerDisabled {
+                    [class*='tag'] {
+                        background-color: var(--chart-disabled) !important;
+                        color: var(--text-disabled) !important;
+                    }
+                }
             }
         }
     }

@@ -55,15 +55,38 @@ const ErrorInvestigationOverview = () => {
         [allLogAnalysisData, inventoryTableData]
     );
 
-    const activeTableRows: any = useMemo(
-        () => createLogAnalyzerActiveInstance(allLogAnalysisData),
-        [allLogAnalysisData, inventoryTableData]
-    );
+    const activeTableRows: any = useMemo(() => {
+        const data = createLogAnalyzerActiveInstance(allLogAnalysisData) || [];
 
-    const notActiveTableRows: any = useMemo(
-        () => createLogAnalyzerNotActiveInstance(allLogAnalysisData),
-        [allLogAnalysisData, inventoryTableData]
-    );
+        if (data.length > 0) {
+            const preferred = new Set([INVENTORY_STATUS.CASE_SENSITIVE_UP, INVENTORY_STATUS.RUNNING]);
+
+            return [...data].sort((a: any, b: any) => {
+                const aPref = preferred.has(a?.status);
+                const bPref = preferred.has(b?.status);
+                if (aPref === bPref) return 0;
+                return aPref ? -1 : 1;
+            });
+        }
+
+        return data;
+    }, [allLogAnalysisData, inventoryTableData]);
+
+    const notActiveTableRows: any = useMemo(() => {
+        const data = createLogAnalyzerNotActiveInstance(allLogAnalysisData) || [];
+
+        if (data.length > 0) {
+            const preferred = new Set([INVENTORY_STATUS.CASE_SENSITIVE_UP, INVENTORY_STATUS.RUNNING]);
+            return [...data].sort((a: any, b: any) => {
+                const aPref = preferred.has(a?.status);
+                const bPref = preferred.has(b?.status);
+                if (aPref === bPref) return 0;
+                return aPref ? -1 : 1;
+            });
+        }
+
+        return data;
+    }, [allLogAnalysisData, inventoryTableData]);
 
     const redirectToLogAnalyzerPage = (type: string) => {
         const updatedState = store.getState();

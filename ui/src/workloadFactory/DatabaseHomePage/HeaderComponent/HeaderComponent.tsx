@@ -936,6 +936,34 @@ const HeaderComponent = ({ tab }: Tab) => {
         return GENERAL.NO_REGIONS_SELECTED;
     };
 
+    const disableCredDropdown = () => {
+        if (
+            !credentialData ||
+            credentialData.length === 0 ||
+            ((selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS) &&
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+        ) {
+            return true;
+        }
+        return false;
+    };
+
+    const disableRegionDropDown = () => {
+        if (
+            !credentialData ||
+            credentialData.length === 0 ||
+            ((selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS) &&
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
+            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
+                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
+        ) {
+            return true;
+        }
+        return false;
+    };
+
     const selectMultipleComponents = () => (
         <div className={styles.content}>
             <div className={styles.firstSelect}>
@@ -971,14 +999,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                         selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                     }
-                    isDisabled={
-                        !credentialData ||
-                        credentialData.length === 0 ||
-                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-                    }
+                    isDisabled={disableCredDropdown()}
                     disabledReason={!credentialData || credentialData.length === 0 ? 'No credentials' : ''}
                 />
             </div>
@@ -1016,14 +1037,7 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.SAVINGS_CALCULATOR ||
                         selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS
                     }
-                    isDisabled={
-                        !credentialData ||
-                        credentialData.length === 0 ||
-                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-                        (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-                    }
+                    isDisabled={disableRegionDropDown()}
                     disabledReason={!credentialData || credentialData.length === 0 ? 'No regions' : ''}
                 />
             </div>

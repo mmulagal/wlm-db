@@ -1,12 +1,16 @@
-import { DsButton, DsFlashingDotsLoader, DsTypography, useDialog } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { useMemo } from 'react';
-import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as Storage } from '../../../assets/Storage.svg';
+import { ReactComponent as StorageDisabled } from '../../../assets/Storage-Disabled.svg';
 import { ReactComponent as Applications } from '../../../assets/Application.svg';
+import { ReactComponent as ApplicationsDisabled } from '../../../assets/Application-Disabled.svg';
 import { ReactComponent as Resiliency } from '../../../assets/Resiliency.svg';
+import { ReactComponent as ResiliencyDisabled } from '../../../assets/Resiliency-Disabled.svg';
+import { ReactComponent as CloningDisabled } from '../../../assets/Cloning-Disabled.svg';
 import { ReactComponent as Cloning } from '../../../assets/Cloning.svg';
 import { ReactComponent as Compute } from '../../../assets/Compute.svg';
+import { ReactComponent as ComputeDisabled } from '../../../assets/Compute-Disabled.svg';
 import styles from './OptimizeByCategory.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -14,7 +18,6 @@ import { getAssessmentGroupedByCategory } from '../../DatabaseHomePage/DatabaseH
 import { GENERAL } from '../../../utils/appConstants';
 
 const OptimizeByCategory = () => {
-    const dispatch = useDispatch();
     const { t } = useTranslation();
     const {
         allmssqlHostAssessmentData,
@@ -56,9 +59,7 @@ const OptimizeByCategory = () => {
             <div className={styles.mainSection}>
                 <div className={styles.topSection}>
                     <div className={styles.tile1}>
-                        <div className={styles.section1}>
-                            <Storage />
-                        </div>
+                        <div className={styles.section1}>{showNA ? <StorageDisabled /> : <Storage />}</div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
@@ -83,9 +84,7 @@ const OptimizeByCategory = () => {
                         <div className={styles.section3} />
                     </div>
                     <div className={styles.tile1}>
-                        <div className={styles.section1}>
-                            <Compute />
-                        </div>
+                        <div className={styles.section1}>{showNA ? <ComputeDisabled /> : <Compute />}</div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
@@ -107,9 +106,7 @@ const OptimizeByCategory = () => {
                         <div className={styles.section3} />
                     </div>
                     <div className={styles.tile2}>
-                        <div className={styles.section1}>
-                            <Applications />
-                        </div>
+                        <div className={styles.section1}>{showNA ? <ApplicationsDisabled /> : <Applications />}</div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
@@ -135,9 +132,7 @@ const OptimizeByCategory = () => {
 
                 <div className={styles.topSection}>
                     <div className={styles.tile1}>
-                        <div className={styles.section1}>
-                            <Resiliency />
-                        </div>
+                        <div className={styles.section1}>{showNA ? <ResiliencyDisabled /> : <Resiliency />}</div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
@@ -159,9 +154,7 @@ const OptimizeByCategory = () => {
                         <div className={styles.section3} />
                     </div>
                     <div className={styles.tile1}>
-                        <div className={styles.section1}>
-                            <Cloning />
-                        </div>
+                        <div className={styles.section1}>{showNA ? <CloningDisabled /> : <Cloning />}</div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography

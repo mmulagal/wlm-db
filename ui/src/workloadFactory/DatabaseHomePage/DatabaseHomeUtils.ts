@@ -2620,7 +2620,10 @@ export const createLogAnalyzerNotActiveInstance = (tableData: any) => {
                 },
                 ec2InstanceId: item?.ec2InstanceId,
                 fsxId: instance?.fsxId,
-                sqlServerDeploymentType: instance?.sqlServerDeploymentType
+                sqlServerDeploymentType: instance?.sqlServerDeploymentType,
+                cellProps: {
+                    isDisabled: instance?.status === STATUS_CONST.DOWN || instance?.status === INVENTORY_STATUS.STOPPED
+                }
             });
         });
     });
@@ -2696,7 +2699,10 @@ export const createLogAnalyzerActiveInstance = (tableData: any[]) => {
                 },
                 ec2InstanceId: item?.ec2InstanceId,
                 fsxId: instance?.fsxId,
-                sqlServerDeploymentType: instance?.sqlServerDeploymentType
+                sqlServerDeploymentType: instance?.sqlServerDeploymentType,
+                cellProps: {
+                    isDisabled: instance?.status === STATUS_CONST.DOWN || instance?.status === INVENTORY_STATUS.STOPPED
+                }
             });
         });
     });

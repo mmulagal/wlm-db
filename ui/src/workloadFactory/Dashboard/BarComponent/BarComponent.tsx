@@ -276,7 +276,9 @@ const BarComponent = ({
                             </DsTypography>
                         </div>
 
-                        <Tag text={type} />
+                        <div className={isDisabled ? styles.tagContainerDisabled : styles.tagContainer}>
+                            <Tag text={type} />
+                        </div>
                     </div>
                 </div>
             </div>

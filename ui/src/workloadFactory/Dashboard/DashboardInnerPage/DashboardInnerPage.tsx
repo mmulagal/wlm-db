@@ -1,7 +1,7 @@
 import { useDispatch } from 'react-redux';
 import { DsTypography, useDialog, DsButton, Button, Popover, TooltipInfo } from '@netapp/design-system';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
@@ -101,8 +101,8 @@ const DashboardInnerPage = () => {
         notOptimizedInstances: '',
         severity: '',
         analysisState: '',
-        cardHeight: '',
-        tagHeight: '',
+        cardHeight: '96px',
+        tagHeight: '96px',
         data: {
             title: '',
             description: '',
@@ -110,6 +110,44 @@ const DashboardInnerPage = () => {
         },
         cardName: ''
     });
+
+    const recommendationRef = useRef<HTMLDivElement | null>(null);
+    const VALUE_CARD_FIXED_HEIGHT = 96;
+
+    useEffect(() => {
+        const recEl = recommendationRef.current;
+        const measure = () => {
+            const el = recommendationRef.current || recEl;
+            const recHeight = el ? Math.ceil(el.getBoundingClientRect().height) : 0;
+            const tagH = VALUE_CARD_FIXED_HEIGHT + recHeight;
+            setValueCardData((prev: any) => ({
+                ...prev,
+                cardHeight: `${VALUE_CARD_FIXED_HEIGHT}px`,
+                tagHeight: `${tagH}px`
+            }));
+        };
+
+        // Use ResizeObserver when available to catch initial layout and dynamic changes
+        let ro: ResizeObserver | null = null;
+        if (recEl && (window as any).ResizeObserver) {
+            ro = new (window as any).ResizeObserver(() => {
+                window.requestAnimationFrame(measure);
+            });
+            if (ro && recEl) ro.observe(recEl);
+        }
+
+        measure();
+        window.requestAnimationFrame(measure);
+
+        const onResize = () => window.requestAnimationFrame(measure);
+        window.addEventListener('resize', onResize);
+
+        return () => {
+            window.removeEventListener('resize', onResize);
+            if (ro && recEl) ro.unobserve(recEl);
+            ro = null;
+        };
+    }, [valueCardData?.data?.description, valueCardData?.data?.descriptionRssConfig, valueCardData?.data?.values]);
 
     const selectedConfigName = useMemo(() => {
         if (selectedConfig === ASSESSMENT_CONFIG_NAMES.CRR) {
@@ -1694,12 +1732,14 @@ const DashboardInnerPage = () => {
                     <div className={styles.leftSection}>
                         <ValueCard valueCardData={valueCardData} configEngineType={configEngineType} />
 
-                        <div className={styles.recommendation} style={{ height: valueCardData.cardHeight }}>
-                            <RecommendationText
-                                data={valueCardData?.data}
-                                from="dashboard"
-                                cardName={valueCardData?.cardName}
-                            />
+                        <div className={styles.recommendation}>
+                            <div ref={recommendationRef}>
+                                <RecommendationText
+                                    data={valueCardData?.data}
+                                    from="dashboard"
+                                    cardName={valueCardData?.cardName}
+                                />
+                            </div>
                         </div>
                     </div>
                     <div className={styles.rightSection} style={{ width: '32%' }}>
