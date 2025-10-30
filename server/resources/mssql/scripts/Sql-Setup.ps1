@@ -629,6 +629,7 @@ try {
         Write-Output "Starting sql instance name & create fsx param"
         $ConfigureSql = @(
             @{Command = "C:\\cfn\\scripts\\common\\SetMaxDOP.ps1 -DomainAdminUser `"$DomainAdminUser`" -Parentstackname `"$DeploymentName`" -NetBIOSName `"$SqlServerName`""; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\SetMTU.ps1 -FSxID `"$FsxFileSystemId`" -FSxRegion `"$Region`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Set-SQLInstanceName.ps1 -DomainAdminUser `"$DomainAdminUser`" -Parentstackname `"$DeploymentName`" -NetBIOSName `"$SqlServerName`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Create-FsxParameter.ps1 -FSxID `"$FsxFileSystemId`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false }
         )
@@ -667,6 +668,7 @@ try {
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Validate-FCICluster.ps1 -DomainAdminUser `"$DomainAdminUser`" -WFCName `"$SqlFsxWsFcName`" -Node1 `"$SqlFsxServerNetBiosName`" -Node2 `"$SqlFsxServerNetBiosName2`" -ResourceID '$NodeType' -Stackname `"$DeploymentName`" -Parentstackname `"$DeploymentName`" -IsTerraform 1"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\sqlfci\\Validate-SQLLogin.ps1 -SqlServer `"$SqlFsxFciName`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\SetMaxDOP.ps1 -DomainAdminUser `"$DomainAdminUser`" -Parentstackname `"$DeploymentName`" -NetBIOSName `"$SqlFsxServerNetBiosName`" -ClusterName `"$SqlFsxFciName`""; UseExecutionPolicy = $false },
+            @{Command = "C:\\cfn\\scripts\\common\\SetMTU.ps1 -FSxID `"$FsxFileSystemId`" -FSxRegion `"$Region`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Update-SQLNodeTag.ps1 -StackName `"$DeploymentName`""; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Query-SQLNodeTags.ps1 -StackName `"$DeploymentName`" -NumberOfNodes 2"; UseExecutionPolicy = $false },
             @{Command = "C:\\cfn\\scripts\\common\\Create-FsxParameter.ps1 -FSxID `"$FsxFileSystemId`" -Parentstackname `"$DeploymentName`""; UseExecutionPolicy = $false }

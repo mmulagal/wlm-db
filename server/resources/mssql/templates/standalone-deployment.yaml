@@ -438,7 +438,7 @@ Resources:
                     commands:
                         a-installssmscript:
                             command: echo try{Start-Process ` -FilePath $env:USERPROFILE\Desktop\SSMAgent_latest.exe ` -ArgumentList "/S"}catch{Write-Host $_.exception} > C:/install-ssm.ps1
-                            waitAfterCompletion: '0'
+                            waitAfterCompletion: 0
                         b-installssm:
                             command: powershell.exe -Command C:/install-ssm.ps1
                             waitAfterCompletion: '30'
@@ -842,6 +842,16 @@ Resources:
                                   - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
+                        e-set-mtu:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\SetMTU.ps1 -FSxID '
+                                  - !Ref 'FSxFileSystemId'
+                                  - "' -FSxRegion '"
+                                  - !Ref 'AWS::Region'
+                                  - '''"'
+                            waitAfterCompletion: '0'
+                            ignoreErrors: 'true'
 
                 Cleanup:
                     commands:
