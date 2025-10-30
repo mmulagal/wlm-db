@@ -320,17 +320,28 @@ EOF
             rawUdevInfo=$(udevadm info --query=all --name=$(cat "/dev/oracleafd/disks/$diskName"))
         fi
         serialUdevInfo=$(printf '%b' "$rawUdevInfo")
-        mountDevice=$(echo "$serialUdevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
-        mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
-        iscsiSerialNumber=$(echo "$serialUdevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
-        mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
+        isMultipath=$(echo "$serialUdevInfo" | grep "DM_UUID=mpath-")
 
-        if echo "$mountPoint" | grep -q "iscsi"; then
-            protocol="iSCSI"
+        if [ -n "$isMultipath" ]; then
+            deviceName=$(echo "$serialUdevInfo" | grep "DEVNAME=" | awk -F= '{print $2}')
+            multipathMountPointDetails=$(get_multipath_mount_details "$deviceName")
+            mountIp=$(echo "$multipathMountPointDetails" | cut -d',' -f1)
+            iscsiSerialNumber=$(echo "$multipathMountPointDetails" | cut -d',' -f2)
+            protocol=$(echo "$multipathMountPointDetails" | cut -d',' -f3)
+            mountPoint="$iscsiSerialNumber"
         else
-            protocol="others"
+            mountDevice=$(echo "$serialUdevInfo" | grep -m 1 "disk/by-path" | awk '{print $2}')
+            mountIp=$(echo "$mountDevice" | sed -n 's#^disk/by-path/ip-\\([0-9\\.]\\+\\):.*#\\1#p')
+            iscsiSerialNumber=$(echo "$serialUdevInfo" | grep "ID_SCSI_SERIAL" | awk -F= '{print $2}')
+            mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
+
+            if echo "$mountPoint" | grep -q "iscsi"; then
+                protocol="iSCSI"
+            else
+                protocol="others"
+            fi
+            mountPoint=$iscsiSerialNumber
         fi
-        mountPoint=$iscsiSerialNumber
         echo "$mountIp,$mountPoint,$protocol"
     }
 
@@ -442,6 +453,9 @@ get_multipath_device_info() {
     
     # Get multipath information
     local multipath_info=$(sudo multipath -ll "$dev_name" 2>/dev/null)
+    if [ $? -ne 0 ] || [ -z "$multipath_info" ]; then
+        multipath_info=$(sudo multipath -ll "$device" 2>/dev/null)
+    fi
     echo "$multipath_info"
 }
 
