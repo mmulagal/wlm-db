@@ -722,7 +722,7 @@
                                         "status": "optimized",
                                         "recommended": "",
                                         "severity": "warning",
-                                        "recommendation": "Workload Factory recommends using optimized NFS mount options for database files: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144,noint. This configuration is designed to improve database performance and resilience, particularly in high-throughput environments.",
+                                        "recommendation": "Workload Factory recommends using optimized NFS mount options for database files: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144,nointr. This configuration is designed to improve database performance and resilience, particularly in high-throughput environments.",
                                         "tags": ["Reliability", "Operational excellence", "Performance efficiency"],
                                         "objectsInViolation": ["i-031858c121f213fb7"],
                                         "violationDetails": [
@@ -1741,7 +1741,7 @@
                                         "status": "not-optimized",
                                         "recommended": "",
                                         "severity": "warning",
-                                        "recommendation": "Workload Factory recommends using optimized NFS mount options for database files: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144,noint. This configuration is designed to improve database performance and resilience, particularly in high-throughput environments.",
+                                        "recommendation": "Workload Factory recommends using optimized NFS mount options for database files: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144,nointr. This configuration is designed to improve database performance and resilience, particularly in high-throughput environments.",
                                         "tags": ["Reliability", "Operational excellence", "Performance efficiency"],
                                         "objectsInViolation": ["i-031858c121f213fb7"],
                                         "violationDetails": [

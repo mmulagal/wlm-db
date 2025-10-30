@@ -269,14 +269,17 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                     </div>
                 );
             case ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS:
-                return createStandardDialog(
-                    t,
-                    t('databases.well-architect.oracle-nfs-caching-options-action-summary'),
-                    t('databases.well-architect.oracle-nfs-caching-options-what-will-happen'),
-                    createSection(
-                        t('databases.well-architect.note'),
-                        t('databases.well-architect.oracle-nfs-caching-options-note')
-                    )
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.oracle-nfs-caching-options-action-summary')
+                        )}
+                        {createSection(
+                            t('databases.well-architect.note'),
+                            t('databases.well-architect.oracle-nfs-caching-options-note')
+                        )}
+                    </div>
                 );
             default:
                 return null;

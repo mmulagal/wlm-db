@@ -908,8 +908,6 @@ export const GETWELL_CONFIG: any = {
     'asmlib-logical-block-size': 'ASMLib logical block size alignment'
 };
 
-export const GW_CONFIG_OPTIMIZE_NA = ['TempDB placement', GENERAL.LICENSE_SQL_SERVER];
-
 export const GW_TOOLTIP_KEYS_MAPPING: any = {
     rssProfile: 'RSS profile',
     rssStatus: 'RSS status',
@@ -1002,6 +1000,12 @@ export const ASSESSMENT_CONFIG_NAMES = {
     ASMLIB_LOGICAL_BLOCK_SIZE: 'ASMLib logical block size alignment',
     HIGH_AVAILABILITY: 'highAvailability'
 };
+
+export const GW_CONFIG_OPTIMIZE_NA = [
+    'TempDB placement',
+    GENERAL.LICENSE_SQL_SERVER,
+    ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME
+];
 
 export const categoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];
 export const severityOptions = ['Critical', 'Warning'];
