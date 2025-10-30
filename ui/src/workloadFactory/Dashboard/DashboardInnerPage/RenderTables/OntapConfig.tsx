@@ -87,7 +87,7 @@ const OntapConfig = () => {
                                 ? `${notOptimized.length} out of ${mergedData.length}`
                                 : '0 out of 0',
                             hostName: hostData?.databaseHostName,
-                            fullData: formatAssessmentTableData(notOptimized),
+                            fullData: formatAssessmentTableData(notOptimized, configEngineType),
                             credentialName: matchingCredEntry?.name,
                             regionName: matchingRegionEntry?.regionName,
                             accountId: matchingCredEntry?.providerAccountId

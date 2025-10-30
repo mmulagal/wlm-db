@@ -2470,10 +2470,13 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
     return sortListOfDict(result, 'status', false);
 };
 
-export const formatAssessmentTableData = (data: any) => {
+export const formatAssessmentTableData = (data: any, engineType?: string) => {
     const result: any = [];
     data?.map((item: any) => {
         if (!item?.error && !item?.errorMessage) {
+            if (engineType === DBType.ORACLE && item?.name === 'snapshot-policy') {
+                item.name = 'snapshot-policy-vol';
+            }
             result.push({
                 ...item,
                 name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
