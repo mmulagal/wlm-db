@@ -962,7 +962,7 @@ async function getSqlInstancePricingDetails(
                 const { priceDimensions } = onDemandPrice[Object.keys(onDemandPrice)[0]];
                 const { unit, pricePerUnit } = priceDimensions[Object.keys(priceDimensions)[0]];
                 const { preInstalledSw, instanceType: ec2InstType, licenseModel } = product.attributes;
-                if (licenseModel !== 'Bring your own license') {
+                if (licenseModel === 'No License required') {
                     // Windows Server as BYOL- no windows license included Windows Server as BYOL (Bring Your Own License) - RunInstances:0800
                     if (!pricingDetails[ec2InstType]) {
                         pricingDetails[ec2InstType] = {};
