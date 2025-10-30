@@ -53,16 +53,10 @@ const ErrorBarGraph: React.FC<{ errorCardsData?: ErrorInvestigationGetApiRespons
 
     const disableColor = () => {
         let tickColor;
-        if (loading) {
-            if (isDarkTheme) {
-                tickColor = '#ffffff';
-            } else {
-                tickColor = '#1C1C1C';
-            }
-        } else if (isDarkTheme) {
-            tickColor = '#858C95';
+        if (isDarkTheme) {
+            tickColor = '#ffffff';
         } else {
-            tickColor = '#A7A7A7';
+            tickColor = '#404040';
         }
         return tickColor;
     };

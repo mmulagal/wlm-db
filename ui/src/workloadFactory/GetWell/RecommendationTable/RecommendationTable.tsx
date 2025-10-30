@@ -1196,7 +1196,326 @@ const RecommendationTable = ({
         }
     ];
 
-    const colDefsForDashboard = ColDefs.filter((item: any) => item.id !== '2');
+    const ColDefsDashboard: ColumnProps[] = [
+        {
+            id: '1',
+            Header: t('databases.well-architect.recommendation-table.headers.configuration'),
+            accessor: 'name',
+            width: windowSize.width > 1700 ? '15%' : '250px',
+            isSortable: true,
+            renderCell: (cellData: any, rowData: any) => (
+                <CellWrapper rowData={rowData}>{cellData || GENERAL.NOT_AVAILABLE}</CellWrapper>
+            )
+        },
+
+        {
+            id: '3',
+            Header: t('databases.well-architect.recommendation-table.headers.severity'),
+            accessor: 'severity',
+            width: windowSize.width > 1700 ? '15%' : '200px',
+            isSortable: true,
+            renderCell: (cellData: any, rowData: any) => {
+                if (rowData?.errorMessage) {
+                    return <CellWrapper rowData={rowData}>{showUnavailableWithTooltip(rowData)}</CellWrapper>;
+                }
+
+                if (!cellData || cellData === GENERAL.NOT_AVAILABLE) {
+                    return (
+                        <CellWrapper rowData={rowData}>
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {t('databases.well-architect.unavailable')}
+                            </DsTypography>
+                        </CellWrapper>
+                    );
+                }
+
+                return (
+                    <CellWrapper rowData={rowData}>
+                        <div className={styles.statusCol}>
+                            <div>
+                                {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
+                                {cellData === GETWELL_STATUS.NOT_OPTIMIZED && (
+                                    <NotActive className={styles.statusIcon} />
+                                )}
+                                {(cellData === GETWELL_STATUS.OPTIMIZING || cellData === GETWELL_STATUS.ANALYZING) && (
+                                    <InProgress className={styles.statusIcon} />
+                                )}
+                            </div>
+                            <div>{statusValue(cellData)}</div>
+                        </div>
+                    </CellWrapper>
+                );
+            }
+        },
+        {
+            id: '4',
+            Header: t('databases.well-architect.recommendation-table.headers.impacted-resources'),
+            accessor: 'totalObjectsInViolation',
+            width: windowSize.width > 1700 ? '20%' : '200px',
+            isSortable: true,
+            renderCell: (cellData: any, rowData: any) => {
+                let type = '';
+                if (engineType === DBType.ORACLE) {
+                    if (rowData?.type === 'volume') {
+                        type = 'volumes';
+                    } else if (rowData?.type === 'lun') {
+                        type = 'LUN path';
+                    } else if (rowData?.type === 'os') {
+                        if (
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.SELINUX ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME
+                        ) {
+                            type = 'EC2 instances';
+                        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY) {
+                            type = 'Disk Group';
+                        } else if (
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS
+                        ) {
+                            type = 'databases';
+                        } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS) {
+                            type = 'volumes';
+                        }
+                    }
+                } else if (rowData?.type === 'volume') {
+                    type = 'volumes';
+                } else if (rowData?.type === 'lun') {
+                    type = 'LUN path';
+                } else if (rowData?.type === 'os') {
+                    type = 'drives';
+                }
+
+                return (
+                    <CellWrapper rowData={rowData}>
+                        {/* Show "n/a" when viewing dismissed configurations or when the category is in Activating state */}
+                        {showDismissedConfigurations === true || isRowConfigurationActivating(rowData) ? (
+                            GENERAL.NOT_AVAILABLE
+                        ) : (
+                            <>
+                                {(engineType === DBType.MSSQL &&
+                                    rowData?.name !== 'Multipath I/O Sessions' &&
+                                    rowData?.name !== 'Multipath I/O Status' &&
+                                    rowData?.name !== 'Multipath I/O Timeout') ||
+                                engineType === DBType.ORACLE ? (
+                                    <div>
+                                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                            {`${rowData?.totalObjectsInViolation || 0} out of ${
+                                                rowData?.totalObjectsAssessed || 0
+                                            } ${type}`}
+                                        </DsTypography>
+                                    </div>
+                                ) : (
+                                    <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                        Storage multipath
+                                    </DsTypography>
+                                )}
+                            </>
+                        )}
+                    </CellWrapper>
+                );
+            }
+        },
+        {
+            id: '5',
+            Header: t('databases.well-architect.recommendation-table.headers.tags'),
+            accessor: 'tags',
+            width: windowSize.width > 1700 ? '15%' : '200px',
+            isSortable: true,
+            renderCell: (cellData: any, rowData: any) => (
+                <CellWrapper rowData={rowData}>
+                    <div className={styles.tooltipContainer}>
+                        {cellData?.length > 0 && (
+                            <div className={styles.tooltip}>
+                                <Popover
+                                    popoverClass=""
+                                    children={
+                                        <div className={styles.tags}>
+                                            {cellData?.map((perTag: string) => (
+                                                <Tag text={perTag} />
+                                            ))}
+                                        </div>
+                                    }
+                                    trigger="hover"
+                                    delayHide={200}
+                                    interactive
+                                    isAppendedToBody={false}
+                                    container={<TooltipIcon />}
+                                />
+                            </div>
+                        )}
+                        {cellData?.length === 0 && (
+                            <div>
+                                <DisabledTooltipIcon />
+                            </div>
+                        )}
+
+                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                            {`Tags (${cellData.length})`}
+                        </DsTypography>
+                    </div>
+                </CellWrapper>
+            )
+        },
+        {
+            id: '6',
+            Header: '',
+            accessor: 'recommendation',
+            width: windowSize.width > 1700 ? '15%' : '290px',
+            renderCell: (cellData: any, rowData: any) => (
+                <CellWrapper rowData={rowData}>
+                    <div className={styles.recommendation}>
+                        <div className={styles.tooltipContainer}>
+                            {cellData?.length === 0 && (
+                                <div>
+                                    <DisabledTooltipIcon />
+                                </div>
+                            )}
+                            {cellData?.length > 0 && (
+                                <div className={styles.tooltip}>
+                                    <Popover
+                                        popoverClass=""
+                                        children={cellData && <RecommendationTooltip data={cellData} />}
+                                        trigger="hover"
+                                        delayHide={200}
+                                        container={<TooltipIcon />}
+                                        placement="bottom"
+                                    />
+                                </div>
+                            )}
+                            <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                {t('databases.well-architect.recommendation-table.recommendation')}
+                            </DsTypography>
+                        </div>
+                    </div>
+                </CellWrapper>
+            )
+        },
+        {
+            id: '7',
+            Header: '',
+            accessor: '',
+            isSticky: true,
+            width: windowSize.width > 1700 ? '20%' : '200px',
+            renderCell: (cellData: any, rowData: any) => (
+                <CellWrapper rowData={rowData}>
+                    <div className={styles.buttonGroup}>
+                        {renderDismissButton(rowData)}
+
+                        {/* Reactivate button for dismissed configurations */}
+                        {showDismissedConfigurations && (
+                            <div className={styles.reactivateButtonContainer}>
+                                {/* Show postpone indicator if configuration is postponed */}
+                                {renderConfigPostponeInfo(rowData)}
+
+                                <div
+                                    className={styles.buttonSection}
+                                    style={{
+                                        position: 'relative',
+                                        zIndex: 1000,
+                                        pointerEvents: 'auto'
+                                    }}
+                                    onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE, rowData);
+                                    }}
+                                >
+                                    <DsButton
+                                        variant="secondary"
+                                        onClick={(e: any) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            handleSingleAction(CONFIG_STATE_ACTIONS.ACTIVE, rowData);
+                                        }}
+                                        isDisabled={isLoading || dismissAction}
+                                    >
+                                        {t('databases.well-architect.dismiss.reactivate')}
+                                    </DsButton>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Regular action buttons for non-dismissed configurations */}
+                        {!showDismissedConfigurations && (
+                            <div className={styles.recommendation}>
+                                {!optimizePrintState &&
+                                    (isRowConfigurationActivating(rowData) ? (
+                                        // Show activating info instead of View and fix buttons
+                                        // As we known this configuration is in activating state as we have called isRowConfigurationActivating so can send dummy configKey with activation status
+                                        <ActivatingInfo
+                                            configKey="dummy"
+                                            cardData={{ dummy: { dismissedObj: { configState: 'ACTIVATING' } } }}
+                                            translation={t}
+                                            showFullContent={false}
+                                            customStyles={customStyles}
+                                        />
+                                    ) : GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
+                                      rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
+                                        <TooltipComponent
+                                            title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                                            placement="bottom"
+                                            width="120px"
+                                            height="30px"
+                                        >
+                                            <div>
+                                                <DsButton variant="secondary" isDisabled>
+                                                    {innerPageCheck(rowData?.name) ? 'View & fix' : 'Fix'}
+                                                </DsButton>
+                                            </div>
+                                        </TooltipComponent>
+                                    ) : optimizingInstanceData &&
+                                      rowData?.status !== GETWELL_STATUS.OPTIMIZED &&
+                                      rowData?.status !== GETWELL_STATUS.OPTIMIZING ? (
+                                        <TooltipComponent
+                                            title={GENERAL.OPTIMIZATION_IN_PROGRESS}
+                                            placement="bottom"
+                                            width="310px"
+                                            height="50px"
+                                        >
+                                            <div>
+                                                <DsButton variant="secondary" isDisabled>
+                                                    {innerPageText(rowData?.name)}
+                                                </DsButton>
+                                            </div>
+                                        </TooltipComponent>
+                                    ) : (
+                                        <div id={`${engineType}-${rowData?.id}-optimize`}>
+                                            <DsButton
+                                                variant="secondary"
+                                                onClick={(e: any) => {
+                                                    e.stopPropagation();
+                                                    handleDifferentNavigation(rowData);
+                                                }}
+                                                isDisabled={rowData?.status !== 'Not optimized'}
+                                            >
+                                                {innerPageText(rowData?.name)}
+                                            </DsButton>
+                                        </div>
+                                    ))}
+                            </div>
+                        )}
+                    </div>
+                </CellWrapper>
+            )
+        }
+    ];
 
     // Filter table data based on dismissed state
     const filteredTableData = React.useMemo(() => {
@@ -1261,7 +1580,7 @@ const RecommendationTable = ({
 
     const tableProps = useTable({
         isSorting: false,
-        columns: from === WLF_TABS.INVENTORY ? ColDefs : colDefsForDashboard,
+        columns: from === WLF_TABS.INVENTORY ? ColDefs : ColDefsDashboard,
         rows: filteredTableData,
         selectionType: 'none',
         isHorizontalScroll: true,

@@ -177,9 +177,9 @@
 .recommendationTableDashboard {
     z-index: 1 !important;
     display: flex;
-    width: 100%;
-    box-shadow: 0px -1px 0px 0px var(--border-drop-shadow, #e0e0e0) inset;
-    padding: 32px 0 40px 40px;
+
+    box-shadow: 2px 2px 6px 0px var(--border-drop-shadow);
+    padding: 32px 20px 20px 40px;
 
     .recommendation {
         // margin-left: 151px;
@@ -234,6 +234,9 @@
     }
     [class*='Table-module_last-col'] {
         border-right: unset !important;
+        display: flex;
+        justify-content: flex-end;
+        padding-right: 40px !important;
     }
 
     [class*='Popover-module_base'] {
