@@ -1840,10 +1840,12 @@ const InventoryApisV3 = () => {
                     if (storageType === GENERAL.EBS) {
                         isEbsProtected = checkIfEbsProtected(row, null);
                     }
+                    // Only keep loading=true for EBS when we will actually make a savings API call
+                    const shouldLoad = storageType === GENERAL.EBS ? Boolean(isEbsProtected) : true;
                     instanceData[uniqueHostRow(id, credId, rowRegionId)] = {
                         error: null,
                         data: null,
-                        loading: true,
+                        loading: shouldLoad,
                         storageType,
                         isProtected: isEbsProtected
                     };
@@ -1881,10 +1883,11 @@ const InventoryApisV3 = () => {
                 !potentialSavingsHostDataRef.current?.[uniqueHostRow(id, credId, rowRegionId)]?.isProtected
             ) {
                 const isEbsProtected = checkIfEbsProtected(row, null);
+                const shouldLoad = Boolean(isEbsProtected);
                 instanceData[uniqueHostRow(id, credId, rowRegionId)] = {
                     error: null,
                     data: null,
-                    loading: true,
+                    loading: shouldLoad,
                     storageType,
                     isProtected: isEbsProtected
                 };
