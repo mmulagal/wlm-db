@@ -3035,7 +3035,7 @@ function mockCreateVpcEndpoint(
     ];
 }
 
-async function mockPGSqlStandaloneDeploymentStack(
+function mockPGSqlStandaloneDeploymentStack(
     accountId: string,
     resourceName: string,
     credentialsId: string,

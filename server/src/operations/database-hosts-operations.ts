@@ -641,7 +641,7 @@ async function getDatabaseHostsSummaryV2(
     };
 }
 
-async function getDatabaseInstancesDetails(
+function getDatabaseInstancesDetails(
     credentialsId: string,
     region: string,
     instancesManaged: DatabaseInstance[],
@@ -834,7 +834,7 @@ async function getDatabaseHostSummaryV2(
 
             databaseInstancesDetail =
                 resourceType === DatabaseTypes.PG_SQL
-                    ? await getPgSqlDatabaseInstancesDetails(
+                    ? getPgSqlDatabaseInstancesDetails(
                           credentialsId,
                           region,
                           instancesManaged,
@@ -845,7 +845,7 @@ async function getDatabaseHostSummaryV2(
                           }))
                       )
                     : resourceType === DatabaseTypes.ORACLE
-                    ? await getOracleDatabaseInstancesDetails(
+                    ? getOracleDatabaseInstancesDetails(
                           credentialsId,
                           region,
                           instancesManaged,
@@ -855,7 +855,7 @@ async function getDatabaseHostSummaryV2(
                               isManaged: instance.isManaged ?? true
                           }))
                       )
-                    : await getDatabaseInstancesDetails(
+                    : getDatabaseInstancesDetails(
                           credentialsId,
                           region,
                           instancesManaged,

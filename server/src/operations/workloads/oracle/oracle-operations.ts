@@ -163,7 +163,7 @@ async function getOracleInstanceInfo(
     }
 }
 
-async function getOracleDatabaseInstancesDetails(
+function getOracleDatabaseInstancesDetails(
     credentialsId: string,
     region: string,
     instancesManaged: DatabaseInstance[],

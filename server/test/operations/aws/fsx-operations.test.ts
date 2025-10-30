@@ -48,7 +48,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             FSX_FILESYSTEM_ID,
             fsxResponse.volumeMap.volumeRecords.map(v => v.uuid),
             fsxResponse.volumeMap.volumeDBMap,
-            `i-${faker.string.alpha(17)}`
+            `i-${faker.string.fromCharacters('abcdef0123456789', 17)}`
         );
         expect(response?.volumeDBMapWithBackupFlag.master).toEqual(true);
     });

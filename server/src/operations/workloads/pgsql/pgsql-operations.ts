@@ -358,7 +358,7 @@ async function getPgSqlDatabaseInstancesSummary(
     });
 }
 
-async function getPgSqlDatabaseInstancesDetails(
+function getPgSqlDatabaseInstancesDetails(
     credentialsId: string,
     region: string,
     instancesManaged: DatabaseInstance[],

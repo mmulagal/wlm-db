@@ -93,6 +93,7 @@ import { OracleDriftAssessmentResponseType } from '../routes/types/oracle-contin
 
 const logger = getLogger();
 const DemoDefaultDatabaseNames = ['RetailBanking', 'MFGSales'];
+const generateRandomEc2InstanceId = () => `i-${randomize('?0', 17, { chars: 'abcdef' })}`;
 
 async function createAssessmentDataWithRetry(
     configDataRecords: DatabaseInstanceConfigData[],
@@ -189,7 +190,7 @@ async function createAssessmentDataWithRetry(
     }
 }
 
-async function createJobMockData(
+function createJobMockData(
     accountId: string,
     resourceName: string,
     stackName: string,
@@ -296,7 +297,7 @@ async function createDeploymentMockDataInDB(
 
     const metadata: Metadata = {
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
-        node1InstanceId: `i-${randomize('A0', 17)}`,
+        node1InstanceId: generateRandomEc2InstanceId(),
         creationDate: new Date().getTime().toString(),
         activeDirectoryName: 'wlm.com',
         activeDirectoryAddress: generateRandomIP(),
@@ -311,7 +312,7 @@ async function createDeploymentMockDataInDB(
         : (mockResourceAssessmentDataAllOptimized.assessment as unknown as ResourceAssessmentData);
 
     if (sqlDeploymentMode === 'FCI') {
-        metadata.node2InstanceId = `i-${randomize('A0', 17)}`;
+        metadata.node2InstanceId = generateRandomEc2InstanceId();
         metadata.activeDirectoryAddress = `${generateRandomIP()}, ${generateRandomIP()}`;
     }
     await createResource(accountId, {
@@ -359,7 +360,7 @@ async function createDeploymentMockDataInDB(
         sqlDeploymentMode
     );
 
-    const jobData = await createJobMockData(
+    const jobData = createJobMockData(
         accountId,
         resourceName,
         stackName,
@@ -369,10 +370,10 @@ async function createDeploymentMockDataInDB(
         region
     );
 
-    await createJobs(accountId, jobData);
+    const jobPromises = [createJobs(accountId, jobData)];
 
     if (createSandbox) {
-        const sandboxJobsData = await createSandboxJobMockData(
+        const sandboxJobsData = createSandboxJobMockData(
             accountId,
             region,
             'RetailBanking',
@@ -381,8 +382,10 @@ async function createDeploymentMockDataInDB(
             'SQL-Managed-Host-Prod',
             resourceName
         );
-        await createJobs(accountId, sandboxJobsData);
+        jobPromises.push(createJobs(accountId, sandboxJobsData));
     }
+
+    await Promise.all(jobPromises);
 }
 
 async function createFileSystemForDemo(
@@ -584,7 +587,7 @@ async function updateSandboxDBIntoInstanceData(
     return instanceMetaData;
 }
 
-async function createSandboxJobMockData(
+function createSandboxJobMockData(
     accountId: string,
     region: string,
     srcDb: string,
@@ -656,7 +659,7 @@ async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string
             Attachments: [
                 {
                     AttachTime: '2013-12-18T22:35:00.000Z',
-                    InstanceId: 'i-1234567890abcdef0',
+                    InstanceId: generateRandomEc2InstanceId(),
                     VolumeId: 'vol-049df61146c4d7901',
                     State: 'attached',
                     DeleteOnTermination: true,
@@ -679,19 +682,14 @@ async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string
     };
 }
 
-async function createAssessmentJobMockData(
-    accountId: string,
-    instanceDetails: any,
-    credentialsId: string,
-    region: string
-) {
+function createAssessmentJobMockData(accountId: string, instanceDetails: any, credentialsId: string, region: string) {
     logger.debug('Generate mock data for job table', accountId, credentialsId, region);
     accountId = checkAccount(accountId);
     const parentJobId = randomUUID();
     return assessmentJobData(accountId, instanceDetails, credentialsId, region, parentJobId);
 }
 
-async function createOptimizeJobMockData(
+function createOptimizeJobMockData(
     accountId: string,
     resourceName: string,
     instanceName: string,
@@ -723,7 +721,7 @@ async function createOptimizeJobMockData(
     );
 }
 
-async function createOperatingSystemOptimizeJobMockData(
+function createOperatingSystemOptimizeJobMockData(
     accountId: string,
     resourceName: string,
     instanceName: string,
@@ -754,7 +752,7 @@ async function createOperatingSystemOptimizeJobMockData(
     );
 }
 
-async function createOperatingSystemMpioSessionsOptimizeJobMockData(
+function createOperatingSystemMpioSessionsOptimizeJobMockData(
     accountId: string,
     resourceName: string,
     instanceName: string,
@@ -827,7 +825,7 @@ async function createDeploymentMockDataInDBForPgSql(
 
     const metadata: Metadata = {
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
-        node1InstanceId: `i-${randomize('A0', 17)}`,
+        node1InstanceId: generateRandomEc2InstanceId(),
         creationDate: new Date().getTime().toString(),
         fsxSvmId: 'svm-0491dd89a76b7ca3d',
         sandboxCreated: true,
@@ -870,7 +868,7 @@ async function createDeploymentMockDataInDBForPgSql(
 
     await upsertDatabaseInstance(accountId, instanceRecord);
 
-    const data: any[] = await mockPGSqlStandaloneDeploymentStack(
+    const data: any[] = mockPGSqlStandaloneDeploymentStack(
         accountId,
         resourceName,
         credentialsId,
@@ -924,7 +922,7 @@ async function createDeploymentMockDataInDBForOracle(
 
     const metadata = {
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
-        node1InstanceId: `i-${randomize('A0', 17)}`,
+        node1InstanceId: generateRandomEc2InstanceId(),
         creationDate: new Date().getTime().toString(),
         fsxSvmId: 'svm-0491dd89a76b7ca3d',
         storageProtocol: STORAGE_PROTOCOLS.NFS,
@@ -1021,7 +1019,7 @@ async function demoGetFsxnVolIdsFromOntapVolIds(
     };
 }
 
-async function createStorageTierJobMockData(
+function createStorageTierJobMockData(
     accountId: string,
     resourceName: string,
     instanceName: string,
@@ -1052,7 +1050,7 @@ async function createStorageTierJobMockData(
     );
 }
 
-async function createEnableMpioJobMockData(
+function createEnableMpioJobMockData(
     accountId: string,
     resourceName: string,
     instanceName: string,

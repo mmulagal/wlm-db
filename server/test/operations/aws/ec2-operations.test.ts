@@ -35,7 +35,7 @@ import {
 const WINDOWS = 'windows';
 const SQL = 'sql';
 const credentialsId = `${faker.string.alpha(20)}`;
-const ec2Id = `i-${faker.string.alpha(8)}`;
+const ec2Id = `i-${faker.string.fromCharacters('abcdef0123456789', 17)}`;
 
 describe('EC2 Operations', () => {
     it('list of EC2 AMIs', async () => {

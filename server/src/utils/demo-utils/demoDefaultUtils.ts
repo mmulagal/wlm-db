@@ -43,6 +43,59 @@ import { triggerLogsAnalysis } from '../../operations/logs-analyzer/logs-analyze
 
 const logger = getLogger();
 
+const prodOneResourceId = randomUUID();
+const devFourResourceId = randomUUID();
+
+const mockedHosts = [
+    {
+        resourceId: prodOneResourceId,
+        hostName: 'SQL-Managed-Host-Prod',
+        protocol: STORAGE_PROTOCOLS.ISCSI,
+        sqlInstances: [
+            { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-MarketingCampaigns' },
+            { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-SupplierManagement' },
+            { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-ProductCatalog' }
+        ],
+        databaseType: DatabaseTypes.MS_SQL_SERVER,
+        deploymentType: 'Standalone'
+    },
+    {
+        resourceId: devFourResourceId,
+        hostName: 'SQL-Managed-Host-DEV',
+        protocol: STORAGE_PROTOCOLS.ISCSI,
+        sqlInstances: [
+            { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-SalesAnalytics' },
+            { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-ProjectManagement' }
+        ],
+        databaseType: DatabaseTypes.MS_SQL_SERVER,
+        deploymentType: 'FCI'
+    },
+    {
+        resourceId: randomUUID(),
+        hostName: 'PGSQL-Managed-Host-STG',
+        protocol: STORAGE_PROTOCOLS.NFS,
+        sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
+        databaseType: DatabaseTypes.PG_SQL,
+        deploymentType: 'Standalone'
+    },
+    {
+        resourceId: randomUUID(),
+        hostName: 'PGSQLServer-Dev-02',
+        protocol: STORAGE_PROTOCOLS.NFS,
+        sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
+        databaseType: DatabaseTypes.PG_SQL,
+        deploymentType: 'HA'
+    },
+    {
+        resourceId: randomUUID(),
+        hostName: 'ip-171-30-40-16.ap-southeast-1.compute.internal',
+        protocol: STORAGE_PROTOCOLS.NFS,
+        sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'oracle-orahost' }],
+        databaseType: DatabaseTypes.ORACLE,
+        deploymentType: 'Standalone'
+    }
+];
+
 async function createDemoResources(
     accountId: string,
     region: string,
@@ -175,172 +228,109 @@ async function createDemoResourcesPerRegion(
     if (isEmpty(jobs)) {
         // create 3 new resources and configurations
         logger.info('Creating demo resources');
-        const prodOneResourceId = randomUUID();
-        const devFourResourceId = randomUUID();
-
-        const instances = [
-            {
-                resourceId: prodOneResourceId,
-                hostName: 'SQL-Managed-Host-Prod',
-                protocol: STORAGE_PROTOCOLS.ISCSI,
-                sqlInstances: [
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-MarketingCampaigns' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-SupplierManagement' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-ProductCatalog' }
-                ],
-                databaseType: DatabaseTypes.MS_SQL_SERVER,
-                deploymentType: 'Standalone'
-            },
-            {
-                resourceId: devFourResourceId,
-                hostName: 'SQL-Managed-Host-DEV',
-                protocol: STORAGE_PROTOCOLS.ISCSI,
-                sqlInstances: [
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-SalesAnalytics' },
-                    { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-ProjectManagement' }
-                ],
-                databaseType: DatabaseTypes.MS_SQL_SERVER,
-                deploymentType: 'FCI'
-            },
-            {
-                resourceId: randomUUID(),
-                hostName: 'PGSQL-Managed-Host-STG',
-                protocol: STORAGE_PROTOCOLS.NFS,
-                sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
-                databaseType: DatabaseTypes.PG_SQL,
-                deploymentType: 'Standalone'
-            },
-            {
-                resourceId: randomUUID(),
-                hostName: 'PGSQLServer-Dev-02',
-                protocol: STORAGE_PROTOCOLS.NFS,
-                sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
-                databaseType: DatabaseTypes.PG_SQL,
-                deploymentType: 'HA'
-            },
-            {
-                resourceId: randomUUID(),
-                hostName: 'ip-171-30-40-16.ap-southeast-1.compute.internal',
-                protocol: STORAGE_PROTOCOLS.NFS,
-                sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'oracle-orahost' }],
-                databaseType: DatabaseTypes.ORACLE,
-                deploymentType: 'Standalone'
-            }
-        ];
         const resourceSandboxMetadata: any = { sandboxes: [], userDatabase: [] };
 
-        for await (const instance of instances) {
-            const { resourceId, hostName, protocol, sqlInstances, databaseType, deploymentType } = instance;
-            // create hosts and default instances
-            await createDemoResources(
-                accountId,
-                region,
-                credentialsId,
-                awsAccountId,
-                hostName,
-                protocol,
-                resourceId,
-                databaseType,
-                deploymentType
-            );
-            const instanceNames: string[] = [];
-            let instanceIds: string = '';
-            for await (const sqlInstance of sqlInstances) {
-                const { sqlInstanceId, sqlInstanceName } = sqlInstance;
-                const dismissedConfigurations = {
-                    crr: {
-                        configurationName: 'crr',
-                        configState: 'POSTPONED',
-                        startTime: Date.now(),
-                        endTime: Date.now() + 30 * 24 * 60 * 60 * 1000
-                    },
-                    maxDOP: {
-                        configurationName: 'maxdop',
-                        configState: 'POSTPONED',
-                        startTime: Date.now(),
-                        endTime: Date.now() + 30 * 24 * 60 * 60 * 1000
-                    }
-                };
-                const databaseConfigurationData = { dismissedConfigurations };
-                // create sandbox metadata for resource and instance
-                let sqlInstanceSandboxMetadata: any = {};
-                if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
-                    sqlInstanceSandboxMetadata = prepareDemoSandboxMetadata(
-                        hostName,
-                        sqlInstanceId,
-                        undefined,
-                        sqlInstanceName
-                    );
-                    if (
-                        sqlInstanceSandboxMetadata &&
-                        sqlInstanceSandboxMetadata?.sandboxes?.length > 0 &&
-                        sqlInstanceSandboxMetadata?.userDatabase?.length > 0
-                    ) {
-                        resourceSandboxMetadata.sandboxes.push(...(sqlInstanceSandboxMetadata?.sandboxes ?? []));
-                        resourceSandboxMetadata.userDatabase.push(...(sqlInstanceSandboxMetadata?.userDatabase ?? []));
-                    }
-                }
-
-                // create additional database instance from the "instances" array
-                await createDatabaseInstances(
+        await Promise.all(
+            mockedHosts.map(async mockedHost => {
+                const { resourceId, hostName, protocol, sqlInstances, databaseType, deploymentType } = mockedHost;
+                // create hosts and default instances
+                await createDemoResources(
                     accountId,
-                    resourceId,
-                    sqlInstanceName,
-                    deploymentType,
-                    sqlInstanceId,
-                    credentialsId,
                     region,
-                    `fs-${randomize('0', 8)}`,
+                    credentialsId,
+                    awsAccountId,
+                    hostName,
                     protocol,
-                    databaseType === DatabaseTypes.MS_SQL_SERVER ? sqlInstanceSandboxMetadata : {},
-                    databaseConfigurationData
+                    resourceId,
+                    databaseType,
+                    deploymentType
                 );
-                const newInstanceName = sqlInstanceName.replace(hostName, '');
-                instanceNames.push(newInstanceName);
-                instanceNames.push(DEFAULT_INSTANCE_NAME);
-                instanceIds += `${sqlInstanceId},`;
-            }
+                const instanceNames: string[] = [];
+                let instanceIds: string = '';
+                await Promise.all(
+                    sqlInstances.map(async sqlInstance => {
+                        const { sqlInstanceId, sqlInstanceName } = sqlInstance;
+                        const dismissedConfigurations = {
+                            crr: {
+                                configurationName: 'crr',
+                                configState: 'POSTPONED',
+                                startTime: Date.now(),
+                                endTime: Date.now() + 30 * 24 * 60 * 60 * 1000
+                            },
+                            maxDOP: {
+                                configurationName: 'maxdop',
+                                configState: 'POSTPONED',
+                                startTime: Date.now(),
+                                endTime: Date.now() + 30 * 24 * 60 * 60 * 1000
+                            }
+                        };
+                        const databaseConfigurationData = { dismissedConfigurations };
+                        // create sandbox metadata for resource and instance
+                        let sqlInstanceSandboxMetadata: any = {};
+                        if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
+                            sqlInstanceSandboxMetadata = prepareDemoSandboxMetadata(
+                                hostName,
+                                sqlInstanceId,
+                                undefined,
+                                sqlInstanceName
+                            );
+                            if (
+                                sqlInstanceSandboxMetadata &&
+                                sqlInstanceSandboxMetadata?.sandboxes?.length > 0 &&
+                                sqlInstanceSandboxMetadata?.userDatabase?.length > 0
+                            ) {
+                                resourceSandboxMetadata.sandboxes.push(
+                                    ...(sqlInstanceSandboxMetadata?.sandboxes ?? [])
+                                );
+                                resourceSandboxMetadata.userDatabase.push(
+                                    ...(sqlInstanceSandboxMetadata?.userDatabase ?? [])
+                                );
+                            }
+                        }
 
-            if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
-                const [resource] = await listResources({ accountId, resourceId, includeDatabaseInstances: true });
-                if (!isEmpty(resource?.metadata)) {
-                    (resource.metadata as unknown as Metadata).sandboxes = (
-                        (resource?.metadata as unknown as Metadata)?.sandboxes ?? []
-                    )?.concat(resourceSandboxMetadata.sandboxes ?? []);
-                    (resource.metadata as unknown as Metadata).userDatabase = (
-                        (resource?.metadata as unknown as Metadata)?.userDatabase ?? []
-                    )?.concat(resourceSandboxMetadata.userDatabase ?? []);
-                    await updateResource({ accountId, credentialsId, region, resourceId, metaData: resource.metadata });
-                }
-
-                // create sandbox metadata for instances
-                // Update assessment configs
-                const optimizeStorageJobMockdata = await createOptimizeJobMockData(
-                    accountId,
-                    hostName,
-                    instanceNames[0],
-                    credentialsId,
-                    region,
-                    instanceIds.split(',')[0],
-                    resourceId
+                        // create additional database instance from the "mockedHosts" array
+                        await createDatabaseInstances(
+                            accountId,
+                            resourceId,
+                            sqlInstanceName,
+                            deploymentType,
+                            sqlInstanceId,
+                            credentialsId,
+                            region,
+                            `fs-${randomize('0', 8)}`,
+                            protocol,
+                            databaseType === DatabaseTypes.MS_SQL_SERVER ? sqlInstanceSandboxMetadata : {},
+                            databaseConfigurationData
+                        );
+                        const newInstanceName = sqlInstanceName.replace(hostName, '');
+                        instanceNames.push(newInstanceName);
+                        instanceNames.push(DEFAULT_INSTANCE_NAME);
+                        instanceIds += `${sqlInstanceId},`;
+                    })
                 );
 
-                // create assessment and optimization jobs
-                await createJobs(accountId, optimizeStorageJobMockdata);
+                if (databaseType === DatabaseTypes.MS_SQL_SERVER) {
+                    const [resource] = await listResources({ accountId, resourceId, includeDatabaseInstances: true });
+                    let updateResourcePromise;
+                    if (!isEmpty(resource?.metadata)) {
+                        (resource.metadata as unknown as Metadata).sandboxes = (
+                            (resource?.metadata as unknown as Metadata)?.sandboxes ?? []
+                        )?.concat(resourceSandboxMetadata.sandboxes ?? []);
+                        (resource.metadata as unknown as Metadata).userDatabase = (
+                            (resource?.metadata as unknown as Metadata)?.userDatabase ?? []
+                        )?.concat(resourceSandboxMetadata.userDatabase ?? []);
+                        updateResourcePromise = updateResource({
+                            accountId,
+                            credentialsId,
+                            region,
+                            resourceId,
+                            metaData: resource.metadata
+                        });
+                    }
 
-                const operatingSystemOptimizeJobMockData = await createOperatingSystemOptimizeJobMockData(
-                    accountId,
-                    hostName,
-                    instanceNames[0],
-                    credentialsId,
-                    region,
-                    instanceIds.split(',')[0],
-                    resourceId
-                );
-                await createJobs(accountId, operatingSystemOptimizeJobMockData);
-
-                const operatingSystemMpioSessionsOptimizeJobMockData =
-                    await createOperatingSystemMpioSessionsOptimizeJobMockData(
+                    // create sandbox metadata for instances
+                    // Update assessment configs
+                    const optimizeStorageJobMockdata = createOptimizeJobMockData(
                         accountId,
                         hostName,
                         instanceNames[0],
@@ -349,49 +339,77 @@ async function createDemoResourcesPerRegion(
                         instanceIds.split(',')[0],
                         resourceId
                     );
-                await createJobs(accountId, operatingSystemMpioSessionsOptimizeJobMockData);
-                const storageTierJobMockData = await createStorageTierJobMockData(
-                    accountId,
-                    hostName,
-                    instanceNames[0],
-                    credentialsId,
-                    region,
-                    instanceIds.split(',')[0],
-                    resourceId
-                );
-                await createJobs(accountId, storageTierJobMockData);
-                const enableMpioJobMockData = await createEnableMpioJobMockData(
-                    accountId,
-                    hostName,
-                    instanceNames[0],
-                    credentialsId,
-                    region,
-                    instanceIds.split(',')[0],
-                    resourceId
-                );
-                await createJobs(accountId, enableMpioJobMockData);
 
-                if (accountId && !isEmpty(resource.database_instances)) {
-                    // Run logs analysis for only the first instance per resource so that dashboard has metrics to show by default; for other instances we still want to trigger the analysis
-                    const [firstInstance] = resource.database_instances;
-                    await triggerLogsAnalysis(
+                    // create assessment and optimization jobs
+                    const jobPromiseList = [createJobs(accountId, optimizeStorageJobMockdata)];
+
+                    const operatingSystemOptimizeJobMockData = createOperatingSystemOptimizeJobMockData(
                         accountId,
+                        hostName,
+                        instanceNames[0],
                         credentialsId,
                         region,
-                        resourceId,
-                        firstInstance.database_instance_id,
-                        {}
+                        instanceIds.split(',')[0],
+                        resourceId
                     );
+                    jobPromiseList.push(createJobs(accountId, operatingSystemOptimizeJobMockData));
+
+                    const operatingSystemMpioSessionsOptimizeJobMockData =
+                        createOperatingSystemMpioSessionsOptimizeJobMockData(
+                            accountId,
+                            hostName,
+                            instanceNames[0],
+                            credentialsId,
+                            region,
+                            instanceIds.split(',')[0],
+                            resourceId
+                        );
+                    jobPromiseList.push(createJobs(accountId, operatingSystemMpioSessionsOptimizeJobMockData));
+                    const storageTierJobMockData = createStorageTierJobMockData(
+                        accountId,
+                        hostName,
+                        instanceNames[0],
+                        credentialsId,
+                        region,
+                        instanceIds.split(',')[0],
+                        resourceId
+                    );
+                    jobPromiseList.push(createJobs(accountId, storageTierJobMockData));
+                    const enableMpioJobMockData = createEnableMpioJobMockData(
+                        accountId,
+                        hostName,
+                        instanceNames[0],
+                        credentialsId,
+                        region,
+                        instanceIds.split(',')[0],
+                        resourceId
+                    );
+                    jobPromiseList.push(createJobs(accountId, enableMpioJobMockData));
+
+                    let logAnalysisJob;
+                    if (accountId && !isEmpty(resource.database_instances)) {
+                        // Run logs analysis for only the first instance per resource so that dashboard has metrics to show by default; for other instances we still want to trigger the analysis
+                        const [firstInstance] = resource.database_instances;
+                        logAnalysisJob = triggerLogsAnalysis(
+                            accountId,
+                            credentialsId,
+                            region,
+                            resourceId,
+                            firstInstance.database_instance_id,
+                            {}
+                        );
+                    }
+                    await Promise.all([
+                        updateResourcePromise ?? Promise.resolve(),
+                        ...jobPromiseList,
+                        logAnalysisJob ?? Promise.resolve()
+                    ]);
                 }
-            }
-        }
-        const filteredInstances = instances.filter(instance => instance.databaseType !== DatabaseTypes.PG_SQL);
-        const assessmentJobMockData = await createAssessmentJobMockData(
-            accountId,
-            filteredInstances,
-            credentialsId,
-            region
+            })
         );
+
+        const filteredInstances = mockedHosts.filter(mockedHost => mockedHost.databaseType !== DatabaseTypes.PG_SQL);
+        const assessmentJobMockData = createAssessmentJobMockData(accountId, filteredInstances, credentialsId, region);
         await createJobs(accountId, assessmentJobMockData);
 
         return { message: 'Default Demo Data created' };
