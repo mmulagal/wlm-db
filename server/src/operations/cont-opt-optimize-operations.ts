@@ -321,6 +321,10 @@ async function createExportPolicy(
             error: jobError
         });
     }
+
+    if (jobStatus === JOBSTATUS.FAILED) {
+        throw new Error(jobError);
+    }
 }
 
 async function optimizeStorageAttributes(params: OptimizeStorageOperationParams) {
@@ -448,12 +452,15 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
             optimizationTargets
         )}`
     );
-    const jobDescription = `Fix storage for ${serverNameWithHostName}`;
+    const jobDescription =
+        resourceType === RESOURCESTYPE.MSSQL
+            ? `Fix MSSQL Storage Configuration for ${serverNameWithHostName}`
+            : `Fix Oracle Storage Configuration for ${serverNameWithHostName}`;
 
     await Promise.all(
         optimizationTargets.map(async data => {
             const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-                name: `Fix storage for ${serverNameWithHostName}`,
+                name: jobDescription,
                 description: jobDescription,
                 startTime: Date.now(),
                 type: JOBTYPE.WELL_ARCHITECTED,
@@ -526,9 +533,10 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                                     clients as string[],
                                     existingPolicyName as string,
                                     value,
-                                    parentJobId
+                                    jobId
                                 );
                             }
+
                             const result = await callOntapApi(
                                 apiRequestData,
                                 configKey!,
@@ -555,7 +563,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                 objectsOptimized = IS_DEMO_FLOW ? objectsToOptimize.length : objectsOptimized;
                 // with bulk optimization of volumes, user can send 1/2/3 vol ids to optimize but ssm response will hardcoded to reply with 3 as optimized.
 
-                const optimizeMessage = `Optimized ${objectsOptimized}/${
+                const optimizeMessage = `Fixed ${objectsOptimized}/${
                     objectsToOptimize.length
                 } ${jobParamKey} in ${serverNameWithHostName} for configuration parameter '${
                     OptimizeStorageConfigsJobNames[configKey as keyof typeof OptimizeStorageConfigsJobNames]
@@ -817,6 +825,10 @@ async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?
         instanceMetadata
     } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
 
+    const jobDescription =
+        databaseType === RESOURCESTYPE.MSSQL
+            ? `Fix MSSQL Storage Configuration for ${serverNameWithHostName}`
+            : `Fix Oracle Storage Configuration for ${serverNameWithHostName}`;
     // check whether any jobs on the same resource running
     const parentJobId = await handleOptimizeJobCreation(
         accountId,
@@ -824,8 +836,8 @@ async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?
         region,
         serverNameWithHostName,
         JOBTYPE.WELL_ARCHITECTED,
-        `Fix storage for ${serverNameWithHostName}`,
-        `Fix storage for ${serverNameWithHostName}`,
+        jobDescription,
+        jobDescription,
         bulkOptimizeJobId
     );
 

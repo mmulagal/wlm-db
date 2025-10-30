@@ -133,7 +133,7 @@ enum OptimizeStorageConfigsJobNames {
     DEDUPLICATION = 'deduplication',
     COMPACTION = 'compaction',
     NFS_ROOTONLY = 'nfs rootonly',
-    EXPORT_POLICY = 'export policy'
+    EXPORT_POLICY = 'binaries export policy'
 }
 
 enum OptimizeOperatingSystemParams {

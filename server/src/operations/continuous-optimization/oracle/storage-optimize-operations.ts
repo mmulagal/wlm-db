@@ -603,7 +603,7 @@ async function getOracleStorageConfigRecommendationMap(
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
         name: `Fix Oracle Storage Configuration for ${serverNameWithHostName}`,
-        description: `Fetching latest ONTAP configuration for ${serverNameWithHostName}`,
+        description: `Fetch latest ONTAP configuration for ${serverNameWithHostName}`,
         startTime: Date.now(),
         type: JOBTYPE.WELL_ARCHITECTED,
         status: JOBSTATUS.IN_PROGRESS,
