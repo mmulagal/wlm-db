@@ -142,37 +142,37 @@ async function oracleOptimizeStorageOS(
     let jobDescription = '';
     switch (configurationName) {
         case OptimizeOracleiSCSIStorageOperatingSystem.TCP_OPTIONS:
-            jobDescription = `Fix Storage Operating System TCP options for ${serverNameWithHostName}`;
+            jobDescription = `Fix TCP Slot table entries for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.ISCSI_REPLACEMENT_TIMEOUT:
-            jobDescription = `Fix Storage Operating System iSCSI replacement timeout for ${serverNameWithHostName}`;
+            jobDescription = `Fix iSCSI replacement timeout for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_IO_SESSIONS:
-            jobDescription = `Fix Storage Operating System multipath IO sessions for ${serverNameWithHostName}`;
+            jobDescription = `Fix multipath IO sessions for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.THP_DISABLE:
-            jobDescription = `Fix Storage Operating System transparent huge pages for ${serverNameWithHostName}`;
+            jobDescription = `Fix transparent huge pages for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_ENABLE:
-            jobDescription = `Fix Storage Operating System multipath IO enable for ${serverNameWithHostName}`;
+            jobDescription = `Fix multipath IO enable for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.SELINUX_DISABLE:
-            jobDescription = `Fix Storage Operating System SELinux disable for ${serverNameWithHostName}`;
+            jobDescription = `Fix SELinux disable for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_CONFIGURATION:
-            jobDescription = `Fix Storage Operating System multipath configuration for ${serverNameWithHostName}`;
+            jobDescription = `Fix multipath configuration for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_FRIENDLY_NAMES:
-            jobDescription = `Fix Storage Operating System multipath friendly names for ${serverNameWithHostName}`;
+            jobDescription = `Fix multipath friendly names for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.MULTIBLOCK_READCOUNT:
-            jobDescription = `Fix Storage Operating System Oracle multiblock read count for ${serverNameWithHostName}`;
+            jobDescription = `Fix multiblock read count for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.FILESYSTEM_IO_OPTIONS:
-            jobDescription = `Fix Storage Operating System Oracle filesystem I/O options for ${serverNameWithHostName}`;
+            jobDescription = `Fix filesystem I/O options for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.HOST_UTILITIES:
-            jobDescription = `Fix Storage Operating System Install Host Utilities for ${serverNameWithHostName}`;
+            jobDescription = `Install Host Utilities for ${serverNameWithHostName}`;
             break;
 
         default:
@@ -560,8 +560,8 @@ async function optimizeTcpOptions(params: OptimizeOSParams) {
     logger.info('Optimizing TCP Options', { accountId, databaseHostId, serverNameWithHostName, databaseInstanceId });
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Fix TCP Options for ${serverNameWithHostName}`,
-        description: `Fix TCP options for ${serverNameWithHostName}`,
+        name: `Set NFS TCP slot table entries for ${serverNameWithHostName}`,
+        description: `Set NFS TCP slot table entries for ${serverNameWithHostName}`,
         resourceName: serverNameWithHostName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -677,8 +677,8 @@ async function optimizeIscsiReplacementTimeout(params: OptimizeOSParams) {
     });
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Fix iSCSI Replacement Timeout for ${serverNameWithHostName}`,
-        description: `Fix iSCSI replacement timeout for ${serverNameWithHostName}`,
+        name: `Set iSCSI replacement timeout to 5 for ${serverNameWithHostName}`,
+        description: `Set iSCSI replacement timeout to 5 for ${serverNameWithHostName}`,
         resourceName: serverNameWithHostName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -781,8 +781,8 @@ async function optimizeMultipathIoSessions(params: OptimizeOSParams) {
     });
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Fix Multipath IO Sessions for ${serverNameWithHostName}`,
-        description: `Fix multipath IO sessions for ${serverNameWithHostName}`,
+        name: `Configure multipath IO Sessions on ${serverNameWithHostName}`,
+        description: `Configure multipath IO sessions on ${serverNameWithHostName}`,
         resourceName: serverNameWithHostName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -910,8 +910,8 @@ async function optimizeTransparentHugePages(params: OptimizeOSParams) {
     });
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Disable transaparent huge pages(THP) for ${serverNameWithHostName}`,
-        description: `Disable transaparent huge pages(THP) settings for ${serverNameWithHostName}`,
+        name: `Disable transparent huge pages(THP) for ${serverNameWithHostName}`,
+        description: `Disable transparent huge pages(THP) for ${serverNameWithHostName}`,
         resourceName: serverNameWithHostName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -923,7 +923,7 @@ async function optimizeTransparentHugePages(params: OptimizeOSParams) {
 
     try {
         const ssmCommand = fixTransparentHugepageCommand;
-        const ssmComment = 'Disable transaparent huge pages(THP) settings';
+        const ssmComment = 'Disable transparent huge pages(THP) settings';
         const response = await retryWithDelay(
             callSsmExecution.bind(
                 null,
@@ -1019,8 +1019,8 @@ async function optimizeMultipathConfig(params: OptimizeOSParams) {
     });
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Fix Multipath Configuration for ${serverNameWithHostName}`,
-        description: `Fix multipath configuration for ${serverNameWithHostName}`,
+        name: `Update multipath configuration file with best practices for ${serverNameWithHostName}`,
+        description: `Update multipath configuration file with best practices for ${serverNameWithHostName}`,
         resourceName: serverNameWithHostName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -1116,8 +1116,8 @@ async function optimizeMultipathFriendlyNames(params: OptimizeOSParams) {
     });
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Fix Multipath Friendly Names Configuration for ${serverNameWithHostName}`,
-        description: `Fix multipath friendly names configuration for ${serverNameWithHostName}`,
+        name: `Enable multipath friendly names on ${serverNameWithHostName}`,
+        description: `Enable multipath friendly names on ${serverNameWithHostName}`,
         resourceName: serverNameWithHostName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -1219,8 +1219,8 @@ async function installHostUtilities(params: OptimizeOSParams) {
     let jobError;
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Install Host Utilities for ${serverNameWithHostName}`,
-        description: `Install Host Utilities for ${serverNameWithHostName}`,
+        name: `Install Host Utilities on ${serverNameWithHostName}`,
+        description: `Install Host Utilities on ${serverNameWithHostName}`,
         resourceName: serverNameWithHostName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,

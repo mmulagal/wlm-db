@@ -178,7 +178,7 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
             // Find the parent job for TCP options optimization
             const tcpOptimizeJob = jobItems?.find(
                 (job: any) =>
-                    job.description?.includes('TCP options') &&
+                    job.description?.includes('TCP Slot table entries') &&
                     job.type === JOBTYPE.WELL_ARCHITECTED &&
                     job.resourceName === dbInstanceSid
             );

@@ -1,4 +1,5 @@
 import { CLOUDFLARE_DNS_IP } from '../../../utils/consts';
+import { LINUX_LOG_DIRECTORY } from '../../continuous-optimization/oracle/consts';
 
 type ontapRequestParams = {
     fsxId?: string;
@@ -1489,10 +1490,9 @@ def ontapRestApiRequest(fileSystemId, region, method, url, body=None):
 
 const pythonLogger = (logFileName: string) => `
 def log(msg):
-    LOG_DIR = "/var/log/netapp"
-    LOG_FILE = f"{LOG_DIR}/${logFileName}"
-    if not os.path.exists(LOG_DIR):
-        os.makedirs(LOG_DIR, exist_ok=True)
+    LOG_FILE = f"${LINUX_LOG_DIRECTORY}/${logFileName}"
+    if not os.path.exists(f"${LINUX_LOG_DIRECTORY}"):
+        os.makedirs(f"${LINUX_LOG_DIRECTORY}", exist_ok=True)
     with open(LOG_FILE, "a") as f:
         f.write(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}\\n") 
 
@@ -1514,9 +1514,8 @@ PYTHON
 
 const logFileCheck = (changeOwner = false, user = 'oracle', group = 'oinstall') => `
 # Ensure log directory exists
-LOG_DIR="/var/log/netapp"
-sudo mkdir -p "$LOG_DIR"
-${changeOwner ? `sudo chown ${user}:${group} "$LOG_DIR"` : ''}
+sudo mkdir -p "${LINUX_LOG_DIRECTORY}"
+${changeOwner ? `sudo chown ${user}:${group} "${LINUX_LOG_DIRECTORY}"` : ''}
 `;
 
 const oracleStorageInfoFromOntapPythonTemplate = (params: ontapRequestParams) => `

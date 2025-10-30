@@ -1,4 +1,5 @@
 import { getOracleDefaultOrUserAuthCommand, pythonLogger } from '../../../workloads/oracle/oracle-ssm-script-utils';
+import { LINUX_LOG_DIRECTORY } from '../consts';
 
 const KERNEL_TCP_SLOT_PARAMETERS = `
 # Check sunrpc TCP slot table entries
@@ -393,9 +394,9 @@ const NFS_OS_ASSESSMENT = (ec2InstanceId: string, dbSid: string) => `
 
 ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
 
-sudo mkdir -p /var/log/netapp
-sudo chown oracle:oinstall /var/log/netapp
-sudo chmod 755 /var/log/netapp
+sudo mkdir -p ${LINUX_LOG_DIRECTORY}
+sudo chown oracle:oinstall ${LINUX_LOG_DIRECTORY}
+sudo chmod 755 ${LINUX_LOG_DIRECTORY}
 
 export PYTHON_LATEST=$(ls /usr/bin/python* /usr/local/bin/python* 2>/dev/null | xargs -I {} sh -c 'version=$({} -c "import sys; print(f\\"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\\")" 2>/dev/null); if [[ "$version" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then echo "{}|$version"; fi' | sort -t'|' -k2 -V | tail -n1 | cut -d'|' -f1)
 

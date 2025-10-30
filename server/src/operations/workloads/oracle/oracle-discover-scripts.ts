@@ -1,3 +1,4 @@
+import { LINUX_LOG_DIRECTORY } from '../../continuous-optimization/oracle/consts';
 import {
     checkOracleModuleAvailability,
     getMappedOntapDataVolume,
@@ -10,7 +11,7 @@ import {
 
 const debugLog = (logFileName: string) => `
 log() {
-    mkdir -p /var/log/netapp
+    mkdir -p ${LINUX_LOG_DIRECTORY}
     echo "[DEBUG $(date '+%Y-%m-%d %H:%M:%S')] $1" >> ${logFileName}
 }
 `;
@@ -1506,10 +1507,10 @@ const getMappedOntapDataVolumeForInstance = (
     fsxnId: string,
     region: string
 ) => `
-    ${debugLog('/var/log/netapp/mappedontapvolumes.log')}
+    ${debugLog(`${LINUX_LOG_DIRECTORY}/mappedontapvolumes.log`)}
 
     # Ensure log directory exists
-    mkdir -p /var/log/netapp
+    mkdir -p ${LINUX_LOG_DIRECTORY}
 
     log "Starting getMappedOntapDataVolumeForInstance"
     log "Parameters: ec2InstanceId=${ec2InstanceId}, oracleSids=${oracleSids.join()}, fsxnId=${fsxnId}, region=${region}"

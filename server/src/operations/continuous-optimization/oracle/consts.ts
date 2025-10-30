@@ -49,6 +49,8 @@ interface KernelTcpSlotOptimiseResponse {
     error?: string;
 }
 
+const LINUX_LOG_DIRECTORY = '/var/log/netapp/wlmdb';
+
 export {
     NETAPP_HOST_UTILITIES_RELATIVE_PATH,
     OracleJobMetadata,
@@ -56,5 +58,6 @@ export {
     TcpFeatures,
     InstallHostUtilitiesResponse,
     KernelTcpSlotOptimiseResponse,
-    GenericOptimizationResponse
+    GenericOptimizationResponse,
+    LINUX_LOG_DIRECTORY
 };

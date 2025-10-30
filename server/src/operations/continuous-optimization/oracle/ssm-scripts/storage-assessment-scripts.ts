@@ -5,6 +5,7 @@ import {
     checkCommandStatus,
     ontapRestApi
 } from '../../../workloads/oracle/oracle-ssm-script-utils';
+import { LINUX_LOG_DIRECTORY } from '../consts';
 
 const CHECK_ORACLE_FRA_RMAN_STATUS = (ec2InstanceId: string, dbSid: string) => `
     check_oracle_fra_rman_status() {
@@ -103,12 +104,12 @@ const VOLUME_LUN_CONFIGURATION = (instanceRecord: WorkloadInstance) =>
     `
 # Get Storage Configuration Assessment
 
-${debugLog('/var/log/netapp/storageassessment.log')}
+${debugLog(`${LINUX_LOG_DIRECTORY}/storageassessment.log`)}
 
 ${checkCommandStatus}
 
 # Ensure log directory exists
-mkdir -p /var/log/netapp
+mkdir -p ${LINUX_LOG_DIRECTORY}
 
 instanceName="${instanceRecord.name}"
 filesystemid="${instanceRecord.fsxFileSystem}"
