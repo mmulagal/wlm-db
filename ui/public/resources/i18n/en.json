@@ -635,6 +635,7 @@
             "mixed-state-config-tooltip": "This configuration analysis is dismissed or postponed for some of the instances.",
             "optimization-in-progress-for-host": "Optimization in progress for this host",
             "only-online-instances": "Only online resources can be assessed.",
+            "only-online-resource-fix": "Only online resources can be fixed.",
             "assessment-not-available": "assessment not available.",
             "oracle-multipath-io-action-summary": "Workload Factory recommends enabling Multipath I/O (MPIO) on database hosts that connect to ISCSI LUNs for Oracle databases. This host-level configuration improves storage reliability and performance by providing multiple redundant data paths between the server and storage.",
             "oracle-multipath-io-what-will-happen": "Workload Factory will enable and configure Multipath I/O on the selected database host, ensuring that all ISCSI LUNs are accessible through multiple paths.",

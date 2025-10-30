@@ -11,6 +11,7 @@ import {
     GETWELL_CONFIG,
     GETWELL_VALUES,
     INVENTORY_STATUS,
+    ORACLE_DATABASES_COMPONENTS,
     STATUS_CONST,
     WIZARD_TYPE
 } from '../../utils/consts';
@@ -132,12 +133,29 @@ export const getManagedHostCountFromInventory = (
 
         item?.sqlServerInstances?.forEach((instance: any) => {
             totalInstances += 1;
-            totalDatabases += instance?.databaseCount || 0;
+            if (type === DBType.ORACLE) {
+                instance?.databases?.forEach((db: any) => {
+                    if (db?.type === ORACLE_DATABASES_COMPONENTS.PDB) {
+                        totalDatabases += 1;
+                    }
+                });
+            } else {
+                totalDatabases += instance?.databaseCount || 0;
+            }
+
             if (instance?.statusColText !== INVENTORY_STATUS.MANAGED) {
                 return;
             }
             managedInstances += 1;
-            managedDatabases += instance?.databaseCount || 0;
+            if (type === DBType.ORACLE) {
+                instance?.databases?.forEach((db: any) => {
+                    if (db?.type === ORACLE_DATABASES_COMPONENTS.PDB) {
+                        managedDatabases += 1;
+                    }
+                });
+            } else {
+                managedDatabases += instance?.databaseCount || 0;
+            }
             if (inventoryTableData[key]?.loading) {
                 isLoading = true;
             }
@@ -2591,11 +2609,20 @@ export const createLogAnalyzerNotActiveInstance = (tableData: any) => {
             if (instance?.statusColText !== INVENTORY_STATUS.MANAGED) {
                 return;
             }
-            const logAnalyzerRow = allLogAnalysisData?.find(
+            let logAnalyzerRow = allLogAnalysisData?.find(
                 (perLa: any) =>
                     uniqueHostRow(perLa?.databaseHostId, perLa?.credentialId || '', perLa?.regionId || '') === key &&
                     perLa?.databaseInstanceId === instance?.databaseInstanceId
             );
+            if (!logAnalyzerRow) {
+                logAnalyzerRow = allLogAnalysisData?.find(
+                    (perLa: any) =>
+                        perLa?.databaseHostId === instance?.resourceId &&
+                        perLa?.credentialId === item?.credentialId &&
+                        perLa?.regionId === item?.regionId &&
+                        perLa?.databaseInstanceId === instance?.databaseInstanceId
+                );
+            }
             const logAnalyzerStatus = logAnalyzerRow?.status || ERROR_ANALYZER_STATUS.NOT_ACTIVE;
             if (logAnalyzerStatus === ERROR_ANALYZER_STATUS.ACTIVE) {
                 return;
@@ -2669,11 +2696,20 @@ export const createLogAnalyzerActiveInstance = (tableData: any[]) => {
             if (instance?.statusColText !== INVENTORY_STATUS.MANAGED) {
                 return;
             }
-            const logAnalyzerRow = allLogAnalysisData?.find(
+            let logAnalyzerRow = allLogAnalysisData?.find(
                 (perLa: any) =>
                     uniqueHostRow(perLa?.databaseHostId, perLa?.credentialId || '', perLa?.regionId || '') === key &&
                     perLa?.databaseInstanceId === instance?.databaseInstanceId
             );
+            if (!logAnalyzerRow) {
+                logAnalyzerRow = allLogAnalysisData?.find(
+                    (perLa: any) =>
+                        perLa?.databaseHostId === instance?.resourceId &&
+                        perLa?.credentialId === item?.credentialId &&
+                        perLa?.regionId === item?.regionId &&
+                        perLa?.databaseInstanceId === instance?.databaseInstanceId
+                );
+            }
             const logAnalyzerStatus = logAnalyzerRow?.status || ERROR_ANALYZER_STATUS.NOT_ACTIVE;
             if (logAnalyzerStatus !== ERROR_ANALYZER_STATUS.ACTIVE) {
                 return;

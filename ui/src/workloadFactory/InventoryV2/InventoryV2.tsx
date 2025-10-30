@@ -226,7 +226,7 @@ const InventoryV2 = () => {
                             ? INVENTORY_STATUS.REGISTERED
                             : INVENTORY_STATUS.NOT_REGISTERED;
 
-                        const logAnalyzerRow = allLogAnalysisDataLatest?.find(
+                        let logAnalyzerRow = allLogAnalysisDataLatest?.find(
                             (perLa: any) =>
                                 uniqueHostRow(
                                     perLa?.databaseHostId,
@@ -234,6 +234,15 @@ const InventoryV2 = () => {
                                     perLa?.regionId || ''
                                 ) === key && perLa?.databaseInstanceId === perRow?.databaseInstanceId
                         );
+                        if (!logAnalyzerRow) {
+                            logAnalyzerRow = allLogAnalysisDataLatest?.find(
+                                (perLa: any) =>
+                                    perLa?.databaseHostId === perRow?.resourceId &&
+                                    perLa?.credentialId === inventoryTableData?.[key]?.credentialId &&
+                                    perLa?.regionId === inventoryTableData?.[key]?.regionId &&
+                                    perLa?.databaseInstanceId === perRow?.databaseInstanceId
+                            );
+                        }
                         const logAnalyzerStatus = logAnalyzerRow?.status || ERROR_ANALYZER_STATUS.NOT_ACTIVE;
                         const perRowData = {
                             ...perRow,

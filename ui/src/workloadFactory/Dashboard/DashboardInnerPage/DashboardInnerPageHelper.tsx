@@ -7,7 +7,9 @@ import {
     CONFIG_STATE_ACTIONS,
     CONFIG_STATES,
     DBType,
-    GETWELL_STATUS
+    GETWELL_STATUS,
+    INVENTORY_STATUS,
+    STATUS_CONST
 } from '../../../utils/consts';
 import { categorizeStateInstances } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { updateConfigStateStatus } from '../../GetWell/GetWellUtils';
@@ -389,6 +391,9 @@ export const bulkFixDisableCheck = (
     const checkIfAnyRowNotOptimized = (selectedRows: any[]) =>
         selectedRows.some((row: any) => row?.assessmentStatus !== GETWELL_STATUS.OPTIMIZED);
 
+    const checkIfAllRowNotOnline = (selectedRows: any[]) =>
+        selectedRows.every((row: any) => row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP);
+
     // Function to check if all selected rows has same host
     const checkIfAllRowsSameHost = (selectedRows: any[]) =>
         selectedRows.every((row: any) => row?.databaseHostId === selectedRows[0]?.databaseHostId);
@@ -421,6 +426,9 @@ export const bulkFixDisableCheck = (
     } else if (!checkIfAnyRowNotOptimized(selectedRowsForOptimize)) {
         isFixDisabled = true;
         fixDisableMsg = t('databases.well-architect.bulk-fix-disabled');
+    } else if (checkIfAllRowNotOnline(selectedRowsForOptimize)) {
+        isFixDisabled = true;
+        fixDisableMsg = t('databases.well-architect.only-online-resource-fix');
     } else if (
         configType === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING &&
         !checkIfAllRowsSameHost(selectedRowsForOptimize)
@@ -482,7 +490,9 @@ export const sortOptimizeDashboardInnerTable = (data: any) => {
 };
 
 export const filterNotOptimizedRows = (data: any[]) =>
-    data.filter(row => row.assessmentStatus !== GETWELL_STATUS.OPTIMIZED);
+    data.filter(
+        row => row?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP && row.assessmentStatus !== GETWELL_STATUS.OPTIMIZED
+    );
 
 // Check if all rowData entries have the same assessment status
 export const getAssessmentStatusConsistency = (data: any) => {

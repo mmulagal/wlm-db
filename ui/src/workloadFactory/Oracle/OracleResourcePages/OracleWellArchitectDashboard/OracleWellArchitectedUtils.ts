@@ -248,7 +248,7 @@ const cardConfigurations: Record<string, CardConfig> = {
         resourceType: 'Volume',
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
         description:
-            'Placing archive logs on a dedicated volume ensures efficient backup and recovery processes and helps reduce storage cost.\nBy separating archive logs, you can apply specific storage configurations, such as compression and tiering policies, to optimize cost and performance.\nThis separation also facilitates efficient snapshot and backup strategies, ensuring that archive logs are readily available for recovery without impacting\nthe performance of redo logs, data files, or control files.',
+            'Placing archive logs on a dedicated volume ensures efficient backup and recovery processes and helps reduce storage cost.\nBy separating archive logs, you can apply specific storage configurations, such as compression and tiering policies, to optimize cost and performance.\nThis separation also facilitates efficient snapshot and backup strategies, ensuring that archive logs are readily available for recovery without impacting the performance of redo logs, data files, or control files.',
         smallFont: true
     },
     datafiles_placement: {

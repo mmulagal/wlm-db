@@ -5308,7 +5308,7 @@ export const checkIfDisableForOptimize = (
         errorMessage = translation('databases.well-architect.optimization-in-progress-for-host');
     } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
         isDisabled = true;
-        errorMessage = translation('databases.well-architect.only-online-instances');
+        errorMessage = translation('databases.well-architect.only-online-resource-fix');
     } else if (rowData?.configState && rowData?.configState === CONFIG_STATES.ACTIVATING) {
         isDisabled = true;
         errorMessage = '';
@@ -5366,9 +5366,6 @@ export const checkIfDisableFullRow = (inProgressHostData: any, name: string, row
     if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
         isDisabled = true;
         errorMessage = translation('databases.well-architect.optimization-in-progress-for-host');
-    } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
-        isDisabled = true;
-        errorMessage = translation('databases.well-architect.only-online-instances');
     }
     return { isDisabled, errorMessage };
 };
@@ -5376,10 +5373,7 @@ export const checkIfDisableFullRow = (inProgressHostData: any, name: string, row
 export const checkIfDisableForDismiss = (rowData: any, selectedRowsForDismiss?: any) => {
     let isDisabled = false;
     let errorMessage = '';
-    if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
-        isDisabled = true;
-        errorMessage = GENERAL.ONLINE_INSTANCE_DISMISS;
-    } else if (selectedRowsForDismiss && selectedRowsForDismiss.length > 0) {
+    if (selectedRowsForDismiss && selectedRowsForDismiss.length > 0) {
         isDisabled = true;
         errorMessage = '';
     }
@@ -5398,7 +5392,7 @@ export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string, 
             ...row,
             cellProps: {
                 ...row.cellProps,
-                isDisabled: row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP || isDisabled,
+                isDisabled,
                 selectionProps: {
                     title: errorMessage,
                     titleProps: {
@@ -5486,7 +5480,7 @@ export const disableOptimizeCheckBoxForOptimizeCase = (
         const hasStatusOffline = row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP;
 
         // Combine both conditions
-        let isDisabled = isBeingOptimized || hasStatusOffline;
+        let isDisabled = isBeingOptimized;
         let errorMessage = '';
         if (!isDisabled) {
             ({ isDisabled, errorMessage } = checkIfDisableFullRow(inProgressHostData, type, row, translation));
