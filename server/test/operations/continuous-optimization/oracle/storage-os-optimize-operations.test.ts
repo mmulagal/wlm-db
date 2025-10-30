@@ -178,7 +178,7 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
             // Find the parent job for TCP options optimization
             const tcpOptimizeJob = jobItems?.find(
                 (job: any) =>
-                    job.description?.includes('TCP Slot table entries') &&
+                    job.description?.includes('TCP advanced options') &&
                     job.type === JOBTYPE.WELL_ARCHITECTED &&
                     job.resourceName === dbInstanceSid
             );
@@ -278,7 +278,7 @@ describe('oracleOptimizeStorageOS (integration style)', () => {
             // Find the parent job for kernel TCP sunrpc slots optimization
             const tcpSunrpcOptimizeJob = jobItems?.find(
                 (job: any) =>
-                    job.description.toLowerCase().includes('kernel parameters') &&
+                    job.description.toLowerCase().includes('slot table') &&
                     job.type === JOBTYPE.WELL_ARCHITECTED &&
                     job.resourceName === dbInstanceSid
             );

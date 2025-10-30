@@ -1444,10 +1444,12 @@ function handleGetOracleAssessmentForDemo(
             storageConfigsOptimized
         );
 
-        storageAssessmentResponse.configuration.luns = optimizeConfig(
-            storageAssessmentResponse.configuration.luns as ParameterDriftResponseType[],
-            storageConfigsOptimized
-        );
+        if (assessmentData.storageProtocol === STORAGE_PROTOCOLS.ISCSI) {
+            storageAssessmentResponse.configuration.luns = optimizeConfig(
+                storageAssessmentResponse.configuration.luns as ParameterDriftResponseType[],
+                storageConfigsOptimized
+            );
+        }
     }
 
     if (storageAssessmentResponse.layout) {

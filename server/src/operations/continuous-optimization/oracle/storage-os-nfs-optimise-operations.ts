@@ -132,7 +132,7 @@ async function oracleOptimizeStorageOSForNfs(
     let jobDescription = '';
     switch (configurationName) {
         case OptimizeOracleNFSStorageOperatingSystem.KERNEL_PARAMETERS:
-            jobDescription = `Fix storage operating system kernel parameters for ${serverNameWithHostName}`;
+            jobDescription = `Fix storage operating system TCP slot table for ${serverNameWithHostName}`;
             break;
         default:
             break;

@@ -142,7 +142,7 @@ async function oracleOptimizeStorageOS(
     let jobDescription = '';
     switch (configurationName) {
         case OptimizeOracleiSCSIStorageOperatingSystem.TCP_OPTIONS:
-            jobDescription = `Fix TCP Slot table entries for ${serverNameWithHostName}`;
+            jobDescription = `Fix TCP advanced options for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.ISCSI_REPLACEMENT_TIMEOUT:
             jobDescription = `Fix iSCSI replacement timeout for ${serverNameWithHostName}`;
@@ -560,8 +560,8 @@ async function optimizeTcpOptions(params: OptimizeOSParams) {
     logger.info('Optimizing TCP Options', { accountId, databaseHostId, serverNameWithHostName, databaseInstanceId });
 
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Set NFS TCP slot table entries for ${serverNameWithHostName}`,
-        description: `Set NFS TCP slot table entries for ${serverNameWithHostName}`,
+        name: `Enable TCP advanced options (tcp_timestamps, tcp_sack, tcp_window_scaling) for ${serverNameWithHostName}`,
+        description: `Enable TCP advanced options (tcp_timestamps, tcp_sack, tcp_window_scaling) for ${serverNameWithHostName}`,
         resourceName: serverNameWithHostName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
