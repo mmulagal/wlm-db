@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash-es';
-import { HEADERS, MANUAL_TCO, USER_TOKEN, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
+import { HEADERS, MARKETING_API_TCO, USER_TOKEN, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
@@ -28,6 +28,11 @@ async function getStorageSavings(
         url = `accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/fsxw/auto/calculate`;
     }
 
+    const cacheKey = generateHash(JSON.stringify(params));
+    if (hasCache(MARKETING_API_TCO, cacheKey)) {
+        return readFromCacheByKey(MARKETING_API_TCO, cacheKey) as CalculateEbsComparisonResponse;
+    }
+
     const response = await gotInstanceForInternalRequest
         .post(url, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
@@ -40,6 +45,10 @@ async function getStorageSavings(
             json: params
         })
         .json<CalculateEbsComparisonResponse>();
+
+    if (!isEmpty(response)) {
+        writeToCache(MARKETING_API_TCO, cacheKey, response);
+    }
     return response;
 }
 
@@ -53,8 +62,8 @@ async function getManualModeStorageSavings<T>(accountId: string, params: ManualM
     logger.info('URL>>>', url);
 
     const cacheKey = generateHash(JSON.stringify(params));
-    if (!process.env.TEST && hasCache(MANUAL_TCO, cacheKey)) {
-        return readFromCacheByKey(MANUAL_TCO, cacheKey) as T;
+    if (!process.env.TEST && hasCache(MARKETING_API_TCO, cacheKey)) {
+        return readFromCacheByKey(MARKETING_API_TCO, cacheKey) as T;
     }
 
     const response = await gotInstanceForInternalRequest
@@ -71,7 +80,7 @@ async function getManualModeStorageSavings<T>(accountId: string, params: ManualM
         .json<T>();
 
     if (!isEmpty(response)) {
-        writeToCache(MANUAL_TCO, cacheKey, response);
+        writeToCache(MARKETING_API_TCO, cacheKey, response);
     }
     return response;
 }
