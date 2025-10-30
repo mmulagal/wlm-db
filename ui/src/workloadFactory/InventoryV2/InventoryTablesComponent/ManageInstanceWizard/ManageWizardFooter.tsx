@@ -89,6 +89,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
         const batches = chunkArray(fullPayload, DETECT_PAYLOAD_SIZE);
         let newSelectedMultiDetectInstances: BulkDetectedInstance[] = selectedMultiDetectInstances;
+        // @ts-ignore
         const engineType = selectedMultiDetectInstances[0]?.data?.hostType;
 
         // Check if any batch has credentials before processing
@@ -182,19 +183,31 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             if (payload?.items?.some(item => item?.credentials?.length > 0)) {
                 const result = await registerResourceCredBulk({ payload });
                 if (result && !result?.error && result?.data) {
-                    if (
-                        result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
-                        result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
-                        result?.data?.items?.[0]?.registerDetails?.[0]?.oracleAsmError
-                    ) {
-                        const error = [];
-                        error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError || '');
-                        error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError || '');
-                        error.push(result?.data?.items?.[0]?.registerDetails?.[0]?.oracleAsmError || '');
+                    const registerDetails = result?.data?.items?.[0]?.registerDetails || [];
+                    const errors: string[] = [];
+                    let hasErrors = false;
+
+                    // If we are giving multiple credentials like msql/oracle cred and also fsx credentials then the error can be present at any position
+                    registerDetails.forEach((detail: any) => {
+                        if (detail?.databaseServerError) {
+                            errors.push(detail.databaseServerError);
+                            hasErrors = true;
+                        }
+                        if (detail?.fsxnError) {
+                            errors.push(detail.fsxnError);
+                            hasErrors = true;
+                        }
+                        if (detail?.oracleAsmError) {
+                            errors.push(detail.oracleAsmError);
+                            hasErrors = true;
+                        }
+                    });
+
+                    if (hasErrors) {
                         dispatch(
                             addNotification({
                                 notificationType: NOTIFICATION_TYPES.ERROR,
-                                message: error.join(' ') || t('databases.register-flow.manage-detect-fail-message')
+                                message: errors.join(' ') || t('databases.register-flow.manage-detect-fail-message')
                             })
                         );
                     } else {
@@ -266,6 +279,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 goToNextStep();
             } else {
                 setState({ hitNext: true });
+                // @ts-ignore
                 const engineType = selectedMultiDetectInstances[0]?.data?.hostType || DBType.MSSQL;
                 const fieldsCorrect = detectFieldsValidation(bulkInstanceData, engineType);
                 if (fieldsCorrect) {
@@ -277,6 +291,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     const handleManage = () => {
         if (wizardOperationType === ACTION_TYPE.BULK) {
+            // @ts-ignore
             const engineType = selectedMultiDetectInstances[0]?.data?.hostType || DBType.MSSQL;
             const manageApi = engineType === DBType.ORACLE ? manageBulkV2OracleInstanceApi : manageBulkV2InstanceApi;
             handleMultiInstanceManage(
