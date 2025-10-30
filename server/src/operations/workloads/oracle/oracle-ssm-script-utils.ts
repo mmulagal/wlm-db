@@ -1161,6 +1161,25 @@ EOF
         )
         echo "$result" | grep -q "true" && echo "true" || echo "false"
 }
+
+    # Checks if there is more than one PDB in READ WRITE or READ ONLY state.
+    # Note: PDB$SEED is always in READ ONLY state and is included in the count.
+    # This function effectively checks if there is at least one user-created PDB in READ WRITE or READ ONLY state.
+    check_for_pdb_read_write_state() {
+        local result=$(sudo -i -u oracle bash <<EOF
+            set -e
+            export ORACLE_SID="$oracleSid"
+            $sqlplus_command
+            WHENEVER SQLERROR EXIT SQL.SQLCODE
+            SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+            SELECT CASE WHEN COUNT(*) > 1 THEN 'true' ELSE 'false' END
+            FROM v\\$pdbs
+            WHERE open_mode = 'READ WRITE' or open_mode = 'READ ONLY';
+            EXIT;
+EOF
+        )
+        echo "$result" | grep -q "true" && echo "true" || echo "false"
+}
 `;
 
 const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string) => `
@@ -1178,6 +1197,7 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
     username=$(sed -n 's/.* -S \\([^/]*\\)\\/.*/\\1/p' <<< "$sqlplus_command")
     isCreateSessionRoleGranted=$(is_create_session_granted)
     remediationMissingPermissions="[]"
+    errors="[]"
 
     if [ "$username" == "sys" ]; then
         # SYS user has all privileges, so we don't need to check for permissions.
@@ -1200,19 +1220,26 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
             # Perform actions specific to CDB instances
             isSetContainerRoleGranted=$(check_for_set_container_permission)
             isContainerDataPermissionGranted=$(check_for_container_data_permission)
+            arePDBsInReadWriteState=$(check_for_pdb_read_write_state)
 
             missingPermissions="["
+            errors="["
             if [ "$isSetContainerRoleGranted" == "false" ]; then
                 missingPermissions="$missingPermissions\\"SET CONTAINER ROLE\\","
             fi
             if [ "$isContainerDataPermissionGranted" == "false" ]; then
                 missingPermissions="$missingPermissions\\"SET CONTAINER_DATA\\","
+                errors="$errors\\"either SET CONTAINER_DATA privilege is not granted or PDBs are not in READ WRITE or READ ONLY state\\","
+            elif [ "$isContainerDataPermissionGranted" == "true" ] && [ "$arePDBsInReadWriteState" == "false" ]; then
+                errors="$errors\\"Not all PDBs are in READ WRITE or READ ONLY state\\","
             fi
+
             if [ "$isSelectCatalogRoleGranted" == "false" ]; then
                 missingPermissions="$missingPermissions\\"SELECT CATALOG ROLE\\","
             fi
             # Remove trailing comma if any
             missingPermissions="\${missingPermissions%,}]"
+            errors="\${errors%,}]"
         else
             # Perform actions specific to non-CDB instances
             if [ "$isSelectCatalogRoleGranted" == "false" ]; then
@@ -1223,7 +1250,7 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
         fi
     fi
 
-    missingOracleUserPermissions="{\\"instanceSid\\": \\"$oracleSid\\", \\"missingPermissions\\": $missingPermissions, \\"remediationMissingPermissions\\": $remediationMissingPermissions}"
+    missingOracleUserPermissions="{\\"instanceSid\\": \\"$oracleSid\\", \\"missingPermissions\\": $missingPermissions, \\"remediationMissingPermissions\\": $remediationMissingPermissions, \\"errors\\": $errors}"
 
     resultObject=$(echo "$resultObject" | jq --argjson permissions "$(echo "$missingOracleUserPermissions" | jq '.')" '.missingOracleUserPermissions += [$permissions]')
 `;

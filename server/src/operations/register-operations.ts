@@ -2679,9 +2679,15 @@ async function validateOracleCredentials(
 
         if (missingOracleUserPermissions && missingOracleUserPermissions.length) {
             for (const permission of missingOracleUserPermissions) {
-                const { instanceSid, missingPermissions, remediationMissingPermissions } = permission;
+                const { instanceSid, missingPermissions, remediationMissingPermissions, errors } = permission;
                 instanceIdToMissingPermissionsMap.set(instanceSid, missingPermissions);
                 instanceIdToRemediationMissingPermissionsMap.set(instanceSid, remediationMissingPermissions);
+                if (errors && errors.length) {
+                    throw createError(
+                        HttpErrorCodes.VALIDATION_ERROR,
+                        `Failed to validate Oracle credentials for instance ${instanceSid}. Reason: ${errors}`
+                    );
+                }
             }
         }
 
