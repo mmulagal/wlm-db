@@ -782,13 +782,26 @@ def download_and_extract_targz(url, download_path, extract_dir):
         log(f'Creating extraction directory {extract_dir}')
         os.makedirs(extract_dir, exist_ok=True)
         
-        # Extract tar.gz using tarfile module
+        # Extract tar.gz using tar CLI command
         log(f'Extracting tar.gz file to {extract_dir}')
         try:
-            with tarfile.open(download_path, 'r:gz') as tar:
-                tar.extractall(path=extract_dir)
+            result = subprocess.run(
+                ['tar', '-xzf', download_path, '-C', extract_dir],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                timeout=120
+            )
+            if result.returncode != 0:
+                error_msg = f'Extraction failed: {result.stderr.strip()}'
+                log(error_msg)
+                return {"success": False, "error": error_msg, "extract_dir": None}
             log(f'Successfully extracted tar.gz to {extract_dir}')
             return {"success": True, "error": None, "extract_dir": extract_dir}
+        except subprocess.TimeoutExpired:
+            error_msg = 'Extraction timed out after 120 seconds'
+            log(error_msg)
+            return {"success": False, "error": error_msg, "extract_dir": None}
         except Exception as e:
             error_msg = f'Extraction failed: {str(e)}'
             log(error_msg)

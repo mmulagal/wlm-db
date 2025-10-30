@@ -235,9 +235,7 @@ async function oracleOptimizeStorageOS(
                     serverNameWithHostName,
                     parentJobId,
                     databaseInstanceId,
-                    databaseInstanceName: instanceName,
-                    fsxId,
-                    activeNodeInstanceId: activeNodeInstanceId!,
+                    activeNodeInstanceId,
                     instanceMetadata
                 });
             } catch (error) {
