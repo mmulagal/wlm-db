@@ -416,7 +416,12 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                // Fail parent job only if grub update is required (restart case)
+                if (parentJobError.includes('GRUB')) {
+                    parentJobStatus = JOBSTATUS.FAILED;
+                } else {
+                    parentJobStatus = JOBSTATUS.WARNING;
+                }
             }
             break;
         }
@@ -500,31 +505,33 @@ async function oracleOptimizeStorageOS(
     );
 
     // Common assessment trigger logic for all successful optimizations
-    try {
-        const instanceToAssess: WorkloadInstance = {
-            id: databaseInstanceId,
-            name: instanceName,
-            type: RESOURCESTYPE.ORACLE,
-            region,
-            sqlAuthEnabled: false,
-            fsxFileSystem: fsxId,
-            activeNodeInstanceid: activeNodeInstanceId,
-            resourceName: serverNameWithHostName
-        };
-        await triggerAssessmentAfterOptimization(
-            credentialsId,
-            region,
-            accountId,
-            databaseHostId,
-            serverNameWithHostName,
-            parentJobId,
-            instanceToAssess,
-            AssessmentCategories.STORAGE,
-            RESOURCESTYPE.ORACLE
-        );
-    } catch (error) {
-        logger.error(`Error triggering assessment after optimization for databaseHost ${databaseHostId}: ${error}`);
-        parentJobStatus = JOBSTATUS.WARNING;
+    if (parentJobStatus === JOBSTATUS.COMPLETED || parentJobStatus === JOBSTATUS.WARNING) {
+        try {
+            const instanceToAssess: WorkloadInstance = {
+                id: databaseInstanceId,
+                name: instanceName,
+                type: RESOURCESTYPE.ORACLE,
+                region,
+                sqlAuthEnabled: false,
+                fsxFileSystem: fsxId,
+                activeNodeInstanceid: activeNodeInstanceId,
+                resourceName: serverNameWithHostName
+            };
+            await triggerAssessmentAfterOptimization(
+                credentialsId,
+                region,
+                accountId,
+                databaseHostId,
+                serverNameWithHostName,
+                parentJobId,
+                instanceToAssess,
+                AssessmentCategories.STORAGE,
+                RESOURCESTYPE.ORACLE
+            );
+        } catch (error) {
+            logger.error(`Error triggering assessment after optimization for databaseHost ${databaseHostId}: ${error}`);
+            parentJobStatus = JOBSTATUS.WARNING;
+        }
     }
 
     await updateJobDetails(accountId, parentJobId, {
@@ -1360,7 +1367,7 @@ async function enableMultipathIo(params: OptimizeOSParams) {
                 break;
             case 'restart-required':
                 jobError =
-                    'Fix aborted. Multipath enablement requires removing "multipath=off" from GRUB configuration and restarting the instance. Manual intervention required.';
+                    'Fix aborted. Multipath enablement requires removing "multipath=off" from GRUB configuration at "/etc/default/grub" and restarting the instance. Manual intervention required.';
                 logger.info(jobError);
                 jobStatus = JOBSTATUS.FAILED;
                 break;
@@ -1379,7 +1386,7 @@ async function enableMultipathIo(params: OptimizeOSParams) {
         }
     } catch (error) {
         logger.error(`Error while enabling multipath IO: ${error}`);
-        jobError = `Error while enabling multipath IO: ${error}`;
+        jobError = String(error);
         jobStatus = JOBSTATUS.FAILED;
     } finally {
         await updateJobDetails(accountId, jobId, {
