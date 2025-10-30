@@ -11,12 +11,12 @@ import {
     ChartOptions,
     TooltipModel
 } from 'chart.js';
+import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
+import { useTranslation } from 'react-i18next';
 import styles from './ErrorBarGraph.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { ErrorInvestigationGetApiResponse } from '../../../../../../utils/types/agenticAITypes';
 import { ReactComponent as LoadingEmptyGraph } from '../../../../../../assets/loading_empty_graph.svg';
-import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
-import { useTranslation } from 'react-i18next';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 

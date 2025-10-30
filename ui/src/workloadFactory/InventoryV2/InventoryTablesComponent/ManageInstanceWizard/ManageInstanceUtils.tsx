@@ -42,14 +42,14 @@ import {
 } from './DetectInstanceStep/DetectContent/DetectContentHelper';
 
 // Helper function to get engine type display name based on engine type
-const getEngineTypeDisplayName = (engineType: string): string => {
+const getEngineTypeDisplayName = (engineType: string, messageType: 'single' | 'multi'): string => {
     switch (engineType) {
         case DBType.MSSQL:
-            return REGISTER_INSTANCE_STATE.MSSQL;
+            return messageType === 'single' ? REGISTER_INSTANCE_STATE.MSSQL : `${REGISTER_INSTANCE_STATE.MSSQL}s`;
         case DBType.ORACLE:
-            return REGISTER_INSTANCE_STATE.ORACLE;
+            return messageType === 'single' ? REGISTER_INSTANCE_STATE.ORACLE : `${REGISTER_INSTANCE_STATE.ORACLE}s`;
         default:
-            return REGISTER_INSTANCE_STATE.MSSQL;
+            return messageType === 'single' ? REGISTER_INSTANCE_STATE.MSSQL : `${REGISTER_INSTANCE_STATE.MSSQL}s`;
     }
 };
 
@@ -59,12 +59,12 @@ const createManageInstanceMessageText = (
     instanceIdentifier: string | number,
     messageType: 'single' | 'multi'
 ): string => {
-    const engineDisplayName = getEngineTypeDisplayName(engineType);
+    const engineDisplayName = getEngineTypeDisplayName(engineType, messageType);
 
     if (messageType === 'single') {
         return `${GENERAL.INSTANCE_MANAGE_REQUEST[0]} ${engineDisplayName} ${instanceIdentifier} ${GENERAL.INSTANCE_MANAGE_REQUEST[1]}`;
     }
-    return `${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[0]} ${engineDisplayName} ${instanceIdentifier} ${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[1]}`;
+    return `${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[0]}  ${instanceIdentifier}  ${engineDisplayName} ${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[1]}`;
 };
 
 // Checks if the manage readiness data allows for management actions based on missing permissions and modules
