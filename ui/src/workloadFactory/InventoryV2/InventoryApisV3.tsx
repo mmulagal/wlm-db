@@ -1093,6 +1093,28 @@ const InventoryApisV3 = () => {
                     fields
                 };
                 dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataErr }));
+                // Fallback rationale: instance API failed so we cannot determine EBS protection.
+                // Without this fallback the potential savings entry would spin forever waiting for classification.
+                // We set isProtected=UNKNOWN and loading=false so UI can render a stable state; a manual refresh will retry proper classification.
+                const potentialSavingsKey = uniqueHostRow(instanceId, instanceCredId, instanceRegionId);
+                const potentialSavingsEntry = potentialSavingsHostDataRef.current?.[potentialSavingsKey];
+                if (potentialSavingsEntry?.loading && !potentialSavingsEntry?.isProtected) {
+                    const updatedPotentialSavings: Record<
+                        string,
+                        { error: any; data: any; loading: boolean; storageType: any; isProtected: string | null }
+                    > = {};
+                    updatedPotentialSavings[potentialSavingsKey] = {
+                        ...potentialSavingsEntry,
+                        loading: false,
+                        isProtected: EBS_PROTECTED_OPTIONS.UNKNOWN
+                    };
+                    dispatch(
+                        setPotentialSavingsHostData({
+                            ...potentialSavingsHostDataRef.current,
+                            ...updatedPotentialSavings
+                        })
+                    );
+                }
             }
         } catch (error) {
             const mssqlInstancesDataErr: any = {};
@@ -1104,6 +1126,27 @@ const InventoryApisV3 = () => {
                 fields
             };
             dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataErr }));
+            // Fallback rationale: Without instance data we can't classify EBS protection and the potential savings row would stay in a perpetual loading state.
+            // We mark isProtected as UNKNOWN and loading:false so the UI stops spinning; a manual refresh later will retry proper classification.
+            const potentialSavingsKey = uniqueHostRow(instanceId, instanceCredId, instanceRegionId);
+            const potentialSavingsEntry = potentialSavingsHostDataRef.current?.[potentialSavingsKey];
+            if (potentialSavingsEntry?.loading && !potentialSavingsEntry?.isProtected) {
+                const updatedPotentialSavings: Record<
+                    string,
+                    { error: any; data: any; loading: boolean; storageType: any; isProtected: string | null }
+                > = {};
+                updatedPotentialSavings[potentialSavingsKey] = {
+                    ...potentialSavingsEntry,
+                    loading: false,
+                    isProtected: EBS_PROTECTED_OPTIONS.UNKNOWN
+                };
+                dispatch(
+                    setPotentialSavingsHostData({
+                        ...potentialSavingsHostDataRef.current,
+                        ...updatedPotentialSavings
+                    })
+                );
+            }
         }
     };
 
