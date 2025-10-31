@@ -37,7 +37,12 @@ const NewPotentialSavings = () => {
 
     const handleClick = (value: string) => {
         dispatch(setSelectedHeaderTab(value));
-        dashboardRedirection('explore-savings/explore-savings-ebs');
+        if (isWorkloadFactory) {
+            dashboardRedirection('explore-savings/explore-savings-ebs');
+        } else {
+            dashboardRedirection('explore-savings');
+        }
+
         if (isWorkloadFactory) {
             navigate('../../databases/explore-savings/explore-savings-ebs');
         }
