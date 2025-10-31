@@ -143,8 +143,8 @@ describe('Manage operations', () => {
                 databaseServerEdition: '19.0.0.0.0',
                 resourceType: 'ORACLE',
                 manageReadiness: {
-                    oracle: {
-                        missingPermissions: [],
+                    assessment: {
+                        missingSqlPermissions: [],
                         missingModules: []
                     },
                     remediation: {

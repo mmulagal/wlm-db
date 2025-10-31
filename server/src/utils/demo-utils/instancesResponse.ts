@@ -430,9 +430,9 @@ function oracleInstanceDemoData(fsxId: string, ec2InstanceId: string) {
                         oracleServerAuthentication: false,
                         asmAuthentication: false,
                         manageReadiness: {
-                            oracle: {
+                            assessment: {
                                 missingModules: [],
-                                missingPermissions: []
+                                missingSqlPermissions: []
                             }
                         }
                     }

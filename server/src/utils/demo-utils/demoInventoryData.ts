@@ -525,9 +525,9 @@ function discoverDemoDataOracle(fsxId: string, ebsVolId: string) {
                         oracleServerAuthentication: false,
                         asmAuthentication: false,
                         manageReadiness: {
-                            oracle: {
+                            assessment: {
                                 missingModules: [],
-                                missingPermissions: []
+                                missingSqlPermissions: []
                             }
                         }
                     }
@@ -609,9 +609,9 @@ function discoverDemoDataOracle(fsxId: string, ebsVolId: string) {
                         oracleServerAuthentication: false,
                         asmAuthentication: false,
                         manageReadiness: {
-                            oracle: {
+                            assessment: {
                                 missingModules: [],
-                                missingPermissions: []
+                                missingSqlPermissions: []
                             }
                         }
                     }

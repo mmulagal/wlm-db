@@ -1990,9 +1990,9 @@ async function validateAndStoreDiscoveredParameters(
                 cred.resourceType === RESOURCESTYPE.ORACLE
                     ? {
                           manageReadiness: {
-                              oracle: {
+                              assessment: {
                                   missingModules: [],
-                                  missingPermissions: []
+                                  missingSqlPermissions: []
                               }
                           }
                       }
@@ -2741,8 +2741,8 @@ async function validateOracleCredentials(
                     resourceType: RESOURCESTYPE.ORACLE,
                     databaseServerError: instance.oracleError,
                     manageReadiness: {
-                        oracle: {
-                            missingPermissions: ['Invalid credentials provided'],
+                        assessment: {
+                            missingSqlPermissions: ['Invalid credentials provided'],
                             missingModules
                         }
                     }
@@ -2757,8 +2757,8 @@ async function validateOracleCredentials(
                     resourceType: RESOURCESTYPE.ORACLE,
                     databaseServerEdition: oracleEdition,
                     manageReadiness: {
-                        oracle: {
-                            missingPermissions,
+                        assessment: {
+                            missingSqlPermissions: missingPermissions,
                             missingModules
                         },
                         remediation: {

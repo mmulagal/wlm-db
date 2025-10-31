@@ -1824,13 +1824,13 @@ async function discoverOracleResources(
                             oracleServerAuthentication: isOracleAuth,
                             asmAuthentication: isAsmAuth,
                             manageReadiness: {
-                                oracle: {
+                                assessment: {
                                     missingModules: [
                                         isAwsCliInstalled === 'false' ? 'awsCli' : null,
                                         isJqInstalled === 'false' ? 'jq' : null,
                                         isPythonInstalled === 'false' ? 'python' : null
                                     ].filter(Boolean) as string[],
-                                    missingPermissions
+                                    missingSqlPermissions: missingPermissions
                                 },
                                 remediation: {
                                     missingSqlPermissions: remediationMissingPermissions,

@@ -3296,10 +3296,6 @@ const DEMO_REGISTER_RESPONSE = {
         sandbox: {
             missingSqlPermissions: [],
             missingModules: []
-        },
-        oracle: {
-            missingModules: [],
-            missingPermissions: []
         }
     }
 };

@@ -221,13 +221,7 @@ const SingleRegisterCredentialsResponse = Type.Object({
             assessment: Type.Optional(ManageReadinessObject),
             remediation: Type.Optional(ManageReadinessObject),
             dbcreation: Type.Optional(ManageReadinessObject),
-            sandbox: Type.Optional(ManageReadinessObject),
-            oracle: Type.Optional(
-                Type.Object({
-                    missingPermissions: Type.Array(Type.String({ description: 'Missing Oracle user permissions' })),
-                    missingModules: Type.Array(Type.String({ description: 'Missing Oracle user modules' }))
-                })
-            )
+            sandbox: Type.Optional(ManageReadinessObject)
         })
     )
 });
