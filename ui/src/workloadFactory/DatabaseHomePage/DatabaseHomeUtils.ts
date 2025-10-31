@@ -9,6 +9,7 @@ import {
     ERROR_ANALYZER_STATUS,
     FINDINGS,
     GETWELL_CONFIG,
+    GETWELL_STATUS,
     GETWELL_VALUES,
     INVENTORY_STATUS,
     ORACLE_DATABASES_COMPONENTS,
@@ -722,6 +723,18 @@ const checkMSSQLConfigurationsOptimized = (instanceAssessmentData: any) => {
         instanceAssessmentData?.clone?.status,
         instanceAssessmentData?.dismissedConfigurations?.clone?.configState
     );
+    const isScheduledLocalSnapshot = isOptimized(
+        instanceAssessmentData?.snapshotPolicy?.status,
+        instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
+    );
+    const isCrr = isOptimized(
+        instanceAssessmentData?.crr?.status,
+        instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+    );
+    const isAwsBackup = isOptimized(
+        instanceAssessmentData?.awsBackup?.status,
+        instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
+    );
 
     return {
         isComputeOptimized,
@@ -731,7 +744,10 @@ const checkMSSQLConfigurationsOptimized = (instanceAssessmentData: any) => {
         isLicenseOptimized,
         isMicrosoftSqlPatchOptimized,
         isMaxdopPatchOptimized,
-        isCloneOptimized
+        isCloneOptimized,
+        isScheduledLocalSnapshot,
+        isCrr,
+        isAwsBackup
     };
 };
 
@@ -793,21 +809,72 @@ const checkMSSQLConfigurationSeverities = (
 
     // Check compute configurations
     const configChecks = [
-        { isOptimized: configOptimization.isComputeOptimized, config: instanceAssessmentData?.compute },
-        { isOptimized: configOptimization.isRssConfigOptimized, config: instanceAssessmentData?.rssConfig },
-        { isOptimized: configOptimization.isOperatingSystemOptimized, config: instanceAssessmentData?.hostOsPatch },
-        { isOptimized: configOptimization.isMTUConfigurationOptimized, config: instanceAssessmentData?.mtuAlignment },
-        { isOptimized: configOptimization.isLicenseOptimized, config: instanceAssessmentData?.license },
-        { isOptimized: configOptimization.isMicrosoftSqlPatchOptimized, config: instanceAssessmentData?.mssqlPatch },
-        { isOptimized: configOptimization.isMaxdopPatchOptimized, config: instanceAssessmentData?.maxDOP },
-        { isOptimized: configOptimization.isCloneOptimized, config: instanceAssessmentData?.clone }
+        {
+            isOptimized: configOptimization.isComputeOptimized,
+            config: instanceAssessmentData?.compute,
+            severity: GETWELL_STATUS.WARNING
+        },
+        {
+            isOptimized: configOptimization.isRssConfigOptimized,
+            config: instanceAssessmentData?.rssConfig,
+            severity: GETWELL_STATUS.WARNING
+        },
+        {
+            isOptimized: configOptimization.isOperatingSystemOptimized,
+            config: instanceAssessmentData?.hostOsPatch,
+            severity: GETWELL_STATUS.CRITICAL
+        },
+        {
+            isOptimized: configOptimization.isMTUConfigurationOptimized,
+            config: instanceAssessmentData?.mtuAlignment,
+            severity: GETWELL_STATUS.CRITICAL
+        },
+        {
+            isOptimized: configOptimization.isLicenseOptimized,
+            config: instanceAssessmentData?.license,
+            severity: GETWELL_STATUS.WARNING
+        },
+        {
+            isOptimized: configOptimization.isMicrosoftSqlPatchOptimized,
+            config: instanceAssessmentData?.mssqlPatch,
+            severity: GETWELL_STATUS.WARNING
+        },
+        {
+            isOptimized: configOptimization.isMaxdopPatchOptimized,
+            config: instanceAssessmentData?.maxDOP,
+            severity: GETWELL_STATUS.WARNING
+        },
+        {
+            isOptimized: configOptimization.isCloneOptimized,
+            config: instanceAssessmentData?.clone,
+            severity: GETWELL_STATUS.WARNING
+        },
+        {
+            isOptimized: configOptimization.isScheduledLocalSnapshot,
+            config: instanceAssessmentData?.snapshotPolicy,
+            severity: GETWELL_STATUS.WARNING
+        },
+        {
+            isOptimized: configOptimization.isCrr,
+            config: instanceAssessmentData?.crr,
+            severity: GETWELL_STATUS.WARNING
+        },
+        {
+            isOptimized: configOptimization.isAwsBackup,
+            config: instanceAssessmentData?.awsBackup,
+            severity: GETWELL_STATUS.WARNING
+        }
     ];
 
-    configChecks.forEach(({ isOptimized, config }) => {
+    configChecks.forEach(({ isOptimized, config, severity }) => {
         if (!isOptimized) {
             if (config?.severity?.toLowerCase() === 'critical') {
                 hasCriticalIssue = true;
             } else if (config?.severity?.toLowerCase() === 'warning') {
+                hasWarningIssue = true;
+            } else if (severity === GETWELL_STATUS.CRITICAL) {
+                hasCriticalIssue = true;
+            } else if (severity === GETWELL_STATUS.WARNING) {
                 hasWarningIssue = true;
             }
         }
@@ -824,6 +891,8 @@ const checkMSSQLConfigurationSeverities = (
                     hasCriticalIssue = true;
                 } else if (item?.severity?.toLowerCase() === 'warning') {
                     hasWarningIssue = true;
+                } else {
+                    hasCriticalIssue = true;
                 }
             }
         });
@@ -840,6 +909,8 @@ const checkMSSQLConfigurationSeverities = (
                     hasCriticalIssue = true;
                 } else if (item?.severity?.toLowerCase() === 'warning') {
                     hasWarningIssue = true;
+                } else {
+                    hasCriticalIssue = true;
                 }
             }
         });
@@ -857,6 +928,8 @@ const checkMSSQLConfigurationSeverities = (
                         hasCriticalIssue = true;
                     } else if (subItem?.severity?.toLowerCase() === 'warning') {
                         hasWarningIssue = true;
+                    } else {
+                        hasCriticalIssue = true;
                     }
                 }
             });
@@ -910,7 +983,10 @@ const processMSSQLAssessmentData = (assessmentData: any, headerFilters: any, uni
                     storageOptimization.isStorageConfigOptimized &&
                     configOptimization.isMicrosoftSqlPatchOptimized &&
                     configOptimization.isMaxdopPatchOptimized &&
-                    configOptimization.isCloneOptimized;
+                    configOptimization.isCloneOptimized &&
+                    configOptimization.isScheduledLocalSnapshot &&
+                    configOptimization.isCrr &&
+                    configOptimization.isAwsBackup;
 
                 if (isInstanceOptimized) {
                     optimizedInstances += 1;
@@ -972,6 +1048,8 @@ const checkOracleConfigurationSeverities = (
                     hasCriticalIssue = true;
                 } else if (item?.severity?.toLowerCase() === 'warning') {
                     hasWarningIssue = true;
+                } else {
+                    hasWarningIssue = true;
                 }
             }
         });
@@ -995,6 +1073,8 @@ const checkOracleConfigurationSeverities = (
                         hasCriticalIssue = true;
                     } else if (item?.severity?.toLowerCase() === 'warning') {
                         hasWarningIssue = true;
+                    } else {
+                        hasCriticalIssue = true;
                     }
                 }
             });
