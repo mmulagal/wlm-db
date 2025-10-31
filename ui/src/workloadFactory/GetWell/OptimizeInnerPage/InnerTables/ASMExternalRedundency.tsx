@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import styles from './InnerTable.module.scss';
-import { GENERAL } from '../../../../utils/appConstants';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -92,7 +91,14 @@ const ASMExternalRedundency = ({ type, data, lastColDetails, handleBulkAction }:
                 singularTitle={t('databases.oracle-inner-page.impacted-disk-group')}
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
-                <BulkActionContainer action={t('databases.well-architect.fix')} onClick={handleBulkAction} />
+                <BulkActionContainer
+                    action={
+                        type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY
+                            ? t('databases.well-architect.view')
+                            : t('databases.well-architect.fix')
+                    }
+                    onClick={handleBulkAction}
+                />
             )}
             <Table
                 // @ts-ignore

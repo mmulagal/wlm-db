@@ -1,12 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
-import {
-    createStandardDialog,
-    createStandardNotesSection,
-    createSection,
-    createActionOptionSection
-} from './DialogContentHelper';
+import { createStandardDialog, createStandardNotesSection, createSection } from './DialogContentHelper';
 
 const StorageConfigOracleDialog = ({
     type,
@@ -170,11 +165,6 @@ const StorageConfigOracleDialog = ({
                             t('databases.well-architect.oracle-export-policy-what-will-happen')
                         )}
                         {createONTAPConfigSection()}
-                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
-                            t('databases.well-architect.oracle-export-policy-step1'),
-                            t('databases.well-architect.oracle-export-policy-step2'),
-                            t('databases.well-architect.oracle-export-policy-step3')
-                        ])}
                         {createSection(
                             t('databases.well-architect.note'),
                             t('databases.well-architect.oracle-export-policy-note')

@@ -15,18 +15,32 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
     const setContent = () => {
         switch (type) {
             case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
-                return createStandardDialog(
-                    t,
-                    t('databases.well-architect.oracle-multipath-io-action-summary'),
-                    t('databases.well-architect.oracle-multipath-io-what-will-happen'),
-                    createStandardNotesSection()
+                return (
+                    <>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.oracle-multipath-io-action-summary')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                            t('databases.well-architect.oracle-multipath-io-optimization-step1'),
+                            t('databases.well-architect.oracle-multipath-io-optimization-step2'),
+                            t('databases.well-architect.oracle-multipath-io-optimization-step3'),
+                            t('databases.well-architect.oracle-multipath-io-optimization-step4'),
+                            t('databases.well-architect.oracle-multipath-io-optimization-step5')
+                        ])}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-multipath-io-note')
+                        )}
+                    </>
                 );
             case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
                 return createStandardDialog(
                     t,
                     t('databases.well-architect.oracle-host-utility-action-summary'),
                     t('databases.well-architect.oracle-host-utility-what-will-happen'),
-                    createStandardNotesSection()
+                    createStandardNotesSection(),
+                    createOSConfigSection()
                 );
             case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
                 return createStandardDialog(
@@ -69,12 +83,26 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                     createOSConfigSection()
                 );
             case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
-                return createStandardDialog(
-                    t,
-                    t('databases.well-architect.oracle-filesystem-io-options-action-summary'),
-                    t('databases.well-architect.oracle-filesystem-io-options-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
+                return (
+                    <>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.oracle-filesystem-io-options-action-summary')
+                        )}
+                        {createSection(
+                            t('databases.well-architect.what-will-happen'),
+                            t('databases.well-architect.oracle-filesystem-io-options-what-will-happen')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                            t('databases.well-architect.oracle-filesystem-io-options-optimization-step1'),
+                            t('databases.well-architect.oracle-filesystem-io-options-optimization-step2'),
+                            t('databases.well-architect.oracle-filesystem-io-options-optimization-step3')
+                        ])}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-multipath-io-note')
+                        )}
+                    </>
                 );
             case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
                 return createStandardDialog(
@@ -107,10 +135,6 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                             t('databases.well-architect.action-summary'),
                             t('databases.well-architect.oracle-asm-setup-action-summary')
                         )}
-                        {createSection(
-                            t('databases.well-architect.notes'),
-                            t('databases.well-architect.oracle-asm-setup-note')
-                        )}
                         {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
                             t('databases.well-architect.oracle-asm-setup-optimization-step1'),
                             t('databases.well-architect.oracle-asm-setup-optimization-step2'),
@@ -122,6 +146,10 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                             t('databases.well-architect.oracle-asm-setup-optimization-step8'),
                             t('databases.well-architect.oracle-asm-setup-optimization-step9')
                         ])}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-asm-setup-note')
+                        )}
                     </>
                 );
             case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
@@ -154,10 +182,6 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                             t('databases.well-architect.action-summary'),
                             t('databases.well-architect.oracle-afd-logical-block-size-action-summary')
                         )}
-                        {createSection(
-                            t('databases.well-architect.what-will-happen'),
-                            t('databases.well-architect.oracle-afd-logical-block-size-what-will-happen')
-                        )}
                         {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
                             t('databases.well-architect.oracle-asm-adf-optimization-step1'),
                             t('databases.well-architect.oracle-asm-adf-optimization-step2'),
@@ -178,10 +202,6 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                         {createSection(
                             t('databases.well-architect.action-summary'),
                             t('databases.well-architect.oracle-asmlib-logical-block-size-action-summary')
-                        )}
-                        {createSection(
-                            t('databases.well-architect.what-will-happen'),
-                            t('databases.well-architect.oracle-asmlib-logical-block-size-what-will-happen')
                         )}
                         {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
                             t('databases.well-architect.oracle-asm-adf-optimization-step1'),
@@ -275,6 +295,12 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                             t('databases.well-architect.action-summary'),
                             t('databases.well-architect.oracle-nfs-caching-options-action-summary')
                         )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                            t('databases.well-architect.oracle-nfs-caching-optimization-step-1'),
+                            t('databases.well-architect.oracle-nfs-caching-optimization-step-2'),
+                            t('databases.well-architect.oracle-nfs-caching-optimization-step-3'),
+                            t('databases.well-architect.oracle-nfs-caching-optimization-step-4')
+                        ])}
                         {createSection(
                             t('databases.well-architect.note'),
                             t('databases.well-architect.oracle-nfs-caching-options-note')

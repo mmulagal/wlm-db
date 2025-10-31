@@ -88,6 +88,13 @@ const OSOracleTable = ({ type, data, lastColDetails, handleBulkAction }: any) =>
         }
     }, [tableProps.selectionState, inProgressOptimizationData]);
 
+    // Determine the bulk action text based on configuration type
+    const getBulkActionText = () =>
+        type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
+        type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY
+            ? 'View'
+            : GENERAL.OPTIMIZE;
+
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
@@ -97,7 +104,7 @@ const OSOracleTable = ({ type, data, lastColDetails, handleBulkAction }: any) =>
                 singularTitle={`Impacted ${tableHeader}`}
             />
             {selectedRowsForOptimizeInnerPage.length > 0 && (
-                <BulkActionContainer action={GENERAL.OPTIMIZE} onClick={handleBulkAction} />
+                <BulkActionContainer action={getBulkActionText()} onClick={handleBulkAction} />
             )}
             <Table
                 // @ts-ignore

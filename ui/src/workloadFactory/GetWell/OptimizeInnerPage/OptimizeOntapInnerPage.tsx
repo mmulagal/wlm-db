@@ -205,6 +205,12 @@ const OptimizeOntapInnerPage = () => {
     }, [selectedOptimizeConfig]);
 
     const buttonComponent = (rowData: any) => {
+        const buttonText =
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY
+                ? t('databases.well-architect.view')
+                : t('databases.well-architect.fix');
+
         if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
             return (
                 <Popover
@@ -215,7 +221,7 @@ const OptimizeOntapInnerPage = () => {
                     interactive
                     container={
                         <DsButton variant="secondary" isDisabled isThin>
-                            Fix
+                            {buttonText}
                         </DsButton>
                     }
                 />
@@ -237,7 +243,7 @@ const OptimizeOntapInnerPage = () => {
                     );
                 }}
             >
-                Fix
+                {buttonText}
             </DsButton>
         );
     };

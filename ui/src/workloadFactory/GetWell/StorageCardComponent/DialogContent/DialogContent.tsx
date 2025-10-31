@@ -200,11 +200,13 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.SELINUX:
                     return 'SELINUX=disabled';
                 case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
-                    return 'node.session.timeo.replacement_timeout = 5';
+                    return 'node.session.timeo.replacement_timeout = 5 in /etc/iscsi/iscsid.conf';
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
                     return 'user_friendly_names = yes in /etc/multipath.conf';
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
                     return '4 active iSCSI sessions per host';
+                case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
+                    return 'Install host utilities';
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
                     return 'db_file_multiblock_read_count unset in init.ora';
                 case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:

@@ -1910,7 +1910,7 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
         Compaction: 'compaction',
         'Snapshot policy': 'snapshot-policy',
         'NFS rootonly': 'nfs-rootonly',
-        'Export policy': 'export-policy',
+        'Binaries export policy': 'export-policy',
 
         // OS configurations for Oracle
         'TCP slot table': 'kernel-parameters',
