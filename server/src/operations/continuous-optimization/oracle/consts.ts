@@ -30,7 +30,7 @@ interface TcpOptimizationResponse {
 }
 
 interface GenericOptimizationResponse {
-    status: 'optimised' | 'failed' | 'optimised-offline' | 'restart-required';
+    status: 'optimized' | 'failed' | 'optimized-offline' | 'restart-required';
     error?: string;
 }
 

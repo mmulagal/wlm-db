@@ -221,7 +221,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -241,7 +241,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -262,7 +262,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -283,7 +283,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -306,7 +306,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -329,7 +329,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -350,7 +350,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -370,7 +370,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -391,7 +391,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -417,12 +417,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                // Fail parent job only if grub update is required (restart case)
-                if (parentJobError.includes('GRUB')) {
-                    parentJobStatus = JOBSTATUS.FAILED;
-                } else {
-                    parentJobStatus = JOBSTATUS.WARNING;
-                }
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -445,7 +440,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -466,7 +461,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -490,7 +485,7 @@ async function oracleOptimizeStorageOS(
             } catch (error) {
                 parentJobError = String(error);
                 logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.WARNING;
+                parentJobStatus = JOBSTATUS.FAILED;
             }
             break;
         }
@@ -500,14 +495,12 @@ async function oracleOptimizeStorageOS(
 
     // Update audit status based on final job status
     await updateLongRunningAuditGroup(
-        parentJobStatus === JOBSTATUS.COMPLETED || parentJobStatus === JOBSTATUS.WARNING
-            ? AuditStatus.SUCCESS
-            : AuditStatus.FAILED,
+        parentJobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
         parentJobStatus === JOBSTATUS.COMPLETED ? '' : parentJobError
     );
 
     // Common assessment trigger logic for all successful optimizations
-    if (parentJobStatus === JOBSTATUS.COMPLETED || parentJobStatus === JOBSTATUS.WARNING) {
+    if (parentJobStatus === JOBSTATUS.COMPLETED) {
         try {
             const instanceToAssess: WorkloadInstance = {
                 id: databaseInstanceId,
@@ -536,11 +529,7 @@ async function oracleOptimizeStorageOS(
         }
     }
 
-    await updateJobDetails(accountId, parentJobId, {
-        status: parentJobStatus,
-        endTime: Date.now(),
-        error: parentJobError
-    });
+    // parent job status gets updated by triggerAssessmentAfterOptimization
     if (parentJobStatus !== JOBSTATUS.COMPLETED) {
         throw new Error(parentJobError);
     }
@@ -608,6 +597,7 @@ async function optimizeTcpOptions(params: OptimizeOSParams) {
         if (parsedResponse['already-optimized'] === true) {
             const errMsg = 'All TCP options are already optimized, no further action done.';
             jobError = errMsg;
+            jobStatus = JOBSTATUS.WARNING;
             throw new Error(errMsg);
         }
 
@@ -641,7 +631,7 @@ async function optimizeTcpOptions(params: OptimizeOSParams) {
         }
     } catch (error) {
         jobError = jobError || `Error while updating tcp options ${error}`;
-        jobStatus = jobError ? JOBSTATUS.WARNING : JOBSTATUS.FAILED;
+        jobStatus = jobStatus || JOBSTATUS.FAILED;
     } finally {
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
@@ -650,7 +640,7 @@ async function optimizeTcpOptions(params: OptimizeOSParams) {
         });
     }
 
-    if (jobStatus !== JOBSTATUS.COMPLETED) {
+    if (jobStatus === JOBSTATUS.FAILED) {
         logger.info(
             `Skipping assessment trigger for databaseHost ${databaseHostId} as optimization job did not complete successfully.`
         );
@@ -1272,7 +1262,7 @@ async function installHostUtilities(params: OptimizeOSParams) {
         if (error || status === 'failed') {
             throw new Error(`Host utilities installation failed: ${error}`);
         }
-        if (status === 'optimised-offline') {
+        if (status === 'optimized-offline') {
             jobError = 'Host utilities are already installed. No further action needed.';
             logger.info(jobError);
             jobStatus = JOBSTATUS.WARNING;
@@ -1299,7 +1289,7 @@ async function installHostUtilities(params: OptimizeOSParams) {
         });
     }
 
-    if (jobStatus !== JOBSTATUS.COMPLETED) {
+    if (jobStatus === JOBSTATUS.FAILED) {
         throw new Error(jobError);
     }
 }
@@ -1362,7 +1352,7 @@ async function enableMultipathIo(params: OptimizeOSParams) {
         switch (status) {
             case 'failed':
                 throw new Error(`Multipath IO enabling failed: ${error}`);
-            case 'optimised-offline':
+            case 'optimized-offline':
                 jobError = 'Multipath IO is already enabled. No further action needed.';
                 logger.info(jobError);
                 jobStatus = JOBSTATUS.WARNING;
@@ -1372,7 +1362,7 @@ async function enableMultipathIo(params: OptimizeOSParams) {
                     'Fix aborted. Multipath enablement requires removing "multipath=off" from GRUB configuration at "/etc/default/grub" and restarting the instance. Manual intervention required.';
                 logger.info(jobError);
                 jobStatus = JOBSTATUS.FAILED;
-                break;
+                throw new Error(jobError);
 
             default:
         }
@@ -1398,7 +1388,7 @@ async function enableMultipathIo(params: OptimizeOSParams) {
         });
     }
 
-    if (jobStatus !== JOBSTATUS.COMPLETED) {
+    if (jobStatus === JOBSTATUS.FAILED) {
         throw new Error(jobError);
     }
 }
@@ -1461,7 +1451,7 @@ async function disableSelinux(params: OptimizeOSParams) {
         if (error || status === 'failed') {
             throw new Error(`SELinux disabling failed: ${error}`);
         }
-        if (status === 'optimised-offline') {
+        if (status === 'optimized-offline') {
             jobError = 'SELinux is already disabled. No further action needed.';
             logger.info(jobError);
             jobStatus = JOBSTATUS.WARNING;
@@ -1488,7 +1478,7 @@ async function disableSelinux(params: OptimizeOSParams) {
         });
     }
 
-    if (jobStatus !== JOBSTATUS.COMPLETED) {
+    if (jobStatus === JOBSTATUS.FAILED) {
         throw new Error(jobError);
     }
 }
