@@ -31,7 +31,7 @@ const useOracleWellArchitectApi = () => {
 
     const [getOracleAssessmentDataApi] = useGetOracleAssessmentDataMutation();
 
-    const runAssessmentDetailsApi = async () => {
+    const runAssessmentDetailsApi = async (isRefresh: boolean = false) => {
         try {
             dispatch(setOptimizePageLoading(true));
             dispatch(setCardData(oracleCardData));
@@ -44,7 +44,7 @@ const useOracleWellArchitectApi = () => {
 
             if (result && !result?.error && result?.data) {
                 dispatch(setDriftAssessmentData(result.data));
-                formatOracleWellArchitectedData(dispatch, result.data);
+                formatOracleWellArchitectedData(dispatch, result.data, false, isRefresh);
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
             } else {
@@ -57,17 +57,17 @@ const useOracleWellArchitectApi = () => {
         }
     };
 
-    const viewResourceAction = () => {
+    const viewResourceAction = (isRefresh: boolean = false) => {
         dispatch(setDriftAssessmentData({}));
         dispatch(setOptimizePageLoading(true));
-        runAssessmentDetailsApi();
+        runAssessmentDetailsApi(isRefresh);
     };
 
     useEffect(() => {
         // On page load, call the API to get the assessment details and set initial refresh time
         if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
             dispatch(setOracleRefreshTimes({ optimizeRefreshTime: getCurrentDateTime() }));
-            viewResourceAction();
+            viewResourceAction(false); // isRefresh = false for initial load
         } else {
             dispatch(setLandingFromInnerPage(false));
         }
@@ -77,7 +77,7 @@ const useOracleWellArchitectApi = () => {
     useEffect(() => {
         // Handle Oracle-specific refresh
         if (refreshWellArchitect) {
-            viewResourceAction();
+            viewResourceAction(true); // isRefresh = true
             dispatch(setRefreshOracleWellArchitect(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -6,6 +6,7 @@ import {
     setGwTimestamp,
     setOntapConfigTableData,
     setOptimizationBreakDown,
+    setOptimizingData,
     setOsConfigTableData
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { addAllOracleHostAssessmentData } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -982,10 +983,18 @@ const formatTimestamp = (timestamp: any): any => {
 export const formatOracleWellArchitectedData = (
     dispatch: any,
     data?: AssessmentResponseInterface,
-    showDismissedView: boolean = false
+    showDismissedView: boolean = false,
+    isRefresh: boolean = false
 ) => {
     const state = store.getState();
-    const optimizingData = state.getWellOptimize.optimizingData || {};
+    let optimizingData = state.getWellOptimize.optimizingData || {};
+
+    // If this is a refresh (fresh assessment data), clear optimistic state to show actual API status
+    if (isRefresh && data) {
+        optimizingData = {};
+        dispatch(setOptimizingData({}));
+    }
+
     const assessmentData = data || state.getWellOptimize.driftAssessmentData;
 
     if (!assessmentData) return;

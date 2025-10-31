@@ -3536,10 +3536,18 @@ export const getCardsData = (
 export const formatGetWellData = (
     dispatch: any,
     data?: AssessmentResponseInterface | undefined,
-    showDismissedView: boolean = false
+    showDismissedView: boolean = false,
+    isRefresh: boolean = false
 ) => {
     const state = store.getState();
-    const optimizingData = state.getWellOptimize.optimizingData || {};
+    let optimizingData = state.getWellOptimize.optimizingData || {};
+
+    // If this is a refresh (fresh assessment data), clear optimistic state to show actual API status
+    if (isRefresh && data) {
+        optimizingData = {};
+        dispatch(setOptimizingData({}));
+    }
+
     if (!data) {
         data = state.getWellOptimize.driftAssessmentData || undefined;
     }

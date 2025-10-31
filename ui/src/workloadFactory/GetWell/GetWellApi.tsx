@@ -33,7 +33,7 @@ const GetWellApi = () => {
     useEffect(() => {
         // On page load, call the API to get the assessment details
         if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
-            viewOptimizeAction();
+            viewOptimizeAction(false); // isRefresh = false for initial load
         } else {
             dispatch(setLandingFromInnerPage(false));
         }
@@ -43,7 +43,7 @@ const GetWellApi = () => {
         // }
     }, []);
 
-    const runAssessmentDetailsApi = async () => {
+    const runAssessmentDetailsApi = async (isRefresh: boolean = false) => {
         // Call the API to get the assessment details
         try {
             dispatch(setOptimizePageLoading(true));
@@ -58,7 +58,7 @@ const GetWellApi = () => {
                     result.data = { ...result.data, ...storageMockData };
                 }
                 dispatch(setDriftAssessmentData(result.data));
-                formatGetWellData(dispatch, result.data);
+                formatGetWellData(dispatch, result.data, false, isRefresh);
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
                 dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));
@@ -72,20 +72,20 @@ const GetWellApi = () => {
         }
     };
 
-    const viewOptimizeAction = () => {
+    const viewOptimizeAction = (isRefresh: boolean = false) => {
         resetGwValuesOnRefresh(dispatch);
         setTimeout(() => {
             // Set the loading state to true
             dispatch(setOptimizePageLoading(true));
             // Call the API to get the assessment details
-            runAssessmentDetailsApi();
+            runAssessmentDetailsApi(isRefresh);
         }, 10);
     };
 
     useEffect(() => {
         // On page refresh, call the API to get the assessment details
         if (gwRefreshPage) {
-            viewOptimizeAction();
+            viewOptimizeAction(true); // isRefresh = true
             dispatch(setGwRefreshPage(false));
         }
     }, [gwRefreshPage]);
