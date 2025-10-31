@@ -817,6 +817,11 @@ const getStorageWithoutCreds = `
         else
             storageDetails=$(get_asm_nfs_storage_details_without_creds)
         fi
+
+        # there can be a case where iscsi sessions are running but no iscsi devices are found, so try getting nfs storage details in that case.
+        if [ "$isSetupRunningISCSISessions" == "true" ] && [ "$storageDetails" == "[]" ]; then
+            storageDetails=$(get_asm_nfs_storage_details_without_creds)
+        fi
     else
         storageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "NO" "null" "false" "$oracle_home")
     fi
