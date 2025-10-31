@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { WLMDB_RESOURCE_CLASS, WF_NOTIFICATION_RESOURCE_TYPE, WF_NOTIFICATION_PRIORITY } from '../utils/consts';
+import { NOTIFICATION_SERVICE_NAME, WF_NOTIFICATION_RESOURCE_TYPE, WF_NOTIFICATION_PRIORITY } from '../utils/consts';
 import { sendWFNotification, WFNotification } from '../lib/cloud-manager/wf-notification';
 import getLogger from '../utils/logger';
 import { isNonEmptyObject } from '../utils/utils';
@@ -18,7 +18,7 @@ export default async function prepareWFNotificationRequest(
     accountId: string,
     notificationData: WFNotification,
     userId: string = '*',
-    service: string = WLMDB_RESOURCE_CLASS
+    service: string = NOTIFICATION_SERVICE_NAME
 ) {
     logger.info('prepare WF Notification Request', {
         accountId,
@@ -31,7 +31,7 @@ export default async function prepareWFNotificationRequest(
         const notification: WFNotification = {
             ...notificationData,
             resourceType: notificationData.resourceType ?? WF_NOTIFICATION_RESOURCE_TYPE,
-            workload: notificationData.workload ?? WLMDB_RESOURCE_CLASS,
+            workload: notificationData.workload ?? NOTIFICATION_SERVICE_NAME,
             priority: notificationData.priority ?? WF_NOTIFICATION_PRIORITY.WF_RECOMMENDATION,
             persist: notificationData.persist ?? false,
             ttl: notificationData.ttl ?? 3600,
