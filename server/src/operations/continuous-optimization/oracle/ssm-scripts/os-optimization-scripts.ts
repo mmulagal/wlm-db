@@ -198,11 +198,63 @@ def check_netapp_block_exists_in_file(configText):
         return False
 `;
 
+const MULTIPATH_CONF_UTILS = `
+# Utility functions for multipath configuration management
+def rollback_config(config_path, backup_path, file_created):
+    """Rollback configuration from backup or delete if newly created"""
+    try:
+        if file_created:
+            if config_path.exists():
+                config_path.unlink()
+                log('Removed newly created config file')
+        else:
+            if backup_path.exists() and config_path.exists():
+                shutil.copy2(backup_path, config_path)
+                log('Configuration rolled back from backup')
+        return True
+    except Exception as e:
+        log(f'Failed to rollback configuration: {str(e)}')
+        return False
+
+def update_config_block(block_or_match, values_dict, indent='        '):
+    """Update config block with key-value pairs and custom indentation.
+    Accepts either a regex match object or block content string."""
+    # Handle both match objects and direct content
+    if hasattr(block_or_match, 'group'):
+        block_content = block_or_match.group(0)
+    else:
+        block_content = block_or_match
+    
+    updated_block = block_content
+    keys_to_add = []
+    
+    for key, value in values_dict.items():
+        key_pattern = rf'^(\\s*){key}\\s+.*$'
+        if re.search(key_pattern, block_content, re.MULTILINE):
+            updated_block = re.sub(key_pattern, rf'\\1{key} {value}', updated_block, flags=re.MULTILINE)
+            log(f"Updated existing {key} to {value}")
+        else:
+            keys_to_add.append(f'{key} {value}')
+    
+    if keys_to_add:
+        lines = updated_block.split('\\n')
+        for i in range(len(lines) - 1, -1, -1):
+            if '}' in lines[i]:
+                for key_value in keys_to_add:
+                    lines.insert(i, f'{indent}{key_value}')
+                    log(f"Added new {key_value}")
+                break
+        updated_block = '\\n'.join(lines)
+    
+    return updated_block
+`;
+
 const ENSURE_MULTIPATH_CONF = `
 ${CHECK_MULTIPATH_IO_STATUS}
 ${RELOAD_MULTIPATHD_SERVICE}
 ${VALIDATE_MULTIPATH_CONF}
 ${CHECK_NETAPP_BLOCK_EXISTS_IN_FILE}
+${MULTIPATH_CONF_UTILS}
 # ensure multipath config is validated
 def ensure_multipath_conf():
     log('Checking if multipathd is running')
@@ -218,23 +270,6 @@ def ensure_multipath_conf():
     config_path = Path('/etc/multipath.conf')
     backup_path = Path('/etc/wlmdb-multipath-backup.conf')
     file_created = False
-    
-    # Helper function to rollback configuration
-    def rollback_config():
-        """Rollback configuration from backup or delete if newly created"""
-        try:
-            if file_created:
-                if config_path.exists():
-                    config_path.unlink()
-                    log('Removed newly created config file')
-            else:
-                if backup_path.exists() and config_path.exists():
-                    shutil.copy2(backup_path, config_path)
-                    log('Configuration rolled back from backup')
-            return True
-        except Exception as e:
-            log(f'Failed to rollback configuration: {str(e)}')
-            return False
     
     # Single source of truth for key-values
     new_values = {
@@ -266,49 +301,45 @@ def ensure_multipath_conf():
             config = config_path.read_text()
             if check_netapp_block_exists_in_file(config):
                 log("NETAPP block found, updating keys if needed")
-                def update_device_block(match):
-                    block = match.group(0)
-                    # Collect all new keys that need to be added
-                    keys_to_add = []
-                    
-                    for key, value in new_values.items():
-                        # Check if key exists in the block
-                        key_pattern = rf'^(\\s*){key}\\s+.*$'
-                        if re.search(key_pattern, block, re.MULTILINE):
-                            # Update existing key - replace entire line
-                            block = re.sub(key_pattern, rf'\\1{key} {value}', block, flags=re.MULTILINE)
-                        else:
-                            # Collect key to be added later
-                            keys_to_add.append(f'{key} {value}')
-                    
-                    # Add all new keys at once before the closing brace
-                    if keys_to_add:
-                        # Find the last closing brace and insert before it
-                        lines = block.split('\\n')
-                        # Find the line with closing brace
-                        for i in range(len(lines) - 1, -1, -1):
-                            if '}' in lines[i]:
-                                # Insert new keys before the closing brace
-                                for key_value in keys_to_add:
-                                    lines.insert(i, f'        {key_value}')
-                                break
-                        block = '\\n'.join(lines)
-                    
-                    return block
+                # Use unified function for updating NETAPP device block
                 updated_config = re.sub(
                     r'(device\\s*{\\s*vendor\\s*"NETAPP"\\s*product\\s*"LUN".*?})',
-                    update_device_block,
+                    lambda match: update_config_block(match, new_values),
                     config,
                     flags=re.DOTALL
                 )
-                config_path.write_text(updated_config)
+                config = updated_config  # Keep changes in memory
             else:
                 log("NETAPP block not found, adding it")
                 if "devices {" in config:
                     config = re.sub(r'(devices\\s*{)', r'\\1\\n' + netapp_block, config, 1)
                 else:
                     config += "\\ndevices {\\n" + netapp_block + "}\\n"
-                config_path.write_text(config)
+                
+            # After NETAPP block handling, check and update defaults block
+            log("Checking and updating defaults block")
+            defaults_values = {
+                'find_multipaths': 'yes',
+                'polling_interval': '5'
+            }
+            
+            # Check if defaults block exists
+            defaults_match = re.search(r'(defaults\\s*{[^}]*})', config, re.DOTALL)
+            if defaults_match:
+                log("Defaults block found, updating values if needed")
+                defaults_block = defaults_match.group(0)
+                updated_defaults = update_config_block(defaults_block, defaults_values, indent='    ')
+                config = config.replace(defaults_block, updated_defaults)
+            else:
+                log("Defaults block not found, adding it")
+                # Use the existing defaults_values and utility function
+                base_defaults = "defaults {\\n}\\n"
+                defaults_block = update_config_block(base_defaults, defaults_values, indent='    ')
+                config = defaults_block + config
+            
+            # Write the final config to file only once after all modifications
+            log("Writing final configuration to file")
+            config_path.write_text(config)
         else:
             log('/etc/multipath.conf not found, creating new file')
             new_config_content = f"""defaults {{
@@ -329,7 +360,7 @@ devices {{
         # Validate config syntax & runtime after modifications
         if not validate_multipath_conf():
             log("Invalid multipath.conf after changes, rolling back")
-            rollback_config()
+            rollback_config(config_path, backup_path, file_created)
             return {"status": "failed", "error": "Invalid multipath.conf after changes"}
         # Reload daemon and verify
         reload_success, reload_error = reload_and_verify_multipathd()
@@ -344,15 +375,15 @@ devices {{
                 return {"status": "success", "error": None}
             else:
                 log('multipathd daemon not running after reload')
-                rollback_config()
+                rollback_config(config_path, backup_path, file_created)
                 return {"status": "failed", "error": "multipathd daemon not running after reload"}
         else:
             log('Failed to reload multipathd daemon')
-            rollback_config()
+            rollback_config(config_path, backup_path, file_created)
             return {"status": "failed", "error": reload_error}
     except Exception as e:
         log(f'Exception: {str(e)}')
-        rollback_config()
+        rollback_config(config_path, backup_path, file_created)
         return {"status": "failed", "error": str(e)}
 `;
 

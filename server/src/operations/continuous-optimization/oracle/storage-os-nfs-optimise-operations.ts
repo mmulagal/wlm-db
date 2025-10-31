@@ -1,5 +1,5 @@
 import { JOBTYPE, JOBSTATUS } from '@prisma/client';
-import { DatabaseInstance, ResourceDetails, WorkloadInstance } from '../../../utils/common-types';
+import { DatabaseInstanceMetadata, WorkloadInstance } from '../../../utils/common-types';
 import {
     AssessmentCategories,
     OptimizeOracleNFSStorageOperatingSystem
@@ -110,23 +110,16 @@ async function oracleOptimizeStorageOSForNfs(
     databaseInstanceId: string,
     configurationName: string,
     activeNodeInstanceId: string,
-    instancesDetails: DatabaseInstance[],
-    resourceDetail: ResourceDetails,
+    instanceName: string,
+    fsxId: string,
+    serverNameWithHostName: string,
+    instanceMetadata: DatabaseInstanceMetadata,
     masterJobId?: string
 ) {
     logger.info(
         `Optimizing storage OS for NFS on ${accountId}, ${credentialsId} ${databaseHostId} ${databaseInstanceId} in ${region} for configuration ${configurationName}`
     );
 
-    const [instanceDetail] = instancesDetails;
-    logger.info(`Instance detail for optimization: ${JSON.stringify(instanceDetail)}`);
-    const { fsxn_ids: fsxId } = instanceDetail;
-    const { resource_name: oracleResourceName } = resourceDetail;
-    const { database_instance_name: instanceName } = instanceDetail as unknown as DatabaseInstance;
-
-    const serverNameWithHostName = instanceName
-        ? `${oracleResourceName}\\${instanceName}`
-        : (oracleResourceName as string);
     updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
 
     let jobDescription = '';
@@ -172,7 +165,7 @@ async function oracleOptimizeStorageOSForNfs(
                     databaseInstanceId,
                     serverNameWithHostName,
                     activeNodeInstanceId,
-                    instanceMetadata: instanceDetail,
+                    instanceMetadata,
                     parentJobId
                 });
             } catch (error) {

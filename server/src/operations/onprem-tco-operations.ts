@@ -20,7 +20,7 @@ import {
     PRICING_LICENSE_KEYS,
     WLMDB
 } from '../utils/consts';
-import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes } from '../utils/utils';
+import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes, IS_DEMO_FLOW } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -735,8 +735,9 @@ async function analyzeOnpremData(
 
     // Analyze OnPrem data
     const { windowsConfig, sqlServerInfo } = data;
-
-    region = region || DEFAULT_AWS_REGION;
+    if (!region || IS_DEMO_FLOW) {
+        region = DEFAULT_AWS_REGION; // For demo flow or missing region, set to default region
+    }
 
     const hostIds = windowsConfig.nodeDetails.map(({ hostId }) => hostId);
     const sqlInstancesPerDeploymentType = groupSqlServerInstancesByDeploymentType(sqlServerInfo);

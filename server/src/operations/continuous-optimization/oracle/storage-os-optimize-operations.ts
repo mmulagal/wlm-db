@@ -1,14 +1,7 @@
 import createError from 'http-errors';
 import { JOBTYPE, JOBSTATUS } from '@prisma/client';
-import { isEmpty } from 'lodash-es';
-import { Metadata, DatabaseInstance, WorkloadInstance } from '../../../utils/common-types';
-import {
-    RESOURCESTYPE,
-    HttpErrorCodes,
-    DatabaseTypes,
-    AuditStatus,
-    LINUX_HOST_UTILITIES_RELATIVE_PATH
-} from '../../../utils/consts';
+import { DatabaseInstanceMetadata, WorkloadInstance } from '../../../utils/common-types';
+import { RESOURCESTYPE, HttpErrorCodes, AuditStatus, LINUX_HOST_UTILITIES_RELATIVE_PATH } from '../../../utils/consts';
 import {
     AssessmentCategories,
     OptimizeOracleiSCSIStorageOperatingSystem,
@@ -17,11 +10,9 @@ import {
 import { IS_DEMO_FLOW, retryWithDelay, sqlResponseParsing, getArtifactsRegionBucketName } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
-import { triggerAssessmentAfterOptimization } from '../../cont-opt-optimize-operations';
-import { getResources } from '../../database/database-operations';
+import { activeSqlNodeDetails, triggerAssessmentAfterOptimization } from '../../cont-opt-optimize-operations';
 import { updateJobDetails, registerJob } from '../../database/job-operations';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
-import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import {
     optimizeTcpOptionsCommand,
@@ -67,42 +58,16 @@ async function oracleOptimizeStorageOS(
     );
 
     const {
-        items: [resourceDetail]
-    } = await getResources({
-        accountId,
-        resourceId: databaseHostId,
-        credentialsId,
-        region,
-        resourceType: RESOURCESTYPE.ORACLE
-    });
+        activeNodeInstanceId,
+        serverNameWithHostName,
+        instanceMetadata,
+        instanceName,
+        fsxId,
+        sqlServerName: oracleResourceName
+    } = await activeSqlNodeDetails(credentialsId, region, accountId, databaseHostId, databaseInstanceId);
 
-    if (isEmpty(resourceDetail)) {
-        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
-    }
-
-    const { metadata, resource_name: resourceName } = resourceDetail;
-    const oracleResourceName = resourceName || '';
-    const metadataTyped = metadata as unknown as Metadata;
-    const { node1InstanceId, node2InstanceId } = metadataTyped;
-
-    const {
-        isSSMConnected,
-        activeNodeInstanceId: activeNode,
-        instancesDetails
-    } = await getActiveSqlNode(credentialsId, region, {
-        node1InstanceId,
-        node2InstanceId,
-        resourceType: DatabaseTypes.ORACLE
-    });
-
-    const activeNodeInstanceId = activeNode;
-
-    if (!activeNodeInstanceId || !isSSMConnected) {
-        const errorMessage = !activeNodeInstanceId
-            ? `Unable to fix host ${oracleResourceName} in account ${accountId}. Cannot retrieve active node ID from the Oracle configuration.`
-            : `Unable to fix host ${oracleResourceName} in account ${accountId} due to SSM connection issues.`;
+    if (!activeNodeInstanceId) {
+        const errorMessage = `Unable to fix host ${oracleResourceName} in account ${accountId}. Cannot retrieve active node ID from the Oracle configuration.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
@@ -120,23 +85,15 @@ async function oracleOptimizeStorageOS(
             databaseInstanceId,
             configurationName,
             activeNodeInstanceId,
-            instancesDetails as DatabaseInstance[],
-            resourceDetail,
+            instanceName,
+            fsxId,
+            serverNameWithHostName,
+            instanceMetadata as DatabaseInstanceMetadata,
             masterJobId
         );
         return;
     }
 
-    const [instanceDetail] = instancesDetails || [];
-    const {
-        fsxn_ids: fsxId,
-        database_instance_name: instanceName,
-        metadata: instanceMetadata
-    } = instanceDetail as unknown as DatabaseInstance;
-
-    const serverNameWithHostName = instanceName
-        ? `${oracleResourceName}\\${instanceName}`
-        : (oracleResourceName as string);
     updateLongRunningAuditGroup(undefined, undefined, serverNameWithHostName);
 
     let jobDescription = '';
@@ -299,7 +256,7 @@ async function oracleOptimizeStorageOS(
                     credentialsId,
                     resourceId: databaseHostId,
                     databaseInstanceId,
-                    node1InstanceId,
+                    node1InstanceId: activeNodeInstanceId,
                     instanceMetadata,
                     parentJobId
                 });
@@ -322,7 +279,7 @@ async function oracleOptimizeStorageOS(
                     credentialsId,
                     resourceId: databaseHostId,
                     databaseInstanceId,
-                    node1InstanceId,
+                    node1InstanceId: activeNodeInstanceId,
                     instanceMetadata,
                     parentJobId
                 });
@@ -1566,7 +1523,7 @@ async function optimizeMultiblockReadcount(params: OptimizeOSParams) {
                 accountId,
                 databaseInstanceId,
                 ['multiblock-readcount'],
-                'Oracle',
+                'OS',
                 instanceMetadata || {}
             );
         }
@@ -1678,7 +1635,7 @@ async function optimizeFilesystemioOptions(params: OptimizeOSParams) {
                 accountId,
                 databaseInstanceId,
                 ['filesystem-io-options'],
-                'Oracle',
+                'OS',
                 instanceMetadata || {}
             );
         }
