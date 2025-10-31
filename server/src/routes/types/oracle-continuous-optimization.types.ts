@@ -94,7 +94,6 @@ const HostsToOptimize = Type.Array(
                     'Optimization configuration name for the type specified.\n\n' +
                     'For iscsi-storage-operating-system type, valid values are:\n' +
                     '- tcp-advanced-options\n' +
-                    '- multipath-enable\n' +
                     '- host-utilities\n' +
                     '- thp-disable\n' +
                     '- selinux-disable\n' +

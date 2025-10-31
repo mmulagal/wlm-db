@@ -29,12 +29,12 @@ import {
     optimizeMultipathIoSessionsCommand,
     installHostUtilitiesCommand,
     fixTransparentHugepageCommand,
-    enableMultipathIoCommand,
     disableSelinuxCommand,
     optimizeMultiblockReadCountCommand,
     optimizeFilesystemioOptionsCommand,
     optimizeMultipathIoConfigCommand,
-    optimizeMultiPathConfigFriendlyNamesCommand
+    optimizeMultiPathConfigFriendlyNamesCommand,
+    enableMultipathIoCommand
 } from './ssm-scripts/os-optimization-scripts';
 import { handleOptimizeJobCreation } from '../assessment-utils';
 import getLogger from '../../../utils/logger';
@@ -397,6 +397,9 @@ async function oracleOptimizeStorageOS(
         }
 
         case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_ENABLE: {
+            if (isProdEnv) {
+                throw new Error('Multipath IO enable optimization is not supported');
+            }
             try {
                 await enableMultipathIo({
                     accountId,
@@ -423,6 +426,7 @@ async function oracleOptimizeStorageOS(
             }
             break;
         }
+
         case OptimizeOracleiSCSIStorageOperatingSystem.SELINUX_DISABLE: {
             try {
                 await disableSelinux({
