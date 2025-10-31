@@ -10,8 +10,8 @@ import {
 import { IS_DEMO_FLOW, retryWithDelay, sqlResponseParsing, getArtifactsRegionBucketName } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
+import { updateJobDetails, registerJob, updateParentJobStatus } from '../../database/job-operations';
 import { activeSqlNodeDetails, triggerAssessmentAfterOptimization } from '../../cont-opt-optimize-operations';
-import { updateJobDetails, registerJob } from '../../database/job-operations';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import {
@@ -486,8 +486,8 @@ async function oracleOptimizeStorageOS(
         }
     }
 
-    // parent job status gets updated by triggerAssessmentAfterOptimization
     if (parentJobStatus !== JOBSTATUS.COMPLETED) {
+        await updateParentJobStatus(accountId, parentJobId, false, parentJobError);
         throw new Error(parentJobError);
     }
 }

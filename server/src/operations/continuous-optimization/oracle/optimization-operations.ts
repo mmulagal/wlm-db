@@ -1,7 +1,7 @@
 import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import throat from 'throat';
-import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import { JOBTYPE } from '@prisma/client';
 import {
     HostsToOptimizeType,
     OptimizeRequestBodyType
@@ -11,7 +11,7 @@ import getLogger from '../../../utils/logger';
 import { oracleOptimizeStorageOS } from './storage-os-optimize-operations';
 import { HttpErrorCodes } from '../../../utils/consts';
 import { handleOptimizeJobCreation } from '../assessment-utils';
-import { updateJobDetails } from '../../database/job-operations';
+import { updateParentJobStatus } from '../../database/job-operations';
 import { validateAndFilterDatabaseHosts } from '../../bulk-cont-opt-operations';
 import { OracleJobMetadata } from './consts';
 
@@ -87,8 +87,6 @@ async function handleBulkOptimization(
         `Handle bulk optimizing : ${accountId}, ${optimizationCategory}, hostsToOptimize: ${hostsToOptimize?.length}, ${masterOptimizeParentId}`
     );
 
-    let masterOptimizeParentStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-
     const flattenedTasks = hostsToOptimize.flatMap(({ configurationName: optimizationSubcategory, databaseHosts }) =>
         databaseHosts.flatMap(({ id: databaseHostId, databases, credentialsId, region }) =>
             databases.map(databaseInstanceId => ({
@@ -100,7 +98,7 @@ async function handleBulkOptimization(
             }))
         )
     );
-
+    let jobError = '';
     try {
         await Promise.all(
             flattenedTasks.map(
@@ -128,23 +126,18 @@ async function handleBulkOptimization(
                             logger.error(
                                 `Error optimizing database ${databaseInstanceId} on host ${databaseHostId}: ${error.message}`
                             );
-                            masterOptimizeParentStatus = JOBSTATUS.WARNING;
                         }
                     }
                 )
             )
         );
     } catch (error: any) {
+        jobError = String(error);
         logger.error(
             `Error occurred while optimizing for account ${accountId}, ${optimizationCategory}. Error: ${error}`
         );
-        masterOptimizeParentStatus = JOBSTATUS.WARNING;
     } finally {
-        await updateJobDetails(accountId, masterOptimizeParentId, {
-            status:
-                masterOptimizeParentStatus === JOBSTATUS.COMPLETED ? JOBSTATUS.COMPLETED : masterOptimizeParentStatus,
-            endTime: Date.now()
-        });
+        await updateParentJobStatus(accountId, masterOptimizeParentId, false, jobError);
     }
 }
 
