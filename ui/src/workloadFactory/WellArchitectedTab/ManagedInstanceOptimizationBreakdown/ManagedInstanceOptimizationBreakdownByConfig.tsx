@@ -274,6 +274,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     };
 
     const naCheck = useMemo(() => {
+        if (configData?.total === 0 && configData?.oracleTotal !== 0) {
+            dispatch(setSelectedConfigEngineType(DBType.ORACLE));
+        }
         if (showNA) {
             return true;
         }
@@ -310,21 +313,30 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         const identifyType = derivedType(assessmentKey);
         const identifySeverity = derivedSeverity(assessmentKey);
 
+        let perTypeCheck = false;
+        if (naCheck) {
+            perTypeCheck = true;
+        } else if (type === DBType.ORACLE && configData?.oracleTotal === 0) {
+            perTypeCheck = true;
+        } else if (type !== DBType.ORACLE && configData?.total === 0) {
+            perTypeCheck = true;
+        }
+
         return (
             <BarComponent
                 color="#5E8DCD"
                 headingText={headingText}
                 percentage={
-                    naCheck
+                    perTypeCheck
                         ? t('databases.general.not-available')
                         : dismissedOrPostponedText
                         ? 0
                         : Math.round((optimizedCount / total) * 100)
                 }
-                beforeOutOf={naCheck ? undefined : dismissedOrPostponedText ? undefined : optimizedCount}
-                afterOutOf={naCheck ? undefined : dismissedOrPostponedText ? undefined : afterOutOfTotal}
+                beforeOutOf={perTypeCheck ? undefined : dismissedOrPostponedText ? undefined : optimizedCount}
+                afterOutOf={perTypeCheck ? undefined : dismissedOrPostponedText ? undefined : afterOutOfTotal}
                 bottomText={
-                    naCheck
+                    perTypeCheck
                         ? undefined
                         : dismissedOrPostponedText
                         ? undefined
@@ -332,12 +344,12 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 }
                 width={width}
                 from="dashboard"
-                optimizePercentage={naCheck ? 100 : dismissedOrPostponedText ? 0 : optimizePercentage}
+                optimizePercentage={perTypeCheck ? 100 : dismissedOrPostponedText ? 0 : optimizePercentage}
                 loading={dismissedOrPostponedText ? loading : isLoading}
-                textMessage={naCheck ? undefined : dismissedOrPostponedText || undefined}
-                textMessageVariant={naCheck ? 'Regular_14' : undefined}
+                textMessage={perTypeCheck ? undefined : dismissedOrPostponedText || undefined}
+                textMessageVariant={perTypeCheck ? 'Regular_14' : undefined}
                 tooltipMessage={dismissedOrPostponedText ? undefined : hasMixedState(configStateKey)}
-                isDisabled={naCheck}
+                isDisabled={perTypeCheck}
                 type={identifyType}
                 severity={identifySeverity}
             />

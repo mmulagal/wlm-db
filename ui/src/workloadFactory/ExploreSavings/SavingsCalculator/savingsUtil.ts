@@ -1581,16 +1581,6 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
 
     // fsxn data
     if (fsxData) {
-        // IOPS
-        if (fsxData?.ssdIop) {
-            result = {
-                ...result,
-                provisionedIOPS: {
-                    provisionedType: GENERAL.USER_PROVISIONED,
-                    IOPSValue: fsxData?.ssdIop
-                }
-            };
-        }
         // Throughput
         if (fsxData?.throughputCapacity) {
             const throughput = THROUGHPUT_LIST?.filter(perRow => perRow?.value === fsxData?.throughputCapacity);
@@ -1606,13 +1596,32 @@ export const setRecommendedConfig = (msSqlInstance: any, fsxData: any) => {
                 size = 120;
             }
             const unitOption = generateOptionType('GiB', 'GiB', '', false, '');
+            const capacityValue = formatFractionalNumber(size, 0) || 0;
             result = {
                 ...result,
                 storageCapacity: {
-                    capacity: formatFractionalNumber(size, 0),
+                    capacity: capacityValue,
                     unit: unitOption
                 }
             };
+            // IOPS
+            if (fsxData?.ssdIop && fsxData?.ssdIop >= Number(capacityValue) * 3) {
+                result = {
+                    ...result,
+                    provisionedIOPS: {
+                        provisionedType: GENERAL.USER_PROVISIONED,
+                        IOPSValue: fsxData?.ssdIop
+                    }
+                };
+            } else {
+                result = {
+                    ...result,
+                    provisionedIOPS: {
+                        provisionedType: GENERAL.AUTOMATIC,
+                        IOPSValue: ''
+                    }
+                };
+            }
         }
     }
 
