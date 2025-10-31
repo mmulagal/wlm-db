@@ -122,6 +122,7 @@ export const getManageCheckObjInitial = (hostType: string) => {
 
     if (hostType === DBType.ORACLE) {
         manageCheckObj.assessment = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
+        manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
     } else {
         manageCheckObj.assessment = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
@@ -152,16 +153,17 @@ export function getManageCheckObjFinal(
     if (hostType === DBType.ORACLE) {
         return {
             ...baseObj,
-            assessment: getPermissionState('oracle', manageReadinessData, DBType.ORACLE)
+            assessment: getPermissionState('assessment', manageReadinessData),
+            remediation: getPermissionState('remediation', manageReadinessData)
         };
     }
     return {
         ...baseObj,
-        assessment: getPermissionState('assessment', manageReadinessData, DBType.MSSQL),
-        remediation: getPermissionState('remediation', manageReadinessData, DBType.MSSQL),
-        dbcreation: getPermissionState('dbcreation', manageReadinessData, DBType.MSSQL),
-        sandbox: getPermissionState('sandbox', manageReadinessData, DBType.MSSQL),
-        errorInvestigation: getPermissionState('errorInvestigation', manageReadinessData, DBType.MSSQL)
+        assessment: getPermissionState('assessment', manageReadinessData),
+        remediation: getPermissionState('remediation', manageReadinessData),
+        dbcreation: getPermissionState('dbcreation', manageReadinessData),
+        sandbox: getPermissionState('sandbox', manageReadinessData),
+        errorInvestigation: getPermissionState('errorInvestigation', manageReadinessData)
     };
 }
 
@@ -179,9 +181,14 @@ export const getManageCheckObjMultiInitial = (hostType: string, t: TFunction) =>
 
     if (hostType === DBType.ORACLE) {
         manageCheckObj.assessment = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
+        manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.perRowState = [
             {
                 key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
+                value: REGISTER_INSTANCE_STATE.NOT_AVAILABLE
+            },
+            {
+                key: t('databases.register-flow.fix-well-architected-issues'),
                 value: REGISTER_INSTANCE_STATE.NOT_AVAILABLE
             }
         ];
@@ -226,18 +233,27 @@ export function getManageCheckObjMultiFinal(
     t: TFunction
 ): Partial<ExtendedManageStates> {
     if (hostType === DBType.ORACLE) {
-        const assessment = getPermissionState('oracle', manageReadinessData, DBType.ORACLE);
-        const overallState = assessment;
-        const readyCount = assessment === MANAGE_STATES.READY ? 1 : 0;
+        const assessment = getPermissionState('assessment', manageReadinessData);
+        const remediation = getPermissionState('remediation', manageReadinessData);
+
+        const states = [assessment, remediation];
+        const overallState = checkOverallManageState(assessment, remediation);
+        const readyCount = states.filter(state => state === MANAGE_STATES.READY).length;
+
         const perRowState = [
             {
                 key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
                 value: assessment
+            },
+            {
+                key: t('databases.register-flow.fix-well-architected-issues'),
+                value: remediation
             }
         ];
         return {
             ...manageCheckObj,
             assessment,
+            remediation,
             overallState,
             readyCount,
             perRowState,
@@ -248,11 +264,11 @@ export function getManageCheckObjMultiFinal(
             manageReadinessData
         };
     }
-    const assessment = getPermissionState('assessment', manageReadinessData, DBType.MSSQL);
-    const remediation = getPermissionState('remediation', manageReadinessData, DBType.MSSQL);
-    const dbcreation = getPermissionState('dbcreation', manageReadinessData, DBType.MSSQL);
-    const sandbox = getPermissionState('sandbox', manageReadinessData, DBType.MSSQL);
-    const errorInvestigation = getPermissionState('errorInvestigation', manageReadinessData, DBType.MSSQL);
+    const assessment = getPermissionState('assessment', manageReadinessData);
+    const remediation = getPermissionState('remediation', manageReadinessData);
+    const dbcreation = getPermissionState('dbcreation', manageReadinessData);
+    const sandbox = getPermissionState('sandbox', manageReadinessData);
+    const errorInvestigation = getPermissionState('errorInvestigation', manageReadinessData);
 
     const states = [assessment, remediation, dbcreation, sandbox, errorInvestigation];
     const overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox, errorInvestigation);

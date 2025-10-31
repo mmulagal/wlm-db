@@ -89,6 +89,15 @@ export const PermissionListComponentItems = (
         }
     ];
 
+    const oracleBlocksRemediation = [
+        ...oracleBlocks.slice(0, -1), // All blocks except the last one as need to add 'ALTER SYSTEM'
+        {
+            label: t('databases.register-flow.oracle-user-permissions'),
+            values: ['CREATE SESSION', 'SELECT_CATALOG_ROLE CONTAINER = ALL'],
+            secondLineValues: ['SET CONTAINER = ALL', 'SET CONTAINER_DATA = ALL CONTAINER = CURRENT', 'ALTER SYSTEM']
+        }
+    ];
+
     // Decide which items to show based on engineType
     if (engineType === 'Oracle') {
         return [
@@ -111,6 +120,29 @@ export const PermissionListComponentItems = (
                             'databases.register-flow.capabilities-information.oracle-capabilities.review-well-architected-issues'
                         )}
                         blocks={oracleBlocks}
+                        policies={policiesList}
+                    />
+                )
+            },
+            {
+                id: '2',
+                title: t('databases.register-flow.fix-well-architected-issues'),
+                subtitle: t('databases.register-flow.capability'),
+                readinessStatus: manageChecks?.remediation,
+                missingPermission: manageChecks?.remediation !== MANAGE_STATES.READY,
+                image:
+                    wizardOperationType !== ACTION_TYPE.BULK && manageChecks?.remediation !== MANAGE_STATES.READY ? (
+                        <FixDisabled />
+                    ) : (
+                        <Fix />
+                    ),
+                content: (
+                    <PermissionContent
+                        title={t('databases.register-flow.prerequisites-list')}
+                        infoBlock={t(
+                            'databases.register-flow.capabilities-information.oracle-capabilities.fix-well-architected-issues'
+                        )}
+                        blocks={oracleBlocksRemediation}
                         policies={policiesList}
                     />
                 )

@@ -11,11 +11,7 @@ import { DBType, MANAGE_STATES } from '../../../../../../utils/consts';
 import TooltipCard from '../../../../../../common/TooltipCard/TooltipCard';
 import { readinessString } from '../DetectInstanceHelper';
 
-interface DetectedInstanceTableProps {
-    engineType: string;
-}
-
-const DetectedInstanceTable = ({ engineType }: DetectedInstanceTableProps) => {
+const DetectedInstanceTable = () => {
     const { t } = useTranslation();
     const { bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
 
@@ -62,11 +58,8 @@ const DetectedInstanceTable = ({ engineType }: DetectedInstanceTableProps) => {
                     <DsTypography variant="Regular_14">{readinessString(cellData, t)}</DsTypography>
                 </div>
             )
-        }
-    ];
-
-    if (engineType !== DBType.ORACLE) {
-        ColDefs.push({
+        },
+        {
             id: '5',
             Header: t('databases.register-flow.detect-instance-table-col.prerequisite-check'),
             accessor: 'readyCount',
@@ -84,8 +77,8 @@ const DetectedInstanceTable = ({ engineType }: DetectedInstanceTableProps) => {
                     <DsTypography variant="Regular_14">{`${cellData}/${rowData?.totalCount}`}</DsTypography>
                 </div>
             )
-        });
-    }
+        }
+    ];
 
     const tableProps = useTable({
         // @ts-ignore

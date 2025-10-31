@@ -141,9 +141,13 @@
                         }
                     ],
                     "manageReadiness": {
-                        "oracle": {
+                        "assessment": {
                             "missingModules": [],
                             "missingPermissions": []
+                        },
+                        "remediation": {
+                            "missingModules": [],
+                            "missingSqlPermissions": []
                         }
                     }
                 }
@@ -196,9 +200,13 @@
                         }
                     ],
                     "manageReadiness": {
-                        "oracle": {
+                        "assessment": {
                             "missingModules": [],
-                            "missingPermissions": []
+                            "missingSqlPermissions": []
+                        },
+                        "remediation": {
+                            "missingModules": [],
+                            "missingSqlPermissions": []
                         }
                     }
                 }
@@ -252,9 +260,13 @@
                         }
                     ],
                     "manageReadiness": {
-                        "oracle": {
+                        "assessment": {
                             "missingModules": ["python"],
                             "missingPermissions": []
+                        },
+                        "remediation": {
+                            "missingModules": [],
+                            "missingSqlPermissions": []
                         }
                     }
                 }
@@ -308,9 +320,13 @@
                         }
                     ],
                     "manageReadiness": {
-                        "oracle": {
+                        "assessment": {
                             "missingModules": [],
                             "missingPermissions": []
+                        },
+                        "remediation": {
+                            "missingModules": [],
+                            "missingSqlPermissions": []
                         }
                     }
                 }

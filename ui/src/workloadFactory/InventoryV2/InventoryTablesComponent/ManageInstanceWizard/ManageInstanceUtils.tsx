@@ -690,7 +690,7 @@ export const missingModules = (manageReadinessData: ManageReadinessInterface) =>
 };
 
 // Returns the permission state based on the type and manage readiness data
-export const getPermissionState = (type: string, manageReadinessData: ManageReadinessInterface, engineType: string) => {
+export const getPermissionState = (type: string, manageReadinessData: ManageReadinessInterface) => {
     const readinessData = manageReadinessData?.[type];
 
     if (!readinessData) return GENERAL.NOT_AVAILABLE;
@@ -704,8 +704,7 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
             module !== MANAGE_STATES.POWERSHELL7 && module !== MANAGE_STATES.JQ && module !== MANAGE_STATES.PYTHON
     );
 
-    const permissions =
-        engineType === DBType.ORACLE ? readinessData?.missingPermissions : readinessData?.missingSqlPermissions;
+    const permissions = readinessData?.missingSqlPermissions;
 
     if ((otherModules && otherModules.length > 0) || (permissions && permissions.length > 0)) {
         return MANAGE_STATES.MISSING_PREREQUISITES;
@@ -730,21 +729,22 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
 export const checkOverallManageState = (
     assessment: string,
     remediation: string,
-    dbcreation: string,
-    sandbox: string,
-    errorInvestigation: string
+    dbcreation?: string,
+    sandbox?: string,
+    errorInvestigation?: string
 ) => {
     let overallState = '';
 
-    if ([assessment, remediation, dbcreation, sandbox, errorInvestigation].includes(MANAGE_STATES.READY)) {
+    // Filter out undefined values to handle optional parameters for Oracle
+    const states = [assessment, remediation, dbcreation, sandbox, errorInvestigation].filter(
+        state => state !== undefined
+    );
+
+    if (states.includes(MANAGE_STATES.READY)) {
         overallState = MANAGE_STATES.READY;
-    } else if (
-        [assessment, remediation, dbcreation, sandbox, errorInvestigation].includes(MANAGE_STATES.MISSING_PREREQUISITES)
-    ) {
+    } else if (states.includes(MANAGE_STATES.MISSING_PREREQUISITES)) {
         overallState = MANAGE_STATES.MISSING_PREREQUISITES;
-    } else if (
-        [assessment, remediation, dbcreation, sandbox, errorInvestigation].includes(MANAGE_STATES.MISSING_POWERSHELL)
-    ) {
+    } else if (states.includes(MANAGE_STATES.MISSING_POWERSHELL)) {
         overallState = MANAGE_STATES.MISSING_POWERSHELL;
     } else {
         overallState = MANAGE_STATES.NOT_READY;
