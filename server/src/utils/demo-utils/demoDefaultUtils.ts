@@ -43,58 +43,57 @@ import { triggerLogsAnalysis } from '../../operations/logs-analyzer/logs-analyze
 
 const logger = getLogger();
 
-const prodOneResourceId = randomUUID();
-const devFourResourceId = randomUUID();
-
-const mockedHosts = [
-    {
-        resourceId: prodOneResourceId,
-        hostName: 'SQL-Managed-Host-Prod',
-        protocol: STORAGE_PROTOCOLS.ISCSI,
-        sqlInstances: [
-            { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-MarketingCampaigns' },
-            { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-SupplierManagement' },
-            { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-ProductCatalog' }
-        ],
-        databaseType: DatabaseTypes.MS_SQL_SERVER,
-        deploymentType: 'Standalone'
-    },
-    {
-        resourceId: devFourResourceId,
-        hostName: 'SQL-Managed-Host-DEV',
-        protocol: STORAGE_PROTOCOLS.ISCSI,
-        sqlInstances: [
-            { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-SalesAnalytics' },
-            { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-ProjectManagement' }
-        ],
-        databaseType: DatabaseTypes.MS_SQL_SERVER,
-        deploymentType: 'FCI'
-    },
-    {
-        resourceId: randomUUID(),
-        hostName: 'PGSQL-Managed-Host-STG',
-        protocol: STORAGE_PROTOCOLS.NFS,
-        sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
-        databaseType: DatabaseTypes.PG_SQL,
-        deploymentType: 'Standalone'
-    },
-    {
-        resourceId: randomUUID(),
-        hostName: 'PGSQLServer-Dev-02',
-        protocol: STORAGE_PROTOCOLS.NFS,
-        sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
-        databaseType: DatabaseTypes.PG_SQL,
-        deploymentType: 'HA'
-    },
-    {
-        resourceId: randomUUID(),
-        hostName: 'ip-171-30-40-16.ap-southeast-1.compute.internal',
-        protocol: STORAGE_PROTOCOLS.NFS,
-        sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'oracle-orahost' }],
-        databaseType: DatabaseTypes.ORACLE,
-        deploymentType: 'Standalone'
-    }
-];
+function generateDemoResources() {
+    return [
+        {
+            resourceId: randomUUID(),
+            hostName: 'SQL-Managed-Host-Prod',
+            protocol: STORAGE_PROTOCOLS.ISCSI,
+            sqlInstances: [
+                { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-MarketingCampaigns' },
+                { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-SupplierManagement' },
+                { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-ProductCatalog' }
+            ],
+            databaseType: DatabaseTypes.MS_SQL_SERVER,
+            deploymentType: 'Standalone'
+        },
+        {
+            resourceId: randomUUID(),
+            hostName: 'SQL-Managed-Host-DEV',
+            protocol: STORAGE_PROTOCOLS.ISCSI,
+            sqlInstances: [
+                { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-SalesAnalytics' },
+                { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-ProjectManagement' }
+            ],
+            databaseType: DatabaseTypes.MS_SQL_SERVER,
+            deploymentType: 'FCI'
+        },
+        {
+            resourceId: randomUUID(),
+            hostName: 'PGSQL-Managed-Host-STG',
+            protocol: STORAGE_PROTOCOLS.NFS,
+            sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
+            databaseType: DatabaseTypes.PG_SQL,
+            deploymentType: 'Standalone'
+        },
+        {
+            resourceId: randomUUID(),
+            hostName: 'PGSQLServer-Dev-02',
+            protocol: STORAGE_PROTOCOLS.NFS,
+            sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'pgsqlserver' }],
+            databaseType: DatabaseTypes.PG_SQL,
+            deploymentType: 'HA'
+        },
+        {
+            resourceId: randomUUID(),
+            hostName: 'ip-171-30-40-16.ap-southeast-1.compute.internal',
+            protocol: STORAGE_PROTOCOLS.NFS,
+            sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'oracle-orahost' }],
+            databaseType: DatabaseTypes.ORACLE,
+            deploymentType: 'Standalone'
+        }
+    ];
+}
 
 async function createDemoResources(
     accountId: string,
@@ -228,6 +227,7 @@ async function createDemoResourcesPerRegion(
     if (isEmpty(jobs)) {
         // create 3 new resources and configurations
         logger.info('Creating demo resources');
+        const mockedHosts = generateDemoResources();
         const resourceSandboxMetadata: any = { sandboxes: [], userDatabase: [] };
 
         await Promise.all(

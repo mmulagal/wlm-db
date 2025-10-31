@@ -14,6 +14,7 @@ import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { generateHash } from '../../utils/utils';
 
 const logger = getLogger();
+const MARKETING_API_THROTTLING_ERROR = 'The caller does not have sufficient permissions to perform the operation.';
 
 async function getStorageSavings(
     accountId: string,
@@ -46,7 +47,7 @@ async function getStorageSavings(
         })
         .json<CalculateEbsComparisonResponse>();
 
-    if (!isEmpty(response)) {
+    if (!isEmpty(response) || !(response as unknown as string).includes(MARKETING_API_THROTTLING_ERROR)) {
         writeToCache(MARKETING_API_TCO, cacheKey, response);
     }
     return response;
