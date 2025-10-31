@@ -181,7 +181,7 @@ async function listFoundationModels(region: string, cacheParams?: AWSSDKCachePar
     });
     const response = await client.send(command);
 
-    logger.info('List foundation models response', response);
+    logger.debug('List foundation models response', response);
 
     return response;
 }

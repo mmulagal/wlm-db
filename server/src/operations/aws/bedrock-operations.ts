@@ -25,7 +25,7 @@ async function getLogsAnalyzerBedrockRegionsList() {
     const logsAnalyserSupportedRegions = await Promise.all(
         compact(
             bedrockSupportedRegionsList.map(
-                throat(3, async region => {
+                throat(5, async region => {
                     const response = await listFoundationModels(region, { useCache: true });
                     const { modelSummaries } = response || {};
                     const regionSupportedModels =

@@ -1,6 +1,1741 @@
 {
     "remediationRecommendation": [
         {
+            "error": "Error: 25607, Severity: 24, State: 1.",
+            "cause": "The Extended Event engine has been disabled by startup options. This indicates that SQL Server was started with the -T7806 trace flag or another option that disables the Extended Events engine. Features that rely on Extended Events will not function properly.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 25607, Severity: 24, State: 1. Extended Event engine has been disabled by startup options.",
+            "count": 48,
+            "remediation": [
+                "Remove the -T7806 trace flag from SQL Server startup parameters in SQL Server Configuration Manager.",
+                "Restart the SQL Server service after removing the trace flag to enable the Extended Events engine.",
+                "Check for other startup parameters that might be disabling Extended Events by reviewing the SQL Server error log.",
+                "Verify if this trace flag was intentionally set for a specific purpose, as it's uncommon to disable Extended Events in production environments.",
+                "After enabling Extended Events, verify functionality by creating a test Extended Event session."
+            ],
+            "severity": "24",
+            "tags": [
+                "Compute"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "25607",
+            "uniqueErrorKey": "25607",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 5
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 6
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 6
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 6
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 5
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 6
+                }
+            ]
+        },
+        {
+            "error": "Error: 26079, Severity: 22, State: 1.",
+            "cause": "SQL Server TCP provider has stopped listening on port 0 due to a CreateSocket failure. This typically indicates a network-related issue, possibly due to port conflicts, network connectivity problems, or insufficient resources. Since this is running on AWS FSx for NetApp ONTAP, it could be related to storage network connectivity issues.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 26079, Severity: 22, State: 1. TCP provider has stopped listening on port 1433 due to a CreateSocket failure.",
+            "count": 36,
+            "remediation": [
+                "Restart the SQL Server service to re-establish TCP connections and socket bindings.",
+                "Verify network connectivity between the SQL Server instance and the AWS FSx for NetApp ONTAP storage system.",
+                "Check Windows Event Logs for any network-related errors that might provide additional context.",
+                "Ensure that the SQL Server port (default 1433) is not being blocked by a firewall or security group.",
+                "Verify that the SQL Server configuration allows TCP/IP connections in SQL Server Configuration Manager.",
+                "Check for resource contention on the AWS FSx for NetApp ONTAP system that might be affecting network performance.",
+                "Review SQL Server error logs for additional details about the CreateSocket failure.",
+                "Ensure that the service account running SQL Server has appropriate network permissions."
+            ],
+            "severity": "22",
+            "tags": [
+                "Network"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "26079",
+            "uniqueErrorKey": "26079",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "error": "Error: 30038, Severity: 21, State: 1.",
+            "cause": "Full-text index corruption has occurred during compression or decompression operations. This is a serious error that indicates the full-text index may be corrupted on disk, potentially affecting search functionality in the database.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 30038, Severity: 21, State: 1. Full-text index corruption has occurred during compression or decompression operations.",
+            "count": 51,
+            "remediation": [
+                "Run DBCC CHECKDB to verify the overall database integrity and identify any additional corruption issues",
+                "Rebuild the affected full-text catalog using ALTER FULLTEXT CATALOG [catalog_name] REBUILD command",
+                "If rebuilding fails, consider dropping and recreating the full-text index for the affected table(s)",
+                "Check for disk issues on the AWS FSx for NetApp ONTAP storage, as underlying storage problems can cause index corruption",
+                "Ensure SQL Server has the latest service pack and cumulative updates applied, as some full-text corruption issues have been fixed in updates",
+                "Review and increase the error log retention to capture more details about when and how the corruption occurred",
+                "Consider restoring from a backup if the corruption cannot be resolved through rebuilding"
+            ],
+            "severity": "21",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "30038",
+            "uniqueErrorKey": "30038",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "error": "Error: 25726, Severity: 17, State: 1.",
+            "cause": "The SQL Server Extended Events session has too many outstanding events in the data stream. This occurs when events are generated faster than they can be processed or consumed, causing the buffer to overflow. This is typically seen in high-volume Extended Events sessions with insufficient filtering or when the consumer application isn't processing events quickly enough.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 25726, Severity: 17, State: 1. Extended Events session has too many outstanding events in the data stream.",
+            "count": 51,
+            "remediation": [
+                "Increase the buffer size for the affected Extended Events session using ALTER EVENT SESSION to prevent overflow",
+                "Add more targeted filters to your Extended Events session to reduce the volume of captured events",
+                "Consider using event_retention_mode = ALLOW_SINGLE_EVENT_LOSS or event_retention_mode = ALLOW_MULTIPLE_EVENT_LOSS to prevent session blocking",
+                "Implement a more efficient consumer application that can process events at a faster rate",
+                "Check if there are any blocked processes that might be generating excessive events by configuring 'blocked process threshold' properly",
+                "Review your Extended Events session configuration for any high-frequency events that could be excluded",
+                "For AWS FSx storage environments, ensure the storage throughput capacity is sufficient for the I/O demands of the Extended Events session"
+            ],
+            "severity": "17",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "25726",
+            "uniqueErrorKey": "25726",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "error": "Error: 25729, Severity: 18, State: 1.",
+            "cause": "The event data stream was disconnected due to an internal error. This is typically related to network connectivity issues, storage subsystem problems, or resource constraints affecting SQL Server's ability to maintain event data streams. Since you're using AWS FSx for NetApp ONTAP as storage, this could indicate an issue with the storage connectivity or performance.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 25729, Severity: 18, State: 1. Event data stream was disconnected due to an internal error.",
+            "count": 49,
+            "remediation": [
+                "Investigate high wait times for HADR_FILESTREAM_IOMGR_IOCOMPLETION (53,370,236ms) which suggests file I/O issues with the AWS FSx storage.",
+                "Check network connectivity between SQL Server and the FSx for NetApp ONTAP storage - the high wait times indicate potential latency or connection issues.",
+                "Review the I/O statistics showing multiple database files with high stall times, particularly database ID 3, file 1 with 664ms of I/O stall time.",
+                "Consider increasing the FSx for NetApp ONTAP throughput capacity if I/O bottlenecks persist.",
+                "Monitor PAGEIOLATCH_SH waits (2,103ms) which indicate potential disk I/O bottlenecks when reading data pages.",
+                "Verify AWS FSx for NetApp ONTAP service health in the AWS console and check for any maintenance events or service disruptions.",
+                "Review SQL Server error logs for additional connectivity errors that might provide more context about the disconnection."
+            ],
+            "severity": "18",
+            "tags": [
+                "Storage",
+                "Network"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "25729",
+            "uniqueErrorKey": "25729",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "error": "Error: 30029, Severity: 17, State: 1.",
+            "cause": "The full-text host controller failed to start. This error indicates an issue with the SQL Server Full-Text Search service. The error code 0x(null) suggests that the service could not initialize properly, possibly due to configuration issues, service account permissions, or underlying file system problems.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 30029, Severity: 17, State: 1. The full-text host controller failed to start. Error: 0x(null).",
+            "count": 50,
+            "remediation": [
+                "Check if the SQL Server Full-Text Filter Daemon Launcher service is running in Windows Services. If not, start it and ensure it's set to Automatic startup.",
+                "Verify that the SQL Server service account has sufficient permissions to access the full-text catalog directories on the AWS FSx for NetApp ONTAP storage.",
+                "Examine the SQL Server error logs for additional details about the full-text service failure using EXEC sp_readerrorlog.",
+                "Rebuild the full-text catalogs using 'ALTER FULLTEXT CATALOG [catalog_name] REBUILD' for affected databases.",
+                "Check for I/O latency issues with the FSx storage, as indicated by the high wait times for HADR_FILESTREAM_IOMGR_IOCOMPLETION (53370236ms) in the wait stats.",
+                "Ensure that the SQL Server service account has the 'Lock pages in memory' privilege if using enterprise features.",
+                "Verify network connectivity between the SQL Server and the FSx for NetApp ONTAP storage, as network issues can impact full-text operations.",
+                "Consider restarting the SQL Server instance if other remediation steps don't resolve the issue."
+            ],
+            "severity": "17",
+            "tags": [
+                "Storage",
+                "Security"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "30029",
+            "uniqueErrorKey": "30029",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "error": "Error: 28405, Severity: 15, State: 1.",
+            "cause": "This error indicates a critical failure during error handling. SQL Server encountered a second error while trying to handle an initial error, resulting in an unrecoverable state. This is a serious issue that can lead to database instability or corruption.",
+            "context": "Critical error handling failure in SQL Server, potentially caused by cascading issues with storage I/O operations on AWS FSx for NetApp ONTAP requiring immediate investigation.",
+            "count": 49,
+            "remediation": [
+                "Investigate the HADR_FILESTREAM_IOMGR_IOCOMPLETION wait type which shows the highest wait time (53,370,236ms), suggesting potential issues with FileStream operations on the AWS FSx for NetApp ONTAP storage.",
+                "Check for storage latency issues as the IO stats show significant stall time on several database files, particularly database ID 3 file 1 with 664ms of stall time.",
+                "Review SQL Server error logs to identify the initial error that triggered the cascading failure.",
+                "Consider restarting the SQL Server instance to clear the error state if it persists.",
+                "Verify that the AWS FSx for NetApp ONTAP storage is properly configured and accessible with adequate performance characteristics.",
+                "Ensure that the SQL Server service account has proper permissions on the underlying storage system.",
+                "Monitor storage performance metrics in AWS CloudWatch to identify potential bottlenecks in the FSx for NetApp ONTAP configuration.",
+                "Consider increasing the timeout values for storage operations if the environment experiences intermittent network latency."
+            ],
+            "severity": "15",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "28405",
+            "uniqueErrorKey": "28405",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "error": "Error: 26040, Severity: 24, State: 1.",
+            "cause": "The SQL Server TCP provider has stopped listening on port 0 due to an AcceptEx failure. This typically indicates network connectivity issues, port conflicts, or resource constraints on the server. Since this is running on AWS FSx for NetApp ONTAP, it could be related to network configuration issues between SQL Server and the storage subsystem.",
+            "context": "TCP provider AcceptEx failure affecting network connectivity to SQL Server on AWS FSx for NetApp ONTAP environment, potentially causing connection and availability issues.",
+            "count": 48,
+            "remediation": [
+                "Check the SQL Server error log for additional details about the AcceptEx failure and related network errors.",
+                "Verify network connectivity between the SQL Server instance and the AWS FSx for NetApp ONTAP storage system.",
+                "Examine the high wait time (53,370,236 ms) for HADR_FILESTREAM_IOMGR_IOCOMPLETION, which suggests file I/O issues with the storage subsystem.",
+                "Ensure that the SQL Server service account has appropriate permissions to access the AWS FSx for NetApp ONTAP storage.",
+                "Check if there are any network throttling policies or bandwidth limitations between SQL Server and the storage system.",
+                "Verify that the SQL Server TCP/IP protocol is properly configured in SQL Server Configuration Manager.",
+                "Restart the SQL Server service to reset the TCP provider and network connections.",
+                "Review AWS FSx for NetApp ONTAP performance metrics to identify any storage latency or throughput issues.",
+                "Check if there are any AWS network security groups or firewall rules blocking SQL Server network traffic."
+            ],
+            "severity": "24",
+            "tags": [
+                "Network",
+                "Security"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "26040",
+            "uniqueErrorKey": "26040",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "error": "Error: 29227, Severity: 22, State: 1.",
+            "cause": "Thread creation failed in SQL Server. This is a critical error indicating the server could not create a new thread, likely due to resource constraints such as memory pressure or reaching thread limits on the system. With AWS FSx for NetApp ONTAP as the underlying storage, this could be related to I/O operations consuming too many system resources.",
+            "context": "Thread creation failure in SQL Server indicating critical resource constraints, potentially exacerbated by high I/O demands from AWS FSx for NetApp ONTAP storage operations.",
+            "count": 52,
+            "remediation": [
+                "Check for high I/O wait statistics - HADR_FILESTREAM_IOMGR_IOCOMPLETION has 104,779 waits with 53,370,236 ms total wait time, indicating potential I/O bottlenecks with the AWS FSx storage.",
+                "Investigate memory pressure - MEMORY_ALLOCATION_EXT has 385,853 waits, suggesting memory allocation issues that may be preventing thread creation.",
+                "Review the SQL Server configuration for max worker threads and adjust if necessary to prevent thread exhaustion.",
+                "Optimize database files with high I/O - database file with ID 3, file ID 1 shows high I/O (237 reads, 110,723,072 bytes) and significant stall time (664 ms).",
+                "Consider increasing the resources allocated to your AWS FSx for NetApp ONTAP instance to handle the current workload.",
+                "Implement a monitoring solution to track thread usage and I/O patterns to identify recurring bottlenecks.",
+                "Review and optimize queries that might be causing excessive I/O operations or thread creation."
+            ],
+            "severity": "22",
+            "tags": [
+                "Compute"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "29227",
+            "uniqueErrorKey": "29227",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "error": "Error: 26042, Severity: 19, State: 1.",
+            "cause": "The SQL Server HTTP provider has stopped listening due to a failure. This typically happens when there's an issue with the HTTP endpoint configuration, network problems, or resource constraints. The server will automatically attempt to reestablish the HTTP endpoint connection.",
+            "context": "HTTP provider failure affecting SQL Server's ability to maintain HTTP endpoints, potentially impacting web service connectivity and integration with AWS FSx for NetApp ONTAP management interfaces.",
+            "count": 51,
+            "remediation": [
+                "Verify HTTP endpoint configuration by running 'SELECT name, state_desc FROM sys.endpoints WHERE type_desc = \"HTTP\"' to check the current state of HTTP endpoints.",
+                "Check for network connectivity issues between SQL Server and the AWS FSx for NetApp ONTAP storage, as HTTP endpoints may be used for communication with the storage system.",
+                "Review SQL Server error logs for more detailed information about the HTTP provider failure using 'EXEC xp_readerrorlog' to find related errors.",
+                "Ensure that the SQL Server service account has the necessary permissions to access network resources and the FSx storage.",
+                "Monitor HTTP Storage performance counters which show HTTP Storage IO metrics that may indicate issues with the storage connectivity.",
+                "Restart the SQL Server service (MSSQL$SIGMA) if the HTTP endpoint cannot recover automatically.",
+                "Check if there are resource constraints as the server has only 8 GB of physical memory which might be insufficient for the workload."
+            ],
+            "severity": "19",
+            "tags": [
+                "Network",
+                "Security"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "26042",
+            "uniqueErrorKey": "26042",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "error": "Error: 30039, Severity: 17, State: 1.",
+            "cause": "Data corruption occurred during communication between SQL Server and the full-text filter daemon host. This typically happens when a filter used for full-text indexing is malfunctioning or when there are issues with the full-text indexing process. The system will automatically retry the indexing operation with a smaller batch size.",
+            "context": "Full-text filter daemon communication corruption affecting search and indexing operations on AWS FSx for NetApp ONTAP storage, requiring filter daemon restart and catalog verification.",
+            "count": 52,
+            "remediation": [
+                "Restart the Full-Text Filter Daemon Host service (fdhost.exe) to clear any corrupted state.",
+                "Verify that all full-text filters are properly installed and registered in the system.",
+                "Check SQL Server error logs for additional information about the full-text indexing failures.",
+                "Run 'sp_fulltext_service 'restart_all_fdhosts', 1' to restart all full-text filter daemon hosts.",
+                "Consider rebuilding the affected full-text catalogs using 'ALTER FULLTEXT CATALOG [catalog_name] REBUILD'.",
+                "Ensure that the SQL Server service account has sufficient permissions to access the full-text catalog files.",
+                "Since this is running on AWS FSx for NetApp ONTAP, verify network connectivity between SQL Server and the storage system, as latency or connectivity issues could contribute to the corruption during data transfer."
+            ],
+            "severity": "17",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "30039",
+            "uniqueErrorKey": "30039",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 5
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "error": "Error: 25699, Severity: 15, State: 1.",
+            "cause": "The Extended Event engine failed unexpectedly while performing an operation. This indicates a critical issue with SQL Server's Extended Events system, which is used for monitoring and troubleshooting SQL Server performance. This could be due to resource constraints, corruption in the Extended Events system, or underlying storage issues with AWS FSx for NetApp ONTAP.",
+            "context": "Extended Events engine failure affecting SQL Server monitoring and diagnostics capabilities on AWS FSx for NetApp ONTAP storage, potentially impacting performance troubleshooting and system observability.",
+            "count": 11,
+            "remediation": [
+                "Check for SQL Server updates and patches that address Extended Events engine issues. Apply any relevant updates.",
+                "Review the SQL Server error log for additional details about the Extended Events failure using EXEC sp_readerrorlog.",
+                "Verify that the AWS FSx for NetApp ONTAP storage has sufficient IOPS and throughput for SQL Server operations.",
+                "The server has only 8GB of physical memory which may be insufficient. Consider increasing memory allocation for the SQL Server instance.",
+                "Restart the Extended Events service or sessions that are experiencing issues.",
+                "Check if any HTTP-related Extended Events sessions are causing the issue as there are HTTP performance counters active.",
+                "Verify permissions on the Extended Events file targets and ensure SQL Server has proper access to storage locations.",
+                "Consider disabling problematic Extended Events sessions temporarily to isolate which one might be causing the error."
+            ],
+            "severity": "15",
+            "tags": [
+                "Compute"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "25699",
+            "uniqueErrorKey": "25699",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                }
+            ]
+        },
+        {
+            "error": "Error: 25608, Severity: 24, State: 1.",
+            "cause": "The SQL Server Extended Event engine failed to allocate memory for a record in the local thread/fiber. This typically indicates memory pressure on the server or resource contention issues. Since this application uses AWS FSx for NetApp ONTAP as underlying storage, there might be storage-related resource constraints affecting SQL Server's Extended Events functionality.",
+            "context": "Extended Events memory allocation failure indicating severe memory pressure on SQL Server running on AWS FSx for NetApp ONTAP storage, requiring immediate memory optimization.",
+            "count": 15,
+            "remediation": [
+                "Increase the physical memory available to the SQL Server instance, as 8GB may be insufficient for the current workload combined with Extended Events.",
+                "Reduce the buffer size or frequency of Extended Events sessions to decrease memory pressure.",
+                "Check for memory leaks in Extended Events sessions by reviewing session configurations and targets.",
+                "Monitor memory usage patterns and consider implementing memory pressure notifications.",
+                "Verify that the max server memory setting for SQL Server is appropriately configured to leave sufficient memory for the operating system.",
+                "Review SQL Server's max server memory setting to ensure it's not set too high, leaving insufficient memory for the operating system and other processes."
+            ],
+            "severity": "24",
+            "tags": [
+                "Storage",
+                "Compute"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "25608",
+            "uniqueErrorKey": "25608",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                }
+            ]
+        },
+        {
+            "error": "Error: 29223, Severity: 22, State: 1.",
+            "cause": "SQL Server configuration manager enlistment ran out of memory. This indicates a severe memory pressure situation where SQL Server could not allocate memory needed for configuration changes. As this is running on AWS FSx for NetApp ONTAP, there might be memory constraints related to storage operations or configuration.",
+            "context": "Configuration manager memory allocation failure indicating critical memory pressure affecting SQL Server's ability to manage configuration changes on AWS FSx for NetApp ONTAP storage system.",
+            "count": 57,
+            "remediation": [
+                "Immediately review and optimize SQL Server memory allocation - with only 8GB physical memory, consider upgrading the instance.",
+                "Check for memory leaks in applications or processes consuming excessive memory on the server.",
+                "Review the max server memory configuration for SQL Server to ensure appropriate memory allocation.",
+                "Monitor memory usage patterns using Performance Monitor and SQL Server DMVs to identify the root cause of memory pressure.",
+                "Verify that other processes on the server are not consuming excessive memory, leaving insufficient resources for SQL Server.",
+                "Consider upgrading the instance size if memory pressure persists after optimization, as SQL Server with FSx for NetApp ONTAP typically requires more memory than standard configurations."
+            ],
+            "severity": "22",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "29223",
+            "uniqueErrorKey": "29223",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 5
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "error": "Error: 29201, Severity: 17, State: 1.",
+            "cause": "SQL Server's Configuration Manager enlistment service is unable to initialize the communication service required to receive enlistment requests. This is a critical error related to the distributed transaction coordinator (DTC) functionality, which may affect distributed transactions across multiple databases or servers.",
+            "context": "Distributed Transaction Coordinator (DTC) communication service initialization failure affecting distributed transaction capabilities on AWS FSx for NetApp ONTAP storage environment.",
+            "count": 54,
+            "remediation": [
+                "Check the status of the Distributed Transaction Coordinator (MSDTC) service and restart it if necessary.",
+                "Verify that the MSDTC service is configured to start automatically and has the proper security settings.",
+                "Ensure that the SQL Server service account has the necessary permissions to interact with the MSDTC service.",
+                "Check Windows Event Logs for additional errors related to MSDTC or distributed transaction issues.",
+                "Verify network connectivity for distributed transactions if your application uses transactions across multiple servers.",
+                "Review MSDTC security configuration using the Component Services administrative tool.",
+                "Check if any recent changes to firewall settings might be blocking DTC communication ports (typically port 135 and dynamic RPC ports)."
+            ],
+            "severity": "17",
+            "tags": [
+                "Storage",
+                "Compute"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "29201",
+            "uniqueErrorKey": "29201",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
             "error": "Error: 17054, Severity: 16, State: 1.",
             "cause": "The current event was not reported to the operating system error log due to an operating system error. This typically occurs when the Windows Event Log is full or there are permissions issues preventing SQL Server from writing to the event log.",
             "count": 48,
@@ -17,8 +1752,8 @@
                 "Storage",
                 "Security"
             ],
-            "firstOccurrence": 1759972817420,
-            "lastOccurrence": 1759971378780,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "17054",
             "uniqueErrorKey": "17054",
             "hourlyErrorCounts": [
@@ -140,8 +1875,8 @@
                 "Storage",
                 "Compute"
             ],
-            "firstOccurrence": 1760020958240,
-            "lastOccurrence": 1760020958240,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "25606",
             "uniqueErrorKey": "25606",
             "hourlyErrorCounts": [
@@ -272,8 +2007,8 @@
             "tags": [
                 "Compute"
             ],
-            "firstOccurrence": 1760020960260,
-            "lastOccurrence": 1760020960260,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "25607",
             "uniqueErrorKey": "25607",
             "hourlyErrorCounts": [
@@ -404,8 +2139,8 @@
             "tags": [
                 "Compute"
             ],
-            "firstOccurrence": 1760020962270,
-            "lastOccurrence": 1760020962270,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "25608",
             "uniqueErrorKey": "25608",
             "hourlyErrorCounts": [
@@ -538,8 +2273,8 @@
                 "Compute",
                 "Storage"
             ],
-            "firstOccurrence": 1760020966310,
-            "lastOccurrence": 1760020966310,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "25699",
             "uniqueErrorKey": "25699",
             "hourlyErrorCounts": [
@@ -673,8 +2408,8 @@
                 "Compute",
                 "Storage"
             ],
-            "firstOccurrence": 1760020968320,
-            "lastOccurrence": 1760020968320,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "25726",
             "uniqueErrorKey": "25726",
             "hourlyErrorCounts": [
@@ -807,8 +2542,8 @@
                 "Compute",
                 "Storage"
             ],
-            "firstOccurrence": 1760020970340,
-            "lastOccurrence": 1760020970340,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "25729",
             "uniqueErrorKey": "25729",
             "hourlyErrorCounts": [
@@ -942,8 +2677,8 @@
                 "Network",
                 "Compute"
             ],
-            "firstOccurrence": 1760020972350,
-            "lastOccurrence": 1760020972350,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "26040",
             "uniqueErrorKey": "26040",
             "hourlyErrorCounts": [
@@ -1077,8 +2812,8 @@
                 "Network",
                 "Security"
             ],
-            "firstOccurrence": 1760020974370,
-            "lastOccurrence": 1760020974370,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "26042",
             "uniqueErrorKey": "26042",
             "hourlyErrorCounts": [
@@ -1211,8 +2946,8 @@
             "tags": [
                 "Network"
             ],
-            "firstOccurrence": 1760020980420,
-            "lastOccurrence": 1760020980420,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "26079",
             "uniqueErrorKey": "26079",
             "hourlyErrorCounts": [
@@ -1347,8 +3082,8 @@
                 "Compute",
                 "Storage"
             ],
-            "firstOccurrence": 1760020982430,
-            "lastOccurrence": 1760020982430,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "28405",
             "uniqueErrorKey": "28405",
             "hourlyErrorCounts": [
@@ -1482,8 +3217,8 @@
                 "Network",
                 "Compute"
             ],
-            "firstOccurrence": 1760020984450,
-            "lastOccurrence": 1760020984450,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "29201",
             "uniqueErrorKey": "29201",
             "hourlyErrorCounts": [
@@ -1615,8 +3350,8 @@
             "tags": [
                 "Compute"
             ],
-            "firstOccurrence": 1760020986460,
-            "lastOccurrence": 1760020986460,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "29223",
             "uniqueErrorKey": "29223",
             "hourlyErrorCounts": [
@@ -1750,13 +3485,13 @@
             "tags": [
                 "Compute"
             ],
-            "firstOccurrence": 1760020988480,
-            "lastOccurrence": 1760020988480,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "29227",
             "uniqueErrorKey": "29227",
             "hourlyErrorCounts": [
                 {
-                    "hour": 1760018400000,
+                    "hour": 1740528000000,
                     "count": 1
                 }
             ],
@@ -1794,13 +3529,13 @@
                 "Network",
                 "Storage"
             ],
-            "firstOccurrence": 1760020990500,
-            "lastOccurrence": 1760020990500,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "30028",
             "uniqueErrorKey": "30028",
             "hourlyErrorCounts": [
                 {
-                    "hour": 1760018400000,
+                    "hour": 1740528000000,
                     "count": 1
                 }
             ],
@@ -1837,13 +3572,13 @@
                 "Compute",
                 "Security"
             ],
-            "firstOccurrence": 1760020992510,
-            "lastOccurrence": 1760020992510,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "30029",
             "uniqueErrorKey": "30029",
             "hourlyErrorCounts": [
                 {
-                    "hour": 1760018400000,
+                    "hour": 1740528000000,
                     "count": 1
                 }
             ],
@@ -1879,13 +3614,13 @@
             "tags": [
                 "Storage"
             ],
-            "firstOccurrence": 1760020996540,
-            "lastOccurrence": 1760020996540,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "30038",
             "uniqueErrorKey": "30038",
             "hourlyErrorCounts": [
                 {
-                    "hour": 1760018400000,
+                    "hour": 1740528000000,
                     "count": 1
                 }
             ],
@@ -1923,8 +3658,8 @@
                 "Network",
                 "Compute"
             ],
-            "firstOccurrence": 1760020998560,
-            "lastOccurrence": 1760020998560,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "30039",
             "uniqueErrorKey": "30039",
             "hourlyErrorCounts": [
@@ -2056,16 +3791,16 @@
                 "Compute",
                 "Security"
             ],
-            "firstOccurrence": 1759972960000,
-            "lastOccurrence": 1759970424030,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "uniqueErrorKey": "a751083a25078d96-dummy",
             "hourlyErrorCounts": [
                 {
-                    "hour": 1759968000000,
+                    "hour": 1740520800000,
                     "count": 2
                 },
                 {
-                    "hour": 1759971600000,
+                    "hour": 1740524400000,
                     "count": 4
                 }
             ],
@@ -2099,8 +3834,8 @@
             "tags": [
                 "Security"
             ],
-            "firstOccurrence": 1760020950000,
-            "lastOccurrence": 1760020980000,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "208",
             "uniqueErrorKey": "208",
             "hourlyErrorCounts": [
@@ -2195,8 +3930,8 @@
                 "Storage",
                 "Compute"
             ],
-            "firstOccurrence": 1760021000000,
-            "lastOccurrence": 1760021050000,
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
             "errorCode": "823",
             "uniqueErrorKey": "823",
             "hourlyErrorCounts": [
