@@ -46,6 +46,7 @@
               "ssm:GetCommandInvocation",
               "ssm:SendCommand",
               "ssm:GetConnectionStatus",
+              "ssm:DescribeInstancePatches",
               "ssm:DescribePatchBaselines",
               "ssm:DescribeInstancePatchStates",
               "ssm:ListCommands",
