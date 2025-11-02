@@ -270,9 +270,13 @@ async function getBillingOrPriceEstimation(
         promises.push(Promise.resolve());
     }
 
-    const [billingResponse, pricingResponse] = await Promise.all(promises);
+    const [billingResponse, pricingResponse] = await Promise.allSettled(promises);
 
-    return billingResponse || pricingResponse;
+    return billingResponse.status === 'fulfilled'
+        ? billingResponse.value
+        : pricingResponse.status === 'fulfilled'
+        ? pricingResponse.value
+        : undefined;
 }
 
 async function getBilling(resourceDetail: ResourceDetails) {
