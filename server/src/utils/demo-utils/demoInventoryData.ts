@@ -528,6 +528,10 @@ function discoverDemoDataOracle(fsxId: string, ebsVolId: string) {
                             assessment: {
                                 missingModules: [],
                                 missingSqlPermissions: []
+                            },
+                            remediation: {
+                                missingModules: [],
+                                missingSqlPermissions: []
                             }
                         }
                     }
@@ -610,6 +614,10 @@ function discoverDemoDataOracle(fsxId: string, ebsVolId: string) {
                         asmAuthentication: false,
                         manageReadiness: {
                             assessment: {
+                                missingModules: [],
+                                missingSqlPermissions: []
+                            },
+                            remediation: {
                                 missingModules: [],
                                 missingSqlPermissions: []
                             }
