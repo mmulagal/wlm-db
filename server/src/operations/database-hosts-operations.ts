@@ -272,9 +272,9 @@ async function getBillingOrPriceEstimation(
 
     const [billingResponse, pricingResponse] = await Promise.allSettled(promises);
 
-    return billingResponse.status === 'fulfilled'
+    return billingResponse.status === 'fulfilled' && billingResponse.value
         ? billingResponse.value
-        : pricingResponse.status === 'fulfilled'
+        : pricingResponse.status === 'fulfilled' && pricingResponse.value
         ? pricingResponse.value
         : undefined;
 }
