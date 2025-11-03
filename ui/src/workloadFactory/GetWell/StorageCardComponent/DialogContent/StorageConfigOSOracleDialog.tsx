@@ -234,7 +234,6 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                             t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step3'),
                             t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step4')
                         ])}
-                        {createOSConfigSection()}
                         {createSection(
                             t('databases.well-architect.notes'),
                             t('databases.well-architect.oracle-nfs-mount-options-dbfiles-note')
@@ -254,7 +253,6 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                             t('databases.well-architect.oracle-nfs-mount-options-adrhome-step3'),
                             t('databases.well-architect.oracle-nfs-mount-options-adrhome-step4')
                         ])}
-                        {createOSConfigSection()}
                         {createSection(
                             t('databases.well-architect.notes'),
                             t('databases.well-architect.oracle-nfs-mount-options-adrhome-note')
