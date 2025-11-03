@@ -1993,6 +1993,10 @@ async function validateAndStoreDiscoveredParameters(
                               assessment: {
                                   missingModules: [],
                                   missingSqlPermissions: []
+                              },
+                              remediation: {
+                                  missingModules: [],
+                                  missingSqlPermissions: []
                               }
                           }
                       }
