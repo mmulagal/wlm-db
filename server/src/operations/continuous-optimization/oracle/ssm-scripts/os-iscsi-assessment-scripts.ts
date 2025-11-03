@@ -701,7 +701,7 @@ def check_selinux():
                 elif status == 'enforcing':
                     return {"selinux-disabled": False, "selinux-value": "enforcing", "error": None}
                 elif status == 'permissive':
-                    return {"selinux-disabled": False, "selinux-value": "permissive", "error": None}
+                    return {"selinux-disabled": True, "selinux-value": "permissive", "error": None}
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
             log(f'Exception while checking SELinux status: {str(e)}')
             pass

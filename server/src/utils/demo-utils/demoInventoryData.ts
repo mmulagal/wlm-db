@@ -3249,7 +3249,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
     os: {
         selinux: {
             error: null,
-            'selinux-value': 'permissive',
+            'selinux-value': 'enforcing',
             'selinux-disabled': false
         },
         'multipath-io': {

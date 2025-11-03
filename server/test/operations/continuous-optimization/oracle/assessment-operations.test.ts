@@ -182,10 +182,10 @@ describe('Oracle assessment operations', () => {
         expect(selinux).toBeDefined();
 
         expect(selinux.status).toBe('not-optimized');
-        expect(selinux.recommended).toBe('disabled');
+        expect(selinux.recommended).toBe('permissive or disabled');
         expect(selinux.severity).toBe('warning');
         expect(selinux.totalObjectsInViolation).toBe(1);
-        expect(selinux.violationDetails?.[0]?.value).toBe('permissive');
+        expect(selinux.violationDetails?.[0]?.value).toBe('enforcing');
 
         // Test iscsi-replacement-timeout assessment
         const iscsiTimeout = osAssessment.find(

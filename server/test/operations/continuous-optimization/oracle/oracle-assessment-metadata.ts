@@ -624,16 +624,16 @@ const oracleAssessmentMetadata = {
             {
                 name: 'selinux',
                 status: 'not-optimized',
-                recommended: 'disabled',
+                recommended: 'permissive or disabled',
                 severity: 'warning',
                 recommendation:
-                    'Workload Factory recommends disabling SELinux on Oracle database hosts by setting SELINUX=disabled in the system configuration. Disabling SELinux can help avoid compatibility issues and administrative overhead associated with managing SELinux policies for Oracle workloads. After this change, SELinux will no longer enforce access controls, so ensure that your environment is otherwise secured.',
+                    'Workload Factory recommends disabling SELinux on Oracle database hosts by setting SELINUX=disabled or SELINUX=permissive in the system configuration. Disabling or setting SELinux to permissive mode can help avoid compatibility issues and administrative overhead associated with managing SELinux policies for Oracle workloads. When disabled, SELinux will no longer enforce access controls; when set to permissive, it will log policy violations without blocking operations. In either case, ensure that your environment is otherwise secured.',
                 tags: ['Security', 'Operational excellence'],
                 objectsInViolation: ['i-03ed3dc17db570670'],
                 violationDetails: [
                     {
                         objectName: 'i-03ed3dc17db570670',
-                        value: 'permissive',
+                        value: 'enforcing',
                         objectType: 'EC2 instance'
                     }
                 ],

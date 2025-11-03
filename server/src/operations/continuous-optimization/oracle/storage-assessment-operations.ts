@@ -346,7 +346,7 @@ function getOSConfigDrift(
                             'selinux',
                             'configuration',
                             selinuxData?.['selinux-value'] || '',
-                            'SELINUX=disabled'
+                            'SELINUX=disabled or SELINUX=permissive'
                         )
                     );
                 }

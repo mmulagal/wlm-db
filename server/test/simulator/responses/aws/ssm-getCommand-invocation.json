@@ -3751,7 +3751,7 @@
     "os": {
       "selinux": {
         "error": null,
-        "selinux-status": "permissive",
+        "selinux-status": "enforcing",
         "selinux-disabled": false
       },
       "multipath-io": {
