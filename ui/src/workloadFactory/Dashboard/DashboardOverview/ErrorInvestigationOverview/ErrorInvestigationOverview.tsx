@@ -102,7 +102,10 @@ const ErrorInvestigationOverview = () => {
         if (isWorkloadFactory) {
             dashboardRedirection();
         } else {
-            if (selectedErrorInvestigationRow?.type === DBType.MSSQL) {
+            if (
+                selectedErrorInvestigationRow?.type === DBType.MSSQL ||
+                selectedViewInvestigationRow?.type === DBType.MSSQL
+            ) {
                 dashboardRedirection('inventory/optimize/mssql');
             } else {
                 dashboardRedirection('inventory/optimize/oracle');
