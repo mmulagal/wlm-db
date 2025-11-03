@@ -728,7 +728,12 @@ const DialogContent = ({
                                             variant="two-lines"
                                             value={selectedRecommendedInstance}
                                             onChange={(selectedOptions: optionType[]): void => {
-                                                dispatch(setSelectedRecommendedInstance(selectedOptions[0]));
+                                                dispatch(
+                                                    setSelectedRecommendedInstance(
+                                                        //@ts-ignore
+                                                        selectedOptions[0] || selectedOptions
+                                                    )
+                                                );
                                             }}
                                             isSearchable={generateRecommendedInstanceTypes?.length > 5}
                                             options={generateRecommendedInstanceTypes}
