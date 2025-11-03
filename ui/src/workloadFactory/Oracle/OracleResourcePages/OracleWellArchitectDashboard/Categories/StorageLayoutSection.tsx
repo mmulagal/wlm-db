@@ -8,7 +8,7 @@ import { ReactComponent as Light } from '../../../../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../../../../assets/Light-Disabled.svg';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { ActivatingInfo, PostponeInfo, calculatePostponeInfo } from '../../../../GetWell/GetWellHelper';
-import { CONFIG_STATES } from '../../../../../utils/consts';
+import { CONFIG_STATES, FSXN_STORAGE_PROTOCOLS } from '../../../../../utils/consts';
 
 const StorageLayoutSection = ({
     styles,
@@ -28,6 +28,7 @@ const StorageLayoutSection = ({
     const { cardData } = useAppSelector(state => state.getWellOptimize);
 
     const isASMManaged = useMemo(() => cardData?.isASMManaged, [cardData]);
+    const isIscsi = useMemo(() => cardData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI, [cardData]);
     const isStorageLayoutFra = useMemo(() => cardData?.isStorageLayoutFra, [cardData]);
 
     // Helper function to calculate postpone information for configurations
@@ -515,7 +516,7 @@ const StorageLayoutSection = ({
                     </div>
                 )}
 
-                {oracleCardData?.data_dg_lun_layout && isASMManaged && (
+                {oracleCardData?.data_dg_lun_layout && isASMManaged && isIscsi && (
                     <div>
                         <OracleCardComponent
                             cardData={oracleCardData.data_dg_lun_layout}
@@ -579,7 +580,7 @@ const StorageLayoutSection = ({
                     </div>
                 )}
 
-                {oracleCardData?.log_dg_lun_layout && isASMManaged && (
+                {oracleCardData?.log_dg_lun_layout && isASMManaged && isIscsi && (
                     <div>
                         <OracleCardComponent
                             cardData={oracleCardData.log_dg_lun_layout}
@@ -643,7 +644,7 @@ const StorageLayoutSection = ({
                     </div>
                 )}
 
-                {oracleCardData?.fra_dg_lun_layout && isASMManaged && isStorageLayoutFra && (
+                {oracleCardData?.fra_dg_lun_layout && isASMManaged && isStorageLayoutFra && isIscsi && (
                     <div>
                         <OracleCardComponent
                             cardData={oracleCardData.fra_dg_lun_layout}
@@ -707,7 +708,7 @@ const StorageLayoutSection = ({
                     </div>
                 )}
 
-                {oracleCardData?.archivelog_dg_lun_layout && isASMManaged && !isStorageLayoutFra && (
+                {oracleCardData?.archivelog_dg_lun_layout && isASMManaged && isIscsi && !isStorageLayoutFra && (
                     <div>
                         <OracleCardComponent
                             cardData={oracleCardData.archivelog_dg_lun_layout}

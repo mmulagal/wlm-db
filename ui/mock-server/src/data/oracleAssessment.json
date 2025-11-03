@@ -973,5 +973,6 @@
     "fileSystemId": "fs-0d5efc3057c4f12cb",
     "ec2InstanceId": "i-05fbc9747d558cf12",
     "databaseInstanceName": "pdb21cnas1",
-    "isASMManaged": true
+    "isASMManaged": true,
+    "storageProtocol": "iSCSI"
 }

@@ -227,7 +227,8 @@ export const JOB_MONITORING_TYPE = {
 
 export const FSXN_STORAGE_PROTOCOLS = {
     ISCSI: 'iSCSI',
-    SMB: 'SMB'
+    SMB: 'SMB',
+    NFS: 'NFS'
 };
 
 export const MAX_SAVED_CONFIG = 100;

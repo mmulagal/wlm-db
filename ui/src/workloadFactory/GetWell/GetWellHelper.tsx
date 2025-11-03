@@ -1,7 +1,7 @@
 import { TooltipInfo } from '@netapp/design-system';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { TFunction } from 'i18next';
-import { CONFIG_STATES, ASSESSMENT_CONFIG_NAMES, GETWELL_CONFIG } from '../../utils/consts';
+import { CONFIG_STATES, ASSESSMENT_CONFIG_NAMES, GETWELL_CONFIG, FSXN_STORAGE_PROTOCOLS } from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
 import { ReactComponent as Postpone } from '../../assets/Schedule.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
@@ -180,13 +180,23 @@ export const checkHasDismissedConfigurations = (cardData: any, assessmentData?: 
 // Helper function to check if a configuration should be counted based on Oracle-specific conditions for MSSQL we do not have any condition so will go to else block
 const shouldCountOracleMSSQLConfiguration = (key: string, cardData: any): boolean => {
     if (key === 'log_dg_lun_layout' || key === 'data_dg_lun_layout') {
-        return cardData.isASMManaged;
+        return cardData.isASMManaged && cardData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI;
     }
     if (key === 'archivelog_dg_lun_layout' || key === 'fra_dg_lun_layout') {
-        if (key === 'archivelog_dg_lun_layout' && !cardData.isStorageLayoutFra && cardData.isASMManaged) {
+        if (
+            key === 'archivelog_dg_lun_layout' &&
+            !cardData.isStorageLayoutFra &&
+            cardData.isASMManaged &&
+            cardData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI
+        ) {
             return true;
         }
-        if (key === 'fra_dg_lun_layout' && cardData.isStorageLayoutFra && cardData.isASMManaged) {
+        if (
+            key === 'fra_dg_lun_layout' &&
+            cardData.isStorageLayoutFra &&
+            cardData.isASMManaged &&
+            cardData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI
+        ) {
             return true;
         }
         return false;
@@ -212,7 +222,7 @@ export const calculateTotalConfigCount = (
             return;
         }
 
-        if (key === 'isStorageLayoutFra' || key === 'isASMManaged') {
+        if (key === 'isStorageLayoutFra' || key === 'isASMManaged' || key === 'storageProtocol') {
             return;
         }
 

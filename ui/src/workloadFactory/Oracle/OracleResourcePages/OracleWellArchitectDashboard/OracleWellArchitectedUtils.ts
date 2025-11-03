@@ -15,6 +15,7 @@ import {
     CONFIG_NAME_TO_ID_MAPPING,
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
+    FSXN_STORAGE_PROTOCOLS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
     GETWELL_VALUES
@@ -403,6 +404,7 @@ export const oracleCardData: any = {
         tags: ['Reliability', 'Operational excellence', 'Performance efficiency', 'Security']
     },
     isASMManaged: false,
+    storageProtocol: '',
     isStorageLayoutFra: false
 };
 
@@ -798,6 +800,7 @@ export const getOracleCardsData = (
     const cardsData = {
         ...formatIndividualCardMainConfig(data, optimizingData),
         isASMManaged: data?.isASMManaged || false,
+        storageProtocol: data?.storageProtocol || '',
         isStorageLayoutFra: isFraCheck,
         ontap_configuration: createOntapConfigurationBlock(
             ontapOptimizedConfig,
@@ -855,13 +858,19 @@ export const formatOracleOptimizationBreakDown = (
     };
 
     Object.values(cardsData).forEach((cardItem: any) => {
-        if (cardItem === 'isASMManaged' || cardItem === 'deploymentType' || cardItem === 'isStorageLayoutFra') {
+        if (
+            cardItem === 'isASMManaged' ||
+            cardItem === 'deploymentType' ||
+            cardItem === 'isStorageLayoutFra' ||
+            cardItem === 'storageProtocol'
+        ) {
             return; // Skip isASMManaged, deploymentType and isStorageLayoutFra as they are not cards
         }
         if (cardItem?.category !== 'storage') return;
 
         if (
             !cardsData?.isASMManaged &&
+            cardsData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI &&
             (cardItem?.id === 'data-dg-lun-layout' ||
                 cardItem?.id === 'redolog-dg-lun-layout' ||
                 cardItem?.id === 'fra-dg-lun-layout' ||
@@ -1035,7 +1044,12 @@ export const oracleApplyFilter = (
     const categoryData = getOracleCategoryData();
 
     Object.keys(cardData)?.forEach((key: any) => {
-        if (key === 'deploymentType' || key === 'isASMManaged' || key === 'isStorageLayoutFra') {
+        if (
+            key === 'deploymentType' ||
+            key === 'isASMManaged' ||
+            key === 'isStorageLayoutFra' ||
+            key === 'storageProtocol'
+        ) {
             return; // Skip deploymentType, isASMManaged and isStorageLayoutFra as they are not cards
         }
 
@@ -1174,7 +1188,7 @@ export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploy
 
     Object.keys(cardData).forEach((key: any) => {
         // Skip non-card keys
-        if (['deploymentType', 'isASMManaged', 'isStorageLayoutFra'].includes(key)) {
+        if (['deploymentType', 'isASMManaged', 'isStorageLayoutFra', 'storageProtocol'].includes(key)) {
             return;
         }
 
