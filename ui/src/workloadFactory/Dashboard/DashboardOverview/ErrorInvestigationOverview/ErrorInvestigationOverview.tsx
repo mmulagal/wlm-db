@@ -16,7 +16,13 @@ import {
 } from '../../../../store/workloadFactory/agenticAISlice';
 import { ReactComponent as ErrorInvestigateSmall } from '../../../../assets/ErrorInvestigationSmallImage.svg';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import { ERROR_ANALYZER_STATUS, INVENTORY_STATUS, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../utils/consts';
+import {
+    DBType,
+    ERROR_ANALYZER_STATUS,
+    INVENTORY_STATUS,
+    WELL_ARCHITECTED_TABS,
+    WLF_TABS
+} from '../../../../utils/consts';
 import ViewErrorInvestigation from './ActivateErrorInvestigation/CategoryDialogComponent/ViewErrorInvestigation';
 import { useAppSelector } from '../../../../store/storeHooks';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -92,7 +98,17 @@ const ErrorInvestigationOverview = () => {
         const updatedState = store.getState();
         const { selectedErrorInvestigationRow, selectedViewInvestigationRow }: any = updatedState.agenticAI;
         let selectedRowData = null;
-        dashboardRedirection();
+        const isWorkloadFactory = updatedState.auth.isWorkloadFactory;
+        if (isWorkloadFactory) {
+            dashboardRedirection();
+        } else {
+            if (selectedErrorInvestigationRow?.type === DBType.MSSQL) {
+                dashboardRedirection('inventory/optimize/mssql');
+            } else {
+                dashboardRedirection('inventory/optimize/oracle');
+            }
+        }
+
         if (type === 'activate') {
             selectedRowData = selectedErrorInvestigationRow;
         } else {
