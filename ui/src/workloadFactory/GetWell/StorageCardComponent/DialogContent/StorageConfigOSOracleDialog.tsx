@@ -89,10 +89,6 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                             t('databases.well-architect.action-summary'),
                             t('databases.well-architect.oracle-filesystem-io-options-action-summary')
                         )}
-                        {createSection(
-                            t('databases.well-architect.what-will-happen'),
-                            t('databases.well-architect.oracle-filesystem-io-options-what-will-happen')
-                        )}
                         {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
                             t('databases.well-architect.oracle-filesystem-io-options-optimization-step1'),
                             t('databases.well-architect.oracle-filesystem-io-options-optimization-step2'),
@@ -171,7 +167,7 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                         ])}
                         {createSection(
                             t('databases.well-architect.notes'),
-                            t('databases.well-architect.oracle-asm-setup-note')
+                            t('databases.well-architect.oracle-afd-logical-block-size-note')
                         )}
                     </>
                 );
@@ -226,46 +222,44 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                     createOSConfigSection()
                 );
             case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
-                return createStandardDialog(
-                    t,
-                    t('databases.well-architect.oracle-nfs-mount-options-dbfiles-action-summary'),
+                return (
                     <>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-nfs-mount-options-dbfiles-what-will-happen')}
-                        </DsTypography>
-                        {createNumberedActionSteps([
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.oracle-nfs-mount-options-dbfiles-action-summary')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
                             t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step1'),
                             t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step2'),
                             t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step3'),
                             t('databases.well-architect.oracle-nfs-mount-options-dbfiles-step4')
                         ])}
-                    </>,
-                    createSection(
-                        t('databases.well-architect.note'),
-                        t('databases.well-architect.oracle-nfs-mount-options-dbfiles-note')
-                    ),
-                    createOSConfigSection()
+                        {createOSConfigSection()}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-nfs-mount-options-dbfiles-note')
+                        )}
+                    </>
                 );
             case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:
-                return createStandardDialog(
-                    t,
-                    t('databases.well-architect.oracle-nfs-mount-options-adrhome-action-summary'),
+                return (
                     <>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-nfs-mount-options-adrhome-what-will-happen')}
-                        </DsTypography>
-                        {createNumberedActionSteps([
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.oracle-nfs-mount-options-adrhome-action-summary')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
                             t('databases.well-architect.oracle-nfs-mount-options-adrhome-step1'),
                             t('databases.well-architect.oracle-nfs-mount-options-adrhome-step2'),
                             t('databases.well-architect.oracle-nfs-mount-options-adrhome-step3'),
                             t('databases.well-architect.oracle-nfs-mount-options-adrhome-step4')
                         ])}
-                    </>,
-                    createSection(
-                        t('databases.well-architect.note'),
-                        t('databases.well-architect.oracle-nfs-mount-options-adrhome-note')
-                    ),
-                    createOSConfigSection()
+                        {createOSConfigSection()}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-nfs-mount-options-adrhome-note')
+                        )}
+                    </>
                 );
             case ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME:
                 return (

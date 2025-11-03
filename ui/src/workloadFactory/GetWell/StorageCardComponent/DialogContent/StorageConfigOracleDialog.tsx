@@ -165,10 +165,7 @@ const StorageConfigOracleDialog = ({
                             t('databases.well-architect.oracle-export-policy-what-will-happen')
                         )}
                         {createONTAPConfigSection()}
-                        {createSection(
-                            t('databases.well-architect.note'),
-                            t('databases.well-architect.oracle-export-policy-note')
-                        )}
+                        {createStandardNotesSection()}
                     </>
                 );
             default:
