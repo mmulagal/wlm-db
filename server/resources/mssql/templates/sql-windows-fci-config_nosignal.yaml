@@ -680,7 +680,13 @@ Resources:
                                   - '''"'
                             waitAfterCompletion: 0
                         h-set-rssconfig:
-                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1 -FSxID '
+                                  - !Ref 'FSxFileSystemId'
+                                  - "' -FSxRegion '"
+                                  - !Ref 'AWS::Region'
+                                  - '''"'
                             waitAfterCompletion: forever
                 ontapconfig:
                     commands:
@@ -1390,7 +1396,13 @@ Resources:
                                   - '''"'
                             waitAfterCompletion: forever
                         h-set-rssconfig:
-                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1 -FSxID '
+                                  - !Ref 'FSxFileSystemId'
+                                  - "' -FSxRegion '"
+                                  - !Ref 'AWS::Region'
+                                  - '''"'
                             waitAfterCompletion: forever
                 ontapconfig:
                     commands:
