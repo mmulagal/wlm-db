@@ -48,6 +48,15 @@
     "reporting": {
         "bucket-name": "prod.reports.data-services.tlveng.netapp.com"
     },
+    "cors": {
+        "allowed-origins": [
+            "https://console.workloads.netapp.com",
+            "https://cloudmanager.netapp.com",
+            "https://api.workloads.netapp.com",
+            "https://console.bluexp.netapp.com",
+            "https://console.netapp.com"
+        ]
+    },
     "clone-age-in-days": 60,
     "well-architected-assessment-notification": "0 5 */7 * *",
     "postpone-age-in-days": 30,

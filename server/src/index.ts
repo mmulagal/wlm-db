@@ -122,7 +122,23 @@ const app = fastify({
         limits: { fileSize: 500 * 1024 * 1024 }
     })
     .register(cors, {
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE'
+        origin: (origin, callback) => {
+            if (!origin) {
+                return callback(null, true);
+            }
+            const allowedOrigins: string[] = config.get('cors.allowed-origins') || [];
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            logger.warn(`CORS: Blocked request from unauthorized origin: ${origin}`, {
+                origin,
+                timestamp: new Date().toISOString()
+            });
+
+            return callback(new Error(`CORS policy violation: Origin ${origin} not allowed`), false);
+        },
+        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE']
     })
     .register(compress)
     .register(sensible) // disable sensible error handler and use fastify native
