@@ -654,10 +654,12 @@ export const useTable = ({
     );
 
     const columnsWithSelection = useMemo(() => {
+        const selectableRows = organizedRows?.filter((row: rowDataType) => !row?.cellProps?.isDisabled) || [];
+
         const isAllSelected =
-            organizedRows?.every(
-                (row: rowDataType) => table.selectionState?.rows[row.id] || row?.cellProps?.isDisabled
-            ) && organizedRows?.length > 0;
+            selectableRows.length > 0 &&
+            selectableRows.every((row: rowDataType) => !!table.selectionState?.rows[row.id]);
+
         const isAllPageRowsDisabled = pagination?.pageRows?.every(row => row?.cellProps?.isDisabled);
         const isAllRowsDisabled = organizedRows?.every(row => row?.cellProps?.isDisabled);
         return table.selectionState
@@ -699,6 +701,7 @@ export const useTable = ({
                                       />
                                   );
                               }
+
                               return (
                                   <Checkbox
                                       variant="tableCheckbox"
@@ -706,10 +709,11 @@ export const useTable = ({
                                       isPartial={
                                           table!.selectionState!.count > 0 &&
                                           !isAllSelected &&
-                                          organizedRows?.length > 0
+                                          selectableRows.length > 0
                                       }
                                       isChecked={isAllSelected}
                                       onChange={() => {
+                                          // toggle selection for all selectable rows (ignore disabled rows)
                                           selectRows(organizedRows, !isAllSelected);
                                       }}
                                       {...selectAllProps}
