@@ -869,8 +869,7 @@ export const formatOracleOptimizationBreakDown = (
         if (cardItem?.category !== 'storage') return;
 
         if (
-            !cardsData?.isASMManaged &&
-            cardsData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI &&
+            (!cardsData?.isASMManaged || cardsData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) &&
             (cardItem?.id === 'data-dg-lun-layout' ||
                 cardItem?.id === 'redolog-dg-lun-layout' ||
                 cardItem?.id === 'fra-dg-lun-layout' ||
@@ -1041,7 +1040,7 @@ export const oracleApplyFilter = (
     let configCount = 0;
     const filters = groupByType(optimizeFilterTags, 'value');
 
-    const categoryData = getOracleCategoryData();
+    const categoryData = getDynamicOracleCategoryData(driftAssessmentData);
 
     Object.keys(cardData)?.forEach((key: any) => {
         if (
@@ -1141,7 +1140,7 @@ export const oracleApplyFilter = (
     return { data: filteredCardData, configCount };
 };
 
-// Oracle-specific category data mapping
+// Static Oracle category data mapping (for fallback)
 export const getOracleCategoryData = () => ({
     // Storage Layout cards
     oracle_binary_placement: { category: 'Storage', subCategory: 'Storage layout' },
@@ -1159,6 +1158,51 @@ export const getOracleCategoryData = () => ({
     ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
     os_configuration: { category: 'Storage', subCategory: 'Storage configuration' }
 });
+
+// Helper function to convert assessment configuration names to technical keys
+const convertOracleAssessmentNameToTechnicalKey = (assessmentName: string): string => {
+    // Special case for redolog-dg-lun-layout -> log_dg_lun_layout (remove "redo" prefix)
+    if (assessmentName === 'redolog-dg-lun-layout') {
+        return 'log_dg_lun_layout';
+    }
+    // Convert hyphenated names from assessment to underscore format used in technical keys
+    return assessmentName.replace(/-/g, '_');
+};
+// Dynamic Oracle category data mapping based on actual assessment response
+export const getDynamicOracleCategoryData = (assessmentData?: any) => {
+    const categoryMapping: { [key: string]: { category: string; subCategory: string } } = {};
+
+    // Always include ONTAP and OS configurations as they're core storage configurations
+    categoryMapping.ontap_configuration = { category: 'Storage', subCategory: 'Storage configuration' };
+    categoryMapping.os_configuration = { category: 'Storage', subCategory: 'Storage configuration' };
+
+    if (!assessmentData?.storage) {
+        // If no assessment data, return static mapping as fallback
+        return getOracleCategoryData();
+    }
+
+    // Add storage layout configurations based on actual assessment data
+    if (assessmentData.storage.layout) {
+        assessmentData.storage.layout.forEach((layoutConfig: any) => {
+            if (layoutConfig.name) {
+                const technicalKey = convertOracleAssessmentNameToTechnicalKey(layoutConfig.name);
+                categoryMapping[technicalKey] = {
+                    category: 'Storage',
+                    subCategory: 'Storage layout'
+                };
+            }
+        });
+    }
+
+    // Add any storage configuration items (volumes, LUNs, OS) if they exist
+    if (assessmentData.storage.configuration) {
+        // For volumes and LUNs, these are typically sub-configurations of ONTAP
+        // For OS configurations, these are sub-configurations of OS
+        // They don't need separate category entries as they are handled as sub-configurations
+    }
+
+    return categoryMapping;
+};
 
 // Check if configuration is optimized (Oracle version)
 const isOracleConfigOptimized = (blockTwoValue: string, configState?: string): boolean => {
@@ -1178,6 +1222,7 @@ const isOracleConfigOptimized = (blockTwoValue: string, configState?: string): b
 
 // Generate dynamic filter options for Oracle cards
 export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploymentType?: string) => {
+    // Use static mapping here as this is for generating filter options based on cards that exist
     const categoryData = getOracleCategoryData();
     const availableCategories = new Set();
     const availableSubCategories = new Set();
@@ -1367,4 +1412,84 @@ export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, actio
         });
     });
     dispatch(addAllOracleHostAssessmentData(updatedAsessmentData));
+};
+
+// Helper function to check if all Oracle configurations are dismissed (dismissed or postponed)
+export const checkAllOracleConfigurationsDismissed = (cardData: any, assessmentData?: any): boolean => {
+    if (!cardData) {
+        return false;
+    }
+
+    let totalConfigs = 0;
+    let dismissedConfigs = 0;
+
+    // Check standard configurations (using dismissedObj)
+    Object.keys(cardData).forEach((key: string) => {
+        // Skip metadata keys
+        if (
+            key === 'deploymentType' ||
+            key === 'isStorageLayoutFra' ||
+            key === 'isASMManaged' ||
+            key === 'storageProtocol'
+        ) {
+            return;
+        }
+
+        const config = cardData[key];
+        if (!config) return;
+
+        // Only count configurations that have actual assessment data (block_two.value exists)
+        if (!config?.block_two?.value) return;
+
+        // Apply Oracle-specific logic for ASM configurations
+        if (key === 'data_dg_lun_layout' || key === 'log_dg_lun_layout') {
+            if (!cardData.isASMManaged || cardData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) return;
+        }
+        if (key === 'archivelog_dg_lun_layout' || key === 'fra_dg_lun_layout') {
+            if (!cardData.isASMManaged || cardData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) return;
+            // Additional logic for FRA-specific configs
+            if (key === 'archivelog_dg_lun_layout' && cardData.isStorageLayoutFra) {
+                return; // Skip archivelog if FRA is enabled
+            }
+            if (key === 'fra_dg_lun_layout' && !cardData.isStorageLayoutFra) {
+                return; // Skip FRA if it's not enabled
+            }
+        }
+
+        totalConfigs++;
+        const configState = config?.dismissedObj?.configState;
+        if (configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED) {
+            dismissedConfigs++;
+        }
+    });
+
+    // Check sub-configurations for ONTAP/OS cards
+    if (assessmentData?.dismissedConfigurations) {
+        const dismissedConfigurationsData = assessmentData.dismissedConfigurations;
+
+        // Check ONTAP sub-configurations (volumes and luns)
+        const ontapSubConfigs = [
+            ...(dismissedConfigurationsData.storage?.configuration?.volumes || []),
+            ...(dismissedConfigurationsData.storage?.configuration?.luns || [])
+        ];
+
+        ontapSubConfigs.forEach((config: any) => {
+            totalConfigs++;
+            if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
+                dismissedConfigs++;
+            }
+        });
+
+        // Check OS sub-configurations
+        const osSubConfigs = dismissedConfigurationsData.storage?.configuration?.os || [];
+        osSubConfigs.forEach((config: any) => {
+            totalConfigs++;
+            if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
+                dismissedConfigs++;
+            }
+        });
+    }
+
+    // Return true only if there are configurations and ALL of them are dismissed
+    return totalConfigs > 0 && dismissedConfigs === totalConfigs;
 };

@@ -747,6 +747,9 @@
             "oracle-nfs-caching-optimization-step-4": "Remount the file systems and restart the database.",
             "configuration-name": "Configuration name",
             "configuration": "Configuration",
+            "sub-configuration": "Sub-configuration",
+            "category": "Category",
+            "sub-category": "Sub-category",
             "dismiss": {
                 "header": "Dismiss configuration",
                 "content": "Select the dismiss option for ",

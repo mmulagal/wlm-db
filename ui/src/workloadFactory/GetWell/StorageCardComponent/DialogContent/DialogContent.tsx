@@ -730,7 +730,7 @@ const DialogContent = ({
                                             onChange={(selectedOptions: optionType[]): void => {
                                                 dispatch(
                                                     setSelectedRecommendedInstance(
-                                                        //@ts-ignore
+                                                        // @ts-ignore
                                                         selectedOptions[0] || selectedOptions
                                                     )
                                                 );

@@ -5770,6 +5770,202 @@ export const storageMockData = {
     }
 };
 
+// storageMockOracleData used when all the storage configurations are dismissed then storage object will not be coming in the Assessment response so will add mock storage object for Oracle
+export const storageMockOracleData = {
+    storage: {
+        configuration: {
+            volumes: [
+                {
+                    name: 'thin-provision'
+                },
+                {
+                    name: 'autosize'
+                },
+                {
+                    name: 'autosize-mode'
+                },
+                {
+                    name: 'fractional-reserve'
+                },
+                {
+                    name: 'snapshot-copy-reserve'
+                },
+                {
+                    name: 'snapshot-autodelete'
+                },
+                {
+                    name: 'space-mgmt-try-first'
+                },
+                {
+                    name: 'tiering-policy'
+                },
+                {
+                    name: 'tiering-min-cooling-days'
+                },
+                {
+                    name: 'compression'
+                }
+            ],
+            luns: [
+                {
+                    name: 'os-type'
+                },
+                {
+                    name: 'space-reservation-enabled'
+                },
+                {
+                    name: 'space-allocation-allocated'
+                }
+            ],
+            os: [
+                {
+                    name: 'multipath-io'
+                },
+                {
+                    name: 'host-utilities'
+                },
+                {
+                    name: 'transparent-hugepages'
+                },
+                {
+                    name: 'selinux'
+                },
+                {
+                    name: 'iscsi-replacement-timeout'
+                },
+                {
+                    name: 'multipath-friendly-names'
+                },
+                {
+                    name: 'tcp-advanced-options'
+                },
+                {
+                    name: 'filesystems-io-options'
+                },
+                {
+                    name: 'multiblock-readcount'
+                },
+                {
+                    name: 'multipath-io-sessions'
+                },
+                {
+                    name: 'multipath-configuration'
+                },
+                {
+                    name: 'kernel-parameters'
+                },
+                {
+                    name: 'nfs-mount-options-databasefiles'
+                },
+                {
+                    name: 'nfs-mount-options-adrhome'
+                },
+                {
+                    name: 'nfs-caching-options'
+                },
+                {
+                    name: 'nfsv4-domain-name'
+                },
+                {
+                    name: 'asm-setup'
+                },
+                {
+                    name: 'asm-external-redundancy'
+                },
+                {
+                    name: 'afd-logical-block-size'
+                },
+                {
+                    name: 'asmlib-logical-block-size'
+                }
+            ]
+        },
+        layout: [
+            {
+                name: 'data-dg-lun-layout'
+            },
+            {
+                name: 'redolog-dg-lun-layout'
+            },
+            {
+                name: 'fra-dg-lun-layout'
+            },
+            {
+                name: 'archivelog-dg-lun-layout'
+            },
+            {
+                name: 'archive-placement'
+            },
+            {
+                name: 'datafiles-placement'
+            },
+            {
+                name: 'controlfiles-placement'
+            },
+            {
+                name: 'redologs-placement'
+            },
+            {
+                name: 'templogs-placement'
+            },
+            {
+                name: 'oracle-binary-placement'
+            }
+        ]
+    }
+};
+
+/**
+ * Dynamically generates Oracle storage mock data based on dismissed configurations in the assessment response.
+ * This is used for Oracle databases where the configuration can vary based on protocol (NFS, ASM, iSCSI)
+ * and deployment type. Instead of using hardcoded mock data like in MSSQL, this function constructs
+ * the storage structure based on what configurations were actually dismissed.
+ */
+export const generateDynamicOracleStorageMockData = (assessmentData: any) => {
+    const dismissedConfigurations = assessmentData?.dismissedConfigurations?.storage;
+
+    if (!dismissedConfigurations) {
+        // Fallback to static mock data if no dismissed configurations
+        return storageMockOracleData;
+    }
+
+    const dynamicStorageData: any = {
+        storage: {
+            configuration: {},
+            layout: []
+        }
+    };
+
+    // Process configuration sections (volumes, luns, os)
+    if (dismissedConfigurations.configuration) {
+        Object.keys(dismissedConfigurations.configuration).forEach(configType => {
+            const configurations = dismissedConfigurations.configuration[configType];
+            if (Array.isArray(configurations) && configurations.length > 0) {
+                dynamicStorageData.storage.configuration[configType] = configurations.map((config: any) => ({
+                    name: config.configurationName
+                }));
+            }
+        });
+    }
+
+    // Process layout section
+    if (dismissedConfigurations.layout && Array.isArray(dismissedConfigurations.layout)) {
+        dynamicStorageData.storage.layout = dismissedConfigurations.layout.map((config: any) => ({
+            name: config.configurationName
+        }));
+    }
+
+    // If no valid configuration was found, fallback to static mock data
+    if (
+        Object.keys(dynamicStorageData.storage.configuration).length === 0 &&
+        dynamicStorageData.storage.layout.length === 0
+    ) {
+        return storageMockOracleData;
+    }
+
+    return dynamicStorageData;
+};
+
 export const instanceBreadCrumbSelectedFrom = (breadCrumbSelectedFrom: string) => {
     let tab: string = '';
     if (breadCrumbSelectedFrom === WLF_TABS.INVENTORY) {

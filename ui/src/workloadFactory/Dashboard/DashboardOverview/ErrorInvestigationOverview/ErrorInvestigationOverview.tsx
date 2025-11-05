@@ -98,18 +98,16 @@ const ErrorInvestigationOverview = () => {
         const updatedState = store.getState();
         const { selectedErrorInvestigationRow, selectedViewInvestigationRow }: any = updatedState.agenticAI;
         let selectedRowData = null;
-        const isWorkloadFactory = updatedState.auth.isWorkloadFactory;
+        const { isWorkloadFactory } = updatedState.auth;
         if (isWorkloadFactory) {
             dashboardRedirection();
+        } else if (
+            selectedErrorInvestigationRow?.type === DBType.MSSQL ||
+            selectedViewInvestigationRow?.type === DBType.MSSQL
+        ) {
+            dashboardRedirection('inventory/optimize/mssql');
         } else {
-            if (
-                selectedErrorInvestigationRow?.type === DBType.MSSQL ||
-                selectedViewInvestigationRow?.type === DBType.MSSQL
-            ) {
-                dashboardRedirection('inventory/optimize/mssql');
-            } else {
-                dashboardRedirection('inventory/optimize/oracle');
-            }
+            dashboardRedirection('inventory/optimize/oracle');
         }
 
         if (type === 'activate') {

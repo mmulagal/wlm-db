@@ -13,6 +13,7 @@ import {
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { setRefreshOracleWellArchitect, setOracleRefreshTimes } from '../../../../store/workloadFactory/oracleSlice';
 import { getCurrentDateTime } from '../../../../utils/utilityFunctions';
+import { generateDynamicOracleStorageMockData } from '../../../GetWell/GetWellUtils';
 
 const useOracleWellArchitectApi = () => {
     const dispatch = useDispatch();
@@ -43,6 +44,10 @@ const useOracleWellArchitectApi = () => {
             });
 
             if (result && !result?.error && result?.data) {
+                if (!result.data.storage) {
+                    const dynamicMockData = generateDynamicOracleStorageMockData(result.data);
+                    result.data = { ...result.data, ...dynamicMockData };
+                }
                 dispatch(setDriftAssessmentData(result.data));
                 formatOracleWellArchitectedData(dispatch, result.data, false, isRefresh);
                 dispatch(setOptimizePageLoading(false));

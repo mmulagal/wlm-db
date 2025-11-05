@@ -31,6 +31,15 @@
                     font-weight: bold;
                     margin-bottom: 12px;
                 }
+
+                .tooltipDivider {
+                    border-bottom: 1px solid var(--border);
+                    margin: 8px 0;
+                }
+
+                .tooltipConfigText {
+                    margin-bottom: 4px;
+                }
             }
         }
     }

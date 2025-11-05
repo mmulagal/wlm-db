@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DsPopover, DsSpinner, DsToggleSwitch, DsTypography } from '@tlveng/wlm-ds';
 import { useAppSelector, useAppDispatch } from '../../../../store/storeHooks';
 import TotalOptimizationScore from '../../../GetWell/TotalOptimizationScore/TotalOptimizationScore';
-import OracleConfigureCategory from './OracleConfigureCategory/OracleConfigureCategory';
+import OptimizationBreakdown from '../../../GetWell/OptimizationBreakdown/OptimizationBreakdown';
 import styles from './OracleWellArchitectDashboard.module.scss';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import StorageLayoutSection from './Categories/StorageLayoutSection';
@@ -12,8 +12,13 @@ import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
 import OracleExportPDF from './ExportPDFComponent/OracleExportPDF';
 import OracleWellArchitectBanner from './OracleWellArchitectBanner';
-import { checkAllConfigurationsDismissed, checkHasDismissedConfigurations } from '../../../GetWell/GetWellHelper';
-import { generateOracleDynamicFilterOptions, oracleApplyFilter } from './OracleWellArchitectedUtils';
+import { checkHasDismissedConfigurations } from '../../../GetWell/GetWellHelper';
+import {
+    generateOracleDynamicFilterOptions,
+    oracleApplyFilter,
+    checkAllOracleConfigurationsDismissed
+} from './OracleWellArchitectedUtils';
+import { DBType } from '../../../../utils/consts';
 import {
     setOracleOptimizeFilterTags,
     setOracleDefaultFilterOptions
@@ -84,16 +89,22 @@ const OracleWellArchitectDashboard = () => {
 
     // Helper function to check if all configurations are dismissed
     const allConfigurationsDismissed = useMemo(
-        () => checkAllConfigurationsDismissed(cardData, driftAssessmentData),
+        () => checkAllOracleConfigurationsDismissed(cardData, driftAssessmentData),
         [cardData, driftAssessmentData]
     );
 
     // Automatically enable dismissed toggle when all configurations are dismissed
+    // and allow it to be turned off when not all configurations are dismissed
     useEffect(() => {
         if (allConfigurationsDismissed) {
             setShowDismissedConfigurations(true);
+        } else {
+            // Only auto-disable if currently showing dismissed view and not all configs are dismissed
+            if (showDismissedConfigurations && !hasDismissedConfigurations) {
+                setShowDismissedConfigurations(false);
+            }
         }
-    }, [allConfigurationsDismissed]);
+    }, [allConfigurationsDismissed, hasDismissedConfigurations, showDismissedConfigurations]);
 
     // To apply filters on change of filters or card data
     useEffect(() => {
@@ -157,7 +168,10 @@ const OracleWellArchitectDashboard = () => {
                                 isAssessmentAvailable={isAssessmentAvailable}
                                 allConfigurationsDismissed={allConfigurationsDismissed}
                             />
-                            <OracleConfigureCategory allConfigurationsDismissed={allConfigurationsDismissed} />
+                            <OptimizationBreakdown
+                                allConfigurationsDismissed={allConfigurationsDismissed}
+                                engineType={DBType.ORACLE}
+                            />
                         </div>
 
                         <div className={styles.sectionTwo}>
