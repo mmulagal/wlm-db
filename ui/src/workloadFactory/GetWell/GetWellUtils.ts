@@ -4605,9 +4605,10 @@ export const updateConfigStateStatus = (
 
             // Extract timestamp from API response if available
             const endTime = apiResponseData?.dismissedConfigurations?.[0]?.endTime || null;
+            const startTime = apiResponseData?.dismissedConfigurations?.[0]?.startTime || null;
 
             // Call the special card-level handling
-            const updatedData = updateConfigStatePerInstance(setAction, rowData.name, endTime, engineType);
+            const updatedData = updateConfigStatePerInstance(setAction, rowData.name, endTime, startTime, engineType);
             if (updatedData) {
                 dispatch(setDriftAssessmentData(updatedData));
                 // Use the appropriate format function based on engine type
@@ -4626,12 +4627,14 @@ export const updateConfigStateStatus = (
 
             // Extract timestamp from API response if available
             const endTime = apiResponseData?.dismissedConfigurations?.[0]?.endTime || null;
+            const startTime = apiResponseData?.dismissedConfigurations?.[0]?.startTime || null;
 
             // Call the special card-level handling
             const updatedData = updateConfigStatePerInstance(
                 setAction,
                 ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
                 endTime,
+                startTime,
                 engineType
             );
             if (updatedData) {
@@ -4691,7 +4694,8 @@ export const updateConfigStateStatus = (
                                                               ? {
                                                                     ...item,
                                                                     configState: setAction,
-                                                                    endTime: rowData?.endTime
+                                                                    endTime: rowData?.endTime,
+                                                                    startTime: rowData?.startTime
                                                                 }
                                                               : item
                                                       );
@@ -4702,7 +4706,8 @@ export const updateConfigStateStatus = (
                                                       {
                                                           configurationName: haMssqlMap[rowData?.name],
                                                           configState: setAction,
-                                                          endTime: rowData?.endTime
+                                                          endTime: rowData?.endTime,
+                                                          startTime: rowData?.startTime
                                                       }
                                                   ];
                                               })()
@@ -4710,7 +4715,8 @@ export const updateConfigStateStatus = (
                                                   {
                                                       configurationName: haMssqlMap[rowData?.name],
                                                       configState: setAction,
-                                                      endTime: rowData?.endTime
+                                                      endTime: rowData?.endTime,
+                                                      startTime: rowData?.startTime
                                                   }
                                               ]
                                     } || {
@@ -4718,7 +4724,8 @@ export const updateConfigStateStatus = (
                                             {
                                                 configurationName: haMssqlMap[rowData?.name],
                                                 configState: setAction,
-                                                endTime: rowData?.endTime
+                                                endTime: rowData?.endTime,
+                                                startTime: rowData?.startTime
                                             }
                                         ]
                                     }
@@ -4752,7 +4759,8 @@ export const updateConfigStateStatus = (
                                                                   ? {
                                                                         ...item,
                                                                         configState: setAction,
-                                                                        endTime: rowData?.endTime
+                                                                        endTime: rowData?.endTime,
+                                                                        startTime: rowData?.startTime
                                                                     }
                                                                   : item
                                                           );
@@ -4763,7 +4771,8 @@ export const updateConfigStateStatus = (
                                                           {
                                                               configurationName: storageSizingMap[rowData?.name],
                                                               configState: setAction,
-                                                              endTime: rowData?.endTime
+                                                              endTime: rowData?.endTime,
+                                                              startTime: rowData?.startTime
                                                           }
                                                       ];
                                                   })()
@@ -4771,7 +4780,8 @@ export const updateConfigStateStatus = (
                                                       {
                                                           configurationName: storageSizingMap[rowData?.name],
                                                           configState: setAction,
-                                                          endTime: rowData?.endTime
+                                                          endTime: rowData?.endTime,
+                                                          startTime: rowData?.startTime
                                                       }
                                                   ]
                                         }
@@ -4781,7 +4791,8 @@ export const updateConfigStateStatus = (
                                                 {
                                                     configurationName: storageSizingMap[rowData?.name],
                                                     configState: setAction,
-                                                    endTime: rowData?.endTime
+                                                    endTime: rowData?.endTime,
+                                                    startTime: rowData?.startTime
                                                 }
                                             ]
                                         }
@@ -4816,7 +4827,8 @@ export const updateConfigStateStatus = (
                                                                   ? {
                                                                         ...item,
                                                                         configState: setAction,
-                                                                        endTime: rowData?.endTime
+                                                                        endTime: rowData?.endTime,
+                                                                        startTime: rowData?.startTime
                                                                     }
                                                                   : item
                                                           );
@@ -4827,7 +4839,8 @@ export const updateConfigStateStatus = (
                                                           {
                                                               configurationName: storageLayoutMap[rowData?.name],
                                                               configState: setAction,
-                                                              endTime: rowData?.endTime
+                                                              endTime: rowData?.endTime,
+                                                              startTime: rowData?.startTime
                                                           }
                                                       ];
                                                   })()
@@ -4835,7 +4848,8 @@ export const updateConfigStateStatus = (
                                                       {
                                                           configurationName: storageLayoutMap[rowData?.name],
                                                           configState: setAction,
-                                                          endTime: rowData?.endTime
+                                                          endTime: rowData?.endTime,
+                                                          startTime: rowData?.startTime
                                                       }
                                                   ]
                                         }
@@ -4845,7 +4859,8 @@ export const updateConfigStateStatus = (
                                                 {
                                                     configurationName: storageLayoutMap[rowData?.name],
                                                     configState: setAction,
-                                                    endTime: rowData?.endTime
+                                                    endTime: rowData?.endTime,
+                                                    startTime: rowData?.startTime
                                                 }
                                             ]
                                         }
@@ -4875,7 +4890,8 @@ export const updateConfigStateStatus = (
                                                               return {
                                                                   ...item,
                                                                   configState: setAction,
-                                                                  endTime: rowData?.endTime
+                                                                  endTime: rowData?.endTime,
+                                                                  startTime: rowData?.startTime
                                                               };
                                                           }
                                                           return item;
@@ -4884,7 +4900,8 @@ export const updateConfigStateStatus = (
                                                           {
                                                               configurationName: rowData?.id,
                                                               configState: setAction,
-                                                              endTime: rowData?.endTime
+                                                              endTime: rowData?.endTime,
+                                                              startTime: rowData?.startTime
                                                           }
                                                       ]
                                             }
@@ -4905,12 +4922,14 @@ export const updateConfigStateStatus = (
                                             ? {
                                                   ...instance?.assessments?.dismissedConfigurations?.[name],
                                                   configState: setAction,
-                                                  endTime: rowData?.endTime
+                                                  endTime: rowData?.endTime,
+                                                  startTime: rowData?.startTime
                                               }
                                             : {
                                                   configurationName: rowData?.id,
                                                   configState: setAction,
-                                                  endTime: rowData?.endTime
+                                                  endTime: rowData?.endTime,
+                                                  startTime: rowData?.startTime
                                               }
                                     }
                                 }
@@ -4928,7 +4947,13 @@ export const updateConfigStateStatus = (
     dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
 };
 
-export const updateConfigStatePerInstance = (setAction: any, name: string, endTime: any, engineType?: string) => {
+export const updateConfigStatePerInstance = (
+    setAction: any,
+    name: string,
+    endTime: any,
+    startTime: any,
+    engineType?: string
+) => {
     const state = store.getState();
     const { driftAssessmentData } = state.getWellOptimize;
 
@@ -5002,13 +5027,15 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
         const dismissedVolumeConfigs = volumeConfigs.map((config: any) => ({
             configurationName: config.name,
             configState: setAction,
-            endTime
+            endTime,
+            startTime
         }));
 
         const dismissedLunConfigs = lunConfigs.map((config: any) => ({
             configurationName: config.name,
             configState: setAction,
-            endTime
+            endTime,
+            startTime
         }));
 
         return {
@@ -5034,7 +5061,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
         const dismissedOsConfigs = osConfigs.map((config: any) => ({
             configurationName: config.name,
             configState: setAction,
-            endTime
+            endTime,
+            startTime
         }));
 
         return {
@@ -5060,7 +5088,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
         const dismissedMssqlHAConfigs = mssqlHAConfigs.map((config: any) => ({
             configurationName: config.name,
             configState: setAction,
-            endTime
+            endTime,
+            startTime
         }));
 
         return {
@@ -5093,7 +5122,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                                           ? {
                                                 ...item,
                                                 configState: setAction,
-                                                endTime
+                                                endTime,
+                                                startTime
                                             }
                                           : item
                                   );
@@ -5104,7 +5134,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                                   {
                                       configurationName: name,
                                       configState: setAction,
-                                      endTime
+                                      endTime,
+                                      startTime
                                   }
                               ];
                           })()
@@ -5112,7 +5143,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                               {
                                   configurationName: name,
                                   configState: setAction,
-                                  endTime
+                                  endTime,
+                                  startTime
                               }
                           ]
                 }
@@ -5122,7 +5154,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                         {
                             configurationName: name,
                             configState: setAction,
-                            endTime
+                            endTime,
+                            startTime
                         }
                     ]
                 }
@@ -5146,7 +5179,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                                       ? {
                                             ...item,
                                             configState: setAction,
-                                            endTime
+                                            endTime,
+                                            startTime
                                         }
                                       : item
                               );
@@ -5157,7 +5191,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                               {
                                   configurationName: name,
                                   configState: setAction,
-                                  endTime
+                                  endTime,
+                                  startTime
                               }
                           ];
                       })()
@@ -5165,7 +5200,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                           {
                               configurationName: name,
                               configState: setAction,
-                              endTime
+                              endTime,
+                              startTime
                           }
                       ]
             } || {
@@ -5173,7 +5209,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                     {
                         configurationName: name,
                         configState: setAction,
-                        endTime
+                        endTime,
+                        startTime
                     }
                 ]
             }
@@ -5200,7 +5237,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                                           ? {
                                                 ...item,
                                                 configState: setAction,
-                                                endTime
+                                                endTime,
+                                                startTime
                                             }
                                           : item
                                   );
@@ -5211,7 +5249,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                                   {
                                       configurationName: name,
                                       configState: setAction,
-                                      endTime
+                                      endTime,
+                                      startTime
                                   }
                               ];
                           })()
@@ -5219,7 +5258,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                               {
                                   configurationName: name,
                                   configState: setAction,
-                                  endTime
+                                  endTime,
+                                  startTime
                               }
                           ]
                 }
@@ -5229,7 +5269,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                         {
                             configurationName: name,
                             configState: setAction,
-                            endTime
+                            endTime,
+                            startTime
                         }
                     ]
                 }
@@ -5249,7 +5290,7 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
         if (existingIndex !== -1) {
             // Update existing configuration
             updatedConfigs = existingConfigs.map((item: any, index: number) =>
-                index === existingIndex ? { ...item, configState: setAction, endTime } : item
+                index === existingIndex ? { ...item, configState: setAction, endTime, startTime } : item
             );
         } else {
             // Add new configuration to the list
@@ -5258,7 +5299,8 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                 {
                     configurationName: name,
                     configState: setAction,
-                    endTime
+                    endTime,
+                    startTime
                 }
             ];
         }
@@ -5289,12 +5331,14 @@ export const updateConfigStatePerInstance = (setAction: any, name: string, endTi
                     ? {
                           ...driftAssessmentData?.dismissedConfigurations?.[key],
                           configState: setAction,
-                          endTime
+                          endTime,
+                          startTime
                       }
                     : {
                           configurationName: name,
                           configState: setAction,
-                          endTime
+                          endTime,
+                          startTime
                       }
             }
         };

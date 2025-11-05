@@ -50,16 +50,11 @@ const StorageConfigurationSection = ({
     const renderPostponeActivatingInfo = (configKey: string) => (
         <>
             {showDismissedConfigurations && (
-                <PostponeInfo
-                    configKey={configKey}
-                    getPostponeInfo={getPostponeInfo}
-                    translation={t}
-                    customStyles={styles}
-                />
+                <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} translation={t} />
             )}
 
             {!showDismissedConfigurations && (
-                <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} customStyles={styles} />
+                <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
             )}
         </>
     );
@@ -86,7 +81,6 @@ const StorageConfigurationSection = ({
                 configKey={configType}
                 cardData={{ [configType]: { dismissedObj: { configState: CONFIG_STATES.ACTIVATING } } }}
                 translation={t}
-                customStyles={styles}
             />
         );
     };

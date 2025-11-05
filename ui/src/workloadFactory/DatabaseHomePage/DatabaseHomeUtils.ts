@@ -2604,6 +2604,7 @@ export const categorizeStateInstances = (data: any, type: string) => {
                         credentialId: credentialsId,
                         regionId: region,
                         state: config?.configState,
+                        startTime: config?.startTime,
                         endTime: config?.endTime
                     });
                 });
@@ -2618,6 +2619,7 @@ export const categorizeStateInstances = (data: any, type: string) => {
                         credentialId: credentialsId,
                         regionId: region,
                         state: config?.configState,
+                        startTime: config?.startTime,
                         endTime: config?.endTime
                     });
                 });
@@ -2632,6 +2634,7 @@ export const categorizeStateInstances = (data: any, type: string) => {
                             credentialId: credentialsId,
                             regionId: region,
                             state: config?.configState,
+                            startTime: config?.startTime,
                             endTime: config?.endTime
                         });
                     } else {
@@ -2643,6 +2646,7 @@ export const categorizeStateInstances = (data: any, type: string) => {
                             credentialId: credentialsId,
                             regionId: region,
                             state: config?.configState,
+                            startTime: config?.startTime,
                             endTime: config?.endTime
                         });
                     }

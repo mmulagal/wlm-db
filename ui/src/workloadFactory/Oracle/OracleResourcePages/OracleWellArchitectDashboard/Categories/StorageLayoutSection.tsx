@@ -38,16 +38,11 @@ const StorageLayoutSection = ({
     const renderPostponeActivatingInfo = (configKey: string) => (
         <>
             {showDismissedConfigurations && (
-                <PostponeInfo
-                    configKey={configKey}
-                    getPostponeInfo={getPostponeInfo}
-                    translation={t}
-                    customStyles={styles}
-                />
+                <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} translation={t} />
             )}
 
             {!showDismissedConfigurations && (
-                <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} customStyles={styles} />
+                <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
             )}
         </>
     );

@@ -189,8 +189,6 @@
 
     /* Postpone info container for dismissed configurations */
     .postponeInfoContainer {
-        margin-right: 20px;
-
         /* Ensure typography maintains proper colors */
         [class*='Typography'] {
             color: var(--text-primary) !important;

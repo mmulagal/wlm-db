@@ -1322,19 +1322,20 @@ const updateStorageLayoutConfig = (
     existingLayout: any[],
     configurationName: string,
     setAction: string,
-    endTime: string
+    endTime: string,
+    startTime: string
 ) => {
     const itemIndex = existingLayout.findIndex((item: any) => item?.configurationName === configurationName);
 
     if (itemIndex !== -1) {
         // Update existing item
         return existingLayout.map((item: any, index: number) =>
-            index === itemIndex ? { ...item, configState: setAction, endTime } : item
+            index === itemIndex ? { ...item, configState: setAction, endTime, startTime } : item
         );
     }
 
     // Add new item
-    return [...existingLayout, { configurationName, configState: setAction, endTime }];
+    return [...existingLayout, { configurationName, configState: setAction, endTime, startTime }];
 };
 
 // Helper function to create dismissed configurations structure
@@ -1342,14 +1343,15 @@ const createDismissedConfigStructure = (
     instance: any,
     configurationName: string,
     setAction: string,
-    endTime: string
+    endTime: string,
+    startTime: string
 ) => {
     const existingStorage = instance?.assessments?.dismissedConfigurations?.storage;
     const existingLayout = existingStorage?.layout;
 
     const updatedLayout = existingLayout
-        ? updateStorageLayoutConfig(existingLayout, configurationName, setAction, endTime)
-        : [{ configurationName, configState: setAction, endTime }];
+        ? updateStorageLayoutConfig(existingLayout, configurationName, setAction, endTime, startTime)
+        : [{ configurationName, configState: setAction, endTime, startTime }];
 
     return {
         ...instance?.assessments?.dismissedConfigurations,
@@ -1391,7 +1393,8 @@ export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, actio
                                 instance,
                                 configurationName,
                                 setAction,
-                                rowData?.endTime
+                                rowData?.endTime,
+                                rowData?.startTime
                             );
 
                             return {

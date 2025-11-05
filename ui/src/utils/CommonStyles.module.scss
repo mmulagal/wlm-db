@@ -258,3 +258,51 @@
         font-size: 14px;
     }
 }
+
+.postponeInfo {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+
+    .postponeContent {
+        margin-right: 10px;
+    }
+
+    .postponeTooltip {
+        pointer-events: auto;
+        display: flex;
+        position: relative;
+        z-index: 1001;
+    }
+}
+
+.activatingInfo {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+
+    .activatingContent {
+        margin-right: 10px;
+    }
+}
+
+.postponeTypography,
+.activatingTypography {
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+
+    .postponeIcon {
+        margin-right: 10px;
+    }
+
+    .activatingIcon {
+        margin-right: 8px;
+    }
+
+    .textContent {
+        .boldText {
+            font-weight: 500;
+        }
+    }
+}

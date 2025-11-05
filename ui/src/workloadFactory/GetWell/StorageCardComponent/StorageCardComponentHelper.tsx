@@ -307,6 +307,7 @@ export const handleDismissResponse = (
                 updatedState,
                 targetId,
                 res?.data?.dismissedConfigurations?.[0]?.endTime,
+                res?.data?.dismissedConfigurations?.[0]?.startTime,
                 engineType
             ) || {};
 

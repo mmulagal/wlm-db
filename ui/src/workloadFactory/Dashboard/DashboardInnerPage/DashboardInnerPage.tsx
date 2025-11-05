@@ -1434,7 +1434,8 @@ const DashboardInnerPage = () => {
                                     <DsTypography variant="Regular_14">
                                         {t('databases.well-architect.postponed-for-30-days')}
                                     </DsTypography>
-                                    {(rowData?.configObj?.endTime || rowData?.configObj?.startTime) &&
+                                    {rowData?.configObj?.endTime &&
+                                        rowData?.configObj?.startTime &&
                                         (() => {
                                             const postponeInfo = calculatePostponeInfo(rowData?.configObj);
                                             return postponeInfo ? (

@@ -506,40 +506,20 @@ export const getAssessmentStatusConsistency = (data: any) => {
     return false; // Single object should return false
 };
 
-// Helper function to calculate postpone information, handling cases where we might only have endTime
+// Helper function to calculate postpone information
 export const calculatePostponeInfo = (configObj: any) => {
     if (!configObj) return null;
 
     const { startTime, endTime } = configObj;
 
-    if (!startTime && !endTime) {
-        return null;
-    }
-
+    const postponeStartDate = new Date(startTime);
+    const postponeEndDate = new Date(endTime);
     const today = new Date();
-    let postponeDate: Date;
-    let thirtyDaysFromPostpone: Date;
 
-    if (startTime) {
-        // If we have startTime, add 30 days to it
-        postponeDate = new Date(startTime);
-        thirtyDaysFromPostpone = new Date(postponeDate);
-        thirtyDaysFromPostpone.setDate(thirtyDaysFromPostpone.getDate() + 30);
-    } else {
-        // If we have endTime, subtract 30 days from it to get the postpone date
-        const endTimeDate = new Date(endTime);
-        postponeDate = new Date(endTimeDate);
-        postponeDate.setDate(postponeDate.getDate() - 30);
-        thirtyDaysFromPostpone = new Date(endTimeDate);
-    }
-
-    const daysLeft = Math.max(
-        0,
-        Math.ceil((thirtyDaysFromPostpone.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-    );
+    const daysLeft = Math.max(0, Math.ceil((postponeEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
 
     // Format postpone date
-    const postponeDateFormatted = postponeDate.toLocaleDateString('en-GB', {
+    const postponeDateFormatted = postponeStartDate.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'long',
         year: 'numeric'

@@ -763,13 +763,7 @@ const RecommendationTable = ({
 
         return (
             <div className={styles.postponeInfoContainer}>
-                <PostponeInfo
-                    configKey="config"
-                    getPostponeInfo={getPostponeInfo}
-                    translation={t}
-                    placement="right"
-                    customStyles={customStyles}
-                />
+                <PostponeInfo configKey="config" getPostponeInfo={getPostponeInfo} translation={t} placement="bottom" />
             </div>
         );
     };
@@ -1145,7 +1139,6 @@ const RecommendationTable = ({
                                             cardData={{ dummy: { dismissedObj: { configState: 'ACTIVATING' } } }}
                                             translation={t}
                                             showFullContent={false}
-                                            customStyles={customStyles}
                                         />
                                     ) : GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
                                       rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
@@ -1466,7 +1459,6 @@ const RecommendationTable = ({
                                             cardData={{ dummy: { dismissedObj: { configState: 'ACTIVATING' } } }}
                                             translation={t}
                                             showFullContent={false}
-                                            customStyles={customStyles}
                                         />
                                     ) : GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
                                       rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (

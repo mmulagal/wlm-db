@@ -6,21 +6,19 @@ import { GENERAL } from '../../utils/appConstants';
 import { ReactComponent as Postpone } from '../../assets/Schedule.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
 import { getConfigurationTechnicalName } from './GetWellUtils';
-import styles from './GetWell.module.scss';
+import CommonStyles from '../../utils/CommonStyles.module.scss';
 
 // Helper component for postpone information
 export const PostponeInfo = ({
     configKey,
     getPostponeInfo,
     translation,
-    placement = 'bottom',
-    customStyles
+    placement = 'bottom'
 }: {
     configKey: string;
     getPostponeInfo: (key: string) => any;
     translation: TFunction;
     placement?: string;
-    customStyles?: any;
 }) => {
     const postponeInfo = getPostponeInfo(configKey);
 
@@ -28,20 +26,17 @@ export const PostponeInfo = ({
         return null;
     }
 
-    // Use custom styles if provided, otherwise fallback to default styles
-    const componentStyles = customStyles || styles;
-
     return (
-        <div className={componentStyles.postponeInfo}>
-            <div className={componentStyles.postponeContent}>
-                <DsTypography variant="Regular_14" className={componentStyles.postponeTypography}>
-                    <Postpone className={componentStyles.postponeIcon} />
+        <div className={CommonStyles.postponeInfo}>
+            <div className={CommonStyles.postponeContent}>
+                <DsTypography variant="Regular_14" className={CommonStyles.postponeTypography}>
+                    <Postpone className={CommonStyles.postponeIcon} />
                     {translation('databases.well-architect.postponed-for-30-days')}
                 </DsTypography>
             </div>
-            <div className={componentStyles.postponeTooltip}>
+            <div className={CommonStyles.postponeTooltip}>
                 {/* @ts-ignore */}
-                <TooltipInfo placement={placement} trigger="hover">
+                <TooltipInfo placement={placement} trigger="hover" isAppendedToBody>
                     <div>
                         <div>
                             {translation('databases.well-architect.postpone-date')} {postponeInfo.postponeDate}
@@ -61,30 +56,25 @@ export const ActivatingInfo = ({
     configKey,
     cardData,
     translation,
-    showFullContent = true,
-    customStyles
+    showFullContent = true
 }: {
     configKey: string;
     cardData: any;
     translation: TFunction;
     showFullContent?: boolean;
-    customStyles?: any;
 }) => {
     const configState = cardData[configKey]?.dismissedObj?.configState;
     if (configState !== CONFIG_STATES.ACTIVATING) {
         return null;
     }
 
-    // Use custom styles if provided, otherwise fallback to default styles
-    const componentStyles = customStyles || styles;
-
     return (
-        <div className={componentStyles.activatingInfo}>
-            <div className={componentStyles.activatingContent}>
-                <DsTypography variant="Regular_14" className={componentStyles.activatingTypography}>
-                    <Activating className={componentStyles.activatingIcon} />
-                    <span className={componentStyles.textContent}>
-                        <span className={componentStyles.boldText}>
+        <div className={CommonStyles.activatingInfo}>
+            <div className={CommonStyles.activatingContent}>
+                <DsTypography variant="Regular_14" className={CommonStyles.activatingTypography}>
+                    <Activating className={CommonStyles.activatingIcon} />
+                    <span className={CommonStyles.textContent}>
+                        <span className={CommonStyles.boldText}>
                             {translation('databases.well-architect.dismiss.activating-info-content1')}
                         </span>
                         {showFullContent && (
@@ -296,39 +286,18 @@ export const calculatePostponeInfo = (cardData: any, key: string) => {
         return null;
     }
 
-    // Get the postpone date from startTime or endTime
+    // Get the postpone date from startTime and endTime
     const startTime = cardData[key]?.dismissedObj?.startTime;
     const endTime = cardData[key]?.dismissedObj?.endTime;
-    const postponeTimestamp = startTime || endTime;
 
-    if (!postponeTimestamp) {
-        return null;
-    }
-
+    const postponeStartDate = new Date(startTime);
+    const postponeEndDate = new Date(endTime);
     const today = new Date();
-    let postponeDate: Date;
-    let thirtyDaysFromPostpone: Date;
 
-    if (startTime) {
-        // If we have startTime, add 30 days to it
-        postponeDate = new Date(startTime);
-        thirtyDaysFromPostpone = new Date(postponeDate);
-        thirtyDaysFromPostpone.setDate(thirtyDaysFromPostpone.getDate() + 30);
-    } else {
-        // If we have endTime, subtract 30 days from it to get the postpone date
-        const endTimeDate = new Date(endTime);
-        postponeDate = new Date(endTimeDate);
-        postponeDate.setDate(postponeDate.getDate() - 30);
-        thirtyDaysFromPostpone = new Date(endTimeDate);
-    }
-
-    const daysLeft = Math.max(
-        0,
-        Math.ceil((thirtyDaysFromPostpone.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-    );
+    const daysLeft = Math.max(0, Math.ceil((postponeEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
 
     // Format postpone date
-    const postponeDateFormatted = postponeDate.toLocaleDateString('en-GB', {
+    const postponeDateFormatted = postponeStartDate.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'long',
         year: 'numeric'
