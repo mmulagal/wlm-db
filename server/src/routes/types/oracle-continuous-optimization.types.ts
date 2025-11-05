@@ -96,7 +96,6 @@ const HostsToOptimize = Type.Array(
                     '- tcp-advanced-options\n' +
                     '- host-utilities\n' +
                     '- thp-disable\n' +
-                    '- selinux-disable\n' +
                     '- iscsi-replacement-timeout\n' +
                     '- multipath-io-sessions\n' +
                     '- multipath-configuration\n' +

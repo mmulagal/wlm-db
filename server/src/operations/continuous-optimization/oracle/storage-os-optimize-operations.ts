@@ -20,7 +20,6 @@ import {
     optimizeMultipathIoSessionsCommand,
     installHostUtilitiesCommand,
     fixTransparentHugepageCommand,
-    disableSelinuxCommand,
     optimizeMultiblockReadCountCommand,
     optimizeFilesystemioOptionsCommand,
     optimizeMultipathIoConfigCommand,
@@ -112,9 +111,6 @@ async function oracleOptimizeStorageOS(
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_ENABLE:
             jobDescription = `Fix multipath IO enable for ${serverNameWithHostName}`;
-            break;
-        case OptimizeOracleiSCSIStorageOperatingSystem.SELINUX_DISABLE:
-            jobDescription = `Fix SELinux disable for ${serverNameWithHostName}`;
             break;
         case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_CONFIGURATION:
             jobDescription = `Fix multipath configuration for ${serverNameWithHostName}`;
@@ -359,29 +355,6 @@ async function oracleOptimizeStorageOS(
             }
             try {
                 await enableMultipathIo({
-                    accountId,
-                    credentialsId,
-                    region,
-                    databaseHostId,
-                    serverNameWithHostName,
-                    parentJobId,
-                    databaseInstanceId,
-                    databaseInstanceName: instanceName,
-                    fsxId,
-                    activeNodeInstanceId: activeNodeInstanceId!,
-                    instanceMetadata
-                });
-            } catch (error) {
-                parentJobError = String(error);
-                logger.error(parentJobError);
-                parentJobStatus = JOBSTATUS.FAILED;
-            }
-            break;
-        }
-
-        case OptimizeOracleiSCSIStorageOperatingSystem.SELINUX_DISABLE: {
-            try {
-                await disableSelinux({
                     accountId,
                     credentialsId,
                     region,
@@ -1336,96 +1309,6 @@ async function enableMultipathIo(params: OptimizeOSParams) {
     } catch (error) {
         logger.error(`Error while enabling multipath IO: ${error}`);
         jobError = String(error);
-        jobStatus = JOBSTATUS.FAILED;
-    } finally {
-        await updateJobDetails(accountId, jobId, {
-            status: jobStatus,
-            endTime: Date.now(),
-            error: jobError
-        });
-    }
-
-    if (jobStatus === JOBSTATUS.FAILED) {
-        throw new Error(jobError);
-    }
-}
-
-async function disableSelinux(params: OptimizeOSParams) {
-    const {
-        accountId,
-        credentialsId,
-        region,
-        databaseHostId,
-        serverNameWithHostName,
-        parentJobId,
-        databaseInstanceId,
-        activeNodeInstanceId,
-        instanceMetadata
-    } = params;
-
-    logger.info('Disabling SELinux', { accountId, databaseHostId, serverNameWithHostName, databaseInstanceId });
-
-    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let jobError;
-
-    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Disable SELinux for ${serverNameWithHostName}`,
-        description: `Disable SELinux for ${serverNameWithHostName}`,
-        resourceName: serverNameWithHostName,
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.WELL_ARCHITECTED,
-        parentJobId
-    });
-
-    try {
-        const ssmCommand = disableSelinuxCommand;
-        const ssmComment = 'Disabling SELinux';
-        const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
-                credentialsId,
-                region,
-                [ssmCommand],
-                activeNodeInstanceId,
-                ssmComment,
-                accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            ),
-            3,
-            5000
-        );
-
-        const parsedResponse = sqlResponseParsing(response) as GenericOptimizationResponse;
-        logger.debug(`Disabling SELinux on ${activeNodeInstanceId}`, { parsedResponse });
-
-        const { status, error } = parsedResponse;
-
-        if (error || status === 'failed') {
-            throw new Error(`SELinux disabling failed: ${error}`);
-        }
-        if (status === 'optimized-offline') {
-            jobError = 'SELinux is already disabled. No further action needed.';
-            logger.info(jobError);
-            jobStatus = JOBSTATUS.WARNING;
-        }
-
-        if (IS_DEMO_FLOW) {
-            await updateOptimizedConfigNameInInstanceTable(
-                accountId,
-                databaseInstanceId,
-                ['selinux'],
-                'OS',
-                instanceMetadata || {}
-            );
-        }
-    } catch (error) {
-        logger.error(`Error while disabling SELinux: ${error}`);
-        jobError = `Error while disabling SELinux: ${error}`;
         jobStatus = JOBSTATUS.FAILED;
     } finally {
         await updateJobDetails(accountId, jobId, {

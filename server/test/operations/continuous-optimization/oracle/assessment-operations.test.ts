@@ -128,7 +128,7 @@ describe('Oracle assessment operations', () => {
         ).toBeGreaterThan(0);
         expect((assessmentData.storage as StorageParameterDriftResponseType)?.layout?.length).toBeGreaterThan(0);
 
-        expect((assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os?.length).toEqual(14);
+        expect((assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os?.length).toEqual(13);
 
         // Additional OS assessment assertions
         const osAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os;
@@ -176,16 +176,6 @@ describe('Oracle assessment operations', () => {
         expect(hugepages.status).toBe('not-optimized');
         expect(hugepages.recommended).toBe('disabled');
         expect(hugepages.totalObjectsInViolation).toBe(1);
-
-        // Test selinux assessment
-        const selinux = osAssessment.find(item => item.name === 'selinux') as OracleGenericParameterDriftResponseType;
-        expect(selinux).toBeDefined();
-
-        expect(selinux.status).toBe('not-optimized');
-        expect(selinux.recommended).toBe('permissive or disabled');
-        expect(selinux.severity).toBe('warning');
-        expect(selinux.totalObjectsInViolation).toBe(1);
-        expect(selinux.violationDetails?.[0]?.value).toBe('enforcing');
 
         // Test iscsi-replacement-timeout assessment
         const iscsiTimeout = osAssessment.find(

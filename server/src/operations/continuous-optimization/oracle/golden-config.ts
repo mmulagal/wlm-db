@@ -269,16 +269,6 @@ const GOLDEN_CONFIG = {
                 tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
             },
             {
-                parameter: 'selinux',
-                name: 'selinux',
-                recommended: 'permissive or disabled',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends disabling SELinux on Oracle database hosts by setting SELINUX=disabled or SELINUX=permissive in the system configuration. Disabling or setting SELinux to permissive mode can help avoid compatibility issues and administrative overhead associated with managing SELinux policies for Oracle workloads. When disabled, SELinux will no longer enforce access controls; when set to permissive, it will log policy violations without blocking operations. In either case, ensure that your environment is otherwise secured.',
-                tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
-            },
-            {
                 parameter: 'iscsi-replacement-timeout',
                 name: 'iscsi-replacement-timeout',
                 recommended: '5',
