@@ -27,18 +27,22 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading, resourceType }: M
     const buildChartData = () => {
         if (!data) return null;
 
+        const sizeGiB = byteToGiB(data?.size ?? 0);
+        const usedGiB = byteToGiB(data?.used ?? 0);
+        const ssdUsedGiB = byteToGiB(data?.ssdUsed ?? 0);
+        const capacityPoolUsedGiB = byteToGiB(data?.capacityPoolUsed ?? 0);
+
+        const remainingGiB = Math.max(0, sizeGiB - usedGiB);
+        const remainingPoolGiB = Math.max(0, sizeGiB - (ssdUsedGiB + capacityPoolUsedGiB));
+
         return {
             datasets: [
                 {
-                    data: [byteToGiB(data?.used), byteToGiB(data?.size) - byteToGiB(data?.used)],
+                    data: [usedGiB, remainingGiB],
                     backgroundColor: ['#5E8DCD', '#E0E0E0']
                 },
                 {
-                    data: [
-                        byteToGiB(data?.ssdUsed),
-                        byteToGiB(data?.capacityPoolUsed),
-                        byteToGiB(data?.size) - (byteToGiB(data?.ssdUsed) + byteToGiB(data?.capacityPoolUsed))
-                    ],
+                    data: [ssdUsedGiB, capacityPoolUsedGiB, remainingPoolGiB],
                     backgroundColor: ['#0BAFFC', '#A815F3', '#FFF']
                 }
             ]
@@ -80,7 +84,7 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading, resourceType }: M
                             variant={resourceType === 'mssql' ? 'Regular_24' : 'Regular_32'}
                             style={{ lineHeight: 'unset' }}
                         >
-                            {resourceType === 'mssql' ? bytesToTB(data?.size) : byteToGiB(data?.size)}
+                            {resourceType === 'mssql' ? bytesToTB(data?.size ?? 0) : byteToGiB(data?.size ?? 0)}
                         </DsTypography>
                         <DsTypography variant="Regular_20" style={{ lineHeight: 'unset' }}>
                             {resourceType === 'mssql'
