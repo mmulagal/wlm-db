@@ -1823,7 +1823,7 @@ const DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN: string = config.has('daily-dr
     ? config.get('daily-drift-assessment-trigger')
     : '0 0 0 * * *'; // Default to every 12 midnight everyday not set in config
 
-const DEMO_BYOL_INSTANCE_ID = 'i-p9o5n2m4l8k6byol';
+const DEMO_BYOL_INSTANCE_ID = 'i-cb05c810a74426184';
 const DEMO_SERVER_UAT_03 = 'i-0ab2e12971d543c14';
 const JOB_MONITORING_ENDPOINT = 'databases/job-monitoring';
 enum SSM_COMMAND_RUNTIMES {

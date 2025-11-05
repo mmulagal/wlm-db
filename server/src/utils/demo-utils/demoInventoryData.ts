@@ -128,7 +128,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 ]
             },
             {
-                ec2InstanceId: 'i-p9o5n2m4l8k6byol',
+                ec2InstanceId: 'i-cb05c810a74426184',
                 ec2InstanceType: 'm5.2xlarge',
                 ec2UsageOperation: 'RunInstances:0002',
                 ssmState: 'connected',
@@ -311,7 +311,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 ]
             },
             {
-                ec2InstanceId: 'i-4s6d8f2g1h0j3k5',
+                ec2InstanceId: 'i-cb05c810a74426185',
                 ec2InstanceType: 'm5.2xlarge',
                 ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
