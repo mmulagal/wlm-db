@@ -1975,14 +1975,15 @@ async function getAllClusterNodeDetails(
         ({ node1InstanceId } = metadata as unknown as Metadata);
     }
 
-    const clusterNetworkIpDetails = await callSsmExecution(
+    const clusterNetworkIpDetails = await callSsmExecution({
         credentialsId,
         region,
-        CLUSTER_NETWORK_IP_INFO_PS1,
-        node1InstanceId,
-        ssmComment,
-        accountId
-    );
+        commands: CLUSTER_NETWORK_IP_INFO_PS1,
+        ec2InstanceId: node1InstanceId,
+        comment: ssmComment,
+        accountId,
+        cacheData: true
+    });
     const clusterNetworkIpDetailsJson: { clusterNetworkIps: string[] } = JSON.parse(clusterNetworkIpDetails);
     const { clusterNetworkIps } = clusterNetworkIpDetailsJson;
     const clusterNodeDetails = await getInstanceDetailsByPrivateIp(credentialsId, region, clusterNetworkIps, {
@@ -2180,18 +2181,17 @@ async function processResourceNodes(
                             }
                             const ssmComment = `Triggering instance performance assessment for account ${accountId}, database host ${databaseHostId}`;
 
-                            await callSsmExecution(
+                            await callSsmExecution({
                                 credentialsId,
                                 region,
-                                command,
-                                nodeId,
-                                ssmComment,
+                                commands: command,
+                                ec2InstanceId: nodeId,
+                                comment: ssmComment,
                                 accountId,
-                                true,
-                                CUSTOM_SSM_EXECUTION_TIMEOUT,
-                                false,
-                                SSM_RUN_SHELL_SCRIPT_DOC
-                            );
+                                cacheData: true,
+                                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT,
+                                documentName: SSM_RUN_SHELL_SCRIPT_DOC
+                            });
 
                             logger.info('Successfully triggered performance assessment for node', {
                                 accountId,

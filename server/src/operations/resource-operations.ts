@@ -14,7 +14,7 @@ import getLogger from '../utils/logger';
 import { ManageResourcesResponseType } from '../routes/types/resource.types';
 import { getResources } from './database/database-operations';
 import { Metadata } from '../utils/common-types';
-import { COPY_SCIRPTS_TO_MANAGE_RESOURCE } from './workloads/mssql/discover-consts';
+import { COPY_SCRIPTS_TO_MANAGE_RESOURCE } from './workloads/mssql/discover-consts';
 import { preSignedUrl } from '../lib/aws/s3';
 import { callSsmExecution } from './aws/ssm-operations';
 import { CHECK_SCRIPT_AVAILABILITY_AND_VERSION } from './workloads/mssql/ssm-script-utils';
@@ -120,15 +120,14 @@ async function getManagedResources(
 async function checkScriptNeedsUpdate(accountId: string, credentialsId: string, region: string, nodeId: string) {
     logger.info('Check script version at database host', { accountId, credentialsId, region, nodeId });
     try {
-        const resp = await callSsmExecution(
+        const resp = await callSsmExecution({
             credentialsId,
             region,
-            [CHECK_SCRIPT_AVAILABILITY_AND_VERSION],
-            nodeId,
-            'Get script version',
-            accountId,
-            false
-        );
+            commands: [CHECK_SCRIPT_AVAILABILITY_AND_VERSION],
+            ec2InstanceId: nodeId,
+            comment: 'Get script version',
+            accountId
+        });
         if (resp) {
             const { scriptVersion } = sqlResponseParsing(resp);
             if (scriptVersion === CURRENT_SCRIPT_VERSION) {
@@ -151,19 +150,15 @@ async function copyScriptsToHost(accountId: string, credentialsId: string, regio
     try {
         // Copy scripts to the EC2 instance
         const ssmScriptsCopyResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                COPY_SCIRPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
+                commands: COPY_SCRIPTS_TO_MANAGE_RESOURCE(dbcreateS3SignedUrl),
                 ec2InstanceId,
-                'Copy scripts to host',
+                comment: 'Copy scripts to host',
                 accountId,
-                false,
-                (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
-            ),
-            3,
-            5000
+                executionTimeout: (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
+            })
         );
 
         logger.info(`Response for copy scripts using PowerShell for ${ec2InstanceId}: ${ssmScriptsCopyResponse}`);

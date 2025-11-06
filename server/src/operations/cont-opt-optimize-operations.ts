@@ -181,20 +181,15 @@ async function getExportPolicyRules(
     ];
 
     const existingPolicyResponse = await retryWithDelay(
-        callSsmExecution.bind(
-            null,
+        callSsmExecution.bind(null, {
             credentialsId,
             region,
-            commandToFetchExistingPolicyDetails,
-            activeNodeInstanceId,
-            'Fetch existing export policy details',
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        )
+            commands: commandToFetchExistingPolicyDetails,
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Fetch existing export policy details',
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        })
     );
 
     const parsedExistingPolicyResponse = sqlResponseParsing(existingPolicyResponse);
@@ -283,20 +278,15 @@ async function createExportPolicy(
         ];
 
         const resp = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
                 commands,
-                activeNodeInstanceId,
-                jobDescription,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            )
+                ec2InstanceId: activeNodeInstanceId,
+                comment: jobDescription,
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const parsedResp = sqlResponseParsing(resp);
@@ -691,22 +681,15 @@ async function callOntapApi(
     }
 
     const resp = await retryWithDelay(
-        callSsmExecution.bind(
-            null,
+        callSsmExecution.bind(null, {
             credentialsId,
             region,
             commands,
-            activeNodeInstanceId,
-            jobDescription,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            ssmDocument,
-            ssmVersion
-        ),
-        3,
-        5000
+            ec2InstanceId: activeNodeInstanceId,
+            comment: jobDescription,
+            documentName: ssmDocument,
+            documentVersion: ssmVersion
+        })
     );
 
     const parsedResp = sqlResponseParsing(resp);
@@ -1141,20 +1124,16 @@ async function resizeLun(
         apiQueryFilter: '',
         apiBody: JSON.stringify({ space: { size: requiredLunSizeBytes } })
     });
-    const ssmComment = 'Optimizing storage';
     const rescanExtendLunSsmCommand = RESCAN_EXTEND_LUN(diskSerialNumber);
     try {
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand, rescanExtendLunSsmCommand],
-                activeNodeInstanceId,
-                ssmComment
-            ),
-            3,
-            5000
+                commands: [ssmCommand, rescanExtendLunSsmCommand],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: 'Optimizing storage'
+            })
         );
 
         const [{ error: optimiseStorageParamsCommandError } = {}, { error: rescanExtendLunSsmCommandError } = {}] =
@@ -1365,7 +1344,13 @@ async function resizeVolumeAndLunSize(
     });
     const ssmComment = 'Get ONTAP LUN details';
 
-    const resp = await callSsmExecution(credentialsId, region, [ssmCommand], activeNodeInstanceId!, ssmComment);
+    const resp = await callSsmExecution({
+        credentialsId,
+        region,
+        commands: [ssmCommand],
+        ec2InstanceId: activeNodeInstanceId!,
+        comment: ssmComment
+    });
     const parsedResp = sqlResponseParsing(resp);
     const {
         space: { size: existingLogLunSizeBytes }
@@ -1610,15 +1595,14 @@ async function validateMpioPolicyToRoundRobin(
 
     try {
         const ssmComment = 'Check MPIO policy';
-        const validateMPIOPolicyChangeResponse = await callSsmExecution(
+        const validateMPIOPolicyChangeResponse = await callSsmExecution({
             credentialsId,
             region,
-            [CHECK_MPIO_POLICY],
-            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-            ssmComment,
-            accountId,
-            false
-        );
+            commands: [CHECK_MPIO_POLICY],
+            ec2InstanceId: runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+            comment: ssmComment,
+            accountId
+        });
         parsedValidateMPIOPolicyChangeResponse = sqlResponseParsing(validateMPIOPolicyChangeResponse);
         if (!parsedValidateMPIOPolicyChangeResponse.remediated && !preCheck) {
             const errorMessage = `Failed to set MPIO policy to Round Robin on ${serverNameWithHostName}.`;
@@ -1689,16 +1673,13 @@ async function setMpioPolicyToRoundRobin(
         const ssmCommand = REMEDIATE_MPIO_POLICY(optimizeMpioPolicyParams, runningOnPrimaryNode);
         const ssmComment = 'Remediate MPIO policy';
         await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-                ssmComment
-            ),
-            3,
-            5000
+                commands: [ssmCommand],
+                ec2InstanceId: runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                comment: ssmComment
+            })
         );
     } catch (error) {
         const errorMessage = `Error while setting MPIO policy to Round Robin ${error}`;
@@ -1865,18 +1846,14 @@ async function configureMpio(
 
     try {
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses)],
-                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-                jobDescription,
-                accountId,
-                false
-            ),
-            3,
-            5000
+                commands: [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses)],
+                ec2InstanceId: runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                comment: jobDescription,
+                accountId
+            })
         );
         const { status, error } = sqlResponseParsing(response);
         if (status === 'failed') {
@@ -1939,15 +1916,14 @@ async function checkMpioInstallation(
 
     let mpioInstalled = false;
     try {
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [CHECK_IF_MPIO_INSTALLED],
-            runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-            jobDescription,
-            accountId,
-            false
-        );
+            commands: [CHECK_IF_MPIO_INSTALLED],
+            ec2InstanceId: runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+            comment: jobDescription,
+            accountId
+        });
         const parsedResponse = sqlResponseParsing(response);
         mpioInstalled = parsedResponse.mpioInstalled;
         if (!mpioInstalled) {
@@ -2118,18 +2094,14 @@ async function validateMpioSessions(
         const ssmCommand = MPIO_ISCSI_SESSIONS(iscsiTargetAddresses);
         const ssmComment = 'Remediate MPIO ICSI session';
         const validateMpioSessionsResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-                ssmComment,
-                accountId,
-                false
-            ),
-            3,
-            5000
+                commands: [ssmCommand],
+                ec2InstanceId: runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                comment: ssmComment,
+                accountId
+            })
         );
         parsedResponse = sqlResponseParsing(validateMpioSessionsResponse);
         jobStatus = JOBSTATUS.COMPLETED;
@@ -2191,18 +2163,14 @@ async function remediateMpioSessions(
     try {
         const ssmCommand = REMEDIATE_MPIO_ISCSI_SESSIONS(optimizeMpioisSessionsParams.currentMpioSessionsCount);
         const remediateResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
-                jobDescription,
-                accountId,
-                false
-            ),
-            3,
-            5000
+                commands: [ssmCommand],
+                ec2InstanceId: runningOnPrimaryNode ? activeNodeInstanceId! : standbyNodeInstanceId!,
+                comment: jobDescription,
+                accountId
+            })
         );
         parsedResponse = sqlResponseParsing(remediateResponse);
         jobStatus = parsedResponse.every((address: { status: string }) => address.status === 'success')
@@ -2419,18 +2387,14 @@ async function enableMpioTimeout(optimizeMpioTimeoutParams: OptimizeMpioTimeoutP
         );
         try {
             await retryWithDelay(
-                callSsmExecution.bind(
-                    null,
+                callSsmExecution.bind(null, {
                     credentialsId,
                     region,
-                    [ssmCommand],
-                    nodeInstanceId,
-                    jobName,
-                    accountId,
-                    false
-                ),
-                3,
-                50
+                    commands: [ssmCommand],
+                    ec2InstanceId: nodeInstanceId,
+                    comment: jobName,
+                    accountId
+                })
             );
             await updateJobDetails(accountId, jobId, {
                 status: JOBSTATUS.COMPLETED,
@@ -2885,9 +2849,13 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
                 apiBody: JSON.stringify({ 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' })
             });
             const resp = await retryWithDelay(
-                callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
-                3,
-                5000
+                callSsmExecution.bind(null, {
+                    credentialsId,
+                    region,
+                    commands: [ssmCommand],
+                    ec2InstanceId: activeNodeInstanceId!,
+                    comment: jobDescription
+                })
             );
             const parsedResp = sqlResponseParsing(resp);
             const objectsOptimized = parsedResp.num_records || 0;
@@ -3118,9 +3086,13 @@ async function handleMaxDopRemediation(
             isClustered
         );
         const resp = await retryWithDelay(
-            callSsmExecution.bind(null, credentialsId, region, [ssmCommand], activeNodeInstanceId!, jobDescription),
-            3,
-            5000
+            callSsmExecution.bind(null, {
+                credentialsId,
+                region,
+                commands: [ssmCommand],
+                ec2InstanceId: activeNodeInstanceId!,
+                comment: jobDescription
+            })
         );
         const parsedResp = sqlResponseParsing(resp);
         jobStatus = parsedResp.status === 'success' ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;

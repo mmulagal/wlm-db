@@ -43,6 +43,20 @@ import { getLogsAnalyzerBedrockRegionsList } from './bedrock-operations';
 
 const logger = getLogger();
 
+type callSsmExecutionParams = {
+    credentialsId: string;
+    region: string;
+    commands: Array<string>;
+    ec2InstanceId: string;
+    comment?: string;
+    accountId?: string;
+    cacheData?: boolean;
+    executionTimeout?: string;
+    shouldReadFromCloudWatchLogs?: boolean;
+    documentName?: string;
+    documentVersion?: string;
+};
+
 async function pollCommandStatusForAllInstances(
     credentialsId: string,
     region: string,
@@ -232,25 +246,25 @@ async function executeSSMDocument(
     }
 }
 
-async function callSsmExecution(
-    credentialsId: string,
-    region: string,
-    commands: Array<string>,
-    activeNodeInstanceId: string,
-    comment?: string,
-    accountId?: string,
-    cacheData: boolean = true,
-    executionTimeout?: string,
-    shouldReadFromCloudWatchLogs: boolean = false,
-    documentName: string = SSM_RUN_POWERSHELL_SCRIPT_DOC,
-    documentVersion: string = SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
-) {
+async function callSsmExecution({
+    credentialsId,
+    region,
+    commands,
+    ec2InstanceId,
+    comment,
+    accountId,
+    cacheData = false,
+    executionTimeout,
+    shouldReadFromCloudWatchLogs = false,
+    documentName = SSM_RUN_POWERSHELL_SCRIPT_DOC,
+    documentVersion = SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+}: callSsmExecutionParams) {
     logger.info(
         'Calling SSM command execution',
         credentialsId,
         region,
         commands,
-        activeNodeInstanceId,
+        ec2InstanceId,
         comment,
         accountId,
         cacheData,
@@ -259,10 +273,10 @@ async function callSsmExecution(
         documentName,
         documentVersion
     );
-    const cacheHashKey = generateHash(activeNodeInstanceId + commands);
+    const cacheHashKey = generateHash(ec2InstanceId + commands);
 
     if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
-        logger.info('Reading from cache', activeNodeInstanceId, cacheHashKey);
+        logger.info('Reading from cache', ec2InstanceId, cacheHashKey);
         return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
     }
 
@@ -277,7 +291,7 @@ async function callSsmExecution(
     };
     const params = {
         ...defaultParams,
-        InstanceIds: [activeNodeInstanceId],
+        InstanceIds: [ec2InstanceId],
         ...(comment && { Comment: comment?.substring(0, 100) }),
         ...(shouldReadFromCloudWatchLogs && {
             CloudWatchOutputConfig: {
@@ -287,7 +301,7 @@ async function callSsmExecution(
         })
     };
     try {
-        logger.debug('SSM command execution.', credentialsId, region, activeNodeInstanceId);
+        logger.debug('SSM command execution.', credentialsId, region, ec2InstanceId);
         const response = await executeSSMDocument(credentialsId, region, params, accountId);
 
         // Set the retention period for the log group to 1 day
@@ -307,7 +321,7 @@ async function callSsmExecution(
         }
 
         if (cacheData) {
-            logger.info('Writing to cache', activeNodeInstanceId, cacheHashKey);
+            logger.info('Writing to cache', ec2InstanceId, cacheHashKey);
             writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
         }
         return output;

@@ -150,19 +150,17 @@ async function checkLogAnalyzerPreRequisites(
             databaseType === DATABASE_TYPE.mssql
                 ? getWindowsBedrockAvailabilityCheckScript(region, inferenceProfileArn)
                 : getLinuxBedrockAvailabilityCheckScript(region, inferenceProfileArn);
-        const bedrockAvailabilityCheckResponse = await callSsmExecution(
+        const bedrockAvailabilityCheckResponse = await callSsmExecution({
             credentialsId,
             region,
-            [bedrockCheckScript!],
-            activeNodeInstanceId,
-            'Check Bedrock Availability',
+            commands: [bedrockCheckScript!],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Check Bedrock Availability',
             accountId,
-            false,
-            '600',
-            false, // Cloud watch logs disabled
-            databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC : undefined,
-            databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC_VERSION : undefined
-        );
+            executionTimeout: '600',
+            documentName: databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC : undefined,
+            documentVersion: databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC_VERSION : undefined
+        });
 
         const [jsonResponse] = parseConcatenatedJSON(bedrockAvailabilityCheckResponse);
         if ((jsonResponse as { success?: boolean })?.success === false) {
@@ -309,13 +307,13 @@ async function handleLogsAnalysis(
             'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations FOR JSON PATH';
         const { sqlAuthEnabled, instanceName: databaseInstanceName } = matchingInstance;
         const logsAnalysisSsmCommand = sqlQueryExecutionWithAuth([databaseInstanceName], logsPathQuery, sqlAuthEnabled);
-        const logsPathResponse = await callSsmExecution(
+        const logsPathResponse = await callSsmExecution({
             credentialsId,
             region,
-            [logsAnalysisSsmCommand],
-            activeNodeInstanceId,
-            'Fetch Logs Path for sql server instance'
-        );
+            commands: [logsAnalysisSsmCommand],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Fetch Logs Path for sql server instance'
+        });
         const parsedResponse = logsPathResponse ? sqlResponseParsing(logsPathResponse) : {};
         const [{ path: logsPath } = {}] = IS_DEMO_FLOW
             ? parsedResponse?.[DEFAULT_INSTANCE_NAME] || []
@@ -367,17 +365,16 @@ async function handleLogsAnalysis(
                       logLevel
                   });
 
-        const logsAnalysisResponse = await callSsmExecution(
+        const logsAnalysisResponse = await callSsmExecution({
             credentialsId,
             region,
-            [logsAnalyserScriptCommand],
-            activeNodeInstanceId,
-            'Trigger Logs Analysis',
+            commands: [logsAnalyserScriptCommand],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Trigger Logs Analysis',
             accountId,
-            false,
-            '1800',
-            true // Cloud watch logs enabled
-        );
+            executionTimeout: '1800',
+            shouldReadFromCloudWatchLogs: true // Cloud watch logs enabled
+        });
 
         const parsedAnalysisResponse = logsAnalysisResponse ? sqlResponseParsing(logsAnalysisResponse) : {};
         if (parsedAnalysisResponse?.error || parsedAnalysisResponse?.success === false) {
@@ -974,19 +971,17 @@ async function handlePreReqCheck(
                 databaseType === DATABASE_TYPE.mssql
                     ? getWindowsBedrockAvailabilityCheckScript(region, inferenceProfileArn)
                     : getLinuxBedrockAvailabilityCheckScript(region, inferenceProfileArn);
-            const bedrockAvailabilityCheckResponse = await callSsmExecution(
+            const bedrockAvailabilityCheckResponse = await callSsmExecution({
                 credentialsId,
                 region,
-                [bedrockCheckScript],
-                activeNodeInstanceId,
-                'Check Bedrock Availability',
+                commands: [bedrockCheckScript],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: 'Check Bedrock Availability',
                 accountId,
-                false,
-                '600',
-                false, // Cloud watch logs disabled
-                databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC : undefined,
-                databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC_VERSION : undefined
-            );
+                executionTimeout: '600',
+                documentName: databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC : undefined,
+                documentVersion: databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC_VERSION : undefined
+            });
 
             const [jsonResponse] = parseConcatenatedJSON(bedrockAvailabilityCheckResponse) as {
                 success?: boolean;

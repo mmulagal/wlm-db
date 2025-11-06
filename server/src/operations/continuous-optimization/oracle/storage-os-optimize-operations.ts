@@ -496,22 +496,16 @@ async function optimizeTcpOptions(params: OptimizeOSParams) {
         const ssmCommand = optimizeTcpOptionsCommand;
         const ssmComment = 'Optimize TCP options';
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                activeNodeInstanceId,
-                ssmComment,
+                commands: [ssmCommand],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: ssmComment,
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            ),
-            3,
-            5000
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const parsedResponse = sqlResponseParsing(response) as TcpOptimizationResponse;
@@ -614,22 +608,16 @@ async function optimizeIscsiReplacementTimeout(params: OptimizeOSParams) {
         const ssmCommand = optimizeIscsiReplacementTimeoutCommand;
         const ssmComment = 'Optimize iSCSI replacement timeout';
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                activeNodeInstanceId,
-                ssmComment,
+                commands: [ssmCommand],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: ssmComment,
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            ),
-            3,
-            5000
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const parsedResponse = sqlResponseParsing(response);
@@ -718,22 +706,16 @@ async function optimizeMultipathIoSessions(params: OptimizeOSParams) {
         const ssmCommand = optimizeMultipathIoSessionsCommand;
         const ssmComment = 'Optimize multipath IO sessions';
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                activeNodeInstanceId,
-                ssmComment,
+                commands: [ssmCommand],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: ssmComment,
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            ),
-            3,
-            5000
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const parsedResponse = sqlResponseParsing(response);
@@ -847,22 +829,16 @@ async function optimizeTransparentHugePages(params: OptimizeOSParams) {
         const ssmCommand = fixTransparentHugepageCommand;
         const ssmComment = 'Disable transparent huge pages(THP) settings';
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                activeNodeInstanceId,
-                ssmComment,
+                commands: [ssmCommand],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: ssmComment,
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            ),
-            3,
-            5000
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const parsedResponse = sqlResponseParsing(response);
@@ -956,22 +932,16 @@ async function optimizeMultipathConfig(params: OptimizeOSParams) {
         const ssmCommand = optimizeMultipathIoConfigCommand;
         const ssmComment = 'Optimize multipath configuration';
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                activeNodeInstanceId,
-                ssmComment,
+                commands: [ssmCommand],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: ssmComment,
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            ),
-            3,
-            5000
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const parsedResponse = sqlResponseParsing(response);
@@ -1053,22 +1023,16 @@ async function optimizeMultipathFriendlyNames(params: OptimizeOSParams) {
         const ssmCommand = optimizeMultiPathConfigFriendlyNamesCommand;
         const ssmComment = 'Optimize multipath friendly names configuration';
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                activeNodeInstanceId,
-                ssmComment,
+                commands: [ssmCommand],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: ssmComment,
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            ),
-            3,
-            5000
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const parsedResponse = sqlResponseParsing(response);
@@ -1166,22 +1130,16 @@ async function installHostUtilities(params: OptimizeOSParams) {
         const ssmCommand = installHostUtilitiesCommand(linuxHostUtilitiesSignedUrl);
         const ssmComment = 'Installing NetApp Host Utilities';
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                activeNodeInstanceId,
-                ssmComment,
+                commands: [ssmCommand],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: ssmComment,
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            ),
-            3,
-            5000
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const parsedResponse = sqlResponseParsing(response) as InstallHostUtilitiesResponse;
@@ -1256,22 +1214,16 @@ async function enableMultipathIo(params: OptimizeOSParams) {
         const ssmCommand = enableMultipathIoCommand;
         const ssmComment = 'Enabling Multipath IO';
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                activeNodeInstanceId,
-                ssmComment,
+                commands: [ssmCommand],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: ssmComment,
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            ),
-            3,
-            5000
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const parsedResponse = sqlResponseParsing(response) as GenericOptimizationResponse;
@@ -1359,22 +1311,16 @@ async function optimizeMultiblockReadcount(params: OptimizeOSParams) {
         const ssmCommand = optimizeMultiblockReadCountCommand(activeNodeInstanceId, databaseInstanceId);
         const ssmComment = 'Optimize Oracle multiblock read count parameter';
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                activeNodeInstanceId,
-                ssmComment,
+                commands: [ssmCommand],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: ssmComment,
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            ),
-            3,
-            5000
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const parsedResponse = sqlResponseParsing(response);
@@ -1471,22 +1417,16 @@ async function optimizeFilesystemioOptions(params: OptimizeOSParams) {
         const ssmCommand = optimizeFilesystemioOptionsCommand(activeNodeInstanceId, databaseInstanceId);
         const ssmComment = 'Optimize Oracle filesystem I/O options parameter';
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ssmCommand],
-                activeNodeInstanceId,
-                ssmComment,
+                commands: [ssmCommand],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: ssmComment,
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            ),
-            3,
-            5000
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const parsedResponse = sqlResponseParsing(response);

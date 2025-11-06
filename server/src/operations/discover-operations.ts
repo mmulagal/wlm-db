@@ -899,14 +899,14 @@ async function prepareForManage(accountId: string, credentialsId: string, region
         );
     }
 
-    const hostname = await callSsmExecution(
+    const hostname = await callSsmExecution({
         credentialsId,
         region,
-        ['hostname'],
+        commands: ['hostname'],
         ec2InstanceId,
-        'Get hostname',
+        comment: 'Get hostname',
         accountId
-    );
+    });
     const hostnameMessage: string = isEmpty(hostname) ? '' : `with hostname '${hostname?.trim()}' `;
 
     // Check if any job is already running for the same purpose.
@@ -1060,19 +1060,18 @@ async function preparePsModulesForManage(
         const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PREPARE_PSMODULES_RELATIVE_PATH);
 
         const ssmPsModuleInstallResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT, copyPSModuleS3SignedUrl),
+                commands: INSTALL_WF_POWERSHELL_PREREQS_PS1(
+                    REQUIRED_PS_MODULES_FOR_MANAGEMENT,
+                    copyPSModuleS3SignedUrl
+                ),
                 ec2InstanceId,
-                'Install PowerShell modules',
+                comment: 'Install PowerShell modules',
                 accountId,
-                false,
-                (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
-            ),
-            3,
-            5000
+                executionTimeout: (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
+            })
         );
         logger.debug(`Response for PowerShell module installation for ${ec2InstanceId}: ${ssmPsModuleInstallResponse}`);
 

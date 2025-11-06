@@ -65,15 +65,14 @@ async function isUsingEnterpriseConfiguration(
         )
     ];
 
-    const checkEnterpriseConfigurationList = await callSsmExecution(
+    const checkEnterpriseConfigurationList = await callSsmExecution({
         credentialsId,
         region,
-        command,
-        instanceId,
-        'Check SQL Enterprise Configuration',
-        accountId,
-        false
-    );
+        commands: command,
+        ec2InstanceId: instanceId,
+        comment: 'Check SQL Enterprise Configuration',
+        accountId
+    });
 
     if (checkEnterpriseConfigurationList) {
         const jsonResult = JSON.parse(checkEnterpriseConfigurationList);

@@ -30,7 +30,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
         items: [
             // no windows auth
             {
-                ec2InstanceId: 'i-7h2b6f4e8d1g5i3j',
+                ec2InstanceId: 'i-b0a57935835ddfce4',
                 ec2InstanceType: 'm5.large',
                 ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',
@@ -235,7 +235,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 }
             },
             {
-                ec2InstanceId: 'i-9m8n7b6v5c4x3z',
+                ec2InstanceId: 'i-fe881ebd880a3e61f',
                 ec2InstanceType: 'm5.large',
                 ec2UsageOperation: 'RunInstances:0102',
                 ssmState: 'connected',
@@ -357,7 +357,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 ]
             },
             {
-                ec2InstanceId: 'i-c5x3z1a7s9d2f3g',
+                ec2InstanceId: 'i-587a3738a9f5e35aa',
                 ec2InstanceType: 'm5.large',
                 ec2UsageOperation: 'RunInstances:0006',
                 ssmState: 'connected',

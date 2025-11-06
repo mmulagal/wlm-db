@@ -181,17 +181,15 @@ async function getAvailableSnapshotPolicyList(
 
         const command = [GET_CLUSTER_SNAPSHOT_POLICIES(fsxId, region)];
         const ssmComment = 'Get available snapshot policies';
-        const rawResponse = await callSsmExecution(
+        const rawResponse = await callSsmExecution({
             credentialsId,
             region,
-            command,
-            activeNodeInstanceId,
-            ssmComment,
+            commands: command,
+            ec2InstanceId: activeNodeInstanceId,
+            comment: ssmComment,
             accountId,
-            true,
-            undefined,
-            true
-        );
+            shouldReadFromCloudWatchLogs: true
+        });
         const {
             response: { snapshotSchedules, snapshotPolicies },
             errors: { snapshotSchedules: snapshotSchedulesError, snapshotPolicies: snapshotPoliciesError }
@@ -307,17 +305,15 @@ async function setSnapshotPolicyForVolumes(
             const ssmComment = 'Set snapshot policy for volumes';
 
             const response = await retryWithDelay(
-                callSsmExecution.bind(
-                    null,
+                callSsmExecution.bind(null, {
                     credentialsId,
                     region,
-                    command,
-                    instanceRecord.activeNodeInstanceid,
-                    ssmComment,
+                    commands: command,
+                    ec2InstanceId: instanceRecord.activeNodeInstanceid,
+                    comment: ssmComment,
                     accountId,
-                    false,
-                    CUSTOM_SSM_EXECUTION_TIMEOUT
-                )
+                    executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+                })
             );
             const { response: ssmResponse, error: ssmError } = sqlResponseParsing(response);
             if (!isEmpty(ssmError)) {
@@ -501,14 +497,14 @@ async function optimizeHASharedStorageData(
         throw createError(HttpErrorCodes.PRECONDITION_FAILED, errorMessage);
     }
 
-    const response = await callSsmExecution(
+    const response = await callSsmExecution({
         credentialsId,
         region,
-        [ADD_INITIATOR_TO_IGROUP(fsxFileSystem, region, igroupMissingIqnsMap)],
-        activeNodeInstanceid,
-        `Add initiators to igroup on instance ${activeNodeInstanceid}`,
+        commands: [ADD_INITIATOR_TO_IGROUP(fsxFileSystem, region, igroupMissingIqnsMap)],
+        ec2InstanceId: activeNodeInstanceid,
+        comment: `Add initiators to igroup on instance ${activeNodeInstanceid}`,
         accountId
-    );
+    });
 
     const parsedResponse = sqlResponseParsing(response);
 
@@ -714,14 +710,14 @@ async function handleHeartbeatSettings(
 
     try {
         // Call the remediation script
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [REMEDIATE_HEARTBEAT_SETTINGS],
-            activeNodeInstanceId,
-            `Remediate heartbeat settings on host ${databaseHostId}`,
+            commands: [REMEDIATE_HEARTBEAT_SETTINGS],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: `Remediate heartbeat settings on host ${databaseHostId}`,
             accountId
-        );
+        });
         const parsedResponse = sqlResponseParsing(response);
 
         jobStatus =
@@ -812,14 +808,14 @@ async function handleClusterQuorum(
 
     try {
         // Call the remediation script
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [REMEDIATE_CLUSTER_QUORUM_SETTINGS],
-            activeNodeInstanceId,
-            `Remediate cluster quorum settings on host ${activeNodeInstanceId}`,
+            commands: [REMEDIATE_CLUSTER_QUORUM_SETTINGS],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: `Remediate cluster quorum settings on host ${activeNodeInstanceId}`,
             accountId
-        );
+        });
         const parsedResponse = sqlResponseParsing(response);
 
         jobStatus =
@@ -1185,14 +1181,14 @@ async function handleSqlServerServiceBulkOptimizeStartUpType(
 
     try {
         logger.info(`Running SQL Server Service remediation script on host "${nodeInstanceId}".`);
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE],
-            nodeInstanceId,
-            `Fix SQL Server Service settings on host ${nodeInstanceId} and instance: ${instanceName})`,
+            commands: [REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE],
+            ec2InstanceId: nodeInstanceId,
+            comment: `Fix SQL Server Service settings on host ${nodeInstanceId} and instance: ${instanceName})`,
             accountId
-        );
+        });
 
         const parsedResponse = sqlResponseParsing(response);
 

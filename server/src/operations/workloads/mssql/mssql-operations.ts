@@ -122,13 +122,14 @@ async function getDatabasesCount(
 
     const commands = [sqlQueryExecutionWithAuth(instanceNames, DATABASES_COUNT_V2, isSqlAuthEnabled)];
 
-    const response = await callSsmExecution(
+    const response = await callSsmExecution({
         credentialsId,
         region,
         commands,
-        activeNodeInstanceId,
-        'Get databases count'
-    );
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get databases count',
+        cacheData: true
+    });
     logger.debug('Fetching databases count response', response);
     let parsedResponse = response ? sqlResponseParsing(response) : {};
 
@@ -192,17 +193,15 @@ async function getDataBasesSummary(
             databaseInstances = [DEFAULT_INSTANCE_NAME];
         }
         const commands = sqlQueryExecutionWithAuth(databaseInstances, DATABASES, sqlAuthEnabled);
-        const dbSummary = await callSsmExecution(
-            credentialsId!,
-            region!,
-            [commands],
-            activeNodeInstanceId,
-            'Get databases summary on node',
-            undefined,
-            true,
-            undefined,
-            true
-        );
+        const dbSummary = await callSsmExecution({
+            credentialsId: credentialsId!,
+            region,
+            commands: [commands],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Get databases summary on node',
+            cacheData: true,
+            shouldReadFromCloudWatchLogs: true
+        });
         const cleanDBSummanry = sqlResponseParsing(dbSummary);
         return { databases: cleanDBSummanry };
     } catch (error: any) {
@@ -231,17 +230,15 @@ async function getAllResourceUtilisationDetails(
     logger.info('Fetching resources utilization from primary', credentialsId, region, activeNodeInstanceId);
     const updatedInstanceNames = IS_DEMO_FLOW ? [DEFAULT_INSTANCE_NAME] : instanceNames;
     const commands = [RESOURCE_UTILIZATION(updatedInstanceNames, isSqlAuthEnabled)];
-    const resourceUtilizationData = await callSsmExecution(
+    const resourceUtilizationData = await callSsmExecution({
         credentialsId,
         region,
         commands,
-        activeNodeInstanceId,
-        'Get resource utilization for MSSQL instances',
-        undefined,
-        true,
-        undefined,
-        true
-    );
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get resource utilization for MSSQL instances',
+        cacheData: true,
+        shouldReadFromCloudWatchLogs: true
+    });
     const parsedResourceUtilizationData = resourceUtilizationData ? sqlResponseParsing(resourceUtilizationData) : {};
 
     const instancesResponse: { [key: string]: any } = {};
@@ -371,24 +368,20 @@ async function getResourceUtilisationDetails(
         const diskUtilizationCommand = [`sqlcmd -S "${instanceName}" -Q "${DISK_UTILISATION}" -y 0`];
 
         const [diskdata, size] = await Promise.all([
-            callSsmExecution(
+            callSsmExecution({
                 credentialsId,
                 region,
-                diskUtilizationCommand,
-                activeNodeInstanceId,
-                'Get disk utilization for MSSQL instance',
-                undefined,
-                false
-            ),
-            callSsmExecution(
+                commands: diskUtilizationCommand,
+                ec2InstanceId: activeNodeInstanceId,
+                comment: 'Get disk utilization for MSSQL instance'
+            }),
+            callSsmExecution({
                 credentialsId,
                 region,
-                dbSizecommand,
-                activeNodeInstanceId,
-                'Get database size for MSSQL instance',
-                undefined,
-                false
-            )
+                commands: dbSizecommand,
+                ec2InstanceId: activeNodeInstanceId,
+                comment: 'Get database size for MSSQL instance'
+            })
         ]);
 
         const [sizeValue] = size ? sqlResponseParsing(size) : [];
@@ -410,15 +403,13 @@ async function getResourceUtilisationDetails(
     }
 
     try {
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
             commands,
-            activeNodeInstanceId,
-            'GET MSSQL CPU utilization metrics',
-            undefined,
-            false
-        );
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'GET MSSQL CPU utilization metrics'
+        });
         logger.debug('Utilization response', metricType, response);
         if (!response) {
             throw createError(
@@ -444,7 +435,13 @@ async function getTablesCount(
     logger.info('Fetching tables total count ', credentialsId, region, activeNodeInstanceId, databaseName);
 
     const commands = [`${PSSCRIPT} -Database ${databaseName} -Query "${TABLES_COUNT_QUERY}"`];
-    const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId, 'Get tables count');
+    const response = await callSsmExecution({
+        credentialsId,
+        region,
+        commands,
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get tables count'
+    });
     logger.debug('Fetching tables count response', response);
     if (response) {
         return sqlResponseParsing(response)[0];
@@ -485,7 +482,13 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
     const responses = await Promise.all(
         batchQueries.map(
             throat(SSM_QUERY_CONCURRENCY_LIMIT, async (query: string) =>
-                callSsmExecution(credentialsId, region, [query], activeNodeInstanceId!, 'Get database tables summary')
+                callSsmExecution({
+                    credentialsId,
+                    region,
+                    commands: [query],
+                    ec2InstanceId: activeNodeInstanceId!,
+                    comment: 'Get database tables summary'
+                })
             )
         )
     );
@@ -548,17 +551,15 @@ async function getServerDetails(
     }
     const updatedInstanceNames = IS_DEMO_FLOW ? [DEFAULT_INSTANCE_NAME] : instanceNames;
     const command = [sqlQueryExecutionWithAuth(updatedInstanceNames, SERVER_DETAILS, isSqlAuthEnabled)];
-    const serverAllDetails = await callSsmExecution(
+    const serverAllDetails = await callSsmExecution({
         credentialsId,
         region,
-        command,
-        activeNodeInstanceId,
-        'Get MSSQL server details',
-        undefined,
-        true,
-        undefined,
-        true
-    );
+        commands: command,
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get MSSQL server details',
+        cacheData: true,
+        shouldReadFromCloudWatchLogs: true
+    });
 
     const instancesResponse: { [key: string]: any } = {};
     const parsedResponse = serverAllDetails ? sqlResponseParsing(serverAllDetails) : {};
@@ -630,22 +631,24 @@ async function getSqlServerDetails(
     logger.info('Getting SQL server details', { credentialsId, region, activeNodeInstanceId });
 
     const [resourceIdentifier, name] = await Promise.all([
-        callSsmExecution(
+        callSsmExecution({
             credentialsId,
             region,
-            [`${PSSCRIPT} -Query "${SERVER_GUID}"`],
-            activeNodeInstanceId,
-            'Get service_broker_guid for MSSQL server instance',
-            accountId
-        ),
-        callSsmExecution(
+            commands: [`${PSSCRIPT} -Query "${SERVER_GUID}"`],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Get service_broker_guid for MSSQL server instance',
+            accountId,
+            cacheData: true
+        }),
+        callSsmExecution({
             credentialsId,
             region,
-            [`${PSSCRIPT} -Query "${SERVER_NAME}"`],
-            activeNodeInstanceId,
-            'Get MSSQL server instance name',
-            accountId
-        )
+            commands: [`${PSSCRIPT} -Query "${SERVER_NAME}"`],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Get MSSQL server instance name',
+            accountId,
+            cacheData: true
+        })
     ]);
 
     const resourceId = resourceIdentifier ? sqlResponseParsing(resourceIdentifier)[0] : '';
@@ -756,15 +759,13 @@ async function getServerIOLatency(resourceId: string, activeNodeInstanceId: stri
     }
 
     const commands = [`${PSSCRIPT} -Query "${SERVER_IO_LATENCY}"`];
-    const response = await callSsmExecution(
+    const response = await callSsmExecution({
         credentialsId,
         region,
         commands,
-        activeNodeInstanceId,
-        'Get MSSQL server instance IO latency',
-        undefined,
-        false
-    );
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get MSSQL server instance IO latency'
+    });
 
     logger.debug('SQL server IO latency response', response);
 
@@ -783,15 +784,13 @@ async function getActiveSqlInstanceName(
     const commands = [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS, GET_CLUSTER_NAME];
     try {
         for await (const nodeId of nodeIds) {
-            const response = await callSsmExecution(
+            const response = await callSsmExecution({
                 credentialsId,
                 region,
                 commands,
-                nodeId,
-                'Get MSSQL instance name',
-                undefined,
-                false
-            );
+                ec2InstanceId: nodeId,
+                comment: 'Get MSSQL instance name'
+            });
             if (response) {
                 const parsedResponse = parseMultipleCommandResponse(response);
                 const [parsedInstancesDetails, { fqdn }, { ipAddress }, { clusterName }] = parsedResponse;
@@ -845,14 +844,15 @@ async function getAllInstanceDetails(credentialsId: string, region: string, node
     try {
         await Promise.all(
             nodeIds.map(async nodeId => {
-                const response = await callSsmExecution(
+                const response = await callSsmExecution({
                     credentialsId,
                     region,
                     commands,
-                    nodeId,
-                    'Get MSSQL instance details',
-                    accountId
-                );
+                    ec2InstanceId: nodeId,
+                    comment: 'Get MSSQL instance details',
+                    accountId,
+                    cacheData: true
+                });
                 if (response) {
                     let parsedResponse = sqlResponseParsing(response);
                     parsedResponse = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
@@ -888,13 +888,14 @@ async function getNativeSQLProtection(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
         }
 
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [sqlQueryExecutionWithAuth(instanceNames, NATIVE_SQL_BACKUPS, isSqlAuthEnabled)],
-            activeNodeInstanceId,
-            'Get native SQL backedup databases count'
-        );
+            commands: [sqlQueryExecutionWithAuth(instanceNames, NATIVE_SQL_BACKUPS, isSqlAuthEnabled)],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Get native SQL backedup databases count',
+            cacheData: true
+        });
 
         const cleanedResponse = response?.replaceAll('\r\n', '');
         const parsedResponse = attempt(JSON.parse, cleanedResponse);
@@ -927,15 +928,13 @@ async function getPerformanceMetrics(
 
     const commands = [sqlQueryExecutionWithAuth(instanceNames, PERFORMANCE_METRICS_WITH_LATENCY, isSqlAuthEnabled)];
 
-    const response = await callSsmExecution(
+    const response = await callSsmExecution({
         credentialsId,
         region,
         commands,
-        activeNodeInstanceId,
-        ssmComment,
-        undefined,
-        false
-    );
+        ec2InstanceId: activeNodeInstanceId,
+        comment: ssmComment
+    });
 
     logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
 
@@ -1003,13 +1002,14 @@ async function getNativeSQLBackedupDatabases(
 
         const commands = [sqlQueryExecutionWithAuth(instanceNames, SQL_BACKUPS, isSqlAuthEnabled)];
 
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
             commands,
-            activeNodeInstanceId,
-            'Get native SQL backedup databases'
-        );
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Get native SQL backedup databases',
+            cacheData: true
+        });
 
         const cleanedResponse = response?.replaceAll('\r\n', '');
         let parsedResponse = attempt(JSON.parse, cleanedResponse);
@@ -1271,15 +1271,14 @@ async function checkDatabaseExists(
     ];
 
     try {
-        const checkDatabaseExistsResponse = await callSsmExecution(
+        const checkDatabaseExistsResponse = await callSsmExecution({
             credentialsId,
             region,
-            command,
-            activeNodeInstanceId,
-            `Check for existing Database with name ${databaseName}`,
-            accountId,
-            false
-        );
+            commands: command,
+            ec2InstanceId: activeNodeInstanceId,
+            comment: `Check for existing Database with name ${databaseName}`,
+            accountId
+        });
 
         logger.debug('checking database name exists done', checkDatabaseExistsResponse);
 
@@ -1314,13 +1313,14 @@ async function getSqlServerVersion(
     });
     const instanceName = getOriginalDatabaseInstanceName(executableInstanceName);
     const command = [sqlQueryExecution(instanceName, executableInstanceName, SERVER_VERSION, sqlAuthEnabled)];
-    const sqlServerVersionResponse = await callSsmExecution(
+    const sqlServerVersionResponse = await callSsmExecution({
         credentialsId,
         region,
-        command,
-        activeNodeInstanceId,
-        'Get MSSQL server version'
-    );
+        commands: command,
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get MSSQL server version',
+        cacheData: true
+    });
     const { version = '' } = sqlServerVersionResponse ? sqlResponseParsing(sqlServerVersionResponse) : {}; // const sqlServerVersion: parsedSqlSeverVersionResponse[0].substring(0, serverInfo[0].indexOf('(')).trim(),
     const sqlServerVersion = version ? version.substring(0, version.indexOf('(')).trim() : '';
 
@@ -1342,7 +1342,15 @@ async function getMssqlInstanceGuid(
 
         for await (const nodeId of nodeIds) {
             const ssmComment = 'Fetching MSSQL instance GUID';
-            response = await callSsmExecution(credentialsId, region, commands, nodeId, ssmComment, accountId);
+            response = await callSsmExecution({
+                credentialsId,
+                region,
+                commands,
+                ec2InstanceId: nodeId,
+                comment: ssmComment,
+                accountId,
+                cacheData: true
+            });
             if (response) {
                 [{ instance_guid: sqlInstanceGuid }] = sqlResponseParsing(response);
 
@@ -1525,15 +1533,15 @@ async function getSqlServerVersionAndEdition(
         }
 
         const commands = sqlQueryExecutionWithAuth(databaseInstances, SERVER_VERSION_EDITION_DETAILS, sqlAuthEnabled);
-        const ssmResponse = await callSsmExecution(
+        const ssmResponse = await callSsmExecution({
             credentialsId,
             region,
-            [commands],
-            activeNodeInstanceId,
-            'Get SQL server version and edition',
+            commands: [commands],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Get SQL server version and edition',
             accountId,
-            true
-        );
+            cacheData: true
+        });
         const parsedResponse = sqlResponseParsing(ssmResponse);
 
         const items = Object.entries(parsedResponse).map(([instanceName, records]) => {
@@ -1638,17 +1646,15 @@ async function getMssqlStorageDataFromOntap(
             isSqlAuthEnabled,
             'efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used,space.physical_used,space.performance_tier_footprint,space.capacity_tier_footprint,space.snapshot.used'
         );
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
-            region!,
-            [command],
-            activeNodeInstanceId,
-            ssmComment,
-            undefined,
-            true,
-            undefined,
-            true
-        );
+            region,
+            commands: [command],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: ssmComment,
+            cacheData: true,
+            shouldReadFromCloudWatchLogs: true
+        });
 
         const cleanResponse = response?.replaceAll('\r\n', '');
         let parsedResponse = attempt(JSON.parse, cleanResponse);

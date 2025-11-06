@@ -49,18 +49,15 @@ async function optimizeMTUAlignment(
     let errMsg;
     try {
         const rawResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [OPTIMIZE_NETWORK_INTERFACE_MTU(targetMTU, interfaceNames)],
-                instanceId,
-                `Optimize MTU alignment for instance ${instanceId}`,
+                commands: [OPTIMIZE_NETWORK_INTERFACE_MTU(targetMTU, interfaceNames)],
+                ec2InstanceId: instanceId,
+                comment: `Optimize MTU alignment for instance ${instanceId}`,
                 accountId,
-                false,
-                undefined,
-                true
-            ),
+                shouldReadFromCloudWatchLogs: true
+            }),
             3,
             2000
         );
@@ -99,18 +96,15 @@ async function getFSxMTUValue(
 ): Promise<number> {
     try {
         const rawResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [FETCH_FSX_MTU_DETAILS(instanceRecord)],
-                instanceRecord.activeNodeInstanceid,
-                `Get FSx MTU details for ${instanceRecord.fsxFileSystem}`,
+                commands: [FETCH_FSX_MTU_DETAILS(instanceRecord)],
+                ec2InstanceId: instanceRecord.activeNodeInstanceid,
+                comment: `Get FSx MTU details for ${instanceRecord.fsxFileSystem}`,
                 accountId,
-                false,
-                undefined,
-                true
-            ),
+                shouldReadFromCloudWatchLogs: true
+            }),
             3,
             2000
         );

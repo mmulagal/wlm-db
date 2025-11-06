@@ -49,14 +49,15 @@ async function getInstalledSQLPatchDetails(
 
     return Promise.all(
         instanceIds.map(async instanceId => {
-            const response = await callSsmExecution(
+            const response = await callSsmExecution({
                 credentialsId,
                 region,
-                [ssmCommand],
-                instanceId,
-                'Get Installed SQL patches',
-                accountId
-            );
+                commands: [ssmCommand],
+                ec2InstanceId: instanceId,
+                comment: 'Get Installed SQL patches',
+                accountId,
+                cacheData: true
+            });
             const parsedResponse = sqlResponseParsing(response);
             const { installedPatches } = parsedResponse;
 

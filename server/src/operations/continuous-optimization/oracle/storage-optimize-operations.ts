@@ -104,19 +104,17 @@ async function handleAfdDriftOptimization(params: OptimizeAsmConfigParams) {
 
         const optimizeAfdDriftParam = optimizeAfdDriftConfigParam;
         const optimizeAfdDriftParamComment = 'Optimize AFD Drift Config Param';
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [optimizeAfdDriftParam],
-            node1InstanceId,
-            optimizeAfdDriftParamComment,
+            commands: [optimizeAfdDriftParam],
+            ec2InstanceId: node1InstanceId,
+            comment: optimizeAfdDriftParamComment,
             accountId,
-            undefined,
-            CUSTOM_SSM_EXECUTION_TIMEOUT,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT,
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
         if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
@@ -181,19 +179,17 @@ async function handleAsmLibDriftOptimization(params: OptimizeAsmConfigParams) {
         }
         const optimizeAsmLibParam = optimizeAsmLibDriftConfigParam;
         const optimizeAsmLibParamComment = 'Optimize Asm Lib Config Param';
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [optimizeAsmLibParam],
-            node1InstanceId,
-            optimizeAsmLibParamComment,
+            commands: [optimizeAsmLibParam],
+            ec2InstanceId: node1InstanceId,
+            comment: optimizeAsmLibParamComment,
             accountId,
-            undefined,
-            CUSTOM_SSM_EXECUTION_TIMEOUT,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT,
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
         if (IS_DEMO_FLOW) {
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
@@ -301,19 +297,17 @@ async function handleDiskgroupOptimization(
         if (unOptimizedDiskGroups.length > 0) {
             const createVolsCommand = createAndMapLunsForDiskGroups(unOptimizedDiskGroups, lunIds, fsxId, region);
             const createVolsComment = 'Create Volumes for Oracle Diskgroups';
-            const response = await callSsmExecution(
+            const response = await callSsmExecution({
                 credentialsId,
                 region,
-                [createVolsCommand],
-                node1InstanceId,
-                createVolsComment,
+                commands: [createVolsCommand],
+                ec2InstanceId: node1InstanceId,
+                comment: createVolsComment,
                 accountId,
-                undefined,
-                CUSTOM_SSM_EXECUTION_TIMEOUT,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            );
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT,
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            });
             if (response) {
                 const parsedResponse = sqlResponseParsing(response);
                 const diskGrps = Object.keys(parsedResponse);
@@ -336,19 +330,17 @@ async function handleDiskgroupOptimization(
             logger.info('Mounting LUNs to Oracle ASM disks');
             const addToDiskgroupCommand = mountLunsToDisks(unOptimizedDiskGroups);
             const addToDiskgroupComment = 'Mount LUNs to Oracle ASM disks';
-            const addDiskResponse = await callSsmExecution(
+            const addDiskResponse = await callSsmExecution({
                 credentialsId,
                 region,
-                [addToDiskgroupCommand],
-                node1InstanceId,
-                addToDiskgroupComment,
+                commands: [addToDiskgroupCommand],
+                ec2InstanceId: node1InstanceId,
+                comment: addToDiskgroupComment,
                 accountId,
-                undefined,
-                CUSTOM_SSM_EXECUTION_TIMEOUT,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            );
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT,
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            });
             if (addDiskResponse) {
                 const parsedResponse = sqlResponseParsing(addDiskResponse);
                 const diskGrps = Object.keys(parsedResponse);
@@ -370,19 +362,17 @@ async function handleDiskgroupOptimization(
             logger.info('Adding disks to Oracle ASM diskgroups');
             const attachToDiskgroupCommand = addDiskToDiskGroups(unOptimizedDiskGroups);
             const attachToDiskgroupComment = 'Add disks to Oracle ASM diskgroups';
-            const attachDiskResponse = await callSsmExecution(
+            const attachDiskResponse = await callSsmExecution({
                 credentialsId,
                 region,
-                [attachToDiskgroupCommand],
-                node1InstanceId,
-                attachToDiskgroupComment,
+                commands: [attachToDiskgroupCommand],
+                ec2InstanceId: node1InstanceId,
+                comment: attachToDiskgroupComment,
                 accountId,
-                undefined,
-                CUSTOM_SSM_EXECUTION_TIMEOUT,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            );
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT,
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            });
             if (attachDiskResponse) {
                 const parsedResponse = sqlResponseParsing(attachDiskResponse);
                 const diskGrps = Object.keys(parsedResponse);

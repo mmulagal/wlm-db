@@ -164,17 +164,15 @@ async function getSandboxDetails(
     const isSqlAuthEnabled = instances.some(instance => instance.sqlAuthEnabled);
     const command = [sqlQueryExecutionWithAuth(instanceNames, GET_SANDBOXES, isSqlAuthEnabled)];
 
-    const response = await callSsmExecution(
+    const response = await callSsmExecution({
         credentialsId,
         region,
-        command,
-        activeNodeInstanceId!,
-        'Get sandbox details',
-        undefined,
-        true,
-        undefined,
-        true
-    );
+        commands: command,
+        ec2InstanceId: activeNodeInstanceId!,
+        comment: 'Get sandbox details',
+        cacheData: true,
+        shouldReadFromCloudWatchLogs: true
+    });
 
     try {
         const parsedResponse = response ? sqlResponseParsing(response) : {};
@@ -444,16 +442,17 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                                     ];
                                 }
 
-                                const response = await callSsmExecution(
+                                const response = await callSsmExecution({
                                     credentialsId,
                                     region,
-                                    command,
-                                    (ssmStatus1.Status === ConnectionStatus.CONNECTED
+                                    commands: command,
+                                    ec2InstanceId: (ssmStatus1.Status === ConnectionStatus.CONNECTED
                                         ? node1InstanceId
                                         : node2InstanceId) as string,
-                                    'Get storage savings',
-                                    accountId
-                                );
+                                    comment: 'Get storage savings',
+                                    accountId,
+                                    cacheData: true
+                                });
 
                                 if (response && !response.includes('error')) {
                                     let { savedStorage, consumedStorage } = sqlResponseParsing(response);
@@ -970,16 +969,15 @@ async function getMappings(
             )
         ];
 
-        const mappings = await callSsmExecution(
+        const mappings = await callSsmExecution({
             credentialsId,
             region,
-            command,
-            activeNodeInstanceId,
-            'Get volume mappings',
+            commands: command,
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Get volume mappings',
             accountId,
-            false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
-        );
+            executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+        });
 
         if (!mappings) {
             throw createError(
@@ -1090,19 +1088,15 @@ async function createVolumeClone(
         }
 
         const clonedVolumes = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                command,
-                destDetails.activeNodeInstanceId,
-                'SandBox: Create Volume Clone',
+                commands: command,
+                ec2InstanceId: destDetails.activeNodeInstanceId,
+                comment: 'SandBox: Create Volume Clone',
                 accountId,
-                false,
-                CUSTOM_SSM_EXECUTION_TIMEOUT
-            ),
-            3,
-            5000
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+            })
         );
 
         if (!clonedVolumes) {
@@ -1253,16 +1247,15 @@ async function invokeVirtualMount(
             }
 
             // eslint-disable-next-line no-await-in-loop
-            const resp = await callSsmExecution(
+            const resp = await callSsmExecution({
                 credentialsId,
                 region,
-                command,
-                destDetails.activeNodeInstanceId,
-                'Discover LUN and add virtual mount points',
+                commands: command,
+                ec2InstanceId: destDetails.activeNodeInstanceId,
+                comment: 'Discover LUN and add virtual mount points',
                 accountId,
-                false,
-                CUSTOM_SSM_EXECUTION_TIMEOUT
-            );
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+            });
 
             if (!resp) {
                 throw createError(
@@ -1367,19 +1360,15 @@ async function createCloneDb(
         }
 
         const resp = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                command,
-                destDetails.activeNodeInstanceId,
-                'Clone Database for sandbox',
+                commands: command,
+                ec2InstanceId: destDetails.activeNodeInstanceId,
+                comment: 'Clone Database for sandbox',
                 accountId,
-                false,
-                CUSTOM_SSM_EXECUTION_TIMEOUT
-            ),
-            3,
-            5000
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+            })
         );
 
         // We only get a response for  different server version or in case of error from query
@@ -1468,16 +1457,13 @@ async function createExtendedProperties(
             ];
         }
         const resp = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                command,
-                destDetails.activeNodeInstanceId,
-                'Add extended properties to sandbox database'
-            ),
-            3,
-            5000
+                commands: command,
+                ec2InstanceId: destDetails.activeNodeInstanceId,
+                comment: 'Add extended properties to sandbox database'
+            })
         );
 
         // We only get a response in case of error from query
@@ -1621,19 +1607,15 @@ async function startCleanup(
         }
 
         const resp = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                command,
-                destDetails.activeNodeInstanceId,
-                `Cleanup ${name} resources`,
+                commands: command,
+                ec2InstanceId: destDetails.activeNodeInstanceId,
+                comment: `Cleanup ${name} resources`,
                 accountId,
-                false,
-                CUSTOM_SSM_EXECUTION_TIMEOUT
-            ),
-            3,
-            5000
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+            })
         );
 
         if (!resp) {
@@ -1795,13 +1777,13 @@ async function getSandboxConnectionString(
             command = [getConnectionInfo('MSSQLSERVER', false)];
         }
 
-        const resp = await callSsmExecution(
+        const resp = await callSsmExecution({
             credentialsId,
             region,
-            command,
-            activeNodeInstanceId!,
-            'Get sandbox database connection info'
-        );
+            commands: command,
+            ec2InstanceId: activeNodeInstanceId!,
+            comment: 'Get sandbox database connection info'
+        });
 
         if (!resp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get the connection string');
@@ -1863,13 +1845,13 @@ async function getDatabaseMountPointInfo(
             command = [sqlQueryExecution('MSSQLSERVER', '$env:computername', mountPointQuery('test-database'), true)];
         }
 
-        const mountPoints = await callSsmExecution(
+        const mountPoints = await callSsmExecution({
             credentialsId,
             region,
-            command,
-            srcDetails.activeNodeInstanceId,
-            'Get database mount points'
-        );
+            commands: command,
+            ec2InstanceId: srcDetails.activeNodeInstanceId,
+            comment: 'Get database mount points'
+        });
         if (!mountPoints) {
             throw createError('No mount points found.');
         }
@@ -2129,15 +2111,14 @@ async function getSandboxSplitEstimate(
         )
     ];
 
-    const mappings = await callSsmExecution(
+    const mappings = await callSsmExecution({
         credentialsId,
         region,
-        command,
-        activeNodeInstanceId,
-        'Get volume mappings',
-        accountId,
-        false
-    );
+        commands: command,
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get volume mappings',
+        accountId
+    });
 
     if (!mappings) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
@@ -2597,19 +2578,15 @@ async function detachSandboxAndAccessPath(
         }
 
         const resp = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                command,
-                resourceDetails.activeNodeInstanceId,
-                'Detach sandbox and access path',
+                commands: command,
+                ec2InstanceId: resourceDetails.activeNodeInstanceId,
+                comment: 'Detach sandbox and access path',
                 accountId,
-                false,
-                CUSTOM_SSM_EXECUTION_TIMEOUT
-            ),
-            3,
-            5000
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+            })
         );
 
         if (!resp) {
@@ -2712,16 +2689,15 @@ async function reAttachSandboxAndAccessPath(
                 `SandBox:${resourceDetails.database}:`
             )
         ];
-        let resp = await callSsmExecution(
+        let resp = await callSsmExecution({
             credentialsId,
             region,
-            command,
-            resourceDetails.activeNodeInstanceId,
-            'Discover LUN and add virtual mount points',
+            commands: command,
+            ec2InstanceId: resourceDetails.activeNodeInstanceId,
+            comment: 'Discover LUN and add virtual mount points',
             accountId,
-            false,
-            CUSTOM_SSM_EXECUTION_TIMEOUT
-        );
+            executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+        });
 
         if (!resp) {
             logger.error('Failed to re-attach sandbox and add access path, SSM command response is empty');
@@ -2763,19 +2739,15 @@ async function reAttachSandboxAndAccessPath(
         ];
 
         resp = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                command,
-                resourceDetails.activeNodeInstanceId,
-                'Attach sandbox and add access path',
+                commands: command,
+                ec2InstanceId: resourceDetails.activeNodeInstanceId,
+                comment: 'Attach sandbox and add access path',
                 accountId,
-                false,
-                CUSTOM_SSM_EXECUTION_TIMEOUT
-            ),
-            3,
-            5000
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+            })
         );
 
         // We only get a response for  different server version or in case of error from query
@@ -2994,19 +2966,15 @@ async function splitVolumes(
         ];
 
         const resp = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                command,
-                resourceDetail.activeNodeInstanceId,
-                'Split volume for creating sandbox',
+                commands: command,
+                ec2InstanceId: resourceDetail.activeNodeInstanceId,
+                comment: 'Split volume for creating sandbox',
                 accountId,
-                false,
-                CUSTOM_SSM_EXECUTION_TIMEOUT
-            ),
-            3,
-            5000
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+            })
         );
 
         if (!resp) {
@@ -3080,16 +3048,13 @@ async function deleteExtendedProperties(
         }
 
         const resp = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                command,
-                resourceDetail.activeNodeInstanceId,
-                'Remove extended properties'
-            ),
-            3,
-            5000
+                commands: command,
+                ec2InstanceId: resourceDetail.activeNodeInstanceId,
+                comment: 'Remove extended properties'
+            })
         );
 
         if (resp) {
@@ -3209,13 +3174,13 @@ async function performIntegrityCheck(
             command = [checkDatabaseIntegrityScript('test-db', DEFAULT_INSTANCE_NAME, '.', '', false)];
         }
 
-        const resp = await callSsmExecution(
+        const resp = await callSsmExecution({
             credentialsId,
             region,
-            command,
-            activeNodeInstanceId!,
-            'Check database integrity'
-        );
+            commands: command,
+            ec2InstanceId: activeNodeInstanceId!,
+            comment: 'Check database integrity'
+        });
 
         if (resp) {
             throw createError(
@@ -3275,13 +3240,13 @@ async function getSandboxSnapshots(
         )
     ];
 
-    const mappings = await callSsmExecution(
+    const mappings = await callSsmExecution({
         credentialsId,
         region,
-        mappingsCommand,
-        activeNodeInstanceId,
-        'Get volume mappings'
-    );
+        commands: mappingsCommand,
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get volume mappings'
+    });
 
     if (!mappings) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
@@ -3314,15 +3279,14 @@ async function getSandboxSnapshots(
         )
     ];
 
-    const snapshotResponse = await callSsmExecution(
+    const snapshotResponse = await callSsmExecution({
         credentialsId,
         region,
-        snapshotsCommand,
-        srcDetails.activeNodeInstanceId,
-        'Get snapshots to clone for sandbox',
-        accountId,
-        false
-    );
+        commands: snapshotsCommand,
+        ec2InstanceId: srcDetails.activeNodeInstanceId,
+        comment: 'Get snapshots to clone for sandbox',
+        accountId
+    });
     if (!snapshotResponse) {
         logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume lun mapping for the database');

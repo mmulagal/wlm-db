@@ -137,19 +137,16 @@ async function getOracleInstanceInfo(
     let response;
     try {
         for await (const nodeId of nodeIds) {
-            response = await callSsmExecution(
+            response = await callSsmExecution({
                 credentialsId,
                 region,
                 commands,
-                nodeId,
+                ec2InstanceId: nodeId,
                 comment,
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            );
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            });
             if (response) {
                 return response;
             }
@@ -220,19 +217,16 @@ async function getOraclePerformanceMetrics(
     try {
         const command = ORACLE_PERFORMANCE_METRICS(node1InstanceId, dbInstanceSid);
         const comment = 'oracle performance metrics';
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [command],
-            node1InstanceId,
+            commands: [command],
+            ec2InstanceId: node1InstanceId,
             comment,
             accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
 
@@ -309,7 +303,7 @@ async function getOracleProtectionStatus(
             );
         }
 
-        const command = [];
+        const commands = [];
         if (isCDB === YES && pdbNames?.length > 0) {
             mountPointDetails?.forEach(mountPointDetail => {
                 const [{ mountIP, mountPoint, protocol }] = mountPointDetail;
@@ -319,7 +313,7 @@ async function getOracleProtectionStatus(
                         `Missing mountIp, junctionPath or protocol for fsxnId: ${fsxnId}, ${credentialsId}, ${region}`
                     );
                 }
-                command.push(
+                commands.push(
                     getOracleProtectionData(
                         fsxnId,
                         region,
@@ -333,7 +327,7 @@ async function getOracleProtectionStatus(
             });
         } else {
             const [[{ mountIP, mountPoint, protocol }]] = mountPointDetails;
-            command.push(
+            commands.push(
                 getOracleProtectionData(
                     fsxnId,
                     region,
@@ -347,19 +341,16 @@ async function getOracleProtectionStatus(
         }
 
         const comment = 'oracle protection status';
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            command,
-            node1InstanceId,
+            commands,
+            ec2InstanceId: node1InstanceId,
             comment,
             accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
         if (response) {
             const protectionResponse: any = {};
             const parsedResponse = parseMultipleCommandResponse(response);
@@ -414,19 +405,16 @@ async function getOracleDatabaseCount(
     try {
         const command = fetchOracleDatabasesCount(ec2InstanceId, databaseInstanceSid);
         const comment = 'oracle database count';
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [command],
+            commands: [command],
             ec2InstanceId,
             comment,
             accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
 
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
@@ -460,19 +448,16 @@ async function getOracleDatabasesList(
     try {
         const command = fetchOracleDatabasesDetails(ec2InstanceId, databaseInstanceSid);
         const comment = 'oracle database list';
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [command],
+            commands: [command],
             ec2InstanceId,
             comment,
             accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
 
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
@@ -541,19 +526,16 @@ async function getRegisteredOracleInstanceStorageDetails(
     try {
         const command = getStorageDetailsForRegisteredInstances(node1InstanceId, dbInstanceSid);
         const comment = 'Get oracle instance storage details';
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [command],
-            node1InstanceId,
+            commands: [command],
+            ec2InstanceId: node1InstanceId,
             comment,
             accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
             const { storage_details: mountPointDetails, is_cdb: isCDB, pdb_names: pdbNames } = parsedResponse;
@@ -1067,19 +1049,17 @@ async function getOracleDatabaseMappedVolumes(
                         fsxId,
                         region
                     );
-                    const ssmResponse = await callSsmExecution(
+                    const ssmResponse = await callSsmExecution({
                         credentialsId,
                         region,
-                        [mappedVolCommand],
-                        node1InstanceId,
-                        'Get mapped volume details for Oracle db',
+                        commands: [mappedVolCommand],
+                        ec2InstanceId: node1InstanceId,
+                        comment: 'Get mapped volume details for Oracle db',
                         accountId,
-                        false,
-                        '300', // the more the # of pdbs in the setup the longer it takes to fetch the details
-                        undefined,
-                        SSM_RUN_SHELL_SCRIPT_DOC,
-                        SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-                    );
+                        executionTimeout: '300', // the more the # of pdbs in the setup the longer it takes to fetch the details
+                        documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                        documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+                    });
                     let parsedMappedVolRes: OracleInstanceMountpointResponse = sqlResponseParsing(ssmResponse);
                     const instanceToFsxnMap = new Map<string, Map<string, OracleInstanceMountpointResponse>>();
                     mappedDatabaseInstances.forEach(instance => {
@@ -1191,19 +1171,18 @@ async function getOracleStorageInfoFromOntap(activeNodeInstanceId: string, insta
             instances: mappedByInstances
         });
 
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [command],
-            activeNodeInstanceId,
-            ssmComment,
+            commands: [command],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: ssmComment,
             accountId,
-            true,
-            '45',
-            true,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            cacheData: true,
+            shouldReadFromCloudWatchLogs: true,
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
 
         const parsedResponse = sqlResponseParsing(response);
         if (!parsedResponse || isEmpty(parsedResponse)) {

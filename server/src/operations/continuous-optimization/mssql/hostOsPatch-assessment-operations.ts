@@ -42,24 +42,24 @@ async function checkIfWindowsUpdateCatalogReachable(
     });
     try {
         const { node1InstanceId, node2InstanceId } = metadata;
-        await callSsmExecution(
+        await callSsmExecution({
             credentialsId,
             region,
-            [TEST_CONNECTION_COMMAND],
-            node1InstanceId,
-            'Check if Windows Update Catalog is reachable',
+            commands: [TEST_CONNECTION_COMMAND],
+            ec2InstanceId: node1InstanceId,
+            comment: 'Check if Windows Update Catalog is reachable',
             accountId
-        );
+        });
 
         if (node2InstanceId) {
-            await callSsmExecution(
+            await callSsmExecution({
                 credentialsId,
                 region,
-                [TEST_CONNECTION_COMMAND],
-                node2InstanceId,
-                'Check if Windows Update Catalog is reachable',
+                commands: [TEST_CONNECTION_COMMAND],
+                ec2InstanceId: node2InstanceId,
+                comment: 'Check if Windows Update Catalog is reachable',
                 accountId
-            );
+            });
         }
     } catch (error) {
         const errorMessage = `Error while checking if Windows Update Catalog is reachable. ${error}`;

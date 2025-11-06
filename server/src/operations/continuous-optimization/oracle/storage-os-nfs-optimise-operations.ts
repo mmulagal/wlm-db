@@ -50,20 +50,16 @@ async function optimiseKernelTcpSunrpcSlots(params: OptimizeOSParams) {
 
     try {
         const response = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [optimiseTcpSunrpcSlotsScript],
-                activeNodeInstanceId,
-                'Fix kernel TCP sunrpc slot table entries for Oracle NFS storage optimization',
+                commands: [optimiseTcpSunrpcSlotsScript],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: 'Fix kernel TCP sunrpc slot table entries for Oracle NFS storage optimization',
                 accountId,
-                false,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            )
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            })
         );
 
         const { status: optimisationStatus, error } = sqlResponseParsing(response) as KernelTcpSlotOptimiseResponse;

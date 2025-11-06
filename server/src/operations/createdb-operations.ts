@@ -75,16 +75,14 @@ async function getDefaultDrives(
     logger.info('Getting MSSQL default data and log drives', { credentialsId, region, activeNodeInstanceId });
     const defaultDrivesCommand = [GET_DEFAULT_DRIVES(instanceName, executableInstanceName, isSqlAuthEnabled)];
 
-    const defaultDriveResponse = await callSsmExecution(
+    const defaultDriveResponse = await callSsmExecution({
         credentialsId,
         region,
-        defaultDrivesCommand,
-        activeNodeInstanceId,
-        ssmComment,
-        undefined,
-        false,
+        commands: defaultDrivesCommand,
+        ec2InstanceId: activeNodeInstanceId,
+        comment: ssmComment,
         executionTimeout
-    );
+    });
 
     const parsedDefaultDriveResponse = defaultDriveResponse ? sqlResponseParsing(defaultDriveResponse) : '';
 
@@ -119,29 +117,25 @@ async function getDriveInfoFromNodes(
     const activeNodeDriveInfoCommand = [GET_ACTIVE_NODE_DRIVE_INFO(sqlDeploymentType, instanceName)];
     const standbyNodeDriveListCommand = [GET_STANDBY_NODE_DRIVE_LIST];
 
-    const existingDriveActiveNodePromise = callSsmExecution(
+    const existingDriveActiveNodePromise = callSsmExecution({
         credentialsId,
         region,
-        activeNodeDriveInfoCommand,
-        activeNodeInstanceId,
-        'Get active standby node drive info',
-        undefined,
-        false,
+        commands: activeNodeDriveInfoCommand,
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get active standby node drive info',
         executionTimeout
-    );
+    });
     // Getting list of drives present on standby node to eliminate presenting existing drive letter as available drive letter
     const existingDriveStandbyNodePromise =
         sqlDeploymentType === 'FCI' && !forSandbox && standbyNodeInstanceId
-            ? callSsmExecution(
+            ? callSsmExecution({
                   credentialsId,
                   region,
-                  standbyNodeDriveListCommand,
-                  standbyNodeInstanceId,
-                  'Get standby node drive list',
-                  undefined,
-                  false,
+                  commands: standbyNodeDriveListCommand,
+                  ec2InstanceId: standbyNodeInstanceId,
+                  comment: 'Get standby node drive list',
                   executionTimeout
-              )
+              })
             : Promise.resolve();
 
     const [existingDriveActiveNodeResponse, existingDriveStandbyNodeResponse] = await Promise.all([
@@ -790,16 +784,15 @@ async function invokeSSMForDatabaseDeployment(
             if (isClustered === 'true' && standbyNodeInstanceId !== undefined) {
                 const standbyIqnCommand = ['(Get-InitiatorPort).NodeAddress'];
                 try {
-                    standbyIqnResponse = await callSsmExecution(
+                    standbyIqnResponse = await callSsmExecution({
                         credentialsId,
                         region,
-                        standbyIqnCommand,
-                        standbyNodeInstanceId,
-                        'Get IQN for standby node',
+                        commands: standbyIqnCommand,
+                        ec2InstanceId: standbyNodeInstanceId,
+                        comment: 'Get IQN for standby node',
                         accountId,
-                        false,
-                        CUSTOM_SSM_EXECUTION_TIMEOUT
-                    );
+                        executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+                    });
                 } catch (error) {
                     const errorMessage = `Failed to fetch standby IQN value' for host ${databaseName} in account ${accountId}, ${error}`;
                     logger.error(errorMessage);
@@ -1030,19 +1023,15 @@ async function createDatabase(
     let errMsg;
     try {
         const createDatabaseResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                createDatabaseCommand,
-                activeNodeInstanceId,
-                jobDescription,
+                commands: createDatabaseCommand,
+                ec2InstanceId: activeNodeInstanceId,
+                comment: jobDescription,
                 accountId,
-                false,
-                CUSTOM_SSM_EXECUTION_TIMEOUT
-            ),
-            3,
-            5000
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+            })
         );
 
         logger.debug('Create database is done', createDatabaseResponse);
@@ -1138,19 +1127,15 @@ async function configureLuns(
     let errMsg;
     try {
         const configureLunresponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                configureLuncommands,
-                activeNodeInstanceId,
-                'Configuring LUNs',
+                commands: configureLuncommands,
+                ec2InstanceId: activeNodeInstanceId,
+                comment: 'Configuring LUNs',
                 accountId,
-                false,
-                CUSTOM_SSM_EXECUTION_TIMEOUT
-            ),
-            3,
-            5000
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+            })
         );
         logger.debug('Configure luns is done', configureLunresponse);
         const parsedLunsResponse = configureLunresponse ? sqlResponseParsing(configureLunresponse) : {};
@@ -1260,19 +1245,15 @@ async function newDBInitialization(
     let errMsg;
     try {
         const newDBInitializeresponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                dbInitializecommands,
-                activeNodeInstanceId,
-                description,
+                commands: dbInitializecommands,
+                ec2InstanceId: activeNodeInstanceId,
+                comment: description,
                 accountId,
-                false,
-                customSSMTimeoutValue || CUSTOM_SSM_EXECUTION_TIMEOUT
-            ),
-            3,
-            5000
+                executionTimeout: customSSMTimeoutValue || CUSTOM_SSM_EXECUTION_TIMEOUT
+            })
         );
         logger.debug('New DB initialize is successfully done', newDBInitializeresponse);
 
@@ -1366,7 +1347,7 @@ async function cleanUpDatabaseDeployment(
     let status;
     let errMsg;
     try {
-        const cleaupCommand = [
+        const cleanupCommand = [
             cleanupResources(
                 fileSystemId!,
                 sqlVMName!,
@@ -1382,18 +1363,14 @@ async function cleanUpDatabaseDeployment(
         ];
 
         const cleanUpResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                cleaupCommand,
-                activeNodeInstanceId,
-                jobDescription,
-                accountId,
-                false
-            ),
-            3,
-            5000
+                commands: cleanupCommand,
+                ec2InstanceId: activeNodeInstanceId,
+                comment: jobDescription,
+                accountId
+            })
         );
 
         const parsedCleanUpResponse = cleanUpResponse ? sqlResponseParsing(cleanUpResponse) : {};
@@ -1491,15 +1468,14 @@ async function validateParams(
         }
 
         // // Check if PS7 is installed
-        const ps7AvailabilityResponse = await callSsmExecution(
+        const ps7AvailabilityResponse = await callSsmExecution({
             credentialsId,
             region,
-            CHECK_POWERSHELL7_AVAILABLE,
-            activeNodeInstanceId,
-            'Check PowerShell 7 availability',
-            accountId,
-            false
-        );
+            commands: CHECK_POWERSHELL7_AVAILABLE,
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Check PowerShell 7 availability',
+            accountId
+        });
 
         let isPS7Available = true;
         try {
@@ -1852,16 +1828,14 @@ async function getDefaultCollationAndVersion(
 
     const defaultCollationCommand = [GET_DEFAULT_COLLATION(instanceName, executableName, sqlAuthEnabled)];
 
-    const defaultCollationResponse = await callSsmExecution(
+    const defaultCollationResponse = await callSsmExecution({
         credentialsId,
         region,
-        defaultCollationCommand,
-        activeNodeInstanceId,
-        ssmComment,
-        undefined,
-        false,
+        commands: defaultCollationCommand,
+        ec2InstanceId: activeNodeInstanceId,
+        comment: ssmComment,
         executionTimeout
-    );
+    });
 
     const [defaultCollation, mssqlVersion] = defaultCollationResponse
         ? sqlResponseParsing(defaultCollationResponse)

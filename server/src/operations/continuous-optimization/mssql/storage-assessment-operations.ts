@@ -106,17 +106,16 @@ async function initiateStorageAssessmentCollection(
         const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
         const ssmComment = 'Get Storage Configuration Assessment';
 
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            command,
-            instanceRecord.activeNodeInstanceid,
-            ssmComment,
+            commands: command,
+            ec2InstanceId: instanceRecord.activeNodeInstanceid,
+            comment: ssmComment,
             accountId,
-            false,
-            ASSESSMENT_SSM_EXECUTION_TIMEOUT,
-            true
-        );
+            executionTimeout: ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+            shouldReadFromCloudWatchLogs: true
+        });
 
         const parsedResponse = response ? sqlResponseParsing(response) : {};
         const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;

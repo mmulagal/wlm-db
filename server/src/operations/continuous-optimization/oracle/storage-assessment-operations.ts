@@ -1604,19 +1604,18 @@ async function initiateStorageAssessmentCollection(
         }
         const ssmComment = 'Get Storage Configuration Assessment for Oracle instance';
 
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            command,
-            activeNodeInstanceid,
-            ssmComment,
+            commands: command,
+            ec2InstanceId: activeNodeInstanceid,
+            comment: ssmComment,
             accountId,
-            false,
-            ASSESSMENT_SSM_EXECUTION_TIMEOUT,
-            true,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            executionTimeout: ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+            shouldReadFromCloudWatchLogs: true,
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
 
         const parsedResponse = parseMultipleCommandResponse(response);
         const [storageAssessment, osAssessment] = parsedResponse;

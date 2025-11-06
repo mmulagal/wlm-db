@@ -139,16 +139,14 @@ async function installPowershell7(
         const copyPowershell7SignedUrl = await getPreSignedUrl(region, bucketname, POWERSHELL_7_RELATIVE_PATH);
 
         const installResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                INSTALL_POWERSHELL_7(copyPowershell7SignedUrl),
+                commands: INSTALL_POWERSHELL_7(copyPowershell7SignedUrl),
                 ec2InstanceId,
-                `Install PowerShell 7.5.0 for ${ec2InstanceId}`,
-                accountId,
-                false
-            )
+                comment: `Install PowerShell 7.5.0 for ${ec2InstanceId}`,
+                accountId
+            })
         );
 
         const parsedInstallResponse = JSON.parse(installResponse || '{}');
@@ -158,16 +156,14 @@ async function installPowershell7(
         }
 
         const checkResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                CHECK_POWERSHELL7_AVAILABLE,
+                commands: CHECK_POWERSHELL7_AVAILABLE,
                 ec2InstanceId,
-                'Check PowerShell 7 availability after installation',
-                accountId,
-                false
-            )
+                comment: 'Check PowerShell 7 availability after installation',
+                accountId
+            })
         );
 
         const parsedResponse = JSON.parse(checkResponse);
@@ -219,17 +215,18 @@ async function installPowerShellModules(
         const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PREPARE_PSMODULES_RELATIVE_PATH);
 
         ssmPsModuleInstallResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                INSTALL_WF_POWERSHELL_PREREQS_PS1(REQUIRED_PS_MODULES_FOR_MANAGEMENT, copyPSModuleS3SignedUrl),
+                commands: INSTALL_WF_POWERSHELL_PREREQS_PS1(
+                    REQUIRED_PS_MODULES_FOR_MANAGEMENT,
+                    copyPSModuleS3SignedUrl
+                ),
                 ec2InstanceId,
-                `Install PowerShell modules for ${ec2InstanceId}`,
+                comment: `Install PowerShell modules for ${ec2InstanceId}`,
                 accountId,
-                false,
-                (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
-            )
+                executionTimeout: (RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES * 60).toString()
+            })
         );
 
         jobStatus = JOBSTATUS.COMPLETED;
@@ -404,14 +401,14 @@ async function registerSqlInstance(
         const [ec2Details, discoverDetails, adDetails] = await Promise.all([
             describeInstance(credentialsId, region, { InstanceIds: [ec2InstanceId] }, { useCache: true }),
             getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [ec2InstanceId]),
-            callSsmExecution(
+            callSsmExecution({
                 credentialsId,
                 region,
-                GET_ACTIVE_DIRECTORY_DETAILS,
+                commands: GET_ACTIVE_DIRECTORY_DETAILS,
                 ec2InstanceId,
-                'Get AD details',
+                comment: 'Get AD details',
                 accountId
-            )
+            })
         ]);
 
         const node1InstanceId = ec2InstanceId;
@@ -905,30 +902,30 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                             getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [
                                 ec2InstanceId
                             ]),
-                            callSsmExecution(
+                            callSsmExecution({
                                 credentialsId,
                                 region,
-                                CLUSTER_NETWORK_IP_INFO_PS1,
+                                commands: CLUSTER_NETWORK_IP_INFO_PS1,
                                 ec2InstanceId,
-                                'Get cluster network info',
+                                comment: 'Get cluster network info',
                                 accountId
-                            ),
-                            callSsmExecution(
+                            }),
+                            callSsmExecution({
                                 credentialsId,
                                 region,
-                                GET_ACTIVE_DIRECTORY_DETAILS,
+                                commands: GET_ACTIVE_DIRECTORY_DETAILS,
                                 ec2InstanceId,
-                                'Get AD details',
+                                comment: 'Get AD details',
                                 accountId
-                            ),
-                            callSsmExecution(
+                            }),
+                            callSsmExecution({
                                 credentialsId,
                                 region,
-                                GET_MISSING_RESOURCE_DETAILS,
+                                commands: GET_MISSING_RESOURCE_DETAILS,
                                 ec2InstanceId,
-                                'Get missing resources',
+                                comment: 'Get missing resources',
                                 accountId
-                            )
+                            })
                         ]);
 
                     const node1InstanceId = ec2InstanceId;
@@ -983,14 +980,14 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                 if (node2ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
                                     precheckErrorList.push(`No SSM connectivity on partner node ${node2InstanceId}.`);
                                 } else {
-                                    const node2missingResourceDetails = await callSsmExecution(
+                                    const node2missingResourceDetails = await callSsmExecution({
                                         credentialsId,
                                         region,
-                                        GET_MISSING_RESOURCE_DETAILS,
-                                        node2InstanceId!,
-                                        'Get missing resources',
+                                        commands: GET_MISSING_RESOURCE_DETAILS,
+                                        ec2InstanceId: node2InstanceId!,
+                                        comment: 'Get missing resources',
                                         accountId
-                                    );
+                                    });
 
                                     const node2missingResourceJson = JSON.parse(node2missingResourceDetails!);
 
@@ -1676,19 +1673,16 @@ async function installPythonModules(
 
     try {
         let parsedResponse;
-        const ssmresponse = await callSsmExecution(
+        const ssmresponse = await callSsmExecution({
             credentialsId,
             region,
-            [installPythonOnLinuxHost(pythonSignedUrls)],
-            instanceId,
-            'Install python on linux host',
+            commands: [installPythonOnLinuxHost(pythonSignedUrls)],
+            ec2InstanceId: instanceId,
+            comment: 'Install python on linux host',
             accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
 
         const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
         parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -2466,15 +2460,13 @@ async function validateWindowsCredentials(
 
     command += '$responseObject | ConvertTo-Json -Compress';
 
-    const ssmresponse = await callSsmExecution(
+    const ssmresponse = await callSsmExecution({
         credentialsId,
         region,
-        [command],
-        instanceId,
-        'Validate credentials',
-        undefined,
-        false
-    );
+        commands: [command],
+        ec2InstanceId: instanceId,
+        comment: 'Validate credentials'
+    });
 
     const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
     parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -2641,19 +2633,16 @@ async function validateOracleCredentials(
 
     command += 'echo $resultObject';
 
-    const ssmresponse = await callSsmExecution(
+    const ssmresponse = await callSsmExecution({
         credentialsId,
         region,
-        [command],
-        instanceId,
-        'Validate Oracle Credentials',
+        commands: [command],
+        ec2InstanceId: instanceId,
+        comment: 'Validate Oracle Credentials',
         accountId,
-        undefined,
-        undefined,
-        undefined,
-        SSM_RUN_SHELL_SCRIPT_DOC,
-        SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-    );
+        documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+        documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+    });
 
     const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
     parsedResponse = attempt(JSON.parse, cleanResponse);

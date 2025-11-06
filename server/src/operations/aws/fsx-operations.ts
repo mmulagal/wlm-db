@@ -282,7 +282,14 @@ async function getStorageDataUsingSSM(
             `C:\\SSM\\OntapRestGet.ps1  -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
         ];
     }
-    const response = await callSsmExecution(credentialsId, region, commands, activeNodeInstanceId, ssmComment);
+    const response = await callSsmExecution({
+        credentialsId,
+        region,
+        commands,
+        ec2InstanceId: activeNodeInstanceId,
+        comment: ssmComment,
+        cacheData: true
+    });
 
     const cleanResponse = response?.replaceAll('\r\n', '');
     const jsonResponse = JSON.parse(cleanResponse!);
@@ -553,17 +560,17 @@ async function getMappedOntapVolumes(
             instanceOntapDetails
         );
 
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
-            region!,
-            [command],
-            activeNodeInstanceId!,
-            ssmComment,
+            region,
+            commands: [command],
+            ec2InstanceId: activeNodeInstanceId!,
+            comment: ssmComment,
             accountId,
-            true,
+            cacheData: true,
             executionTimeout,
-            true
-        );
+            shouldReadFromCloudWatchLogs: true
+        });
 
         const cleanResponse = response?.replaceAll('\r\n', '');
         let parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -882,8 +889,14 @@ async function isInstanceAppConsistentBackupEnabled(
             queryFields: 'comment'
         };
         const command = [GET_SNAPSHOT_DETAILS(volumesToCheck, fsxId, region, ontapApiQueryParams)];
-        const ssmComment = 'Get snapshot copy details for volumes';
-        const rawResponse = await callSsmExecution(credentialsId, region, command, activeNodeInstanceid, ssmComment);
+        const rawResponse = await callSsmExecution({
+            credentialsId,
+            region,
+            commands: command,
+            ec2InstanceId: activeNodeInstanceid,
+            comment: 'Get snapshot copy details for volumes',
+            cacheData: true
+        });
         const { response: ssmResponse, error: ssmError } = sqlResponseParsing(rawResponse);
         if (!isEmpty(ssmError) || isEmpty(ssmResponse)) {
             throw Error(

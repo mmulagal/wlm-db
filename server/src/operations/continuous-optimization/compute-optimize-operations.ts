@@ -489,15 +489,14 @@ async function getRunningSqlServices(
     });
 
     try {
-        const rawResponse = await callSsmExecution(
+        const rawResponse = await callSsmExecution({
             credentialsId,
             region,
-            [GET_RUNNING_SQL_SERVERS()],
-            activeNodeInstanceId,
-            'Getting running SQL server names',
-            accountId,
-            false
-        );
+            commands: [GET_RUNNING_SQL_SERVERS()],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Getting running SQL server names',
+            accountId
+        });
 
         const sqlServers: string | string[] = sqlResponseParsing(rawResponse);
         return formatSsmArrayResponse<string>(sqlServers);
@@ -543,16 +542,15 @@ async function checkRunningStatus(
     let rawStatusResponse;
 
     try {
-        rawStatusResponse = await callSsmExecution(
+        rawStatusResponse = await callSsmExecution({
             credentialsId,
             region,
-            [CHECK_RUNNING_STATUS_WITH_RESTART(sqlServerNames)],
-            activeNodeInstanceId,
-            'Checking running status of the service',
+            commands: [CHECK_RUNNING_STATUS_WITH_RESTART(sqlServerNames)],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Checking running status of the service',
             accountId,
-            false,
-            timeRequired.toString()
-        );
+            executionTimeout: timeRequired.toString()
+        });
         const cleanResponse = sqlResponseParsing(rawStatusResponse);
         const statuses: SsmSqlServerRunningStatus[] = formatSsmArrayResponse<SsmSqlServerRunningStatus>(cleanResponse);
 
@@ -691,19 +689,15 @@ async function moveClusterGroupOwnership(
         activeNodeInstanceId
     });
     const resp = await retryWithDelay(
-        callSsmExecution.bind(
-            null,
+        callSsmExecution.bind(null, {
             credentialsId,
             region,
-            [MOVE_ALL_CLUSTER_GROUPS(targetNodeName)],
-            activeNodeInstanceId,
-            'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.',
-            undefined,
-            undefined,
-            COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
-        ),
-        3,
-        5000
+            commands: [MOVE_ALL_CLUSTER_GROUPS(targetNodeName)],
+            ec2InstanceId: activeNodeInstanceId,
+            comment:
+                'Moves all "SQL Server" cluster groups to a target node and returns the status as a compressed JSON.',
+            executionTimeout: COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
+        })
     );
 
     let clusterGroupOwnershipTransferStatus = sqlResponseParsing(resp);
@@ -731,15 +725,13 @@ async function moveClusterGroupOwnership(
 
 async function getCurrentDnsSettings(credentialsId: string, region: string, instanceId: string) {
     logger.info('Getting current DNS settings', { credentialsId, region, instanceId });
-    return callSsmExecution(
+    return callSsmExecution({
         credentialsId,
         region,
-        ['Get-NetAdapter | Get-DnsClientServerAddress | Select-Object -ExpandProperty ServerAddresses'],
-        instanceId,
-        'Retrieves the DNS server addresses for all network adapters on the system.',
-        undefined,
-        false
-    );
+        commands: ['Get-NetAdapter | Get-DnsClientServerAddress | Select-Object -ExpandProperty ServerAddresses'],
+        ec2InstanceId: instanceId,
+        comment: 'Retrieves the DNS server addresses for all network adapters on the system.'
+    });
 }
 
 async function updateDnsSettings(
@@ -765,19 +757,15 @@ async function updateDnsSettings(
     );
     try {
         return await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [`Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ${dnsAddresses}`],
-                instanceId,
-                'Sets the DNS server addresses for all network adapters to the specified addresses.',
+                commands: [`Get-NetAdapter | Set-DnsClientServerAddress -ServerAddresses ${dnsAddresses}`],
+                ec2InstanceId: instanceId,
+                comment: 'Sets the DNS server addresses for all network adapters to the specified addresses.',
                 accountId,
-                undefined,
-                COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
-            ),
-            3,
-            5000
+                executionTimeout: COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
+            })
         );
     } catch (error) {
         errorMessage = `Failed to update DNS settings for ${instanceId}. ${error}`;
@@ -854,19 +842,15 @@ async function handleIscsiSessions(
     try {
         const iscsiTargetAddresses = await getIscsiTargetAddresses(credentialsId, region, fsxId, svmId);
         await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses, 'compute-optimize')],
+                commands: [ENABLE_MPIO_AND_CONFIGURE(iscsiTargetAddresses, 'compute-optimize')],
                 ec2InstanceId,
-                'Enable MPIO and configure ISCSI sessions',
+                comment: 'Enable MPIO and configure ISCSI sessions',
                 accountId,
-                false,
-                COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
-            ),
-            3,
-            5000
+                executionTimeout: COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
+            })
         );
     } catch (error) {
         errorMessage = `Failed to update ISCSI sessions for ${ec2InstanceId}. ${error}`;
@@ -947,16 +931,15 @@ async function updateNodeInstanceType(
 }
 
 async function getClusterNodeInstanceIds(accountId: string, credentialsId: string, region: string, instanceId: string) {
-    const clusterNetworkIpDetails = await callSsmExecution(
+    const clusterNetworkIpDetails = await callSsmExecution({
         credentialsId,
         region,
-        CLUSTER_NETWORK_IP_INFO_PS1,
-        instanceId,
-        'Get cluster network IPs',
+        commands: CLUSTER_NETWORK_IP_INFO_PS1,
+        ec2InstanceId: instanceId,
+        comment: 'Get cluster network IPs',
         accountId,
-        undefined,
-        COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
-    );
+        executionTimeout: COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
+    });
     let clusterNodeInstanceIds: string[] = [];
     let clusterNodeDetails: NodeDetails[] = [];
     if (clusterNetworkIpDetails?.includes(FAILURE_INFO)) {
@@ -980,16 +963,15 @@ async function transferClusterOwnershipToStandbyNode(
     activeNodeInstanceId: string
 ) {
     try {
-        const sqlNodeDetails = await callSsmExecution(
+        const sqlNodeDetails = await callSsmExecution({
             credentialsId,
             region,
-            [GET_CLUSTER_NODE_NAMES()],
-            activeNodeInstanceId,
-            'Get all node names in the cluster',
+            commands: [GET_CLUSTER_NODE_NAMES()],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Get all node names in the cluster',
             accountId,
-            undefined,
-            COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
-        );
+            executionTimeout: COMPUTE_OPTIMIZE_SSM_EXECUTION_TIMEOUT
+        });
         let { ownerNodes, clusterNodes, currentNode } = sqlResponseParsing(sqlNodeDetails);
         ownerNodes = Array.isArray(ownerNodes) ? ownerNodes : ownerNodes?.split(',');
         const ownerNode = ownerNodes?.includes(currentNode) ? currentNode : ownerNodes?.[0];
@@ -997,14 +979,14 @@ async function transferClusterOwnershipToStandbyNode(
         // pick one of the nodes in the cluster to transfer primary node ownership
         let targetNodeName;
         for await (const nodeName of clusterNodes) {
-            const resp = await callSsmExecution(
+            const resp = await callSsmExecution({
                 credentialsId,
                 region,
-                [CHECK_NODE_STATUS(nodeName)],
-                activeNodeInstanceId,
-                'Checks if a cluster node is Up and reachable, returning the status as a JSON object.',
+                commands: [CHECK_NODE_STATUS(nodeName)],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: 'Checks if a cluster node is Up and reachable, returning the status as a JSON object.',
                 accountId
-            );
+            });
             const { status } = sqlResponseParsing(resp);
             if (status === 'success') {
                 targetNodeName = nodeName;

@@ -68,19 +68,17 @@ async function getPgSqlInstanceInfo(accountId: string, credentialsId: string, re
     try {
         for await (const nodeId of nodeIds) {
             logger.info('Fetching PGSQL instance GUID', nodeId);
-            response = await callSsmExecution(
+            response = await callSsmExecution({
                 credentialsId,
                 region,
                 commands,
-                nodeId,
+                ec2InstanceId: nodeId,
                 comment,
                 accountId,
-                undefined,
-                undefined,
-                undefined,
-                SSM_RUN_SHELL_SCRIPT_DOC,
-                SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-            );
+                cacheData: true,
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            });
             if (response) {
                 return response;
             }
@@ -111,19 +109,17 @@ async function getPgSqlDatabaseCount(
     try {
         const command = DATABASES_COUNT;
         const comment = 'pgsql databases count';
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [command],
-            node1InstanceId,
+            commands: [command],
+            ec2InstanceId: node1InstanceId,
             comment,
             accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            cacheData: true,
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
         if (response) {
             return response;
         }
@@ -155,19 +151,17 @@ async function getPgSqlStorageSavingsVolumeData(
             'storage/volumes?fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used';
         const commands = getPgSqlStorageSavings(fsxNId, region, endpoint);
         const comment = 'pgsql storage savings';
-        response = await callSsmExecution(
+        response = await callSsmExecution({
             credentialsId,
             region,
-            [commands],
-            node1InstanceId,
+            commands: [commands],
+            ec2InstanceId: node1InstanceId,
             comment,
             accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            cacheData: true,
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
         const {
             records: [volSavingsData]
         } = JSON.parse(response!) || {};
@@ -403,19 +397,18 @@ async function getPgSqlDatabasesList(
     try {
         const command = LIST_DATABASES;
         const comment = 'pgsql database list';
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [command],
-            node1InstanceId,
+            commands: [command],
+            ec2InstanceId: node1InstanceId,
             comment,
             accountId,
-            undefined,
-            undefined,
-            true,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            cacheData: true,
+            shouldReadFromCloudWatchLogs: true,
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
             if (!isArray(parsedResponse)) {
@@ -464,19 +457,17 @@ async function getPgSqlPerformaceMetrics(
     try {
         const command = PERFORMANCE_METRICS;
         const comment = 'pgsql performance metrics';
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [command],
-            node1InstanceId,
+            commands: [command],
+            ec2InstanceId: node1InstanceId,
             comment,
             accountId,
-            undefined,
-            undefined,
-            undefined,
-            SSM_RUN_SHELL_SCRIPT_DOC,
-            SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        );
+            cacheData: true,
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
         if (response) {
             const parsedResponse = sqlResponseParsing(response);
 
@@ -529,19 +520,17 @@ async function getPgSqlProtectionStatus(
     logger.info('Fetching pgsql protection', { accountId, credentialsId, region, node1InstanceId, fsxId });
     const command = getPgSqlProtection(fsxId, region);
     const comment = 'pgsql protection data';
-    const response = await callSsmExecution(
+    const response = await callSsmExecution({
         credentialsId,
         region,
-        [command],
-        node1InstanceId,
+        commands: [command],
+        ec2InstanceId: node1InstanceId,
         comment,
         accountId,
-        undefined,
-        undefined,
-        undefined,
-        SSM_RUN_SHELL_SCRIPT_DOC,
-        SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-    );
+        cacheData: true,
+        documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+        documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+    });
     if (response) {
         const parsedResponse = sqlResponseParsing(response);
         if (!isEmpty(parsedResponse?.error)) {

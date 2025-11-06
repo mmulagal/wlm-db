@@ -765,7 +765,7 @@ const CLUSTER_NETWORK_IP_INFO_PS1 = [
 ];
 
 // For now, we copy only the scripts that are needed to create a database.
-const COPY_SCIRPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
+const COPY_SCRIPTS_TO_MANAGE_RESOURCE = (s3SignedUrl: string) => [
     `
     $ProgressPreference = 'SilentlyContinue'
     $ErrorActionPreference = "Stop"
@@ -1100,7 +1100,7 @@ export {
     HOST_AND_SQL_INFO_PS1,
     SQL_SERVER_VERSION_TO_YEAR,
     CLUSTER_NETWORK_IP_INFO_PS1,
-    COPY_SCIRPTS_TO_MANAGE_RESOURCE,
+    COPY_SCRIPTS_TO_MANAGE_RESOURCE,
     GET_MISSING_RESOURCE_DETAILS,
     IS_PS7_AVAILABLE,
     UNAVAILABLE_PS_MODULES,

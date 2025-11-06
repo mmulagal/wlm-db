@@ -151,14 +151,14 @@ async function runRssConfigAssessment(
     logger.info('Running RSS Config assessment', { accountId, credentialsId, region, activeNodeInstanceId });
     try {
         const ssmCommand = GET_RSS_CONFIG_DETAILS();
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            [ssmCommand],
-            activeNodeInstanceId,
-            'Get network adapters configuration details',
+            commands: [ssmCommand],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Get network adapters configuration details',
             accountId
-        );
+        });
         const parsedResponse = sqlResponseParsing(response);
         const { adapters: rssConfigAdapters, vcpuCount, tcpOffloadState } = parsedResponse;
 

@@ -81,28 +81,24 @@ async function mtuAssessment(
     };
     try {
         const [mssqlResponse, fsxResponse] = await Promise.all([
-            callSsmExecution(
+            callSsmExecution({
                 credentialsId,
                 region,
-                [FETCH_MSSQL_INSTANCE_MTU_DETAILS],
-                activeNodeInstanceId,
-                `Fetch MTU details for SQL Server instance ${activeNodeInstanceId}`,
+                commands: [FETCH_MSSQL_INSTANCE_MTU_DETAILS],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: `Fetch MTU details for SQL Server instance ${activeNodeInstanceId}`,
                 accountId,
-                false,
-                undefined,
-                true
-            ),
-            callSsmExecution(
+                shouldReadFromCloudWatchLogs: true
+            }),
+            callSsmExecution({
                 credentialsId,
                 region,
-                [FETCH_FSX_MTU_DETAILS(instanceRecord)],
-                activeNodeInstanceId,
-                'Fetch FSx MTU details',
+                commands: [FETCH_FSX_MTU_DETAILS(instanceRecord)],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: 'Fetch FSx MTU details',
                 accountId,
-                false,
-                undefined,
-                true
-            )
+                shouldReadFromCloudWatchLogs: true
+            })
         ]);
 
         const parsedMssqlResponse = typeof mssqlResponse === 'string' ? JSON.parse(mssqlResponse) : mssqlResponse;

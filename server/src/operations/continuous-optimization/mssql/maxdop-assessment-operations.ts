@@ -160,14 +160,14 @@ async function runMaxDOPAssessment(
         sqlAuthEnabled
     });
     const ssmCommand = GET_VCPU_AND_MAXDOP_DETAILS(databaseInstanceName, sqlAuthEnabled as boolean);
-    const response = await callSsmExecution(
+    const response = await callSsmExecution({
         credentialsId,
         region,
-        [ssmCommand],
-        activeNodeInstanceId,
-        'Get MaxDOP and VCPU details',
+        commands: [ssmCommand],
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get MaxDOP and VCPU details',
         accountId
-    );
+    });
     const parsedResponse = sqlResponseParsing(response);
     const { maxDOP, vcpuCount } = parsedResponse;
 

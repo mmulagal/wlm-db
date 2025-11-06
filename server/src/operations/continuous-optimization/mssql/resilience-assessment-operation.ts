@@ -110,17 +110,15 @@ async function collectVolumeSnapshotCopiesData(
 
         const command = [GET_SNAPSHOT_DETAILS(volumesToCheck, fsxId, region)];
         const ssmComment = 'Get snapshot copy details for volumes';
-        const rawResponse = await callSsmExecution(
+        const rawResponse = await callSsmExecution({
             credentialsId,
-            instanceRecord.region,
-            command,
-            instanceRecord.activeNodeInstanceid,
-            ssmComment,
+            region: instanceRecord.region,
+            commands: command,
+            ec2InstanceId: instanceRecord.activeNodeInstanceid,
+            comment: ssmComment,
             accountId,
-            true,
-            undefined,
-            true
-        );
+            shouldReadFromCloudWatchLogs: true
+        });
         const { response: ssmResponse, error: ssmError } = sqlResponseParsing(rawResponse);
         if (!isEmpty(ssmError)) {
             throw Error(
@@ -558,17 +556,15 @@ async function initiateCrossRegionResiliencyAssessment(
         const command = [CROSS_REGION_REPLICATION_SCRIPT(instanceRecord)];
         const ssmComment = 'Get Cross Region Replication Assessment';
 
-        const response = await callSsmExecution(
+        const response = await callSsmExecution({
             credentialsId,
             region,
-            command,
-            instanceRecord.activeNodeInstanceid,
-            ssmComment,
+            commands: command,
+            ec2InstanceId: instanceRecord.activeNodeInstanceid,
+            comment: ssmComment,
             accountId,
-            false,
-            undefined,
-            true
-        );
+            shouldReadFromCloudWatchLogs: true
+        });
 
         const { crrDetails, errorMessage } = response
             ? sqlResponseParsing(response)
@@ -738,28 +734,24 @@ async function getSharedStorageAssessment(
 
         const command = GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN(fsxFileSystem, region, mappedLunUuids || []);
         const [primaryNodeResponse, standbyNodeResponse] = await Promise.all([
-            callSsmExecution(
+            callSsmExecution({
                 credentialsId,
                 region,
-                [command],
-                node1InstanceId,
-                `Get Host IQN and LUN mappings from node ${node1InstanceId}`,
+                commands: [command],
+                ec2InstanceId: node1InstanceId,
+                comment: `Get Host IQN and LUN mappings from node ${node1InstanceId}`,
                 accountId,
-                false,
-                undefined,
-                true
-            ),
-            callSsmExecution(
+                shouldReadFromCloudWatchLogs: true
+            }),
+            callSsmExecution({
                 credentialsId,
                 region,
-                [command],
-                node2InstanceId,
-                `Get Host IQN and LUN mappings from node ${node2InstanceId}`,
+                commands: [command],
+                ec2InstanceId: node2InstanceId,
+                comment: `Get Host IQN and LUN mappings from node ${node2InstanceId}`,
                 accountId,
-                false,
-                undefined,
-                true
-            )
+                shouldReadFromCloudWatchLogs: true
+            })
         ]);
 
         let primaryNodeParsedResponse: LunIqnDetails | null = null;
@@ -848,32 +840,28 @@ async function getDriveLetterAssessment(
         }
         const isActiveNodePrimary = activeNodeInstanceid === node1InstanceId;
         const [primaryNodeResponse, standbyNodeResponse] = await Promise.all([
-            callSsmExecution(
+            callSsmExecution({
                 credentialsId,
                 region,
-                [FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS(instanceRecord)],
-                isActiveNodePrimary ? node1InstanceId : node2InstanceId,
-                `Fetch drive letters for mapped volumes on primary node ${
+                commands: [FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS(instanceRecord)],
+                ec2InstanceId: isActiveNodePrimary ? node1InstanceId : node2InstanceId,
+                comment: `Fetch drive letters for mapped volumes on primary node ${
                     isActiveNodePrimary ? node1InstanceId : node2InstanceId
                 }`,
                 accountId,
-                false,
-                undefined,
-                true
-            ),
-            callSsmExecution(
+                shouldReadFromCloudWatchLogs: true
+            }),
+            callSsmExecution({
                 credentialsId,
                 region,
-                [DRIVE_LETTER],
-                isActiveNodePrimary ? node2InstanceId : node1InstanceId,
-                `Fetch available drive letters on standby node ${
+                commands: [DRIVE_LETTER],
+                ec2InstanceId: isActiveNodePrimary ? node2InstanceId : node1InstanceId,
+                comment: `Fetch available drive letters on standby node ${
                     isActiveNodePrimary ? node2InstanceId : node1InstanceId
                 }`,
                 accountId,
-                false,
-                undefined,
-                true
-            )
+                shouldReadFromCloudWatchLogs: true
+            })
         ]);
 
         const primaryNodeParsedResponse = sqlResponseParsing(primaryNodeResponse);
@@ -964,28 +952,22 @@ async function getSqlServiceStartupAssessment(
 
         // 3. Run SSM command on both nodes in parallel
         const [preferredNodeRaw, nonPreferredNodeRaw] = await Promise.all([
-            callSsmExecution(
+            callSsmExecution({
                 credentialsId,
                 region,
-                [SQL_SERVER_SERVICES(databaseInstanceName)],
-                preferredNodeId,
-                `Fetch sql service status for instance ${databaseInstanceName} on preferred node ${preferredNodeId}`,
-                accountId,
-                false,
-                undefined,
-                true
-            ),
-            callSsmExecution(
+                commands: [SQL_SERVER_SERVICES(databaseInstanceName)],
+                ec2InstanceId: preferredNodeId,
+                comment: `Fetch sql service status for instance ${databaseInstanceName} on preferred node ${preferredNodeId}`,
+                accountId
+            }),
+            callSsmExecution({
                 credentialsId,
                 region,
-                [SQL_SERVER_SERVICES(databaseInstanceName)],
-                standbyNodeId,
-                `Fetch sql service status for instance ${databaseInstanceName} on non-preferred node ${standbyNodeId}`,
-                accountId,
-                false,
-                undefined,
-                true
-            )
+                commands: [SQL_SERVER_SERVICES(databaseInstanceName)],
+                ec2InstanceId: standbyNodeId,
+                comment: `Fetch sql service status for instance ${databaseInstanceName} on non-preferred node ${standbyNodeId}`,
+                accountId
+            })
         ]);
 
         // 4. Parse SSM outputs
@@ -1063,17 +1045,15 @@ async function initiateHostLevelHighAvailabilityAssessment(
         // Prepare all commands in a single SSM document execution
 
         const commands = [CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS];
-        const rawResponses = await callSsmExecution(
+        const rawResponses = await callSsmExecution({
             credentialsId,
             region,
             commands,
-            activeNodeInstanceid,
-            `Fetch cluster quorum, heartbeat settings on node ${activeNodeInstanceid}`,
+            ec2InstanceId: activeNodeInstanceid,
+            comment: `Fetch cluster quorum, heartbeat settings on node ${activeNodeInstanceid}`,
             accountId,
-            false,
-            undefined,
-            true
-        );
+            shouldReadFromCloudWatchLogs: true
+        });
 
         // Parse SSM output into separate objects
         const rawResponsesParsed = parseMultipleCommandResponse(rawResponses);

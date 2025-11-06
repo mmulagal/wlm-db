@@ -227,17 +227,15 @@ async function runCloneAssessment(
         'clone.parent_volume.name,clone.is_flexclone,create_time'
     ) as Promise<InstancesResponse>;
 
-    const callSsmExecutionResponse = callSsmExecution(
+    const callSsmExecutionResponse = callSsmExecution({
         credentialsId,
         region,
-        [ssmCommand],
-        activeNodeInstanceId,
-        'Get sandbox Details for clone assessment',
+        commands: [ssmCommand],
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get sandbox Details for clone assessment',
         accountId,
-        true,
-        undefined,
-        true
-    );
+        shouldReadFromCloudWatchLogs: true
+    });
 
     const [instanceVolumeMapping, response] = await Promise.all([getInstanceVolumeMapping, callSsmExecutionResponse]);
 

@@ -186,14 +186,14 @@ async function getTheMSSqlversion(
 
     const ssmCommand = GET_INSTALLED_MSSQL_VERSION(instanceName, sqlAuthEnabled);
 
-    const response = await callSsmExecution(
+    const response = await callSsmExecution({
         credentialsId,
         region,
-        [ssmCommand],
-        instanceId,
-        'Get Installed SQL version',
+        commands: [ssmCommand],
+        ec2InstanceId: instanceId,
+        comment: 'Get Installed SQL version',
         accountId
-    );
+    });
     const [parsedResponse] = sqlResponseParsing(response);
     const { version } = parsedResponse;
     const { version: versionYear, releaseDate } = extractVersionDetails(version);

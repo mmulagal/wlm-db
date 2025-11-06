@@ -52,17 +52,15 @@ async function optimizeNetworkAdapters(
     let errMsg;
     try {
         const rawResponse = await retryWithDelay(
-            callSsmExecution.bind(
-                null,
+            callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                [OPTIMIZE_NETWORK_ADAPTERS(networkAdapters)],
-                instanceId,
-                `Fix network adapters for ${resourceName}`,
+                commands: [OPTIMIZE_NETWORK_ADAPTERS(networkAdapters)],
+                ec2InstanceId: instanceId,
+                comment: `Fix network adapters for ${resourceName}`,
                 accountId,
-                false,
-                '300'
-            )
+                executionTimeout: '300'
+            })
         );
         const { response, error: ssmError } = sqlResponseParsing(rawResponse) || {};
         if (response === 'FAILED' || !isEmpty(ssmError)) {
