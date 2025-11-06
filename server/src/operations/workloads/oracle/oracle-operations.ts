@@ -470,6 +470,10 @@ async function getOracleDatabasesList(
                 service_name: serviceName
             } = parsedResponse;
 
+            if (parsedResponse?.error) {
+                throw Error(parsedResponse.error);
+            }
+
             const databases = [];
 
             // If there are no PDBs, it's a single tenant database
@@ -820,7 +824,7 @@ async function getOracleDatabaseInstancesSummary(
                             if (database.type === CDB) {
                                 database.protection = protectionData?.[dbInstanceSid];
                             } else {
-                                database.protection = protectionData?.[database.name] || {
+                                database.protection = protectionData?.[database?.name] || {
                                     isSqlNativeBackupEnabled: false,
                                     isAwsBackupEnabled: { fsxn: false },
                                     isFsxOntapSnapshotsEnabled: false

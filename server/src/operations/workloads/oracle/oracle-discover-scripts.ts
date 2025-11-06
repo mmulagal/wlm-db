@@ -6,7 +6,8 @@ import {
     getOracleHomePath,
     loadOracleUserPermissionsDetectionModule,
     oracleUserAuthLoginCommand,
-    isASMManagedCheck
+    isASMManagedCheck,
+    parseSqlplusOutput
 } from './oracle-ssm-script-utils';
 
 const debugLog = (logFileName: string) => `
@@ -186,7 +187,7 @@ EOF
 
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SET FEEDBACK OFF
@@ -198,6 +199,7 @@ EOF
                         INSTR(file_name, '/', -1) - 1) AS data_dir
             FROM   dba_data_files
             WHERE  file_name NOT LIKE '+%';
+EOSQL
 EOF
     }
 
@@ -206,13 +208,14 @@ EOF
         local diskgroupName="$2"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command
+            $sqlplus_command << 'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT d.name
             FROM v\\$asm_disk d
             JOIN v\\$asm_diskgroup g ON d.group_number = g.group_number
             WHERE g.name = '$diskgroupName';
+EOSQL
 EOF
 }
 
@@ -221,7 +224,7 @@ EOF
         local diskName="$2"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command
+            $sqlplus_command << 'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT path 
@@ -229,6 +232,7 @@ EOF
                 WHERE name = '$diskName'
                 AND header_status = 'MEMBER';
             EXIT;
+EOSQL
 EOF
     }
 
@@ -244,7 +248,7 @@ EOF
 
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SET FEEDBACK OFF
@@ -253,6 +257,7 @@ EOF
             SELECT DISTINCT SUBSTR(file_name, 2, INSTR(file_name, '/') - 2) AS diskgroup
             FROM dba_data_files
             WHERE file_name LIKE '+%';
+EOSQL
 EOF
 }
 
@@ -870,7 +875,7 @@ const loadDatabaseDetectionModules = `
 
             sudo -i -u oracle bash <<EOF
                 export ORACLE_SID="$ORACLE_SID"
-                $sqlplus_command
+                $sqlplus_command <<'EOSQL'
                     SET HEADING OFF
                     SET LINESIZE 500
                     SELECT JSON_OBJECT(
@@ -881,6 +886,7 @@ const loadDatabaseDetectionModules = `
                             'instance_state' value STATUS
                         ) AS instance_info
                     FROM V\\$INSTANCE;
+EOSQL
 EOF
         else
             # instance name & id are same as ORACLE_SID, hostname is not available in /etc/oratab.
@@ -897,7 +903,7 @@ EOF
         jsonRes=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET HEADING OFF
                 SET LINESIZE 500
@@ -913,6 +919,7 @@ EOF
                         END
                 )
                 FROM V\\$DATABASE;
+EOSQL
 EOF
 ) || return 1
     
@@ -923,7 +930,7 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT JSON_ARRAYAGG(
@@ -934,6 +941,7 @@ EOF
             )
         ) AS pdb_info
             FROM DBA_PDBS;
+EOSQL
 EOF
     }
 
@@ -941,7 +949,7 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT JSON_OBJECTAGG(
@@ -950,6 +958,7 @@ EOF
             FROM V\\$DATAFILE df
             JOIN DBA_PDBS p ON df.CON_ID = p.CON_ID
             GROUP BY p.PDB_NAME;
+EOSQL
 EOF
     }
 
@@ -957,11 +966,12 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT ROUND(SUM(BYTES), 2) AS db_size_gb
             FROM   DBA_DATA_FILES;
+EOSQL
 EOF
     }
 
@@ -969,7 +979,7 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT JSON_ARRAYAGG(
@@ -984,6 +994,7 @@ EOF
                     )
                 ) AS pdb_status_json
             FROM V\\$PDBS;
+EOSQL
 EOF
     }
 
@@ -991,10 +1002,11 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT COUNT(*) AS pdb_count FROM DBA_PDBS;
+EOSQL
 EOF
     }
 `;
@@ -1108,7 +1120,7 @@ const discoverOracleHosts = `
         local result
         result=$(sudo -i -u oracle bash <<EOF
                 export ORACLE_SID="$ORACLE_SID"
-                sqlplus -S / as sysdba 2>/dev/null <<EOSQL
+                sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET HEADING OFF
                 SET FEEDBACK OFF
@@ -1339,8 +1351,10 @@ const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
 
     ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
     ${loadDatabaseDetectionModules}
+    ${parseSqlplusOutput}
 
     while IFS=: read -r sid oracle_home; do
+        errorMessage=""
         # Check if the instance is running by checking for its PMON process.
         # Skip if the instance process is not running.
         if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
@@ -1355,7 +1369,11 @@ const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
         
         if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
             DATABASE_DETAILS=$(get_database_details "$sid")
-            root_db_size=$(get_cdb_or_single_instance_db_size "$sid")
+            root_db_size=$(parse_sqlplus_output "$(get_cdb_or_single_instance_db_size "$sid")")
+            sqlplus_exit_code=$?
+            if [ $sqlplus_exit_code -ne 0 ]; then
+                errorMessage=$root_db_size
+            fi
             is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
 
             if [ "$is_cdb" == "YES" ]; then
@@ -1379,10 +1397,13 @@ const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
             service_name=""
         fi
 
-        results="{\\"database_details\\": $DATABASE_DETAILS, \\"pdbs_size\\": $pdbs_size, \\"root_db_size\\": $root_db_size, \\"pdbs_status\\": $pdbs_status, \\"is_cdb\\": \\"$is_cdb\\", \\"service_name\\": \\"$service_name\\"}"
+        if [ -n "$errorMessage" ]; then
+            results="{\\"error\\": \\"$errorMessage\\"}"
+        else
+            results="{\\"database_details\\": $DATABASE_DETAILS, \\"pdbs_size\\": \\"$pdbs_size\\", \\"root_db_size\\": \\"$root_db_size\\", \\"pdbs_status\\": $pdbs_status, \\"is_cdb\\": \\"$is_cdb\\", \\"service_name\\": \\"$service_name\\"}"
+        fi
     done <<< "$oratab_entries"
-
-    echo $results
+    echo "$results" | tr -d '\r\n' | tr -d '\n' 
 `;
 
 const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) => `
@@ -1695,7 +1716,6 @@ const getMappedOntapDataVolumeForInstance = (
     echo "$result" | tr -d '\n' | tr -d ' '
 
 `;
-
 export {
     discoverOracleHosts,
     getStorageDetailsForRegisteredInstances,

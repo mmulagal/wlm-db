@@ -1603,6 +1603,34 @@ ${logFileCheck()}
 ${pythonScriptInit(oracleStorageInfoFromOntapPythonTemplate(params), 'wlmdb-oracle-storage-information')}
 `;
 
+const parseSqlplusOutput = `
+# capture the first line of sqlplus output or the first ORA- error encountered
+# exit code 0 if no error, 1 if error
+parse_sqlplus_output() {
+    local sqlplus_out
+    if [ $# -eq 0 ]; then
+        sqlplus_out=$(cat) || return 1
+    else
+        sqlplus_out="$1"
+        shift
+        while [ $# -gt 0 ]; do
+            sqlplus_out=$sqlplus_out$'\n'"$1"
+            shift
+        done
+    fi
+    if printf '%s' "$sqlplus_out" | grep -q 'ORA-'; then
+        local err
+        err=$(printf '%s' "$sqlplus_out" | sed -n '/ORA-/ { s/^[[:space:]]*//; s/[[:space:]]*$//; p; q }')
+        printf '%s' "$err"
+        return 1
+    fi
+    local output
+    output=$(printf '%s' "$sqlplus_out" | sed -n '/[^[:space:]]/ { s/^[[:space:]]*//; s/[[:space:]]*$//; p; q }')
+    printf '%s' "$output"
+    return 0
+}
+`;
+
 export {
     getFsxCredentials,
     getOracleProtectionData,
@@ -1633,5 +1661,6 @@ export {
     getOracleHomePath,
     oracleStorageInfoFromOntap,
     isASMManagedCheck,
-    isStorageASMmanaged
+    isStorageASMmanaged,
+    parseSqlplusOutput
 };
