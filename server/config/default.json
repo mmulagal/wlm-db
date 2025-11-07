@@ -46,11 +46,11 @@
     "cors": {
         "allowed-origins": [
             "https://staging.console.workloads.netapp.com",
-            "https://staging.cloudmanager.netapp.com", 
+            "https://staging.cloudmanager.netapp.com",
             "https://staging.console.bluexp.netapp.com",
             "https://staging.console.netapp.com",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000"
+            "http://localhost:4300",
+            "http://127.0.0.1:4300"
         ]
     },
     "kinesis": {
