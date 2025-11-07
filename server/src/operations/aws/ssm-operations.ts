@@ -23,7 +23,7 @@ import {
     getParameter,
     describeInstanceInformation
 } from '../../lib/aws/ssm';
-import { decompressSSMResponse, generateHash, sleep } from '../../utils/utils';
+import { decompressSSMResponse, generateHash, IS_DEMO_FLOW, sleep } from '../../utils/utils';
 import {
     AWS_REGION_KEYS,
     AWS_REGIONS,
@@ -184,7 +184,12 @@ async function executeSSMDocumentMultipleInstances(
         }
 
         const commandId = await sendSSMCommand(credentialsId, region, params, accountId);
-        await sleep(1000);
+
+        // Sleep for 1 second in non-demo flow to avoid immediate polling
+        if (!IS_DEMO_FLOW) {
+            await sleep(1000);
+        }
+
         try {
             if (commandId) {
                 const response = await pollCommandStatusForAllInstances(
@@ -229,8 +234,11 @@ async function executeSSMDocument(
         InstanceId: instanceIds
     };
 
-    // Sleep for 1 second to avoid immediate polling
-    await sleep(1000);
+    // Sleep for 1 second in non-demo flow to avoid immediate polling
+    if (!IS_DEMO_FLOW) {
+        await sleep(1000);
+    }
+
     try {
         const response = await pollCommandStatus(credentialsId, region, pollParams, pollDuration, accountId);
         logger.debug('SSM command commandId, Response:', commandId, response);
