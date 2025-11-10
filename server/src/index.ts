@@ -108,6 +108,7 @@ interface Headers {
 await initiateSecrets();
 logger.info('Secrets initiated');
 logger.info('Initializing app');
+const ALLOWED_ORIGINS = new Set(config.get<string[]>('cors.allowed-origins') || []);
 const app = fastify({
     trustProxy: true,
     genReqId: () => `WLM-DB-${randomize('Aa0', 8)}`,
@@ -126,8 +127,8 @@ const app = fastify({
             if (!origin) {
                 return callback(null, true);
             }
-            const allowedOrigins: string[] = config.get('cors.allowed-origins') || [];
-            if (allowedOrigins.includes(origin)) {
+
+            if (ALLOWED_ORIGINS.has(origin)) {
                 return callback(null, true);
             }
 
