@@ -65,10 +65,6 @@ export const CREDENTIAL_PROD_LINK = 'https://console.bluexp.netapp.com/fsxadmini
 // export const CREDENTIAL_WF_STAGE_LINK = 'https://staging.console.workloads.netapp.com/credentials';
 // export const CREDENTIAL_WF_PROD_LINK = 'https://console.workloads.netapp.com/credentials';
 
-// Add timeline link
-export const TIMELINE_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/timeline';
-export const TIMELINE_PROD_LINK = 'https://cloudmanager.netapp.com/timeline';
-
 // Add workload policies
 export const WLMDB_POLICIES_STAGE_LINK = 'https://staging.console.workloads.netapp.com';
 export const WLMDB_POLICIES_PROD_LINK = 'https://console.workloads.netapp.com';
@@ -309,18 +305,9 @@ export const CRED_PLACEHOLDERS = {
     DATABASE_HOST_ID: '<databaseHostId>'
 };
 
-export const MARKETING_PAGE_URL = 'https://workloads.netapp.com/database-workloads';
-
 export const DB_HOME_DATA_TYPE = {
     HOSTS: 'hosts',
     JOBS: 'jobs'
-};
-
-export const CODEBOX_REST_RES = {
-    API: 'api',
-    VIEW: 'view',
-    COPY: 'copy',
-    ORIGINAL_DATA: 'Original Data'
 };
 
 export const COSTING_TYPES = {

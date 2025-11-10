@@ -244,13 +244,6 @@ export const formatCalcSize = (val: any) => {
     return '0 GiB';
 };
 
-export const formatPrice = (val: any) => {
-    if (val || val === 0) {
-        return `$${Number(val).toLocaleString()}`;
-    }
-    return GENERAL.NOT_AVAILABLE;
-};
-
 export const formatNumbers = (val: any) => {
     if (val || val === 0) {
         return Number(val).toLocaleString();

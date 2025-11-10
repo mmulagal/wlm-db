@@ -92,16 +92,6 @@ export const getSandboxDistributionByAge = (sandBoxList: SandboxListEntities) =>
     return distribution;
 };
 
-export const getSandboxDistributionByAgeValue = (sandBoxList: SandboxListEntities) => {
-    const distribution = getSandboxDistributionByAge(sandBoxList);
-    const distributionUiValue = {
-        '0-30': `${distribution['0-30']} ${distribution['0-30'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES}`,
-        '31-60': `${distribution['31-60']} ${distribution['31-60'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES}`,
-        '61+': `${distribution['61+']} ${distribution['61+'] === 1 ? GENERAL.SANDBOX : GENERAL.SANDBOXES}`
-    };
-    return distributionUiValue;
-};
-
 export const getSandboxDistributionByTag = (sandBoxList: SandboxListEntities) => {
     const distribution: any = {
         Development: 0,

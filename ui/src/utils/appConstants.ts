@@ -1372,39 +1372,6 @@ export const CODE_VIEWER = {
     TERRAFORM: 'Terraform'
 };
 
-export const CHATBOT_FIELD_MAPPING: any = {
-    credentialsId: 'credential id',
-    region: 'region',
-    vpcId: 'vpc',
-    availabilityZone1: 'availability zone for primary node',
-    availabilityZone2: 'availability zone for secondary node',
-    vpcCidr: 'vpc cidr',
-    privateSubnet1Id: 'subnet for primary node',
-    routeTable1Id: 'route table for primary node',
-    privateSubnet2Id: 'subnet for secondary node',
-    routeTable2Id: 'route table for secondary node',
-    workloadInstanceType: 'workload instance type',
-    keyPairName: 'key pair name',
-    sqlAmiId: 'sql ami id',
-    adScenarioType: 'active directory scenario type',
-    dnsIpaddress: 'dns ip address',
-    domainDnsname: 'domain dns name',
-    domainUsername: 'domain user name',
-    domainPassword: 'domain password',
-    fsxUsername: 'fsx user name',
-    fsxPassword: 'fsx password',
-    serviceAccountName: 'service account name',
-    serviceAccountPassword: 'service account password',
-    fsxDeploymentMode: 'fsx deployment mode',
-    sqlDeploymentMode: 'sql deployment mode',
-    databaseSize: 'database size',
-    fsxVolThroughput: 'fsx volume throughput',
-    fsxIOPS: 'fsx IOPS',
-    ontapSgGroupId: 'ontap security group id',
-    fsxType: 'fsx type',
-    fsxFileSystemId: 'fsx file system id'
-};
-
 export const CHATBOT = {
     WELCOME_PAGE: {
         DB_WORKLOAD_EXPERT: 'Database workload expert',

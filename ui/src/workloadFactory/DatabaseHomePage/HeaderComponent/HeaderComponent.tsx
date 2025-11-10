@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
     BlueXPListeners,
-    DsButton,
     DsSelect,
     DsTypography,
     Popover,
@@ -63,15 +62,7 @@ import {
     setToTime
 } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
-import {
-    DBType,
-    LOCAL,
-    SAVINGS_CALC_MODE,
-    STAGING,
-    WLF_TABS,
-    WLF_TO_FORM_NAVIGATE,
-    WLF_TO_PROTECT_NAVIGATE
-} from '../../../utils/consts';
+import { LOCAL, SAVINGS_CALC_MODE, STAGING, WLF_TABS } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
 import DatabaseHomeApis from '../DatabaseHomeApis';
@@ -93,7 +84,6 @@ import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFac
 import { updateRefreshBlocked } from '../../../store/authSlice';
 
 import SavingsCalculatorManualApi from '../../ExploreSavings/SavingsCalculator/SavingsCalculatorManualAPI';
-import { setDatabaseHostEntryPoint } from '../../../store/mssql/msSqlActionSlice';
 import { navigateToCanvas } from '../../../utils/appConfig';
 
 import {
@@ -103,8 +93,7 @@ import {
     setLandingFromWizard,
     setSelectedHeaderTab
 } from '../../../store/workloadFactory/inventoryV2Slice';
-import { setSelectedDatabaseType } from '../../../store/postgre/postgreFormSlice';
-import Dashboard from '../../Dashboard/Dashboard';
+
 import DashboardInnerPage from '../../Dashboard/DashboardInnerPage/DashboardInnerPage';
 import {
     addInitialData,

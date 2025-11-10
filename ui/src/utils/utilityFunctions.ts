@@ -1808,44 +1808,6 @@ export const getCurrentDateTime = () => {
     return `${formattedDate}, ${formattedTime}`;
 };
 
-export const initialColStateManagedHosts = {
-    1: {
-        isHidden: false,
-        isRemovalDisabled: true
-    },
-    2: {
-        isHidden: false
-    },
-    3: {
-        isHidden: false
-    },
-    4: {
-        isHidden: false
-    },
-    5: {
-        isHidden: false
-    },
-    6: {
-        isHidden: false
-    },
-    7: {
-        isHidden: false
-    },
-    8: {
-        isHidden: true
-    },
-    9: {
-        isHidden: true
-    },
-
-    10: {
-        isHidden: true
-    },
-    11: {
-        isHidden: true
-    }
-};
-
 export const removePasswordInConfig = (payload: any) => {
     if (payload?.dbCredentials?.password) {
         payload = { ...payload, dbCredentials: { ...payload.dbCredentials, password: '' } };
@@ -2229,24 +2191,6 @@ export const setTabInfoFOrBXP = (tab: string, statusData: any) => {
     }
 };
 
-export const apiDOCURL = () => {
-    if (navigator.userAgent.includes('Chrome')) {
-        if (
-            !window.location ||
-            !window.location.ancestorOrigins ||
-            !window.location.ancestorOrigins.length ||
-            window.location.ancestorOrigins[0].includes('staging')
-        ) {
-            return 'https://staging.console.workloads.netapp.com/api-doc';
-        }
-        return 'https://console.workloads.netapp.com/api-doc';
-    }
-    if (document.referrer.includes('staging')) {
-        return 'https://staging.console.workloads.netapp.com/api-doc';
-    }
-    return 'https://console.workloads.netapp.com/api-doc';
-};
-
 export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolean) => {
     let path = '';
     if (isWorkloadFactory) {
@@ -2595,13 +2539,10 @@ export const isPartialData = (resourceDetails: any) => {
 
 const roundedFormatter = Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
 const twoDecimalFormatter = Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-const fourDecimalFormatter = Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 4 });
 
 export const rounded = (value: number) => roundedFormatter.format(value);
 
 export const twoFractionDigits = (value: number) => twoDecimalFormatter.format(value);
-
-export const fourFractionDigits = (value: number) => fourDecimalFormatter.format(value);
 
 export const formatTimeAMPM = (time: string, showPeriod: boolean = true) => {
     const [h, m] = time.split(':').map(Number);
