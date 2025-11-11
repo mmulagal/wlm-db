@@ -333,16 +333,6 @@ export const AWS_CLI_HIGHLIGHT_STRINGS = [
 
 export const CREATE_DATABASE_YAML = 'Create_Database';
 
-export const CHATBOT_WELCOME_CARDS = [
-    { label: 'Help me deploy Microsoft SQL Server on FSx for ONTAP.' },
-    { label: 'What are the key features of Amazon FSx for NetApp ONTAP for databases?' },
-    { label: 'What are the key benefits of Amazon FSx for NetApp ONTAP for databases?' },
-    {
-        label: 'What is the FSx for ONTAP best practice for Microsoft SQL Server?',
-        value: 'What are some best practices for using FSx for ONTAP with Microsoft SQL Server?'
-    }
-];
-
 export const CHATBOT_SUGGESTION_BUBBLES = [
     { label: 'Resume the current deployment', value: 'resume' },
     { label: 'Start a new deployment', value: 'start' }

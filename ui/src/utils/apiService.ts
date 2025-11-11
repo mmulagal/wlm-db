@@ -1489,8 +1489,6 @@ export const {
     useGetJobsSummaryTimelineDataQuery
 } = jobMonitoringApi;
 
-export const { useSendMsgMutation } = chatbotApi;
-
 export const {
     useGetHeadersCredentialsQuery,
     useGetHeadersRegionsQuery,
