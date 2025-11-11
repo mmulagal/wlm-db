@@ -252,46 +252,28 @@ const ErrorInvestigationOverview = () => {
                                         </div>
 
                                         <div className={styles.row}>
-                                            <DsTypography
-                                                variant="Semibold_13"
-                                                className={styles.itemWithoutBorderTop1}
-                                            >
+                                            <DsTypography variant="Regular_13" className={styles.itemWithoutBorderTop1}>
                                                 {t('databases.dashboard.critical')}
                                             </DsTypography>
-                                            <DsTypography
-                                                variant="Semibold_13"
-                                                className={styles.itemWithoutBorderTop2}
-                                            >
+                                            <DsTypography variant="Regular_13" className={styles.itemWithoutBorderTop2}>
                                                 {SEVERITIES.TWENTY_TWENTY_FOUR}
                                             </DsTypography>
                                         </div>
 
                                         <div className={styles.row}>
-                                            <DsTypography
-                                                variant="Semibold_13"
-                                                className={styles.itemWithoutBorderTop1}
-                                            >
+                                            <DsTypography variant="Regular_13" className={styles.itemWithoutBorderTop1}>
                                                 {t('databases.dashboard.severe')}
                                             </DsTypography>
-                                            <DsTypography
-                                                variant="Semibold_13"
-                                                className={styles.itemWithoutBorderTop2}
-                                            >
+                                            <DsTypography variant="Regular_13" className={styles.itemWithoutBorderTop2}>
                                                 {SEVERITIES.SEVENTEEN_NINETEEN}
                                             </DsTypography>
                                         </div>
 
                                         <div className={styles.row}>
-                                            <DsTypography
-                                                variant="Semibold_13"
-                                                className={styles.itemWithoutBorderTop1}
-                                            >
+                                            <DsTypography variant="Regular_13" className={styles.itemWithoutBorderTop1}>
                                                 {t('databases.dashboard.important-notes')}
                                             </DsTypography>
-                                            <DsTypography
-                                                variant="Semibold_13"
-                                                className={styles.itemWithoutBorderTop2}
-                                            >
+                                            <DsTypography variant="Regular_13" className={styles.itemWithoutBorderTop2}>
                                                 {SEVERITIES.SIXTEEN}
                                             </DsTypography>
                                         </div>
@@ -425,7 +407,7 @@ const ErrorInvestigationOverview = () => {
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                         variant="Regular_14"
                                     >
-                                        {t('databases.dashboard.warning')}
+                                        {t('databases.dashboard.important-notes')}
                                     </DsTypography>
                                 </div>
                             </div>
