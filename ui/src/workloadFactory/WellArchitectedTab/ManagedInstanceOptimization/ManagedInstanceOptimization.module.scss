@@ -69,42 +69,5 @@
                 align-items: center;
             }
         }
-        .secondPartSmallRes {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-
-            .headSectionSmall {
-                display: flex;
-                justify-content: space-between;
-
-                .manageInstanceTooltipSection {
-                    margin-bottom: 16px;
-                    display: flex;
-                    gap: 4px;
-                }
-            }
-
-            .firstBlockSection {
-                width: 360px;
-                height: 56px;
-                border-top: 1px solid var(--border);
-                border-bottom: 1px solid var(--border);
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-
-                .bottomRow {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-
-                    .square {
-                        width: 12px;
-                        height: 12px;
-                    }
-                }
-            }
-        }
     }
 }

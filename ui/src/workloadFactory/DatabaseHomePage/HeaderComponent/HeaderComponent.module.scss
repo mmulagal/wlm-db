@@ -162,10 +162,6 @@
                     border-bottom: 4px solid var(--text-button-primary);
                 }
 
-                .activeBleXP {
-                    border-bottom: 4px solid var(--text-button-primary);
-                }
-
                 .blueXPHeaderClass {
                     color: var(--text-button-primary);
                     font-weight: 400;
@@ -177,31 +173,6 @@
         .thirdRow {
             margin-right: 40px;
             margin-top: 16px;
-
-            .menuPopOverHide {
-                position: relative;
-                top: -26px;
-
-                [class*='menuIcon'] {
-                    color: var(--content-background);
-                }
-
-                [class*='selected'] {
-                    border: none;
-                }
-
-                [class*='menuIcon']:hover {
-                    border: none;
-                }
-            }
-        }
-
-        .darkThemeThirdRow {
-            svg {
-                path {
-                    fill: #fff;
-                }
-            }
         }
     }
 
@@ -311,38 +282,6 @@
                 width: 100%;
                 padding: 0 40px;
 
-                align-items: center;
-                [class*='Select-module_base'] {
-                    div {
-                        div {
-                            outline: none !important;
-                        }
-                    }
-                }
-
-                [class*='Select-module_base'] {
-                    margin-bottom: 0 !important;
-                    div {
-                        div:hover {
-                            outline: none !important;
-                        }
-                    }
-                }
-            }
-        }
-
-        .jobMonitoringSection {
-            display: flex;
-            padding: 40px 0;
-            justify-content: center;
-            width: 100%;
-            background-color: var(--main-background);
-
-            .contentArea {
-                display: flex;
-                justify-content: space-between;
-                width: 83.95%;
-                max-width: 1607px;
                 align-items: center;
                 [class*='Select-module_base'] {
                     div {
@@ -530,10 +469,6 @@
     }
 }
 
-.tempClass {
-    padding: 0 120px !important;
-}
-
 .loader {
     text-align: center;
     padding-top: 40vh;
@@ -550,16 +485,6 @@
 
             .contentAreaTemp {
                 width: 1318px !important;
-            }
-        }
-    }
-}
-
-@media screen and (max-width: 1500px) {
-    .headerComponent {
-        .jobMonitoringSection {
-            .contentArea {
-                width: 1124px !important;
             }
         }
     }

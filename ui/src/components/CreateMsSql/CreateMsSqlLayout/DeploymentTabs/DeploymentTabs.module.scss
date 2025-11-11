@@ -11,22 +11,6 @@
         gap: 8px;
         padding-bottom: 8px;
         cursor: pointer;
-
-        .darkModeWizardSelected {
-            svg {
-                path {
-                    fill: var(--text-button-light);
-                }
-            }
-        }
-
-        .darkModeChatbotSelected {
-            svg {
-                path {
-                    fill: var(--icon-tertiary);
-                }
-            }
-        }
     }
     .selected-tab {
         color: var(--blue-70);

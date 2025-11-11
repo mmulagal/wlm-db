@@ -60,30 +60,6 @@
 
             margin: 12px 0;
         }
-
-        .flexRightSection {
-            display: flex;
-
-            align-items: center;
-            max-width: 64%;
-            width: 60.59%;
-            .valueContainer {
-                display: flex;
-                flex-direction: column;
-
-                .setLineHeight {
-                    line-height: 42px !important;
-                }
-            }
-
-            .jobDistributionSeparator {
-                height: 56px;
-                border-right: 1px solid var(--border);
-                position: relative;
-                top: 4px;
-                margin: 0 32px;
-            }
-        }
     }
 }
 
