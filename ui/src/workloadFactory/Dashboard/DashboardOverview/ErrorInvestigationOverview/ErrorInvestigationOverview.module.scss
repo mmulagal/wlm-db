@@ -16,6 +16,60 @@
     .rightSection {
         display: flex;
         gap: 8px;
+
+        .tooltip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 16px;
+
+            .tooltipContainer {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+
+                .tableRow {
+                    display: flex;
+                    flex-direction: column;
+
+                    .row {
+                        display: flex;
+                        height: 32px;
+
+                        .itemOne {
+                            width: 96px;
+
+                            padding: 6px 8px;
+                            border: 1px solid var(--border);
+                        }
+
+                        .itemTwo {
+                            width: 160px;
+
+                            padding: 6px 8px;
+                            border-top: 1px solid var(--border);
+                            border-right: 1px solid var(--border);
+                            border-bottom: 1px solid var(--border);
+                        }
+
+                        .itemWithoutBorderTop2 {
+                            width: 160px;
+                            border-right: 1px solid var(--border);
+
+                            border-bottom: 1px solid var(--border);
+                            padding: 6px 8px;
+                        }
+                        .itemWithoutBorderTop1 {
+                            width: 96px;
+                            border-right: 1px solid var(--border);
+                            border-left: 1px solid var(--border);
+                            border-bottom: 1px solid var(--border);
+                            padding: 6px 8px;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     .emptyState {

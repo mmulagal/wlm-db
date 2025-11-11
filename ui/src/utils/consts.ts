@@ -331,6 +331,12 @@ export const AWS_CLI_HIGHLIGHT_STRINGS = [
     '--parameters'
 ];
 
+export const SEVERITIES = {
+    TWENTY_TWENTY_FOUR: '20-24',
+    SEVENTEEN_NINETEEN: '17-19',
+    SIXTEEN: '16'
+};
+
 export const CREATE_DATABASE_YAML = 'Create_Database';
 
 export const CHATBOT_SUGGESTION_BUBBLES = [

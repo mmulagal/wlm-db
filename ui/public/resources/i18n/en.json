@@ -1037,6 +1037,11 @@
             "readiness-status-incomplete": "Incomplete"
         },
         "dashboard": {
+            "status": "Status",
+            "severity-level": "Severity level",
+            "important-notes": "Important",
+            "mssql-severity": "Microsoft SQL severity",
+            "microsoft-sql-server-mapping": "Microsoft SQL severity mapping",
             "engine-type": "Engine type",
             "critical": "Critical",
             "severe": "Severe",

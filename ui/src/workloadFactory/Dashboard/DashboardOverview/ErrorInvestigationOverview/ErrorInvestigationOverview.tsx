@@ -1,6 +1,6 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
-import { useDialog } from '@netapp/design-system';
+import { TooltipInfo, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useMemo } from 'react';
 import styles from './ErrorInvestigationOverview.module.scss';
@@ -20,6 +20,7 @@ import {
     DBType,
     ERROR_ANALYZER_STATUS,
     INVENTORY_STATUS,
+    SEVERITIES,
     WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../../utils/consts';
@@ -233,6 +234,75 @@ const ErrorInvestigationOverview = () => {
 
                 <div className={styles.rightSection}>
                     {loading && <DsFlashingDotsLoader />}
+                    {!loading && !errInvestigationOverview?.emptyState && (
+                        <div className={styles.tooltip}>
+                            <TooltipInfo>
+                                <div className={styles.tooltipContainer}>
+                                    <DsTypography variant="Semibold_13">
+                                        {t('databases.dashboard.microsoft-sql-server-mapping')}
+                                    </DsTypography>
+                                    <div className={styles.tableRow}>
+                                        <div className={styles.row}>
+                                            <DsTypography variant="Semibold_13" className={styles.itemOne}>
+                                                {t('databases.dashboard.status')}
+                                            </DsTypography>
+                                            <DsTypography variant="Semibold_13" className={styles.itemTwo}>
+                                                {t('databases.dashboard.severity-level')}
+                                            </DsTypography>
+                                        </div>
+
+                                        <div className={styles.row}>
+                                            <DsTypography
+                                                variant="Semibold_13"
+                                                className={styles.itemWithoutBorderTop1}
+                                            >
+                                                {t('databases.dashboard.critical')}
+                                            </DsTypography>
+                                            <DsTypography
+                                                variant="Semibold_13"
+                                                className={styles.itemWithoutBorderTop2}
+                                            >
+                                                {SEVERITIES.TWENTY_TWENTY_FOUR}
+                                            </DsTypography>
+                                        </div>
+
+                                        <div className={styles.row}>
+                                            <DsTypography
+                                                variant="Semibold_13"
+                                                className={styles.itemWithoutBorderTop1}
+                                            >
+                                                {t('databases.dashboard.severe')}
+                                            </DsTypography>
+                                            <DsTypography
+                                                variant="Semibold_13"
+                                                className={styles.itemWithoutBorderTop2}
+                                            >
+                                                {SEVERITIES.SEVENTEEN_NINETEEN}
+                                            </DsTypography>
+                                        </div>
+
+                                        <div className={styles.row}>
+                                            <DsTypography
+                                                variant="Semibold_13"
+                                                className={styles.itemWithoutBorderTop1}
+                                            >
+                                                {t('databases.dashboard.important-notes')}
+                                            </DsTypography>
+                                            <DsTypography
+                                                variant="Semibold_13"
+                                                className={styles.itemWithoutBorderTop2}
+                                            >
+                                                {SEVERITIES.SIXTEEN}
+                                            </DsTypography>
+                                        </div>
+                                    </div>
+                                </div>
+                            </TooltipInfo>
+                            <DsTypography variant="Regular_14" className={loading || showNA ? styles.disabled : ''}>
+                                {t('databases.dashboard.mssql-severity')}
+                            </DsTypography>
+                        </div>
+                    )}
                     <div className={styles.buttonContainer}>
                         <DsButton
                             children="Analyze"
