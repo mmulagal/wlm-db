@@ -420,6 +420,7 @@ async function sleep(ms: number) {
         await new Promise(resolve => {
             setTimeout(resolve, 100);
         });
+        return;
     }
     await new Promise(resolve => {
         setTimeout(resolve, ms);

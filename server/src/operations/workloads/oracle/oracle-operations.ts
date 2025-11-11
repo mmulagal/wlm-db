@@ -145,7 +145,8 @@ async function getOracleInstanceInfo(
                 comment,
                 accountId,
                 documentName: SSM_RUN_SHELL_SCRIPT_DOC,
-                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION,
+                cacheData: true
             });
             if (response) {
                 return response;

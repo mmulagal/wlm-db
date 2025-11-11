@@ -75,7 +75,6 @@ async function getPgSqlInstanceInfo(accountId: string, credentialsId: string, re
                 ec2InstanceId: nodeId,
                 comment,
                 accountId,
-                cacheData: true,
                 documentName: SSM_RUN_SHELL_SCRIPT_DOC,
                 documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
             });
