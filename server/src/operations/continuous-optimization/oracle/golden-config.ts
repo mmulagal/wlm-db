@@ -1,4 +1,8 @@
-import { AwsWellArchitecturedPillars, SEVERITY } from '../../../utils/continous-optimization-consts';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AwsWellArchitecturedPillars,
+    SEVERITY
+} from '../../../utils/continous-optimization-consts';
 
 const GOLDEN_CONFIG = {
     configuration: {
@@ -545,7 +549,20 @@ const GOLDEN_CONFIG = {
         recommendation:
             'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.',
         tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-    }
+    },
+    sizing: [
+        {
+            parameter: 'swap-space',
+            name: 'swap-space',
+            severity: SEVERITY.CRITICAL,
+            recommendation: `Swap space sizing recommendation Proper swap sizing ensures that the system can handle memory pressure gracefully, avoiding potential performance degradation or system crashes. Swap space should be sized relatively to RAM: 
+                - Between 1 GB and 2 GB: 1.5 times the size of the RAM 
+                - Between 2 GB and 16 GB: Equal to the size of the RAM 
+                - More than 16 GB: 16 GB`,
+            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
+        }
+    ]
 };
 
 export default GOLDEN_CONFIG;

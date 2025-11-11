@@ -3508,7 +3508,15 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
             svmName: 'wlmdb_sqlsvm_1735809893269',
             nfsRootonly: 'disabled'
         }
-    ]
+    ],
+    sizing: {
+        swapSpace: {
+            error: '',
+            ramSizeInKb: '2117632',
+            swapSizeInKb: '1048576',
+            hugepagesSizeInKb: '20480'
+        }
+    }
 };
 
 const MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {

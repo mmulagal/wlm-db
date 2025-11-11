@@ -159,6 +159,14 @@ interface StorageAssessment {
             };
         }[];
     };
+    sizing?: {
+        swapSpace: {
+            error?: string | null;
+            ramSizeInKb: number;
+            swapSizeInKb: number;
+            hugepagesSizeInKb: number;
+        };
+    };
 }
 
 interface StorageIscsiAssessment extends StorageAssessment {

@@ -348,4 +348,28 @@ describe('Oracle assessment operations', () => {
         expect(nfsCachingOptions.totalObjectsInViolation).toBe(1);
         expect((nfsCachingOptions as any).resourceType).toBe('EC2 Instance');
     });
+    it('should return nfs/iscsi drift assessment data', async () => {
+        const assessmentData = await fetchOracleDriftAssessment(
+            accountId,
+            credentialsId,
+            region,
+            '6cbdabbfe3fb147e',
+            dbNfsInstanceSid,
+            'storage'
+        );
+        expect(assessmentData).toBeDefined();
+        expect((assessmentData.storage as StorageParameterDriftResponseType)?.sizing?.length).toBeGreaterThan(0);
+        const swapSpaceAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.sizing?.find(
+            item => item.name === 'swap-space'
+        ) as OracleGenericParameterDriftResponseType;
+
+        expect(swapSpaceAssessment).toBeDefined();
+        expect(swapSpaceAssessment.name).toBe('swap-space');
+        expect(swapSpaceAssessment.status).toBe('not-optimized');
+        expect(swapSpaceAssessment.recommended).toBe('3 - 4 GB');
+        expect(swapSpaceAssessment.severity).toBe('critical');
+        expect(swapSpaceAssessment.totalObjectsAssessed).toBe(1);
+        expect(swapSpaceAssessment.totalObjectsInViolation).toBe(1);
+        expect((swapSpaceAssessment as any).resourceType).toBe('EC2 instance');
+    });
 });

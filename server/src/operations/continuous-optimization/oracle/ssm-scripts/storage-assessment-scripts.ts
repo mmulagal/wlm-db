@@ -3,7 +3,9 @@ import { debugLog } from '../../../workloads/oracle/oracle-discover-scripts';
 import {
     getOracleDefaultOrUserAuthCommand,
     checkCommandStatus,
-    ontapRestApi
+    ontapRestApi,
+    logFileCheck,
+    pythonScriptInit
 } from '../../../workloads/oracle/oracle-ssm-script-utils';
 import { LINUX_LOG_DIRECTORY } from '../consts';
 
@@ -754,4 +756,54 @@ find_oracle_binary_volumes() {
 }
 `;
 
-export { VOLUME_LUN_CONFIGURATION };
+const CHECK_SWAP_SPACE = `
+def check_swap_space():
+    err = None
+    swapSizeInKb = 0
+    ramSizeInKb = 0
+    hugepagesSizeInKb = 0
+    
+    try:
+        with open('/proc/meminfo', 'r') as f:
+            for line in f:
+                parts = line.strip().split()[:2]
+                label = parts[0] if len(parts) >= 1 else ''
+                value = parts[1] if len(parts) >= 2 else '0'
+                if line.startswith('MemTotal:'):
+                    ramSizeInKb = value
+                elif line.startswith('SwapTotal:'):
+                    swapSizeInKb = value
+                elif line.startswith('Hugetlb:'):
+                    hugepagesSizeInKb = value
+
+    except FileNotFoundError:
+        err = "File /proc/meminfo not found"
+    except Exception as e:
+        err = str(e)
+    finally:
+        if err:
+            return {"error": err}
+        return {
+            "ramSizeInKb": ramSizeInKb,
+            "swapSizeInKb": swapSizeInKb,
+            "hugepagesSizeInKb": hugepagesSizeInKb
+        }
+`;
+
+const storageSizingAssessmentTemplate = `
+${CHECK_SWAP_SPACE}
+
+results = {"sizing": {}}
+results['sizing']["swapSpace"] = check_swap_space()
+
+print(json.dumps(results))
+`;
+
+const ORACLE_STORAGE_SIZING_ASSESSMENT = `#!/bin/bash
+${logFileCheck(false)}
+
+# This script doesn't need to be run as oracle user
+${pythonScriptInit(storageSizingAssessmentTemplate, 'wlmdb-storage-sizing-assessment.log')}
+`;
+
+export { VOLUME_LUN_CONFIGURATION, ORACLE_STORAGE_SIZING_ASSESSMENT };

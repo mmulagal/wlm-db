@@ -4001,6 +4001,14 @@
         "v4IdDomain": "ap-south-1.compute.internal"
       },
       "error": ""
+    },
+    "sizing": {
+        "swapSpace": {
+            "error": "",
+            "ramSizeInKb": "7659656",
+            "swapSizeInKb": "16777212",
+            "hugepagesSizeInKb": "16777212"
+        }
     }
   },
     "getoptimizeMtuResponse": {

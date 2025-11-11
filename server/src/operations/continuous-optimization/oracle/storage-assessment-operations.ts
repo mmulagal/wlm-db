@@ -4,7 +4,7 @@ import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { WorkloadInstance } from '../../../utils/common-types';
 import { ASSESSMENT_SSM_EXECUTION_TIMEOUT, STORAGE_PROTOCOLS } from '../../../utils/consts';
-import { IS_DEMO_FLOW, parseMultipleCommandResponse } from '../../../utils/utils';
+import { IS_DEMO_FLOW, parseMultipleCommandResponse, sizeInGigaBytes } from '../../../utils/utils';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
@@ -21,7 +21,10 @@ import {
 } from '../../workloads/oracle/consts';
 import storageGoldenConfigData from './golden-config';
 import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
-import { StorageParameterDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
+import {
+    GenericParameterDriftResponseType,
+    StorageParameterDriftResponseType
+} from '../../../routes/types/oracle-continuous-optimization.types';
 import {
     OracleMappedOntapVolumesResponse,
     OracleSysFileTypes,
@@ -38,7 +41,7 @@ import {
 } from './common-types';
 import { OS_ASSESSMENT } from './ssm-scripts/os-iscsi-assessment-scripts';
 import { NFS_OS_ASSESSMENT } from './ssm-scripts/os-nfs-assessment-scripts';
-import { VOLUME_LUN_CONFIGURATION } from './ssm-scripts/storage-assessment-scripts';
+import { ORACLE_STORAGE_SIZING_ASSESSMENT, VOLUME_LUN_CONFIGURATION } from './ssm-scripts/storage-assessment-scripts';
 
 const logger = getLogger();
 
@@ -47,6 +50,7 @@ const volumeNfsConfigData = storageGoldenConfigData.configuration.volume_nfs;
 const lunConfigData = storageGoldenConfigData.configuration.lun;
 const osIsciConfigData = storageGoldenConfigData.configuration.os_iscsi;
 const osNfsConfigData = storageGoldenConfigData.configuration.os_nfs;
+const sizingConfigData = storageGoldenConfigData.sizing;
 
 function mapVolumeTypesToIdName(
     databaseInstanceName: string,
@@ -1460,6 +1464,113 @@ function getLunLayoutDrift(
     return result;
 }
 
+function getSwapSpaceDrift(
+    accountId: string,
+    ec2InstanceId: string,
+    databaseInstanceName: string,
+    storageAssessmentData: StorageAssessment
+): GenericParameterDriftResponseType {
+    logger.info('Fetching swap space drift', { accountId, ec2InstanceId, databaseInstanceName });
+
+    const swapSpaceConfig = sizingConfigData.find(config => config.parameter === 'swap-space');
+    const { swapSpace } = storageAssessmentData.sizing!;
+    if (!swapSpace) {
+        logger.info('No swap space sizing data found in the assessment.', {
+            accountId,
+            ec2InstanceId,
+            databaseInstanceName
+        });
+        return { name: 'swap-space', errorMessage: 'No swap space sizing data found in the assessment.' };
+    }
+
+    const { ramSizeInKb, swapSizeInKb, hugepagesSizeInKb, error } = swapSpace;
+
+    if (error) {
+        logger.error('Error in stored swap space sizing data', accountId, error);
+        return { name: 'swap-space', errorMessage: 'Error in stored swap space sizing data' };
+    }
+
+    const ramTotal = Math.round(sizeInGigaBytes(ramSizeInKb, 'KiB') * 100) / 100;
+    const swapTotal = Math.round(sizeInGigaBytes(swapSizeInKb, 'KiB') * 100) / 100;
+    const hugepageSize = Math.round(sizeInGigaBytes(hugepagesSizeInKb, 'KiB') * 100) / 100; // hugepageSize will be 0 if hugepage is not enabled; else it will be the total hugepage size
+    const effectiveRam = ramTotal - hugepageSize;
+
+    let recommendedSwapSpace = 0;
+    let recommendedSwapSpaceMin = 0;
+    let recommendedSwapSpaceMax = 0;
+    let isRangeRecommendation = false;
+
+    if (effectiveRam >= 1 && effectiveRam <= 2) {
+        isRangeRecommendation = true;
+        recommendedSwapSpaceMin = Math.round(effectiveRam * 1.5 * 100) / 100;
+        recommendedSwapSpaceMax = Math.round(effectiveRam * 2 * 100) / 100;
+    } else if (effectiveRam > 2 && effectiveRam <= 16) {
+        recommendedSwapSpace = effectiveRam;
+    } else if (effectiveRam > 16) {
+        recommendedSwapSpace = 16;
+    }
+
+    if (!isRangeRecommendation && recommendedSwapSpace === 0) {
+        logger.info('Unable to determine recommended swap space due to insufficient RAM data.', {
+            accountId,
+            ec2InstanceId,
+            databaseInstanceName,
+            ramTotal,
+            hugepageSize
+        });
+        return {
+            name: 'swap-space',
+            errorMessage: 'Unable to determine recommended swap space due to insufficient RAM data.'
+        };
+    }
+
+    if (!isRangeRecommendation) {
+        recommendedSwapSpace = Math.round(recommendedSwapSpace * 100) / 100;
+    }
+
+    const isViolation = isRangeRecommendation
+        ? swapTotal < recommendedSwapSpaceMin || swapTotal > recommendedSwapSpaceMax
+        : swapTotal !== recommendedSwapSpace;
+    const status = isViolation ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+
+    return {
+        ...swapSpaceConfig!,
+        status,
+        recommended: isRangeRecommendation
+            ? `${recommendedSwapSpaceMin} - ${recommendedSwapSpaceMax} GB`
+            : `${recommendedSwapSpace} GB`,
+        current: `${swapTotal} GB`,
+        objectsInViolation: isViolation ? [ec2InstanceId] : [],
+        totalObjectsAssessed: 1,
+        totalObjectsInViolation: isViolation ? 1 : 0
+    };
+}
+
+function getStorageSizingDrift(
+    accountId: string,
+    ec2InstanceId: string,
+    databaseInstanceName: string,
+    storageAssessmentData: StorageAssessment
+) {
+    logger.info('Fetching storage sizing drift', { accountId, ec2InstanceId, databaseInstanceName });
+
+    const result: GenericParameterDriftResponseType[] = [];
+    const { sizing: sizingData } = storageAssessmentData;
+
+    if (!sizingData) {
+        const errorMessage = 'No storage sizing data found in the assessment.';
+        logger.error(errorMessage, { accountId, ec2InstanceId, databaseInstanceName });
+        return result;
+    }
+
+    const swapSpaceData = getSwapSpaceDrift(accountId, ec2InstanceId, databaseInstanceName, storageAssessmentData);
+    if (swapSpaceData) {
+        result.push(swapSpaceData);
+    }
+
+    return result;
+}
+
 function calculateStorageDrift(
     accountId: string,
     credentialsId: string,
@@ -1494,7 +1605,8 @@ function calculateStorageDrift(
 
     const storageDriftData: StorageParameterDriftResponseType = {
         configuration: { volumes: [] },
-        layout: []
+        layout: [],
+        sizing: []
     };
 
     const layoutAssessment = getVolumeLayoutDrift(volumeTypeMap, storageAssessmentData);
@@ -1521,6 +1633,13 @@ function calculateStorageDrift(
             storageAssessmentData as StorageNfsAssessment
         );
     }
+
+    storageDriftData.sizing = getStorageSizingDrift(
+        accountId,
+        ec2InstanceId,
+        databaseInstanceName,
+        storageAssessmentData
+    );
 
     return storageDriftData;
 }
@@ -1602,6 +1721,7 @@ async function initiateStorageAssessmentCollection(
         } else {
             command.push(NFS_OS_ASSESSMENT(activeNodeInstanceid, databaseInstanceName));
         }
+        command.push(ORACLE_STORAGE_SIZING_ASSESSMENT);
         const ssmComment = 'Get Storage Configuration Assessment for Oracle instance';
 
         const response = await callSsmExecution({
@@ -1618,7 +1738,7 @@ async function initiateStorageAssessmentCollection(
         });
 
         const parsedResponse = parseMultipleCommandResponse(response);
-        const [storageAssessment, osAssessment] = parsedResponse;
+        const [storageAssessment, osAssessment, storageSizingAssessment] = parsedResponse;
 
         await createDatabaseInstanceConfigData([
             {
@@ -1629,7 +1749,7 @@ async function initiateStorageAssessmentCollection(
                 database_instance_id: databaseInstanceId,
                 creation_time: new Date(Date.now()),
                 config_data_type: AssessmentCategories.STORAGE,
-                config_data: { ...storageAssessment, ...osAssessment }
+                config_data: { ...storageAssessment, ...osAssessment, ...storageSizingAssessment }
             }
         ]);
 
@@ -1646,6 +1766,16 @@ async function initiateStorageAssessmentCollection(
         await registerJob(accountId, credentialsId, region, {
             name: 'Storage layout assessment',
             description: 'Storage layout assessment',
+            resourceName: resourceWithInstanceName,
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: jobStatus,
+            type: JOBTYPE.ASSESSMENT,
+            parentJobId
+        });
+        await registerJob(accountId, credentialsId, region, {
+            name: 'Storage sizing assessment',
+            description: 'Storage sizing assessment',
             resourceName: resourceWithInstanceName,
             startTime: Date.now(),
             endTime: Date.now(),

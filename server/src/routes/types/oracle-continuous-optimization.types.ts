@@ -30,13 +30,17 @@ const OracleGenericParameterDriftResponse = Type.Object({
 });
 type OracleGenericParameterDriftResponseType = Static<typeof OracleGenericParameterDriftResponse>;
 
+const genericParameterDriftResponse = Type.Union([OracleGenericParameterDriftResponse, ErrorResponse]);
+type GenericParameterDriftResponseType = Static<typeof genericParameterDriftResponse>;
+
 const StorageParameterDriftResponse = Type.Object({
     configuration: Type.Object({
-        volumes: Type.Array(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse])),
-        luns: Type.Optional(Type.Array(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse]))),
-        os: Type.Optional(Type.Array(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse])))
+        volumes: Type.Array(genericParameterDriftResponse),
+        luns: Type.Optional(Type.Array(genericParameterDriftResponse)),
+        os: Type.Optional(Type.Array(genericParameterDriftResponse))
     }),
-    layout: Type.Array(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse]))
+    layout: Type.Array(genericParameterDriftResponse),
+    sizing: Type.Array(genericParameterDriftResponse)
 });
 
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
@@ -125,6 +129,7 @@ export {
     OracleGenericParameterDriftResponse,
     OracleGenericParameterDriftResponseType,
     OracleDriftAssessmentResponse,
+    GenericParameterDriftResponseType,
     OracleDriftAssessmentResponseType,
     StorageParameterDriftResponseType,
     DriftAssessmentResponsePerHost,
