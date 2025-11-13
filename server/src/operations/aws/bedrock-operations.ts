@@ -1,23 +1,34 @@
 import createError from 'http-errors';
-import { compact } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import throat from 'throat';
 import { FoundationModelSummary } from '@aws-sdk/client-bedrock';
 import { listInferenceProfiles, listFoundationModels } from '../../lib/aws/bedrock';
-import { HttpErrorCodes, RESTRICTED_FSX_REGIONS } from '../../utils/consts';
+import { AWS_FSX_TYPE, HttpErrorCodes, RESTRICTED_FSX_REGIONS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { getParametersByPath } from '../../lib/aws/ssm';
 import { LOGS_ANALYZER_MODEL_IDS } from '../../utils/logs-analyzer/logs-analyzer-consts';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 
 const logger = getLogger();
 
 async function getLogsAnalyzerBedrockRegionsList() {
     logger.info('Getting Bedrock regions list');
 
+    const cacheKey = 'bedrock-regions-list';
+
+    if (hasCache(AWS_FSX_TYPE, cacheKey)) {
+        const response = readFromCacheByKey(AWS_FSX_TYPE, cacheKey) as string[];
+        if (response && !isEmpty(response)) {
+            return response;
+        }
+    }
+
     const bedrockRegionsResponse = await getParametersByPath(
         undefined,
         undefined,
         '/aws/service/global-infrastructure/services/bedrock/regions'
     );
+
     const bedrockSupportedRegionsList = compact(
         bedrockRegionsResponse.filter(({ Value }) => !RESTRICTED_FSX_REGIONS.includes(Value!)).map(({ Value }) => Value)
     );
@@ -38,8 +49,11 @@ async function getLogsAnalyzerBedrockRegionsList() {
             )
         )
     );
+    const regionsList = compact(logsAnalyserSupportedRegions);
 
-    return compact(logsAnalyserSupportedRegions);
+    writeToCache(AWS_FSX_TYPE, cacheKey, regionsList);
+
+    return regionsList;
 }
 
 async function getInferenceProfileFromModelId(

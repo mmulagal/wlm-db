@@ -1144,7 +1144,7 @@ async function getLatestLogsAnalysisReports(
         if (logsAnalysisData?.remediationRecommendation) {
             const severityCounts: SeverityCountsType = {
                 severe: 0,
-                warning: 0,
+                important: 0,
                 critical: 0
             };
             for (const rec of logsAnalysisData.remediationRecommendation) {

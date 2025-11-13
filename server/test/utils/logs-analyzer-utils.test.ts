@@ -26,8 +26,8 @@ describe('parseConcatenatedJSON', () => {
 });
 
 describe('mapSeverityLevel', () => {
-    it('returns "warning" for severity level 16', () => {
-        expect(mapSeverityLevel(16)).toBe('warning');
+    it('returns "important" for severity level 16', () => {
+        expect(mapSeverityLevel(16)).toBe('important');
     });
 
     it('returns "severe" for severity levels 17-19', () => {

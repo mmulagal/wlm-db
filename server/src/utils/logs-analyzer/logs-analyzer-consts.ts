@@ -42,13 +42,13 @@ const PRE_REQ_MESSAGES = {
 };
 
 const SEVERITIES = {
-    WARNING: 'warning',
+    IMPORTANT: 'important',
     SEVERE: 'severe',
     CRITICAL: 'critical'
 };
 
 const MSSQL_SEVERITY_RANGE = {
-    [SEVERITIES.WARNING]: {
+    [SEVERITIES.IMPORTANT]: {
         start: 16,
         end: 16
     },

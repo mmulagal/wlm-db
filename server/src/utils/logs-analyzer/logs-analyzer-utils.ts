@@ -20,10 +20,10 @@ function parseConcatenatedJSON(input: string): object[] {
 // Map SQL Server severity level (16-24) to high-level category used by UI
 function mapSeverityLevel(level: number) {
     if (
-        level >= MSSQL_SEVERITY_RANGE[SEVERITIES.WARNING].start &&
-        level <= MSSQL_SEVERITY_RANGE[SEVERITIES.WARNING].end
+        level >= MSSQL_SEVERITY_RANGE[SEVERITIES.IMPORTANT].start &&
+        level <= MSSQL_SEVERITY_RANGE[SEVERITIES.IMPORTANT].end
     ) {
-        return SEVERITIES.WARNING;
+        return SEVERITIES.IMPORTANT;
     }
     if (
         level >= MSSQL_SEVERITY_RANGE[SEVERITIES.SEVERE].start &&

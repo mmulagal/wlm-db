@@ -84,7 +84,7 @@ const LogsAnalysisPreRequisites = Type.Object({
 });
 
 const SeverityCounts = Type.Object({
-    warning: Type.Optional(Type.Number()),
+    important: Type.Optional(Type.Number()),
     severe: Type.Optional(Type.Number()),
     critical: Type.Optional(Type.Number())
 });
