@@ -561,6 +561,15 @@ const GOLDEN_CONFIG = {
                 - More than 16 GB: 16 GB`,
             tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
             resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
+        },
+        {
+            parameter: 'headroom',
+            name: 'headroom',
+            severity: SEVERITY.CRITICAL,
+            recommendation:
+                'File system headroom recommendation to optimize storage performance, provision file system capacity as 1.2 times of total size of provisioned volume. File system headroom percentages are as follows: Under-provisioned: <20%; Optimized: 20-100%; Over-provisioned: >100%',
+            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+            resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
         }
     ]
 };

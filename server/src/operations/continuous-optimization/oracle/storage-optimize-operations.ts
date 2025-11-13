@@ -627,7 +627,7 @@ async function getOracleStorageConfigRecommendationMap(
             OracleMappedOntapVolumesResponse
         >;
 
-        const storageDrift = calculateStorageDrift(
+        const storageDrift = await calculateStorageDrift(
             accountId,
             credentialsId,
             region,

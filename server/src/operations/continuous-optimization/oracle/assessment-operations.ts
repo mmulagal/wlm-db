@@ -509,7 +509,7 @@ async function fetchOracleDriftAssessment(
     const isASMManaged = mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.isASMManaged : false;
 
     const storageDriftData = assessmentFlags.storage
-        ? calculateStorageDrift(
+        ? await calculateStorageDrift(
               accountId,
               credentialsId,
               region,

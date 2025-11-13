@@ -3,12 +3,13 @@ import { isEmpty, uniqBy } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { WorkloadInstance } from '../../../utils/common-types';
-import { ASSESSMENT_SSM_EXECUTION_TIMEOUT, STORAGE_PROTOCOLS } from '../../../utils/consts';
+import { ASSESSMENT_SSM_EXECUTION_TIMEOUT, RESOURCESTYPE, STORAGE_PROTOCOLS } from '../../../utils/consts';
 import { IS_DEMO_FLOW, parseMultipleCommandResponse, sizeInGigaBytes } from '../../../utils/utils';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
-    AssessmentStatus
+    AssessmentStatus,
+    MIN_OPTIMIZED_HEADROOM_PERCENTAGE
 } from '../../../utils/continous-optimization-consts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob } from '../../database/job-operations';
@@ -42,6 +43,7 @@ import {
 import { OS_ASSESSMENT } from './ssm-scripts/os-iscsi-assessment-scripts';
 import { NFS_OS_ASSESSMENT } from './ssm-scripts/os-nfs-assessment-scripts';
 import { ORACLE_STORAGE_SIZING_ASSESSMENT, VOLUME_LUN_CONFIGURATION } from './ssm-scripts/storage-assessment-scripts';
+import { getHeadroomDrift } from '../assessment-utils';
 
 const logger = getLogger();
 
@@ -1546,32 +1548,107 @@ function getSwapSpaceDrift(
     };
 }
 
-function getStorageSizingDrift(
+async function getOracleHeadroomDrift(
     accountId: string,
+    credentialsId: string,
+    region: string,
     ec2InstanceId: string,
     databaseInstanceName: string,
-    storageAssessmentData: StorageAssessment
+    fileSystemId: string
+): Promise<GenericParameterDriftResponseType> {
+    logger.info('Fetching storage headroom drift', { accountId, ec2InstanceId, databaseInstanceName });
+
+    const headroomConfig = sizingConfigData.find(config => config.parameter === 'headroom');
+
+    try {
+        const { status, headroomPercent, missingPermissions, newFsxStorageCapacityGiB } = await getHeadroomDrift(
+            credentialsId,
+            region,
+            fileSystemId,
+            RESOURCESTYPE.ORACLE
+        );
+
+        return {
+            ...headroomConfig!,
+            status,
+            current: `${headroomPercent}%`,
+            recommended: `${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.ORACLE}%`,
+            recommendedSizeInGib: newFsxStorageCapacityGiB ? Math.ceil(newFsxStorageCapacityGiB) : 0,
+            objectsInViolation: status !== AssessmentStatus.OPTIMIZED ? [fileSystemId] : [],
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: status !== AssessmentStatus.OPTIMIZED ? 1 : 0,
+            missingPermissions
+        };
+    } catch (error) {
+        logger.error('Error fetching FSx storage details or CloudWatch metrics', {
+            accountId,
+            ec2InstanceId,
+            databaseInstanceName,
+            fileSystemId,
+            error
+        });
+        return {
+            name: 'headroom',
+            errorMessage: `Failed to fetch FSx storage details or CloudWatch metrics; Error: ${error}`
+        };
+    }
+}
+
+async function getStorageSizingDrift(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    databaseInstanceName: string,
+    storageAssessmentData: StorageAssessment,
+    fsxFileSystemId: string
 ) {
     logger.info('Fetching storage sizing drift', { accountId, ec2InstanceId, databaseInstanceName });
 
     const result: GenericParameterDriftResponseType[] = [];
     const { sizing: sizingData } = storageAssessmentData;
 
-    if (!sizingData) {
-        const errorMessage = 'No storage sizing data found in the assessment.';
-        logger.error(errorMessage, { accountId, ec2InstanceId, databaseInstanceName });
+    if (!sizingData || isEmpty(sizingData)) {
+        result.push({ errorMessage: 'No sizing assessment data found.' });
         return result;
     }
 
-    const swapSpaceData = getSwapSpaceDrift(accountId, ec2InstanceId, databaseInstanceName, storageAssessmentData);
-    if (swapSpaceData) {
-        result.push(swapSpaceData);
-    }
+    const asyncAssessments: Promise<void>[] = [];
+
+    sizingConfigData.forEach(config => {
+        switch (config.parameter) {
+            case 'swap-space':
+                result.push(getSwapSpaceDrift(accountId, ec2InstanceId, databaseInstanceName, storageAssessmentData));
+                break;
+
+            case 'headroom':
+                // Headroom we wont be fetching from the database as it's a calculated field
+                asyncAssessments.push(
+                    getOracleHeadroomDrift(
+                        accountId,
+                        credentialsId,
+                        region,
+                        ec2InstanceId,
+                        databaseInstanceName,
+                        fsxFileSystemId
+                    ).then(headroomDrift => {
+                        result.push(headroomDrift);
+                    })
+                );
+                break;
+
+            default:
+                logger.warn('Unknown sizing parameter encountered', { parameter: config.parameter });
+                break;
+        }
+    });
+
+    await Promise.all(asyncAssessments);
 
     return result;
 }
 
-function calculateStorageDrift(
+async function calculateStorageDrift(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -1634,11 +1711,14 @@ function calculateStorageDrift(
         );
     }
 
-    storageDriftData.sizing = getStorageSizingDrift(
+    storageDriftData.sizing = await getStorageSizingDrift(
         accountId,
+        credentialsId,
+        region,
         ec2InstanceId,
         databaseInstanceName,
-        storageAssessmentData
+        storageAssessmentData,
+        fsxFileSystemId
     );
 
     return storageDriftData;

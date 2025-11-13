@@ -2,12 +2,24 @@ import Ajv, { ValidateFunction } from 'ajv';
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
 import { getJobs, registerJob } from '../database/job-operations';
-import { getTimeDifferenceInMinutes } from '../../utils/utils';
+import {
+    calculateFsxStorageCapacityForHeadroomOptimization,
+    convertToBytes,
+    getTimeDifferenceInMinutes
+} from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
-import { AssessmentCategoriesOracle, AssessmentStatus } from '../../utils/continous-optimization-consts';
+import {
+    AssessmentCategoriesOracle,
+    AssessmentStatus,
+    MIN_OPTIMIZED_HEADROOM_PERCENTAGE
+} from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import type { JobMetadata } from '../../utils/common-types';
 import { OracleJobMetadata } from './oracle/consts';
+import getMissingPermissionsList from '../aws/iam-operations';
+import { getFsxStorageDetails } from '../aws/fsx-operations';
+import { calculateFsxnStorageEfficiencyUsingCloudwatch } from '../aws/cloud-watch-operations';
+import { RESOURCESTYPE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -135,13 +147,106 @@ function validateAssessment(schema: object, assessmentData: unknown) {
     };
 }
 
+async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
+    logger.info('Checking for missing optimize permissions', { credentialsId, region, permissions });
+    try {
+        const missingPermissions: string[] = [];
+        const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(
+            credentialsId,
+            region,
+            permissions
+        );
+        const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
+        if (combinedDeniedPermissions.length > 0) {
+            combinedDeniedPermissions.forEach(permission => {
+                missingPermissions.push(`${permission.service}:${permission.action}`);
+            });
+        }
+        return missingPermissions;
+    } catch (error) {
+        logger.error('Error while checking for missing optimize permissions', {
+            credentialsId,
+            region,
+            permissions,
+            error
+        });
+    }
+}
+
+async function getHeadroomDrift(
+    credentialsId: string,
+    region: string,
+    fileSystemId: string,
+    resourceType: RESOURCESTYPE.MSSQL | RESOURCESTYPE.ORACLE
+) {
+    logger.info('Getting headroom drift', { credentialsId, region, fileSystemId, resourceType });
+
+    try {
+        const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(credentialsId, region, fileSystemId);
+
+        const cwMetricsDataCollectionPeriodSeconds = 1 * 60 * 60; // 1 hour
+        const cwMetricsDataCollectionPeriod = '1h'; // 1 hour
+
+        const { totalUsed } = await calculateFsxnStorageEfficiencyUsingCloudwatch(
+            region,
+            credentialsId,
+            fileSystemId,
+            cwMetricsDataCollectionPeriodSeconds,
+            cwMetricsDataCollectionPeriod
+        );
+
+        const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / ssdStorageCapacityInBytes) * 100);
+        const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
+        const minOptimizedHeadroomPercent = MIN_OPTIMIZED_HEADROOM_PERCENTAGE[resourceType];
+        const status =
+            headroomPercent < minOptimizedHeadroomPercent
+                ? AssessmentStatus.UNDER_PROVISIONED
+                : headroomPercent > 100 && ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
+                ? AssessmentStatus.OVER_PROVISIONED
+                : AssessmentStatus.OPTIMIZED;
+
+        // Check for 'fsx:UpdateFileSystem' permissions
+        let missingPermissions: string[] = [];
+        let newFsxStorageCapacityGiB = 0;
+        if (status !== AssessmentStatus.OPTIMIZED) {
+            missingPermissions =
+                (await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem'])) || [];
+            newFsxStorageCapacityGiB = calculateFsxStorageCapacityForHeadroomOptimization(
+                totalUsed,
+                ssdStorageCapacityInBytes,
+                resourceType
+            );
+        }
+
+        return {
+            status,
+            headroomPercent,
+            ssdStorageCapacityInBytes,
+            totalUsed,
+            missingPermissions,
+            newFsxStorageCapacityGiB
+        };
+    } catch (error) {
+        logger.error('Error fetching FSx storage details or CloudWatch metrics', {
+            credentialsId,
+            region,
+            fileSystemId,
+            resourceType,
+            error
+        });
+        throw error;
+    }
+}
+
 export {
     getMatchingAssessmentStatus,
     handleOptimizeJobCreation,
     hasNotOptimizedStatus,
     getLatestInstanceAssessmentTime,
     validateAssessment,
-    UnOptimizedDiskGroups
+    UnOptimizedDiskGroups,
+    checkForMissingOptimizePermissions,
+    getHeadroomDrift
 };
 
 // Re-export type for external usage without creating a runtime export

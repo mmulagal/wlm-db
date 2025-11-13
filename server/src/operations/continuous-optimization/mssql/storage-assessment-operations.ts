@@ -6,27 +6,21 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     ASSESSMENT_RESOURCE_TYPE,
-    VALID_MPIO_LB_POLICIES
+    VALID_MPIO_LB_POLICIES,
+    MIN_OPTIMIZED_HEADROOM_PERCENTAGE
 } from '../../../utils/continous-optimization-consts';
 import getLogger from '../../../utils/logger';
 
 import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
 import storageGoldenConfigData from './golden-config';
 import { LogDriveDetails, StorageAssessment, TempDbDriveDetails, WorkloadInstance } from '../../../utils/common-types';
-import {
-    calculateFsxStorageCapacityForHeadroomOptimization,
-    convertToBytes,
-    sqlResponseParsing,
-    IS_DEMO_FLOW
-} from '../../../utils/utils';
-import getMissingPermissionsList from '../../aws/iam-operations';
-import { getFsxStorageDetails } from '../../aws/fsx-operations';
-import { calculateFsxnStorageEfficiencyUsingCloudwatch } from '../../aws/cloud-watch-operations';
+import { sqlResponseParsing, IS_DEMO_FLOW } from '../../../utils/utils';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import {
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
     HttpErrorCodes,
-    ASSESSMENT_SSM_EXECUTION_TIMEOUT
+    ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+    RESOURCESTYPE
 } from '../../../utils/consts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
@@ -36,6 +30,7 @@ import {
     SizingViolationResponseType,
     StorageParameterDriftResponseType
 } from '../../../routes/types/mssql-continuous-optimisation.types';
+import { checkForMissingOptimizePermissions, getHeadroomDrift } from '../assessment-utils';
 
 const logger = getLogger();
 
@@ -252,32 +247,6 @@ function expandDatabaseDetailForSizingAssessment(data: LogDriveDetails[]) {
     return expandedData;
 }
 
-async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
-    logger.info('Checking for missing optimize permissions', { credentialsId, region, permissions });
-    try {
-        const missingPermissions: string[] = [];
-        const { implicitlyDenied, explicitlyDenied } = await getMissingPermissionsList(
-            credentialsId,
-            region,
-            permissions
-        );
-        const combinedDeniedPermissions = [...implicitlyDenied, ...explicitlyDenied];
-        if (combinedDeniedPermissions.length > 0) {
-            combinedDeniedPermissions.forEach(permission => {
-                missingPermissions.push(`${permission.service}:${permission.action}`);
-            });
-        }
-        return missingPermissions;
-    } catch (error) {
-        logger.error('Error while checking for missing optimize permissions', {
-            credentialsId,
-            region,
-            permissions,
-            error
-        });
-    }
-}
-
 function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStatus, key: string) {
     logger.info('Getting log volume drift', { logVolumesLength: logVolumes.length });
 
@@ -434,54 +403,6 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
         ignoredDrives,
         currentSizePercentForAllVolumes,
         totalObjectsInViolation
-    };
-}
-
-async function getHeadroomDrift(credentialsId: string, region: string, fileSystemId: string) {
-    logger.info('Getting headroom drift', { credentialsId, region, fileSystemId });
-
-    const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(credentialsId, region, fileSystemId);
-
-    const cwMetricsDataCollectionPeriodSeconds = 1 * 60 * 60; // 1 hour
-    const cwMetricsDataCollectionPeriod = '1h'; // 1 hour
-
-    const { totalUsed } = await calculateFsxnStorageEfficiencyUsingCloudwatch(
-        region,
-        credentialsId,
-        fileSystemId,
-        cwMetricsDataCollectionPeriodSeconds,
-        cwMetricsDataCollectionPeriod
-    );
-
-    const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / ssdStorageCapacityInBytes) * 100);
-    const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
-    const status =
-        headroomPercent < 35
-            ? AssessmentStatus.UNDER_PROVISIONED
-            : headroomPercent > 100 &&
-              ssdStorageCapacityInBytes &&
-              ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
-            ? AssessmentStatus.OVER_PROVISIONED
-            : AssessmentStatus.OPTIMIZED;
-
-    // Check for 'fsx:UpdateFileSystem' permissions
-    let missingPermissions: string[] = [];
-    let newFsxStorageCapactiyGiB = 0;
-    if (status !== AssessmentStatus.OPTIMIZED) {
-        missingPermissions =
-            (await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem'])) || [];
-        newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
-            totalUsed,
-            ssdStorageCapacityInBytes
-        );
-    }
-    return {
-        status,
-        headroomPercent,
-        ssdStorageCapacityInBytes,
-        totalUsed,
-        missingPermissions,
-        newFsxStorageCapactiyGiB
     };
 }
 
@@ -1007,21 +928,22 @@ async function calculateStorageDrift(
 
     try {
         const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
-        const { status, headroomPercent, missingPermissions, newFsxStorageCapactiyGiB } = await getHeadroomDrift(
+        const { status, headroomPercent, missingPermissions, newFsxStorageCapacityGiB } = await getHeadroomDrift(
             credentialsId,
             region,
-            filesystemId
+            filesystemId,
+            RESOURCESTYPE.MSSQL
         );
 
         driftAssessmentData.sizing.push({
             name: 'headroom',
-            recommended: goldenData!.value.toString(),
+            recommended: `${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL}%`,
             status,
             severity: goldenData!.severity,
             recommendation: goldenData!.recommendation,
             tags: goldenData!.tags,
             missingPermissions,
-            recommendedSizeInGib: newFsxStorageCapactiyGiB ? Math.ceil(newFsxStorageCapactiyGiB) : 0,
+            recommendedSizeInGib: newFsxStorageCapacityGiB ? Math.ceil(newFsxStorageCapacityGiB) : 0,
             current: `${headroomPercent}%`,
             resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
         });
@@ -1038,10 +960,4 @@ async function calculateStorageDrift(
     return driftAssessmentData;
 }
 
-export {
-    calculateStorageDrift,
-    getHeadroomDrift,
-    getLogVolumeDrift,
-    getTempDbVolumeDrift,
-    initiateStorageAssessmentCollection
-};
+export { calculateStorageDrift, getLogVolumeDrift, getTempDbVolumeDrift, initiateStorageAssessmentCollection };

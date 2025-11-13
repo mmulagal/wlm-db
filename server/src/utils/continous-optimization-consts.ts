@@ -589,6 +589,11 @@ const DEFAULT_MPIO_TIMEOUT = 60; // seconds
 
 const DEFAULT_FSX_MTU_VALUE = 9001;
 
+const MIN_OPTIMIZED_HEADROOM_PERCENTAGE = {
+    ORACLE: 90,
+    MSSQL: 90
+};
+
 export {
     AssessmentCategories,
     AssessmentTriggeredBy,
@@ -649,5 +654,6 @@ export {
     OracleOptimizeJobDescriptions,
     ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     OptimizeOracleNFSStorageOperatingSystem,
-    ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP
+    ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
+    MIN_OPTIMIZED_HEADROOM_PERCENTAGE
 };

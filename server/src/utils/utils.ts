@@ -56,7 +56,7 @@ import {
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
 import { MS_SQL_2016, MS_SQL_2017, MS_SQL_2022 } from '../operations/workloads/mssql/createdb-collations';
-import { REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
+import { MIN_OPTIMIZED_HEADROOM_PERCENTAGE, REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
 import { readFromCacheByKey, writeToCache } from './cache';
 import { DatabaseInstance, DatabaseInstances, DatabaseInstancesIncludingResource, Resource } from './common-types';
 
@@ -901,9 +901,11 @@ function getRegionDetails(region: string): RegionDetailsType {
 
 function calculateFsxStorageCapacityForHeadroomOptimization(
     totalVolumeSizeInBytes: number,
-    ssdStorageCapacityInBytes: number
+    ssdStorageCapacityInBytes: number,
+    databaseType: RESOURCESTYPE.ORACLE | RESOURCESTYPE.MSSQL = RESOURCESTYPE.MSSQL
 ): number {
-    let newFsxStorageCapacity = totalVolumeSizeInBytes / 0.64;
+    const percentage = (100 - MIN_OPTIMIZED_HEADROOM_PERCENTAGE[databaseType] - 1) / 100;
+    let newFsxStorageCapacity = totalVolumeSizeInBytes / percentage;
     const increase = ((newFsxStorageCapacity - ssdStorageCapacityInBytes) / ssdStorageCapacityInBytes) * 100;
     // increase newFsxStorageCapacity so that increment is at least 10%
     newFsxStorageCapacity = increase > 10 ? newFsxStorageCapacity : ssdStorageCapacityInBytes * 1.1;

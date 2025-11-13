@@ -2,6 +2,7 @@ import '../../../simulator/scopes/aws/ssm-scope';
 import '../../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../../simulator/scopes/aws/fsx-scope';
+import '../../../simulator/scopes/aws/cloud-watch-scope';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
 import {
@@ -359,6 +360,8 @@ describe('Oracle assessment operations', () => {
         );
         expect(assessmentData).toBeDefined();
         expect((assessmentData.storage as StorageParameterDriftResponseType)?.sizing?.length).toBeGreaterThan(0);
+
+        // swap-space assessment should be present in both NFS and iSCSI assessments
         const swapSpaceAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.sizing?.find(
             item => item.name === 'swap-space'
         ) as OracleGenericParameterDriftResponseType;
@@ -371,5 +374,19 @@ describe('Oracle assessment operations', () => {
         expect(swapSpaceAssessment.totalObjectsAssessed).toBe(1);
         expect(swapSpaceAssessment.totalObjectsInViolation).toBe(1);
         expect((swapSpaceAssessment as any).resourceType).toBe('EC2 instance');
+
+        // headroom assessment should be present in both NFS and iSCSI assessments
+        const headroomAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.sizing?.find(
+            item => item.name === 'headroom'
+        ) as OracleGenericParameterDriftResponseType;
+
+        expect(headroomAssessment).toBeDefined();
+        expect(headroomAssessment.name).toBe('headroom');
+        expect(headroomAssessment.status).toBe('under-provisioned');
+        expect(headroomAssessment.current).toBe('44%');
+        expect(headroomAssessment.severity).toBe('critical');
+        expect(headroomAssessment.totalObjectsAssessed).toBe(1);
+        expect(headroomAssessment.totalObjectsInViolation).toBe(1);
+        expect(headroomAssessment.resourceType).toBe('File system (FSx for ONTAP)');
     });
 });

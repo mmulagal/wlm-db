@@ -17,6 +17,7 @@ const OracleGenericParameterDriftResponse = Type.Object({
     name: Type.String(),
     status: Type.Enum(AssessmentStatus),
     recommended: Type.String(),
+    recommendedSizeInGib: Type.Optional(Type.Number()),
     severity: Type.String(),
     recommendation: Type.String(),
     objectsInViolation: Type.Optional(Type.Array(Type.Union([Type.String(), OntapVolume]))),

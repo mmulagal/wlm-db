@@ -85,12 +85,8 @@ import {
     MPIO_TIMEOUT
 } from './workloads/mssql/mpio-remediation-scripts';
 import { describeInstance } from '../lib/aws/ec2';
-import {
-    getHeadroomDrift,
-    getLogVolumeDrift,
-    getTempDbVolumeDrift
-} from './continuous-optimization/mssql/storage-assessment-operations';
-import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
+import { getLogVolumeDrift, getTempDbVolumeDrift } from './continuous-optimization/mssql/storage-assessment-operations';
+import { handleOptimizeJobCreation, JobMetadata, getHeadroomDrift } from './continuous-optimization/assessment-utils';
 import { listJobs } from '../lib/database/job';
 import { resetCache } from '../utils/cache';
 import { onDemandTriggerMssqlDriftAssessment } from './continuous-optimization/mssql/assessment-operations';
@@ -1058,7 +1054,8 @@ async function headroomOptimization(
         const { headroomPercent, ssdStorageCapacityInBytes, totalUsed } = await getHeadroomDrift(
             credentialsId,
             region,
-            fileSystemId
+            fileSystemId,
+            RESOURCESTYPE.MSSQL
         );
 
         if (headroomPercent < 35) {

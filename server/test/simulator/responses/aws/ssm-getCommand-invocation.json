@@ -4005,9 +4005,9 @@
     "sizing": {
         "swapSpace": {
             "error": "",
-            "ramSizeInKb": "7659656",
-            "swapSizeInKb": "16777212",
-            "hugepagesSizeInKb": "16777212"
+            "ramSizeInKb": "2117632",
+            "swapSizeInKb": "1048576",
+            "hugepagesSizeInKb": "20480"
         }
     }
   },
