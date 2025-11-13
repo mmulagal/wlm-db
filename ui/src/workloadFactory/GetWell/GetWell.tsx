@@ -74,6 +74,7 @@ import {
     areAllHaSubConfigurationsActivating,
     checkAllConfigurationsDismissed
 } from './GetWellHelper';
+import generateReport from '../../utils/generateWellArchitectedExcel';
 
 const GetWell = () => {
     const { t } = useTranslation();
@@ -173,26 +174,24 @@ const GetWell = () => {
         });
     };
 
-    const printDocument = () => {
-        setOptimizePrintState(true);
-        setTimeout(() => {
-            const elem = document.getElementById('export-optimize-pdf') as HTMLElement;
-            const options = {
-                filename: `Optimization_Report_MSSQLSERVER_${generateDate()}.pdf`,
-                compression: 'MEDIUM'
-            };
-
-            // @ts-ignore
-            downloadPdf(elem, options, (pdf: any) => {
-                setOptimizePrintState(false);
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: GENERAL.REPORT_DOWNLOAD_SUCCESS
-                    })
-                );
-            });
-        }, 100);
+    const printDocument = async () => {
+        try {
+            await generateReport(JSON.stringify(driftAssessmentData));
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                    message: GENERAL.REPORT_DOWNLOAD_SUCCESS
+                })
+            );
+        } catch (error) {
+            console.error('Error generating Excel report:', error);
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: `${GENERAL.REPORT_DOWNLOAD_FAIL}: ${String(error)}`
+                })
+            );
+        }
     };
 
     const toggleDismissedConfiguration = () => {
@@ -527,7 +526,7 @@ const GetWell = () => {
                                                     }}
                                                     variant="Semibold_14"
                                                 >
-                                                    Export PDF
+                                                    Export Excel
                                                 </DsTypography>
                                             </div>
                                             <div>

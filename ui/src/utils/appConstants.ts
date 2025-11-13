@@ -1149,6 +1149,7 @@ export const GENERAL = {
         'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.',
     PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.',
     REPORT_DOWNLOAD_SUCCESS: 'Report downloaded successfully',
+    REPORT_DOWNLOAD_FAIL: 'Failed to download the report. Please try again.',
     MANAGE_HOST_DISABLED: 'Supported only for the FSx for ONTAP storage type',
     EXPLORE_SAVINGS_DISABLED: 'Supported only for the EBS storage type',
     SMB_PROTOCOL_DISABLED: 'Action not supported on SQL server using SMB protocol',
