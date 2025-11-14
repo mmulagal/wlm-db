@@ -11,7 +11,7 @@ import {
     MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP,
     MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
-    ORACLE_STORAGE_LAYOUT_CONFIGS_MAP,
+    ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP,
     ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS,
     ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP
@@ -168,7 +168,7 @@ function formatDismissConfigurations(
     // Check for storage assessment configs (sizing, layout) based on database type
     const storageAssessmentMap =
         databaseType === DatabaseTypes.ORACLE
-            ? ORACLE_STORAGE_LAYOUT_CONFIGS_MAP
+            ? ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP
             : MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP;
 
     const storageKey = Object.keys(storageAssessmentMap).find(key =>
@@ -644,7 +644,7 @@ function areAllStorageConfigurationsDismissed(
 
     const storageAssessmentMap =
         databaseType === DatabaseTypes.ORACLE
-            ? ORACLE_STORAGE_LAYOUT_CONFIGS_MAP
+            ? ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP
             : MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP;
 
     const allConfigurationMapsDismissed = Object.entries(storageConfigMap).every(([category, expectedConfigs]) => {

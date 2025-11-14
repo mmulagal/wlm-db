@@ -409,6 +409,22 @@ const MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP = {
     layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
 };
 
+const ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP = {
+    sizing: ['headroom', 'swap-space'],
+    layout: [
+        'archive-placement',
+        'datafiles-placement',
+        'controlfiles-placement',
+        'redologs-placement',
+        'templogs-placement',
+        'oracle-binary-placement',
+        'data-dg-lun-layout',
+        'redolog-dg-lun-layout',
+        'fra-dg-lun-layout',
+        'archivelog-dg-lun-layout'
+    ]
+};
+
 const MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
     volumes: [
         'thin-provision',
@@ -558,6 +574,8 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes,
     ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.luns,
     ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
+    // Expand Oracle storage assessment configs map
+    ...ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP.sizing,
     'clone-management',
     // Oracle layout configurations
     'archive-placement',
@@ -629,6 +647,7 @@ export {
     OptimizeCloneParams,
     ASSESSMENT_CONFIGS,
     MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP,
+    ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP,
     DISMISS_DEACTIVATION_REASON,
     DISMISS_STATUS,
     DISMISS_UPDATE_STATUS,

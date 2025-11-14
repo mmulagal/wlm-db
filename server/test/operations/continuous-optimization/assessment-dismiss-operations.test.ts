@@ -988,6 +988,60 @@ describe('Oracle Assessment Dismiss Operations', () => {
         });
     });
 
+    it('Should format Oracle storage sizing assessment (headroom)', async () => {
+        const mockCurrentConfigs = {};
+        const currentTime = Date.now();
+        const newConfigs = {
+            configurationName: 'headroom',
+            startTime: currentTime,
+            configState: 'DISMISSED',
+            endTime: undefined
+        };
+
+        const result = formatDismissConfigurations(mockCurrentConfigs, newConfigs, DatabaseTypes.ORACLE);
+
+        expect(result).toEqual({
+            storage: {
+                sizing: [
+                    {
+                        configurationName: 'headroom',
+                        startTime: currentTime,
+                        configState: 'DISMISSED',
+                        endTime: undefined,
+                        reactivationReason: undefined
+                    }
+                ]
+            }
+        });
+    });
+
+    it('Should format Oracle storage sizing assessment (swap-space)', async () => {
+        const mockCurrentConfigs = {};
+        const currentTime = Date.now();
+        const newConfigs = {
+            configurationName: 'swap-space',
+            startTime: currentTime,
+            configState: 'POSTPONED',
+            endTime: currentTime + 30 * 24 * 60 * 60 * 1000 // 30 days later
+        };
+
+        const result = formatDismissConfigurations(mockCurrentConfigs, newConfigs, DatabaseTypes.ORACLE);
+
+        expect(result).toEqual({
+            storage: {
+                sizing: [
+                    {
+                        configurationName: 'swap-space',
+                        startTime: currentTime,
+                        configState: 'POSTPONED',
+                        endTime: currentTime + 30 * 24 * 60 * 60 * 1000,
+                        reactivationReason: undefined
+                    }
+                ]
+            }
+        });
+    });
+
     it('Should handle Oracle NFS protocol specific filtering', () => {
         const fieldsValues = ['storage'];
         const dismissedConfigurations = {
