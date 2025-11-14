@@ -842,7 +842,7 @@ const DashboardDismissPage = () => {
                         </div>
                     </div>
                     <div className={styles.rightSection}>
-                        <TagComponent tagHeight={valueCardData.tagHeight} />
+                        <TagComponent tagHeight={valueCardData.tagHeight} severity={valueCardData?.severity} />
                     </div>
                 </div>
 

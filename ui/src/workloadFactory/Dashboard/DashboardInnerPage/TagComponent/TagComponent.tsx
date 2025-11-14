@@ -2,6 +2,7 @@ import { DsTypography } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as Tagmage } from '../../../../assets/tag.svg';
+import { ReactComponent as Severity } from '../../../../assets/severity-icon.svg';
 
 import styles from './TagComponent.module.scss';
 import Tag from '../../../../common/Tag/Tag';
@@ -13,9 +14,10 @@ type TagComponentProps = {
     tagHeight: string;
     type?: string;
     engineType?: string;
+    severity: string;
 };
 
-const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL }: TagComponentProps) => {
+const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: TagComponentProps) => {
     const { t } = useTranslation();
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const [tagData, setTagData] = useState<any>([]);
@@ -346,6 +348,21 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL }: TagCompone
                     </div>
                 ))}
             </div>
+
+            {severity && (
+                <div className={styles.severitySection}>
+                    <Severity />
+
+                    <DsTypography variant="Semibold_14">{t('databases.log-analyzer.severity')}:</DsTypography>
+
+                    <div className={styles.severity}>
+                        <div
+                            className={`${styles.circle} ${severity === 'Critical' ? styles.error : styles.warning}`}
+                        />
+                        <DsTypography variant="Semibold_14">{severity}</DsTypography>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

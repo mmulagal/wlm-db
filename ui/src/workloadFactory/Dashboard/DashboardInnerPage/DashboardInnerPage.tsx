@@ -1059,104 +1059,104 @@ const DashboardInnerPage = () => {
     useEffect(() => {
         switch (selectedConfig) {
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.storage_tier?.recommendation?.description
                     }
-                });
+                }));
 
                 break;
             case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
+                    cardHeight: prev.cardHeight || '184px',
+                    tagHeight: prev.tagHeight || '281px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.file_system_headroom?.recommendation?.description,
                         values: cardDataDefault?.file_system_headroom?.recommendation?.values,
                         valuesHeading: cardDataDefault?.file_system_headroom?.recommendation?.valuesHeading
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '208px',
-                    tagHeight: '305px',
+                    cardHeight: prev.cardHeight || '208px',
+                    tagHeight: prev.tagHeight || '305px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.transaction_log_drive_size?.recommendation?.description,
                         values: cardDataDefault?.transaction_log_drive_size?.recommendation?.values,
                         valuesHeading: cardDataDefault?.transaction_log_drive_size?.recommendation?.valuesHeading
                     }
-                });
+                }));
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '232px',
-                    tagHeight: '329px',
+                    cardHeight: prev.cardHeight || '232px',
+                    tagHeight: prev.tagHeight || '329px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.tempdb_drive_size?.recommendation?.description,
                         values: cardDataDefault?.tempdb_drive_size?.recommendation?.values,
                         valuesHeading: cardDataDefault?.tempdb_drive_size?.recommendation?.valuesHeading
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '202px',
-                    tagHeight: '299px',
+                    cardHeight: prev.cardHeight || '202px',
+                    tagHeight: prev.tagHeight || '299px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.user_data_files?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '202px',
-                    tagHeight: '299px',
+                    cardHeight: prev.cardHeight || '202px',
+                    tagHeight: prev.tagHeight || '299px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.transaction_log_files?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '160px',
-                    tagHeight: '257px',
+                    cardHeight: prev.cardHeight || '160px',
+                    tagHeight: prev.tagHeight || '257px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.tempdb_files?.recommendation?.description
                     }
-                });
+                }));
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '112px',
-                    tagHeight: '209px',
+                    cardHeight: prev.cardHeight || '112px',
+                    tagHeight: prev.tagHeight || '209px',
                     data: {
                         title: 'Recommendations',
                         description: engineTypeBasedResourceStr(
@@ -1165,27 +1165,27 @@ const DashboardInnerPage = () => {
                             t('databases.well-architect.general-databases-recommendations')
                         )
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '112px',
-                    tagHeight: '209px',
+                    cardHeight: prev.cardHeight || '112px',
+                    tagHeight: prev.tagHeight || '209px',
                     data: {
                         title: 'Recommendations',
                         description: t('databases.well-architect.fci-recommendations')
                     }
-                });
+                }));
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '112px',
-                    tagHeight: '209px',
+                    cardHeight: prev.cardHeight || '112px',
+                    tagHeight: prev.tagHeight || '209px',
                     data: {
                         title: 'Recommendations',
                         description: engineTypeBasedResourceStr(
@@ -1194,212 +1194,212 @@ const DashboardInnerPage = () => {
                             t('databases.well-architect.general-databases-recommendations')
                         )
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '204px',
-                    tagHeight: '301px',
+                    cardHeight: prev.cardHeight || '204px',
+                    tagHeight: prev.tagHeight || '301px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.compute_rightsizing?.recommendation?.description
                     },
                     cardName: 'compute_right_sizing'
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.host_os_patch?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '450px',
-                    tagHeight: '547px',
+                    cardHeight: prev.cardHeight || '450px',
+                    tagHeight: prev.tagHeight || '547px',
                     data: {
                         title: 'Recommendations',
                         descriptionRssConfig: cardDataDefault?.rss_config?.recommendation?.descriptionRssConfig
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.MTU:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '214px',
-                    tagHeight: '311px',
+                    cardHeight: prev.cardHeight || '214px',
+                    tagHeight: prev.tagHeight || '311px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.mtu?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.LICENSE:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '228px',
-                    tagHeight: '325px',
+                    cardHeight: prev.cardHeight || '228px',
+                    tagHeight: prev.tagHeight || '325px',
                     data: cardDataDefault?.sql_licenses?.recommendation
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '160px',
-                    tagHeight: '257px',
+                    cardHeight: prev.cardHeight || '160px',
+                    tagHeight: prev.tagHeight || '257px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.microsoft_sql_patch?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.MAXDOP:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '216px',
-                    tagHeight: '313px',
+                    cardHeight: prev.cardHeight || '216px',
+                    tagHeight: prev.tagHeight || '313px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.maxdop?.recommendation?.descriptionRssConfig?.first
                     }
-                });
+                }));
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.scheduled_local_snapshot?.recommendation?.description
                     }
-                });
+                }));
 
                 break;
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.scheduled_fsx_for_ontap_backups?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.clone_management?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.CRR:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.crr?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
                     data: {
                         title: 'Recommendations',
                         description: oracleCardData?.oracle_binary_placement?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '156px',
-                    tagHeight: '253px',
+                    cardHeight: prev.cardHeight || '156px',
+                    tagHeight: prev.tagHeight || '253px',
                     data: {
                         title: 'Recommendations',
                         description: oracleCardData?.datafiles_placement?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '176px',
-                    tagHeight: '273px',
+                    cardHeight: prev.cardHeight || '176px',
+                    tagHeight: prev.tagHeight || '273px',
                     data: {
                         title: 'Recommendations',
                         description: oracleCardData?.controlfiles_placement?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '206px',
-                    tagHeight: '303px',
+                    cardHeight: prev.cardHeight || '206px',
+                    tagHeight: prev.tagHeight || '303px',
                     data: {
                         title: 'Recommendations',
                         description: oracleCardData?.redologs_placement?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '176px',
-                    tagHeight: '273px',
+                    cardHeight: prev.cardHeight || '176px',
+                    tagHeight: prev.tagHeight || '273px',
                     data: {
                         title: 'Recommendations',
                         description: oracleCardData?.templogs_placement?.recommendation?.description
                     }
-                });
+                }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '196px',
-                    tagHeight: '293px',
+                    cardHeight: prev.cardHeight || '196px',
+                    tagHeight: prev.tagHeight || '293px',
                     data: {
                         title: 'Recommendations',
                         description: oracleCardData?.archive_placement?.recommendation?.description
                     }
-                });
+                }));
                 break;
         }
     }, [selectedConfig, selectedConfigSummary]);
@@ -1744,7 +1744,11 @@ const DashboardInnerPage = () => {
                         </div>
                     </div>
                     <div className={styles.rightSection} style={{ width: '32%' }}>
-                        <TagComponent tagHeight={valueCardData.tagHeight} engineType={configEngineType} />
+                        <TagComponent
+                            tagHeight={valueCardData.tagHeight}
+                            engineType={configEngineType}
+                            severity={valueCardData?.severity}
+                        />
                     </div>
                 </div>
 

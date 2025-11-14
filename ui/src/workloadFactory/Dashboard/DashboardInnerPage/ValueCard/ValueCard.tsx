@@ -136,19 +136,6 @@ const ValueCard = ({ valueCardData, configEngineType }: ValueCardProps) => {
                         </DsTypography>
                     </div>
                 )}
-
-                <div className={styles.column} style={{ borderRight: 'none' }}>
-                    <DsTypography variant="Semibold_14" className={styles.titleText}>
-                        {severity}
-                    </DsTypography>
-                    <DsTypography
-                        className={styles.label}
-                        title={t('databases.well-architect.severity')}
-                        variant="Regular_14"
-                    >
-                        {t('databases.well-architect.severity')}
-                    </DsTypography>
-                </div>
             </div>
         </div>
     );
