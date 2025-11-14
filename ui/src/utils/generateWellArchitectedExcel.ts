@@ -22,6 +22,7 @@ interface AssessmentItem {
     tcpOffloadState?: string;
     objectsInViolation?: string[];
     recommendationOptions?: any[];
+    oldCloneDetails?: any[];
 }
 
 interface ComprehensiveAssessmentData {
@@ -81,7 +82,8 @@ const MULTI_TABLE_CONFIGS = [
     'rss-config',
     'log-drive-size',
     'tempdb-drive-size',
-    'compute-rightsizing'
+    'compute-rightsizing',
+    'clone-management'
 ];
 
 const TWO_COLUMN_CONFIGS = [
@@ -369,11 +371,6 @@ const createRSSConfigData = (config: AssessmentItem, details: any[]) => {
     details.push({}, {});
 
     details.push({
-        Setting: 'Recommended Adapter Settings',
-        Value: ''
-    });
-
-    details.push({
         Setting: 'Setting',
         Value: 'Value'
     });
@@ -411,14 +408,6 @@ const createRSSConfigData = (config: AssessmentItem, details: any[]) => {
     }
 
     details.push({}, {});
-
-    details.push({
-        'Adapter Name': 'RSS Adapters',
-        'RSS Enabled': '',
-        'RSS Profile': '',
-        'Base Processor Number': '',
-        'Number of Receive Queues': ''
-    });
 
     details.push({
         'Adapter Name': 'Adapter Name',
@@ -516,7 +505,7 @@ const createComputeRightsizingData = (config: AssessmentItem, details: any[]) =>
     }
 
     if (config.objectsInViolation && config.objectsInViolation.length > 0) {
-        details.push({}, {});
+        details.push({}, {}, {});
 
         details.push({
             'Violation Type': 'Objects in Violation'
@@ -529,6 +518,82 @@ const createComputeRightsizingData = (config: AssessmentItem, details: any[]) =>
         config.objectsInViolation.forEach((violation: string) => {
             details.push({
                 'Violation Type': violation
+            });
+        });
+    }
+};
+
+const createBaseConfigurationObject = (config: AssessmentItem) => ({
+    'Configuration name': config.name,
+    ...(config.status && { Status: config.status }),
+    ...(config.severity && { Severity: config.severity }),
+    ...(config.recommendation && { Recommendation: config.recommendation }),
+    ...(config.current && { Current: config.current }),
+    ...(config.recommended && { Recommended: config.recommended }),
+    ...(config.tags?.length && { Tags: config.tags.join(', ') }),
+    'Impacted resources (X out of Y)':
+        typeof config.totalObjectsAssessed === 'number'
+            ? `${config.totalObjectsInViolation || 0} out of ${config.totalObjectsAssessed}`
+            : 'n/a'
+});
+
+const createCloneManagementData = (config: AssessmentItem, details: any[]) => {
+    const oldCloneDetails = config.oldCloneDetails || [];
+
+    if (oldCloneDetails && oldCloneDetails.length > 0) {
+        details.push({}, {});
+
+        details.push({
+            'Clone database name': 'Impacted Resources'
+        });
+
+        details.push({
+            'Clone database name': 'Clone database name',
+            'Source database': 'Source database',
+            'Source volume': 'Source volume',
+            'Clone age': 'Clone age',
+            'Cloned by': 'Cloned by'
+        });
+
+        oldCloneDetails.forEach((clone: any) => {
+            let sourceDatabase = '';
+            if (clone.sourceDatabaseName) {
+                sourceDatabase = clone.sourceDatabaseName;
+                if (clone.sourceDatabaseHostName) {
+                    sourceDatabase = `${clone.sourceDatabaseHostName}/${sourceDatabase}`;
+                }
+                if (clone.sourceDatabaseInstanceName && clone.sourceDatabaseInstanceName !== 'MSSQLSERVER') {
+                    sourceDatabase = `${sourceDatabase} (${clone.sourceDatabaseInstanceName})`;
+                }
+            }
+
+            if (!sourceDatabase) {
+                sourceDatabase = 'n/a';
+            }
+
+            let sourceVolumeNames = '';
+            if (clone.clonedVolumeDetails && clone.clonedVolumeDetails.length > 0) {
+                const sourceVolumes = Array.from(
+                    new Set(
+                        clone.clonedVolumeDetails.map((vol: any) => vol.sourceVolumeName).filter((name: string) => name)
+                    )
+                );
+                sourceVolumeNames = sourceVolumes.join(', ');
+            }
+
+            let clonedBy = clone.clonedBy || 'other';
+            if (clonedBy === 'netapp_wf') {
+                clonedBy = 'NetApp Workload Factory (Sandboxes)';
+            } else {
+                clonedBy = 'Outside Workload Factory';
+            }
+
+            details.push({
+                'Clone database name': clone.cloneDatabaseName || '',
+                'Source database': sourceDatabase,
+                'Source volume': sourceVolumeNames,
+                'Clone age': clone.cloneAge ? `${clone.cloneAge} days` : '',
+                'Cloned by': clonedBy
             });
         });
     }
@@ -642,19 +707,7 @@ function generateDetailedConfigurationData(data: ComprehensiveAssessmentData, co
     const details: any[] = [];
 
     // Base configuration info
-    const baseConfig = {
-        'Configuration name': config.name,
-        ...(config.status && { Status: config.status }),
-        ...(config.severity && { Severity: config.severity }),
-        ...(config.recommendation && { Recommendation: config.recommendation }),
-        ...(config.current && { Current: config.current }),
-        ...(config.recommended && { Recommended: config.recommended }),
-        ...(config.tags?.length && { Tags: config.tags.join(', ') }),
-        'Impacted resources (X out of Y)':
-            typeof config.totalObjectsAssessed === 'number'
-                ? `${config.totalObjectsInViolation || 0} out of ${config.totalObjectsAssessed}`
-                : 'n/a'
-    };
+    const baseConfig = createBaseConfigurationObject(config);
 
     details.push(baseConfig);
 
@@ -693,6 +746,7 @@ function generateDetailedConfigurationData(data: ComprehensiveAssessmentData, co
                 'Violation Type': 'Violation Type'
             }),
         'compute-rightsizing': () => createComputeRightsizingData(config, details),
+        'clone-management': () => createCloneManagementData(config, details),
         'shared-storage': () => createObjectsInViolationData(config, details, 'LUN Names'),
         'tempdb-files-location': () => createObjectsInViolationData(config, details, 'Databases'),
         'data-files-location': () => createObjectsInViolationData(config, details, 'Databases'),
@@ -844,6 +898,11 @@ function addDataToWorksheet(worksheet: ExcelJS.Worksheet, data: any[]): void {
     });
 }
 
+// Column width constants for autoFitColumns
+const COLUMN_WIDTH_PADDING = 3;
+const MIN_COLUMN_WIDTH = 10;
+const MAX_COLUMN_WIDTH = 60;
+
 function autoFitColumns(worksheet: ExcelJS.Worksheet, data: any[]): void {
     if (!data || data.length === 0) return;
 
@@ -865,11 +924,19 @@ function autoFitColumns(worksheet: ExcelJS.Worksheet, data: any[]): void {
             }
         });
 
-        if (key.toUpperCase() === 'RECOMMENDED') {
+        if (key.toUpperCase() === 'RECOMMENDED' || key.toUpperCase() === 'RECOMMENDATION') {
+            maxWidth = Math.max(maxWidth, 20);
+        } else if (key.includes('Savings Opportunity Percentage')) {
+            maxWidth = Math.max(maxWidth, 25);
+        } else if (key.includes('Estimated Monthly Savings Value')) {
+            maxWidth = Math.max(maxWidth, 25);
+        } else if (key === 'Instance Type') {
             maxWidth = Math.max(maxWidth, 15);
+        } else if (key === 'Violation Type') {
+            maxWidth = Math.max(maxWidth, 30);
         }
 
-        const width = Math.min(Math.max(maxWidth + 2, 8), 50);
+        const width = Math.min(Math.max(maxWidth + COLUMN_WIDTH_PADDING, MIN_COLUMN_WIDTH), MAX_COLUMN_WIDTH);
         worksheet.getColumn(index + 1).width = width;
     });
 }
@@ -894,6 +961,16 @@ function addMultiTableDataToWorksheet(worksheet: ExcelJS.Worksheet, data: any[],
 
     if (configName === 'rss-config') {
         addRSSConfigToWorksheet(worksheet, data);
+        return;
+    }
+
+    if (configName === 'compute-rightsizing') {
+        addComputeRightsizingToWorksheet(worksheet, data);
+        return;
+    }
+
+    if (configName === 'clone-management') {
+        addCloneManagementToWorksheet(worksheet, data);
         return;
     }
 
@@ -963,41 +1040,236 @@ function addMultiTableDataToWorksheet(worksheet: ExcelJS.Worksheet, data: any[],
     });
 }
 
-function addRSSConfigToWorksheet(worksheet: ExcelJS.Worksheet, data: any[]): void {
-    if (!data || data.length === 0) return;
+// Utility functions for table creation
+interface TableConfig<T = any> {
+    title: string;
+    columnHeaders: string[];
+    columnSpan: number;
+    dataExtractor: (row: T) => string[];
+    dataFilter: (row: T) => boolean;
+}
 
-    let recommendedSettingsIndex = -1;
-    let rssAdaptersIndex = -1;
+function createBaseConfigTable(worksheet: ExcelJS.Worksheet, data: any[], startRow: number = 1): number {
+    if (!data.length) return startRow;
 
-    for (let i = 0; i < data.length; i += 1) {
-        const row = data[i];
-        if (row && row.Setting === 'Recommended Adapter Settings') {
-            recommendedSettingsIndex = i;
-        }
-        if (row && row['Adapter Name'] === 'RSS Adapters') {
-            rssAdaptersIndex = i;
-        }
-    }
+    const baseColumns = Object.keys(data[0] || {});
 
-    // Add base configuration table
-    const baseConfigData = data.slice(0, Math.min(recommendedSettingsIndex, rssAdaptersIndex));
-    const baseColumns = Object.keys(baseConfigData[0] || {});
-
+    // Add headers
     baseColumns.forEach((header, index) => {
-        worksheet.getCell(1, index + 1).value = header;
+        const cell = worksheet.getCell(startRow, index + 1);
+        cell.value = header.toUpperCase();
+        applyCellStyle(
+            cell,
+            createCellStyle(
+                COLORS.LIGHT_BLUE,
+                { bold: true, color: { argb: COLORS.BLACK } },
+                { horizontal: 'center', vertical: 'middle', wrapText: true }
+            )
+        );
     });
 
-    baseConfigData.forEach((row, rowIndex) => {
+    // Add data rows
+    data.forEach((row, rowIndex) => {
         if (row && Object.keys(row).length > 0) {
             baseColumns.forEach((column, colIndex) => {
-                worksheet.getCell(rowIndex + 2, colIndex + 1).value = row[column] || '';
+                const cell = worksheet.getCell(startRow + rowIndex + 1, colIndex + 1);
+                cell.value = row[column] || '';
+                applyCellStyle(
+                    cell,
+                    createCellStyle(COLORS.WHITE, undefined, {
+                        horizontal: 'left',
+                        vertical: 'middle',
+                        wrapText: true
+                    })
+                );
             });
         }
     });
 
-    let nextAvailableRow = baseConfigData.length + 3; // Start after base config table
+    // Apply styling
+    const endRow = startRow + data.length;
+    styleTableBorders(worksheet, startRow, endRow, 1, baseColumns.length);
+    worksheet.getRow(startRow).height = 25;
 
-    // Add Recommended Adapter Settings table
+    return endRow + 2;
+}
+
+function createStyledTable(worksheet: ExcelJS.Worksheet, config: TableConfig, data: any[], startRow: number): number {
+    const filteredData = data.filter(config.dataFilter);
+    if (!filteredData.length) return startRow;
+
+    let currentRow = startRow;
+
+    // Add table header
+    const headerCell = worksheet.getCell(currentRow, 1);
+    headerCell.value = config.title;
+    worksheet.mergeCells(`A${currentRow}:${String.fromCharCode(64 + config.columnSpan)}${currentRow}`);
+    applyCellStyle(
+        headerCell,
+        createCellStyle(
+            COLORS.STEEL_BLUE,
+            { bold: true, color: { argb: COLORS.WHITE } },
+            { horizontal: 'center', vertical: 'middle', wrapText: true }
+        )
+    );
+    worksheet.getRow(currentRow).height = 25;
+    currentRow++;
+
+    // Add column headers
+    config.columnHeaders.forEach((header, colIndex) => {
+        const cell = worksheet.getCell(currentRow, colIndex + 1);
+        cell.value = header;
+        applyCellStyle(
+            cell,
+            createCellStyle(
+                COLORS.SKY_BLUE,
+                { bold: true, color: { argb: COLORS.BLACK } },
+                { horizontal: 'center', vertical: 'middle', wrapText: true }
+            )
+        );
+    });
+    worksheet.getRow(currentRow).height = 25;
+    currentRow++;
+
+    // Add data rows
+    const dataStartRow = currentRow;
+    filteredData.forEach(row => {
+        const dataValues = config.dataExtractor(row);
+        dataValues.forEach((value, colIndex) => {
+            const cell = worksheet.getCell(currentRow, colIndex + 1);
+            cell.value = value;
+            applyCellStyle(
+                cell,
+                createCellStyle(COLORS.WHITE, undefined, {
+                    horizontal: 'left',
+                    vertical: 'middle',
+                    wrapText: true
+                })
+            );
+        });
+        currentRow++;
+    });
+
+    // Apply borders and auto-filter
+    const tableEndRow = currentRow - 1;
+    styleTableBorders(worksheet, dataStartRow - 2, tableEndRow, 1, config.columnSpan);
+
+    if (tableEndRow >= dataStartRow) {
+        const endColumn = String.fromCharCode(64 + config.columnSpan);
+        worksheet.autoFilter = {
+            from: `A${dataStartRow - 1}`,
+            to: `${endColumn}${tableEndRow}`
+        };
+    }
+
+    return currentRow + 1;
+}
+
+function addComputeRightsizingToWorksheet(worksheet: ExcelJS.Worksheet, data: any[]): void {
+    if (!data || data.length === 0) return;
+
+    const recommendationOptionsStart = data.findIndex(row => row && row['Instance Type'] === 'Recommendation Options');
+    const objectsInViolationStart = data.findIndex(row => row && row['Violation Type'] === 'Objects in Violation');
+
+    // Process base configuration data
+    const baseConfigData = data.slice(
+        0,
+        Math.min(
+            recommendationOptionsStart >= 0 ? recommendationOptionsStart : data.length,
+            objectsInViolationStart >= 0 ? objectsInViolationStart : data.length
+        )
+    );
+
+    let nextAvailableRow = 1;
+    if (baseConfigData.length > 0) {
+        nextAvailableRow = createBaseConfigTable(worksheet, baseConfigData);
+    }
+
+    // Process recommendation options table
+    if (recommendationOptionsStart >= 0) {
+        const recommendationEndIndex =
+            objectsInViolationStart >= 0
+                ? data.findIndex(
+                      (row, idx) => idx > recommendationOptionsStart && (!row || Object.keys(row).length === 0)
+                  )
+                : data.length;
+
+        const recommendationData = data.slice(
+            recommendationOptionsStart,
+            recommendationEndIndex > 0 ? recommendationEndIndex : data.length
+        );
+
+        const recommendationConfig: TableConfig = {
+            title: 'Recommendation Options',
+            columnHeaders: [
+                'Instance Type',
+                'Rank',
+                'Savings Opportunity Percentage',
+                'Estimated Monthly Savings Value',
+                'Currency'
+            ],
+            columnSpan: 5,
+            dataFilter: row =>
+                row &&
+                Object.keys(row).length > 0 &&
+                row['Instance Type'] &&
+                row['Instance Type'] !== 'Recommendation Options' &&
+                row['Instance Type'] !== 'Instance Type',
+            dataExtractor: row => [
+                row['Instance Type'],
+                row.Rank || '',
+                row['Savings Opportunity Percentage'] || '',
+                row['Estimated Monthly Savings Value'] || '',
+                row.Currency || ''
+            ]
+        };
+
+        nextAvailableRow = createStyledTable(worksheet, recommendationConfig, recommendationData, nextAvailableRow);
+    }
+
+    // Process objects in violation table
+    if (objectsInViolationStart >= 0) {
+        const violationData = data.slice(objectsInViolationStart);
+
+        const violationConfig: TableConfig = {
+            title: 'Objects in Violation',
+            columnHeaders: ['Violation Type'],
+            columnSpan: 1,
+            dataFilter: row => row && Object.keys(row).length > 0 && row['Violation Type'],
+            dataExtractor: row => [row['Violation Type']]
+        };
+
+        createStyledTable(worksheet, violationConfig, violationData, nextAvailableRow);
+    }
+}
+
+function addRSSConfigToWorksheet(worksheet: ExcelJS.Worksheet, data: any[]): void {
+    if (!data || data.length === 0) return;
+
+    // Find table boundaries
+    const recommendedSettingsIndex = data.findIndex(row => row && row.Setting === 'Setting' && row.Value === 'Value');
+    const rssAdaptersIndex = data.findIndex(
+        row => row && row['Adapter Name'] === 'Adapter Name' && row['RSS Enabled'] === 'RSS Enabled'
+    );
+
+    // Process base configuration data
+    const baseConfigData = data.slice(
+        0,
+        Math.min(
+            recommendedSettingsIndex > 0 ? recommendedSettingsIndex - 2 : data.length,
+            rssAdaptersIndex > 0 ? rssAdaptersIndex - 2 : data.length
+        )
+    );
+
+    let nextAvailableRow = 1;
+    if (baseConfigData.length > 0) {
+        nextAvailableRow = createBaseConfigTable(worksheet, baseConfigData);
+    }
+
+    // Start recommended settings table at row 5 as requested
+    nextAvailableRow = 5;
+
+    // Process recommended adapter settings
     if (recommendedSettingsIndex >= 0) {
         const recommendedEndIndex =
             rssAdaptersIndex >= 0
@@ -1007,57 +1279,87 @@ function addRSSConfigToWorksheet(worksheet: ExcelJS.Worksheet, data: any[]): voi
                 : data.length;
 
         const recommendedData = data.slice(
-            recommendedSettingsIndex,
+            recommendedSettingsIndex + 1,
             recommendedEndIndex > 0 ? recommendedEndIndex : data.length
         );
 
-        // Write recommended settings data starting from column 1
-        recommendedData.forEach((row, rowIndex) => {
-            if (row && Object.keys(row).length > 0) {
-                if (row.Setting) {
-                    worksheet.getCell(nextAvailableRow + rowIndex, 1).value = row.Setting;
-                    worksheet.getCell(nextAvailableRow + rowIndex, 2).value = row.Value || '';
-                }
-            }
-        });
+        const recommendedConfig: TableConfig = {
+            title: 'Recommended Adapter Settings',
+            columnHeaders: ['Setting', 'Value'],
+            columnSpan: 2,
+            dataFilter: row => row && Object.keys(row).length > 0 && row.Setting && row.Setting !== 'Setting',
+            dataExtractor: row => [row.Setting, row.Value || '']
+        };
 
-        // Style recommended table
-        const recommendedTableEndRow = nextAvailableRow + recommendedData.length - 1;
-        styleTableBorders(worksheet, nextAvailableRow, recommendedTableEndRow, 1, 2);
-        styleDataRows(worksheet, nextAvailableRow + 2, recommendedTableEndRow, 1, 2);
-        styleImpactedResourcesHeader(worksheet, nextAvailableRow, 2);
-        styleFilterHeaders(worksheet, nextAvailableRow + 1, 2);
-
-        nextAvailableRow = recommendedTableEndRow + 2; // Update next available row
+        nextAvailableRow = createStyledTable(worksheet, recommendedConfig, recommendedData, nextAvailableRow);
     }
 
-    // Add RSS Adapters table
+    // Process RSS adapters table
     if (rssAdaptersIndex >= 0) {
-        const rssData = data.slice(rssAdaptersIndex);
+        const rssData = data.slice(rssAdaptersIndex + 1);
 
-        // Write RSS adapters data starting from column 1
-        rssData.forEach((row, rowIndex) => {
-            if (row && Object.keys(row).length > 0) {
-                if (row['Adapter Name']) {
-                    worksheet.getCell(nextAvailableRow + rowIndex, 1).value = row['Adapter Name'];
-                    worksheet.getCell(nextAvailableRow + rowIndex, 2).value = row['RSS Enabled'] || '';
-                    worksheet.getCell(nextAvailableRow + rowIndex, 3).value = row['RSS Profile'] || '';
-                    worksheet.getCell(nextAvailableRow + rowIndex, 4).value = row['Base Processor Number'] || '';
-                    worksheet.getCell(nextAvailableRow + rowIndex, 5).value = row['Number of Receive Queues'] || '';
-                }
-            }
-        });
+        const rssConfig: TableConfig = {
+            title: 'RSS Adapters',
+            columnHeaders: [
+                'Adapter Name',
+                'RSS Enabled',
+                'RSS Profile',
+                'Base Processor Number',
+                'Number of Receive Queues'
+            ],
+            columnSpan: 5,
+            dataFilter: row =>
+                row && Object.keys(row).length > 0 && row['Adapter Name'] && row['Adapter Name'] !== 'Adapter Name',
+            dataExtractor: row => [
+                row['Adapter Name'],
+                row['RSS Enabled'] || '',
+                row['RSS Profile'] || '',
+                row['Base Processor Number'] || '',
+                row['Number of Receive Queues'] || ''
+            ]
+        };
 
-        // Style RSS adapters table
-        const rssTableEndRow = nextAvailableRow + rssData.length - 1;
-        styleTableBorders(worksheet, nextAvailableRow, rssTableEndRow, 1, 5);
-        styleDataRows(worksheet, nextAvailableRow + 2, rssTableEndRow, 1, 5);
-        styleImpactedResourcesHeader(worksheet, nextAvailableRow, 5);
-        styleFilterHeaders(worksheet, nextAvailableRow + 1, 5);
+        createStyledTable(worksheet, rssConfig, rssData, nextAvailableRow);
     }
 }
 
-// Configuration-specific styling functions
+function addCloneManagementToWorksheet(worksheet: ExcelJS.Worksheet, data: any[]): void {
+    if (!data || data.length === 0) return;
+
+    const impactedResourcesStart = data.findIndex(row => row && row['Clone database name'] === 'Impacted Resources');
+
+    const baseConfigData = impactedResourcesStart > 0 ? data.slice(0, impactedResourcesStart) : data;
+
+    let nextAvailableRow = 1;
+    if (baseConfigData.length > 0) {
+        nextAvailableRow = createBaseConfigTable(worksheet, baseConfigData);
+    }
+
+    if (impactedResourcesStart >= 0) {
+        const impactedData = data.slice(impactedResourcesStart + 1);
+
+        const impactedConfig: TableConfig = {
+            title: 'Impacted Resources',
+            columnHeaders: ['Clone database name', 'Source database', 'Source volume', 'Clone age', 'Cloned by'],
+            columnSpan: 5,
+            dataFilter: row =>
+                row &&
+                Object.keys(row).length > 0 &&
+                row['Clone database name'] &&
+                row['Clone database name'] !== 'Clone database name',
+            dataExtractor: row => [
+                row['Clone database name'],
+                row['Source database'] || '',
+                row['Source volume'] || '',
+                row['Clone age'] || '',
+                row['Cloned by'] || ''
+            ]
+        };
+
+        createStyledTable(worksheet, impactedConfig, impactedData, nextAvailableRow);
+    }
+}
+
 const applySpecialConfigurationStyling = (
     worksheet: ExcelJS.Worksheet,
     configName: string,
@@ -1274,7 +1576,6 @@ async function generateProperXlsxWorkbook(data: ComprehensiveAssessmentData): Pr
         const hasImpactedResources = allSpecialConfigs.includes(configName) || impactedResourcesStartRow > 0;
 
         if (hasImpactedResources && impactedResourcesStartRow > 0) {
-            // Style main configuration table
             const mainTableEndRow = impactedResourcesStartRow - 3;
             styleTableBorders(configSheet, 1, mainTableEndRow, 1, columnCount);
             styleDataRows(configSheet, 2, mainTableEndRow, 1, columnCount);
@@ -1284,7 +1585,6 @@ async function generateProperXlsxWorkbook(data: ComprehensiveAssessmentData): Pr
             const filterHeaderRowIndex = impactedResourcesRowIndex + 1;
 
             if (configName === 'compute-rightsizing') {
-                // Special handling for compute-rightsizing dual tables
                 const recommendationOptionsStart = configDetails.findIndex(
                     row => row && row['Instance Type'] === 'Recommendation Options'
                 );
@@ -1294,42 +1594,63 @@ async function generateProperXlsxWorkbook(data: ComprehensiveAssessmentData): Pr
 
                 if (recommendationOptionsStart >= 0) {
                     const firstTableHeaderRow = recommendationOptionsStart + 2;
-                    const firstTableDataStartRow = firstTableHeaderRow + 1;
-                    const firstTableEndRow =
-                        objectsInViolationStart >= 0 ? objectsInViolationStart + 1 : configDetails.length + 1;
+                    const firstTableColumnsRow = firstTableHeaderRow + 1;
+                    const firstTableDataStartRow = firstTableColumnsRow + 1;
+
+                    let firstTableEndRow;
+                    if (objectsInViolationStart >= 0) {
+                        let emptyRowsBeforeSecondTable = 0;
+                        for (let i = objectsInViolationStart - 1; i >= recommendationOptionsStart; i--) {
+                            const row = configDetails[i];
+                            if (!row || Object.keys(row).length === 0 || Object.values(row).every(val => val === '')) {
+                                emptyRowsBeforeSecondTable++;
+                            } else {
+                                break;
+                            }
+                        }
+                        firstTableEndRow = objectsInViolationStart + 2 - emptyRowsBeforeSecondTable;
+                    } else {
+                        firstTableEndRow = configDetails.length + 1;
+                    }
 
                     configSheet.mergeCells(`A${firstTableHeaderRow}:E${firstTableHeaderRow}`);
 
+                    styleTableBorders(configSheet, firstTableHeaderRow, firstTableEndRow, 1, 5);
+                    styleImpactedResourcesHeader(configSheet, firstTableHeaderRow, 5);
+                    styleFilterHeaders(configSheet, firstTableColumnsRow, 5);
+
                     if (firstTableDataStartRow <= firstTableEndRow) {
-                        styleTableBorders(configSheet, firstTableHeaderRow, firstTableEndRow, 1, 5);
-                        styleDataRows(configSheet, firstTableDataStartRow + 1, firstTableEndRow, 1, 5);
+                        styleDataRows(configSheet, firstTableDataStartRow, firstTableEndRow, 1, 5);
                     }
 
-                    styleImpactedResourcesHeader(configSheet, firstTableHeaderRow, 5);
-                    styleFilterHeaders(configSheet, firstTableDataStartRow, 5);
+                    if (firstTableDataStartRow <= firstTableEndRow) {
+                        configSheet.autoFilter = {
+                            from: `A${firstTableColumnsRow}`,
+                            to: `E${firstTableEndRow}`
+                        };
+                    }
                 }
 
                 if (objectsInViolationStart >= 0) {
-                    const secondTableHeaderRow = objectsInViolationStart + 2;
-                    const secondTableDataStartRow = secondTableHeaderRow + 1;
+                    const secondTableHeaderRow = objectsInViolationStart + 2; // +2 for 1-based indexing
+                    const secondTableColumnsRow = secondTableHeaderRow + 1;
+                    const secondTableDataStartRow = secondTableColumnsRow + 1;
                     const secondTableEndRow = configDetails.length + 1;
 
-                    // Write Objects in Violation table starting from column 1
-                    const objectsInViolationData = configDetails.slice(objectsInViolationStart);
-                    objectsInViolationData.forEach((row, rowIndex) => {
-                        if (row && Object.keys(row).length > 0 && row['Violation Type']) {
-                            configSheet.getCell(objectsInViolationStart + 2 + rowIndex, 1).value =
-                                row['Violation Type'];
-                        }
-                    });
+                    styleTableBorders(configSheet, secondTableHeaderRow, secondTableEndRow, 1, 1);
+                    styleImpactedResourcesHeader(configSheet, secondTableHeaderRow, 1);
+                    styleFilterHeaders(configSheet, secondTableColumnsRow, 1);
 
                     if (secondTableDataStartRow <= secondTableEndRow) {
-                        styleTableBorders(configSheet, secondTableHeaderRow, secondTableEndRow, 1, 1);
-                        styleDataRows(configSheet, secondTableDataStartRow + 1, secondTableEndRow, 1, 1);
+                        styleDataRows(configSheet, secondTableDataStartRow, secondTableEndRow, 1, 1);
                     }
 
-                    styleImpactedResourcesHeader(configSheet, secondTableHeaderRow, 1);
-                    styleFilterHeaders(configSheet, secondTableDataStartRow, 1);
+                    if (secondTableDataStartRow <= secondTableEndRow) {
+                        configSheet.autoFilter = {
+                            from: `A${secondTableColumnsRow}`,
+                            to: `A${secondTableEndRow}`
+                        };
+                    }
                 }
             } else {
                 applySpecialConfigurationStyling(
@@ -1341,10 +1662,8 @@ async function generateProperXlsxWorkbook(data: ComprehensiveAssessmentData): Pr
                 );
             }
 
-            // Add auto-filters
             addConfigurationAutoFilter(configSheet, configName, configDetails, filterHeaderRowIndex);
         } else {
-            // Simple configurations
             const totalRows = 2;
             styleTableBorders(configSheet, 1, totalRows, 1, columnCount);
             styleDataRows(configSheet, 2, totalRows, 1, columnCount);
