@@ -1,5 +1,4 @@
 import { getWlmdbPolicy } from '../../../src/lib/cloud-manager/wlmdb';
-import '../../simulator/scopes/cloud-manager/wlmdb-scope';
 
 describe('WLMDB lib', () => {
     it('Get WLMDB policy', async () => {

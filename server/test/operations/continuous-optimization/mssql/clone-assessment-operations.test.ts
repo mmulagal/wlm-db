@@ -4,11 +4,6 @@ import {
     runCloneAssessment
 } from '../../../../src/operations/continuous-optimization/mssql/clone-assessment-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
-import '../../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../../simulator/scopes/aws/ssm-scope';
-import '../../../simulator/scopes/aws/fsx-scope';
-import '../../../simulator/scopes/aws/cloud-watch-logs-scope';
 import { createResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';

@@ -18,12 +18,6 @@ import {
     getAmazonLinux2023AmiList,
     validateVpcEndpoints
 } from '../../../src/operations/aws/ec2-operations';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/aws/ec2-scope';
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/aws/cloud-watch-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import {
     DEFAULT_AWS_CREDENTIALS_ID,

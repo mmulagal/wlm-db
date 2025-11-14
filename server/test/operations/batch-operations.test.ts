@@ -1,12 +1,4 @@
 import executeBatchApiCalls from '../../src/operations/batch-operations';
-import '../simulator/scopes/aws/s3-scope';
-import '../simulator/scopes/aws/ec2-scope';
-import '../simulator/scopes/aws/iam-scope';
-import '../simulator/scopes/aws/secrets-manager-scope';
-import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../simulator/scopes/aws/service-quota-scope';
-import '../simulator/scopes/opentelemetry-scope';
-import '../simulator/scopes/batch-scope';
 
 describe(
     'Batch operations',

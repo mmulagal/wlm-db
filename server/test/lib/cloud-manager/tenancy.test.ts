@@ -8,9 +8,6 @@ import {
     getTenancyAccounts,
     getPermissionsForUser
 } from '../../../src/lib/cloud-manager/tenancy';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/opentelemetry-scope';
 import registerServiceResponse from '../../simulator/responses/cloud-manager/register-service-resource-tenancy.json';
 import getTenancyResourceResponse from '../../simulator/responses/cloud-manager/get-tenancy-resources-by-type.json';
 import tenancyAccountsResponse from '../../simulator/responses/cloud-manager/tenancy-accounts.json';

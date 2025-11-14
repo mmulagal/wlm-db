@@ -3,7 +3,6 @@ import { faker } from '@faker-js/faker';
 import { Instance } from '@aws-sdk/client-ec2';
 import { createSecrets } from '../../src/operations/aws/secrets-manager-operations';
 import { DatabaseTypes, DEFAULT_AWS_REGION, FCI } from '../../src/utils/consts';
-import '../simulator/scopes/aws/secrets-manager-scope';
 import secretManagerResponse from '../simulator/responses/aws/secrets-manager-create.json';
 import {
     checkAndRetrieveJsonObject,

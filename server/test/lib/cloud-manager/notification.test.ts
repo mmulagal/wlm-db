@@ -1,9 +1,3 @@
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-audit-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-notification-scope';
-import '../../simulator/scopes/opentelemetry-scope';
 import sendNotification from '../../../src/lib/cloud-manager/notification';
 import { ACCOUNT_ID } from '../../../src/utils/consts';
 

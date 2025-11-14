@@ -1,6 +1,5 @@
 import { ACCOUNT_ID, EMAIL_TYPES, MAX_EMAIL_ATTACHMENT_SIZE } from '../../src/utils/consts';
 import processEmailRequest, { sendSavingsCalculationEmail } from '../../src/operations/notification-operations';
-import '../simulator/scopes/aws/ses-scope';
 
 describe('Process email request operations', () => {
     const accountId = ACCOUNT_ID;

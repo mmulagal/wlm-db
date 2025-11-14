@@ -11,8 +11,6 @@ import {
 } from '../../src/operations/onprem-tco-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_REGION, MSSQL } from '../../src/utils/consts';
 import { prisma } from '../../src/utils/prisma-utils';
-import '../simulator/scopes/aws/ec2-scope';
-import '../simulator/scopes/aws/pricing-scope';
 import { convertGiBToBytes } from '../../src/utils/utils';
 
 const reportData = {

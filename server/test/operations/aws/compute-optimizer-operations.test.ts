@@ -5,14 +5,6 @@ import {
     manageInstanceRecommendationPreReqs,
     translateFindingReasonCode
 } from '../../../src/operations/aws/compute-optimizer-operations';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/aws/pricing-scope';
-import '../../simulator/scopes/aws/compute-optimizer-scope';
-import '../../simulator/scopes/aws/cloud-watch-scope';
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/aws/ec2-scope';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import { getEc2Arn } from '../../../src/utils/utils';
 

@@ -1,9 +1,4 @@
 import { afterAll, beforeAll } from 'vitest';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/aws/ssm-scope';
 import { STORAGE_TYPE } from '@prisma/client';
 import mssqlResponse from '../../simulator/responses/workload/mssql-operations-response.json';
 import {

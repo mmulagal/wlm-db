@@ -1,8 +1,4 @@
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
-import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../simulator/scopes/cloud-manager/fsx-core-scope';
-import '../simulator/scopes/aws/ssm-scope';
 import {
     checkScriptNeedsUpdate,
     getFileSystemCredentialsStatus,

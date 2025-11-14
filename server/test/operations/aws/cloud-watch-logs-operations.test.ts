@@ -2,9 +2,6 @@ import {
     setLogGroupRetentionPolicy,
     cloudWatchLogsLogger
 } from '../../../src/operations/aws/cloud-watch-logs-operations';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/aws/cloud-watch-logs-scope';
 import { CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
 describe('setLogGroupRetentionPolicy', () => {

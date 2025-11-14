@@ -1,12 +1,5 @@
 import { getCloudformationClient, listStacks, createStack } from '../../../src/lib/aws/cloud-formation';
-
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
-
-import '../../simulator/scopes/aws/cloud-formation-scope';
 
 const CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
 

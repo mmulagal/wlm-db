@@ -1,11 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { describeDirectories } from '../../../src/lib/aws/directory-service';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import adsResponse from '../../simulator/responses/aws/list-ads.json';
-import '../../simulator/scopes/aws/directory-service-scope';
-import '../../simulator/scopes/opentelemetry-scope';
 
 const credentialsid = `${faker.string.alphanumeric(20)}`;
 

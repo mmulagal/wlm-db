@@ -18,11 +18,6 @@ import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-res
 import ssmResponse from '../../simulator/responses/aws/ssm-response.json';
 import fsxOntapRegions from '../../simulator/responses/aws/list-fsx-ontap-regions.json';
 import getConnectionStatusResponse from '../../simulator/responses/aws/ssm-connection-status.json';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/aws/ssm-scope';
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import putParameterResponse from '../../simulator/responses/aws/ssm-put-parameter.json';
 import getParameterResponse from '../../simulator/responses/aws/ssm-get-parameter.json';
 import describePatchStatesResponse from '../../simulator/responses/aws/ssm-describe-patch-states.json';

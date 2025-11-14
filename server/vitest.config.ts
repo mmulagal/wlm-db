@@ -7,15 +7,16 @@ export default defineConfig({
         ...(isGitHubActions
             ? {}
             : {
-                  pool: 'threads',
-                  poolOptions: {
-                      threads: {
-                          maxThreads: 4,
-                          minThreads: 1,
-                          useAtomics: true
-                      }
-                  }
-              }),
+                pool: 'threads',
+                poolOptions: {
+                    threads: {
+                        maxThreads: 4,
+                        minThreads: 1,
+                        useAtomics: true
+                    }
+                }
+            }),
+        setupFiles: ['./test/setup.ts'],
         testTimeout: 30000,
         coverage: {
             reporter: isGitHubActions ? ['basic'] : ['text', 'html']

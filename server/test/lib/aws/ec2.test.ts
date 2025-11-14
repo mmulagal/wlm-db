@@ -22,11 +22,6 @@ import {
 import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
 // This file.  describeRegions is there.  Add similarly for describeInstance.
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/aws/ec2-scope';
-import '../../simulator/scopes/opentelemetry-scope';
 import ec2Images from '../../simulator/responses/aws/ec2-images.json';
 import fsxRegions from '../../simulator/responses/aws/list-fsx-regions.json';
 import routeTables from '../../simulator/responses/aws/list-route-tables.json';

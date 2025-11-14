@@ -1,11 +1,3 @@
-import '../../../simulator/scopes/aws/ssm-scope';
-import '../../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../../simulator/scopes/aws/fsx-scope';
-import '../../../simulator/scopes/aws/cloud-watch-logs-scope';
-import '../../../simulator/scopes/aws/cloud-watch-scope';
-import '../../../simulator/scopes/aws/s3-scope';
-
 import { JOBTYPE, JOBSTATUS } from '@prisma/client';
 import { createResource, upsertDatabaseInstance, deleteResource } from '../../../../src/lib/database/db';
 import { oracleOptimizeStorageOS } from '../../../../src/operations/continuous-optimization/oracle/storage-os-optimize-operations';

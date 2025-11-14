@@ -79,15 +79,31 @@ function initialize() {
                         format(
                             ...loggingEvent.data.map(log => {
                                 try {
-                                    return isObject(log)
-                                        ? stringifyObject(hideSecretsValues(structuredClone(log)))
-                                        : log;
+                                    if (isObject(log)) {
+                                        // Simple safe cloning with fallback
+                                        let safeLog;
+                                        try {
+                                            safeLog = structuredClone(log);
+                                        } catch {
+                                            // Simple fallback - just extract essential properties.
+                                            // These fields (message, code, statusCode, type) are chosen because they are commonly present in error objects or API responses,
+                                            // and provide useful context for debugging when structured cloning fails (e.g., due to circular references or non-serializable values).
+                                            const uncloneableLog = log as any;
+                                            safeLog = {
+                                                message: uncloneableLog?.message,
+                                                code: uncloneableLog?.code,
+                                                statusCode: uncloneableLog?.statusCode,
+                                                type: 'uncloneable_object'
+                                            };
+                                        }
+                                        return stringifyObject(hideSecretsValues(safeLog));
+                                    }
                                 } catch (error) {
                                     // TODO: Remove me: Temporary catch to identify #<Promise> could not be cloned
                                     // eslint-disable-next-line no-console
                                     console.log('ERROR in LOG MESSAGING', error);
                                 }
-                                return log;
+                                return String(log);
                             })
                         )
                 };

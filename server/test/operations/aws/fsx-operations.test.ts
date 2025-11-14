@@ -1,14 +1,5 @@
 import { faker } from '@faker-js/faker';
 import { isEmpty } from 'lodash-es';
-import '../../simulator/scopes/aws/ec2-scope';
-import '../../simulator/scopes/aws/fsx-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/aws/ssm-scope';
-import '../../simulator/scopes/aws/cloud-watch-logs-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/cloud-manager/fsx-core-scope';
 
 import { DEFAULT_AWS_REGION, DEFAULT_INSTANCE_NAME } from '../../../src/utils/consts';
 import {

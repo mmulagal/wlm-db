@@ -10,13 +10,6 @@ import {
     pollSSMConnectionStatus
 } from '../../../src/operations/aws/ssm-operations';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/aws/ssm-scope';
-import '../../simulator/scopes/aws/ec2-scope';
-import '../../simulator/scopes/aws/bedrock-scope';
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import { SSMParameterObject } from '../../../src/utils/common-types';
 import getParameterResponse from '../../simulator/responses/aws/ssm-get-parameter.json';
 import { ACCOUNTID } from '../../../src/utils/consts';

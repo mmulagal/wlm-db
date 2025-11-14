@@ -1,9 +1,4 @@
 import { faker } from '@faker-js/faker';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/aws/cloud-watch-scope';
-import '../../simulator/scopes/opentelemetry-scope';
 import ms from 'ms';
 import { getMetricStatistics, getCloudWatchMetrics } from '../../../src/lib/aws/cloud-watch';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';

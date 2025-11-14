@@ -5,10 +5,6 @@ import {
     getEbsManualModeStorageSavings
 } from '../../../src/lib/cloud-manager/marketing';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/cloud-manager/marketing-scope';
 import {
     AutomaticModeMarketingRequestBody,
     ManualModeEbsComparisonV2Response,

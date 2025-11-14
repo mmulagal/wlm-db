@@ -1,12 +1,4 @@
 import registerSsmLink from '../../../src/lib/cloud-manager/link-service';
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/cloud-manager/link-service-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/jwt-scope';
-import '../../simulator/scopes/cloud-manager/wlmdb-scope';
-import '../../simulator/scopes/cloud-manager/fsx-core-scope';
 
 describe('SSM link service', () => {
     it('Register SSM link', async () => {

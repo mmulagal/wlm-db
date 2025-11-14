@@ -1,10 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { GetCostAndUsageCommandInput } from '@aws-sdk/client-cost-explorer';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import GetCostAndUsageCommandResponse from '../../simulator/scopes/aws/cost-explorer-scope';
-import '../../simulator/scopes/opentelemetry-scope';
 import { getCostAndUsage } from '../../../src/lib/aws/cost-explorer';
 
 describe('Billing Lib', () => {

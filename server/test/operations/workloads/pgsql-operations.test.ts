@@ -9,11 +9,7 @@ import {
 } from '../../../src/operations/workloads/pgsql/pgsql-operations';
 import { DatabaseInstance, PgSqlInstanceDetails } from '../../../src/utils/common-types';
 import { ServerState, STORAGE_PROTOCOLS } from '../../../src/utils/consts';
-import '../../simulator/scopes/aws/ssm-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import { parsePgSqlInstanceInfo } from '../../../src/utils/utils';
-import '../../simulator/scopes/aws/fsx-scope';
 
 describe('PgSql Database Operations', () => {
     const credentialsId = 'test-credentials-id';

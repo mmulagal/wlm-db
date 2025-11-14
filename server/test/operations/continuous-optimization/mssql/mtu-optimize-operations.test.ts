@@ -1,7 +1,3 @@
-import '../../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../../simulator/scopes/aws/ssm-scope';
-import '../../../simulator/scopes/aws/cloud-watch-logs-scope';
 import {
     optimizeMTUAlignment,
     getFSxMTUValue,

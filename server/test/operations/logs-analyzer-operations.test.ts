@@ -9,15 +9,6 @@ import {
 
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import { ACCOUNT_ID } from '../utils/consts';
-
-import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../simulator/scopes/aws/ssm-scope';
-import '../simulator/scopes/aws/bedrock-scope';
-import '../simulator/scopes/aws/ec2-scope';
-import '../simulator/scopes/aws/iam-scope';
-import '../simulator/scopes/aws/s3-scope';
-import '../simulator/scopes/aws/cloud-watch-logs-scope';
 import waitForJobCompletion from '../utils/utils';
 
 const TEST_RESOURCE_ID = '36E53042-04E8-40C9-AE69-26E56CB0D216';

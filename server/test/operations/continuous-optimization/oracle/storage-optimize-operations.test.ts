@@ -1,10 +1,3 @@
-import '../../../simulator/scopes/aws/ssm-scope';
-import '../../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../../simulator/scopes/aws/fsx-scope';
-import '../../../simulator/scopes/aws/cloud-watch-logs-scope';
-import '../../../simulator/scopes/aws/cloud-watch-scope';
-
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
 import { optimizeOracleStorageLayout } from '../../../../src/operations/continuous-optimization/oracle/storage-optimize-operations';

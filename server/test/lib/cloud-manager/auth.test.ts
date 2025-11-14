@@ -1,5 +1,4 @@
 import { getWfServiceToken, getBxpServiceToken } from '../../../src/lib/cloud-manager/auth';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 
 describe('Get service token', () => {
     it('should return service token for WF intracluster services', async () => {

@@ -1,8 +1,4 @@
 import { getModelAvailability, listFoundationModels, listInferenceProfiles } from '../../../src/lib/aws/bedrock';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/aws/bedrock-scope';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
 
 describe('getModelAvailability', () => {

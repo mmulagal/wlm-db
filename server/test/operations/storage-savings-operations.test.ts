@@ -1,13 +1,3 @@
-import '../simulator/scopes/opentelemetry-scope';
-import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../simulator/scopes/cloud-manager/marketing-scope';
-import '../simulator/scopes/aws/ec2-scope';
-import '../simulator/scopes/aws/compute-optimizer-scope';
-import '../simulator/scopes/aws/ssm-scope';
-import '../simulator/scopes/aws/pricing-scope';
-import '../simulator/scopes/aws/cloud-watch-scope';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 import { inventoryDemoData } from '../../src/utils/demo-utils/demoInventoryData';
 import {

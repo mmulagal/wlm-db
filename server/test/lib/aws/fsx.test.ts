@@ -1,10 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { ListTagsForResourceCommandInput } from '@aws-sdk/client-fsx';
 import { fsxnBackupWithModifiedCreationTime } from '../../simulator/scopes/aws/fsx-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/opentelemetry-scope';
 import fsxFilesystems from '../../simulator/responses/aws/list-fsx-filesystems.json';
 import fsxVolumes from '../../simulator/responses/aws/list-fsx-volumes.json';
 import fsxSvms from '../../simulator/responses/aws/list-fsx-svms.json';

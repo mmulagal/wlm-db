@@ -1,11 +1,3 @@
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/marketing-scope';
-import '../../simulator/scopes/aws/ec2-scope';
-import '../../simulator/scopes/aws/compute-optimizer-scope';
-import '../../simulator/scopes/aws/ssm-scope';
 import {
     handleMarketingApiFsxCalculationObject,
     formatManualStorageSavingsCalculationMetrics

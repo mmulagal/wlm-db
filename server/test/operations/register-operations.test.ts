@@ -1,14 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 
-import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../simulator/scopes/aws/ssm-scope';
-import '../simulator/scopes/aws/bedrock-scope';
-import '../simulator/scopes/aws/ec2-scope';
-import '../simulator/scopes/aws/iam-scope';
-import '../simulator/scopes/aws/s3-scope';
-import '../simulator/scopes/aws/cloud-watch-logs-scope';
 import {
     registerDatabaseServerInstances,
     manageSqlServerV2,

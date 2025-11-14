@@ -590,10 +590,12 @@ async function manualModeComputeLicenseDetails(
 
     return {
         compute: {
+            deploymentType: sqlServerDeploymentType,
             existing: computeDetails,
             recommended: recommendedComputeDetails
         },
         license: {
+            deploymentType: sqlServerDeploymentType,
             existing: licenseDetails,
             recommended: recommendedLicenseDetails
         }

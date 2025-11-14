@@ -5,11 +5,6 @@ import {
 import { LOGS_ANALYZER_MODEL_IDS } from '../../../src/utils/logs-analyzer/logs-analyzer-consts';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/aws/bedrock-scope';
-import '../../simulator/scopes/aws/ssm-scope';
-
 describe('getInferenceProfileFromModelId', () => {
     it('should return the inferenceProfileArn when modelId matches', async () => {
         const result = await getInferenceProfileFromModelId(

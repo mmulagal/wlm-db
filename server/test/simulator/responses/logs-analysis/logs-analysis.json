@@ -458,7 +458,7 @@
             ]
         },
         {
-            "error": "Error: 28405, Severity: 15, State: 1.",
+            "error": "Error: 28405, Severity: 17, State: 1.",
             "cause": "This error indicates a critical failure during error handling. SQL Server encountered a second error while trying to handle an initial error, resulting in an unrecoverable state. This is a serious issue that can lead to database instability or corruption.",
             "context": "Critical error handling failure in SQL Server, potentially caused by cascading issues with storage I/O operations on AWS FSx for NetApp ONTAP requiring immediate investigation.",
             "count": 49,
@@ -472,7 +472,7 @@
                 "Monitor storage performance metrics in AWS CloudWatch to identify potential bottlenecks in the FSx for NetApp ONTAP configuration.",
                 "Consider increasing the timeout values for storage operations if the environment experiences intermittent network latency."
             ],
-            "severity": "15",
+            "severity": "17",
             "tags": [
                 "Storage"
             ],

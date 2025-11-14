@@ -1,9 +1,3 @@
-import '../../simulator/scopes/aws/ssm-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/aws/fsx-scope';
-import '../../simulator/scopes/aws/ec2-scope';
-
 import { isEmpty } from 'lodash-es';
 import {
     getOracleDatabaseHostInstanceSummary,
