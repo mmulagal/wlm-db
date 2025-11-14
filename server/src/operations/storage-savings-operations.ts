@@ -20,25 +20,26 @@ import {
 import {
     formatManualStorageSavingsCalculationMetrics,
     formatStorageSavingsCalculationMetrics,
-    getMarketingApiManualModeRequestBody,
-    handleMarketingApiFsxCalculationObject,
-    invokeMarketingApi
-} from './cloud-manager/marketing-operations';
+    handleMarketingApiFsxCalculationObject
+} from './cloud-manager/marketing/marketing-operations';
 import getLogger from '../utils/logger';
-import { fsxStorageCapacityBreakdown, getMonthlyPriceFromHourlyPrice } from '../utils/utils';
+import { fsxStorageCapacityBreakdown, getMonthlyPriceFromHourlyPrice, isMultiAzDeployment } from '../utils/utils';
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { getSqlInstanceLicenseRecommendations, manualModeComputeLicenseDetails } from './recommendation-operations';
-import { getManualModeStorageSavings } from '../lib/cloud-manager/marketing';
+import { getEbsManualModeStorageSavings, getFsxwManualModeStorageSavings } from '../lib/cloud-manager/marketing';
 import {
-    ManualModeEbsComparisonResponse,
+    ManualModeEbsComparisonV2Response,
     ManualModeFsxwComparisonResponse,
-    ManualModeMarketingRequestBody,
     StorageSummary
 } from '../utils/marketing-types';
+import { invokeMarketingApi } from './cloud-manager/marketing/marketing-operations-utils';
+import {
+    getEbsMarketingApiManualModeRequestBody,
+    getFsxwMarketingApiManualModeRequestBody
+} from './cloud-manager/marketing/marketing-request-utils';
 
 const logger = getLogger();
-
 interface CalculationResponse {
     ebsCalculation?: EBSCostCalculationRespType;
     ebsCloneCalculation?: EBSCloneCostCalculationRespType;
@@ -984,63 +985,96 @@ async function performManualModeStorageSavingsCalculations(
         nodeCount,
         isOnpremTcoFlow
     });
-    const marketingRequestBody = getMarketingApiManualModeRequestBody(region, params) as ManualModeMarketingRequestBody;
-
-    if (marketingRequestBody?.instances) {
+    if (!isEmpty(params?.ec2Instances[0]?.volumes)) {
         // EBS flow
-        const { ebsTotal, fsx, single, multi } = await getManualModeStorageSavings<ManualModeEbsComparisonResponse>(
-            accountId,
-            marketingRequestBody
-        );
-
-        const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow);
-
-        const singleFsxCalculationData = single?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation, single.fsx_cost_calculation_no_snapshot)
-            : undefined;
-        const multiFsxCalculationData = multi?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
-            : undefined;
-
-        return {
-            compute,
-            license,
-            ebs: ebsTotal,
-            fsx,
-            ...(singleFsxCalculationData && {
-                single: {
-                    fsxCalculation: singleFsxCalculationData,
-                    fsxBreakdown: fsxStorageCapacityBreakdown(
-                        singleFsxCalculationData.totalStorageCapacity,
-                        params.sqlServerDeploymentType!
-                    )
-                }
-            }),
-            ...(multiFsxCalculationData && {
-                multi: {
-                    fsxCalculation: multiFsxCalculationData,
-                    fsxBreakdown: fsxStorageCapacityBreakdown(
-                        multiFsxCalculationData.totalStorageCapacity,
-                        params.sqlServerDeploymentType!
-                    )
-                }
-            }),
-            totalSummary: {
-                existing:
-                    Number(ebsTotal.total || 0) +
-                    Number(compute?.existing?.computeMonthlyPrice || 0) +
-                    Number(license?.existing?.licenseMonthlyPrice || 0),
-                recommended:
-                    fsx.total +
-                    Number(compute?.recommended?.computeMonthlyPrice || 0) +
-                    Number(license?.recommended?.licenseMonthlyPrice || 0)
-            }
-        };
+        return handleEbsWorkflow(accountId, region, params, nodeCount, isOnpremTcoFlow);
     }
-    // EBS flow ends
+    return handleFsxwWorkflow(region, params, accountId, nodeCount);
+}
 
-    // FSXw flow
-    const resp = await getManualModeStorageSavings<ManualModeFsxwComparisonResponse>(accountId, marketingRequestBody);
+async function handleEbsWorkflow(
+    accountId: string,
+    region: string,
+    params: ManualStorageSavingsRequestBodyType,
+    nodeCount: number,
+    isOnpremTcoFlow: boolean
+) {
+    logger.info('Handling EBS workflow for manual mode storage savings calculation', {
+        accountId,
+        region,
+        params,
+        nodeCount,
+        isOnpremTcoFlow
+    });
+
+    const { sqlServerDeploymentType } = params;
+    const ebsMarketingRequestBody = getEbsMarketingApiManualModeRequestBody(region, params);
+
+    const {
+        ebsTotal,
+        fsx,
+        fsx_calculation: fsxCalculation,
+        fsx_cost_calculation_no_snapshot: fsxCostCalculationNoSnapshot
+    } = await getEbsManualModeStorageSavings<ManualModeEbsComparisonV2Response>(accountId, ebsMarketingRequestBody);
+    const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow);
+
+    const isMultiAz = isMultiAzDeployment(sqlServerDeploymentType);
+
+    const fsxCalculationData = handleMarketingApiFsxCalculationObject(fsxCalculation, fsxCostCalculationNoSnapshot);
+
+    return {
+        compute,
+        license,
+        ebs: ebsTotal,
+        fsx,
+        ...(!isMultiAz && {
+            single: {
+                fsxCalculation: fsxCalculationData,
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    fsxCalculationData.totalStorageCapacity,
+                    sqlServerDeploymentType!
+                )
+            }
+        }),
+        ...(isMultiAz && {
+            multi: {
+                fsxCalculation: fsxCalculationData,
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    fsxCalculationData.totalStorageCapacity,
+                    sqlServerDeploymentType!
+                )
+            }
+        }),
+        totalSummary: {
+            existing:
+                Number(ebsTotal.total || 0) +
+                Number(compute?.existing?.computeMonthlyPrice || 0) +
+                Number(license?.existing?.licenseMonthlyPrice || 0),
+            recommended:
+                fsx.total +
+                Number(compute?.recommended?.computeMonthlyPrice || 0) +
+                Number(license?.recommended?.licenseMonthlyPrice || 0)
+        }
+    };
+}
+
+async function handleFsxwWorkflow(
+    region: string,
+    params: ManualStorageSavingsRequestBodyType,
+    accountId: string,
+    nodeCount: number
+) {
+    const fsxwMarketingRequestBody = getFsxwMarketingApiManualModeRequestBody(region, params);
+    if (!fsxwMarketingRequestBody) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            'No FSxW configuration found for the provided manual mode parameters. Please ensure that the request includes valid FSxW configuration details such as file system type, storage capacity, and deployment type.'
+        );
+    }
+    const resp = await getFsxwManualModeStorageSavings<ManualModeFsxwComparisonResponse>(
+        accountId,
+        fsxwMarketingRequestBody
+    );
 
     const {
         fsx_calculation: fsxCalculation,
@@ -1060,7 +1094,7 @@ async function performManualModeStorageSavingsCalculations(
         fsx,
         fsxw,
         ...(fsxCalculationData && {
-            [params.sqlServerDeploymentType === 'FCI' ? 'multi' : 'single']: {
+            [isMultiAzDeployment(params.sqlServerDeploymentType) ? 'multi' : 'single']: {
                 fsxCalculation: fsxCalculationData,
                 fsxBreakdown: fsxStorageCapacityBreakdown(
                     fsxCalculationData.totalStorageCapacity,
@@ -1079,7 +1113,6 @@ async function performManualModeStorageSavingsCalculations(
                 Number(license?.recommended?.licenseMonthlyPrice || 0)
         }
     };
-    // FSXw flow ends
 }
 
 async function getManualModeStorageSavingsCalculationMetrics(

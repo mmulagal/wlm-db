@@ -5,7 +5,8 @@ import getLogger from '../../utils/logger';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import {
     CalculateEbsComparisonResponse,
-    ManualModeMarketingRequestBody,
+    ManualModeMarketingRequestBodyEBS,
+    ManualModeMarketingRequestBodyFsxW,
     StorageInstanceResponse,
     StorageVolumesResponse,
     AutomaticModeMarketingRequestBody
@@ -53,14 +54,42 @@ async function getStorageSavings(
     return response;
 }
 
-async function getManualModeStorageSavings<T>(accountId: string, params: ManualModeMarketingRequestBody) {
-    logger.info('Get manual mode storage savings from marketing APIs:', { accountId, params });
-    let url = `accounts/${accountId}/marketing/v1/ebs/db/calculate`;
-    if (!params.instances) {
-        url = `accounts/${accountId}/marketing/v1/fsxw/calculate`;
+async function getEbsManualModeStorageSavings<T>(accountId: string, params: ManualModeMarketingRequestBodyEBS) {
+    logger.info('Get EBS manual mode storage savings from marketing APIs:', { accountId, params });
+    const url = `accounts/${accountId}/marketing/v2/ebs/calculate`;
+
+    logger.info('Requesting EBS manual mode API endpoint:', { url });
+
+    const cacheKey = generateHash(JSON.stringify(params));
+    if (!process.env.TEST && hasCache(MARKETING_API_TCO, cacheKey)) {
+        return readFromCacheByKey(MARKETING_API_TCO, cacheKey) as T;
     }
 
-    logger.info('URL>>>', url);
+    const response = await gotInstanceForInternalRequest
+        .post(url, {
+            prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+            headers: {
+                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
+                ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
+                    [HEADERS.SIMULATOR]: 'true'
+                })
+            },
+            json: params
+        })
+        .json<T>();
+
+    if (!isEmpty(response)) {
+        writeToCache(MARKETING_API_TCO, cacheKey, response);
+    }
+    return response;
+}
+
+async function getFsxwManualModeStorageSavings<T>(accountId: string, params: ManualModeMarketingRequestBodyFsxW) {
+    logger.info('Get FSXW manual mode storage savings from marketing APIs:', { accountId, params });
+
+    const url = `accounts/${accountId}/marketing/v1/fsxw/calculate`;
+
+    logger.info('Calling FSxW manual mode API endpoint:', { url });
 
     const cacheKey = generateHash(JSON.stringify(params));
     if (!process.env.TEST && hasCache(MARKETING_API_TCO, cacheKey)) {
@@ -126,4 +155,10 @@ async function getVolumesListFromStorage(accountId: string, credentialsId: strin
     return response;
 }
 
-export { getStorageSavings, getManualModeStorageSavings, getVolumesListFromStorage, getInstanceListFromStorage };
+export {
+    getStorageSavings,
+    getEbsManualModeStorageSavings,
+    getFsxwManualModeStorageSavings,
+    getVolumesListFromStorage,
+    getInstanceListFromStorage
+};

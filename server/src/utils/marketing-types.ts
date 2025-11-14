@@ -302,12 +302,14 @@ interface InstanceEbsData extends EbsVolumeTypesCalculation {
     isPrimary: boolean;
 }
 
-interface ManualModeEbsComparisonResponse {
-    instanceEbs: InstanceEbsData[];
-    fsx: StorageSummary;
+interface ManualModeEbsComparisonV2Response {
+    ebsResults: EbsVolumeTypesCalculation;
     ebsTotal: StorageSummary;
-    single: FsxCostCalculations;
-    multi: FsxCostCalculations;
+    fsx: StorageSummary;
+    fsx_calculation: FsxCalculation;
+    fsx_cost_calculation_no_snapshot: FsxNoSnapshotCalculation;
+    fsx_snapshot_cost_calculation: FsxSnapshotCalculation;
+    fsx_clone_cost_calculation: FsxCloneCalculation;
     fsx_optimized?: StorageSummary;
     fsx_optimized_single?: FsxCostCalculations;
 }
@@ -340,36 +342,32 @@ interface AutomaticModeMarketingRequestBodyFsxW {
     monthlyChangeRate?: number;
 }
 
+interface EbsVolumeManual {
+    volumeType: string;
+    volumeNumber: number;
+    storageAmount: {
+        size: number;
+        unit: string;
+    };
+    volumeIops?: number;
+    throughput?: number;
+    snapshotFreq: string;
+    snapshotAmountChange: {
+        size: number;
+        unit: string;
+    };
+}
+
 interface ManualModeMarketingRequestBodyEBS {
     useCase: string;
     region: string;
     deploymentType: string;
-    snapshots: {
-        snapshotFreq: string;
-        snapshotPercentageChange: number;
-    };
+    fsxSnapshotFreq: string;
     clones?: {
         cloneEnvs: number;
         changeRate: number;
     };
-    instances: [
-        {
-            instanceName?: string;
-            isPrimary: boolean;
-            volumes: [
-                {
-                    volumeType: string;
-                    volumeNumber: number;
-                    storageAmount: {
-                        size: number;
-                        unit: string;
-                    };
-                    volumeIops?: number;
-                    throughput?: number;
-                }
-            ];
-        }
-    ];
+    volumes: EbsVolumeManual[];
 }
 
 interface StorageVolume {
@@ -409,32 +407,10 @@ interface ManualModeMarketingRequestBodyFsxW {
     useCase: string;
     region: string;
     deploymentType: string;
-    snapshots: {
-        snapshotFreq: string;
-        snapshotPercentageChange: number;
-    };
     clones?: {
         cloneEnvs: number;
         changeRate: number;
     };
-    instances: [
-        {
-            instanceName?: string;
-            isPrimary: boolean;
-            volumes: [
-                {
-                    volumeType: string;
-                    volumeNumber: number;
-                    storageAmount: {
-                        size: number;
-                        unit: string;
-                    };
-                    volumeIops?: number;
-                    throughput?: number;
-                }
-            ];
-        }
-    ];
 }
 
 interface FsxwCostCalculation {
@@ -512,9 +488,7 @@ type ManualModeFsxwComparisonResponse = {
     fsx_clone_cost_calculation: FsxCloneCalculation;
 };
 
-type ManualModeComparisionResponse = ManualModeEbsComparisonResponse | ManualModeFsxwComparisonResponse;
-
-type ManualModeMarketingRequestBody = ManualModeMarketingRequestBodyFsxW | ManualModeMarketingRequestBodyEBS;
+type ManualModeComparisionResponse = ManualModeEbsComparisonV2Response | ManualModeFsxwComparisonResponse;
 
 type AutomaticModeMarketingRequestBody = AutomaticModeMarketingRequestBodyFsxW | MarketingRequestBody;
 
@@ -528,9 +502,11 @@ export {
     FsxCostCalculations,
     CalculateEbsComparisonResponse,
     InstanceEbsData,
-    ManualModeEbsComparisonResponse,
+    ManualModeEbsComparisonV2Response,
     MarketingRequestBody,
-    ManualModeMarketingRequestBody,
+    ManualModeMarketingRequestBodyEBS,
+    EbsVolumeManual,
+    ManualModeMarketingRequestBodyFsxW,
     StorageVolume,
     StorageVolumesResponse,
     StorageInstance,
@@ -538,5 +514,6 @@ export {
     ManualModeFsxwComparisonResponse,
     FsxwCostCalculation,
     ManualModeComparisionResponse,
-    AutomaticModeMarketingRequestBody
+    AutomaticModeMarketingRequestBody,
+    EbsVolumeTypesCalculation
 };

@@ -13,7 +13,7 @@ import {
     RESOURCE_SOURCE,
     DatabaseTypes,
     SqlServerDeploymentModel,
-    DEMO_STANADLONE_SQL_SERVER_ID,
+    DEMO_STANDALONE_SQL_SERVER_ID,
     STORAGE_PROTOCOLS
 } from '../utils/consts';
 import { checkAccount, createResource, upsertDatabaseInstance } from '../lib/database/db';
@@ -647,7 +647,7 @@ async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string
         if (
             sqlDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
             databaseInstanceDetails.length &&
-            databaseInstanceDetails[0].database_instance_id === DEMO_STANADLONE_SQL_SERVER_ID
+            databaseInstanceDetails[0].database_instance_id === DEMO_STANDALONE_SQL_SERVER_ID
         ) {
             // Change VolumeType based on the index
             volType = index % 2 === 0 ? 'io1' : 'io2';
