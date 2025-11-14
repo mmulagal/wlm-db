@@ -220,7 +220,7 @@ async function aoagStorageSavingsCalculations(
         const allNodesExistingLicensePrice = allNodesComputeLicenseDetails.license.existing.licenseHourlyPrice;
         const existingLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesExistingLicensePrice || 0);
 
-        const { compute, license } = allNodesComputeLicenseDetails;
+        const { compute, license, deploymentType, hostname } = allNodesComputeLicenseDetails;
 
         // recommended compute and license details
         const allNodesRecommendedComputePrice = allNodesComputeLicenseDetails.compute.recommended.computeHourlyPrice;
@@ -241,8 +241,8 @@ async function aoagStorageSavingsCalculations(
               )
             : undefined;
         return {
-            compute,
-            license,
+            compute: { ...compute, deploymentType, hostname },
+            license: { ...license, deploymentType, hostname },
             ebs: {
                 iops: allEbsDetails?.iops,
                 throughput: allEbsDetails?.throughput,
@@ -447,11 +447,13 @@ async function retrieveComputeAndLicenseCost(
         recommendedLicense: { message: licenseMessage, sqlServerEdition: rSqlServerEdition, price: rLicensePrice }
     } = response;
 
-    const [{ windowsOsVersion }] = ec2HostDetails.sqlServerInstances || [];
+    const [{ windowsOsVersion, sqlServerDeploymentType, sqlServerName }] = ec2HostDetails.sqlServerInstances || [];
 
     return {
         ec2InstanceId,
         ec2InstanceType,
+        deploymentType: sqlServerDeploymentType,
+        hostname: sqlServerName,
         compute: {
             existing: {
                 instanceType: eInstanceType,
@@ -578,13 +580,22 @@ async function performStorageSavingsCalculations(
             ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
             : undefined;
 
+        const { compute, license, deploymentType, hostname } = computeAndLicenseCostList[0] || {};
         return {
             compute: params.bulk
-                ? computeAndLicenseCostList.map(item => item.compute)
-                : computeAndLicenseCostList[0]?.compute,
+                ? computeAndLicenseCostList.map(item => ({
+                      ...item.compute,
+                      deploymentType: item.deploymentType,
+                      hostname: item.hostname
+                  }))
+                : { ...compute, deploymentType, hostname },
             license: params.bulk
-                ? computeAndLicenseCostList.map(item => item.license)
-                : computeAndLicenseCostList[0]?.license,
+                ? computeAndLicenseCostList.map(item => ({
+                      ...item.license,
+                      deploymentType: item.deploymentType,
+                      hostname: item.hostname
+                  }))
+                : { ...license, deploymentType, hostname },
             ...(singleFsxCalculationData && {
                 single: {
                     fsxCalculation: singleFsxCalculationData,
@@ -629,7 +640,7 @@ async function performStorageSavingsCalculations(
     const isFci = sqlServerInstances.some(
         ({ sqlServerDeploymentType }) => sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT
     );
-    const deploymentType = isAoag
+    const sqlServerDeploymentType = isAoag
         ? SqlServerDeploymentModel.SQL_AOAG_SHORT
         : isFci
         ? SqlServerDeploymentModel.SQL_FCI_SHORT
@@ -666,7 +677,7 @@ async function performStorageSavingsCalculations(
         accountId,
         credentialsId,
         region,
-        deploymentType,
+        sqlServerDeploymentType,
         ebsVolumeIds,
         params,
         instanceIds
@@ -690,13 +701,22 @@ async function performStorageSavingsCalculations(
               fsxOptimizedSingle.fsx_cost_calculation_no_snapshot
           )
         : undefined;
+    const { compute, license, deploymentType, hostname } = computeAndLicenseCostList[0] || {};
     return {
         compute: params.bulk
-            ? computeAndLicenseCostList.map(item => item.compute)
-            : computeAndLicenseCostList[0]?.compute,
+            ? computeAndLicenseCostList.map(item => ({
+                  ...item.compute,
+                  deploymentType: item.deploymentType,
+                  hostname: item.hostname
+              }))
+            : { ...compute, deploymentType, hostname },
         license: params.bulk
-            ? computeAndLicenseCostList.map(item => item.license)
-            : computeAndLicenseCostList[0]?.license,
+            ? computeAndLicenseCostList.map(item => ({
+                  ...item.license,
+                  deploymentType: item.deploymentType,
+                  hostname: item.hostname
+              }))
+            : { ...license, deploymentType, hostname },
         ebs,
         fsx,
         ...(fsxOptimized && { fsxOptimized }),
@@ -710,13 +730,19 @@ async function performStorageSavingsCalculations(
         ...(singleFsxCalculationData && {
             single: {
                 fsxCalculation: singleFsxCalculationData,
-                fsxBreakdown: fsxStorageCapacityBreakdown(singleFsxCalculationData.totalStorageCapacity, deploymentType)
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    singleFsxCalculationData.totalStorageCapacity,
+                    sqlServerDeploymentType
+                )
             }
         }),
         ...(multiFsxCalculationData && {
             multi: {
                 fsxCalculation: multiFsxCalculationData,
-                fsxBreakdown: fsxStorageCapacityBreakdown(multiFsxCalculationData.totalStorageCapacity, deploymentType)
+                fsxBreakdown: fsxStorageCapacityBreakdown(
+                    multiFsxCalculationData.totalStorageCapacity,
+                    sqlServerDeploymentType
+                )
             }
         }),
         ...(fsxOptimizedSingleFsxCalculationData && {
@@ -724,7 +750,7 @@ async function performStorageSavingsCalculations(
                 fsxCalculation: fsxOptimizedSingleFsxCalculationData,
                 fsxBreakdown: fsxStorageCapacityBreakdown(
                     fsxOptimizedSingleFsxCalculationData.totalStorageCapacity,
-                    deploymentType
+                    sqlServerDeploymentType
                 )
             }
         })
@@ -1349,12 +1375,28 @@ async function mixOfAoagAndNonAoagStorageSavingsCalculations(
     ]);
 
     const compute = [
-        ...aoagNodesComputeAndLicenseDetails.map(node => node.compute),
-        ...nonAoagNodesComputeAndLicenseDetails.map(node => node.compute)
+        ...aoagNodesComputeAndLicenseDetails.map(node => ({
+            deploymentType: node.deploymentType,
+            hostname: node.hostname,
+            ...node.compute
+        })),
+        ...nonAoagNodesComputeAndLicenseDetails.map(node => ({
+            deploymentType: node.deploymentType,
+            hostname: node.hostname,
+            ...node.compute
+        }))
     ];
     const license = [
-        ...aoagNodesComputeAndLicenseDetails.map(node => node.license),
-        ...nonAoagNodesComputeAndLicenseDetails.map(node => node.license)
+        ...aoagNodesComputeAndLicenseDetails.map(node => ({
+            deploymentType: node.deploymentType,
+            hostname: node.hostname,
+            ...node.license
+        })),
+        ...nonAoagNodesComputeAndLicenseDetails.map(node => ({
+            deploymentType: node.deploymentType,
+            hostname: node.hostname,
+            ...node.license
+        }))
     ];
 
     // existing compute and license details

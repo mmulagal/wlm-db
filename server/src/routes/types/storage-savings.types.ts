@@ -204,16 +204,40 @@ const StorageSavingsCapacityResponse = Type.Object({
 const StorageSavingsResponse = Type.Intersect([
     StorageSavingsCapacityResponse,
     Type.Object({
-        compute: Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute }),
-        license: Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense })
+        compute: Type.Object({
+            deploymentType: Type.String(),
+            hostname: Type.Optional(Type.String()),
+            existing: StorageSavingsCompute,
+            recommended: StorageSavingsCompute
+        }),
+        license: Type.Object({
+            deploymentType: Type.String(),
+            hostname: Type.Optional(Type.String()),
+            existing: StorageSavingsLicense,
+            recommended: StorageSavingsLicense
+        })
     })
 ]);
 
 const BulkStorageSavingsResponse = Type.Intersect([
     StorageSavingsCapacityResponse,
     Type.Object({
-        compute: Type.Array(Type.Object({ existing: StorageSavingsCompute, recommended: StorageSavingsCompute })),
-        license: Type.Array(Type.Object({ existing: StorageSavingsLicense, recommended: StorageSavingsLicense }))
+        compute: Type.Array(
+            Type.Object({
+                deploymentType: Type.String(),
+                hostname: Type.Optional(Type.String()),
+                existing: StorageSavingsCompute,
+                recommended: StorageSavingsCompute
+            })
+        ),
+        license: Type.Array(
+            Type.Object({
+                deploymentType: Type.String(),
+                hostname: Type.Optional(Type.String()),
+                existing: StorageSavingsLicense,
+                recommended: StorageSavingsLicense
+            })
+        )
     })
 ]);
 
@@ -533,6 +557,8 @@ const License = Type.Object({
 const ComputeLicenseCost = Type.Object({
     ec2InstanceId: Type.String(),
     ec2InstanceType: Type.String(),
+    deploymentType: Type.Optional(Type.String()),
+    hostname: Type.Optional(Type.String()),
     compute: Compute,
     license: License
 });
