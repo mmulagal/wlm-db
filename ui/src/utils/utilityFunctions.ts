@@ -2454,6 +2454,7 @@ export const derivedType = (type: string) => {
     switch (type) {
         case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
         case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+        case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
         case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
         case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
         case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
@@ -2499,6 +2500,7 @@ export const derivedSeverity = (type: string) => {
     switch (type) {
         case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
         case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+        case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
         case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
         case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
         case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
@@ -2534,6 +2536,8 @@ export const derivedSeverity = (type: string) => {
 };
 
 export const oracleAssessmentKeys = [
+    ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
+    ASSESSMENT_CONFIG_NAMES.SWAP_SPACE,
     ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
     ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
     ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
@@ -2577,6 +2581,7 @@ export const getCategoryForAssessment = (assessmentKey: string): string => {
     const categoryMap: { [key: string]: string } = {
         [ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]: 'Storage',
         [ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]: 'Storage',
+        [ASSESSMENT_CONFIG_NAMES.SWAP_SPACE]: 'Storage',
         [ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]: 'Storage',
         [ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]: 'Storage',
         [ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]: 'Storage',

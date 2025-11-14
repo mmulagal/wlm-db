@@ -36,6 +36,7 @@ import {
 import StorageLayoutOracleDialog from './StorageLayoutOracleDialog';
 import StorageConfigOracleDialog from './StorageConfigOracleDialog';
 import StorageConfigOSOracleDialog from './StorageConfigOSOracleDialog';
+import StorageSizingOracleDialog from './StorageSizingOracleDialog';
 
 interface SavingsOpportunity {
     savingsOpportunityPercentage?: number;
@@ -362,6 +363,11 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME:
                 case ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS:
                     return <StorageConfigOSOracleDialog type={type} createOSConfigSection={createONTAPConfigSection} />;
+
+                // Oracle storage sizing cards
+                case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+                case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
+                    return <StorageSizingOracleDialog type={type} />;
             }
         }
         switch (type) {

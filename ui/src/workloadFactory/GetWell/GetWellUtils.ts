@@ -1904,6 +1904,9 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
         transaction_log_drive_size: 'log-drive-size',
         tempdb_drive_size: 'tempdb-drive-size',
 
+        // Oracle storage sizing configurations
+        'Swap space': 'swap-space',
+
         // Storage efficiency configurations
         Compression: 'compression',
         Deduplication: 'deduplication',
@@ -5582,7 +5585,7 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             configKey = 'storageTier';
             break;
         case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
-            configKey = 'fileSystemHeadroom';
+            configKey = dbType === DBType.ORACLE ? 'oracleFileSystemHeadroom' : 'fileSystemHeadroom';
             break;
         case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
             configKey = 'logDriveSize';
@@ -5669,6 +5672,9 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             break;
         case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
             configKey = 'archivePlacement';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
+            configKey = 'oracleSwapSpace';
             break;
     }
     const optimizedInstances = configData?.[configKey]?.optimized || 0;

@@ -1037,7 +1037,8 @@ const DashboardInnerPage = () => {
                     hidePrimaryButton={
                         (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
                             type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
-                            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
+                            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
+                            type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE) &&
                         rowData?.missingPermissions &&
                         rowData?.missingPermissions.length > 0
                     }
@@ -1079,9 +1080,18 @@ const DashboardInnerPage = () => {
                     tagHeight: prev.tagHeight || '281px',
                     data: {
                         title: 'Recommendations',
-                        description: cardDataDefault?.file_system_headroom?.recommendation?.description,
-                        values: cardDataDefault?.file_system_headroom?.recommendation?.values,
-                        valuesHeading: cardDataDefault?.file_system_headroom?.recommendation?.valuesHeading
+                        description:
+                            configEngineType === DBType.ORACLE
+                                ? oracleCardData?.file_system_headroom?.recommendation?.description
+                                : cardDataDefault?.file_system_headroom?.recommendation?.description,
+                        values:
+                            configEngineType === DBType.ORACLE
+                                ? oracleCardData?.file_system_headroom?.recommendation?.values
+                                : cardDataDefault?.file_system_headroom?.recommendation?.values,
+                        valuesHeading:
+                            configEngineType === DBType.ORACLE
+                                ? oracleCardData?.file_system_headroom?.recommendation?.valuesHeading
+                                : cardDataDefault?.file_system_headroom?.recommendation?.valuesHeading
                     }
                 }));
                 break;
@@ -1401,6 +1411,20 @@ const DashboardInnerPage = () => {
                     }
                 }));
                 break;
+            case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
+                setValueCardData({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: '232px',
+                    tagHeight: '329px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.swap_space?.recommendation?.description,
+                        values: oracleCardData?.swap_space?.recommendation?.values,
+                        valuesHeading: oracleCardData?.swap_space?.recommendation?.valuesHeading
+                    }
+                });
+                break;
         }
     }, [selectedConfig, selectedConfigSummary]);
 
@@ -1674,6 +1698,7 @@ const DashboardInnerPage = () => {
             case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
             case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
             case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
                 return (
                     <DashboardConfigsTable
                         configType={selectedConfig}

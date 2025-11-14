@@ -1153,6 +1153,26 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
+                        'oracleFileSystemHeadroom',
+                        'wlm-db-optimize-oracle-file-system-headroom',
+                        'File system headroom',
+                        ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
+                        false
+                    )}
+
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.SWAP_SPACE,
+                        'oracleSwapSpace',
+                        'wlm-db-optimize-oracle-swap-space',
+                        'Swap space',
+                        ASSESSMENT_CONFIG_NAMES.SWAP_SPACE,
+                        false
+                    )}
+
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
                         'oracleBinaryPlacement',
                         'wlm-db-optimize-oracle-binary-placement',

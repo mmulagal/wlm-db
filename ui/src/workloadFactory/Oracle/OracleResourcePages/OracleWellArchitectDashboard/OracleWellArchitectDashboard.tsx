@@ -7,6 +7,7 @@ import OptimizationBreakdown from '../../../GetWell/OptimizationBreakdown/Optimi
 import styles from './OracleWellArchitectDashboard.module.scss';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import StorageLayoutSection from './Categories/StorageLayoutSection';
+import StorageSizingSection from './Categories/StorageSizingSection';
 import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
@@ -263,6 +264,26 @@ const OracleWellArchitectDashboard = () => {
 
                         {/* Adding dummy div to have consistent spacing after filters */}
                         <div style={{ marginBottom: '20px' }} />
+
+                        {(filteredCardData?.headroom || filteredCardData?.swap_space) && (
+                            <div className={styles.sectionTwo}>
+                                <div className={styles.sectionClass}>
+                                    <StorageSizingSection
+                                        styles={styles}
+                                        isAccordionExpanded={isAccordionExpanded}
+                                        setClickedAccordionId={setClickedAccordionId}
+                                        loading={loading}
+                                        handleAccordionExpanded={handleAccordionExpanded}
+                                        isDarkTheme={isDarkTheme}
+                                        optimizePrintState={optimizePrintState}
+                                        oracleCardData={filteredCardData}
+                                        showDismissedConfigurations={showDismissedConfigurations}
+                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
+                                        driftAssessmentData={driftAssessmentData}
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {(filteredCardData?.redologs_placement ||
                             filteredCardData?.templogs_placement ||

@@ -143,7 +143,7 @@ const getOracleOntapOsCardDismissState = (
 // Helper function to get individual configuration dismiss state (similar to MSSQL version)
 const getIndividualConfigDismissState = (
     configName: string,
-    type: 'volume' | 'lun' | 'os',
+    type: 'volume' | 'lun' | 'os' | 'sizing',
     dismissedConfigurations: any
 ): any => {
     let dismissedConfigs: any[] = [];
@@ -153,6 +153,8 @@ const getIndividualConfigDismissState = (
             dismissedConfigurations?.storage?.configuration?.[type === 'volume' ? 'volumes' : 'luns'] || [];
     } else if (type === 'os') {
         dismissedConfigs = dismissedConfigurations?.storage?.configuration?.os || [];
+    } else if (type === 'sizing') {
+        dismissedConfigs = dismissedConfigurations?.storage?.sizing || [];
     }
     const dismissedConfig = dismissedConfigs.find((config: any) => config.configurationName === configName);
 
@@ -347,6 +349,85 @@ const generateStorageLayoutCards = () => {
 
 export const oracleCardData: any = {
     ...generateStorageLayoutCards(),
+    // Storage Sizing cards
+    swap_space: {
+        id: 'swap-space',
+        category: 'storage',
+        mapName: ASSESSMENT_CONFIG_NAMES.SWAP_SPACE,
+        block_one: {
+            value: 'Swap space',
+            type: 'Storage sizing'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Current',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: 'Critical'
+        },
+        block_five: {
+            type: 'Resource type',
+            value: 'EC2 Instance'
+        },
+        block_six: {
+            type: 'Impacted instances',
+            value: ''
+        },
+        recommendation: {
+            title: 'Swap space sizing recommendation',
+            description:
+                'Proper swap sizing ensures that the system can handle memory pressure gracefully, avoiding potential performance degradation or system crashes.',
+            valuesHeading: 'Swap space should be sized relatively to RAM:',
+            values: [
+                'Between 1 GB and 2 GB: 1.5 times the size of the RAM',
+                'Between 2 GB and 16 GB: Equal to the size of the RAM',
+                'More than 16 GB: 16 GB'
+            ]
+        },
+        tags: ['Performance efficiency']
+    },
+    file_system_headroom: {
+        id: 'headroom',
+        category: 'storage',
+        mapName: ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
+        block_one: {
+            value: 'File system headroom',
+            type: 'Storage sizing'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Current',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: 'Critical'
+        },
+        block_five: {
+            type: 'Resource type',
+            value: 'File system'
+        },
+        block_six: {
+            type: 'File system headroom',
+            value: ''
+        },
+        recommendation: {
+            title: 'File system headroom sizing recommendation',
+            description:
+                'To optimize storage performance, provision file system capacity as 1.2 times of total size of provisioned volume.',
+            valuesHeading: 'File system headroom percentages are as follows:',
+            values: ['Under-provisioned: <20%', 'Optimized: 20-100%', 'Over-provisioned: >100%']
+        },
+        tags: ['Performance efficiency']
+    },
     ontap_configuration: {
         id: 'ONTAP',
         category: 'storage',
@@ -449,7 +530,9 @@ const formatCardItem = (
     data: AssessmentResponseInterface
 ): any => {
     const originalName = item?.name || '';
-    const itemName = GETWELL_CONFIG?.[originalName] || originalName;
+    const itemName =
+        originalName === 'headroom' ? 'file_system_headroom' : GETWELL_CONFIG?.[originalName] || originalName;
+
     const status = optimizingData?.[originalName] || item?.status || '';
     const severity = item?.severity || '';
     const categoryVal = 'storage';
@@ -496,10 +579,19 @@ export const formatIndividualCardMainConfig = (
     optimizingData: Record<string, string>
 ): Record<string, any> => {
     const layoutItems = data?.storage?.layout || [];
+    const sizingItems = data?.storage?.sizing || [];
     const cardsData = { ...oracleCardData };
 
     layoutItems.forEach((item: PerConfigInterface) => {
         const itemName = GETWELL_CONFIG?.[item?.name || ''] || item?.name || '';
+        cardsData[itemName] = formatCardItem(item, optimizingData, data);
+    });
+
+    // Process storage sizing items
+    sizingItems.forEach((item: PerConfigInterface) => {
+        const originalName = item?.name || '';
+        const itemName =
+            originalName === 'headroom' ? 'file_system_headroom' : GETWELL_CONFIG?.[originalName] || originalName;
         cardsData[itemName] = formatCardItem(item, optimizingData, data);
     });
 
@@ -517,7 +609,7 @@ const getHighestSeverity = (hasCritical: boolean, hasWarning: boolean): string =
 const processStorageConfigItem = (
     item: PerConfigInterface,
     optimizingData: Record<string, string>,
-    type: 'volume' | 'lun' | 'os',
+    type: 'volume' | 'lun' | 'os' | 'sizing',
     dismissedConfigurations?: any
 ) => {
     let name = item?.name;
@@ -617,6 +709,76 @@ export const formatOntapConfig = (
         ontapOptimizedConfig,
         ontapNotOptimizedConfig,
         highestOntapSeverity: getHighestSeverity(hasCritical, hasWarning)
+    };
+};
+
+// Optimized function to format storage sizing configuration data
+export const formatStorageSizingConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>,
+    showDismissedView: boolean = false
+) => {
+    const sizingList = data?.storage?.sizing;
+
+    if (!sizingList?.length || sizingList[0]?.errorMessage) {
+        return {
+            formatStorageSizingConfigList: [],
+            storageSizingTagsList: [],
+            storageSizingOptimizedConfig: 0,
+            storageSizingNotOptimizedConfig: 0,
+            highestStorageSizingSeverity: 'None'
+        };
+    }
+
+    const formatStorageSizingConfigList: PerConfigInterface[] = [];
+    const allTags: string[] = [];
+    let storageSizingOptimizedConfig = 0;
+    let storageSizingNotOptimizedConfig = 0;
+    let hasCritical = false;
+    let hasWarning = false;
+
+    sizingList?.forEach((item: PerConfigInterface) => {
+        const processedItem = processStorageConfigItem(item, optimizingData, 'sizing', data?.dismissedConfigurations);
+        formatStorageSizingConfigList.push(processedItem);
+
+        // Get the dismiss state for this configuration
+        const dismissedObj = getIndividualConfigDismissState(item?.name || '', 'sizing', data?.dismissedConfigurations);
+        const configState = dismissedObj?.configState;
+
+        // Skip dismissed and postponed configurations from counts
+        if (configState === CONFIG_STATE_ACTIONS.DISMISS || configState === CONFIG_STATE_ACTIONS.POSTPONED) {
+            // Skip this configuration from counting
+        } else {
+            // Count optimized vs not optimized
+            let status = item?.status || '';
+            if (optimizingData?.[item?.name || ''] && optimizingData?.[item?.name || ''] !== '') {
+                status = optimizingData?.[item?.name || ''];
+            }
+
+            // If the configuration is in activating state, count it as optimized
+            if (configState === CONFIG_STATES.ACTIVATING) {
+                storageSizingOptimizedConfig++;
+            } else if (status === 'optimized') {
+                storageSizingOptimizedConfig++;
+            } else {
+                storageSizingNotOptimizedConfig++;
+            }
+        }
+
+        // Track severities
+        if (item?.severity === 'critical') hasCritical = true;
+        if (item?.severity === 'warning') hasWarning = true;
+
+        // Collect tags
+        if (item?.tags) allTags.push(...item.tags);
+    });
+
+    return {
+        formatStorageSizingConfigList,
+        storageSizingTagsList: allTags,
+        storageSizingOptimizedConfig,
+        storageSizingNotOptimizedConfig,
+        highestStorageSizingSeverity: getHighestSeverity(hasCritical, hasWarning)
     };
 };
 
@@ -791,6 +953,14 @@ export const getOracleCardsData = (
     const { formatOsConfigList, osTagsList, osOptimizedConfig, osNotOptimizedConfig, highestOsSeverity } =
         formatOSConfig(data, optimizingData, showDismissedView);
 
+    const {
+        formatStorageSizingConfigList,
+        storageSizingTagsList,
+        storageSizingOptimizedConfig,
+        storageSizingNotOptimizedConfig,
+        highestStorageSizingSeverity
+    } = formatStorageSizingConfig(data, optimizingData, showDismissedView);
+
     // Get dismiss states for ONTAP and OS cards
     const ontapDismissedObj = getOracleOntapOsCardDismissState('ontap_configuration', data);
     const osDismissedObj = getOracleOntapOsCardDismissState('os_configuration', data);
@@ -818,7 +988,11 @@ export const getOracleCardsData = (
         )
     };
 
-    return { cardsData, formatOntapConfigList, formatOsConfigList };
+    return {
+        cardsData,
+        formatOntapConfigList,
+        formatOsConfigList
+    };
 };
 
 // Helper function to process storage card item
@@ -1142,6 +1316,9 @@ export const oracleApplyFilter = (
 
 // Static Oracle category data mapping (for fallback)
 export const getOracleCategoryData = () => ({
+    // Storage Sizing cards (moved to top)
+    swap_space: { category: 'Storage', subCategory: 'Storage sizing' },
+    file_system_headroom: { category: 'Storage', subCategory: 'Storage sizing' },
     // Storage Layout cards
     oracle_binary_placement: { category: 'Storage', subCategory: 'Storage layout' },
     datafiles_placement: { category: 'Storage', subCategory: 'Storage layout' },
@@ -1161,6 +1338,10 @@ export const getOracleCategoryData = () => ({
 
 // Helper function to convert assessment configuration names to technical keys
 const convertOracleAssessmentNameToTechnicalKey = (assessmentName: string): string => {
+    // Special case for headroom -> file_system_headroom
+    if (assessmentName === 'headroom') {
+        return 'file_system_headroom';
+    }
     // Special case for redolog-dg-lun-layout -> log_dg_lun_layout (remove "redo" prefix)
     if (assessmentName === 'redolog-dg-lun-layout') {
         return 'log_dg_lun_layout';
@@ -1189,6 +1370,19 @@ export const getDynamicOracleCategoryData = (assessmentData?: any) => {
                 categoryMapping[technicalKey] = {
                     category: 'Storage',
                     subCategory: 'Storage layout'
+                };
+            }
+        });
+    }
+
+    // Add storage sizing configurations based on actual assessment data
+    if (assessmentData.storage.sizing) {
+        assessmentData.storage.sizing.forEach((sizingConfig: any) => {
+            if (sizingConfig.name) {
+                const technicalKey = convertOracleAssessmentNameToTechnicalKey(sizingConfig.name);
+                categoryMapping[technicalKey] = {
+                    category: 'Storage',
+                    subCategory: 'Storage sizing'
                 };
             }
         });

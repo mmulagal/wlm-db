@@ -889,7 +889,8 @@ export const GETWELL_CONFIG: any = {
     'asm-setup': 'ASM setup',
     'asm-external-redundancy': 'ASM external redundancy',
     'afd-logical-block-size': 'ASM filter driver logical block size alignment',
-    'asmlib-logical-block-size': 'ASMLib logical block size alignment'
+    'asmlib-logical-block-size': 'ASMLib logical block size alignment',
+    'swap-space': 'swap_space'
 };
 
 export const GW_TOOLTIP_KEYS_MAPPING: any = {
@@ -982,6 +983,7 @@ export const ASSESSMENT_CONFIG_NAMES = {
     ASM_EXTERNAL_REDUNDANCY: 'ASM external redundancy',
     AFD_LOGICAL_BLOCK_SIZE: 'ASM filter driver logical block size alignment',
     ASMLIB_LOGICAL_BLOCK_SIZE: 'ASMLib logical block size alignment',
+    SWAP_SPACE: 'Swap space',
     HIGH_AVAILABILITY: 'highAvailability'
 };
 
@@ -1029,7 +1031,8 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]: 'log-drive-size',
         [ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]: 'performance-tier',
         [ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]: 'headroom',
-        [ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]: 'tempdb-drive-size'
+        [ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]: 'tempdb-drive-size',
+        [ASSESSMENT_CONFIG_NAMES.SWAP_SPACE]: 'swap-space'
     },
     STORAGE_CONFIG_MAP: {
         'os-type': 'luns',

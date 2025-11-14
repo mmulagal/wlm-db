@@ -543,6 +543,34 @@ const createOraclePlacementConfig = (configName: string, dismissConfigName: stri
     ]
 });
 
+// Helper function to create Oracle storage sizing configuration
+const createOracleStorageSizingConfig = (
+    configName: string,
+    dismissConfigName: string,
+    headerKey: string,
+    accessor: string
+) => ({
+    assessmentPath: ['storage', 'sizing'],
+    configName,
+    dismissConfigName,
+    isFixSupported: false, // Fix is not supported for Oracle storage sizing configurations
+    dataMapping: (obj: any) => ({
+        [accessor]: obj?.current,
+        totalObjectsAssessed: obj?.totalObjectsAssessed,
+        totalObjectsInViolation: obj?.totalObjectsInViolation
+    }),
+    customColumns: [
+        {
+            Header: headerKey,
+            accessor,
+            id: '4',
+            width: '200px',
+            renderCell: (cellData: string, rowData: any, t: any) =>
+                cellData || t('databases.general.not-available-table-columns')
+        }
+    ]
+});
+
 // Oracle placement configurations mapping
 const oraclePlacementConfigs = {
     [ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT]: createOraclePlacementConfig(
@@ -568,10 +596,27 @@ const oraclePlacementConfigs = {
     [ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT]: createOraclePlacementConfig('archive-placement', 'archive-placement')
 };
 
+// Oracle storage sizing configurations mapping
+const oracleStorageSizingConfigs = {
+    [ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]: createOracleStorageSizingConfig(
+        'headroom',
+        'headroom',
+        'databases.well-architect.dashboard-table-headers.file-system-headroom',
+        'fileSystemHeadroom'
+    ),
+    [ASSESSMENT_CONFIG_NAMES.SWAP_SPACE]: createOracleStorageSizingConfig(
+        'swap-space',
+        'swap-space',
+        'databases.well-architect.dashboard-table-headers.swap-space',
+        'swapSpace'
+    )
+};
+
 // Merge all configurations
 const FULL_CONFIG_MAPPING = {
     ...CONFIG_MAPPING,
-    ...oraclePlacementConfigs
+    ...oraclePlacementConfigs,
+    ...oracleStorageSizingConfigs
     // Add more configurations as needed
 };
 

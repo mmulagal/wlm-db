@@ -820,6 +820,36 @@
                 }
             ]
         },
+        "sizing": [
+            {
+                "name": "swap-space",
+                "status": "not-optimized",
+                "recommended": "3 - 4 GB",
+                "severity": "critical",
+                "recommendation": "Swap space sizing recommendation Proper swap sizing ensures that the system can handle memory pressure gracefully, avoiding potential performance degradation or system crashes. Swap space should be sized relatively to RAM: \n                - Between 1 GB and 2 GB: 1.5 times the size of the RAM \n                - Between 2 GB and 16 GB: Equal to the size of the RAM \n                - More than 16 GB: 16 GB.",
+                "tags": ["Performance efficiency"],
+                "current": "8 GB",
+                "resourceType": "EC2 Instance",
+                "objectsInViolation": ["i-08b88d1026a035b68"],
+                "totalObjectsAssessed": 1,
+                "totalObjectsInViolation": 1
+            },
+            {
+                "name": "headroom",
+                "status": "under-provisioned",
+                "recommended": "35%",
+                "severity": "critical",
+                "recommendation": "Workload Factory recommends maintaining adequate storage headroom for Oracle database volumes to accommodate data growth and prevent storage-related outages. A minimum of 35% free space is recommended to ensure optimal performance, allow for temporary file operations, and provide buffer for unexpected data growth.",
+                "tags": ["Performance efficiency"],
+                "missingPermissions": ["fsx:UpdateFileSystem"],
+                "recommendedSizeInGib": 350,
+                "current": "15%",
+                "resourceType": "File system (FSx for ONTAP)",
+                "objectsInViolation": ["fs-0d5efc3057c4f12cb"],
+                "totalObjectsAssessed": 1,
+                "totalObjectsInViolation": 1
+            }
+        ],
         "layout": [
             {
                 "name": "data-dg-lun-layout",

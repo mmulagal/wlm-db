@@ -86,6 +86,14 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
         ) {
             return { isDisable: true, reason: t('databases.well-architect.controlfiles-view-disable') };
         }
+        const type = cardData?.block_one?.value;
+        const status = cardData?.block_two?.value;
+
+        if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
+            // Enable for File system headroom when status is under-provisioned or over-provisioned
+            const enabledStatuses = [GETWELL_STATUS.UNDER_PROVISIONED, GETWELL_STATUS.OVER_PROVISIONED];
+            return { isDisable: loading || !status || !enabledStatuses.includes(status), reason: '' };
+        }
         return { isDisable: loading || cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED, reason: '' };
     };
 

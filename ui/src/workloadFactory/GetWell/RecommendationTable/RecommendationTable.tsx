@@ -475,7 +475,9 @@ const RecommendationTable = ({
                 name === ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS ||
                 name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
                 name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
-                name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME)
+                name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME ||
+                name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
+                name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM)
         ) {
             return false;
         }
@@ -510,7 +512,9 @@ const RecommendationTable = ({
             name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
             name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
             name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
-            name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO
+            name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
+            name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
+            name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
         ) {
             return 'View';
         }
@@ -531,7 +535,9 @@ const RecommendationTable = ({
             rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO;
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM;
         if (isCloseButton) {
             setDialog(
                 <DialogComponent

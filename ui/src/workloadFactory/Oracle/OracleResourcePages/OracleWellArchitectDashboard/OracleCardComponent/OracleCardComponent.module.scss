@@ -171,6 +171,20 @@
         }
     }
 
+    .overProvisioned {
+        display: flex;
+        align-items: center;
+        overflow: unset;
+
+        [class*='svgSection'] {
+            top: 0px;
+        }
+
+        .tooltipLevel {
+            margin-top: 6px;
+        }
+    }
+
     .warningMsg {
         display: flex;
         gap: 8px;

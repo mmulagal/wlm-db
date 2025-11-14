@@ -852,9 +852,11 @@ const StorageCardComponent = ({
             type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
             type === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
             type === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
-            type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO
+            type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
+            type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
+            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
         ) {
-            return 'View';
+            return t('databases.well-architect.view');
         }
         return GENERAL.VIEW_AND_FIX;
     };

@@ -51,14 +51,27 @@ const StatusSection = ({ cardData, loading, disableText }: any) => {
     return (
         <DsTypography
             variant="Semibold_14"
-            className={styles.titleText}
+            className={
+                cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED
+                    ? `${styles.titleText} ${styles.overProvisioned}`
+                    : styles.titleText
+            }
             style={{
                 whiteSpace: cardData?.errorMessage ? 'unset' : 'nowrap'
             }}
         >
             {cardData?.block_two?.value && cardData?.block_two?.value !== GENERAL.UNAVAILABLE ? (
                 <>
-                    <span className={styles.svgSection}>
+                    <span
+                        className={styles.svgSection}
+                        style={{
+                            top:
+                                cardData?.block_two?.value === GETWELL_STATUS.UNDER_PROVISIONED ||
+                                cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED
+                                    ? '2px'
+                                    : '8px'
+                        }}
+                    >
                         {setImage(cardData?.block_two?.value || t('databases.general.not-available-table-columns'))}
                     </span>
                     <span

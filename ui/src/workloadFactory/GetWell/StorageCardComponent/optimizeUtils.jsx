@@ -33,7 +33,9 @@ export const handleDialog = (
     if (
         type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
         type === ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH ||
-        type === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER
+        type === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
+        (engineType === DBType.ORACLE && type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) ||
+        (engineType === DBType.ORACLE && type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE)
     ) {
         setDialog(
             <DialogComponent
@@ -45,6 +47,7 @@ export const handleDialog = (
                         missingPermissions={cardData?.missingPermissions}
                         recommendedSizeInGib={cardData?.recommendedSizeInGib}
                         missingPatchList={cardData?.missingPatchList}
+                        engineType={engineType}
                     />
                 }
                 primaryButton="Close"

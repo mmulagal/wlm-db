@@ -87,6 +87,15 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                         { label: t('databases.well-architect.tags.security'), value: 'security' }
                     ]);
                     break;
+                case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+                case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
+                    setTagData([
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        }
+                    ]);
+                    break;
                 default:
                     // Default oracle has all 3 tags. Once we get different configs for oracle, we can update the tags accordingly using switch case.
                     setTagData([
@@ -247,6 +256,7 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                 case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
                 case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
                     setTagData([
                         {
                             label: t('databases.well-architect.tags.performanceEfficiency'),

@@ -1580,6 +1580,53 @@ const processOracleConfigurationData = (
                     );
                 });
 
+                // Process Oracle storage sizing configurations
+                const headroomObj = instanceAssessmentData?.storage?.sizing?.find(
+                    (item: any) => item.name === 'headroom'
+                );
+                const headroomStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
+                    (item: any) => item?.configurationName === 'headroom'
+                );
+                const isHeadroomOptimized = isOptimizedDashInner(headroomObj?.status, headroomStateObj?.configState);
+                setConfigState(configState, 'oracleFileSystemHeadroom', headroomStateObj?.configState);
+                getAssessmentGroupedByConfigurations.oracleFileSystemHeadroom.optimized += isHeadroomOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.oracleFileSystemHeadroom.dismissed += isDismissed(
+                    headroomStateObj?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleFileSystemHeadroom.activating += isActivating(
+                    headroomStateObj?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleFileSystemHeadroom =
+                    GETWELL_VALUES[headroomObj?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.oracleFileSystemHeadroom;
+
+                const swapSpaceObj = instanceAssessmentData?.storage?.sizing?.find(
+                    (item: any) => item.name === 'swap-space'
+                );
+                const swapSpaceStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
+                    (item: any) => item?.configurationName === 'swap-space'
+                );
+                const isSwapSpaceOptimized = isOptimizedDashInner(swapSpaceObj?.status, swapSpaceStateObj?.configState);
+                setConfigState(configState, 'oracleSwapSpace', swapSpaceStateObj?.configState);
+                getAssessmentGroupedByConfigurations.oracleSwapSpace.optimized += isSwapSpaceOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.oracleSwapSpace.dismissed += isDismissed(
+                    swapSpaceStateObj?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleSwapSpace.activating += isActivating(
+                    swapSpaceStateObj?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleSwapSpace =
+                    GETWELL_VALUES[swapSpaceObj?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.oracleSwapSpace;
+
                 const isOntapConfigurationOptimized =
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
@@ -1791,6 +1838,16 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             dismissed: 0,
             activating: 0
         },
+        oracleFileSystemHeadroom: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        oracleSwapSpace: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
         total: 0,
         oracleTotal: 0,
         severityObj: {}
@@ -1829,7 +1886,9 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         fraDgLunLayout: [],
         archiveLogDgLunLayout: [],
         oracleOntapConfiguration: [],
-        oracleOperatingSystem: []
+        oracleOperatingSystem: [],
+        oracleFileSystemHeadroom: [],
+        oracleSwapSpace: []
     };
 
     const state = store.getState();
