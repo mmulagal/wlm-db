@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Popover } from '@netapp/design-system';
-import { DsRadioButton, DsTextField, DsTypography } from '@tlveng/wlm-ds';
+import { DsRadioButton, DsSpinner, DsTextField, DsTypography } from '@tlveng/wlm-ds';
 import { useDispatch } from 'react-redux';
 import { ChangeEvent, useEffect, useState } from 'react';
 import {
@@ -19,6 +19,8 @@ import {
     setSelectedAuthenticationType
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import { ReactComponent as Success } from '../../../../assets/success.svg';
+import { ReactComponent as Failure } from '../../../../assets/error-icon.svg';
 import {
     setSelectedRowsForExploreSavingsEBSBulk,
     setBulkAuthCredentials,
@@ -37,6 +39,8 @@ const AuthBulkDialog = () => {
     const { selectedRowsForExploreSavingsEBSBulk, bulkAuthCredentials, rowsRequiringAuthBulk } = useAppSelector(
         state => state.exploreSavingsBulk
     );
+
+    const notAllPassed = false;
 
     const rowsToRender =
         rowsRequiringAuthBulk && rowsRequiringAuthBulk.length > 0
@@ -110,6 +114,19 @@ const AuthBulkDialog = () => {
         setInputValues(updatedInputs);
     };
 
+    const getImageForStatus = (status: string) => {
+        switch (status) {
+            case 'success':
+                return <Success />;
+            case 'in-progress':
+                return <DsSpinner className={styles.spinner} />;
+            case 'failure':
+                return <Failure />;
+            default:
+                return null;
+        }
+    };
+
     const mssqlInputFields = () => (
         <div className={styles.firstBulkSection}>
             <div className={styles.rowContainer} style={{ marginBottom: '-16px' }}>
@@ -134,9 +151,15 @@ const AuthBulkDialog = () => {
 
                 return (
                     <div key={row.id} className={styles.rowContainer}>
-                        <DsTypography className={styles.hostName} variant="Regular_14">
-                            {hostName}
-                        </DsTypography>
+                        <div className={styles.hostNameContainer}>
+                            {/* in case when all are not passed, some passed and some failed */}
+                            {notAllPassed && (
+                                <div className={styles.svgContainer}>{getImageForStatus(row?.status)}</div>
+                            )}
+                            <DsTypography className={styles.hostName} variant="Regular_14">
+                                {hostName}
+                            </DsTypography>
+                        </div>
 
                         <DsTextField
                             title=""
