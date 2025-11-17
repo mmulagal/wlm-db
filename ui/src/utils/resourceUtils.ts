@@ -352,7 +352,7 @@ export const handleTriggerAssessment = ({
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: t('databases.well-architect.error-triggering-assessment')
+                    message: t('databases.well-architect.error-in-triggering-assessment')
                 })
             );
             setTriggerAssessmentInProgress(false);

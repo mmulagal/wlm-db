@@ -79,13 +79,6 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
     };
 
     const viewButtonDisable = () => {
-        if (
-            cardData?.mapName === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT &&
-            cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED &&
-            cardData?.recommendedValue === 'two-multiplexed-volumes'
-        ) {
-            return { isDisable: true, reason: t('databases.well-architect.controlfiles-view-disable') };
-        }
         const type = cardData?.block_one?.value;
         const status = cardData?.block_two?.value;
 

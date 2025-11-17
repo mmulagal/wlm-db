@@ -53,7 +53,8 @@ import {
     useOptimizeResiliencyMutation,
     useOptimizeAwsBackupMutation,
     useDismissMssqlAssessmentMutation,
-    useDismissOracleAssessmentMutation
+    useDismissOracleAssessmentMutation,
+    useOptimizeOracleStorageLayoutAsmMutation
 } from '../../../utils/apiService';
 import {
     setCloneDashboardData,
@@ -78,7 +79,10 @@ import {
 } from './DashboardInnerPageHelper';
 import DashboardConfigsTable from './RenderTables/DashboardConfigsTable';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
-import { oracleCardData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+import {
+    formatOracleWellArchitectedData,
+    oracleCardData
+} from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 import { engineTypeBasedResourceStr } from '../../WellArchitectedTab/WellArchitectedTabUtils';
 
 const DashboardInnerPage = () => {
@@ -172,6 +176,16 @@ const DashboardInnerPage = () => {
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
     const [dismissOracleAssessment] = useDismissOracleAssessmentMutation();
+    const [optimizeOracleStorageLayoutAsm] = useOptimizeOracleStorageLayoutAsmMutation();
+
+    const storageLayoutAsmPayload = (configName: string, rowData: any) => ({
+        assessments: [
+            {
+                configurationName: configName,
+                objectsToOptimize: rowData?.objectsInViolation || []
+            }
+        ]
+    });
 
     const callOptimizeApi = (type: any, fullRowData?: any, operation?: string) => {
         // Filter rows to only include those with "Not optimized" status if fullRowData is an array
@@ -188,7 +202,38 @@ const DashboardInnerPage = () => {
             selectedGwInstanceCredId,
             selectedGwInstanceRegionId
         } = state.getWellOptimize;
-        if (type === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
+        if (configEngineType === DBType.ORACLE) {
+            if (type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT) {
+                apiCall = optimizeOracleStorageLayoutAsm;
+                payload = storageLayoutAsmPayload('data-dg-lun-layout', rowData);
+            } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT) {
+                apiCall = optimizeOracleStorageLayoutAsm;
+                payload = storageLayoutAsmPayload('redolog-dg-lun-layout', rowData);
+            } else if (type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT) {
+                apiCall = optimizeOracleStorageLayoutAsm;
+                payload = storageLayoutAsmPayload('fra-dg-lun-layout', rowData);
+            } else if (type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT) {
+                apiCall = optimizeOracleStorageLayoutAsm;
+                payload = storageLayoutAsmPayload('archivelog-dg-lun-layout', rowData);
+            } else {
+                // ToDo - More type will come like optimize for sizing and layout here
+                apiCall = optimizeStorageConfig;
+                if (operation === ACTION_TYPE.BULK) {
+                    payload = {
+                        databaseHosts: []
+                    };
+                } else {
+                    payload = {
+                        assessments: [
+                            {
+                                configurationName: type,
+                                objectsToOptimize: []
+                            }
+                        ]
+                    };
+                }
+            }
+        } else if (type === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
             if (operation === ACTION_TYPE.BULK) {
                 apiCall = optimizeComputeConfigForBulk;
 
@@ -691,8 +736,12 @@ const DashboardInnerPage = () => {
                 })
             );
         }
+        if (configEngineType === DBType.ORACLE) {
+            formatOracleWellArchitectedData(dispatch, rowData?.assessments);
+        } else {
+            formatGetWellData(dispatch, rowData?.assessments);
+        }
 
-        formatGetWellData(dispatch, rowData?.assessments);
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
@@ -819,7 +868,10 @@ const DashboardInnerPage = () => {
                     getJobDetailApi,
                     dispatch,
                     type,
-                    operation
+                    operation,
+                    null,
+                    false,
+                    configEngineType
                 );
             }
         });
@@ -1021,6 +1073,7 @@ const DashboardInnerPage = () => {
                             bulkRecommendationOptions={rowData}
                             operation={operation}
                             objectsInViolation={rowData?.objectsInViolation}
+                            engineType={configEngineType}
                             assessmentStatus={assessmentStatusConsistent}
                         />
                     }
@@ -1412,18 +1465,66 @@ const DashboardInnerPage = () => {
                 }));
                 break;
             case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
-                setValueCardData({
+                setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: '232px',
-                    tagHeight: '329px',
+                    cardHeight: prev.cardHeight || '232px',
+                    tagHeight: prev.tagHeight || '329px',
                     data: {
                         title: 'Recommendations',
                         description: oracleCardData?.swap_space?.recommendation?.description,
                         values: oracleCardData?.swap_space?.recommendation?.values,
                         valuesHeading: oracleCardData?.swap_space?.recommendation?.valuesHeading
                     }
-                });
+                }));
+                break;
+            case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+                setValueCardData((prev: any) => ({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: prev.cardHeight || '196px',
+                    tagHeight: prev.tagHeight || '293px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.data_dg_lun_layout?.recommendation?.description
+                    }
+                }));
+                break;
+            case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+                setValueCardData((prev: any) => ({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: prev.cardHeight || '196px',
+                    tagHeight: prev.tagHeight || '293px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.log_dg_lun_layout?.recommendation?.description
+                    }
+                }));
+                break;
+            case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+                setValueCardData((prev: any) => ({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: prev.cardHeight || '196px',
+                    tagHeight: prev.tagHeight || '293px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.fra_dg_lun_layout?.recommendation?.description
+                    }
+                }));
+                break;
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
+                setValueCardData((prev: any) => ({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: prev.cardHeight || '196px',
+                    tagHeight: prev.tagHeight || '293px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.archivelog_dg_lun_layout?.recommendation?.description
+                    }
+                }));
                 break;
         }
     }, [selectedConfig, selectedConfigSummary]);
@@ -1698,6 +1799,10 @@ const DashboardInnerPage = () => {
             case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
             case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
             case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
+            case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+            case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
             case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
                 return (
                     <DashboardConfigsTable

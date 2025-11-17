@@ -1096,7 +1096,11 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
     STORAGE_LAYOUT_MAP: {
         [ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]: 'data-files-location',
         [ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]: 'log-files-location',
-        [ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]: 'tempdb-files-location'
+        [ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]: 'tempdb-files-location',
+        [ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT]: 'data-dg-lun-layout',
+        [ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT]: 'redolog-dg-lun-layout',
+        [ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT]: 'fra-dg-lun-layout',
+        [ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT]: 'archivelog-dg-lun-layout'
     },
     NON_STORAGE_CONFIG_MAP: {
         [ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]: 'compute',
@@ -1118,7 +1122,11 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT]: 'controlfiles-placement',
         [ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT]: 'redologs-placement',
         [ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT]: 'templogs-placement',
-        [ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT]: 'archive-placement'
+        [ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT]: 'archive-placement',
+        [ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT]: 'data-dg-lun-layout',
+        [ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT]: 'redolog-dg-lun-layout',
+        [ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT]: 'fra-dg-lun-layout',
+        [ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT]: 'archivelog-dg-lun-layout'
     }
 };
 

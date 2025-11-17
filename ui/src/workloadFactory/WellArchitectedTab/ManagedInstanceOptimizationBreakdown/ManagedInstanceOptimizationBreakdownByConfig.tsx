@@ -48,6 +48,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     const windowSize = useResize();
     const mainSectionRef = useRef<HTMLDivElement>(null);
     const [hasScrollbar, setHasScrollbar] = useState(false);
+    const [oracleAssessmentDynamicKeys, setOracleAssessmentDynamicKeys] = useState<string[]>(oracleAssessmentKeys);
 
     // For popup
     const [isOpen, setIsOpen] = useState(false);
@@ -65,6 +66,44 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     const [appliedSeverityOracle, setAppliedSeverityOracle] = useState<string[]>(oracleSeverityOptions);
     const popupRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLDivElement>(null);
+
+    const loading = useMemo(
+        () => allmssqlHostAssessmentLoading || allOracleHostAssessmentLoading,
+        [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading]
+    );
+
+    const configData = useMemo(
+        () => getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData, allOracleHostAssessmentData),
+        [allmssqlHostAssessmentData, allOracleHostAssessmentData]
+    );
+
+    useEffect(() => {
+        if (configEngineType === DBType.ORACLE) {
+            // To calculate dynamic keys for Oracle assessments for "Score breakdown by configurations"
+            setOracleAssessmentDynamicKeys(
+                oracleAssessmentKeys.filter(key => {
+                    if (
+                        key === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
+                        key === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT
+                    ) {
+                        if (configData?.isAsmEnable) {
+                            return key;
+                        }
+                    } else if (key === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT) {
+                        if (configData?.isAsmEnable && configData?.isFraEnable) {
+                            return key;
+                        }
+                    } else if (key === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT) {
+                        if (configData?.isAsmEnable && configData?.isArchiveEnable) {
+                            return key;
+                        }
+                    } else {
+                        return key;
+                    }
+                })
+            );
+        }
+    }, [oracleAssessmentKeys, configData]);
 
     // Close on outside click
     useEffect(() => {
@@ -142,7 +181,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
     // Function to check if a tile should be visible based on applied filters
     const shouldShowTile = (assessmentKey: string): boolean => {
-        const currentAssessmentKeys = configEngineType === DBType.ORACLE ? oracleAssessmentKeys : mssqlAssessmentKeys;
+        const currentAssessmentKeys =
+            configEngineType === DBType.ORACLE ? oracleAssessmentDynamicKeys : mssqlAssessmentKeys;
 
         // Check if the assessment key belongs to the current engine type
         if (!currentAssessmentKeys.includes(assessmentKey)) {
@@ -170,7 +210,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     };
 
     // Get current engine-specific assessment keys
-    const currentAssessmentKeys = configEngineType === DBType.ORACLE ? oracleAssessmentKeys : mssqlAssessmentKeys;
+    const currentAssessmentKeys =
+        configEngineType === DBType.ORACLE ? oracleAssessmentDynamicKeys : mssqlAssessmentKeys;
 
     const filteredConfigurations = currentAssessmentKeys.filter(key => shouldShowTile(key)).length;
 
@@ -187,17 +228,22 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         return categoryMatch && severityMatch;
     }).length;
 
-    const oracleTotalConfigurations = oracleAssessmentKeys.length;
-    const oracleFilteredConfigurations = oracleAssessmentKeys.filter(key => {
-        const tileCategory = getCategoryForAssessment(key);
-        const tileSeverity = derivedSeverity(key);
-        const appliedCats = appliedCategoriesOracle;
-        const appliedSev = appliedSeverityOracle;
-        if (appliedCats.length === 0 && appliedSev.length === 0) return false;
-        const categoryMatch = appliedCats.length > 0 ? appliedCats.includes(tileCategory) : false;
-        const severityMatch = appliedSev.length > 0 && tileSeverity ? appliedSev.includes(tileSeverity) : false;
-        return categoryMatch && severityMatch;
-    }).length;
+    const oracleTotalConfigurations = useMemo(() => oracleAssessmentDynamicKeys.length, [oracleAssessmentDynamicKeys]);
+
+    const oracleFilteredConfigurations = useMemo(
+        () =>
+            oracleAssessmentDynamicKeys.filter(key => {
+                const tileCategory = getCategoryForAssessment(key);
+                const tileSeverity = derivedSeverity(key);
+                const appliedCats = appliedCategoriesOracle;
+                const appliedSev = appliedSeverityOracle;
+                if (appliedCats.length === 0 && appliedSev.length === 0) return false;
+                const categoryMatch = appliedCats.length > 0 ? appliedCats.includes(tileCategory) : false;
+                const severityMatch = appliedSev.length > 0 && tileSeverity ? appliedSev.includes(tileSeverity) : false;
+                return categoryMatch && severityMatch;
+            }).length,
+        [oracleAssessmentDynamicKeys, appliedCategoriesOracle, appliedSeverityOracle]
+    );
 
     // Check if no filters are applied (all categories and severities selected) per engine
     const noFiltersAppliedMssql =
@@ -239,16 +285,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         dispatch(setSelectedConfig(type));
         setOptimizeInnerpageSummary(type, configData, dispatch, dbType);
     };
-
-    const loading = useMemo(
-        () => allmssqlHostAssessmentLoading || allOracleHostAssessmentLoading,
-        [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading]
-    );
-
-    const configData = useMemo(
-        () => getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData, allOracleHostAssessmentData),
-        [allmssqlHostAssessmentData, allOracleHostAssessmentData]
-    );
 
     const hasDismissedOrPosponed = (state: any) => {
         if (state.includes(CONFIG_STATES.ACTIVE)) {
@@ -294,15 +330,23 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         const configStateKey = configData?.configState?.[key] || [];
         const dismissedOrPostponedText = hasDismissedOrPosponed(configStateKey);
         let total = 0;
-        if (type === DBType.ORACLE) {
-            total = configData?.oracleTotal || 1;
-        } else {
-            total = configData?.total || 1;
-        }
         let afterOutOfTotal = 0;
         if (type === DBType.ORACLE) {
-            afterOutOfTotal = configData?.oracleTotal;
+            if (
+                headingText === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
+                headingText === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
+                headingText === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
+                headingText === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
+            ) {
+                // For ASM configs total is calculated dynamically as all databases does not have ASM setup
+                total = configData?.[key]?.total || 1;
+                afterOutOfTotal = configData?.[key]?.total;
+            } else {
+                total = configData?.oracleTotal || 1;
+                afterOutOfTotal = configData?.oracleTotal;
+            }
         } else {
+            total = configData?.total || 1;
             afterOutOfTotal = configData?.total;
         }
         const optimizePercentage = Math.round(
@@ -1232,31 +1276,49 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     )}
 
                 {configEngineType === DBType.ORACLE &&
+                    configData?.isAsmEnable &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
                         'dataDgLunLayout',
-                        'wlm-db-optimize-data-dg-lun-layout'
+                        'wlm-db-optimize-data-dg-lun-layout',
+                        ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
+                        ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
+                        false
                     )}
 
                 {configEngineType === DBType.ORACLE &&
+                    configData?.isAsmEnable &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
                         'logDgLunLayout',
-                        'wlm-db-optimize-log-dg-lun-layout'
+                        'wlm-db-optimize-log-dg-lun-layout',
+                        ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
+                        ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
+                        false
                     )}
 
                 {configEngineType === DBType.ORACLE &&
+                    configData?.isAsmEnable &&
+                    configData?.isFraEnable &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
                         'fraDgLunLayout',
-                        'wlm-db-optimize-fra-dg-lun-layout'
+                        'wlm-db-optimize-fra-dg-lun-layout',
+                        ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
+                        ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
+                        false
                     )}
 
                 {configEngineType === DBType.ORACLE &&
+                    configData?.isAsmEnable &&
+                    configData?.isArchiveEnable &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT,
                         'archiveLogDgLunLayout',
-                        'wlm-db-optimize-archive-dg-lun-layout'
+                        'wlm-db-optimize-archive-dg-lun-layout',
+                        ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT,
+                        ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT,
+                        false
                     )}
 
                 {configEngineType === DBType.ORACLE &&

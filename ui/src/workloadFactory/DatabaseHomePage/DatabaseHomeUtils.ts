@@ -8,6 +8,7 @@ import {
     DBType,
     ERROR_ANALYZER_STATUS,
     FINDINGS,
+    FSXN_STORAGE_PROTOCOLS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
     GETWELL_VALUES,
@@ -1506,6 +1507,37 @@ export const setConfigState = (configState: any, configName: string, state: stri
     return configState;
 };
 
+// Helper function to filter Oracle ASM-related configurations
+export const filterDatabaseRowsForNonAsm = (configName: any, instanceAssessmentData: any): boolean => {
+    // For asm oracle configs we need to exclude rows that are not ASM
+    if (
+        (configName === 'data-dg-lun-layout' ||
+            configName === 'redolog-dg-lun-layout' ||
+            configName === 'fra-dg-lun-layout' ||
+            configName === 'archivelog-dg-lun-layout') &&
+        (!instanceAssessmentData?.isASMManaged ||
+            instanceAssessmentData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI)
+    ) {
+        return false;
+    }
+
+    if (
+        configName === 'fra-dg-lun-layout' &&
+        !instanceAssessmentData?.storage?.layout?.some((item: any) => item?.name === 'fra-dg-lun-layout')
+    ) {
+        return false;
+    }
+
+    if (
+        configName === 'archivelog-dg-lun-layout' &&
+        !instanceAssessmentData?.storage?.layout?.some((item: any) => item?.name === 'archivelog-dg-lun-layout')
+    ) {
+        return false;
+    }
+
+    return true;
+};
+
 /**
  * Helper function to process storage layout configuration for Oracle
  */
@@ -1520,8 +1552,14 @@ const processStorageLayoutConfig = (
     const configStateObj = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
         (item: any) => item?.configurationName === configName
     );
+
     const isConfigOptimized = isOptimizedDashInner(configObj?.status, configStateObj?.configState);
     setConfigState(configState, resultKey, configStateObj?.configState);
+
+    // Filter Oracle ASM-related configurations
+    if (!filterDatabaseRowsForNonAsm(configName, instanceAssessmentData)) {
+        return;
+    }
 
     getAssessmentGroupedByConfigurations[resultKey].optimized += isConfigOptimized ? 1 : 0;
     getAssessmentGroupedByConfigurations[resultKey].dismissed += isDismissed(configStateObj?.configState) ? 1 : 0;
@@ -1555,6 +1593,33 @@ const processOracleConfigurationData = (
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
                 getAssessmentGroupedByConfigurations.oracleTotal++;
                 const instanceAssessmentData = instance?.assessments;
+
+                // For ASM configs we need to calculate total database count seperately.
+                // Updating asm related flags
+                if (
+                    instanceAssessmentData?.isASMManaged &&
+                    instanceAssessmentData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI
+                ) {
+                    getAssessmentGroupedByConfigurations.dataDgLunLayout.total++;
+                    getAssessmentGroupedByConfigurations.logDgLunLayout.total++;
+                    getAssessmentGroupedByConfigurations.isAsmEnable = true;
+                    const isFraCheck =
+                        instanceAssessmentData?.storage?.layout?.some(
+                            (item: any) => item?.name === 'fra-dg-lun-layout'
+                        ) || false;
+                    if (isFraCheck) {
+                        getAssessmentGroupedByConfigurations.fraDgLunLayout.total++;
+                        getAssessmentGroupedByConfigurations.isFraEnable = true;
+                    }
+                    const isArchiveCheck =
+                        instanceAssessmentData?.storage?.layout?.some(
+                            (item: any) => item?.name === 'archivelog-dg-lun-layout'
+                        ) || false;
+                    if (isArchiveCheck) {
+                        getAssessmentGroupedByConfigurations.archiveLogDgLunLayout.total++;
+                        getAssessmentGroupedByConfigurations.isArchiveEnable = true;
+                    }
+                }
 
                 // Process Oracle storage layout configurations
                 const oracleLayoutConfigs = [
@@ -1809,21 +1874,25 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             activating: 0
         },
         dataDgLunLayout: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
         },
         logDgLunLayout: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
         },
         fraDgLunLayout: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
         },
         archiveLogDgLunLayout: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
@@ -1850,7 +1919,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         },
         total: 0,
         oracleTotal: 0,
-        severityObj: {}
+        severityObj: {},
+        isAsmEnable: false,
+        isFraEnable: false,
+        isArchiveEnable: false
     };
 
     const configState: any = {
@@ -2649,7 +2721,6 @@ export const categorizeStateInstances = (data: any, type: string) => {
                 });
             } else if (status.toLowerCase() === 'failed') {
                 host?.sqlServerInstances?.map((instanceId: string) => {
-                    failedList.push(`${id}_${instanceId}_${credentialsId}_${region}`);
                     failedList.push({
                         id: config?.configurationName,
                         name: type,

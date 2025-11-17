@@ -288,7 +288,6 @@
             "postpone-bulk-line-1": "Are you sure you want to postpone for 30 days the"
         },
         "well-architect": {
-            "controlfiles-view-disable": "Minimum 2 copies of control files is recommended for multiplexing. Only 1 found.",
             "log-drive-over-provisioned-error": "Over provisioned log drive size can not be optimized",
             "tempdb-drive-over-provisioned-error": "Over provisioned tempDB drive size can not be optimized",
             "file-system-headroom-over-provisioned-error": "Over provisioned headroom can not be optimized",
@@ -313,6 +312,7 @@
             "fixing": "Fixing",
             "view": "View",
             "bulk-fix-disable-for-fsx-for-ontap-backup": "Bulk fix is not supported for Scheduled FSx for ONTAP Backups.",
+            "bulk-fix-disable-for-asm": "Bulk fix is not supported for ASM configurations.",
             "fix-disabled": "Fix is not supported for this configuration.",
             "bulk-fix-disabled": "Fix is not supported for optimized rows.",
             "multi-instance-selection-for-same-host": "You can select multiple instances associated with the same host.",

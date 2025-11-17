@@ -90,6 +90,18 @@ const getPayloadType = (type: string) => {
         case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
             type = 'archive-placement';
             break;
+        case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+            type = 'data-dg-lun-layout';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+            type = 'redolog-dg-lun-layout';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+            type = 'fra-dg-lun-layout';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
+            type = 'archivelog-dg-lun-layout';
+            break;
         default:
             break;
     }
@@ -140,19 +152,19 @@ const createSuccessMsg = (
         }
     } else if (rowLength === 1 && failedCount) {
         if (action === CONFIG_STATE_ACTIONS.DISMISS) {
-            notificationType = NOTIFICATION_TYPES.FAILED;
+            notificationType = NOTIFICATION_TYPES.ERROR;
             message = translation('databases.well-architect.dismiss-msg.dismiss-failed', {
                 name: rowData?.[0].serverInstanceName,
                 resourceType
             });
         } else if (action === CONFIG_STATE_ACTIONS.POSTPONED) {
-            notificationType = NOTIFICATION_TYPES.FAILED;
+            notificationType = NOTIFICATION_TYPES.ERROR;
             message = translation('databases.well-architect.dismiss-msg.postpone-failed', {
                 name: rowData?.[0].serverInstanceName,
                 resourceType
             });
         } else if (action === CONFIG_STATE_ACTIONS.ACTIVE) {
-            notificationType = NOTIFICATION_TYPES.FAILED;
+            notificationType = NOTIFICATION_TYPES.ERROR;
             message = translation('databases.well-architect.dismiss-msg.active-failed', {
                 name: rowData?.[0].serverInstanceName,
                 resourceType
@@ -420,6 +432,14 @@ export const bulkFixDisableCheck = (
     if (configType === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
         isFixDisabled = true;
         fixDisableMsg = t('databases.well-architect.bulk-fix-disable-for-fsx-for-ontap-backup');
+    } else if (
+        configType === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
+        configType === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
+        configType === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
+        configType === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
+    ) {
+        isFixDisabled = true;
+        fixDisableMsg = t('databases.well-architect.bulk-fix-disable-for-asm');
     } else if (isFixNotSupported) {
         isFixDisabled = true;
         fixDisableMsg = t('databases.well-architect.fix-disabled');

@@ -4421,6 +4421,7 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any, engineType
             const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
                 if (instance?.databaseInstanceId === rowData?.instanceId) {
                     const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
+                    const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_LAYOUT_MAP;
                     const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
                     let newStorageConfigurationMap: any;
                     if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
@@ -4439,6 +4440,26 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any, engineType
                                     ...instance?.assessments?.storage,
                                     sizing: instance?.assessments?.storage?.sizing.map((item: any) => {
                                         if (item?.name === storageSizingMap[rowData?.name]) {
+                                            return {
+                                                ...item,
+                                                status: 'optimized'
+                                            };
+                                        }
+                                        return item;
+                                    })
+                                }
+                            }
+                        };
+                    }
+                    if (storageLayoutMap[rowData?.name]) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                storage: {
+                                    ...instance?.assessments?.storage,
+                                    layout: instance?.assessments?.storage?.layout.map((item: any) => {
+                                        if (item?.name === storageLayoutMap[rowData?.name]) {
                                             return {
                                                 ...item,
                                                 status: 'optimized'
@@ -5576,6 +5597,14 @@ export const nameToIdConfigMapping = (name: string) =>
         ? 'clone'
         : name === ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION
         ? 'rss-config'
+        : name === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT
+        ? 'data-dg-lun-layout'
+        : name === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT
+        ? 'redolog-dg-lun-layout'
+        : name === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT
+        ? 'fra-dg-lun-layout'
+        : name === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
+        ? 'archivelog-dg-lun-layout'
         : '';
 
 export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any, dbType?: string) => {
@@ -5673,6 +5702,18 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
             configKey = 'archivePlacement';
             break;
+        case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+            configKey = 'dataDgLunLayout';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+            configKey = 'logDgLunLayout';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+            configKey = 'fraDgLunLayout';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
+            configKey = 'archiveLogDgLunLayout';
+            break;
         case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
             configKey = 'oracleSwapSpace';
             break;
@@ -5698,15 +5739,26 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         tooltipText = GENERAL.DISMISS_MIX_CASE_TOOLTIP;
     }
     if (dbType === DBType.ORACLE) {
+        let totalDb = 0;
+        if (
+            configKey === 'dataDgLunLayout' ||
+            configKey === 'logDgLunLayout' ||
+            configKey === 'fraDgLunLayout' ||
+            configKey === 'archiveLogDgLunLayout'
+        ) {
+            // For above configs we need to calculate dynamic total database as all database might not be asm.
+            totalDb = configData?.[configKey]?.total || 0;
+        } else {
+            totalDb = configData?.oracleTotal || 0;
+        }
         dispatch(
             setSelectedConfigSummary({
-                totalInstances: configData?.oracleTotal || 0,
+                totalInstances: totalDb,
                 optimizedInstances,
                 dismissedInstances,
                 activatingInstances,
-                notOptimizedInstances:
-                    configData?.oracleTotal - (optimizedInstances + dismissedInstances + activatingInstances),
-                optimizationScore: `${Math.round((optimizedInstances / (configData?.oracleTotal || 1)) * 100)}%`,
+                notOptimizedInstances: totalDb - (optimizedInstances + dismissedInstances + activatingInstances),
+                optimizationScore: `${Math.round((optimizedInstances / (totalDb || 1)) * 100)}%`,
                 severity: configData?.severityObj?.[configKey] || '',
                 configState: configStateValue,
                 tooltipText

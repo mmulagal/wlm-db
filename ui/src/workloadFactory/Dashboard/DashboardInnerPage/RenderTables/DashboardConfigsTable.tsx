@@ -10,7 +10,10 @@ import { ReactComponent as NotActive } from '../../../../assets/ic_not_active.sv
 import { ReactComponent as Optimized } from '../../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../../assets/under-provisioned.svg';
 import { ReactComponent as InProgress } from '../../../../assets/In Progress.svg';
-import { mapHostStatusToAssessmentData } from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import {
+    filterDatabaseRowsForNonAsm,
+    mapHostStatusToAssessmentData
+} from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import {
@@ -18,6 +21,7 @@ import {
     CONFIG_STATE_ACTIONS,
     CONFIG_STATES,
     DBType,
+    FSXN_STORAGE_PROTOCOLS,
     GETWELL_STATUS,
     GETWELL_VALUES
 } from '../../../../utils/consts';
@@ -521,16 +525,18 @@ const CONFIG_MAPPING: Record<string, any> = {
 };
 
 // Helper function to create Oracle placement configuration
-const createOraclePlacementConfig = (configName: string, dismissConfigName: string) => ({
+const createOraclePlacementConfig = (configName: string, isFixSupported: boolean) => ({
     assessmentPath: ['storage', 'layout'],
     configName,
-    dismissConfigName,
+    dismissConfigName: configName,
     dataMapping: (obj: any) => ({
         current: obj?.current,
         totalObjectsAssessed: obj?.totalObjectsAssessed,
-        totalObjectsInViolation: obj?.totalObjectsInViolation
+        totalObjectsInViolation: obj?.totalObjectsInViolation,
+        objectsInViolation: obj?.objectsInViolation || [],
+        violationDetails: obj?.violationDetails || []
     }),
-    isFixSupported: false, // Fix is not supported for Oracle placement configurations
+    isFixSupported, // Fix is not supported for Oracle placement configurations
     customColumns: [
         {
             Header: 'databases.well-architect.dashboard-table-headers.impacted-volumes',
@@ -573,27 +579,16 @@ const createOracleStorageSizingConfig = (
 
 // Oracle placement configurations mapping
 const oraclePlacementConfigs = {
-    [ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT]: createOraclePlacementConfig(
-        'oracle-binary-placement',
-        'oracle-binary-placement'
-    ),
-    [ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT]: createOraclePlacementConfig(
-        'datafiles-placement',
-        'datafiles-placement'
-    ),
-    [ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT]: createOraclePlacementConfig(
-        'controlfiles-placement',
-        'controlfiles-placement'
-    ),
-    [ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT]: createOraclePlacementConfig(
-        'redologs-placement',
-        'redologs-placement'
-    ),
-    [ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT]: createOraclePlacementConfig(
-        'templogs-placement',
-        'templogs-placement'
-    ),
-    [ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT]: createOraclePlacementConfig('archive-placement', 'archive-placement')
+    [ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT]: createOraclePlacementConfig('oracle-binary-placement', false),
+    [ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT]: createOraclePlacementConfig('datafiles-placement', false),
+    [ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT]: createOraclePlacementConfig('controlfiles-placement', false),
+    [ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT]: createOraclePlacementConfig('redologs-placement', false),
+    [ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT]: createOraclePlacementConfig('templogs-placement', false),
+    [ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT]: createOraclePlacementConfig('archive-placement', false),
+    [ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT]: createOraclePlacementConfig('data-dg-lun-layout', true),
+    [ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT]: createOraclePlacementConfig('redolog-dg-lun-layout', true),
+    [ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT]: createOraclePlacementConfig('fra-dg-lun-layout', true),
+    [ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT]: createOraclePlacementConfig('archivelog-dg-lun-layout', true)
 };
 
 // Oracle storage sizing configurations mapping
@@ -700,6 +695,11 @@ const DashboardConfigsTable = ({
 
                     // Use custom data mapping function
                     const customData = config.dataMapping(configObj, instanceData);
+
+                    // Filter Oracle ASM-related configurations
+                    if (!filterDatabaseRowsForNonAsm(config.configName, instanceData?.assessments)) {
+                        return;
+                    }
 
                     assessmentData.push({
                         credentialId: hostData?.credentialId,

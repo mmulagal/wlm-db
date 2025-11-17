@@ -895,7 +895,7 @@
                             "layout": [
                                 {
                                     "name": "data-dg-lun-layout",
-                                    "status": "optimized",
+                                    "status": "not-optimized",
                                     "recommended": "associated-lun-count",
                                     "severity": "warning",
                                     "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.",
@@ -915,7 +915,7 @@
                                 },
                                 {
                                     "name": "redolog-dg-lun-layout",
-                                    "status": "optimized",
+                                    "status": "not-optimized",
                                     "recommended": "associated-lun-count",
                                     "severity": "warning",
                                     "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.",
@@ -935,7 +935,7 @@
                                 },
                                 {
                                     "name": "fra-dg-lun-layout",
-                                    "status": "optimized",
+                                    "status": "not-optimized",
                                     "recommended": "associated-lun-count",
                                     "severity": "warning",
                                     "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
@@ -955,7 +955,7 @@
                                 },
                                 {
                                     "name": "archivelog-dg-lun-layout",
-                                    "status": "optimized",
+                                    "status": "not-optimized",
                                     "recommended": "associated-lun-count",
                                     "severity": "warning",
                                     "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
