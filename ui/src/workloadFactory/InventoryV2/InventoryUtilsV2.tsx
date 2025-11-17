@@ -632,7 +632,7 @@ export const getPrimaryClusterNode = (
                 }
             })?.[0];
 
-            if (partnerNode && !isDemoMode) {
+            if (partnerNode) {
                 let isManagedNode1;
                 let isManagedNode2;
                 if (host?.ec2InstanceId) {
