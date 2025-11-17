@@ -17,9 +17,14 @@ const stars = '*******';
 function getAllPropertyNames(obj: any): string[] {
     const props = new Set<string>();
     let current = obj;
-    while (current && current !== Object.prototype) {
+
+    let depth = 0;
+    const MAX_PROTOTYPE_DEPTH = 10;
+
+    while (current && current !== Object.prototype && depth < MAX_PROTOTYPE_DEPTH) {
         Object.getOwnPropertyNames(current).forEach(name => props.add(name));
         current = Object.getPrototypeOf(current);
+        depth += 1;
     }
     return Array.from(props);
 }
@@ -98,12 +103,13 @@ function initialize() {
                                         }
                                         return stringifyObject(hideSecretsValues(safeLog));
                                     }
+                                    return log;
                                 } catch (error) {
                                     // TODO: Remove me: Temporary catch to identify #<Promise> could not be cloned
                                     // eslint-disable-next-line no-console
                                     console.log('ERROR in LOG MESSAGING', error);
+                                    return isObject(log) ? '[Object: logging error]' : log;
                                 }
-                                return String(log);
                             })
                         )
                 };
