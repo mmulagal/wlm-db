@@ -27,7 +27,7 @@ import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
 
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, WLF_TABS } from '../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, DBType, WLF_TABS } from '../../utils/consts';
 import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
@@ -176,7 +176,7 @@ const GetWell = () => {
 
     const printDocument = async () => {
         try {
-            await generateReport(JSON.stringify(driftAssessmentData));
+            await generateReport(JSON.stringify(driftAssessmentData), DBType.MSSQL);
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.SUCCESS,

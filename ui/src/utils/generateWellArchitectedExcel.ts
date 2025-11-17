@@ -1,4 +1,6 @@
 import * as ExcelJS from 'exceljs';
+import getActionSummaryMessages from './wellArchitectedActionSummaryMessages';
+import { GETWELL_CONFIG } from './consts';
 
 interface AssessmentItem {
     name: string;
@@ -523,14 +525,17 @@ const createComputeRightsizingData = (config: AssessmentItem, details: any[]) =>
     }
 };
 
-const createBaseConfigurationObject = (config: AssessmentItem) => ({
-    'Configuration name': config.name,
+const createBaseConfigurationObject = (config: AssessmentItem, databaseType: string) => ({
+    'Configuration name': GETWELL_CONFIG[config.name] || config.name,
     ...(config.status && { Status: config.status }),
     ...(config.severity && { Severity: config.severity }),
     ...(config.recommendation && { Recommendation: config.recommendation }),
     ...(config.current && { Current: config.current }),
     ...(config.recommended && { Recommended: config.recommended }),
     ...(config.tags?.length && { Tags: config.tags.join(', ') }),
+    'Action Summary':
+        getActionSummaryMessages(GETWELL_CONFIG[config.name] || config.name, databaseType, config.objectsInViolation) ||
+        'n/a',
     'Impacted resources (X out of Y)':
         typeof config.totalObjectsAssessed === 'number'
             ? `${config.totalObjectsInViolation || 0} out of ${config.totalObjectsAssessed}`
@@ -690,7 +695,11 @@ const createObjectsInViolationData = (config: AssessmentItem, details: any[], he
     });
 };
 
-function generateDetailedConfigurationData(data: ComprehensiveAssessmentData, configName: string) {
+function generateDetailedConfigurationData(
+    data: ComprehensiveAssessmentData,
+    configName: string,
+    databaseType: string
+) {
     const allItems = getAllItems(data);
     const config = allItems.find(item => item.name === configName);
 
@@ -707,7 +716,7 @@ function generateDetailedConfigurationData(data: ComprehensiveAssessmentData, co
     const details: any[] = [];
 
     // Base configuration info
-    const baseConfig = createBaseConfigurationObject(config);
+    const baseConfig = createBaseConfigurationObject(config, databaseType);
 
     details.push(baseConfig);
 
@@ -1478,7 +1487,10 @@ const addConfigurationAutoFilter = (
 };
 
 // Main workbook generation function
-async function generateProperXlsxWorkbook(data: ComprehensiveAssessmentData): Promise<ArrayBuffer> {
+async function generateProperXlsxWorkbook(
+    data: ComprehensiveAssessmentData,
+    databaseType: string
+): Promise<ArrayBuffer> {
     const workbook = new ExcelJS.Workbook();
 
     // 1. Generate General Information worksheet
@@ -1538,7 +1550,7 @@ async function generateProperXlsxWorkbook(data: ComprehensiveAssessmentData): Pr
     uniqueConfigs.forEach(configName => {
         if (!configName || typeof configName !== 'string') return;
 
-        const configDetails = generateDetailedConfigurationData(data, configName);
+        const configDetails = generateDetailedConfigurationData(data, configName, databaseType);
         if (configDetails.length === 0) return;
 
         const cleanSheetName = configName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 31);
@@ -1681,7 +1693,7 @@ async function generateProperXlsxWorkbook(data: ComprehensiveAssessmentData): Pr
 }
 
 // Export function
-async function generateReport(jsonString: string): Promise<void> {
+async function generateReport(jsonString: string, databaseType: string): Promise<void> {
     try {
         let jsonData;
         try {
@@ -1689,7 +1701,10 @@ async function generateReport(jsonString: string): Promise<void> {
         } catch (parseError) {
             throw new Error('Malformed input data: Invalid JSON format.');
         }
-        const xlsxBuffer = await generateProperXlsxWorkbook(jsonData as unknown as ComprehensiveAssessmentData);
+        const xlsxBuffer = await generateProperXlsxWorkbook(
+            jsonData as unknown as ComprehensiveAssessmentData,
+            databaseType
+        );
 
         if (!xlsxBuffer) {
             throw new Error('Failed to generate XLSX buffer');

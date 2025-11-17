@@ -15,6 +15,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL, DBType } from '../../../../utils/consts';
+import { engineTypeText, ontapConfigTextSet } from '../../../../utils/dialogContentUtils';
 import MSSQLPatchDialog from './MSSQLPatchDialog';
 
 import ScheduledLocalSnapshotDalog from './ScheduledLocalSnapshotDalog';
@@ -125,181 +126,10 @@ const DialogContent = ({
         return options;
     };
 
-    const ontapConfigTextSet = () => {
-        if (engineType === DBType.ORACLE) {
-            switch (type) {
-                case 'Thin provisioning':
-                    return 'Thin provisioninig (-space-guarantee = none)';
-                case 'Autosize':
-                    return 'Autosize on';
-                case 'Autosize-mode':
-                    return 'Autosize-mode = grow';
-                case 'Fractional reserve':
-                    return 'Fractional reserve = 0%';
-                case 'Snapshot copy reserve':
-                    return 'Snapshot copy reserve = 0%';
-                case 'Snapshot autodelete':
-                    return 'Snapshot autodelete (Volume/oldest first)';
-                case 'Space management':
-                    return 'Space-mgmt-try-first = volume_grow';
-                case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY:
-                    return 'Snapshot policy = none';
-                case 'Tiering policy':
-                    return [
-                        "[Data] tiering policy='none'",
-                        "[Redo Log] tiering policy='none'",
-                        "[Archive] tiering policy='auto'"
-                    ];
-                case 'Tiering minimum cooling days':
-                    return [
-                        '[Archive,RMAN-compressed] tiering-minimum-cooling-days=2',
-                        '[Archive, RMAN uncompressed] tiering-minimum-cooling-days=14'
-                    ];
-                case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
-                    return ['[Log] Compression= disabled', '[Data, Archive] Compression=Inline, adaptive'];
-                case ASSESSMENT_CONFIG_NAMES.COMPACTION:
-                    return 'Compaction = enabled';
-                case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
-                    return ['[Log] Deduplication = disabled', '[Data, Archive] Deduplication = Inline'];
-                case ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY:
-                    return 'nfs-rootonly = disabled';
-                case ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY:
-                    return ['superuser = sys', 'allow-suid=true'];
-                case 'OS type':
-                    return 'OS type = linux';
-                case 'Space reservation':
-                    return 'Space reservation enabled ';
-                case 'Space allocation':
-                    return 'Space allocation enabled';
-                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
-                    return ['Install device-mapper-multipath', 'Start multipathd'];
-                case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
-                    return 'Install host utilities';
-                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
-                    return [
-                        'user_friendly_names: yes',
-                        'find_multipaths: yes',
-                        'polling_interval: 5',
-                        'path_grouping_policy: group_by_prio',
-                        'path_selector: service-time 0',
-                        'prio: ontap',
-                        'features: 3 queue_if_no_path pg_init_retries 50',
-                        'hardware_handler: 0',
-                        'failback: immediate',
-                        'rr_weight: uniform',
-                        'no_path_retry: queue',
-                        'fast_io_fail_tmo: 5',
-                        'dev_loss_tmo: infinity',
-                        'detect_prio: yes',
-                        'flush_on_last_del: yes',
-                        'retain_attached_hw_handler: yes',
-                        'path_checker: tur',
-                        'max_sectors_kb: 4096'
-                    ];
-                case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
-                    return 'Transparent Hugepages disabled (enabled=never, defrag=never)';
-                case ASSESSMENT_CONFIG_NAMES.SELINUX:
-                    return 'SELINUX=disabled';
-                case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
-                    return 'node.session.timeo.replacement_timeout = 5 in /etc/iscsi/iscsid.conf';
-                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
-                    return 'user_friendly_names = yes in /etc/multipath.conf';
-                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
-                    return '4 active iSCSI sessions per host';
-                case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
-                    return 'Install host utilities';
-                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
-                    return 'db_file_multiblock_read_count unset in init.ora';
-                case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
-                    return 'filesystemio_options = setall';
-                case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
-                    return ['net.ipv4.tcp_timestamps = 1', 'net.ipv4.tcp_sack = 1', 'net.ipv4.tcp_window_scaling = 1'];
-                case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
-                    return ['sunrpc.tcp_max_slot_table_entries = 128', 'sunrpc.tcp_slot_table_entries = 128'];
-                case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
-                    return [
-                        'rw,bg,hard,[vers=3,vers=4.1],proto=tcp,',
-                        'timeo=600,rsize=262144,wsize=262144,',
-                        'nointr'
-                    ];
-                case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:
-                    return ['rw,bg,hard,[vers=3,vers=4.1],proto=tcp,', 'timeo=600,rsize=262144,wsize=262144'];
-            }
-        }
-        switch (type) {
-            case 'Autosize':
-                return 'Autosize on';
-            case 'Thin provisioning':
-                return 'Thin provisioninig (-space-guarantee = none)';
-            case 'Autosize-mode':
-                return 'Autosize-mode = grow';
-            case 'Fractional reserve':
-                return 'Fractional reserve = 0%';
-            case 'Snapshot copy reserve':
-                return 'Snapshot copy reserve = 0%';
-            case 'Snapshot autodelete':
-                return 'Snapshot autodelete (Volume/oldest first)';
-            case 'Space management':
-                return 'Space-mgmt-try-first = volume_grow';
-            case 'Tiering policy':
-                return 'Tiering-policy = snapshot-only';
-            case 'Tiering minimum cooling days':
-                return 'Tiering-minimum-cooling-days = 7';
-            case 'OS type':
-                return 'OS type = windows_2008 ';
-            case 'Space reservation':
-                return 'Space reservation enabled ';
-            case 'Space allocation':
-                return 'Space allocation enabled';
-            case 'Multipath I/O Status':
-                return 'Multipath I/O Status = Enabled';
-            case 'Multipath I/O Policy':
-                return 'Multipath I/O Policy = Round Robin';
-            case 'Multipath I/O Sessions':
-                return 'Multipath I/O Sessions = 5';
-            case 'Multipath I/O Timeout':
-                return 'Multipath I/O Timeout = 60 seconds';
-            case 'Shared storage':
-                return 'Mapping on impacted LUNs will be updated to include initiator names of both EC2 nodes';
-            case 'Drive Letter':
-                return objectsInViolation && objectsInViolation.length > 0
-                    ? `Drives ${objectsInViolation.map(drive => drive.replace(':', '')).join(', ')} ${t(
-                          'databases.well-architect.drive-letter-conflicting-drives'
-                      )}`
-                    : t('databases.well-architect.drive-letter-no-violation');
-            case 'Cluster Quorum':
-                return 'Quorum will be set to disk witness with node majority';
-            case 'SQL Server Service':
-                return objectsInViolation && objectsInViolation.length > 0
-                    ? [
-                          `${t('databases.well-architect.sql-service-startup-type-config')}${objectsInViolation.join(
-                              ', node-'
-                          )}`,
-                          t('databases.well-architect.sql-service-role-ownership-config')
-                      ]
-                    : [];
-            default:
-                return '';
-        }
-    };
-
-    const engineTypeText = () => {
-        switch (engineType) {
-            case DBType.MSSQL:
-                return 'SQL Server';
-            case DBType.ORACLE:
-                return 'Oracle';
-            case DBType.POSTGRESQL:
-                return 'PostgreSQL';
-            default:
-                return '';
-        }
-    };
-
     const createONTAPConfigSection = () =>
         createSection(
             t('databases.well-architect.well-architected-configuration'),
-            createCodeBox(ontapConfigTextSet()),
+            createCodeBox(ontapConfigTextSet(type, engineType, objectsInViolation)),
             { width: '712px' }
         );
 
@@ -547,8 +377,8 @@ const DialogContent = ({
             case 'Tiering minimum cooling days':
                 return createStandardDialog(
                     t,
-                    t('databases.well-architect.autosize-action-summary', { engineType: engineTypeText() }),
-                    t('databases.well-architect.autosize-what-will-happen', { engineType: engineTypeText() }),
+                    t('databases.well-architect.autosize-action-summary', { engineType: engineTypeText(engineType) }),
+                    t('databases.well-architect.autosize-what-will-happen', { engineType: engineTypeText(engineType) }),
                     createStandardNotesSection(),
                     createONTAPConfigSection()
                 );
@@ -559,10 +389,10 @@ const DialogContent = ({
                 return createStandardDialog(
                     t,
                     t('databases.well-architect.os-type-space-allocation-reservation-action-summary', {
-                        engineType: engineTypeText()
+                        engineType: engineTypeText(engineType)
                     }),
                     t('databases.well-architect.os-type-space-allocation-reservation-what-will-happen', {
-                        engineType: engineTypeText()
+                        engineType: engineTypeText(engineType)
                     }),
                     createStandardNotesSection(),
                     createONTAPConfigSection()
@@ -658,7 +488,7 @@ const DialogContent = ({
                     '',
                     createSection(
                         t('databases.well-architect.well-architected-configuration'),
-                        createCodeBox(ontapConfigTextSet()),
+                        createCodeBox(ontapConfigTextSet(type, engineType, objectsInViolation)),
                         { width: '712px' }
                     ),
                     createDriveLetterNotesSection(t)

@@ -984,7 +984,25 @@ export const ASSESSMENT_CONFIG_NAMES = {
     AFD_LOGICAL_BLOCK_SIZE: 'ASM filter driver logical block size alignment',
     ASMLIB_LOGICAL_BLOCK_SIZE: 'ASMLib logical block size alignment',
     SWAP_SPACE: 'Swap space',
-    HIGH_AVAILABILITY: 'highAvailability'
+    HIGH_AVAILABILITY: 'highAvailability',
+    // Additional constants for wellArchitectedActionSummaryMessages
+    THIN_PROVISIONING: 'Thin provisioning',
+    AUTOSIZE: 'Autosize',
+    AUTOSIZE_MODE: 'Autosize-mode',
+    FRACTIONAL_RESERVE: 'Fractional reserve',
+    SNAPSHOT_COPY_RESERVE: 'Snapshot copy reserve',
+    SNAPSHOT_AUTODELETE: 'Snapshot autodelete',
+    SPACE_MANAGEMENT: 'Space management',
+    TIERING_POLICY: 'Tiering policy',
+    TIERING_MINIMUM_COOLING_DAYS: 'Tiering minimum cooling days',
+    OS_TYPE: 'OS type',
+    SPACE_RESERVATION: 'Space reservation',
+    SPACE_ALLOCATION: 'Space allocation',
+    MULTIPATH_IO_STATUS: 'Multipath I/O Status',
+    MULTIPATH_IO_POLICY: 'Multipath I/O Policy',
+    MULTIPATH_IO_TIMEOUT: 'Multipath I/O Timeout',
+    NTFS_ALLOCATION_UNIT_SIZE: 'NTFS allocation unit size',
+    MICROSOFT_SQL_SERVER_PATCH_SHORT: 'Microsoft SQL Server patch'
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
@@ -1241,4 +1259,10 @@ export const DEMO_MODE_PROTECTION_CRITERIA = {
             databaseNames: ['mfgsales', 'hraudit', 'salesdata', 'timesheet']
         }
     ]
+};
+
+export const ENGINE_TYPES = {
+    MSSQL: 'SQL Server',
+    ORACLE: 'Oracle',
+    POSTGRESQL: 'PostgreSQL'
 };
