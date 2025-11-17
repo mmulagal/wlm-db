@@ -8,13 +8,18 @@
 
         .fieldWrapper {
             flex: 0 0 auto;
-            width: calc(40% - 12px);
+            width: calc(50% - 12px);
         }
 
         .instanceTypeContainer {
             display: flex;
             flex-direction: column;
             position: relative;
+
+            // Remove bottom margin from SelectField so that missingPermissions error aligns properly
+            [class*='Select-module_base'] {
+                margin-bottom: 0 !important;
+            }
 
             .errorContainer {
                 display: flex;

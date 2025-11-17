@@ -28,6 +28,7 @@ import { checkIfByolFieldRequired } from '../savingsUtil';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import { GENERAL } from '../../../../utils/appConstants';
 import hostInstanceStyles from './HostInstanceSelection.module.scss';
+import LearnHowDialog from '../SavingsSelection/LearnHowDialog/LearnHowDialog';
 
 const TCOBulkAccordion = () => {
     const { t } = useTranslation();
@@ -98,7 +99,7 @@ const TCOBulkAccordion = () => {
                 const hostComputeData = storageSavingsResponse.compute.find(
                     (computeItem: any) => computeItem.hostname === hostName
                 );
-                
+
                 if (hostComputeData?.recommended?.recommendationOptions) {
                     const options = hostComputeData.recommended.recommendationOptions;
                     const existingInstanceType = hostComputeData?.existing?.instanceType || '';
@@ -134,7 +135,7 @@ const TCOBulkAccordion = () => {
                     const existingCompute = computeArray.find(
                         (computeItem: any) => computeItem.hostname === hostName
                     )?.existing;
-                    
+
                     const savingsPercent =
                         existingCompute && option.computeMonthlyPrice && existingCompute.computeMonthlyPrice
                             ? Math.round(
@@ -167,8 +168,14 @@ const TCOBulkAccordion = () => {
         ]);
 
         const handleLearnHowClick = () => {
-            // Todo : Need to check why this was written so we can open proper dialog and display the missing permissions info
-            console.log('Learn how clicked for host:', host.name);
+            setDialog(
+                <DialogComponent
+                    header={GENERAL.LEARN_HOW_DIALOG.TITLE}
+                    content={<LearnHowDialog type="tco" />}
+                    primaryButton={GENERAL.CLOSE}
+                    callback={() => closeDialog()}
+                />
+            );
         };
 
         // Handle instance type change for this specific host
