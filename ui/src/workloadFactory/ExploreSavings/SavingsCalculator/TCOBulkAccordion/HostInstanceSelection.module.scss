@@ -1,0 +1,58 @@
+.hostInstanceSelection {
+    padding: 0 40px 0 40px;
+
+    .fieldsContainer {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+
+        .fieldWrapper {
+            flex: 0 0 auto;
+            width: calc(40% - 12px);
+        }
+
+        .instanceTypeContainer {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+
+            .errorContainer {
+                display: flex;
+                flex-direction: row;
+                gap: 4px;
+                align-items: center;
+                margin-top: 8px;
+
+                svg {
+                    width: 16px;
+                    path {
+                        fill: var(--icon-primary);
+                    }
+                }
+            }
+
+            .tooltip-icon {
+                width: 16px;
+                height: 16px;
+            }
+        }
+    }
+}
+
+[class*='instanceInformation'] {
+    [class*='Table-module_table'] {
+        z-index: 1;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .hostInstanceSelection {
+        .fieldsContainer {
+            flex-direction: column;
+
+            .fieldWrapper {
+                min-width: 100%;
+            }
+        }
+    }
+}

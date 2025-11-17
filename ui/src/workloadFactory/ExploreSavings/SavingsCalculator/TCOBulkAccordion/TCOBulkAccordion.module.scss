@@ -1,0 +1,48 @@
+.tcoBulkAccordion {
+    .ssdContainer {
+        min-height: 64px;
+        height: auto;
+        margin: 0 32px 24px 32px;
+        padding: 8px;
+        background-color: var(--notification-information-bg);
+        display: flex;
+        gap: 8px;
+    }
+    .header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin: 16px 0 16px 32px;
+    }
+
+    .centerValue {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+
+        .centerText {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+    }
+
+    .rightWidgetButton {
+        margin-right: 8px;
+
+        button {
+            font-size: 14px;
+            color: var(--text-primary);
+            padding: 4px 8px;
+
+            &:hover {
+                color: var(--primary-hover);
+            }
+
+            &:disabled {
+                color: var(--text-disabled);
+                cursor: none;
+            }
+        }
+    }
+}

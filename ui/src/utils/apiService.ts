@@ -1211,6 +1211,20 @@ export const exploreSavingsApi = createApi({
                 method: 'POST',
                 body: payload
             })
+        }),
+        getBulkStorageSavings: builder.mutation({
+            query: ({ credentialId, regionId, payload }) => ({
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/storage-savings/ebs`,
+                method: 'POST',
+                body: payload
+            })
+        }),
+        getBulkViewCalculations: builder.mutation({
+            query: ({ credentialId, regionId, payload }) => ({
+                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/storage-savings/ebs/calculations`,
+                method: 'POST',
+                body: payload
+            })
         })
     })
 });
@@ -1579,7 +1593,9 @@ export const {
     useGetStorageSavingsMutation,
     useGetViewCalculationsMutation,
     useGetManualStorageSavingsMutation,
-    useGetManualViewCalculationsMutation
+    useGetManualViewCalculationsMutation,
+    useGetBulkStorageSavingsMutation,
+    useGetBulkViewCalculationsMutation
 } = exploreSavingsApi;
 
 export const {

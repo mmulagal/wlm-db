@@ -47,6 +47,7 @@ import snapCenterSlice from './workloadFactory/snapcenterSlice';
 import dialogComponentSlice from './workloadFactory/dialogComponentSlice';
 import oracleSlice from './workloadFactory/oracleSlice';
 import inventoryBannerSlice from './workloadFactory/inventorybannerSlice';
+import exploreSavingsBulkSlice from './workloadFactory/exploreSavingsBulkSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -79,6 +80,7 @@ const rootReducer = combineReducers({
     [snapCenterSlice.reducerPath]: snapCenterSlice.reducer,
     [sandboxApi.reducerPath]: sandboxApi.reducer,
     [exploreSavingsSlice.reducerPath]: exploreSavingsSlice.reducer,
+    [exploreSavingsBulkSlice.reducerPath]: exploreSavingsBulkSlice.reducer,
     [createSandboxSlice.reducerPath]: createSandboxSlice.reducer,
     [exploreSavingsApi.reducerPath]: exploreSavingsApi.reducer,
     [getWellApi.reducerPath]: getWellApi.reducer,

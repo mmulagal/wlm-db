@@ -47,7 +47,7 @@ const ClonesEBSCalculation = () => {
                                 {viewCalculationForEBS(
                                     viewCalculationsResponse,
                                     selectedDeploymentModel
-                                ).cloneCalculation.map(
+                                )?.cloneCalculation?.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (
                                         <TableLayout key={index} data={data} />
                                     )

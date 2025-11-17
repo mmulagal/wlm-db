@@ -17,6 +17,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { WLF_TABS } from '../../../utils/consts';
 import ExploreSavingsOnPremiseTable from '../ExploreSavingsOnPremiseTable/ExploreSavingsOnPremiseTable';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
+import ExploreSavingsFsxTable from '../ExploreSavingsTableV2/ExploreSavingsFsxTable';
 
 const ExploreSavingHeader = () => {
     const dispatch = useDispatch();
@@ -24,6 +25,13 @@ const ExploreSavingHeader = () => {
     const navigate = useNavigate();
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
+
+    const renderTCOTable = () => {
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE) {
+            return <ExploreSavingsTableV2 />;
+        }
+        return <ExploreSavingsFsxTable />;
+    };
 
     return (
         <>
@@ -190,7 +198,7 @@ const ExploreSavingHeader = () => {
                             {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                                 <ExploreSavingsOnPremiseTable />
                             )}
-                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && <ExploreSavingsTableV2 />}
+                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && renderTCOTable()}
                         </div>
                     )}
                 </>
@@ -364,7 +372,7 @@ const ExploreSavingHeader = () => {
                             {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                                 <ExploreSavingsOnPremiseTable />
                             )}
-                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && <ExploreSavingsTableV2 />}
+                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && renderTCOTable()}
                         </div>
                     )}
                 </>
@@ -529,7 +537,7 @@ const ExploreSavingHeader = () => {
                             {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                                 <ExploreSavingsOnPremiseTable />
                             )}
-                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && <ExploreSavingsTableV2 />}
+                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && renderTCOTable()}
                         </div>
                     )}
                 </>

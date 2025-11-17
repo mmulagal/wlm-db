@@ -24,10 +24,28 @@ const InstanceInformation = () => {
     useEffect(() => {
         if (selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES) {
             setLoading(selectedHostDetails?.loading);
-            const findingsComputeData =
-                storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.finding || '-');
-            const findingsLicenseData =
-                storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
+            const findingsComputeData = (() => {
+                if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
+                    // Handle AUTO_EBS array format
+                    const computeArray = Array.isArray(storageSavingsResponse?.compute)
+                        ? storageSavingsResponse.compute
+                        : [storageSavingsResponse?.compute].filter(Boolean);
+                    return computeArray[0]?.existing?.finding || '-';
+                }
+                // Handle single object format for other modes
+                return storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.finding || '-');
+            })();
+            const findingsLicenseData = (() => {
+                if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
+                    // Handle AUTO_EBS array format
+                    const licenseArray = Array.isArray(storageSavingsResponse?.license)
+                        ? storageSavingsResponse.license
+                        : [storageSavingsResponse?.license].filter(Boolean);
+                    return licenseArray[0]?.existing?.finding || '-';
+                }
+                // Handle single object format for other modes
+                return storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
+            })();
             const findingsDbModel =
                 selectedHostDetails?.serverInstallationMode?.length &&
                 selectedHostDetails?.serverInstallationMode.includes(GENERAL.AOAG)

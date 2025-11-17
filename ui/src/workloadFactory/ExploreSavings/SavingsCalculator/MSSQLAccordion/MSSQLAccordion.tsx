@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import styles from './MSSQLAccordion.module.scss';
+import { generateHostMsSqlInstanceData } from './MSSQLAccordionUtils';
 import {
     ExploreSaveConfiguration,
     MSSQLServerInstance,
@@ -61,12 +62,16 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         selectedOnPremRegion,
         selectedExRegionId
     } = useAppSelector(state => state.exploreSavings);
+    const { selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const [fsxData, setFsxData] = useState({});
     const [msSqlInstance, setMsSqlInstance] = useState({});
     const [storageType, setStorageType] = useState('');
+
+    const [bulkModeState, setBulkModeState] = useState({ isBulkMode: false, shouldRenderMultipleHosts: false });
+
     // To get configDatalist
     const [configData, setConfigData] = useState<any>([]);
 
@@ -75,6 +80,17 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     useEffect(() => {
         setConfigData(configDataList || []);
     }, [configDataList]);
+
+    // useEffect to manage shouldRenderMultipleHosts so that on Add hosts and remove hosts the Save Configuration and create template button visibility can be handled
+    useEffect(() => {
+        const shouldRender =
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
+            selectedRowsForExploreSavingsEBSBulk &&
+            selectedRowsForExploreSavingsEBSBulk.length > 1;
+        const isBulk =
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && selectedRowsForExploreSavingsEBSBulk.length > 0;
+        setBulkModeState({ isBulkMode: isBulk, shouldRenderMultipleHosts: shouldRender });
+    }, [savingsCalculatorFrom, selectedRowsForExploreSavingsEBSBulk]);
 
     useEffect(() => {
         if (
@@ -119,20 +135,63 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
 
     useEffect(() => {
         let instanceType = '';
-        if (storageSavingsResponse?.compute?.recommended?.instanceType) {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
+            // Handle AUTO_EBS array format
+            const computeArray = Array.isArray(storageSavingsResponse?.compute)
+                ? storageSavingsResponse.compute
+                : [storageSavingsResponse?.compute].filter(Boolean);
+            if (computeArray[0]?.recommended?.instanceType) {
+                instanceType = computeArray[0]?.recommended?.instanceType.split(',')[0];
+            }
+        } else if (storageSavingsResponse?.compute?.recommended?.instanceType) {
+            // Handle single object format for other modes
             instanceType = storageSavingsResponse?.compute?.recommended?.instanceType.split(',')[0];
         }
+
         let serverEdition = '';
-        if (storageSavingsResponse?.license?.recommended?.sqlServerEdition) {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
+            // Handle AUTO_EBS array format
+            const licenseArray = Array.isArray(storageSavingsResponse?.license)
+                ? storageSavingsResponse.license
+                : [storageSavingsResponse?.license].filter(Boolean);
+            if (licenseArray[0]?.recommended?.sqlServerEdition) {
+                serverEdition = licenseArray[0]?.recommended?.sqlServerEdition.split(',')[0];
+            }
+        } else if (storageSavingsResponse?.license?.recommended?.sqlServerEdition) {
+            // Handle single object format for other modes
             serverEdition = storageSavingsResponse?.license?.recommended?.sqlServerEdition.split(',')[0];
         }
+
         let windowsServer = '';
-        if (storageSavingsResponse?.compute?.recommended?.windowsOsVersion) {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
+            // Handle AUTO_EBS array format
+            const computeArray = Array.isArray(storageSavingsResponse?.compute)
+                ? storageSavingsResponse.compute
+                : [storageSavingsResponse?.compute].filter(Boolean);
+            if (computeArray[0]?.recommended?.windowsOsVersion) {
+                windowsServer = computeArray[0]?.recommended?.windowsOsVersion.split(',')[0];
+            }
+        } else if (storageSavingsResponse?.compute?.recommended?.windowsOsVersion) {
+            // Handle single object format for other modes
             windowsServer = storageSavingsResponse?.compute?.recommended?.windowsOsVersion.split(',')[0];
         }
-        const editionUpgradeCheck =
-            storageSavingsResponse?.license?.existing?.sqlServerEdition?.includes('Enterprise') &&
-            storageSavingsResponse?.license?.recommended?.sqlServerEdition?.includes('Standard');
+        const editionUpgradeCheck = (() => {
+            if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
+                // Handle AUTO_EBS array format
+                const licenseArray = Array.isArray(storageSavingsResponse?.license)
+                    ? storageSavingsResponse.license
+                    : [storageSavingsResponse?.license].filter(Boolean);
+                return (
+                    licenseArray[0]?.existing?.sqlServerEdition?.includes('Enterprise') &&
+                    licenseArray[0]?.recommended?.sqlServerEdition?.includes('Standard')
+                );
+            }
+            // Handle single object format for other modes
+            return (
+                storageSavingsResponse?.license?.existing?.sqlServerEdition?.includes('Enterprise') &&
+                storageSavingsResponse?.license?.recommended?.sqlServerEdition?.includes('Standard')
+            );
+        })();
 
         let mssqlInstanceData = {};
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
@@ -257,7 +316,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                             }
                         />
                     ) : (
-                        !printState && (
+                        !printState &&
+                        !bulkModeState.shouldRenderMultipleHosts && (
                             <div id="es-save-config">
                                 {saveIsDisabled() ? (
                                     <Popover
@@ -282,7 +342,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                             isMutliFsx ||
                                             disableState ||
                                             !storageSavingsResponse ||
-                                            configLoading
+                                            configLoading ||
+                                            bulkModeState.shouldRenderMultipleHosts
                                         }
                                         onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                                     >
@@ -293,8 +354,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                         )
                     ),
 
-                    !printState && (
-                        <div style={{ height: '32px' }} id="es-create" className={styles.buttonContainer}>
+                    !printState && !bulkModeState.shouldRenderMultipleHosts && (
+                        <div id="es-create" className={`${styles.buttonContainer} ${styles.headerActionsContainer}`}>
                             {savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM && isMutliFsx ? (
                                 <Popover
                                     popoverClass={styles.popover}
@@ -317,7 +378,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                         selectedHostDetails?.loading ||
                                         viewCalculationsLoading ||
                                         disableState ||
-                                        !storageSavingsResponse
+                                        !storageSavingsResponse ||
+                                        bulkModeState.shouldRenderMultipleHosts
                                     }
                                     onClick={() => handleCreateClick()}
                                 >
@@ -329,11 +391,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                 ]}
                 children={
                     isMutliFsx ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '2351px' }}>
-                            <DsTypography
-                                variant="Semibold_14"
-                                style={{ marginBottom: '6px', fontWeight: '505 !important' }}
-                            >
+                        <div className={styles.accordionContentWrapper}>
+                            <DsTypography variant="Semibold_14" className={styles.instanceTypography}>
                                 {GENERAL.MS_SQL_TWO_INSTANCES}
                             </DsTypography>
 
@@ -350,7 +409,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                         <TableLayout data={data} key={index} />
                                     )
                                 )}
-                            <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
+                            <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
                                 {GENERAL.FSX_FOR_ONTAP} 1
                             </DsTypography>
                             {calculatedFSXData(fsxData, storageType).map(
@@ -359,7 +418,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                 )
                             )}
 
-                            <DsTypography variant="Semibold_14" style={{ marginTop: '32px', marginBottom: '6px' }}>
+                            <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
                                 {GENERAL.FSX_FOR_ONTAP} 2
                             </DsTypography>
                             {calculatedFSXData(fsxData, storageType).map(
@@ -369,41 +428,77 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                             )}
                         </div>
                     ) : (
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                maxHeight: '2000px',
-                                overflow: 'hidden'
-                            }}
-                        >
-                            <DsTypography
-                                variant="Semibold_14"
-                                style={{ marginBottom: '6px' }}
-                                className={styles.setFont}
-                            >
-                                {GENERAL.MS_SQL_SINGLE_INSTANCES}
-                            </DsTypography>
+                        <div className={styles.accordionContentWrapperSingle}>
+                            {bulkModeState.isBulkMode ? (
+                                // Render multiple hosts for AUTO_EBS mode
+                                <>
+                                    {selectedRowsForExploreSavingsEBSBulk.map((host: any, hostIndex: number) => {
+                                        const hostName = host.ec2InstanceName || host.name;
+                                        const hostMsSqlData = generateHostMsSqlInstanceData(
+                                            hostName,
+                                            savingsCalculatorFrom,
+                                            storageSavingsResponse,
+                                            msSqlInstance
+                                        );
+                                        return (
+                                            <div key={host.id || `host-${hostIndex}`}>
+                                                <DsTypography
+                                                    variant="Semibold_14"
+                                                    className={styles.setFont}
+                                                    style={{
+                                                        marginBottom: '6px',
+                                                        marginTop: hostIndex > 0 ? '32px' : '0px'
+                                                    }}
+                                                >
+                                                    {`${GENERAL.MS_SQL_SINGLE_INSTANCES} - ${
+                                                        host.name || host.hostname || `Host ${hostIndex + 1}`
+                                                    }`}
+                                                </DsTypography>
 
-                            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES &&
-                                MSSQLServerInstanceForOnPremise(msSqlInstance, storageType).map(
-                                    (data: { label: string; text: string; value: string }, index: number) => (
-                                        <TableLayout data={data} key={index} type={WLF_TABS.MSSQL_ON_PREMISES} />
-                                    )
-                                )}
+                                                {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES &&
+                                                    MSSQLServerInstance(hostMsSqlData, storageType).map(
+                                                        (
+                                                            data: { label: string; text: string; value: string },
+                                                            index: number
+                                                        ) => (
+                                                            <TableLayout
+                                                                data={data}
+                                                                key={`${host.id}-regular-${index}`}
+                                                            />
+                                                        )
+                                                    )}
+                                            </div>
+                                        );
+                                    })}
+                                </>
+                            ) : (
+                                // Render single host (original logic)
+                                <>
+                                    <DsTypography variant="Semibold_14" className={styles.instanceTypography}>
+                                        {GENERAL.MS_SQL_SINGLE_INSTANCES}
+                                    </DsTypography>
 
-                            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES &&
-                                MSSQLServerInstance(msSqlInstance, storageType).map(
-                                    (data: { label: string; text: string; value: string }, index: number) => (
-                                        <TableLayout data={data} key={index} />
-                                    )
-                                )}
+                                    {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES &&
+                                        MSSQLServerInstanceForOnPremise(msSqlInstance, storageType).map(
+                                            (data: { label: string; text: string; value: string }, index: number) => (
+                                                <TableLayout
+                                                    data={data}
+                                                    key={index}
+                                                    type={WLF_TABS.MSSQL_ON_PREMISES}
+                                                />
+                                            )
+                                        )}
 
-                            <DsTypography
-                                variant="Semibold_14"
-                                style={{ marginTop: '32px', marginBottom: '6px' }}
-                                className={styles.setFont}
-                            >
+                                    {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES &&
+                                        MSSQLServerInstance(msSqlInstance, storageType).map(
+                                            (data: { label: string; text: string; value: string }, index: number) => (
+                                                <TableLayout data={data} key={index} />
+                                            )
+                                        )}
+                                </>
+                            )}
+
+                            <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
                                 {GENERAL.FSX_FOR_ONTAP}
                             </DsTypography>
                             {calculatedFSXData(fsxData, storageType, selectedExploreSavingsTab).map(

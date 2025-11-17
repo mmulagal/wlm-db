@@ -1,0 +1,268 @@
+{
+    "ebs": {
+        "capacity": 5120,
+        "iops": 9776,
+        "throughput": 0,
+        "snapshots": 6963.2,
+        "clones": 14896,
+        "total": 36755.2
+    },
+    "fsxw": {
+        "capacity": 0,
+        "iops": 0,
+        "throughput": 0,
+        "snapshots": 0,
+        "clones": 0,
+        "total": 0
+    },
+    "fsx": {
+        "capacity": 5120,
+        "iops": 631.04,
+        "throughput": 2457.6,
+        "snapshots": 6332.74,
+        "clones": 409.6,
+        "total": 14950.98
+    },
+    "totalSummary": {
+        "existing": 36755.2,
+        "recommended": 15919.194,
+        "optimized": 13659.194
+    },
+    "single": {
+        "fsxCalculation": {
+            "deploymentType": "Single",
+            "numberOfVolumes": 2,
+            "throughput": 256,
+            "totalStorageCapacity": 21990232555520,
+            "percentageSsd": 100,
+            "savings": 0,
+            "effectiveCapacity": 21990232555520,
+            "ssdTierReqCapacity": 21990232555520,
+            "capacityPoolTier": 0,
+            "ssdIop": 80000,
+            "throughputCapacity": 2048,
+            "useCase": "Low-latency",
+            "regionName": "US East (N. Virginia)",
+            "monthlySnapshotCapacity": 105553116266496,
+            "desiredStorageCapacity": 0,
+            "ebsCapacity": 0
+        },
+        "fsxBreakdown": {
+            "fsxDataLunSize": 12324036226442,
+            "fsxDataVolumeSize": 13556439849088,
+            "fsxLogVolumeSize": 3389109962272,
+            "fsxTempDbVolumeSize": 1355643984910,
+            "fsxQuorumVolumeSize": 24000000000,
+            "fsxBufferVolumeSize": 3665038759254,
+            "fsxStorageCapacity": 21990232555520
+        }
+    },
+    "multi": {
+        "fsxCalculation": {
+            "deploymentType": "Multi",
+            "numberOfVolumes": 2,
+            "throughput": 256,
+            "totalStorageCapacity": 21990232555520,
+            "percentageSsd": 100,
+            "savings": 0,
+            "effectiveCapacity": 21990232555520,
+            "ssdTierReqCapacity": 21990232555520,
+            "capacityPoolTier": 0,
+            "ssdIop": 80000,
+            "throughputCapacity": 2048,
+            "useCase": "Low-latency",
+            "regionName": "US East (N. Virginia)",
+            "monthlySnapshotCapacity": 105553116266496,
+            "desiredStorageCapacity": 0,
+            "ebsCapacity": 0
+        },
+        "fsxBreakdown": {
+            "fsxDataLunSize": 12324036226442,
+            "fsxDataVolumeSize": 13556439849088,
+            "fsxLogVolumeSize": 3389109962272,
+            "fsxTempDbVolumeSize": 1355643984910,
+            "fsxQuorumVolumeSize": 24000000000,
+            "fsxBufferVolumeSize": 3665038759254,
+            "fsxStorageCapacity": 21990232555520
+        }
+    },
+    "fsxOptimizedSingle": {
+        "fsxCalculation": {
+            "deploymentType": "Single",
+            "numberOfVolumes": 2,
+            "throughput": 256,
+            "totalStorageCapacity": 21990232555520,
+            "percentageSsd": 100,
+            "savings": 0,
+            "effectiveCapacity": 21990232555520,
+            "ssdTierReqCapacity": 21990232555520,
+            "capacityPoolTier": 0,
+            "ssdIop": 80000,
+            "throughputCapacity": 2048,
+            "useCase": "Low-latency",
+            "regionName": "US East (N. Virginia)",
+            "monthlySnapshotCapacity": 105553116266496,
+            "desiredStorageCapacity": 0,
+            "ebsCapacity": 0
+        },
+        "fsxBreakdown": {
+            "fsxDataLunSize": 12324036226442,
+            "fsxDataVolumeSize": 13556439849088,
+            "fsxLogVolumeSize": 3389109962272,
+            "fsxTempDbVolumeSize": 1355643984910,
+            "fsxQuorumVolumeSize": 24000000000,
+            "fsxBufferVolumeSize": 3665038759254,
+            "fsxStorageCapacity": 21990232555520
+        }
+    },
+    "fsxOptimized": {
+        "capacity": 5120,
+        "iops": 411.04,
+        "throughput": 417.6,
+        "snapshots": 6332.74,
+        "clones": 409.6,
+        "total": 12690.98
+    },
+    "compute": [
+        {
+            "existing": {
+                "instanceType": "m5.large",
+                "computeMonthlyPrice": 137.24,
+                "windowsOsVersion": "Microsoft Windows Server 2019",
+                "finding": "NOT_OPTIMIZED",
+                "machineDetails": [
+                    {
+                        "instanceType": "m5.large",
+                        "price": 0.668,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.188,
+                        "instanceMonthlyPrice": 487.64,
+                        "computeMonthlyPrice": 137.24,
+                        "licenseIncluded": true,
+                        "licenseMonthlyPrice": 350.4
+                    }
+                ]
+            },
+            "recommended": {
+                "instanceType": "m7i-flex.large",
+                "computeMonthlyPrice": 133.7068,
+                "windowsOsVersion": "Microsoft Windows Server 2019",
+                "machineDetails": [
+                    {
+                        "instanceType": "m7i-flex.large",
+                        "price": 0.66316,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.18316,
+                        "instanceMonthlyPrice": 484.11,
+                        "computeMonthlyPrice": 133.7068,
+                        "licenseIncluded": true,
+                        "licenseMonthlyPrice": 350.4
+                    }
+                ],
+                "recommendationOptions": [
+                    {
+                        "instanceType": "m7i-flex.large",
+                        "price": 0.66316,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.18316,
+                        "instanceMonthlyPrice": 484.11,
+                        "computeMonthlyPrice": 133.7068,
+                        "licenseMonthlyPrice": 350.4
+                    },
+                    {
+                        "instanceType": "m2.xlarge",
+                        "price": 1.084,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.345,
+                        "instanceMonthlyPrice": 791.32,
+                        "computeMonthlyPrice": 251.85,
+                        "licenseMonthlyPrice": 539.47
+                    }
+                ]
+            }
+        },
+        {
+            "existing": {
+                "instanceType": "m5.large",
+                "computeMonthlyPrice": 139.24,
+                "windowsOsVersion": "Microsoft Windows Server 2019",
+                "finding": "NOT_OPTIMIZED",
+                "machineDetails": [
+                    {
+                        "instanceType": "m5.large",
+                        "price": 0.668,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.188,
+                        "instanceMonthlyPrice": 487.64,
+                        "computeMonthlyPrice": 137.24,
+                        "licenseIncluded": true,
+                        "licenseMonthlyPrice": 350.4
+                    }
+                ]
+            },
+            "recommended": {
+                "instanceType": "m6i.large",
+                "computeMonthlyPrice": 135.15,
+                "windowsOsVersion": "Microsoft Windows Server 2019",
+                "machineDetails": [
+                    {
+                        "instanceType": "m6i.large",
+                        "price": 0.672,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.185,
+                        "instanceMonthlyPrice": 490.56,
+                        "computeMonthlyPrice": 135.15,
+                        "licenseIncluded": true,
+                        "licenseMonthlyPrice": 355.41
+                    }
+                ],
+                "recommendationOptions": [
+                    {
+                        "instanceType": "m6i.large",
+                        "price": 0.672,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.185,
+                        "instanceMonthlyPrice": 490.56,
+                        "computeMonthlyPrice": 135.15,
+                        "licenseMonthlyPrice": 355.41
+                    },
+                    {
+                        "instanceType": "m5.xlarge",
+                        "price": 1.336,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.376,
+                        "instanceMonthlyPrice": 975.28,
+                        "computeMonthlyPrice": 274.48,
+                        "licenseMonthlyPrice": 700.8
+                    }
+                ]
+            }
+        }
+    ],
+    "license": [
+        {
+            "existing": {
+                "sqlServerEdition": "Standard Edition (64-bit)",
+                "licenseMonthlyPrice": 350.4,
+                "finding": "OPTIMIZED"
+            },
+            "recommended": {
+                "sqlServerEdition": "Standard Edition (64-bit)",
+                "licenseMonthlyPrice": 350.4,
+                "message": "No license change recommended as you are already using a non-enterprise edition"
+            }
+        },
+        {
+            "existing": {
+                "sqlServerEdition": "Standard Edition (64-bit)",
+                "licenseMonthlyPrice": 355.41,
+                "finding": "OPTIMIZED"
+            },
+            "recommended": {
+                "sqlServerEdition": "Standard Edition (64-bit)",
+                "licenseMonthlyPrice": 355.41,
+                "message": "No license change recommended as you are already using a non-enterprise edition"
+            }
+        }
+    ]
+}

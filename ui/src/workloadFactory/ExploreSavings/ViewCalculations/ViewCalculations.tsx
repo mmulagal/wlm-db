@@ -1,5 +1,6 @@
 import { AccordionController, DsTypography } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './ViewCalculations.module.scss';
 import { FSX_AZ_TYPE, SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
@@ -27,8 +28,33 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 
 const ViewCalculations = ({ statusCheck }: any) => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
     const { viewCalculationsResponse, savingsCalculatorFrom } = useAppSelector(state => state.exploreSavings);
+    const { selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
+
+    const getDynamicBreadcrumbTitle = () => {
+        // For manual modes, use the manual breadcrumb title
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+        ) {
+            return t('databases.explore-savings.view-calculation-breadcrumb-title-manual');
+        }
+
+        // For AUTO_EBS mode with bulk selection capability
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && selectedRowsForExploreSavingsEBSBulk) {
+            if (selectedRowsForExploreSavingsEBSBulk.length > 1) {
+                return `${selectedRowsForExploreSavingsEBSBulk.length} hosts selected`;
+            }
+            if (selectedRowsForExploreSavingsEBSBulk.length === 1) {
+                return selectedRowsForExploreSavingsEBSBulk[0]?.name || selectedServerName;
+            }
+        }
+
+        // Fallback to original selectedServerName for other modes
+        return selectedServerName;
+    };
 
     return (
         <div className={styles.viewCalculations}>
@@ -44,11 +70,7 @@ const ViewCalculations = ({ statusCheck }: any) => {
                                 }
                             },
                             {
-                                title:
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                        ? 'Explore savings manually'
-                                        : selectedServerName,
+                                title: getDynamicBreadcrumbTitle(),
                                 onClick: () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                                 }
@@ -62,11 +84,7 @@ const ViewCalculations = ({ statusCheck }: any) => {
                     <BreadCrumbs
                         items={[
                             {
-                                title:
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                        ? 'Explore savings manually'
-                                        : selectedServerName,
+                                title: getDynamicBreadcrumbTitle(),
                                 onClick: () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                                 }

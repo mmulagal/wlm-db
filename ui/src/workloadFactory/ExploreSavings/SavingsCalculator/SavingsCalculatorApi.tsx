@@ -6,6 +6,8 @@ import {
     useGetOnPremCalculationsMutation,
     useGetStorageSavingsMutation,
     useGetViewCalculationsMutation,
+    useGetBulkStorageSavingsMutation,
+    useGetBulkViewCalculationsMutation,
     useLazyGetRegionsWithoutCredQuery
 } from '../../../utils/apiService';
 import {
@@ -90,10 +92,13 @@ const SavingsCalculatorApi = () => {
         showOptimizeMode
     } = useAppSelector(state => state.exploreSavings);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
+    const { ebsTCOAction, selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
     const [getViewCalculationsApi] = useGetViewCalculationsMutation();
+    const [getBulkStorageSavingsApi] = useGetBulkStorageSavingsMutation();
+    const [getBulkViewCalculationsApi] = useGetBulkViewCalculationsMutation();
     const [getMssqlInstanceDataApiV2] = useGetMssqlInstanceDataV2Mutation();
     const [getStorageSavingsOnPremDataApi] = useGetOnPremCalculationsMutation();
 
@@ -136,7 +141,7 @@ const SavingsCalculatorApi = () => {
                 }
             }
             setESInstanceData(selectedRow[0], dispatch);
-            // dispatch(setSelectedHostDetails(selectedRow[0]));
+            dispatch(setSelectedHostDetails(selectedRow[0]));
         } else {
             dispatch(setSelectedHostDetails({}));
         }
@@ -322,19 +327,158 @@ const SavingsCalculatorApi = () => {
         }
     };
 
+    const getBulkStorageSavingsData = async () => {
+        if (ebsTCOAction !== 'bulk' || !selectedRowsForExploreSavingsEBSBulk.length) return;
+
+        // Extract all instance IDs from selected hosts
+        const instanceIds: string[] = [];
+        selectedRowsForExploreSavingsEBSBulk.forEach((host: any) => {
+            if (host.ec2Details && host.ec2Details.length > 0) {
+                host.ec2Details.forEach((instance: any) => {
+                    if (instance.id) {
+                        instanceIds.push(instance.id);
+                    }
+                });
+            }
+        });
+
+        if (instanceIds.length === 0) {
+            return;
+        }
+
+        let payload: any = {
+            snapshotFrequency: selectedSnapshotFrequency?.value,
+            clonedCopiesCount: numberOfClonedCopies,
+            monthlyChangeRatePercentage: monthlyChangeRate,
+            instanceIds
+        };
+
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+            payload = {
+                ...payload,
+                cloneRefreshFrequency: selectedCloneRefresh?.value
+            };
+        }
+
+        if (monthlyBYOLCost) {
+            payload = {
+                ...payload,
+                monthlySqlByolCost: Number(monthlyBYOLCost)
+            };
+        }
+
+        try {
+            const result: any = await getBulkStorageSavingsApi({
+                credentialId: selectedExCredId,
+                regionId: selectedExRegionId,
+                payload
+            });
+            if (result && !result?.error) {
+                prepareStorageSavingsData(result?.data, dispatch);
+                if (result?.data?.fsxOptimized && !showOptimizeMode?.showCalcMode) {
+                    dispatch(setShowFirstTimeOptimize(null));
+                }
+                dispatch(setStorageSavingsLoading(false));
+            } else {
+                dispatch(setStorageSavingsLoading(false));
+                dispatch(setStorageSavingsResponse(null));
+                dispatch(resetOptimizedStorage());
+            }
+        } catch (error) {
+            dispatch(setStorageSavingsResponse(null));
+            dispatch(setStorageSavingsLoading(false));
+            dispatch(resetOptimizedStorage());
+        }
+    };
+
+    const getBulkViewCalculationsData = async () => {
+        if (ebsTCOAction !== 'bulk' || !selectedRowsForExploreSavingsEBSBulk.length) return;
+
+        // Extract all instance IDs from selected hosts
+        const instanceIds: string[] = [];
+        selectedRowsForExploreSavingsEBSBulk.forEach((host: any) => {
+            if (host.ec2Details && host.ec2Details.length > 0) {
+                host.ec2Details.forEach((instance: any) => {
+                    if (instance.id) {
+                        instanceIds.push(instance.id);
+                    }
+                });
+            }
+        });
+
+        if (instanceIds.length === 0) {
+            return;
+        }
+
+        let payload: any = {
+            snapshotFrequency: selectedSnapshotFrequency?.value,
+            clonedCopiesCount: numberOfClonedCopies,
+            monthlyChangeRatePercentage: monthlyChangeRate,
+            instanceIds
+        };
+
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+            payload = {
+                ...payload,
+                cloneRefreshFrequency: selectedCloneRefresh?.value
+            };
+        }
+
+        if (monthlyBYOLCost) {
+            payload = {
+                ...payload,
+                monthlySqlByolCost: Number(monthlyBYOLCost)
+            };
+        }
+
+        try {
+            const result: any = await getBulkViewCalculationsApi({
+                credentialId: selectedExCredId,
+                regionId: selectedExRegionId,
+                payload
+            });
+            if (result && !result?.error) {
+                prepareViewCalcData(result?.data, dispatch, selectedDeploymentModel, monthlyChangeRate);
+                dispatch(setViewCalculationsApiResponse(result?.data));
+                dispatch(setViewCalculationsLoading(false));
+            } else {
+                dispatch(setViewCalculationsLoading(false));
+                dispatch(setViewCalculationsResponse(null));
+            }
+        } catch (error) {
+            dispatch(setViewCalculationsResponse(null));
+            dispatch(setViewCalculationsLoading(false));
+        }
+    };
+
     const triggerRefreshApi = () => {
-        if (
-            selectedSnapshotFrequency &&
-            numberOfClonedCopies &&
-            monthlyChangeRate &&
+        const hasBasicRequirements = selectedSnapshotFrequency && numberOfClonedCopies && monthlyChangeRate;
+        const hasSingleInstanceRequirements =
             selectedInstanceId &&
             ((savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && selectedCloneRefresh) ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW)
-        ) {
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW);
+        const hasBulkRequirements =
+            ebsTCOAction === 'bulk' &&
+            selectedRowsForExploreSavingsEBSBulk.length > 0 &&
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
+            selectedCloneRefresh;
+
+        if (hasBasicRequirements && (hasSingleInstanceRequirements || hasBulkRequirements)) {
             dispatch(setStorageSavingsLoading(true));
             dispatch(setViewCalculationsLoading(true));
-            getStorageSavingsData();
-            getViewCalculationsData();
+
+            // Use bulk APIs if it's bulk mode for AUTO_EBS
+            if (
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
+                ebsTCOAction === 'bulk' &&
+                selectedRowsForExploreSavingsEBSBulk.length > 0
+            ) {
+                getBulkStorageSavingsData();
+                getBulkViewCalculationsData();
+            } else {
+                getStorageSavingsData();
+                getViewCalculationsData();
+            }
         }
     };
 
@@ -389,7 +533,9 @@ const SavingsCalculatorApi = () => {
         selectedCloneRefresh,
         monthlyChangeRate,
         selectedInstanceId,
-        monthlyBYOLCost
+        monthlyBYOLCost,
+        ebsTCOAction,
+        selectedRowsForExploreSavingsEBSBulk
     ]);
 
     useEffect(() => {

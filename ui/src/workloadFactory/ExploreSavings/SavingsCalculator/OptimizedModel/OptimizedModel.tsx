@@ -4,19 +4,36 @@ import { DsTypography } from '@tlveng/wlm-ds';
 import { DsButton } from '@netapp/design-system';
 import styles from './OptimizedModel.module.scss';
 import { ReactComponent as OptimizeImage } from '../../../../assets/optimizeES.svg';
-import { setOptimizeLink, setShowOptimizeMode } from '../../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    setOptimizeLink,
+    setShowOptimizeMode,
+    setStorageSavingsResponse,
+    setViewCalculationsResponse,
+    setSelectedCalculatorMode
+} from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { TCO_CALCULATOR_MODE } from '../../../../utils/consts';
 
 const OptimizedModel = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const { showOptimizeMode } = useAppSelector(state => state.exploreSavings);
+    const { showOptimizeMode, standardStorageSavingsResponse, standardViewCalculationsResponse } = useAppSelector(
+        state => state.exploreSavings
+    );
 
     const handleOptimizeButton = () => {
         // As data is loaded in same api so no need to loading true
         // dispatch(setShowOptimizeMode({ optimizeLoading: true, showCalcMode: false }));
         dispatch(setShowOptimizeMode({ optimizeLoading: false, showCalcMode: true }));
         dispatch(setOptimizeLink(false));
+    };
+
+    const handleStandardButton = () => {
+        // Set standard mode data on maybe later click
+        dispatch(setStorageSavingsResponse(standardStorageSavingsResponse));
+        dispatch(setViewCalculationsResponse(standardViewCalculationsResponse));
+        dispatch(setSelectedCalculatorMode(TCO_CALCULATOR_MODE.STANDARD));
+        dispatch(setOptimizeLink(true));
     };
 
     return (
@@ -38,7 +55,7 @@ const OptimizedModel = () => {
                             <DsButton
                                 type="text"
                                 onClick={() => {
-                                    dispatch(setOptimizeLink(true));
+                                    handleStandardButton();
                                 }}
                             >
                                 {t('databases.explore-savings.maybe-later')}

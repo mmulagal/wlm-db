@@ -47,7 +47,7 @@ const SnapshotsEBSCalculation = () => {
                                 {viewCalculationForEBS(
                                     viewCalculationsResponse,
                                     selectedDeploymentModel
-                                ).SnapshotCalculation.map(
+                                )?.SnapshotCalculation?.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (
                                         <TableLayout key={index} data={data} />
                                     )

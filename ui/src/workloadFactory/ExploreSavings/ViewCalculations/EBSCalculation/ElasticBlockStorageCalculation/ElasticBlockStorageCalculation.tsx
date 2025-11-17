@@ -48,7 +48,7 @@ const ElasticBlockStorageCalculation = () => {
                                         {viewCalculationForEBS(
                                             viewCalculationsResponse,
                                             selectedDeploymentModel
-                                        ).gp3VolumeType.map(
+                                        )?.gp3VolumeType?.map(
                                             (data: { label: string; text?: string; value?: string }, index: number) => (
                                                 <TableLayout key={index} data={data} />
                                             )
@@ -63,7 +63,7 @@ const ElasticBlockStorageCalculation = () => {
                                         {viewCalculationForEBS(
                                             viewCalculationsResponse,
                                             selectedDeploymentModel
-                                        ).io2VolumeType.map(
+                                        )?.io2VolumeType?.map(
                                             (data: { label: string; text?: string; value?: string }, index: number) => (
                                                 <TableLayout key={index} data={data} />
                                             )
@@ -78,7 +78,7 @@ const ElasticBlockStorageCalculation = () => {
                                         {viewCalculationForEBS(
                                             viewCalculationsResponse,
                                             selectedDeploymentModel
-                                        ).io1VolumeType.map(
+                                        )?.io1VolumeType?.map(
                                             (data: { label: string; text?: string; value?: string }, index: number) => (
                                                 <TableLayout key={index} data={data} />
                                             )
@@ -93,7 +93,7 @@ const ElasticBlockStorageCalculation = () => {
                                         {viewCalculationForEBS(
                                             viewCalculationsResponse,
                                             selectedDeploymentModel
-                                        ).gp2VolumeType.map(
+                                        )?.gp2VolumeType?.map(
                                             (data: { label: string; text?: string; value?: string }, index: number) => (
                                                 <TableLayout key={index} data={data} />
                                             )
@@ -108,7 +108,7 @@ const ElasticBlockStorageCalculation = () => {
                                         {viewCalculationForEBS(
                                             viewCalculationsResponse,
                                             selectedDeploymentModel
-                                        ).st1VolumeType.map(
+                                        )?.st1VolumeType?.map(
                                             (data: { label: string; text?: string; value?: string }, index: number) => (
                                                 <TableLayout key={index} data={data} />
                                             )
@@ -122,7 +122,7 @@ const ElasticBlockStorageCalculation = () => {
                                 {viewCalculationForEBS(
                                     viewCalculationsResponse,
                                     selectedDeploymentModel
-                                ).ebsTotalCost.map(
+                                )?.ebsTotalCost?.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (
                                         <TableLayout key={index} data={data} />
                                     )

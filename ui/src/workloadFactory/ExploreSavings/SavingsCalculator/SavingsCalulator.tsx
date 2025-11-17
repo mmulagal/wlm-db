@@ -49,6 +49,7 @@ import { useGetSendEmailMutation } from '../../../utils/apiService';
 import OptimizedModel from './OptimizedModel/OptimizedModel';
 import CalculatorMode from './CalculatorMode/CalculatorMode';
 import { prepareViewCalcData } from './savingsUtil';
+import TCOBulkAccordion from './TCOBulkAccordion/TCOBulkAccordion';
 
 const SavingsCalculator = ({ statusCheck }: any) => {
     const { t } = useTranslation();
@@ -78,6 +79,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         showOptimizeMode,
         selectedCalculatorMode
     } = useAppSelector(state => state.exploreSavings);
+
+    const { selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
 
     const { isWorkloadFactory, userMetadata } = useAppSelector(state => state.auth);
 
@@ -142,8 +145,9 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             formData.append('userEmail', userMetadata?.email);
             formData.append('emailType', 'savings-calculations');
             formData.append('storageType', setEmailSubject());
-            if (selectedServerName) {
-                formData.append('hostName', selectedServerName);
+            const dynamicHostName = getDynamicBreadcrumbTitle();
+            if (dynamicHostName) {
+                formData.append('hostName', dynamicHostName);
             }
             getSendEmail({ payload: formData })
                 .then(resp => {
@@ -220,6 +224,29 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         return 'Custom configuration for FSx for Windows';
     };
 
+    const getDynamicBreadcrumbTitle = () => {
+        // For manual modes, use the manual breadcrumb title
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+        ) {
+            return setManualBreadcrumbTitle();
+        }
+
+        // For AUTO_EBS mode with bulk selection capability
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && selectedRowsForExploreSavingsEBSBulk) {
+            if (selectedRowsForExploreSavingsEBSBulk.length > 1) {
+                return `${selectedRowsForExploreSavingsEBSBulk.length} hosts selected`;
+            }
+            if (selectedRowsForExploreSavingsEBSBulk.length === 1) {
+                return selectedRowsForExploreSavingsEBSBulk[0]?.name || selectedServerName;
+            }
+        }
+
+        // Fallback to original selectedServerName for other modes
+        return selectedServerName;
+    };
+
     const setCSSForTextArea = () => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
             return `${styles.selectionArea} ${styles.selectionAreaOnPrem}`;
@@ -274,11 +301,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                         }
                                     },
                                     {
-                                        title:
-                                            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
-                                                ? setManualBreadcrumbTitle()
-                                                : selectedServerName
+                                        title: getDynamicBreadcrumbTitle()
                                     }
                                 ]}
                             />
@@ -353,12 +376,17 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     <>
                                         <SavingsHeader />
                                         <SavingsSelection printState={printState} />
-                                        <SavingsSelectedHost />
-                                        <InstanceInformation />
-                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
-                                            <SelectedVolumeSummary />
+
+                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && <TCOBulkAccordion />}
+
+                                        {/* Condition for EBS TCO Bulk for Auto - accordions to be displayed */}
+                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && (
+                                            <>
+                                                <SavingsSelectedHost />
+                                                <InstanceInformation />
+                                                <WindowFileServer />
+                                            </>
                                         )}
-                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && <WindowFileServer />}
                                     </>
                                 )}
                                 {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (

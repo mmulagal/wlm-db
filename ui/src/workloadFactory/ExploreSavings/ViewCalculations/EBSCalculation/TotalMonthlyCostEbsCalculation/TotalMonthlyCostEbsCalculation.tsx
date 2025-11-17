@@ -40,7 +40,7 @@ const TotalMonthlyCostEbsCalculation = () => {
                             {viewCalculationForEBS(
                                 viewCalculationsResponse,
                                 selectedDeploymentModel
-                            ).totalMonthlyCost.map(
+                            )?.totalMonthlyCost?.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
                                 )

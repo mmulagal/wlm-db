@@ -1,7 +1,9 @@
 import { BASE_URL, generateResponse } from '../utils/appUtils';
 import StorageSavings from '../data/storageSavings.json';
+import StorageSavingsBulk from '../data/storageSavingsBulk.json';
 import StorageSavingsFsxw from '../data/storageSavingsFsxw.json';
 import ViewCalculations from '../data/viewCalculations.json';
+import ViewCalculationsBulk from '../data/viewCalculationsBulk.json';
 import ViewCalculationsFsxw from '../data/viewCalculationsFsxw.json';
 import UploadScript from '../data/uploadScript.json';
 import SendEmail from '../data/sendEmail.json';
@@ -15,6 +17,15 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, StorageSavings);
+        }, 100);
+    }
+);
+
+router.post(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/storage-savings/ebs`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, StorageSavingsBulk);
         }, 100);
     }
 );
@@ -62,6 +73,15 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, ViewCalculations);
+        }, 50);
+    }
+);
+
+router.post(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/storage-savings/ebs/calculations`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, ViewCalculationsBulk);
         }, 50);
     }
 );

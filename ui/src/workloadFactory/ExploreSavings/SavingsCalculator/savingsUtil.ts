@@ -5,7 +5,8 @@ import {
     formatFractionalNumberForCost,
     formatSizeTwoPrecision,
     generateOptionType,
-    removePasswordInConfig
+    removePasswordInConfig,
+    formatNumberWithCustomComma
 } from '../../../utils/utilityFunctions';
 import store from '../../../store/store';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
@@ -38,7 +39,8 @@ import { StorageSavingsInterface, ViewCalculationsInterface } from '../../../uti
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
-    const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom } = state.exploreSavings;
+    const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom, selectedDeploymentModel } =
+        state.exploreSavings;
     const checkBYOLTooltip = checkIfByolFieldRequired(selectedHostDetails, false, savingsCalculatorFrom);
     return [
         {
@@ -92,9 +94,32 @@ export const comparisonData = (calculatedResponse: any) => {
             fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
                 ? `$${formatFractionalNumberForCost(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)}`
                 : '$0',
-            ebs: calculatedResponse?.compute?.existing?.computeMonthlyPrice
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.compute?.existing?.computeMonthlyPrice, 2)}`
-                : '$0'
+            ebs: (() => {
+                if (
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
+                    Array.isArray(calculatedResponse?.compute)
+                ) {
+                    // Handle AUTO_EBS array format - sum all existing compute costs
+                    let totalExistingComputePrice = 0;
+                    calculatedResponse.compute.forEach((computeObj: any) => {
+                        const deploymentModelValue =
+                            selectedDeploymentModel ||
+                            selectedHostDetails?.deploymentModel ||
+                            SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+                        const isAOAG = deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+                        const multiplier = isAOAG ? 2 : 1;
+                        totalExistingComputePrice +=
+                            Number(computeObj?.existing?.computeMonthlyPrice || 0) * multiplier;
+                    });
+                    return totalExistingComputePrice > 0
+                        ? `$${formatFractionalNumberForCost(totalExistingComputePrice, 2)}`
+                        : '$0';
+                }
+                // Handle single object format for other modes
+                return calculatedResponse?.compute?.existing?.computeMonthlyPrice
+                    ? `$${formatFractionalNumberForCost(calculatedResponse?.compute?.existing?.computeMonthlyPrice, 2)}`
+                    : '$0';
+            })()
         },
         {
             type: 'SQL license',
@@ -104,9 +129,32 @@ export const comparisonData = (calculatedResponse: any) => {
             fsx: calculatedResponse?.recommendedInstance?.licenseMonthlyPrice
                 ? `$${formatFractionalNumberForCost(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)}`
                 : '$0',
-            ebs: calculatedResponse?.license?.existing?.licenseMonthlyPrice
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.license?.existing?.licenseMonthlyPrice, 2)}`
-                : '$0'
+            ebs: (() => {
+                if (
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
+                    Array.isArray(calculatedResponse?.license)
+                ) {
+                    // Handle AUTO_EBS array format - sum all existing license costs
+                    let totalExistingLicensePrice = 0;
+                    calculatedResponse.license.forEach((licenseObj: any) => {
+                        const deploymentModelValue =
+                            selectedDeploymentModel ||
+                            selectedHostDetails?.deploymentModel ||
+                            SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+                        const isAOAG = deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+                        const multiplier = isAOAG ? 2 : 1;
+                        totalExistingLicensePrice +=
+                            Number(licenseObj?.existing?.licenseMonthlyPrice || 0) * multiplier;
+                    });
+                    return totalExistingLicensePrice > 0
+                        ? `$${formatFractionalNumberForCost(totalExistingLicensePrice, 2)}`
+                        : '$0';
+                }
+                // Handle single object format for other modes
+                return calculatedResponse?.license?.existing?.licenseMonthlyPrice
+                    ? `$${formatFractionalNumberForCost(calculatedResponse?.license?.existing?.licenseMonthlyPrice, 2)}`
+                    : '$0';
+            })()
         },
         {
             type: 'Total summary',
@@ -371,6 +419,144 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
     } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
         storageType = GENERAL.FSX_FOR_WINDOWS;
     }
+
+    // Check if we have bulk calculation data (multiple hosts)
+    if (viewCalculation?.isBulkCalculation && viewCalculation?.hostCalculationData?.length > 0) {
+        // For bulk calculations, return host-specific data
+        const hostCalculations = viewCalculation.hostCalculationData.map((hostData: any) => {
+            const machineDetailsList: any[] = [];
+
+            // Process each machine for this host
+            hostData?.fsxInstanceCalculation?.forEach((calculation: any, index: number) => {
+                machineDetailsList.push(
+                    { label: `Machine ${index + 1} specification` },
+                    {
+                        label: 'Instance type',
+                        value: `${calculation?.instanceType}`,
+                        text:
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+                                ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
+                                : ''
+                    },
+                    {
+                        label: 'SQL edition',
+                        value: `${calculation?.sqlEdition}`,
+                        text: ''
+                    },
+                    {
+                        label: 'SQL license included',
+                        value: `${calculation?.sqlLicense}`,
+                        text: ''
+                    },
+                    { label: `Machine ${index + 1} pricing calculations` },
+                    {
+                        label: 'Instance hourly price',
+                        value: `${calculation?.computeHourlyPrice}`,
+                        text: 'Instance hourly price with SQL license included'
+                    },
+                    {
+                        label: `EC2 machine${index + 1} cost`,
+                        value: `${calculation?.instanceMonthlyPrice}`,
+                        text: `Instance hourly price x number of hours in a month = ${calculation?.computeHourlyPrice} x ${calculation?.hoursInAMonth}`
+                    }
+                );
+            });
+
+            // Calculate total cost for this host
+            const hostTotalCost = hostData?.fsxInstanceCalculation?.reduce((total: number, calc: any) => {
+                const price = calc?.instanceMonthlyPrice;
+                const numericPrice =
+                    typeof price === 'string' ? Number(price.replace('$', '').replace(',', '')) : Number(price) || 0;
+                return total + numericPrice;
+            }, 0);
+
+            machineDetailsList.push({
+                label: 'EC2 machines total cost',
+                value: `$${formatNumberWithCustomComma(hostTotalCost)}`,
+                text: ''
+            });
+
+            return {
+                hostName: hostData.hostName,
+                Ec2InstanceCalculation: machineDetailsList
+            };
+        });
+
+        return {
+            isBulkCalculation: true,
+            hostCalculations,
+            // Include FSx calculation data (shared across hosts)
+            FSxNCalculation: viewCalculation.fsxOntapCalculation
+                ? [
+                      {
+                          label: 'Unit conversions'
+                      },
+                      {
+                          label: 'Desired storage capacity',
+                          value: `${viewCalculation.fsxOntapCalculation.desiredStorageCapacity}`,
+                          text: `Total required capacity according to ${storageType} storage capacity`
+                      }
+                      // Add more FSx calculation details as needed
+                  ]
+                : [],
+            // Include snapshot calculation data (shared across hosts)
+            SnapshotCalculation: viewCalculation.fsxOntapSnapshotCalculation
+                ? [
+                      {
+                          label: 'Unit conversions'
+                      },
+                      {
+                          label: 'Desired storage capacity',
+                          value: `${viewCalculation.fsxOntapSnapshotCalculation.desiredStorageCapacity}`,
+                          text: `Monthly change rate (${viewCalculation.monthlyChangeRate}%) x FSx for ONTAP storage capacity (${viewCalculation.fsxOntapCalculation.desiredStorageCapacity})`
+                      },
+                      {
+                          label: 'Percentage of data on SSD storage',
+                          value: `${viewCalculation.fsxOntapSnapshotCalculation.percentageOfDataOnSsdStorage}%`,
+                          text: ''
+                      },
+                      {
+                          label: 'Savings from compression & deduplication',
+                          value: `${viewCalculation.fsxOntapSnapshotCalculation.savingsFromCompressionAndDeduplication}%`,
+                          text: ''
+                      },
+                      {
+                          label: 'Pricing calculations'
+                      },
+                      {
+                          label: 'Total snapshot monthly cost',
+                          value: `$${viewCalculation.fsxOntapSnapshotCalculation.totalSnapshotMonthlyCost}`,
+                          text: ''
+                      }
+                  ]
+                : [],
+            // Include clone calculation data (shared across hosts)
+            cloneCalculation: viewCalculation.fsxCloneCalculation
+                ? [
+                      {
+                          label: 'Unit conversions'
+                      },
+                      {
+                          label: 'Monthly change rate',
+                          value: `${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}%`,
+                          text: 'Based on user input'
+                      },
+                      {
+                          label: 'Desired storage capacity',
+                          value: `${viewCalculation.fsxCloneCalculation.desiredStorageCapacity}`,
+                          text: `Number of cloned copies x (Monthly change rate x Total FSx for ONTAP capacity)= ${viewCalculation.fsxCloneCalculation.clonedCopiesCount} x (${viewCalculation.fsxCloneCalculation.monthlyChangeRatePercentage}% x ${viewCalculation.fsxCloneCalculation.totalFsxnCapacity})`
+                      },
+                      {
+                          label: 'Total clone monthly cost',
+                          value: `$${viewCalculation.fsxCloneCalculation.totalCloneMonthlyCost}`,
+                          text: ''
+                      }
+                  ]
+                : []
+        };
+    }
+
+    // Original single host calculation logic
     const machineDetailsList = [];
 
     viewCalculation?.fsxInstanceCalculation?.forEach((calculation: any, index: number) => {
@@ -796,6 +982,75 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
         deploymentModelValue = selectedManualDeploymentModel?.value;
     }
 
+    // Check if we have bulk calculation data (multiple hosts)
+    if (viewCalculation?.isBulkCalculation && viewCalculation?.hostCalculationData?.length > 0) {
+        // For bulk calculations, return host-specific data
+        const hostCalculations = viewCalculation.hostCalculationData.map((hostData: any) => {
+            const machineDetailsList: any[] = [];
+
+            // Process each machine for this host
+            hostData?.ebsInstanceCalculation?.forEach((calculation: any, index: number) => {
+                machineDetailsList.push(
+                    { label: `Machine ${index + 1} specification` },
+                    {
+                        label: 'Instance type',
+                        value: `${calculation?.instanceType}`,
+                        text:
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+                                ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
+                                : ''
+                    },
+                    {
+                        label: 'SQL edition',
+                        value: `${calculation?.sqlEdition}`,
+                        text: ''
+                    },
+                    {
+                        label: 'SQL license included',
+                        value: `${calculation?.sqlLicense}`,
+                        text: ''
+                    },
+                    { label: `Machine ${index + 1} pricing calculations` },
+                    {
+                        label: 'Instance hourly price',
+                        value: `${calculation?.computeHourlyPrice}`,
+                        text: 'Instance hourly price with SQL license included'
+                    },
+                    {
+                        label: `EC2 machine${index + 1} cost`,
+                        value: `${calculation?.instanceMonthlyPrice}`,
+                        text: `Instance hourly price x number of hours in a month = ${calculation?.computeHourlyPrice} x ${calculation?.hoursInAMonth}`
+                    }
+                );
+            });
+
+            // Calculate total cost for this host
+            const hostTotalCost = hostData?.ebsInstanceCalculation?.reduce((total: number, calc: any) => {
+                const price = calc?.instanceMonthlyPrice;
+                const numericPrice =
+                    typeof price === 'string' ? Number(price.replace('$', '').replace(',', '')) : Number(price) || 0;
+                return total + numericPrice;
+            }, 0);
+
+            machineDetailsList.push({
+                label: 'EC2 machines total cost',
+                value: `$${formatNumberWithCustomComma(hostTotalCost)}`,
+                text: ''
+            });
+
+            return {
+                hostName: hostData.hostName,
+                Ec2InstanceCalculation: machineDetailsList
+            };
+        });
+
+        return {
+            isBulkCalculation: true,
+            hostCalculations
+        };
+    }
+
+    // Original single host calculation logic
     const machineDetailsList = [];
 
     viewCalculation?.ebsInstanceCalculation?.forEach((calculation: any, index: number) => {

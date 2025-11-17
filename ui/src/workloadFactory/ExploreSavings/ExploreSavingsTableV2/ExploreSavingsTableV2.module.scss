@@ -3,6 +3,12 @@
 
     margin-top: 24px;
 
+    [class*='header-name'] {
+        [class*='Checkbox-module'] {
+            display: none !important;
+        }
+    }
+
     .firstColText {
         display: flex;
         gap: 8px;

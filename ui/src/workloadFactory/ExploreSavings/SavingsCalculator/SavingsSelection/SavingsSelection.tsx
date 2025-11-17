@@ -82,13 +82,28 @@ const SavingsSelection = ({ printState }: any) => {
     }, [textSearch]);
 
     useEffect(() => {
-        setInstanceTypeData({
-            missingPermissions:
-                storageSavingsResponse?.compute?.existing?.finding === FINDINGS.INSUFFICIENT_PERMISSIONS,
-            options: storageSavingsResponse?.compute?.recommended?.recommendationOptions || [],
-            existingInstanceType: storageSavingsResponse?.compute?.existing?.instanceType
-        });
-    }, [storageSavingsResponse?.compute]);
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+            // Handle AUTO_EBS array format
+            const computeArray = Array.isArray(storageSavingsResponse?.compute)
+                ? storageSavingsResponse.compute
+                : [storageSavingsResponse?.compute].filter(Boolean);
+            const firstCompute = computeArray[0];
+
+            setInstanceTypeData({
+                missingPermissions: firstCompute?.existing?.finding === FINDINGS.INSUFFICIENT_PERMISSIONS,
+                options: firstCompute?.recommended?.recommendationOptions || [],
+                existingInstanceType: firstCompute?.existing?.instanceType
+            });
+        } else {
+            // Handle single object format for other modes
+            setInstanceTypeData({
+                missingPermissions:
+                    storageSavingsResponse?.compute?.existing?.finding === FINDINGS.INSUFFICIENT_PERMISSIONS,
+                options: storageSavingsResponse?.compute?.recommended?.recommendationOptions || [],
+                existingInstanceType: storageSavingsResponse?.compute?.existing?.instanceType
+            });
+        }
+    }, [storageSavingsResponse?.compute, savingsCalculatorFrom]);
 
     useEffect(() => {
         setClonedText(noOfClonedCopies);
@@ -157,44 +172,6 @@ const SavingsSelection = ({ printState }: any) => {
 
         return options;
     }, []);
-
-    const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
-        const options: optionType[] = [];
-        instanceTypeData.options.map((option: any) => {
-            options.push(
-                generateOptionType(
-                    option?.instanceType,
-                    <div className="savings-calculator-dropdown-options">
-                        {option?.instanceType} <span className={styles.greyedOutText}>(for all instances)</span>
-                    </div>,
-                    generateLabel2ForInstanceType(
-                        instanceTypeData.options,
-                        option?.instanceType,
-                        storageSavingsResponse?.compute?.existing
-                    ),
-                    false,
-                    ''
-                )
-            );
-        });
-        options.push(
-            generateOptionType(
-                instanceTypeData?.existingInstanceType,
-                <div className="savings-calculator-dropdown-options">{instanceTypeData?.existingInstanceType}</div>,
-                generateLabel2ForInstanceType(
-                    [],
-                    instanceTypeData?.existingInstanceType,
-                    storageSavingsResponse?.compute?.existing
-                ),
-                false,
-                ''
-            )
-        );
-        if (options.length > 1) {
-            dispatch(setRecommendedTargetInstance(options[0].value));
-        }
-        return options;
-    }, [instanceTypeData.options]);
 
     useEffect(() => {
         if (!selectedCloneRefresh && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
@@ -427,79 +404,23 @@ const SavingsSelection = ({ printState }: any) => {
                             </DsTypography>
                         </div>
                     </div>
-                    <div className={styles.secondRow}>
-                        {isByolField && (
-                            <TextField
-                                label={GENERAL.BYOL_TEXT}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                                    setByolValue(numVal);
-                                }}
-                                isOptional
-                                value={byolValue}
-                                className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                            />
-                        )}
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
-                            <div className={styles.instanceTypeContainer}>
-                                <SelectField
-                                    label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
-                                    info={GENERAL.RECOMMENDED_INSTANCE_TYPE_INFO}
-                                    isClearable={false}
-                                    isDisabled={
-                                        instanceTypeData?.missingPermissions ||
-                                        generateRecommendedInstanceTypes.length === 1
-                                    }
-                                    variant="two-lines"
-                                    isLoading={storageSavingsLoading}
-                                    value={generateOptionType(
-                                        recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                                        recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                                        generateLabel2ForInstanceType(
-                                            instanceTypeData?.options,
-                                            recommendedTargetInstance || instanceTypeData.existingInstanceType,
-                                            storageSavingsResponse?.compute?.existing
-                                        ),
-                                        false,
-                                        ''
-                                    )}
-                                    onChange={(selectedOptions: any): void => {
-                                        const selectedVal = selectedOptions.value;
-                                        dispatch(
-                                            setRecommendedTargetInstance(
-                                                selectedVal === instanceTypeData?.existingInstanceType
-                                                    ? ''
-                                                    : selectedVal
-                                            )
-                                        );
+                    {/* Hide these fields for AUTO_EBS mode since they will be shown per-host in TCOBulkAccordion */}
+                    {savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO_EBS && (
+                        <div className={styles.secondRow}>
+                            {isByolField && (
+                                <TextField
+                                    label={GENERAL.BYOL_TEXT}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                        setByolValue(numVal);
                                     }}
-                                    isSearchable={generateRecommendedInstanceTypes?.length > 5}
-                                    options={generateRecommendedInstanceTypes}
-                                    className={`${styles.widthSet} savings-calculator-input-fields`}
+                                    isOptional
+                                    value={byolValue}
+                                    className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                                 />
-                                {(instanceTypeData?.missingPermissions ||
-                                    (generateRecommendedInstanceTypes?.length === 1 && !storageSavingsLoading)) && (
-                                    <div className={styles.errorContainer}>
-                                        <InfoIcon />
-                                        <DsTypography variant="Regular_13">
-                                            {instanceTypeData?.missingPermissions
-                                                ? GENERAL.MISSING_PERMISSIONS_NOTICE
-                                                : GENERAL.RECOMMENDATIONS_UNAVAILABLE_NOTICE}
-                                        </DsTypography>
-                                        {instanceTypeData?.missingPermissions ? (
-                                            <Button variant="text" onClick={handleLearnHowClick}>
-                                                {GENERAL.LEARN_HOW}
-                                            </Button>
-                                        ) : (
-                                            <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                                                {GENERAL.RECOMMENDATIONS_UNAVAILABLE_TOOLTIP}
-                                            </TooltipInfo>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
         </>

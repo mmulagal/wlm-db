@@ -37,7 +37,7 @@ const TotalMonthlyCostOntapCalculation = () => {
                 {viewCalculationsResponse && (
                     <AccordionCardContent>
                         <DsTypography className={CommonStyles.accordionContentSet}>
-                            {viewCalculation(viewCalculationsResponse, selectedDeploymentModel).totalMonthlyCost.map(
+                            {viewCalculation(viewCalculationsResponse, selectedDeploymentModel)?.totalMonthlyCost?.map(
                                 (data: { label: string; text?: string; value?: string }, index: number) => (
                                     <TableLayout key={index} data={data} />
                                 )

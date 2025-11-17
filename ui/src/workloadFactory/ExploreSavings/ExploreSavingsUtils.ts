@@ -45,6 +45,7 @@ import {
 } from '../../store/workloadFactory/dialogComponentSlice';
 import { DiscoverHostInterface } from '../../utils/types/inventoryV2Types';
 import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
+import { setSelectedRowsForExploreSavingsEBSBulk } from '../../store/workloadFactory/exploreSavingsBulkSlice';
 
 export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
     postBlueXPMessage({
@@ -108,8 +109,16 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
     }, 500);
 };
 
-export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: boolean, navigate?: NavigateFunction) => {
+export const onClickESHost = (
+    dispatch: any,
+    rowData: any,
+    isWorkloadFactory: boolean,
+    navigate?: NavigateFunction,
+    isBulk?: boolean,
+    bulkServerName?: string
+) => {
     const deploymentModel = (() => rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase())();
+
     if (rowData?.storageType === GENERAL.EBS) {
         if (navigate && isWorkloadFactory) {
             navigate('../databases/saving-calculator');
@@ -125,6 +134,10 @@ export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: bo
                 replace: true
             }
         });
+        // Only set bulk selection if this is NOT a bulk operation (to avoid overriding existing selection)
+        if (!isBulk) {
+            dispatch(setSelectedRowsForExploreSavingsEBSBulk([rowData]));
+        }
         dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.AUTO_EBS));
     } else {
         if (navigate && isWorkloadFactory) {
@@ -152,7 +165,7 @@ export const onClickESHost = (dispatch: any, rowData: any, isWorkloadFactory: bo
             credentialId: rowData?.credentialId,
             regionId: rowData?.regionId,
             deploymentModel,
-            serverName: rowData?.name || GENERAL.ES_SERVER_NAME
+            serverName: isBulk && bulkServerName ? bulkServerName : rowData?.name || GENERAL.ES_SERVER_NAME
         })
     );
     setESInstanceData(rowData, dispatch);
@@ -345,6 +358,11 @@ export const formatViewCalcData = (
 ) => {
     const state = store.getState();
     const { savingsCalculatorFrom } = state.exploreSavings;
+    const { selectedRowsForExploreSavingsEBSBulk } = state.exploreSavingsBulk;
+
+    // Check if we're dealing with bulk calculations (arrays) vs single calculations (objects)
+    const isBulkCalculation = Array.isArray(viewCalculations.recommendedComputeCalculation);
+
     let viewCalculationsResponse = formatViewCalcRecommendedData(viewCalculations, selectedDeploymentModel);
     let azType = '';
     if (viewCalculationsResponse?.single) {
@@ -365,16 +383,132 @@ export const formatViewCalcData = (
         azType = FSX_AZ_TYPE.MULTI;
     }
 
+    // Helper function to create host-specific instance calculation data
+    const createHostInstanceCalculationData = (hostName: string) => {
+        if (!isBulkCalculation) return null;
+
+        const recommendedComputeArray: any = viewCalculationsResponse?.recommendedComputeCalculation;
+        const recommendedLicenseArray: any = viewCalculationsResponse?.recommendedLicenseCalculation;
+        const existingComputeArray: any = viewCalculationsResponse?.existingComputeCalculation;
+        const existingLicenseArray: any = viewCalculationsResponse?.existingLicenseCalculation;
+
+        // Find the compute and license data by matching hostname
+        const recommendedCompute = recommendedComputeArray?.find((item: any) => item.hostname === hostName);
+        const recommendedLicense = recommendedLicenseArray?.find((item: any) => item.hostname === hostName);
+        const existingCompute = existingComputeArray?.find((item: any) => item.hostname === hostName);
+        const existingLicense = existingLicenseArray?.find((item: any) => item.hostname === hostName);
+
+        // Get the raw machine data from formatViewCalcInstance
+        const fsxMachineData = formatViewCalcInstance(
+            selectedDeploymentModel,
+            {},
+            recommendedCompute?.machineDetails,
+            recommendedLicense
+        );
+
+        const ebsMachineData = formatViewCalcInstance(
+            selectedDeploymentModel,
+            {},
+            existingCompute?.machineDetails,
+            existingLicense
+        );
+
+        // Create formatted calculation arrays similar to what viewCalculation functions produce
+        const createFormattedCalculation = (machineData: any[], licenseData: any, computeData: any) => {
+            const machineDetailsList: any[] = [];
+
+            machineData?.forEach((calculation: any, index: number) => {
+                machineDetailsList.push(
+                    { label: `Machine ${index + 1} specification` },
+                    {
+                        label: 'Instance type',
+                        value: calculation?.instanceType,
+                        text: ''
+                    },
+                    {
+                        label: 'SQL edition',
+                        value: calculation?.sqlEdition,
+                        text: ''
+                    },
+                    {
+                        label: 'SQL license included',
+                        value: calculation?.sqlLicense,
+                        text: ''
+                    },
+                    { label: `Machine ${index + 1} pricing calculations` },
+                    {
+                        label: 'Instance hourly price',
+                        value: calculation?.computeHourlyPrice,
+                        text: 'Instance hourly price with SQL license included'
+                    },
+                    {
+                        label: `EC2 machine${index + 1} cost`,
+                        value: calculation?.instanceMonthlyPrice,
+                        text: `Instance hourly price x number of hours in a month = ${calculation?.computeHourlyPrice} x ${calculation?.hoursInAMonth}`
+                    }
+                );
+            });
+
+            // Calculate total cost for all machines for this host
+            const totalCost =
+                machineData?.reduce((total: number, calc: any) => {
+                    const price = calc?.instanceMonthlyPrice;
+                    const numericPrice =
+                        typeof price === 'string'
+                            ? Number(price.replace('$', '').replace(',', ''))
+                            : Number(price) || 0;
+                    return total + numericPrice;
+                }, 0) || 0;
+
+            machineDetailsList.push({
+                label: 'EC2 machines total cost',
+                value: `$${formatNumberWithCustomComma(totalCost)}`,
+                text: ''
+            });
+
+            return machineDetailsList;
+        };
+
+        return {
+            hostName,
+            fsxInstanceCalculation: createFormattedCalculation(fsxMachineData, recommendedLicense, recommendedCompute),
+            ebsInstanceCalculation: createFormattedCalculation(ebsMachineData, existingLicense, existingCompute),
+            recommendedCompute,
+            recommendedLicense,
+            existingCompute,
+            existingLicense
+        };
+    };
+
+    // Create host-specific data for bulk calculations
+    const hostCalculationData = isBulkCalculation
+        ? selectedRowsForExploreSavingsEBSBulk
+              .map((host: any) => {
+                  const hostName = host.ec2InstanceName || host.name;
+                  return createHostInstanceCalculationData(hostName);
+              })
+              .filter(Boolean)
+        : [];
+
     const totalEbsCost = (ebsViewCalculationData: any) => {
         let cost = 0;
-        if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
-            );
-        } else {
-            viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.map((instance: any) => {
-                cost += Number(instance?.instanceMonthlyPrice || 0);
+        if (isBulkCalculation) {
+            // For bulk calculations, sum costs from all hosts
+            const existingComputeArray: any = viewCalculationsResponse?.existingComputeCalculation;
+            existingComputeArray.forEach((compute: any) => {
+                compute?.machineDetails?.forEach((instance: any) => {
+                    cost += Number(instance?.instanceMonthlyPrice || 0);
+                });
             });
+        } else {
+            const existingCompute: any = viewCalculationsResponse?.existingComputeCalculation;
+            if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                cost += Number(existingCompute?.machineDetails?.[0]?.instanceMonthlyPrice || 0);
+            } else {
+                existingCompute?.machineDetails?.map((instance: any) => {
+                    cost += Number(instance?.instanceMonthlyPrice || 0);
+                });
+            }
         }
         cost += ebsViewCalculationData?.ebsSnapshotCalculation?.totalEbsSnapshotCostValue || 0;
         cost += ebsViewCalculationData?.ebsCloneCalculation?.totalCloneMonthlyCostValue || 0;
@@ -387,14 +521,23 @@ export const formatViewCalcData = (
 
     const totalFsxwCost = () => {
         let cost = 0;
-        if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
-            );
-        } else {
-            viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.map((instance: any) => {
-                cost += Number(instance?.instanceMonthlyPrice || 0);
+        if (isBulkCalculation) {
+            // For bulk calculations, sum costs from all hosts
+            const existingComputeArray: any = viewCalculationsResponse?.existingComputeCalculation;
+            existingComputeArray?.forEach((compute: any) => {
+                compute?.machineDetails?.forEach((instance: any) => {
+                    cost += Number(instance?.instanceMonthlyPrice || 0);
+                });
             });
+        } else {
+            const existingCompute = viewCalculationsResponse?.existingComputeCalculation as any;
+            if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                cost += Number(existingCompute?.machineDetails?.[0]?.instanceMonthlyPrice || 0);
+            } else {
+                existingCompute?.machineDetails?.map((instance: any) => {
+                    cost += Number(instance?.instanceMonthlyPrice || 0);
+                });
+            }
         }
         cost += Number(viewCalculationsResponse?.fsxwCloneCalculation?.totalCloneMonthlyCost || 0);
         cost += Number(
@@ -414,21 +557,38 @@ export const formatViewCalcData = (
 
     const totalExistingEc2MachineCost = (() => {
         let cost = 0;
-        if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            cost += Number(
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.[0]?.instanceMonthlyPrice || 0
-            );
-        } else {
-            viewCalculationsResponse?.existingComputeCalculation?.machineDetails?.map((instance: any) => {
-                cost += Number(instance?.instanceMonthlyPrice || 0);
+        if (isBulkCalculation) {
+            // For bulk calculations, sum costs from all hosts
+            const existingComputeArray: any = viewCalculationsResponse?.existingComputeCalculation;
+            existingComputeArray?.forEach((compute: any) => {
+                compute?.machineDetails?.forEach((instance: any) => {
+                    cost += Number(instance?.instanceMonthlyPrice || 0);
+                });
             });
+        } else {
+            const existingCompute = viewCalculationsResponse?.existingComputeCalculation as any;
+            if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                cost += Number(existingCompute?.machineDetails?.[0]?.instanceMonthlyPrice || 0);
+            } else {
+                existingCompute?.machineDetails?.map((instance: any) => {
+                    cost += Number(instance?.instanceMonthlyPrice || 0);
+                });
+            }
         }
         return formatFractionalNumberForCost(cost, 2);
     })();
 
     const totalFsxEc2MachineCost = (() => {
         let cost = 0;
-        if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+        if (isBulkCalculation) {
+            // For bulk calculations, sum costs from all hosts
+            const recommendedComputeArray: any = viewCalculationsResponse?.recommendedComputeCalculation;
+            recommendedComputeArray?.forEach((compute: any) => {
+                compute?.machineDetails?.forEach((instance: any) => {
+                    cost += Number(instance?.instanceMonthlyPrice || 0);
+                });
+            });
+        } else if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
         } else {
             viewCalculationsResponse?.recommendedInstance?.map((instance: any) => {
@@ -440,7 +600,15 @@ export const formatViewCalcData = (
 
     const totalFsxCost = (() => {
         let cost = 0;
-        if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+        if (isBulkCalculation) {
+            // For bulk calculations, sum costs from all hosts
+            const recommendedComputeArray: any = viewCalculationsResponse?.recommendedComputeCalculation;
+            recommendedComputeArray?.forEach((compute: any) => {
+                compute?.machineDetails?.forEach((instance: any) => {
+                    cost += Number(instance?.instanceMonthlyPrice || 0);
+                });
+            });
+        } else if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
         } else {
             viewCalculationsResponse?.recommendedInstance?.map((instance: any) => {
@@ -469,12 +637,22 @@ export const formatViewCalcData = (
     })();
 
     let result: any = {
-        fsxInstanceCalculation: formatViewCalcInstance(
-            selectedDeploymentModel,
-            {},
-            viewCalculationsResponse?.recommendedInstance,
-            viewCalculationsResponse?.recommendedLicenseCalculation
-        ),
+        fsxInstanceCalculation: isBulkCalculation
+            ? hostCalculationData.map((host: any) => ({
+                  hostName: host.hostName,
+                  hostIndex: host.hostIndex,
+                  fsxInstanceCalculation: host.fsxInstanceCalculation,
+                  recommendedCompute: host.recommendedCompute,
+                  recommendedLicense: host.recommendedLicense,
+                  existingCompute: host.existingCompute,
+                  existingLicense: host.existingLicense
+              }))
+            : formatViewCalcInstance(
+                  selectedDeploymentModel,
+                  {},
+                  viewCalculationsResponse?.recommendedInstance,
+                  viewCalculationsResponse?.recommendedLicenseCalculation
+              ),
         fsxOntapCalculation: {
             numberOfVolumes: formatNumbers(viewCalculationsResponse?.fsxOntapCalculation?.numberOfVolumes),
             desiredStorageCapacity: formatCalcSize(
@@ -755,12 +933,22 @@ export const formatViewCalcData = (
                     ebsViewCalculationData?.ebsCalculation?.totalEbsStorageCost
                 )
             },
-            ebsInstanceCalculation: formatViewCalcInstance(
-                selectedDeploymentModel,
-                {},
-                viewCalculationsResponse?.existingComputeCalculation?.machineDetails,
-                viewCalculationsResponse?.existingLicenseCalculation
-            ),
+            ebsInstanceCalculation: isBulkCalculation
+                ? hostCalculationData.map((host: any) => ({
+                      hostName: host.hostName,
+                      hostIndex: host.hostIndex,
+                      ebsInstanceCalculation: host.ebsInstanceCalculation,
+                      recommendedCompute: host.recommendedCompute,
+                      recommendedLicense: host.recommendedLicense,
+                      existingCompute: host.existingCompute,
+                      existingLicense: host.existingLicense
+                  }))
+                : formatViewCalcInstance(
+                      selectedDeploymentModel,
+                      {},
+                      (viewCalculationsResponse?.existingComputeCalculation as any)?.machineDetails,
+                      viewCalculationsResponse?.existingLicenseCalculation
+                  ),
             totalEBSEc2MachineCost: totalExistingEc2MachineCost,
             ebsTotalCost: totalEbsCost(ebsViewCalculationData),
             ebsOnlyCost: onlyEbsCost(ebsViewCalculationData)
@@ -960,7 +1148,126 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
                     recommendedTotal: Number(data?.totalSummary?.recommended || 0)
                 }
             };
+        } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+            // Handle AUTO_EBS mode with array format for compute and license
+            const computeArray = Array.isArray(data?.compute) ? data.compute : [data?.compute].filter(Boolean);
+            const licenseArray = Array.isArray(data?.license) ? data.license : [data?.license].filter(Boolean);
+
+            // Check if all compute objects have recommendationOptions
+            const hasRecommendationOptions = computeArray.every(
+                (computeObj: any) =>
+                    computeObj?.recommended?.recommendationOptions &&
+                    computeObj.recommended.recommendationOptions.length > 0
+            );
+
+            if (recommendedTargetInstance && computeArray.length > 0 && hasRecommendationOptions) {
+                // Calculate total costs for all compute and license objects
+                let totalExistingComputePrice = 0;
+                let totalExistingLicensePrice = 0;
+                let totalRecommendedComputePrice = 0;
+                let totalRecommendedLicensePrice = 0;
+
+                // Sum up existing costs from all compute objects
+                computeArray.forEach((computeObj: any) => {
+                    const isAOAG = deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+                    const multiplier = isAOAG ? 2 : 1;
+
+                    totalExistingComputePrice +=
+                        Number(computeObj?.recommended?.machineDetails?.[0]?.computeMonthlyPrice || 0) * multiplier;
+                });
+
+                // Sum up existing license costs
+                licenseArray.forEach((licenseObj: any) => {
+                    const isAOAG = deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+                    const multiplier = isAOAG ? 2 : 1;
+
+                    totalExistingLicensePrice += Number(licenseObj?.recommended?.licenseMonthlyPrice || 0) * multiplier;
+                });
+
+                // Calculate recommended costs for each compute object individually
+                computeArray.forEach((computeObj: any) => {
+                    const isAOAG = deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+                    const multiplier = isAOAG ? 2 : 1;
+
+                    // Get recommendeRow from each compute object's recommendationOptions
+                    const recommendeRow = computeObj?.recommended?.recommendationOptions?.filter(
+                        (perRow: any) => perRow?.instanceType === recommendedTargetInstance
+                    );
+
+                    if (recommendeRow && recommendeRow?.length > 0) {
+                        totalRecommendedComputePrice += Number(recommendeRow[0]?.computeMonthlyPrice || 0) * multiplier;
+                    }
+                });
+
+                // Calculate recommended costs for each license object individually
+                licenseArray.forEach((licenseObj: any) => {
+                    const isAOAG = deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+                    const multiplier = isAOAG ? 2 : 1;
+
+                    // For license, we need to find the corresponding recommendeRow based on the target instance
+                    // Since license objects might not have recommendationOptions, we'll use the first compute's recommendeRow for license pricing
+                    const firstComputeRecommendeRow = computeArray[0]?.recommended?.recommendationOptions?.filter(
+                        (perRow: any) => perRow?.instanceType === recommendedTargetInstance
+                    );
+
+                    if (firstComputeRecommendeRow && firstComputeRecommendeRow?.length > 0) {
+                        totalRecommendedLicensePrice +=
+                            Number(firstComputeRecommendeRow[0]?.licenseMonthlyPrice || 0) * multiplier;
+                    }
+                });
+
+                const recommendedTotal =
+                    Number(data?.totalSummary?.recommended || 0) -
+                    totalExistingComputePrice -
+                    totalExistingLicensePrice +
+                    totalRecommendedComputePrice +
+                    totalRecommendedLicensePrice;
+
+                // Get the first compute object's recommendeRow for the recommendedInstance structure
+                const firstComputeRecommendeRow = computeArray[0]?.recommended?.recommendationOptions?.filter(
+                    (perRow: any) => perRow?.instanceType === recommendedTargetInstance
+                );
+
+                result = {
+                    ...data,
+                    recommendedInstance: {
+                        ...firstComputeRecommendeRow?.[0],
+                        licenseMonthlyPrice: totalRecommendedLicensePrice,
+                        computeMonthlyPrice: totalRecommendedComputePrice
+                    },
+                    totalSummary: {
+                        ...data?.totalSummary,
+                        recommendedTotal
+                    }
+                };
+            } else {
+                // Fallback for AUTO_EBS when no recommended instance is selected
+                let totalExistingComputePrice = 0;
+                let totalExistingLicensePrice = 0;
+
+                computeArray.forEach((computeObj: any) => {
+                    totalExistingComputePrice += Number(computeObj?.existing?.computeMonthlyPrice || 0);
+                });
+
+                licenseArray.forEach((licenseObj: any) => {
+                    totalExistingLicensePrice += Number(licenseObj?.recommended?.licenseMonthlyPrice || 0);
+                });
+
+                result = {
+                    ...data,
+                    recommendedInstance: {
+                        ...computeArray[0]?.recommended?.machineDetails?.[0],
+                        licenseMonthlyPrice: totalExistingLicensePrice,
+                        computeMonthlyPrice: totalExistingComputePrice
+                    },
+                    totalSummary: {
+                        ...data?.totalSummary,
+                        recommendedTotal: Number(data?.totalSummary?.recommended || 0)
+                    }
+                };
+            }
         } else {
+            // Handle non-AUTO_EBS modes (original logic for single object format)
             let recommendeRow: any = null;
             if (recommendedTargetInstance) {
                 recommendeRow = data?.compute?.recommended?.recommendationOptions?.filter(
@@ -1258,4 +1565,10 @@ export const shouldAuthDialogOpen = (rowData: any) => {
     }
     // If not detected, open dialog
     return true;
+};
+
+// For bulk actions: evaluate an array of rowData and return an array of rows that require auth
+export const shouldAuthDialogOpenBulk = (rows: any[] = []) => {
+    if (!Array.isArray(rows) || rows.length === 0) return [];
+    return rows.filter(row => shouldAuthDialogOpen(row));
 };

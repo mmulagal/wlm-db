@@ -47,3 +47,48 @@
         width: 1407px !important;
     }
 }
+
+.accordionContentWrapper {
+    display: flex;
+    flex-direction: column;
+    max-height: 2351px;
+
+    .instanceTypography {
+        margin-bottom: 6px;
+        font-weight: 505 !important;
+    }
+
+    .fsxTypography {
+        margin-top: 32px;
+        margin-bottom: 6px;
+        font-weight: 505 !important;
+    }
+}
+
+.accordionContentWrapperSingle {
+    display: flex;
+    flex-direction: column;
+    max-height: 2000px;
+    overflow: hidden;
+
+    .instanceTypography {
+        margin-bottom: 6px;
+        font-weight: 505 !important;
+    }
+
+    .instanceTypographyWithMargin {
+        margin-bottom: 6px;
+        margin-top: 32px;
+        font-weight: 505 !important;
+    }
+
+    .fsxTypography {
+        margin-top: 32px;
+        margin-bottom: 6px;
+        font-weight: 505 !important;
+    }
+}
+
+.headerActionsContainer {
+    height: 32px;
+}

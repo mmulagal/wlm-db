@@ -21,9 +21,24 @@ const CostBreakdown = ({ disableState = false }: CB) => {
     const [calculatedResponse, setCalculatedResponse] = useState({});
     const [loading, setLoading] = useState(false);
 
-    const checkForTooltip =
-        storageSavingsResponse?.license?.existing?.sqlServerEdition?.includes('Enterprise') &&
-        storageSavingsResponse?.license?.recommended?.sqlServerEdition?.includes('Standard');
+    const checkForTooltip = (() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
+            // Handle AUTO_EBS array format - check if ANY host has Enterprise→Standard downgrade
+            const licenseArray = Array.isArray(storageSavingsResponse?.license)
+                ? storageSavingsResponse.license
+                : [storageSavingsResponse?.license].filter(Boolean);
+            return licenseArray.some(
+                license =>
+                    license?.existing?.sqlServerEdition?.includes('Enterprise') &&
+                    license?.recommended?.sqlServerEdition?.includes('Standard')
+            );
+        }
+        // Handle single object format for other modes
+        return (
+            storageSavingsResponse?.license?.existing?.sqlServerEdition?.includes('Enterprise') &&
+            storageSavingsResponse?.license?.recommended?.sqlServerEdition?.includes('Standard')
+        );
+    })();
 
     useEffect(() => {
         setCalculatedResponse(storageSavingsResponse);

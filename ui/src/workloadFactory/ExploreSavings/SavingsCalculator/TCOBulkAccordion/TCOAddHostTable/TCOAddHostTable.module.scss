@@ -1,0 +1,15 @@
+.tcoAddHost {
+    .text {
+        width: 712px;
+        margin-bottom: 24px;
+    }
+    [class*='_base'] {
+        background-color: unset !important;
+        box-shadow: unset !important;
+    }
+    [class*='header-name'] {
+        [class*='Checkbox-module'] {
+            display: none !important;
+        }
+    }
+}

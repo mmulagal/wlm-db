@@ -29,6 +29,17 @@
         }
     }
 
+    .firstBulkSection {
+        display: flex;
+        gap: 40px;
+        flex-direction: column;
+        margin-top: 40px;
+    }
+
+    .fieldLabel {
+        width: 319px;
+    }
+
     .accordionContainer {
         margin-top: 32px;
         width: 100%;
@@ -108,6 +119,36 @@
                     }
                 }
             }
+        }
+    }
+
+    .rowContainer {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+
+        .hostName {
+            width: 250px;
+        }
+
+        .textFieldStyleBulk {
+            width: 319px;
+        }
+        .crossIcon {
+            width: 10px;
+            height: 10px;
+            cursor: pointer;
+            fill: var(--icon-primary);
+
+            &:hover {
+                fill: var(--text-title);
+            }
+        }
+
+        .crossDisabled {
+            cursor: not-allowed;
+            opacity: 0.3;
+            pointer-events: none;
         }
     }
 }
