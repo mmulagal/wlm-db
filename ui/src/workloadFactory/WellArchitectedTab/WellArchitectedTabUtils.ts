@@ -131,7 +131,7 @@ export const redirectToGetWellPage = (dispatch: any, selectedAssessmentRow: any)
             hostname: selectedAssessmentRow?.hostName,
             resourceId: selectedAssessmentRow?.databaseHostId,
             instanceId: selectedAssessmentRow?.instanceId,
-            instanceName: selectedAssessmentRow?.databaseInstanceName,
+            instanceName: selectedAssessmentRow?.serverInstanceName,
             credId: selectedAssessmentRow?.credentialId,
             regionId: selectedAssessmentRow?.regionId,
             storageType: selectedAssessmentRow?.sqlServerDeploymentType
@@ -144,7 +144,7 @@ export const redirectToGetWellPage = (dispatch: any, selectedAssessmentRow: any)
         setSelectedResourcePageHostData({
             resourceId: selectedAssessmentRow?.databaseHostId,
             databaseInstanceId: selectedAssessmentRow?.instanceId,
-            databaseInstanceName: selectedAssessmentRow?.databaseInstanceName,
+            databaseInstanceName: selectedAssessmentRow?.serverInstanceName,
             credentialId: selectedAssessmentRow?.credentialId,
             regionId: selectedAssessmentRow?.regionId
         })

@@ -374,6 +374,10 @@ const HeaderComponent = ({ tab }: Tab) => {
     }, [regionsData]);
 
     const generateSandboxRegionsData = useMemo<optionType[]>((): optionType[] => {
+        // To avoid Create resource API call when tab is not Sandboxes
+        if (selectedHeaderTab !== WLF_TABS.SANDBOXES) {
+            return [];
+        }
         const options: optionType[] = [];
         const sortedRegionsData = regionsSort(regionsData?.regions || []);
         sortedRegionsData?.map((val: any, idx: number) => {
@@ -421,7 +425,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             }
         }
         return options;
-    }, [regionsData]);
+    }, [regionsData, selectedHeaderTab]);
 
     useEffect(() => {
         if (headerSelectedMultiCred?.length > 0) {
