@@ -5,8 +5,10 @@ import { ReactComponent as Download } from '../../../../../assets/download.svg';
 import styles from './OracleExportPDF.module.scss';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../../store/notificationSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
-import downloadPdf from '../../../../../common/pdfGenerator';
+import { DBType } from '../../../../../utils/consts';
+import generateReport from '../../../../../utils/generateWellArchitectedExcel';
 import { generateDate } from '../../../../GetWell/GetWellUtils';
+import { useAppSelector } from '../../../../../store/storeHooks';
 
 interface OracleExportPDFProps {
     optimizePrintState: boolean;
@@ -23,25 +25,28 @@ const OracleExportPDF = ({
 }: OracleExportPDFProps) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-
-    const printDocument = () => {
+    const { driftAssessmentData } = useAppSelector(state => state.getWellOptimize);
+    const printDocument = async () => {
         setOptimizePrintState(true);
-        setTimeout(() => {
-            const elem = document.getElementById('export-oracle-optimize-pdf') as HTMLElement;
-            const options = {
-                filename: `Oracle_Optimization_Report_${generateDate()}.pdf`,
-                compression: 'MEDIUM'
-            };
-
-            downloadPdf(elem, options, () => {
-                setOptimizePrintState(false);
+        setTimeout(async () => {
+            try {
+                await generateReport(JSON.stringify(driftAssessmentData), DBType.MSSQL);
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
                         message: GENERAL.REPORT_DOWNLOAD_SUCCESS
                     })
                 );
-            });
+                setOptimizePrintState(false);
+            } catch (error) {
+                console.error('Error generating Excel report:', error);
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: `${GENERAL.REPORT_DOWNLOAD_FAIL}: ${String(error)}`
+                    })
+                );
+            }
         }, 100);
     };
 
@@ -71,7 +76,7 @@ const OracleExportPDF = ({
                             }}
                             variant="Semibold_14"
                         >
-                            {t('databases.well-architect.export-pdf')}
+                            {t('databases.well-architect.export-excel')}
                         </DsTypography>
                     </div>
                 </div>

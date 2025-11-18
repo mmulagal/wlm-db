@@ -342,6 +342,7 @@
             "well-architect-state": "Well-architected",
             "total": "Total",
             "export-pdf": "Export PDF",
+            "export-excel": "Export Excel",
             "assessment-track-in-progress": "Assessment process initiated. Track progress in ",
             "assessment-completed": "Assessment completed",
             "assessment-failed": "Assessment failed",
