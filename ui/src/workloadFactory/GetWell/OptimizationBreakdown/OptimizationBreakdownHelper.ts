@@ -43,8 +43,8 @@ export const getDisplayNameToTechnicalKeyMapping = () => ({
 // Helper function to get display name to technical key mapping for Oracle
 export const getOracleDisplayNameToTechnicalKeyMapping = () => ({
     // Storage Sizing configurations
-    [ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]: 'headroom',
-    [ASSESSMENT_CONFIG_NAMES.SWAP_SPACE]: 'swap-space',
+    [ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]: 'file_system_headroom',
+    [ASSESSMENT_CONFIG_NAMES.SWAP_SPACE]: 'swap_space',
     // Storage Layout configurations
     [ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT]: 'oracle_binary_placement',
     [ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT]: 'datafiles_placement',

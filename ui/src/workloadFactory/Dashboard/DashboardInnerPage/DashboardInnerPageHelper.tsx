@@ -30,6 +30,9 @@ const getPayloadType = (type: string) => {
         case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
             type = 'tempdb-drive-size';
             break;
+        case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
+            type = 'swap-space';
+            break;
         case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
             type = 'data-files-location';
             break;

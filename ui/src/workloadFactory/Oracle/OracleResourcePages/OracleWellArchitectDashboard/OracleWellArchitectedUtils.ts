@@ -1532,7 +1532,28 @@ const updateStorageLayoutConfig = (
     return [...existingLayout, { configurationName, configState: setAction, endTime, startTime }];
 };
 
-// Helper function to create dismissed configurations structure
+// Helper function to update storage sizing configuration
+const updateStorageSizingConfig = (
+    existingSizing: any[],
+    configurationName: string,
+    setAction: string,
+    endTime: string,
+    startTime: string
+) => {
+    const itemIndex = existingSizing.findIndex((item: any) => item?.configurationName === configurationName);
+
+    if (itemIndex !== -1) {
+        // Update existing item
+        return existingSizing.map((item: any, index: number) =>
+            index === itemIndex ? { ...item, configState: setAction, endTime, startTime } : item
+        );
+    }
+
+    // Add new item
+    return [...existingSizing, { configurationName, configState: setAction, endTime, startTime }];
+};
+
+// Helper function to create dismissed configurations structure for storage layout
 const createDismissedConfigStructure = (
     instance: any,
     configurationName: string,
@@ -1552,6 +1573,28 @@ const createDismissedConfigStructure = (
         storage: {
             ...existingStorage,
             layout: updatedLayout
+        }
+    };
+};
+
+// Helper function to create dismissed configurations structure for storage sizing
+const createDismissedSizingStructure = (
+    instance: any,
+    configurationName: string,
+    setAction: string,
+    endTime: string,
+    startTime: string
+) => {
+    const existingStorage = instance?.assessments?.dismissedConfigurations?.storage;
+    const existingSizing = existingStorage?.sizing || [];
+
+    const updatedSizing = updateStorageSizingConfig(existingSizing, configurationName, setAction, endTime, startTime);
+
+    return {
+        ...instance?.assessments?.dismissedConfigurations,
+        storage: {
+            ...existingStorage,
+            sizing: updatedSizing
         }
     };
 };
@@ -1580,10 +1623,32 @@ export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, actio
                 const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
                     if (instance?.databaseInstanceId === rowData?.instanceId) {
                         const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.ORACLE_STORAGE_LAYOUT_MAP;
+                        const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
 
+                        // Check if it's a storage layout configuration
                         if (storageLayoutMap[rowData?.name]) {
                             const configurationName = storageLayoutMap[rowData?.name];
                             const dismissedConfigurations = createDismissedConfigStructure(
+                                instance,
+                                configurationName,
+                                setAction,
+                                rowData?.endTime,
+                                rowData?.startTime
+                            );
+
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations
+                                }
+                            };
+                        }
+
+                        // Check if it's a storage sizing configuration
+                        if (storageSizingMap[rowData?.name]) {
+                            const configurationName = storageSizingMap[rowData?.name];
+                            const dismissedConfigurations = createDismissedSizingStructure(
                                 instance,
                                 configurationName,
                                 setAction,

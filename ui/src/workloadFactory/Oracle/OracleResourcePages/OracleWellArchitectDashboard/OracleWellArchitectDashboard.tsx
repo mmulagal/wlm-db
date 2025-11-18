@@ -265,7 +265,7 @@ const OracleWellArchitectDashboard = () => {
                         {/* Adding dummy div to have consistent spacing after filters */}
                         <div style={{ marginBottom: '20px' }} />
 
-                        {(filteredCardData?.headroom || filteredCardData?.swap_space) && (
+                        {(filteredCardData?.file_system_headroom || filteredCardData?.swap_space) && (
                             <div className={styles.sectionTwo}>
                                 <div className={styles.sectionClass}>
                                     <StorageSizingSection

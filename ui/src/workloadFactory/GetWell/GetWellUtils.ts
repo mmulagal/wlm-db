@@ -4993,7 +4993,7 @@ export const updateConfigStatePerInstance = (
         }
     }
 
-    const storageSizingMap: any = ['log-drive-size', 'performance-tier', 'headroom', 'tempdb-drive-size'];
+    const storageSizingMap: any = ['log-drive-size', 'performance-tier', 'headroom', 'tempdb-drive-size', 'swap-space'];
     const storageLayoutMap: any = [
         'data-files-location',
         'log-files-location',

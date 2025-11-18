@@ -138,7 +138,7 @@ const StorageSizingSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('headroom')}
+                                    {renderPostponeActivatingInfo('file_system_headroom')}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
