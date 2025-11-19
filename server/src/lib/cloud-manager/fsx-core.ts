@@ -1,4 +1,5 @@
-import { HEADERS, WORKLOAD_FACTORY_ENDPOINT, USER_TOKEN, ACCOUNT_ID } from '../../utils/consts';
+import createError from 'http-errors';
+import { HEADERS, WORKLOAD_FACTORY_ENDPOINT, USER_TOKEN, ACCOUNT_ID, HttpErrorCodes } from '../../utils/consts';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
@@ -87,15 +88,23 @@ async function listFsxOntapCredentials(accountId: string, fsxId: string) {
     // Since list credentials API doesn't support service token, we are using user token here.
     const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
 
-    const response = await gotInstanceForInternalRequest
-        .get(`accounts/${accountId}/fsx/v2/file-systems/${fsxId}/ontap-credentials`, {
-            prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
-            headers: {
-                [HEADERS.AUTHORIZATION]: token
-            }
-        })
-        .json<listCredentialsResponse>();
-    return response;
+    try {
+        const response = await gotInstanceForInternalRequest
+            .get(`accounts/${accountId}/fsx/v2/file-systems/${fsxId}/ontap-credentials`, {
+                prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+                headers: {
+                    [HEADERS.AUTHORIZATION]: token
+                }
+            })
+            .json<listCredentialsResponse>();
+        return response;
+    } catch (error: any) {
+        const statusCode: number | undefined =
+            (error && error.statusCode) || (error && error.response && error.response.statusCode);
+
+        const errorMessage = `Error getting file system credentials status: ${error?.message}`;
+        throw createError(statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
 }
 
 async function listFSXFileSystem(credentialsId: string, region: string) {

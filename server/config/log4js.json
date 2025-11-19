@@ -22,10 +22,12 @@
             "type": "file",
             "filename": "//log/simulator.log",
             "mode": 644,
-            "maxLogSize": 5242880,
+            "maxLogSize": 10485760,
             "backups": 10,
+            "compress": true,
             "layout": {
-                "type": "colored"
+                "type": "pattern",
+                "pattern": "[%d] [%p] [%h] [%f{1}:%l] [%x{requestId}] [%x{accountId}] [%x{traceId}] %x{message}"
             }
         },
         "got": {

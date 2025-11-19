@@ -21,10 +21,10 @@
     },
     "got": {
         "internal": {
-            "lookup-timeout": "1s",
-            "connect-timeout": "1s",
+            "lookup-timeout": "3s",
+            "connect-timeout": "3s",
             "response-timeout": "20s",
-            "retry-count": 2
+            "retry-count": 3
         },
         "external": {
             "lookup-timeout": "2s",

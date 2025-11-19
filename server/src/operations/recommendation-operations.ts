@@ -444,6 +444,14 @@ async function handleInstanceRecommendation(
             error?.message?.includes('not authorized')
         ) {
             computeFinding = FINDING.INSUFFICIENT_PERMISSIONS;
+        } else if (error?.message?.includes('Rate exceeded') || error?.message?.includes('ThrottlingException')) {
+            // Handle rate limiting errors gracefully
+            logger.warn('AWS Compute Optimizer rate limit exceeded, using fallback recommendations', {
+                accountId,
+                region,
+                instanceId: instanceIdToUseForRecommendations
+            });
+            computeFinding = FINDING.INSUFFICIENT_DATA;
         }
         recommendedCompute = getExistingAsRecommended(
             totalNodesCount,

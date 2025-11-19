@@ -14,6 +14,25 @@ import getLogger from '../../utils/logger';
 const logger = getLogger();
 const AWS_PRICING_REGION = 'us-east-1';
 
+async function fetchPricingData(
+    pricingClient: PricingClient,
+    productFilters: GetProductsCommandInput
+): Promise<GetProductsCommandOutput> {
+    const paginator = paginateGetProducts({ client: pricingClient }, productFilters);
+    const pricingResult: GetProductsCommandOutput = { PriceList: [], $metadata: { httpStatusCode: 200 } };
+
+    for await (const page of paginator) {
+        if (isEmpty(pricingResult.$metadata.requestId) && page?.$metadata) {
+            pricingResult.$metadata = page.$metadata;
+        }
+        if (page?.PriceList) {
+            pricingResult.PriceList = pricingResult.PriceList?.concat(page.PriceList);
+        }
+    }
+
+    return pricingResult;
+}
+
 async function getProducts(
     productFilters: GetProductsCommandInput,
     readFromCache = true
@@ -36,20 +55,14 @@ async function getProducts(
         eu-central-1
         ap-south-1
     */
-    const pricingClient = new PricingClient({ region: AWS_PRICING_REGION });
+    const pricingClient = new PricingClient({
+        region: AWS_PRICING_REGION,
+        maxAttempts: 5,
+        retryMode: 'adaptive', // Use adaptive retry mode for better throttling handling
+        defaultsMode: 'cross-region' // Optimize for cross-region calls; wlmdb pod could be in any region
+    });
 
-    const paginator = paginateGetProducts({ client: pricingClient }, productFilters);
-
-    const pricingResult: GetProductsCommandOutput = { PriceList: [], $metadata: { httpStatusCode: 200 } };
-
-    for await (const page of paginator) {
-        if (isEmpty(pricingResult.$metadata.requestId) && page?.$metadata) {
-            pricingResult.$metadata = page.$metadata;
-        }
-        if (page?.PriceList) {
-            pricingResult.PriceList = pricingResult.PriceList?.concat(page.PriceList);
-        }
-    }
+    const pricingResult = await fetchPricingData(pricingClient, productFilters);
 
     if (!isEmpty(pricingResult?.PriceList)) {
         logger.debug('Writing pricing information to cache');

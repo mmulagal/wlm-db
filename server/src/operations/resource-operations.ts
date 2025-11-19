@@ -39,6 +39,14 @@ async function getFileSystemCredentialsStatus(accountId: string, fsxId: string) 
 
         return fsxObject;
     } catch (error: any) {
+        logger.error('getFileSystemCredentialsStatus: underlying FSx call failed', {
+            accountId,
+            fsxId,
+            errorName: error?.name,
+            errorMessage: error?.message,
+            errorCode: error?.code,
+            statusCode: error?.statusCode
+        });
         const { statusCode } = error as unknown as { [key: string]: string };
 
         if (Number(statusCode) === 404) {

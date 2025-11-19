@@ -421,7 +421,12 @@ async function createFileSystemForDemo(
         routeTableIds: ['rtb-11111111']
     };
 
-    return createFSX(requestBody);
+    const response = await createFSX(requestBody);
+    // adding delay to ensure fsx is available for subsequent operations
+    await new Promise(resolve => {
+        setTimeout(resolve, 3000);
+    });
+    return response;
 }
 
 async function updateUserDBIntoResourceData(

@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import { HEADERS, MARKETING_API_TCO, USER_TOKEN, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
-import { gotInstanceForInternalRequest } from '../../utils/got';
+import { gotInstanceForInternalRequest, handleEinvalError } from '../../utils/got';
 import getLogger from '../../utils/logger';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import {
@@ -35,23 +35,39 @@ async function getStorageSavings(
         return readFromCacheByKey(MARKETING_API_TCO, cacheKey) as CalculateEbsComparisonResponse;
     }
 
-    const response = await gotInstanceForInternalRequest
-        .post(url, {
-            prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
-            headers: {
-                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
-                ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
-                    [HEADERS.SIMULATOR]: 'true'
-                })
-            },
-            json: params
-        })
-        .json<CalculateEbsComparisonResponse>();
+    try {
+        const response = await gotInstanceForInternalRequest
+            .post(url, {
+                prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+                headers: {
+                    [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
+                    ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
+                        [HEADERS.SIMULATOR]: 'true'
+                    })
+                },
+                json: params
+            })
+            .json<CalculateEbsComparisonResponse>();
 
-    if (!isEmpty(response) || !(response as unknown as string).includes(MARKETING_API_THROTTLING_ERROR)) {
-        writeToCache(MARKETING_API_TCO, cacheKey, response);
+        if (!isEmpty(response) || !(response as unknown as string).includes(MARKETING_API_THROTTLING_ERROR)) {
+            writeToCache(MARKETING_API_TCO, cacheKey, response);
+        }
+        return response;
+    } catch (error: any) {
+        logger.error('Marketing API call failed', {
+            url,
+            accountId,
+            credentialsId,
+            region,
+            errorName: error?.name,
+            errorMessage: error?.message,
+            errorCode: error?.code,
+            statusCode: error?.statusCode
+        });
+
+        // Re-throw the error to maintain existing behavior
+        throw error;
     }
-    return response;
 }
 
 async function getEbsManualModeStorageSavings<T>(accountId: string, params: ManualModeMarketingRequestBodyEBS) {
@@ -96,43 +112,53 @@ async function getFsxwManualModeStorageSavings<T>(accountId: string, params: Man
         return readFromCacheByKey(MARKETING_API_TCO, cacheKey) as T;
     }
 
-    const response = await gotInstanceForInternalRequest
-        .post(url, {
-            prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
-            headers: {
-                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
-                ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
-                    [HEADERS.SIMULATOR]: 'true'
-                })
-            },
-            json: params
-        })
-        .json<T>();
-
-    if (!isEmpty(response)) {
-        writeToCache(MARKETING_API_TCO, cacheKey, response);
-    }
-    return response;
-}
-
-async function getInstanceListFromStorage(accountId: string, credentialsId: string, region: string) {
-    logger.info('Get storage instance list from marketing APIs:', { accountId, credentialsId, region });
-
-    const response = await gotInstanceForInternalRequest
-        .get(
-            `accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/instances?limit=50&offset=0&force=false`,
-            {
+    try {
+        const response = await gotInstanceForInternalRequest
+            .post(url, {
                 prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
                 headers: {
                     [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
                     ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
                         [HEADERS.SIMULATOR]: 'true'
                     })
+                },
+                json: params
+            })
+            .json<T>();
+
+        if (!isEmpty(response)) {
+            writeToCache(MARKETING_API_TCO, cacheKey, response);
+        }
+        return response;
+    } catch (error: any) {
+        // Use generic EINVAL handler - no more manual EINVAL error handling needed!
+        return handleEinvalError(error, undefined, 'getFsxwManualModeStorageSavings');
+    }
+}
+
+async function getInstanceListFromStorage(accountId: string, credentialsId: string, region: string) {
+    logger.info('Get storage instance list from marketing APIs:', { accountId, credentialsId, region });
+
+    try {
+        const response = await gotInstanceForInternalRequest
+            .get(
+                `accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/instances?limit=50&offset=0&force=false`,
+                {
+                    prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+                    headers: {
+                        [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
+                        ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
+                            [HEADERS.SIMULATOR]: 'true'
+                        })
+                    }
                 }
-            }
-        )
-        .json<StorageInstanceResponse>();
-    return response;
+            )
+            .json<StorageInstanceResponse>();
+        return response;
+    } catch (error: any) {
+        // Use generic EINVAL handler with fallback - returns empty instances array on connection error
+        return handleEinvalError(error, { instances: [] }, 'getInstanceListFromStorage');
+    }
 }
 
 async function getVolumesListFromStorage(accountId: string, credentialsId: string, region: string, instanceId: string) {

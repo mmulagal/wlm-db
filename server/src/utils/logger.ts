@@ -7,6 +7,8 @@ import { context, trace } from '@opentelemetry/api';
 import { ACCOUNT_ID, REQUEST_ID, SECRET_WORDS } from './consts';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
+const MAX_PROTOTYPE_DEPTH = 5;
+
 function isPatternLayout(layout: Layout): layout is PatternLayout {
     return (layout as PatternLayout).pattern !== undefined;
 }
@@ -19,7 +21,6 @@ function getAllPropertyNames(obj: any): string[] {
     let current = obj;
 
     let depth = 0;
-    const MAX_PROTOTYPE_DEPTH = 10;
 
     while (current && current !== Object.prototype && depth < MAX_PROTOTYPE_DEPTH) {
         Object.getOwnPropertyNames(current).forEach(name => props.add(name));
@@ -34,10 +35,14 @@ const maskDBHostUrl = (message: string) => {
     return message.replace(hostUrlPattern, stars);
 };
 
-function hideSecretsValues(obj: any) {
+function hideSecretsValues(obj: any, depth = 0) {
+    if (depth > MAX_PROTOTYPE_DEPTH || obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+
     if (isArray(obj)) {
         obj.forEach((arrayObj, i) => {
-            obj[i] = hideSecretsValues(arrayObj);
+            obj[i] = hideSecretsValues(arrayObj, depth + 1);
         });
     } else if (isObjectLike(obj)) {
         // Iterate over all keys including inherited ones
@@ -47,7 +52,7 @@ function hideSecretsValues(obj: any) {
             } else if (isString(obj[key as keyof object]) && obj[key as keyof object]) {
                 obj[key] = maskDBHostUrl(obj[key]);
             } else if (isPlainObject(obj[key as keyof typeof obj]) || isArray(obj[key as keyof typeof obj])) {
-                (obj as { [index: string]: any })[key] = hideSecretsValues(obj[key as keyof object]);
+                (obj as { [index: string]: any })[key] = hideSecretsValues(obj[key as keyof object], depth + 1);
             }
         }
     }

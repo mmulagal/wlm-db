@@ -1,6 +1,9 @@
 import got, { Hooks, HTTPError, RequestError, TimeoutError } from 'got';
 import ms, { StringValue } from 'ms';
 import config from 'config';
+import { Agent as HttpAgent } from 'http';
+import { Agent as HttpsAgent } from 'https';
+import createError from 'http-errors';
 import getLogger, { getTraceData } from './logger';
 import { HEADERS, WLMDB } from './consts';
 
@@ -60,7 +63,29 @@ const hooks: Hooks = {
                     `Got timeout event ${event} from ${method} to ${url}, took ${timings?.phases.total} msecs`
                 );
             } else {
-                logger.error(`Got error from ${method} to ${url}`, error.message);
+                // Handle EINVAL and other connection errors generically
+                const isEinvalError =
+                    error?.message?.includes('EINVAL') || error?.code === 'EINVAL' || (error as any)?.errno === -22;
+
+                if (isEinvalError) {
+                    logger.warn(`Connection error (EINVAL) for ${method} to ${url}, will be retried automatically`, {
+                        method,
+                        url,
+                        errorMessage: error.message,
+                        errorCode: error?.code,
+                        errno: (error as any)?.errno,
+                        syscall: (error as any)?.syscall
+                    });
+
+                    // Transform EINVAL to a more specific error for better handling
+                    Object.assign(error, {
+                        name: 'ConnectionError',
+                        message: `Connection failed: ${error.message}`,
+                        isEinvalError: true
+                    });
+                } else {
+                    logger.error(`Got error from ${method} to ${url}`, error.message);
+                }
             }
 
             return error;
@@ -95,14 +120,72 @@ function setBodyToObject(body: any) {
     return body;
 }
 
+/**
+ * Generic error handler for EINVAL errors that have been transformed by Got hooks.
+ * Use this in catch blocks to handle connection errors gracefully.
+ *
+ * @param error - The error caught from Got request
+ * @param fallbackValue - Optional fallback value to return instead of throwing
+ * @param context - Optional context for logging (function name, operation, etc.)
+ * @returns fallbackValue if provided, otherwise throws appropriate HTTP error
+ */
+function handleEinvalError(error: any, fallbackValue?: any, context?: string) {
+    if (error?.isEinvalError) {
+        const logContext = context ? ` in ${context}` : '';
+        logger.warn(`Handling EINVAL error gracefully${logContext}`, {
+            errorMessage: error.message,
+            context,
+            returnsFallback: fallbackValue !== undefined
+        });
+
+        if (fallbackValue !== undefined) {
+            return fallbackValue;
+        }
+
+        // If no fallback provided, throw a 503 Service Unavailable
+        throw createError(503, 'Service temporarily unavailable due to connection issues');
+    }
+
+    // If it's not an EINVAL error, re-throw as-is
+    throw error;
+}
+
 const gotInstanceForInternalRequest = got.extend({
     retry: {
-        limit: config.get<number>('got.internal.retry-count')
+        limit: config.get<number>('got.internal.retry-count'),
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
+        errorCodes: [
+            'ETIMEDOUT',
+            'ECONNRESET',
+            'EADDRINUSE',
+            'ECONNREFUSED',
+            'EPIPE',
+            'ENOTFOUND',
+            'ENETUNREACH',
+            'EAI_AGAIN',
+            'EINVAL'
+        ]
     },
     timeout: {
         lookup: ms(config.get<StringValue>('got.internal.lookup-timeout')),
         connect: ms(config.get<StringValue>('got.internal.connect-timeout')),
         response: ms(config.get<StringValue>('got.internal.response-timeout'))
+    },
+    agent: {
+        http: new HttpAgent({
+            keepAlive: true,
+            keepAliveMsecs: 30000, // 30 seconds
+            maxSockets: 50, // Max connections per host
+            maxFreeSockets: 10, // Keep up to 10 idle connections
+            timeout: 60000 // Socket timeout: 60 seconds
+        }),
+        https: new HttpsAgent({
+            keepAlive: true,
+            keepAliveMsecs: 30000, // 30 seconds
+            maxSockets: 50, // Max connections per host
+            maxFreeSockets: 10, // Keep up to 10 idle connections
+            timeout: 60000 // Socket timeout: 60 seconds
+        })
     },
     resolveBodyOnly: true,
     responseType: 'json',
@@ -157,5 +240,6 @@ export {
     gotInstanceForInternalRequest,
     gotInstanceForExternalRequest,
     gotInstanceForBatchRequest,
-    gotInstanceForTextResponse
+    gotInstanceForTextResponse,
+    handleEinvalError
 };
