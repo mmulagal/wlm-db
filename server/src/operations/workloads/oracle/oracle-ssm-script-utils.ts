@@ -1457,7 +1457,7 @@ def ontapRestApiRequest(fileSystemId, region, method, url, body=None):
             "--region", region,
             "--query", "FileSystems[0].OntapConfiguration.Endpoints.Management.IpAddresses[0]",
             "--output", "text"
-        ], text=True).strip()
+        ], universal_newlines=True).strip()
         use_insecure = True
     else:
         use_insecure = False
