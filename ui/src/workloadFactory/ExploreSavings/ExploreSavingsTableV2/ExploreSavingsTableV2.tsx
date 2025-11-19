@@ -138,11 +138,32 @@ const ExploreSavingsTableV2 = () => {
                 const isSelected = selectedRowsForExploreSavingsEBSBulk.some(
                     (selectedRow: any) => selectedRow.id === item.id
                 );
-                const shouldDisable = selectedRowsForExploreSavingsEBSBulk.length >= 5 && !isSelected;
+
+                const hasSelection = selectedRowsForExploreSavingsEBSBulk.length > 0;
+                const sharesGroupWithSelection = hasSelection
+                    ? selectedRowsForExploreSavingsEBSBulk.some(
+                          (selectedRow: any) =>
+                              selectedRow.credentialId === item.credentialId && selectedRow.regionId === item.regionId
+                      )
+                    : true;
+
+                const limitReached = selectedRowsForExploreSavingsEBSBulk.length >= 5;
+                const shouldDisableDueToLimit = limitReached && !isSelected;
+
+                const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit;
 
                 return {
                     ...item,
-                    cellProps: { ...item.cellProps, isDisabled: shouldDisable }
+                    cellProps: {
+                        ...item.cellProps,
+                        isDisabled,
+                        selectionProps: {
+                            title: !sharesGroupWithSelection && t('databases.explore-savings.disabled-tooltip'),
+                            titleProps: {
+                                placement: 'bottom'
+                            }
+                        }
+                    }
                 };
             }),
         [ebsTableData, selectedRowsForExploreSavingsEBSBulk]

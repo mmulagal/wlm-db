@@ -1156,6 +1156,7 @@
             "update-configuration-state-for": "Update configuration analysis state for"
         },
         "explore-savings": {
+            "disabled-tooltip": "Running a DB on an FSxN in a different region may affect performance.",
             "mssql-ebs": "Microsoft SQL Server hosts on Elastic Block Store",
             "select-upto-five": "Select up to five hosts from the table below, then proceed to explore potential savings. After five selections are made, the remaining checkboxes will be disabled.",
             "availability": "Availability",
