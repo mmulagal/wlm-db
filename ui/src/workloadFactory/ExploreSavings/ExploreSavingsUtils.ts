@@ -483,10 +483,7 @@ export const formatViewCalcData = (
     // Create host-specific data for bulk calculations
     const hostCalculationData = isBulkCalculation
         ? selectedRowsForExploreSavingsEBSBulk
-              .map((host: any) => {
-                  const hostName = host.ec2InstanceName || host.name;
-                  return createHostInstanceCalculationData(hostName);
-              })
+              .map((host: any) => createHostInstanceCalculationData(host.name))
               .filter(Boolean)
         : [];
 

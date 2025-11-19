@@ -4,7 +4,11 @@ import { DsButton } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
-import { AccordionCard, AccordionController } from '../../../../common/AccordionCard/AccordionCard';
+import {
+    AccordionCard,
+    AccordionController,
+    useAccordionContext
+} from '../../../../common/AccordionCard/AccordionCard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './TCOBulkAccordion.module.scss';
 
@@ -72,7 +76,7 @@ const TCOBulkAccordion = () => {
 
         // Get host-specific recommendation from parent state
         const hostId = host.id;
-        const hostName = host.ec2InstanceName || host.name;
+        const hostName = host.name;
         const hostRecommendedInstance = hostRecommendations[hostId] || '';
         const [isByolField, setIsByolField] = useState<boolean>(false);
         const [byolValue, setByolValue] = useState(monthlyBYOLCost || '');
@@ -259,20 +263,14 @@ const TCOBulkAccordion = () => {
         );
     };
 
-    // Logic for only single host
     const {
         selectedHostDetails,
         selectedOnPremHostDetails,
         selectedPartnerHostDetails,
-        getPartnerHostDetailsLoading,
         savingsCalculatorFrom,
-        selectedExploreSavingsTab,
         viewCalculationsResponse
     } = useAppSelector(state => state.exploreSavings);
 
-    const [totalVolume, setTotalVolume] = useState(0);
-    const [hostname, setHostname] = useState('');
-    const [noOfInstances, setNoOfInstances] = useState('');
     const [showSsdTierCard, setShowSsdTierCard] = useState(false);
 
     // Check if SSD tier card should be shown based on ebsCapacity
@@ -292,26 +290,13 @@ const TCOBulkAccordion = () => {
         }
     }, [viewCalculationsResponse, selectedRowsForExploreSavingsEBSBulk]);
 
-    useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
-            setTotalVolume(0);
-            setHostname(selectedOnPremHostDetails?.resourceName);
-            setNoOfInstances(selectedOnPremHostDetails?.totalInstance);
-        } else {
-            let volumeCount = 0;
-            if (selectedHostDetails?.ebsResourceInfo?.length) {
-                volumeCount += selectedHostDetails?.ebsResourceInfo?.length;
-            }
-            if (selectedPartnerHostDetails?.ebsResourceInfo?.length) {
-                volumeCount += selectedPartnerHostDetails?.ebsResourceInfo?.length;
-            }
-            setTotalVolume(volumeCount);
-            setHostname(selectedHostDetails?.name);
-            setNoOfInstances(selectedHostDetails?.totalInstance);
+    // Function to calculate total volume count for a specific host
+    const getHostVolumeCount = (host: any) => {
+        if (!host?.ebsResourceInfo) {
+            return 0;
         }
-    }, [selectedHostDetails, selectedPartnerHostDetails, selectedOnPremHostDetails, ebsTCOAction]);
-
-    // Single host logic ends here
+        return host.ebsResourceInfo.length || 0;
+    };
 
     const handleManageHosts = () => {
         let exploreSavingsHandler: (() => void) | null = null;
@@ -341,6 +326,21 @@ const TCOBulkAccordion = () => {
             />
         );
     };
+
+    const OpenFirstAccordion = ({ firstId }: { firstId?: string }) => {
+        const accordion = useAccordionContext();
+        useEffect(() => {
+            if (accordion?.setOpenChildren && firstId) {
+                if (selectedRowsForExploreSavingsEBSBulk.length === 1) {
+                    accordion.setOpenChildren(prev => ({ ...(prev || {}), [firstId]: true }));
+                } else {
+                    accordion.setOpenChildren(prev => ({ ...(prev || {}), [firstId]: false }));
+                }
+            }
+        }, [accordion?.setOpenChildren, firstId]);
+        return null;
+    };
+
     return (
         <div className={styles.tcoBulkAccordion}>
             {/* SSD tier card - showed based on condition */}
@@ -353,6 +353,8 @@ const TCOBulkAccordion = () => {
                 </div>
             )}
             <AccordionController isGrouped>
+                {/* Helper to open first accordion after provider mounts */}
+                <OpenFirstAccordion firstId={String(selectedRowsForExploreSavingsEBSBulk[0]?.id || '1')} />
                 <div className={styles.header}>
                     <DsTypography variant="Semibold_16">
                         {t('databases.explore-savings.selected-hosts')} ({selectedRowsForExploreSavingsEBSBulk.length})
@@ -370,8 +372,7 @@ const TCOBulkAccordion = () => {
                                     <DsTypography variant="Regular_14" className={styles.centerText}>
                                         {host.totalInstance} {t('databases.explore-savings.instances')}
                                         <SeparatorComponent variant="vertical" height="16px" />
-                                        {(host.ec2Details && host.ec2Details.length) || 0}{' '}
-                                        {t('databases.explore-savings.volumes')}
+                                        {getHostVolumeCount(host)} {t('databases.explore-savings.volumes')}
                                     </DsTypography>
                                 </div>
                             )}
@@ -395,9 +396,9 @@ const TCOBulkAccordion = () => {
                                         <HostInstanceSelection host={host} />
                                     )}
 
-                                    <InstanceInformation />
+                                    <InstanceInformation host={host} />
 
-                                    <SelectedVolumeSummary />
+                                    <SelectedVolumeSummary host={host} />
                                 </DsTypography>
                             </AccordionCardContent>
                         </AccordionCard>

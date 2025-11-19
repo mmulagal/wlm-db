@@ -1,4 +1,4 @@
-import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
+import { DATABASE_DEPLOYMENT_MODE, SAVINGS_CALC_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 
 export const generateHostMsSqlInstanceData = (
     hostName: string,
@@ -35,14 +35,28 @@ export const generateHostMsSqlInstanceData = (
 
         let serverInstallationMode = '';
         if (hostCompute?.deploymentType) {
-            serverInstallationMode = hostCompute.deploymentType;
+            serverInstallationMode =
+                hostCompute.deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG ||
+                hostCompute.deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+                    ? DATABASE_DEPLOYMENT_MODE.FAILOVER_CLUSTER_INSTANCES
+                    : hostCompute.deploymentType;
+        }
+
+        let actualServerInstallationMode = '';
+        if (hostCompute?.deploymentType) {
+            actualServerInstallationMode =
+                hostCompute.deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG ||
+                hostCompute.deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+                    ? DATABASE_DEPLOYMENT_MODE.AOAG
+                    : hostCompute.deploymentType;
         }
 
         return {
             instanceType,
             serverEdition,
             serverVersion,
-            serverInstallationMode: serverInstallationMode || 'Standalone'
+            serverInstallationMode: serverInstallationMode || DATABASE_DEPLOYMENT_MODE.STANDALONE,
+            actualServerInstallationMode
         };
     }
     return msSqlInstance;

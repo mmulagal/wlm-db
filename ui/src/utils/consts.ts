@@ -173,6 +173,12 @@ export const SQL_DEPLOYMENT_MODE = {
     FAILOVER_CLUSTER_VALUE_CAPS: 'FCI'
 };
 
+export const DATABASE_DEPLOYMENT_MODE = {
+    FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
+    STANDALONE: 'Standalone',
+    AOAG: 'Always on availability group'
+};
+
 export const TENANCY = {
     SINGLE_TENANT: 'SINGLE_TENANT'
 };

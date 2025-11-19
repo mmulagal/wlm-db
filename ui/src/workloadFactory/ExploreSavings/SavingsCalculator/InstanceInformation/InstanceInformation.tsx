@@ -6,7 +6,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { FINDINGS, SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
-const InstanceInformation = () => {
+const InstanceInformation = ({ host }: { host?: any }) => {
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
     const {
         savingsCalculatorFrom,
@@ -23,14 +23,20 @@ const InstanceInformation = () => {
 
     useEffect(() => {
         if (selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES) {
-            setLoading(selectedHostDetails?.loading);
+            const currentHost = host || selectedHostDetails;
+            setLoading(currentHost?.loading);
+            const hostName = currentHost?.name;
+
             const findingsComputeData = (() => {
                 if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
                     // Handle AUTO_EBS array format
                     const computeArray = Array.isArray(storageSavingsResponse?.compute)
                         ? storageSavingsResponse.compute
                         : [storageSavingsResponse?.compute].filter(Boolean);
-                    return computeArray[0]?.existing?.finding || '-';
+
+                    // Find compute data by matching hostname
+                    const hostCompute = computeArray.find((item: any) => item.hostname === hostName);
+                    return hostCompute?.existing?.finding || '-';
                 }
                 // Handle single object format for other modes
                 return storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.finding || '-');
@@ -41,27 +47,30 @@ const InstanceInformation = () => {
                     const licenseArray = Array.isArray(storageSavingsResponse?.license)
                         ? storageSavingsResponse.license
                         : [storageSavingsResponse?.license].filter(Boolean);
-                    return licenseArray[0]?.existing?.finding || '-';
+
+                    // Find license data by matching hostname
+                    const hostLicense = licenseArray.find((item: any) => item.hostname === hostName);
+                    return hostLicense?.existing?.finding || '-';
                 }
                 // Handle single object format for other modes
                 return storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
             })();
             const findingsDbModel =
-                selectedHostDetails?.serverInstallationMode?.length &&
-                selectedHostDetails?.serverInstallationMode.includes(GENERAL.AOAG)
+                currentHost?.serverInstallationMode?.length &&
+                currentHost?.serverInstallationMode.includes(GENERAL.AOAG)
                     ? FINDINGS.NOT_OPTIMIZED
                     : FINDINGS.OPTIMIZED;
 
-            setNoOfInstances(selectedHostDetails?.totalInstance || 0);
+            setNoOfInstances(currentHost?.totalInstance || 0);
 
             let instanceTypelist = [];
-            if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
-                instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
+            if (currentHost?.clusterNodeDetails && currentHost?.clusterNodeDetails?.length === 2) {
+                instanceTypelist = currentHost?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
             } else {
-                instanceTypelist = selectedHostDetails?.ec2Details?.map((inst: any) => inst?.instanceType);
+                instanceTypelist = currentHost?.ec2Details?.map((inst: any) => inst?.instanceType);
             }
             const serverEdition: any = [];
-            selectedHostDetails?.sqlServerInstances?.map((perRow: any) => {
+            currentHost?.sqlServerInstances?.map((perRow: any) => {
                 if (
                     perRow?.databaseServer?.serverEdition &&
                     !serverEdition.includes(perRow?.databaseServer?.serverEdition)
@@ -84,16 +93,16 @@ const InstanceInformation = () => {
                 },
                 {
                     details: 'Deployment model',
-                    value: selectedHostDetails?.serverAllInstallationMode
-                        ? selectedHostDetails?.serverAllInstallationMode.join(', ')
-                        : selectedHostDetails?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+                    value: currentHost?.serverAllInstallationMode
+                        ? currentHost?.serverAllInstallationMode.join(', ')
+                        : currentHost?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
                     id: '3',
                     findings: findingsDbModel
                 }
             ];
             setTableData(data);
         }
-    }, [selectedHostDetails, storageSavingsResponse]);
+    }, [selectedHostDetails, storageSavingsResponse, host]);
 
     useEffect(() => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {

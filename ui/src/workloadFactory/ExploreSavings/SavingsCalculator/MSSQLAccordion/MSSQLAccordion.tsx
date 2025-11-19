@@ -433,9 +433,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                 // Render multiple hosts for AUTO_EBS mode
                                 <>
                                     {selectedRowsForExploreSavingsEBSBulk.map((host: any, hostIndex: number) => {
-                                        const hostName = host.ec2InstanceName || host.name;
                                         const hostMsSqlData = generateHostMsSqlInstanceData(
-                                            hostName,
+                                            host.name,
                                             savingsCalculatorFrom,
                                             storageSavingsResponse,
                                             msSqlInstance

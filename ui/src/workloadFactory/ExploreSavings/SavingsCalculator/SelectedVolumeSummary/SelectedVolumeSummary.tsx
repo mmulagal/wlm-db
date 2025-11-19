@@ -7,7 +7,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { formatSizeTwoPrecision } from '../../../../utils/utilityFunctions';
 import { mergeAoagVolumesList } from '../savingsUtil';
 
-const SelectedVolumeSummary = () => {
+const SelectedVolumeSummary = ({ host }: { host?: any }) => {
     const { selectedHostDetails, selectedPartnerHostDetails, getPartnerHostDetailsLoading } = useAppSelector(
         state => state.exploreSavings
     );
@@ -44,7 +44,7 @@ const SelectedVolumeSummary = () => {
         }
     ];
 
-    const getColumnsList = (volTypeList: Array<string>, ebsAvailable: any) => {
+    const getColumnsList = (volTypeList: Array<string>, ebsAvailable: any, currentHost: any) => {
         const colList = [];
         colList.push({
             Header: GENERAL.ES_DETAILS,
@@ -69,7 +69,7 @@ const SelectedVolumeSummary = () => {
                 id,
                 width: '1fr',
                 renderCell: (cellData: any, rowData: any) =>
-                    selectedHostDetails?.loading || getPartnerHostDetailsLoading ? (
+                    currentHost?.loading || getPartnerHostDetailsLoading ? (
                         <DsFlashingDotsLoader />
                     ) : (
                         <DsTypography variant="Regular_14">{cellData}</DsTypography>
@@ -83,12 +83,12 @@ const SelectedVolumeSummary = () => {
     };
 
     useEffect(() => {
-        setLoading(selectedHostDetails?.loading || getPartnerHostDetailsLoading);
+        const currentHost = host || selectedHostDetails;
+        setLoading(currentHost?.loading || getPartnerHostDetailsLoading);
 
-        const mergedEbsResourceInfo = mergeAoagVolumesList(
-            selectedHostDetails?.ebsResourceInfo,
-            selectedPartnerHostDetails?.ebsResourceInfo
-        );
+        const mergedEbsResourceInfo = host
+            ? currentHost?.ebsResourceInfo || []
+            : mergeAoagVolumesList(selectedHostDetails?.ebsResourceInfo, selectedPartnerHostDetails?.ebsResourceInfo);
         let header = {};
         let volumes: any = { details: GENERAL.ES_TOTAL_VOLUMES, id: '1' };
         let storageAmount: any = { details: GENERAL.ES_TOTAL_STORAGE_AMOUNT, id: '2' };
@@ -116,7 +116,7 @@ const SelectedVolumeSummary = () => {
             }
         });
 
-        getColumnsList(volTypeList, mergedEbsResourceInfo);
+        getColumnsList(volTypeList, mergedEbsResourceInfo, currentHost);
 
         setTimeout(() => {
             storageAmount = Object.keys(storageAmount).reduce((newObj: any, key) => {
@@ -130,7 +130,7 @@ const SelectedVolumeSummary = () => {
             const data = [volumes, storageAmount, iops, throughput];
             setTableData(data);
         }, 0);
-    }, [selectedHostDetails, selectedPartnerHostDetails]);
+    }, [selectedHostDetails, selectedPartnerHostDetails, host]);
 
     const tableProps = useTable({
         // @ts-ignore
