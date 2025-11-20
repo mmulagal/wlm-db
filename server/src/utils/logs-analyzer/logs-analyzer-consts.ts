@@ -1,8 +1,10 @@
 import { WLMDB } from '../consts';
 
-const LOGS_ANALYZER_BUNDLE_PATH = `${WLMDB}/scripts/logs-analyzer/agent-win.exe`;
+const LOGS_ANALYZER_BUNDLE_PATH = `${WLMDB}/scripts/logs-analyzer`;
 const LOGS_ANALYZER_PACKAGE_NAME = 'LogsAnalyzerAgent';
 const LOGS_ANALYZER_PACKAGE_VERSION = '1.0.0';
+const MSSQL_PATH = '/agent-win.exe';
+const ORACLE_PATH = '/agent-linux';
 const LOG_LEVEL = 'info';
 const LOGS_COUNT_TO_CONSIDER = 100;
 
@@ -74,5 +76,7 @@ export {
     MSSQL_ERROR_PATTERN,
     PRE_REQ_MESSAGES,
     SEVERITIES,
-    MSSQL_SEVERITY_RANGE
+    MSSQL_SEVERITY_RANGE,
+    MSSQL_PATH,
+    ORACLE_PATH
 };

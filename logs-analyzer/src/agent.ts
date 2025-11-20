@@ -19,6 +19,8 @@ import {
     MSSQL_ERROR_LOGS_ANALYZER_PROMPT,
     PGSQL_ERROR_LOGS_ANALYZER_PROMPT,
     PGSQL_REMEDIATION_RECOMMENDATION_PROMPT,
+    ORACLE_ERROR_LOGS_ANALYZER_PROMPT,
+    ORACLE_REMEDIATION_RECOMMENDATION_PROMPT,
     REMIDIATION_RECOMMENDATION_PROMPT
 } from './utils/const';
 import streamMessages from './aws/bedrock';
@@ -27,7 +29,9 @@ import TOOLS from './utils/tools';
 import {
     getPowershellScript,
     getBashScript,
+    getSqlPlusScript,
     runPowerShellScript,
+    runSqlPlusScript,
     deleteOlderFilesInDirectory,
     safeParseJson,
     hoursAgoTimestamp,
@@ -59,7 +63,8 @@ program
     .option('-m, --max-tokens <tokens>', 'Max tokens for the model', '1000')
     .option('--monitor-usage', 'Monitor CPU and memory usage during analysis', false)
     .requiredOption('-a, --model-id <id>', 'Model ID to use for analysis')
-    .requiredOption('-n, --model-region <region>', 'Model region to use for analysis');
+    .requiredOption('-n, --model-region <region>', 'Model region to use for analysis')
+    .requiredOption('-b, --database-type <type>', 'Database type (mssql, oracle, pgsql)');
 
 program.parse(process.argv);
 const argv = program.opts();
@@ -82,7 +87,8 @@ const {
     topP: TOP_P,
     temperature: TEMP,
     maxTokens: MAX_TOKENS,
-    monitorUsage: MONITOR_USAGE
+    monitorUsage: MONITOR_USAGE,
+    databaseType: DATABASE_TYPE_ARG
 } = argv as AgentArgs;
 
 let monitorInterval: NodeJS.Timeout | undefined;
@@ -94,7 +100,7 @@ const MICROSECONDS_PER_SECOND = 1000000;
 const MILLISECONDS_PER_SECOND = 1000;
 
 const LOGS_FOLDER = decodeURIComponent(logsPath);
-if (!existsSync(LOGS_FOLDER)) {
+if (DATABASE_TYPE_ARG === DATABASE_TYPE.MSSQL && !existsSync(LOGS_FOLDER)) {
     logger.error(`Logs folder does not exist: ${LOGS_FOLDER}`);
     throw new Error(`Logs folder does not exist: ${LOGS_FOLDER}`);
 }
@@ -108,7 +114,8 @@ logger.level = LOG_LEVEL;
 logger.info(`Log level set to: ${LOG_LEVEL}`);
 
 const logGroupName = 'netapp/wlmdb/ssm-response';
-const logStreamSuffix = 'aws-runPowerShellScript/stdout';
+const logStreamSuffix =
+    DATABASE_TYPE_ARG === DATABASE_TYPE.MSSQL ? 'aws-runPowerShellScript/stdout' : 'aws-runShellScript/stdout';
 const logStreamName = `${INSTANCE_ID}-logs-analyzer/${JOB_ID}/${logStreamSuffix}`;
 const CW_OUTPUT_PATH = `${logGroupName}/${logStreamName}`;
 interface RemediationRecommendation {
@@ -146,7 +153,7 @@ interface RemediationRecommendation {
 const remediationRecommendation: RemediationRecommendation[] = [];
 
 initiateLogsAnalysis(
-    `Analyze the SQL profiles logs available in ${LOGS_FOLDER} and provide remediation recommendations for the errors found in the logs.`
+    `Analyze the database logs available in ${LOGS_FOLDER} and provide remediation recommendations for the errors found in the logs.`
 );
 
 async function initiateLogsAnalysis(inputText: string) {
@@ -207,7 +214,8 @@ async function initiateLogsAnalysis(inputText: string) {
                 toolConfig,
                 uniqueQueryMap,
                 INFERENCE_CONFIG,
-                startLogsAnalysisFromTimestamp
+                startLogsAnalysisFromTimestamp,
+                INSTANCE_ID
             );
         }
 
@@ -297,7 +305,7 @@ function trackResourceUsage() {
     writeFileSync(
         usageLogFile,
         `${machineInfo}\n` +
-        'timestamp,cpu_percent,mem_mb,total_mem_mb,free_mem_mb,app_heap_mb,app_external_mb,cpu_cores\n',
+            'timestamp,cpu_percent,mem_mb,total_mem_mb,free_mem_mb,app_heap_mb,app_external_mb,cpu_cores\n',
         'utf-8'
     );
     let lastCpu = process.cpuUsage();
@@ -358,7 +366,8 @@ async function handleToolUse(
     toolConfig: { tools: ToolSpec[] },
     uniqueQueryMap: Map<string, string[]>,
     inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG,
-    startLogsAnalysisFromTimestamp: number
+    startLogsAnalysisFromTimestamp: number,
+    ec2InstanceId: string
 ) {
     let stopReason = '';
     if (message?.content) {
@@ -378,7 +387,8 @@ async function handleToolUse(
                                     DATABASE_INSTANCE_NAME,
                                     messages,
                                     INFERENCE_CONFIG,
-                                    startLogsAnalysisFromTimestamp
+                                    startLogsAnalysisFromTimestamp,
+                                    ec2InstanceId
                                 );
                                 stopReason = 'end_turn'; // Stop further tool use
                                 logger.info('Log analysis completed. Stopping further tool use.');
@@ -399,7 +409,8 @@ async function handleToolUse(
                                 toolConfig,
                                 uniqueQueryMap,
                                 inferenceConfig,
-                                startLogsAnalysisFromTimestamp
+                                startLogsAnalysisFromTimestamp,
+                                INSTANCE_ID
                             );
                         }
                     }
@@ -420,7 +431,11 @@ async function analyzeErrorLogs(
     const errorLogsWithScripts: ErrorLogWithScriptAndDetails[] = [];
 
     const prompt =
-        databaseType === DATABASE_TYPE.MSSQL ? MSSQL_ERROR_LOGS_ANALYZER_PROMPT : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
+        databaseType === DATABASE_TYPE.MSSQL
+            ? MSSQL_ERROR_LOGS_ANALYZER_PROMPT
+            : databaseType === DATABASE_TYPE.ORACLE
+            ? ORACLE_ERROR_LOGS_ANALYZER_PROMPT
+            : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
 
     // Sequential processing is intentional to avoid AWS Bedrock throttling
     /* eslint-disable no-await-in-loop */
@@ -440,8 +455,8 @@ async function analyzeErrorLogs(
             } = logChunk;
 
             const minimalErrorObject = {
-                errorContext: context,
-                errorMessage: error
+                errorContext: databaseType === DATABASE_TYPE.ORACLE ? decodeURIComponent(context) : context,
+                errorMessage: databaseType === DATABASE_TYPE.ORACLE ? decodeURIComponent(error) : error
             };
 
             const response = await streamMessages(
@@ -573,6 +588,8 @@ async function checkAndExecuteAdditionalScript(
                     const response =
                         databaseType === DATABASE_TYPE.MSSQL
                             ? await runPowerShellScript(getPowershellScript(sql, databaseInstanceName!, sqlAuthEnabled))
+                            : databaseType === DATABASE_TYPE.ORACLE
+                            ? 'test' // await runSqlPlusScript(getSqlPlusScript(sql, databaseInstanceName, INSTANCE_ID))
                             : await runBashScript(getBashScript(sql));
                     const errorAndCauseWithAdditionalInfo = value.map((val: ErrorLogWithScriptAndDetails) => ({
                         ...val,
@@ -604,6 +621,8 @@ async function recommendRemediation(
     const prompt =
         databaseType === DATABASE_TYPE.MSSQL
             ? REMIDIATION_RECOMMENDATION_PROMPT
+            : databaseType === DATABASE_TYPE.ORACLE
+            ? ORACLE_REMEDIATION_RECOMMENDATION_PROMPT
             : PGSQL_REMEDIATION_RECOMMENDATION_PROMPT;
 
     /* eslint-disable no-await-in-loop */
@@ -710,7 +729,12 @@ async function getDatabaseDetails(logsFolderPath: string) {
     let databaseDetails: { logFile: string; databaseType: string; databaseVersion: string } | null = null;
 
     const logFiles = readdirSync(logsFolderPath).filter(
-        file => file.endsWith('.trc') || file.endsWith('.xel') || file.endsWith('.log') || file.startsWith('ERRORLOG')
+        file =>
+            file.endsWith('.trc') ||
+            file.endsWith('.xel') ||
+            file.endsWith('.log') ||
+            file.startsWith('ERRORLOG') ||
+            file.startsWith('alert_')
     );
 
     for (const logFile of logFiles) {
@@ -730,6 +754,22 @@ async function getDatabaseDetails(logsFolderPath: string) {
             const versionMatch = fileContent.match(/PostgreSQL\s+([\d.]+)/);
             if (versionMatch) {
                 [, databaseVersion] = versionMatch;
+            }
+        } else if (
+            fileContent.includes('Oracle Database') ||
+            fileContent.includes('ORACLE') ||
+            logFile.startsWith('alert_')
+        ) {
+            databaseType = DATABASE_TYPE.ORACLE;
+            const versionMatch = fileContent.match(/Oracle Database\s+([\d.]+)/);
+            if (versionMatch) {
+                [, databaseVersion] = versionMatch;
+            } else {
+                // Try to find version in different Oracle format
+                const oraVersionMatch = fileContent.match(/Release\s+([\d.]+)/);
+                if (oraVersionMatch) {
+                    [, databaseVersion] = oraVersionMatch;
+                }
             }
         }
 
@@ -754,11 +794,19 @@ async function analyzeDatabaseApplicationLogs(
     databaseInstanceName: string,
     messages: MessageObj[],
     inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG,
-    startLogsAnalysisFromTimestamp: number
+    startLogsAnalysisFromTimestamp: number,
+    ec2InstanceId: string
 ) {
     logger.info('Analyzing database application logs.', { logsFolderPath, sqlAuthEnabled, databaseInstanceName });
 
-    const databaseDetails = await getDatabaseDetails(logsFolderPath);
+    const databaseDetails =
+        DATABASE_TYPE_ARG !== DATABASE_TYPE.ORACLE
+            ? await getDatabaseDetails(logsFolderPath)
+            : {
+                  databaseType: DATABASE_TYPE.ORACLE,
+                  databaseVersion: 'Unknown',
+                  logFile: 'alert.log'
+              };
     // Collect logs based on the identified database type
     const { databaseType: dbType = '' } = databaseDetails || {};
 
@@ -766,7 +814,9 @@ async function analyzeDatabaseApplicationLogs(
         dbType,
         logsFolderPath,
         startLogsAnalysisFromTimestamp,
-        LOGS_COUNT
+        LOGS_COUNT,
+        databaseInstanceName,
+        ec2InstanceId
     );
 
     if (isEmpty(errorLogs)) {

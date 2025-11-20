@@ -304,4 +304,5 @@ enum DATABASE_DEPLOYMENT_TYPE {
 enum DATABASE_TYPE {
   mssql
   pgsql
+  oracle
 }

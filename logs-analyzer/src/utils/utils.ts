@@ -5,6 +5,7 @@ import ms from 'ms';
 import zlib from 'zlib';
 import { join } from 'node:path';
 import logger from './logging';
+import { ORACLE_ERROR_KEYWORDS } from './const';
 
 const GOOGLE_DNS = '8.8.8.8';
 
@@ -284,6 +285,175 @@ function getBashScript(sql: string[]) {
     `;
 }
 
+const defaultAuthDetectModule = `
+    is_default_auth() {
+        local ORACLE_SID="$1"
+        local result
+        result=$(sudo -i -u oracle bash <<EOF
+                export ORACLE_SID="$ORACLE_SID"
+                sqlplus -S / as sysdba 2>/dev/null <<EOSQL
+                WHENEVER SQLERROR EXIT SQL.SQLCODE
+                SET HEADING OFF
+                SET FEEDBACK OFF
+                SET VERIFY OFF
+                SET PAGESIZE 0
+                SELECT 'OK' FROM dual;
+                EXIT;
+EOSQL
+EOF
+)
+        if echo "$result" | grep -q "^OK"; then
+            echo "true"
+        else
+            echo "false"
+        fi
+}
+`;
+
+const oracleUserAuthLoginCommand = `
+    get_oracle_user_auth_login_command() {
+        local oracleSid="$1"
+        local ec2InstanceId="$2"
+
+        instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
+        oracleInstances=$(echo "$instanceCreds" | jq -c '.oracle')
+        matchingOracleInstance=$(echo "$oracleInstances" | jq -c --arg sid "$oracleSid" '.[] | select(.oracleinstancename == $sid)')
+        username=$(echo "$matchingOracleInstance" | jq -r '.username')
+        password=$(echo "$matchingOracleInstance" | jq -r '.password')
+        
+        # Convert username to lowercase
+        usernameLowercase=$(echo "$username" | tr '[:upper:]' '[:lower:]')
+        if [ -z "$username" ] || [ -z "$password" ] || [ "$username" == "null" ] || [ "$password" == "null" ]; then
+            oracleCredsAvailable="false"
+        else
+            oracleCredsAvailable="true"
+            if [ "$usernameLowercase" == "sys" ]; then
+                # For SYS user, we need to use AS SYSDBA
+                sqlplus_command="sqlplus -S $username/$password as sysdba"
+            else
+                sqlplus_command="sqlplus -S $username/$password"
+            fi
+        fi
+        echo "$sqlplus_command|$oracleCredsAvailable"
+    }
+`;
+
+const getOracleDefaultOrUserAuthCommand = (ec2InstanceId: string, dbSid: string) => `
+    oracleSid="${dbSid}"
+    ec2InstanceId="${ec2InstanceId}"
+
+    ${defaultAuthDetectModule}
+    isDefaultAuth=$(is_default_auth "$oracleSid")
+
+    if [ "$isDefaultAuth" == "true" ]; then
+        sqlplus_command="sqlplus -S / as sysdba"
+    elif [ "$isDefaultAuth" == "false" ]; then
+        # If default auth is not used, we need to fetch the credentials from SSM.
+        ${oracleUserAuthLoginCommand}
+        
+        result=$(get_oracle_user_auth_login_command "$oracleSid" "$ec2InstanceId")
+        sqlplus_command=$(echo "$result" | cut -d'|' -f1)
+        oracleCredsAvailable=$(echo "$result" | cut -d'|' -f2)
+    else
+        echo "Error: isDefaultAuth is undefined"
+        exit 1
+    fi
+`;
+
+function getSqlplusScriptForOracle(query: string, oracleInstanceName: string = 'ORACLE_SID', ec2InstanceId: string) {
+    return `
+        #!/bin/bash
+        # SQL*Plus script to run a set of SQL queries on Oracle Database and return the output in JSON format
+
+        # Define the Oracle connection string
+        ORACLE_SID="${oracleInstanceName}"
+        ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, oracleInstanceName)}
+        sqlquery=$(cat <<'SQL'
+                ${query}
+SQL
+        );
+
+            result=$(sudo -i -u oracle bash <<EOF
+                export ORACLE_SID="$ORACLE_SID"
+                $sqlplus_command <<'EOSQL'
+SET PAGESIZE 0
+SET FEEDBACK OFF
+SET HEADING OFF
+SET ECHO OFF
+SET VERIFY OFF
+SET LINESIZE      32767
+SET LONG          10000000
+SET LONGCHUNKSIZE 10000000
+SET TRIMSPOOL     ON
+$sqlquery
+EXIT;
+EOSQL
+EOF
+)
+        json_result=$(printf '%s' "$result" | tr -d '\\n')
+        echo "$json_result"
+`;
+}
+
+function getSqlPlusScript(sql: string[], oracleInstanceName: string = 'ORACLE_SID', ec2InstanceId: string) {
+    return `
+        #!/bin/bash
+        # SQL*Plus script to run a set of SQL queries on Oracle Database and return the output in JSON format
+
+        # Define the Oracle connection string
+        ORACLE_SID="${oracleInstanceName}"
+        export ORACLE_SID
+        ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, oracleInstanceName)}
+
+        # Define the list of queries
+        queries=(
+            ${
+                // eslint-disable-next-line quotes
+                sql.map(sqlQuery => `'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`).join(',\n  ')
+            }
+        )
+
+        # Initialize an array to store the results
+        results=()
+
+        # Iterate over each query and execute it
+        for query in "\${queries[@]}"; do
+            result=$(sudo -i -u oracle bash <<EOF
+                export ORACLE_SID="$ORACLE_SID"
+                $sqlplus_command 2>/dev/null <<EOSQL
+SET PAGESIZE 0
+SET FEEDBACK OFF
+SET HEADING OFF
+SET ECHO OFF
+SET VERIFY OFF
+SET LINESIZE      32767
+SET LONG          10000000
+SET LONGCHUNKSIZE 10000000
+SET TRIMSPOOL     ON
+$query
+EXIT;
+EOSQL
+EOF
+)
+            if [ $? -eq 0 ]; then
+                # Clean up the result and escape for JSON
+                clean_result=$(echo "$result" | sed 's/"/\\"/g' | tr '\\n' ' ')
+                results+=("{\\"Query\\": \\"$query\\", \\"Result\\": \\"$clean_result\\"}")
+            else
+                # Clean up the error and escape for JSON
+                clean_error=$(echo "$result" | sed 's/"/\\"/g' | tr '\\n' ' ')
+                results+=("{\\"Query\\": \\"$query\\", \\"Error\\": \\"$clean_error\\"}")
+            fi
+        done
+
+        # Convert the results to JSON format
+        json_output=$(printf "%s\n" "\${results[@]}" | jq -s .)
+
+        # Write the output to console
+        echo "$json_output"
+    `;
+}
+
 async function runPowerShellScript(scriptContent: string): Promise<string> {
     return new Promise((resolve, reject) => {
         const powershell = execa('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', '-']);
@@ -336,6 +506,35 @@ async function runBashScript(scriptContent: string): Promise<string> {
                 resolve(output.trim());
             } else {
                 reject(new Error(`Bash script failed with code ${code}: ${errorOutput.trim()}`));
+            }
+        });
+
+        bash.on('error', (err: Error) => {
+            reject(err);
+        });
+    });
+}
+
+async function runSqlPlusScript(scriptContent: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const bash = execa('/bin/bash', ['-c', scriptContent]);
+
+        let output = '';
+        let errorOutput = '';
+
+        bash.stdout?.on('data', (data: Buffer) => {
+            output += data.toString();
+        });
+
+        bash.stderr?.on('data', (data: Buffer) => {
+            errorOutput += data.toString();
+        });
+
+        bash.on('close', (code: number) => {
+            if (code === 0) {
+                resolve(output.trim());
+            } else {
+                reject(new Error(`SQL*Plus script failed with code ${code}: ${errorOutput.trim()}`));
             }
         });
 
@@ -405,15 +604,24 @@ function toMB(bytes: number): number {
     return bytes / 1024 / 1024;
 }
 
+function containsErrorKeywords(messageText: string): boolean {
+    const lowerMessage = messageText.toLowerCase();
+    return ORACLE_ERROR_KEYWORDS.some(keyword => lowerMessage.includes(keyword.toLowerCase()));
+}
+
 export {
     getPowershellScript,
     getBashScript,
+    getSqlPlusScript,
     runPowerShellScript,
     runBashScript,
+    runSqlPlusScript,
     deflateString,
     deleteOlderFilesInDirectory,
     generateHash,
     safeParseJson,
     hoursAgoTimestamp,
-    toMB
+    toMB,
+    containsErrorKeywords,
+    getSqlplusScriptForOracle
 };

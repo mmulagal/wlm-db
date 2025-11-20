@@ -148,6 +148,7 @@ function getWindowsPrepareScript(scriptParams: {
         $timestamp = ${logsAnalyzerFromTimestamp};
         $logsWindowDuration = ${logsWindowDuration};
         $monitorUsage = $${monitorUsage};
+        $databaseType = "mssql";
 
         function Invoke-RetryCommand {
             param ([scriptblock]$Command, [int]$Retries = 5)
@@ -205,7 +206,8 @@ function getWindowsPrepareScript(scriptParams: {
                 '--top-p', $topP,
                 '--logs-count-to-consider', $logsCountToConsider,
                 '--timestamp', $timestamp,
-                '--time-window-hours', $logsWindowDuration
+                '--time-window-hours', $logsWindowDuration,
+                '--database-type', $databaseType
             )
             if ($sqlAuthEnabled) { $argumentList += '--sql-auth-enabled' }
             if ($monitorUsage) { $argumentList += '--monitor-usage' }
@@ -240,6 +242,9 @@ function getLinuxPrepareScript(scriptParams: {
     jobId?: string;
     inferenceConfig?: InferenceConfigType;
     logLevel?: string;
+    databaseType?: string;
+    logsAnalyzerFromTimestamp?: number;
+    logsWindowDuration?: number;
 }): string {
     logger.debug('Generating Linux prepare script with params:', scriptParams);
     const {
@@ -252,7 +257,10 @@ function getLinuxPrepareScript(scriptParams: {
         inferenceProfileArn,
         jobId,
         inferenceConfig = {},
-        logLevel = LOG_LEVEL
+        logLevel = LOG_LEVEL,
+        databaseType,
+        logsAnalyzerFromTimestamp,
+        logsWindowDuration
     } = scriptParams;
     const { temperature = 0.5, maxTokens = 5000, topP = 0.9 } = inferenceConfig;
 
@@ -268,12 +276,15 @@ function getLinuxPrepareScript(scriptParams: {
     instanceId="${instanceId}"
     region="${region}"
     jobId="${jobId}"
-    modelId = "${inferenceProfileArn}";
-    modelRegion = "${region}";
-    temperature = ${temperature};
-    maxTokens = ${maxTokens};
-    topP = ${topP};
+    modelId="${inferenceProfileArn}";
+    modelRegion="${region}";
+    temperature=${temperature};
+    maxTokens=${maxTokens};
+    topP=${topP};
     logLevel='${logLevel}';
+    databaseType='${databaseType}';
+    timestamp='${logsAnalyzerFromTimestamp}';
+    logsWindowDuration='${logsWindowDuration}';
 
 retry_command() {
     local retries=5
@@ -289,7 +300,7 @@ retry_command() {
 
 filePath="./$packageName-$version"
 if [ ! -f "$filePath" ]; then
-    retry_command curl -o "$filePath" "$s3SignedUrl"
+    retry_command curl -sS -fSL -o "$filePath" "$s3SignedUrl"
 
     find . -name "$packageName-*" ! -name "$packageName-$version" -exec rm -f {} +
 fi
@@ -300,7 +311,7 @@ if [ ! -f "$filePath" ]; then
     exit 1
 fi
 
-"$filePath" --logs-path "$logsPath" --log-level "$logLevel" --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP"
+"$filePath" --logs-path "$logsPath" --log-level "$logLevel" --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP" --database-type "$databaseType" --timestamp "$timestamp" --time-window-hours "$logsWindowDuration"
 
 if [ $? -ne 0 ]; then
     exit 1

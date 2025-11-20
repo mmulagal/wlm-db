@@ -303,30 +303,204 @@ Respond strictly in valid JSON format as a single JSON object. The JSON object s
 
 Here's the error details for your reference:`;
 
+const ORACLE_ERROR_LOGS_ANALYZER_PROMPT = `You are a world-class Oracle Database expert. Your task is to analyze errors from Oracle Database logs and respond strictly in valid JSON format.
+
+### Note:
+This application uses AWS FSx for NetApp ONTAP as the underlying storage.
+
+### Input Format:
+You are given the following input:
+{
+    "errorContext": "<error message along with 5 lines before and after the message>",
+    "errorMessage": "<error message>"
+}
+
+### Output Format:
+Respond strictly in valid JSON format as a JSON object. Each object should have the following structure:
+
+    {
+        "error": "<errorMessage>",
+        "cause": "<cause of the error>",
+        "sql": {
+            "query": ["<SQL query to gather additional information>", ...]                    
+            }
+    }
+
+### Rules:
+1. Respond strictly in valid JSON format. Do not include any additional commentary, explanations, or text outside the JSON response. Do not use code blocks (e.g., json or jsonc) or any extra formatting.
+2. Ensure all strings are properly escaped and formatted to comply with JSON standards.
+3. If there are multiple errors in an errorContext, summarize the errors and provide a single response.
+4. If additional information is required from the Oracle Database server, include the SQL queries needed to gather that information in the 'sql' field.
+5. If no additional information is required, always return '"sql": { "query": [] }'.
+6. You are only a simple read-only assistant. Do NOT return any alter, update, or delete queries that can modify any data in the 'sql' field.
+7. For purely informational messages or errors where no further investigation is needed, ensure the 'sql' field contains an empty array.
+8. Do NOT return SQL queries that would result in errors. Only provide queries that are valid and will execute successfully on a standard Oracle Database server.
+9. When using SELECT DISTINCT, ensure proper ordering and avoid queries that would cause errors.
+10. Do NOT reference columns in WHERE or ORDER BY clauses that do not exist in the target table or view. Always verify column names and query structure for correctness.
+11. Do NOT guess or assume column names or table structure. Only use columns and tables that are standard and guaranteed to exist in the context provided. If you are unsure, do not include the query.
+12. If you are unsure about the validity of a query, do not include it in the output.
+13. If no valid query can be generated, return "sql": { "query": [] }.
+14. **ALWAYS limit query results to prevent excessive data.** Use ROWNUM <= 10 for system views that may return large datasets (e.g., V$SESSION, V$PROCESS, V$SQL). Format queries as: "SELECT * FROM (SELECT * FROM V$SESSION ORDER BY LOGON_TIME DESC) WHERE ROWNUM <= 10;"
+15. **For queries that may return large result sets, always include appropriate WHERE clauses or ROWNUM limits.** Avoid queries that could return hundreds or thousands of rows.
+16. **When querying system views (V$ views), prioritize the most relevant columns rather than SELECT *.** Focus on key diagnostic columns that directly relate to the error being analyzed.
+17. **For Oracle-specific monitoring, use appropriate system views like V$SESSION, V$PROCESS, V$SQL, DBA_OBJECTS, etc.**
+
+### Example Input:
+{
+    "errorContext": "ORA-00001: unique constraint (SCHEMA.PK_TABLE) violated\\nORA-06512: at line 1\\nORA-06512: at line 1",
+    "errorMessage": "ORA-00001: unique constraint (SCHEMA.PK_TABLE) violated"
+}
+
+### Example Output:
+    {
+        "error": "ORA-00001: unique constraint (SCHEMA.PK_TABLE) violated",
+        "cause": "An attempt was made to insert or update a row that would violate a unique constraint. This occurs when trying to insert duplicate values into a column or set of columns that have a unique constraint defined.",
+        "sql": {
+         "query" : ["SELECT * FROM (SELECT constraint_name, table_name, column_name, constraint_type FROM user_cons_columns WHERE constraint_name LIKE '%PK_TABLE%' ORDER BY position) WHERE ROWNUM <= 10;", "SELECT * FROM (SELECT owner, constraint_name, table_name, status FROM dba_constraints WHERE constraint_name LIKE '%PK_TABLE%') WHERE ROWNUM <= 10;"]
+        }
+    }
+Here's the error details for your reference:`;
+
+const ORACLE_REMEDIATION_RECOMMENDATION_PROMPT = `You are a world-class Oracle Database expert. Your task is to analyze errors from Oracle Database logs and respond strictly in valid JSON format.
+
+### Note:
+This application uses AWS FSx for NetApp ONTAP as the underlying storage.
+
+### Input Format:
+You are given the following input:
+{
+    "error": "<error message>",
+    "cause": "<cause of the error>",
+    "additionalInfo": [
+        {
+            "Instance": "<Oracle instance name>",
+            "Query": "<SQL query executed>",
+            "Result": [
+                "<query result row 1>",
+                "<query result row 2>",
+                ...
+            ]
+        },
+        ...
+    ]
+}
+
+### Output Format:
+Respond strictly in valid JSON format as a single JSON object. The JSON object should have the following structure:
+{
+    "error": "<error message>",
+    "cause": "<cause of the error>",
+    "remediation": [
+        "<specific remediation recommendation 1>",
+        "<specific remediation recommendation 2>",
+        ...
+    ]
+}
+
+### Rules:
+1. Respond strictly in valid JSON format. Do not include any additional commentary, explanations, or text outside the JSON response.
+2. Use the 'additionalInfo' provided to generate specific remediation recommendations. Avoid generic suggestions.
+3. If you cannot generate a remediation, return an empty array for the 'remediation' field.
+4. Ensure all strings are properly escaped and formatted to comply with JSON standards.
+5. Focus on Oracle-specific remediation techniques including tablespace management, index optimization, constraint handling, etc.
+
+### Example Input:
+{
+    "error": "ORA-00001: unique constraint (SCHEMA.PK_TABLE) violated",
+    "cause": "An attempt was made to insert or update a row that would violate a unique constraint. This occurs when trying to insert duplicate values into a column or set of columns that have a unique constraint defined.",
+    "additionalInfo": [
+        {
+            "Instance": "ORACLE_SID",
+            "Query": "SELECT constraint_name, table_name, column_name FROM user_cons_columns WHERE constraint_name LIKE '%PK_TABLE%'",
+            "Result": [
+                "PK_TABLE | USERS | USER_ID",
+                "PK_TABLE | USERS | EMAIL"
+            ]
+        }
+    ]
+}
+
+### Example Output:
+{
+    "error": "ORA-00001: unique constraint (SCHEMA.PK_TABLE) violated",
+    "cause": "An attempt was made to insert or update a row that would violate a unique constraint. This occurs when trying to insert duplicate values into a column or set of columns that have a unique constraint defined.",
+    "remediation": [
+        "The unique constraint PK_TABLE is defined on columns USER_ID and EMAIL in the USERS table. Ensure that the combination of these values is unique before inserting or updating records.",
+        "Check for existing records with the same USER_ID and EMAIL combination before performing the insert/update operation.",
+        "Consider using MERGE statement instead of INSERT to handle duplicate key scenarios gracefully.",
+        "Review the application logic to ensure proper validation of unique constraints before database operations."
+    ]
+}
+
+Here's the error details for your reference:`;
+
 const PGSQL_ERROR_PATTERN =
     /^(?<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) UTC (?<processId>\[\d+\]) (?<severity>ERROR|FATAL|PANIC|WARNING): (?<message>(.+))$/;
 const MSSQL_ERROR_PATTERN =
     /(?<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{2}) (?<spid>\w+) +(?:Error: (?<errorCode>\d+), Severity: (?<severity>\d+), State: (?<state>\d+)|.*?\b(?:(?<keyword>deadlock|error|failed|bottleneck))\b(?<message>.*))/;
 
+const ORACLE_ERROR_PATTERN =
+    /^(?<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+\d{2}:\d{2})\s+(?<severity>ERROR|WARNING|NOTIFICATION)\s+(?:PID:\s*(?<pid>\d+)\s+)?(?:SQLID:\s*\((?<sqlid>[^)]*)\)\s+)?(?:\((?<module>[^)]+)\):\s+)?(?<code>\d+):\s+(?<message>.*)$/;
 enum DATABASE_TYPE {
     POSTGRESQL = 'postgresql',
-    MSSQL = 'mssql'
+    MSSQL = 'mssql',
+    ORACLE = 'oracle'
 }
 
 const MSSQL_SEVERITY_THRESHOLD = 16; // Severity threshold for MSSQL errors
+const ORACLE_SEVERITY_LEVELS = ['ERROR', 'WARNING']; // Severity levels to process for Oracle logs
 
 const BEDROCK_RETRY = {
     MODE: 'adaptive',
     MAX_ATTEMPTS: 6
 };
+
+const ORACLE_ERROR_KEYWORDS = [
+    'error',
+    'warning',
+    'deadlock',
+    'ORA-',
+    'exception',
+    'failed',
+    'failure',
+    'timeout',
+    'corrupt',
+    'invalid',
+    'abort',
+    'crash',
+    'hang',
+    'block',
+    'lock',
+    'constraint',
+    'violation',
+    'recovery',
+    'rollback',
+    'checkpoint',
+    'shutdown',
+    'startup',
+    'mount',
+    'open',
+    'close',
+    'issue',
+    'terminated',
+    'unavailable',
+    'exceeded',
+    'invalid',
+    'insufficient'
+];
 export {
     MSSQL_ERROR_LOGS_ANALYZER_PROMPT,
     REMIDIATION_RECOMMENDATION_PROMPT,
     PGSQL_ERROR_LOGS_ANALYZER_PROMPT,
     PGSQL_REMEDIATION_RECOMMENDATION_PROMPT,
+    ORACLE_ERROR_LOGS_ANALYZER_PROMPT,
+    ORACLE_REMEDIATION_RECOMMENDATION_PROMPT,
     DATABASE_TYPE,
     PGSQL_ERROR_PATTERN,
     MSSQL_ERROR_PATTERN,
+    ORACLE_ERROR_PATTERN,
+    ORACLE_SEVERITY_LEVELS,
     MSSQL_SEVERITY_THRESHOLD,
-    BEDROCK_RETRY
+    BEDROCK_RETRY,
+    ORACLE_ERROR_KEYWORDS
 };

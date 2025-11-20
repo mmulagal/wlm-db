@@ -12,7 +12,13 @@ import ms from 'ms';
 import throat from 'throat';
 import { callSsmExecution } from '../aws/ssm-operations';
 import { preSignedUrl } from '../../lib/aws/s3';
-import { AuditStatus, DEFAULT_INSTANCE_NAME, HttpErrorCodes } from '../../utils/consts';
+import {
+    AuditStatus,
+    DatabaseTypes,
+    DEFAULT_INSTANCE_NAME,
+    HttpErrorCodes,
+    SqlServerDeploymentModel
+} from '../../utils/consts';
 
 import {
     generateHash,
@@ -30,15 +36,18 @@ import {
     LOGS_ANALYZER_PACKAGE_VERSION,
     LOGS_COUNT_TO_CONSIDER,
     MODEL_AVAILABILITY_STATUS,
+    MSSQL_PATH,
     MSSQL_ERROR_PATTERN,
     MSSQL_SEVERITY_RANGE,
+    ORACLE_PATH,
     PRE_REQ_MESSAGES,
     SEVERITIES
 } from '../../utils/logs-analyzer/logs-analyzer-consts';
-import { DatabaseInstance, DatabaseInstancesIncludingResource } from '../../utils/common-types';
+import { DatabaseInstance, DatabaseInstancesIncludingResource, Metadata } from '../../utils/common-types';
+
 import getLogger from '../../utils/logger';
 import { registerJob, updateJobDetails } from '../database/job-operations';
-import { getActiveNodeAndInstanceDetails } from '../workloads/mssql/mssql-operations';
+import { getActiveNodeAndInstanceDetails, getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { sqlQueryExecutionWithAuth } from '../workloads/mssql/ssm-script-utils';
 import { getModelAvailability } from '../../lib/aws/bedrock';
 import { getCloudWatchLogs } from '../aws/cloud-watch-logs-operations';
@@ -64,6 +73,7 @@ import {
     listLogsAnalysisReports
 } from '../../lib/database/logs-analysis-reports';
 import { getPaginatedDatabaseInstances } from '../database/database-operations';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -278,46 +288,83 @@ async function handleLogsAnalysis(
         const {
             database_type: dbType,
             database_instance_id: databaseInstanceId,
-            resource_id: databaseHostId
+            resource_id: databaseHostId,
+            resource: { metadata: resourceMetadata }
         } = managedInstance;
         const databaseType = dbType?.toLowerCase();
-        const { nodeId: activeNodeInstanceId, matchingInstance } = await getActiveNodeAndInstanceDetails(
-            accountId,
-            credentialsId,
-            region,
-            managedInstance.resource,
-            databaseInstanceDetails as unknown as DatabaseInstance
-        );
+
+        const { node1InstanceId, node2InstanceId, sqlDeploymentType } = resourceMetadata as unknown as Metadata;
+
+        let activeNodeInstanceId;
+        let matchingInstance;
+        if (databaseType === DATABASE_TYPE.oracle) {
+            const activeSqlNodeResult = await getActiveSqlNode(credentialsId, region, {
+                node1InstanceId,
+                node2InstanceId,
+                resourceId: databaseHostId,
+                accountId,
+                resourceType: dbType as DatabaseTypes,
+                sqlDeploymentType: sqlDeploymentType as SqlServerDeploymentModel
+            });
+            logger.debug('Active SQL Node for Oracle:', activeSqlNodeResult);
+            activeNodeInstanceId = activeSqlNodeResult.activeNodeInstanceId;
+        } else {
+            ({ nodeId: activeNodeInstanceId, matchingInstance } = await getActiveNodeAndInstanceDetails(
+                accountId,
+                credentialsId,
+                region,
+                managedInstance.resource,
+                databaseInstanceDetails as unknown as DatabaseInstance
+            ));
+        }
 
         const { inferenceProfileArn } = await checkLogAnalyzerPreRequisites(
             accountId,
             credentialsId,
             region,
-            activeNodeInstanceId,
+            activeNodeInstanceId!,
             databaseType
         );
         if (!inferenceProfileArn) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Inference profile not found');
         }
+        const logsAnalyzerPath =
+            databaseType === DATABASE_TYPE.mssql
+                ? `${LOGS_ANALYZER_BUNDLE_PATH}${MSSQL_PATH}`
+                : `${LOGS_ANALYZER_BUNDLE_PATH}${ORACLE_PATH}`;
         const s3SignedUrl =
             logsAnalyzerS3SignedUrl ||
-            (await getPreSignedUrl(region, getArtifactsRegionBucketName(region), LOGS_ANALYZER_BUNDLE_PATH));
+            (await getPreSignedUrl(region, getArtifactsRegionBucketName(region), logsAnalyzerPath));
 
-        const logsPathQuery =
-            'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations FOR JSON PATH';
-        const { sqlAuthEnabled, instanceName: databaseInstanceName } = matchingInstance;
-        const logsAnalysisSsmCommand = sqlQueryExecutionWithAuth([databaseInstanceName], logsPathQuery, sqlAuthEnabled);
-        const logsPathResponse = await callSsmExecution({
-            credentialsId,
-            region,
-            commands: [logsAnalysisSsmCommand],
-            ec2InstanceId: activeNodeInstanceId,
-            comment: 'Fetch Logs Path for sql server instance'
-        });
-        const parsedResponse = logsPathResponse ? sqlResponseParsing(logsPathResponse) : {};
-        const [{ path: logsPath } = {}] = IS_DEMO_FLOW
-            ? parsedResponse?.[DEFAULT_INSTANCE_NAME] || []
-            : parsedResponse?.[databaseInstanceName] || [];
+        let logsPath = '';
+        let databaseInstanceName = '';
+        let sqlAuthEnabled;
+        if (databaseType === DATABASE_TYPE.oracle) {
+            logsPath = '/oracle'; // Dummy path for Oracle logs, actual logs will be fetched from the database directly
+        } else {
+            const logsPathQuery =
+                'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations FOR JSON PATH';
+            ({ sqlAuthEnabled, instanceName: databaseInstanceName } = matchingInstance);
+            const logsAnalysisSsmCommand = sqlQueryExecutionWithAuth(
+                [databaseInstanceName],
+                logsPathQuery,
+                sqlAuthEnabled
+            );
+            const logsPathResponse = await callSsmExecution({
+                credentialsId,
+                region,
+                commands: [logsAnalysisSsmCommand],
+                ec2InstanceId: activeNodeInstanceId!,
+                comment: 'Fetch Logs Path for sql server instance'
+            });
+            const parsedResponse = logsPathResponse ? sqlResponseParsing(logsPathResponse) : {};
+
+            const [{ path } = {}] = IS_DEMO_FLOW
+                ? parsedResponse?.[DEFAULT_INSTANCE_NAME] || []
+                : parsedResponse?.[databaseInstanceName] || [];
+            logsPath = path;
+        }
+
         if (!logsPath) {
             throw createError(
                 HttpErrorCodes.INTERNAL_SERVER_ERROR,
@@ -341,7 +388,7 @@ async function handleLogsAnalysis(
                       sqlAuthEnabled,
                       databaseInstanceName,
                       version: LOGS_ANALYZER_PACKAGE_VERSION,
-                      instanceId: activeNodeInstanceId,
+                      instanceId: activeNodeInstanceId!,
                       region,
                       logsCountToConsider,
                       logsAnalyzerFromTimestamp,
@@ -357,23 +404,35 @@ async function handleLogsAnalysis(
                       packageName: LOGS_ANALYZER_PACKAGE_NAME,
                       logsPath,
                       version: LOGS_ANALYZER_PACKAGE_VERSION,
-                      instanceId: activeNodeInstanceId,
+                      instanceId: activeNodeInstanceId!,
                       region,
                       inferenceProfileArn,
                       jobId,
                       inferenceConfig,
-                      logLevel
+                      logLevel,
+                      databaseType,
+                      logsAnalyzerFromTimestamp,
+                      logsWindowDuration
                   });
+
+        const documentName =
+            databaseType !== DATABASE_TYPE.mssql ? SSM_RUN_SHELL_SCRIPT_DOC : SSM_RUN_POWERSHELL_SCRIPT_DOC;
+        const documentVersion =
+            databaseType !== DATABASE_TYPE.mssql
+                ? SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+                : SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION;
 
         const logsAnalysisResponse = await callSsmExecution({
             credentialsId,
             region,
             commands: [logsAnalyserScriptCommand],
-            ec2InstanceId: activeNodeInstanceId,
+            ec2InstanceId: activeNodeInstanceId!,
             comment: 'Trigger Logs Analysis',
             accountId,
             executionTimeout: '1800',
-            shouldReadFromCloudWatchLogs: true // Cloud watch logs enabled
+            shouldReadFromCloudWatchLogs: true, // Cloud watch logs enabled,
+            documentName,
+            documentVersion
         });
 
         const parsedAnalysisResponse = logsAnalysisResponse ? sqlResponseParsing(logsAnalysisResponse) : {};
@@ -387,7 +446,9 @@ async function handleLogsAnalysis(
         }
 
         const logGroupName = 'netapp/wlmdb/ssm-response';
-        const logStreamName = `${activeNodeInstanceId}-logs-analyzer/${jobId}/aws-runPowerShellScript/stdout`;
+        const scriptTypeSuffix =
+            databaseType === DATABASE_TYPE.mssql ? 'aws-runPowerShellScript' : 'aws-runShellScript';
+        const logStreamName = `${activeNodeInstanceId}-logs-analyzer/${jobId}/${scriptTypeSuffix}/stdout`;
         const [ssmLogsResponse] = await getCloudWatchLogs(credentialsId, region, logGroupName, logStreamName);
         const jsonSsmLogsResponse = parseConcatenatedJSON(ssmLogsResponse);
 
@@ -1148,11 +1209,20 @@ async function getLatestLogsAnalysisReports(
                 critical: 0
             };
             for (const rec of logsAnalysisData.remediationRecommendation) {
-                const { severity: initialSeverity = MSSQL_SEVERITY_RANGE[SEVERITIES.SEVERE].start } = rec; // marking errors with unknown severities as 'SEVERE; by default
-                if (initialSeverity) {
-                    const severity = mapSeverityLevel(Number(initialSeverity));
+                if (databaseType === DATABASE_TYPE.mssql) {
+                    const { severity: initialSeverity = MSSQL_SEVERITY_RANGE[SEVERITIES.SEVERE].start } = rec; // marking errors with unknown severities as 'SEVERE; by default
+                    if (initialSeverity) {
+                        const severity = mapSeverityLevel(Number(initialSeverity));
+                        severityCounts[severity as keyof SeverityCountsType] =
+                            (severityCounts[severity as keyof SeverityCountsType] || 0) + 1;
+                    }
+                } else if (databaseType === DATABASE_TYPE.oracle) {
+                    const { severity } = rec;
                     severityCounts[severity as keyof SeverityCountsType] =
                         (severityCounts[severity as keyof SeverityCountsType] || 0) + 1;
+                } else {
+                    // For other database types, if any in future, we can extend here
+                    logger.debug(`Severity count aggregation not available for database type: ${databaseType}`);
                 }
             }
             latestReports.push({

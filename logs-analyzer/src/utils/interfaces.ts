@@ -97,6 +97,7 @@ interface AgentArgs {
     maxTokens: number;
     timeWindowHours: number;
     monitorUsage?: boolean;
+    databaseType?: string;
 }
 
 export { MessageObj, ToolUse, ErrorLog, ToolSpec, MsSqlErrorLog, ErrorLogWithScriptAndDetails, AgentArgs };

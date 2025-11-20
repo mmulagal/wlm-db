@@ -7,11 +7,18 @@ import {
 import { mockClient } from 'aws-sdk-client-mock';
 import describeLogGroupsResponse from '../../responses/aws/describe-log-groups.json';
 import logsAnalysisResponse from '../../responses/logs-analysis/logs-analysis.json';
+import oracleLogsAnalysisResponse from '../../responses/logs-analysis/oracle-logs-analysis.json';
 
 const cloudwatchLogsMock = mockClient(CloudWatchLogsClient);
 
 cloudwatchLogsMock.on(GetLogEventsCommand).callsFake(async args => {
     if (args.logStreamName.includes('logs-analyzer')) {
+        let recommendation;
+        if (args.logStreamName.includes('runShellScript')) {
+            recommendation = oracleLogsAnalysisResponse.remediationRecommendation;
+        } else {
+            recommendation = logsAnalysisResponse.remediationRecommendation;
+        }
         return {
             events: [
                 {
@@ -25,7 +32,7 @@ cloudwatchLogsMock.on(GetLogEventsCommand).callsFake(async args => {
                                 '/Users/srigowri/wlmdb/logs-analyzer/output/remediation_recommendations_2025-05-15T05-21-34-242Z.json',
                             statusFilePath:
                                 '/Users/srigowri/wlmdb/logs-analyzer/output/status_2025-05-15T05-21-34-242Z.txt',
-                            remediationRecommendation: logsAnalysisResponse.remediationRecommendation
+                            remediationRecommendation: recommendation
                         }
                     })
                 }

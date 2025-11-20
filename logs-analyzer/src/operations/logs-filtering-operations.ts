@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { isEmpty } from 'lodash-es';
 import { getUniqueErrorAndRespectiveCount, MsSqlErrorLog, readMsSqlLogsFile } from './mssql-logs-filtering-operations';
 import { getUniquePostgresErrors, PostgresLog, readPostgresLogsFile } from './postgres-logs-filtering-operations';
+import { fetchAllOracleLogs, getUniqueOracleErrorsAndRespectiveCount } from './oracle-logs-filtering-operations';
 import logger from '../utils/logging';
 import { DATABASE_TYPE } from '../utils/const';
 
@@ -10,9 +11,20 @@ export default async function collectLogs(
     databaseType: string,
     logsFolderPath: string,
     timestampLastLogProcessed: number,
-    logsCount: number
+    logsCount: number,
+    databaseInstanceName?: string,
+    ec2InstanceId?: string
 ) {
     logger.debug(`Starting to collect logs from ${logsFolderPath} for database type: ${databaseType}`);
+
+    if (databaseType === DATABASE_TYPE.ORACLE) {
+        const logsRecords = await fetchAllOracleLogs({
+            databaseInstanceName,
+            startTime: timestampLastLogProcessed,
+            ec2InstanceId
+        });
+        return getUniqueOracleErrorsAndRespectiveCount(logsRecords, logsCount);
+    }
 
     const files = readdirSync(logsFolderPath);
 
