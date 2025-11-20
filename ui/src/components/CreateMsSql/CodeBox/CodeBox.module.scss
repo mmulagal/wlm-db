@@ -111,12 +111,15 @@
         justify-content: center;
         align-items: center;
         background-color: var(--grey-65);
+        padding: 0 40px;
         button {
             --button-height: 32px !important;
             background: none !important;
-            --button-min-width: 480px;
+            width: 100%;
+            max-width: none;
             color: var(--blue-40);
             border: 1px solid var(--blue-40) !important;
+            box-sizing: border-box;
 
             span {
                 text-transform: none !important;
