@@ -2,7 +2,7 @@
 // @ts-nocheck
 import sinon from 'sinon';
 import { faker } from '@faker-js/faker';
-import { cloneDeep, sample } from 'lodash-es';
+import { cloneDeep, sample, isEmpty, compact } from 'lodash-es';
 import randomize from 'randomatic';
 import {
     EC2Client,
@@ -205,14 +205,16 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
                     Value: `sqlnode-${randomize('0', 5)}`
                 }
             ];
-            const dummyInstanceRef = sample(instancesWithEbs);
-            const dummyInstanceId = dummyInstanceRef.ec2InstanceId;
-            dummyInstanceDetails.InstanceId = dummyInstanceId;
-            dummyInstanceDetails.InstanceType = dummyInstanceRef?.ec2InstanceType;
-            instancesWithEbs = instancesWithEbs.filter(instance => instance.ec2InstanceId !== dummyInstanceId);
-            instances?.push(dummyInstanceDetails);
-            dummyResevation.Instances = instances;
-            reservations?.push(dummyResevation);
+            if (!isEmpty(compact(instancesWithEbs))) {
+                const dummyInstanceRef = sample(instancesWithEbs);
+                const dummyInstanceId = dummyInstanceRef.ec2InstanceId;
+                dummyInstanceDetails.InstanceId = dummyInstanceId;
+                dummyInstanceDetails.InstanceType = dummyInstanceRef?.ec2InstanceType;
+                instancesWithEbs = instancesWithEbs.filter(instance => instance.ec2InstanceId !== dummyInstanceId);
+                instances?.push(dummyInstanceDetails);
+                dummyResevation.Instances = instances;
+                reservations?.push(dummyResevation);
+            }
         });
 
         return { Reservations: reservations };
