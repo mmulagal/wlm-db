@@ -43,7 +43,7 @@ import { getInstanceInfo, getResources } from './database/database-operations';
 import { GET_ONTAP_LUN_DETAILS, RESCAN_EXTEND_LUN } from './workloads/mssql/storage-scripts';
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT, SET_MAXDOP } from './workloads/mssql/optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
-import { registerJob, updateJobDetails } from './database/job-operations';
+import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
@@ -315,25 +315,25 @@ async function createExportPolicy(
 
 async function optimizeStorageAttributes(params: OptimizeStorageOperationParams) {
     logger.info('Optimizing storage for', params);
+    const {
+        accountId,
+        region,
+        credentialsId,
+        awsAccountId,
+        fsxId,
+        activeNodeInstanceId,
+        parentJobId,
+        serverNameWithHostName,
+        instanceId,
+        databaseHostId,
+        databaseType,
+        instanceName,
+        sqlAuthEnabled,
+        svmName,
+        optimizationTargets,
+        instanceMetadata
+    } = params;
     try {
-        const {
-            accountId,
-            region,
-            credentialsId,
-            awsAccountId,
-            fsxId,
-            activeNodeInstanceId,
-            parentJobId,
-            serverNameWithHostName,
-            instanceId,
-            databaseHostId,
-            databaseType,
-            instanceName,
-            sqlAuthEnabled,
-            svmName,
-            optimizationTargets,
-            instanceMetadata
-        } = params;
         let recommendationMap;
         if (optimizationTargets && optimizationTargets.length > 0) {
             if (
@@ -414,6 +414,7 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
         );
     } catch (error) {
         logger.error('Failed to optimize storage', { params, error });
+        await updateParentJobStatus(accountId, parentJobId, false, `Failed to optimize storage: ${error}`);
     }
 }
 
