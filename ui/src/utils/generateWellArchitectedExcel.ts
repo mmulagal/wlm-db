@@ -1,6 +1,227 @@
 import * as ExcelJS from 'exceljs';
 import getActionSummaryMessages from './wellArchitectedActionSummaryMessages';
-import { GETWELL_CONFIG } from './consts';
+import { GETWELL_CONFIG, ASSESSMENT_CONFIG_NAMES, DBType } from './consts';
+import { GENERAL } from './appConstants';
+import { formatOptimizationBreakDown, getCardsData, cardDataDefault } from '../workloadFactory/GetWell/GetWellUtils';
+import {
+    oracleCardData,
+    getOracleCardsData,
+    formatOracleOptimizationBreakDown
+} from '../workloadFactory/Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+
+const getOrderedConfigurationKeys = (data: ComprehensiveAssessmentData, databaseType: string): string[] => {
+    const orderedKeys: string[] = [];
+
+    if (databaseType === DBType.MSSQL) {
+        Object.keys(cardDataDefault).forEach(key => {
+            if (key === 'deploymentType') return; // Skip metadata - continue to next key
+
+            // Check if this configuration exists in the actual data
+            const configExists = checkIfConfigurationExistsInData(data, key, databaseType);
+            if (configExists) {
+                orderedKeys.push(key);
+            }
+        });
+    } else if (databaseType === DBType.ORACLE) {
+        const sizingCards: string[] = [];
+        const layoutCards: string[] = [];
+        const configCards: string[] = [];
+        const otherCards: string[] = [];
+
+        Object.keys(oracleCardData).forEach(key => {
+            if (['isASMManaged', 'storageProtocol', 'isStorageLayoutFra'].includes(key)) {
+                return; // Skip metadata
+            }
+
+            const cardData = oracleCardData[key];
+            if (cardData?.block_one?.type === 'Storage sizing') {
+                sizingCards.push(key);
+            } else if (cardData?.block_one?.type === 'Storage layout') {
+                layoutCards.push(key);
+            } else if (cardData?.block_one?.type === 'Configuration') {
+                configCards.push(key);
+            } else {
+                otherCards.push(key);
+            }
+        });
+
+        const desiredOracleOrder = [...sizingCards, ...layoutCards, ...configCards, ...otherCards];
+
+        desiredOracleOrder.forEach(key => {
+            const configExists = checkIfConfigurationExistsInData(data, key, databaseType);
+            if (configExists) {
+                orderedKeys.push(key);
+            }
+        });
+    }
+
+    return orderedKeys;
+};
+
+// Helper function to check if a configuration exists in the assessment data
+const checkIfConfigurationExistsInData = (
+    data: ComprehensiveAssessmentData,
+    configKey: string,
+    databaseType: string
+): boolean => {
+    if (databaseType === DBType.ORACLE) {
+        if (data.storage?.configuration) {
+            if (configKey === 'ontap_configuration') {
+                return !!data.storage?.configuration?.volumes?.length;
+            }
+
+            if (configKey === 'os_configuration') {
+                return !!data.storage?.configuration?.os?.length;
+            }
+        }
+
+        if (
+            data.storage?.sizing?.some(item => {
+                const oracleSizingConfigMap: { [key: string]: string } = {
+                    'swap-space': 'swap_space',
+                    headroom: 'file_system_headroom'
+                };
+                return oracleSizingConfigMap[item.name] === configKey;
+            })
+        )
+            return true;
+
+        if (
+            data.storage?.layout?.some(item => {
+                const oracleLayoutConfigMap: { [key: string]: string } = {
+                    'archive-placement': 'archive_placement',
+                    'datafiles-placement': 'datafiles_placement',
+                    'controlfiles-placement': 'controlfiles_placement',
+                    'redologs-placement': 'redologs_placement',
+                    'templogs-placement': 'templogs_placement',
+                    'oracle-binary-placement': 'oracle_binary_placement'
+                };
+                return oracleLayoutConfigMap[item.name] === configKey;
+            })
+        )
+            return true;
+
+        return false;
+    }
+
+    if (data.storage?.configuration) {
+        if (
+            data.storage.configuration.volumes?.some(
+                item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey
+            )
+        )
+            return true;
+        if (
+            data.storage.configuration.luns?.some(
+                item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey
+            )
+        )
+            return true;
+        if (
+            data.storage.configuration.os?.some(
+                item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey
+            )
+        )
+            return true;
+    }
+
+    if (data.storage?.sizing?.some(item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey))
+        return true;
+    if (data.storage?.layout?.some(item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey))
+        return true;
+
+    const configChecks = {
+        compute_rightsizing: () => data.compute,
+        rss_config: () => data.rssConfig,
+        host_os_patch: () => data.hostOsPatch,
+        mtu: () => data.mtuAlignment,
+        sql_licenses: () => data.license,
+        microsoft_sql_patch: () => data.mssqlPatch,
+        maxdop: () => data.maxDOP,
+        scheduled_local_snapshot: () => data.snapshotPolicy,
+        crr: () => data.crr,
+        scheduled_fsx_for_ontap_backups: () => data.awsBackup,
+        clone_management: () => data.clone,
+        mssql_high_availability: () => data.highAvailability
+    };
+
+    if (configChecks[configKey as keyof typeof configChecks]) {
+        return !!configChecks[configKey as keyof typeof configChecks]();
+    }
+
+    // Handle special ONTAP/OS configuration cards
+    if (configKey === 'ontap_configuration') {
+        return !!(data.storage?.configuration?.volumes?.length || data.storage?.configuration?.luns?.length);
+    }
+    if (configKey === 'os_configuration') {
+        return !!data.storage?.configuration?.os?.length;
+    }
+
+    return false;
+};
+
+// Function to get proper display name for configuration
+const getConfigurationDisplayName = (internalName: string, databaseType?: string): string => {
+    // Oracle-specific display names
+    if (databaseType === DBType.ORACLE) {
+        if (GETWELL_CONFIG[internalName]) {
+            return GETWELL_CONFIG[internalName];
+        }
+
+        // Fallback overrides for Oracle-specific keys not in GETWELL_CONFIG
+        const oracleOverrides: { [key: string]: string } = {
+            swap_space: 'Swap space',
+            file_system_headroom: 'File system headroom',
+            ontap_configuration: 'ONTAP',
+            os_configuration: 'Operating system',
+            archive_placement: 'Archive placement',
+            datafiles_placement: 'Datafiles placement',
+            controlfiles_placement: 'Controlfiles placement',
+            redologs_placement: 'Redologs placement',
+            templogs_placement: 'Templogs placement',
+            oracle_binary_placement: 'Oracle binary placement'
+        };
+
+        if (oracleOverrides[internalName]) {
+            return oracleOverrides[internalName];
+        }
+    }
+
+    // MSSQL-specific overrides for cases where GETWELL_CONFIG has internal names instead of display names
+    const overrides: { [key: string]: string } = {
+        'log-drive-size': ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
+        'performance-tier': ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
+        'tempdb-drive-size': ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
+        headroom: ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
+        'data-files-location': ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
+        'log-files-location': ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
+        'tempdb-files-location': ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
+        'compute-rightsizing': GENERAL.COMPUTE_RIGHTSIZING,
+        'rss-config': GENERAL.RSS_CONFIGURATION,
+        'snapshot-policy': ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+        'backup-configuration': ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+        maxdop: ASSESSMENT_CONFIG_NAMES.MAXDOP,
+        'mssql-patch': ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+        'host-os-patch': ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+        'sql-license': ASSESSMENT_CONFIG_NAMES.LICENSE,
+        crr: ASSESSMENT_CONFIG_NAMES.CRR,
+        'clone-management': ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+        'mtu-alignment': ASSESSMENT_CONFIG_NAMES.MTU
+    };
+
+    return overrides[internalName] || GETWELL_CONFIG[internalName] || internalName;
+};
+
+// Function to sanitize worksheet names for Excel compliance
+const sanitizeWorksheetName = (name: string): string => {
+    let sanitized = name.replace(/[*?:\\/[\]]/g, '_');
+
+    if (sanitized.length > 31) {
+        sanitized = sanitized.substring(0, 31);
+    }
+
+    return sanitized;
+};
 
 interface AssessmentItem {
     name: string;
@@ -132,8 +353,24 @@ const getAllItems = (data: ComprehensiveAssessmentData): AssessmentItem[] => {
     Object.keys(data).forEach(key => {
         if (!EXCLUDED_FIELDS.includes(key)) {
             const item = data[key as keyof ComprehensiveAssessmentData] as AssessmentItem;
-            if (item && typeof item === 'object' && item.name) {
-                allItems.push(item);
+            if (item && typeof item === 'object') {
+                if ('errorMessage' in item) {
+                    allItems.push({
+                        name: key,
+                        status: 'n/a',
+                        severity: 'n/a',
+                        recommendation: 'n/a',
+                        recommended: 'n/a',
+                        current: 'n/a',
+                        totalObjectsAssessed: undefined,
+                        totalObjectsInViolation: undefined,
+                        resourceType: 'n/a',
+                        tags: [],
+                        errorMessage: item.errorMessage
+                    } as AssessmentItem & { errorMessage: string });
+                } else if (item.name) {
+                    allItems.push(item);
+                }
             }
         }
     });
@@ -176,23 +413,25 @@ const addImpactedResourcesHeader = (details: any[], isTwoColumnTable = false) =>
     }
 };
 
-function generateGeneralInformationData(data: ComprehensiveAssessmentData) {
-    const allItems = getAllItems(data);
-    let criticalIssues = 0;
-    let warningIssues = 0;
-    let wellArchitectedConfigurations = 0;
+function generateGeneralInformationData(data: ComprehensiveAssessmentData, databaseType: string = DBType.MSSQL) {
+    let cardsData: any;
+    let breakdown: any;
 
-    allItems.forEach(item => {
-        if (item.status === 'optimized') {
-            wellArchitectedConfigurations += 1;
-        } else if (item.severity === 'critical') {
-            criticalIssues += 1;
-        } else if (item.severity === 'warning') {
-            warningIssues += 1;
-        }
-    });
+    if (databaseType === DBType.ORACLE) {
+        // Use Oracle-specific functions for Oracle database type
+        ({ cardsData } = getOracleCardsData(data as any, {}));
+        breakdown = formatOracleOptimizationBreakDown(cardsData, data as any);
+    } else {
+        // Use MSSQL functions for MSSQL database type
+        ({ cardsData } = getCardsData(data as any, {}));
+        breakdown = formatOptimizationBreakDown(cardsData, data);
+    }
 
-    const total = allItems.length;
+    // Extract totals from breakdown
+    const criticalIssues = breakdown.total.critical;
+    const warningIssues = breakdown.total.warning;
+    const wellArchitectedConfigurations = breakdown.total.optimized;
+    const total = breakdown.total.total;
     const totalIssues = criticalIssues + warningIssues;
     const score = total > 0 ? Math.round((wellArchitectedConfigurations / total) * 100) : 0;
 
@@ -215,8 +454,12 @@ function generateGeneralInformationData(data: ComprehensiveAssessmentData) {
     };
 }
 
-function generateConfigurationStatusData(data: ComprehensiveAssessmentData) {
+function generateConfigurationStatusData(data: ComprehensiveAssessmentData, databaseType: string = DBType.MSSQL) {
     const configurations: any[] = [];
+
+    const displayToInternal = new Map<string, string>();
+
+    const orderedKeys = getOrderedConfigurationKeys(data, databaseType);
 
     const processItems = (
         items: AssessmentItem[] | undefined,
@@ -227,47 +470,138 @@ function generateConfigurationStatusData(data: ComprehensiveAssessmentData) {
         if (!items) return;
 
         items.forEach(item => {
-            configurations.push({
-                'Configuration name': item.name,
-                'Parent-configuration name': parentConfigurationName,
-                Category: category,
-                'Sub-category': subCategory,
-                Status: item.status,
-                Severity: item.severity?.charAt(0).toUpperCase() + item.severity?.slice(1) || 'Unknown',
-                'Resource type': item.resourceType || 'Resource',
-                'Impacted resources (X out of Y)':
-                    typeof item.totalObjectsAssessed === 'number'
-                        ? `${item.totalObjectsInViolation || 0} out of ${item.totalObjectsAssessed}`
-                        : 'n/a'
-            });
+            const displayName = getConfigurationDisplayName(item.name, databaseType);
+            displayToInternal.set(displayName, item.name);
+
+            // Handle error message objects
+            if ('errorMessage' in item && item.errorMessage) {
+                configurations.push({
+                    'Configuration name': displayName,
+                    'Parent-configuration name': parentConfigurationName,
+                    Category: category,
+                    'Sub-category': subCategory,
+                    Status: 'n/a',
+                    Severity: 'n/a',
+                    'Resource type': 'n/a',
+                    'Impacted resources (X out of Y)': 'n/a'
+                });
+            } else {
+                configurations.push({
+                    'Configuration name': displayName,
+                    'Parent-configuration name': parentConfigurationName,
+                    Category: category,
+                    'Sub-category': subCategory,
+                    Status: item.status,
+                    Severity: item.severity?.charAt(0).toUpperCase() + item.severity?.slice(1) || 'Unknown',
+                    'Resource type': item.resourceType || 'Resource',
+                    'Impacted resources (X out of Y)':
+                        typeof item.totalObjectsAssessed === 'number'
+                            ? `${item.totalObjectsInViolation || 0} out of ${item.totalObjectsAssessed}`
+                            : 'n/a'
+                });
+            }
         });
     };
 
-    if (data.storage?.configuration) {
-        processItems(data.storage.configuration.volumes, 'Storage', 'Storage configuration', 'ONTAP');
-        processItems(data.storage.configuration.luns, 'Storage', 'Storage configuration', 'ONTAP');
-        processItems(data.storage.configuration.os, 'Storage', 'Storage configuration', 'Operating System');
-    }
-    processItems(data.storage?.sizing, 'Storage', 'Storage sizing');
-    processItems(data.storage?.layout, 'Storage', 'Storage layout');
-    processItems(data.highAvailability, 'Resiliency', 'Protection', 'High Availability');
+    orderedKeys.forEach(configKey => {
+        switch (configKey) {
+            // Storage configurations
+            case 'ontap_configuration':
+                if (data.storage?.configuration) {
+                    processItems(data.storage.configuration.volumes, 'Storage', 'Storage configuration', 'ONTAP');
+                    processItems(data.storage.configuration.luns, 'Storage', 'Storage configuration', 'ONTAP');
+                }
+                break;
+            case 'os_configuration':
+                if (data.storage?.configuration) {
+                    processItems(data.storage.configuration.os, 'Storage', 'Storage configuration', 'Operating System');
+                }
+                break;
 
-    processItems(data.compute ? [data.compute] : undefined, 'Compute', 'Compute');
-    processItems(data.hostOsPatch ? [data.hostOsPatch] : undefined, 'Compute', 'Compute');
-    processItems(data.rssConfig ? [data.rssConfig] : undefined, 'Compute', 'Compute');
-    processItems(data.mtuAlignment ? [data.mtuAlignment] : undefined, 'Compute', 'Compute');
+            // Storage sizing configurations
+            case 'storage_tier':
+            case 'file_system_headroom':
+            case 'transaction_log_drive_size':
+            case 'tempdb_drive_size':
+            case 'swap_space':
+                if (data.storage?.sizing) {
+                    const matchingItem = data.storage.sizing.find(
+                        item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey
+                    );
+                    if (matchingItem) processItems([matchingItem], 'Storage', 'Storage sizing');
+                }
+                break;
 
-    processItems(data.license ? [data.license] : undefined, 'Application', 'Application');
-    processItems(data.mssqlPatch ? [data.mssqlPatch] : undefined, 'Application', 'Application');
-    processItems(data.maxDOP ? [data.maxDOP] : undefined, 'Application', 'Application');
+            // Storage layout configurations
+            case 'user_data_files':
+            case 'transaction_log_files':
+            case 'tempdb_files':
+            case 'redologs_placement':
+            case 'templogs_placement':
+            case 'archive_placement':
+            case 'datafiles_placement':
+            case 'controlfiles_placement':
+            case 'oracle_binary_placement':
+            case 'data_dg_lun_layout':
+            case 'log_dg_lun_layout':
+            case 'fra_dg_lun_layout':
+            case 'archivelog_dg_lun_layout':
+                if (data.storage?.layout) {
+                    const matchingItem = data.storage.layout.find(
+                        item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey
+                    );
+                    if (matchingItem) processItems([matchingItem], 'Storage', 'Storage layout');
+                }
+                break;
 
-    processItems(data.snapshotPolicy ? [data.snapshotPolicy] : undefined, 'Resiliency', 'Protection');
-    processItems(data.crr ? [data.crr] : undefined, 'Resiliency', 'Protection');
-    processItems(data.awsBackup ? [data.awsBackup] : undefined, 'Resiliency', 'Protection');
+            // Compute configurations
+            case 'compute_rightsizing':
+                if (data.compute) processItems([data.compute], 'Compute', 'Compute');
+                break;
+            case 'host_os_patch':
+                if (data.hostOsPatch) processItems([data.hostOsPatch], 'Compute', 'Compute');
+                break;
+            case 'rss_config':
+                if (data.rssConfig) processItems([data.rssConfig], 'Compute', 'Compute');
+                break;
+            case 'mtu':
+                if (data.mtuAlignment) processItems([data.mtuAlignment], 'Compute', 'Compute');
+                break;
 
-    processItems(data.clone ? [data.clone] : undefined, 'Cloning', 'Cloning');
+            // Application configurations
+            case 'sql_licenses':
+                if (data.license) processItems([data.license], 'Application', 'Application');
+                break;
+            case 'microsoft_sql_patch':
+                if (data.mssqlPatch) processItems([data.mssqlPatch], 'Application', 'Application');
+                break;
+            case 'maxdop':
+                if (data.maxDOP) processItems([data.maxDOP], 'Application', 'Application');
+                break;
 
-    return configurations;
+            // Resiliency configurations
+            case 'scheduled_local_snapshot':
+                if (data.snapshotPolicy) processItems([data.snapshotPolicy], 'Resiliency', 'Protection');
+                break;
+            case 'crr':
+                if (data.crr) processItems([data.crr], 'Resiliency', 'Protection');
+                break;
+            case 'scheduled_fsx_for_ontap_backups':
+                if (data.awsBackup) processItems([data.awsBackup], 'Resiliency', 'Protection');
+                break;
+            case 'mssql_high_availability':
+                if (data.highAvailability)
+                    processItems(data.highAvailability, 'Resiliency', 'Protection', 'High Availability');
+                break;
+
+            // Cloning configurations
+            case 'clone_management':
+                if (data.clone) processItems([data.clone], 'Cloning', 'Cloning');
+                break;
+        }
+    });
+
+    return { configurations, displayToInternal };
 }
 
 // Special Configuration Handlers
@@ -526,7 +860,7 @@ const createComputeRightsizingData = (config: AssessmentItem, details: any[]) =>
 };
 
 const createBaseConfigurationObject = (config: AssessmentItem, databaseType: string) => ({
-    'Configuration name': GETWELL_CONFIG[config.name] || config.name,
+    'Configuration name': getConfigurationDisplayName(config.name, databaseType),
     ...(config.status && { Status: config.status }),
     ...(config.severity && { Severity: config.severity }),
     ...(config.recommendation && { Recommendation: config.recommendation }),
@@ -537,7 +871,9 @@ const createBaseConfigurationObject = (config: AssessmentItem, databaseType: str
         getActionSummaryMessages(GETWELL_CONFIG[config.name] || config.name, databaseType, config.objectsInViolation) ||
         'n/a',
     'Impacted resources (X out of Y)':
-        typeof config.totalObjectsAssessed === 'number'
+        'errorMessage' in config && config.errorMessage
+            ? config.errorMessage
+            : typeof config.totalObjectsAssessed === 'number'
             ? `${config.totalObjectsInViolation || 0} out of ${config.totalObjectsAssessed}`
             : 'n/a'
 });
@@ -706,7 +1042,7 @@ function generateDetailedConfigurationData(
     if (!config) {
         return [
             {
-                'Configuration name': configName,
+                'Configuration name': getConfigurationDisplayName(configName, databaseType),
                 Status: 'No data available',
                 Details: 'Configuration not found in assessment data'
             }
@@ -1494,7 +1830,7 @@ async function generateProperXlsxWorkbook(
     const workbook = new ExcelJS.Workbook();
 
     // 1. Generate General Information worksheet
-    const generalInfo = generateGeneralInformationData(data);
+    const generalInfo = generateGeneralInformationData(data, databaseType);
     const generalInfoSheet = workbook.addWorksheet('General Information');
 
     addDataToWorksheet(generalInfoSheet, [generalInfo]);
@@ -1506,7 +1842,10 @@ async function generateProperXlsxWorkbook(
     addHeaderStyling(generalInfoSheet, [generalInfo]);
 
     // 2. Generate Configuration Status worksheet
-    const configurationStatus = generateConfigurationStatusData(data);
+    const { configurations: configurationStatus, displayToInternal } = generateConfigurationStatusData(
+        data,
+        databaseType
+    );
     const configStatusSheet = workbook.addWorksheet('Configuration Status');
 
     addDataToWorksheet(configStatusSheet, configurationStatus);
@@ -1524,12 +1863,12 @@ async function generateProperXlsxWorkbook(
     configurationStatus.forEach((config, index) => {
         const configName = config['Configuration name'];
         if (configName && typeof configName === 'string') {
-            const cleanSheetName = configName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 31);
+            const sheetName = sanitizeWorksheetName(configName);
             const cell = configStatusSheet.getCell(index + 2, 1);
 
             cell.value = {
                 text: configName,
-                hyperlink: `#'${cleanSheetName}'!A1`,
+                hyperlink: `#'${sheetName}'!A1`,
                 tooltip: `Go to ${configName} details`
             };
             cell.font = { color: { argb: 'FF0000FF' }, underline: true };
@@ -1537,28 +1876,46 @@ async function generateProperXlsxWorkbook(
     });
 
     // 3. Generate individual configuration detail worksheets
-    const uniqueConfigs = Array.from(
-        new Set(
-            configurationStatus
-                .filter(
-                    config => config && config['Configuration name'] && typeof config['Configuration name'] === 'string'
-                )
-                .map(config => config['Configuration name'])
-        )
-    );
+    const orderedKeys = getOrderedConfigurationKeys(data, databaseType);
+    const orderedUniqueConfigs: string[] = [];
 
-    uniqueConfigs.forEach(configName => {
-        if (!configName || typeof configName !== 'string') return;
+    // Add configurations in the order defined by cardDataDefault or oracleCardData
+    orderedKeys.forEach(configKey => {
+        const matchingConfig = configurationStatus.find(config => {
+            const internalName = displayToInternal.get(config['Configuration name']);
+            return GETWELL_CONFIG[internalName || ''] === configKey || internalName === configKey;
+        });
 
-        const configDetails = generateDetailedConfigurationData(data, configName, databaseType);
+        if (matchingConfig && matchingConfig['Configuration name']) {
+            const displayName = matchingConfig['Configuration name'];
+            if (!orderedUniqueConfigs.includes(displayName)) {
+                orderedUniqueConfigs.push(displayName);
+            }
+        }
+    });
+
+    configurationStatus.forEach(config => {
+        const configName = config['Configuration name'];
+        if (configName && typeof configName === 'string' && !orderedUniqueConfigs.includes(configName)) {
+            orderedUniqueConfigs.push(configName);
+        }
+    });
+
+    orderedUniqueConfigs.forEach(displayName => {
+        if (!displayName || typeof displayName !== 'string') return;
+
+        const internalName = displayToInternal.get(displayName);
+        if (!internalName) return;
+
+        const configDetails = generateDetailedConfigurationData(data, internalName, databaseType);
         if (configDetails.length === 0) return;
 
-        const cleanSheetName = configName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 31);
-        const configSheet = workbook.addWorksheet(cleanSheetName);
+        const sheetName = sanitizeWorksheetName(displayName);
+        const configSheet = workbook.addWorksheet(sheetName);
 
         // Add data
-        if (MULTI_TABLE_CONFIGS.includes(configName)) {
-            addMultiTableDataToWorksheet(configSheet, configDetails, configName);
+        if (MULTI_TABLE_CONFIGS.includes(internalName)) {
+            addMultiTableDataToWorksheet(configSheet, configDetails, internalName);
         } else {
             addDataToWorksheet(configSheet, configDetails);
         }
@@ -1585,7 +1942,7 @@ async function generateProperXlsxWorkbook(
         const allSpecialConfigs = [...TWO_COLUMN_CONFIGS, ...SINGLE_COLUMN_CONFIGS, ...MULTI_TABLE_CONFIGS];
 
         // Check if configuration has impacted resources (either known config or unknown with violation details)
-        const hasImpactedResources = allSpecialConfigs.includes(configName) || impactedResourcesStartRow > 0;
+        const hasImpactedResources = allSpecialConfigs.includes(internalName) || impactedResourcesStartRow > 0;
 
         if (hasImpactedResources && impactedResourcesStartRow > 0) {
             const mainTableEndRow = impactedResourcesStartRow - 3;
@@ -1596,7 +1953,7 @@ async function generateProperXlsxWorkbook(
             const impactedResourcesRowIndex = impactedResourcesStartRow;
             const filterHeaderRowIndex = impactedResourcesRowIndex + 1;
 
-            if (configName === 'compute-rightsizing') {
+            if (internalName === 'compute-rightsizing') {
                 const recommendationOptionsStart = configDetails.findIndex(
                     row => row && row['Instance Type'] === 'Recommendation Options'
                 );
@@ -1667,14 +2024,14 @@ async function generateProperXlsxWorkbook(
             } else {
                 applySpecialConfigurationStyling(
                     configSheet,
-                    configName,
+                    internalName,
                     configDetails,
                     impactedResourcesRowIndex,
                     filterHeaderRowIndex
                 );
             }
 
-            addConfigurationAutoFilter(configSheet, configName, configDetails, filterHeaderRowIndex);
+            addConfigurationAutoFilter(configSheet, internalName, configDetails, filterHeaderRowIndex);
         } else {
             const totalRows = 2;
             styleTableBorders(configSheet, 1, totalRows, 1, columnCount);

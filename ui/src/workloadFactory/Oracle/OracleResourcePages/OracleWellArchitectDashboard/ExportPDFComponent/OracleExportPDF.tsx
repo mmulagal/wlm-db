@@ -30,7 +30,7 @@ const OracleExportPDF = ({
         setOptimizePrintState(true);
         setTimeout(async () => {
             try {
-                await generateReport(JSON.stringify(driftAssessmentData), DBType.MSSQL);
+                await generateReport(JSON.stringify(driftAssessmentData), DBType.ORACLE);
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
