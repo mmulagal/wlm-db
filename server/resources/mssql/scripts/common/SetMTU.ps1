@@ -17,10 +17,17 @@ try {
     Start-Transcript -Path C:\cfn\log\SetMTU.ps1.txt -Append
     $ErrorActionPreference = "Stop"  # Set to 'Stop' to ensure errors are caught by try-catch
     
-    # Load retry function and adapter targeting function
     $ScriptsPath = Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
-    . "$ScriptsPath\common\InvokeRetryCommand.ps1"
-    . "$ScriptsPath\common\Get-TargetAdapters.ps1"
+    try {
+        . "$ScriptsPath\common\InvokeRetryCommand.ps1"
+    } catch {
+        Write-Output "Warning: Could not load InvokeRetryCommand.ps1. Exception: $($_.Exception.Message)"
+    }
+    try {
+        . "$ScriptsPath\common\Get-TargetAdapters.ps1"
+    } catch {
+        Write-Output "Warning: Could not load Get-TargetAdapters.ps1. Exception: $($_.Exception.Message)"
+    }
 
     Write-Output "Starting MTU optimization"
     Write-Output "Target MTU: $TargetMTU"
@@ -36,13 +43,15 @@ try {
         
         if ($targetAdapters.Count -eq 0) {
             Write-Output "No valid target adapters found after filtering"
-            throw "No valid network adapters found for FSx optimization"
+            Write-Output "MTU optimization will be skipped - no suitable network adapters available"
+            return
         }
         
         Write-Output "Found $($targetAdapters.Count) valid target adapters"
     } catch {
         Write-Output "Error retrieving target adapters: $($_.Exception.Message)"
-        throw
+        Write-Output "MTU optimization will be skipped due to adapter detection failure"
+        return
     }
 
     # Process each adapter
@@ -74,11 +83,9 @@ try {
                 
                 # Check if jumbo frames are properly configured for target MTU
                 if ($jumboProp.DisplayValue -eq "Disabled") {
-                    Write-Output "ERROR: Jumbo frames are disabled on adapter '$interfaceName'"
-                    Write-Output "Target MTU $TargetMTU requires jumbo frames to be enabled"
-                    Write-Output "Please enable jumbo frames manually (requires adapter restart)"
-                    $responseObject.errors += "Jumbo frames disabled on '$interfaceName' - MTU $TargetMTU requires jumbo frames enabled"
-                    $responseObject.success = $false
+                    Write-Output "WARNING: Jumbo frames are disabled on adapter '$interfaceName'"
+                    Write-Output "Skipping MTU optimization for this adapter as enabling jumbo frames requires restart"
+                    Write-Output "Note: MTU $TargetMTU requires jumbo frames to be enabled for optimal performance"
                     continue
                 }
                 
@@ -86,27 +93,23 @@ try {
                 try {
                     $currentJumboValue = [int]$jumboProp.DisplayValue
                     if ($currentJumboValue -lt $TargetMTU) {
-                        Write-Output "ERROR: Current jumbo frame value ($currentJumboValue) is less than target MTU ($TargetMTU)"
-                        Write-Output "Please set jumbo frames to a value >= $TargetMTU manually (requires adapter restart)"
-                        $responseObject.errors += "Jumbo frame value ($currentJumboValue) insufficient for MTU $TargetMTU on '$interfaceName'"
-                        $responseObject.success = $false
+                        Write-Output "WARNING: Current jumbo frame value ($currentJumboValue) is less than target MTU ($TargetMTU)"
+                        Write-Output "Skipping MTU optimization for this adapter as increasing jumbo frames requires restart"
+                        Write-Output "Note: For optimal performance, set jumbo frames to a value >= $TargetMTU"
                         continue
                     } else {
                         Write-Output "Jumbo frames properly configured: $currentJumboValue (>= $TargetMTU)"
                     }
                 } catch {
-                    Write-Output "ERROR: Could not parse jumbo frame value '$($jumboProp.DisplayValue)' as integer"
-                    Write-Output "Cannot verify jumbo frame compatibility with target MTU $TargetMTU"
-                    $responseObject.errors += "Invalid jumbo frame value '$($jumboProp.DisplayValue)' on '$interfaceName' - cannot verify MTU compatibility"
-                    $responseObject.success = $false
+                    Write-Output "WARNING: Could not parse jumbo frame value '$($jumboProp.DisplayValue)' as integer"
+                    Write-Output "Skipping MTU optimization for this adapter due to jumbo frame value parsing issue"
+                    Write-Output "Note: Cannot verify jumbo frame compatibility with target MTU $TargetMTU"
                     continue
                 }
             } else {
-                Write-Output "ERROR: No jumbo frame property found for $interfaceName"
-                Write-Output "Target MTU $TargetMTU requires jumbo frame support"
-                Write-Output "Please configure jumbo frames manually (requires adapter restart)"
-                $responseObject.errors += "No jumbo frame support found on '$interfaceName' - MTU $TargetMTU requires jumbo frame capability"
-                $responseObject.success = $false
+                Write-Output "WARNING: No jumbo frame property found for $interfaceName"
+                Write-Output "Skipping MTU optimization for this adapter as jumbo frame support is required"
+                Write-Output "Note: Target MTU $TargetMTU requires jumbo frame support for optimal performance"
                 continue
             }
 
@@ -116,9 +119,8 @@ try {
             # Get the interface index for more reliable netsh commands
             $adapterDetails = Get-NetAdapter -Name $interfaceName -ErrorAction SilentlyContinue
             if (-not $adapterDetails) {
-                Write-Output "ERROR: Cannot retrieve adapter details for '$interfaceName'"
-                $responseObject.errors += "Cannot retrieve adapter details for '$interfaceName'"
-                $responseObject.success = $false
+                Write-Output "WARNING: Cannot retrieve adapter details for '$interfaceName'"
+                Write-Output "Skipping MTU optimization for this adapter"
                 continue
             }
             
@@ -172,19 +174,14 @@ try {
                     }
                 } else {
                     $actualMTU = if ($updatedAdapter) { $updatedAdapter.MtuSize } else { "unknown" }
-                    Write-Output "MTU verification failed for '$interfaceName': Expected $TargetMTU, got $actualMTU"
-                    $responseObject.errors += "MTU verification failed for '$interfaceName': Expected $TargetMTU, got $actualMTU"
-                    $responseObject.success = $false
+                    Write-Output "WARNING: MTU verification failed for '$interfaceName': Expected $TargetMTU, got $actualMTU"
                 }
             } else {
-                Write-Output "Failed to set MTU for '$interfaceName': $netshResult"
-                $responseObject.errors += "Failed to set MTU for '$interfaceName': $netshResult"
-                $responseObject.success = $false
+                Write-Output "WARNING: Failed to set MTU for '$interfaceName': $netshResult"
             }
 
         } catch {
-            Write-Output "Error processing adapter '$interfaceName': $($_.Exception.Message)"
-            $responseObject.errors += "Error processing adapter '$interfaceName': $($_.Exception.Message)"
+            Write-Output "Warning: Error processing adapter '$interfaceName': $($_.Exception.Message)"
         }
     }
 

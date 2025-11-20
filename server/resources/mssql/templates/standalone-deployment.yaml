@@ -831,13 +831,7 @@ Resources:
                                   - '''"'
                             waitAfterCompletion: '0'
                         c-set-rssconfig:
-                            command: !Join
-                                - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1 -FSxID '
-                                  - !Ref 'FSxFileSystemId'
-                                  - "' -FSxRegion '"
-                                  - !Ref 'AWS::Region'
-                                  - '''"'
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
                             waitAfterCompletion: forever
                         d-create-fsxparameter:
                             command: !Join
@@ -848,7 +842,16 @@ Resources:
                                   - !Ref 'ParentStackName'
                                   - '''"'
                             waitAfterCompletion: 0
-                        e-set-mtu:
+                        e-set-jumboframes:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Set-JumboFrames.ps1 -FSxID '"
+                                  - !Ref 'FSxFileSystemId'
+                                  - "' -FSxRegion '"
+                                  - !Ref 'AWS::Region'
+                                  - '''"'
+                            waitAfterCompletion: forever
+                        f-set-mtu:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\SetMTU.ps1 -FSxID '

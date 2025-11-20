@@ -680,9 +680,12 @@ Resources:
                                   - '''"'
                             waitAfterCompletion: 0
                         h-set-rssconfig:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
+                            waitAfterCompletion: forever
+                        i-set-jumboframes:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1 -FSxID '
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Set-JumboFrames.ps1 -FSxID '"
                                   - !Ref 'FSxFileSystemId'
                                   - "' -FSxRegion '"
                                   - !Ref 'AWS::Region'
@@ -1396,9 +1399,12 @@ Resources:
                                   - '''"'
                             waitAfterCompletion: forever
                         h-set-rssconfig:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1"
+                            waitAfterCompletion: forever
+                        i-set-jumboframes:
                             command: !Join
                                 - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\common\Set-RSSConfig.ps1 -FSxID '
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Set-JumboFrames.ps1 -FSxID '"
                                   - !Ref 'FSxFileSystemId'
                                   - "' -FSxRegion '"
                                   - !Ref 'AWS::Region'
@@ -1636,6 +1642,16 @@ Resources:
                                   - !Ref 'AWS::StackName'
                                   - '"'
                             waitAfterCompletion: 0
+                        i-set-mtu:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\SetMTU.ps1 -FSxID '
+                                  - !Ref 'FSxFileSystemId'
+                                  - "' -FSxRegion '"
+                                  - !Ref 'AWS::Region'
+                                  - '''"'
+                            waitAfterCompletion: '0'
+                            ignoreErrors: 'true'
                 Cleanup:
                     commands:
                         a-disable-credssp:
