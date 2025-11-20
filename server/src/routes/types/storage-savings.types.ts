@@ -201,18 +201,21 @@ const StorageSavingsCapacityResponse = Type.Object({
     fsxOptimized: Type.Optional(StorageMetrics)
 });
 
+const additionalParams = {
+    hostname: Type.Optional(Type.String()),
+    deploymentType: Type.Optional(Type.String())
+};
+
 const StorageSavingsResponse = Type.Intersect([
     StorageSavingsCapacityResponse,
     Type.Object({
         compute: Type.Object({
-            deploymentType: Type.String(),
-            hostname: Type.Optional(Type.String()),
+            ...additionalParams,
             existing: StorageSavingsCompute,
             recommended: StorageSavingsCompute
         }),
         license: Type.Object({
-            deploymentType: Type.String(),
-            hostname: Type.Optional(Type.String()),
+            ...additionalParams,
             existing: StorageSavingsLicense,
             recommended: StorageSavingsLicense
         })
@@ -224,16 +227,14 @@ const BulkStorageSavingsResponse = Type.Intersect([
     Type.Object({
         compute: Type.Array(
             Type.Object({
-                deploymentType: Type.String(),
-                hostname: Type.Optional(Type.String()),
+                ...additionalParams,
                 existing: StorageSavingsCompute,
                 recommended: StorageSavingsCompute
             })
         ),
         license: Type.Array(
             Type.Object({
-                deploymentType: Type.String(),
-                hostname: Type.Optional(Type.String()),
+                ...additionalParams,
                 existing: StorageSavingsLicense,
                 recommended: StorageSavingsLicense
             })
@@ -479,20 +480,28 @@ const StorageSavingsCapacityCalculationsMetricsResponse = Type.Object({
 const StorageSavingsCalculationsMetricsResponse = Type.Intersect([
     StorageSavingsCapacityCalculationsMetricsResponse,
     Type.Object({
-        recommendedComputeCalculation: ComputeCalculationObject,
-        recommendedLicenseCalculation: LicenseCalculationObject,
-        existingComputeCalculation: ComputeCalculationObject,
-        existingLicenseCalculation: LicenseCalculationObject
+        recommendedComputeCalculation: Type.Intersect([ComputeCalculationObject, Type.Object(additionalParams)]),
+        recommendedLicenseCalculation: Type.Intersect([LicenseCalculationObject, Type.Object(additionalParams)]),
+        existingComputeCalculation: Type.Intersect([ComputeCalculationObject, Type.Object(additionalParams)]),
+        existingLicenseCalculation: Type.Intersect([LicenseCalculationObject, Type.Object(additionalParams)])
     })
 ]);
 
 const BulkStorageSavingsCalculationsMetricsResponse = Type.Intersect([
     StorageSavingsCapacityCalculationsMetricsResponse,
     Type.Object({
-        recommendedComputeCalculation: Type.Array(ComputeCalculationObject),
-        recommendedLicenseCalculation: Type.Array(LicenseCalculationObject),
-        existingComputeCalculation: Type.Array(ComputeCalculationObject),
-        existingLicenseCalculation: Type.Array(LicenseCalculationObject)
+        recommendedComputeCalculation: Type.Array(
+            Type.Intersect([ComputeCalculationObject, Type.Object(additionalParams)])
+        ),
+        recommendedLicenseCalculation: Type.Array(
+            Type.Intersect([LicenseCalculationObject, Type.Object(additionalParams)])
+        ),
+        existingComputeCalculation: Type.Array(
+            Type.Intersect([ComputeCalculationObject, Type.Object(additionalParams)])
+        ),
+        existingLicenseCalculation: Type.Array(
+            Type.Intersect([LicenseCalculationObject, Type.Object(additionalParams)])
+        )
     })
 ]);
 

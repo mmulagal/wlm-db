@@ -340,7 +340,9 @@ async function aoagStorageSavingsMetrics(
     if (sqlServerInstances !== undefined && nodeIps && nodeIps.length > 0) {
         const {
             compute: { existing: existingComputeCalculation, recommended: recommendedComputeCalculation },
-            license: { existing: existingLicenseCalculation, recommended: recommendedLicenseCalculation }
+            license: { existing: existingLicenseCalculation, recommended: recommendedLicenseCalculation },
+            hostname,
+            deploymentType
         } = currentNodeComputeLicenseDetails;
 
         const { allEbsVolumeIds, uniqueHostVolumeIds } = identifyAoagVolumes(
@@ -384,10 +386,10 @@ async function aoagStorageSavingsMetrics(
         const recommendedComputeLicensePrice = Number(recommendedComputeCalculation?.instanceMonthlyPrice || 0);
 
         return {
-            recommendedComputeCalculation,
-            recommendedLicenseCalculation,
-            existingComputeCalculation,
-            existingLicenseCalculation,
+            recommendedComputeCalculation: { ...recommendedComputeCalculation, hostname, deploymentType },
+            recommendedLicenseCalculation: { ...recommendedLicenseCalculation, hostname, deploymentType },
+            existingComputeCalculation: { ...existingComputeCalculation, hostname, deploymentType },
+            existingLicenseCalculation: { ...existingLicenseCalculation, hostname, deploymentType },
             ebsCalculation: allVolumesEbsCalculation,
             single,
             multi,
@@ -828,20 +830,53 @@ async function getStorageSavingsCalculationMetrics(
 
         const { existingComputeLicensePrice, recommendedComputeLicensePrice } =
             getExistingAndRecommendedComputeAndLicense(computeAndLicenseCostList);
+        const [{ compute, license, deploymentType, hostname } = {}] = computeAndLicenseCostList;
 
         return {
             recommendedComputeCalculation: params.bulk
-                ? computeAndLicenseCostList.map(item => item.compute.recommended)
-                : computeAndLicenseCostList[0]?.compute.recommended,
+                ? computeAndLicenseCostList.map(item => ({
+                      hostname: item.hostname,
+                      deploymentType: item.deploymentType,
+                      ...item.compute.recommended
+                  }))
+                : {
+                      ...compute?.recommended,
+                      deploymentType,
+                      hostname
+                  },
             recommendedLicenseCalculation: params.bulk
-                ? computeAndLicenseCostList.map(item => item.license.recommended)
-                : computeAndLicenseCostList[0]?.license.recommended,
+                ? computeAndLicenseCostList.map(item => ({
+                      hostname: item.hostname,
+                      deploymentType: item.deploymentType,
+                      ...item.license.recommended
+                  }))
+                : {
+                      ...license?.recommended,
+                      deploymentType,
+                      hostname
+                  },
             existingComputeCalculation: params.bulk
-                ? computeAndLicenseCostList.map(item => item.compute.existing)
-                : computeAndLicenseCostList[0]?.compute.existing,
+                ? computeAndLicenseCostList.map(item => ({
+                      hostname: item.hostname,
+                      deploymentType: item.deploymentType,
+                      ...item.compute.existing
+                  }))
+                : {
+                      ...compute?.existing,
+                      deploymentType,
+                      hostname
+                  },
             existingLicenseCalculation: params.bulk
-                ? computeAndLicenseCostList.map(item => item.license.existing)
-                : computeAndLicenseCostList[0]?.license.existing,
+                ? computeAndLicenseCostList.map(item => ({
+                      hostname: item.hostname,
+                      deploymentType: item.deploymentType,
+                      ...item.license.existing
+                  }))
+                : {
+                      ...license?.existing,
+                      deploymentType,
+                      hostname
+                  },
             single,
             multi,
             fsxwCalculation,
@@ -868,7 +903,7 @@ async function getStorageSavingsCalculationMetrics(
     const isFci = sqlServerInstances.some(
         ({ sqlServerDeploymentType }) => sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT
     );
-    const deploymentType = isAoag
+    const sqlServerDeploymentType = isAoag
         ? SqlServerDeploymentModel.SQL_AOAG_SHORT
         : isFci
         ? SqlServerDeploymentModel.SQL_FCI_SHORT
@@ -937,26 +972,59 @@ async function getStorageSavingsCalculationMetrics(
         region,
         ebsVolumeIds,
         params,
-        deploymentType,
+        sqlServerDeploymentType,
         instanceIds
     );
 
     const { existingComputeLicensePrice, recommendedComputeLicensePrice } =
         getExistingAndRecommendedComputeAndLicense(computeAndLicenseCostList);
+    const [{ compute, license, deploymentType, hostname } = {}] = computeAndLicenseCostList;
 
     return {
         recommendedComputeCalculation: params.bulk
-            ? computeAndLicenseCostList.map(item => item.compute.recommended)
-            : computeAndLicenseCostList[0]?.compute.recommended,
+            ? computeAndLicenseCostList.map(item => ({
+                  hostname: item.hostname,
+                  deploymentType: item.deploymentType,
+                  ...item.compute.recommended
+              }))
+            : {
+                  ...compute?.recommended,
+                  deploymentType,
+                  hostname
+              },
         recommendedLicenseCalculation: params.bulk
-            ? computeAndLicenseCostList.map(item => item.license.recommended)
-            : computeAndLicenseCostList[0]?.license.recommended,
+            ? computeAndLicenseCostList.map(item => ({
+                  hostname: item.hostname,
+                  deploymentType: item.deploymentType,
+                  ...item.license.recommended
+              }))
+            : {
+                  ...license?.recommended,
+                  deploymentType,
+                  hostname
+              },
         existingComputeCalculation: params.bulk
-            ? computeAndLicenseCostList.map(item => item.compute.existing)
-            : computeAndLicenseCostList[0]?.compute.existing,
+            ? computeAndLicenseCostList.map(item => ({
+                  hostname: item.hostname,
+                  deploymentType: item.deploymentType,
+                  ...item.compute.existing
+              }))
+            : {
+                  ...compute?.existing,
+                  deploymentType,
+                  hostname
+              },
         existingLicenseCalculation: params.bulk
-            ? computeAndLicenseCostList.map(item => item.license.existing)
-            : computeAndLicenseCostList[0]?.license.existing,
+            ? computeAndLicenseCostList.map(item => ({
+                  hostname: item.hostname,
+                  deploymentType: item.deploymentType,
+                  ...item.license.existing
+              }))
+            : {
+                  ...license?.existing,
+                  deploymentType,
+                  hostname
+              },
         ebsCalculation,
         ebsCloneCalculation,
         ebsSnapshotCalculation,
@@ -1534,13 +1602,17 @@ async function mixOfAoagAndNonAoagStorageSavingsMetrics(
 
     return {
         recommendedComputeCalculation: currentNodeComputeLicenseDetails.map(
-            ({ compute: { recommended } }) => recommended
+            ({ compute: { recommended }, hostname, deploymentType }) => ({ ...recommended, hostname, deploymentType })
         ),
         recommendedLicenseCalculation: currentNodeComputeLicenseDetails.map(
-            ({ license: { recommended } }) => recommended
+            ({ license: { recommended }, hostname, deploymentType }) => ({ ...recommended, hostname, deploymentType })
         ),
-        existingComputeCalculation: currentNodeComputeLicenseDetails.map(({ compute: { existing } }) => existing),
-        existingLicenseCalculation: currentNodeComputeLicenseDetails.map(({ license: { existing } }) => existing),
+        existingComputeCalculation: currentNodeComputeLicenseDetails.map(
+            ({ compute: { existing }, hostname, deploymentType }) => ({ ...existing, hostname, deploymentType })
+        ),
+        existingLicenseCalculation: currentNodeComputeLicenseDetails.map(
+            ({ license: { existing }, hostname, deploymentType }) => ({ ...existing, hostname, deploymentType })
+        ),
         ebsCalculation: allVolumesEbsCalculation,
         single,
         multi,
