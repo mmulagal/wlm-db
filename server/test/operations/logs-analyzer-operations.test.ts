@@ -159,6 +159,129 @@ describe('Logs Analyzer Operations', () => {
         expect(response.items[0]).toHaveProperty('errorMessage');
     });
 
+    it('Should analyze prerequisites for Oracle logs analysis', async () => {
+        const response = await analyzePreRequisites(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            'oracle',
+            undefined,
+            TEST_RESOURCE_ID
+        );
+
+        expect(response.items[0]).toBeDefined();
+        expect(response.items[0]).toHaveProperty('bedrockPreRequisites');
+        expect(response.items[0]).toHaveProperty('instanceProfilePreRequisites');
+        expect(response.items[0]).toHaveProperty('credentialsPreRequisites');
+        expect(response.items[0]).toHaveProperty('networkingPreRequisites');
+    });
+
+    it('Should handle Oracle prerequisites analysis with invalid database instance', async () => {
+        const response = await analyzePreRequisites(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            'oracle',
+            undefined,
+            'invalid-resource-id'
+        );
+        expect(response.items[0]).toBeDefined();
+        expect(response.items[0]).toHaveProperty('errorMessage');
+    });
+
+    it('Should analyze Oracle prerequisites with ec2InstanceId parameter', async () => {
+        const response = await analyzePreRequisites(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            'oracle',
+            'i-07e76a4b916548dc0',
+            undefined
+        );
+
+        expect(response).toBeDefined();
+        expect(response).toHaveProperty('items');
+        expect(Array.isArray(response.items)).toBe(true);
+        expect(response.items.length).toBeGreaterThan(0);
+        expect(response.items[0]).toHaveProperty('bedrockPreRequisites');
+        expect(response.items[0]).toHaveProperty('instanceProfilePreRequisites');
+        expect(response.items[0]).toHaveProperty('credentialsPreRequisites');
+        expect(response.items[0]).toHaveProperty('networkingPreRequisites');
+    });
+
+    it('Should handle multiple ec2InstanceIds for Oracle prerequisites', async () => {
+        const response = await analyzePreRequisites(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            'oracle',
+            'i-07e76a4b916548dc0,i-0880a21327284f67c',
+            undefined
+        );
+
+        expect(response).toBeDefined();
+        expect(response).toHaveProperty('items');
+        expect(Array.isArray(response.items)).toBe(true);
+        expect(response.items.length).toBe(2);
+    });
+
+    it('Should handle multiple databaseHostIds for Oracle prerequisites', async () => {
+        const response = await analyzePreRequisites(
+            ACCOUNT_ID,
+            TEST_CREDENTIALS_ID,
+            TEST_REGION,
+            'oracle',
+            undefined,
+            `${TEST_RESOURCE_ID},another-resource-id`
+        );
+
+        expect(response).toBeDefined();
+        expect(response).toHaveProperty('items');
+        expect(Array.isArray(response.items)).toBe(true);
+        expect(response.items.length).toBe(2);
+    });
+
+    it('Should throw error when both ec2InstanceId and databaseHostId are provided for Oracle', async () => {
+        await expect(
+            analyzePreRequisites(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                'oracle',
+                'i-07e76a4b916548dc0',
+                TEST_RESOURCE_ID
+            )
+        ).rejects.toThrow();
+    });
+
+    it('Should throw error when neither ec2InstanceId nor databaseHostId is provided for Oracle', async () => {
+        await expect(
+            analyzePreRequisites(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, 'oracle', undefined, undefined)
+        ).rejects.toThrow();
+    });
+
+    it('Should validate max instances limit for Oracle ec2InstanceIds', async () => {
+        const tooManyInstances = Array(6)
+            .fill('i-')
+            .map((prefix, i) => `${prefix}${i}`)
+            .join(',');
+
+        await expect(
+            analyzePreRequisites(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, 'oracle', tooManyInstances, undefined)
+        ).rejects.toThrow();
+    });
+
+    it('Should validate max instances limit for Oracle databaseHostIds', async () => {
+        const tooManyHosts = Array(6)
+            .fill('host-')
+            .map((prefix, i) => `${prefix}${i}`)
+            .join(',');
+
+        await expect(
+            analyzePreRequisites(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, 'oracle', undefined, tooManyHosts)
+        ).rejects.toThrow();
+    });
+
     it('Should get latest logs analysis reports at account level', async () => {
         await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, JOB_ID!);
 

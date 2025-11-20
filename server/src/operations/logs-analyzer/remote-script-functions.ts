@@ -57,14 +57,14 @@ function getLinuxBedrockAvailabilityCheckScript(region: string, modelId: string)
     # Bedrock Availability Check Linux Script
     #!/bin/bash
 
-# Check for AWS CLI v2, install if not present
-
+# Check for AWS CLI availability
+if ! command -v aws &> /dev/null; then
+    echo '{"success": false, "response": null, "error": "'"${PRE_REQ_MESSAGES.AWS_CLI_NOT_FOUND}"'"}'
+    exit 1
+fi
 
 REGION="${region}"
 MODEL_ID="${modelId}"
-
-# Prepare the request body as a JSON string
-REQUEST_BODY='[{"role":"user","content":"Hello, how are you?"}]'
 
 # Invoke the model using the inference profile ARN and JSON string body
 RESPONSE=$(

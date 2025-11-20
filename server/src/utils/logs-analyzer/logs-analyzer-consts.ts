@@ -35,6 +35,7 @@ const PRE_REQ_MESSAGES = {
         'Bedrock model %smodelId%s should be enabled in the AWS account and accessible from the region %sregion%s.',
     BEDROCK_TOOL_NOT_FOUND:
         'Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment.',
+    AWS_CLI_NOT_FOUND: 'Ensure that the AWS CLI is installed and available in the system PATH.',
     BEDROCK_NW_CONFIGURATION:
         'Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet route table.',
     IAM_INSTANCE_PROFILE:

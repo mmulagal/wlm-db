@@ -925,13 +925,24 @@ async function handlePreReqCheckBasedOnDatabaseHostId(
                         isManaged: true
                     };
 
-                    const { nodeId: activeNodeInstanceId } = await getActiveNodeAndInstanceDetails(
-                        accountId,
-                        credentialsId,
-                        region,
-                        managedInstance.resource,
-                        databaseInstanceDetails as unknown as DatabaseInstance
-                    );
+                    // For non-MSSQL databases (Oracle, PostgreSQL), directly extract node instance ID
+                    // For MSSQL, we need to query SQL Server to determine the active node
+                    let activeNodeInstanceId: string;
+                    if (databaseType === DATABASE_TYPE.mssql) {
+                        const { nodeId } = await getActiveNodeAndInstanceDetails(
+                            accountId,
+                            credentialsId,
+                            region,
+                            managedInstance.resource,
+                            databaseInstanceDetails as unknown as DatabaseInstance
+                        );
+                        activeNodeInstanceId = nodeId;
+                    } else {
+                        // For Oracle/PostgreSQL, get the first node instance ID from metadata
+                        const { node1InstanceId } = managedInstance.resource.metadata as { node1InstanceId: string };
+                        activeNodeInstanceId = node1InstanceId;
+                    }
+
                     const preReqCheckResponse = await handlePreReqCheck(
                         accountId,
                         credentialsId,

@@ -46,6 +46,28 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
     );
 
     server.get(
+        `${ORACLE_API_PREFIX_PATH}/logs-analysis/pre-requisites`,
+        { schema: AnalyzePreRequisitesSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region },
+                query: { ec2InstanceId, databaseHostId }
+            } = castRequest(request);
+
+            const response = await analyzePreRequisites(
+                accountId,
+                credentialsId,
+                region,
+                DATABASE_TYPE.oracle,
+                ec2InstanceId,
+                databaseHostId
+            );
+
+            return reply.send(response);
+        }
+    );
+
+    server.get(
         `${MSSQL_API_PREFIX_PATH}/logs-analysis/summary`,
         { schema: LatestReportsSchema },
         async (request, reply) => {
