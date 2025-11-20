@@ -18,7 +18,7 @@ interface LogAnalyserHeaderProps {
     lastScan: string;
 }
 
-const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps }) => {
+const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHeaderProps; dbType: string }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
 
@@ -52,9 +52,10 @@ const LogAnalyserHeader = ({ headerData }: { headerData: LogAnalyserHeaderProps 
             regionId,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
-            payload: {}
+            payload: {},
+            dbType
         }).then((res: any) => {
-            handleLogAnalyzerJob(dispatch, res, getJobDetailApi, t, false, key, null);
+            handleLogAnalyzerJob(dispatch, res, getJobDetailApi, t, false, key, null, dbType);
         });
     };
 

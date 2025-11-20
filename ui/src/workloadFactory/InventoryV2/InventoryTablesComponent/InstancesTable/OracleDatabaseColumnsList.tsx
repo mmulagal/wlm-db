@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     ACTION_CTA,
     DBType,
+    ERROR_ANALYZER_STATUS,
     INVENTORY_STATUS,
     INVENTORY_TABLE_STATUS,
     PROTECTION_COLUMN_TEXT_STATUS,
@@ -17,13 +18,14 @@ import {
 } from '../../../../utils/consts';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
-import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
+import { formatDateWithTime, formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
 import { instanceNameHyperLink, optimizeAction, protectionTooltipText } from './InstanceTableColumnsHelper';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import { ReactComponent as NotActiveNotificationIcon } from '../../../../assets/NotActiveNotificationIcon.svg';
 import {
     setBreadCrumbSelectedFrom,
     setManageSingleInstanceData,
@@ -33,6 +35,7 @@ import {
 import { manageActionCol } from '../../InventoryUtilsV2';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 import { setFSXId } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { logAnalyzerStatusCol } from './InstanceTableHelper';
 
 export function getOracleDatabaseColumnsList({
     t,
@@ -161,6 +164,14 @@ export function getOracleDatabaseColumnsList({
                 }
                 return <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />;
             }
+        },
+        {
+            Header: t('databases.instance-table.headers.error-analyzer'),
+            accessor: 'logAnalyzer.status',
+            id: '17',
+            width: '200px',
+            filterOptions: getFilterOptions(updatedTableData, 'logAnalyzer.status'),
+            renderCell: (cellData: string, rowData: any) => logAnalyzerStatusCol(styles, t, rowData, cellData)
         },
         {
             Header: t('databases.databases-table.oracle.headers.well-architected-status'),

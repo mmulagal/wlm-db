@@ -208,12 +208,16 @@ export const Content = () => {
             dispatch(setManageSingleInstanceChecks(manageCheckObj));
 
             // Fetch agentic pre-requisites if available
-            if (hostType === DBType.MSSQL && wizardOperationType === ACTION_TYPE.SINGLE) {
+            if (
+                (hostType === DBType.MSSQL || hostType === DBType.ORACLE) &&
+                wizardOperationType === ACTION_TYPE.SINGLE
+            ) {
                 fetchErrorInvestigationState(
                     manageCheckObj,
                     getLogAnalyzerPreReqApi,
                     dispatch,
-                    manageSingleInstanceData
+                    manageSingleInstanceData,
+                    hostType
                 );
             }
         }
@@ -283,7 +287,7 @@ export const Content = () => {
         });
 
         selectedMultiDetectInstances?.forEach((item: BulkDetectedInstance) => {
-            if (hostType === DBType.MSSQL) {
+            if (hostType === DBType.MSSQL || hostType === DBType.ORACLE) {
                 item = updateItemWithAgenticData(item);
             }
 
@@ -324,7 +328,7 @@ export const Content = () => {
                 hostName: item?.data?.name,
                 readinessStatus: item?.authorized ? manageStates?.overallState : MANAGE_STATES.NOT_READY,
                 readyCount: manageStates?.readyCount,
-                totalCount: hostType === DBType.MSSQL ? 5 : 2,
+                totalCount: hostType === DBType.MSSQL ? 5 : 3,
                 perRowState: manageStates?.perRowState || [],
                 manageStates: rowManageStates,
                 manageReadiness: item?.manageReadiness
@@ -340,10 +344,9 @@ export const Content = () => {
     }, [selectedMultiDetectInstances, agenticPreReqData]);
 
     useEffect(() => {
-        if (wizardOperationType !== ACTION_TYPE.BULK || hostType !== DBType.MSSQL) {
-            return;
+        if (wizardOperationType === ACTION_TYPE.BULK && (hostType === DBType.MSSQL || hostType === DBType.ORACLE)) {
+            fetchErrorInvestigationStateBulk(selectedMultiDetectInstances, getLogAnalyzerPreReqApi, dispatch, hostType);
         }
-        fetchErrorInvestigationStateBulk(selectedMultiDetectInstances, getLogAnalyzerPreReqApi, dispatch);
     }, [selectedMultiDetectInstances]);
 
     return (

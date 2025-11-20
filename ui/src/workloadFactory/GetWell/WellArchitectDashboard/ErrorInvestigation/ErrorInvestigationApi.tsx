@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../utils/consts';
+import { DBType, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../utils/consts';
 import { useGetErrorInvestigationDataMutation, useGetInvestigationDatesMutation } from '../../../../utils/apiService';
 import { setLandingFromInnerPage } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import {
@@ -16,7 +16,7 @@ import {
 } from '../../../../store/workloadFactory/agenticAISlice';
 import { getCurrentDateTime, sortListOfDict } from '../../../../utils/utilityFunctions';
 
-const ErrorInvestigationApi = () => {
+const ErrorInvestigationApi = ({ dbType }: { dbType: string }) => {
     const dispatch = useDispatch();
     const { credIdFromJM, regionFromJM, landingFrom, landingFromInnerPage } = useAppSelector(
         state => state.getWellOptimize
@@ -32,6 +32,8 @@ const ErrorInvestigationApi = () => {
         visitedTabs
     } = useAppSelector(state => state.getWellOptimize);
 
+    const { visitedTabs: oracleVisitedTabs } = useAppSelector(state => state.oracleSlice);
+
     const [errorInvestigationDatesApi] = useGetInvestigationDatesMutation();
     const [errorInvestigationGetApi] = useGetErrorInvestigationDataMutation();
 
@@ -44,13 +46,15 @@ const ErrorInvestigationApi = () => {
                 databaseHostId: string;
                 instanceId: string;
                 id?: string;
+                dbType?: string;
             };
 
             let payload: ErrorInvestigationPayload = {
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
                 regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 databaseHostId: selectedResourceId,
-                instanceId: selectedDatabaseInstance
+                instanceId: selectedDatabaseInstance,
+                dbType
             };
             if (selectedInvestigationDate) {
                 payload = {
@@ -88,7 +92,8 @@ const ErrorInvestigationApi = () => {
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
                 regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 databaseHostId: selectedResourceId,
-                instanceId: selectedDatabaseInstance
+                instanceId: selectedDatabaseInstance,
+                dbType
             });
             if (result && !result?.error && result?.data?.reports && result.data.reports.length > 0) {
                 const reportsList = sortListOfDict(result.data.reports, 'creationTime', false); // false means it will sort in desc order
@@ -131,7 +136,13 @@ const ErrorInvestigationApi = () => {
 
     useEffect(() => {
         // On page load, call the API to get the error investigation details
-        if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION]) {
+        let visitedCheck = null;
+        if (dbType === DBType.ORACLE) {
+            visitedCheck = oracleVisitedTabs;
+        } else {
+            visitedCheck = visitedTabs;
+        }
+        if (!landingFromInnerPage && !visitedCheck[WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION]) {
             viewLogAction();
         } else {
             dispatch(setLandingFromInnerPage(false));

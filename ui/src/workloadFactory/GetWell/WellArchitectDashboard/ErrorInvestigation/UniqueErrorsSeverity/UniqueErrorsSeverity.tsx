@@ -1,13 +1,22 @@
 import { DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
+import { useMemo } from 'react';
 import styles from './UniqueErrorsSeverity.module.scss';
 import ErrorBarComponent from './ErrorBarComponent/ErrorBarComponent';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
+export const eiSeverityMappingOracle: Record<string, string> = {
+    CRITICAL: 'Critical',
+    SEVERE: 'Severe',
+    IMPORTANT: 'Important'
+};
+
 const UniqueErrorsSeverity = ({
-    uniqueErrBySeverity
+    uniqueErrBySeverity,
+    dbType
 }: {
     uniqueErrBySeverity: Array<{ severity: string; count: number }>;
+    dbType: string;
 }) => {
     const { t } = useTranslation();
     const { noData, investigationDatesLoading } = useAppSelector(state => state.agenticAI);
@@ -26,16 +35,18 @@ const UniqueErrorsSeverity = ({
             <div className={styles.mainSection}>
                 {loading || noData || uniqueErrBySeverity?.length === 0
                     ? Array.from({ length: 5 }, (_, index) => (
-                          <ErrorBarComponent key={index} percentage={0} noFilteredData />
+                          <ErrorBarComponent key={index} percentage={0} noFilteredData dbType={dbType} />
                       ))
                     : uniqueErrBySeverity.map(error => {
-                          if (error?.severity && error?.severity !== 'undefined') {
+                          const errorVal = eiSeverityMappingOracle?.[error.severity] || error.severity;
+                          if (errorVal && errorVal !== 'undefined') {
                               return (
                                   <ErrorBarComponent
-                                      key={error.severity}
+                                      key={errorVal}
                                       percentage={(error.count / totalCount) * 100}
                                       errorCount={error.count}
-                                      severity={error.severity}
+                                      severity={errorVal}
+                                      dbType={dbType}
                                   />
                               );
                           }

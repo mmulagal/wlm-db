@@ -6,8 +6,9 @@ import { ReactComponent as OnboardingIllustration2 } from '../../../../../assets
 import { ReactComponent as CarousalLeft } from '../../../../../assets/Carousel Arrow left.svg';
 import { ReactComponent as CarousalRight } from '../../../../../assets/Carousel Arrow right.svg';
 import styles from './ScrollableCard.module.scss';
+import { DBType } from '../../../../../utils/consts';
 
-const ScrollableCard = () => {
+const ScrollableCard = ({ dbType }: { dbType: string }) => {
     const { t } = useTranslation();
     const [activeSlide, setActiveSlide] = useState(0); // 0 for first, 1 for second
     return (
@@ -26,11 +27,15 @@ const ScrollableCard = () => {
                     <div className={styles.middleSection}>
                         <div className={styles.textContentSection}>
                             <DsTypography variant="Semibold_16">
-                                {t('databases.log-analyzer.first-card-heading')}
+                                {dbType === DBType.ORACLE
+                                    ? t('databases.log-analyzer.first-card-heading-oracle')
+                                    : t('databases.log-analyzer.first-card-heading')}
                             </DsTypography>
                             <div className={styles.textSection}>
                                 <DsTypography variant="Regular_14">
-                                    {t('databases.log-analyzer.first-card-heading-text')}
+                                    {dbType === DBType.ORACLE
+                                        ? t('databases.log-analyzer.first-card-heading-text-oracle')
+                                        : t('databases.log-analyzer.first-card-heading-text')}
                                 </DsTypography>
                                 <DsTypography variant="Regular_14">
                                     {t('databases.log-analyzer.first-card-point-1-heading')}

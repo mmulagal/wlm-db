@@ -128,6 +128,7 @@ const InstancesTable = () => {
     const {
         notRegisteredSQLView,
         notActiveSQLInstancesView,
+        notActiveOracleDatabasesView,
         notRegisteredOracleDatabasesView,
         notOptimizedSQLInstancesView,
         notOptimizedOracleDatabaseView
@@ -1044,6 +1045,7 @@ const InstancesTable = () => {
             tableProps,
             notRegisteredSQLView,
             notActiveSQLInstancesView,
+            notActiveOracleDatabasesView,
             notOptimizedSQLInstancesView,
             notRegisteredOracleDatabasesView,
             notOptimizedOracleDatabaseView,
@@ -1054,6 +1056,7 @@ const InstancesTable = () => {
     }, [
         notRegisteredSQLView,
         notActiveSQLInstancesView,
+        notActiveOracleDatabasesView,
         notOptimizedSQLInstancesView,
         notRegisteredOracleDatabasesView,
         notOptimizedOracleDatabaseView,

@@ -80,12 +80,13 @@ export interface ErrorInvestigationInstance {
     status?: string;
     credentialId?: string;
     regionId?: string;
+    dbType?: string;
     latestReport?: {
         creationTime?: number;
         jobId?: string;
         errorCount?: number;
         severityCounts?: {
-            warning: number;
+            important: number;
             critical: number;
             severe: number;
         };

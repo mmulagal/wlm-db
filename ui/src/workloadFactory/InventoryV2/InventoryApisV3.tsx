@@ -49,7 +49,8 @@ import {
     setAllLogAnalysisLoading,
     addAllLogAnalysisData,
     addAllOracleHostAssessmentData,
-    setAllOracleHostAssessmentLoading
+    setAllOracleHostAssessmentLoading,
+    setAllLogAnalysisOracleLoading
 } from '../../store/workloadFactory/inventoryV2Slice';
 import {
     useCreateDemoResourcesMutation,
@@ -72,7 +73,8 @@ import {
     useLazyGetOracleDatabaseHostsListQuery,
     useLazyGetOracleDatabaseHostsFullDataV2Query,
     useGetAccLogAnalysisLatestMutation,
-    useLazyGetAllOracleHostsAssessmentDataQuery
+    useLazyGetAllOracleHostsAssessmentDataQuery,
+    useGetAccLogAnalysisLatestOracleMutation
 } from '../../utils/apiService';
 import {
     addInstanceIdToGetPerf,
@@ -225,7 +227,9 @@ const InventoryApisV3 = () => {
 
     // Get all managed hosts error analyzer data
     const [getLogAnalysisLatestAPI] = useGetAccLogAnalysisLatestMutation();
+    const [getLogAnalysisLatestAPIOracle] = useGetAccLogAnalysisLatestOracleMutation();
     const [allLogAnalysisData, setAllLogAnalysisData] = useState<any>([]);
+    const [allLogAnalysisOracleData, setAllLogAnalysisOracleData] = useState<any>([]);
 
     // Get all sandbox API data
     const [getSandboxListApi] = useLazyGetSandboxListQuery();
@@ -477,6 +481,7 @@ const InventoryApisV3 = () => {
             const assessmentData: any = [];
             const assessmentOracleData: any = [];
             const logAnalysisData: any = [];
+            const logAnalysisOracleData: any = [];
             const sandboxListData: any = [];
             const sandboxSavingsData: any = [];
             getDatabaseHostsList(topologyHostData, null, credId, regionId);
@@ -488,6 +493,7 @@ const InventoryApisV3 = () => {
             getAllMssqlHostAssessmentData(assessmentData, null, credId, regionId);
             getAllOracleHostAssessmentData(assessmentOracleData, null, credId, regionId);
             getAllLogAnalysisLatestData(logAnalysisData, null, credId, regionId);
+            getAllLogAnalysisOracleLatestData(logAnalysisOracleData, null, credId, regionId);
             // sandbox APIs
             getAllSandboxListData(sandboxListData, null, credId, regionId);
             getAllSandboxSavingsData(sandboxSavingsData, credId, regionId);
@@ -1594,7 +1600,8 @@ const InventoryApisV3 = () => {
                                       ...item,
                                       credentialId: credId,
                                       regionId,
-                                      status: ERROR_ANALYZER_STATUS.ACTIVE
+                                      status: ERROR_ANALYZER_STATUS.ACTIVE,
+                                      dbType: DBType.MSSQL
                                   }))
                                 : [])
                         ];
@@ -1618,6 +1625,62 @@ const InventoryApisV3 = () => {
             } catch (error) {
                 dispatch(setAllLogAnalysisLoading(false));
                 setAllLogAnalysisData(logAnalysisData);
+            }
+        }
+    };
+
+    const getAllLogAnalysisOracleLatestData = async (
+        logAnalysisOracleData: any,
+        nextToken: string | null,
+        runningCredId: string,
+        runningRegionId: string
+    ) => {
+        if (
+            headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+            headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+        ) {
+            try {
+                const result: any = await getLogAnalysisLatestAPIOracle({
+                    credentialId: credId,
+                    regionId,
+                    nextToken
+                });
+                if (
+                    headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                    headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+                ) {
+                    if (result && !result?.error) {
+                        logAnalysisOracleData = [
+                            ...(Array.isArray(result?.data?.items)
+                                ? result.data.items.map((item: any) => ({
+                                      ...item,
+                                      credentialId: credId,
+                                      regionId,
+                                      status: ERROR_ANALYZER_STATUS.ACTIVE,
+                                      dbType: DBType.ORACLE
+                                  }))
+                                : [])
+                        ];
+                        if (result?.data?.nextToken) {
+                            setAllLogAnalysisOracleData(logAnalysisOracleData);
+                            getAllLogAnalysisOracleLatestData(
+                                logAnalysisOracleData,
+                                result?.data?.nextToken,
+                                runningCredId,
+                                runningRegionId
+                            );
+                        } else {
+                            dispatch(setAllLogAnalysisOracleLoading(false));
+                            setAllLogAnalysisOracleData(logAnalysisOracleData);
+                        }
+                    } else {
+                        dispatch(setAllLogAnalysisOracleLoading(false));
+                        setAllLogAnalysisOracleData(logAnalysisOracleData);
+                    }
+                }
+            } catch (error) {
+                dispatch(setAllLogAnalysisOracleLoading(false));
+                setAllLogAnalysisOracleData(logAnalysisOracleData);
             }
         }
     };
@@ -1984,6 +2047,7 @@ const InventoryApisV3 = () => {
         setAllmssqlHostAssessmentData([]);
         setAllOracleHostAssessmentData([]);
         setAllLogAnalysisData([]);
+        setAllLogAnalysisOracleData([]);
     };
 
     const resetFullData = () => {
@@ -2439,9 +2503,11 @@ const InventoryApisV3 = () => {
 
     useEffect(() => {
         if (!refreshBlocked) {
-            dispatch(addAllLogAnalysisData([...allLogAnalysisDataS, ...allLogAnalysisData]));
+            dispatch(
+                addAllLogAnalysisData([...allLogAnalysisDataS, ...allLogAnalysisData, ...allLogAnalysisOracleData])
+            );
         }
-    }, [allLogAnalysisData]);
+    }, [allLogAnalysisData, allLogAnalysisOracleData]);
 };
 
 export default InventoryApisV3;

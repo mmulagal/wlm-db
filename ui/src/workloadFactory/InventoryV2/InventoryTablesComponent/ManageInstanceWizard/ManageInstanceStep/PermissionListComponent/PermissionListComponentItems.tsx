@@ -146,6 +146,53 @@ export const PermissionListComponentItems = (
                         policies={policiesList}
                     />
                 )
+            },
+            {
+                id: '5',
+                title: t('databases.register-flow.error-investigation'),
+                subtitle: t('databases.register-flow.capability'),
+                readinessStatus: manageChecks?.errorInvestigation,
+                missingPermission: manageChecks?.errorInvestigation !== MANAGE_STATES.READY,
+                image:
+                    wizardOperationType !== ACTION_TYPE.BULK &&
+                    manageChecks?.errorInvestigation !== MANAGE_STATES.READY ? (
+                        <div className={`${styles.logAnalyzer} ${styles.logAnalyzerDisabled}`}>
+                            <LogAnalyzerDisabled />
+                        </div>
+                    ) : (
+                        <div className={styles.logAnalyzer}>
+                            <LogAnalyzer />
+                        </div>
+                    ),
+                content: (
+                    <PermissionContent
+                        title={t('databases.register-flow.prerequisites-list')}
+                        infoBlock={t('databases.register-flow.capabilities-information.error-investigation-oracle')}
+                        blocks={[
+                            {
+                                label: t('databases.register-flow.amazon-bedrock-model-activation'),
+                                values: ['anthropic.claude-sonnet-4-20250514']
+                            },
+                            {
+                                label: t('databases.register-flow.private-endpoint-for-bedrock'),
+                                values: [t('databases.register-flow.private-endpoint-for-bedrock-text-oracle')]
+                            },
+                            {
+                                label: t('databases.register-flow.aws-iam-permissions'),
+                                values: [
+                                    'bedrock:InvokeModel',
+                                    'bedrock:GetFoundationModelAvailability',
+                                    'bedrock:ListInferenceProfiles'
+                                ]
+                            },
+                            {
+                                label: t('databases.register-flow.powershell-modules'),
+                                values: ['AWS.Tools.BedrockRuntime']
+                            }
+                        ]}
+                        policies={policiesList}
+                    />
+                )
             }
         ];
     }

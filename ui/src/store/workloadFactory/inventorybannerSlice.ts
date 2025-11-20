@@ -7,7 +7,8 @@ export const initialInventoryBannerState: InventoryBannerEntities = {
     notActiveSQLInstancesView: false,
     notRegisteredOracleDatabasesView: false,
     notOptimizedSQLInstancesView: false,
-    notOptimizedOracleDatabaseView: false
+    notOptimizedOracleDatabaseView: false,
+    notActiveOracleDatabasesView: false
 };
 
 const inventoryBannerSlice = createSlice({
@@ -28,6 +29,9 @@ const inventoryBannerSlice = createSlice({
         },
         setNotOptimizedOracleDatabaseView: (state, action: PayloadAction<boolean>) => {
             state.notOptimizedOracleDatabaseView = action.payload;
+        },
+        setNotActiveOracleDatabasesView: (state, action: PayloadAction<boolean>) => {
+            state.notActiveOracleDatabasesView = action.payload;
         }
     }
 });
@@ -37,7 +41,8 @@ export const {
     setNotActiveSQLInstancesView,
     setNotRegisteredOracleDatabasesView,
     setNotOptimizedSQLInstancesView,
-    setNotOptimizedOracleDatabaseView
+    setNotOptimizedOracleDatabaseView,
+    setNotActiveOracleDatabasesView
 } = inventoryBannerSlice.actions;
 
 export default inventoryBannerSlice;

@@ -80,6 +80,7 @@ const initialInventoryV2State: InventorySliceData = {
     allOracleHostAssessmentLoading: false,
     allLogAnalysisData: [],
     allLogAnalysisLoading: false,
+    allLogAnalysisOracleLoading: false,
     potentialSavingsHostData: {},
     selectedInventoryTab: 'Instances',
     selectedOptimizeConfig: {
@@ -335,6 +336,9 @@ const inventoryV2Slice = createSlice({
         setAllLogAnalysisLoading: (state, action: PayloadAction<any>) => {
             state.allLogAnalysisLoading = action.payload;
         },
+        setAllLogAnalysisOracleLoading: (state, action: PayloadAction<any>) => {
+            state.allLogAnalysisOracleLoading = action.payload;
+        },
         setPotentialSavingsHostData: (state, action: PayloadAction<any>) => {
             state.potentialSavingsHostData = action.payload;
         },
@@ -415,6 +419,7 @@ const inventoryV2Slice = createSlice({
             state.allmssqlHostAssessmentLoading = true;
             state.allOracleHostAssessmentLoading = true;
             state.allLogAnalysisLoading = true;
+            state.allLogAnalysisOracleLoading = true;
             state.getDatabaseHosts.databaseHostsData = null;
             state.getPgSqlDatabaseHosts.databaseHostsData = null;
             state.discoveredHosts.discoveredHostData = null;
@@ -463,6 +468,7 @@ const inventoryV2Slice = createSlice({
             state.allmssqlHostAssessmentLoading = false;
             state.allOracleHostAssessmentLoading = false;
             state.allLogAnalysisLoading = false;
+            state.allLogAnalysisOracleLoading = false;
             state.discoveredHosts.discoverHostLoading = false;
             state.discoveredOracleHosts.discoverOracleHostLoading = false;
             state.discoveredPgsqlHosts.discoverPgsqlHostLoading = false;
@@ -479,6 +485,7 @@ const inventoryV2Slice = createSlice({
             state.allmssqlHostAssessmentLoading = false;
             state.allOracleHostAssessmentLoading = false;
             state.allLogAnalysisLoading = false;
+            state.allLogAnalysisOracleLoading = false;
             state.dashSandboxList.loading = false;
             state.dashSandboxSavings.loading = false;
         }
@@ -545,6 +552,7 @@ export const {
     setAllOracleHostAssessmentLoading,
     addAllLogAnalysisData,
     setAllLogAnalysisLoading,
+    setAllLogAnalysisOracleLoading,
     setPotentialSavingsHostData,
     resetPerComboData,
     setTableManageColumnState,

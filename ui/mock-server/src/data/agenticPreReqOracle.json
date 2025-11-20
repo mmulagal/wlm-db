@@ -1,0 +1,84 @@
+{
+    "items": [
+        {
+            "databaseHostId": "65c6fd61d60cd207",
+            "ec2InstanceId": "i-08d0bd2b32ead74e1",
+            "bedrockPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment."
+            },
+            "instanceProfilePreRequisites": {
+                "ready": true,
+                "message": "Ensure that the instance profile has the required permissions to access Bedrock Runtime Interface."
+            },
+            "credentialsPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the credentials used have the necessary permissions to access Bedrock Runtime Interface."
+            },
+            "networkingPreRequisites": {
+                "ready": true,
+                "message": "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
+            }
+        },
+        {
+            "databaseHostId": "65c6fd61d60cd207",
+            "ec2InstanceId": "i-07f8c2f7b14dac941",
+            "bedrockPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment."
+            },
+            "instanceProfilePreRequisites": {
+                "ready": true,
+                "message": "Ensure that the instance profile has the required permissions to access Bedrock Runtime Interface."
+            },
+            "credentialsPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the credentials used have the necessary permissions to access Bedrock Runtime Interface."
+            },
+            "networkingPreRequisites": {
+                "ready": true,
+                "message": "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
+            }
+        },
+        {
+            "databaseHostId": "65c6fd61d60cd207",
+            "ec2InstanceId": "i-0adbbacc59d0f3b34",
+            "bedrockPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment."
+            },
+            "instanceProfilePreRequisites": {
+                "ready": true,
+                "message": "Ensure that the instance profile has the required permissions to access Bedrock Runtime Interface."
+            },
+            "credentialsPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the credentials used have the necessary permissions to access Bedrock Runtime Interface."
+            },
+            "networkingPreRequisites": {
+                "ready": true,
+                "message": "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
+            }
+        },
+        {
+            "databaseHostId": "65c6fd61d60cd207",
+            "ec2InstanceId": "i-00089d8cbf8b728cf",
+            "bedrockPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment."
+            },
+            "instanceProfilePreRequisites": {
+                "ready": true,
+                "message": "Ensure that the instance profile has the required permissions to access Bedrock Runtime Interface."
+            },
+            "credentialsPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the credentials used have the necessary permissions to access Bedrock Runtime Interface."
+            },
+            "networkingPreRequisites": {
+                "ready": true,
+                "message": "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
+            }
+        }
+    ]
+}

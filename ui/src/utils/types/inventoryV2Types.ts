@@ -88,6 +88,7 @@ export interface InventorySliceData {
     allOracleHostAssessmentLoading: boolean;
     allLogAnalysisData: Array<ErrorInvestigationInstance>;
     allLogAnalysisLoading: boolean;
+    allLogAnalysisOracleLoading: boolean;
     potentialSavingsHostData: {
         [key: string]: any;
     };

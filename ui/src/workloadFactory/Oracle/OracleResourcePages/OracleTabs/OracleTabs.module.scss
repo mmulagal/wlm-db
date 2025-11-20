@@ -16,6 +16,24 @@
         font-weight: 600;
         padding-bottom: 12px;
         gap: 8px;
+
+        .tag {
+            width: 50px;
+            height: 20px;
+            border-radius: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            background-color: var(--tag-1-bg);
+            color: var(--tag-3-text);
+            font-weight: 500;
+        }
+
+        .tagDisable {
+            background-color: var(--field-border-disabled);
+            color: var(--text-disabled);
+        }
     }
 
     .headerWidthFirst {

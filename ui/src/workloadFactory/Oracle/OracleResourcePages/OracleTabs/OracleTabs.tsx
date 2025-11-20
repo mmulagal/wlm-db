@@ -4,8 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { DsTypography, Popover } from '@netapp/design-system';
 import styles from './OracleTabs.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { WELL_ARCHITECTED_TABS, ORACLE_DATABASES_COMPONENTS } from '../../../../utils/consts';
+import { WELL_ARCHITECTED_TABS, ORACLE_DATABASES_COMPONENTS, ERROR_ANALYZER_STATUS } from '../../../../utils/consts';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
+import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
+import { uniqueHostRow } from '../../../InventoryV2/InventoryUtilsV2';
+import { resetEiData, setLogAnalyzerState } from '../../../../store/workloadFactory/agenticAISlice';
 
 const OracleTabs = () => {
     const dispatch = useDispatch();
@@ -14,6 +17,14 @@ const OracleTabs = () => {
     const { selectedOracleInnerPageTab } = useAppSelector(state => state.oracleSlice);
     const { selectedResourceId, selectedDatabaseInstanceName } = useAppSelector(state => state.workloadFactoryResource);
     const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
+    const { regionMapping } = useAppSelector(state => state.headers);
+    const {
+        selectedGwInstanceRegionId,
+        selectedGwInstanceCredId,
+        selectedDatabaseInstance,
+        selectedResourceId: waSelectedResourceId
+    } = useAppSelector(state => state.getWellOptimize);
+    const { allLogAnalysisData } = useAppSelector(state => state.inventoryV2);
 
     const isSingleTenant = useMemo(() => {
         if (!selectedResourceId || !selectedDatabaseInstanceName || !inventoryTableData) {
@@ -37,6 +48,32 @@ const OracleTabs = () => {
         setSelectedTab(value);
         dispatch(setSelectedOracleInnerPageTab(value));
     };
+
+    const isBedrockSupportedForRegion = useMemo(() => {
+        let isBedRockAvailable = true;
+        if (
+            regionMapping &&
+            selectedGwInstanceRegionId &&
+            regionMapping.hasOwnProperty(selectedGwInstanceRegionId) &&
+            regionMapping[selectedGwInstanceRegionId]?.hasOwnProperty('bedrockAvailable') &&
+            !regionMapping[selectedGwInstanceRegionId]?.bedrockAvailable
+        ) {
+            isBedRockAvailable = false;
+        }
+        return isBedRockAvailable;
+    }, [regionMapping, selectedGwInstanceRegionId]);
+
+    const updateLogAnalyzerCheck = () => {
+        dispatch(resetEiData({}));
+        const key = uniqueHostRow(waSelectedResourceId, selectedGwInstanceCredId, selectedGwInstanceRegionId);
+        const logAnalyzerRow: any = allLogAnalysisData?.find(
+            (perLa: any) =>
+                uniqueHostRow(perLa?.databaseHostId, perLa?.credentialId || '', perLa?.regionId || '') === key &&
+                perLa?.databaseInstanceId === selectedDatabaseInstance
+        );
+        dispatch(setLogAnalyzerState(logAnalyzerRow?.status || ERROR_ANALYZER_STATUS.NOT_ACTIVE));
+    };
+
     return (
         <div className={styles['oracle-tabs']}>
             <div
@@ -77,6 +114,51 @@ const OracleTabs = () => {
                     {t('databases.general.well_architected_status')}
                 </DsTypography>
             </div>
+
+            {!isBedrockSupportedForRegion && (
+                <TooltipComponent
+                    placement="bottom"
+                    title={t('databases.log-analyzer.bedrock-in-region-not-supported')}
+                    width={300}
+                >
+                    <div className={`${styles.headers} ${styles.headerWidthSecond}`}>
+                        <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
+                            {t('databases.log-analyzer.error-investigation')}
+                        </DsTypography>
+                        <DsTypography variant="Semibold_13" className={`${styles.tag} ${styles.tagDisable}`}>
+                            {t('databases.log-analyzer.ai-tag')}
+                        </DsTypography>
+                    </div>
+                </TooltipComponent>
+            )}
+            {isBedrockSupportedForRegion && (
+                <div
+                    className={
+                        selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION
+                            ? `${styles.headers} ${styles.headerWidthSecond} ${styles.active}`
+                            : `${styles.headers} ${styles.headerWidthSecond}`
+                    }
+                >
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={
+                            selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION
+                                ? `${styles.headerPart1} ${styles.activeText}`
+                                : `${styles.headerPart1}`
+                        }
+                        onClick={() => {
+                            updateLogAnalyzerCheck();
+                            handleClick(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION);
+                        }}
+                        data-testid="wlm-db-mssql-error-investigation-tab"
+                    >
+                        {t('databases.log-analyzer.error-investigation')}
+                    </DsTypography>
+                    <DsTypography variant="Semibold_13" className={styles.tag}>
+                        {t('databases.log-analyzer.ai-tag')}
+                    </DsTypography>
+                </div>
+            )}
 
             <div
                 className={

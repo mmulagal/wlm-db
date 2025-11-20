@@ -3,6 +3,7 @@ import { DsFlashingDotsLoader, DsTypography, DsButton } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import styles from './ErrorBarComponent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
+import { DBType } from '../../../../../../utils/consts';
 
 type BarComponentType = {
     color?: string;
@@ -11,6 +12,7 @@ type BarComponentType = {
     errorCount?: number;
     severity?: string;
     noFilteredData?: boolean;
+    dbType?: string;
 };
 
 const ErrorBarComponent = ({
@@ -19,7 +21,8 @@ const ErrorBarComponent = ({
     width,
     errorCount = 0,
     severity = '',
-    noFilteredData = false
+    noFilteredData = false,
+    dbType = DBType.MSSQL
 }: BarComponentType) => {
     const { t } = useTranslation();
     const { noData, investigationDatesLoading } = useAppSelector(state => state.agenticAI);
@@ -108,19 +111,21 @@ const ErrorBarComponent = ({
             <div className={styles.rightSection} style={{ width }}>
                 <div className={styles.topSection}>
                     <div className={styles.textWithLoading}>
-                        <TooltipInfo
-                            trigger={loading || noData || noFilteredData ? 'click' : 'hover'}
-                            className={loading || noData || noFilteredData ? styles.disabled : ''}
-                            delayHide={200}
-                            interactive
-                        >
-                            <div className={styles.severityLabel}>
-                                {severityLabel()}
-                                <DsButton className={styles.buttonClass} onClick={learnMore} type="link">
-                                    {t('databases.dashboard.learn-more')}
-                                </DsButton>
-                            </div>
-                        </TooltipInfo>
+                        {dbType === DBType.MSSQL && (
+                            <TooltipInfo
+                                trigger={loading || noData || noFilteredData ? 'click' : 'hover'}
+                                className={loading || noData || noFilteredData ? styles.disabled : ''}
+                                delayHide={200}
+                                interactive
+                            >
+                                <div className={styles.severityLabel}>
+                                    {severityLabel()}
+                                    <DsButton className={styles.buttonClass} onClick={learnMore} type="link">
+                                        {t('databases.dashboard.learn-more')}
+                                    </DsButton>
+                                </div>
+                            </TooltipInfo>
+                        )}
                         <DsTypography variant="Semibold_14" style={{ marginLeft: '2px' }}>
                             {t('databases.log-analyzer.severity')}
                         </DsTypography>

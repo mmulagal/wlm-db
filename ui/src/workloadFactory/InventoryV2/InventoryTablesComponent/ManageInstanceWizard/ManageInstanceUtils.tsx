@@ -80,10 +80,7 @@ export const isAllowManage = (manageReadinessData: ManageReadinessInterface, eng
             // Skip the missingSqlCmd key
             return;
         }
-        const missingPermissions =
-            engineType === DBType.ORACLE
-                ? manageReadinessData[key]?.missingPermissions || []
-                : manageReadinessData[key]?.missingSqlPermissions || [];
+        const missingPermissions = manageReadinessData[key]?.missingSqlPermissions || [];
         const missingModules = manageReadinessData[key]?.missingModules || [];
         const otherMissingModules = missingModules.filter(
             (module: string) =>

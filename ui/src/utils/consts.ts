@@ -1237,7 +1237,8 @@ export const INVENTORY_BANNER_FILTER_OPTIONS = {
     NOT_ACTIVE_INSTANCES: 'Not active instances',
     NOT_OPTIMIZED_INSTANCE_SQL: 'Not-optimized instances sql',
     NOT_REGISTERED_DATABASES: 'Not registered databases',
-    NOT_OPTIMIZED_DATABASES: 'Not-optimized databases'
+    NOT_OPTIMIZED_DATABASES: 'Not-optimized databases',
+    NOT_ACTIVE_DATABASES: 'Not active databases'
 };
 
 export const TCO_CALCULATOR_MODE = {

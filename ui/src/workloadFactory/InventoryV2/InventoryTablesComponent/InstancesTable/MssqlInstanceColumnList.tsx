@@ -35,6 +35,7 @@ import { selectedTabSelection } from '../../../../store/workloadFactory/database
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { manageActionCol } from '../../InventoryUtilsV2';
 import { resetAgenticPreCheckData } from '../../../../store/workloadFactory/agenticAISlice';
+import { logAnalyzerStatusCol } from './InstanceTableHelper';
 
 export function getMssqlInstanceTableColumns({
     t,
@@ -129,71 +130,7 @@ export function getMssqlInstanceTableColumns({
             id: '14',
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'logAnalyzer.status'),
-            renderCell: (cellData: string, rowData: any) => {
-                // If the computed display value is "Not active", show with tooltip
-                if (cellData === ERROR_ANALYZER_STATUS.ACTIVE) {
-                    return (
-                        <div className={styles.naContainer}>
-                            <div>
-                                <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                                    <div className={styles.tooltipContent}>
-                                        <DsTypography variant="Regular_14">
-                                            {t('databases.log-analyzer.last-scan-date')}:{' '}
-                                            {formatDateWithTime(rowData?.logAnalyzer?.lastScan)}
-                                        </DsTypography>
-                                        <DsTypography variant="Regular_14">
-                                            {t('databases.log-analyzer.detected-errors1')}:{' '}
-                                            {rowData?.logAnalyzer?.errorCount !== 0
-                                                ? `${rowData?.logAnalyzer?.errorCount} ${t(
-                                                      'databases.log-analyzer.detected-errors2'
-                                                  )}`
-                                                : t('databases.log-analyzer.no-errors')}
-                                        </DsTypography>
-                                    </div>
-                                </TooltipInfo>
-                            </div>
-
-                            <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                        </div>
-                    );
-                }
-                if (cellData === ERROR_ANALYZER_STATUS.NOT_ACTIVE) {
-                    return (
-                        <div className={styles.naContainer}>
-                            <NotActiveNotificationIcon />
-                            <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                        </div>
-                    );
-                }
-                if (cellData === ERROR_ANALYZER_STATUS.RUNNING) {
-                    return (
-                        <div className={styles.naContainer}>
-                            <div>
-                                <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                                    <div className={styles.tooltipContent}>
-                                        <DsTypography variant="Regular_14">
-                                            {t('databases.log-analyzer.status-investigating')}
-                                        </DsTypography>
-                                        <DsTypography variant="Regular_14">
-                                            {t('databases.log-analyzer.running-status')}
-                                        </DsTypography>
-                                    </div>
-                                </TooltipInfo>
-                            </div>
-
-                            <DsTypography variant="Regular_14">{ERROR_ANALYZER_STATUS.ACTIVE}</DsTypography>
-                        </div>
-                    );
-                }
-                if (!rowData?.logAnalyzer?.lastScan && rowData?.logAnalyzer?.loading) {
-                    return <DsFlashingDotsLoader />;
-                }
-                return (
-                    <div className={styles.statusCol}>
-                        <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                    </div>
-                );
-            }
+            renderCell: (cellData: string, rowData: any) => logAnalyzerStatusCol(styles, t, rowData, cellData)
         },
         {
             Header: t('databases.instance-table.headers.well-architected-status'),

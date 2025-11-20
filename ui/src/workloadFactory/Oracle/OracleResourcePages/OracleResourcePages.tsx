@@ -8,7 +8,7 @@ import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { resetAllPasswords } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import styles from './OracleResourcePages.module.scss';
-import { WELL_ARCHITECTED_TABS, WLF_TABS, RESET_PASSWORD_TYPE, FROM_DIALOG } from '../../../utils/consts';
+import { WELL_ARCHITECTED_TABS, WLF_TABS, RESET_PASSWORD_TYPE, FROM_DIALOG, DBType } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import OracleTabs from './OracleTabs/OracleTabs';
 import OracleWellArchitectDashboard from './OracleWellArchitectDashboard/OracleWellArchitectDashboard';
@@ -32,6 +32,8 @@ import {
 import { handleFSXAdminApply } from '../../../utils/resourceUtils';
 import { getCurrentDateTime } from '../../../utils/utilityFunctions';
 import { instanceBreadCrumbSelectedFrom, selectHeaderTabFromBreadCrumb } from '../../GetWell/GetWellUtils';
+import OracleErrorInvestigationTab from './OracleErrorInvestigation/OracleErrorInvestigationTab';
+import { resetEiData, setEiRefreshPage, setEiRefreshTimestamp } from '../../../store/workloadFactory/agenticAISlice';
 
 const OracleResourcePages = () => {
     const dispatch = useDispatch();
@@ -44,6 +46,8 @@ const OracleResourcePages = () => {
         state => state.getWellOptimize
     );
     const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
+
+    const { eiRefreshTimestamp } = useAppSelector(state => state.agenticAI);
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
 
     // Reset visited tabs when leaving the dashboard
@@ -114,6 +118,9 @@ const OracleResourcePages = () => {
         if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
             return refreshTimes.optimizeRefreshTime;
         }
+        if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION) {
+            return eiRefreshTimestamp;
+        }
         return '';
     };
 
@@ -128,6 +135,10 @@ const OracleResourcePages = () => {
         } else if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
             dispatch(setRefreshOracleWellArchitect(true));
             dispatch(setOracleRefreshTimes({ optimizeRefreshTime: getCurrentDateTime() }));
+        } else if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION) {
+            dispatch(resetEiData({ dbType: DBType.ORACLE }));
+            dispatch(setEiRefreshTimestamp(getCurrentDateTime()));
+            dispatch(setEiRefreshPage(true));
         }
     };
     return (
@@ -158,44 +169,46 @@ const OracleResourcePages = () => {
                         }
                     />
 
-                    <div className={styles.buttonContainer}>
-                        <ButtonWithDropdown
-                            variant="icon"
-                            className={styles.buttonWithDropdownContainer}
-                            items={[
-                                {
-                                    id: 'updateOracleServerPassword',
-                                    children: GENERAL.UPDATE_ORACLE_SERVER_PASSWORD,
+                    {selectedOracleInnerPageTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && (
+                        <div className={styles.buttonContainer}>
+                            <ButtonWithDropdown
+                                variant="icon"
+                                className={styles.buttonWithDropdownContainer}
+                                items={[
+                                    {
+                                        id: 'updateOracleServerPassword',
+                                        children: GENERAL.UPDATE_ORACLE_SERVER_PASSWORD,
 
-                                    onClick: () => {
-                                        handleUpdatePassword(RESET_PASSWORD_TYPE.ORACLESERVER);
-                                    }
-                                },
-                                {
-                                    id: 'updateFsxAdminPassword',
-                                    children: GENERAL.UPDATE_FSX_ADMIN_PASSWORD,
+                                        onClick: () => {
+                                            handleUpdatePassword(RESET_PASSWORD_TYPE.ORACLESERVER);
+                                        }
+                                    },
+                                    {
+                                        id: 'updateFsxAdminPassword',
+                                        children: GENERAL.UPDATE_FSX_ADMIN_PASSWORD,
 
-                                    onClick: () => {
-                                        handleUpdatePassword(RESET_PASSWORD_TYPE.FSXADMIN);
-                                    }
-                                },
-                                ...(innerPageDetails.isInstanceStorageAsmManaged
-                                    ? [
-                                          {
-                                              id: 'updateOracleASMPassword',
-                                              children: GENERAL.UPDATE_ORACLE_ASM_PASSWORD,
+                                        onClick: () => {
+                                            handleUpdatePassword(RESET_PASSWORD_TYPE.FSXADMIN);
+                                        }
+                                    },
+                                    ...(innerPageDetails.isInstanceStorageAsmManaged
+                                        ? [
+                                              {
+                                                  id: 'updateOracleASMPassword',
+                                                  children: GENERAL.UPDATE_ORACLE_ASM_PASSWORD,
 
-                                              onClick: () => {
-                                                  handleUpdatePassword(RESET_PASSWORD_TYPE.ORACLEASM);
+                                                  onClick: () => {
+                                                      handleUpdatePassword(RESET_PASSWORD_TYPE.ORACLEASM);
+                                                  }
                                               }
-                                          }
-                                      ]
-                                    : [])
-                            ]}
-                        >
-                            <MenuIcon />
-                        </ButtonWithDropdown>
-                    </div>
+                                          ]
+                                        : [])
+                                ]}
+                            >
+                                <MenuIcon />
+                            </ButtonWithDropdown>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -208,6 +221,10 @@ const OracleResourcePages = () => {
             {selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.OVERVIEW && <OracleOverview />}
 
             {selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.PDB && <OraclePDB />}
+
+            {selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && (
+                <OracleErrorInvestigationTab />
+            )}
         </div>
     );
 };

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as OnboardingIllustration } from '../../../../../../assets/Onbording illustration.svg';
 import styles from './ActivatingScreen.module.scss';
 
-const ActivatingScreen = () => {
+const ActivatingScreen = ({ dbType }: { dbType: string }) => {
     const { t } = useTranslation();
     return (
         <div className={styles.activatingScreen}>

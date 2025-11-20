@@ -1239,7 +1239,7 @@ export const getErrorInvestigationSummary = (allLogAnalysisData: any) => {
             !headerSelectedMultiRegionIdsList.includes(item?.regionId) ||
             uniqueResourceList.includes(item?.resourceId || '') ||
             item?.managedInstance === 0 ||
-            item?.hostType !== DBType.MSSQL
+            !(item?.hostType === DBType.MSSQL || item?.hostType === DBType.ORACLE)
         ) {
             return;
         }
@@ -1270,7 +1270,7 @@ export const getErrorInvestigationSummary = (allLogAnalysisData: any) => {
                 // Get severity counts from log analysis data
                 severity1 += logAnalysisMatch?.latestReport?.severityCounts?.critical || 0;
                 severity2 += logAnalysisMatch?.latestReport?.severityCounts?.severe || 0;
-                severity3 += logAnalysisMatch?.latestReport?.severityCounts?.warning || 0;
+                severity3 += logAnalysisMatch?.latestReport?.severityCounts?.important || 0;
             }
         });
     });
@@ -2793,7 +2793,7 @@ export const createLogAnalyzerNotActiveInstance = (tableData: any) => {
             !headerSelectedMultiRegionIdsList.includes(item?.regionId) ||
             uniqueResourceList.includes(item?.resourceId || '') ||
             item?.managedInstance === 0 ||
-            item?.hostType !== DBType.MSSQL
+            !(item?.hostType === DBType.MSSQL || item?.hostType === DBType.ORACLE)
         ) {
             return;
         }
@@ -2837,7 +2837,7 @@ export const createLogAnalyzerNotActiveInstance = (tableData: any) => {
                     status: logAnalyzerStatus,
                     lastScan: logAnalyzerRow?.latestReport?.creationTime || '',
                     severityCounts: {
-                        warning: logAnalyzerRow?.latestReport?.severityCounts?.warning || 0,
+                        important: logAnalyzerRow?.latestReport?.severityCounts?.important || 0,
                         critical: logAnalyzerRow?.latestReport?.severityCounts?.critical || 0,
                         severe: logAnalyzerRow?.latestReport?.severityCounts?.severe || 0
                     }
@@ -2880,7 +2880,7 @@ export const createLogAnalyzerActiveInstance = (tableData: any[]) => {
             !headerSelectedMultiRegionIdsList.includes(item?.regionId) ||
             uniqueResourceList.includes(item?.resourceId || '') ||
             item?.managedInstance === 0 ||
-            item?.hostType !== DBType.MSSQL
+            !(item?.hostType === DBType.MSSQL || item?.hostType === DBType.ORACLE)
         ) {
             return;
         }
@@ -2925,7 +2925,7 @@ export const createLogAnalyzerActiveInstance = (tableData: any[]) => {
                     status: logAnalyzerStatus,
                     lastScan: logAnalyzerRow?.latestReport?.creationTime || '',
                     severityCounts: {
-                        warning: logAnalyzerRow?.latestReport?.severityCounts?.warning || 0,
+                        important: logAnalyzerRow?.latestReport?.severityCounts?.important || 0,
                         critical: logAnalyzerRow?.latestReport?.severityCounts?.critical || 0,
                         severe: logAnalyzerRow?.latestReport?.severityCounts?.severe || 0
                     }

@@ -1,6 +1,7 @@
 import { DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import styles from './ErrorCards.module.scss';
+import { eiSeverityMappingOracle } from '../UniqueErrorsSeverity/UniqueErrorsSeverity';
 
 type ErrorCardProps = {
     errorCode?: string;
@@ -40,12 +41,20 @@ const ErrorCards = ({
             <div className={styles.errorCardTopSection}>
                 <div className={styles.item}>
                     <DsTypography variant="Regular_14">{t('databases.log-analyzer.error-code')}:</DsTypography>
-                    <DsTypography variant="Semibold_14">{errorCode || t('databases.log-analyzer.n/a')}</DsTypography>
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={styles.textWrap}
+                        title={errorCode || t('databases.log-analyzer.n/a')}
+                    >
+                        {errorCode || t('databases.log-analyzer.n/a')}
+                    </DsTypography>
                 </div>
 
                 <div className={styles.item}>
                     <DsTypography variant="Regular_14">{t('databases.log-analyzer.severity')}:</DsTypography>
-                    <DsTypography variant="Semibold_14">{severity || t('databases.log-analyzer.n/a')}</DsTypography>
+                    <DsTypography variant="Semibold_14">
+                        {eiSeverityMappingOracle?.[severity || ''] || severity || t('databases.log-analyzer.n/a')}
+                    </DsTypography>
                 </div>
 
                 <div className={styles.item}>

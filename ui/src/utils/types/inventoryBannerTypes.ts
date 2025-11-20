@@ -4,4 +4,5 @@ export interface InventoryBannerEntities {
     notRegisteredOracleDatabasesView: boolean;
     notOptimizedSQLInstancesView: boolean;
     notOptimizedOracleDatabaseView: boolean;
+    notActiveOracleDatabasesView: boolean;
 }

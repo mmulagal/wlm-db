@@ -8,6 +8,7 @@ import SeparatorComponent from '../../../../../common/SeparatorComponent/Separat
 import ErrorCountChart from '../ErrorCountChart/ErrorCountChart';
 import { formatTime } from '../../../../../utils/utilityFunctions';
 import { ErrorInvestigationGetApiResponse } from '../../../../../utils/types/agenticAITypes';
+import { eiSeverityMappingOracle } from '../UniqueErrorsSeverity/UniqueErrorsSeverity';
 
 const AIInvestigation = ({
     selectedErrorData,
@@ -32,6 +33,17 @@ const AIInvestigation = ({
                             <DsTypography variant="Regular_14">{t('databases.log-analyzer.error-code')}:</DsTypography>
                             <DsTypography variant="Semibold_14">
                                 {selectedErrorData?.errorCode || t('databases.log-analyzer.n/a')}
+                            </DsTypography>
+                        </div>
+
+                        <SeparatorComponent variant="vertical" height="20px" />
+
+                        <div className={styles.item}>
+                            <DsTypography variant="Regular_14">{t('databases.log-analyzer.severity')}:</DsTypography>
+                            <DsTypography variant="Semibold_14">
+                                {eiSeverityMappingOracle?.[selectedErrorData?.severity || ''] ||
+                                    selectedErrorData?.severity ||
+                                    t('databases.log-analyzer.n/a')}
                             </DsTypography>
                         </div>
 

@@ -1,5 +1,5 @@
 import { DsButton, DsTypography } from '@tlveng/wlm-ds';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { ReactComponent as Union } from '../../../../../assets/Union.svg';
@@ -8,9 +8,15 @@ import styles from './FilterComponent.module.scss';
 import TimeDropdown from './TimeDropDown';
 import { resetEiFilters } from '../../../../../store/workloadFactory/agenticAISlice';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { eiErrorCodesOptions, eiSeverityOptionList, eiTimeOptions } from '../ErrorInvestigationUtility';
+import {
+    eiErrorCodesOptions,
+    eiSeverityOptionList,
+    eiSeverityOptionListOracle,
+    eiTimeOptions
+} from '../ErrorInvestigationUtility';
+import { DBType } from '../../../../../utils/consts';
 
-const FilterComponent = () => {
+const FilterComponent = ({ dbType }: { dbType: string }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
 
@@ -26,13 +32,23 @@ const FilterComponent = () => {
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
     const loading = investigationDatesLoading || errorInvestigationLoading;
 
-    const severityOptionList = [
-        eiSeverityOptionList?.all,
-        eiSeverityOptionList?.top5,
-        eiSeverityOptionList?.['16-24'],
-        eiSeverityOptionList?.['9-15'],
-        eiSeverityOptionList?.['1-8']
-    ];
+    const severityOptionList = useMemo(() => {
+        if (dbType === DBType.ORACLE) {
+            return [
+                eiSeverityOptionListOracle?.all,
+                eiSeverityOptionListOracle?.critical,
+                eiSeverityOptionListOracle?.severe,
+                eiSeverityOptionListOracle?.important
+            ];
+        }
+        return [
+            eiSeverityOptionList?.all,
+            eiSeverityOptionList?.top5,
+            eiSeverityOptionList?.['16-24'],
+            eiSeverityOptionList?.['9-15'],
+            eiSeverityOptionList?.['1-8']
+        ];
+    }, [dbType]);
 
     const errorCodesOptions = [eiErrorCodesOptions?.all, eiErrorCodesOptions?.top10, eiErrorCodesOptions?.top5];
 
@@ -55,7 +71,7 @@ const FilterComponent = () => {
         dispatch(
             resetEiFilters({
                 selectedTimeFrame: timeOptions[0],
-                selectedSeverity: severityOptionList[1],
+                selectedSeverity: dbType === DBType.ORACLE ? severityOptionList[0] : severityOptionList[1],
                 selectedErrorCodes: errorCodesOptions[0],
                 selectedErrorTags: ['Storage', 'Compute', 'Network', 'Security']
             })
@@ -142,7 +158,8 @@ const FilterComponent = () => {
                         dispatch(
                             resetEiFilters({
                                 selectedTimeFrame: timeOptions[0],
-                                selectedSeverity: severityOptionList[1],
+                                selectedSeverity:
+                                    dbType === DBType.ORACLE ? severityOptionList[0] : severityOptionList[1],
                                 selectedErrorCodes: errorCodesOptions[0],
                                 selectedErrorTags: ['Storage', 'Compute', 'Network', 'Security']
                             })

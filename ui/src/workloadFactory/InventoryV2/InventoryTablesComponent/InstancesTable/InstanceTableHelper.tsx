@@ -1,6 +1,8 @@
 import { TFunction } from 'i18next';
 import { Dispatch } from '@reduxjs/toolkit';
 import { NavigateFunction } from 'react-router-dom';
+import { TooltipInfo } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import {
     DBType,
     ERROR_ANALYZER_STATUS,
@@ -27,13 +29,15 @@ import {
 } from '../../../../store/workloadFactory/createNewDBSlice';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 import {
+    setNotActiveOracleDatabasesView,
     setNotActiveSQLInstancesView,
     setNotOptimizedOracleDatabaseView,
     setNotOptimizedSQLInstancesView,
     setNotRegisteredOracleDatabasesView,
     setNotRegisteredSQLView
 } from '../../../../store/workloadFactory/inventorybannerSlice';
-import { createSandboxNavigation } from '../../../../utils/utilityFunctions';
+import { createSandboxNavigation, formatDateWithTime } from '../../../../utils/utilityFunctions';
+import { ReactComponent as NotActiveNotificationIcon } from '../../../../assets/NotActiveNotificationIcon.svg';
 
 export interface InstanceMenuSelectionParams {
     menuId: string;
@@ -71,6 +75,14 @@ export const getInstanceTableMenuOptions = (
                     displayName: t('databases.databases-table.oracle.menu-options.well-architected'),
                     disabled: disableOption,
                     infoText: disableMessage
+                },
+                {
+                    id: 'oracle-investigateErrors',
+                    displayName: t('databases.databases-table.oracle.menu-options.investigate-errors'),
+                    disabled: !isBedRockAvailable || disableOption,
+                    infoText: !isBedRockAvailable
+                        ? t('databases.log-analyzer.bedrock-in-region-not-supported')
+                        : disableMessage
                 },
                 {
                     id: 'oracle-viewDatabaseDashboard',
@@ -249,6 +261,19 @@ export const handleInstanceMenuSelection = ({
             break;
         case DBType.ORACLE:
             switch (menuId) {
+                case 'oracle-investigateErrors':
+                    dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+                    dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+                    dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION));
+                    dispatch(
+                        setFSXId({
+                            fsxId: rowData?.fsxId,
+                            ec2InstanceId: rowData?.ec2InstanceId,
+                            isInstanceStorageAsmManaged: rowData?.isInstanceStorageAsmManaged
+                        })
+                    );
+                    optimizeAction(rowData);
+                    break;
                 case 'oracle-optimize':
                     dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
                     dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
@@ -317,6 +342,7 @@ export const inventoryBannerFilterUpdates = (
     tableProps: any,
     notRegisteredSQLView: boolean,
     notActiveSQLInstancesView: boolean,
+    notActiveOracleDatabasesView: boolean,
     notOptimizedSQLInstancesView: boolean,
     notRegisteredOracleDatabasesView: boolean,
     notOptimizedOracleDatabaseView: boolean,
@@ -428,6 +454,90 @@ export const inventoryBannerFilterUpdates = (
             });
             // Reset the notRegisteredOracleDatabasesView flag
             dispatch(setNotOptimizedOracleDatabaseView(false));
+        } else if (notActiveOracleDatabasesView && selectedHostType === DBType.ORACLE) {
+            // First reset all existing filters to match the original behavior
+            tableProps.resetFilters();
+            // Then apply the Not active filter (column '14' with value 'Not active')
+            tableProps.updateFilterState({
+                id: '17',
+                values: {
+                    [ERROR_ANALYZER_STATUS.NOT_ACTIVE]: true
+                }
+            });
+            tableProps.updateFilterState({
+                id: '4',
+                values: {
+                    [INVENTORY_STATUS.REGISTERED]: true
+                }
+            });
+            // Reset the notActiveOracleDatabasesView flag
+            dispatch(setNotActiveOracleDatabasesView(false));
         }
     }
+};
+
+export const logAnalyzerStatusCol = (styles: any, t: any, rowData: any, cellData: string) => {
+    // If the computed display value is "Not active", show with tooltip
+    if (cellData === ERROR_ANALYZER_STATUS.ACTIVE) {
+        return (
+            <div className={styles.naContainer}>
+                <div>
+                    <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                        <div className={styles.tooltipContent}>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.log-analyzer.last-scan-date')}:{' '}
+                                {formatDateWithTime(rowData?.logAnalyzer?.lastScan)}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.log-analyzer.detected-errors1')}:{' '}
+                                {rowData?.logAnalyzer?.errorCount !== 0
+                                    ? `${rowData?.logAnalyzer?.errorCount} ${t(
+                                          'databases.log-analyzer.detected-errors2'
+                                      )}`
+                                    : t('databases.log-analyzer.no-errors')}
+                            </DsTypography>
+                        </div>
+                    </TooltipInfo>
+                </div>
+
+                <DsTypography variant="Regular_14">{cellData}</DsTypography>
+            </div>
+        );
+    }
+    if (cellData === ERROR_ANALYZER_STATUS.NOT_ACTIVE) {
+        return (
+            <div className={styles.naContainer}>
+                <NotActiveNotificationIcon />
+                <DsTypography variant="Regular_14">{cellData}</DsTypography>
+            </div>
+        );
+    }
+    if (cellData === ERROR_ANALYZER_STATUS.RUNNING) {
+        return (
+            <div className={styles.naContainer}>
+                <div>
+                    <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                        <div className={styles.tooltipContent}>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.log-analyzer.status-investigating')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.log-analyzer.running-status')}
+                            </DsTypography>
+                        </div>
+                    </TooltipInfo>
+                </div>
+
+                <DsTypography variant="Regular_14">{ERROR_ANALYZER_STATUS.ACTIVE}</DsTypography>
+            </div>
+        );
+    }
+    if (!rowData?.logAnalyzer?.lastScan && rowData?.logAnalyzer?.loading) {
+        return <DsFlashingDotsLoader />;
+    }
+    return (
+        <div className={styles.statusCol}>
+            <DsTypography variant="Regular_14">{cellData}</DsTypography>
+        </div>
+    );
 };

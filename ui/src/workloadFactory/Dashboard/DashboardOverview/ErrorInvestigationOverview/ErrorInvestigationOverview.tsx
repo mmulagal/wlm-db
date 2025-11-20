@@ -46,16 +46,19 @@ import {
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { dashboardRedirection } from '../../../../utils/utilityFunctions';
+import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 
 const ErrorInvestigationOverview = () => {
     const { t } = useTranslation();
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
     const { showNA, multiDataLoading } = useAppSelector(state => state.headers);
-    const { allLogAnalysisLoading, allLogAnalysisData, inventoryTableData } = useAppSelector(
-        state => state.inventoryV2
+    const { allLogAnalysisLoading, allLogAnalysisOracleLoading, allLogAnalysisData, inventoryTableData } =
+        useAppSelector(state => state.inventoryV2);
+    const loading = useMemo(
+        () => allLogAnalysisLoading || allLogAnalysisOracleLoading || multiDataLoading,
+        [allLogAnalysisLoading, allLogAnalysisOracleLoading, multiDataLoading]
     );
-    const loading = useMemo(() => allLogAnalysisLoading || multiDataLoading, [allLogAnalysisLoading, multiDataLoading]);
 
     const errInvestigationOverview: any = useMemo(
         () => getErrorInvestigationSummary(allLogAnalysisData),
@@ -116,8 +119,13 @@ const ErrorInvestigationOverview = () => {
         } else {
             selectedRowData = selectedViewInvestigationRow;
         }
-        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
-        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION));
+        if (selectedRowData?.type === DBType.ORACLE) {
+            dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+            dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION));
+        } else {
+            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+            dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION));
+        }
 
         dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
         dispatch(setBreadCrumbSelectedFrom(WLF_TABS.DASHBOARD));
@@ -271,7 +279,7 @@ const ErrorInvestigationOverview = () => {
 
                                         <div className={styles.row}>
                                             <DsTypography variant="Regular_13" className={styles.itemWithoutBorderTop1}>
-                                                {t('databases.dashboard.important-notes')}
+                                                {t('databases.dashboard.important')}
                                             </DsTypography>
                                             <DsTypography variant="Regular_13" className={styles.itemWithoutBorderTop2}>
                                                 {SEVERITIES.SIXTEEN}
@@ -407,7 +415,7 @@ const ErrorInvestigationOverview = () => {
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                         variant="Regular_14"
                                     >
-                                        {t('databases.dashboard.important-notes')}
+                                        {t('databases.dashboard.important')}
                                     </DsTypography>
                                 </div>
                             </div>

@@ -22,6 +22,13 @@ export const eiSeverityOptionList = {
     '1-8': '1-8'
 };
 
+export const eiSeverityOptionListOracle = {
+    all: 'All severity levels',
+    critical: 'Critical',
+    severe: 'Severe',
+    important: 'Important'
+};
+
 export const eiErrorCodesOptions = {
     all: 'All error codes',
     top10: 'Top 10 frequent error codes',
@@ -65,6 +72,16 @@ export const filterBySeverity = (
         allSeverities.sort((a, b) => b - a);
         const top5 = allSeverities.slice(0, 5);
         return data.filter(obj => obj?.severity && top5.includes(Number(obj.severity)));
+    }
+    return data;
+};
+
+export const filterBySeverityOracle = (
+    data: ErrorInvestigationGetApiResponse[],
+    selectedSeverity: string
+): ErrorInvestigationGetApiResponse[] => {
+    if (selectedSeverity && selectedSeverity !== eiSeverityOptionListOracle?.all) {
+        return data?.filter(obj => obj?.severity?.toLowerCase() === selectedSeverity.toLowerCase());
     }
     return data;
 };
@@ -389,7 +406,8 @@ export const handleLogAnalyzerJob = (
     t: any,
     firstScan: boolean,
     key: string,
-    newObj: ErrorInvestigationInstance | null
+    newObj: ErrorInvestigationInstance | null,
+    dbType?: string
 ) => {
     const jobId = res?.data?.jobId;
     if (jobId) {
@@ -413,11 +431,12 @@ export const handleLogAnalyzerJob = (
                                 jobId: jobId || '',
                                 errorCount: latestReport?.errorCount || 0,
                                 severityCounts: {
-                                    warning: latestReport?.severityCounts?.warning || 0,
+                                    important: latestReport?.severityCounts?.important || 0,
                                     critical: latestReport?.severityCounts?.critical || 0,
                                     severe: latestReport?.severityCounts?.severe || 0
                                 }
-                            }
+                            },
+                            dbType
                         };
                         updateLogAnalyzerRow(dispatch, newObj);
                     }

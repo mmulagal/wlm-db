@@ -26,11 +26,14 @@ import {
     eiTimeOptions,
     recalculateErrorFields,
     getStartAndEndTimeFromRange,
-    calculateTotalHourlyErrorCounts
+    calculateTotalHourlyErrorCounts,
+    filterBySeverityOracle,
+    eiSeverityOptionListOracle
 } from './ErrorInvestigationUtility';
 import { formatDateWithTime } from '../../../../utils/utilityFunctions';
+import { DBType } from '../../../../utils/consts';
 
-const ErrorInvestigation = () => {
+const ErrorInvestigation = ({ dbType }: { dbType: string }) => {
     const { t } = useTranslation();
     const rightRef = useRef<HTMLDivElement>(null);
     const [rightHeight, setRightHeight] = useState(0);
@@ -48,7 +51,8 @@ const ErrorInvestigation = () => {
     const [endTime, setEndTime] = useState(0);
     const [totalHourlyErrorCounts, setTotalHourlyErrorCounts] = useState<Array<{ hour: number; count: number }>>([]);
 
-    ErrorInvestigationApi();
+    ErrorInvestigationApi({ dbType });
+
     const { errorInvestigationData, errorInvestigationLoading } = useAppSelector(
         state => state.agenticAI.errorInvestigation
     );
@@ -68,7 +72,12 @@ const ErrorInvestigation = () => {
     useEffect(() => {
         if (errorInvestigationData) {
             // Filtering logic
-            const filtered = filterBySeverity(errorInvestigationData, selectedSeverity);
+            let filtered = errorInvestigationData;
+            if (dbType === DBType.ORACLE) {
+                filtered = filterBySeverityOracle(errorInvestigationData, selectedSeverity);
+            } else {
+                filtered = filterBySeverity(errorInvestigationData, selectedSeverity);
+            }
             const timeFiltered = filterByTime(filtered, selectedTimeFrame, timeRange);
             const codesFiltered = filterByErrorCodes(timeFiltered, selectedErrorCodes);
             const tagsFiltered = filterByErrorTags(codesFiltered, selectedErrorTags);
@@ -76,7 +85,8 @@ const ErrorInvestigation = () => {
             // Set filteredCount for UI
             let filteredCount = 0;
             if (selectedErrorCodes !== eiErrorCodesOptions?.all) filteredCount += 1;
-            if (selectedSeverity !== eiSeverityOptionList?.all) filteredCount += 1;
+            if (selectedSeverity !== eiSeverityOptionList?.all && dbType === DBType.MSSQL) filteredCount += 1;
+            if (selectedSeverity !== eiSeverityOptionListOracle?.all && dbType === DBType.ORACLE) filteredCount += 1;
             if (selectedTimeFrame !== eiTimeOptions?.last24) filteredCount += 1;
             if (selectedErrorTags && selectedErrorTags.length > 0 && selectedErrorTags.length < 4) filteredCount += 1;
             setFiltersApplied(filteredCount);
@@ -129,9 +139,9 @@ const ErrorInvestigation = () => {
     return (
         <div className={styles.errorInvestigation}>
             <TimeSelect />
-            <LogAnalyserHeader headerData={headerData} />
+            <LogAnalyserHeader headerData={headerData} dbType={dbType} />
 
-            <FilterComponent />
+            <FilterComponent dbType={dbType} />
 
             {!loading && noErrorsDetected && (
                 <div className={styles.noErrorsDetected}>
@@ -157,7 +167,7 @@ const ErrorInvestigation = () => {
             {!noErrorsDetected && (
                 <>
                     <div className={styles.sectionTwo}>
-                        <UniqueErrorsSeverity uniqueErrBySeverity={uniqueErrBySeverity} />
+                        <UniqueErrorsSeverity uniqueErrBySeverity={uniqueErrBySeverity} dbType={dbType} />
                         <UniqueErrorGraph
                             startTime={startTime}
                             endTime={endTime}
@@ -229,7 +239,7 @@ const ErrorInvestigation = () => {
                                 <div className={styles.errorCardSection} style={{ height: rightHeight }} ref={rightRef}>
                                     {errorCardsData.map((error, index) => (
                                         <ErrorCards
-                                            key={error.errorCode || index}
+                                            key={`${error.errorCode}-${index}`}
                                             errorCode={error.errorCode}
                                             errorMessage={error.error}
                                             severity={error.severity}

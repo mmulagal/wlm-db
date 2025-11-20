@@ -2,12 +2,15 @@
 import express from 'express';
 import { BASE_URL, generateResponse } from '../utils/appUtils';
 import ErrorInvestigationData from '../data/errorInvestigationGet.json';
+import ErrorInvestigationDataOracle from '../data/errorInvestigationOracle.json';
 import ErrCountAcc from '../data/errorCountAcc.json';
 import AgenticPreReq from '../data/agenticPreReq.json';
+import ErrCountAccOracle from '../data/errorCountAccOracle.json';
+import AgenticPreReqOracle from '../data/agenticPreReqOracle.json';
 
 const router = express.Router();
 
-router.post(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis`, async (req: express.Request, res: any) => {
+router.post(`${BASE_URL}/v1/:dbType/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis`, async (req: express.Request, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, {jobId: '1234'});
     }, 7000);
@@ -21,7 +24,15 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/data
     }, 700);
 });
 
-router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis/reports`, async (req: express.Request, res: any) => {
+router.get(`${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis`, async (req: express.Request, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, ErrorInvestigationDataOracle);
+        // generateResponse(res, 200, {remediationRecommendation: []});
+        // generateResponse(res, 500, {message: 'Server Error: Unable to fetch logs analysis data.'});
+    }, 700);
+});
+
+router.get(`${BASE_URL}/v1/:dbType/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis/reports`, async (req: express.Request, res: any) => {
     setTimeout(() => {
         // generateResponse(res, 500, {message: "Server Error: Unable to fetch logs analysis data."});
         generateResponse(res, 200, {
@@ -85,9 +96,21 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/logs
     }, 700);
 });
 
+router.get(`${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/logs-analysis/summary`, async (req: express.Request, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, ErrCountAccOracle);
+    }, 700);
+});
+
 router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/logs-analysis/pre-requisites`, async (req: express.Request, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, AgenticPreReq);
+    }, 2000);
+});
+
+router.get(`${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/logs-analysis/pre-requisites`, async (req: express.Request, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, AgenticPreReqOracle);
     }, 2000);
 });
 

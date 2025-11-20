@@ -15,8 +15,9 @@ import {
 import { PermissionContent } from '../../../../InventoryV2/InventoryTablesComponent/ManageInstanceWizard/ManageInstanceStep/PermissionListComponent/PermissionContent/PermissionContent';
 import styles from './OnboardingAccordions.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { DBType } from '../../../../../utils/consts';
 
-const OnboardingAccordions = () => {
+const OnboardingAccordions = ({ dbType }: { dbType: string }) => {
     const { t } = useTranslation();
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [disableAll] = useState(false);
@@ -45,11 +46,19 @@ const OnboardingAccordions = () => {
             content: (
                 <PermissionContent
                     title={t('databases.log-analyzer.prerequisites-list')}
-                    infoBlock={t('databases.log-analyzer.accordion-1-info')}
+                    infoBlock={
+                        dbType === DBType.ORACLE
+                            ? t('databases.log-analyzer.accordion-1-info-oracle')
+                            : t('databases.log-analyzer.accordion-1-info')
+                    }
                     blocks={[
                         {
                             label: t('databases.log-analyzer.bedrock-model-activation'),
-                            values: [t('databases.log-analyzer.bedrock-model-activation-content')],
+                            values: [
+                                dbType === DBType.ORACLE
+                                    ? t('databases.log-analyzer.bedrock-model-activation-content-oracle')
+                                    : t('databases.log-analyzer.bedrock-model-activation-content')
+                            ],
                             showCopy: false,
                             viewPolicy: {
                                 value: false,
@@ -80,7 +89,11 @@ const OnboardingAccordions = () => {
             content: (
                 <PermissionContent
                     title={t('databases.log-analyzer.prerequisites-list')}
-                    infoBlock={t('databases.log-analyzer.onboarding-accordion-3-info')}
+                    infoBlock={
+                        dbType === DBType.ORACLE
+                            ? t('databases.log-analyzer.onboarding-accordion-3-info-oracle')
+                            : t('databases.log-analyzer.onboarding-accordion-3-info')
+                    }
                     blocks={[
                         {
                             label: t('databases.log-analyzer.onboarding-accordion-3-label'),
@@ -106,7 +119,11 @@ const OnboardingAccordions = () => {
             content: (
                 <PermissionContent
                     title={t('databases.log-analyzer.prerequisites-list')}
-                    infoBlock={t('databases.log-analyzer.onboarding-accordion-4-info')}
+                    infoBlock={
+                        dbType === DBType.ORACLE
+                            ? t('databases.log-analyzer.onboarding-accordion-4-info-oracle')
+                            : t('databases.log-analyzer.onboarding-accordion-4-info')
+                    }
                     blocks={[
                         {
                             label: t('databases.log-analyzer.onboarding-accordion-4-label'),
@@ -134,7 +151,11 @@ const OnboardingAccordions = () => {
             content: (
                 <PermissionContent
                     title={t('databases.log-analyzer.prerequisites-list')}
-                    infoBlock={t('databases.log-analyzer.onboarding-accordion-2-info')}
+                    infoBlock={
+                        dbType === DBType.ORACLE
+                            ? t('databases.log-analyzer.onboarding-accordion-2-info-oracle')
+                            : t('databases.log-analyzer.onboarding-accordion-2-info')
+                    }
                     blocks={[
                         {
                             label: t('databases.log-analyzer.onboarding-accordion-2-label'),

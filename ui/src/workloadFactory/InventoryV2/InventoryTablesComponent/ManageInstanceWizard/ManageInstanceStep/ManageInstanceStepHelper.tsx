@@ -123,6 +123,7 @@ export const getManageCheckObjInitial = (hostType: string) => {
     if (hostType === DBType.ORACLE) {
         manageCheckObj.assessment = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
+        manageCheckObj.errorInvestigation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
     } else {
         manageCheckObj.assessment = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
@@ -154,7 +155,8 @@ export function getManageCheckObjFinal(
         return {
             ...baseObj,
             assessment: getPermissionState('assessment', manageReadinessData),
-            remediation: getPermissionState('remediation', manageReadinessData)
+            remediation: getPermissionState('remediation', manageReadinessData),
+            errorInvestigation: getPermissionState('errorInvestigation', manageReadinessData)
         };
     }
     return {
@@ -182,6 +184,7 @@ export const getManageCheckObjMultiInitial = (hostType: string, t: TFunction) =>
     if (hostType === DBType.ORACLE) {
         manageCheckObj.assessment = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
+        manageCheckObj.errorInvestigation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.perRowState = [
             {
                 key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
@@ -189,6 +192,10 @@ export const getManageCheckObjMultiInitial = (hostType: string, t: TFunction) =>
             },
             {
                 key: t('databases.register-flow.fix-well-architected-issues'),
+                value: REGISTER_INSTANCE_STATE.NOT_AVAILABLE
+            },
+            {
+                key: t('databases.register-flow.error-investigation'),
                 value: REGISTER_INSTANCE_STATE.NOT_AVAILABLE
             }
         ];
@@ -235,9 +242,10 @@ export function getManageCheckObjMultiFinal(
     if (hostType === DBType.ORACLE) {
         const assessment = getPermissionState('assessment', manageReadinessData);
         const remediation = getPermissionState('remediation', manageReadinessData);
+        const errorInvestigation = getPermissionState('errorInvestigation', manageReadinessData);
 
-        const states = [assessment, remediation];
-        const overallState = checkOverallManageState(assessment, remediation);
+        const states = [assessment, remediation, errorInvestigation];
+        const overallState = checkOverallManageState(assessment, remediation, errorInvestigation);
         const readyCount = states.filter(state => state === MANAGE_STATES.READY).length;
 
         const perRowState = [
@@ -248,6 +256,10 @@ export function getManageCheckObjMultiFinal(
             {
                 key: t('databases.register-flow.fix-well-architected-issues'),
                 value: remediation
+            },
+            {
+                key: t('databases.register-flow.error-investigation'),
+                value: errorInvestigation
             }
         ];
         return {
@@ -317,14 +329,16 @@ export const fetchErrorInvestigationState = async (
     manageCheckObj: Partial<ManageStates>,
     getLogAnalyzerPreReqApi: any,
     dispatch: any,
-    manageSingleInstanceData: any
+    manageSingleInstanceData: any,
+    hostType?: string
 ) => {
     if (manageCheckObj && manageSingleInstanceData) {
         try {
             const agenticPreReqChk = await getAgenticPreReqData(
                 getLogAnalyzerPreReqApi,
                 dispatch,
-                manageSingleInstanceData
+                manageSingleInstanceData,
+                hostType
             );
             const missingSqlPermissionsList: string[] = [];
             if (agenticPreReqChk === MANAGE_STATES.MISSING_PREREQUISITES) {
@@ -360,7 +374,8 @@ export const fetchErrorInvestigationState = async (
 export const getAgenticPreReqData = async (
     getLogAnalyzerPreReqApi: any,
     dispatch: any,
-    manageSingleInstanceData: any
+    manageSingleInstanceData: any,
+    hostType?: string
 ) => {
     let result = GENERAL.NOT_AVAILABLE;
     const { ec2InstanceId, credentialId, regionId, hostRow } = manageSingleInstanceData || {};
@@ -374,7 +389,8 @@ export const getAgenticPreReqData = async (
             credentialId,
             regionId,
             type: 'ec2InstanceId',
-            typeId: ec2InstanceId + (partnerInstance ? `,${partnerInstance?.id}` : '')
+            typeId: ec2InstanceId + (partnerInstance ? `,${partnerInstance?.id}` : ''),
+            dbType: hostType
         });
 
         if (apiResult && !apiResult?.error && apiResult?.data?.items) {
@@ -407,7 +423,8 @@ export const getAgenticPreReqData = async (
 export const fetchErrorInvestigationStateBulk = async (
     selectedMultiDetectInstances: BulkDetectedInstance[],
     getLogAnalyzerPreReqApi: any,
-    dispatch: any
+    dispatch: any,
+    hostType: string
 ) => {
     if (!selectedMultiDetectInstances || selectedMultiDetectInstances.length === 0) {
         return;
@@ -502,7 +519,8 @@ export const fetchErrorInvestigationStateBulk = async (
                         credentialId,
                         regionId,
                         type: 'ec2InstanceId',
-                        typeId: batchEc2Ids
+                        typeId: batchEc2Ids,
+                        dbType: hostType
                     });
 
                     if (apiResult && !apiResult?.error && apiResult?.data?.items) {

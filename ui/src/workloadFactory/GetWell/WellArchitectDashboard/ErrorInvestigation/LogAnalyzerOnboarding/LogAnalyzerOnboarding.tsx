@@ -19,13 +19,13 @@ import {
     useLazyGetSubTaskListQuery,
     useScanErrorInvestigationMutation
 } from '../../../../../utils/apiService';
-import { ERROR_ANALYZER_STATUS, WLF_TABS } from '../../../../../utils/consts';
+import { DBType, ERROR_ANALYZER_STATUS, WLF_TABS } from '../../../../../utils/consts';
 import { handleLogAnalyzerJob, logAnalyzerScanUpdate } from '../ErrorInvestigationUtility';
 import store from '../../../../../store/store';
 import { addAllLogAnalysisData } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
 
-const LogAnalyzerOnboarding = () => {
+const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
 
@@ -50,7 +50,7 @@ const LogAnalyzerOnboarding = () => {
         }
     }, [preReqData]);
 
-    LogAnalyzerOnboardingAPI();
+    LogAnalyzerOnboardingAPI({ dbType });
 
     const [getLogAnalyzerPreReqApi] = useGetLogAnalyzerPreReqMutation();
     const [scanErrorInvestigation] = useScanErrorInvestigationMutation();
@@ -67,6 +67,7 @@ const LogAnalyzerOnboarding = () => {
             regionId,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
+            dbType,
             payload: {}
         }).then((res: any) => {
             const newObj = {
@@ -81,16 +82,17 @@ const LogAnalyzerOnboarding = () => {
                     jobId: res.data?.jobId || '',
                     errorCount: 0,
                     severityCounts: {
-                        warning: 0,
+                        important: 0,
                         critical: 0,
                         severe: 0
                     }
-                }
+                },
+                dbType
             };
             const state = store.getState();
             const { allLogAnalysisData } = state.inventoryV2;
             dispatch(addAllLogAnalysisData([...allLogAnalysisData, newObj]));
-            handleLogAnalyzerJob(dispatch, res, getJobDetailApi, t, true, key, newObj);
+            handleLogAnalyzerJob(dispatch, res, getJobDetailApi, t, true, key, newObj, dbType);
         });
     };
 
@@ -101,7 +103,8 @@ const LogAnalyzerOnboarding = () => {
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
                 regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 type: 'databaseHostId',
-                typeId: selectedResourceId
+                typeId: selectedResourceId,
+                dbType
             });
             if (result && !result?.error && result?.data?.items?.length > 0 && !result?.data?.items[0]?.errorMessage) {
                 dispatch(setLogAnalyzerPreReqData(result?.data?.items[0]));
@@ -117,7 +120,7 @@ const LogAnalyzerOnboarding = () => {
 
     return (
         <div className={styles['log-analyzer-onboarding']}>
-            <ScrollableCard />
+            <ScrollableCard dbType={dbType} />
 
             <div className={styles.sectionTwo}>
                 <div className={styles.accordionCardSection}>
@@ -149,9 +152,13 @@ const LogAnalyzerOnboarding = () => {
                         <div>
                             <InfoIcon />
                         </div>
-                        <DsTypography variant="Semibold_14">{t('databases.log-analyzer.info-text')}</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {dbType === DBType.ORACLE
+                                ? t('databases.log-analyzer.info-text-oracle')
+                                : t('databases.log-analyzer.info-text')}
+                        </DsTypography>
                     </div>
-                    <OnboardingAccordions />
+                    <OnboardingAccordions dbType={dbType} />
                 </div>
                 <div className={styles.legalNoticeSection}>
                     <div className={styles.legalNoticeHeading} />
@@ -173,7 +180,9 @@ const LogAnalyzerOnboarding = () => {
                                     {t('databases.log-analyzer.legal-notice-content-1')}
                                 </DsTypography>
                                 <DsTypography variant="Regular_14">
-                                    {t('databases.log-analyzer.legal-notice-content-2')}
+                                    {dbType === DBType.ORACLE
+                                        ? t('databases.log-analyzer.legal-notice-content-2-oracle')
+                                        : t('databases.log-analyzer.legal-notice-content-2')}
                                 </DsTypography>
                             </div>
                         </div>

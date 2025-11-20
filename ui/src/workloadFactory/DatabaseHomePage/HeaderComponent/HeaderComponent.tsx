@@ -156,6 +156,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         allmssqlHostAssessmentLoading,
         allOracleHostAssessmentLoading,
         allLogAnalysisLoading,
+        allLogAnalysisOracleLoading,
         fsxCredentialStatusLoading,
         fsxCredentialStatusLoadingOracle,
         mssqlInstancesData,
@@ -473,6 +474,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             !allmssqlHostAssessmentLoading &&
             !allOracleHostAssessmentLoading &&
             !allLogAnalysisLoading &&
+            !allLogAnalysisOracleLoading &&
             !dashSandboxListLoading &&
             !dashSandboxSavingsLoading &&
             !discoverHostLoading &&
@@ -590,6 +592,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         allmssqlHostAssessmentLoading,
         allOracleHostAssessmentLoading,
         allLogAnalysisLoading,
+        allLogAnalysisOracleLoading,
         dashSandboxListLoading,
         dashSandboxSavingsLoading,
         discoverHostLoading,

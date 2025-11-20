@@ -12,6 +12,7 @@ import store, { RootState } from '../store/store';
 import {
     API_ERRORS,
     API_MAX_RETRIES,
+    DBType,
     MIN_RETRY_DELAY,
     PRODUCTION,
     WLMDB_POLICIES_PROD_LINK,
@@ -1408,24 +1409,29 @@ export const errorInvestigationApi = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => ({
         getErrorInvestigationData: builder.mutation({
-            query: ({ credentialId, regionId, databaseHostId, instanceId, id }) => {
+            query: ({ credentialId, regionId, databaseHostId, instanceId, id, dbType = DBType.MSSQL }) => {
+                dbType = dbType === DBType.ORACLE || dbType === 'oracle' ? 'oracle' : 'mssql';
                 if (id) {
-                    return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis?id=${id}`;
+                    return `v1/${dbType}/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis?id=${id}`;
                 }
-                return `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`;
+                return `v1/${dbType}/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`;
             }
         }),
         getInvestigationDates: builder.mutation({
-            query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis/reports`
-            })
+            query: ({ credentialId, regionId, databaseHostId, instanceId, dbType = DBType.MSSQL }) => {
+                dbType = dbType === DBType.ORACLE || dbType === 'oracle' ? 'oracle' : 'mssql';
+                return `v1/${dbType}/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis/reports`;
+            }
         }),
         scanErrorInvestigation: builder.mutation({
-            query: ({ credentialId, regionId, databaseHostId, instanceId, payload }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`,
-                method: 'POST',
-                body: payload
-            })
+            query: ({ credentialId, regionId, databaseHostId, instanceId, payload, dbType = DBType.MSSQL }) => {
+                dbType = dbType === DBType.ORACLE || dbType === 'oracle' ? 'oracle' : 'mssql';
+                return {
+                    url: `v1/${dbType}/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/logs-analysis`,
+                    method: 'POST',
+                    body: payload
+                };
+            }
         }),
         getAccLogAnalysisLatest: builder.mutation({
             query: ({ credentialId, regionId, nextToken = null }) => {
@@ -1435,10 +1441,19 @@ export const errorInvestigationApi = createApi({
                 return `v1/mssql/credentials/${credentialId}/regions/${regionId}/logs-analysis/summary`;
             }
         }),
+        getAccLogAnalysisLatestOracle: builder.mutation({
+            query: ({ credentialId, regionId, nextToken = null }) => {
+                if (nextToken) {
+                    return `v1/oracle/credentials/${credentialId}/regions/${regionId}/logs-analysis/summary?nextToken=${nextToken}`;
+                }
+                return `v1/oracle/credentials/${credentialId}/regions/${regionId}/logs-analysis/summary`;
+            }
+        }),
         getLogAnalyzerPreReq: builder.mutation({
-            query: ({ credentialId, regionId, type, typeId }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/logs-analysis/pre-requisites?${type}=${typeId}`
-            })
+            query: ({ credentialId, regionId, type, typeId, dbType = DBType.MSSQL }) => {
+                dbType = dbType === DBType.ORACLE || dbType === 'oracle' ? 'oracle' : 'mssql';
+                return `v1/${dbType}/credentials/${credentialId}/regions/${regionId}/logs-analysis/pre-requisites?${type}=${typeId}`;
+            }
         }),
         getLogAnalyzerPricing: builder.mutation({
             query: ({ regionId }) => ({
@@ -1631,6 +1646,7 @@ export const {
     useGetInvestigationDatesMutation,
     useScanErrorInvestigationMutation,
     useGetAccLogAnalysisLatestMutation,
+    useGetAccLogAnalysisLatestOracleMutation,
     useGetLogAnalyzerPreReqMutation,
     useGetLogAnalyzerPricingMutation
 } = errorInvestigationApi;

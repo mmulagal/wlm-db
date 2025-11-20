@@ -4,8 +4,10 @@ import { AgenticAIEntities, ErrorInvestigationGetApiResponse, TimeRange } from '
 import {
     eiErrorCodesOptions,
     eiSeverityOptionList,
+    eiSeverityOptionListOracle,
     eiTimeOptions
 } from '../../workloadFactory/GetWell/WellArchitectDashboard/ErrorInvestigation/ErrorInvestigationUtility';
+import { DBType } from '../../utils/consts';
 
 export const initialSandboxState: AgenticAIEntities = {
     selectedSeverity: '',
@@ -120,7 +122,8 @@ const agenticAISlice = createSlice({
             state.errorInvestigation.errorInvestigationLoading = false;
             state.investigationDatesLoading = false;
             state.investigationDates = [];
-            state.selectedSeverity = eiSeverityOptionList?.top5;
+            state.selectedSeverity =
+                action.payload.dbType === DBType.MSSQL ? eiSeverityOptionList?.top5 : eiSeverityOptionListOracle?.all;
             state.selectedTimeFrame = eiTimeOptions?.last24;
             state.selectedErrorCodes = eiErrorCodesOptions?.all;
             state.timeRange = {

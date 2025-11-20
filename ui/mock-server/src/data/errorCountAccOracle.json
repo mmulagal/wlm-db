@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "id": "b3c241a0-4a1c-4670-9f79-ee33d0dec03c",
+      "databaseHostId": "65c6fd61d60cd207",
+      "databaseInstanceId": "oradb1",
+      "latestReport": {
+        "creationTime": 1752268918138,
+        "jobId": "aa366161-3a90-4525-90ce-e9d07ac7857a",
+        "errorCount": 11,
+        "severityCounts": {
+            "important": 5,
+            "critical": 3,
+            "severe": 3
+        }
+      }
+    }
+  ]
+}

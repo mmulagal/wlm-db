@@ -1,18 +1,16 @@
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { useGetLogAnalyzerPreReqMutation, useGetLogAnalyzerPricingMutation } from '../../../../../utils/apiService';
+import { useGetLogAnalyzerPreReqMutation } from '../../../../../utils/apiService';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../../utils/consts';
 import {
     setEiRefreshPage,
     setLogAnalyzerPreReqData,
-    setLogAnalyzerPreReqLoading,
-    setLogAnalyzerPricingData,
-    setLogAnalyzerPricingLoading
+    setLogAnalyzerPreReqLoading
 } from '../../../../../store/workloadFactory/agenticAISlice';
 import { setLandingFromInnerPage } from '../../../../../store/workloadFactory/getWellOptimizeSlice';
 
-const LogAnalyzerOnboardingAPI = () => {
+const LogAnalyzerOnboardingAPI = ({ dbType }: { dbType: string }) => {
     const dispatch = useDispatch();
     const {
         credIdFromJM,
@@ -28,7 +26,6 @@ const LogAnalyzerOnboardingAPI = () => {
     const { eiRefreshPage } = useAppSelector(state => state.agenticAI);
 
     const [getLogAnalyzerPreReqApi] = useGetLogAnalyzerPreReqMutation();
-    const [getLogAnalyzerPricingApi] = useGetLogAnalyzerPricingMutation();
 
     const runInvestigationPreReqApi = async () => {
         try {
@@ -37,7 +34,8 @@ const LogAnalyzerOnboardingAPI = () => {
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
                 regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 type: 'databaseHostId',
-                typeId: selectedResourceId
+                typeId: selectedResourceId,
+                dbType
             });
             if (result && !result?.error && result?.data?.items?.length > 0 && !result?.data?.items[0]?.errorMessage) {
                 dispatch(setLogAnalyzerPreReqData(result?.data?.items[0]));
@@ -48,24 +46,6 @@ const LogAnalyzerOnboardingAPI = () => {
             dispatch(setLogAnalyzerPreReqData(null));
         } finally {
             dispatch(setLogAnalyzerPreReqLoading(false));
-        }
-    };
-
-    const runInvestigationPricingApi = async () => {
-        try {
-            dispatch(setLogAnalyzerPricingLoading(true));
-            const result: { data?: any; error?: any } = await getLogAnalyzerPricingApi({
-                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM
-            });
-            if (result && !result?.error) {
-                dispatch(setLogAnalyzerPricingData(result?.data));
-            } else {
-                dispatch(setLogAnalyzerPricingData(null));
-            }
-        } catch (error) {
-            dispatch(setLogAnalyzerPricingData(null));
-        } finally {
-            dispatch(setLogAnalyzerPricingLoading(false));
         }
     };
 

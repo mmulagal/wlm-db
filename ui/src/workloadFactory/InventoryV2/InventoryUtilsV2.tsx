@@ -4352,7 +4352,7 @@ export const calculateDbBannerCounts = (instanceTableRows: any, type: string) =>
             } else {
                 result.notOptimizedRows += 1;
             }
-            if (type === DBType.MSSQL) {
+            if (type === DBType.MSSQL || type === DBType.ORACLE) {
                 if (item?.logAnalyzer?.status === ERROR_ANALYZER_STATUS.ACTIVE) {
                     result.activatedRows += 1;
                 } else {

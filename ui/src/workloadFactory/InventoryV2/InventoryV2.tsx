@@ -48,6 +48,7 @@ const InventoryV2 = () => {
         allOracleHostAssessmentData,
         allLogAnalysisData,
         allLogAnalysisLoading,
+        allLogAnalysisOracleLoading,
         selectedHostType,
         fullHostTableRows,
         fullInstanceTableRows,
@@ -244,15 +245,21 @@ const InventoryV2 = () => {
                             );
                         }
                         const logAnalyzerStatus = logAnalyzerRow?.status || ERROR_ANALYZER_STATUS.NOT_ACTIVE;
+                        let logAnalysisLoading = false;
+                        if (inventoryTableData?.[key]?.hostType === DBType.ORACLE) {
+                            logAnalysisLoading = allLogAnalysisOracleLoading;
+                        } else {
+                            logAnalysisLoading = allLogAnalysisLoading;
+                        }
                         const perRowData = {
                             ...perRow,
                             logAnalyzer: {
-                                loading: allLogAnalysisLoading,
+                                loading: logAnalysisLoading,
                                 errorCount: logAnalyzerRow?.latestReport?.errorCount || 0,
                                 status: logAnalyzerStatus,
                                 lastScan: logAnalyzerRow?.latestReport?.creationTime || '',
                                 severityCounts: {
-                                    warning: logAnalyzerRow?.latestReport?.severityCounts?.warning || 0,
+                                    important: logAnalyzerRow?.latestReport?.severityCounts?.important || 0,
                                     critical: logAnalyzerRow?.latestReport?.severityCounts?.critical || 0,
                                     severe: logAnalyzerRow?.latestReport?.severityCounts?.severe || 0
                                 }

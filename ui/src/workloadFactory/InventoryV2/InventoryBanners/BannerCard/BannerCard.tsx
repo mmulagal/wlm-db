@@ -4,6 +4,7 @@ import styles from './BannerCard.module.scss';
 import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorComponent';
 import { setSelectedInventoryTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
+    setNotActiveOracleDatabasesView,
     setNotActiveSQLInstancesView,
     setNotOptimizedOracleDatabaseView,
     setNotOptimizedSQLInstancesView,
@@ -49,6 +50,11 @@ const BannerCard = ({ Image, topText, text2, text3, value1, value2, viewFilterOp
         if (viewFilterOption === INVENTORY_BANNER_FILTER_OPTIONS.NOT_OPTIMIZED_DATABASES) {
             dispatch(setSelectedInventoryTab('Instances'));
             dispatch(setNotOptimizedOracleDatabaseView(true));
+        }
+
+        if (viewFilterOption === INVENTORY_BANNER_FILTER_OPTIONS.NOT_ACTIVE_DATABASES) {
+            dispatch(setSelectedInventoryTab('Instances'));
+            dispatch(setNotActiveOracleDatabasesView(true));
         }
     };
     return (
