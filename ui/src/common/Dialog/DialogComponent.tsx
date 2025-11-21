@@ -95,8 +95,8 @@ const DialogComponent = ({
     const isBulkExploreSavings = useRef(false);
 
     // Check if all bulk credentials are filled for explore savings
-    const checkBulkCredentialsFilled = (rowsToCheck: any[]) => {
-        return rowsToCheck.every((row: any) => {
+    const checkBulkCredentialsFilled = (rowsToCheck: any[]) =>
+        rowsToCheck.every((row: any) => {
             const credentials = bulkAuthCredentials[row.name];
             return (
                 credentials &&
@@ -106,7 +106,6 @@ const DialogComponent = ({
                 credentials.password.length > 0
             );
         });
-    };
 
     // Check if explore savings credentials are disabled
     const checkExploreSavingsDisabled = () => {

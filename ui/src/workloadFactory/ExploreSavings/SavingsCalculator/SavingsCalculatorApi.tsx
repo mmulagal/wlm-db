@@ -334,11 +334,8 @@ const SavingsCalculatorApi = () => {
         const instanceIds: string[] = [];
         selectedRowsForExploreSavingsEBSBulk.forEach((host: any) => {
             if (host.ec2Details && host.ec2Details.length > 0) {
-                host.ec2Details.forEach((instance: any) => {
-                    if (instance.id) {
-                        instanceIds.push(instance.id);
-                    }
-                });
+                // for aoag picking first node instance id only and stanadlone will have tne
+                instanceIds.push(host.ec2Details[0].id);
             }
         });
 

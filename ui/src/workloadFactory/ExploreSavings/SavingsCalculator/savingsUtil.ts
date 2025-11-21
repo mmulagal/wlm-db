@@ -102,14 +102,7 @@ export const comparisonData = (calculatedResponse: any) => {
                     // Handle AUTO_EBS array format - sum all existing compute costs
                     let totalExistingComputePrice = 0;
                     calculatedResponse.compute.forEach((computeObj: any) => {
-                        const deploymentModelValue =
-                            selectedDeploymentModel ||
-                            selectedHostDetails?.deploymentModel ||
-                            SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
-                        const isAOAG = deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
-                        const multiplier = isAOAG ? 2 : 1;
-                        totalExistingComputePrice +=
-                            Number(computeObj?.existing?.computeMonthlyPrice || 0) * multiplier;
+                        totalExistingComputePrice += Number(computeObj?.existing?.computeMonthlyPrice || 0);
                     });
                     return totalExistingComputePrice > 0
                         ? `$${formatFractionalNumberForCost(totalExistingComputePrice, 2)}`
@@ -137,14 +130,7 @@ export const comparisonData = (calculatedResponse: any) => {
                     // Handle AUTO_EBS array format - sum all existing license costs
                     let totalExistingLicensePrice = 0;
                     calculatedResponse.license.forEach((licenseObj: any) => {
-                        const deploymentModelValue =
-                            selectedDeploymentModel ||
-                            selectedHostDetails?.deploymentModel ||
-                            SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
-                        const isAOAG = deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
-                        const multiplier = isAOAG ? 2 : 1;
-                        totalExistingLicensePrice +=
-                            Number(licenseObj?.existing?.licenseMonthlyPrice || 0) * multiplier;
+                        totalExistingLicensePrice += Number(licenseObj?.existing?.licenseMonthlyPrice || 0);
                     });
                     return totalExistingLicensePrice > 0
                         ? `$${formatFractionalNumberForCost(totalExistingLicensePrice, 2)}`
