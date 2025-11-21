@@ -787,7 +787,7 @@ const createDriveSizeData = (config: AssessmentItem, details: any[], columns: an
 
             if (isLogDrive) {
                 dataObj.Databases = (drive.databases || []).join(', ');
-                dataObj['Data Access Path'] = (drive.dataAccessPath || []).join(', ');
+                dataObj['Drive name'] = drive.logAccessPath || '';
                 dataObj['Data Drive Total Size MB'] = drive.dataDriveTotalSizeMB?.toString() || '';
                 dataObj['Log Drive Total Size MB'] = drive.logDriveTotalSizeMB?.toString() || '';
                 dataObj['ONTAP Volume Name'] = drive.ontapVolumeName || '';
@@ -1074,7 +1074,7 @@ function generateDetailedConfigurationData(
                 details,
                 {
                     Databases: 'Databases',
-                    'Data Access Path': 'Data Access Path',
+                    'Drive name': 'Drive name',
                     'Data Drive Total Size MB': 'Data Drive Total Size MB',
                     'Log Drive Total Size MB': 'Log Drive Total Size MB',
                     'ONTAP Volume Name': 'ONTAP Volume Name',
