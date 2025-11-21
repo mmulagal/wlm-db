@@ -204,6 +204,18 @@ interface TrackedEc2Record {
 
 type TrackedEc2RecordFilters = Partial<TrackedEc2Record>;
 
+interface AccountIdCredRegionParams {
+    accountId: string;
+    credentialsIdList?: string[];
+    regionList?: string[];
+}
+
+interface GroupedDatabaseInstancesBySeverityResult {
+    name: string;
+    severity: string;
+    count: number;
+}
+
 export {
     Deployment,
     Event,
@@ -219,5 +231,7 @@ export {
     PaginatedDatabaseInstancesResponse,
     ListTrackedEc2Params,
     TrackedEc2Record,
-    TrackedEc2RecordFilters
+    TrackedEc2RecordFilters,
+    AccountIdCredRegionParams,
+    GroupedDatabaseInstancesBySeverityResult
 };

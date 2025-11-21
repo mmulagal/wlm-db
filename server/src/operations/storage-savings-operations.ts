@@ -583,7 +583,7 @@ async function performStorageSavingsCalculations(
             ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
             : undefined;
 
-        const { compute, license, deploymentType, hostname } = computeAndLicenseCostList[0] || {};
+        const [{ compute, license, deploymentType, hostname } = {}] = computeAndLicenseCostList;
         return {
             compute: params.bulk
                 ? computeAndLicenseCostList.map(item => ({
@@ -591,14 +591,22 @@ async function performStorageSavingsCalculations(
                       deploymentType: item.deploymentType,
                       hostname: item.hostname
                   }))
-                : { ...compute, deploymentType, hostname },
+                : {
+                      ...compute,
+                      deploymentType,
+                      hostname
+                  },
             license: params.bulk
                 ? computeAndLicenseCostList.map(item => ({
                       ...item.license,
                       deploymentType: item.deploymentType,
                       hostname: item.hostname
                   }))
-                : { ...license, deploymentType, hostname },
+                : {
+                      ...license,
+                      deploymentType,
+                      hostname
+                  },
             ...(singleFsxCalculationData && {
                 single: {
                     fsxCalculation: singleFsxCalculationData,
@@ -704,7 +712,7 @@ async function performStorageSavingsCalculations(
               fsxOptimizedSingle.fsx_cost_calculation_no_snapshot
           )
         : undefined;
-    const { compute, license, deploymentType, hostname } = computeAndLicenseCostList[0] || {};
+    const [{ compute, license, deploymentType, hostname } = {}] = computeAndLicenseCostList;
     return {
         compute: params.bulk
             ? computeAndLicenseCostList.map(item => ({
@@ -712,14 +720,22 @@ async function performStorageSavingsCalculations(
                   deploymentType: item.deploymentType,
                   hostname: item.hostname
               }))
-            : { ...compute, deploymentType, hostname },
+            : {
+                  ...compute,
+                  deploymentType,
+                  hostname
+              },
         license: params.bulk
             ? computeAndLicenseCostList.map(item => ({
                   ...item.license,
                   deploymentType: item.deploymentType,
                   hostname: item.hostname
               }))
-            : { ...license, deploymentType, hostname },
+            : {
+                  ...license,
+                  deploymentType,
+                  hostname
+              },
         ebs,
         fsx,
         ...(fsxOptimized && { fsxOptimized }),

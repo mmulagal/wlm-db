@@ -1,19 +1,45 @@
-import { compact, isEmpty, uniqBy } from 'lodash-es';
+import { compact, isEmpty, partition, uniqBy } from 'lodash-es';
 import getLogger from '../utils/logger';
 import { getCredentials } from './cloud-manager/credentials-operations';
 import { creadteDemoDBData } from '../utils/demo-utils/demoDefaultUtils';
-import { MSSQL } from '../utils/consts';
+import { DatabaseTypes, MSSQL } from '../utils/consts';
 import {
     onPremAOAGAUploadObject,
     onPremFCIUploadObject,
     onpremStdUploadObject
 } from '../utils/demo-utils/demoMockdata';
 import { getOnPremDatabaseResources, uploadOnpremTcoData } from './onprem-tco-operations';
-import { AssessmentCategories } from '../utils/continous-optimization-consts';
+import { AssessmentCategories, SEVERITY } from '../utils/continous-optimization-consts';
 import { MappedOnTapVolumeResponse } from '../utils/common-types';
 import { paginateListInstanceConfigData } from './database/instance-config-operations';
+import { getGroupedDatabaseInstancesBySeverity, groupResources } from '../lib/database/db';
+import { GroupedDatabaseInstancesBySeverityResult } from '../lib/database/db-types';
 
 const logger = getLogger();
+
+const dataItems = {
+    [DatabaseTypes.ORACLE]: {
+        label: 'Oracle',
+        value: 0,
+        color: 'chart-9',
+        legendTitle: 'Oracle',
+        tooltip: 'Number of Oracle databases registered'
+    },
+    [DatabaseTypes.PG_SQL]: {
+        label: 'PostgreSQL',
+        value: 0,
+        color: 'chart-4',
+        legendTitle: 'PostgreSQL',
+        tooltip: 'Number of PostgreSQL databases registered'
+    },
+    [DatabaseTypes.MS_SQL_SERVER]: {
+        label: 'Microsoft SQL Server',
+        value: 0,
+        color: 'chart-3',
+        legendTitle: 'Microsoft SQL Server',
+        tooltip: 'Number of Microsoft SQL Server databases registered'
+    }
+};
 
 async function getSystemStatus(accountId: string) {
     logger.info('Getting system status for account.', accountId);
@@ -75,4 +101,118 @@ async function getDatabaseVolumes(accountId: string, pageSize = 500, nextToken?:
     return { volumeCount: volumes?.length ?? 0, volumes, nextToken: newToken };
 }
 
-export { getSystemStatus, getDatabaseVolumes };
+// The structure of grouped objects is assumed to be:
+// [
+//   {
+//     name: "auto size",
+//     severity: "critical",
+//     count: 40,
+//   },
+//   {
+//     name: "autosize-mode",
+//     severity: "critical",
+//     count: 40,
+//   },
+//   ...
+// ]
+// If limit is provided, we try to return distinct name items up to the limit, like "Performance efficiency", "Operational excellence", etc.
+// If distinct items are less than the limit, we fill the remaining slots with the most frequent items until we reach the limit.
+function getLimitedItems(objects: GroupedDatabaseInstancesBySeverityResult[], totalItems: number, limit = 0) {
+    if (limit) {
+        if (objects.length >= limit) {
+            return objects.slice(0, limit < totalItems ? limit : totalItems);
+        }
+
+        let items = [...objects];
+        for (let i = 0; items.length < limit && i < objects.length; i++) {
+            const sameItems = Array(Number(objects[i]?.count) - 1).fill(objects[i]);
+            items = [...items, ...sameItems];
+        }
+        return items.slice(0, limit < totalItems ? limit : totalItems);
+    }
+
+    return objects;
+}
+
+async function getFocusStatus(accountId: string, credentialsIds?: string, regions?: string, limit?: number) {
+    logger.info('Getting focus status for account.', accountId, credentialsIds, regions, limit);
+    // Always send only one severity. Sort the documents based on severity and send the top ones.
+    // Priority is high > medium > low
+    // limit is applied on the number of items to be sent in the response not on the totalItems
+    // e.g., if there are 10 high severity items and limit is 5, send only 5 high severity items, totalItems will be 10
+
+    const credentialsIdList = credentialsIds?.split(',').map(id => id.trim());
+    const regionList = regions?.split(',').map(region => region.trim());
+    const groupedDatabaseInstances = await getGroupedDatabaseInstancesBySeverity({
+        accountId,
+        credentialsIdList,
+        regionList
+    });
+
+    const [highSeverityItems, lowSeverityItems] = partition(groupedDatabaseInstances, {
+        severity: SEVERITY.CRITICAL
+    });
+
+    if (!isEmpty(highSeverityItems)) {
+        const totalItems = highSeverityItems.reduce((sum, item) => sum + Number(item.count), 0);
+        const limitedItems = getLimitedItems(highSeverityItems, totalItems, limit);
+        const items = compact(limitedItems.map(({ name }) => ({ description: name ?? '' })));
+        return {
+            items,
+            severity: 'high',
+            totalItems
+        };
+    }
+
+    if (!isEmpty(lowSeverityItems)) {
+        const totalItems = lowSeverityItems.reduce((sum, item) => sum + Number(item.count), 0);
+        const limitedItems = getLimitedItems(lowSeverityItems, totalItems, limit);
+        const items = compact(limitedItems.map(({ name }) => ({ description: name ?? '' })));
+        return {
+            items,
+            severity: 'low',
+            totalItems
+        };
+    }
+
+    return {
+        items: [{ description: 'All systems operational' }],
+        severity: 'low',
+        totalItems: 0
+    };
+}
+
+async function getWidgetStatus(accountId: string, credentialsIds?: string, regions?: string) {
+    logger.info('Getting widget status for account.', accountId, credentialsIds, regions);
+
+    const count = await groupResources({
+        accountId,
+        credentialsIdList: credentialsIds ? credentialsIds.split(',') : undefined,
+        regionList: regions ? regions.split(',') : undefined
+    });
+
+    return {
+        items: [
+            {
+                data: compact(
+                    count.map(
+                        ({
+                            resource_type: resourceType,
+                            _count: { id }
+                        }: {
+                            resource_type: string;
+                            _count: { id: number };
+                        }) => ({
+                            ...dataItems[resourceType as DatabaseTypes],
+                            value: id || 0
+                        })
+                    )
+                ),
+                type: 'bar',
+                label: 'Resources'
+            }
+        ]
+    };
+}
+
+export { getSystemStatus, getDatabaseVolumes, getFocusStatus, getWidgetStatus };

@@ -1,5 +1,13 @@
 import { AccountIdParams } from '../types/generic.types';
-import { ListVolumesQueryParams, ListVolumesResponse, StatusParams, StatusResponse } from '../types/wf-internal.types';
+import {
+    HomepageFocusStatusResponse,
+    HomepageStatusQueryParams,
+    HomepageWidgetStatusResponse,
+    ListVolumesQueryParams,
+    ListVolumesResponse,
+    StatusParams,
+    StatusResponse
+} from '../types/wf-internal.types';
 
 const GetSystemStatusSchema = {
     tags: ['WF-Internal'],
@@ -22,4 +30,26 @@ const GetDatabaseVolumesSchema = {
     }
 };
 
-export { GetSystemStatusSchema, GetDatabaseVolumesSchema };
+const GetFocusStatusSchema = {
+    tags: ['WF-Internal'],
+    params: AccountIdParams,
+    querystring: HomepageStatusQueryParams,
+    summary: 'Get Focus status',
+    description: 'List all the Database Focus status for the given account',
+    response: {
+        200: HomepageFocusStatusResponse
+    }
+};
+
+const GetWidgetStatusSchema = {
+    tags: ['WF-Internal'],
+    params: AccountIdParams,
+    querystring: HomepageStatusQueryParams,
+    summary: 'Get Widget status',
+    description: 'List all the Database Widget status for the given account',
+    response: {
+        200: HomepageWidgetStatusResponse
+    }
+};
+
+export { GetSystemStatusSchema, GetDatabaseVolumesSchema, GetFocusStatusSchema, GetWidgetStatusSchema };

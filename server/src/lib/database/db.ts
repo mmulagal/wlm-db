@@ -1,4 +1,4 @@
-import { DEPLOYMENT_STATUS, SOURCE, DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE } from '@prisma/client';
+import { DEPLOYMENT_STATUS, SOURCE, DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE, Prisma } from '@prisma/client';
 import { isArray, isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
@@ -12,7 +12,9 @@ import {
     ListDatabaseInstancesRecord,
     ListResourcesParams,
     TrackedEc2Record,
-    TrackedEc2RecordFilters
+    TrackedEc2RecordFilters,
+    AccountIdCredRegionParams,
+    GroupedDatabaseInstancesBySeverityResult
 } from './db-types';
 import { ResourceDetails } from '../../utils/common-types';
 import { RESOURCE_DEFAULT_SELECT_FIELDS, INSTANCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
@@ -943,6 +945,111 @@ async function weeklyDemoDatabaseCleanup() {
     }
 }
 
+async function groupResources({ accountId, credentialsIdList, regionList }: AccountIdCredRegionParams) {
+    logger.info('Grouping resources', { accountId, credentialsIdList, regionList });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.resource.groupBy({
+        by: ['resource_type'],
+        _count: {
+            id: true
+        },
+        where: {
+            ...(accountId && { account_id: accountId }),
+            ...(!isEmpty(credentialsIdList) && { credentials_id: { in: credentialsIdList } }),
+            ...(!isEmpty(regionList) && { region: { in: regionList } })
+        }
+    });
+}
+
+async function getGroupedDatabaseInstancesBySeverity({
+    accountId,
+    credentialsIdList,
+    regionList
+}: AccountIdCredRegionParams): Promise<GroupedDatabaseInstancesBySeverityResult[]> {
+    logger.info('Grouping database instances by severity', { accountId, credentialsIdList, regionList });
+
+    accountId = checkAccount(accountId);
+
+    const credentialsFilter =
+        Array.isArray(credentialsIdList) && credentialsIdList.length > 0
+            ? Prisma.sql`AND di.credentials_id IN (${Prisma.join(credentialsIdList)})`
+            : Prisma.empty;
+
+    const regionFilter =
+        Array.isArray(regionList) && regionList.length > 0
+            ? Prisma.sql`AND di.region IN (${Prisma.join(regionList)})`
+            : Prisma.empty;
+
+    // Using raw SQL query to perform recursive JSON traversal and aggregation
+    // Getting tag and severity from nested assessment_results JSON where status is not 'optimized'
+    return prisma.client.$queryRaw`WITH RECURSIVE walk AS (
+        SELECT
+            di.id,
+            '$' AS jpath,
+            di.assessment_results AS node,
+            JSON_TYPE(di.assessment_results) AS kind
+        FROM database_instances di
+        WHERE di.account_id = ${accountId}
+        ${credentialsFilter}
+        ${regionFilter}
+        UNION ALL
+
+        -- step into object members
+        SELECT
+            w.id,
+            CONCAT(w.jpath, '.', JSON_UNQUOTE(k.key_name)) AS jpath,
+            JSON_EXTRACT(w.node, CONCAT('$."', JSON_UNQUOTE(k.key_name), '"')) AS node,
+            JSON_TYPE(JSON_EXTRACT(w.node, CONCAT('$."', JSON_UNQUOTE(k.key_name), '"'))) AS kind
+        FROM walk w
+        JOIN JSON_TABLE(
+            JSON_KEYS(w.node),
+            '$[*]' COLUMNS (key_name VARCHAR(200) PATH '$')
+        ) k
+        ON w.kind = 'OBJECT'
+
+        UNION ALL
+
+        -- step into array elements
+        SELECT
+            w.id,
+            CONCAT(w.jpath, '[', a.ord - 1, ']') AS jpath,
+            JSON_EXTRACT(w.node, CONCAT('$[', a.ord - 1, ']')) AS node,
+            JSON_TYPE(JSON_EXTRACT(w.node, CONCAT('$[', a.ord - 1, ']'))) AS kind
+        FROM walk w
+        JOIN JSON_TABLE(
+            w.node,
+            '$[*]' COLUMNS (ord FOR ORDINALITY, value JSON PATH '$')
+        ) a
+        ON w.kind = 'ARRAY'
+        )
+        SELECT
+            labeled.default_label AS name,
+            labeled.severity,
+            COUNT(*) AS count
+        FROM (
+            SELECT
+                w.node,
+                JSON_UNQUOTE(JSON_EXTRACT(w.node, '$.severity')) AS severity,
+                CASE
+                    WHEN JSON_EXTRACT(w.node, '$.name') IS NOT NULL
+                    THEN CONCAT(
+                        REGEXP_REPLACE(SUBSTRING(w.jpath, 3), '\\[[0-9]+\\]', ''),
+                        JSON_UNQUOTE(JSON_EXTRACT(w.node, '$.name'))
+                    )
+                    ELSE REGEXP_REPLACE(SUBSTRING(w.jpath, 3), '\\[[0-9]+\\]', '')
+                END AS default_label
+            FROM walk w
+        ) AS labeled
+        WHERE labeled.severity IS NOT NULL
+            AND TRIM(labeled.severity) <> ''
+            AND JSON_UNQUOTE(JSON_EXTRACT(labeled.node, '$.status')) <> 'optimized'
+        GROUP BY labeled.default_label, labeled.severity
+        ORDER BY labeled.severity, count DESC;
+    `;
+}
+
 export {
     listDeployments,
     createDeployment,
@@ -975,5 +1082,7 @@ export {
     deleteOlderDeployments,
     countDatabaseInstances,
     countTrackedEc2,
-    weeklyDemoDatabaseCleanup
+    weeklyDemoDatabaseCleanup,
+    groupResources,
+    getGroupedDatabaseInstancesBySeverity
 };

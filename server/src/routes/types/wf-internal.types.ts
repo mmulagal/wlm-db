@@ -1,4 +1,5 @@
 import { Type } from '@fastify/type-provider-typebox';
+import { AWS_REGION_KEYS } from '../../utils/consts';
 
 const StatusParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
@@ -27,4 +28,49 @@ const ListVolumesQueryParams = Type.Object({
     fsxId: Type.Optional(Type.String())
 });
 
-export { StatusParams, StatusResponse, VolumeObject, ListVolumesResponse, ListVolumesQueryParams };
+const HomepageStatusQueryParams = Type.Object({
+    credentialsIds: Type.Optional(Type.String({ format: 'uuid' })),
+    regions: Type.Optional(Type.String({ enum: AWS_REGION_KEYS })),
+    limit: Type.Optional(Type.Number())
+});
+
+const HomepageFocusStatusResponse = Type.Object({
+    items: Type.Array(
+        Type.Optional(
+            Type.Object({
+                description: Type.String()
+            })
+        )
+    ),
+    severity: Type.String({ enum: ['high', 'low'] }),
+    totalItems: Type.Number()
+});
+
+const dataItem = Type.Object({
+    label: Type.String({ enum: ['Microsoft SQL Server', 'Oracle', 'PostgreSQL'] }),
+    value: Type.Number(),
+    color: Type.String(),
+    legendTitle: Type.String(),
+    tooltip: Type.Optional(Type.String())
+});
+
+const HomepageWidgetStatusResponse = Type.Object({
+    items: Type.Array(
+        Type.Object({
+            data: Type.Union([Type.Number(), Type.Array(dataItem)]),
+            type: Type.String({ enum: ['metric', 'bar'] }),
+            label: Type.String()
+        })
+    )
+});
+
+export {
+    StatusParams,
+    StatusResponse,
+    VolumeObject,
+    ListVolumesResponse,
+    ListVolumesQueryParams,
+    HomepageStatusQueryParams,
+    HomepageFocusStatusResponse,
+    HomepageWidgetStatusResponse
+};
