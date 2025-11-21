@@ -214,7 +214,7 @@ async function getHeadroomDrift(
             throw new Error(errorMessage);
         }
 
-        const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / totalUsed) * 100);
+        const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / ssdStorageCapacityInBytes) * 100);
         const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
         const minOptimizedHeadroomPercent = MIN_OPTIMIZED_HEADROOM_PERCENTAGE[resourceType];
         const status =
