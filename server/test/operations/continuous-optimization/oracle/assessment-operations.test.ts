@@ -378,7 +378,7 @@ describe('Oracle assessment operations', () => {
         expect(headroomAssessment).toBeDefined();
         expect(headroomAssessment.name).toBe('headroom');
         expect(headroomAssessment.status).toBe('under-provisioned');
-        expect(headroomAssessment.current).toBe('44%');
+        expect(headroomAssessment.current).toBe('45%');
         expect(headroomAssessment.severity).toBe('critical');
         expect(headroomAssessment.totalObjectsAssessed).toBe(1);
         expect(headroomAssessment.totalObjectsInViolation).toBe(1);

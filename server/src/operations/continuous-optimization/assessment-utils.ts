@@ -1,6 +1,8 @@
 import Ajv, { ValidateFunction } from 'ajv';
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
+import ms from 'ms';
+import { GetMetricStatisticsCommandInput } from '@aws-sdk/client-cloudwatch';
 import { getJobs, registerJob } from '../database/job-operations';
 import {
     calculateFsxStorageCapacityForHeadroomOptimization,
@@ -18,8 +20,8 @@ import type { JobMetadata } from '../../utils/common-types';
 import { OracleJobMetadata } from './oracle/consts';
 import getMissingPermissionsList from '../aws/iam-operations';
 import { getFsxStorageDetails } from '../aws/fsx-operations';
-import { calculateFsxnStorageEfficiencyUsingCloudwatch } from '../aws/cloud-watch-operations';
 import { RESOURCESTYPE } from '../../utils/consts';
+import { getMetricStatistics } from '../../lib/aws/cloud-watch';
 
 const logger = getLogger();
 
@@ -187,15 +189,32 @@ async function getHeadroomDrift(
         const cwMetricsDataCollectionPeriodSeconds = 1 * 60 * 60; // 1 hour
         const cwMetricsDataCollectionPeriod = '1h'; // 1 hour
 
-        const { totalUsed } = await calculateFsxnStorageEfficiencyUsingCloudwatch(
-            region,
-            credentialsId,
-            fileSystemId,
-            cwMetricsDataCollectionPeriodSeconds,
-            cwMetricsDataCollectionPeriod
-        );
+        let totalUsed = 0;
+        const storageUsedParams: GetMetricStatisticsCommandInput = {
+            EndTime: new Date(),
+            MetricName: 'StorageUsed',
+            Namespace: 'AWS/FSx',
+            Period: cwMetricsDataCollectionPeriodSeconds,
+            StartTime: new Date(Date.now() - ms(cwMetricsDataCollectionPeriod)),
+            Statistics: ['Average'],
+            Dimensions: [
+                {
+                    Name: 'FileSystemId',
+                    Value: fileSystemId
+                }
+            ]
+        };
+        const storageUsedMetric = await getMetricStatistics(credentialsId, region, storageUsedParams);
 
-        const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / ssdStorageCapacityInBytes) * 100);
+        if (storageUsedMetric.Datapoints) {
+            [{ Average: totalUsed }] = storageUsedMetric.Datapoints;
+        } else {
+            const errorMessage = 'Storage used data not found in CloudWatch metrics in last hour';
+            logger.error(errorMessage);
+            throw new Error(errorMessage);
+        }
+
+        const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / totalUsed) * 100);
         const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
         const minOptimizedHeadroomPercent = MIN_OPTIMIZED_HEADROOM_PERCENTAGE[resourceType];
         const status =
