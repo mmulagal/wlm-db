@@ -1257,7 +1257,8 @@ export const getErrorInvestigationSummary = (allLogAnalysisData: any) => {
                     logHost?.databaseHostId === item?.resourceId &&
                     logHost?.databaseInstanceId === instance?.databaseInstanceId &&
                     logHost?.credentialId === item?.credentialId &&
-                    logHost?.regionId === item?.regionId
+                    logHost?.regionId === item?.regionId &&
+                    logHost?.dbType === item?.hostType
             );
 
             if (logAnalysisMatch) {
