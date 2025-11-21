@@ -4,7 +4,6 @@
             "error": "Instance termination due to critical errors",
             "cause": "Oracle database instances underwent emergency shutdown due to critical errors that compromised database integrity. The termination was initiated by various Oracle background processes (CKPT, USER processes) when they encountered unrecoverable errors such as control file corruption, I/O failures, or other system-level issues. This represents the final stage of error escalation where Oracle determines the instance cannot safely continue operation.",
             "count": 3,
-            "severity": "CRITICAL",
             "remediation": [
                 "Review Oracle diagnostic dumps and incident files for root cause analysis",
                 "Check system state dump files in $ORACLE_BASE/diag/rdbms/ordbsdl/ordbsdl/trace/",
@@ -16,28 +15,29 @@
                 "Review and tune Oracle parameters related to error handling and recovery",
                 "Establish regular backup and recovery testing procedures"
             ],
-            "tags": ["Storage"],
-            "firstOccurrence": 1708400211129,
-            "lastOccurrence": 1709967237419,
+            "context": "Instance termination events occurred following critical errors. Sequence: 2025-02-20T04:36:51.129751+00:00 Instance abort (OS id: 22947) followed by restart, and 2025-03-10T08:33:57.419549+00:00 termination due to ORA errors after control file failures.",
+            "severity": "CRITICAL",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
             "errorCode": "INSTANCE-TERMINATION",
             "uniqueErrorKey": "oracle-instance-termination",
+            "tags": ["Storage"],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
                 {
-                    "hour": 1708398000000,
+                    "hour": 1763614800000,
                     "count": 2
                 },
                 {
-                    "hour": 1709964000000,
+                    "hour": 1763632800000,
                     "count": 1
                 }
-            ],
-            "context": "Instance termination events occurred following critical errors. Sequence: 2025-02-20T04:36:51.129751+00:00 Instance abort (OS id: 22947) followed by restart, and 2025-03-10T08:33:57.419549+00:00 termination due to ORA errors after control file failures."
+            ]
         },
         {
             "error": "Empty temporary tablespace after database creation",
             "cause": "Temporary tablespace 'TEMP' was created without any tempfiles during database creation or restoration process. This commonly occurs when using backup control files or when the CREATE DATABASE command doesn't specify a default temporary tablespace. While not immediately critical, this can impact sort operations, temporary table creation, and overall database performance.",
             "count": 1,
-            "severity": "WARNING",
             "remediation": [
                 "Add tempfile to TEMP tablespace: ALTER TABLESPACE TEMP ADD TEMPFILE '/mnt/oradata/ORDBSDL/temp01.dbf' SIZE 1G AUTOEXTEND ON",
                 "Verify temporary tablespace is set as default: ALTER DATABASE DEFAULT TEMPORARY TABLESPACE TEMP",
@@ -45,24 +45,25 @@
                 "Monitor temporary tablespace usage and configure appropriate autoextend settings",
                 "Consider creating multiple tempfiles for better I/O distribution"
             ],
-            "tags": ["Storage"],
-            "firstOccurrence": 1708400253886,
-            "lastOccurrence": 1708400253886,
+            "context": "2025-02-20T04:37:33.886013+00:00 Empty temporary tablespace TEMP detected after database creation. Recommendation provided to add tempfiles using ALTER TABLESPACE command.",
+            "severity": "SEVERE",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
             "errorCode": "TEMP-TABLESPACE-EMPTY",
             "uniqueErrorKey": "oracle-temp-tablespace-empty",
+            "tags": ["Storage"],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
                 {
-                    "hour": 1708398000000,
+                    "hour": 1763618400000,
                     "count": 1
                 }
-            ],
-            "context": "2025-02-20T04:37:33.886013+00:00 Empty temporary tablespace TEMP detected after database creation. Recommendation provided to add tempfiles using ALTER TABLESPACE command."
+            ]
         },
         {
             "error": "Recovery file destination catalog inconsistency",
             "cause": "Files exist in the db_recovery_file_dest location that are not registered in Oracle's recovery catalog. This typically occurs after control file restoration, standby database setup, or when the recovery file destination was previously enabled and disabled. These orphaned files can consume space and may interfere with backup operations.",
             "count": 1,
-            "severity": "WARNING",
             "remediation": [
                 "Catalog existing recovery files: RMAN> CATALOG RECOVERY AREA",
                 "Review files in recovery destination: ls -la $ORACLE_BASE/fast_recovery_area/",
@@ -71,24 +72,25 @@
                 "Ensure adequate space in FSx for NetApp ONTAP volume for recovery operations",
                 "Configure RMAN retention policy appropriately for your backup strategy"
             ],
-            "tags": ["Storage"],
-            "firstOccurrence": 1708400253886,
-            "lastOccurrence": 1708400253886,
+            "context": "2025-02-20T04:37:33.886013+00:00 Files exist in db_recovery_file_dest that are unknown to database. Caused by backup controlfile restoration or recovery area configuration changes.",
+            "severity": "SEVERE",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
             "errorCode": "RECOVERY-CATALOG-INCONSISTENCY",
             "uniqueErrorKey": "oracle-recovery-catalog-inconsistency",
+            "tags": ["Storage"],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
                 {
-                    "hour": 1708398000000,
+                    "hour": 1763618400000,
                     "count": 1
                 }
-            ],
-            "context": "2025-02-20T04:37:33.886013+00:00 Files exist in db_recovery_file_dest that are unknown to database. Caused by backup controlfile restoration or recovery area configuration changes."
+            ]
         },
         {
             "error": "Advanced Queuing configuration warnings",
             "cause": "Oracle Advanced Queuing (AQ) is not properly configured with AQ_TM_PROCESSES set to 0 and no enabled queues. This disables the AQ time manager and can impact applications that rely on message queuing functionality. While not critical for basic database operations, it may affect specific application features that use Oracle's messaging capabilities.",
             "count": 2,
-            "severity": "WARNING",
             "remediation": [
                 "Configure AQ time manager: ALTER SYSTEM SET AQ_TM_PROCESSES=1",
                 "Enable queues if needed by applications: BEGIN DBMS_AQADM.START_QUEUE('queue_name'); END;",
@@ -96,24 +98,25 @@
                 "Monitor queue performance if AQ is enabled for production use",
                 "Document AQ configuration requirements for future database deployments"
             ],
-            "tags": ["Storage"],
-            "firstOccurrence": 1708400413474,
-            "lastOccurrence": 1708400413474,
+            "context": "2025-02-20T04:40:13.474490+00:00 AQ_TM_PROCESSES=0 and no enabled queues detected. Advanced Queuing time manager not started, potentially affecting queue-dependent applications.",
+            "severity": "SEVERE",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
             "errorCode": "AQ-CONFIG-WARNING",
             "uniqueErrorKey": "oracle-aq-configuration-warning",
+            "tags": ["Storage"],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
                 {
-                    "hour": 1708400400000,
+                    "hour": 1763629200000,
                     "count": 2
                 }
-            ],
-            "context": "2025-02-20T04:40:13.474490+00:00 AQ_TM_PROCESSES=0 and no enabled queues detected. Advanced Queuing time manager not started, potentially affecting queue-dependent applications."
+            ]
         },
         {
             "error": "ORA-00060: Database deadlock occurrence",
             "cause": "Oracle detected a deadlock situation where two or more transactions were waiting for each other to release locks, creating a circular dependency. This is typically caused by applications accessing resources in different orders or inefficient SQL design. While Oracle automatically resolves deadlocks by rolling back one transaction, frequent deadlocks can indicate application design issues.",
             "count": 1,
-            "severity": "WARNING",
             "remediation": [
                 "Review deadlock trace file for detailed analysis: /u01/app/oracle/diag/rdbms/ordbsdl/ordbsdl/trace/ordbsdl_ora_1182122.trc",
                 "Analyze application code to ensure consistent resource ordering",
@@ -123,24 +126,25 @@
                 "Monitor deadlock frequency using AWR reports",
                 "Review and optimize SQL statements causing high contention"
             ],
-            "tags": ["Compute", "Storage"],
-            "firstOccurrence": 1726380871699,
-            "lastOccurrence": 1726380871699,
+            "context": "2025-09-15T05:54:31.699700+00:00 Deadlock detected with detailed information available in trace file. Automatic deadlock resolution performed by Oracle.",
+            "severity": "SEVERE",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
             "errorCode": "ORA-00060",
             "uniqueErrorKey": "ORA-00060",
+            "tags": ["Compute", "Storage"],
+            "additionalInfo": [],
             "hourlyErrorCounts": [
                 {
-                    "hour": 1726380000000,
+                    "hour": 1763632800000,
                     "count": 1
                 }
-            ],
-            "context": "2025-09-15T05:54:31.699700+00:00 Deadlock detected with detailed information available in trace file. Automatic deadlock resolution performed by Oracle."
+            ]
         },
         {
             "error": "Process termination requested for pid 4017595 [source = rdbms], [info = 2] [request issued by pid: 2477563, uid: 54321]",
             "cause": "An Oracle background process or user session with process ID 4017595 has been requested to terminate by another process (pid 2477563). This is typically initiated by Oracle's Process Monitor (PMON) or a DBA action due to process cleanup, session termination, or system maintenance. The info code 2 indicates a normal termination request.",
             "count": 1,
-            "severity": "IMPORTANT",
             "remediation": [
                 "Monitor the Oracle alert log and trace files to identify if this is part of normal process cleanup or indicates a recurring issue with process management.",
                 "Check V$SESSION and V$PROCESS views to verify if the terminated process was associated with a specific user session or background process.",
@@ -150,40 +154,28 @@
                 "Check for any scheduled maintenance activities or automated scripts that might be terminating processes as part of routine operations.",
                 "If this occurs frequently, enable additional tracing for the specific process types to capture more detailed information about termination causes."
             ],
-            "tags": ["Compute"],
-            "firstOccurrence": 1726380871699,
-            "lastOccurrence": 1726380871699,
-            "uniqueErrorKey": "7a020a3ca720ab18-dummy",
-            "hourlyErrorCounts": [
-                {
-                    "hour": 1726380000000,
-                    "count": 1
-                }
-            ],
             "context": "Process%20termination%20requested%20for%20pid%204017595%20[source%20=%20rdbms],%20[info%20=%202]%20[request%20issued%20by%20pid:%202477563,%20uid:%2054321]%0A",
+            "severity": "IMPORTANT",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
+            "uniqueErrorKey": "7a020a3ca720ab18-dummy",
             "sql": [
                 "SELECT * FROM (SELECT pid, spid, program, username, terminal FROM v$process WHERE spid IN ('4017595', '2477563') ORDER BY pid) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT sid, serial#, username, program, status, logon_time FROM v$session WHERE paddr IN (SELECT addr FROM v$process WHERE spid IN ('4017595', '2477563')) ORDER BY logon_time DESC) WHERE ROWNUM <= 10;"
             ],
+            "tags": ["Compute"],
             "additionalInfo": [],
-            "tokenUsage": {
-                "causeIdentification": {
-                    "input": 1151,
-                    "output": 270,
-                    "total": 1421
-                },
-                "remediationRecommendation": {
-                    "input": 897,
-                    "output": 339,
-                    "total": 1236
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1763629200000,
+                    "count": 1
                 }
-            }
+            ]
         },
         {
             "error": "ARC0 (PID:4017503): Detected ARCH process failure",
             "cause": "The Oracle Archive Process (ARC0) has failed. This typically occurs due to issues with archiving redo log files, such as insufficient disk space in the archive destination, network connectivity problems to remote archive destinations, or file system permission issues. Since this system uses AWS FSx for NetApp ONTAP storage, the failure could be related to storage connectivity, mount point issues, or storage capacity problems.",
             "count": 1,
-            "severity": "IMPORTANT",
             "remediation": [
                 "Check the archive destination disk space using 'df -h' command on the archive log destination path to ensure sufficient free space is available",
                 "Verify AWS FSx for NetApp ONTAP storage connectivity and mount points are accessible and properly mounted",
@@ -196,42 +188,30 @@
                 "Restart the failed ARC0 process after resolving underlying storage issues: ALTER SYSTEM ARCHIVE LOG START TO 'destination_path'",
                 "Implement archive log cleanup procedures to prevent future space issues in the AWS FSx storage"
             ],
-            "tags": ["Network", "Storage"],
-            "firstOccurrence": 1740445200000,
-            "lastOccurrence": 1740445280000,
-            "uniqueErrorKey": "eda0187ab367b3db-dummy",
-            "hourlyErrorCounts": [
-                {
-                    "hour": 1740445200000,
-                    "count": 1
-                }
-            ],
             "context": "ARC0%20(PID:4017503):%20Detected%20ARCH%20process%20failure%0A",
+            "severity": "IMPORTANT",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
+            "uniqueErrorKey": "eda0187ab367b3db-dummy",
             "sql": [
                 "SELECT * FROM (SELECT dest_id, status, destination, error FROM v$archive_dest WHERE status != 'INACTIVE' ORDER BY dest_id) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT process, status, client_process, sequence# FROM v$managed_standby ORDER BY sequence# DESC) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT destination, status, error FROM v$archive_dest_status WHERE error IS NOT NULL) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT thread#, sequence#, first_time, next_time, archived, status FROM v$log ORDER BY sequence# DESC) WHERE ROWNUM <= 10;"
             ],
+            "tags": ["Network", "Storage"],
             "additionalInfo": [],
-            "tokenUsage": {
-                "causeIdentification": {
-                    "input": 1107,
-                    "output": 303,
-                    "total": 1410
-                },
-                "remediationRecommendation": {
-                    "input": 882,
-                    "output": 412,
-                    "total": 1294
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1763632800000,
+                    "count": 1
                 }
-            }
+            ]
         },
         {
             "error": "Process termination requested for pid 4014513 [source = rdbms], [info = 2] [request issued by pid: 2477563, uid: 54321]",
             "cause": "A database process (PID 4014513) has been requested to terminate by another process (PID 2477563). This is typically an internal Oracle operation where PMON or another background process is cleaning up a failed or hung session. The info code 2 usually indicates the process is being terminated due to an error condition or timeout.",
             "count": 1,
-            "severity": "IMPORTANT",
             "remediation": [
                 "Check the Oracle alert log for preceding errors that may have caused the process termination to identify the root cause.",
                 "Monitor v$session and v$process views to identify any long-running or blocked sessions that might be causing resource contention.",
@@ -242,40 +222,28 @@
                 "Review application connection pooling configuration to prevent connection leaks and excessive session creation.",
                 "Monitor AWS FSx performance metrics and ensure network connectivity is stable between Oracle and the storage layer."
             ],
-            "tags": ["Network", "Storage"],
-            "firstOccurrence": 1716969105502,
-            "lastOccurrence": 1719092172039,
-            "uniqueErrorKey": "33b91483df20e9e1-dummy",
-            "hourlyErrorCounts": [
-                {
-                    "hour": 1716969105500,
-                    "count": 1
-                }
-            ],
             "context": "Process%20termination%20requested%20for%20pid%204014513%20[source%20=%20rdbms],%20[info%20=%202]%20[request%20issued%20by%20pid:%202477563,%20uid:%2054321]%0A",
+            "severity": "IMPORTANT",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
+            "uniqueErrorKey": "33b91483df20e9e1-dummy",
             "sql": [
                 "SELECT * FROM (SELECT pid, spid, program, username, terminal FROM v$process WHERE spid IN ('4014513', '2477563') ORDER BY pid) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT sid, serial#, username, status, program, machine, osuser FROM v$session WHERE paddr IN (SELECT addr FROM v$process WHERE spid IN ('4014513', '2477563')) ORDER BY sid) WHERE ROWNUM <= 10;"
             ],
+            "tags": ["Network", "Storage"],
             "additionalInfo": [],
-            "tokenUsage": {
-                "causeIdentification": {
-                    "input": 1151,
-                    "output": 256,
-                    "total": 1407
-                },
-                "remediationRecommendation": {
-                    "input": 894,
-                    "output": 366,
-                    "total": 1260
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1763632800000,
+                    "count": 1
                 }
-            }
+            ]
         },
         {
             "error": "Process termination requested for pid 4016738 [source = rdbms], [info = 2] [request issued by pid: 2477563, uid: 54321]",
             "cause": "A database process with PID 4016738 was requested to terminate by another process (PID 2477563). This is typically an internal Oracle process management action that can occur due to various reasons such as session cleanup, resource management, abnormal session behavior, or administrative actions. The 'info = 2' parameter provides additional context about the termination reason.",
             "count": 1,
-            "severity": "IMPORTANT",
             "remediation": [
                 "Check the Oracle alert log and trace files for additional details about the process termination to identify the root cause",
                 "Monitor system resources (CPU, memory, I/O) to ensure adequate capacity for Oracle processes",
@@ -287,40 +255,28 @@
                 "Consider implementing connection pooling to reduce process creation overhead and improve session management",
                 "Review application connection handling to ensure proper session cleanup and avoid resource leaks"
             ],
-            "tags": ["Compute"],
-            "firstOccurrence": 1725368267368,
-            "lastOccurrence": 1725551261681,
-            "uniqueErrorKey": "a5de09a77d814da3-dummy",
-            "hourlyErrorCounts": [
-                {
-                    "hour": 1725368267360,
-                    "count": 1
-                }
-            ],
             "context": "Process%20termination%20requested%20for%20pid%204016738%20[source%20=%20rdbms],%20[info%20=%202]%20[request%20issued%20by%20pid:%202477563,%20uid:%2054321]%0A",
+            "severity": "IMPORTANT",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
+            "uniqueErrorKey": "a5de09a77d814da3-dummy",
             "sql": [
                 "SELECT * FROM (SELECT pid, spid, program, username, terminal FROM v$process WHERE pid IN (4016738, 2477563) OR spid IN ('4016738', '2477563') ORDER BY pid) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT s.sid, s.serial#, s.username, s.program, s.status, s.logon_time, p.pid, p.spid FROM v$session s, v$process p WHERE s.paddr = p.addr AND (p.pid IN (4016738, 2477563) OR p.spid IN ('4016738', '2477563')) ORDER BY s.logon_time DESC) WHERE ROWNUM <= 10;"
             ],
+            "tags": ["Compute"],
             "additionalInfo": [],
-            "tokenUsage": {
-                "causeIdentification": {
-                    "input": 1151,
-                    "output": 330,
-                    "total": 1481
-                },
-                "remediationRecommendation": {
-                    "input": 899,
-                    "output": 358,
-                    "total": 1257
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1763632800000,
+                    "count": 1
                 }
-            }
+            ]
         },
         {
             "error": "ARC3 (PID:4015255): Detected ARCH process failure",
             "cause": "The Oracle archiver process ARC3 has failed. This typically occurs due to issues with the archive log destination such as insufficient disk space, permission problems, network connectivity issues to the archive destination, or I/O errors on the storage system. Since this system uses AWS FSx for NetApp ONTAP, the failure could be related to storage connectivity or capacity issues.",
             "count": 20,
-            "severity": "IMPORTANT",
             "remediation": [
                 "Check the archive log destination space using 'SELECT destination, status FROM v$archive_dest WHERE status != 'INACTIVE'' and verify AWS FSx for NetApp ONTAP volume capacity and utilization",
                 "Examine the Oracle alert log for specific error messages related to ARC3 process failure and I/O errors",
@@ -332,41 +288,29 @@
                 "Consider increasing LOG_ARCHIVE_MAX_PROCESSES parameter if archive log generation rate exceeds current archiver capacity",
                 "Review FSx backup snapshots schedule to ensure it's not conflicting with archive log operations"
             ],
-            "tags": ["Compute"],
-            "firstOccurrence": 1723238489843,
-            "lastOccurrence": 1724854205670,
-            "uniqueErrorKey": "d0f6ab2b866c3210-dummy",
-            "hourlyErrorCounts": [
-                {
-                    "hour": null,
-                    "count": 20
-                }
-            ],
             "context": "ARC3%20(PID:4015255):%20Detected%20ARCH%20process%20failure%0A",
+            "severity": "IMPORTANT",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
+            "uniqueErrorKey": "d0f6ab2b866c3210-dummy",
             "sql": [
                 "SELECT * FROM (SELECT dest_id, status, destination, error FROM v$archive_dest WHERE status != 'INACTIVE' ORDER BY dest_id) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT process, status, client_process, sequence# FROM v$managed_standby ORDER BY sequence# DESC) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT destination, error, fail_date FROM v$archive_dest WHERE error IS NOT NULL ORDER BY fail_date DESC) WHERE ROWNUM <= 5;"
             ],
+            "tags": ["Compute"],
             "additionalInfo": [],
-            "tokenUsage": {
-                "causeIdentification": {
-                    "input": 1107,
-                    "output": 258,
-                    "total": 1365
-                },
-                "remediationRecommendation": {
-                    "input": 875,
-                    "output": 384,
-                    "total": 1259
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1763622000000,
+                    "count": 20
                 }
-            }
+            ]
         },
         {
             "error": "Process termination requested for pid 4015980 [source = rdbms], [info = 2] [request issued by pid: 2477563, uid: 54321]",
             "cause": "Oracle RDBMS has requested termination of a database process. This typically occurs when Oracle detects an issue with a session or process that requires cleanup, such as a hung session, resource contention, or abnormal process behavior. The termination was initiated by another Oracle process for database stability.",
             "count": 1,
-            "severity": "IMPORTANT",
             "remediation": [
                 "Monitor the alert log and trace files for the terminated process (pid 4015980) to identify the root cause of the abnormal behavior",
                 "Check V$SESSION and V$PROCESS views to identify any remaining zombie sessions or processes that may need cleanup",
@@ -378,43 +322,31 @@
                 "Consider implementing connection pooling or session timeout configurations to prevent similar issues",
                 "Monitor AWS FSx performance metrics to ensure storage layer is not causing process hangs or timeouts"
             ],
-            "tags": ["Storage"],
-            "firstOccurrence": 1723579066676,
-            "lastOccurrence": 1724582593948,
-            "uniqueErrorKey": "dda1ee00f56450f5-dummy",
-            "hourlyErrorCounts": [
-                {
-                    "hour": null,
-                    "count": 1
-                }
-            ],
             "context": "Process%20termination%20requested%20for%20pid%204015980%20[source%20=%20rdbms],%20[info%20=%202]%20[request%20issued%20by%20pid:%202477563,%20uid:%2054321]%0A",
+            "severity": "IMPORTANT",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
+            "uniqueErrorKey": "dda1ee00f56450f5-dummy",
             "sql": [
                 "SELECT * FROM (SELECT sid, serial#, username, status, program, machine, osuser, process, logon_time FROM v$session WHERE paddr IN (SELECT addr FROM v$process WHERE spid IN ('4015980', '2477563')) ORDER BY logon_time DESC) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT spid, pid, username, program, background FROM v$process WHERE spid IN ('4015980', '2477563') ORDER BY pid) WHERE ROWNUM <= 10;"
             ],
+            "tags": ["Storage"],
             "additionalInfo": [],
-            "tokenUsage": {
-                "causeIdentification": {
-                    "input": 1151,
-                    "output": 263,
-                    "total": 1414
-                },
-                "remediationRecommendation": {
-                    "input": 883,
-                    "output": 368,
-                    "total": 1251
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1763625600000,
+                    "count": 1
                 }
-            }
+            ]
         },
         {
             "error": "WARNING: CLMN has failed to cleanup a dead process for 96200 attempts",
             "cause": "The Cluster Manager (CLMN) background process has been unable to clean up a dead process after 96200 attempts. This indicates a persistent issue with process cleanup in the Oracle cluster environment, potentially due to hung processes, resource contention, or communication issues between cluster nodes.",
             "count": 2,
-            "severity": "IMPORTANT",
             "remediation": [
                 "Check the Oracle Clusterware logs using 'crsctl status resource -t' to identify the problematic resources or processes that cannot be cleaned up",
-                "Examine the Grid Infrastructure alert log and CLMN trace files in $GRID_HOME/diag/crs/<nodename>/crs/trace/ for detailed error information",
+                "Examine the Grid Infrastructure alert log and CLMN trace files in $GRID_HOME/diag/crs//crs/trace/ for detailed error information",
                 "Verify cluster interconnect connectivity between nodes using 'cluvfy comp interconnect' to ensure proper communication",
                 "Check for hung or zombie processes on all cluster nodes using 'ps -ef | grep <process_name>' and kill them if necessary",
                 "Review system resources (CPU, memory, I/O) on all cluster nodes as resource exhaustion can prevent proper process cleanup",
@@ -424,41 +356,29 @@
                 "Verify that the _cleanup_rollback_entries parameter is set appropriately to handle cleanup operations efficiently",
                 "Monitor the cluster for split-brain scenarios or network partitioning that could prevent proper process coordination"
             ],
-            "tags": ["Compute", "Network"],
-            "firstOccurrence": 1715111710206,
-            "lastOccurrence": 1723829652574,
-            "uniqueErrorKey": "dfa9946ef74e26ee-dummy",
-            "hourlyErrorCounts": [
-                {
-                    "hour": 1715111710200,
-                    "count": 2
-                }
-            ],
             "context": "WARNING:%20CLMN%20has%20failed%20to%20cleanup%20a%20dead%20process%20for%2096200%20attempts%0A",
+            "severity": "IMPORTANT",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
+            "uniqueErrorKey": "dfa9946ef74e26ee-dummy",
             "sql": [
                 "SELECT * FROM (SELECT process, pid, spid, program, status, username FROM v$process WHERE status = 'KILLED' OR program LIKE '%CLMN%' ORDER BY spid) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT sid, serial#, status, process, program, machine, logon_time FROM v$session WHERE status = 'KILLED' OR program LIKE '%CLMN%' ORDER BY logon_time DESC) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT component, process_name, pid, status, con_id FROM v$process_group ORDER BY pid) WHERE ROWNUM <= 10;"
             ],
+            "tags": ["Compute", "Network"],
             "additionalInfo": [],
-            "tokenUsage": {
-                "causeIdentification": {
-                    "input": 1109,
-                    "output": 276,
-                    "total": 1385
-                },
-                "remediationRecommendation": {
-                    "input": 859,
-                    "output": 434,
-                    "total": 1293
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1763632800000,
+                    "count": 2
                 }
-            }
+            ]
         },
         {
             "error": "Process termination requested for pid 4013768 [source = rdbms], [info = 2] [request issued by pid: 2477563, uid: 54321]",
             "cause": "A database process with PID 4013768 was terminated by another process (PID 2477563). This is typically an administrative action where a process was killed due to resource constraints, long-running operations, or manual intervention. The 'info = 2' indicates this was a forced termination.",
             "count": 1,
-            "severity": "IMPORTANT",
             "remediation": [
                 "Check the Oracle alert log and trace files for the terminated process (PID 4013768) to identify what operation was being performed when terminated",
                 "Review system resources (CPU, memory, I/O) at the time of termination to determine if resource constraints triggered the kill",
@@ -470,40 +390,28 @@
                 "Consider enabling Oracle Database Resource Manager to gracefully manage resource-intensive operations instead of forceful termination",
                 "Review application connection pooling and ensure proper session cleanup to prevent process accumulation"
             ],
-            "tags": ["Storage"],
-            "firstOccurrence": 1710565541137,
-            "lastOccurrence": 1715213057235,
-            "uniqueErrorKey": "e3de68a6f4e953ea-dummy",
-            "hourlyErrorCounts": [
-                {
-                    "hour": 1710565541130,
-                    "count": 1
-                }
-            ],
             "context": "Process%20termination%20requested%20for%20pid%204013768%20[source%20=%20rdbms],%20[info%20=%202]%20[request%20issued%20by%20pid:%202477563,%20uid:%2054321]%0A",
+            "severity": "IMPORTANT",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
+            "uniqueErrorKey": "e3de68a6f4e953ea-dummy",
             "sql": [
                 "SELECT * FROM (SELECT pid, spid, username, program, status, logon_time FROM v$process WHERE pid IN (4013768, 2477563) OR spid IN ('4013768', '2477563') ORDER BY logon_time DESC) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT sid, serial#, username, program, status, logon_time, last_call_et FROM v$session WHERE paddr IN (SELECT addr FROM v$process WHERE pid IN (4013768, 2477563) OR spid IN ('4013768', '2477563')) ORDER BY logon_time DESC) WHERE ROWNUM <= 10;"
             ],
+            "tags": ["Storage"],
             "additionalInfo": [],
-            "tokenUsage": {
-                "causeIdentification": {
-                    "input": 1151,
-                    "output": 301,
-                    "total": 1452
-                },
-                "remediationRecommendation": {
-                    "input": 887,
-                    "output": 355,
-                    "total": 1242
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1763632800000,
+                    "count": 1
                 }
-            }
+            ]
         },
         {
             "error": "Process termination requested for pid 4015878 [source = rdbms], [info = 2] [request issued by pid: 2477563, uid: 54321]",
             "cause": "Oracle Database process with PID 4015878 was terminated by another process (PID 2477563). This could be due to administrative action, resource constraints, abnormal process behavior, or system cleanup. The 'info = 2' indicates the termination reason code from the Oracle process monitor.",
             "count": 2,
-            "severity": "IMPORTANT",
             "remediation": [
                 "Check Oracle alert log and trace files for detailed information about why the process was terminated",
                 "Verify system memory and CPU resources to ensure adequate capacity for Oracle processes",
@@ -515,39 +423,28 @@
                 "Consider implementing Oracle Resource Manager to better control resource allocation and prevent process terminations",
                 "Review system-level process monitoring tools that may have killed the Oracle process due to resource consumption"
             ],
-            "tags": ["Network"],
-            "firstOccurrence": 1708398000090,
-            "lastOccurrence": 1708398000099,
-            "uniqueErrorKey": "1aebcec0c2a50af9-dummy",
-            "hourlyErrorCounts": [
-                {
-                    "hour": 1708398000000,
-                    "count": 2
-                },
-                {
-                    "hour": 1709964000000,
-                    "count": 1
-                }
-            ],
             "context": "Process%20termination%20requested%20for%20pid%204015878%20[source%20=%20rdbms],%20[info%20=%202]%20[request%20issued%20by%20pid:%202477563,%20uid:%2054321]%0A",
+            "severity": "IMPORTANT",
+            "firstOccurrence": 1763550000000,
+            "lastOccurrence": 1763632800000,
+            "uniqueErrorKey": "1aebcec0c2a50af9-dummy",
             "sql": [
                 "SELECT * FROM (SELECT pid, spid, program, username, status FROM v$process WHERE spid IN ('4015878', '2477563') ORDER BY pid) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT sid, serial#, username, program, status, logon_time FROM v$session WHERE paddr IN (SELECT addr FROM v$process WHERE spid IN ('4015878', '2477563')) ORDER BY logon_time DESC) WHERE ROWNUM <= 10;",
                 "SELECT * FROM (SELECT component, process, pid, operation, message_text FROM v$diag_info WHERE pid IN (4015878, 2477563)) WHERE ROWNUM <= 10;"
             ],
+            "tags": ["Network"],
             "additionalInfo": [],
-            "tokenUsage": {
-                "causeIdentification": {
-                    "input": 1151,
-                    "output": 307,
-                    "total": 1458
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1763625600000,
+                    "count": 2
                 },
-                "remediationRecommendation": {
-                    "input": 886,
-                    "output": 339,
-                    "total": 1225
+                {
+                    "hour": 1763632800000,
+                    "count": 1
                 }
-            }
+            ]
         }
     ]
 }
