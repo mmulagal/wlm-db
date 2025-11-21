@@ -190,9 +190,15 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
         let instancesWithEbs = items.filter(instance =>
             instance.sqlServerInstances?.find(
                 ({ nodeIps, storage }) =>
-                    storage?.find((sqlStorage: SqlStorage) => sqlStorage?.type === 'EBS') && nodeIps?.length >= 1
+                    storage?.find((sqlStorage: SqlStorage) => sqlStorage?.type === 'EBS') &&
+                    nodeIps?.length >= 1 &&
+                    nodeIps.some(nodeIp => instancesQueryPrivateIps.includes(nodeIp))
             )
         );
+        // For FSXW the instancesWithEbs are empty in that case, fall back to all instances
+        if (isEmpty(compact(instancesWithEbs))) {
+            instancesWithEbs = items;
+        }
 
         instancesQueryPrivateIps.forEach((privateIp: string) => {
             const instances = [];

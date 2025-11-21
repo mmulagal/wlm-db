@@ -517,7 +517,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[\r\n    {\r\n        \"sqlServerVersion\":  \"16.0.1000.6\",\r\n        \"databaseCount\":  \"4\",\r\n        \"sqlServerEdition\":  \"Standard Edition (64-bit)\",\r\n        \"sqlServerState\":  \"Running\",\r\n        \"sqlServerInstance\":  \"INST_C\",\r\n        \"sqlServerNodes\":  \"EC2AMAZ-1MF7SUF\",\r\n        \"scriptExecutionTime\":  2372.2185,\r\n        \"sqlServerMajorVersion\":  16,\r\n        \"sqlServerInstanceStorageInfo\":  \"{\\r\\n    \\\"SerialNumberOrScsiTarget\\\":  \\\"vol05109452537b7ad57_00000001.\\\"\\r\\n}\",\r\n        \"windowsOsVersion\":  \"Microsoft Windows Server 2019 Datacenter\",\r\n        \"windowsAuthentication\":  true,\r\n        \"sqlServerName\":  \"EC2AMAZ-1MF7SUF\"\r\n    },\r\n    {\r\n        \"sqlServerVersion\":  \"16.0.1000.6\",\r\n        \"databaseCount\":  \"4\",\r\n        \"sqlServerEdition\":  \"Standard Edition (64-bit)\",\r\n        \"sqlServerState\":  \"Running\",\r\n        \"sqlServerInstance\":  \"PreProd-BusinessIntelligence\",\r\n        \"sqlServerNodes\":  \"EC2AMAZ-1MF7SUF\",\r\n        \"scriptExecutionTime\":  407.6358,\r\n        \"sqlServerMajorVersion\":  16,\r\n        \"sqlServerInstanceStorageInfo\":  \"{\\r\\n    \\\"SerialNumberOrScsiTarget\\\":  \\\"172.31.11.195\\\"\\r\\n}\",\r\n        \"windowsOsVersion\":  \"Microsoft Windows Server 2019 Datacenter\",\r\n        \"windowsAuthentication\":  true,\r\n        \"sqlServerName\":  \"EC2AMAZ-1MF7SUF\"\r\n    },\r\n    {\r\n        \"sqlServerVersion\":  \"16.0.4095.4\",\r\n        \"databaseCount\":  \"8\",\r\n        \"sqlServerEdition\":  \"Standard Edition (64-bit)\",\r\n        \"sqlServerState\":  \"Running\",\r\n        \"sqlServerInstance\":  \"MSSQLSERVER\",\r\n        \"sqlServerNodes\":  \"EC2AMAZ-1MF7SUF\",\r\n        \"scriptExecutionTime\":  454.5521,\r\n        \"sqlServerMajorVersion\":  16,\r\n        \"sqlServerInstanceStorageInfo\":  \"[\\r\\n    {\\r\\n        \\\"SerialNumberOrScsiTarget\\\":  \\\"vol05109452537b7ad57_00000001.\\\"\\r\\n    },\\r\\n    {\\r\\n        \\\"SerialNumberOrScsiTarget\\\":  \\\"172.31.11.195\\\"\\r\\n    }\\r\\n]\",\r\n        \"windowsOsVersion\":  \"Microsoft Windows Server 2019 Datacenter\",\r\n        \"windowsAuthentication\":  true,\r\n        \"sqlServerName\":  \"EC2AMAZ-1MF7SUF\"\r\n    }\r\n]\r\n",
+        "StandardOutputContent": "[\r\n    {\r\n        \"sqlServerVersion\":  \"16.0.1000.6\",\r\n        \"databaseCount\":  \"4\",\r\n        \"sqlServerEdition\":  \"Standard Edition (64-bit)\",\r\n        \"sqlServerState\":  \"Running\",\r\n        \"sqlServerInstance\":  \"INST_C\",\r\n        \"sqlServerNodes\":  \"EC2AMAZ-3K8X9DF\",\r\n        \"scriptExecutionTime\":  2372.2185,\r\n        \"sqlServerMajorVersion\":  16,\r\n        \"sqlServerInstanceStorageInfo\":  \"{\\r\\n    \\\"SerialNumberOrScsiTarget\\\":  \\\"vol05109452537b7ad57_00000001.\\\"\\r\\n}\",\r\n        \"windowsOsVersion\":  \"Microsoft Windows Server 2019 Datacenter\",\r\n        \"windowsAuthentication\":  true,\r\n        \"sqlServerName\":  \"EC2AMAZ-3K8X9DF\"\r\n    },\r\n    {\r\n        \"sqlServerVersion\":  \"16.0.1000.6\",\r\n        \"databaseCount\":  \"4\",\r\n        \"sqlServerEdition\":  \"Standard Edition (64-bit)\",\r\n        \"sqlServerState\":  \"Running\",\r\n        \"sqlServerInstance\":  \"PreProd-BusinessIntelligence\",\r\n        \"sqlServerNodes\":  \"EC2AMAZ-7N2Q4RT\",\r\n        \"scriptExecutionTime\":  407.6358,\r\n        \"sqlServerMajorVersion\":  16,\r\n        \"sqlServerInstanceStorageInfo\":  \"{\\r\\n    \\\"SerialNumberOrScsiTarget\\\":  \\\"172.31.11.195\\\"\\r\\n}\",\r\n        \"windowsOsVersion\":  \"Microsoft Windows Server 2019 Datacenter\",\r\n        \"windowsAuthentication\":  true,\r\n        \"sqlServerName\":  \"EC2AMAZ-7N2Q4RT\"\r\n    },\r\n    {\r\n        \"sqlServerVersion\":  \"16.0.4095.4\",\r\n        \"databaseCount\":  \"8\",\r\n        \"sqlServerEdition\":  \"Standard Edition (64-bit)\",\r\n        \"sqlServerState\":  \"Running\",\r\n        \"sqlServerInstance\":  \"MSSQLSERVER\",\r\n        \"sqlServerNodes\":  \"EC2AMAZ-5P6M8WK\",\r\n        \"scriptExecutionTime\":  454.5521,\r\n        \"sqlServerMajorVersion\":  16,\r\n        \"sqlServerInstanceStorageInfo\":  \"[\\r\\n    {\\r\\n        \\\"SerialNumberOrScsiTarget\\\":  \\\"vol05109452537b7ad57_00000001.\\\"\\r\\n    },\\r\\n    {\\r\\n        \\\"SerialNumberOrScsiTarget\\\":  \\\"172.31.11.195\\\"\\r\\n    }\\r\\n]\",\r\n        \"windowsOsVersion\":  \"Microsoft Windows Server 2019 Datacenter\",\r\n        \"windowsAuthentication\":  true,\r\n        \"sqlServerName\":  \"EC2AMAZ-5P6M8WK\"\r\n    }\r\n]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -3608,409 +3608,401 @@
         ],
         "error": null
     },
-  "getOracleStorageAssessmentData": {
-    "volumes": {
-      "data": [
-        {
-          "name": "oracleredo2",
-          "uuid": "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a",
-          "svmName": "wlmdb_sqlsvm_1735809893269",
-          "autosize": "off",
-          "compaction": "inline",
-          "compression": "inline",
-          "autosizeMode": "off",
-          "deduplication": "both",
-          "thinProvision": true,
-          "tieringPolicy": "none",
-          "efficiencyType": "efficient",
-          "snapshotPolicy": "default",
-          "spaceGuarantee": "none",
-          "compressionType": "adaptive",
-          "fractionalReserve": 100,
-          "snapshotAutodelete": true,
-          "snapshotDeleteOrder": "newest_first",
-          "snapshotCopyReserve": 5,
-          "tieringMinCoolingDays": 4,
-          "spaceMgmtTryFirst": "volume_grow"
-        },
-        {
-          "name": "oraclearch2",
-          "uuid": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a",
-          "svmName": "wlmdb_sqlsvm_1735809893269",
-          "autosize": "off",
-          "compaction": "inline",
-          "compression": "inline",
-          "autosizeMode": "off",
-          "deduplication": "both",
-          "thinProvision": true,
-          "tieringPolicy": "none",
-          "efficiencyType": "efficient",
-          "snapshotPolicy": "default",
-          "spaceGuarantee": "none",
-          "compressionType": "adaptive",
-          "fractionalReserve": 100,
-          "snapshotAutodelete": true,
-          "snapshotDeleteOrder": "newest_first",
-          "snapshotCopyReserve": 5,
-          "tieringMinCoolingDays": 4,
-          "spaceMgmtTryFirst": "volume_grow"
-        },
-        {
-          "name": "oracledata2",
-          "uuid": "db1ed9f2-eee7-11ef-8fbb-837e18df6f7a",
-          "svmName": "wlmdb_sqlsvm_1735809893269",
-          "autosize": "off",
-          "compaction": "inline",
-          "compression": "inline",
-          "autosizeMode": "off",
-          "deduplication": "both",
-          "thinProvision": true,
-          "tieringPolicy": "all",
-          "efficiencyType": "efficient",
-          "snapshotPolicy": "default",
-          "spaceGuarantee": "none",
-          "compressionType": "adaptive",
-          "fractionalReserve": 100,
-          "snapshotAutodelete": true,
-          "snapshotDeleteOrder": "newest_first",
-          "snapshotCopyReserve": 5,
-          "tieringMinCoolingDays": 4,
-          "spaceMgmtTryFirst": "volume_grow"
-        }
-      ],
-      "error": "",
-      "filesystemId": "fs-0d5efc3057c4f12cb"
-    },
-    "binaryVolumes": {
-      "data": [
-        {
-          "nfsInfo": {
-            "rules": [
-              {
-                "clients": [
-                  "10.0.140.145"
-                ],
-                "superuser": [
-                  "any"
-                ],
-                "allow_suid": false
-              },
-              {
-                "clients": [
-                  "13.127.25.212"
-                ],
-                "superuser": [
-                  "none"
-                ],
-                "allow_suid": false
-              }
+    "getOracleStorageAssessmentData": {
+        "volumes": {
+            "data": [
+                {
+                    "name": "oracleredo2",
+                    "uuid": "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a",
+                    "svmName": "wlmdb_sqlsvm_1735809893269",
+                    "autosize": "off",
+                    "compaction": "inline",
+                    "compression": "inline",
+                    "autosizeMode": "off",
+                    "deduplication": "both",
+                    "thinProvision": true,
+                    "tieringPolicy": "none",
+                    "efficiencyType": "efficient",
+                    "snapshotPolicy": "default",
+                    "spaceGuarantee": "none",
+                    "compressionType": "adaptive",
+                    "fractionalReserve": 100,
+                    "snapshotAutodelete": true,
+                    "snapshotDeleteOrder": "newest_first",
+                    "snapshotCopyReserve": 5,
+                    "tieringMinCoolingDays": 4,
+                    "spaceMgmtTryFirst": "volume_grow"
+                },
+                {
+                    "name": "oraclearch2",
+                    "uuid": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a",
+                    "svmName": "wlmdb_sqlsvm_1735809893269",
+                    "autosize": "off",
+                    "compaction": "inline",
+                    "compression": "inline",
+                    "autosizeMode": "off",
+                    "deduplication": "both",
+                    "thinProvision": true,
+                    "tieringPolicy": "none",
+                    "efficiencyType": "efficient",
+                    "snapshotPolicy": "default",
+                    "spaceGuarantee": "none",
+                    "compressionType": "adaptive",
+                    "fractionalReserve": 100,
+                    "snapshotAutodelete": true,
+                    "snapshotDeleteOrder": "newest_first",
+                    "snapshotCopyReserve": 5,
+                    "tieringMinCoolingDays": 4,
+                    "spaceMgmtTryFirst": "volume_grow"
+                },
+                {
+                    "name": "oracledata2",
+                    "uuid": "db1ed9f2-eee7-11ef-8fbb-837e18df6f7a",
+                    "svmName": "wlmdb_sqlsvm_1735809893269",
+                    "autosize": "off",
+                    "compaction": "inline",
+                    "compression": "inline",
+                    "autosizeMode": "off",
+                    "deduplication": "both",
+                    "thinProvision": true,
+                    "tieringPolicy": "all",
+                    "efficiencyType": "efficient",
+                    "snapshotPolicy": "default",
+                    "spaceGuarantee": "none",
+                    "compressionType": "adaptive",
+                    "fractionalReserve": 100,
+                    "snapshotAutodelete": true,
+                    "snapshotDeleteOrder": "newest_first",
+                    "snapshotCopyReserve": 5,
+                    "tieringMinCoolingDays": 4,
+                    "spaceMgmtTryFirst": "volume_grow"
+                }
             ],
-            "svmName": "wlmdb_sqlsvm_1737955690776",
-            "svmUuid": "2b2ae63e-dc72-11ef-b430-bb0ad6a3b8df",
-            "volumeId": "a678830e-a9e0-11f0-bb42-83fc639f5501",
-            "instanceInfo": {
-              "domain": "ap-south-1.compute.internal",
-              "hostname": "ip-10-0-140-145.ap-south-1.compute.internal",
-              "publicIp": "13.127.25.212",
-              "privateIp": "10.0.140.145"
-            },
-            "exportPolicyName": "wf2_policy"
-          },
-          "volumeId": "a678830e-a9e0-11f0-bb42-83fc639f5501",
-          "mountPath": "/mnt/orahome",
-          "oracleSid": "ordbsdl",
-          "isNfsMount": true,
-          "oracleHome": "/mnt/orahome/app/oracle/product/19c/db_1",
-          "volumeName": "orahome",
-          "hasBinaries": true
-        }
-      ],
-      "error": ""
-    },
-    "dnfsServers": {
-      "data": [
-        {
-          "dirname": "/oracledata2",
-          "svrname": "172.31.255.231",
-          "nfsversion": "NFSv3.0"
-        },
-        {
-          "dirname": "/oracleredo2",
-          "svrname": "fsxnfsv3",
-          "nfsversion": "NFSv4.0"
-        }
-      ],
-      "error": ""
-    },
-    "nfsRootonly": [
-      {
-        "svmName": "wlmdb_sqlsvm_1735809893269",
-        "nfsRootonly": "disabled"
-      }
-    ],
-    "os": {
-      "selinux": {
-        "error": null,
-        "selinux-status": "enforcing",
-        "selinux-disabled": false
-      },
-      "multipath-io": {
-        "error": null,
-        "multipath-io-is-active": true,
-        "multipath-io-status": "active",
-        "multipath-io-is-enabled": true,
-        "multipath-io-enabled-status": "enabled"
-      },
-      "host-utilities": {
-        "error": "sanlun command not found",
-        "sanlun-version": null,
-        "sanlun-installed": false,
-        "os-version": "sles15"
-      },
-      "oracle-parameters": {
-        "error": null,
-        "filesystemio-options": {
-          "found": true,
-          "value": "none"
-        },
-        "db-file-multiblock-read-count": {
-          "found": true,
-          "value": "128"
-        }
-      },
-      "tcp-advanced-options": {
-        "error": null,
-        "tcp-features": {
-          "tcp-sack-value": "0",
-          "tcp-sack-enabled": false,
-          "tcp-timestamps-value": "0",
-          "tcp-timestamps-enabled": false,
-          "tcp-window-scaling-value": "0",
-          "tcp-window-scaling-enabled": false
-        }
-      },
-      "transparent-hugepages": {
-        "error": null,
-        "thp-status": "enabled",
-        "thp-disabled": false
-      },
-      "iscsi-targets-sessions": {
-        "error": null,
-        "iscsi-targets": [
-          {
-            "portal": "172.31.48.72:3260,1031 iqn.1992-08.com.netapp:sn.b2853ecdb1f911efa8811fbfd81226d0:vs.345",
-            "target_name": "172.31.48.72",
-            "active_sessions": 1
-          },
-          {
-            "portal": "172.31.6.100:3260,1032 iqn.1992-08.com.netapp:sn.b2853ecdb1f911efa8811fbfd81226d0:vs.345",
-            "target_name": "172.31.6.100",
-            "active_sessions": 0
-          }
-        ],
-        "iscsi-targets-found": 2,
-        "total-active-sessions": 1,
-        "iscsi-sessions-per-target": {
-          "172.31.48.72": 1,
-          "172.31.6.100": 0
-        }
-      },
-      "multipath-configuration": {
-        "error": null,
-        "defaults": {
-          "find_multipaths": true,
-          "polling_interval": 5,
-          "user_friendly_names": true
-        },
-        "netapp-device": {
-          "prio": "ontap",
-          "vendor": "NETAPP",
-          "product": "LUN",
-          "failback": "immediate",
-          "features": "2 pg_init_retries 50",
-          "dev_loss_tmo": "infinity",
-          "no_path_retry": "queue",
-          "flush_on_last_del": true,
-          "user_friendly_names": false,
-          "path_grouping_policy": "group_by_prio"
-        },
-        "multipath-config-found": true
-      },
-      "iscsi-replacement-timeout": {
-        "error": null,
-        "replacement-timeout": 120
-      },
-      "oracle-parameters-from-init": {
-        "error": null,
-        "db-file-multiblock-read-count-in-init": [
-          {
-            "path": "/u01/app/oracle/product/19c/db_1/dbs/spfilepdbnas1.ora",
-            "error": null,
-            "parameter-found": true,
-            "parameter-value": "128"
-          }
-        ]
-      },
-      "asm-os-config": {
-        "isIscsi": "true",
-        "asm-setup": "true",
-        "asm-external-redundancy": {
-          "error": "",
-          "assessment": {
-            "violations": [],
-            "result": "true",
-            "totalObjects": 2
-          }
-        },
-        "afd-logical-block-size": {},
-        "asmlib-logical-block-size": {
-          "assessment": {
-            "result": "Y"
-          },
-          "error": ""
-        }
-      },
-      "adr-info": {
-        "error": null,
-        "adr-home": "/mnt/orahome/app/oracle/diag/rdbms/ordbsdl/ordbsdl",
-        "adr-home-mount": "198.19.255.89:/orahome",
-        "adr-home-mount-info": {
-          "error": null,
-          "mount-point": "198.19.255.89:/orahome",
-          "mount-options": {
-            "bg": true,
-            "rw": true,
-            "hard": true,
-            "vers": "3",
-            "proto": "tcp",
-            "rsize": "32768",
-            "timeo": "600",
-            "wsize": "32768",
-            "acdirmax": "0",
-            "acdirmin": "0",
-            "acregmax": "0",
-            "acregmin": "0"
-          },
-          "filesystem-type": "nfs"
-        }
-      },
-      "kernel-parameters": {
-        "error": null,
-        "sunrpc-tcp-slot-entries": {
-          "tcp-slot-table": "2",
-          "tcp-max-slot-table": "65536"
-        }
-      },
-      "nfs-mount-options": {
-        "error": null,
-        "nfs-mount-options": [
-          {
-            "server": "172.31.255.231",
-            "options": {
-              "rw": true,
-              "sec": "sys",
-              "addr": "172.31.255.231",
-              "hard": true,
-              "vers": "4.2",
-              "proto": "tcp",
-              "rsize": "65536",
-              "timeo": "600",
-              "wsize": "65536",
-              "namlen": "255",
-              "retrans": "2",
-              "relatime": true,
-              "clientaddr": "172.31.48.99",
-              "local_lock": "none",
-              "acdirmax": "0",
-              "acdirmin": "0",
-              "acregmax": "0",
-              "acregmin": "0",
-              "noac": true
-            },
-            "mount-point": "/mnt/oradata",
-            "remote-path": "/oracledata2",
-            "filesystem-type": "nfs4"
-          },
-          {
-            "server": "172.31.255.231",
-            "options": {
-              "rw": true,
-              "sec": "sys",
-              "addr": "172.31.255.231",
-              "hard": true,
-              "vers": "4.2",
-              "proto": "tcp",
-              "rsize": "65536",
-              "timeo": "600",
-              "wsize": "65536",
-              "namlen": "255",
-              "retrans": "2",
-              "relatime": true,
-              "clientaddr": "172.31.48.99",
-              "local_lock": "none",
-              "acdirmax": "0",
-              "acdirmin": "0",
-              "acregmax": "0",
-              "acregmin": "0",
-              "noac": true
-            },
-            "mount-point": "/mnt/oraarch",
-            "remote-path": "/oraclearch2",
-            "filesystem-type": "nfs4"
-          },
-          {
-            "server": "172.31.255.231",
-            "options": {
-              "rw": true,
-              "sec": "sys",
-              "addr": "172.31.255.231",
-              "hard": true,
-              "vers": "4.2",
-              "proto": "tcp",
-              "rsize": "65536",
-              "timeo": "600",
-              "wsize": "65536",
-              "namlen": "255",
-              "retrans": "2",
-              "relatime": true,
-              "clientaddr": "172.31.48.99",
-              "local_lock": "none",
-              "acdirmax": "0",
-              "acdirmin": "0",
-              "acregmax": "0",
-              "acregmin": "0",
-              "noac": true
-            },
-            "mount-point": "/mnt/oraredoctl",
-            "remote-path": "/oracleredo2",
-            "filesystem-type": "nfs4"
-          }
-        ]
-      },
-      "idmapd-domain-config": {
-        "error": null,
-        "domain": "dbsqa.mssql.com",
-        "config-file": "/etc/idmapd.conf",
-        "config-exists": true
-      }
-    },
-    "nfsv4DomainData": {
-      "data": {
-        "v40Enabled": true,
-        "v41Enabled": true,
-        "v4IdDomain": "ap-south-1.compute.internal"
-      },
-      "error": ""
-    },
-    "sizing": {
-        "swapSpace": {
             "error": "",
-            "ramSizeInKb": "2117632",
-            "swapSizeInKb": "1048576",
-            "hugepagesSizeInKb": "20480"
+            "filesystemId": "fs-0d5efc3057c4f12cb"
+        },
+        "binaryVolumes": {
+            "data": [
+                {
+                    "nfsInfo": {
+                        "rules": [
+                            {
+                                "clients": ["10.0.140.145"],
+                                "superuser": ["any"],
+                                "allow_suid": false
+                            },
+                            {
+                                "clients": ["13.127.25.212"],
+                                "superuser": ["none"],
+                                "allow_suid": false
+                            }
+                        ],
+                        "svmName": "wlmdb_sqlsvm_1737955690776",
+                        "svmUuid": "2b2ae63e-dc72-11ef-b430-bb0ad6a3b8df",
+                        "volumeId": "a678830e-a9e0-11f0-bb42-83fc639f5501",
+                        "instanceInfo": {
+                            "domain": "ap-south-1.compute.internal",
+                            "hostname": "ip-10-0-140-145.ap-south-1.compute.internal",
+                            "publicIp": "13.127.25.212",
+                            "privateIp": "10.0.140.145"
+                        },
+                        "exportPolicyName": "wf2_policy"
+                    },
+                    "volumeId": "a678830e-a9e0-11f0-bb42-83fc639f5501",
+                    "mountPath": "/mnt/orahome",
+                    "oracleSid": "ordbsdl",
+                    "isNfsMount": true,
+                    "oracleHome": "/mnt/orahome/app/oracle/product/19c/db_1",
+                    "volumeName": "orahome",
+                    "hasBinaries": true
+                }
+            ],
+            "error": ""
+        },
+        "dnfsServers": {
+            "data": [
+                {
+                    "dirname": "/oracledata2",
+                    "svrname": "172.31.255.231",
+                    "nfsversion": "NFSv3.0"
+                },
+                {
+                    "dirname": "/oracleredo2",
+                    "svrname": "fsxnfsv3",
+                    "nfsversion": "NFSv4.0"
+                }
+            ],
+            "error": ""
+        },
+        "nfsRootonly": [
+            {
+                "svmName": "wlmdb_sqlsvm_1735809893269",
+                "nfsRootonly": "disabled"
+            }
+        ],
+        "os": {
+            "selinux": {
+                "error": null,
+                "selinux-status": "enforcing",
+                "selinux-disabled": false
+            },
+            "multipath-io": {
+                "error": null,
+                "multipath-io-is-active": true,
+                "multipath-io-status": "active",
+                "multipath-io-is-enabled": true,
+                "multipath-io-enabled-status": "enabled"
+            },
+            "host-utilities": {
+                "error": "sanlun command not found",
+                "sanlun-version": null,
+                "sanlun-installed": false,
+                "os-version": "sles15"
+            },
+            "oracle-parameters": {
+                "error": null,
+                "filesystemio-options": {
+                    "found": true,
+                    "value": "none"
+                },
+                "db-file-multiblock-read-count": {
+                    "found": true,
+                    "value": "128"
+                }
+            },
+            "tcp-advanced-options": {
+                "error": null,
+                "tcp-features": {
+                    "tcp-sack-value": "0",
+                    "tcp-sack-enabled": false,
+                    "tcp-timestamps-value": "0",
+                    "tcp-timestamps-enabled": false,
+                    "tcp-window-scaling-value": "0",
+                    "tcp-window-scaling-enabled": false
+                }
+            },
+            "transparent-hugepages": {
+                "error": null,
+                "thp-status": "enabled",
+                "thp-disabled": false
+            },
+            "iscsi-targets-sessions": {
+                "error": null,
+                "iscsi-targets": [
+                    {
+                        "portal": "172.31.48.72:3260,1031 iqn.1992-08.com.netapp:sn.b2853ecdb1f911efa8811fbfd81226d0:vs.345",
+                        "target_name": "172.31.48.72",
+                        "active_sessions": 1
+                    },
+                    {
+                        "portal": "172.31.6.100:3260,1032 iqn.1992-08.com.netapp:sn.b2853ecdb1f911efa8811fbfd81226d0:vs.345",
+                        "target_name": "172.31.6.100",
+                        "active_sessions": 0
+                    }
+                ],
+                "iscsi-targets-found": 2,
+                "total-active-sessions": 1,
+                "iscsi-sessions-per-target": {
+                    "172.31.48.72": 1,
+                    "172.31.6.100": 0
+                }
+            },
+            "multipath-configuration": {
+                "error": null,
+                "defaults": {
+                    "find_multipaths": true,
+                    "polling_interval": 5,
+                    "user_friendly_names": true
+                },
+                "netapp-device": {
+                    "prio": "ontap",
+                    "vendor": "NETAPP",
+                    "product": "LUN",
+                    "failback": "immediate",
+                    "features": "2 pg_init_retries 50",
+                    "dev_loss_tmo": "infinity",
+                    "no_path_retry": "queue",
+                    "flush_on_last_del": true,
+                    "user_friendly_names": false,
+                    "path_grouping_policy": "group_by_prio"
+                },
+                "multipath-config-found": true
+            },
+            "iscsi-replacement-timeout": {
+                "error": null,
+                "replacement-timeout": 120
+            },
+            "oracle-parameters-from-init": {
+                "error": null,
+                "db-file-multiblock-read-count-in-init": [
+                    {
+                        "path": "/u01/app/oracle/product/19c/db_1/dbs/spfilepdbnas1.ora",
+                        "error": null,
+                        "parameter-found": true,
+                        "parameter-value": "128"
+                    }
+                ]
+            },
+            "asm-os-config": {
+                "isIscsi": "true",
+                "asm-setup": "true",
+                "asm-external-redundancy": {
+                    "error": "",
+                    "assessment": {
+                        "violations": [],
+                        "result": "true",
+                        "totalObjects": 2
+                    }
+                },
+                "afd-logical-block-size": {},
+                "asmlib-logical-block-size": {
+                    "assessment": {
+                        "result": "Y"
+                    },
+                    "error": ""
+                }
+            },
+            "adr-info": {
+                "error": null,
+                "adr-home": "/mnt/orahome/app/oracle/diag/rdbms/ordbsdl/ordbsdl",
+                "adr-home-mount": "198.19.255.89:/orahome",
+                "adr-home-mount-info": {
+                    "error": null,
+                    "mount-point": "198.19.255.89:/orahome",
+                    "mount-options": {
+                        "bg": true,
+                        "rw": true,
+                        "hard": true,
+                        "vers": "3",
+                        "proto": "tcp",
+                        "rsize": "32768",
+                        "timeo": "600",
+                        "wsize": "32768",
+                        "acdirmax": "0",
+                        "acdirmin": "0",
+                        "acregmax": "0",
+                        "acregmin": "0"
+                    },
+                    "filesystem-type": "nfs"
+                }
+            },
+            "kernel-parameters": {
+                "error": null,
+                "sunrpc-tcp-slot-entries": {
+                    "tcp-slot-table": "2",
+                    "tcp-max-slot-table": "65536"
+                }
+            },
+            "nfs-mount-options": {
+                "error": null,
+                "nfs-mount-options": [
+                    {
+                        "server": "172.31.255.231",
+                        "options": {
+                            "rw": true,
+                            "sec": "sys",
+                            "addr": "172.31.255.231",
+                            "hard": true,
+                            "vers": "4.2",
+                            "proto": "tcp",
+                            "rsize": "65536",
+                            "timeo": "600",
+                            "wsize": "65536",
+                            "namlen": "255",
+                            "retrans": "2",
+                            "relatime": true,
+                            "clientaddr": "172.31.48.99",
+                            "local_lock": "none",
+                            "acdirmax": "0",
+                            "acdirmin": "0",
+                            "acregmax": "0",
+                            "acregmin": "0",
+                            "noac": true
+                        },
+                        "mount-point": "/mnt/oradata",
+                        "remote-path": "/oracledata2",
+                        "filesystem-type": "nfs4"
+                    },
+                    {
+                        "server": "172.31.255.231",
+                        "options": {
+                            "rw": true,
+                            "sec": "sys",
+                            "addr": "172.31.255.231",
+                            "hard": true,
+                            "vers": "4.2",
+                            "proto": "tcp",
+                            "rsize": "65536",
+                            "timeo": "600",
+                            "wsize": "65536",
+                            "namlen": "255",
+                            "retrans": "2",
+                            "relatime": true,
+                            "clientaddr": "172.31.48.99",
+                            "local_lock": "none",
+                            "acdirmax": "0",
+                            "acdirmin": "0",
+                            "acregmax": "0",
+                            "acregmin": "0",
+                            "noac": true
+                        },
+                        "mount-point": "/mnt/oraarch",
+                        "remote-path": "/oraclearch2",
+                        "filesystem-type": "nfs4"
+                    },
+                    {
+                        "server": "172.31.255.231",
+                        "options": {
+                            "rw": true,
+                            "sec": "sys",
+                            "addr": "172.31.255.231",
+                            "hard": true,
+                            "vers": "4.2",
+                            "proto": "tcp",
+                            "rsize": "65536",
+                            "timeo": "600",
+                            "wsize": "65536",
+                            "namlen": "255",
+                            "retrans": "2",
+                            "relatime": true,
+                            "clientaddr": "172.31.48.99",
+                            "local_lock": "none",
+                            "acdirmax": "0",
+                            "acdirmin": "0",
+                            "acregmax": "0",
+                            "acregmin": "0",
+                            "noac": true
+                        },
+                        "mount-point": "/mnt/oraredoctl",
+                        "remote-path": "/oracleredo2",
+                        "filesystem-type": "nfs4"
+                    }
+                ]
+            },
+            "idmapd-domain-config": {
+                "error": null,
+                "domain": "dbsqa.mssql.com",
+                "config-file": "/etc/idmapd.conf",
+                "config-exists": true
+            }
+        },
+        "nfsv4DomainData": {
+            "data": {
+                "v40Enabled": true,
+                "v41Enabled": true,
+                "v4IdDomain": "ap-south-1.compute.internal"
+            },
+            "error": ""
+        },
+        "sizing": {
+            "swapSpace": {
+                "error": "",
+                "ramSizeInKb": "2117632",
+                "swapSizeInKb": "1048576",
+                "hugepagesSizeInKb": "20480"
+            }
         }
-    }
-  },
+    },
     "getoptimizeMtuResponse": {
         "optimizedInterfaces": [
             {

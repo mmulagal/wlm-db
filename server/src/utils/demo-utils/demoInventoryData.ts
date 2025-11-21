@@ -56,7 +56,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerAuthentication: true,
                         windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerNodes: ['EC2WIN-A3E8F7B5', 'EC2WIN-C9D2A6E1'],
                         sqlServerDeploymentType: 'FCI',
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
                         storage: [
@@ -74,11 +74,11 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         manageReadiness: MANAGE_READINESS,
                         windowsClusterNodes: [
                             {
-                                Node: 'EC2AMAZ-1MF7SUF',
+                                Node: 'EC2WIN-A3E8F7B5',
                                 Address: '10.0.6.118'
                             },
                             {
-                                Node: 'EC2AMAZ-1MF7SUD',
+                                Node: 'EC2WIN-C9D2A6E1',
                                 Address: '10.0.28.145'
                             }
                         ]
@@ -98,7 +98,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerAuthentication: true,
                         windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerNodes: ['EC2WIN-F4B9D7A3', 'EC2WIN-6E2C8F15'],
                         nodeIps: ['10.0.6.118', '10.0.28.145'],
                         sqlServerDeploymentType: 'FCI',
                         storage: [
@@ -116,11 +116,11 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         manageReadiness: MANAGE_READINESS,
                         windowsClusterNodes: [
                             {
-                                Node: 'EC2AMAZ-1MF7SUF',
+                                Node: 'EC2WIN-F4B9D7A3',
                                 Address: '10.0.6.118'
                             },
                             {
-                                Node: 'EC2AMAZ-1MF7SUD',
+                                Node: 'EC2WIN-6E2C8F15',
                                 Address: '10.0.28.145'
                             }
                         ]
@@ -150,12 +150,12 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         sqlServerName: 'SQLServer-BYOL-01',
                         sqlServerVersion: '16.0.4105.2',
                         databaseCount: 8,
-                        nodeIps: ['10.0.6.118', '10.0.28.145'],
+                        nodeIps: ['10.0.6.11', '10.0.28.14'],
                         windowsAuthentication: true,
                         sqlServerAuthentication: true,
                         windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerNodes: ['EC2WIN-8A5D3B71', 'EC2WIN-2F7C9E46'],
                         sqlServerDeploymentType: 'AOAG',
                         storage: [
                             {
@@ -167,6 +167,144 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                             {
                                 type: 'SINGLE_AZ_1',
                                 zones: ['availability-zone-1']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-cb05c810a74426185',
+                ec2InstanceType: 'm5.2xlarge',
+                ec2UsageOperation: 'RunInstances:0102',
+                ssmState: 'connected',
+                ec2InstanceName: 'app-server-14',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2017,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5k',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLserver-PLM',
+                        sqlServerNodes: ['EC2WIN-8A5D3B71', 'EC2WIN-2F7C9E46'],
+                        nodeIps: ['10.0.6.11', '10.0.28.14'],
+                        sqlServerDeploymentType: 'AOAG',
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-1', 'availability-zone-2']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-cb05c810a74426187',
+                ec2InstanceType: 'm5.2xlarge',
+                ec2UsageOperation: 'RunInstances:0002',
+                ssmState: 'connected',
+                ec2InstanceName: 'app-byol-server-16',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2017,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b88',
+                        sqlServerState: 'Running',
+                        isDefaultInstance: false,
+                        sqlServerName: 'SQLServer-Sales-04',
+                        sqlServerVersion: '16.0.4105.2',
+                        databaseCount: 8,
+                        nodeIps: ['10.0.6.22', '10.0.28.28'],
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerNodes: ['EC2WIN-8A596F71', 'EC2WIN-2F76G346'],
+                        sqlServerDeploymentType: 'AOAG',
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'SINGLE_AZ_1',
+                                zones: ['availability-zone-1']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-cb05c810a74426189',
+                ec2InstanceType: 'm5.2xlarge',
+                ec2UsageOperation: 'RunInstances:0102',
+                ssmState: 'connected',
+                ec2InstanceName: 'app-server-21',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2017,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5y',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLserver-PLM',
+                        sqlServerNodes: ['EC2WIN-8A596F71', 'EC2WIN-2F76G346'],
+                        nodeIps: ['10.0.6.22', '10.0.28.28'],
+                        sqlServerDeploymentType: 'AOAG',
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-1', 'availability-zone-2']
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
@@ -185,7 +323,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                     {
                         sqlServerVersion: '16.0.4015.1',
                         sqlServerName: 'SQLServer-UAT-03',
-                        sqlServerNodes: ['sql-node1', 'sql-node2'],
+                        sqlServerNodes: ['EC2WIN-3E9A1F52', 'EC2WIN-8B4C7D96'],
                         nodeIps: ['10.0.2.224', '10.0.18.80'],
                         sqlServerDeploymentType: 'FCI',
                         sqlServerInstance: 'MSSQLSERVER',
@@ -261,7 +399,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLServer-UAT-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerNodes: ['EC2WIN-5A8F2D64'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
@@ -292,58 +430,12 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLServer-UAT-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerNodes: ['EC2WIN-C3F7E9A1'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
                                 type: 'FSXN',
                                 id: fsxId
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'MULTI_AZ_1',
-                                zones: ['availability-zone-1', 'availability-zone-2']
-                            }
-                        ],
-                        manageReadiness: MANAGE_READINESS
-                    }
-                ]
-            },
-            {
-                ec2InstanceId: 'i-cb05c810a74426185',
-                ec2InstanceType: 'm5.2xlarge',
-                ec2UsageOperation: 'RunInstances:0102',
-                ssmState: 'connected',
-                ec2InstanceName: 'app-server-14',
-                vpc: {
-                    id: 'vpc-84b3afe6',
-                    name: 'wlmdb-vpc',
-                    cidrBlock: '172.31.0.0/16'
-                },
-                sqlServerInstances: [
-                    {
-                        sqlServerEdition: 'Enterprise Edition (64-bit)',
-                        sqlServerEngineEdition: 3,
-                        sqlServerProductYear: 2017,
-                        sqlServerInstance: 'MSSQLSERVER',
-                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9b5k',
-                        isDefaultInstance: false,
-                        sqlServerState: 'Running',
-                        sqlServerVersion: '16.0.4080.1',
-                        databaseCount: 8,
-                        windowsAuthentication: true,
-                        sqlServerAuthentication: true,
-                        windowsDomainUserAuthentication: true,
-                        windowsOsVersion: 'Microsoft Windows Server 2019',
-                        sqlServerName: 'SQLserver-PLM',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUZ'],
-                        nodeIps: ['10.0.6.118', '10.0.28.145'],
-                        sqlServerDeploymentType: 'AOAG',
-                        storage: [
-                            {
-                                type: 'EBS',
-                                id: ebsVolId
                             }
                         ],
                         deploymentTypes: [
@@ -383,7 +475,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLserver-Finance-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerNodes: ['EC2WIN-8E4A6B29'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
@@ -419,7 +511,238 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsOsVersion: 'Microsoft Windows Server 2019',
 
                         sqlServerName: 'SQLserver-Finance-03',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerNodes: ['EC2WIN-9F7D2A83'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            },
+                            {
+                                type: 'EBS',
+                                id: 'vol-0a1b2c3d4e5f6i7h'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'SINGLE_AZ_1',
+                                zones: ['availability-zone-1']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-587a3738a9f5e35ab',
+                ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
+                ssmState: 'connected',
+                ec2InstanceName: 'app-server-30',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2019,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9c99',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLserver-HR-02',
+                        sqlServerNodes: ['EC2WIN-8E4AHF49'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            },
+                            {
+                                type: 'EBS',
+                                id: 'vol-0a1b2c3d4e5f6i7h'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'SINGLE_AZ_1',
+                                zones: ['availability-zone-1']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2019,
+                        sqlServerInstance: 'PROD-DB',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9c6l',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLserver-Finance-03',
+                        sqlServerNodes: ['EC2WIN-8F7D2A83'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            },
+                            {
+                                type: 'EBS',
+                                id: 'vol-0a1b2c3d4e5f6i7h'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'SINGLE_AZ_1',
+                                zones: ['availability-zone-1']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-587a3738a9f5e35ac',
+                ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
+                ssmState: 'connected',
+                ec2InstanceName: 'app-server-31',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2019,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9cA9',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLserver-Orders-02',
+                        sqlServerNodes: ['EC2WIN-8E4AHF49'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            },
+                            {
+                                type: 'EBS',
+                                id: 'vol-0a1b2c3d4e5f6i7h'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'SINGLE_AZ_1',
+                                zones: ['availability-zone-1']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-587a3738a9f5e35ad',
+                ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
+                ssmState: 'connected',
+                ec2InstanceName: 'app-server-32',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2019,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9cH9',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLserver-Store-02',
+                        sqlServerNodes: ['EC2WIN-8E4AHG4D'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: ebsVolId
+                            },
+                            {
+                                type: 'EBS',
+                                id: 'vol-0a1b2c3d4e5f6i7h'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'SINGLE_AZ_1',
+                                zones: ['availability-zone-1']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-587a3738a9f5e35af',
+                ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
+                ssmState: 'connected',
+                ec2InstanceName: 'app-server-33',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2019,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-9cq9',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4080.1',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQLserver-Employee-02',
+                        sqlServerNodes: ['EC2WIN-8E4AHK5D'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {

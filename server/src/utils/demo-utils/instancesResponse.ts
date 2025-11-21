@@ -47,7 +47,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQL-Managed-Host-Prod',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerNodes: ['EC2WIN-7B9F4A12'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
@@ -76,7 +76,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQL-Managed-Host-Prod',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerNodes: ['EC2WIN-3C8E5D29'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
@@ -105,7 +105,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQL-Managed-Host-Prod',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerNodes: ['EC2WIN-9A2F6E15'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
@@ -134,7 +134,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLServer-QA-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerNodes: ['EC2WIN-4D7B8C36'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
@@ -163,7 +163,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLServer-PreProd-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerNodes: ['EC2WIN-6E1A9F53'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
@@ -232,7 +232,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLServer-Prod-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerNodes: ['EC2WIN-8B4C2D71'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
@@ -261,7 +261,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLServer-Dev-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF'],
+                        sqlServerNodes: ['EC2WIN-5F9E1A47'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
@@ -290,7 +290,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLServer-UAT-02',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerNodes: ['EC2WIN-2A7D3F84', 'EC2WIN-9C5E6B21'],
                         sqlServerDeploymentType: 'FCI',
                         storage: [
                             {
@@ -319,7 +319,7 @@ function instanceDemoData(fsxId: string, ec2InstanceId: string) {
                         windowsAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQL-Managed-Host-DEV',
-                        sqlServerNodes: ['EC2AMAZ-1MF7SUF', 'EC2AMAZ-1MF7SUD'],
+                        sqlServerNodes: ['EC2WIN-1B8F4E92', 'EC2WIN-7D3A5C68'],
                         sqlServerDeploymentType: 'FCI',
                         storage: [
                             {
