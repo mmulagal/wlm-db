@@ -9,6 +9,13 @@
         }
     }
 
+    [class*='disabled-row'] {
+        // Target Typography components specifically as DsTypography color is taking precedence
+        [class*='Typography'] {
+            color: var(--text-disabled) !important;
+        }
+    }
+
     .firstColText {
         display: flex;
         gap: 8px;

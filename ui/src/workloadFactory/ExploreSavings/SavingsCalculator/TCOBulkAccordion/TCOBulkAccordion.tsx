@@ -398,17 +398,18 @@ const TCOBulkAccordion = () => {
         );
     };
 
-    const OpenFirstAccordion = ({ firstId }: { firstId?: string }) => {
+    const OpenFirstAccordion = ({ firstId, lastId }: { firstId?: string; lastId?: string }) => {
         const accordion = useAccordionContext();
         useEffect(() => {
-            if (accordion?.setOpenChildren && firstId) {
-                if (selectedRowsForExploreSavingsEBSBulk.length === 1) {
+            if (accordion?.setOpenChildren) {
+                if (selectedRowsForExploreSavingsEBSBulk.length === 1 && firstId) {
                     accordion.setOpenChildren(prev => ({ ...(prev || {}), [firstId]: true }));
-                } else {
+                } else if (selectedRowsForExploreSavingsEBSBulk.length > 1 && lastId && firstId) {
                     accordion.setOpenChildren(prev => ({ ...(prev || {}), [firstId]: false }));
+                    accordion.setOpenChildren(prev => ({ ...(prev || {}), [lastId]: true }));
                 }
             }
-        }, [accordion?.setOpenChildren, firstId]);
+        }, [accordion?.setOpenChildren, firstId, lastId, selectedRowsForExploreSavingsEBSBulk.length]);
         return null;
     };
 
@@ -425,7 +426,12 @@ const TCOBulkAccordion = () => {
             )}
             <AccordionController isGrouped>
                 {/* Helper to open first accordion after provider mounts */}
-                <OpenFirstAccordion firstId={String(selectedRowsForExploreSavingsEBSBulk[0]?.id || '1')} />
+                <OpenFirstAccordion
+                    firstId={String(selectedRowsForExploreSavingsEBSBulk[0]?.id || '1')}
+                    lastId={String(
+                        selectedRowsForExploreSavingsEBSBulk[selectedRowsForExploreSavingsEBSBulk.length - 1]?.id || '1'
+                    )}
+                />
                 <div className={styles.header}>
                     <DsTypography variant="Semibold_16">
                         {t('databases.explore-savings.selected-hosts')} ({selectedRowsForExploreSavingsEBSBulk.length})

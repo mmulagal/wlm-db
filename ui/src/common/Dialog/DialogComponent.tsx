@@ -56,7 +56,7 @@ const DialogComponent = ({
     const saveConfigFromSaving = useAppSelector(state => state.exploreSavings.saveConfigName);
     const {
         dialogError: { showDialogError = false, errorMessage = '' } = {},
-        dialogTooltip: { showTooltipInfo = false, tooltipText = '', showBullets = false, bulletPoints = [] } = {},
+        dialogTooltip: { showTooltipInfo = false, tooltipText = '' } = {},
         actionsDisabled
     } = useAppSelector(state => state.dialogComponent);
 
@@ -275,20 +275,7 @@ const DialogComponent = ({
                                         : styles.dialogFooterDialog
                                 }
                             >
-                                <TooltipInfo>
-                                    {tooltipText && (
-                                        <div style={isBulkExploreSavings.current ? { fontWeight: 500 } : undefined}>
-                                            {tooltipText}
-                                        </div>
-                                    )}
-                                    {showBullets && bulletPoints && bulletPoints.length > 0 && (
-                                        <ul style={{ marginTop: tooltipText ? '8px' : '0', paddingLeft: '20px' }}>
-                                            {bulletPoints.map((bullet, index) => (
-                                                <li key={index}>{bullet}</li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </TooltipInfo>
+                                <TooltipInfo>{tooltipText}</TooltipInfo>
                             </div>
                         )}
                     </div>

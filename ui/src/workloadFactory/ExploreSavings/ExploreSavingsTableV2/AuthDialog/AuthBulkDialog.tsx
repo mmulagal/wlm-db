@@ -241,20 +241,19 @@ const AuthBulkDialog = () => {
         <div className={styles.authDialog}>
             {rowsToRender.length === selectedRowsForExploreSavingsEBSBulk.length && (
                 <DsTypography variant="Regular_14">
-                    To explore potential savings, authentication is required for all databases
+                    {t('databases.explore-savings.authentication-bulk-dialog-header')}
                 </DsTypography>
             )}
 
             {rowsToRender.length < selectedRowsForExploreSavingsEBSBulk.length && (
                 <>
                     <DsTypography variant="Regular_14">
-                        To explore potential savings, authentication is required. Out of the{' '}
-                        {selectedRowsForExploreSavingsEBSBulk.length} selected databases,{' '}
-                        {selectedRowsForExploreSavingsEBSBulk.length - rowsToRender.length} are already authenticated.
+                        {t('databases.explore-savings.authentication-bulk-dialog-header')}
                     </DsTypography>
                     <DsTypography variant="Regular_14">
-                        Please provide credentials for the remaining {rowsToRender.length} databases to complete the
-                        authentication process.
+                        {selectedRowsForExploreSavingsEBSBulk.length - rowsToRender.length} out of the{' '}
+                        {selectedRowsForExploreSavingsEBSBulk.length}{' '}
+                        {t('databases.explore-savings.authentication-bulk-dialog-content-someAuthRequired')}.
                     </DsTypography>
                 </>
             )}

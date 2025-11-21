@@ -23,9 +23,7 @@ const initialState: DialogComponentState = {
     },
     dialogTooltip: {
         showTooltipInfo: false,
-        tooltipText: '',
-        showBullets: false,
-        bulletPoints: []
+        tooltipText: ''
     },
     actionsDisabled: false
 };
@@ -47,8 +45,6 @@ const dialogComponentSlice = createSlice({
                 errorMessage?: string;
                 showTooltipInfo?: boolean;
                 tooltipText?: string;
-                showBullets?: boolean;
-                bulletPoints?: string[];
             }>
         ) => {
             state.dialogError = {
@@ -57,9 +53,7 @@ const dialogComponentSlice = createSlice({
             };
             state.dialogTooltip = {
                 showTooltipInfo: action.payload.showTooltipInfo ?? false,
-                tooltipText: action.payload.tooltipText ?? '',
-                showBullets: action.payload.showBullets ?? false,
-                bulletPoints: action.payload.bulletPoints ?? []
+                tooltipText: action.payload.tooltipText ?? ''
             };
         },
         setActionsDisabled: (state, action: PayloadAction<boolean>) => {

@@ -1555,12 +1555,11 @@ export const handleAuthenticate = async (
                                 failedRows.length
                             } ${t('databases.explore-savings.authentication-failed-bulk-content2')}`,
                             showTooltipInfo: true,
-                            tooltipText: t('databases.explore-savings.authentication-failed-bulk-tooltip'),
-                            showBullets: true,
-                            bulletPoints: [
-                                t('databases.explore-savings.authentication-failed-bulk-tooltip-option1'),
-                                t('databases.explore-savings.authentication-failed-bulk-tooltip-option2')
-                            ]
+                            tooltipText: `${t('databases.explore-savings.authentication-failed-bulk-content1')} ${
+                                failedRows.length
+                            } ${t('databases.explore-savings.authentication-failed-bulk-content2')} ${t(
+                                'databases.explore-savings.authentication-failed-bulk-tooltip'
+                            )}`
                         })
                     );
                 } else {
@@ -1572,12 +1571,11 @@ export const handleAuthenticate = async (
                                 rowsToAuthenticate.length
                             } ${t('databases.explore-savings.authentication-failed-bulk-content2')}`,
                             showTooltipInfo: true,
-                            tooltipText: t('databases.explore-savings.authentication-failed-bulk-tooltip'),
-                            showBullets: true,
-                            bulletPoints: [
-                                t('databases.explore-savings.authentication-failed-bulk-tooltip-option1'),
-                                t('databases.explore-savings.authentication-failed-bulk-tooltip-option2')
-                            ]
+                            tooltipText: `${t('databases.explore-savings.authentication-failed-bulk-content1')} ${
+                                rowsToAuthenticate.length
+                            } ${t('databases.explore-savings.authentication-failed-bulk-content2')} ${t(
+                                'databases.explore-savings.authentication-failed-bulk-tooltip'
+                            )}`
                         })
                     );
                 }

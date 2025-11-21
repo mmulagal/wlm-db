@@ -1213,11 +1213,13 @@
             "optimize-savings": "Optimize savings",
             "optimize-your-calculation": "Optimize your calculation",
             "view-calculation-breadcrumb-title-manual": "Explore savings manually",
-            "authentication-failed-bulk-content1": "Authentication for ",
-            "authentication-failed-bulk-content2": " database failed.",
-            "authentication-failed-bulk-tooltip": "Please select one of the following options to proceed:",
+            "authentication-failed-bulk-content1": "Failed authentication for ",
+            "authentication-failed-bulk-content2": " database.",
+            "authentication-failed-bulk-tooltip": "Enter new credentials or remove the database from the list.",
             "authentication-failed-bulk-tooltip-option1": "Enter new credentials and click \"Apply,\" ",
-            "authentication-failed-bulk-tooltip-option2": "Remove the failed database from the list and click \"Apply.\""
+            "authentication-failed-bulk-tooltip-option2": "Remove the failed database from the list and click \"Apply.\"",
+            "authentication-bulk-dialog-header": "To explore savings, you must authenticate selected databases.",
+            "authentication-bulk-dialog-content-someAuthRequired": "selected databases are already authenticated. Provide credentials for the remaining three databases."
         },
         "instance-table": {
             "headers": {
