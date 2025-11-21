@@ -1212,7 +1212,12 @@
             "maybe-later": "Maybe later",
             "optimize-savings": "Optimize savings",
             "optimize-your-calculation": "Optimize your calculation",
-            "view-calculation-breadcrumb-title-manual": "Explore savings manually"
+            "view-calculation-breadcrumb-title-manual": "Explore savings manually",
+            "authentication-failed-bulk-content1": "Authentication for ",
+            "authentication-failed-bulk-content2": " database failed.",
+            "authentication-failed-bulk-tooltip": "Please select one of the following options to proceed:",
+            "authentication-failed-bulk-tooltip-option1": "Enter new credentials and click \"Apply,\" ",
+            "authentication-failed-bulk-tooltip-option2": "Remove the failed database from the list and click \"Apply.\""
         },
         "instance-table": {
             "headers": {

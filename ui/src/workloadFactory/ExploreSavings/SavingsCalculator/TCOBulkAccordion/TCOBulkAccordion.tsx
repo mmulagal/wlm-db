@@ -3,6 +3,7 @@ import { AccordionCardContent, DsTypography, useDialog, SelectField, TextField, 
 import { DsButton } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import {
     AccordionCard,
@@ -19,34 +20,65 @@ import SelectedVolumeSummary from '../SelectedVolumeSummary/SelectedVolumeSummar
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import TCOAddHostTable from './TCOAddHostTable/TCOAddHostTable';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
+import { FROM_DIALOG, SAVINGS_CALC_MODE } from '../../../../utils/consts';
 import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorComponent';
-import { setSelectedRowsForExploreSavingsEBSBulk } from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
+import {
+    setSelectedRowsForExploreSavingsEBSBulk,
+    resetBulkAuthCredentialsAndStatus,
+    resetRowsRequiringAuthBulk,
+    setRowsRequiringAuthBulk
+} from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
 import {
     setRecommendedTargetInstance,
     setSelectedMonthlyBYOLCost
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { generateOptionType, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
-import { generateLabel2ForInstanceType } from '../../ExploreSavingsUtils';
+import { generateLabel2ForInstanceType, handleAuthenticate } from '../../ExploreSavingsUtils';
 import { checkIfByolFieldRequired } from '../savingsUtil';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import { GENERAL } from '../../../../utils/appConstants';
 import hostInstanceStyles from './HostInstanceSelection.module.scss';
 import LearnHowDialog from '../SavingsSelection/LearnHowDialog/LearnHowDialog';
+import AuthBulkDialog from '../../ExploreSavingsTableV2/AuthDialog/AuthBulkDialog';
+import { useRegisterResourceCredentialsBulkMutation } from '../../../../utils/apiService';
+import { resetDialogComponent } from '../../../../store/workloadFactory/dialogComponentSlice';
 
 const TCOBulkAccordion = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { setDialog, closeDialog } = useDialog();
-    const { ebsTCOAction, selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
+    const { ebsTCOAction, selectedRowsForExploreSavingsEBSBulk, rowsRequiringAuthBulk } = useAppSelector(
+        state => state.exploreSavingsBulk
+    );
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
+    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
 
     // State to track recommendations per host
     const [hostRecommendations, setHostRecommendations] = useState<{ [hostId: string]: string }>({});
+
+    // State to track total host count (considering both selected and requiring auth)
+    const [totalHostCount, setTotalHostCount] = useState(0);
+
+    // Update total host count whenever selection or auth requirements change
+    useEffect(() => {
+        if (rowsRequiringAuthBulk && rowsRequiringAuthBulk.length > 0) {
+            setTotalHostCount(rowsRequiringAuthBulk.length);
+        } else {
+            setTotalHostCount(selectedRowsForExploreSavingsEBSBulk.length);
+        }
+    }, [selectedRowsForExploreSavingsEBSBulk, rowsRequiringAuthBulk]);
 
     const handleRemoveHost = (hostToRemove: any, event: React.SyntheticEvent) => {
         event.stopPropagation(); // Prevent accordion from toggling
         const updatedHosts = selectedRowsForExploreSavingsEBSBulk.filter((host: any) => host.id !== hostToRemove.id);
         dispatch(setSelectedRowsForExploreSavingsEBSBulk(updatedHosts));
+
+        // Also remove from rowsRequiringAuthBulk if it exists there
+        if (rowsRequiringAuthBulk && rowsRequiringAuthBulk.length > 0) {
+            const updatedAuthRows = rowsRequiringAuthBulk.filter((row: any) => row.id !== hostToRemove.id);
+            dispatch(setRowsRequiringAuthBulk(updatedAuthRows));
+        }
 
         // Clean up the host recommendation state
         const newHostRecommendations = { ...hostRecommendations };
@@ -56,6 +88,37 @@ const TCOBulkAccordion = () => {
 
     const addHostsDialogCallback = () => {
         closeDialog();
+    };
+
+    const handleAddHostsAuthDialog = (rowData: any) => {
+        setDialog(
+            <DialogComponent
+                header={t('databases.explore-savings.authentication-required')}
+                content={<AuthBulkDialog />}
+                primaryButton={t('databases.explore-savings.apply')}
+                secondaryButton={t('databases.explore-savings.close')}
+                closeCallback={() => {
+                    dispatch(resetDialogComponent());
+                    dispatch(resetBulkAuthCredentialsAndStatus());
+                    dispatch(resetRowsRequiringAuthBulk());
+                    closeDialog();
+                }}
+                dialogFrom={FROM_DIALOG.EXPLORE_SAVINGS}
+                callback={() => {
+                    handleAuthenticate(
+                        rowData,
+                        dispatch,
+                        GENERAL.EBS,
+                        isWorkloadFactory,
+                        navigate,
+                        () => closeDialog(),
+                        t,
+                        registerResourceCredBulk,
+                        true // isFromAddHosts = true
+                    );
+                }}
+            />
+        );
     };
 
     // Host-specific instance selection component
@@ -310,6 +373,14 @@ const TCOBulkAccordion = () => {
                         onHandlerReady={(handler: () => void) => {
                             exploreSavingsHandler = handler;
                         }}
+                        onAuthRequired={(selectedRows: any[]) => {
+                            // Close the add hosts dialog first
+                            closeDialog();
+                            // Open the auth dialog after a small delay to allow the first dialog to close
+                            setTimeout(() => {
+                                handleAddHostsAuthDialog(selectedRows[0]);
+                            }, 100);
+                        }}
                     />
                 }
                 primaryButton="Explore savings"
@@ -382,7 +453,7 @@ const TCOBulkAccordion = () => {
                                 <div className={styles.rightWidgetButton}>
                                     <DsButton
                                         type="text"
-                                        isDisabled={selectedRowsForExploreSavingsEBSBulk.length <= 1}
+                                        isDisabled={totalHostCount <= 1}
                                         onClick={event => handleRemoveHost(host, event)}
                                     >
                                         {t('databases.explore-savings.remove')}

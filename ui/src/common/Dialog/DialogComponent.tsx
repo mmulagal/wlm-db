@@ -7,7 +7,7 @@ import {
     TooltipInfo,
     useDialog
 } from '@netapp/design-system';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { useAppSelector } from '../../store/storeHooks';
@@ -16,6 +16,7 @@ import styles from './DialogComponent.module.scss';
 // eslint-disable-next-line import/no-cycle
 import { isValidSqlUsername } from '../../utils/utilityFunctions';
 import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
+import { ReactComponent as ActionRequiredIcon } from '../../assets/action-required.svg';
 
 type DialogProps = {
     header: string | any;
@@ -55,7 +56,7 @@ const DialogComponent = ({
     const saveConfigFromSaving = useAppSelector(state => state.exploreSavings.saveConfigName);
     const {
         dialogError: { showDialogError = false, errorMessage = '' } = {},
-        dialogTooltip: { showTooltipInfo = false, tooltipText = '' } = {},
+        dialogTooltip: { showTooltipInfo = false, tooltipText = '', showBullets = false, bulletPoints = [] } = {},
         actionsDisabled
     } = useAppSelector(state => state.dialogComponent);
 
@@ -86,6 +87,51 @@ const DialogComponent = ({
     );
     const { username: scUsername, password: scPassword } = useAppSelector(state => state.snapCenter.credentials);
     const { authVerification } = useAppSelector(state => state.snapCenter);
+    const { bulkAuthCredentials, rowsRequiringAuthBulk, selectedRowsForExploreSavingsEBSBulk } = useAppSelector(
+        state => state.exploreSavingsBulk
+    );
+
+    // Track if this is a bulk explore savings case
+    const isBulkExploreSavings = useRef(false);
+
+    // Check if all bulk credentials are filled for explore savings
+    const checkBulkCredentialsFilled = (rowsToCheck: any[]) => {
+        return rowsToCheck.every((row: any) => {
+            const credentials = bulkAuthCredentials[row.name];
+            return (
+                credentials &&
+                credentials.userName &&
+                credentials.userName.length > 0 &&
+                credentials.password &&
+                credentials.password.length > 0
+            );
+        });
+    };
+
+    // Check if explore savings credentials are disabled
+    const checkExploreSavingsDisabled = () => {
+        // Check if it's a bulk operation (multiple hosts requiring auth)
+        const rowsToCheck =
+            rowsRequiringAuthBulk && rowsRequiringAuthBulk.length > 0
+                ? rowsRequiringAuthBulk
+                : selectedRowsForExploreSavingsEBSBulk;
+
+        // If we have bulk credentials to check (bulk case)
+        if (rowsToCheck && rowsToCheck.length > 0) {
+            // Set flag for bulk explore savings case
+            isBulkExploreSavings.current = true;
+
+            // Check if all hosts have both username and password filled
+            const allCredentialsFilled = checkBulkCredentialsFilled(rowsToCheck);
+
+            // Disable if not all credentials are filled
+            return !allCredentialsFilled;
+        }
+
+        // Otherwise, it's a single auth case - check single credentials
+        isBulkExploreSavings.current = false;
+        return exploreSavingsUserName.length === 0 || exploreSavingsPassword.length === 0;
+    };
 
     // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() =>
@@ -161,11 +207,8 @@ const DialogComponent = ({
         ) {
             return true;
         }
-        if (
-            dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS &&
-            (exploreSavingsUserName.length === 0 || exploreSavingsPassword.length === 0)
-        ) {
-            return true;
+        if (dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS) {
+            return checkExploreSavingsDisabled();
         }
         // Condition to disable primary button for AWS backup dialog
         if (
@@ -212,15 +255,41 @@ const DialogComponent = ({
             <DialogFooter>
                 {/* Show error message if showDialogError is true which is stored in dialogComponentSlice so that the DialogComponents reloads when there is a change */}
                 {showDialogError && (
-                    <div className={styles.errorMsg}>
-                        <ErrorIcon className={styles.errorIcon} />
-                        <DsTypography variant="Semibold_14">Error:</DsTypography>&nbsp;
+                    <div className={isBulkExploreSavings.current ? styles.errorMsgBulk : styles.errorMsg}>
+                        {isBulkExploreSavings.current ? (
+                            <ActionRequiredIcon className={styles.errorIcon} />
+                        ) : (
+                            <ErrorIcon className={styles.errorIcon} />
+                        )}
+                        <DsTypography variant="Semibold_14">
+                            {isBulkExploreSavings.current ? 'Notice:' : 'Error:'}
+                        </DsTypography>
+                        &nbsp;
                         <DsTypography variant="Regular_14" className={styles.errorMsgText}>
                             {errorMessage}
                         </DsTypography>
                         {showTooltipInfo && (
-                            <div className={styles.dialogFooterDialog}>
-                                <TooltipInfo>{tooltipText}</TooltipInfo>
+                            <div
+                                className={
+                                    isBulkExploreSavings.current
+                                        ? styles.dialogFooterDialogBulk
+                                        : styles.dialogFooterDialog
+                                }
+                            >
+                                <TooltipInfo>
+                                    {tooltipText && (
+                                        <div style={isBulkExploreSavings.current ? { fontWeight: 500 } : undefined}>
+                                            {tooltipText}
+                                        </div>
+                                    )}
+                                    {showBullets && bulletPoints && bulletPoints.length > 0 && (
+                                        <ul style={{ marginTop: tooltipText ? '8px' : '0', paddingLeft: '20px' }}>
+                                            {bulletPoints.map((bullet, index) => (
+                                                <li key={index}>{bullet}</li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </TooltipInfo>
                             </div>
                         )}
                     </div>

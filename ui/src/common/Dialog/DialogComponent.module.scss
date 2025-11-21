@@ -32,6 +32,38 @@
     }
 }
 
+.errorMsgBulk {
+    display: flex;
+    margin-right: 56%;
+    align-items: center;
+
+    .errorMsgText {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dialogFooterDialogBulk {
+        position: relative;
+        top: 2px;
+        margin-left: 8px;
+
+        [class*='Popover-module_base'] {
+            width: 400px;
+        }
+    }
+
+    .dialogFooterDialogBulk:hover {
+        span {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+    }
+}
+
 .innerPageClass {
     height: 73vh !important;
 }

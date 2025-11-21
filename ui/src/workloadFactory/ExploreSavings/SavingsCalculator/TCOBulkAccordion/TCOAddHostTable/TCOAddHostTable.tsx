@@ -4,20 +4,25 @@ import { useDispatch } from 'react-redux';
 import { DsTypography } from '@netapp/design-system';
 import { ColumnProps, Table } from '../../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../../common/Lib/Table/useTable';
-import { setSelectedRowsForExploreSavingsEBSBulk } from '../../../../../store/workloadFactory/exploreSavingsBulkSlice';
+import {
+    setRowsRequiringAuthBulk,
+    setSelectedRowsForExploreSavingsEBSBulk
+} from '../../../../../store/workloadFactory/exploreSavingsBulkSlice';
 import { getSelectedFromSelectionState } from '../../../../../utils/utilityFunctions';
 import styles from './TCOAddHostTable.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { TableTopBar } from '../../../../../common/Lib/Table/TableTopBar';
 import { renderAllocatedCapacity, renderUnmanagedAZ, uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
 import { GENERAL } from '../../../../../utils/appConstants';
+import { shouldAuthDialogOpenBulk } from '../../../ExploreSavingsUtils';
 
 interface TCOAddHostTableProps {
     onExploreSavings?: () => void;
     onHandlerReady?: (handler: () => void) => void;
+    onAuthRequired?: (selectedRows: any[]) => void;
 }
 
-const TCOAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOAddHostTableProps) => {
+const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: TCOAddHostTableProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [ebsTableData, setEBSTableData] = useState<any>([]);
@@ -146,9 +151,26 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOAddHostTablePr
 
     const handleExploreSavings = () => {
         const selectedRows = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
-        dispatch(setSelectedRowsForExploreSavingsEBSBulk(selectedRows));
-        if (onExploreSavings) {
-            onExploreSavings();
+
+        // Check if any of the selected hosts need authentication
+        const rowsNeedingAuth = shouldAuthDialogOpenBulk(selectedRows || []);
+
+        if (rowsNeedingAuth && rowsNeedingAuth.length > 0) {
+            dispatch(setRowsRequiringAuthBulk(rowsNeedingAuth));
+
+            if (onAuthRequired) {
+                onAuthRequired(selectedRows);
+            }
+        } else {
+            const currentSelection = selectedRowsForExploreSavingsEBSBulk;
+            const existingIds = new Set(currentSelection.map((row: any) => row.id));
+            const newHosts = selectedRows.filter((row: any) => !existingIds.has(row.id));
+            const updatedSelection = [...currentSelection, ...newHosts];
+
+            dispatch(setSelectedRowsForExploreSavingsEBSBulk(updatedSelection));
+            if (onExploreSavings) {
+                onExploreSavings();
+            }
         }
     };
 

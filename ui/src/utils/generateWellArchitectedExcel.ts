@@ -431,7 +431,7 @@ function generateGeneralInformationData(data: ComprehensiveAssessmentData, datab
     const criticalIssues = breakdown.total.critical;
     const warningIssues = breakdown.total.warning;
     const wellArchitectedConfigurations = breakdown.total.optimized;
-    const total = breakdown.total.total;
+    const { total } = breakdown.total;
     const totalIssues = criticalIssues + warningIssues;
     const score = total > 0 ? Math.round((wellArchitectedConfigurations / total) * 100) : 0;
 

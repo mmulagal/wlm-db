@@ -24,7 +24,8 @@ import { ReactComponent as Failure } from '../../../../assets/error-icon.svg';
 import {
     setSelectedRowsForExploreSavingsEBSBulk,
     setBulkAuthCredentials,
-    resetBulkAuthCredentials
+    resetBulkAuthCredentialsAndStatus,
+    setRowsRequiringAuthBulk
 } from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
 
 const AuthBulkDialog = () => {
@@ -36,11 +37,9 @@ const AuthBulkDialog = () => {
 
     const { actionsDisabled } = useAppSelector(state => state.dialogComponent);
 
-    const { selectedRowsForExploreSavingsEBSBulk, bulkAuthCredentials, rowsRequiringAuthBulk } = useAppSelector(
+    const { selectedRowsForExploreSavingsEBSBulk, rowsRequiringAuthBulk, bulkAuthStatus } = useAppSelector(
         state => state.exploreSavingsBulk
     );
-
-    const notAllPassed = false;
 
     const rowsToRender =
         rowsRequiringAuthBulk && rowsRequiringAuthBulk.length > 0
@@ -73,7 +72,7 @@ const AuthBulkDialog = () => {
     const handleAuthTypeChange = (authType: string) => {
         dispatch(setSelectedAuthenticationType(authType));
         dispatch(resetServerDetailsCredentials());
-        dispatch(resetBulkAuthCredentials());
+        dispatch(resetBulkAuthCredentialsAndStatus());
         setTouchedFields({});
         setInputValues({});
     };
@@ -104,8 +103,7 @@ const AuthBulkDialog = () => {
 
         if (rowsRequiringAuthBulk && rowsRequiringAuthBulk.length > 0) {
             const updatedReq = rowsRequiringAuthBulk.filter((row: any) => row.id !== id);
-
-            dispatch({ type: 'exploreSavingsBulk/setRowsRequiringAuthBulk', payload: updatedReq });
+            dispatch(setRowsRequiringAuthBulk(updatedReq));
         }
 
         const updatedInputs = { ...inputValues };
@@ -127,35 +125,60 @@ const AuthBulkDialog = () => {
         }
     };
 
-    const mssqlInputFields = () => (
+    // Get dynamic labels based on authentication type
+    const getUsernameLabel = () => {
+        if (selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+            return t('databases.register-flow.detect-windows-username');
+        }
+        return t('databases.explore-savings.mssql-user-name');
+    };
+
+    const getPasswordLabel = () => {
+        if (selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+            return t('databases.register-flow.detect-windows-password');
+        }
+        return t('databases.explore-savings.mssql-password');
+    };
+
+    const getUsernamePlaceholder = () => {
+        if (selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+            return `${t('databases.general.enter')} ${t('databases.register-flow.detect-windows-username')}`;
+        }
+        return `${t('databases.general.enter')} ${t('databases.register-flow.detect-mssql-username')}`;
+    };
+
+    const authInputFields = () => (
         <div className={styles.firstBulkSection}>
             <div className={styles.rowContainer} style={{ marginBottom: '-16px' }}>
-                <DsTypography className={styles.hostName} variant="Semibold_14">
-                    {t('databases.explore-savings.database-name')}
+                <div className={styles.hostNameContainer}>
+                    {/* Reserve same space as icon container for alignment */}
+                    <div className={styles.svgContainer} />
+                    <DsTypography className={styles.hostName} variant="Semibold_14">
+                        {t('databases.explore-savings.database-name')}
+                    </DsTypography>
+                </div>
+
+                <DsTypography className={styles.fieldLabel} variant="Semibold_14">
+                    {getUsernameLabel()}
                 </DsTypography>
 
                 <DsTypography className={styles.fieldLabel} variant="Semibold_14">
-                    {t('databases.explore-savings.mssql-user-name')}
-                </DsTypography>
-
-                <DsTypography className={styles.fieldLabel} variant="Semibold_14">
-                    {t('databases.explore-savings.mssql-password')}
+                    {getPasswordLabel()}
                 </DsTypography>
             </div>
-            {rowsToRender.map((row: any, idx: any) => {
+            {rowsToRender.map((row: any) => {
                 const hostName = row.name;
                 const userTouched = touchedFields[hostName]?.user;
                 const passTouched = touchedFields[hostName]?.pass;
                 const userValue = inputValues[hostName]?.userName || '';
                 const passValue = inputValues[hostName]?.password || '';
+                const authStatus = bulkAuthStatus?.[hostName];
 
                 return (
                     <div key={row.id} className={styles.rowContainer}>
                         <div className={styles.hostNameContainer}>
-                            {/* in case when all are not passed, some passed and some failed */}
-                            {notAllPassed && (
-                                <div className={styles.svgContainer}>{getImageForStatus(row?.status)}</div>
-                            )}
+                            {/* Reserve space for status icon to maintain alignment */}
+                            <div className={styles.svgContainer}>{authStatus && getImageForStatus(authStatus)}</div>
                             <DsTypography className={styles.hostName} variant="Regular_14">
                                 {hostName}
                             </DsTypography>
@@ -178,9 +201,7 @@ const AuthBulkDialog = () => {
                                       }
                                   }
                                 : {})}
-                            placeholder={`${t('databases.general.enter')} ${t(
-                                'databases.register-flow.detect-mssql-username'
-                            )}`}
+                            placeholder={getUsernamePlaceholder()}
                         />
 
                         <DsTextField
@@ -255,7 +276,7 @@ const AuthBulkDialog = () => {
                     onClick={() => handleAuthTypeChange(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION)}
                 />
             </div>
-            <div className={styles.textFieldContainer}>{mssqlInputFields()}</div>
+            <div className={styles.textFieldContainer}>{authInputFields()}</div>
             <div className={styles.accordionContainer}>
                 <AccordionController isGrouped={false}>
                     <AccordionCard

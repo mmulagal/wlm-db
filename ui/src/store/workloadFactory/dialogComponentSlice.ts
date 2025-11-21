@@ -10,6 +10,8 @@ interface DialogComponentState {
     dialogTooltip?: {
         showTooltipInfo?: boolean;
         tooltipText?: string;
+        showBullets?: boolean;
+        bulletPoints?: string[];
     };
     actionsDisabled?: boolean;
 }
@@ -21,7 +23,9 @@ const initialState: DialogComponentState = {
     },
     dialogTooltip: {
         showTooltipInfo: false,
-        tooltipText: ''
+        tooltipText: '',
+        showBullets: false,
+        bulletPoints: []
     },
     actionsDisabled: false
 };
@@ -43,6 +47,8 @@ const dialogComponentSlice = createSlice({
                 errorMessage?: string;
                 showTooltipInfo?: boolean;
                 tooltipText?: string;
+                showBullets?: boolean;
+                bulletPoints?: string[];
             }>
         ) => {
             state.dialogError = {
@@ -51,7 +57,9 @@ const dialogComponentSlice = createSlice({
             };
             state.dialogTooltip = {
                 showTooltipInfo: action.payload.showTooltipInfo ?? false,
-                tooltipText: action.payload.tooltipText ?? ''
+                tooltipText: action.payload.tooltipText ?? '',
+                showBullets: action.payload.showBullets ?? false,
+                bulletPoints: action.payload.bulletPoints ?? []
             };
         },
         setActionsDisabled: (state, action: PayloadAction<boolean>) => {

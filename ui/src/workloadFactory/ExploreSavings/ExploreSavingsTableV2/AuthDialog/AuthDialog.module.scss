@@ -126,6 +126,7 @@
         display: flex;
         gap: 24px;
         align-items: center;
+        margin-left: 40px;
 
         .hostNameContainer {
             display: flex;
@@ -135,6 +136,12 @@
             .svgContainer {
                 position: relative;
                 top: 2px;
+                width: 22px; // Reserve space for status icon so that after the success and error icons all items align
+                height: 22px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
                 .spinner {
                     svg {
                         width: 22px;

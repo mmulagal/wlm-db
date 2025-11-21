@@ -35,7 +35,8 @@ import {
     setEbsTCOAction,
     setSelectedRowsForExploreSavingsEBSBulk,
     setRowsRequiringAuthBulk,
-    resetRowsRequiringAuthBulk
+    resetRowsRequiringAuthBulk,
+    resetBulkAuthCredentialsAndStatus
 } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import BulkActionContainer from '../../../common/BulkAction/BulkActionContainer';
 import AuthBulkDialog from './AuthDialog/AuthBulkDialog';
@@ -178,7 +179,8 @@ const ExploreSavingsTableV2 = () => {
                 secondaryButton={t('databases.explore-savings.close')}
                 closeCallback={() => {
                     dispatch(resetDialogComponent());
-                    dispatch(resetServerDetailsCredentials());
+                    dispatch(resetBulkAuthCredentialsAndStatus());
+                    dispatch(resetRowsRequiringAuthBulk());
                     closeDialog();
                 }}
                 dialogFrom={FROM_DIALOG.EXPLORE_SAVINGS}
@@ -194,7 +196,6 @@ const ExploreSavingsTableV2 = () => {
                         registerResourceCredBulk
                     );
                 }}
-                customClass={styles.protectionDialog}
             />
         );
     };
@@ -396,11 +397,27 @@ const ExploreSavingsTableV2 = () => {
         isLazyLoading: isDiscoverInProgress || isManagedHostListLoading || multiDataLoading
     });
 
+    // Sync table selection state to Redux
     useEffect(() => {
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
         dispatch(setSelectedRowsForExploreSavingsEBSBulk(rowsData));
     }, [tableProps.selectionState]);
+
+    // Sync Redux selection state back to table when rows are removed externally (e.g., from auth dialog)
+    useEffect(() => {
+        const currentTableSelectedIds = new Set(
+            Object.keys(tableProps.selectionState?.rows || {}).filter(id => tableProps.selectionState?.rows[id])
+        );
+        const reduxSelectedIds = new Set(selectedRowsForExploreSavingsEBSBulk.map((row: any) => row.id));
+
+        // Find rows that are selected in table but not in Redux (these need to be deselected)
+        currentTableSelectedIds.forEach(id => {
+            if (!reduxSelectedIds.has(id)) {
+                tableProps.toggleRowSelection(id)(false);
+            }
+        });
+    }, [selectedRowsForExploreSavingsEBSBulk]);
 
     const handleEBSBulkAction = () => {
         dispatch(setEbsTCOAction('bulk'));

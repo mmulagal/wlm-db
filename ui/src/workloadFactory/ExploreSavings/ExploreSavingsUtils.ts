@@ -45,7 +45,12 @@ import {
 } from '../../store/workloadFactory/dialogComponentSlice';
 import { DiscoverHostInterface } from '../../utils/types/inventoryV2Types';
 import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
-import { setSelectedRowsForExploreSavingsEBSBulk } from '../../store/workloadFactory/exploreSavingsBulkSlice';
+import {
+    resetBulkAuthCredentialsAndStatus,
+    resetRowsRequiringAuthBulk,
+    setBulkAuthStatus,
+    setSelectedRowsForExploreSavingsEBSBulk
+} from '../../store/workloadFactory/exploreSavingsBulkSlice';
 
 export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
     postBlueXPMessage({
@@ -1380,7 +1385,8 @@ export const handleAuthenticate = async (
     navigate: NavigateFunction,
     closeDialogCallback: () => void,
     t: TFunction,
-    registerResourceCredBulk: (args: any) => Promise<any>
+    registerResourceCredBulk: (args: any) => Promise<any>,
+    isFromAddHosts: boolean = false
 ) => {
     try {
         dispatch(setActionsDisabled(true));
@@ -1389,75 +1395,294 @@ export const handleAuthenticate = async (
             selectedAuthenticationType,
             serverDetails: { userName, password }
         } = state.exploreSavings;
+        const { selectedRowsForExploreSavingsEBSBulk, bulkAuthCredentials, rowsRequiringAuthBulk } =
+            state.exploreSavingsBulk;
 
-        // Get all the SQL Server instances that match the selected file system type
-        const matchedInstances = rowData?.sqlServerInstances?.filter(
-            (instance: any) => instance?.fileSystemType === selectedExploreSavingsTabFileSystemType
-        );
+        // Determine if this is a bulk operation
+        const isBulkOperation = selectedRowsForExploreSavingsEBSBulk && selectedRowsForExploreSavingsEBSBulk.length > 0;
 
-        const credentialList: {
-            resourceId: string;
-            resourceType: string;
-            username: string;
-            password: string;
-        }[] = [];
+        if (isBulkOperation) {
+            // Bulk authentication flow
+            const rowsToAuthenticate =
+                rowsRequiringAuthBulk?.length > 0 ? rowsRequiringAuthBulk : selectedRowsForExploreSavingsEBSBulk;
 
-        matchedInstances?.forEach((instance: any) => {
-            credentialList.push({
-                resourceId: instance?.databaseInstanceName,
-                resourceType:
-                    selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
-                        ? DETECT_HOST_VAR.MSSQL
-                        : DETECT_HOST_VAR.WINDOWS,
-                username: userName,
-                password
+            // Initialize status to 'in-progress' for all rows
+            const initialStatus: any = {};
+            rowsToAuthenticate.forEach((row: any) => {
+                initialStatus[row.name] = 'in-progress';
             });
-        });
-        const credList = {
-            credentials: credentialList,
-            checkManageReadiness: true
-        };
+            dispatch(setBulkAuthStatus(initialStatus));
 
-        const payload = {
-            items: [
-                {
-                    ...credList,
-                    ec2InstanceId: rowData?.ec2InstanceId,
-                    region: rowData?.regionId,
-                    credentialsId: rowData?.credentialId
+            // Create payload for bulk authentication
+            const payloadItems: any[] = [];
+
+            rowsToAuthenticate.forEach((row: any) => {
+                const credentialList: {
+                    resourceId: string;
+                    resourceType: string;
+                    username: string;
+                    password: string;
+                }[] = [];
+
+                const hostCredentials = bulkAuthCredentials[row.name];
+                const credUserName = hostCredentials?.userName || '';
+                const credPassword = hostCredentials?.password || '';
+
+                // Only create credentials for instances in this specific host that match the fileSystemType
+                row?.sqlServerInstances?.forEach((instance: any) => {
+                    if (instance?.fileSystemType === selectedExploreSavingsTabFileSystemType) {
+                        credentialList.push({
+                            resourceId: instance?.databaseInstanceName,
+                            resourceType:
+                                selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                                    ? DETECT_HOST_VAR.MSSQL
+                                    : DETECT_HOST_VAR.WINDOWS,
+                            username: credUserName,
+                            password: credPassword
+                        });
+                    }
+                });
+
+                if (credentialList.length > 0) {
+                    payloadItems.push({
+                        credentials: credentialList,
+                        checkManageReadiness: true,
+                        ec2InstanceId: row?.ec2InstanceId,
+                        region: row?.regionId,
+                        credentialsId: row?.credentialId
+                    });
                 }
-            ]
-        };
+            });
 
-        const result = await registerResourceCredBulk({ payload });
-        if (result && !result?.error && result?.data) {
-            const registerItemExists = result?.data?.items?.length > 0;
-            if (registerItemExists && isMissingSqlPermissions(result?.data?.items?.[0]?.registerDetails)) {
+            const payload = { items: payloadItems };
+            const result = await registerResourceCredBulk({ payload });
+
+            if (result && !result?.error && result?.data) {
+                const updatedStatus: any = {};
+                let allSuccess = true;
+                let anySuccess = false;
+
+                rowsToAuthenticate.forEach((row: any) => {
+                    const registerItem = result?.data?.items?.find(
+                        (item: any) =>
+                            item.ec2InstanceId === row?.ec2InstanceId &&
+                            item.region === row?.regionId &&
+                            item.credentialsId === row?.credentialId
+                    );
+
+                    const registerItemExists = registerItem && registerItem?.registerDetails?.length > 0;
+
+                    if (registerItemExists && isMissingSqlPermissions(registerItem?.registerDetails)) {
+                        updatedStatus[row.name] = 'failure';
+                        allSuccess = false;
+                    } else if (registerItemExists) {
+                        // Check all registerDetails for any errors
+                        let hasErrors = false;
+                        const errors: string[] = [];
+
+                        registerItem.registerDetails.forEach((detail: any) => {
+                            if (detail?.databaseServerError) {
+                                errors.push(detail.databaseServerError);
+                                hasErrors = true;
+                            }
+                            if (detail?.fsxnError) {
+                                errors.push(detail.fsxnError);
+                                hasErrors = true;
+                            }
+                        });
+
+                        if (!hasErrors) {
+                            updatedStatus[row.name] = 'success';
+                            anySuccess = true;
+                            // Update inventory table for successful authentication
+                            updateInventoryTable(row, selectedExploreSavingsTabFileSystemType, dispatch, result);
+                        } else {
+                            updatedStatus[row.name] = 'failure';
+                            allSuccess = false;
+                        }
+                    } else {
+                        updatedStatus[row.name] = 'failure';
+                        allSuccess = false;
+                    }
+                });
+
+                dispatch(setBulkAuthStatus(updatedStatus));
+
+                if (allSuccess) {
+                    // All authentications successful
+                    if (isFromAddHosts) {
+                        // If from add hosts, add the successfully authenticated hosts to the selection
+                        const currentSelection = selectedRowsForExploreSavingsEBSBulk;
+                        const existingIds = new Set(currentSelection.map((row: any) => row.id));
+                        const newHosts = rowsToAuthenticate.filter((row: any) => !existingIds.has(row.id));
+                        const updatedSelection = [...currentSelection, ...newHosts];
+
+                        dispatch(setSelectedRowsForExploreSavingsEBSBulk(updatedSelection));
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                message: `Authenticated for ${rowsToAuthenticate.length} database hosts was successful.\nYou can now explore potential savings.`
+                            })
+                        );
+                        dispatch(resetDialogComponent());
+                        dispatch(resetBulkAuthCredentialsAndStatus());
+                        dispatch(resetRowsRequiringAuthBulk());
+                        closeDialogCallback();
+                    } else {
+                        // Navigate to savings page
+                        const firstHost = selectedRowsForExploreSavingsEBSBulk[0];
+                        const bulkServerName = `${selectedRowsForExploreSavingsEBSBulk.length} hosts selected`;
+                        onClickESHost(dispatch, firstHost, isWorkloadFactory, navigate, true, bulkServerName);
+
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                message: `Authenticated for ${selectedRowsForExploreSavingsEBSBulk.length} database hosts was successful.\nYou can now explore potential savings.`
+                            })
+                        );
+                        dispatch(resetDialogComponent());
+                        dispatch(resetBulkAuthCredentialsAndStatus());
+                        closeDialogCallback();
+                    }
+                } else if (anySuccess) {
+                    // Some hosts authenticated successfully, some failed
+                    const failedRows = rowsToAuthenticate.filter((row: any) => updatedStatus[row.name] === 'failure');
+
+                    dispatch(
+                        setDialogErrorWithTooltip({
+                            showDialogError: true,
+                            errorMessage: `${t('databases.explore-savings.authentication-failed-bulk-content1')} ${
+                                failedRows.length
+                            } ${t('databases.explore-savings.authentication-failed-bulk-content2')}`,
+                            showTooltipInfo: true,
+                            tooltipText: t('databases.explore-savings.authentication-failed-bulk-tooltip'),
+                            showBullets: true,
+                            bulletPoints: [
+                                t('databases.explore-savings.authentication-failed-bulk-tooltip-option1'),
+                                t('databases.explore-savings.authentication-failed-bulk-tooltip-option2')
+                            ]
+                        })
+                    );
+                } else {
+                    // All failed
+                    dispatch(
+                        setDialogErrorWithTooltip({
+                            showDialogError: true,
+                            errorMessage: `${t('databases.explore-savings.authentication-failed-bulk-content1')} ${
+                                rowsToAuthenticate.length
+                            } ${t('databases.explore-savings.authentication-failed-bulk-content2')}`,
+                            showTooltipInfo: true,
+                            tooltipText: t('databases.explore-savings.authentication-failed-bulk-tooltip'),
+                            showBullets: true,
+                            bulletPoints: [
+                                t('databases.explore-savings.authentication-failed-bulk-tooltip-option1'),
+                                t('databases.explore-savings.authentication-failed-bulk-tooltip-option2')
+                            ]
+                        })
+                    );
+                }
+            } else {
+                // API error
+                const failedStatus: any = {};
+                rowsToAuthenticate.forEach((row: any) => {
+                    failedStatus[row.name] = 'failure';
+                });
+                dispatch(setBulkAuthStatus(failedStatus));
+
                 dispatch(
                     setDialogErrorWithTooltip({
                         showDialogError: true,
                         errorMessage: t('databases.explore-savings.authentication-failed'),
                         showTooltipInfo: true,
-                        tooltipText: t('databases.explore-savings.missing-sql-permissions')
+                        tooltipText:
+                            // @ts-ignore
+                            result?.error?.data?.message || t('databases.explore-savings.authentication-failed')
                     })
                 );
-            } else if (
-                registerItemExists &&
-                !result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError &&
-                !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
-            ) {
-                updateInventoryTable(rowData, selectedExploreSavingsTabFileSystemType, dispatch, result);
-                // Navigate to the Explore Savings page
-                onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: `Authenticated database host ${rowData?.name}.\nYou can now explore potential savings.`
-                    })
-                );
-                dispatch(resetDialogComponent());
-                dispatch(resetServerDetailsCredentials());
-                closeDialogCallback();
+            }
+        } else {
+            // Single host authentication flow
+            // Get all the SQL Server instances that match the selected file system type
+            const matchedInstances = rowData?.sqlServerInstances?.filter(
+                (instance: any) => instance?.fileSystemType === selectedExploreSavingsTabFileSystemType
+            );
+
+            const credentialList: {
+                resourceId: string;
+                resourceType: string;
+                username: string;
+                password: string;
+            }[] = [];
+
+            matchedInstances?.forEach((instance: any) => {
+                credentialList.push({
+                    resourceId: instance?.databaseInstanceName,
+                    resourceType:
+                        selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                            ? DETECT_HOST_VAR.MSSQL
+                            : DETECT_HOST_VAR.WINDOWS,
+                    username: userName,
+                    password
+                });
+            });
+            const credList = {
+                credentials: credentialList,
+                checkManageReadiness: true
+            };
+
+            const payload = {
+                items: [
+                    {
+                        ...credList,
+                        ec2InstanceId: rowData?.ec2InstanceId,
+                        region: rowData?.regionId,
+                        credentialsId: rowData?.credentialId
+                    }
+                ]
+            };
+
+            const result = await registerResourceCredBulk({ payload });
+            if (result && !result?.error && result?.data) {
+                const registerItemExists = result?.data?.items?.length > 0;
+                if (registerItemExists && isMissingSqlPermissions(result?.data?.items?.[0]?.registerDetails)) {
+                    dispatch(
+                        setDialogErrorWithTooltip({
+                            showDialogError: true,
+                            errorMessage: t('databases.explore-savings.authentication-failed'),
+                            showTooltipInfo: true,
+                            tooltipText: t('databases.explore-savings.missing-sql-permissions')
+                        })
+                    );
+                } else if (
+                    registerItemExists &&
+                    !result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError &&
+                    !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
+                ) {
+                    updateInventoryTable(rowData, selectedExploreSavingsTabFileSystemType, dispatch, result);
+                    // Navigate to the Explore Savings page
+                    onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: `Authenticated database host ${rowData?.name}.\nYou can now explore potential savings.`
+                        })
+                    );
+                    dispatch(resetDialogComponent());
+                    dispatch(resetServerDetailsCredentials());
+                    closeDialogCallback();
+                } else {
+                    dispatch(
+                        setDialogErrorWithTooltip({
+                            showDialogError: true,
+                            errorMessage: t('databases.explore-savings.authentication-failed'),
+                            showTooltipInfo: true,
+                            tooltipText:
+                                result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
+                                result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
+                                t('databases.explore-savings.authentication-failed')
+                        })
+                    );
+                }
             } else {
                 dispatch(
                     setDialogErrorWithTooltip({
@@ -1465,23 +1690,11 @@ export const handleAuthenticate = async (
                         errorMessage: t('databases.explore-savings.authentication-failed'),
                         showTooltipInfo: true,
                         tooltipText:
-                            result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
-                            result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
-                            t('databases.explore-savings.authentication-failed')
+                            // @ts-ignore
+                            result?.error?.data?.message || t('databases.explore-savings.authentication-failed')
                     })
                 );
             }
-        } else {
-            dispatch(
-                setDialogErrorWithTooltip({
-                    showDialogError: true,
-                    errorMessage: t('databases.explore-savings.authentication-failed'),
-                    showTooltipInfo: true,
-                    tooltipText:
-                        // @ts-ignore
-                        result?.error?.data?.message || t('databases.explore-savings.authentication-failed')
-                })
-            );
         }
     } catch (error) {
         dispatch(

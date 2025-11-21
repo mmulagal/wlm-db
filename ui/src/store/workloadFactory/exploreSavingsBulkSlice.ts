@@ -8,7 +8,8 @@ const initialHeaderState: ExploreSavingsBulkSliceEntities = {
     selectedAddHostRows: [],
     bulkAuthCredentials: {},
     // rows that require auth when doing a bulk action
-    rowsRequiringAuthBulk: []
+    rowsRequiringAuthBulk: [],
+    bulkAuthStatus: {}
 };
 
 const exploreSavingsBulkSlice = createSlice({
@@ -38,6 +39,19 @@ const exploreSavingsBulkSlice = createSlice({
         },
         resetBulkAuthCredentials: state => {
             state.bulkAuthCredentials = {};
+        },
+        setBulkAuthStatus: (state, action: PayloadAction<any>) => {
+            state.bulkAuthStatus = {
+                ...state.bulkAuthStatus,
+                ...action.payload
+            };
+        },
+        resetBulkAuthStatus: state => {
+            state.bulkAuthStatus = {};
+        },
+        resetBulkAuthCredentialsAndStatus: state => {
+            state.bulkAuthCredentials = {};
+            state.bulkAuthStatus = {};
         }
     }
 });
@@ -49,7 +63,10 @@ export const {
     setBulkAuthCredentials,
     setRowsRequiringAuthBulk,
     resetRowsRequiringAuthBulk,
-    resetBulkAuthCredentials
+    resetBulkAuthCredentials,
+    setBulkAuthStatus,
+    resetBulkAuthStatus,
+    resetBulkAuthCredentialsAndStatus
 } = exploreSavingsBulkSlice.actions;
 
 export default exploreSavingsBulkSlice;
