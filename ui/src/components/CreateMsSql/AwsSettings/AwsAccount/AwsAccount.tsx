@@ -287,7 +287,7 @@ const AwsAccount = () => {
                                         <Typography variant="Regular_14">{GENERAL.STEP_TWO_TEXT[1]}</Typography>
                                         <Button
                                             Component="button"
-                                            onClick={() => openDialog('operate')}
+                                            onClick={() => openDialog('view')} //View to include all permissions
                                             variant="text"
                                             className={CommonStyles.buttonClass}
                                         >
