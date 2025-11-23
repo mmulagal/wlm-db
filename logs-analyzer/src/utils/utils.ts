@@ -605,8 +605,13 @@ function toMB(bytes: number): number {
 }
 
 function containsErrorKeywords(messageText: string): boolean {
+    const regex = new RegExp(
+        `\\b(?:${ORACLE_ERROR_KEYWORDS.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) // escape meta-chars
+            .join('|')})\\b`,
+        'i'
+    );
     const lowerMessage = messageText.toLowerCase();
-    return ORACLE_ERROR_KEYWORDS.some(keyword => lowerMessage.includes(keyword.toLowerCase()));
+    return regex.test(lowerMessage);
 }
 
 export {

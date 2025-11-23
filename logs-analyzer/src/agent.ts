@@ -667,34 +667,38 @@ async function recommendRemediation(
             } = response;
             const { content: [{ text }] = [] } = message;
             if (text) {
-                const { remediation, tags = [] } = JSON.parse(text);
-                remediationRecommendation.push({
-                    error,
-                    cause,
-                    count,
-                    severity,
-                    remediation,
-                    tags,
-                    firstOccurrence,
-                    lastOccurrence,
-                    errorCode,
-                    uniqueErrorKey,
-                    hourlyErrorCounts,
-                    context,
-                    sql,
-                    additionalInfo:
-                        additionalInfo && !isEmpty(additionalInfo) && typeof additionalInfo !== 'string'
-                            ? formatAdditionalInfo(additionalInfo)
-                            : [],
-                    tokenUsage: {
-                        causeIdentification,
-                        remediationRecommendation: {
-                            input,
-                            output, // Assuming no output tokens for remediation recommendation
-                            total
+                try {
+                    const { remediation, tags = [] } = JSON.parse(text);
+                    remediationRecommendation.push({
+                        error,
+                        cause,
+                        count,
+                        severity,
+                        remediation,
+                        tags,
+                        firstOccurrence,
+                        lastOccurrence,
+                        errorCode,
+                        uniqueErrorKey,
+                        hourlyErrorCounts,
+                        context,
+                        sql,
+                        additionalInfo:
+                            additionalInfo && !isEmpty(additionalInfo) && typeof additionalInfo !== 'string'
+                                ? formatAdditionalInfo(additionalInfo)
+                                : [],
+                        tokenUsage: {
+                            causeIdentification,
+                            remediationRecommendation: {
+                                input,
+                                output, // Assuming no output tokens for remediation recommendation
+                                total
+                            }
                         }
-                    }
-                });
+                    });
+                } catch (err) {
+                    logger.error('Failed to parse remediation recommendation JSON:', { err, text });
+                }
             } else {
                 logger.error('No text found in the response.');
             }

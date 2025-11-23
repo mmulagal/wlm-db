@@ -386,16 +386,24 @@ You are given the following input:
 }
 
 ### Output Format:
-Respond strictly in valid JSON format as a single JSON object. The JSON object should have the following structure:
+Respond with raw JSON only - no markdown formatting. The JSON object should have the following structure:
 {
     "error": "<error message>",
     "cause": "<cause of the error>",
+    "tags": ["<tag1>", "<tag2>", ...],
     "remediation": [
         "<specific remediation recommendation 1>",
         "<specific remediation recommendation 2>",
         ...
     ]
 }
+
+### Tags:
+Assign one or more relevant tags from the following list: Compute, Storage, Network, Security.
+- Compute: Issues related to CPU, memory, performance, or resource pools (e.g., high CPU usage, memory pressure, resource pool exhaustion)
+- Storage: Issues related to disk space, I/O, database files, log files, or backup/restore operations (e.g., insufficient disk space, slow I/O, backup failures)
+- Network: Issues related to connectivity, timeouts, replication, mirroring, or availability groups (e.g., connection drops, replication lag, failover events)
+- Security: Issues related to authentication, authorization, permissions, or encryption (e.g., login failures, permission denied, encryption errors)
 
 ### Rules:
 1. Respond strictly in valid JSON format. Do not include any additional commentary, explanations, or text outside the JSON response.
@@ -424,6 +432,7 @@ Respond strictly in valid JSON format as a single JSON object. The JSON object s
 {
     "error": "ORA-00001: unique constraint (SCHEMA.PK_TABLE) violated",
     "cause": "An attempt was made to insert or update a row that would violate a unique constraint. This occurs when trying to insert duplicate values into a column or set of columns that have a unique constraint defined.",
+    "tags": ["Storage"],
     "remediation": [
         "The unique constraint PK_TABLE is defined on columns USER_ID and EMAIL in the USERS table. Ensure that the combination of these values is unique before inserting or updating records.",
         "Check for existing records with the same USER_ID and EMAIL combination before performing the insert/update operation.",
@@ -458,35 +467,38 @@ const BEDROCK_RETRY = {
 const ORACLE_ERROR_KEYWORDS = [
     'error',
     'warning',
-    'deadlock',
+    'fatal',
+    'critical',
     'ORA-',
-    'exception',
+    'TNS-',
+    'PLS-',
+    'SP2-',
+
+    // Process and system failures
     'failed',
     'failure',
-    'timeout',
-    'corrupt',
-    'invalid',
     'abort',
-    'crash',
-    'hang',
-    'block',
-    'lock',
-    'constraint',
-    'violation',
-    'recovery',
-    'rollback',
-    'checkpoint',
-    'shutdown',
-    'startup',
-    'mount',
-    'open',
-    'close',
-    'issue',
+    'aborted',
+    'crashed',
     'terminated',
-    'unavailable',
+    'killed',
+    'shutdown',
+
+    // Database-specific issues
+    'deadlock',
+    'corrupt',
+    'corrupted',
+    'corruption',
+
+    // Resource and performance issues
+    'timeout',
     'exceeded',
-    'invalid',
-    'insufficient'
+    'exhausted',
+    'insufficient',
+    'unavailable',
+    'unreachable',
+    'denied',
+    'blocked'
 ];
 export {
     MSSQL_ERROR_LOGS_ANALYZER_PROMPT,

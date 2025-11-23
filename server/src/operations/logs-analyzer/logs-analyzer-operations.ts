@@ -308,6 +308,7 @@ async function handleLogsAnalysis(
             });
             logger.debug('Active SQL Node for Oracle:', activeSqlNodeResult);
             activeNodeInstanceId = activeSqlNodeResult.activeNodeInstanceId;
+            matchingInstance = activeSqlNodeResult.instanceName;
         } else {
             ({ nodeId: activeNodeInstanceId, matchingInstance } = await getActiveNodeAndInstanceDetails(
                 accountId,
@@ -341,6 +342,7 @@ async function handleLogsAnalysis(
         let sqlAuthEnabled;
         if (databaseType === DATABASE_TYPE.oracle) {
             logsPath = '/oracle'; // Dummy path for Oracle logs, actual logs will be fetched from the database directly
+            databaseInstanceName = matchingInstance;
         } else {
             const logsPathQuery =
                 'SET NOCOUNT ON; SELECT path FROM sys.dm_os_server_diagnostics_log_configurations FOR JSON PATH';
@@ -412,7 +414,8 @@ async function handleLogsAnalysis(
                       logLevel,
                       databaseType,
                       logsAnalyzerFromTimestamp,
-                      logsWindowDuration
+                      logsWindowDuration,
+                      databaseInstanceName
                   });
 
         const documentName =

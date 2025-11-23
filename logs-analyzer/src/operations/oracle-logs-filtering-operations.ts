@@ -127,6 +127,7 @@ const getOracleLogsScript = (pagination: PaginationOptions = {}) => {
 };
 
 function getTimeBasedQuery(startTime?: string, endTime?: string, limit: number = 5000, offset: number = 0) {
+    logger.debug('Generating time based Oracle logs query', { startTime, endTime, limit, offset });
     return `
         WITH paginated_logs AS (
             SELECT  l.*,
@@ -145,7 +146,7 @@ function getTimeBasedQuery(startTime?: string, endTime?: string, limit: number =
         SELECT JSON_OBJECT(
             'data' VALUE JSON_ARRAYAGG(
                     JSON_OBJECT(
-                        'timestamp'    VALUE TO_CHAR(originating_timestamp),
+                        'timestamp'    VALUE TO_CHAR(originating_timestamp, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
                         /* protect long text */
                         'messageText'  VALUE UTL_URL.ESCAPE(message_text),
                         'messageType'  VALUE CASE message_type
@@ -216,8 +217,19 @@ async function fetchAllOracleLogs(options: any): Promise<OracleErrorLog[]> {
                             return false;
                         }
 
+                        if (record.messageLevel === 'CRITICAL' || record.messageLevel === 'SEVERE') {
+                            return true;
+                        }
+
+                        let messageText = record.messageText;
+                        try {
+                            messageText = JSON.stringify(decodeURIComponent(messageText));
+                            JSON.parse(messageText);
+                        } catch {
+                            logger.debug('Message text is not a JSON string or could not be decoded', { messageText });
+                        }
                         // Filter out records that don't contain error-related keywords
-                        if (!containsErrorKeywords(record.messageText)) {
+                        if (!containsErrorKeywords(messageText)) {
                             return false;
                         }
 

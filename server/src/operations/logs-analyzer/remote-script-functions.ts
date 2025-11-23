@@ -245,6 +245,7 @@ function getLinuxPrepareScript(scriptParams: {
     databaseType?: string;
     logsAnalyzerFromTimestamp?: number;
     logsWindowDuration?: number;
+    databaseInstanceName?: string;
 }): string {
     logger.debug('Generating Linux prepare script with params:', scriptParams);
     const {
@@ -260,7 +261,8 @@ function getLinuxPrepareScript(scriptParams: {
         logLevel = LOG_LEVEL,
         databaseType,
         logsAnalyzerFromTimestamp,
-        logsWindowDuration
+        logsWindowDuration = 24,
+        databaseInstanceName
     } = scriptParams;
     const { temperature = 0.5, maxTokens = 5000, topP = 0.9 } = inferenceConfig;
 
@@ -276,15 +278,16 @@ function getLinuxPrepareScript(scriptParams: {
     instanceId="${instanceId}"
     region="${region}"
     jobId="${jobId}"
-    modelId="${inferenceProfileArn}";
-    modelRegion="${region}";
-    temperature=${temperature};
-    maxTokens=${maxTokens};
-    topP=${topP};
-    logLevel='${logLevel}';
-    databaseType='${databaseType}';
-    timestamp='${logsAnalyzerFromTimestamp}';
-    logsWindowDuration='${logsWindowDuration}';
+    modelId="${inferenceProfileArn}"
+    modelRegion="${region}"
+    temperature="${temperature}"
+    maxTokens="${maxTokens}"
+    topP="${topP}"
+    logLevel="${logLevel}"
+    databaseType="${databaseType}"
+    databaseInstanceName="${databaseInstanceName}"
+    timestamp="${logsAnalyzerFromTimestamp}"
+    logsWindowDuration="${logsWindowDuration}"
 
 retry_command() {
     local retries=5
@@ -311,7 +314,7 @@ if [ ! -f "$filePath" ]; then
     exit 1
 fi
 
-"$filePath" --logs-path "$logsPath" --log-level "$logLevel" --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP" --database-type "$databaseType" --timestamp "$timestamp" --time-window-hours "$logsWindowDuration"
+"$filePath" --logs-path "$logsPath" --log-level "$logLevel" --region "$region" --model-id $modelId --model-region $modelRegion --job-id "$jobId" --instance-id "$instanceId" --temperature "$temperature" --maxTokens "$maxTokens" --topP "$topP" --database-type "$databaseType" --database-instance-name "$databaseInstanceName" --timestamp "$timestamp" --time-window-hours "$logsWindowDuration"
 
 if [ $? -ne 0 ]; then
     exit 1
