@@ -99,7 +99,8 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
             action.payload.error ||
             action.payload.data?.message ||
             action.payload.data?.responseMessage ||
-            action.payload.data?.errorMessage;
+            action.payload.data?.errorMessage ||
+            action.payload.data?.error?.message;
 
         // This error msg is blocked to have in notification. This error will be part of detect host dialog error.
         // getMssqlInstanceData - it is for each row in unmanaged host so not adding
@@ -109,7 +110,9 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
             action?.meta?.arg?.endpointName === 'getMssqlInstanceData' ||
             action?.meta?.arg?.endpointName === 'prepareHost' ||
             action?.meta?.arg?.endpointName === 'manageMssqlInstance' ||
-            (action?.meta?.arg?.endpointName === 'listExistingHosts' && errorMsg?.includes('Unauthorized')) ||
+            (action?.meta?.arg?.endpointName === 'listExistingHosts' &&
+                (errorMsg?.includes('Unauthorized') ||
+                    errorMsg.includes('Unknown tenant. Make sure the tenant is registered.'))) ||
             (action?.meta?.arg?.endpointName === 'listAllDirectories' &&
                 errorMsg?.includes("SyntaxError: Unexpected token 'U'")) ||
             (action?.meta?.arg?.endpointName === 'discoverExistingFsxN' &&
@@ -120,6 +123,13 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
         }
 
         if (action?.meta?.arg?.endpointName === 'addHostSc' && errorMsg?.includes('already exist')) {
+            return errorMsg;
+        }
+
+        if (
+            action?.meta?.arg?.endpointName === 'getBackupRecoveryLicense' &&
+            errorMsg?.includes('You are not on active free trial period')
+        ) {
             return errorMsg;
         }
 
