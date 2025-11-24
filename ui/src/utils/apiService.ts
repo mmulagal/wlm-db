@@ -613,13 +613,13 @@ export const snapcenterAPI = createApi({
             })
         }),
         getBackupRecoveryLicense: builder.mutation({
-            query: ({ orgId }) => ({
-                url: `backup-recovery/organizations/${orgId}/v1/licenses?workloadType=SQL`
+            query: ({ accountID }) => ({
+                url: `backup-recovery/organizations/${accountID}/v1/licenses?workloadType=SQL`
             })
         }),
         assignBackupRecoveryLicense: builder.mutation({
-            query: ({ orgId, payload }) => ({
-                url: `backup-recovery/organizations/${orgId}/v1/licenses`,
+            query: ({ accountID, payload }) => ({
+                url: `backup-recovery/organizations/${accountID}/v1/licenses`,
                 method: 'POST',
                 body: payload
             })

@@ -313,16 +313,15 @@ export const handleFsxFlow = async (
                         },
                         role: roleCheck
                     });
-
-                    const licenseRes = await getBackupRecoveryLicense({ accountID: store.getState().auth.orgId });
-                    if (licenseRes?.data?.error?.message === 'You are not on active free trial period') {
-                        await assignBackupRecoveryLicense({
-                            accountID: store.getState().auth.orgId,
-                            payload: {
-                                workloadtype: 'SQL'
-                            }
-                        });
-                    }
+                }
+                const licenseRes = await getBackupRecoveryLicense({ accountID: store.getState().auth.orgId });
+                if (licenseRes?.data?.error?.message === 'You are not on active free trial period') {
+                    await assignBackupRecoveryLicense({
+                        accountID: store.getState().auth.orgId,
+                        payload: {
+                            workloadtype: 'SQL'
+                        }
+                    });
                 }
             }
         }
