@@ -3,7 +3,7 @@ import { DsButton } from '@tlveng/wlm-ds';
 import { DsPopover, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import styles from './OracleCardComponent.module.scss';
-import { ASSESSMENT_CONFIG_NAMES, DBType, GETWELL_STATUS, WLF_TABS } from '../../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, DBType, GETWELL_STATUS, WLF_TABS } from '../../../../../utils/consts';
 import { handleDialog } from '../../../../GetWell/StorageCardComponent/optimizeUtils';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../../../store/workloadFactory/inventoryV2Slice';
 
@@ -17,6 +17,9 @@ interface ViewAndFixButtonProps {
         };
         mapName?: string;
         recommendedValue?: string;
+        dismissedObj?: {
+            configState?: string;
+        };
     };
     loading?: boolean;
 }
@@ -81,6 +84,11 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
     const viewButtonDisable = () => {
         const type = cardData?.block_one?.value;
         const status = cardData?.block_two?.value;
+
+        // Check if card is in ACTIVATING state - disable button if true
+        if (cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING) {
+            return { isDisable: true, reason: '' };
+        }
 
         if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
             // Enable for File system headroom when status is under-provisioned or over-provisioned
