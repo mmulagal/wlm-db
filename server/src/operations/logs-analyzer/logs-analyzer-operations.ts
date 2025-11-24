@@ -289,7 +289,8 @@ async function handleLogsAnalysis(
             database_type: dbType,
             database_instance_id: databaseInstanceId,
             resource_id: databaseHostId,
-            resource: { metadata: resourceMetadata }
+            resource: { metadata: resourceMetadata },
+            database_instance_name: instanceName
         } = managedInstance;
         const databaseType = dbType?.toLowerCase();
 
@@ -308,7 +309,7 @@ async function handleLogsAnalysis(
             });
             logger.debug('Active SQL Node for Oracle:', activeSqlNodeResult);
             activeNodeInstanceId = activeSqlNodeResult.activeNodeInstanceId;
-            matchingInstance = activeSqlNodeResult.instanceName;
+            matchingInstance = instanceName;
         } else {
             ({ nodeId: activeNodeInstanceId, matchingInstance } = await getActiveNodeAndInstanceDetails(
                 accountId,
@@ -1232,8 +1233,9 @@ async function getLatestLogsAnalysisReports(
                     }
                 } else if (databaseType === DATABASE_TYPE.oracle) {
                     const { severity } = rec;
-                    severityCounts[severity as keyof SeverityCountsType] =
-                        (severityCounts[severity as keyof SeverityCountsType] || 0) + 1;
+                    const loweredSeverity = severity?.toLowerCase();
+                    severityCounts[loweredSeverity as keyof SeverityCountsType] =
+                        (severityCounts[loweredSeverity as keyof SeverityCountsType] || 0) + 1;
                 } else {
                     // For other database types, if any in future, we can extend here
                     logger.debug(`Severity count aggregation not available for database type: ${databaseType}`);
