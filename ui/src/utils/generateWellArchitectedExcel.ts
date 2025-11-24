@@ -332,7 +332,6 @@ const getAllItems = (data: ComprehensiveAssessmentData): AssessmentItem[] => {
             if (item && typeof item === 'object') {
                 // Skip items with error messages when status is unavailable
                 if ('errorMessage' in item && item.errorMessage) {
-                    return;
                 } else if (item.name) {
                     allItems.push(item);
                 }

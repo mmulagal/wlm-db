@@ -176,6 +176,8 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
         } else {
             // Replace the entire selection with whatever is currently selected in the table
             dispatch(setSelectedRowsForExploreSavingsEBSBulk(selectedRows));
+            // Trigger data fetch after adding hosts when authentication is not required
+            dispatch(setTriggerBulkDataFetch(true));
             if (onExploreSavings) {
                 onExploreSavings();
             }

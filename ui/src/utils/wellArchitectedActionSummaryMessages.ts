@@ -366,7 +366,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['clone-refresh-what-will-happen'],
                 GENERAL.NOTE,
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         // Oracle-specific configurations
@@ -375,7 +375,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-swap-space-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-swap-space-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY:
@@ -383,7 +383,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-nfs-rootonly-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-nfs-rootonly-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY:
@@ -391,7 +391,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-export-policy-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-export-policy-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
@@ -399,7 +399,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-multipath-io-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-multipath-io-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
@@ -407,7 +407,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-host-utility-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-host-utility-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
@@ -415,7 +415,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-transparent-hugepages-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-transparent-hugepages-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.SELINUX:
@@ -423,7 +423,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-selinux-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-selinux-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
@@ -431,7 +431,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-iscsi-replacement-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-iscsi-replacement-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
@@ -439,7 +439,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-multipath-friendly-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-multipath-friendly-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
@@ -447,7 +447,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-kernel-parameters-action-summary'], // This maps to TCP slot table configuration
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-kernel-parameters-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
@@ -455,7 +455,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-filesystem-io-options-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-filesystem-io-options-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
@@ -463,7 +463,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-multiblock-readcount-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-multiblock-readcount-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
@@ -471,7 +471,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-multipath-config-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-multipath-config-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
@@ -479,7 +479,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-kernel-parameters-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-kernel-parameters-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
@@ -487,7 +487,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-nfs-mount-options-dbfiles-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-nfs-mount-options-dbfiles-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:
@@ -495,7 +495,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-nfs-mount-options-adrhome-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-nfs-mount-options-adrhome-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS:
@@ -503,7 +503,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-nfs-caching-options-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-nfs-caching-options-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME:
@@ -511,18 +511,16 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-nfsv4-domain-name-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-nfsv4-domain-name-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.ASM_SETUP:
-            return [wellArchitectMessages['oracle-asm-setup-action-summary'], wellArchitectMessages['note1']].join(
-                '\n'
-            );
+            return [wellArchitectMessages['oracle-asm-setup-action-summary'], wellArchitectMessages.note1].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
             return [
                 wellArchitectMessages['oracle-asm-external-redundancy-action-summary'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
@@ -530,7 +528,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-afd-logical-block-size-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-afd-logical-block-size-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE:
@@ -538,7 +536,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-asmlib-logical-block-size-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-asmlib-logical-block-size-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
@@ -546,7 +544,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-data-dg-lun-layout-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-data-dg-lun-layout-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
@@ -554,7 +552,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-log-dg-lun-layout-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-log-dg-lun-layout-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
@@ -562,7 +560,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-fra-dg-lun-layout-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-fra-dg-lun-layout-what-will-happen'],
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
@@ -570,7 +568,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-fra-dg-lun-layout-action-summary'], // Using FRA action summary as they are similar
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-fra-dg-lun-layout-what-will-happen'], // Using FRA what will happen as they are similar
-                wellArchitectMessages['note1']
+                wellArchitectMessages.note1
             ].join('\n');
 
         default:
