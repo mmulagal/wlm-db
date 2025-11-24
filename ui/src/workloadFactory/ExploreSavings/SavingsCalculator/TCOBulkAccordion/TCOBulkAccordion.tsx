@@ -149,8 +149,8 @@ const TCOBulkAccordion = () => {
         const [textSearch, setTextSearch] = useSearchDebounce(500);
 
         useEffect(() => {
-            setIsByolField(checkIfByolFieldRequired(selectedHostDetails, isByolField, savingsCalculatorFrom));
-        }, [selectedHostDetails]);
+            setIsByolField(checkIfByolFieldRequired(host, isByolField, savingsCalculatorFrom));
+        }, [host, savingsCalculatorFrom]);
 
         useEffect(() => {
             setTextSearch(byolValue);
