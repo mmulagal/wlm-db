@@ -49,7 +49,8 @@ import {
     resetBulkAuthCredentialsAndStatus,
     resetRowsRequiringAuthBulk,
     setBulkAuthStatus,
-    setSelectedRowsForExploreSavingsEBSBulk
+    setSelectedRowsForExploreSavingsEBSBulk,
+    setTriggerBulkDataFetch
 } from '../../store/workloadFactory/exploreSavingsBulkSlice';
 
 export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
@@ -174,6 +175,8 @@ export const onClickESHost = (
         })
     );
     setESInstanceData(rowData, dispatch);
+    // Trigger the data fetch after setting up the instance data
+    dispatch(setTriggerBulkDataFetch(true));
 };
 
 export const handleManualTCOEBS = (dispatch: any, navigate: any, isWorkloadFactory: boolean) => {
@@ -1518,6 +1521,8 @@ export const handleAuthenticate = async (
                         const updatedSelection = [...currentSelection, ...newHosts];
 
                         dispatch(setSelectedRowsForExploreSavingsEBSBulk(updatedSelection));
+                        // Trigger data fetch after adding authenticated hosts
+                        dispatch(setTriggerBulkDataFetch(true));
                         dispatch(
                             addNotification({
                                 notificationType: NOTIFICATION_TYPES.SUCCESS,

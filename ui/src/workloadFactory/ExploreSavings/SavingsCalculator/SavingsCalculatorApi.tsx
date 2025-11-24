@@ -33,6 +33,7 @@ import {
     setViewCalculationsLoading,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
+import { setTriggerBulkDataFetch } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import store from '../../../store/store';
 import { setMssqlInstancesData as setMssqlInstancesDataV2 } from '../../../store/workloadFactory/inventoryV2Slice';
 import { formatStorageSavingsRecommendedData, formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
@@ -92,7 +93,9 @@ const SavingsCalculatorApi = () => {
         showOptimizeMode
     } = useAppSelector(state => state.exploreSavings);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
-    const { ebsTCOAction, selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
+    const { ebsTCOAction, selectedRowsForExploreSavingsEBSBulk, triggerBulkDataFetch } = useAppSelector(
+        state => state.exploreSavingsBulk
+    );
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
@@ -395,11 +398,8 @@ const SavingsCalculatorApi = () => {
         const instanceIds: string[] = [];
         selectedRowsForExploreSavingsEBSBulk.forEach((host: any) => {
             if (host.ec2Details && host.ec2Details.length > 0) {
-                host.ec2Details.forEach((instance: any) => {
-                    if (instance.id) {
-                        instanceIds.push(instance.id);
-                    }
-                });
+                // for aoag picking first node instance id only and stanadlone will have tne
+                instanceIds.push(host.ec2Details[0].id);
             }
         });
 
@@ -531,9 +531,35 @@ const SavingsCalculatorApi = () => {
         monthlyChangeRate,
         selectedInstanceId,
         monthlyBYOLCost,
-        ebsTCOAction,
-        selectedRowsForExploreSavingsEBSBulk
+        ebsTCOAction
     ]);
+
+    // Separate useEffect for triggerBulkDataFetch
+    useEffect(() => {
+        if (triggerBulkDataFetch) {
+            // Reset the flag
+            dispatch(setTriggerBulkDataFetch(false));
+
+            // Then trigger the API calls
+            if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+                if (selectedHostDetails && Object.keys(selectedHostDetails).length !== 0) {
+                    const isProtectionData = checkIfEbsProtected();
+                    if (isProtectionData !== '' || selectedSnapshotFrequency) {
+                        dispatch(setDisableState(false));
+                        triggerRefreshApi();
+                    } else {
+                        dispatch(setSnapshotLoading(false));
+                        dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
+                        triggerRefreshApi();
+                    }
+                }
+            } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+                dispatch(setSnapshotLoading(false));
+                dispatch(setDisableState(false));
+                triggerRefreshApi();
+            }
+        }
+    }, [triggerBulkDataFetch]);
 
     useEffect(() => {
         if (savingsCalculatorRefresh) {

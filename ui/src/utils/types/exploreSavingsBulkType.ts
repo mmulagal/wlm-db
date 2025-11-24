@@ -16,4 +16,5 @@ export interface ExploreSavingsBulkSliceEntities {
     bulkAuthCredentials: BulkAuthCredentials;
     rowsRequiringAuthBulk?: Array<any> | any;
     bulkAuthStatus?: BulkAuthStatus;
+    triggerBulkDataFetch?: boolean;
 }

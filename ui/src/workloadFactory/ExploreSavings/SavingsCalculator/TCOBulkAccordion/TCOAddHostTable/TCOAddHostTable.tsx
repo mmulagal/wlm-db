@@ -6,7 +6,8 @@ import { ColumnProps, Table } from '../../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../../common/Lib/Table/useTable';
 import {
     setRowsRequiringAuthBulk,
-    setSelectedRowsForExploreSavingsEBSBulk
+    setSelectedRowsForExploreSavingsEBSBulk,
+    setTriggerBulkDataFetch
 } from '../../../../../store/workloadFactory/exploreSavingsBulkSlice';
 import { getSelectedFromSelectionState } from '../../../../../utils/utilityFunctions';
 import styles from './TCOAddHostTable.module.scss';
@@ -168,6 +169,8 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
             const updatedSelection = [...currentSelection, ...newHosts];
 
             dispatch(setSelectedRowsForExploreSavingsEBSBulk(updatedSelection));
+            // Trigger data fetch after adding hosts when authentication is not required
+            dispatch(setTriggerBulkDataFetch(true));
             if (onExploreSavings) {
                 onExploreSavings();
             }
