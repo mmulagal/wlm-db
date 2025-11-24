@@ -15,7 +15,7 @@ const InstancesEbsCalculation = () => {
         setViewLoading(selectedHostDetails?.loading || viewCalculationsLoading);
     }, [selectedHostDetails, viewCalculationsLoading]);
 
-    const setHeader = () => {
+    const setHeader = (hostCalculation?: any) => {
         if (!viewCalculationsResponse) {
             return (
                 <DsTypography variant="Regular_14" className={CommonStyles['text-disabled']}>
@@ -23,6 +23,18 @@ const InstancesEbsCalculation = () => {
                 </DsTypography>
             );
         }
+
+        // For bulk calculations, extract the host-specific cost from the calculation data
+        if (isBulkCalculation && hostCalculation) {
+            // Find the "EC2 machines total cost" entry in this host's calculation data
+            const totalCostEntry = hostCalculation.ebsInstanceCalculation?.find(
+                (entry: any) => entry.label === 'EC2 machines total cost'
+            );
+            const hostCost = totalCostEntry?.value || '$0';
+            return <DsTypography variant="Regular_14">{hostCost}</DsTypography>;
+        }
+
+        // For single host calculations, use the total cost
         return <DsTypography variant="Regular_14">${viewCalculationsResponse?.totalEBSEc2MachineCost}</DsTypography>;
     };
 
@@ -42,7 +54,7 @@ const InstancesEbsCalculation = () => {
                             <AccordionCard
                                 key={`${hostCalculation.hostName}-${hostIndex}`}
                                 ValueContent={() => (
-                                    <div className={CommonStyles['heading-content']}>{setHeader()}</div>
+                                    <div className={CommonStyles['heading-content']}>{setHeader(hostCalculation)}</div>
                                 )}
                                 id={`7-${hostCalculation.hostName}-${hostIndex}`}
                                 title={
