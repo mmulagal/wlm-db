@@ -27,6 +27,7 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [ebsTableData, setEBSTableData] = useState<any>([]);
+    const [updatedTableData, setUpdatedTableData] = useState<any>([]);
     const { selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
 
@@ -70,28 +71,6 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
             setEBSTableData([]);
         }
     }, [unManagedHostFormatedList]);
-
-    const updatedTableData = useMemo(
-        () =>
-            ebsTableData.map((item: any, index: number) => {
-                const isSelected = selectedRowsForExploreSavingsEBSBulk.some(
-                    (selectedRow: any) => selectedRow.id === item.id
-                );
-
-                const shouldDisable =
-                    (selectedRowsForExploreSavingsEBSBulk.length >= 5 && !isSelected) ||
-                    (selectedRowsForExploreSavingsEBSBulk.length === 1 && isSelected);
-
-                return {
-                    ...item,
-                    cellProps: {
-                        ...item.cellProps,
-                        isDisabled: shouldDisable
-                    }
-                };
-            }),
-        [ebsTableData, selectedRowsForExploreSavingsEBSBulk]
-    );
 
     const AddHostColDefs: ColumnProps[] = [
         {
@@ -150,6 +129,38 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
         pageSize: 10
     });
 
+    // Update table data with disabled states based on selection
+    useEffect(() => {
+        if (ebsTableData.length === 0) {
+            setUpdatedTableData([]);
+            return;
+        }
+
+        // Get currently selected rows in the table
+        const currentTableSelection = getSelectedFromSelectionState(tableProps.selectionState, ebsTableData);
+
+        // Calculate combined selection (already confirmed + currently selected in table)
+        const existingIds = new Set(selectedRowsForExploreSavingsEBSBulk.map((row: any) => row.id));
+
+        const updatedData = ebsTableData.map((item: any) => {
+            const isCurrentlySelected = currentTableSelection.some((row: any) => row.id === item.id);
+
+            const shouldDisable =
+                (currentTableSelection.length >= 5 && !isCurrentlySelected) ||
+                (currentTableSelection.length === 1 && isCurrentlySelected);
+
+            return {
+                ...item,
+                cellProps: {
+                    ...item.cellProps,
+                    isDisabled: shouldDisable
+                }
+            };
+        });
+
+        setUpdatedTableData(updatedData);
+    }, [ebsTableData, selectedRowsForExploreSavingsEBSBulk, tableProps.selectionState]);
+
     const handleExploreSavings = () => {
         const selectedRows = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
@@ -163,14 +174,8 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
                 onAuthRequired(selectedRows);
             }
         } else {
-            const currentSelection = selectedRowsForExploreSavingsEBSBulk;
-            const existingIds = new Set(currentSelection.map((row: any) => row.id));
-            const newHosts = selectedRows.filter((row: any) => !existingIds.has(row.id));
-            const updatedSelection = [...currentSelection, ...newHosts];
-
-            dispatch(setSelectedRowsForExploreSavingsEBSBulk(updatedSelection));
-            // Trigger data fetch after adding hosts when authentication is not required
-            dispatch(setTriggerBulkDataFetch(true));
+            // Replace the entire selection with whatever is currently selected in the table
+            dispatch(setSelectedRowsForExploreSavingsEBSBulk(selectedRows));
             if (onExploreSavings) {
                 onExploreSavings();
             }
