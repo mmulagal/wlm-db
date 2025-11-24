@@ -8,7 +8,6 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import {
     setMonthlyChangeRate,
     setNumberOfClonedCopies,
-    setRecommendedTargetInstance,
     setSelectedCloneRefresh,
     setSelectedMonthlyBYOLCost,
     setSelectedSnapshotFrequency
@@ -19,7 +18,6 @@ import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import { FINDINGS, SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import LearnHowDialog from './LearnHowDialog/LearnHowDialog';
-import { generateLabel2ForInstanceType } from '../../ExploreSavingsUtils';
 import { checkIfByolFieldRequired } from '../savingsUtil';
 
 const SavingsSelection = ({ printState }: any) => {
@@ -31,8 +29,6 @@ const SavingsSelection = ({ printState }: any) => {
         monthlyChangeRate,
         loading,
         storageSavingsResponse,
-        storageSavingsLoading,
-        recommendedTargetInstance,
         monthlyBYOLCost,
         selectedHostDetails,
         savingsCalculatorFrom,
