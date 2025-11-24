@@ -199,8 +199,16 @@ async function getHeadroomDrift(
             Statistics: ['Average'],
             Dimensions: [
                 {
+                    Name: 'StorageTier',
+                    Value: 'SSD'
+                },
+                {
                     Name: 'FileSystemId',
                     Value: fileSystemId
+                },
+                {
+                    Name: 'DataType',
+                    Value: 'All'
                 }
             ]
         };
