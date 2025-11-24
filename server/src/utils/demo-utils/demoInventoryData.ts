@@ -644,7 +644,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         windowsDomainUserAuthentication: true,
                         windowsOsVersion: 'Microsoft Windows Server 2019',
                         sqlServerName: 'SQLserver-Orders-02',
-                        sqlServerNodes: ['EC2WIN-8E4AHF49'],
+                        sqlServerNodes: ['EC2WIN-8E4AHF50'],
                         sqlServerDeploymentType: 'Standalone',
                         storage: [
                             {
