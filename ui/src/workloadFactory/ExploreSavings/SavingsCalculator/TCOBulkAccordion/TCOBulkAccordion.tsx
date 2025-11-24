@@ -26,7 +26,8 @@ import {
     setSelectedRowsForExploreSavingsEBSBulk,
     resetBulkAuthCredentialsAndStatus,
     resetRowsRequiringAuthBulk,
-    setRowsRequiringAuthBulk
+    setRowsRequiringAuthBulk,
+    setTriggerBulkDataFetch
 } from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
 import {
     setRecommendedTargetInstance,
@@ -84,6 +85,8 @@ const TCOBulkAccordion = () => {
         const newHostRecommendations = { ...hostRecommendations };
         delete newHostRecommendations[hostToRemove.id];
         setHostRecommendations(newHostRecommendations);
+        // Trigger data fetch after removing hosts when authentication is not required
+        dispatch(setTriggerBulkDataFetch(true));
     };
 
     const addHostsDialogCallback = () => {

@@ -139,21 +139,40 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
         // Get currently selected rows in the table
         const currentTableSelection = getSelectedFromSelectionState(tableProps.selectionState, ebsTableData);
 
-        // Calculate combined selection (already confirmed + currently selected in table)
-        const existingIds = new Set(selectedRowsForExploreSavingsEBSBulk.map((row: any) => row.id));
-
         const updatedData = ebsTableData.map((item: any) => {
             const isCurrentlySelected = currentTableSelection.some((row: any) => row.id === item.id);
 
+            // Check if there's any selection
+            const hasSelection = currentTableSelection.length > 0;
+
+            // Check if this item shares the same credentialId and regionId with any selected row
+            const sharesGroupWithSelection = hasSelection
+                ? currentTableSelection.some(
+                      (selectedRow: any) =>
+                          selectedRow.credentialId === item.credentialId && selectedRow.regionId === item.regionId
+                  )
+                : true;
+
+            // Check if the limit of 5 selections has been reached
+            const limitReached = currentTableSelection.length >= 5;
+            const shouldDisableDueToLimit = limitReached && !isCurrentlySelected;
+
             const shouldDisable =
-                (currentTableSelection.length >= 5 && !isCurrentlySelected) ||
+                !sharesGroupWithSelection ||
+                shouldDisableDueToLimit ||
                 (currentTableSelection.length === 1 && isCurrentlySelected);
 
             return {
                 ...item,
                 cellProps: {
                     ...item.cellProps,
-                    isDisabled: shouldDisable
+                    isDisabled: shouldDisable,
+                    selectionProps: {
+                        title: !sharesGroupWithSelection && t('databases.explore-savings.disabled-tooltip'),
+                        titleProps: {
+                            placement: 'bottom'
+                        }
+                    }
                 }
             };
         });
