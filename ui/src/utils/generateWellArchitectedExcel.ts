@@ -1,6 +1,6 @@
 import * as ExcelJS from 'exceljs';
 import getActionSummaryMessages from './wellArchitectedActionSummaryMessages';
-import { GETWELL_CONFIG, ASSESSMENT_CONFIG_NAMES, DBType } from './consts';
+import { ASSESSMENT_CONFIG_NAMES, CONFIG_NAMES, DBType } from './consts';
 import { GENERAL } from './appConstants';
 import { formatOptimizationBreakDown, getCardsData, cardDataDefault } from '../workloadFactory/GetWell/GetWellUtils';
 import {
@@ -9,207 +9,184 @@ import {
     formatOracleOptimizationBreakDown
 } from '../workloadFactory/Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 
-const getOrderedConfigurationKeys = (data: ComprehensiveAssessmentData, databaseType: string): string[] => {
+// Static ordered lists for MSSQL and Oracle configuration keys
+const MSSQL_CONFIG_ORDER = [
+    // Storage sizing
+    'performance-tier',
+    'headroom',
+    'log-drive-size',
+    'tempdb-drive-size',
+    // Storage layout
+    'tempdb-files-location',
+    'data-files-location',
+    'log-files-location',
+    // Storage configuration - volumes
+    'thin-provision',
+    'autosize',
+    'autosize-mode',
+    'fractional-reserve',
+    'snapshot-copy-reserve',
+    'snapshot-autodelete',
+    'space-mgmt-try-first',
+    'tiering-policy',
+    'tiering-min-cooling-days',
+    // Storage configuration - luns
+    'os-type',
+    'space-reservation-enabled',
+    'space-allocation-allocated',
+    // Storage configuration - os
+    'mpio-enabled',
+    'mpio-iscsi-count',
+    'ntfs-allocation-unit-size',
+    'mpio-load-balance-policy',
+    'mpio-timeout',
+    // Compute
+    'compute-rightsizing',
+    'host-os-patch',
+    'rss-config',
+    'mtu-alignment',
+    // Application
+    'sql-license',
+    'mssql-patch',
+    'maxdop',
+    // Resiliency
+    'snapshot-policy',
+    'backup-configuration',
+    'crr',
+    // High Availability
+    'shared-storage',
+    'drive-letter',
+    'cluster-quorum',
+    'heartbeat-settings',
+    'sqlServer-service',
+    // Cloning
+    'clone-management'
+];
+
+const ORACLE_CONFIG_ORDER = [
+    'headroom',
+    'swap-space',
+    'oracle-binary-placement',
+    'datafiles-placement',
+    'controlfiles-placement',
+    'redologs-placement',
+    'templogs-placement',
+    'archive-placement',
+
+    'data-dg-lun-layout',
+    'log-dg-lun-layout',
+    'fra-dg-lun-layout',
+    'archivelog-dg-lun-layout',
+    'compaction',
+    'thin-provision',
+    'autosize',
+    'autosize-mode',
+    'fractional-reserve',
+    'snapshot-copy-reserve',
+    'snapshot-autodelete',
+    'space-mgmt-try-first',
+    'tiering-policy',
+    'tiering-min-cooling-days',
+    'compression',
+    'deduplication',
+    'nfs-rootonly',
+    'export-policy',
+    'os-type',
+    'space-reservation-enabled',
+    'space-allocation-allocated',
+    'snapshot-policy-vol',
+    'multipath-io',
+    'host-utilities',
+    'transparent-hugepages',
+    'selinux',
+    'iscsi-replacement-timeout',
+    'multipath-friendly-names',
+    'tcp-advanced-options',
+    'filesystems-io-options',
+    'multiblock-readcount',
+    'multipath-io-sessions',
+    'multipath-configuration',
+    'kernel-parameters',
+    'nfs-mount-options-databasefiles',
+    'nfs-mount-options-adrhome',
+    'nfs-caching-options',
+    'nfsv4-domain-name',
+    'asm-setup',
+    'asm-external-redundancy',
+    'afd-logical-block-size',
+    'asmlib-logical-block-size',
+    'ontap-configuration',
+    'os-configuration'
+];
+
+function getOrderedConfigurationKeys(data: ComprehensiveAssessmentData, databaseType: string): string[] {
+    // Choose the correct static order
+    const staticOrder = databaseType === DBType.ORACLE ? ORACLE_CONFIG_ORDER : MSSQL_CONFIG_ORDER;
+
+    // Collect all existing configuration names from the data
+    const existingConfigNames = new Set<string>();
     const orderedKeys: string[] = [];
 
-    if (databaseType === DBType.MSSQL) {
-        Object.keys(cardDataDefault).forEach(key => {
-            if (key === 'deploymentType') return; // Skip metadata - continue to next key
-
-            // Check if this configuration exists in the actual data
-            const configExists = checkIfConfigurationExistsInData(data, key, databaseType);
-            if (configExists) {
-                orderedKeys.push(key);
-            }
-        });
-    } else if (databaseType === DBType.ORACLE) {
-        const sizingCards: string[] = [];
-        const layoutCards: string[] = [];
-        const configCards: string[] = [];
-        const otherCards: string[] = [];
-
-        Object.keys(oracleCardData).forEach(key => {
-            if (['isASMManaged', 'storageProtocol', 'isStorageLayoutFra'].includes(key)) {
-                return; // Skip metadata
-            }
-
-            const cardData = oracleCardData[key];
-            if (cardData?.block_one?.type === 'Storage sizing') {
-                sizingCards.push(key);
-            } else if (cardData?.block_one?.type === 'Storage layout') {
-                layoutCards.push(key);
-            } else if (cardData?.block_one?.type === 'Configuration') {
-                configCards.push(key);
-            } else {
-                otherCards.push(key);
-            }
-        });
-
-        const desiredOracleOrder = [...sizingCards, ...layoutCards, ...configCards, ...otherCards];
-
-        desiredOracleOrder.forEach(key => {
-            const configExists = checkIfConfigurationExistsInData(data, key, databaseType);
-            if (configExists) {
-                orderedKeys.push(key);
-            }
-        });
+    // Collect names from storage configurations
+    if (data.storage?.configuration) {
+        data.storage.configuration.volumes?.forEach(item => existingConfigNames.add(item.name));
+        data.storage.configuration.luns?.forEach(item => existingConfigNames.add(item.name));
+        data.storage.configuration.os?.forEach(item => existingConfigNames.add(item.name));
     }
+
+    // Collect names from storage sizing and layout
+    data.storage?.sizing?.forEach(item => existingConfigNames.add(item.name));
+    data.storage?.layout?.forEach(item => existingConfigNames.add(item.name));
+
+    // Collect names from high availability
+    data.highAvailability?.forEach(item => existingConfigNames.add(item.name));
+
+    // Add names from top-level configurations
+    const topLevelConfigs = [
+        { data: data.compute, name: 'compute-rightsizing' },
+        { data: data.hostOsPatch, name: 'host-os-patch' },
+        { data: data.rssConfig, name: 'rss-config' },
+        { data: data.mtuAlignment, name: 'mtu-alignment' },
+        { data: data.license, name: 'sql-license' },
+        { data: data.mssqlPatch, name: 'mssql-patch' },
+        { data: data.maxDOP, name: 'maxdop' },
+        { data: data.snapshotPolicy, name: 'snapshot-policy' },
+        { data: data.awsBackup, name: 'backup-configuration' },
+        { data: data.crr, name: 'crr' },
+        { data: data.clone, name: 'clone-management' }
+    ];
+
+    topLevelConfigs.forEach(config => {
+        if (config.data) {
+            existingConfigNames.add(config.name);
+        }
+    });
+
+    // First, add configs from staticOrder that exist in the data
+    staticOrder.forEach(configName => {
+        if (existingConfigNames.has(configName)) {
+            orderedKeys.push(configName);
+            existingConfigNames.delete(configName); // Remove so we don't add it again
+        }
+    });
+
+    // Add any remaining configs that weren't in the static order
+    existingConfigNames.forEach(configName => {
+        orderedKeys.push(configName);
+    });
 
     return orderedKeys;
-};
-
-// Helper function to check if a configuration exists in the assessment data
-const checkIfConfigurationExistsInData = (
-    data: ComprehensiveAssessmentData,
-    configKey: string,
-    databaseType: string
-): boolean => {
-    if (databaseType === DBType.ORACLE) {
-        if (data.storage?.configuration) {
-            if (configKey === 'ontap_configuration') {
-                return !!data.storage?.configuration?.volumes?.length;
-            }
-
-            if (configKey === 'os_configuration') {
-                return !!data.storage?.configuration?.os?.length;
-            }
-        }
-
-        if (
-            data.storage?.sizing?.some(item => {
-                const oracleSizingConfigMap: { [key: string]: string } = {
-                    'swap-space': 'swap_space',
-                    headroom: 'file_system_headroom'
-                };
-                return oracleSizingConfigMap[item.name] === configKey;
-            })
-        )
-            return true;
-
-        if (
-            data.storage?.layout?.some(item => {
-                const oracleLayoutConfigMap: { [key: string]: string } = {
-                    'archive-placement': 'archive_placement',
-                    'datafiles-placement': 'datafiles_placement',
-                    'controlfiles-placement': 'controlfiles_placement',
-                    'redologs-placement': 'redologs_placement',
-                    'templogs-placement': 'templogs_placement',
-                    'oracle-binary-placement': 'oracle_binary_placement'
-                };
-                return oracleLayoutConfigMap[item.name] === configKey;
-            })
-        )
-            return true;
-
-        return false;
-    }
-
-    if (data.storage?.configuration) {
-        if (
-            data.storage.configuration.volumes?.some(
-                item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey
-            )
-        )
-            return true;
-        if (
-            data.storage.configuration.luns?.some(
-                item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey
-            )
-        )
-            return true;
-        if (
-            data.storage.configuration.os?.some(
-                item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey
-            )
-        )
-            return true;
-    }
-
-    if (data.storage?.sizing?.some(item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey))
-        return true;
-    if (data.storage?.layout?.some(item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey))
-        return true;
-
-    const configChecks = {
-        compute_rightsizing: () => data.compute,
-        rss_config: () => data.rssConfig,
-        host_os_patch: () => data.hostOsPatch,
-        mtu: () => data.mtuAlignment,
-        sql_licenses: () => data.license,
-        microsoft_sql_patch: () => data.mssqlPatch,
-        maxdop: () => data.maxDOP,
-        scheduled_local_snapshot: () => data.snapshotPolicy,
-        crr: () => data.crr,
-        scheduled_fsx_for_ontap_backups: () => data.awsBackup,
-        clone_management: () => data.clone,
-        mssql_high_availability: () => data.highAvailability
-    };
-
-    if (configChecks[configKey as keyof typeof configChecks]) {
-        return !!configChecks[configKey as keyof typeof configChecks]();
-    }
-
-    // Handle special ONTAP/OS configuration cards
-    if (configKey === 'ontap_configuration') {
-        return !!(data.storage?.configuration?.volumes?.length || data.storage?.configuration?.luns?.length);
-    }
-    if (configKey === 'os_configuration') {
-        return !!data.storage?.configuration?.os?.length;
-    }
-
-    return false;
-};
+}
 
 // Function to get proper display name for configuration
 const getConfigurationDisplayName = (internalName: string, databaseType?: string): string => {
-    // Oracle-specific display names
-    if (databaseType === DBType.ORACLE) {
-        if (GETWELL_CONFIG[internalName]) {
-            return GETWELL_CONFIG[internalName];
-        }
-
-        // Fallback overrides for Oracle-specific keys not in GETWELL_CONFIG
-        const oracleOverrides: { [key: string]: string } = {
-            swap_space: 'Swap space',
-            file_system_headroom: 'File system headroom',
-            ontap_configuration: 'ONTAP',
-            os_configuration: 'Operating system',
-            archive_placement: 'Archive placement',
-            datafiles_placement: 'Datafiles placement',
-            controlfiles_placement: 'Controlfiles placement',
-            redologs_placement: 'Redologs placement',
-            templogs_placement: 'Templogs placement',
-            oracle_binary_placement: 'Oracle binary placement'
-        };
-
-        if (oracleOverrides[internalName]) {
-            return oracleOverrides[internalName];
-        }
+    // Use unified CONFIG_NAMES mapping for both Oracle and MSSQL
+    if (internalName in CONFIG_NAMES) {
+        return CONFIG_NAMES[internalName as keyof typeof CONFIG_NAMES];
     }
 
-    // MSSQL-specific overrides for cases where GETWELL_CONFIG has internal names instead of display names
-    const overrides: { [key: string]: string } = {
-        'log-drive-size': ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
-        'performance-tier': ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
-        'tempdb-drive-size': ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
-        headroom: ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
-        'data-files-location': ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
-        'log-files-location': ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
-        'tempdb-files-location': ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
-        'compute-rightsizing': GENERAL.COMPUTE_RIGHTSIZING,
-        'rss-config': GENERAL.RSS_CONFIGURATION,
-        'snapshot-policy': ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
-        'backup-configuration': ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-        maxdop: ASSESSMENT_CONFIG_NAMES.MAXDOP,
-        'mssql-patch': ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
-        'host-os-patch': ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-        'sql-license': ASSESSMENT_CONFIG_NAMES.LICENSE,
-        crr: ASSESSMENT_CONFIG_NAMES.CRR,
-        'clone-management': ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
-        'mtu-alignment': ASSESSMENT_CONFIG_NAMES.MTU
-    };
-
-    return overrides[internalName] || GETWELL_CONFIG[internalName] || internalName;
+    // Return the internal name if no mapping is found
+    return internalName;
 };
 
 // Function to sanitize worksheet names for Excel compliance
@@ -226,7 +203,6 @@ const sanitizeWorksheetName = (name: string): string => {
 interface AssessmentItem {
     name: string;
     status: string;
-    recommended: string;
     severity: string;
     recommendation: string;
     current?: string;
@@ -354,20 +330,9 @@ const getAllItems = (data: ComprehensiveAssessmentData): AssessmentItem[] => {
         if (!EXCLUDED_FIELDS.includes(key)) {
             const item = data[key as keyof ComprehensiveAssessmentData] as AssessmentItem;
             if (item && typeof item === 'object') {
-                if ('errorMessage' in item) {
-                    allItems.push({
-                        name: key,
-                        status: 'n/a',
-                        severity: 'n/a',
-                        recommendation: 'n/a',
-                        recommended: 'n/a',
-                        current: 'n/a',
-                        totalObjectsAssessed: undefined,
-                        totalObjectsInViolation: undefined,
-                        resourceType: 'n/a',
-                        tags: [],
-                        errorMessage: item.errorMessage
-                    } as AssessmentItem & { errorMessage: string });
+                // Skip items with error messages when status is unavailable
+                if ('errorMessage' in item && item.errorMessage) {
+                    return;
                 } else if (item.name) {
                     allItems.push(item);
                 }
@@ -456,9 +421,7 @@ function generateGeneralInformationData(data: ComprehensiveAssessmentData, datab
 
 function generateConfigurationStatusData(data: ComprehensiveAssessmentData, databaseType: string = DBType.MSSQL) {
     const configurations: any[] = [];
-
     const displayToInternal = new Map<string, string>();
-
     const orderedKeys = getOrderedConfigurationKeys(data, databaseType);
 
     const processItems = (
@@ -470,134 +433,99 @@ function generateConfigurationStatusData(data: ComprehensiveAssessmentData, data
         if (!items) return;
 
         items.forEach(item => {
+            // Skip items with error messages when status is unavailable
+            if ('errorMessage' in item && item.errorMessage) {
+                return;
+            }
+
             const displayName = getConfigurationDisplayName(item.name, databaseType);
             displayToInternal.set(displayName, item.name);
 
-            // Handle error message objects
-            if ('errorMessage' in item && item.errorMessage) {
-                configurations.push({
-                    'Configuration name': displayName,
-                    'Parent-configuration name': parentConfigurationName,
-                    Category: category,
-                    'Sub-category': subCategory,
-                    Status: 'n/a',
-                    Severity: 'n/a',
-                    'Resource type': 'n/a',
-                    'Impacted resources (X out of Y)': 'n/a'
-                });
-            } else {
-                configurations.push({
-                    'Configuration name': displayName,
-                    'Parent-configuration name': parentConfigurationName,
-                    Category: category,
-                    'Sub-category': subCategory,
-                    Status: item.status,
-                    Severity: item.severity?.charAt(0).toUpperCase() + item.severity?.slice(1) || 'Unknown',
-                    'Resource type': item.resourceType || 'Resource',
-                    'Impacted resources (X out of Y)':
-                        typeof item.totalObjectsAssessed === 'number'
-                            ? `${item.totalObjectsInViolation || 0} out of ${item.totalObjectsAssessed}`
-                            : 'n/a'
-                });
-            }
+            configurations.push({
+                'Configuration name': displayName,
+                'Parent-configuration name': parentConfigurationName,
+                Category: category,
+                'Sub-category': subCategory,
+                Status: item.status,
+                Severity: item.severity?.charAt(0).toUpperCase() + item.severity?.slice(1) || 'Unknown',
+                'Resource type': item.resourceType || 'Resource',
+                'Impacted resources (X out of Y)':
+                    typeof item.totalObjectsAssessed === 'number'
+                        ? `${item.totalObjectsInViolation || 0} out of ${item.totalObjectsAssessed}`
+                        : 'n/a'
+            });
         });
     };
 
-    orderedKeys.forEach(configKey => {
-        switch (configKey) {
-            // Storage configurations
-            case 'ontap_configuration':
-                if (data.storage?.configuration) {
-                    processItems(data.storage.configuration.volumes, 'Storage', 'Storage configuration', 'ONTAP');
-                    processItems(data.storage.configuration.luns, 'Storage', 'Storage configuration', 'ONTAP');
-                }
-                break;
-            case 'os_configuration':
-                if (data.storage?.configuration) {
-                    processItems(data.storage.configuration.os, 'Storage', 'Storage configuration', 'Operating System');
-                }
-                break;
+    // Process configurations in the order they appear in orderedKeys
+    orderedKeys.forEach(configName => {
+        // Check storage configurations
+        if (data.storage?.configuration?.volumes?.find(item => item.name === configName)) {
+            const item = data.storage.configuration.volumes.find(item => item.name === configName);
+            if (item) processItems([item], 'Storage', 'Storage configuration', 'ONTAP');
+        } else if (data.storage?.configuration?.luns?.find(item => item.name === configName)) {
+            const item = data.storage.configuration.luns.find(item => item.name === configName);
+            if (item) processItems([item], 'Storage', 'Storage configuration', 'ONTAP');
+        } else if (data.storage?.configuration?.os?.find(item => item.name === configName)) {
+            const item = data.storage.configuration.os.find(item => item.name === configName);
+            if (item) processItems([item], 'Storage', 'Storage configuration', 'Operating System');
+        }
 
-            // Storage sizing configurations
-            case 'storage_tier':
-            case 'file_system_headroom':
-            case 'transaction_log_drive_size':
-            case 'tempdb_drive_size':
-            case 'swap_space':
-                if (data.storage?.sizing) {
-                    const matchingItem = data.storage.sizing.find(
-                        item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey
-                    );
-                    if (matchingItem) processItems([matchingItem], 'Storage', 'Storage sizing');
-                }
-                break;
+        // Check storage sizing
+        else if (data.storage?.sizing?.find(item => item.name === configName)) {
+            const item = data.storage.sizing.find(item => item.name === configName);
+            if (item) processItems([item], 'Storage', 'Storage sizing');
+        }
 
-            // Storage layout configurations
-            case 'user_data_files':
-            case 'transaction_log_files':
-            case 'tempdb_files':
-            case 'redologs_placement':
-            case 'templogs_placement':
-            case 'archive_placement':
-            case 'datafiles_placement':
-            case 'controlfiles_placement':
-            case 'oracle_binary_placement':
-            case 'data_dg_lun_layout':
-            case 'log_dg_lun_layout':
-            case 'fra_dg_lun_layout':
-            case 'archivelog_dg_lun_layout':
-                if (data.storage?.layout) {
-                    const matchingItem = data.storage.layout.find(
-                        item => GETWELL_CONFIG[item.name] === configKey || item.name === configKey
-                    );
-                    if (matchingItem) processItems([matchingItem], 'Storage', 'Storage layout');
-                }
-                break;
+        // Check storage layout
+        else if (data.storage?.layout?.find(item => item.name === configName)) {
+            const item = data.storage.layout.find(item => item.name === configName);
+            if (item) processItems([item], 'Storage', 'Storage layout');
+        }
 
-            // Compute configurations
-            case 'compute_rightsizing':
-                if (data.compute) processItems([data.compute], 'Compute', 'Compute');
-                break;
-            case 'host_os_patch':
-                if (data.hostOsPatch) processItems([data.hostOsPatch], 'Compute', 'Compute');
-                break;
-            case 'rss_config':
-                if (data.rssConfig) processItems([data.rssConfig], 'Compute', 'Compute');
-                break;
-            case 'mtu':
-                if (data.mtuAlignment) processItems([data.mtuAlignment], 'Compute', 'Compute');
-                break;
+        // Check high availability
+        else if (data.highAvailability?.find(item => item.name === configName)) {
+            const item = data.highAvailability.find(item => item.name === configName);
+            if (item) processItems([item], 'Resiliency', 'Protection', 'High Availability');
+        }
 
-            // Application configurations
-            case 'sql_licenses':
-                if (data.license) processItems([data.license], 'Application', 'Application');
-                break;
-            case 'microsoft_sql_patch':
-                if (data.mssqlPatch) processItems([data.mssqlPatch], 'Application', 'Application');
-                break;
-            case 'maxdop':
-                if (data.maxDOP) processItems([data.maxDOP], 'Application', 'Application');
-                break;
-
-            // Resiliency configurations
-            case 'scheduled_local_snapshot':
-                if (data.snapshotPolicy) processItems([data.snapshotPolicy], 'Resiliency', 'Protection');
-                break;
-            case 'crr':
-                if (data.crr) processItems([data.crr], 'Resiliency', 'Protection');
-                break;
-            case 'scheduled_fsx_for_ontap_backups':
-                if (data.awsBackup) processItems([data.awsBackup], 'Resiliency', 'Protection');
-                break;
-            case 'mssql_high_availability':
-                if (data.highAvailability)
-                    processItems(data.highAvailability, 'Resiliency', 'Protection', 'High Availability');
-                break;
-
-            // Cloning configurations
-            case 'clone_management':
-                if (data.clone) processItems([data.clone], 'Cloning', 'Cloning');
-                break;
+        // Check top-level configurations
+        else {
+            switch (configName) {
+                case 'compute-rightsizing':
+                    if (data.compute) processItems([data.compute], 'Compute', 'Compute');
+                    break;
+                case 'host-os-patch':
+                    if (data.hostOsPatch) processItems([data.hostOsPatch], 'Compute', 'Compute');
+                    break;
+                case 'rss-config':
+                    if (data.rssConfig) processItems([data.rssConfig], 'Compute', 'Compute');
+                    break;
+                case 'mtu-alignment':
+                    if (data.mtuAlignment) processItems([data.mtuAlignment], 'Compute', 'Compute');
+                    break;
+                case 'sql-license':
+                    if (data.license) processItems([data.license], 'Application', 'Application');
+                    break;
+                case 'mssql-patch':
+                    if (data.mssqlPatch) processItems([data.mssqlPatch], 'Application', 'Application');
+                    break;
+                case 'maxdop':
+                    if (data.maxDOP) processItems([data.maxDOP], 'Application', 'Application');
+                    break;
+                case 'snapshot-policy':
+                    if (data.snapshotPolicy) processItems([data.snapshotPolicy], 'Resiliency', 'Protection');
+                    break;
+                case 'backup-configuration':
+                    if (data.awsBackup) processItems([data.awsBackup], 'Resiliency', 'Protection');
+                    break;
+                case 'crr':
+                    if (data.crr) processItems([data.crr], 'Resiliency', 'Protection');
+                    break;
+                case 'clone-management':
+                    if (data.clone) processItems([data.clone], 'Cloning', 'Cloning');
+                    break;
+            }
         }
     });
 
@@ -865,11 +793,13 @@ const createBaseConfigurationObject = (config: AssessmentItem, databaseType: str
     ...(config.severity && { Severity: config.severity }),
     ...(config.recommendation && { Recommendation: config.recommendation }),
     ...(config.current && { Current: config.current }),
-    ...(config.recommended && { Recommended: config.recommended }),
     ...(config.tags?.length && { Tags: config.tags.join(', ') }),
     'Action Summary':
-        getActionSummaryMessages(GETWELL_CONFIG[config.name] || config.name, databaseType, config.objectsInViolation) ||
-        'n/a',
+        getActionSummaryMessages(
+            getConfigurationDisplayName(config.name, databaseType),
+            databaseType,
+            config.objectsInViolation
+        ) || 'n/a',
     'Impacted resources (X out of Y)':
         'errorMessage' in config && config.errorMessage
             ? config.errorMessage
@@ -1269,7 +1199,7 @@ function autoFitColumns(worksheet: ExcelJS.Worksheet, data: any[]): void {
             }
         });
 
-        if (key.toUpperCase() === 'RECOMMENDED' || key.toUpperCase() === 'RECOMMENDATION') {
+        if (key.toUpperCase() === 'RECOMMENDATION') {
             maxWidth = Math.max(maxWidth, 20);
         } else if (key.includes('Savings Opportunity Percentage')) {
             maxWidth = Math.max(maxWidth, 25);
@@ -1883,7 +1813,7 @@ async function generateProperXlsxWorkbook(
     orderedKeys.forEach(configKey => {
         const matchingConfig = configurationStatus.find(config => {
             const internalName = displayToInternal.get(config['Configuration name']);
-            return GETWELL_CONFIG[internalName || ''] === configKey || internalName === configKey;
+            return internalName === configKey;
         });
 
         if (matchingConfig && matchingConfig['Configuration name']) {

@@ -1011,6 +1011,131 @@ export const ASSESSMENT_CONFIG_NAMES = {
     MICROSOFT_SQL_SERVER_PATCH_SHORT: 'Microsoft SQL Server patch'
 };
 
+// Configuration names mapping for unified display names
+export const CONFIG_NAMES = {
+    // Oracle Storage sizing configurations
+    'swap-space': ASSESSMENT_CONFIG_NAMES.SWAP_SPACE,
+    file_system_headroom: ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
+
+    // Oracle Storage layout configurations
+    'archive-placement': ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
+    'datafiles-placement': ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
+    'controlfiles-placement': ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
+    'redologs-placement': ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
+    'templogs-placement': ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
+    'oracle-binary-placement': ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
+    'data-dg-lun-layout': ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
+    'log-dg-lun-layout': ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
+    'fra-dg-lun-layout': ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
+    'archivelog-dg-lun-layout': ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT,
+
+    // Storage configuration - ONTAP
+    compression: ASSESSMENT_CONFIG_NAMES.COMPRESSION,
+    deduplication: ASSESSMENT_CONFIG_NAMES.DEDUPLICATION,
+    compaction: ASSESSMENT_CONFIG_NAMES.COMPACTION,
+    'thin-provision': ASSESSMENT_CONFIG_NAMES.THIN_PROVISIONING,
+    autosize: ASSESSMENT_CONFIG_NAMES.AUTOSIZE,
+    'autosize-mode': ASSESSMENT_CONFIG_NAMES.AUTOSIZE_MODE,
+    'fractional-reserve': ASSESSMENT_CONFIG_NAMES.FRACTIONAL_RESERVE,
+    'snapshot-copy-reserve': ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE,
+    'snapshot-autodelete': ASSESSMENT_CONFIG_NAMES.SNAPSHOT_AUTODELETE,
+    'space-mgmt-try-first': ASSESSMENT_CONFIG_NAMES.SPACE_MANAGEMENT,
+    'tiering-policy': ASSESSMENT_CONFIG_NAMES.TIERING_POLICY,
+    'tiering-min-cooling-days': ASSESSMENT_CONFIG_NAMES.TIERING_MINIMUM_COOLING_DAYS,
+    'os-type': ASSESSMENT_CONFIG_NAMES.OS_TYPE,
+    'space-reservation-enabled': ASSESSMENT_CONFIG_NAMES.SPACE_RESERVATION,
+    'space-allocation-allocated': ASSESSMENT_CONFIG_NAMES.SPACE_ALLOCATION,
+    'nfs-rootonly': ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY,
+    'export-policy': ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY,
+    'snapshot-policy-vol': ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY,
+
+    // Storage configuration - OS (Oracle)
+    'multipath-io': ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO,
+    'host-utilities': ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES,
+    'transparent-hugepages': ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES,
+    selinux: ASSESSMENT_CONFIG_NAMES.SELINUX,
+    'iscsi-replacement-timeout': ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT,
+    'multipath-friendly-names': ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES,
+    'tcp-advanced-options': ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS,
+    'filesystems-io-options': ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS,
+    'multiblock-readcount': ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT,
+    'multipath-io-sessions': ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS,
+    'multipath-configuration': ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION,
+    'kernel-parameters': ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS,
+    'nfs-mount-options-databasefiles': ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES,
+    'nfs-mount-options-adrhome': ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME,
+    'nfs-caching-options': ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS,
+    'nfsv4-domain-name': ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME,
+    'asm-setup': ASSESSMENT_CONFIG_NAMES.ASM_SETUP,
+    'asm-external-redundancy': ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY,
+    'afd-logical-block-size': ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE,
+    'asmlib-logical-block-size': ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE,
+
+    // Special configurations
+    ontap_configuration: ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS,
+    os_configuration: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
+
+    // MSSQL Storage sizing configurations
+    storage_tier: ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
+    transaction_log_drive_size: ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
+    tempdb_drive_size: ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
+    headroom: ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
+
+    // MSSQL Storage layout configurations
+    user_data_files: ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
+    transaction_log_files: ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
+    tempdb_files: ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
+
+    // Compute configurations
+    compute_rightsizing: ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
+    host_os_patch: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+    rss_config: ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION,
+    mtu: ASSESSMENT_CONFIG_NAMES.MTU,
+
+    // Application configurations
+    sql_licenses: ASSESSMENT_CONFIG_NAMES.LICENSE,
+    microsoft_sql_patch: ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+    maxdop: ASSESSMENT_CONFIG_NAMES.MAXDOP,
+
+    // Resiliency configurations
+    scheduled_local_snapshot: ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+    crr: ASSESSMENT_CONFIG_NAMES.CRR,
+    scheduled_fsx_for_ontap_backups: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+    mssql_high_availability: ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY,
+
+    // Cloning configurations
+    clone_management: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+
+    // MSSQL High Availability configurations
+    'shared-storage': ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE,
+    'drive-letter': ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER,
+    'heartbeat-settings': ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS,
+    'cluster-quorum': ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM,
+    'sqlServer-service': ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE,
+
+    // Storage configuration - LUNs (MSSQL)
+    'mpio-iscsi-count': ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS,
+    'mpio-timeout': ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_TIMEOUT,
+    'mpio-enabled': ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_STATUS,
+    'mpio-load-balance-policy': ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_POLICY,
+    'ntfs-allocation-size': ASSESSMENT_CONFIG_NAMES.NTFS_ALLOCATION_UNIT_SIZE,
+    'ntfs-allocation-unit-size': ASSESSMENT_CONFIG_NAMES.NTFS_ALLOCATION_UNIT_SIZE,
+    'log-drive-size': ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
+    'performance-tier': ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
+    'tempdb-drive-size': ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
+    'data-files-location': ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
+    'log-files-location': ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
+    'tempdb-files-location': ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT,
+    'compute-rightsizing': GENERAL.COMPUTE_RIGHTSIZING,
+    'rss-config': GENERAL.RSS_CONFIGURATION,
+    'snapshot-policy': ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+    'backup-configuration': ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+    'mssql-patch': ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+    'host-os-patch': ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+    'sql-license': ASSESSMENT_CONFIG_NAMES.LICENSE,
+    'mtu-alignment': ASSESSMENT_CONFIG_NAMES.MTU
+};
+
 export const GW_CONFIG_OPTIMIZE_NA = [
     'TempDB placement',
     GENERAL.LICENSE_SQL_SERVER,

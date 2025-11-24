@@ -526,7 +526,7 @@ const GetWell = () => {
                                                     }}
                                                     variant="Semibold_14"
                                                 >
-                                                    Export Excel
+                                                    {t('databases.well-architect.export-report')}
                                                 </DsTypography>
                                             </div>
                                             <div>

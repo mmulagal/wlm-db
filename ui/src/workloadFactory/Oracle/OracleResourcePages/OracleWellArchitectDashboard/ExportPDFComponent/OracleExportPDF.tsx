@@ -76,7 +76,7 @@ const OracleExportPDF = ({
                             }}
                             variant="Semibold_14"
                         >
-                            {t('databases.well-architect.export-excel')}
+                            {t('databases.well-architect.export-report')}
                         </DsTypography>
                     </div>
                 </div>

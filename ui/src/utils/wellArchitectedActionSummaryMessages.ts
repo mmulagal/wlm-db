@@ -269,6 +269,12 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
             ].join(' ');
         }
 
+        case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH:
+        case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
+            return [wellArchitectMessages['what-will-happen'], wellArchitectMessages['failover-cluster-note3']].join(
+                '. '
+            );
+
         // Oracle specific configurations
         case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
             return [
@@ -280,6 +286,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
+        case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
             return [
                 wellArchitectMessages['temp-placement-action-summary'],
                 wellArchitectMessages['optimization-steps'],
@@ -298,6 +305,7 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
+        case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
             return [
                 wellArchitectMessages['datafile-placement-action-summary'],
                 wellArchitectMessages['optimization-steps'],
@@ -342,11 +350,228 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['oracle-storagelayout-note1']
             ].join('\n');
 
-        case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH:
-        case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
-            return [wellArchitectMessages['what-will-happen'], wellArchitectMessages['failover-cluster-note3']].join(
-                '. '
+        case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
+            return [
+                wellArchitectMessages['data-log-separation-action-summary'],
+                wellArchitectMessages['data-log-separation-benefit1'],
+                wellArchitectMessages['data-log-separation-recommendation1'],
+                wellArchitectMessages['data-log-separation-requirement1'],
+                GENERAL.NOTE,
+                wellArchitectMessages['oracle-storagelayout-note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
+            return [
+                wellArchitectMessages['clone-refresh-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['clone-refresh-what-will-happen'],
+                GENERAL.NOTE,
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        // Oracle-specific configurations
+        case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
+            return [
+                wellArchitectMessages['oracle-swap-space-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-swap-space-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY:
+            return [
+                wellArchitectMessages['oracle-nfs-rootonly-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-nfs-rootonly-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY:
+            return [
+                wellArchitectMessages['oracle-export-policy-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-export-policy-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
+            return [
+                wellArchitectMessages['oracle-multipath-io-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-multipath-io-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
+            return [
+                wellArchitectMessages['oracle-host-utility-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-host-utility-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+            return [
+                wellArchitectMessages['oracle-transparent-hugepages-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-transparent-hugepages-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.SELINUX:
+            return [
+                wellArchitectMessages['oracle-selinux-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-selinux-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
+            return [
+                wellArchitectMessages['oracle-iscsi-replacement-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-iscsi-replacement-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
+            return [
+                wellArchitectMessages['oracle-multipath-friendly-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-multipath-friendly-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+            return [
+                wellArchitectMessages['oracle-kernel-parameters-action-summary'], // This maps to TCP slot table configuration
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-kernel-parameters-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+            return [
+                wellArchitectMessages['oracle-filesystem-io-options-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-filesystem-io-options-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+            return [
+                wellArchitectMessages['oracle-multiblock-readcount-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-multiblock-readcount-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
+            return [
+                wellArchitectMessages['oracle-multipath-config-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-multipath-config-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
+            return [
+                wellArchitectMessages['oracle-kernel-parameters-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-kernel-parameters-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
+            return [
+                wellArchitectMessages['oracle-nfs-mount-options-dbfiles-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-nfs-mount-options-dbfiles-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:
+            return [
+                wellArchitectMessages['oracle-nfs-mount-options-adrhome-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-nfs-mount-options-adrhome-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS:
+            return [
+                wellArchitectMessages['oracle-nfs-caching-options-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-nfs-caching-options-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME:
+            return [
+                wellArchitectMessages['oracle-nfsv4-domain-name-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-nfsv4-domain-name-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.ASM_SETUP:
+            return [wellArchitectMessages['oracle-asm-setup-action-summary'], wellArchitectMessages['note1']].join(
+                '\n'
             );
+
+        case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
+            return [
+                wellArchitectMessages['oracle-asm-external-redundancy-action-summary'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
+            return [
+                wellArchitectMessages['oracle-afd-logical-block-size-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-afd-logical-block-size-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE:
+            return [
+                wellArchitectMessages['oracle-asmlib-logical-block-size-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-asmlib-logical-block-size-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+            return [
+                wellArchitectMessages['oracle-data-dg-lun-layout-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-data-dg-lun-layout-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+            return [
+                wellArchitectMessages['oracle-log-dg-lun-layout-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-log-dg-lun-layout-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+            return [
+                wellArchitectMessages['oracle-fra-dg-lun-layout-action-summary'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-fra-dg-lun-layout-what-will-happen'],
+                wellArchitectMessages['note1']
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
+            return [
+                wellArchitectMessages['oracle-fra-dg-lun-layout-action-summary'], // Using FRA action summary as they are similar
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['oracle-fra-dg-lun-layout-what-will-happen'], // Using FRA what will happen as they are similar
+                wellArchitectMessages['note1']
+            ].join('\n');
 
         default:
             return 'Action Summary messages are not available for this configuration type.';
