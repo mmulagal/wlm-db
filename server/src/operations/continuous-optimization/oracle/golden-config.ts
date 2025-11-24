@@ -393,7 +393,7 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.WARNING,
                 resourceType: 'EC2 Instance',
                 recommendation:
-                    'Workload Factory recommends using optimized NFS mount options for database files: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144,noint. This configuration is designed to improve database performance and resilience, particularly in high-throughput environments.',
+                    'Workload Factory recommends using optimized NFS mount options for database files: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144,nointr. This configuration is designed to improve database performance and resilience, particularly in high-throughput environments.',
                 tags: [
                     AwsWellArchitecturedPillars.RELIABILITY,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
