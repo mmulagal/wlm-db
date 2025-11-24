@@ -593,12 +593,6 @@ const oraclePlacementConfigs = {
 
 // Oracle storage sizing configurations mapping
 const oracleStorageSizingConfigs = {
-    [ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]: createOracleStorageSizingConfig(
-        'headroom',
-        'headroom',
-        'databases.well-architect.dashboard-table-headers.file-system-headroom',
-        'fileSystemHeadroom'
-    ),
     [ASSESSMENT_CONFIG_NAMES.SWAP_SPACE]: createOracleStorageSizingConfig(
         'swap-space',
         'swap-space',
@@ -606,6 +600,14 @@ const oracleStorageSizingConfigs = {
         'swapSpace'
     )
 };
+
+// Oracle-specific FILE_SYSTEM_HEADROOM configuration
+const oracleFileSystemHeadroomConfig = createOracleStorageSizingConfig(
+    'headroom',
+    'headroom',
+    'databases.well-architect.dashboard-table-headers.file-system-headroom',
+    'fileSystemHeadroom'
+);
 
 // Merge all configurations
 const FULL_CONFIG_MAPPING = {
@@ -636,8 +638,12 @@ const DashboardConfigsTable = ({
     const { credentialData } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
-    // Get configuration for the current config type
-    const config = FULL_CONFIG_MAPPING[configType];
+    let config;
+    if (configType === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && configEngineType === DBType.ORACLE) {
+        config = oracleFileSystemHeadroomConfig;
+    } else {
+        config = FULL_CONFIG_MAPPING[configType];
+    }
 
     if (!config) {
         return null;

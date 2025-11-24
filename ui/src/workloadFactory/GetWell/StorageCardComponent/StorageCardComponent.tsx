@@ -69,7 +69,8 @@ const StorageCardComponent = ({
     type,
     showDismissedConfigurations,
     setShowDismissedConfigurations,
-    isAllSubConfigActivating
+    isAllSubConfigActivating,
+    engineType = DBType.MSSQL
 }: any) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
@@ -854,7 +855,7 @@ const StorageCardComponent = ({
             type === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
             type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
             type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
-            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
+            (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && engineType === DBType.ORACLE)
         ) {
             return t('databases.well-architect.view');
         }

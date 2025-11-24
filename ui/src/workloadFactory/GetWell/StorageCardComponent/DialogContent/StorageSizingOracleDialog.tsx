@@ -1,12 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
-import {
-    createActionOptionSection,
-    createSection,
-    createStandardNotesSection,
-    createContentWithBullets
-} from './DialogContentHelper';
+import { createActionOptionSection, createSection, createContentWithBullets } from './DialogContentHelper';
 
 const StorageSizingOracleDialog = ({ type }: { type: string }) => {
     const { t } = useTranslation();
@@ -44,7 +39,13 @@ const StorageSizingOracleDialog = ({ type }: { type: string }) => {
                             t('databases.well-architect.oracle-filesystem-headroom-optimization-step6'),
                             t('databases.well-architect.oracle-filesystem-headroom-optimization-step7')
                         ])}
-                        {createStandardNotesSection()}
+                        {createSection(
+                            t('databases.well-architect.note'),
+                            createContentWithBullets([
+                                t('databases.well-architect.note1'),
+                                t('databases.well-architect.oracle-filesystem-headroom-note')
+                            ])
+                        )}
                     </>
                 );
             case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
@@ -62,20 +63,17 @@ const StorageSizingOracleDialog = ({ type }: { type: string }) => {
                                 t('databases.well-architect.oracle-swap-space-action-summary-bullet3')
                             ])
                         )}
-                        {createSection(
-                            t('databases.well-architect.what-will-happen'),
-                            t('databases.well-architect.oracle-swap-space-what-will-happen')
-                        )}
                         {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
                             t('databases.well-architect.oracle-swap-space-optimization-step1'),
                             t('databases.well-architect.oracle-swap-space-optimization-step2'),
                             t('databases.well-architect.oracle-swap-space-optimization-step3'),
                             t('databases.well-architect.oracle-swap-space-optimization-step4'),
-                            t('databases.well-architect.oracle-swap-space-optimization-step5'),
-                            t('databases.well-architect.oracle-swap-space-optimization-step6'),
-                            t('databases.well-architect.oracle-swap-space-optimization-step7')
+                            t('databases.well-architect.oracle-swap-space-optimization-step5')
                         ])}
-                        {createStandardNotesSection()}
+                        {createSection(
+                            t('databases.well-architect.note'),
+                            t('databases.well-architect.oracle-swap-space-note')
+                        )}
                     </>
                 );
             default:

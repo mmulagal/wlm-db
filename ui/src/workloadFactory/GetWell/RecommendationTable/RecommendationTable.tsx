@@ -514,7 +514,7 @@ const RecommendationTable = ({
             name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
             name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
             name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
-            name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
+            (name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && engineType === DBType.ORACLE)
         ) {
             return 'View';
         }
