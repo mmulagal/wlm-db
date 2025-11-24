@@ -96,6 +96,21 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                         }
                     ]);
                     break;
+                case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
+                case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
+                case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
+                case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
+                    setTagData([
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        },
+                        {
+                            label: t('databases.well-architect.tags.operationalExcellence'),
+                            value: 'operationalExcellence'
+                        }
+                    ]);
+                    break;
                 default:
                     // Default oracle has all 3 tags. Once we get different configs for oracle, we can update the tags accordingly using switch case.
                     setTagData([
@@ -320,21 +335,6 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                             value: 'operationalExcellence'
                         },
                         { label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' }
-                    ]);
-                    break;
-                case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
-                case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
-                case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
-                case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
-                    setTagData([
-                        {
-                            label: t('databases.well-architect.tags.performanceEfficiency'),
-                            value: 'performanceEfficiency'
-                        },
-                        {
-                            label: t('databases.well-architect.tags.operationalExcellence'),
-                            value: 'operationalExcellence'
-                        }
                     ]);
                     break;
                 default:

@@ -1626,14 +1626,11 @@ export const getDetectOptionForInstance = (
     } else if (!isSqlRunning) {
         detectOption = DETECT_HOST_VAR.DISABLE;
         detectOptionDisableMsg = GENERAL.SQL_SERVER_NOT_RUNNING;
-    } else if (!hasStorageTypes && auth) {
+    } else if (!hasStorageTypes) {
         detectOption = DETECT_HOST_VAR.DISABLE;
         detectOptionDisableMsg = GENERAL.STORAGE_NOT_PRESENT;
     } else if ((fsxId && fsxId in fsxCredentialStatusObj) || !fsxId) {
         detectOption = DETECT_HOST_VAR.SHOW;
-    } else if (!hasStorageTypes) {
-        detectOption = DETECT_HOST_VAR.DISABLE;
-        detectOptionDisableMsg = GENERAL.STORAGE_NOT_PRESENT;
     }
     return {
         detectOption,

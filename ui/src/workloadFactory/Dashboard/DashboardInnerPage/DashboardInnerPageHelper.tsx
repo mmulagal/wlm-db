@@ -7,6 +7,7 @@ import {
     CONFIG_STATE_ACTIONS,
     CONFIG_STATES,
     DBType,
+    FINDINGS,
     GETWELL_STATUS,
     INVENTORY_STATUS,
     STATUS_CONST
@@ -406,6 +407,12 @@ export const bulkFixDisableCheck = (
     const checkIfAnyRowNotOptimized = (selectedRows: any[]) =>
         selectedRows.some((row: any) => row?.assessmentStatus !== GETWELL_STATUS.OPTIMIZED);
 
+    const checkIfAnyRowNotFound = (selectedRows: any[]) =>
+        selectedRows.every(
+            (row: any) =>
+                !row?.assessmentStatus || row?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
+        );
+
     const checkIfAllRowNotOnline = (selectedRows: any[]) =>
         selectedRows.every((row: any) => row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP);
 
@@ -449,6 +456,9 @@ export const bulkFixDisableCheck = (
     } else if (!checkIfAnyRowNotOptimized(selectedRowsForOptimize)) {
         isFixDisabled = true;
         fixDisableMsg = t('databases.well-architect.bulk-fix-disabled');
+    } else if (checkIfAnyRowNotFound(selectedRowsForOptimize)) {
+        isFixDisabled = true;
+        fixDisableMsg = `${configType} ${t('databases.well-architect.assessment-not-available')}`;
     } else if (checkIfAllRowNotOnline(selectedRowsForOptimize)) {
         isFixDisabled = true;
         fixDisableMsg = t('databases.well-architect.only-online-resource-fix');
@@ -514,7 +524,10 @@ export const sortOptimizeDashboardInnerTable = (data: any) => {
 
 export const filterNotOptimizedRows = (data: any[]) =>
     data.filter(
-        row => row?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP && row.assessmentStatus !== GETWELL_STATUS.OPTIMIZED
+        row =>
+            row?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP &&
+            row.assessmentStatus &&
+            row.assessmentStatus !== GETWELL_STATUS.OPTIMIZED
     );
 
 // Check if all rowData entries have the same assessment status
