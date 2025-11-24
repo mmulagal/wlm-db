@@ -24,6 +24,7 @@ regexes = [
     '''35887b14-3e98-499d-8165-e0f45ec5057e''',
     '''InventoryApisV3''',
     '''AKIA2OPDPEVT4HHFDECD''',
+    '''ORA-15173-orapwasm-missing''',
     '''AKIAIOSFODNN7EXAMPLE''',
     '''uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44''',
     '''2fbQV4RarcrCweRERZRGJEZ8RmuTQ9iFQkoy1gBGUmQc5WShqAIdKuFAjMGO0M3D''',
