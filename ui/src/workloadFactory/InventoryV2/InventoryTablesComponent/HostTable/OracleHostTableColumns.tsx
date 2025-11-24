@@ -74,13 +74,13 @@ export function OracleHostTableColDefs({ t, hostTableRows }: { t: TFunction; hos
         {
             id: '1',
             Header: t('databases.host-table.oracle.headers.registered-databases'),
-            accessor: 'totalInstance',
+            accessor: 'managedInstance',
             width: '228px',
             isSortable: true,
             accessorForTextFilter: 'sqlServerInstancesText',
             renderCell: (cellData: any, rowData: any) => (
                 <div>
-                    {cellData && rowData?.sqlServerInstancesText && cellData !== 0 ? (
+                    {rowData?.sqlServerInstancesText ? (
                         <>
                             {/* <Typography variant="Semibold_14">
                                     {cellData === 1 ? cellData + ' instance' : cellData + ' instances'}
@@ -90,9 +90,7 @@ export function OracleHostTableColDefs({ t, hostTableRows }: { t: TFunction; hos
                     ) : (
                         ''
                     )}
-                    {!cellData || !rowData?.sqlServerInstancesText
-                        ? t('databases.general.not-available-table-columns')
-                        : ''}
+                    {!rowData?.sqlServerInstancesText ? t('databases.general.not-available-table-columns') : ''}
                 </div>
             )
         },

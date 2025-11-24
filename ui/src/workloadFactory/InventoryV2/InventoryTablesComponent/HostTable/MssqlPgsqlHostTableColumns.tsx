@@ -80,13 +80,13 @@ export function MssqlPgsqlHostTableColDefs({
         {
             id: '1',
             Header: t('databases.host-table.headers.registered-instances'),
-            accessor: 'totalInstance',
+            accessor: 'managedInstance',
             width: '200px',
             isSortable: true,
             accessorForTextFilter: 'sqlServerInstancesText',
             renderCell: (cellData: any, rowData: any) => (
                 <div>
-                    {cellData && rowData?.sqlServerInstancesText && cellData !== 0 ? (
+                    {rowData?.sqlServerInstancesText ? (
                         <>
                             {/* <Typography variant="Semibold_14">
                                     {cellData === 1 ? cellData + ' instance' : cellData + ' instances'}
@@ -96,9 +96,7 @@ export function MssqlPgsqlHostTableColDefs({
                     ) : (
                         ''
                     )}
-                    {!cellData || !rowData?.sqlServerInstancesText
-                        ? t('databases.general.not-available-table-columns')
-                        : ''}
+                    {!rowData?.sqlServerInstancesText ? t('databases.general.not-available-table-columns') : ''}
                 </div>
             )
         },
