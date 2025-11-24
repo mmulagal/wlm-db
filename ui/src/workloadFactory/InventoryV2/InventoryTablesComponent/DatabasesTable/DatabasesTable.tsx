@@ -29,11 +29,13 @@ import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import {
     useAddHostJobScMutation,
     useAddHostScMutation,
+    useAssignBackupRecoveryLicenseMutation,
     useAssignRBACPrivilegesMutation,
     useConfigureDirectoryMutation,
     useDeleteHostScMutation,
     useDiscoverExistingFsxNMutation,
     useGenerateCredentialIDMutation,
+    useGetBackupRecoveryLicenseMutation,
     useGetConnectorsMutation,
     useGetDiscoverHostResultMutation,
     useGetFsxDetailsMutation,
@@ -88,6 +90,8 @@ const DatabasesTable = () => {
     const [discoverExistingFsxN] = useDiscoverExistingFsxNMutation();
     const [getWorkSpaceID] = useGetWorkSpaceIDMutation();
     const [getRBACPrivileges] = useGetRBACPrivilegesMutation();
+    const [getBackupRecoveryLicense] = useGetBackupRecoveryLicenseMutation();
+    const [assignBackupRecoveryLicense] = useAssignBackupRecoveryLicenseMutation();
     const [listExistingHosts] = useListExistingHostsMutation();
     const [assignRBACPrivileges] = useAssignRBACPrivilegesMutation();
     const [generateCredentialID] = useGenerateCredentialIDMutation();
@@ -350,6 +354,8 @@ const DatabasesTable = () => {
             discoverExistingFsxN,
             assignRBACPrivileges,
             getRBACPrivileges,
+            getBackupRecoveryLicense,
+            assignBackupRecoveryLicense,
             isDemoMode,
             getSCCrendentials,
             scAuthDialog,

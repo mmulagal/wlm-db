@@ -7,11 +7,13 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import {
     useAddHostJobScMutation,
     useAddHostScMutation,
+    useAssignBackupRecoveryLicenseMutation,
     useAssignRBACPrivilegesMutation,
     useConfigureDirectoryMutation,
     useDeleteHostScMutation,
     useDiscoverExistingFsxNMutation,
     useGenerateCredentialIDMutation,
+    useGetBackupRecoveryLicenseMutation,
     useGetConnectorsMutation,
     useGetDiscoverHostResultMutation,
     useGetDiscoverInstanceResultMutation,
@@ -152,6 +154,8 @@ const InstancesTable = () => {
     const [discoverExistingFsxN] = useDiscoverExistingFsxNMutation();
     const [getWorkSpaceID] = useGetWorkSpaceIDMutation();
     const [getRBACPrivileges] = useGetRBACPrivilegesMutation();
+    const [getBackupRecoveryLicense] = useGetBackupRecoveryLicenseMutation();
+    const [assignBackupRecoveryLicense] = useAssignBackupRecoveryLicenseMutation();
     const [listExistingHosts] = useListExistingHostsMutation();
     const [assignRBACPrivileges] = useAssignRBACPrivilegesMutation();
     const [generateCredentialID] = useGenerateCredentialIDMutation();
@@ -616,6 +620,8 @@ const InstancesTable = () => {
             discoverExistingFsxN,
             assignRBACPrivileges,
             getRBACPrivileges,
+            getBackupRecoveryLicense,
+            assignBackupRecoveryLicense,
             isDemoMode,
             getSCCrendentials,
             scAuthDialog,

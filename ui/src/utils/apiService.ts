@@ -85,7 +85,9 @@ const isBluexpExternalApiCall = (endpoint: string): boolean => {
         'listAllDirectories',
         'getDiscoverHostResult',
         'getDiscoverInstanceResult',
-        'getOrganizationIds'
+        'getOrganizationIds',
+        'getBackupRecoveryLicense',
+        'assignBackupRecoveryLicense'
     ];
 
     return bluexpEndpoints.includes(endpoint);
@@ -608,6 +610,18 @@ export const snapcenterAPI = createApi({
         listExistingHosts: builder.mutation({
             query: ({ accountID }) => ({
                 url: `backup-recovery/organizations/${accountID}/v1/workloads/sql/hosts?limit=50&offset=0&order_by=name+asc&deploymentModel=`
+            })
+        }),
+        getBackupRecoveryLicense: builder.mutation({
+            query: ({ orgId }) => ({
+                url: `backup-recovery/organizations/${orgId}/v1/licenses?workloadType=SQL`
+            })
+        }),
+        assignBackupRecoveryLicense: builder.mutation({
+            query: ({ orgId, payload }) => ({
+                url: `backup-recovery/organizations/${orgId}/v1/licenses`,
+                method: 'POST',
+                body: payload
             })
         }),
         listAllDirectories: builder.mutation({
@@ -1541,6 +1555,8 @@ export const {
 } = inventoryApi;
 
 export const {
+    useGetBackupRecoveryLicenseMutation,
+    useAssignBackupRecoveryLicenseMutation,
     useGetSCCrendentialsMutation,
     useGetOrganizationIdsMutation,
     useGetConnectorsMutation,

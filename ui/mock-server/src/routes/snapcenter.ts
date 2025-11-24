@@ -20,6 +20,19 @@ router.get('/backup-recovery/organizations/:accountID/v1/workloads/sql/hosts', a
     }, 500);
 });
 
+router.get('/backup-recovery/organizations/:orgId/v1/licenses?workloadType=SQL', async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            error: {
+                code: 'LICENSE_NO_ACTIVE_TRIAL_FOUND',
+                message: 'You are not on active free trial period',
+                resolution:
+                    "Free trial(Inbuilt) couldn't be found for Account af3703ac-0666-4630-a608-037db02847ac for workload type SQL"
+            }
+        });
+    }, 500);
+});
+
 router.get('/v1/management/organizations', async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, {
@@ -167,6 +180,14 @@ router.post(
         }, 10);
     }
 );
+
+router.post('/backup-recovery/organizations/:orgId/v1/licenses', async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            message: 'Trial license initialized successfully'
+        });
+    }, 10);
+});
 
 router.post(
     '/accounts/:accountID/fsx/v2/credentials/:credentialID/regions/:regionID/bluexp/register-file-systems',
