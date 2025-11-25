@@ -69,18 +69,22 @@ const LAPRReadiness = Type.Object({
     message: Type.Optional(Type.String())
 });
 
+const LogsAnalysisPreRequisitesObject = Type.Object({
+    errorMessage: Type.Optional(Type.String()),
+    databaseHostId: Type.Optional(Type.String()),
+    ec2InstanceId: Type.Optional(Type.String()),
+    databaseInstanceName: Type.Optional(Type.String()),
+    bedrockPreRequisites: Type.Optional(LAPRReadiness),
+    instanceProfilePreRequisites: Type.Optional(LAPRReadiness),
+    credentialsPreRequisites: Type.Optional(LAPRReadiness),
+    networkingPreRequisites: Type.Optional(LAPRReadiness),
+    oraclePermissionsPreRequisites: Type.Optional(LAPRReadiness)
+});
+
+type LogsAnalysisPreRequisitesObjectType = Static<typeof LogsAnalysisPreRequisitesObject>;
+
 const LogsAnalysisPreRequisites = Type.Object({
-    items: Type.Array(
-        Type.Object({
-            errorMessage: Type.Optional(Type.String()),
-            databaseHostId: Type.Optional(Type.String()),
-            ec2InstanceId: Type.Optional(Type.String()),
-            bedrockPreRequisites: Type.Optional(LAPRReadiness),
-            instanceProfilePreRequisites: Type.Optional(LAPRReadiness),
-            credentialsPreRequisites: Type.Optional(LAPRReadiness),
-            networkingPreRequisites: Type.Optional(LAPRReadiness)
-        })
-    )
+    items: Type.Array(LogsAnalysisPreRequisitesObject)
 });
 
 const SeverityCounts = Type.Object({
@@ -90,6 +94,13 @@ const SeverityCounts = Type.Object({
 });
 
 type SeverityCountsType = Static<typeof SeverityCounts>;
+
+const oracleHostObject = Type.Object({
+    databaseHostId: Type.String(),
+    ec2InstanceId: Type.Optional(Type.String()),
+    databaseInstanceName: Type.String()
+});
+type oracleHostType = Static<typeof oracleHostObject>;
 
 const LatestReportObject = Type.Object({
     id: Type.String(),
@@ -126,6 +137,28 @@ const AnalyzePreRequisitesQuery = Type.Object({
     )
 });
 
+const OraclePreRequisitesObjectType = Type.Object({
+    databaseInstanceName: Type.String({
+        description: 'Database Instance Name',
+        minLength: 1,
+        maxLength: 200
+    }),
+    ec2InstanceId: Type.Optional(
+        Type.String({
+            description: 'EC2 Instance ID of unmanaged database host instance'
+        })
+    ),
+    databaseHostId: Type.Optional(
+        Type.String({
+            description: 'Database Host ID of managed database host'
+        })
+    )
+});
+
+const OraclePreRequisitesRequestBody = Type.Object({
+    items: Type.Array(OraclePreRequisitesObjectType)
+});
+
 export {
     LogsAnalyzerParams,
     LogsAnalyzerParamsType,
@@ -139,5 +172,8 @@ export {
     LatestReports,
     AnalyzePreRequisitesQuery,
     SeverityCounts,
-    SeverityCountsType
+    SeverityCountsType,
+    OraclePreRequisitesRequestBody,
+    LogsAnalysisPreRequisitesObjectType,
+    oracleHostType
 };

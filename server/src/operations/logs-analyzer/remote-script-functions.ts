@@ -1,6 +1,7 @@
 import { InferenceConfigType } from '../../routes/types/logs-analyzer.types';
 import getLogger from '../../utils/logger';
 import { LOG_LEVEL, PRE_REQ_MESSAGES } from '../../utils/logs-analyzer/logs-analyzer-consts';
+import { getOracleDefaultOrUserAuthCommand } from '../workloads/oracle/oracle-ssm-script-utils';
 
 const logger = getLogger();
 
@@ -322,9 +323,35 @@ fi
 `;
 }
 
+function getLinuxOraclePermissionsCheckScript(ec2InstanceId: string, databaseName: string): string {
+    return `
+    ORACLE_SID="${databaseName}"
+    #!/bin/bash
+    ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, databaseName)}
+    result=$(sudo -i -u oracle bash <<EOF
+        export ORACLE_SID="$ORACLE_SID"
+        $sqlplus_command <<'EOSQL'
+        SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+        SELECT 1
+        FROM   v\\$diag_alert_ext
+        WHERE  ROWNUM = 1;
+        EXIT;
+EOSQL
+EOF
+)
+    result=$(echo "$result" | xargs)
+    if [[ "$result" == "1" ]]; then
+        echo "true"
+    else
+        echo "false"
+    fi
+`;
+}
+
 export {
     getWindowsBedrockAvailabilityCheckScript,
     getLinuxBedrockAvailabilityCheckScript,
     getWindowsPrepareScript,
-    getLinuxPrepareScript
+    getLinuxPrepareScript,
+    getLinuxOraclePermissionsCheckScript
 };

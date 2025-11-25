@@ -54,7 +54,9 @@ import { getCloudWatchLogs } from '../aws/cloud-watch-logs-operations';
 import { mapSeverityLevel, parseConcatenatedJSON } from '../../utils/logs-analyzer/logs-analyzer-utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
+    LogsAnalysisPreRequisitesObjectType,
     LogsAnalyzerBodyType,
+    oracleHostType,
     RemediationRecommendationObject,
     RemediationRecommendationObjectType,
     SeverityCountsType
@@ -62,6 +64,7 @@ import {
 import { getInferenceProfileFromModelId } from '../aws/bedrock-operations';
 import {
     getLinuxBedrockAvailabilityCheckScript,
+    getLinuxOraclePermissionsCheckScript,
     getLinuxPrepareScript,
     getWindowsBedrockAvailabilityCheckScript,
     getWindowsPrepareScript
@@ -120,12 +123,14 @@ async function checkLogAnalyzerPreRequisites(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    databaseType: string
+    databaseType: string,
+    databaseInstanceName: string
 ) {
     logger.info(`Checking prerequisites for logs analysis with credentialsId: ${credentialsId}, region: ${region}`, {
         accountId,
         activeNodeInstanceId,
-        databaseType
+        databaseType,
+        databaseInstanceName
     });
 
     const {
@@ -180,6 +185,37 @@ async function checkLogAnalyzerPreRequisites(
                     (jsonResponse as any)?.error ?? ''
                 }`
             );
+        }
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Unable to continue with logs analysis ${error}`);
+    }
+
+    try {
+        if (databaseType && databaseType === DATABASE_TYPE.oracle && databaseInstanceName) {
+            const permissionsCheckScript = getLinuxOraclePermissionsCheckScript(
+                activeNodeInstanceId,
+                databaseInstanceName
+            );
+            const permissionsCheckResponse = await callSsmExecution({
+                credentialsId,
+                region,
+                commands: [permissionsCheckScript],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: 'Check Oracle Database Log Analysis Permissions',
+                accountId,
+                executionTimeout: '600',
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            });
+
+            let hasPermissions = true;
+            if (permissionsCheckResponse) {
+                const jsonResponse = JSON.parse(permissionsCheckResponse);
+                hasPermissions = jsonResponse.toString().trim() === 'true';
+            }
+            if (!hasPermissions) {
+                throw createError(HttpErrorCodes.FORBIDDEN, PRE_REQ_MESSAGES.ALERT_LOG_VIEW_PERMISSION_MISSING);
+            }
         }
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Unable to continue with logs analysis ${error}`);
@@ -325,7 +361,8 @@ async function handleLogsAnalysis(
             credentialsId,
             region,
             activeNodeInstanceId!,
-            databaseType
+            databaseType,
+            instanceName
         );
         if (!inferenceProfileArn) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Inference profile not found');
@@ -858,14 +895,16 @@ async function handlePreReqCheckBasedOnEc2InstanceId(
     credentialsId: string,
     region: string,
     ec2InstanceIdList: string[],
-    databaseType: DATABASE_TYPE
+    databaseType: DATABASE_TYPE,
+    databaseInstanceName?: string
 ) {
     logger.info('Handling pre-requisite check based on EC2 instance ID:', {
         accountId,
         credentialsId,
         region,
         ec2InstanceIdList,
-        databaseType
+        databaseType,
+        databaseInstanceName
     });
     return Promise.all(
         ec2InstanceIdList.map(
@@ -876,7 +915,8 @@ async function handlePreReqCheckBasedOnEc2InstanceId(
                         credentialsId,
                         region,
                         ec2InstanceId,
-                        databaseType
+                        databaseType,
+                        databaseInstanceName
                     );
                     return {
                         ec2InstanceId,
@@ -900,7 +940,8 @@ async function handlePreReqCheckBasedOnDatabaseHostId(
     credentialsId: string,
     region: string,
     databaseHostIdList: string[],
-    databaseType: DATABASE_TYPE
+    databaseType: DATABASE_TYPE,
+    databaseInstanceName?: string
 ) {
     logger.info('Handling pre-requisite check based on database host ID:', {
         accountId,
@@ -952,7 +993,8 @@ async function handlePreReqCheckBasedOnDatabaseHostId(
                         credentialsId,
                         region,
                         activeNodeInstanceId,
-                        databaseType
+                        databaseType,
+                        databaseInstanceName
                     );
                     return {
                         databaseHostId,
@@ -977,19 +1019,22 @@ async function handlePreReqCheck(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    databaseType: string
+    databaseType: string,
+    databaseInstanceName?: string
 ) {
     logger.info('Handling pre-requisite check:', {
         accountId,
         credentialsId,
         region,
         activeNodeInstanceId,
-        databaseType
+        databaseType,
+        databaseInstanceName
     });
     let bedrockPreRequisites;
     let instanceProfilePreRequisites;
     let credentialsPreRequisites;
     let networkingPreRequisites;
+    let oraclePermissionsPreRequisites;
 
     let inferenceProfileArn: string | undefined;
     try {
@@ -1099,11 +1144,48 @@ async function handlePreReqCheck(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Unable to continue with logs analysis ${error}`);
     }
 
+    try {
+        if (databaseType && databaseType === DATABASE_TYPE.oracle && databaseInstanceName) {
+            const permissionsCheckScript = getLinuxOraclePermissionsCheckScript(
+                activeNodeInstanceId,
+                databaseInstanceName
+            );
+            const permissionsCheckResponse = await callSsmExecution({
+                credentialsId,
+                region,
+                commands: [permissionsCheckScript],
+                ec2InstanceId: activeNodeInstanceId,
+                comment: 'Check Oracle Database Log Analysis Permissions',
+                accountId,
+                executionTimeout: '600',
+                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            });
+
+            let hasPermissions = true;
+            if (permissionsCheckResponse) {
+                const jsonResponse = JSON.parse(permissionsCheckResponse);
+                hasPermissions = jsonResponse.toString().trim() === 'true';
+            }
+            if (!hasPermissions) {
+                oraclePermissionsPreRequisites = {
+                    ready: false,
+                    message: PRE_REQ_MESSAGES.ALERT_LOG_VIEW_PERMISSION_MISSING
+                };
+            } else {
+                oraclePermissionsPreRequisites = READY_TRUE;
+            }
+        }
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Unable to continue with logs analysis ${error}`);
+    }
+
     return {
         bedrockPreRequisites,
         instanceProfilePreRequisites,
         credentialsPreRequisites,
-        networkingPreRequisites
+        networkingPreRequisites,
+        oraclePermissionsPreRequisites
     };
 }
 
@@ -1113,7 +1195,8 @@ async function analyzePreRequisites(
     region: string,
     databaseType: string,
     ec2InstanceId?: string,
-    databaseHostId?: string
+    databaseHostId?: string,
+    databaseInstanceName?: string
 ) {
     logger.info('Analyzing prerequisites for logs analysis:', {
         accountId,
@@ -1132,16 +1215,65 @@ async function analyzePreRequisites(
                   credentialsId,
                   region,
                   ec2InstanceIdList,
-                  databaseType as DATABASE_TYPE
+                  databaseType as DATABASE_TYPE,
+                  databaseInstanceName
               )
             : await handlePreReqCheckBasedOnDatabaseHostId(
                   accountId,
                   credentialsId,
                   region,
                   databaseHostIdList,
-                  databaseType as DATABASE_TYPE
+                  databaseType as DATABASE_TYPE,
+                  databaseInstanceName
               );
     return { items: response };
+}
+
+async function analyzeOracleHostsPreRequisites(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    oracleHosts: oracleHostType[]
+) {
+    logger.info('Analyzing pre-requisites for Oracle hosts:', { accountId, credentialsId, region });
+    const preRequisitesResults: Array<LogsAnalysisPreRequisitesObjectType> = [];
+
+    await Promise.all(
+        oracleHosts?.map(async (host: oracleHostType) => {
+            try {
+                const { databaseHostId, databaseInstanceName, ec2InstanceId } = host;
+                const preReqCheckResponse = await analyzePreRequisites(
+                    accountId,
+                    credentialsId,
+                    region,
+                    DATABASE_TYPE.oracle,
+                    ec2InstanceId,
+                    databaseHostId,
+                    databaseInstanceName
+                );
+                const [preReqCheckResponseForDatabase] = preReqCheckResponse?.items || [];
+                if (preReqCheckResponseForDatabase) {
+                    preRequisitesResults.push({
+                        databaseHostId,
+                        ec2InstanceId,
+                        databaseInstanceName,
+                        ...preReqCheckResponseForDatabase
+                    });
+                }
+            } catch (error) {
+                const errorMessage = `Error verifying pre-requisite check for Oracle host ${JSON.stringify(
+                    host
+                )}: ${error}`;
+                logger.error(errorMessage);
+                preRequisitesResults.push({
+                    ...host,
+                    errorMessage
+                });
+            }
+        })
+    );
+
+    return { items: preRequisitesResults };
 }
 
 async function getLatestLogsAnalysisReports(
@@ -1265,5 +1397,6 @@ export {
     listLogsAnalysisReportsIdentifiers,
     calculateLogsAnalysisPrice,
     analyzePreRequisites,
-    getLatestLogsAnalysisReports
+    getLatestLogsAnalysisReports,
+    analyzeOracleHostsPreRequisites
 };

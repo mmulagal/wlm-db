@@ -6,7 +6,8 @@ import {
     GetLogsAnalyzerSchema,
     LatestReportsSchema,
     ListLogsAnalyzerReportsSchema,
-    LogsAnalyzerSchema
+    LogsAnalyzerSchema,
+    OracleAnalyzePreRequisitesSchema
 } from './schemas/logs-analyzer-schema';
 import castRequest from './utils';
 import {
@@ -14,7 +15,8 @@ import {
     listLogsAnalysisReportsIdentifiers,
     triggerLogsAnalysis,
     analyzePreRequisites,
-    getLatestLogsAnalysisReports
+    getLatestLogsAnalysisReports,
+    analyzeOracleHostsPreRequisites
 } from '../operations/logs-analyzer/logs-analyzer-operations';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -45,24 +47,16 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.get(
+    server.post(
         `${ORACLE_API_PREFIX_PATH}/logs-analysis/pre-requisites`,
-        { schema: AnalyzePreRequisitesSchema },
+        { schema: OracleAnalyzePreRequisitesSchema },
         async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region },
-                query: { ec2InstanceId, databaseHostId }
+                body: { items }
             } = castRequest(request);
 
-            const response = await analyzePreRequisites(
-                accountId,
-                credentialsId,
-                region,
-                DATABASE_TYPE.oracle,
-                ec2InstanceId,
-                databaseHostId
-            );
-
+            const response = await analyzeOracleHostsPreRequisites(accountId, credentialsId, region, items);
             return reply.send(response);
         }
     );

@@ -41,7 +41,9 @@ const PRE_REQ_MESSAGES = {
     IAM_INSTANCE_PROFILE:
         'Ensure that IAM instance profile attached to the SQL node has bedrock:InvokeModel permission attached.',
     WLMDB_CREDENTIALS:
-        'Ensure that the credentials selected is valid and have the permission bedrock:GetFoundationModelAvailability and bedrock:ListInferenceProfiles permissions attached.'
+        'Ensure that the credentials selected is valid and have the permission bedrock:GetFoundationModelAvailability and bedrock:ListInferenceProfiles permissions attached.',
+    ALERT_LOG_VIEW_PERMISSION_MISSING:
+        'Ensure that the user has access to the V$DIAG_ALERT_EXT view to fetch the alert logs data for logs analysis.'
 };
 
 const SEVERITIES = {

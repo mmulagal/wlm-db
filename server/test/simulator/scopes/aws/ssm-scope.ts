@@ -1015,7 +1015,9 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'Enabling Multipath IO')
     .resolves(getSampleCommandResponse('enableMultipathIo'))
     .on(SendCommandCommand, params => params.Comment === 'Disabling SELinux')
-    .resolves(getSampleCommandResponse('disableSelinux'));
+    .resolves(getSampleCommandResponse('disableSelinux'))
+    .on(SendCommandCommand, params => params.Comment === 'Check Oracle Database Log Analysis Permissions')
+    .resolves(getSampleCommandResponse('checkOracleDatabaseLogAnalysisPermissions'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1693,6 +1695,12 @@ ssmMock
             'disableSelinux',
             JSON.stringify(getCommandInvocationResponse.disableSelinuxResponse)
         )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkOracleDatabaseLogAnalysisPermissions'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput('checkOracleDatabaseLogAnalysisPermissions', JSON.stringify('true\n'))
     );
 
 ssmMock.on(GetParametersByPathCommand).callsFake(input => {
