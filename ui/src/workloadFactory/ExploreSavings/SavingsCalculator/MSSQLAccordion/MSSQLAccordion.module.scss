@@ -2,11 +2,6 @@
     margin: 0 auto;
     width: 1336px;
 
-    [class*='isExpanded'] {
-        max-height: 2500px !important;
-        overflow: hidden;
-    }
-
     .buttonContainer {
         [class*='dsButtonContainer'] {
             div {
@@ -68,7 +63,7 @@
 .accordionContentWrapperSingle {
     display: flex;
     flex-direction: column;
-    max-height: 2000px;
+    max-height: 4000px;
     overflow: hidden;
 
     .instanceTypography {

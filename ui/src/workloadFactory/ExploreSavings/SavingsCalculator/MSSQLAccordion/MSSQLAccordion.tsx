@@ -291,6 +291,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                 title={GENERAL.RECOMMENDED_ES_TITLE}
                 variant="Default"
                 value=""
+                maxExpandHeight={4000}
                 isDisabled={
                     storageSavingsLoading ||
                     selectedHostDetails?.loading ||
