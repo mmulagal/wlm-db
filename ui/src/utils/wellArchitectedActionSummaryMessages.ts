@@ -373,9 +373,18 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
         case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
             return [
                 wellArchitectMessages['oracle-swap-space-action-summary'],
-                wellArchitectMessages['what-will-happen'],
-                wellArchitectMessages['oracle-swap-space-what-will-happen'],
-                wellArchitectMessages.note1
+                wellArchitectMessages['oracle-swap-space-action-summary-heading'],
+                wellArchitectMessages['oracle-swap-space-action-summary-bullet1'],
+                wellArchitectMessages['oracle-swap-space-action-summary-bullet2'],
+                wellArchitectMessages['oracle-swap-space-action-summary-bullet3'],
+                wellArchitectMessages['optimization-steps'],
+                wellArchitectMessages['oracle-swap-space-optimization-step1'],
+                wellArchitectMessages['oracle-swap-space-optimization-step2'],
+                wellArchitectMessages['oracle-swap-space-optimization-step3'],
+                wellArchitectMessages['oracle-swap-space-optimization-step4'],
+                wellArchitectMessages['oracle-swap-space-optimization-step5'],
+                GENERAL.NOTE,
+                wellArchitectMessages['oracle-swap-space-note']
             ].join('\n');
 
         case ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY:
@@ -569,6 +578,22 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['oracle-fra-dg-lun-layout-what-will-happen'], // Using FRA what will happen as they are similar
                 wellArchitectMessages.note1
+            ].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+            return [
+                wellArchitectMessages['aws-backup-action-summary-content'],
+                wellArchitectMessages['aws-backup-user-action-content'],
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['aws-backup-what-will-happen-content1'],
+                wellArchitectMessages['aws-backup-what-will-happen-content2'],
+                wellArchitectMessages['aws-backup-what-will-happen-content3a'],
+                wellArchitectMessages['aws-backup-what-will-happen-content3b'],
+                GENERAL.NOTE,
+                wellArchitectMessages['aws-backup-note1'],
+                wellArchitectMessages['aws-backup-note2'],
+                wellArchitectMessages['aws-backup-note3'],
+                wellArchitectMessages['aws-backup-note4']
             ].join('\n');
 
         default:

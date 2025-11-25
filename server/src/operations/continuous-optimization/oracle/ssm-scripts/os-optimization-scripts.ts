@@ -276,7 +276,7 @@ def ensure_multipath_conf():
         'path_grouping_policy': '"group_by_prio"',
         'path_selector': '"service-time 0"',
         'prio': '"ontap"',
-        'features': '"3 queue_if_no_path pg_init_retries 50"',
+        'features': '"2 pg_init_retries 50"',
         'hardware_handler': '"0"',
         'failback': 'immediate',
         'rr_weight': '"uniform"',

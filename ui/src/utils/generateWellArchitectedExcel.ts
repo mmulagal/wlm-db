@@ -77,11 +77,11 @@ const ORACLE_CONFIG_ORDER = [
     'log-dg-lun-layout',
     'fra-dg-lun-layout',
     'archivelog-dg-lun-layout',
-    'compaction',
     'thin-provision',
     'autosize',
     'autosize-mode',
     'fractional-reserve',
+    'snapshot-policy',
     'snapshot-copy-reserve',
     'snapshot-autodelete',
     'space-mgmt-try-first',
@@ -89,6 +89,7 @@ const ORACLE_CONFIG_ORDER = [
     'tiering-min-cooling-days',
     'compression',
     'deduplication',
+    'compaction',
     'nfs-rootonly',
     'export-policy',
     'os-type',
@@ -403,18 +404,23 @@ function generateGeneralInformationData(data: ComprehensiveAssessmentData, datab
     const lastAnalysisDate = data.lastAssessmentTimestamp
         ? new Date(data.lastAssessmentTimestamp)
         : new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
-
-    return {
-        'Instance name': data.databaseInstanceName,
+    const fileName = `WorkloadfactoryDB-well-architected-report-${data?.databaseInstanceName || ''}.xlsx`;
+    const generalInfo = {
+        [databaseType === DBType.ORACLE ? 'Database name' : 'Instance name']: data.databaseInstanceName,
         'Host name': data.ec2InstanceId,
         'Time stamp (export timestamp)': currentDate.toLocaleString(),
         'Last analysis': lastAnalysisDate.toLocaleString(),
         'Well-architected status': `${totalIssues} issues`,
         'Well-architected score': `${score}%`,
-        'Not-Optimized configuration (Critical)': criticalIssues,
-        'Not-Optimized configuration (Warning)': warningIssues,
-        'Well-architected configurations': wellArchitectedConfigurations,
-        Total: total
+        'Not-Optimized configuration (Critical)': criticalIssues.toString(),
+        'Not-Optimized configuration (Warning)': warningIssues.toString(),
+        'Well-architected configurations': wellArchitectedConfigurations.toString(),
+        Total: total.toString()
+    };
+
+    return {
+        fileName,
+        generalInfo
     };
 }
 
@@ -1047,6 +1053,18 @@ function generateDetailedConfigurationData(
                     Status: violation.ontapVolumeUuid || ''
                 });
             }
+        });
+    } else if (config.objectsInViolation && config.objectsInViolation.length > 0) {
+        addImpactedResourcesHeader(details);
+
+        details.push({
+            'Configuration name': 'Objects in violation'
+        });
+
+        config.objectsInViolation.forEach((violation: string) => {
+            details.push({
+                'Configuration name': violation
+            });
         });
     }
 
@@ -1684,12 +1702,26 @@ const applySpecialConfigurationStyling = (
                 styleFilterHeaders(worksheet, filterHeaderRowIndex, columnCount);
             }
         } else {
-            // Fallback: treat unknown configurations with impacted resources as two-column configs
-            worksheet.mergeCells(`A${impactedResourcesRowIndex}:B${impactedResourcesRowIndex}`);
-            styleTableBorders(worksheet, impactedResourcesRowIndex, violationTableEndRow, 1, 2);
-            styleDataRows(worksheet, filterHeaderRowIndex + 1, violationTableEndRow, 1, 2);
-            styleImpactedResourcesHeader(worksheet, impactedResourcesRowIndex, 2);
-            styleFilterHeaders(worksheet, filterHeaderRowIndex, 2);
+            // Check if this is actually single-column data by looking at the data structure
+            const hasOnlyConfigurationNameColumn =
+                configDetails[4] &&
+                Object.keys(configDetails[4]).length === 1 &&
+                'Configuration name' in configDetails[4];
+
+            if (hasOnlyConfigurationNameColumn) {
+                // Treat as single-column configuration
+                styleTableBorders(worksheet, impactedResourcesRowIndex, violationTableEndRow, 1, 1);
+                styleDataRows(worksheet, filterHeaderRowIndex + 1, violationTableEndRow, 1, 1);
+                styleImpactedResourcesHeader(worksheet, impactedResourcesRowIndex, 1);
+                styleFilterHeaders(worksheet, filterHeaderRowIndex, 1);
+            } else {
+                // Fallback: treat unknown configurations with impacted resources as two-column configs
+                worksheet.mergeCells(`A${impactedResourcesRowIndex}:B${impactedResourcesRowIndex}`);
+                styleTableBorders(worksheet, impactedResourcesRowIndex, violationTableEndRow, 1, 2);
+                styleDataRows(worksheet, filterHeaderRowIndex + 1, violationTableEndRow, 1, 2);
+                styleImpactedResourcesHeader(worksheet, impactedResourcesRowIndex, 2);
+                styleFilterHeaders(worksheet, filterHeaderRowIndex, 2);
+            }
         }
     }
 };
@@ -1755,11 +1787,11 @@ const addConfigurationAutoFilter = (
 async function generateProperXlsxWorkbook(
     data: ComprehensiveAssessmentData,
     databaseType: string
-): Promise<ArrayBuffer> {
+): Promise<{ fileName: string; arrayBuffer: ArrayBuffer }> {
     const workbook = new ExcelJS.Workbook();
 
     // 1. Generate General Information worksheet
-    const generalInfo = generateGeneralInformationData(data, databaseType);
+    const { fileName, generalInfo } = generateGeneralInformationData(data, databaseType);
     const generalInfoSheet = workbook.addWorksheet('General Information');
 
     addDataToWorksheet(generalInfoSheet, [generalInfo]);
@@ -1975,7 +2007,7 @@ async function generateProperXlsxWorkbook(
     const view = new Uint8Array(arrayBuffer);
     view.set(new Uint8Array(buffer));
 
-    return arrayBuffer;
+    return { fileName, arrayBuffer };
 }
 
 // Export function
@@ -1987,26 +2019,23 @@ async function generateReport(jsonString: string, databaseType: string): Promise
         } catch (parseError) {
             throw new Error('Malformed input data: Invalid JSON format.');
         }
-        const xlsxBuffer = await generateProperXlsxWorkbook(
+        const { fileName, arrayBuffer } = await generateProperXlsxWorkbook(
             jsonData as unknown as ComprehensiveAssessmentData,
             databaseType
         );
 
-        if (!xlsxBuffer) {
+        if (!arrayBuffer) {
             throw new Error('Failed to generate XLSX buffer');
         }
 
-        const timestampMs = Date.now();
-        const filename = `wlmdb-well-architected-assessment-${timestampMs}.xlsx`;
-
-        const blob = new Blob([xlsxBuffer], {
+        const blob = new Blob([arrayBuffer], {
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         });
         const url = window.URL.createObjectURL(blob);
 
         const link = document.createElement('a');
         link.href = url;
-        link.download = filename;
+        link.download = fileName;
         link.click();
 
         window.URL.revokeObjectURL(url);

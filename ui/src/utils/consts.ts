@@ -1105,6 +1105,7 @@ export const CONFIG_NAMES = {
 
     // Cloning configurations
     clone_management: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+    'clone-management': ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
 
     // MSSQL High Availability configurations
     'shared-storage': ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE,

@@ -62,9 +62,8 @@ import {
     DEFAULT_INSTANCE_NAME,
     STANDALONE,
     ORACLE_INSTANCE_STATE,
-    DEMO_BYOL_INSTANCE_ID,
-    DEMO_SERVER_UAT_03,
-    SSM_COMMAND_RUNTIMES
+    SSM_COMMAND_RUNTIMES,
+    DEMO_ENTERPRISE_INSTANCES
 } from '../utils/consts';
 import {
     SQL_SERVER_VERSION_TO_YEAR,
@@ -859,7 +858,7 @@ async function fetchUnmanagedHostsInformationV2(
         )
     );
 
-    if (IS_DEMO_FLOW && instances.some(id => id === DEMO_BYOL_INSTANCE_ID || id === DEMO_SERVER_UAT_03)) {
+    if (IS_DEMO_FLOW && instances.some(id => DEMO_ENTERPRISE_INSTANCES.includes(id))) {
         // In demo flow update the sql edition for specific instance
         response = response.map(item => {
             if (item?.databaseInstancesSummary) {

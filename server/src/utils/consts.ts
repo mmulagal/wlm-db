@@ -1823,8 +1823,8 @@ const DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN: string = config.has('daily-dr
     ? config.get('daily-drift-assessment-trigger')
     : '0 0 0 * * *'; // Default to every 12 midnight everyday not set in config
 
-const DEMO_BYOL_INSTANCE_ID = 'i-cb05c810a74426184';
-const DEMO_SERVER_UAT_03 = 'i-0ab2e12971d543c14';
+const DEMO_ENTERPRISE_INSTANCES = ['i-cb05c810a74426184', 'i-0ab2e12971d543c14', 'i-cb05c810a74426187'];
+
 const JOB_MONITORING_ENDPOINT = 'databases/job-monitoring';
 enum SSM_COMMAND_RUNTIMES {
     POWERSHELL = 'PowerShell',
@@ -2199,8 +2199,7 @@ export {
     WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_CRON_PATTERN,
     DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN,
     AWSDAC_MODULE_DIR,
-    DEMO_BYOL_INSTANCE_ID,
-    DEMO_SERVER_UAT_03,
+    DEMO_ENTERPRISE_INSTANCES,
     AWS_CLI_LINUX_RELATIVE_PATH,
     JQ_LINUX_RELATIVE_PATH,
     MAKE_LINUX_RELATIVE_PATH,
