@@ -2,15 +2,19 @@ import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificat
 import store from '../../../../store/store';
 import {
     setEiRefreshPage,
+    setLogAnalyzerPreReqData,
+    setLogAnalyzerPreReqLoading,
     setLogAnalyzerState,
     setScanInProgress
 } from '../../../../store/workloadFactory/agenticAISlice';
 import { addAllLogAnalysisData } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
+    DBType,
     ERROR_ANALYZER_STATUS,
     JOB_MONITORING_STATUS,
     LOG_ANALYZER_POLLING_INTERVAL,
-    MS_PER_HOUR
+    MS_PER_HOUR,
+    WLF_TABS
 } from '../../../../utils/consts';
 import { ErrorInvestigationGetApiResponse, ErrorInvestigationInstance } from '../../../../utils/types/agenticAITypes';
 
@@ -484,4 +488,51 @@ export const logAnalyzerScanUpdate = (key: string, status: boolean, dispatch: an
 
     // Dispatch the updated scanInProgress object
     dispatch(setScanInProgress(updatedScanInProgress));
+};
+
+export const runInvestigationPreReqApiCall = async (
+    dbType: string,
+    commonParams: { credentialId: string; regionId: string },
+    selectedResourceId: string,
+    selectedDatabaseInstance: string,
+    dispatch: any,
+    getLogAnalyzerPreReqOracleApi: any,
+    getLogAnalyzerPreReqApi: any
+) => {
+    try {
+        dispatch(setLogAnalyzerPreReqLoading(true));
+
+        let result: { data?: any; error?: any };
+
+        if (dbType === DBType.ORACLE) {
+            result = await getLogAnalyzerPreReqOracleApi({
+                ...commonParams,
+                payload: {
+                    items: [
+                        {
+                            databaseHostId: selectedResourceId,
+                            databaseInstanceName: selectedDatabaseInstance
+                        }
+                    ]
+                }
+            });
+        } else {
+            result = await getLogAnalyzerPreReqApi({
+                ...commonParams,
+                type: 'databaseHostId',
+                typeId: selectedResourceId
+            });
+        }
+
+        // Common result handling
+        if (result && !result?.error && result?.data?.items?.length > 0 && !result?.data?.items[0]?.errorMessage) {
+            dispatch(setLogAnalyzerPreReqData(result?.data?.items[0]));
+        } else {
+            dispatch(setLogAnalyzerPreReqData(null));
+        }
+    } catch (error) {
+        dispatch(setLogAnalyzerPreReqData(null));
+    } finally {
+        dispatch(setLogAnalyzerPreReqLoading(false));
+    }
 };

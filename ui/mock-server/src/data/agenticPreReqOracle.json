@@ -3,6 +3,7 @@
         {
             "databaseHostId": "65c6fd61d60cd207",
             "ec2InstanceId": "i-08d0bd2b32ead74e1",
+            "databaseInstanceName": "oradb1san",
             "bedrockPreRequisites": {
                 "ready": true,
                 "message": "Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment."
@@ -18,11 +19,16 @@
             "networkingPreRequisites": {
                 "ready": true,
                 "message": "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
+            },
+            "oraclePermissionsPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the user has access to the V$DIAG_ALERT_EXT view to fetch the alert logs data for logs analysis."
             }
         },
         {
             "databaseHostId": "65c6fd61d60cd207",
             "ec2InstanceId": "i-07f8c2f7b14dac941",
+            "databaseInstanceName": "pdbnas1",
             "bedrockPreRequisites": {
                 "ready": true,
                 "message": "Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment."
@@ -38,11 +44,16 @@
             "networkingPreRequisites": {
                 "ready": true,
                 "message": "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
+            },
+            "oraclePermissionsPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the user has access to the V$DIAG_ALERT_EXT view to fetch the alert logs data for logs analysis."
             }
         },
         {
             "databaseHostId": "65c6fd61d60cd207",
             "ec2InstanceId": "i-0adbbacc59d0f3b34",
+            "databaseInstanceName": "oradb1",
             "bedrockPreRequisites": {
                 "ready": true,
                 "message": "Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment."
@@ -58,11 +69,16 @@
             "networkingPreRequisites": {
                 "ready": true,
                 "message": "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
+            },
+            "oraclePermissionsPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the user has access to the V$DIAG_ALERT_EXT view to fetch the alert logs data for logs analysis."
             }
         },
         {
             "databaseHostId": "65c6fd61d60cd207",
             "ec2InstanceId": "i-00089d8cbf8b728cf",
+            "databaseInstanceName": "oradb1",
             "bedrockPreRequisites": {
                 "ready": true,
                 "message": "Ensure that the AWS.Tools.BedrockRuntime module is installed and available in the PowerShell environment."
@@ -78,6 +94,10 @@
             "networkingPreRequisites": {
                 "ready": true,
                 "message": "Ensure that Bedrock Runtime Interface VPC endpoint is present and associated with the SQL node subnet's route table."
+            },
+            "oraclePermissionsPreRequisites": {
+                "ready": true,
+                "message": "Ensure that the user has access to the V$DIAG_ALERT_EXT view to fetch the alert logs data for logs analysis."
             }
         }
     ]

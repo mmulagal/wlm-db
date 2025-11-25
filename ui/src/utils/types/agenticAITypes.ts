@@ -59,6 +59,10 @@ export interface AgenticAIEntities {
                 ready: boolean;
                 message: string;
             };
+            oraclePermissionsPreRequisites?: {
+                ready: boolean;
+                message: string;
+            };
         } | null;
         loading: boolean;
     };

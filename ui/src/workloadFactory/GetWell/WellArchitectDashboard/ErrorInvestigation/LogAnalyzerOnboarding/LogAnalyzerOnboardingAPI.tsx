@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { useGetLogAnalyzerPreReqMutation } from '../../../../../utils/apiService';
+import {
+    useGetLogAnalyzerPreReqMutation,
+    useGetLogAnalyzerPreReqOracleMutation
+} from '../../../../../utils/apiService';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../../utils/consts';
 import {
@@ -9,6 +12,7 @@ import {
     setLogAnalyzerPreReqLoading
 } from '../../../../../store/workloadFactory/agenticAISlice';
 import { setLandingFromInnerPage } from '../../../../../store/workloadFactory/getWellOptimizeSlice';
+import { runInvestigationPreReqApiCall } from '../ErrorInvestigationUtility';
 
 const LogAnalyzerOnboardingAPI = ({ dbType }: { dbType: string }) => {
     const dispatch = useDispatch();
@@ -18,6 +22,7 @@ const LogAnalyzerOnboardingAPI = ({ dbType }: { dbType: string }) => {
         landingFrom,
         landingFromInnerPage,
         selectedResourceId,
+        selectedDatabaseInstance,
         selectedGwInstanceCredId,
         selectedGwInstanceRegionId,
         visitedTabs
@@ -26,27 +31,22 @@ const LogAnalyzerOnboardingAPI = ({ dbType }: { dbType: string }) => {
     const { eiRefreshPage } = useAppSelector(state => state.agenticAI);
 
     const [getLogAnalyzerPreReqApi] = useGetLogAnalyzerPreReqMutation();
+    const [getLogAnalyzerPreReqOracleApi] = useGetLogAnalyzerPreReqOracleMutation();
 
     const runInvestigationPreReqApi = async () => {
-        try {
-            dispatch(setLogAnalyzerPreReqLoading(true));
-            const result: { data?: any; error?: any } = await getLogAnalyzerPreReqApi({
-                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-                type: 'databaseHostId',
-                typeId: selectedResourceId,
-                dbType
-            });
-            if (result && !result?.error && result?.data?.items?.length > 0 && !result?.data?.items[0]?.errorMessage) {
-                dispatch(setLogAnalyzerPreReqData(result?.data?.items[0]));
-            } else {
-                dispatch(setLogAnalyzerPreReqData(null));
-            }
-        } catch (error) {
-            dispatch(setLogAnalyzerPreReqData(null));
-        } finally {
-            dispatch(setLogAnalyzerPreReqLoading(false));
-        }
+        const commonParams = {
+            credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+            regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM
+        };
+        runInvestigationPreReqApiCall(
+            dbType,
+            commonParams,
+            selectedResourceId,
+            selectedDatabaseInstance,
+            dispatch,
+            getLogAnalyzerPreReqOracleApi,
+            getLogAnalyzerPreReqApi
+        );
     };
 
     useEffect(() => {

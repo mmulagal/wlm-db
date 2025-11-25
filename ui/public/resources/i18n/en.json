@@ -1062,6 +1062,12 @@
             "onboarding-accordion-4-info-oracle": "These permissions verify model availability and configuration in the region of the Oracle node, and ensure reliable, region-specific performance.",
             "onboarding-accordion-4-label": "Permissions",
             "onboarding-accordion-4-value-1": "Ensure that your Workload Factory credentials have \"bedrock:GetFoundationModelAvailability\" and \"bedrock:ListInferenceProfiles\" permissions",
+            
+            "onboarding-accordion-5-title": "Oracle user permission",
+            "onboarding-accordion-5-info-oracle": "Grants read access to extended diagnostic alerts, enabling extraction of error/trace details from logs for AI-powered pattern detection and remediation.",
+            "onboarding-accordion-5-label": "Permissions",
+            "onboarding-accordion-5-value-1": "V$DIAG_ALERT_EXT",
+
             "scan-in-progress": "Error analysis in progress",
             "investigation-in-progress": "Setup requirements",
             "activate": "Analyze now",
@@ -1113,7 +1119,7 @@
             "resource": "Resource",
             "view-error-investigation-dialog-text": "Select the resource to review for error investigation and then select 'Continue'.",
             "activation-dialog-text": "Select the resource for error analysis and then select 'Continue'.",
-            "error-analysis-text": "Analyze SQL Server error logs effortlessly with Amazon Bedrock to get error insights in easy-to-read format and step-by-step guidance to fix the errors. Register instances to use this feature.",
+            "error-analysis-text": "Analyze SQL Server and Oracle error logs effortlessly with Amazon Bedrock to get error insights in an easy-to-read format and step-by-step guidance to fix the errors. Register resources to use this feature.",
             "view-error-investigation": "View error analysis",
             "activate-error-investigation": "Activate error analysis",
             "error-analysis": "Error analysis",

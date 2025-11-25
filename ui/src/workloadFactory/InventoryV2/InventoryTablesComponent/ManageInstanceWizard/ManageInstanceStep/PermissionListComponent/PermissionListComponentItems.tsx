@@ -186,8 +186,8 @@ export const PermissionListComponentItems = (
                                 ]
                             },
                             {
-                                label: t('databases.register-flow.powershell-modules'),
-                                values: ['AWS.Tools.BedrockRuntime']
+                                label: t('databases.register-flow.oracle-user-permissions'),
+                                values: ['V$DIAG_ALERT_EXT']
                             }
                         ]}
                         policies={policiesList}

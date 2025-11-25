@@ -16,11 +16,16 @@ import LogAnalyzerOnboardingAPI from './LogAnalyzerOnboardingAPI';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import {
     useGetLogAnalyzerPreReqMutation,
+    useGetLogAnalyzerPreReqOracleMutation,
     useLazyGetSubTaskListQuery,
     useScanErrorInvestigationMutation
 } from '../../../../../utils/apiService';
 import { DBType, ERROR_ANALYZER_STATUS, WLF_TABS } from '../../../../../utils/consts';
-import { handleLogAnalyzerJob, logAnalyzerScanUpdate } from '../ErrorInvestigationUtility';
+import {
+    handleLogAnalyzerJob,
+    logAnalyzerScanUpdate,
+    runInvestigationPreReqApiCall
+} from '../ErrorInvestigationUtility';
 import store from '../../../../../store/store';
 import { addAllLogAnalysisData } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
@@ -41,18 +46,29 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
 
     useEffect(() => {
         if (preReqData) {
-            setIsActive(
-                preReqData?.bedrockPreRequisites?.ready &&
-                    preReqData?.networkingPreRequisites?.ready &&
-                    preReqData?.credentialsPreRequisites?.ready &&
-                    preReqData?.instanceProfilePreRequisites?.ready
-            );
+            if (dbType === DBType.ORACLE) {
+                setIsActive(
+                    preReqData?.bedrockPreRequisites?.ready &&
+                        preReqData?.networkingPreRequisites?.ready &&
+                        preReqData?.credentialsPreRequisites?.ready &&
+                        preReqData?.instanceProfilePreRequisites?.ready &&
+                        (preReqData?.oraclePermissionsPreRequisites?.ready || false)
+                );
+            } else {
+                setIsActive(
+                    preReqData?.bedrockPreRequisites?.ready &&
+                        preReqData?.networkingPreRequisites?.ready &&
+                        preReqData?.credentialsPreRequisites?.ready &&
+                        preReqData?.instanceProfilePreRequisites?.ready
+                );
+            }
         }
     }, [preReqData]);
 
     LogAnalyzerOnboardingAPI({ dbType });
 
     const [getLogAnalyzerPreReqApi] = useGetLogAnalyzerPreReqMutation();
+    const [getLogAnalyzerPreReqOracleApi] = useGetLogAnalyzerPreReqOracleMutation();
     const [scanErrorInvestigation] = useScanErrorInvestigationMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
@@ -97,25 +113,19 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
     };
 
     const runInvestigationPreReqApi = async () => {
-        try {
-            dispatch(setLogAnalyzerPreReqLoading(true));
-            const result: { data?: any; error?: any } = await getLogAnalyzerPreReqApi({
-                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-                type: 'databaseHostId',
-                typeId: selectedResourceId,
-                dbType
-            });
-            if (result && !result?.error && result?.data?.items?.length > 0 && !result?.data?.items[0]?.errorMessage) {
-                dispatch(setLogAnalyzerPreReqData(result?.data?.items[0]));
-            } else {
-                dispatch(setLogAnalyzerPreReqData(null));
-            }
-        } catch (error) {
-            dispatch(setLogAnalyzerPreReqData(null));
-        } finally {
-            dispatch(setLogAnalyzerPreReqLoading(false));
-        }
+        const commonParams = {
+            credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+            regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM
+        };
+        runInvestigationPreReqApiCall(
+            dbType,
+            commonParams,
+            selectedResourceId,
+            selectedDatabaseInstance,
+            dispatch,
+            getLogAnalyzerPreReqOracleApi,
+            getLogAnalyzerPreReqApi
+        );
     };
 
     return (

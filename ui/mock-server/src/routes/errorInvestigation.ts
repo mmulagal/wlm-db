@@ -108,7 +108,7 @@ router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/logs
     }, 2000);
 });
 
-router.get(`${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/logs-analysis/pre-requisites`, async (req: express.Request, res: any) => {
+router.post(`${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/logs-analysis/pre-requisites`, async (req: express.Request, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, AgenticPreReqOracle);
     }, 2000);

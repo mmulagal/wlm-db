@@ -328,6 +328,7 @@ export function getManageCheckObjMultiFinal(
 export const fetchErrorInvestigationState = async (
     manageCheckObj: Partial<ManageStates>,
     getLogAnalyzerPreReqApi: any,
+    getLogAnalyzerPreReqOracleApi: any,
     dispatch: any,
     manageSingleInstanceData: any,
     hostType?: string
@@ -336,6 +337,7 @@ export const fetchErrorInvestigationState = async (
         try {
             const agenticPreReqChk = await getAgenticPreReqData(
                 getLogAnalyzerPreReqApi,
+                getLogAnalyzerPreReqOracleApi,
                 dispatch,
                 manageSingleInstanceData,
                 hostType
@@ -373,43 +375,86 @@ export const fetchErrorInvestigationState = async (
 
 export const getAgenticPreReqData = async (
     getLogAnalyzerPreReqApi: any,
+    getLogAnalyzerPreReqOracleApi: any,
     dispatch: any,
     manageSingleInstanceData: any,
     hostType?: string
 ) => {
     let result = GENERAL.NOT_AVAILABLE;
-    const { ec2InstanceId, credentialId, regionId, hostRow } = manageSingleInstanceData || {};
+    const { ec2InstanceId, credentialId, regionId, hostRow, databaseInstanceName } = manageSingleInstanceData || {};
 
     // Find partner instance (if any)
     const partnerInstance = hostRow?.ec2Details?.find((inst: { id?: string }) => inst.id !== ec2InstanceId);
 
     try {
         dispatch(setAgenticRegisterFlowLoading(true));
-        const apiResult: { data?: any; error?: any } = await getLogAnalyzerPreReqApi({
-            credentialId,
-            regionId,
-            type: 'ec2InstanceId',
-            typeId: ec2InstanceId + (partnerInstance ? `,${partnerInstance?.id}` : ''),
-            dbType: hostType
-        });
-
-        if (apiResult && !apiResult?.error && apiResult?.data?.items) {
-            // Check if all prerequisites are ready for all items
-            const allItemsReady = apiResult.data.items?.every((item: any) => {
-                const prerequisites = [
-                    item.bedrockPreRequisites?.ready,
-                    item.instanceProfilePreRequisites?.ready,
-                    item.credentialsPreRequisites?.ready,
-                    item.networkingPreRequisites?.ready
-                ];
-
-                // All 4 prerequisites must be true for this item to be ready
-                return prerequisites.every(prereq => prereq === true);
+        if (hostType === DBType.ORACLE) {
+            const apiResult: { data?: any; error?: any } = await getLogAnalyzerPreReqOracleApi({
+                credentialId,
+                regionId,
+                payload: {
+                    items: [
+                        {
+                            ec2InstanceId,
+                            databaseInstanceName
+                        },
+                        ...(partnerInstance?.id
+                            ? [
+                                  {
+                                      ec2InstanceId: partnerInstance?.id,
+                                      databaseInstanceName
+                                  }
+                              ]
+                            : [])
+                    ]
+                }
             });
 
-            result = allItemsReady ? MANAGE_STATES.READY : MANAGE_STATES.MISSING_PREREQUISITES;
+            if (apiResult && !apiResult?.error && apiResult?.data?.items) {
+                // Check if all prerequisites are ready for all items
+                const allItemsReady = apiResult.data.items?.every((item: any) => {
+                    const prerequisites = [
+                        item.bedrockPreRequisites?.ready,
+                        item.instanceProfilePreRequisites?.ready,
+                        item.credentialsPreRequisites?.ready,
+                        item.networkingPreRequisites?.ready,
+                        item.oraclePermissionsPreRequisites?.ready
+                    ];
+
+                    // All 5 prerequisites must be true for this item to be ready
+                    return prerequisites.every(prereq => prereq === true);
+                });
+
+                result = allItemsReady ? MANAGE_STATES.READY : MANAGE_STATES.MISSING_PREREQUISITES;
+            } else {
+                result = MANAGE_STATES.MISSING_PREREQUISITES;
+            }
         } else {
-            result = MANAGE_STATES.MISSING_PREREQUISITES;
+            const apiResult: { data?: any; error?: any } = await getLogAnalyzerPreReqApi({
+                credentialId,
+                regionId,
+                type: 'ec2InstanceId',
+                typeId: ec2InstanceId + (partnerInstance ? `,${partnerInstance?.id}` : '')
+            });
+
+            if (apiResult && !apiResult?.error && apiResult?.data?.items) {
+                // Check if all prerequisites are ready for all items
+                const allItemsReady = apiResult.data.items?.every((item: any) => {
+                    const prerequisites = [
+                        item.bedrockPreRequisites?.ready,
+                        item.instanceProfilePreRequisites?.ready,
+                        item.credentialsPreRequisites?.ready,
+                        item.networkingPreRequisites?.ready
+                    ];
+
+                    // All 4 prerequisites must be true for this item to be ready
+                    return prerequisites.every(prereq => prereq === true);
+                });
+
+                result = allItemsReady ? MANAGE_STATES.READY : MANAGE_STATES.MISSING_PREREQUISITES;
+            } else {
+                result = MANAGE_STATES.MISSING_PREREQUISITES;
+            }
         }
     } catch (error) {
         result = MANAGE_STATES.MISSING_PREREQUISITES;
@@ -564,6 +609,186 @@ export const fetchErrorInvestigationStateBulk = async (
     }
 };
 
+export const fetchErrorInvestigationStateBulkOracle = async (
+    selectedMultiDetectInstances: BulkDetectedInstance[],
+    getLogAnalyzerPreReqOracleApi: any,
+    dispatch: any,
+    hostType: string
+) => {
+    if (!selectedMultiDetectInstances || selectedMultiDetectInstances.length === 0) {
+        return;
+    }
+
+    // Helper function to create default prerequisite data
+    const createDefaultPrereqData = (
+        ec2InstanceId: string,
+        databaseInstanceName: string = '',
+        databaseHostId: string = ''
+    ) => ({
+        databaseHostId,
+        ec2InstanceId,
+        databaseInstanceName,
+        bedrockPreRequisites: { ready: false, message: '' },
+        instanceProfilePreRequisites: { ready: false, message: '' },
+        credentialsPreRequisites: { ready: false, message: '' },
+        networkingPreRequisites: { ready: false, message: '' },
+        oraclePermissionsPreRequisites: { ready: false, message: '' }
+    });
+
+    try {
+        dispatch(setAgenticRegisterFlowLoading(true));
+
+        // Get current state data
+        const state = store.getState();
+        const existingData = state.agenticAI.agenticRegisterFlowChecks.data || {};
+
+        // Collect all unique EC2 instance + database instance combinations including partner instances
+        const instanceMap = new Map<
+            string,
+            {
+                credentialId: string;
+                regionId: string;
+                databaseHostId: string;
+                databaseInstanceName: string;
+                ec2InstanceId: string;
+            }
+        >();
+        const keysToFetch = new Set<string>(); // Only keys that need API calls
+
+        selectedMultiDetectInstances.forEach((instance: BulkDetectedInstance) => {
+            const { ec2InstanceId, credentialId, regionId, hostRow, databaseHostId, databaseInstanceName } =
+                instance.data || {};
+            if (ec2InstanceId && credentialId && regionId && databaseInstanceName) {
+                const key = `${credentialId}_${regionId}_${ec2InstanceId}_${databaseInstanceName}`;
+                instanceMap.set(key, {
+                    credentialId,
+                    regionId,
+                    databaseHostId: databaseHostId || '',
+                    databaseInstanceName: databaseInstanceName || '',
+                    ec2InstanceId
+                });
+
+                // Check if key exists in state, if not add to fetch list
+                if (!existingData[key]) {
+                    keysToFetch.add(key);
+                }
+
+                // Add partner instance if it exists
+                const partnerInstance = hostRow?.ec2Details?.find((inst: { id?: string }) => inst.id !== ec2InstanceId);
+                if (partnerInstance?.id) {
+                    const partnerKey = `${credentialId}_${regionId}_${partnerInstance.id}_${databaseInstanceName}`;
+                    instanceMap.set(partnerKey, {
+                        credentialId,
+                        regionId,
+                        databaseHostId: databaseHostId || '',
+                        databaseInstanceName: databaseInstanceName || '',
+                        ec2InstanceId: partnerInstance.id
+                    });
+
+                    // Check if partner key exists in state, if not add to fetch list
+                    if (!existingData[partnerKey]) {
+                        keysToFetch.add(partnerKey);
+                    }
+                }
+            }
+        });
+
+        // If all data already exists, no need to make API calls
+        if (keysToFetch.size === 0) {
+            dispatch(setAgenticRegisterFlowLoading(false));
+            return;
+        }
+
+        // Group instances that need fetching by credential and region for batching
+        const groupedInstances = new Map<string, Array<{ ec2InstanceId: string; databaseInstanceName: string }>>();
+        keysToFetch.forEach(key => {
+            const [credentialId, regionId] = key.split('_');
+            const groupKey = `${credentialId}_${regionId}`;
+            const instanceInfo = instanceMap.get(key);
+
+            if (instanceInfo) {
+                if (!groupedInstances.has(groupKey)) {
+                    groupedInstances.set(groupKey, []);
+                }
+                groupedInstances.get(groupKey)!.push({
+                    ec2InstanceId: instanceInfo.ec2InstanceId,
+                    databaseInstanceName: instanceInfo.databaseInstanceName
+                });
+            }
+        });
+
+        // Process instances in batches of 5 per credential/region combination
+        const batchSize = 5;
+        const newResults: Record<string, any> = {};
+
+        for (const [groupKey, instanceItems] of groupedInstances) {
+            const [credentialId, regionId] = groupKey.split('_');
+
+            // Process in batches
+            for (let i = 0; i < instanceItems.length; i += batchSize) {
+                const batch = instanceItems.slice(i, i + batchSize);
+
+                try {
+                    const apiResult: { data?: any; error?: any } = await getLogAnalyzerPreReqOracleApi({
+                        credentialId,
+                        regionId,
+                        payload: {
+                            items: batch.map(item => ({
+                                ec2InstanceId: item.ec2InstanceId,
+                                databaseInstanceName: item.databaseInstanceName
+                            }))
+                        }
+                    });
+
+                    if (apiResult && !apiResult?.error && apiResult?.data?.items) {
+                        // Process each item in the batch response
+                        apiResult.data.items.forEach((item: any) => {
+                            const key = `${credentialId}_${regionId}_${item.ec2InstanceId}_${item.databaseInstanceName}`;
+                            newResults[key] = item;
+                        });
+                    } else {
+                        // Handle failed batch - set default values for all instances in batch
+                        batch.forEach(item => {
+                            const key = `${credentialId}_${regionId}_${item.ec2InstanceId}_${item.databaseInstanceName}`;
+                            const instanceInfo = instanceMap.get(key);
+                            newResults[key] = createDefaultPrereqData(
+                                item.ec2InstanceId,
+                                item.databaseInstanceName,
+                                instanceInfo?.databaseHostId
+                            );
+                        });
+                    }
+                } catch (batchError) {
+                    // Set default values for failed batch
+                    batch.forEach(item => {
+                        const key = `${credentialId}_${regionId}_${item.ec2InstanceId}_${item.databaseInstanceName}`;
+                        const instanceInfo = instanceMap.get(key);
+                        newResults[key] = createDefaultPrereqData(
+                            item.ec2InstanceId,
+                            item.databaseInstanceName,
+                            instanceInfo?.databaseHostId
+                        );
+                    });
+                }
+            }
+        }
+
+        // Update Redux store with new results only (existing data is preserved)
+        if (Object.keys(newResults).length > 0) {
+            dispatch(
+                setAgenticRegisterFlowData({
+                    ...existingData,
+                    ...newResults
+                })
+            );
+        }
+    } catch (error) {
+        // Handle overall fetch error
+    } finally {
+        dispatch(setAgenticRegisterFlowLoading(false));
+    }
+};
+
 export const isEc2InstanceAgenticReady = (instanceData: any) => {
     const itemEc2InstanceId = instanceData?.data?.ec2InstanceId || '';
     const partnerInstanceId = instanceData?.ec2Details?.find((inst: { id?: string }) => inst.id !== itemEc2InstanceId);
@@ -595,8 +820,42 @@ export const isEc2InstanceAgenticReady = (instanceData: any) => {
     return allItemsReady ? MANAGE_STATES.READY : MANAGE_STATES.MISSING_PREREQUISITES;
 };
 
-export const updateItemWithAgenticData = (item: any) => {
-    const isAgenticReady = isEc2InstanceAgenticReady(item);
+export const isEc2InstanceAgenticReadyOracle = (instanceData: any) => {
+    const itemEc2InstanceId = instanceData?.data?.ec2InstanceId || '';
+    const databaseInstanceName = instanceData?.data?.databaseInstanceName || '';
+    const partnerInstanceId = instanceData?.ec2Details?.find((inst: { id?: string }) => inst.id !== itemEc2InstanceId);
+    const state = store.getState();
+    const agenticPreReqData = state.agenticAI.agenticRegisterFlowChecks.data;
+    const key1 = `${instanceData?.data?.credentialId}_${instanceData?.data?.regionId}_${itemEc2InstanceId}_${databaseInstanceName}`;
+    const key2 = partnerInstanceId
+        ? `${instanceData?.data?.credentialId}_${instanceData?.data?.regionId}_${partnerInstanceId.id}_${databaseInstanceName}`
+        : null;
+
+    if (!agenticPreReqData?.[key1]) {
+        return '';
+    }
+    const itemsData = [agenticPreReqData[key1]];
+    if (key2 && agenticPreReqData?.[key2]) {
+        itemsData.push(agenticPreReqData[key2]);
+    }
+    const allItemsReady = itemsData?.every((item: any) => {
+        const prerequisites = [
+            item.bedrockPreRequisites?.ready,
+            item.instanceProfilePreRequisites?.ready,
+            item.credentialsPreRequisites?.ready,
+            item.networkingPreRequisites?.ready,
+            item.oraclePermissionsPreRequisites?.ready
+        ];
+
+        // All 4 prerequisites must be true for this item to be ready
+        return prerequisites.every(prereq => prereq === true);
+    });
+    return allItemsReady ? MANAGE_STATES.READY : MANAGE_STATES.MISSING_PREREQUISITES;
+};
+
+export const updateItemWithAgenticData = (item: any, hostType: string) => {
+    const isAgenticReady =
+        hostType === DBType.ORACLE ? isEc2InstanceAgenticReadyOracle(item) : isEc2InstanceAgenticReady(item);
 
     // Early return if no agentic state
     if (!isAgenticReady) {

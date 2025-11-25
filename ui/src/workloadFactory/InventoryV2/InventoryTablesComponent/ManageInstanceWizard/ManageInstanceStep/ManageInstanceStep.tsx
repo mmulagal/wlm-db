@@ -23,7 +23,11 @@ import {
     mergeReadinessData,
     missingModules
 } from '../ManageInstanceUtils';
-import { useGetLogAnalyzerPreReqMutation, useGetWlmdbPoliciesQuery } from '../../../../../utils/apiService';
+import {
+    useGetLogAnalyzerPreReqMutation,
+    useGetLogAnalyzerPreReqOracleMutation,
+    useGetWlmdbPoliciesQuery
+} from '../../../../../utils/apiService';
 import {
     BulkDetectedInstance,
     ExtendedManageStates,
@@ -36,6 +40,7 @@ import {
     ENGINE_TYPE_CONTENT_KEYS,
     fetchErrorInvestigationState,
     fetchErrorInvestigationStateBulk,
+    fetchErrorInvestigationStateBulkOracle,
     getDiscoveredHostDataByType,
     getEffectiveManageReadinessData,
     getManageCheckObjFinal,
@@ -50,6 +55,7 @@ export const Content = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [getLogAnalyzerPreReqApi] = useGetLogAnalyzerPreReqMutation();
+    const [getLogAnalyzerPreReqOracleApi] = useGetLogAnalyzerPreReqOracleMutation();
 
     const [manageMultiChecks, setManageMultiChecks] = useState<Partial<ManageStates>>({});
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
@@ -215,6 +221,7 @@ export const Content = () => {
                 fetchErrorInvestigationState(
                     manageCheckObj,
                     getLogAnalyzerPreReqApi,
+                    getLogAnalyzerPreReqOracleApi,
                     dispatch,
                     manageSingleInstanceData,
                     hostType
@@ -288,7 +295,7 @@ export const Content = () => {
 
         selectedMultiDetectInstances?.forEach((item: BulkDetectedInstance) => {
             if (hostType === DBType.MSSQL || hostType === DBType.ORACLE) {
-                item = updateItemWithAgenticData(item);
+                item = updateItemWithAgenticData(item, hostType);
             }
 
             const manageStates = manageCheck(item);
@@ -344,8 +351,22 @@ export const Content = () => {
     }, [selectedMultiDetectInstances, agenticPreReqData]);
 
     useEffect(() => {
-        if (wizardOperationType === ACTION_TYPE.BULK && (hostType === DBType.MSSQL || hostType === DBType.ORACLE)) {
-            fetchErrorInvestigationStateBulk(selectedMultiDetectInstances, getLogAnalyzerPreReqApi, dispatch, hostType);
+        if (wizardOperationType === ACTION_TYPE.BULK) {
+            if (hostType === DBType.MSSQL) {
+                fetchErrorInvestigationStateBulk(
+                    selectedMultiDetectInstances,
+                    getLogAnalyzerPreReqApi,
+                    dispatch,
+                    hostType
+                );
+            } else if (hostType === DBType.ORACLE) {
+                fetchErrorInvestigationStateBulkOracle(
+                    selectedMultiDetectInstances,
+                    getLogAnalyzerPreReqOracleApi,
+                    dispatch,
+                    hostType
+                );
+            }
         }
     }, [selectedMultiDetectInstances]);
 

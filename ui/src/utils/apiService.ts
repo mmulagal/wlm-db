@@ -1464,10 +1464,15 @@ export const errorInvestigationApi = createApi({
             }
         }),
         getLogAnalyzerPreReq: builder.mutation({
-            query: ({ credentialId, regionId, type, typeId, dbType = DBType.MSSQL }) => {
-                dbType = dbType === DBType.ORACLE || dbType === 'oracle' ? 'oracle' : 'mssql';
-                return `v1/${dbType}/credentials/${credentialId}/regions/${regionId}/logs-analysis/pre-requisites?${type}=${typeId}`;
-            }
+            query: ({ credentialId, regionId, type, typeId }) =>
+                `v1/mssql/credentials/${credentialId}/regions/${regionId}/logs-analysis/pre-requisites?${type}=${typeId}`
+        }),
+        getLogAnalyzerPreReqOracle: builder.mutation({
+            query: ({ credentialId, regionId, payload }) => ({
+                url: `v1/oracle/credentials/${credentialId}/regions/${regionId}/logs-analysis/pre-requisites`,
+                method: 'POST',
+                body: payload
+            })
         }),
         getLogAnalyzerPricing: builder.mutation({
             query: ({ regionId }) => ({
@@ -1664,5 +1669,6 @@ export const {
     useGetAccLogAnalysisLatestMutation,
     useGetAccLogAnalysisLatestOracleMutation,
     useGetLogAnalyzerPreReqMutation,
+    useGetLogAnalyzerPreReqOracleMutation,
     useGetLogAnalyzerPricingMutation
 } = errorInvestigationApi;

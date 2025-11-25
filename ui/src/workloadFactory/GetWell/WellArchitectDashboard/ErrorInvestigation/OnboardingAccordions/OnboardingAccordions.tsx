@@ -65,15 +65,19 @@ const OnboardingAccordions = ({ dbType }: { dbType: string }) => {
                                 withTabs: false
                             }
                         },
-                        {
-                            label: t('databases.register-flow.powershell-modules'),
-                            values: ['AWS.Tools.BedrockRuntime'],
-                            showCopy: false,
-                            viewPolicy: {
-                                value: false,
-                                withTabs: false
-                            }
-                        }
+                        ...(dbType === DBType.MSSQL
+                            ? [
+                                  {
+                                      label: t('databases.register-flow.powershell-modules'),
+                                      values: ['AWS.Tools.BedrockRuntime'],
+                                      showCopy: false,
+                                      viewPolicy: {
+                                          value: false,
+                                          withTabs: false
+                                      }
+                                  }
+                              ]
+                            : [])
                     ]}
                     policies={{}}
                 />
@@ -170,7 +174,38 @@ const OnboardingAccordions = ({ dbType }: { dbType: string }) => {
                     policies={{}}
                 />
             )
-        }
+        },
+        // Only show Oracle permissions prerequisite for Oracle database type
+        ...(dbType === DBType.ORACLE
+            ? [
+                  {
+                      id: '5',
+                      title: t('databases.log-analyzer.onboarding-accordion-5-title'),
+                      subtitle: t('databases.log-analyzer.prerequisites'),
+                      readinessStatus: readinessString(data?.oraclePermissionsPreRequisites),
+                      missingPermission: !data?.oraclePermissionsPreRequisites?.ready,
+                      image: !data?.oraclePermissionsPreRequisites?.ready ? <NetworkingDisabled /> : <Networking />,
+                      content: (
+                          <PermissionContent
+                              title={t('databases.log-analyzer.prerequisites-list')}
+                              infoBlock={t('databases.log-analyzer.onboarding-accordion-5-info-oracle')}
+                              blocks={[
+                                  {
+                                      label: t('databases.log-analyzer.onboarding-accordion-5-label'),
+                                      values: [t('databases.log-analyzer.onboarding-accordion-5-value-1')],
+                                      showCopy: false,
+                                      viewPolicy: {
+                                          value: false,
+                                          withTabs: false
+                                      }
+                                  }
+                              ]}
+                              policies={{}}
+                          />
+                      )
+                  }
+              ]
+            : [])
     ];
     return (
         <div className={styles.onboardingAccordions}>
