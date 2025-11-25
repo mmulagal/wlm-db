@@ -153,13 +153,20 @@ const ExploreSavingsTableV2 = () => {
 
                 const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit;
 
+                let tooltipTitle = '';
+                if (!sharesGroupWithSelection) {
+                    tooltipTitle = t('databases.explore-savings.disabled-tooltip');
+                } else if (shouldDisableDueToLimit) {
+                    tooltipTitle = t('databases.explore-savings.disabled-tooltip-limit-exceed');
+                }
+
                 return {
                     ...item,
                     cellProps: {
                         ...item.cellProps,
                         isDisabled,
                         selectionProps: {
-                            title: !sharesGroupWithSelection && t('databases.explore-savings.disabled-tooltip'),
+                            title: tooltipTitle,
                             titleProps: {
                                 placement: 'bottom'
                             }

@@ -401,21 +401,6 @@ const TCOBulkAccordion = () => {
         );
     };
 
-    const OpenFirstAccordion = ({ firstId, lastId }: { firstId?: string; lastId?: string }) => {
-        const accordion = useAccordionContext();
-        useEffect(() => {
-            if (accordion?.setOpenChildren) {
-                if (selectedRowsForExploreSavingsEBSBulk.length === 1 && firstId) {
-                    accordion.setOpenChildren(prev => ({ ...(prev || {}), [firstId]: true }));
-                } else if (selectedRowsForExploreSavingsEBSBulk.length > 1 && lastId && firstId) {
-                    accordion.setOpenChildren(prev => ({ ...(prev || {}), [firstId]: false }));
-                    accordion.setOpenChildren(prev => ({ ...(prev || {}), [lastId]: true }));
-                }
-            }
-        }, [accordion?.setOpenChildren, firstId, lastId, selectedRowsForExploreSavingsEBSBulk.length]);
-        return null;
-    };
-
     return (
         <div className={styles.tcoBulkAccordion}>
             {/* SSD tier card - showed based on condition */}
@@ -428,13 +413,6 @@ const TCOBulkAccordion = () => {
                 </div>
             )}
             <AccordionController isGrouped>
-                {/* Helper to open first accordion after provider mounts */}
-                <OpenFirstAccordion
-                    firstId={String(selectedRowsForExploreSavingsEBSBulk[0]?.id || '1')}
-                    lastId={String(
-                        selectedRowsForExploreSavingsEBSBulk[selectedRowsForExploreSavingsEBSBulk.length - 1]?.id || '1'
-                    )}
-                />
                 <div className={styles.header}>
                     <DsTypography variant="Semibold_16">
                         {t('databases.explore-savings.selected-hosts')} ({selectedRowsForExploreSavingsEBSBulk.length})
@@ -443,7 +421,7 @@ const TCOBulkAccordion = () => {
                         {t('databases.explore-savings.add-hosts')}
                     </DsButton>
                 </div>
-                <>
+                <div className={styles.accordionScrollContainer}>
                     {selectedRowsForExploreSavingsEBSBulk.map((host: any, index: number) => (
                         <AccordionCard
                             key={host.id || index}
@@ -470,7 +448,7 @@ const TCOBulkAccordion = () => {
                                 </div>
                             )}
                         >
-                            <AccordionCardContent>
+                            <AccordionCardContent className={styles.accordionContent}>
                                 <DsTypography>
                                     {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
                                         <HostInstanceSelection host={host} />
@@ -483,7 +461,7 @@ const TCOBulkAccordion = () => {
                             </AccordionCardContent>
                         </AccordionCard>
                     ))}
-                </>
+                </div>
             </AccordionController>
         </div>
     );
