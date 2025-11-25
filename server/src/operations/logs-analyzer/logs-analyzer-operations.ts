@@ -328,7 +328,7 @@ async function handleLogsAnalysis(
             resource: { metadata: resourceMetadata },
             database_instance_name: instanceName
         } = managedInstance;
-        const databaseType = dbType?.toLowerCase();
+        const databaseType = dbType?.toLowerCase() as DATABASE_TYPE;
 
         const { node1InstanceId, node2InstanceId, sqlDeploymentType } = resourceMetadata as unknown as Metadata;
 
@@ -1280,7 +1280,7 @@ async function getLatestLogsAnalysisReports(
     accountId: string,
     region?: string,
     credentialsId?: string,
-    databaseType?: string,
+    databaseType?: DATABASE_TYPE,
     jobId?: string
 ) {
     logger.info('Getting latest report data of database instances at account level', {
@@ -1314,7 +1314,8 @@ async function getLatestLogsAnalysisReports(
                 resource_id: true,
                 job_id: true
             },
-            jobId
+            jobId,
+            databaseType
         });
         processedCount += reports.length;
 
