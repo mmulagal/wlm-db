@@ -1400,7 +1400,7 @@ const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
         if [ -n "$errorMessage" ]; then
             results="{\\"error\\": \\"$errorMessage\\"}"
         else
-            results="{\\"database_details\\": $DATABASE_DETAILS, \\"pdbs_size\\": \\"$pdbs_size\\", \\"root_db_size\\": \\"$root_db_size\\", \\"pdbs_status\\": $pdbs_status, \\"is_cdb\\": \\"$is_cdb\\", \\"service_name\\": \\"$service_name\\"}"
+            results="{\\"database_details\\": $DATABASE_DETAILS, \\"pdbs_size\\": $pdbs_size, \\"root_db_size\\": \\"$root_db_size\\", \\"pdbs_status\\": $pdbs_status, \\"is_cdb\\": \\"$is_cdb\\", \\"service_name\\": \\"$service_name\\"}"
         fi
     done <<< "$oratab_entries"
     echo "$results" | tr -d '\r\n' | tr -d '\n' 

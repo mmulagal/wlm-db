@@ -797,7 +797,7 @@ function discoverDemoDataOracle(fsxId: string, ebsVolId: string) {
                     cidrBlock: '192.168.16.0/20'
                 },
                 error: undefined,
-                platform: 'Linux/UNIX',
+                platform: 'Red Hat Enterprise Linux 8.10 (Ootpa)',
                 oracleServerDeploymentType: 'Standalone',
                 databaseInstanceDetails: [
                     {
@@ -885,7 +885,7 @@ function discoverDemoDataOracle(fsxId: string, ebsVolId: string) {
                     cidrBlock: '192.168.16.0/20'
                 },
                 error: undefined,
-                platform: 'Linux/UNIX',
+                platform: 'Red Hat Enterprise Linux 8.10 (Ootpa)',
                 oracleServerDeploymentType: 'Standalone',
                 databaseInstanceDetails: [
                     {
