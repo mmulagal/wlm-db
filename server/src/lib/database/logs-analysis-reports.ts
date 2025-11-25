@@ -74,6 +74,7 @@ async function listLogsAnalysisReports(params: {
     pageSize?: number;
     nextToken?: string;
     select?: Record<string, boolean>;
+    databaseType?: DATABASE_TYPE;
 }) {
     logger.info('Listing logs analysis reports', params);
     let {
@@ -88,7 +89,8 @@ async function listLogsAnalysisReports(params: {
         sortOrder = 'desc',
         pageSize,
         nextToken,
-        select
+        select,
+        databaseType
     } = params;
 
     accountId = checkAccount(accountId);
@@ -105,6 +107,7 @@ async function listLogsAnalysisReports(params: {
             ...(credentialsId && { credentials_id: credentialsId }),
             ...(jobId && { job_id: jobId }),
             ...(reportId && { id: reportId }),
+            ...(databaseType && { database_type: databaseType }),
             ...(region && {
                 database_instances: {
                     region
