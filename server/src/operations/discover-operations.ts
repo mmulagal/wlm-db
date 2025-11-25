@@ -1804,6 +1804,12 @@ async function discoverOracleResources(
                             flattenedInstanceStorageDetails
                         );
 
+                        const missingModules = [
+                            isAwsCliInstalled === 'false' ? 'awsCli' : null,
+                            isJqInstalled === 'false' ? 'jq' : null,
+                            isPythonInstalled === 'false' ? 'python' : null
+                        ].filter(Boolean) as string[];
+
                         databaseInstanceDetails.push({
                             instanceId,
                             instanceName,
@@ -1824,16 +1830,12 @@ async function discoverOracleResources(
                             asmAuthentication: isAsmAuth,
                             manageReadiness: {
                                 assessment: {
-                                    missingModules: [
-                                        isAwsCliInstalled === 'false' ? 'awsCli' : null,
-                                        isJqInstalled === 'false' ? 'jq' : null,
-                                        isPythonInstalled === 'false' ? 'python' : null
-                                    ].filter(Boolean) as string[],
+                                    missingModules,
                                     missingSqlPermissions: missingPermissions
                                 },
                                 remediation: {
                                     missingSqlPermissions: remediationMissingPermissions,
-                                    missingModules: []
+                                    missingModules
                                 }
                             }
                         });

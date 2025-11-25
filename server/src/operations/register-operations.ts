@@ -2756,7 +2756,7 @@ async function validateOracleCredentials(
                         },
                         remediation: {
                             missingSqlPermissions: remediationMissingPermissions,
-                            missingModules: []
+                            missingModules
                         }
                     }
                 });
