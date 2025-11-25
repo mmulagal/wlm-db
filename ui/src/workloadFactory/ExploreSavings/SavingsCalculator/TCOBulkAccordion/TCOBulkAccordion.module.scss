@@ -68,9 +68,6 @@
     [class*='accordion-table'] {
         [class*='accordionScrollContainer'] {
             width: calc(100% - 16px);
-            > [class*='base'] {
-                margin: 0 40px;
-            }
 
             .accordionContent {
                 padding: 0 32px 0px 40px;

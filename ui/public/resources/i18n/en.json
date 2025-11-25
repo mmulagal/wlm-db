@@ -1062,7 +1062,7 @@
             "onboarding-accordion-4-info-oracle": "These permissions verify model availability and configuration in the region of the Oracle node, and ensure reliable, region-specific performance.",
             "onboarding-accordion-4-label": "Permissions",
             "onboarding-accordion-4-value-1": "Ensure that your Workload Factory credentials have \"bedrock:GetFoundationModelAvailability\" and \"bedrock:ListInferenceProfiles\" permissions",
-            
+
             "onboarding-accordion-5-title": "Oracle user permission",
             "onboarding-accordion-5-info-oracle": "Grants read access to extended diagnostic alerts, enabling extraction of error/trace details from logs for AI-powered pattern detection and remediation.",
             "onboarding-accordion-5-label": "Permissions",
@@ -1180,6 +1180,7 @@
         "explore-savings": {
             "disabled-tooltip": "Running a DB on an FSxN in a different region may affect performance.",
             "disabled-tooltip-limit-exceed": "Upto 5 hosts can be selected",
+            "disabled-tooltip-limit-reached": "Atleast 1 of the host should be selected",
             "mssql-ebs": "Microsoft SQL Server hosts on Elastic Block Store",
             "select-upto-five": "Select up to five hosts from the table below, then proceed to explore potential savings. After five selections are made, the remaining checkboxes will be disabled.",
             "availability": "Availability",

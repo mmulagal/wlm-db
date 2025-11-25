@@ -162,13 +162,22 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
                 shouldDisableDueToLimit ||
                 (currentTableSelection.length === 1 && isCurrentlySelected);
 
+            let tooltipTitle = '';
+            if (!sharesGroupWithSelection) {
+                tooltipTitle = t('databases.explore-savings.disabled-tooltip');
+            } else if (shouldDisableDueToLimit) {
+                tooltipTitle = t('databases.explore-savings.disabled-tooltip-limit-exceed');
+            } else if (currentTableSelection.length === 1 && isCurrentlySelected) {
+                tooltipTitle = t('databases.explore-savings.disabled-tooltip-limit-reached');
+            }
+
             return {
                 ...item,
                 cellProps: {
                     ...item.cellProps,
                     isDisabled: shouldDisable,
                     selectionProps: {
-                        title: !sharesGroupWithSelection && t('databases.explore-savings.disabled-tooltip'),
+                        title: tooltipTitle,
                         titleProps: {
                             placement: 'bottom'
                         }
