@@ -228,7 +228,7 @@ async function getHeadroomDrift(
         const status =
             headroomPercent < minOptimizedHeadroomPercent
                 ? AssessmentStatus.UNDER_PROVISIONED
-                : headroomPercent > 100 && ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
+                : headroomPercent > 50 && ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
                 ? AssessmentStatus.OVER_PROVISIONED
                 : AssessmentStatus.OPTIMIZED;
 
