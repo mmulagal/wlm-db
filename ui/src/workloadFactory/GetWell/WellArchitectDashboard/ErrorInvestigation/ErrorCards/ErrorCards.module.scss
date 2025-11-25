@@ -73,3 +73,27 @@
 .selected {
     background-color: var(--hover-background);
 }
+
+@media screen and (min-width: 1351px) and (max-width: 1500px) {
+    .errorCards {
+        .errorCardTopSection {
+            .item {
+                .textWrap {
+                    max-width: 82px !important;
+                }
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1501px) and (max-width: 1750px) {
+    .errorCards {
+        .errorCardTopSection {
+            .item {
+                .textWrap {
+                    max-width: 140px !important;
+                }
+            }
+        }
+    }
+}
