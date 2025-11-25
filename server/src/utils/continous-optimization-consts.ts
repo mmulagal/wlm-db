@@ -391,7 +391,8 @@ const ASSESSMENT_RESOURCE_TYPE = {
     LUN: 'Lun',
     SQL_INSTANCE: 'SQL instance',
     NETWORK_INTERFACE: 'Network Interface',
-    DISK_GROUP: 'Disk Group'
+    DISK_GROUP: 'Disk Group',
+    STORAGE_MULTIPATH: 'Storage multipath'
 };
 
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];

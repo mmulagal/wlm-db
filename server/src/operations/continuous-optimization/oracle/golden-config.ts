@@ -447,7 +447,8 @@ const GOLDEN_CONFIG = {
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ]
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
     datafilesPlacement: {
         parameter: 'datafiles-placement',
@@ -460,7 +461,8 @@ const GOLDEN_CONFIG = {
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ]
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
     controlfilesPlacement: {
         parameter: 'controlfiles-placement',
@@ -473,7 +475,8 @@ const GOLDEN_CONFIG = {
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ]
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
     redologsPlacement: {
         parameter: 'redologs-placement',
@@ -486,7 +489,8 @@ const GOLDEN_CONFIG = {
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ]
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
     templogsPlacement: {
         parameter: 'templogs-placement',
@@ -499,7 +503,8 @@ const GOLDEN_CONFIG = {
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ]
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
     oracleBinaryPlacement: {
         parameter: 'oracle-binary-placement',
@@ -512,7 +517,8 @@ const GOLDEN_CONFIG = {
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ]
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
     dataDiskLunLayout: {
         parameter: 'data-dg-lun-layout',
@@ -521,7 +527,8 @@ const GOLDEN_CONFIG = {
         severity: SEVERITY.WARNING,
         recommendation:
             'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.',
-        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
     },
     redoLogDiskLunLayout: {
         parameter: 'redolog-dg-lun-layout',
@@ -530,7 +537,8 @@ const GOLDEN_CONFIG = {
         severity: SEVERITY.WARNING,
         recommendation:
             'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.',
-        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
     },
     fraDiskLunLayout: {
         parameter: 'fra-dg-lun-layout',
@@ -539,7 +547,8 @@ const GOLDEN_CONFIG = {
         severity: SEVERITY.WARNING,
         recommendation:
             'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.',
-        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
     },
     archivelogDiskLunLayout: {
         parameter: 'archivelog-dg-lun-layout',
@@ -548,7 +557,8 @@ const GOLDEN_CONFIG = {
         severity: SEVERITY.WARNING,
         recommendation:
             'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.',
-        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
     },
     sizing: [
         {

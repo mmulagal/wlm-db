@@ -136,7 +136,8 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.CRITICAL,
                 recommendation:
                     'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
+                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+                resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
             },
             {
                 parameter: 'mpio-load-balance-policy',
@@ -144,7 +145,8 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.CRITICAL,
                 recommendation:
                     'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
+                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE
             },
             {
                 parameter: 'mpio-iscsi-count',
@@ -152,7 +154,8 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.CRITICAL,
                 recommendation:
                     'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
+                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+                resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
             },
             {
                 parameter: 'ntfs-allocation-unit-size',
@@ -160,7 +163,8 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.CRITICAL,
                 recommendation:
                     'Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE
             },
             {
                 parameter: 'mpio-timeout',
@@ -168,7 +172,8 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.WARNING,
                 recommendation:
                     'Ensure the Multipath I/O Timeout setting on the host is configured to 60 seconds to maintain connectivity and stability during FSxN failovers. Properly configured Multipath I/O Timeout settings prevent disconnections from the disk, which can occur during FSX failovers. Insufficient timeout settings can lead to temporary disconnections, application errors, and potential data loss.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY]
+                tags: [AwsWellArchitecturedPillars.RELIABILITY],
+                resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
             }
         ]
     },

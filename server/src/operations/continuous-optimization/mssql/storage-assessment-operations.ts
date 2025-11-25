@@ -580,7 +580,8 @@ async function calculateStorageDrift(
                 tags: goldenData.tags,
                 violationDetails: objectsInViolation,
                 totalObjectsAssessed: assessmentDetails.length,
-                totalObjectsInViolation: objectsInViolation.length
+                totalObjectsInViolation: objectsInViolation.length,
+                resourceType: goldenData.resourceType
             });
         }
     });
