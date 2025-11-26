@@ -30,7 +30,39 @@ export const handleDialog = (
     singleRowData,
     engineType = DBType.MSSQL
 ) => {
+    // Oracle FILE_SYSTEM_HEADROOM with permissions - show disabled Continue button
     if (
+        engineType === DBType.ORACLE &&
+        type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
+        (!cardData?.missingPermissions || cardData?.missingPermissions.length === 0)
+    ) {
+        setDialog(
+            <DialogComponent
+                header={`${type}`}
+                content={
+                    <DialogContent
+                        type={type}
+                        recommendationOptions={cardData?.recommendationOptions}
+                        missingPermissions={cardData?.missingPermissions}
+                        recommendedSizeInGib={cardData?.recommendedSizeInGib}
+                        engineType={engineType}
+                        status={cardData?.block_two?.value}
+                    />
+                }
+                primaryButton={GENERAL.CONTINUE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    callOptimizeApi(type, operation, singleRowData);
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass="innerPage"
+                primaryButtonDisabled
+                primaryButtonTooltip={GENERAL.COMING_SOON}
+            />
+        );
+    } else if (
         type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
         type === ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH ||
         type === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
@@ -48,6 +80,7 @@ export const handleDialog = (
                         recommendedSizeInGib={cardData?.recommendedSizeInGib}
                         missingPatchList={cardData?.missingPatchList}
                         engineType={engineType}
+                        status={cardData?.block_two?.value}
                     />
                 }
                 primaryButton="Close"

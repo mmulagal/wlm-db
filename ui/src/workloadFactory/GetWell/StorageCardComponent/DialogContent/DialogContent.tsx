@@ -78,6 +78,7 @@ type DialogType = {
     objectsInViolation?: string[];
     engineType?: string;
     assessmentStatus?: boolean;
+    status?: string;
 };
 
 const DialogContent = ({
@@ -90,7 +91,8 @@ const DialogContent = ({
     operation = 'single',
     objectsInViolation = [],
     engineType = DBType.MSSQL,
-    assessmentStatus = false
+    assessmentStatus = false,
+    status
 }: DialogType) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
@@ -196,6 +198,14 @@ const DialogContent = ({
 
                 // Oracle storage sizing cards
                 case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+                    return (
+                        <StorageSizingOracleDialog
+                            type={type}
+                            status={status}
+                            missingPermissions={missingPermissions}
+                            recommendedSizeInGib={recommendedSizeInGib}
+                        />
+                    );
                 case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
                     return <StorageSizingOracleDialog type={type} />;
             }

@@ -259,7 +259,7 @@ export const cardDataDefault: any = {
             description:
                 'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
             valuesHeading: 'File system headroom percentages are as follows:',
-            values: ['Under-provisioned: <35%', 'Optimized: 35-100%', 'Over-provisioned: >100%']
+            values: ['Under-provisioned: <35%', 'Optimized: 35-100%', 'Over-provisioned: >50%']
         },
         tags: ['Performance efficiency']
     },
