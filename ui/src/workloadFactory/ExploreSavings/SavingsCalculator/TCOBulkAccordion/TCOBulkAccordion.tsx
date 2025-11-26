@@ -1,15 +1,11 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { AccordionCardContent, DsTypography, useDialog, SelectField, TextField, Button } from '@netapp/design-system';
 import { DsButton } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
-import {
-    AccordionCard,
-    AccordionController,
-    useAccordionContext
-} from '../../../../common/AccordionCard/AccordionCard';
+import { AccordionCard, AccordionController } from '../../../../common/AccordionCard/AccordionCard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './TCOBulkAccordion.module.scss';
 
@@ -29,10 +25,7 @@ import {
     setRowsRequiringAuthBulk,
     setTriggerBulkDataFetch
 } from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
-import {
-    setRecommendedTargetInstance,
-    setSelectedMonthlyBYOLCost
-} from '../../../../store/workloadFactory/exploreSavingsSlice';
+import { setRecommendedTargetInstance } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { generateOptionType, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { generateLabel2ForInstanceType, handleAuthenticate } from '../../ExploreSavingsUtils';
 import { checkIfByolFieldRequired } from '../savingsUtil';
@@ -57,6 +50,12 @@ const TCOBulkAccordion = () => {
 
     // State to track recommendations per host
     const [hostRecommendations, setHostRecommendations] = useState<{ [hostId: string]: string }>({});
+
+    // State to track BYOL values per host
+    const [hostBYOLValues, setHostBYOLValues] = useState<{ [hostId: string]: string }>({});
+
+    // State to track previous BYOL values to detect actual changes
+    const [previousBYOLValues, setPreviousBYOLValues] = useState<{ [hostId: string]: string }>({});
 
     // State to track total host count (considering both selected and requiring auth)
     const [totalHostCount, setTotalHostCount] = useState(0);
@@ -85,6 +84,17 @@ const TCOBulkAccordion = () => {
         const newHostRecommendations = { ...hostRecommendations };
         delete newHostRecommendations[hostToRemove.id];
         setHostRecommendations(newHostRecommendations);
+
+        // Clean up the host BYOL value state
+        const newHostBYOLValues = { ...hostBYOLValues };
+        delete newHostBYOLValues[hostToRemove.id];
+        setHostBYOLValues(newHostBYOLValues);
+
+        // Clean up the previous BYOL value state
+        const newPreviousBYOLValues = { ...previousBYOLValues };
+        delete newPreviousBYOLValues[hostToRemove.id];
+        setPreviousBYOLValues(newPreviousBYOLValues);
+
         // Trigger data fetch after removing hosts when authentication is not required
         dispatch(setTriggerBulkDataFetch(true));
     };
@@ -126,13 +136,7 @@ const TCOBulkAccordion = () => {
 
     // Host-specific instance selection component
     const HostInstanceSelection = ({ host }: { host: any }) => {
-        const {
-            storageSavingsResponse,
-            storageSavingsLoading,
-            recommendedTargetInstance,
-            monthlyBYOLCost,
-            selectedHostDetails
-        } = useAppSelector(state => state.exploreSavings);
+        const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
 
         const [instanceTypeData, setInstanceTypeData] = useState<any>({
             missingPermissions: false,
@@ -145,20 +149,72 @@ const TCOBulkAccordion = () => {
         const hostName = host.name;
         const hostRecommendedInstance = hostRecommendations[hostId] || '';
         const [isByolField, setIsByolField] = useState<boolean>(false);
-        const [byolValue, setByolValue] = useState(monthlyBYOLCost || '');
-        const [textSearch, setTextSearch] = useSearchDebounce(500);
+
+        // Local state for the BYOL input field
+        const [localByolValue, setLocalByolValue] = useState<string>('');
+        const [textSearch, setTextSearch] = useSearchDebounce(1000);
+
+        // Track if this is the initial mount to avoid triggering API on accordion expand
+        const isInitialMount = useRef(true);
 
         useEffect(() => {
             setIsByolField(checkIfByolFieldRequired(host, isByolField, savingsCalculatorFrom));
         }, [host, savingsCalculatorFrom]);
 
+        // Initialize local state from host object or parent state
         useEffect(() => {
-            setTextSearch(byolValue);
-        }, [byolValue]);
+            const initialValue =
+                hostBYOLValues[hostId] !== undefined ? hostBYOLValues[hostId] : host.monthlySqlByolCost || '';
+
+            setLocalByolValue(initialValue);
+            setTextSearch(initialValue);
+        }, [host.id]); // Only run when host changes
+
+        // When user types, update local state and debounced search
+        const handleByolChange = (value: string) => {
+            setLocalByolValue(value);
+            setTextSearch(value);
+        };
 
         useEffect(() => {
-            if (textSearch || monthlyBYOLCost) {
-                dispatch(setSelectedMonthlyBYOLCost(textSearch));
+            // Skip on initial mount (when accordion first expands) to avoid false API trigger
+            if (isInitialMount.current) {
+                isInitialMount.current = false;
+                // Initialize previous value on first mount
+                if (textSearch) {
+                    setPreviousBYOLValues(prev => ({
+                        ...prev,
+                        [hostId]: textSearch
+                    }));
+                }
+                return;
+            }
+
+            const previousValue = previousBYOLValues[hostId] || '';
+
+            // Only trigger API if the value actually changed (not just expanding a different accordion)
+            if (textSearch !== previousValue) {
+                // Update previous value to track this change
+                setPreviousBYOLValues(prev => ({
+                    ...prev,
+                    [hostId]: textSearch
+                }));
+
+                // Update parent state after debounce so that user do not lose focus while typing
+                setHostBYOLValues(prev => ({
+                    ...prev,
+                    [hostId]: textSearch
+                }));
+
+                // Update the host object in selectedRowsForExploreSavingsEBSBulk with monthlySqlByolCost
+                // Convert empty string to null for API payload as monthlySqlByolCost is optional argument so where it is not applicable will send null
+                const updatedHosts = selectedRowsForExploreSavingsEBSBulk.map((h: any) =>
+                    h.id === hostId ? { ...h, monthlySqlByolCost: textSearch || null } : h
+                );
+                dispatch(setSelectedRowsForExploreSavingsEBSBulk(updatedHosts));
+
+                // Trigger bulk data fetch - this will call the API with the updated BYOL value
+                dispatch(setTriggerBulkDataFetch(true));
             }
         }, [textSearch]);
 
@@ -270,10 +326,10 @@ const TCOBulkAccordion = () => {
                                 label={GENERAL.BYOL_TEXT}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                                    setByolValue(numVal);
+                                    handleByolChange(numVal);
                                 }}
                                 isOptional
-                                value={byolValue}
+                                value={localByolValue}
                                 className="savings-calculator-input-fields"
                             />
                         </div>
@@ -329,13 +385,7 @@ const TCOBulkAccordion = () => {
         );
     };
 
-    const {
-        selectedHostDetails,
-        selectedOnPremHostDetails,
-        selectedPartnerHostDetails,
-        savingsCalculatorFrom,
-        viewCalculationsResponse
-    } = useAppSelector(state => state.exploreSavings);
+    const { savingsCalculatorFrom, viewCalculationsResponse } = useAppSelector(state => state.exploreSavings);
 
     const [showSsdTierCard, setShowSsdTierCard] = useState(false);
 

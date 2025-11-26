@@ -333,16 +333,21 @@ const SavingsCalculatorApi = () => {
     const getBulkStorageSavingsData = async () => {
         if (ebsTCOAction !== 'bulk' || !selectedRowsForExploreSavingsEBSBulk.length) return;
 
-        // Extract all instance IDs from selected hosts
-        const instanceIds: string[] = [];
+        // Extract all instance IDs from selected hosts and build hosts array with monthlySqlByolCost
+        const hosts: Array<{ ec2InstanceId: string; monthlySqlByolCost: number | null }> = [];
         selectedRowsForExploreSavingsEBSBulk.forEach((host: any) => {
             if (host.ec2Details && host.ec2Details.length > 0) {
-                // for aoag picking first node instance id only and stanadlone will have tne
-                instanceIds.push(host.ec2Details[0].id);
+                // for aoag picking first node instance id only and standalone will have one
+                const ec2InstanceId = host.ec2Details[0].id;
+                const byolCost = host.monthlySqlByolCost;
+                hosts.push({
+                    ec2InstanceId,
+                    monthlySqlByolCost: byolCost ? Number(byolCost) : null
+                });
             }
         });
 
-        if (instanceIds.length === 0) {
+        if (hosts.length === 0) {
             return;
         }
 
@@ -350,20 +355,13 @@ const SavingsCalculatorApi = () => {
             snapshotFrequency: selectedSnapshotFrequency?.value,
             clonedCopiesCount: numberOfClonedCopies,
             monthlyChangeRatePercentage: monthlyChangeRate,
-            instanceIds
+            hosts
         };
 
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
             payload = {
                 ...payload,
                 cloneRefreshFrequency: selectedCloneRefresh?.value
-            };
-        }
-
-        if (monthlyBYOLCost) {
-            payload = {
-                ...payload,
-                monthlySqlByolCost: Number(monthlyBYOLCost)
             };
         }
 
@@ -394,16 +392,21 @@ const SavingsCalculatorApi = () => {
     const getBulkViewCalculationsData = async () => {
         if (ebsTCOAction !== 'bulk' || !selectedRowsForExploreSavingsEBSBulk.length) return;
 
-        // Extract all instance IDs from selected hosts
-        const instanceIds: string[] = [];
+        // Extract all instance IDs from selected hosts and build hosts array with monthlySqlByolCost
+        const hosts: Array<{ ec2InstanceId: string; monthlySqlByolCost: number | null }> = [];
         selectedRowsForExploreSavingsEBSBulk.forEach((host: any) => {
             if (host.ec2Details && host.ec2Details.length > 0) {
-                // for aoag picking first node instance id only and stanadlone will have tne
-                instanceIds.push(host.ec2Details[0].id);
+                // for aoag picking first node instance id only and standalone will have one
+                const ec2InstanceId = host.ec2Details[0].id;
+                const byolCost = host.monthlySqlByolCost;
+                hosts.push({
+                    ec2InstanceId,
+                    monthlySqlByolCost: byolCost ? Number(byolCost) : null
+                });
             }
         });
 
-        if (instanceIds.length === 0) {
+        if (hosts.length === 0) {
             return;
         }
 
@@ -411,20 +414,13 @@ const SavingsCalculatorApi = () => {
             snapshotFrequency: selectedSnapshotFrequency?.value,
             clonedCopiesCount: numberOfClonedCopies,
             monthlyChangeRatePercentage: monthlyChangeRate,
-            instanceIds
+            hosts
         };
 
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
             payload = {
                 ...payload,
                 cloneRefreshFrequency: selectedCloneRefresh?.value
-            };
-        }
-
-        if (monthlyBYOLCost) {
-            payload = {
-                ...payload,
-                monthlySqlByolCost: Number(monthlyBYOLCost)
             };
         }
 
@@ -535,6 +531,7 @@ const SavingsCalculatorApi = () => {
     ]);
 
     // Separate useEffect for triggerBulkDataFetch
+    // This is used in bulk mode to trigger API calls when BYOL values change per host
     useEffect(() => {
         if (triggerBulkDataFetch) {
             // Reset the flag

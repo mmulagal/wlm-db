@@ -202,8 +202,21 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
                 onAuthRequired(selectedRows);
             }
         } else {
-            // Replace the entire selection with whatever is currently selected in the table
-            dispatch(setSelectedRowsForExploreSavingsEBSBulk(selectedRows));
+            // Merge with existing hosts to get monthlySqlByolCost values for each hosts
+            const existingHostsMap = new Map(selectedRowsForExploreSavingsEBSBulk.map((host: any) => [host.id, host]));
+
+            const rowsWithByolPreserved = selectedRows.map((row: any) => {
+                const existingHost: any = existingHostsMap.get(row.id);
+                return {
+                    ...row,
+                    // Preserve existing monthlySqlByolCost if host already exists, otherwise initialize to null
+                    monthlySqlByolCost:
+                        existingHost?.monthlySqlByolCost !== undefined ? existingHost.monthlySqlByolCost : null
+                };
+            });
+
+            // set the selected rows with byol values
+            dispatch(setSelectedRowsForExploreSavingsEBSBulk(rowsWithByolPreserved));
             // Trigger data fetch after adding hosts when authentication is not required
             dispatch(setTriggerBulkDataFetch(true));
             if (onExploreSavings) {
