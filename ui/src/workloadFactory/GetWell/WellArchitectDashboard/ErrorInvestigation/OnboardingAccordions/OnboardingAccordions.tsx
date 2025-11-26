@@ -8,6 +8,8 @@ import { ReactComponent as BedrockDisabled } from '../../../../../assets/Bedrock
 import { ReactComponent as NetworkingDisabled } from '../../../../../assets/networking-disabled.svg';
 import { ReactComponent as EC2InstanceDisabled } from '../../../../../assets/ec2-instance-disabled.svg';
 import { ReactComponent as CredentialAssociatedDisabled } from '../../../../../assets/credential-associated-disabled.svg';
+import { ReactComponent as User } from '../../../../../assets/User.svg';
+import { ReactComponent as UserDisabled } from '../../../../../assets/User-disabled.svg';
 import {
     AccordionItem,
     ManageInstanceAccordion
@@ -184,7 +186,7 @@ const OnboardingAccordions = ({ dbType }: { dbType: string }) => {
                       subtitle: t('databases.log-analyzer.prerequisites'),
                       readinessStatus: readinessString(data?.oraclePermissionsPreRequisites),
                       missingPermission: !data?.oraclePermissionsPreRequisites?.ready,
-                      image: !data?.oraclePermissionsPreRequisites?.ready ? <NetworkingDisabled /> : <Networking />,
+                      image: !data?.oraclePermissionsPreRequisites?.ready ? <UserDisabled /> : <User />,
                       content: (
                           <PermissionContent
                               title={t('databases.log-analyzer.prerequisites-list')}
