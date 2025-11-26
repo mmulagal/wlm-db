@@ -6,11 +6,19 @@
     [class*='_base'] {
         background-color: unset !important;
         box-shadow: unset !important;
+        top: -40px !important;
     }
     [class*='header-name'] {
         [class*='Checkbox-module'] {
             display: none !important;
         }
+    }
+    [class*='pagination-panel'] {
+        bottom: -40px !important;
+    }
+
+    [class*='header-cell'] {
+        top: -40px !important;
     }
 
     .azColText {
