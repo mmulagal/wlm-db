@@ -1,17 +1,12 @@
 import { DeserializeHandlerArguments } from '@aws-sdk/types';
-import Redis from 'ioredis';
 import config from 'config';
 import ms, { StringValue } from 'ms';
 import { parse, stringify } from 'flatted';
-import { generateHash, getRedisConnection } from './utils';
+import { generateHash, getRedisConnection, isRedisConnected } from './utils';
 import { AWSSDKCacheParams } from './common-types';
 import getLogger from './logger';
 
 const logger = getLogger();
-
-function isRedisConnected(redisClient: Redis) {
-    return redisClient.status === 'ready';
-}
 
 const cacheMiddlewareConfig = {
     step: 'deserialize' as const,

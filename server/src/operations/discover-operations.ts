@@ -14,6 +14,7 @@ import {
 } from '@aws-sdk/client-ec2';
 import { CommandInvocationStatus, ConnectionStatus, SendCommandCommandInput } from '@aws-sdk/client-ssm';
 import throat from 'throat';
+import { stringify, parse } from 'flatted';
 import {
     describeInstancesWithPagination,
     paginateDescribeEbsVolumes,
@@ -30,7 +31,10 @@ import {
     isValidProp,
     getEc2Hostname,
     getFsxNameFromTags,
-    IS_DEMO_FLOW
+    IS_DEMO_FLOW,
+    getRedisConnection,
+    generateHash,
+    isRedisConnected
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -144,6 +148,7 @@ type DiscoveredEc2InstanceType = (DiscoverPgSqlResponseType | DiscoverOracleResp
 
 const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
 const PREPARE_EC2_RERUN_DURATION: number = 20; // in minutes
+const TEN_MINUTES = 10 * 60 * 1000;
 
 async function getHostAndSqlServerInfo(
     accountId: string,
@@ -157,8 +162,6 @@ async function getHostAndSqlServerInfo(
     if (IS_DEMO_FLOW) {
         return returnInventorydata(DatabaseTypes.MS_SQL_SERVER, instances) as unknown as DiscoverMsSqlResponseBodyType;
     }
-    let api1StartTime;
-    let api1EndTime;
     const filters: Filter[] = [{ Name: 'platform', Values: ['windows'] }];
     const { ec2Instances: ssmTargets, NextToken } = await discoverEc2Instances(
         accountId,
@@ -176,40 +179,43 @@ async function getHostAndSqlServerInfo(
     // SSM connectivity, the attribute 'sqlServerInstances' will not be
     // available for those hosts in API response.
     const ssmNotConnectedEc2ResponseInfo: DiscoverResponseInfoType[] = ssmTargets.filter(
-        target => target.ssmState === ConnectionStatus.NOT_CONNECTED
+        (target: SsmTargetsInfo) => target.ssmState === ConnectionStatus.NOT_CONNECTED
     );
 
-    const ssmConnectedNodes = ssmTargets.filter(target => target.ssmState === ConnectionStatus.CONNECTED);
+    const ssmConnectedNodes = ssmTargets.filter(
+        (target: SsmTargetsInfo) => target.ssmState === ConnectionStatus.CONNECTED
+    );
+    const redisClient = getRedisConnection();
     if (ssmConnectedNodes?.length > 0) {
-        api1StartTime = performance.now();
+        // Reading from cache only for /instances and TCO APIs
+        if (isRedisConnected(redisClient) && !isEmpty(instances)) {
+            const cachedResponses = compact(
+                await Promise.all(
+                    instances.map(async instance => {
+                        const cacheKey = generateHash(stringify({ instance, region, credentialsId }));
+                        const cachedResponse = await redisClient.get(cacheKey);
+                        if (cachedResponse) {
+                            return parse(cachedResponse);
+                        }
+                    })
+                )
+            );
+            if (!isEmpty(cachedResponses) && cachedResponses.length === instances.length) {
+                return {
+                    count: cachedResponses.length,
+                    items: cachedResponses
+                };
+            }
+            // TODO: Handle partial cache hits, currently if any miss, we go for full discovery, which is not optimal.
+        }
+
         const commandId = await makeSsmCall(
             credentialsId,
             region,
             HOST_AND_SQL_INFO_PS1,
-            ssmConnectedNodes.map(target => target.ec2InstanceId),
+            ssmConnectedNodes.map((target: SsmTargetsInfo) => target.ec2InstanceId),
             accountId
         );
-        api1EndTime = performance.now();
-        logger.info(
-            `API1Performance: Time taken by makeSsmCall() for multiple targets: ${
-                api1EndTime - api1StartTime
-            }ms. SSM command ID: ${commandId}`
-        );
-
-        /*
-          FIXME: Optimize
-
-          These calls will be made for each invocation of the API, though they
-          will be repetitive for a paginated call.
-
-          One option is to see if nextToken is present and don't make the call.
-          However, two independent requests can be having nextToken and can cause
-          incorrect data to be returned.
-
-          If we cache data based on nextToken, it too won't be useful since the next
-          call will come with a new nextToken.
-        */
-        api1StartTime = performance.now();
         const [fsxList, svmList, subnetList, ebsVolumeList] = await Promise.all([
             describeFSxFileSystems(credentialsId, region, { useCache: true }),
             describeFSxStorageVirtualMachines(credentialsId, region, undefined, { useCache: true }),
@@ -229,12 +235,9 @@ async function getHostAndSqlServerInfo(
                 { useCache: true }
             )
         ]);
-        api1EndTime = performance.now();
-        logger.info(`API1Performance: Time taken by describe FSxFS/SVM: ${api1EndTime - api1StartTime}ms`);
 
         const endPointIpWithFsxInfo = new Map<string, FSxInfo>();
         const fsIdWithFsxInfo = new Map<string, FsxServerConfig>();
-        api1StartTime = performance.now();
         svmList.StorageVirtualMachines?.forEach(async elem => {
             const fsId = elem.FileSystemId;
             elem?.Endpoints?.Iscsi?.IpAddresses?.forEach(async ip => {
@@ -297,9 +300,6 @@ async function getHostAndSqlServerInfo(
             }
         });
 
-        api1EndTime = performance.now();
-        logger.info(`API1Performance: Endpoint/FSx/Deployment map creation time: ${api1EndTime - api1StartTime}ms`);
-
         const subnetListMap = new Map(subnetList?.map(subnet => [subnet.SubnetId, subnet.AvailabilityZone]));
         const ebsVolumeToAvailabilityZoneMap = new Map(ebsVolumeList?.map(vol => [vol.VolumeId, vol.AvailabilityZone]));
 
@@ -312,12 +312,10 @@ async function getHostAndSqlServerInfo(
         // If run time performance is needed, this is one possible candidate for purge.
         await sleep(1000);
 
-        api1StartTime = performance.now();
         await Promise.all(
             ssmConnectedNodes.map(
                 throat(pageSize || 5, async (target: SsmTargetsInfo) => {
                     let dbInfo: SqlServerInstanceInfoType[] = [];
-                    const dbInfoStartTime = performance.now();
                     dbInfo = await getHostAndSqlInfoFromPsOutput(
                         credentialsId,
                         region,
@@ -327,12 +325,6 @@ async function getHostAndSqlServerInfo(
                         fsIdWithFsxInfo,
                         subnetListMap,
                         ebsVolumeToAvailabilityZoneMap
-                    );
-                    const dbInfoEndTime = performance.now();
-                    logger.info(
-                        `API1Performance: getHostAndSqlInfoFromPsOutput() time for target ${target.ec2InstanceId}: ${
-                            dbInfoEndTime - dbInfoStartTime
-                        }ms`
                     );
 
                     if (dbInfo.length) {
@@ -352,12 +344,18 @@ async function getHostAndSqlServerInfo(
                 })
             )
         );
-        api1EndTime = performance.now();
-        logger.info(
-            `API1Performance: getHostAndSqlInfoFromPsOutput()+other operations time for all targets: ${
-                api1EndTime - api1StartTime
-            }ms`
-        );
+
+        if (isRedisConnected(redisClient)) {
+            await Promise.all(
+                ssmConnectedEc2ResponseInfo.map(async item => {
+                    const cacheKey = generateHash(stringify({ instance: item.ec2InstanceId, region, credentialsId }));
+                    if (!isEmpty(item?.sqlServerInstances)) {
+                        // only cache if sqlServerInstances is present
+                        await redisClient.set(cacheKey, stringify(item), 'PX', TEN_MINUTES); // Cache for 10 minutes
+                    }
+                })
+            );
+        }
     }
 
     return {
@@ -397,7 +395,7 @@ async function getHostAndSqlInfoFromPsOutput(
     api1StartTime = performance.now();
 
     const [ssmResponse, ec2SqlParametersInfo] = await Promise.all([
-        pollCommandStatus(credentialsId, region, commandInvocationParam).catch(error => {
+        pollCommandStatus(credentialsId, region, commandInvocationParam, 5000).catch(error => {
             const errorMessage = `Error fetching command status: ${error} on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
             logger.error(errorMessage);
             throw createError(errorMessage);

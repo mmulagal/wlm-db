@@ -878,6 +878,10 @@ function getRedisConnection() {
     return redisConnection;
 }
 
+function isRedisConnected(redisClient: IORedis) {
+    return redisClient?.status === 'ready';
+}
+
 function getTimeDifferenceInMinutes(startTime: number, endTime: number = Date.now()) {
     // Calculate the time difference in minutes
     logger.debug('Calculate time difference in minutes', { startTime, endTime });
@@ -1448,5 +1452,6 @@ export {
     determineStorageType,
     getFsxNameFromTags,
     IS_DEMO_FLOW,
-    isMultiAzDeployment
+    isMultiAzDeployment,
+    isRedisConnected
 };
