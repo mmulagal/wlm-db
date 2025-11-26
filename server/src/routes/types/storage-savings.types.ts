@@ -30,11 +30,17 @@ const StorageSavingsRequestBody = Type.Object({
 
 const BulkStorageSavingsRequestBody = Type.Object({
     ...StorageSavingsRequestBody.properties,
-    instanceIds: Type.Array(Type.String({ pattern: '^i-[0-9a-f]{8,17}$', description: 'AWS EC2 instance IDs' }), {
-        minItems: 1,
-        maxItems: 5,
-        uniqueItems: true
-    })
+    hosts: Type.Array(
+        Type.Object({
+            ec2InstanceId: Type.String({ pattern: '^i-[0-9a-f]{8,17}$', description: 'AWS EC2 instance IDs' }),
+            monthlySqlByolCost: Type.Optional(Type.Number())
+        }),
+        {
+            minItems: 1,
+            maxItems: 5,
+            uniqueItems: true
+        }
+    )
 });
 
 const ManualStorageSavingsRequestParams = Type.Object({
@@ -526,7 +532,7 @@ type EbsSnapshotCalculationType = Static<typeof EbsSnapshotCalculation>;
 type EbsCostCalculationType = Static<typeof EbsCostCalculation>;
 
 type StorageSavingsResponseType = Static<typeof StorageSavingsResponse>;
-type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody> & { bulk?: boolean };
+type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
 type ManualStorageSavingsRequestBodyType = Static<typeof ManualStorageSavingsRequestBody>;
 
 const ComputeDetails = Type.Object({

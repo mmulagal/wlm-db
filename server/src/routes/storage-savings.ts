@@ -210,9 +210,10 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId, credentialsId, region },
                 body,
-                body: { instanceIds }
+                body: { hosts }
             } = castRequest(request);
 
+            const instanceIds = hosts.map(({ ec2InstanceId }: { ec2InstanceId: string }) => ec2InstanceId);
             const response = await performStorageSavingsCalculations(accountId, credentialsId, region, instanceIds, {
                 ...body,
                 bulk: true
@@ -228,9 +229,10 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
             const {
                 params: { accountId, credentialsId, region },
                 body,
-                body: { instanceIds }
+                body: { hosts }
             } = castRequest(request);
 
+            const instanceIds = hosts.map(({ ec2InstanceId }: { ec2InstanceId: string }) => ec2InstanceId);
             const response = await getStorageSavingsCalculationMetrics(accountId, credentialsId, region, instanceIds, {
                 ...body,
                 bulk: true

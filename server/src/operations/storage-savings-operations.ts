@@ -4,6 +4,7 @@ import { getHostAndSqlServerInfo } from './discover-operations';
 import { FileSystemTypes, HOURS_IN_MONTH, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
 import {
     BulkStorageSavingsCalculationsMetricsResponseType,
+    BulkStorageSavingsRequestBodyType,
     BulkStorageSavingsResponseType,
     ComputeLicenseCostType,
     EBSCloneCostCalculationRespType,
@@ -514,7 +515,7 @@ async function performStorageSavingsCalculations(
     credentialsId: string,
     region: string,
     instanceIds: string[],
-    params: StorageSavingsRequestBodyType
+    params: StorageSavingsRequestBodyType | BulkStorageSavingsRequestBodyType
 ) {
     logger.info('Performing storage savings calculations ', { accountId, credentialsId, region, instanceIds, params });
 
@@ -531,6 +532,16 @@ async function performStorageSavingsCalculations(
     const fsxwInstances = sqlServerInstances?.filter(sqlServerInstance =>
         sqlServerInstance?.storage?.some(storage => storage.type === FileSystemTypes.FSXW)
     );
+    const isBulk = (params as BulkStorageSavingsRequestBodyType).bulk;
+    const hostsMap = new Map(
+        isBulk
+            ? (params as BulkStorageSavingsRequestBodyType).hosts?.map(host => [
+                  host.ec2InstanceId,
+                  host.monthlySqlByolCost
+              ])
+            : []
+    );
+
     if (fsxwInstances && fsxwInstances.length > 0) {
         const [{ sqlServerDeploymentType }] = fsxwInstances;
 
@@ -585,7 +596,7 @@ async function performStorageSavingsCalculations(
 
         const [{ compute, license, deploymentType, hostname } = {}] = computeAndLicenseCostList;
         return {
-            compute: params.bulk
+            compute: isBulk
                 ? computeAndLicenseCostList.map(item => ({
                       ...item.compute,
                       deploymentType: item.deploymentType,
@@ -596,7 +607,7 @@ async function performStorageSavingsCalculations(
                       deploymentType,
                       hostname
                   },
-            license: params.bulk
+            license: isBulk
                 ? computeAndLicenseCostList.map(item => ({
                       ...item.license,
                       deploymentType: item.deploymentType,
@@ -658,7 +669,7 @@ async function performStorageSavingsCalculations(
         : SqlServerDeploymentModel.SQL_STANDALONE_SHORT;
 
     if (isAoag) {
-        if (params.bulk) {
+        if (isBulk) {
             return mixOfAoagAndNonAoagStorageSavingsCalculations(
                 accountId,
                 credentialsId,
@@ -679,11 +690,11 @@ async function performStorageSavingsCalculations(
         );
     }
 
-    const recommendationPromise = Promise.all(
+    const recommendationPromise = Promise.allSettled(
         ec2HostDetails.map(host =>
-            retrieveComputeAndLicenseCost(accountId, credentialsId, region, host, params.monthlySqlByolCost)
+            retrieveComputeAndLicenseCost(accountId, credentialsId, region, host, hostsMap.get(host.ec2InstanceId))
         )
-    );
+    ).then(results => results.filter(result => result.status === 'fulfilled').map(result => result.value));
     const marketingPromise = invokeMarketingApi(
         accountId,
         credentialsId,
@@ -714,7 +725,7 @@ async function performStorageSavingsCalculations(
         : undefined;
     const [{ compute, license, deploymentType, hostname } = {}] = computeAndLicenseCostList;
     return {
-        compute: params.bulk
+        compute: isBulk
             ? computeAndLicenseCostList.map(item => ({
                   ...item.compute,
                   deploymentType: item.deploymentType,
@@ -725,7 +736,7 @@ async function performStorageSavingsCalculations(
                   deploymentType,
                   hostname
               },
-        license: params.bulk
+        license: isBulk
             ? computeAndLicenseCostList.map(item => ({
                   ...item.license,
                   deploymentType: item.deploymentType,
@@ -781,7 +792,7 @@ async function getStorageSavingsCalculationMetrics(
     credentialsId: string,
     region: string,
     instanceIds: string[],
-    params: StorageSavingsRequestBodyType
+    params: StorageSavingsRequestBodyType | BulkStorageSavingsRequestBodyType
 ): Promise<any> {
     logger.info('Getting storage savings calculation metrics ', {
         accountId,
@@ -804,6 +815,16 @@ async function getStorageSavingsCalculationMetrics(
     const fsxwInstances = sqlServerInstances?.filter(sqlServerInstance =>
         sqlServerInstance?.storage?.some(storage => storage.type === FileSystemTypes.FSXW)
     );
+    const isBulk = (params as BulkStorageSavingsRequestBodyType).bulk;
+    const hostsMap = new Map(
+        isBulk
+            ? (params as BulkStorageSavingsRequestBodyType).hosts?.map(host => [
+                  host.ec2InstanceId,
+                  host.monthlySqlByolCost
+              ])
+            : []
+    );
+
     if (fsxwInstances && fsxwInstances.length > 0) {
         const [{ sqlServerDeploymentType }] = fsxwInstances;
 
@@ -849,7 +870,7 @@ async function getStorageSavingsCalculationMetrics(
         const [{ compute, license, deploymentType, hostname } = {}] = computeAndLicenseCostList;
 
         return {
-            recommendedComputeCalculation: params.bulk
+            recommendedComputeCalculation: isBulk
                 ? computeAndLicenseCostList.map(item => ({
                       hostname: item.hostname,
                       deploymentType: item.deploymentType,
@@ -860,7 +881,7 @@ async function getStorageSavingsCalculationMetrics(
                       deploymentType,
                       hostname
                   },
-            recommendedLicenseCalculation: params.bulk
+            recommendedLicenseCalculation: isBulk
                 ? computeAndLicenseCostList.map(item => ({
                       hostname: item.hostname,
                       deploymentType: item.deploymentType,
@@ -871,7 +892,7 @@ async function getStorageSavingsCalculationMetrics(
                       deploymentType,
                       hostname
                   },
-            existingComputeCalculation: params.bulk
+            existingComputeCalculation: isBulk
                 ? computeAndLicenseCostList.map(item => ({
                       hostname: item.hostname,
                       deploymentType: item.deploymentType,
@@ -882,7 +903,7 @@ async function getStorageSavingsCalculationMetrics(
                       deploymentType,
                       hostname
                   },
-            existingLicenseCalculation: params.bulk
+            existingLicenseCalculation: isBulk
                 ? computeAndLicenseCostList.map(item => ({
                       hostname: item.hostname,
                       deploymentType: item.deploymentType,
@@ -933,15 +954,21 @@ async function getStorageSavingsCalculationMetrics(
                     getAoagPartnerNodesDetails(accountId, credentialsId, region, instanceId, nodeIps)
                 )
             ),
-            Promise.all(
+            Promise.allSettled(
                 ec2HostDetails.map(host =>
-                    retrieveComputeAndLicenseCost(accountId, credentialsId, region, host, params.monthlySqlByolCost)
+                    retrieveComputeAndLicenseCost(
+                        accountId,
+                        credentialsId,
+                        region,
+                        host,
+                        hostsMap.get(host.ec2InstanceId) || params.monthlySqlByolCost
+                    )
                 )
-            )
+            ).then(results => results.filter(result => result.status === 'fulfilled').map(result => result.value))
         ]);
         const partnerNodeDetails = compact(partnerNodesList.flatMap(result => result.items || []));
 
-        if (params.bulk) {
+        if (isBulk) {
             return mixOfAoagAndNonAoagStorageSavingsMetrics(
                 accountId,
                 credentialsId,
@@ -966,11 +993,17 @@ async function getStorageSavingsCalculationMetrics(
         );
     }
 
-    const computeAndLicenseCostList = await Promise.all(
+    const computeAndLicenseCostList = await Promise.allSettled(
         ec2HostDetails.map(host =>
-            retrieveComputeAndLicenseCost(accountId, credentialsId, region, host, params.monthlySqlByolCost)
+            retrieveComputeAndLicenseCost(
+                accountId,
+                credentialsId,
+                region,
+                host,
+                hostsMap.get(host.ec2InstanceId) || params.monthlySqlByolCost
+            )
         )
-    );
+    ).then(results => results.filter(result => result.status === 'fulfilled').map(result => result.value));
 
     const {
         ebs,
@@ -997,7 +1030,7 @@ async function getStorageSavingsCalculationMetrics(
     const [{ compute, license, deploymentType, hostname } = {}] = computeAndLicenseCostList;
 
     return {
-        recommendedComputeCalculation: params.bulk
+        recommendedComputeCalculation: isBulk
             ? computeAndLicenseCostList.map(item => ({
                   hostname: item.hostname,
                   deploymentType: item.deploymentType,
@@ -1008,7 +1041,7 @@ async function getStorageSavingsCalculationMetrics(
                   deploymentType,
                   hostname
               },
-        recommendedLicenseCalculation: params.bulk
+        recommendedLicenseCalculation: isBulk
             ? computeAndLicenseCostList.map(item => ({
                   hostname: item.hostname,
                   deploymentType: item.deploymentType,
@@ -1019,7 +1052,7 @@ async function getStorageSavingsCalculationMetrics(
                   deploymentType,
                   hostname
               },
-        existingComputeCalculation: params.bulk
+        existingComputeCalculation: isBulk
             ? computeAndLicenseCostList.map(item => ({
                   hostname: item.hostname,
                   deploymentType: item.deploymentType,
@@ -1030,7 +1063,7 @@ async function getStorageSavingsCalculationMetrics(
                   deploymentType,
                   hostname
               },
-        existingLicenseCalculation: params.bulk
+        existingLicenseCalculation: isBulk
             ? computeAndLicenseCostList.map(item => ({
                   hostname: item.hostname,
                   deploymentType: item.deploymentType,
@@ -1430,30 +1463,39 @@ async function mixOfAoagAndNonAoagStorageSavingsCalculations(
             uniqueHostVolumeIds: string[];
         }[]
     > = Promise.resolve([]);
+    const instanceIdBYOLMap = new Map(
+        (params as BulkStorageSavingsRequestBodyType).hosts?.map(host => [host.ec2InstanceId, host.monthlySqlByolCost])
+    );
     if (aoagClusterNodeDetails && !isEmpty(aoagClusterNodeDetails)) {
-        aoagNodesComputeAndLicenseDetailsPromise = Promise.all(
+        aoagNodesComputeAndLicenseDetailsPromise = Promise.allSettled(
             aoagClusterNodeDetails.map((node, index) =>
                 aoagStorageSavingsCalculations(
                     accountId,
                     credentialsId,
                     region,
                     aoagNodeEbsVolumeIds,
-                    params,
+                    { ...params, monthlySqlByolCost: instanceIdBYOLMap.get(node.ec2InstanceId) ?? params.monthlySqlByolCost },
                     node,
                     aoagInstancesIdList[index],
                     true
                 )
             )
-        );
+        ).then(results => results.filter(result => result.status === 'fulfilled').map(result => result.value));
     }
 
     let nonAoagNodesComputeAndLicenseDetailsPromise: Promise<ComputeLicenseCostType[]> = Promise.resolve([]);
     if (nonAoagClusterNodeDetails && !isEmpty(nonAoagClusterNodeDetails)) {
-        nonAoagNodesComputeAndLicenseDetailsPromise = Promise.all(
+        nonAoagNodesComputeAndLicenseDetailsPromise = Promise.allSettled(
             nonAoagClusterNodeDetails.map(node =>
-                retrieveComputeAndLicenseCost(accountId, credentialsId, region, node, params.monthlySqlByolCost)
+                retrieveComputeAndLicenseCost(
+                    accountId,
+                    credentialsId,
+                    region,
+                    node,
+                    instanceIdBYOLMap.get(node.ec2InstanceId)
+                )
             )
-        );
+        ).then(results => results.filter(result => result.status === 'fulfilled').map(result => result.value));
     }
 
     const [aoagNodesDetails, nonAoagNodesComputeAndLicenseDetails] = await Promise.all([
