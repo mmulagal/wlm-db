@@ -869,6 +869,13 @@ export const updateItemWithAgenticData = (item: any, hostType: string) => {
     // Create updated item with error investigation data
     return {
         ...item,
+        manageReadiness: {
+            ...item?.manageReadiness,
+            errorInvestigation: {
+                missingSqlPermissions,
+                missingModules: []
+            }
+        },
         data: {
             ...item.data,
             manageReadiness: {

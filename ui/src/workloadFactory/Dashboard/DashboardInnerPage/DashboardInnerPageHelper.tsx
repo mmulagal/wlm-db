@@ -395,6 +395,50 @@ export const callDashboardDismissApi = (
         });
 };
 
+export const checkSingleRowFix = (inProgressHostData: any, name: string, rowData: any) => {
+    let isDisabled = false;
+
+    // Helper function to check if row is over-provisioned with no under-provisioned drives
+    const isOverProvisionedWithoutUnderProvisioned = () =>
+        rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
+        (rowData?.sizingViolations?.overProvisionedDrives?.length &&
+            !rowData?.sizingViolations?.underProvisionedDrives?.length);
+
+    // Helper function to check if row is shared drive (not optimized with ignored drives only)
+    const isSharedDrive = () =>
+        rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.NOT_OPTIMIZED.toLowerCase() &&
+        !rowData?.sizingViolations?.underProvisionedDrives?.length &&
+        rowData?.sizingViolations?.ignoredDrives?.length;
+
+    // Drive size configurations that have similar validation logic
+    const driveSizeConfigs = [
+        ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE,
+        ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
+        ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
+    ];
+
+    if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
+        isDisabled = true;
+    } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
+        isDisabled = true;
+    } else if (rowData?.configState && rowData?.configState === CONFIG_STATES.ACTIVATING) {
+        isDisabled = true;
+    } else if (rowData?.assessmentStatus && rowData?.assessmentStatus === GETWELL_STATUS.OPTIMIZED) {
+        isDisabled = true;
+    } else if (
+        !rowData?.assessmentStatus ||
+        rowData?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
+    ) {
+        isDisabled = true;
+    } else if (driveSizeConfigs.includes(name) && isOverProvisionedWithoutUnderProvisioned()) {
+        isDisabled = true;
+    } else if (driveSizeConfigs.includes(name) && isSharedDrive()) {
+        isDisabled = true;
+    }
+
+    return isDisabled;
+};
+
 export const bulkFixDisableCheck = (
     configType: string,
     isFixNotSupported: boolean,
@@ -403,6 +447,8 @@ export const bulkFixDisableCheck = (
 ) => {
     let isFixDisabled = false;
     let fixDisableMsg = '';
+    const state = store.getState();
+    const { inProgressHostData } = state.getWellOptimize;
     // Function to check if any selected row has assessmentStatus as "Not optimized"
     const checkIfAnyRowNotOptimized = (selectedRows: any[]) =>
         selectedRows.some((row: any) => row?.assessmentStatus !== GETWELL_STATUS.OPTIMIZED);
@@ -438,6 +484,10 @@ export const bulkFixDisableCheck = (
                 (row?.sizingViolations?.overProvisionedDrives?.length &&
                     !row?.sizingViolations?.underProvisionedDrives?.length)
         );
+
+    // Function to check if ALL selected rows are not fixable (none have "Not optimized" status)
+    const checkIfAllRowsNotFixable = (selectedRows: any[]) =>
+        selectedRows.every((row: any) => checkSingleRowFix(inProgressHostData, configType, row));
 
     if (configType === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
         isFixDisabled = true;
@@ -494,6 +544,9 @@ export const bulkFixDisableCheck = (
     ) {
         isFixDisabled = true;
         fixDisableMsg = t('databases.well-architect.not-optimized-shared-drive');
+    } else if (checkIfAllRowsNotFixable(selectedRowsForOptimize)) {
+        isFixDisabled = true;
+        fixDisableMsg = t('databases.well-architect.mixed-selection-fix-not-supported');
     }
 
     return { isFixDisabled, fixDisableMsg };

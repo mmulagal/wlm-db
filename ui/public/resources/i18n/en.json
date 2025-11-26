@@ -321,6 +321,7 @@
             "bulk-fix-disable-for-asm": "Bulk fix is not supported for ASM configurations.",
             "fix-disabled": "Fix is not supported for this configuration.",
             "bulk-fix-disabled": "Fix is not supported for optimized rows.",
+            "mixed-selection-fix-not-supported": "Fix is not supported for current selections.",
             "multi-instance-selection-for-same-host": "You can select multiple instances associated with the same host.",
             "fci-recommendations": "Expand instances to view FCI configuration recommendations.",
             "general-recommendations": "Expand instances to view recommendations.",
