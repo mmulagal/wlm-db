@@ -44,7 +44,8 @@ const prepareHeaders = (
         !isWorkloadFactory &&
         endpoint !== 'getWorkSpaceID' &&
         endpoint !== 'getRBACPrivileges' &&
-        endpoint !== 'assignRBACPrivileges'
+        endpoint !== 'assignRBACPrivileges' &&
+        endpoint !== 'addHostJobSc'
     ) {
         headers.set('x-netapp-referer', 'BlueXP');
     }
