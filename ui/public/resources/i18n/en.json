@@ -657,7 +657,7 @@
             "oracle-filesystem-headroom-action-summary": "Workload Factory recommends  provisioning file system capacity as 1.2 times of total size of provisioned volume to optimize storage performance.",
             "oracle-filesystem-headroom-action-summary-heading": "File system headroom percentages are as follows:",
             "oracle-filesystem-headroom-action-summary-bullet1": "Under-provisioned: <20%",
-            "oracle-filesystem-headroom-action-summary-bullet2": "Optimized: 20-100%",
+            "oracle-filesystem-headroom-action-summary-bullet2": "Optimized: 20-50%",
             "oracle-filesystem-headroom-action-summary-bullet3": "Over-provisioned: >50%",
             "oracle-filesystem-headroom-what-will-happen": "Workload Factory will increase the SSD pool capacity to maintain ~20% free space in the aggregate when the file system is under-provisioned. If over-provisioned, Workload factory will not make any changes, capacity decrease must be performed manually.",
             "oracle-filesystem-headroom-optimization-steps": "For second-generation FSx for NetApp ONTAP file systems, you can reduce SSD capacity with a minimum 9% reduction of current size, ensuring post-decrease utilization stays below 80%.",

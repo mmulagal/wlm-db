@@ -424,7 +424,7 @@ export const oracleCardData: any = {
             description:
                 'To optimize storage performance, provision file system capacity as 1.2 times of total size of provisioned volume.',
             valuesHeading: 'File system headroom percentages are as follows:',
-            values: ['Under-provisioned: <20%', 'Optimized: 20-100%', 'Over-provisioned: >50%']
+            values: ['Under-provisioned: <20%', 'Optimized: 20-50%', 'Over-provisioned: >50%']
         },
         tags: ['Performance efficiency']
     },
