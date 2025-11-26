@@ -397,6 +397,20 @@ function getUniqueOracleErrorsAndRespectiveCount(
             // Extract cause from context if available
             const causeMatch = context?.match(/Cause:\s*(.+?)(?:\n|$)/);
             const cause = causeMatch ? causeMatch[1].trim() : undefined;
+            const timestamp1 = groupedLogs[key]?.[0]?.timestamp
+                ? new Date(groupedLogs[key][0].timestamp).getTime()
+                : undefined;
+            const timestamp2 =
+                Array.isArray(groupedLogs[key]) &&
+                groupedLogs[key].length > 0 &&
+                groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
+                    ? new Date(groupedLogs[key][groupedLogs[key].length - 1].timestamp).getTime()
+                    : undefined;
+
+            const firstOccurrence =
+                timestamp1 && timestamp2 ? Math.min(timestamp1, timestamp2) : timestamp1 || timestamp2;
+            const lastOccurrence =
+                timestamp1 && timestamp2 ? Math.max(timestamp1, timestamp2) : timestamp1 || timestamp2;
 
             return {
                 uniqueErrorKey: key,
@@ -404,15 +418,8 @@ function getUniqueOracleErrorsAndRespectiveCount(
                 context: context || message, // Fallback to message if context is undefined
                 cause,
                 count: groupedLogs[key].length,
-                firstOccurrence: groupedLogs[key]?.[0]?.timestamp
-                    ? new Date(groupedLogs[key][0].timestamp).getTime()
-                    : undefined,
-                lastOccurrence:
-                    Array.isArray(groupedLogs[key]) &&
-                    groupedLogs[key].length > 0 &&
-                    groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
-                        ? new Date(groupedLogs[key][groupedLogs[key].length - 1].timestamp).getTime()
-                        : undefined,
+                firstOccurrence,
+                lastOccurrence,
                 severity,
                 hourlyErrorCounts,
                 errorCode: !key.includes('-dummy') ? key : undefined // If the key contains '-dummy', it means it's a generated error code for internal grouping above, so we can set it to undefined
