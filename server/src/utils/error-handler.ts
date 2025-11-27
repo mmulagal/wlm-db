@@ -12,6 +12,29 @@ import getLogger from './logger';
 
 const logger = getLogger();
 
+function isConnectionError(error: any): boolean {
+    const errorCode = (error as NodeJS.ErrnoException)?.code;
+    const errorMessage = error?.message || '';
+
+    return (
+        // Node.js error codes
+        errorCode === 'EINVAL' ||
+        errorCode === 'ECONNRESET' ||
+        errorCode === 'ETIMEDOUT' ||
+        errorCode === 'EPIPE' ||
+        errorCode === 'ENOTFOUND' ||
+        errorCode === 'ENETUNREACH' ||
+        errorCode === 'EAI_AGAIN' ||
+        errorCode === 'ECONNREFUSED' ||
+        // Error message patterns
+        errorMessage.includes('EINVAL') ||
+        errorMessage.includes('socket hang up') ||
+        errorMessage.includes('Premature close') ||
+        errorMessage.includes('read ECONNRESET') ||
+        errorMessage.includes('Client network socket disconnected')
+    );
+}
+
 export default function errorHandler(error: any, request: FastifyRequest, reply: FastifyReply) {
     logger.error(`Request ${request.method} ${request.url} failed:`, {
         errorName: error?.name,
@@ -34,6 +57,17 @@ export default function errorHandler(error: any, request: FastifyRequest, reply:
         }
         const errCode = error.$metadata.httpStatusCode ? error.$metadata.httpStatusCode : statusCode;
         reply.status(errCode).send({ message: error.message });
+    } else if (isConnectionError(error)) {
+        logger.error('Connection error detected', {
+            errorCode: error?.code,
+            errorMessage: error?.message,
+            url: request.url
+        });
+
+        return reply.status(503).send({
+            message: `Connection error: ${error?.code || 'Unknown'}. This is typically temporary, please retry.`,
+            retryable: true
+        });
     } else if (isHTTPError(error)) {
         const body = error.response.body as any;
         const { statusCode: httpStatusCode } = error.response;

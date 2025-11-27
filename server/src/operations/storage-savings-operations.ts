@@ -1474,7 +1474,10 @@ async function mixOfAoagAndNonAoagStorageSavingsCalculations(
                     credentialsId,
                     region,
                     aoagNodeEbsVolumeIds,
-                    { ...params, monthlySqlByolCost: instanceIdBYOLMap.get(node.ec2InstanceId) ?? params.monthlySqlByolCost },
+                    {
+                        ...params,
+                        monthlySqlByolCost: instanceIdBYOLMap.get(node.ec2InstanceId) ?? params.monthlySqlByolCost
+                    },
                     node,
                     aoagInstancesIdList[index],
                     true

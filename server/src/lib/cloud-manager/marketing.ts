@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import { HEADERS, MARKETING_API_TCO, USER_TOKEN, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
-import { gotInstanceForInternalRequest, handleEinvalError } from '../../utils/got';
+import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import {
@@ -112,53 +112,43 @@ async function getFsxwManualModeStorageSavings<T>(accountId: string, params: Man
         return readFromCacheByKey(MARKETING_API_TCO, cacheKey) as T;
     }
 
-    try {
-        const response = await gotInstanceForInternalRequest
-            .post(url, {
+    const response = await gotInstanceForInternalRequest
+        .post(url, {
+            prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+            headers: {
+                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
+                ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
+                    [HEADERS.SIMULATOR]: 'true'
+                })
+            },
+            json: params
+        })
+        .json<T>();
+
+    if (!isEmpty(response)) {
+        writeToCache(MARKETING_API_TCO, cacheKey, response);
+    }
+    return response;
+}
+
+async function getInstanceListFromStorage(accountId: string, credentialsId: string, region: string) {
+    logger.info('Get storage instance list from marketing APIs:', { accountId, credentialsId, region });
+
+    const response = await gotInstanceForInternalRequest
+        .get(
+            `accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/instances?limit=50&offset=0&force=false`,
+            {
                 prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
                 headers: {
                     [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
                     ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
                         [HEADERS.SIMULATOR]: 'true'
                     })
-                },
-                json: params
-            })
-            .json<T>();
-
-        if (!isEmpty(response)) {
-            writeToCache(MARKETING_API_TCO, cacheKey, response);
-        }
-        return response;
-    } catch (error: any) {
-        // Use generic EINVAL handler - no more manual EINVAL error handling needed!
-        return handleEinvalError(error, undefined, 'getFsxwManualModeStorageSavings');
-    }
-}
-
-async function getInstanceListFromStorage(accountId: string, credentialsId: string, region: string) {
-    logger.info('Get storage instance list from marketing APIs:', { accountId, credentialsId, region });
-
-    try {
-        const response = await gotInstanceForInternalRequest
-            .get(
-                `accounts/${accountId}/marketing/v1/credentials/${credentialsId}/regions/${region}/instances?limit=50&offset=0&force=false`,
-                {
-                    prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
-                    headers: {
-                        [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN),
-                        ...((process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') && {
-                            [HEADERS.SIMULATOR]: 'true'
-                        })
-                    }
                 }
-            )
-            .json<StorageInstanceResponse>();
-        return response;
-    } catch (error: any) {
-        // Use generic EINVAL handler with fallback - returns empty instances array on connection error
-        return handleEinvalError(error, { instances: [] }, 'getInstanceListFromStorage');
-    }
+            }
+        )
+        .json<StorageInstanceResponse>();
+    return response;
 }
 
 async function getVolumesListFromStorage(accountId: string, credentialsId: string, region: string, instanceId: string) {

@@ -3,7 +3,6 @@ import ms, { StringValue } from 'ms';
 import config from 'config';
 import { Agent as HttpAgent } from 'http';
 import { Agent as HttpsAgent } from 'https';
-import createError from 'http-errors';
 import getLogger, { getTraceData } from './logger';
 import { HEADERS, WLMDB } from './consts';
 
@@ -63,29 +62,7 @@ const hooks: Hooks = {
                     `Got timeout event ${event} from ${method} to ${url}, took ${timings?.phases.total} msecs`
                 );
             } else {
-                // Handle EINVAL and other connection errors generically
-                const isEinvalError =
-                    error?.message?.includes('EINVAL') || error?.code === 'EINVAL' || (error as any)?.errno === -22;
-
-                if (isEinvalError) {
-                    logger.warn(`Connection error (EINVAL) for ${method} to ${url}, will be retried automatically`, {
-                        method,
-                        url,
-                        errorMessage: error.message,
-                        errorCode: error?.code,
-                        errno: (error as any)?.errno,
-                        syscall: (error as any)?.syscall
-                    });
-
-                    // Transform EINVAL to a more specific error for better handling
-                    Object.assign(error, {
-                        name: 'ConnectionError',
-                        message: `Connection failed: ${error.message}`,
-                        isEinvalError: true
-                    });
-                } else {
-                    logger.error(`Got error from ${method} to ${url}`, error.message);
-                }
+                logger.error(`Got error from ${method} to ${url}`, error.message);
             }
 
             return error;
@@ -118,36 +95,6 @@ function setBodyToObject(body: any) {
         }
     }
     return body;
-}
-
-/**
- * Generic error handler for EINVAL errors that have been transformed by Got hooks.
- * Use this in catch blocks to handle connection errors gracefully.
- *
- * @param error - The error caught from Got request
- * @param fallbackValue - Optional fallback value to return instead of throwing
- * @param context - Optional context for logging (function name, operation, etc.)
- * @returns fallbackValue if provided, otherwise throws appropriate HTTP error
- */
-function handleEinvalError(error: any, fallbackValue?: any, context?: string) {
-    if (error?.isEinvalError) {
-        const logContext = context ? ` in ${context}` : '';
-        logger.warn(`Handling EINVAL error gracefully${logContext}`, {
-            errorMessage: error.message,
-            context,
-            returnsFallback: fallbackValue !== undefined
-        });
-
-        if (fallbackValue !== undefined) {
-            return fallbackValue;
-        }
-
-        // If no fallback provided, throw a 503 Service Unavailable
-        throw createError(503, 'Service temporarily unavailable due to connection issues');
-    }
-
-    // If it's not an EINVAL error, re-throw as-is
-    throw error;
 }
 
 const gotInstanceForInternalRequest = got.extend({
@@ -240,6 +187,5 @@ export {
     gotInstanceForInternalRequest,
     gotInstanceForExternalRequest,
     gotInstanceForBatchRequest,
-    gotInstanceForTextResponse,
-    handleEinvalError
+    gotInstanceForTextResponse
 };
