@@ -11,7 +11,10 @@ import {
     getEc2Hostname,
     getServerNameWithHostname,
     retryWithDelay,
-    IS_DEMO_FLOW
+    IS_DEMO_FLOW,
+    isRedisConnected,
+    generateHash,
+    getRedisConnection
 } from '../utils/utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 import { DiscoverOracleInstanceType, SqlServerInstanceInfoType } from '../routes/types/discover.types';
@@ -1943,6 +1946,20 @@ async function registerResourceCredentials(
             })
         )
     );
+
+    // Reset the redis cache with cache key instanceid, region and credentialsId
+    const redisClient = getRedisConnection();
+    if (isRedisConnected(redisClient)) {
+        const cacheKeys = compact(
+            response.items.map(({ ec2InstanceId, region, credentialsId }) => {
+                if (ec2InstanceId && region && credentialsId) {
+                    return generateHash(JSON.stringify({ instance: ec2InstanceId, region, credentialsId }));
+                }
+                return undefined;
+            })
+        );
+        await redisClient.del(...cacheKeys);
+    }
 
     return response;
 }
