@@ -17,7 +17,7 @@ import { setSelectedFilterValue, setTableManageColumnState } from '../../../../s
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
-import { bxpRedirect } from '../../../../utils/utilityFunctions';
+import { bxpRedirect, createSandboxNavigation } from '../../../../utils/utilityFunctions';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { handleProtectionUtil } from '../../AddHostUtils';
@@ -685,7 +685,7 @@ const DatabasesTable = () => {
                                                 database: rowData?.name
                                             })
                                         );
-                                        navigate('../create-new-sandbox');
+                                        createSandboxNavigation(navigate);
                                     }
 
                                     // Protect POC code
