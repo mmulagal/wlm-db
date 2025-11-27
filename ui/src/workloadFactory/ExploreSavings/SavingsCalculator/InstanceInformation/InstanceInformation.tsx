@@ -230,8 +230,19 @@ const InstanceInformation = ({ host }: { host?: any }) => {
         rows: tableData,
         pageSize: 10
     });
+
+    const getInstanceClassName = () => {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ||
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+        ) {
+            return styles.instanceInformationAlternate;
+        }
+        return styles.instanceInformation;
+    };
+
     return (
-        <div className={styles.instanceInformation}>
+        <div className={getInstanceClassName()}>
             <DsTypography variant="Regular_14">{GENERAL.INSTANCE_INFORMATION}</DsTypography>
             <div className={styles.instanceTable}>
                 <Table
