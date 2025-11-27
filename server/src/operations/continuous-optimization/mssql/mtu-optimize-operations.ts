@@ -38,7 +38,8 @@ async function optimizeMTUAlignment(
     databaseHostId: string,
     instanceId: string,
     targetMTU: number,
-    interfaceNames: string[] = []
+    interfaceNames: string[] = [],
+    deploymentType: string
 ) {
     logger.info('Optimizing MTU alignment for database host', {
         databaseHostId,
@@ -52,7 +53,7 @@ async function optimizeMTUAlignment(
             callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                commands: [OPTIMIZE_NETWORK_INTERFACE_MTU(targetMTU, interfaceNames)],
+                commands: [OPTIMIZE_NETWORK_INTERFACE_MTU(targetMTU, interfaceNames, deploymentType)],
                 ec2InstanceId: instanceId,
                 comment: `Optimize MTU alignment for instance ${instanceId}`,
                 accountId,
@@ -63,14 +64,12 @@ async function optimizeMTUAlignment(
         );
 
         const parsedResponse = sqlResponseParsing(rawResponse);
-        if (parsedResponse?.errors && parsedResponse.errors.length > 0) {
-            errMsg = `MTU optimization failed: ${parsedResponse.errors.join('; ')}`;
-            logger.error(errMsg);
-            throw new Error(errMsg);
-        }
-
-        if (!parsedResponse?.success) {
-            errMsg = 'MTU optimization did not complete successfully';
+        if (parsedResponse?.status === 'failed') {
+            if (parsedResponse?.errors && parsedResponse.errors.length > 0) {
+                errMsg = `MTU optimization failed: ${parsedResponse.errors.join('; ')}`;
+            } else {
+                errMsg = 'MTU optimization did not complete successfully';
+            }
             logger.error(errMsg);
             throw new Error(errMsg);
         }
@@ -199,7 +198,11 @@ async function handleOptimizeMTUAlignment(
 
         // Get instance details for FSx MTU lookup
         const instanceInfo = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-        const { fsxn_ids: fileSystemId, database_instance_name: instanceName } = instanceInfo;
+        const {
+            fsxn_ids: fileSystemId,
+            database_instance_name: instanceName,
+            database_deployment_type: deploymentType
+        } = instanceInfo;
 
         if (!fileSystemId) {
             throw new Error('FSx file system ID not found for MTU optimization');
@@ -245,7 +248,8 @@ async function handleOptimizeMTUAlignment(
             databaseHostId,
             activeNodeInstanceId,
             targetMTU,
-            interfaceNames
+            interfaceNames,
+            deploymentType
         );
 
         if (IS_DEMO_FLOW) {
@@ -256,14 +260,22 @@ async function handleOptimizeMTUAlignment(
             await updateResourceMetaData(accountId, credentialsId, databaseHostId, updatedMetadata);
         }
 
+        const status = optimizationResult?.status;
+        const isWarning = status === 'warning';
+
         logger.info('MTU optimization completed', {
             databaseHostId,
             optimizedInterfaces: optimizationResult?.optimizedInterfaces?.length || 0,
-            jobId: optimizeJobId
+            jobId: optimizeJobId,
+            status,
+            ...(isWarning && { errors: optimizationResult?.errors })
         });
 
         await updateJobDetails(accountId, optimizeJobId, {
-            status: JOBSTATUS.COMPLETED,
+            status: isWarning ? JOBSTATUS.WARNING : JOBSTATUS.COMPLETED,
+            error: isWarning
+                ? optimizationResult?.errors?.join('; ') || 'MTU optimization completed with warnings'
+                : undefined,
             endTime: Date.now()
         });
 

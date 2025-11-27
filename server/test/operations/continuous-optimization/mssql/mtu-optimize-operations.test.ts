@@ -51,6 +51,7 @@ describe('MTU optimization', () => {
     const instanceId = ACTIVE_NODE_INSTANCE_ID;
     const targetMTU = 9001;
     const interfaceNames = ['Ethernet 3'];
+    const deploymentType = 'FCI';
 
     it('optimizeMTUAlignment: should optimize MTU for single interface', async () => {
         const result = await optimizeMTUAlignment(
@@ -60,7 +61,8 @@ describe('MTU optimization', () => {
             databaseHostId,
             instanceId,
             targetMTU,
-            interfaceNames
+            interfaceNames,
+            deploymentType
         );
         expect(result).toBeDefined();
         expect(result.success).toBe(true);
@@ -81,7 +83,8 @@ describe('MTU optimization', () => {
             databaseHostId,
             instanceId,
             targetMTU,
-            multipleInterfaces
+            multipleInterfaces,
+            deploymentType
         );
         expect(result).toBeDefined();
         expect(result.success).toBe(true);
@@ -96,7 +99,8 @@ describe('MTU optimization', () => {
             databaseHostId,
             instanceId,
             targetMTU,
-            []
+            [],
+            deploymentType
         );
         expect(result).toBeDefined();
         expect(result.success).toBe(true);
@@ -111,7 +115,8 @@ describe('MTU optimization', () => {
             databaseHostId,
             instanceId,
             9000, // Different MTU value
-            interfaceNames
+            interfaceNames,
+            deploymentType
         );
         expect(result).toBeDefined();
         expect(result.success).toBe(true);

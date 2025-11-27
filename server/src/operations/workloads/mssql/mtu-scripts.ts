@@ -387,18 +387,18 @@ const FETCH_FSX_MTU_DETAILS = (instanceRecord: WorkloadInstance) => `
     $response
 `;
 
-const OPTIMIZE_NETWORK_INTERFACE_MTU = (targetMTU: number, interfaceNames: string[]) => `
+const OPTIMIZE_NETWORK_INTERFACE_MTU = (targetMTU: number, interfaceNames: string[], deploymentType: string) => `
     #Optimize Network Interface MTU Settings
 
     $WarningPreference = 'SilentlyContinue';
     $targetMTU = ${targetMTU}
     $interfaceNames = @(${interfaceNames.map(name => `"${name}"`).join(', ')})
-    
+    $deploymentType = "${deploymentType}"
     
     $responseObject = @{
     optimizedInterfaces = @()
     errors = @()
-    success = $true
+    status = "pass"
 }
 
 foreach ($interfaceName in $interfaceNames) {
@@ -407,7 +407,7 @@ foreach ($interfaceName in $interfaceNames) {
         $adapter = Get-NetAdapter -Name $interfaceName -ErrorAction SilentlyContinue
         if (-not $adapter) {
             $responseObject.errors += "Adapter '$interfaceName' not found"
-            $responseObject.success = $false
+            $responseObject.status = "failed"
             continue
         }
 
@@ -415,9 +415,17 @@ foreach ($interfaceName in $interfaceNames) {
         $jumboProp = Get-NetAdapterAdvancedProperty -Name $interfaceName | Where-Object { $_.DisplayName -like "*Jumbo*" } | Select-Object -First 1
         if (-not $jumboProp) {
             $responseObject.errors += "Jumbo frame property not found for '$interfaceName'"
-            $responseObject.success = $false
+            $responseObject.status = "failed"
             continue
         }
+        
+        # Special check for FCI deployment type with disabled jumbo frames
+        if ($deploymentType -eq "FCI" -and $jumboProp.DisplayValue -eq "Disabled") {
+            $responseObject.errors += "Jumboframes value is 'Disabled' for interface $interfaceName Optimization will not be attempted"
+            $responseObject.status = "warning"
+            continue
+        }
+        
         $validValues = $jumboProp.ValidDisplayValues
 
         # Select the highest non-disabled value
@@ -426,14 +434,14 @@ foreach ($interfaceName in $interfaceNames) {
         # Check if any valid jumbo values were found
         if (-not $maxJumboValue) {
             $responseObject.errors += "No valid jumbo frame values found for '$interfaceName' (all values may be disabled)"
-            $responseObject.success = $false
+            $responseObject.status = "failed"
             continue
         }
 
         # Check if target MTU is larger than the maximum valid jumbo value
         if ([int]$targetMTU -gt [int]$maxJumboValue) {
             $responseObject.errors += "Target MTU '$targetMTU' is larger than the maximum supported jumbo frame value '$maxJumboValue' for '$interfaceName'."
-            $responseObject.success = $false
+            $responseObject.status = "failed"
             continue
         }
 
@@ -446,7 +454,7 @@ foreach ($interfaceName in $interfaceNames) {
             $jumboPropAfter = Get-NetAdapterAdvancedProperty -Name $interfaceName | Where-Object { $_.DisplayName -like "*Jumbo*" } | Select-Object -First 1
             if ($jumboPropAfter.DisplayValue -ne "$maxJumboValue") {
                 $responseObject.errors += "Failed to enable jumbo frames for '$interfaceName'"
-                $responseObject.success = $false
+                $responseObject.status = "failed"
                 continue
             }
         }
@@ -455,7 +463,7 @@ foreach ($interfaceName in $interfaceNames) {
 
         if ($netshResult -match "The parameter is incorrect") {
             $responseObject.errors += "Failed to set MTU for '$interfaceName': $netshResult"
-            $responseObject.success = $false
+            $responseObject.status = "failed"
             continue
         }
 
@@ -466,7 +474,7 @@ foreach ($interfaceName in $interfaceNames) {
         }
     } catch {
         $responseObject.errors += "Error processing '$interfaceName': $($_.Exception.Message)"
-        $responseObject.success = $false
+        $responseObject.status = "failed"
     }
 }
 
