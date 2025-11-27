@@ -14,11 +14,18 @@ import {
     updateSelectedRollbackSnapshot
 } from '../../../../store/workloadFactory/sandboxSlice';
 import { useLazyGetRollbackSnapshotsQuery } from '../../../../utils/apiService';
+import { WLF_TABS } from '../../../../utils/consts';
 
-const RebaseRollbackContent = ({ rowData }: any) => {
+interface RefreshRollbackProps {
+    rowData: any;
+    fromPage: string;
+}
+
+const RebaseRollbackContent = ({ rowData, fromPage }: RefreshRollbackProps) => {
     const { isRollbackSelected, rollbackSnapshotList, selectedRollbackSnapshot, rollbackSnapshotsLoading } =
         useAppSelector(state => state?.sandbox);
     const { headerSelectedCredSandbox, headerSelectedRegionSandbox } = useAppSelector(state => state.headers);
+    const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
     const [snapshotsFetched, setSnapshotsFetched] = useState(false);
 
     const dispatch = useDispatch();
@@ -36,8 +43,12 @@ const RebaseRollbackContent = ({ rowData }: any) => {
         if (isRollbackSelected && !snapshotsFetched) {
             dispatch(updateRollbackSnapshotsLoading(true));
             getRollbackSnapshotApi({
-                credentialId: headerSelectedCredSandbox?.data?.credentialsId,
-                region: headerSelectedRegionSandbox?.label2,
+                credentialId:
+                    fromPage === WLF_TABS.SANDBOXES
+                        ? headerSelectedCredSandbox?.data?.credentialsId
+                        : selectedResourceCredId,
+                region:
+                    fromPage === WLF_TABS.SANDBOXES ? headerSelectedRegionSandbox?.label2 : selectedResourceRegionId,
                 databaseHostId: rowData?.databaseHostId,
                 instanceId: rowData?.instanceId,
                 sandboxName: rowData?.name

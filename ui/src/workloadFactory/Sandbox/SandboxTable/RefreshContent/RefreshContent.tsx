@@ -4,7 +4,14 @@ import RebaseRollbackContent from '../RebaseRollbackContent/RebaseRollbackConten
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 
-const RefreshContent = ({ databaseName, sandboxName, rowData }: any) => (
+interface RefreshContentProps {
+    databaseName: string;
+    sandboxName: string;
+    rowData: any;
+    fromPage: string;
+}
+
+const RefreshContent = ({ databaseName, sandboxName, rowData, fromPage }: RefreshContentProps) => (
     <div className={styles.refreshContent}>
         <DsTypography variant="Regular_14">
             {GENERAL.REFRESH_DIALOG_TITLE[0]} <span style={{ fontWeight: '590' }}>{sandboxName}</span>
@@ -28,7 +35,7 @@ const RefreshContent = ({ databaseName, sandboxName, rowData }: any) => (
         </DsTypography>
 
         <div className={styles.rollbackContainer}>
-            <RebaseRollbackContent rowData={rowData} />
+            <RebaseRollbackContent rowData={rowData} fromPage={fromPage} />
         </div>
     </div>
 );

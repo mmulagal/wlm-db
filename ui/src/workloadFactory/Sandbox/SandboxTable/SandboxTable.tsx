@@ -327,7 +327,12 @@ const SandboxTable = () => {
             <DialogComponent
                 header="Refresh"
                 content={
-                    <RefreshContent databaseName={rowData?.source} sandboxName={rowData?.name} rowData={rowData} />
+                    <RefreshContent
+                        databaseName={rowData?.source}
+                        sandboxName={rowData?.name}
+                        rowData={rowData}
+                        fromPage={WLF_TABS.SANDBOXES}
+                    />
                 }
                 primaryButton="Refresh"
                 secondaryButton={GENERAL.CANCEL}
