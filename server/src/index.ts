@@ -1,4 +1,3 @@
-import path from 'path';
 import config from 'config';
 import randomize from 'randomatic';
 import { JwtPayload } from 'jsonwebtoken';
@@ -109,16 +108,9 @@ interface Headers {
 await initiateSecrets();
 logger.info('Secrets initiated');
 logger.info('Initializing app');
+const ALLOWED_ORIGINS = new Set(config.get<string[]>('cors.allowed-origins') || []);
 
-// The NODE_ENV is 'demo' for both prod demo and staging demo.
-// As we want to use the urls from production config for prod demo, we need this extra check to identify prod demo.
-const PROD_CONFIG_FILE = path.join(process.cwd(), 'config', 'production.json');
-const ALLOWED_ORIGINS = new Set(
-    process.env.NODE_ENV === 'demo' && process.env.ENVIRONMENT === 'production'
-        ? config.util.loadFileConfigs(PROD_CONFIG_FILE)?.cors?.['allowed-origins'] || []
-        : config.get<string[]>('cors.allowed-origins') || []
-);
-
+logger.info(`CORS allowed origins: ${Array.from(ALLOWED_ORIGINS).join(', ')}`);
 const app = fastify({
     trustProxy: true,
     genReqId: () => `WLM-DB-${randomize('Aa0', 8)}`,

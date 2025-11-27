@@ -3,6 +3,7 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE, STORAGE_TYPE } from '@prisma/client';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { attempt, cloneDeep, compact, isEmpty, uniqBy } from 'lodash-es';
+import { stringify } from 'flatted';
 import {
     derivePropertiesFromARN,
     escapeBackslash,
@@ -1953,7 +1954,7 @@ async function registerResourceCredentials(
         const cacheKeys = compact(
             response.items.map(({ ec2InstanceId, region, credentialsId }) => {
                 if (ec2InstanceId && region && credentialsId) {
-                    return generateHash(JSON.stringify({ instance: ec2InstanceId, region, credentialsId }));
+                    return generateHash(stringify({ instance: ec2InstanceId, region, credentialsId }));
                 }
                 return undefined;
             })
