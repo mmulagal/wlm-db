@@ -479,34 +479,23 @@ async function fetchOracleDriftAssessment(
     >;
 
     storageProtocol = storageProtocol || (mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.protocol : '');
+    const isASMManaged = mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.isASMManaged : false;
 
     const dismissedConfigurations = mergeDismissConfigurations(instanceDismissedConfigs, hostDismissedConfigs);
-
-    // Remove LUNs configuration for Oracle NFS since they're not applicable
-    if (
-        storageProtocol === STORAGE_PROTOCOLS.NFS &&
-        dismissedConfigurations &&
-        dismissedConfigurations.storage &&
-        dismissedConfigurations.storage.configuration &&
-        dismissedConfigurations.storage.configuration.luns
-    ) {
-        delete dismissedConfigurations.storage.configuration.luns;
-    }
 
     if (!isEmpty(dismissedConfigurations)) {
         fieldsValues = updateFieldsBasedOnDismissedConfigurations(
             fieldsValues,
             dismissedConfigurations,
             DatabaseTypes.ORACLE,
-            storageProtocol ?? STORAGE_PROTOCOLS.ISCSI
+            storageProtocol ?? STORAGE_PROTOCOLS.ISCSI,
+            isASMManaged
         );
     }
 
     const assessmentFlags = {
         storage: fieldsValues.includes(AssessmentCategoriesOracle.STORAGE.toLowerCase())
     };
-
-    const isASMManaged = mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.isASMManaged : false;
 
     const storageDriftData = assessmentFlags.storage
         ? await calculateStorageDrift(

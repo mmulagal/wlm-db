@@ -14,7 +14,7 @@ import {
     ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP,
     ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS,
     ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
-    ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP
+    ORACLE_ASM_STORAGE_CONFIGURATION_ASSESSMENT_MAP
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import {
@@ -744,13 +744,35 @@ function updateFieldsBasedOnDismissedConfigurations(
     fieldsValues: string[],
     dismissedConfigurations: DatabaseInstanceDismissConfigs,
     databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER,
-    storageProtocol?: string
+    storageProtocol?: string,
+    isASMManaged?: boolean
 ) {
     logger.info('Updating fields based on dismissed configurations', {
         fieldsValues,
         dismissedConfigurations,
-        storageProtocol
+        storageProtocol,
+        isASMManaged
     });
+
+    // Handle Oracle-specific dismissed configurations cleanup
+    if (
+        databaseType === DatabaseTypes.ORACLE &&
+        dismissedConfigurations &&
+        dismissedConfigurations.storage &&
+        dismissedConfigurations.storage.configuration
+    ) {
+        // Remove ASM-specific OS configurations when ASM is not managed
+        if (!isASMManaged && dismissedConfigurations.storage.configuration.os) {
+            dismissedConfigurations.storage.configuration.os = dismissedConfigurations.storage.configuration.os.filter(
+                osConfig => !ORACLE_ASM_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os.includes(osConfig.configurationName)
+            );
+        }
+
+        // Remove LUNs configuration for Oracle NFS since they're not applicable
+        if (storageProtocol === STORAGE_PROTOCOLS.NFS && dismissedConfigurations.storage.configuration.luns) {
+            delete dismissedConfigurations.storage.configuration.luns;
+        }
+    }
 
     const isOracleWithNFS = databaseType === DatabaseTypes.ORACLE && storageProtocol === STORAGE_PROTOCOLS.NFS;
 
@@ -787,10 +809,6 @@ function updateFieldsBasedOnDismissedConfigurations(
             ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os.includes(fieldValue)
         ) {
             return false;
-        }
-
-        if (!isOracleWithNFS && ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os.includes(fieldValue)) {
-            return true;
         }
 
         return !Object.entries(dismissedConfigurations).some(

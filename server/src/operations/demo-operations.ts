@@ -1365,6 +1365,20 @@ function handleGetMssqlAssessmentForDemo(
         assessmentData.storage = storageAssessmentResponse as StorageParameterDriftResponseType;
     }
 
+    const maxDopAssessmentResponse = assessmentData.maxDOP as ParameterDriftResponseType;
+    if (!isEmpty(maxDopAssessmentResponse) && !('errorMessage' in maxDopAssessmentResponse)) {
+        const maxDopConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.maxdop || [];
+
+        if (maxDopConfigsOptimized.length > 0 && maxDopConfigsOptimized.includes(maxDopAssessmentResponse.name)) {
+            maxDopAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
+            maxDopAssessmentResponse.objectsInViolation = [];
+            maxDopAssessmentResponse.violationDetails = [];
+            maxDopAssessmentResponse.totalObjectsInViolation = 0;
+            maxDopAssessmentResponse.current = '4';
+        }
+        assessmentData.maxDOP = maxDopAssessmentResponse;
+    }
+
     return assessmentData;
 }
 

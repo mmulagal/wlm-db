@@ -449,8 +449,8 @@ const ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS = [
     'archivelog-dg-lun-layout'
 ];
 
-const ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
-    os: ['asm-setup', 'asm-external-redundancy', 'afd-logical-block-size', 'asmlib-logical-block-size']
+const ORACLE_ASM_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
+    os: ['asm-setup', 'asm-external-redundancy', 'afd-logical-block-size', 'asmlib-logical-block-size'] // only ASM related OS configs for ISCSI
 };
 
 const ORACLE_STORAGE_LAYOUT_CONFIGS_MAP = {
@@ -460,11 +460,11 @@ const ORACLE_STORAGE_LAYOUT_CONFIGS_MAP = {
         'controlfiles-placement',
         'redologs-placement',
         'templogs-placement',
-        'oracle-binary-placement',
+        'oracle-binary-placement', // till here common for ISCSI and NFS
         'data-dg-lun-layout',
         'redolog-dg-lun-layout',
         'fra-dg-lun-layout',
-        'archivelog-dg-lun-layout'
+        'archivelog-dg-lun-layout' // these are for iscsi and ASM only
     ]
 };
 
@@ -476,6 +476,21 @@ const ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'nfs-mount-options-adrhome',
         'nfsv4-domain-name',
         'nfs-caching-options'
+    ]
+};
+
+const ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
+    os: [
+        'multipath-io',
+        'host-utilities',
+        'multipath-io-sessions',
+        'transparent-hugepages',
+        'iscsi-replacement-timeout',
+        'multipath-friendly-names',
+        'tcp-advanced-options',
+        'filesystems-io-options',
+        'multiblock-readcount',
+        'multipath-configuration'
     ]
 };
 
@@ -498,19 +513,9 @@ const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
     ],
     luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
     os: [
-        'multipath-io',
-        'host-utilities',
-        'multipath-io-sessions',
-        'transparent-hugepages',
-        'selinux',
-        'iscsi-replacement-timeout',
-        'multipath-friendly-names',
-        'tcp-advanced-options',
-        'filesystems-io-options',
-        'multiblock-readcount',
-        'multipath-configuration',
+        ...ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
         ...ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
-        ...ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os
+        ...ORACLE_ASM_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os
     ]
 };
 
@@ -590,7 +595,7 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     'fra-dg-lun-layout',
     'archivelog-dg-lun-layout',
     // Oracle-ISCSI-specific configurations
-    ...ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os
+    ...ORACLE_ASM_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os
 ];
 
 const HOST_LEVEL_CONFIGURATIONS = [
@@ -674,6 +679,6 @@ export {
     OracleOptimizeJobDescriptions,
     ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     OptimizeOracleNFSStorageOperatingSystem,
-    ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
+    ORACLE_ASM_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     MIN_OPTIMIZED_HEADROOM_PERCENTAGE
 };
