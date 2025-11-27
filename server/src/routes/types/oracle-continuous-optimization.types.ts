@@ -56,7 +56,8 @@ const OracleDriftAssessmentResponse = Type.Object({
     databaseInstanceName: Type.Optional(Type.String()),
     deploymentType: Type.Optional(Type.String()),
     storageProtocol: Type.Optional(Type.String()),
-    isASMManaged: Type.Optional(Type.Boolean())
+    isASMManaged: Type.Optional(Type.Boolean()),
+    databaseHostName: Type.Optional(Type.String())
 });
 type OracleDriftAssessmentResponseType = Static<typeof OracleDriftAssessmentResponse>;
 

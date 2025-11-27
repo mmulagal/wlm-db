@@ -443,7 +443,7 @@ async function fetchOracleDriftAssessment(
         configurations: instanceConfigurations,
         database_deployment_type: databaseDeploymentType,
         storage_protocol: storageProtocol,
-        resource: { configurations: hostConfigurations, metadata: resourceMetadata }
+        resource: { configurations: hostConfigurations, metadata: resourceMetadata, resource_name: databaseHostName }
     } = instanceDetail as DatabaseInstance;
 
     const instanceDismissedConfigs = (instanceConfigurations as DatabaseInstanceConfigurations)
@@ -523,7 +523,8 @@ async function fetchOracleDriftAssessment(
         lastAssessmentTimestamp:
             latestInstanceAssessmentTime instanceof Date ? new Date(latestInstanceAssessmentTime).valueOf() : undefined,
         storageProtocol,
-        isASMManaged
+        isASMManaged,
+        databaseHostName: databaseHostName || ''
     };
 
     if (IS_DEMO_FLOW) {

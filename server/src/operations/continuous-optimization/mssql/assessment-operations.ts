@@ -377,7 +377,8 @@ async function fetchMssqlDriftAssessment(
         fileSystemId,
         databaseInstanceName,
         ec2InstanceId: (resourceMetadata as Metadata)?.node1InstanceId,
-        deploymentType: databaseDeploymentType
+        deploymentType: databaseDeploymentType,
+        databaseHostName: resourceName || ''
     };
 
     if (IS_DEMO_FLOW) {

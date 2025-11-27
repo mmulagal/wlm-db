@@ -274,7 +274,8 @@ const MSSQLDriftAssessmentResponse = Type.Object({
     fileSystemId: Type.Optional(Type.String()),
     ec2InstanceId: Type.Optional(Type.String()),
     databaseInstanceName: Type.Optional(Type.String()),
-    deploymentType: Type.Optional(Type.String())
+    deploymentType: Type.Optional(Type.String()),
+    databaseHostName: Type.Optional(Type.String())
 });
 
 type MSSQLDriftAssessmentResponseType = Static<typeof MSSQLDriftAssessmentResponse>;

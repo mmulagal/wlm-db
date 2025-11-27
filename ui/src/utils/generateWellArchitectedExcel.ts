@@ -1,4 +1,5 @@
 import * as ExcelJS from 'exceljs';
+import store from '../store/store';
 import getActionSummaryMessages from './wellArchitectedActionSummaryMessages';
 import { ASSESSMENT_CONFIG_NAMES, CONFIG_NAMES, DBType } from './consts';
 import { GENERAL } from './appConstants';
@@ -252,6 +253,7 @@ interface ComprehensiveAssessmentData {
     ec2InstanceId?: string;
     databaseInstanceName?: string;
     deploymentType?: string;
+    databaseHostName?: string;
 }
 
 const EXCLUDED_FIELDS = [
@@ -391,6 +393,8 @@ function generateGeneralInformationData(data: ComprehensiveAssessmentData, datab
         ({ cardsData } = getCardsData(data as any, {}));
         breakdown = formatOptimizationBreakDown(cardsData, data);
     }
+    const state = store.getState();
+    const { isDemoMode } = state.auth;
 
     // Extract totals from breakdown
     const criticalIssues = breakdown.total.critical;
@@ -404,10 +408,15 @@ function generateGeneralInformationData(data: ComprehensiveAssessmentData, datab
     const lastAnalysisDate = data.lastAssessmentTimestamp
         ? new Date(data.lastAssessmentTimestamp)
         : new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
-    const fileName = `WorkloadfactoryDB-well-architected-report-${data?.databaseInstanceName || ''}.xlsx`;
+    const databaseHostName = data.databaseHostName || '';
+    const instanceName = isDemoMode
+        ? data.databaseInstanceName?.replace(databaseHostName, '') || ''
+        : data.databaseInstanceName || '';
+    const fileName = `WorkloadfactoryDB-well-architected-report-${instanceName}.xlsx`;
     const generalInfo = {
-        [databaseType === DBType.ORACLE ? 'Database name' : 'Instance name']: data.databaseInstanceName,
-        'Host name': data.ec2InstanceId,
+        'Host name': data.databaseHostName,
+        [databaseType === DBType.ORACLE ? 'Database name' : 'Instance name']: instanceName,
+        'EC2 Instance Id': data.ec2InstanceId,
         'Time stamp (export timestamp)': currentDate.toLocaleString(),
         'Last analysis': lastAnalysisDate.toLocaleString(),
         'Well-architected status': `${totalIssues} issues`,
