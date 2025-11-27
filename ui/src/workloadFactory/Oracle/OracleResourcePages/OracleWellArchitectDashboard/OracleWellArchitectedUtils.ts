@@ -375,7 +375,7 @@ export const oracleCardData: any = {
             value: 'EC2 Instance'
         },
         block_six: {
-            type: 'Impacted instances',
+            type: 'Swap space',
             value: ''
         },
         recommendation: {
