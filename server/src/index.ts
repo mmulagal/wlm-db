@@ -113,17 +113,17 @@ logger.info('Initializing app');
 
 // The NODE_ENV is 'demo' for both prod demo and staging demo.
 // As we want to use the urls from production config for prod demo, we need this extra check to identify prod demo.
-const PROD_CONFIG_FILE = path.join(__dirname, 'config/production.json');
-const DEFAULT_CONFIG_FILE = path.join(__dirname, 'config/default.json');
+const PROD_CONFIG_FILE = path.join(process.cwd(), 'config', 'production.json');
+const DEFAULT_CONFIG_FILE = path.join(process.cwd(), 'config', 'default.json');
 const ALLOWED_ORIGINS = new Set(
     process.env.NODE_ENV === 'demo' && process.env.ENVIRONMENT === 'production'
-        ? config.util.loadFileConfigs(PROD_CONFIG_FILE).cors['allowed-origins']
+        ? config.util.loadFileConfigs(PROD_CONFIG_FILE)?.cors?.['allowed-origins']
         : config.get<string[]>('cors.allowed-origins') || []
 );
 
 // This is for checking the env, will remove this code
 if (process.env.NODE_ENV === 'demo' && process.env.ENVIRONMENT !== 'production') {
-    logger.info('I am staging demo', process.env);
+    logger.info('I am staging demo', process.env.NODE_ENV, process.env.ENVIRONMENT);
     logger.info(fs.readFileSync(DEFAULT_CONFIG_FILE, 'utf-8'));
 }
 
