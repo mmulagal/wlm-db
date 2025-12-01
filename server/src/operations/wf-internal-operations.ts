@@ -17,30 +17,6 @@ import { GroupedDatabaseInstancesBySeverityResult } from '../lib/database/db-typ
 
 const logger = getLogger();
 
-const dataItems = {
-    [DatabaseTypes.ORACLE]: {
-        label: 'Oracle',
-        value: 0,
-        color: 'chart-9',
-        legendTitle: 'Oracle',
-        tooltip: 'Number of Oracle databases registered'
-    },
-    [DatabaseTypes.PG_SQL]: {
-        label: 'PostgreSQL',
-        value: 0,
-        color: 'chart-4',
-        legendTitle: 'PostgreSQL',
-        tooltip: 'Number of PostgreSQL databases registered'
-    },
-    [DatabaseTypes.MS_SQL_SERVER]: {
-        label: 'Microsoft SQL Server',
-        value: 0,
-        color: 'chart-3',
-        legendTitle: 'Microsoft SQL Server',
-        tooltip: 'Number of Microsoft SQL Server databases registered'
-    }
-};
-
 async function getSystemStatus(accountId: string) {
     logger.info('Getting system status for account.', accountId);
     const credentialsType = 'aws_assume_role';
@@ -203,13 +179,12 @@ async function getWidgetStatus(accountId: string, credentialsIds?: string, regio
                             resource_type: string;
                             _count: { id: number };
                         }) => ({
-                            ...dataItems[resourceType as DatabaseTypes],
+                            id: (resourceType as DatabaseTypes)?.toLowerCase?.() ?? '',
                             value: id || 0
                         })
                     )
                 ),
-                type: 'bar',
-                label: 'Resources'
+                id: 'bar-chart'
             }
         ]
     };

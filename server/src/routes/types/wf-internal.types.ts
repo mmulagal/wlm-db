@@ -47,19 +47,15 @@ const HomepageFocusStatusResponse = Type.Object({
 });
 
 const dataItem = Type.Object({
-    label: Type.String({ enum: ['Microsoft SQL Server', 'Oracle', 'PostgreSQL'] }),
     value: Type.Number(),
-    color: Type.String(),
-    legendTitle: Type.String(),
-    tooltip: Type.Optional(Type.String())
+    id: Type.String({ enum: ['mssql', 'oracle', 'pgsql'] })
 });
 
 const HomepageWidgetStatusResponse = Type.Object({
     items: Type.Array(
         Type.Object({
             data: Type.Union([Type.Number(), Type.Array(dataItem)]),
-            type: Type.String({ enum: ['metric', 'bar'] }),
-            label: Type.String()
+            id: Type.String({ enum: ['savings-opportunities', 'bar-chart'] })
         })
     )
 });

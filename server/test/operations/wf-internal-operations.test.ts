@@ -98,11 +98,11 @@ describe('Homepage status operations', () => {
             items: [{ data }]
         } = await getWidgetStatus(ACCOUNTID);
         expect(data?.length).toEqual(3);
-        const mssqlData = data.find(item => item.label === 'Microsoft SQL Server');
+        const mssqlData = data.find(item => item.id === 'mssql');
         expect(mssqlData?.value).toEqual(2); // 2 MSSQL resources across regions
-        const oracleData = data.find(item => item.label === 'Oracle');
+        const oracleData = data.find(item => item.id === 'oracle');
         expect(oracleData?.value).toEqual(1);
-        const pgsqlData = data.find(item => item.label === 'PostgreSQL');
+        const pgsqlData = data.find(item => item.id === 'pgsql');
         expect(pgsqlData?.value).toEqual(1);
     });
 
