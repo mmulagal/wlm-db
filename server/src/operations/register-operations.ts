@@ -2829,7 +2829,7 @@ async function verifyAndCreateCredentials(
     if (fsxCredentials) {
         const path = `${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`;
         let ssmParameter = await getParameter(credentialsId, region, path);
-        if (!ssmParameter) {
+        if (!ssmParameter || ssmParameter === '{}') {
             const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
             setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), fsxCredentials.resourceId]);
         } else {
@@ -2856,7 +2856,7 @@ async function verifyAndCreateCredentials(
             resourceId: `${e.resourceId}${TEMP}`
         }));
         const existingParameters = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${instanceId}`);
-        if (!existingParameters) {
+        if (!existingParameters || existingParameters === '{}') {
             const newSSMParameters: string[] = await getAsyncLocalStorageResource(NEW_SSM_PARAMETERS);
             setAsyncLocalStorageResource(NEW_SSM_PARAMETERS, [...(newSSMParameters || []), ...instanceIds]);
         } else {
