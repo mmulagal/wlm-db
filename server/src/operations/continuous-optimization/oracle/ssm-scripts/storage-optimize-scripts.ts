@@ -202,6 +202,25 @@ def run_shell(cmd, input_str=None):
         universal_newlines=True
     )
 
+def resolve_lun_with_mountpath(serial, byid='/dev/disk/by-id'):
+    esc = escape_to_hex(serial)
+    # collect candidates that end with the escaped serial
+    names = [n for n in os.listdir(byid) if n.endswith(esc)]
+    if not names:
+        return None
+    names.sort(key=lambda n: ('-part' in n, n))
+    link = os.path.join(byid, names[0])
+    return os.path.realpath(link)
+
+def resolve_lun(serial):
+    cmd = f"lsblk -o name,serial,fstype -JpS"
+    jsonRes = run_shell([cmd]).stdout
+    disks = json.loads(jsonRes)
+    for disk in disks["blockdevices"]:
+        if "serial" in disk and disk["serial"] == serial:
+            return disk["name"]
+    return None
+
 def is_block_device(path):
     try:
         st = os.stat(path)
@@ -242,12 +261,8 @@ def create_partition_and_format(device="/dev/sdd", timeout=30):
     if not wait_for_device(partition, timeout=timeout):
         raise TimeoutError(f"{partition} did not appear within {timeout}s.")
 
-    try:
-        run_shell(["mkfs.ext4", "-F", partition])
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"mkfs.ext4 failed: {e.stderr}") from e
     if not is_block_device(partition):
-        raise RuntimeError(f"{partition} not found after mkfs.")
+        raise RuntimeError(f"{partition} doesn't belong to a block device.")
 
     return partition
 
@@ -317,8 +332,11 @@ for diskGrp in diskGroups:
         while attempts < max_attempts:
             attempts += 1
             log(f"Attempt {attempts} to resolve LUN {lunSerial}")
-            
+
             lunPath = resolve_lun(lunSerial)
+            if lunPath is None:
+                lunPath = resolve_lun_with_mountpath(lunSerial)
+
             if lunPath:
                 log(f"Successfully resolved LUN {lunSerial} to path {lunPath} on attempt {attempts}")
                 break
