@@ -644,8 +644,9 @@ async function getOracleStorageConfigRecommendationMap(
         // recommendation map: config -> {recommendedValue -> [objectName]}
         const recommendationMap: {
             [key in OptimizeStorageConfigs]?: {
-                objectsToOptimize: string[];
-                recommended: string;
+                recommended: {
+                    [recommendedValue: string]: string[];
+                };
                 additionalInfo: Record<string, unknown>;
             };
         } = {};
@@ -683,12 +684,14 @@ async function getOracleStorageConfigRecommendationMap(
                                 const key = configKey as OptimizeStorageConfigs;
                                 if (!recommendationMap[key]) {
                                     recommendationMap[key] = {
-                                        objectsToOptimize: [],
-                                        recommended,
+                                        recommended: {},
                                         additionalInfo: additionalInfo ?? {}
                                     };
                                 }
-                                recommendationMap[key].objectsToOptimize.push(objectName as string);
+                                if (!recommendationMap[key].recommended[recommended]) {
+                                    recommendationMap[key].recommended[recommended] = [];
+                                }
+                                recommendationMap[key].recommended[recommended].push(objectName as string);
                             });
                     });
             });

@@ -116,7 +116,12 @@ interface OptimizeStorageAttributeParams {
     serverNameWithHostName: string;
     resourceType: RESOURCESTYPE;
     recommendationMap?: {
-        [key: string]: { objectsToOptimize: string[]; recommended: string; additionalInfo: Record<string, unknown> };
+        [key: string]: {
+            recommended: {
+                [recommendedValue: string]: string[];
+            };
+            additionalInfo: Record<string, unknown>;
+        };
     };
 }
 
@@ -489,10 +494,13 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                         throw new Error(newJobError);
                     }
                     const map = recommendationMap[configurationName];
-                    recommendedValues[map.recommended] = {
-                        objectsToOptimize: map.objectsToOptimize,
-                        additionalInfo: map.additionalInfo
-                    };
+                    // Convert the new structure to the format expected by the rest of the code
+                    Object.entries(map.recommended).forEach(([recommendedValue, objects]) => {
+                        recommendedValues[recommendedValue] = {
+                            objectsToOptimize: objects,
+                            additionalInfo: map.additionalInfo
+                        };
+                    });
                 } else {
                     recommendedValues[''] = {
                         objectsToOptimize,
