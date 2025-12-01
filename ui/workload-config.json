@@ -13,6 +13,43 @@
             "iframeUrl": "/wlmdb/index.html"
         }
     ],
+    "widget": {
+        "metricWidgets": [
+            {
+                "id": "bar-chart",
+                "type": "bar",
+                "label": "Resources",
+                "barData": [
+                    {
+                        "id": "microsoft",
+                        "label": "Microsoft SQL Server",
+                        "color": "chart-3",
+                        "legendTitle": "Microsoft SQL Server",
+                        "tooltip": "Microsoft SQL Server: 15 instances"
+                    },
+                    {
+                        "id": "oracle",
+                        "label": "Oracle",
+                        "color": "chart-9",
+                        "legendTitle": "Oracle",
+                        "tooltip": "Oracle: 15 instances"
+                    },
+                    {
+                        "id": "sql",
+                        "label": "PostgreSQL",
+                        "color": "chart-4",
+                        "legendTitle": "PostgreSQL",
+                        "tooltip": "PostgreSQL: 15 instances"
+                    }
+                ]
+            },
+            {
+                "id": "savings-opportunities",
+                "type": "metric",
+                "label": "Savings opportunities"
+            }
+        ]
+    },
     "homepage": {
         "marketingUrl": "/databases/marketing",
         "marketingBlueXPUrl": "/fsxdb/marketing",
