@@ -1,7 +1,6 @@
 export interface ManageReadinessSection {
     missingSqlPermissions?: string[];
     missingModules: string[];
-    missingPermissions?: string[];
 }
 
 export interface ManageReadinessData {

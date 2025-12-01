@@ -684,6 +684,5 @@ export interface ManageReadinessInterface {
     [key: string]: {
         missingSqlPermissions?: string[];
         missingModules: string[];
-        missingPermissions?: string[];
     };
 }

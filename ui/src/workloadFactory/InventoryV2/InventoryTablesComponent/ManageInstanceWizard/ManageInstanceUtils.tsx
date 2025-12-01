@@ -701,7 +701,7 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
             module !== MANAGE_STATES.POWERSHELL7 && module !== MANAGE_STATES.JQ && module !== MANAGE_STATES.PYTHON
     );
 
-    const permissions = readinessData?.missingSqlPermissions;
+    const permissions = readinessData?.missingSqlPermissions || [];
 
     if ((otherModules && otherModules.length > 0) || (permissions && permissions.length > 0)) {
         return MANAGE_STATES.MISSING_PREREQUISITES;
@@ -760,15 +760,9 @@ export const mergeReadinessData = (
 
     Object.keys(manageReadinessData)?.forEach(key => {
         if (key !== 'missingSqlCmd') {
-            const basePermissions =
-                engineType === DBType.ORACLE
-                    ? manageReadinessData?.[key]?.missingPermissions || []
-                    : manageReadinessData?.[key]?.missingSqlPermissions || [];
+            const basePermissions = manageReadinessData?.[key]?.missingSqlPermissions || [];
 
-            const partnerPermissions =
-                engineType === DBType.ORACLE
-                    ? partnerManageReadinessData?.[key]?.missingPermissions || []
-                    : partnerManageReadinessData?.[key]?.missingSqlPermissions || [];
+            const partnerPermissions = partnerManageReadinessData?.[key]?.missingSqlPermissions || [];
 
             const mergedPermissions = Array.from(new Set([...basePermissions, ...partnerPermissions]));
             const mergedModules = Array.from(
@@ -779,9 +773,7 @@ export const mergeReadinessData = (
             );
 
             mergedData[key] = {
-                ...(engineType === DBType.ORACLE
-                    ? { missingPermissions: mergedPermissions }
-                    : { missingSqlPermissions: mergedPermissions }),
+                missingSqlPermissions: mergedPermissions,
                 missingModules: mergedModules
             };
         } else {

@@ -4526,7 +4526,7 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any, engineType
                                     ...instance?.assessments?.storage,
                                     configuration: {
                                         ...instance?.assessments?.storage?.configuration,
-                                        [key]: instance?.assessments?.storage?.configuration[key].map((item: any) => {
+                                        [key]: instance?.assessments?.storage?.configuration[key]?.map((item: any) => {
                                             if (item.name === rowData?.id) {
                                                 return { ...item, status: 'optimized' };
                                             }
