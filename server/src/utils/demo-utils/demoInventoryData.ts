@@ -947,6 +947,71 @@ function discoverDemoDataOracle(fsxId: string, ebsVolId: string) {
                         }
                     }
                 ]
+            },
+            {
+                ec2InstanceId: 'i-12456768',
+                ec2InstanceType: 'm5.large',
+                ec2InstanceName: 'oracle-node-5717',
+                ec2HostName: 'ip-172-31-48-81.ap-southeast-1.compute.internal',
+                ec2UsageOperation: 'RunInstances',
+                ssmState: 'connected',
+                ebsVolumeIDs: ['vol-094b644283b4fd16a'],
+                ebsVolumes: [
+                    {
+                        DeviceName: '/dev/xvda',
+                        Ebs: {
+                            AttachTime: '2025-03-07T03:34:27.000Z',
+                            DeleteOnTermination: true,
+                            Status: 'attached',
+                            VolumeId: ebsVolId
+                        }
+                    }
+                ],
+                vpc: {
+                    id: 'vpc-0100cefdf732ef9e9',
+                    name: 'VPC-5',
+                    cidrBlock: '192.168.16.0/20'
+                },
+                error: undefined,
+                platform: 'Linux/UNIX',
+                oracleServerDeploymentType: 'Standalone',
+                databaseInstanceDetails: [
+                    {
+                        instanceId: 'pdbebs1',
+                        instanceName: 'pdbebs1',
+                        version: '19.0.0.0.0',
+                        instanceState: 'OPEN',
+                        instanceType: 'SINGLE_TENANT',
+                        databaseCount: 1,
+                        databaseDetails: {
+                            databaseId: '3578044225',
+                            openMode: 'READ WRITE'
+                        },
+
+                        storage: [
+                            {
+                                type: 'EBS',
+                                id: 'vol-094b644283b4fd16a',
+                                deploymentType: 'SINGLE_AZ_1',
+                                zones: ['ap-south-1c']
+                            }
+                        ],
+                        isInstanceStorageAsmManaged: false,
+                        isDefaultAuthentication: true,
+                        oracleServerAuthentication: false,
+                        asmAuthentication: false,
+                        manageReadiness: {
+                            assessment: {
+                                missingModules: [],
+                                missingSqlPermissions: []
+                            },
+                            remediation: {
+                                missingModules: [],
+                                missingSqlPermissions: []
+                            }
+                        }
+                    }
+                ]
             }
         ]
     };

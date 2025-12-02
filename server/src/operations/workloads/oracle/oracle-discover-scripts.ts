@@ -531,12 +531,18 @@ get_multipath_mount_details() {
                             mountPoint=$(echo "$mountDevice" | sed 's/.*ip-[0-9\\.]*://')
                             if echo "$mountPoint" | grep -q "iscsi"; then
                                 protocol="iSCSI"
+                                mountPoint=$iscsiSerialNumber
+                                jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\", \\"directoryPath\\":\\"$dataDirectory\\"}"
+                            # Check if it's an EBS device (after iSCSI check)
+                            elif is_ebs_device "$source" "$dataDirectory"; then
+                                volume_id=$(get_ebs_volume_details "$source" "$dataDirectory")
+                                protocol="EBS"
+                                jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"volumeId\\":\\"$volume_id\\", \\"protocol\\":\\"$protocol\\", \\"directoryPath\\":\\"$dataDirectory\\"}"
                             else
                                 protocol="others"
+                                mountPoint=$iscsiSerialNumber
+                                jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\", \\"directoryPath\\":\\"$dataDirectory\\"}"
                             fi
-
-                            mountPoint=$iscsiSerialNumber
-                            jsonObj="{\\"isAsmManaged\\":\\"false\\", \\"mountIP\\":\\"$mountIp\\", \\"mountPoint\\":\\"$mountPoint\\", \\"protocol\\":\\"$protocol\\", \\"directoryPath\\":\\"$dataDirectory\\"}"
                         fi
                     elif [[ "$fstype" == nfs* ]]; then
                         dns_name=$(echo "$source" | cut -d':' -f1)
@@ -663,6 +669,86 @@ get_multipath_mount_details() {
         done <<< "$nfsSources"
         nfsStorageMappings+="]"
         echo "$nfsStorageMappings"
+    }
+
+    is_ebs_device() {
+        local device_path="$1"
+        local directory_path="$2"
+        
+        # Method 1: Check device naming patterns (nvme or xvd)
+        if [[ "$device_path" =~ ^/dev/(nvme[0-9]+n[0-9]+|xvd[a-z]+) ]]; then
+            return 0
+        fi
+        
+        # Method 2: Check filesystem type - EBS uses local filesystems
+        if command -v lsblk >/dev/null 2>&1; then
+            local fstype=$(lsblk -no FSTYPE "$device_path" 2>/dev/null | head -n1)
+            if [[ "$fstype" =~ ^(ext[2-4]|xfs|btrfs)$ ]]; then
+                return 0
+            fi
+        fi
+        
+        # Method 3: Check directory path pattern and verify not NFS
+        if [[ "$directory_path" =~ (ebs|/data|/u01|/oracle) ]] && ! mount | grep -q "$directory_path.*nfs"; then
+            local real_device=$(df "$directory_path" 2>/dev/null | tail -1 | awk '{print $1}')
+            if [[ "$real_device" =~ ^/dev/(nvme|xvd|sd) ]]; then
+                return 0
+            fi
+        fi
+        
+        return 1
+    }
+
+    get_ebs_volume_details() {
+        local device_path="$1"
+        local directory_path="$2"
+        local volume_id=""
+        
+        # Get actual device from directory if not provided
+        if [ -z "$device_path" ]; then
+            device_path=$(df "$directory_path" 2>/dev/null | tail -1 | awk '{print $1}')
+        fi
+        
+        # Convert partition to whole device (e.g., nvme0n1p3 -> nvme0n1)
+        local whole_device="$device_path"
+        if [[ "$device_path" =~ (nvme[0-9]+n[0-9]+)p[0-9]+ ]]; then
+            whole_device="/dev/\${BASH_REMATCH[1]}"
+        fi
+        
+        # Try udevadm to get serial number
+        if command -v udevadm >/dev/null 2>&1; then
+            local serial=$(sudo udevadm info --query=all --name="$whole_device" 2>/dev/null | grep "ID_SERIAL=" | cut -d'=' -f2)
+            if [ -n "$serial" ]; then
+                # Remove vendor prefix and extract vol ID (with or without hyphen)
+                # Handles both "Amazon Elastic Block Store_vol094..." and "Amazon Elastic Block Store_vol-094..."
+                serial=$(echo "$serial" | sed 's/^.*_vol-*\\([0-9a-f]\\+\\)$/vol-\\1/')
+                
+                # Check if serial looks like a volume ID
+                if [[ "$serial" =~ ^vol-[0-9a-f]+$ ]]; then
+                    echo "$serial"
+                    return 0
+                fi
+            fi
+        fi
+        
+        # Try nvme-cli method as fallback
+        if [[ "$whole_device" =~ nvme ]] && command -v nvme >/dev/null 2>&1; then
+            local serial=$(sudo nvme id-ctrl "$whole_device" 2>/dev/null | grep -E '^sn\\s*:' | awk '{print $3}')
+            if [[ "$serial" =~ ^vol-[0-9a-f]+$ ]]; then
+                echo "$serial"
+                return 0
+            elif [[ "$serial" =~ ^[0-9a-f]{20}$ ]]; then
+                echo "vol-$serial"
+                return 0
+            fi
+        fi
+        
+        # Fallback: create identifier based on device
+        if [ -n "$device_path" ]; then
+            echo "ebs-$(basename "$device_path")"
+        else
+            echo "ebs-$(basename "$directory_path")"
+        fi
     }
 
     get_oracle_db_mount_details() {

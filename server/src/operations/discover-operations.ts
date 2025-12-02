@@ -135,9 +135,10 @@ interface FSxInfo {
 
 interface OracleInstanceStorageInfo {
     isAsmManaged: string;
-    mountIP: string;
-    mountPoint: string;
+    mountIP?: string;
+    mountPoint?: string;
     protocol: string;
+    volumeId?: string;
 }
 
 type DiscoveredEc2InstanceType = (DiscoverPgSqlResponseType | DiscoverOracleResponseType) & {
@@ -1578,6 +1579,22 @@ function getDiscoveredOracleInstancesStorageDetails(
         oracleInstanceStorageDetails
     });
 
+    const storageTypes = [];
+    for (const oracleStorage of oracleInstanceStorageDetails) {
+        const { volumeId, isAsmManaged } = oracleStorage;
+
+        if (volumeId && ebsVolumeIDs.includes(volumeId)) {
+            const ebsAvailabilityZone = ebsVolumeToAvailabilityZoneMap.get(volumeId);
+            storageTypes.push({
+                type: STORAGE_TYPE.EBS,
+                id: volumeId,
+                deploymentType: SINGLE_AZ,
+                isAsmManaged,
+                ...(ebsAvailabilityZone && { zones: [ebsAvailabilityZone] })
+            });
+        }
+    }
+
     const oracleStorageFsxMap = new Map();
     for (const oracleStorage of oracleInstanceStorageDetails) {
         const { mountIP, mountPoint, protocol } = oracleStorage;
@@ -1588,7 +1605,6 @@ function getDiscoveredOracleInstancesStorageDetails(
         }
     }
 
-    const storageTypes = [];
     for (const [mountIP, mountDetails] of oracleStorageFsxMap.entries()) {
         const fsxInfo = endPointIpWithFsxInfo.get(mountIP);
         if (fsxInfo) {
@@ -1951,6 +1967,7 @@ async function fetchFsxResourceMappings(
             ?.filter(subnet => subnet.SubnetId && subnet.AvailabilityZone)
             .map(subnet => [subnet.SubnetId, subnet.AvailabilityZone]) as [string, string][]
     );
+
     const ebsVolumeToAvailabilityZoneMap = new Map(
         ebsVolumeList
             ?.filter(vol => vol.VolumeId && vol.AvailabilityZone)
