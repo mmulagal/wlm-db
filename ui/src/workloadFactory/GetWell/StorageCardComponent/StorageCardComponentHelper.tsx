@@ -1,5 +1,11 @@
 import { TFunction } from 'i18next';
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATE_ACTIONS, RESPONSE_STATUS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
+    CONFIG_STATE_ACTIONS,
+    RESPONSE_STATUS,
+    WLF_TABS
+} from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import { setDriftAssessmentData } from '../../../store/workloadFactory/getWellOptimizeSlice';
@@ -332,7 +338,7 @@ export const handleDismissResponse = (
             id: targetId,
             name: cardData?.mapName
         };
-        updateConfigStateStatus([perObj], dispatch, updatedState, res?.data, engineType);
+        updateConfigStateStatus([perObj], dispatch, updatedState, res?.data, engineType, WLF_TABS.WELL_ARCHITECTED_TAB);
 
         // Check if we're reactivating and this is the last dismissed configuration
         if (action === CONFIG_STATE_ACTIONS.ACTIVE && showDismissedConfigurations && setShowDismissedConfigurations) {

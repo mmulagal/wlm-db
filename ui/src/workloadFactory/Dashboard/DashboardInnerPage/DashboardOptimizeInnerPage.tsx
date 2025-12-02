@@ -1,12 +1,10 @@
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@netapp/design-system';
-import { useMemo, useState } from 'react';
-import { T } from 'vitest/dist/chunks/reporters.d.DG9VKi4m';
+import { useMemo } from 'react';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
-import commonStyles from '../../../utils/CommonStyles.module.scss';
-import { ASSESSMENT_CONFIG_NAMES, DBType, WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../../store/storeHooks';
 import CloneTabs from '../../GetWell/OptimizeInnerPage/CloneTabs';

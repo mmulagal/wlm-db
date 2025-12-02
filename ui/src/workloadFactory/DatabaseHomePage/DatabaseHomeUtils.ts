@@ -1728,13 +1728,133 @@ const processOracleConfigurationData = (
                     ? 1
                     : 0;
                 getAssessmentGroupedByConfigurations.severityObj.oracleOntapConfiguration = 'Critical';
+                const ontapStateList = getConfigStateList(
+                    [
+                        ...(instanceAssessmentData?.storage?.configuration?.luns || []),
+                        ...(instanceAssessmentData?.storage?.configuration?.volumes || [])
+                    ],
+                    [
+                        ...(instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.luns || []),
+                        ...(instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.volumes || [])
+                    ],
+                    DBType.ORACLE
+                );
+                getAssessmentGroupedByConfigurations.oracleOntapConfiguration.dismissed += checkConfigState(
+                    ontapStateList,
+                    CONFIG_STATES.DISMISSED
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleOntapConfiguration.activating += checkConfigState(
+                    ontapStateList,
+                    CONFIG_STATES.ACTIVATING
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleOntapConfiguration.partiallyDismissed += checkConfigState(
+                    ontapStateList,
+                    CONFIG_STATES.PARTIAL
+                )
+                    ? 1
+                    : 0;
+
                 getAssessmentGroupedByConfigurations.oracleOperatingSystem.optimized += isOperatingSystemOptimized
                     ? 1
                     : 0;
                 getAssessmentGroupedByConfigurations.severityObj.oracleOperatingSystem = 'Critical';
+                const osStateList = getConfigStateList(
+                    [...(instanceAssessmentData?.storage?.configuration?.os || [])],
+                    [...(instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.os || [])],
+                    DBType.ORACLE
+                );
+                getAssessmentGroupedByConfigurations.oracleOperatingSystem.dismissed += checkConfigState(
+                    osStateList,
+                    CONFIG_STATES.DISMISSED
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleOperatingSystem.activating += checkConfigState(
+                    osStateList,
+                    CONFIG_STATES.ACTIVATING
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleOperatingSystem.partiallyDismissed += checkConfigState(
+                    osStateList,
+                    CONFIG_STATES.PARTIAL
+                )
+                    ? 1
+                    : 0;
             }
         });
     });
+};
+
+export const getConfigStateList = (
+    mergedData: any[],
+    mergedDismissedData: any[],
+    configEngineType?: string,
+    formattedData?: any
+) => {
+    // Get config state list for any instance/database based on all sub configurations
+    if (!formattedData) {
+        formattedData = formatAssessmentTableData(mergedData, mergedDismissedData, configEngineType);
+    }
+    const result: string[] = [];
+
+    // Loop through formattedData and collect all configState values
+    const configStates = new Set<string>();
+
+    formattedData?.forEach((item: any) => {
+        if (item?.configState) {
+            configStates.add(item.configState);
+        }
+    });
+
+    // Convert Set to Array to get unique values and add to result
+    const uniqueConfigStates = Array.from(configStates);
+
+    // If no config states found, default to ACTIVE
+    if (uniqueConfigStates.length === 0) {
+        result.push(CONFIG_STATES.ACTIVE);
+    } else {
+        result.push(...uniqueConfigStates);
+    }
+
+    return result;
+};
+
+export const checkConfigState = (stateList: string[], state: string) => {
+    if (state === CONFIG_STATES.DISMISSED || state === CONFIG_STATES.POSTPONED) {
+        return (
+            (stateList.includes(CONFIG_STATES.DISMISSED) || stateList.includes(CONFIG_STATES.POSTPONED)) &&
+            !stateList.includes(CONFIG_STATES.ACTIVE) &&
+            !stateList.includes(CONFIG_STATES.ACTIVATING)
+        );
+    }
+    if (state === CONFIG_STATES.ACTIVATING) {
+        return (
+            stateList.includes(CONFIG_STATES.ACTIVATING) &&
+            !stateList.includes(CONFIG_STATES.DISMISSED) &&
+            !stateList.includes(CONFIG_STATES.POSTPONED) &&
+            !stateList.includes(CONFIG_STATES.ACTIVE)
+        );
+    }
+    if (state === CONFIG_STATES.ACTIVE) {
+        return (
+            stateList.includes(CONFIG_STATES.ACTIVE) &&
+            !stateList.includes(CONFIG_STATES.DISMISSED) &&
+            !stateList.includes(CONFIG_STATES.POSTPONED) &&
+            !stateList.includes(CONFIG_STATES.ACTIVATING)
+        );
+    }
+    if (state === CONFIG_STATES.PARTIAL) {
+        return (
+            (stateList.includes(CONFIG_STATES.ACTIVE) || stateList.includes(CONFIG_STATES.ACTIVATING)) &&
+            (stateList.includes(CONFIG_STATES.DISMISSED) || stateList.includes(CONFIG_STATES.POSTPONED))
+        );
+    }
+    return false;
 };
 
 export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracleAssessmentData?: any) => {
@@ -1777,12 +1897,14 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         ontapConfiguration: {
             optimized: 0,
             dismissed: 0,
-            activating: 0
+            activating: 0,
+            partiallyDismissed: 0
         },
         operatingSystem: {
             optimized: 0,
             dismissed: 0,
-            activating: 0
+            activating: 0,
+            partiallyDismissed: 0
         },
         computeRightsizing: {
             optimized: 0,
@@ -1832,7 +1954,8 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         mssqlhighAvailability: {
             optimized: 0,
             dismissed: 0,
-            activating: 0
+            activating: 0,
+            partiallyDismissed: 0
         },
         clone: {
             optimized: 0,
@@ -1901,12 +2024,14 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         oracleOntapConfiguration: {
             optimized: 0,
             dismissed: 0,
-            activating: 0
+            activating: 0,
+            partiallyDismissed: 0
         },
         oracleOperatingSystem: {
             optimized: 0,
             dismissed: 0,
-            activating: 0
+            activating: 0,
+            partiallyDismissed: 0
         },
         oracleFileSystemHeadroom: {
             optimized: 0,
@@ -2320,11 +2445,65 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                 getAssessmentGroupedByConfigurations.ontapConfiguration.optimized += isOntapConfigurationOptimized
                     ? 1
                     : 0;
-                // getAssessmentGroupedByConfigurations.dismissedCount.ontapConfiguration += isDismissed(perfTierStateObj?.configState) ? 1 : 0;
+                const ontapStateList = getConfigStateList(
+                    [
+                        ...(instanceAssessmentData?.storage?.configuration?.luns || []),
+                        ...(instanceAssessmentData?.storage?.configuration?.volumes || [])
+                    ],
+                    [
+                        ...(instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.luns || []),
+                        ...(instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.volumes || [])
+                    ],
+                    DBType.MSSQL
+                );
+                getAssessmentGroupedByConfigurations.ontapConfiguration.dismissed += checkConfigState(
+                    ontapStateList,
+                    CONFIG_STATES.DISMISSED
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.ontapConfiguration.activating += checkConfigState(
+                    ontapStateList,
+                    CONFIG_STATES.ACTIVATING
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.ontapConfiguration.partiallyDismissed += checkConfigState(
+                    ontapStateList,
+                    CONFIG_STATES.PARTIAL
+                )
+                    ? 1
+                    : 0;
+
                 getAssessmentGroupedByConfigurations.severityObj.ontapConfiguration = 'Critical';
+
                 getAssessmentGroupedByConfigurations.operatingSystem.optimized += isOperatingSystemOptimized ? 1 : 0;
-                // getAssessmentGroupedByConfigurations.dismissedCount.operatingSystem += isDismissed(perfTierStateObj?.configState) ? 1 : 0;
+                const osStateList = getConfigStateList(
+                    [...(instanceAssessmentData?.storage?.configuration?.os || [])],
+                    [...(instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.os || [])],
+                    DBType.MSSQL
+                );
+                getAssessmentGroupedByConfigurations.operatingSystem.dismissed += checkConfigState(
+                    osStateList,
+                    CONFIG_STATES.DISMISSED
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.operatingSystem.activating += checkConfigState(
+                    osStateList,
+                    CONFIG_STATES.ACTIVATING
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.operatingSystem.partiallyDismissed += checkConfigState(
+                    osStateList,
+                    CONFIG_STATES.PARTIAL
+                )
+                    ? 1
+                    : 0;
+
                 getAssessmentGroupedByConfigurations.severityObj.operatingSystem = 'Critical';
+
                 getAssessmentGroupedByConfigurations.computeRightsizing.optimized += isComputeRightsizingOptimized
                     ? 1
                     : 0;
@@ -2498,13 +2677,26 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                     (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability)
                         ? 1
                         : 0;
-                getAssessmentGroupedByConfigurations.mssqlhighAvailability.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.mssqlhighAvailability?.configState
+                const hsStateList = getConfigStateList(
+                    [...(instanceAssessmentData?.highAvailability || [])],
+                    [...(instanceAssessmentData?.dismissedConfigurations?.highAvailability || [])],
+                    DBType.MSSQL
+                );
+                getAssessmentGroupedByConfigurations.mssqlhighAvailability.dismissed += checkConfigState(
+                    hsStateList,
+                    CONFIG_STATES.DISMISSED
                 )
                     ? 1
                     : 0;
-                getAssessmentGroupedByConfigurations.mssqlhighAvailability.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.mssqlhighAvailability?.configState
+                getAssessmentGroupedByConfigurations.mssqlhighAvailability.activating += checkConfigState(
+                    hsStateList,
+                    CONFIG_STATES.ACTIVATING
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.mssqlhighAvailability.partiallyDismissed += checkConfigState(
+                    hsStateList,
+                    CONFIG_STATES.PARTIAL
                 )
                     ? 1
                     : 0;
@@ -2637,7 +2829,11 @@ export const disableOfflineRows = (data: any) =>
                 }
             };
         }
-        if (item?.configuration === '0 out of 0') {
+        if (
+            item?.configuration === '0 out of 0' &&
+            !item?.configStateList.includes(CONFIG_STATES.DISMISSED) &&
+            !item?.configStateList.includes(CONFIG_STATES.POSTPONED)
+        ) {
             return {
                 ...item,
                 cellProps: {
@@ -2680,19 +2876,47 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
     return sortListOfDict(result, 'status', false);
 };
 
-export const formatAssessmentTableData = (data: any, engineType?: string) => {
+export const formatAssessmentTableData = (data: any, dismissedData: any, engineType?: string) => {
     const result: any = [];
     data?.map((item: any) => {
         if (!item?.error && !item?.errorMessage) {
-            if (engineType === DBType.ORACLE && item?.name === 'snapshot-policy') {
-                item.name = 'snapshot-policy-vol';
-            }
-            result.push({
+            // Determine the name to use, handling Oracle snapshot-policy case
+            const itemName =
+                engineType === DBType.ORACLE && item?.name === 'snapshot-policy' ? 'snapshot-policy-vol' : item?.name;
+
+            const formattedItem = {
                 ...item,
-                name: GETWELL_CONFIG?.[item?.name || ''] || item?.name,
+                name: GETWELL_CONFIG?.[itemName || ''] || itemName,
                 status: GETWELL_VALUES?.[item?.status] || item?.status,
                 severity: GETWELL_VALUES?.[item?.severity || ''] || item?.severity
-            });
+            };
+
+            // Check if there's a matching dismissed data entry
+            const matchingDismissedItem = dismissedData?.find(
+                (dismissedItem: any) => dismissedItem?.configurationName === item?.name
+            );
+
+            if (matchingDismissedItem) {
+                const formattedDismissedItem = {
+                    ...formattedItem,
+                    ...matchingDismissedItem,
+                    dismissedObj: {
+                        configState: matchingDismissedItem.configState,
+                        startTime: matchingDismissedItem?.startTime,
+                        endTime: matchingDismissedItem?.endTime
+                    }
+                };
+                result.push(formattedDismissedItem);
+            } else {
+                const formattedRegItem = {
+                    ...formattedItem,
+                    configState: CONFIG_STATES.ACTIVE,
+                    dismissedObj: {
+                        configState: CONFIG_STATES.ACTIVE
+                    }
+                };
+                result.push(formattedRegItem);
+            }
         }
     });
     return result;

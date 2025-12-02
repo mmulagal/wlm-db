@@ -1,9 +1,12 @@
 .recommendationTable {
     z-index: 1 !important;
     display: flex;
-    padding: 32px 10px 20px 10px;
-    // width: 1528px;
-    box-shadow: 2px 2px 6px 0px var(--border-drop-shadow);
+    padding: 32px 20px 20px 40px;
+    width: 100%;
+
+    &.inventoryClass {
+        padding: 32px 10px 20px 10px;
+    }
 
     .statusCol {
         display: flex;
@@ -67,15 +70,20 @@
         border-radius: 14px !important;
     }
 
+    [class*='Table-module_table-wrapper'] {
+        box-shadow: none !important;
+    }
+
     [class*='Table-module_header-row'] {
         position: unset !important;
         [class*='Table-module_header-cell'] {
             background-color: var(--content-background) !important;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--white);
         }
     }
     [class*='Table-module_cell'] {
         border-left: unset !important;
+        border-bottom: 2px solid var(--white) !important;
 
         /* Apply background to table cells containing disabled content */
         &:has(.disabledCell) {
@@ -172,81 +180,6 @@
                 }
             }
         }
-    }
-}
-
-.recommendationTableDashboard {
-    z-index: 1 !important;
-    display: flex;
-
-    box-shadow: 2px 2px 6px 0px var(--border-drop-shadow);
-    padding: 32px 20px 20px 40px;
-
-    .recommendation {
-        // margin-left: 151px;
-        gap: 46px;
-        display: flex;
-    }
-
-    .tooltipContainer {
-        display: flex;
-        gap: 16px;
-        align-items: center;
-
-        svg {
-            position: relative;
-            top: 2px;
-        }
-    }
-
-    .tooltip:hover {
-        span:first-child {
-            svg {
-                path {
-                    fill: var(--tooltip-icon-hover);
-                }
-            }
-        }
-    }
-
-    .tags {
-        display: flex;
-        gap: 8px;
-        padding: 8px 16px;
-    }
-
-    [class*='dsButtons'] {
-        height: 32px !important;
-        min-width: 140px !important;
-    }
-
-    [class*='Table-module_header-row'] {
-        position: unset !important;
-        [class*='Table-module_header-cell'] {
-            background-color: unset !important;
-            border-bottom: 1px solid var(--border);
-        }
-    }
-
-    [class*='Table-module_cell'] {
-        border-left: unset !important;
-        background-color: unset !important;
-        border-bottom: 1px solid var(--border);
-    }
-    [class*='Table-module_last-col'] {
-        border-right: unset !important;
-        display: flex;
-        justify-content: flex-end;
-        padding-right: 40px !important;
-    }
-
-    [class*='Popover-module_base'] {
-        max-width: 680px !important;
-        padding: unset !important;
-    }
-
-    [class*='Button-module_content'] {
-        max-width: 152px !important;
     }
 }
 

@@ -14,7 +14,7 @@ type TagComponentProps = {
     tagHeight: string;
     type?: string;
     engineType?: string;
-    severity: string;
+    severity?: string;
 };
 
 const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: TagComponentProps) => {

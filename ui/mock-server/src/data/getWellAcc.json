@@ -1298,6 +1298,29 @@
                         },
                         "dismissedConfigurations": {
                             "storage": {
+                                "configuration": {
+                                    "volumes": [
+                                        {
+                                            "configurationName": "thin-provision",
+                                            "configState": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "luns": [
+                                        {
+                                            "configurationName": "os-type",
+                                            "configState": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ],
+                                    "os": [
+                                        {
+                                            "configurationName": "mpio-enabled",
+                                            "configState": "DISMISSED",
+                                            "startTime": 1739934199000
+                                        }
+                                    ]
+                                },
                                 "sizing": [
                                     {
                                         "configurationName": "performance-tier",

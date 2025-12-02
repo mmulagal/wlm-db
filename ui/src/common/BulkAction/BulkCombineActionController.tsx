@@ -11,6 +11,7 @@ type BulkActionContainerProps = {
     showDismissed?: boolean;
     isFixDisabled?: boolean;
     fixDisableMsg?: string;
+    hideFixButton?: boolean;
 };
 
 const BulkCombineActionController = ({
@@ -19,7 +20,8 @@ const BulkCombineActionController = ({
     handleStateOperation,
     showDismissed,
     isFixDisabled,
-    fixDisableMsg
+    fixDisableMsg,
+    hideFixButton = false
 }: BulkActionContainerProps) => {
     const { t } = useTranslation();
     return (
@@ -27,13 +29,15 @@ const BulkCombineActionController = ({
             <DsTypography variant="Semibold_14"> {t('databases.dismiss.bulk-actions')}</DsTypography>
             {!showDismissed && (
                 <>
-                    <TooltipComponent title={fixDisableMsg} placement="bottom" width="260px" height="auto">
-                        <div>
-                            <DsButton type="text" onClick={onClick} isDisabled={isFixDisabled}>
-                                {action}
-                            </DsButton>
-                        </div>
-                    </TooltipComponent>
+                    {!hideFixButton && (
+                        <TooltipComponent title={fixDisableMsg} placement="bottom" width="260px" height="auto">
+                            <div>
+                                <DsButton type="text" onClick={onClick} isDisabled={isFixDisabled}>
+                                    {action}
+                                </DsButton>
+                            </div>
+                        </TooltipComponent>
+                    )}
                     <DsButton type="text" onClick={() => handleStateOperation(CONFIG_STATE_ACTIONS.DISMISS)}>
                         {t('databases.dismiss.dismiss')}
                     </DsButton>

@@ -1624,6 +1624,7 @@ export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, actio
                     if (instance?.databaseInstanceId === rowData?.instanceId) {
                         const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.ORACLE_STORAGE_LAYOUT_MAP;
                         const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
+                        const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
 
                         // Check if it's a storage layout configuration
                         if (storageLayoutMap[rowData?.name]) {
@@ -1644,9 +1645,8 @@ export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, actio
                                 }
                             };
                         }
-
-                        // Check if it's a storage sizing configuration
                         if (storageSizingMap[rowData?.name]) {
+                            // Check if it's a storage sizing configuration
                             const configurationName = storageSizingMap[rowData?.name];
                             const dismissedConfigurations = createDismissedSizingStructure(
                                 instance,
@@ -1661,6 +1661,68 @@ export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, actio
                                 assessments: {
                                     ...instance?.assessments,
                                     dismissedConfigurations
+                                }
+                            };
+                        }
+                        if (storageConfigurationMap[rowData?.id]) {
+                            const key = storageConfigurationMap[rowData?.id];
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations: {
+                                        ...instance?.assessments?.dismissedConfigurations,
+                                        storage: {
+                                            ...instance?.assessments?.dismissedConfigurations?.storage,
+                                            configuration: {
+                                                ...instance?.assessments?.dismissedConfigurations?.storage
+                                                    ?.configuration,
+                                                [key]: instance?.assessments?.dismissedConfigurations?.storage
+                                                    ?.configuration?.[key]
+                                                    ? (() => {
+                                                          const existingList =
+                                                              instance?.assessments?.dismissedConfigurations?.storage
+                                                                  ?.configuration?.[key];
+                                                          const existingItem = existingList.find(
+                                                              (item: any) => item?.configurationName === rowData?.id
+                                                          );
+
+                                                          if (existingItem) {
+                                                              // Update existing item
+                                                              return existingList.map((item: any) => {
+                                                                  if (item?.configurationName === rowData?.id) {
+                                                                      return {
+                                                                          ...item,
+                                                                          configState: setAction,
+                                                                          endTime: rowData?.endTime,
+                                                                          startTime: rowData?.startTime
+                                                                      };
+                                                                  }
+                                                                  return item;
+                                                              });
+                                                          }
+                                                          // If ID not found, add new entry to existing list
+                                                          return [
+                                                              ...existingList,
+                                                              {
+                                                                  configurationName: rowData?.id,
+                                                                  configState: setAction,
+                                                                  endTime: rowData?.endTime,
+                                                                  startTime: rowData?.startTime
+                                                              }
+                                                          ];
+                                                      })()
+                                                    : [
+                                                          {
+                                                              configurationName: rowData?.id,
+                                                              configState: setAction,
+                                                              endTime: rowData?.endTime,
+                                                              startTime: rowData?.startTime
+                                                          }
+                                                      ]
+                                            }
+                                        }
+                                    }
                                 }
                             };
                         }

@@ -33,9 +33,6 @@ import {
 } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import { ReactComponent as Schedule } from '../../../assets/Schedule.svg';
-import OntapConfig from './RenderTables/OntapConfig';
-import MSSQLHighAvailabilityConfig from './RenderTables/MSSQLHighAvailabilityConfig';
-import OperatingSystemTable from './RenderTables/OperatingSystemTable';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../../GetWell/StorageCardComponent/DialogContent/DialogContent';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
@@ -84,6 +81,7 @@ import {
     oracleCardData
 } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 import { engineTypeBasedResourceStr } from '../../WellArchitectedTab/WellArchitectedTabUtils';
+import DashboardMultiTableConfig from './RenderTables/DashboardConfigsMultiTable';
 
 const DashboardInnerPage = () => {
     const { t } = useTranslation();
@@ -100,6 +98,7 @@ const DashboardInnerPage = () => {
         optimizationScore: '',
         dismissedInstances: '',
         activatingInstances: '',
+        partialDismissInstances: '',
         totalInstances: '',
         optimizedInstances: '',
         notOptimizedInstances: '',
@@ -1786,11 +1785,15 @@ const DashboardInnerPage = () => {
                     />
                 );
             case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
-                return <OntapConfig />;
             case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM:
-                return <OperatingSystemTable />;
             case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
-                return <MSSQLHighAvailabilityConfig />;
+                return (
+                    <DashboardMultiTableConfig
+                        configType={selectedConfig}
+                        handleSingleDismissPostpone={handleSingleDismissPostpone}
+                        handleBulkDismissPostpone={handleBulkDismissPostpone}
+                    />
+                );
 
             // Oracle configurations inner page
             case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:

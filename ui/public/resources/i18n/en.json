@@ -15,9 +15,11 @@
             "resource-view-fix-hover-msg": "Selecting 'View and Fix' will redirect you to the Inventory tab",
             "well-architected-score-hover-msg": "Selecting 'Investigate' will redirect you to the Well-architected tab",
             "registered-resources": "Analyzed resources",
-            "registered-resource": "Analyzed resource"
+            "registered-resource": "Analyzed resource",
+            "fix-after-operation-ends": "You will be able to fix after the current well-architected operation ends."
         },
         "general": {
+            "dismiss": "Dismiss",
             "inventory": "Inventory",
             "view-and-fix": "View and fix",
             "instance-well-architected-dashboard": "instance well-architected dashboard",
@@ -72,7 +74,8 @@
             "cancel": "Cancel",
             "dashboard": "Dashboard",
             "well-architected": "Well-architected",
-            "recommendations": "Recommendations"
+            "recommendations": "Recommendations",
+            "storage-multipath": "Storage multipath"
         },
         "banner": {
             "pgsql-deployment": "Deployment",
@@ -333,6 +336,8 @@
             "dismissed-databases": "Dismissed databases",
             "pending-instances": "Pending instances",
             "pending-databases": "Pending databases",
+            "partial-dismissed-instances": "Partial dismissed instances",
+            "partial-dismissed-databases": "Partial dismissed databases",
             "total-instances": "Total instances",
             "total-databases": "Total databases",
             "fix": "Fix",
@@ -838,7 +843,8 @@
                     "status": "Status",
                     "severity": "Severity",
                     "impacted-resources": "Impacted resources",
-                    "tags": "Tags"
+                    "tags": "Tags",
+                    "recommendations": "Recommendations"
                 },
                 "recommendation": "View recommendation"
             },

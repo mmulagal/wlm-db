@@ -112,6 +112,39 @@
             height: 40px;
         }
     }
+
+    .menuContainer {
+        display: flex;
+        align-items: center;
+        gap: 48px;
+        justify-content: flex-end;
+
+        [class*='dsButtons'] {
+            border-radius: 20px !important;
+        }
+
+        .reactiveButtonContainer {
+            display: flex;
+            gap: 34px;
+
+            .postponeContainer {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                width: 204px;
+            }
+
+            [class*='dsButtons'] {
+                border-radius: 20px !important;
+            }
+        }
+    }
+
+    .toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 }
 
 .colorSet {

@@ -4607,7 +4607,8 @@ export const updateConfigStateStatus = (
     dispatch: any,
     action: any,
     apiResponseData?: any,
-    engineType?: string
+    engineType?: string,
+    activeTab?: string
 ) => {
     let setAction = '';
     if (action === CONFIG_STATE_ACTIONS.DISMISS) {
@@ -4624,7 +4625,10 @@ export const updateConfigStateStatus = (
 
     rowList?.forEach((rowData: any) => {
         // Special handling for MSSQL HA card-level operations
-        if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) {
+        if (
+            activeTab === WLF_TABS.WELL_ARCHITECTED_TAB &&
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY
+        ) {
             const currentState = store.getState();
 
             // Extract timestamp from API response if available
@@ -4646,7 +4650,7 @@ export const updateConfigStateStatus = (
         }
 
         // Special handling for OS card-level operations
-        if (rowData?.name === ASSESSMENT_CONFIG_NAMES.OS) {
+        if (activeTab === WLF_TABS.WELL_ARCHITECTED_TAB && rowData?.name === ASSESSMENT_CONFIG_NAMES.OS) {
             const currentState = store.getState();
 
             // Extract timestamp from API response if available
@@ -4693,8 +4697,14 @@ export const updateConfigStateStatus = (
                         }
 
                         const otherConfigMap: any = CONFIG_NAME_TO_ID_MAPPING.NON_STORAGE_CONFIG_MAP;
-                        const haMssqlMap: any = CONFIG_NAME_TO_ID_MAPPING.HA_MSSQL;
-                        if (haMssqlMap[rowData?.name]) {
+                        const haMssqlMap: any = [
+                            'shared-storage',
+                            'cluster-quorum',
+                            'heartbeat-settings',
+                            'sqlServer-service',
+                            'drive-letter'
+                        ];
+                        if (haMssqlMap.includes(rowData?.id)) {
                             return {
                                 ...instance,
                                 assessments: {
@@ -4707,8 +4717,7 @@ export const updateConfigStateStatus = (
                                                   const existingHa =
                                                       instance?.assessments?.dismissedConfigurations?.highAvailability;
                                                   const itemIndex = existingHa.findIndex(
-                                                      (item: any) =>
-                                                          item?.configurationName === haMssqlMap[rowData?.name]
+                                                      (item: any) => item?.configurationName === rowData?.id
                                                   );
 
                                                   if (itemIndex !== -1) {
@@ -4728,7 +4737,7 @@ export const updateConfigStateStatus = (
                                                   return [
                                                       ...existingHa,
                                                       {
-                                                          configurationName: haMssqlMap[rowData?.name],
+                                                          configurationName: rowData?.id,
                                                           configState: setAction,
                                                           endTime: rowData?.endTime,
                                                           startTime: rowData?.startTime
@@ -4737,21 +4746,12 @@ export const updateConfigStateStatus = (
                                               })()
                                             : [
                                                   {
-                                                      configurationName: haMssqlMap[rowData?.name],
+                                                      configurationName: rowData?.id,
                                                       configState: setAction,
                                                       endTime: rowData?.endTime,
                                                       startTime: rowData?.startTime
                                                   }
                                               ]
-                                    } || {
-                                        highAvailability: [
-                                            {
-                                                configurationName: haMssqlMap[rowData?.name],
-                                                configState: setAction,
-                                                endTime: rowData?.endTime,
-                                                startTime: rowData?.startTime
-                                            }
-                                        ]
                                     }
                                 }
                             };
@@ -4808,17 +4808,6 @@ export const updateConfigStateStatus = (
                                                           startTime: rowData?.startTime
                                                       }
                                                   ]
-                                        }
-                                    } || {
-                                        storage: {
-                                            sizing: [
-                                                {
-                                                    configurationName: storageSizingMap[rowData?.name],
-                                                    configState: setAction,
-                                                    endTime: rowData?.endTime,
-                                                    startTime: rowData?.startTime
-                                                }
-                                            ]
                                         }
                                     }
                                 }
@@ -4877,17 +4866,6 @@ export const updateConfigStateStatus = (
                                                       }
                                                   ]
                                         }
-                                    } || {
-                                        storage: {
-                                            layout: [
-                                                {
-                                                    configurationName: storageLayoutMap[rowData?.name],
-                                                    configState: setAction,
-                                                    endTime: rowData?.endTime,
-                                                    startTime: rowData?.startTime
-                                                }
-                                            ]
-                                        }
                                     }
                                 }
                             };
@@ -4907,19 +4885,39 @@ export const updateConfigStateStatus = (
                                                     ?.configuration,
                                                 [key]: instance?.assessments?.dismissedConfigurations?.storage
                                                     ?.configuration?.[key]
-                                                    ? instance?.assessments?.dismissedConfigurations?.storage?.configuration?.[
-                                                          key
-                                                      ].map((item: any) => {
-                                                          if (item?.configurationName === rowData?.id) {
-                                                              return {
-                                                                  ...item,
+                                                    ? (() => {
+                                                          const existingList =
+                                                              instance?.assessments?.dismissedConfigurations?.storage
+                                                                  ?.configuration?.[key];
+                                                          const existingItem = existingList.find(
+                                                              (item: any) => item?.configurationName === rowData?.id
+                                                          );
+
+                                                          if (existingItem) {
+                                                              // Update existing item
+                                                              return existingList.map((item: any) => {
+                                                                  if (item?.configurationName === rowData?.id) {
+                                                                      return {
+                                                                          ...item,
+                                                                          configState: setAction,
+                                                                          endTime: rowData?.endTime,
+                                                                          startTime: rowData?.startTime
+                                                                      };
+                                                                  }
+                                                                  return item;
+                                                              });
+                                                          }
+                                                          // If ID not found, add new entry to existing list
+                                                          return [
+                                                              ...existingList,
+                                                              {
+                                                                  configurationName: rowData?.id,
                                                                   configState: setAction,
                                                                   endTime: rowData?.endTime,
                                                                   startTime: rowData?.startTime
-                                                              };
-                                                          }
-                                                          return item;
-                                                      })
+                                                              }
+                                                          ];
+                                                      })()
                                                     : [
                                                           {
                                                               configurationName: rowData?.id,
@@ -5172,17 +5170,6 @@ export const updateConfigStatePerInstance = (
                               }
                           ]
                 }
-            } || {
-                storage: {
-                    sizing: [
-                        {
-                            configurationName: name,
-                            configState: setAction,
-                            endTime,
-                            startTime
-                        }
-                    ]
-                }
             }
         };
     }
@@ -5228,15 +5215,6 @@ export const updateConfigStatePerInstance = (
                               startTime
                           }
                       ]
-            } || {
-                highAvailability: [
-                    {
-                        configurationName: name,
-                        configState: setAction,
-                        endTime,
-                        startTime
-                    }
-                ]
             }
         };
     }
@@ -5286,17 +5264,6 @@ export const updateConfigStatePerInstance = (
                                   startTime
                               }
                           ]
-                }
-            } || {
-                storage: {
-                    layout: [
-                        {
-                            configurationName: name,
-                            configState: setAction,
-                            endTime,
-                            startTime
-                        }
-                    ]
                 }
             }
         };
@@ -5721,6 +5688,7 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
     const optimizedInstances = configData?.[configKey]?.optimized || 0;
     const dismissedInstances = configData?.[configKey]?.dismissed || 0;
     const activatingInstances = configData?.[configKey]?.activating || 0;
+    const partialDismissInstances = configData?.[configKey]?.partiallyDismissed || 0;
     let configStateValue = '';
     if (!configData?.configState?.[configKey] || configData?.configState?.[configKey]?.includes(CONFIG_STATES.ACTIVE)) {
         configStateValue = CONFIG_STATES_UI.ACTIVE;
@@ -5757,6 +5725,7 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
                 optimizedInstances,
                 dismissedInstances,
                 activatingInstances,
+                partialDismissInstances,
                 notOptimizedInstances: totalDb - (optimizedInstances + dismissedInstances + activatingInstances),
                 optimizationScore: `${Math.round((optimizedInstances / (totalDb || 1)) * 100)}%`,
                 severity: configData?.severityObj?.[configKey] || '',
@@ -5771,6 +5740,7 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
                 optimizedInstances,
                 dismissedInstances,
                 activatingInstances,
+                partialDismissInstances,
                 notOptimizedInstances:
                     configData?.total - (optimizedInstances + dismissedInstances + activatingInstances),
                 optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,

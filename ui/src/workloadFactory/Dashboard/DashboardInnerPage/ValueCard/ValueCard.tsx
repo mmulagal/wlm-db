@@ -10,6 +10,7 @@ type ValueCardProps = {
         totalInstances?: number;
         dismissedInstances?: number;
         activatingInstances?: number;
+        partialDismissInstances?: number;
         severity?: string;
     };
     configEngineType?: string;
@@ -22,6 +23,7 @@ const ValueCard = ({ valueCardData, configEngineType }: ValueCardProps) => {
         totalInstances,
         dismissedInstances,
         activatingInstances,
+        partialDismissInstances,
         severity
     } = valueCardData;
     const { t } = useTranslation();
@@ -132,6 +134,29 @@ const ValueCard = ({ valueCardData, configEngineType }: ValueCardProps) => {
                                 configEngineType,
                                 t('databases.well-architect.pending-instances'),
                                 t('databases.well-architect.pending-databases')
+                            )}
+                        </DsTypography>
+                    </div>
+                )}
+
+                {partialDismissInstances !== 0 && (
+                    <div className={styles.column} style={{ borderRight: '1px solid var(--border)' }}>
+                        <DsTypography variant="Regular_24" className={styles.titleText} style={{ lineHeight: 'unset' }}>
+                            {partialDismissInstances}
+                        </DsTypography>
+                        <DsTypography
+                            className={styles.label}
+                            title={engineTypeBasedResourceStr(
+                                configEngineType,
+                                t('databases.well-architect.partial-dismissed-instances'),
+                                t('databases.well-architect.partial-dismissed-databases')
+                            )}
+                            variant="Regular_14"
+                        >
+                            {engineTypeBasedResourceStr(
+                                configEngineType,
+                                t('databases.well-architect.partial-dismissed-instances'),
+                                t('databases.well-architect.partial-dismissed-databases')
                             )}
                         </DsTypography>
                     </div>

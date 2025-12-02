@@ -10,7 +10,8 @@ import {
     FINDINGS,
     GETWELL_STATUS,
     INVENTORY_STATUS,
-    STATUS_CONST
+    STATUS_CONST,
+    WLF_TABS
 } from '../../../utils/consts';
 import { categorizeStateInstances } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { updateConfigStateStatus } from '../../GetWell/GetWellUtils';
@@ -19,6 +20,15 @@ import { updateConfigStateStatusOracle } from '../../Oracle/OracleResourcePages/
 
 const getPayloadType = (type: string) => {
     switch (type) {
+        case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
+            type = 'ontap-volumes';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM:
+            type = 'operating-system';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
+            type = 'high-availability';
+            break;
         case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
             type = 'performance-tier';
             break;
@@ -120,8 +130,14 @@ const createSuccessMsg = (
     translation: any,
     configEngineType?: string
 ) => {
-    const successCount = successList.length;
-    const failedCount = failedList.length;
+    const uniqueSuccessEntries = new Set(
+        successList.map((item: any) => `${item.credentialId}_${item.regionId}_${item.hostId}_${item.instanceId}`)
+    );
+    const successCount = uniqueSuccessEntries.size;
+    const uniqueFailedEntries = new Set(
+        failedList.map((item: any) => `${item.credentialId}_${item.regionId}_${item.hostId}_${item.instanceId}`)
+    );
+    const failedCount = uniqueFailedEntries.size;
     const rowLength = rowData?.length;
 
     let notificationType = '';
@@ -332,7 +348,14 @@ export const callDashboardDismissApi = (
                 if (configEngineType === DBType.ORACLE) {
                     updateConfigStateStatusOracle(successList, dispatch, action, res?.data);
                 } else {
-                    updateConfigStateStatus(successList, dispatch, action, res?.data);
+                    updateConfigStateStatus(
+                        successList,
+                        dispatch,
+                        action,
+                        res?.data,
+                        configEngineType,
+                        WLF_TABS.DASHBOARD
+                    );
                 }
 
                 dispatch(
