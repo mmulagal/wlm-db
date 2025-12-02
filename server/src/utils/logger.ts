@@ -4,6 +4,7 @@ import log4js, { Configuration, Layout, LoggingEvent, PatternLayout } from 'log4
 import config from 'config';
 import { isObject, isArray, isPlainObject, isEmpty, isString, isObjectLike } from 'lodash-es';
 import { context, trace } from '@opentelemetry/api';
+import { stringify } from 'flatted';
 import { ACCOUNT_ID, REQUEST_ID, SECRET_WORDS } from './consts';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
@@ -151,7 +152,7 @@ function stringifyObject(obj: any) {
     if (obj instanceof Error) {
         return obj;
     }
-    return JSON.stringify(obj);
+    return stringify(obj);
 }
 
 initialize();

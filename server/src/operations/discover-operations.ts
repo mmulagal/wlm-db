@@ -34,7 +34,8 @@ import {
     IS_DEMO_FLOW,
     getRedisConnection,
     generateHash,
-    isRedisConnected
+    isRedisConnected,
+    summarizeFirstLevel
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -978,9 +979,13 @@ async function prepareDbScriptsForManage(
     ec2InstanceId: string,
     parentJobId: string
 ) {
-    logger.info(
-        `Prepare database scripts for managing ${ec2InstanceId}: { accountId, credentialsId, region, ec2InstanceId, parentJobId }`
-    );
+    logger.info(`Prepare database scripts for managing ${ec2InstanceId}`, {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        parentJobId
+    });
 
     let jobStatusRecord: UpdateJobRecordType;
 
@@ -1036,9 +1041,13 @@ async function preparePsModulesForManage(
     ec2InstanceId: string,
     parentJobId: string
 ) {
-    logger.info(
-        `Prepare database scripts for managing ${ec2InstanceId}: { accountId, credentialsId, region, ec2InstanceId, parentJobId }`
-    );
+    logger.info(`Prepare database scripts for managing ${ec2InstanceId}`, {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        parentJobId
+    });
 
     let jobStatusRecord: UpdateJobRecordType;
 
@@ -1576,7 +1585,7 @@ function getDiscoveredOracleInstancesStorageDetails(
         fsIdWithFsxInfo,
         subnetListMap,
         ebsVolumeToAvailabilityZoneMap,
-        oracleInstanceStorageDetails
+        oracleInstanceStorageDetails: summarizeFirstLevel(oracleInstanceStorageDetails)
     });
 
     const storageTypes = [];

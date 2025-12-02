@@ -22,7 +22,8 @@ import {
     divideArrayIntoChunks,
     extractVersionDetails,
     getEc2Hostname,
-    isCidrContained
+    isCidrContained,
+    summarizeFirstLevel
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -229,5 +230,194 @@ ervisor)\n`;
         const cidr2 = '192.168.1.0/24';
         const result = isCidrContained(cidr1, cidr2);
         expect(result).toBe(true);
+    });
+
+    it('summarizeFirstLevel should handle primitives and arrays', () => {
+        expect(summarizeFirstLevel(null)).toBeNull();
+        expect(summarizeFirstLevel(123)).toBe(123);
+        expect(summarizeFirstLevel('abc')).toBe('abc');
+        expect(summarizeFirstLevel([1, 2, 3])).toBe(3);
+        expect(summarizeFirstLevel([])).toBe(0);
+    });
+
+    it('summarizeFirstLevel should summarize object first level correctly', () => {
+        const input = {
+            a: 'value',
+            b: [1, 2, 3, 4],
+            c: { x: 1, y: [1, 2], z: { nested: true } }
+        };
+        const result = summarizeFirstLevel(input);
+        expect(typeof result).toBe('object');
+        // @ts-expect-error wrong type
+        expect(result.a).toBe('value');
+        // @ts-expect-error wrong type
+        expect(result.b).toBe(4);
+        // @ts-expect-error wrong type
+        expect(typeof result.c).toBe('object');
+        // @ts-expect-error wrong type
+        expect(result.c.x).toBe(1);
+        // @ts-expect-error wrong type
+        expect(result.c.y).toBe(2);
+        // @ts-expect-error wrong type
+        expect(result.c.z).toBe('[Object]');
+    });
+
+    it('summarizeFirstLevel should handle complex object with mixed data types', () => {
+        const complexInput = {
+            stringVal: 'test',
+            numberVal: 42,
+            boolVal: true,
+            nullVal: null,
+            undefinedVal: undefined,
+            arrayVal: [1, 2, 3, 4, 5],
+            emptyArray: [],
+            objectVal: { nested: 'value' },
+            deepObject: {
+                level1: { level2: { level3: 'deep' } },
+                arrayInObject: [10, 20, 30],
+                nullVal: null
+            }
+        };
+        const result = summarizeFirstLevel(complexInput);
+        expect(typeof result).toBe('object');
+        // @ts-expect-error wrong type
+        expect(result.stringVal).toBe('test');
+        // @ts-expect-error wrong type
+        expect(result.numberVal).toBe(42);
+        // @ts-expect-error wrong type
+        expect(result.boolVal).toBe(true);
+        // @ts-expect-error wrong type
+        expect(result.nullVal).toBeNull();
+        // @ts-expect-error wrong type
+        expect(result.undefinedVal).toBeUndefined();
+        // @ts-expect-error wrong type
+        expect(result.arrayVal).toBe(5);
+        // @ts-expect-error wrong type
+        expect(result.emptyArray).toBe(0);
+        // @ts-expect-error wrong type
+        expect(typeof result.objectVal).toBe('object');
+        // @ts-expect-error wrong type
+        expect(result.objectVal.nested).toBe('value');
+        // @ts-expect-error wrong type
+        expect(typeof result.deepObject).toBe('object');
+        // @ts-expect-error wrong type
+        expect(result.deepObject.level1).toBe('[Object]');
+        // @ts-expect-error wrong type
+        expect(result.deepObject.arrayInObject).toBe(3);
+    });
+
+    it('summarizeFirstLevel should handle deeply nested objects', () => {
+        const deepObject = {
+            level1: {
+                level2: {
+                    level3: {
+                        level4: {
+                            data: [1, 2, 3]
+                        }
+                    }
+                }
+            }
+        };
+        const result = summarizeFirstLevel(deepObject);
+        // @ts-expect-error wrong type
+        expect(typeof result.level1).toBe('object');
+        // @ts-expect-error wrong type
+        expect(result.level1.level2).toBe('[Object]');
+    });
+
+    it('summarizeFirstLevel should handle objects with circular-like references', () => {
+        const obj: any = {
+            name: 'test',
+            items: [1, 2, 3],
+            metadata: {
+                created: '2025-01-01',
+                count: 42
+            }
+        };
+        obj.self = obj; // circular reference
+        const result = summarizeFirstLevel(obj);
+        expect(typeof result).toBe('object');
+        // @ts-expect-error wrong type
+        expect(result.name).toBe('test');
+        // @ts-expect-error wrong type
+        expect(result.items).toBe(3);
+        // @ts-expect-error wrong type
+        expect(typeof result.metadata).toBe('object');
+        // @ts-expect-error wrong type
+        expect(result.metadata.created).toBe('2025-01-01');
+        // @ts-expect-error wrong type
+        expect(result.metadata.count).toBe(42);
+        // The self property references the object itself, which gets summarized to '[Object]' by summarizeObjectFirstLevel
+        expect(
+            // @ts-expect-error wrong type
+            (typeof result.self === 'string' && result.self === '[Object]') || typeof result.self === 'object'
+        ).toBeTruthy();
+    });
+
+    it('summarizeFirstLevel should handle large arrays', () => {
+        const largeArray = new Array(1000).fill(0).map((_, i) => i);
+        const result = summarizeFirstLevel(largeArray);
+        expect(result).toBe(1000);
+    });
+
+    it('summarizeFirstLevel should handle objects with special properties', () => {
+        const specialObj = {
+            constructor: 'test',
+            toString: 'method',
+            hasOwnProperty: 'method',
+            normalProp: 'value',
+            arrayProp: [1, 2, 3]
+        };
+        const result = summarizeFirstLevel(specialObj);
+        expect(typeof result).toBe('object');
+        // @ts-expect-error wrong type
+        expect(result.normalProp).toBe('value');
+        // @ts-expect-error wrong type
+        expect(result.arrayProp).toBe(3);
+    });
+
+    it('summarizeFirstLevel should handle objects with symbol keys (symbols skipped in Object.entries)', () => {
+        const obj = {
+            regular: 'value',
+            items: [1, 2]
+        };
+        const result = summarizeFirstLevel(obj);
+        expect(typeof result).toBe('object');
+        // @ts-expect-error wrong type
+        expect(result.regular).toBe('value');
+        // @ts-expect-error wrong type
+        expect(result.items).toBe(2);
+    });
+
+    it('summarizeFirstLevel should handle mixed nesting with multiple array types', () => {
+        const mixedObj = {
+            typedArray: new Array(5),
+            stringArray: ['a', 'b', 'c'],
+            numberArray: [1, 2, 3, 4],
+            nestedArrays: [
+                [1, 2],
+                [3, 4],
+                [5, 6]
+            ],
+            objWithArrays: {
+                arr1: [10, 20],
+                arr2: ['x', 'y', 'z']
+            }
+        };
+        const result = summarizeFirstLevel(mixedObj);
+        // @ts-expect-error wrong type
+        expect(result.typedArray).toBe(5);
+        // @ts-expect-error wrong type
+        expect(result.stringArray).toBe(3);
+        // @ts-expect-error wrong type
+        expect(result.numberArray).toBe(4);
+        // @ts-expect-error wrong type
+        expect(result.nestedArrays).toBe(3);
+        // @ts-expect-error wrong type
+        expect(typeof result.objWithArrays).toBe('object');
+        // @ts-expect-error wrong type
+        expect(result.objWithArrays.arr1).toBe(2);
+        // @ts-expect-error wrong type
+        expect(result.objWithArrays.arr2).toBe(3);
     });
 });

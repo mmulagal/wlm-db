@@ -3019,7 +3019,12 @@ async function unmanageDatabaseInstance(
     resourceId: string,
     databaseInstanceList: string
 ) {
-    logger.info('Unmanaging database instances', { accountId, credentialsId, resourceId, databaseInstanceList });
+    logger.info('Unmanaging database instances', {
+        accountId,
+        credentialsId,
+        resourceId,
+        databaseInstanceListLength: databaseInstanceList?.length ?? 0
+    });
 
     const databaseInstanceResponse: {
         databaseInstanceId: string;

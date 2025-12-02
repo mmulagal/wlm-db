@@ -23,7 +23,12 @@ import {
     SSM_RUN_SHELL_SCRIPT_DOC,
     SSM_RUN_SHELL_SCRIPT_DOC_VERSION
 } from './consts';
-import { parseMultipleCommandResponse, sqlResponseParsing, IS_DEMO_FLOW } from '../../../utils/utils';
+import {
+    parseMultipleCommandResponse,
+    sqlResponseParsing,
+    IS_DEMO_FLOW,
+    summarizeFirstLevel
+} from '../../../utils/utils';
 import {
     DatabaseHostInstanceSummaryResponseType,
     DatabasesResponseType,
@@ -171,7 +176,7 @@ function getOracleDatabaseInstancesDetails(
     logger.info('Getting oracle database Instances details for resource', {
         credentialsId,
         region,
-        instancesManaged,
+        instancesManaged: instancesManaged?.length ?? 0,
         resourceId
     });
 
@@ -579,7 +584,7 @@ async function getOracleDatabaseInstancesSummary(
         credentialsId,
         activeNodeInstanceId,
         region,
-        databaseInstances,
+        databaseInstances: summarizeFirstLevel(databaseInstances),
         fields,
         resourceDetails,
         standbyNodeInstanceId,

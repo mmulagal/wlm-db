@@ -36,7 +36,8 @@ import {
     sleep,
     retryWithDelay,
     getServerNameWithHostname,
-    parseMultipleCommandResponse
+    parseMultipleCommandResponse,
+    summarizeFirstLevel
 } from '../utils/utils';
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
@@ -319,7 +320,7 @@ async function createExportPolicy(
 }
 
 async function optimizeStorageAttributes(params: OptimizeStorageOperationParams) {
-    logger.info('Optimizing storage for', params);
+    logger.info('Optimizing storage for', summarizeFirstLevel(params));
     const {
         accountId,
         region,
@@ -892,7 +893,7 @@ async function modifySizingAttributes(
         filesystemId,
         typesList,
         parentJobId,
-        configData,
+        configData: summarizeFirstLevel(configData),
         serverNameWithHostName,
         databaseHostId,
         databaseInstanceId

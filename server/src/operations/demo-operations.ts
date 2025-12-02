@@ -46,7 +46,7 @@ import {
     optimizeStorageTierJobData,
     enableMPIOJobData
 } from '../utils/demo-utils/demoMockdata';
-import { generateRandomIP } from '../utils/utils';
+import { generateRandomIP, summarizeFirstLevel } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
 import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
@@ -578,7 +578,12 @@ async function updateSandboxDBIntoInstanceData(
     sandboxDetails: Sandbox,
     instanceMetaData: DatabaseInstanceMetadata
 ) {
-    logger.info('updating sandbox db into database instance  meta data', accountId, instanceID, sandboxDetails);
+    logger.info(
+        'updating sandbox db into database instance  meta data',
+        accountId,
+        instanceID,
+        summarizeFirstLevel(sandboxDetails)
+    );
 
     // this is used to retreive the newly created user databases in database list for demo using meta data
     if (instanceMetaData.sandboxes) {

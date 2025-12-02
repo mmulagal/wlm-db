@@ -1374,6 +1374,58 @@ function isMultiAzDeployment(sqlServerDeploymentType: string) {
     );
 }
 
+type SummaryInner = string | number | boolean | null | undefined | '[Object]';
+type SummaryObject = Record<string, SummaryInner>;
+export type Summary = string | number | boolean | null | undefined | SummaryObject;
+
+function summarizeInnerValue(val: any): SummaryInner {
+    if (!val || ['string', 'number', 'boolean'].includes(typeof val)) {
+        return val;
+    }
+    if (Array.isArray(val)) {
+        return val.length ?? 0;
+    }
+    if (typeof val === 'object') {
+        return '[Object]';
+    }
+    // fallback for other types (symbol, bigint, function) -> stringified
+    return String(val) as SummaryInner;
+}
+
+function summarizeObjectFirstLevel(obj: Record<string, any>): SummaryObject {
+    return Object.fromEntries(Object.entries(obj).map(([k, v]): [string, SummaryInner] => [k, summarizeInnerValue(v)]));
+}
+
+function summarizeFirstLevel(input: any): Summary {
+    if (!input || ['string', 'number', 'boolean'].includes(typeof input)) {
+        return input;
+    }
+
+    if (Array.isArray(input)) {
+        return input.length ?? 0;
+    }
+
+    if (typeof input === 'object') {
+        return Object.fromEntries(
+            Object.entries(input).map(([key, val]) => {
+                if (!val || ['string', 'number', 'boolean'].includes(typeof val)) {
+                    return [key, val];
+                }
+                if (Array.isArray(val)) {
+                    return [key, val.length ?? 0];
+                }
+                if (typeof val === 'object') {
+                    return [key, summarizeObjectFirstLevel(val)];
+                }
+                return [key, String(val)];
+            })
+        ) as SummaryObject;
+    }
+
+    // fallback for other types
+    return String(input) as Summary;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1453,5 +1505,6 @@ export {
     getFsxNameFromTags,
     IS_DEMO_FLOW,
     isMultiAzDeployment,
-    isRedisConnected
+    isRedisConnected,
+    summarizeFirstLevel
 };
