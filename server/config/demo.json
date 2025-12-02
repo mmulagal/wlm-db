@@ -16,8 +16,6 @@
             "https://staging.cloudmanager.netapp.com",
             "https://staging.console.bluexp.netapp.com",
             "https://staging.console.netapp.com",
-            "http://localhost:4300",
-            "http://127.0.0.1:4300",
             "https://console.workloads.netapp.com",
             "https://cloudmanager.netapp.com",
             "https://api.workloads.netapp.com",

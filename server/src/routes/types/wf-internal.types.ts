@@ -29,8 +29,10 @@ const ListVolumesQueryParams = Type.Object({
 });
 
 const HomepageStatusQueryParams = Type.Object({
-    credentialsIds: Type.Optional(Type.String({ format: 'uuid' })),
-    regions: Type.Optional(Type.String({ enum: AWS_REGION_KEYS })),
+    credentialsIds: Type.Optional(Type.String()),
+    regions: Type.Optional(
+        Type.String({ pattern: `^(${AWS_REGION_KEYS.join('|')})(\\s*,\\s*(${AWS_REGION_KEYS.join('|')}))*$` })
+    ),
     limit: Type.Optional(Type.Number())
 });
 

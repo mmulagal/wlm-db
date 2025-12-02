@@ -109,6 +109,7 @@ await initiateSecrets();
 logger.info('Secrets initiated');
 logger.info('Initializing app');
 const ALLOWED_ORIGINS = new Set(config.get<string[]>('cors.allowed-origins') || []);
+const LOCAL_HOSTS = ['http://localhost:', 'http://127.0.0.1:'];
 
 logger.info(`CORS allowed origins: ${Array.from(ALLOWED_ORIGINS).join(', ')}`);
 const app = fastify({
@@ -127,6 +128,11 @@ const app = fastify({
     .register(cors, {
         origin: (origin, callback) => {
             if (!origin) {
+                return callback(null, true);
+            }
+
+            // Allow all localhost ports
+            if (LOCAL_HOSTS.some(prefix => origin.startsWith(prefix))) {
                 return callback(null, true);
             }
 
