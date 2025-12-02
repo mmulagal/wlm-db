@@ -10,7 +10,8 @@ import { DATABASE_TYPE } from '../utils/const';
 export default async function collectLogs(
     databaseType: string,
     logsFolderPath: string,
-    timestampLastLogProcessed: number,
+    startLogsAnalysisFromTimestamp: number,
+    endLogsAnalysisAtTimestamp: number,
     logsCount: number,
     databaseInstanceName?: string,
     ec2InstanceId?: string
@@ -20,7 +21,8 @@ export default async function collectLogs(
     if (databaseType === DATABASE_TYPE.ORACLE) {
         const logsRecords = await fetchAllOracleLogs({
             databaseInstanceName,
-            startTime: timestampLastLogProcessed,
+            startTime: startLogsAnalysisFromTimestamp,
+            endTime: endLogsAnalysisAtTimestamp,
             ec2InstanceId
         });
         return getUniqueOracleErrorsAndRespectiveCount(logsRecords, logsCount);
@@ -31,7 +33,7 @@ export default async function collectLogs(
     const filteredFiles = files.filter(file => {
         const filePath = join(logsFolderPath, file);
         const stats = statSync(filePath);
-        return stats.mtimeMs > timestampLastLogProcessed;
+        return stats.mtimeMs > startLogsAnalysisFromTimestamp;
     });
 
     const filesToProcess = filteredFiles.length > 0 ? filteredFiles : files;
@@ -43,7 +45,11 @@ export default async function collectLogs(
                 const filePath = join(logsFolderPath, file);
                 if (statSync(filePath).isFile()) {
                     logger.debug(`Processing file: ${filePath}`);
-                    const content = await readMsSqlLogsFile(filePath, timestampLastLogProcessed);
+                    const content = await readMsSqlLogsFile(
+                        filePath,
+                        startLogsAnalysisFromTimestamp,
+                        endLogsAnalysisAtTimestamp
+                    );
 
                     if (!isEmpty(content)) {
                         logs.push(...content);
@@ -60,7 +66,11 @@ export default async function collectLogs(
             filesToProcess.map(async file => {
                 const filePath = join(logsFolderPath, file);
                 if (statSync(filePath).isFile()) {
-                    const content = await readPostgresLogsFile(filePath, timestampLastLogProcessed);
+                    const content = await readPostgresLogsFile(
+                        filePath,
+                        startLogsAnalysisFromTimestamp,
+                        endLogsAnalysisAtTimestamp
+                    );
                     if (!isEmpty(content)) {
                         logs.push(...content);
                     }

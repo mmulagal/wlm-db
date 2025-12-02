@@ -29,13 +29,12 @@ import TOOLS from './utils/tools';
 import {
     getPowershellScript,
     getBashScript,
-    getSqlPlusScript,
     runPowerShellScript,
-    runSqlPlusScript,
     deleteOlderFilesInDirectory,
     safeParseJson,
     hoursAgoTimestamp,
-    toMB
+    toMB,
+    getHoursInMilliseconds
 } from './utils/utils';
 import logger from './utils/logging';
 import { ToolUse, ToolSpec, MessageObj, AgentArgs, ErrorLogWithScriptAndDetails, ErrorLog } from './utils/interfaces';
@@ -180,7 +179,12 @@ async function initiateLogsAnalysis(inputText: string) {
     logger.info('Step 2: Creating output directory and file paths.');
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
-    const startLogsAnalysisFromTimestamp = getStartTimestampForAnalysis(TIME_WINDOW_HOURS);
+    const startLogsAnalysisFromTimestamp = Number(TIMESTAMP_LAST_LOG_PROCESSED);
+    let endLogsAnalysisAtTimestamp = Number(startLogsAnalysisFromTimestamp) + getHoursInMilliseconds((TIME_WINDOW_HOURS));
+    if (endLogsAnalysisAtTimestamp > Date.now()) {
+        endLogsAnalysisAtTimestamp = Date.now();
+    }
+
     const outputDir = join(process.cwd(), 'output');
     if (!existsSync(outputDir)) {
         mkdirSync(outputDir);
@@ -215,6 +219,7 @@ async function initiateLogsAnalysis(inputText: string) {
                 uniqueQueryMap,
                 INFERENCE_CONFIG,
                 startLogsAnalysisFromTimestamp,
+                endLogsAnalysisAtTimestamp,
                 INSTANCE_ID
             );
         }
@@ -239,7 +244,7 @@ async function initiateLogsAnalysis(inputText: string) {
                 statusFilePath,
                 remediationRecommendation,
                 startTime: startLogsAnalysisFromTimestamp,
-                endTime: Date.now(),
+                endTime: endLogsAnalysisAtTimestamp,
                 totalTokens: {
                     tokenUsageForIntentIdentification: {
                         input: inputTokens,
@@ -305,7 +310,7 @@ function trackResourceUsage() {
     writeFileSync(
         usageLogFile,
         `${machineInfo}\n` +
-            'timestamp,cpu_percent,mem_mb,total_mem_mb,free_mem_mb,app_heap_mb,app_external_mb,cpu_cores\n',
+        'timestamp,cpu_percent,mem_mb,total_mem_mb,free_mem_mb,app_heap_mb,app_external_mb,cpu_cores\n',
         'utf-8'
     );
     let lastCpu = process.cpuUsage();
@@ -336,18 +341,6 @@ function trackResourceUsage() {
     }, 2000);
 }
 
-function getStartTimestampForAnalysis(timeWindowHours: number = 24) {
-    if (timeWindowHours > 24) {
-        // 24 is default value
-        // If the time window is greater than 24 hours, value specifically passed to the agent will be used.
-        logger.info(`Using time window of ${timeWindowHours} hours for logs analysis.`);
-        return hoursAgoTimestamp(timeWindowHours);
-    }
-    const windowHrAgoTimestamp = hoursAgoTimestamp(timeWindowHours);
-    const startTimestamp = Math.max(TIMESTAMP_LAST_LOG_PROCESSED, windowHrAgoTimestamp);
-    return startTimestamp;
-}
-
 function sumTokenUsage(
     recommendations: RemediationRecommendation[],
     key: 'causeIdentification' | 'remediationRecommendation',
@@ -367,6 +360,7 @@ async function handleToolUse(
     uniqueQueryMap: Map<string, string[]>,
     inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG,
     startLogsAnalysisFromTimestamp: number,
+    endLogsAnalysisAtTimestamp: number,
     ec2InstanceId: string
 ) {
     let stopReason = '';
@@ -388,6 +382,7 @@ async function handleToolUse(
                                     messages,
                                     INFERENCE_CONFIG,
                                     startLogsAnalysisFromTimestamp,
+                                    endLogsAnalysisAtTimestamp,
                                     ec2InstanceId
                                 );
                                 stopReason = 'end_turn'; // Stop further tool use
@@ -410,6 +405,7 @@ async function handleToolUse(
                                 uniqueQueryMap,
                                 inferenceConfig,
                                 startLogsAnalysisFromTimestamp,
+                                endLogsAnalysisAtTimestamp,
                                 INSTANCE_ID
                             );
                         }
@@ -434,8 +430,8 @@ async function analyzeErrorLogs(
         databaseType === DATABASE_TYPE.MSSQL
             ? MSSQL_ERROR_LOGS_ANALYZER_PROMPT
             : databaseType === DATABASE_TYPE.ORACLE
-            ? ORACLE_ERROR_LOGS_ANALYZER_PROMPT
-            : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
+                ? ORACLE_ERROR_LOGS_ANALYZER_PROMPT
+                : PGSQL_ERROR_LOGS_ANALYZER_PROMPT;
 
     // Sequential processing is intentional to avoid AWS Bedrock throttling
     /* eslint-disable no-await-in-loop */
@@ -589,8 +585,8 @@ async function checkAndExecuteAdditionalScript(
                         databaseType === DATABASE_TYPE.MSSQL
                             ? await runPowerShellScript(getPowershellScript(sql, databaseInstanceName!, sqlAuthEnabled))
                             : databaseType === DATABASE_TYPE.ORACLE
-                            ? 'test' // await runSqlPlusScript(getSqlPlusScript(sql, databaseInstanceName, INSTANCE_ID))
-                            : await runBashScript(getBashScript(sql));
+                                ? 'test' // await runSqlPlusScript(getSqlPlusScript(sql, databaseInstanceName, INSTANCE_ID))
+                                : await runBashScript(getBashScript(sql));
                     const errorAndCauseWithAdditionalInfo = value.map((val: ErrorLogWithScriptAndDetails) => ({
                         ...val,
                         additionalInfo: response
@@ -622,8 +618,8 @@ async function recommendRemediation(
         databaseType === DATABASE_TYPE.MSSQL
             ? REMIDIATION_RECOMMENDATION_PROMPT
             : databaseType === DATABASE_TYPE.ORACLE
-            ? ORACLE_REMEDIATION_RECOMMENDATION_PROMPT
-            : PGSQL_REMEDIATION_RECOMMENDATION_PROMPT;
+                ? ORACLE_REMEDIATION_RECOMMENDATION_PROMPT
+                : PGSQL_REMEDIATION_RECOMMENDATION_PROMPT;
 
     /* eslint-disable no-await-in-loop */
     for (let index = 0; index < result.length; index++) {
@@ -799,18 +795,25 @@ async function analyzeDatabaseApplicationLogs(
     messages: MessageObj[],
     inferenceConfig: InferenceConfiguration = INFERENCE_CONFIG,
     startLogsAnalysisFromTimestamp: number,
+    endLogsAnalysisAtTimestamp: number,
     ec2InstanceId: string
 ) {
-    logger.info('Analyzing database application logs.', { logsFolderPath, sqlAuthEnabled, databaseInstanceName });
+    logger.info('Analyzing database application logs.', {
+        logsFolderPath,
+        sqlAuthEnabled,
+        databaseInstanceName,
+        startLogsAnalysisFromTimestamp,
+        endLogsAnalysisAtTimestamp
+    });
 
     const databaseDetails =
         DATABASE_TYPE_ARG !== DATABASE_TYPE.ORACLE
             ? await getDatabaseDetails(logsFolderPath)
             : {
-                  databaseType: DATABASE_TYPE.ORACLE,
-                  databaseVersion: 'Unknown',
-                  logFile: 'alert.log'
-              };
+                databaseType: DATABASE_TYPE.ORACLE,
+                databaseVersion: 'Unknown',
+                logFile: 'alert.log'
+            };
     // Collect logs based on the identified database type
     const { databaseType: dbType = '' } = databaseDetails || {};
 
@@ -818,6 +821,7 @@ async function analyzeDatabaseApplicationLogs(
         dbType,
         logsFolderPath,
         startLogsAnalysisFromTimestamp,
+        endLogsAnalysisAtTimestamp,
         LOGS_COUNT,
         databaseInstanceName,
         ec2InstanceId

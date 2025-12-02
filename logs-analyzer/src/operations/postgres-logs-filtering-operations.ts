@@ -11,9 +11,16 @@ interface PostgresLog {
     severity: string;
 }
 
-async function readPostgresLogsFile(filePath: string, timestampLastLogProcessed: number = 1): Promise<PostgresLog[]> {
+async function readPostgresLogsFile(
+    filePath: string,
+    startLogsAnalysisFromTimestamp: number = 1,
+    endLogsAnalysisAtTimestamp: number = Number.MAX_SAFE_INTEGER
+): Promise<PostgresLog[]> {
     // default to 1 to process all logs
-    logger.info(`Starting to read PostgreSQL logs from file: ${filePath}`, { timestampLastLogProcessed });
+    logger.info(`Starting to read PostgreSQL logs from file: ${filePath}`, {
+        startLogsAnalysisFromTimestamp,
+        endLogsAnalysisAtTimestamp
+    });
 
     const stream = createReadStream(filePath, { encoding: 'utf-8' });
 
@@ -34,10 +41,10 @@ async function readPostgresLogsFile(filePath: string, timestampLastLogProcessed:
                 line = line.replace(/[^\x20-\x7E]/g, ''); // Remove non-printable characters
                 const match = PGSQL_ERROR_PATTERN.exec(line);
 
-                if (timestampLastLogProcessed && match) {
+                if (startLogsAnalysisFromTimestamp && match) {
                     const [, errorLogTimestamp] = match;
                     const logTimestamp = new Date(errorLogTimestamp).getTime();
-                    if (logTimestamp >= timestampLastLogProcessed) {
+                    if (logTimestamp >= startLogsAnalysisFromTimestamp && logTimestamp <= endLogsAnalysisAtTimestamp) {
                         const [, timestamp, processId, severity, message] = match;
                         if (!logSet.has(message)) {
                             const start = Math.max(0, i - contextLines);

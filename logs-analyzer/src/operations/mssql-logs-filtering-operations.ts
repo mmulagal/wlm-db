@@ -13,9 +13,17 @@ interface MsSqlErrorLog {
     context: string;
     error: string;
 }
-async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: number = 1): Promise<MsSqlErrorLog[]> {
+async function readMsSqlLogsFile(
+    filePath: string,
+    startLogsAnalysisFromTimestamp: number = 1,
+    endLogsAnalysisAtTimestamp: number = Number.MAX_SAFE_INTEGER
+): Promise<MsSqlErrorLog[]> {
     // default to 1 to process all logs
-    logger.debug(`Starting to read SQL logs from file: ${filePath}`, { timestampLastLogProcessed });
+    logger.debug(`Starting to read SQL logs from file: ${filePath}`, {
+        filePath,
+        startLogsAnalysisFromTimestamp,
+        endLogsAnalysisAtTimestamp
+    });
     const stream = createReadStream(filePath, { encoding: 'utf-8' });
 
     let buffer = '';
@@ -37,14 +45,23 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
 
             logger.debug(`Processing chunk from file: ${filePath}`);
 
-            processErrorLogLines(lines, timestampLastLogProcessed, errorSet, pendingEntries, linesToIgnore, errorLogs);
+            processErrorLogLines(
+                lines,
+                startLogsAnalysisFromTimestamp,
+                endLogsAnalysisAtTimestamp,
+                errorSet,
+                pendingEntries,
+                linesToIgnore,
+                errorLogs
+            );
         });
 
         stream.on('end', () => {
             if (pendingEntries.length > 0) {
                 processErrorLogLines(
                     pendingEntries,
-                    timestampLastLogProcessed,
+                    startLogsAnalysisFromTimestamp,
+                    endLogsAnalysisAtTimestamp,
                     errorSet,
                     pendingEntries,
                     linesToIgnore,
@@ -65,7 +82,8 @@ async function readMsSqlLogsFile(filePath: string, timestampLastLogProcessed: nu
 
 function processErrorLogLines(
     lines: string[],
-    timestampLastLogProcessed: number,
+    startLogsAnalysisFromTimestamp: number,
+    endLogsAnalysisAtTimestamp: number,
     errorSet: Set<unknown>,
     pendingEntries: string[],
     linesToIgnore: Set<unknown>,
@@ -78,10 +96,14 @@ function processErrorLogLines(
         line = line.replace(/[^\x20-\x7E]/g, ''); // Remove non-printable characters
         const match = MSSQL_ERROR_PATTERN.exec(line);
 
-        if (timestampLastLogProcessed && match?.groups) {
+        if (startLogsAnalysisFromTimestamp && match?.groups) {
             const [, errorLogTimestamp] = match;
             const logTimestamp = new Date(errorLogTimestamp).getTime();
-            if (logTimestamp >= timestampLastLogProcessed && !errorSet.has(line)) {
+            if (
+                logTimestamp >= startLogsAnalysisFromTimestamp &&
+                logTimestamp <= endLogsAnalysisAtTimestamp &&
+                !errorSet.has(line)
+            ) {
                 const { timestamp, spid, errorCode, severity, state } = match.groups;
                 const contextLimit = i + contextLines;
                 const start = Math.max(0, i - contextLines);

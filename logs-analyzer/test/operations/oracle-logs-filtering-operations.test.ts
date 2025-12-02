@@ -1,17 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { readOracleLogsFile, getUniqueOracleErrorsAndRespectiveCount } from '../../src/operations/oracle-logs-filtering-operations';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
+import { readOracleLogsFile, getUniqueOracleErrorsAndRespectiveCount } from '../../src/operations/oracle-logs-filtering-operations';
 
 describe('Oracle logs filtering operations', () => {
     const logsDir = join(__dirname, '../../Logs/oracle');
 
     // Skip tests if Oracle logs directory doesn't exist
     const shouldSkip = !existsSync(logsDir);
-
-    if (shouldSkip) {
-        console.log('Skipping Oracle tests - Oracle logs directory not found');
-    }
 
     it.skipIf(shouldSkip)('should process valid Oracle log files and return unique error logs', async () => {
         const logsFilePath = 'Logs/oracle/alert_test.log';

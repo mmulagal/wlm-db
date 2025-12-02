@@ -26,6 +26,7 @@ interface PaginationOptions {
     limit?: number;
     offset?: number;
     startTime?: string;
+    endTime?: string;
 }
 
 interface OracleLogRecord {
@@ -121,9 +122,9 @@ async function readOracleLogsFile(filePath: string, timestampLastLogProcessed: n
 }
 
 const getOracleLogsScript = (pagination: PaginationOptions = {}) => {
-    const { limit = 5000, offset = 0, startTime } = pagination;
+    const { limit = 5000, offset = 0, startTime, endTime } = pagination;
 
-    return getTimeBasedQuery(startTime, undefined, limit, offset);
+    return getTimeBasedQuery(startTime, endTime, limit, offset);
 };
 
 function getTimeBasedQuery(startTime?: string, endTime?: string, limit: number = 5000, offset: number = 0) {
@@ -134,11 +135,12 @@ function getTimeBasedQuery(startTime?: string, endTime?: string, limit: number =
                 ROW_NUMBER() OVER (ORDER BY l.originating_timestamp DESC) AS rn,
                 COUNT(*)    OVER ()                                      AS total_count
             FROM    v$diag_alert_ext l
-            WHERE l.originating_timestamp >= ${
-                startTime
-                    ? `(timestamp '1970-01-01 00:00:00' + numtodsinterval(${startTime}/1000,'SECOND') )`
-                    : 'SYSDATE - 1'
-            }
+            WHERE l.originating_timestamp >= ${startTime
+            ? `(timestamp '1970-01-01 00:00:00' + numtodsinterval(${startTime}/1000,'SECOND') )`
+            : 'SYSDATE - 1'
+        }
+            AND l.originating_timestamp <= ${endTime ? `(timestamp '1970-01-01 00:00:00' + numtodsinterval(${endTime}/1000,'SECOND') )` : 'SYSDATE'
+        }
             ORDER BY l.originating_timestamp DESC
             OFFSET ${offset} ROWS 
             FETCH NEXT ${limit} ROWS ONLY
@@ -189,8 +191,8 @@ async function executeOracleScript(script: string, databaseInstanceName: string,
 }
 
 async function fetchAllOracleLogs(options: any): Promise<OracleErrorLog[]> {
-    const { databaseInstanceName, startTime, limit = 5000, ec2InstanceId } = options;
-    logger.debug(`Starting to fetch Oracle logs for instance: ${databaseInstanceName}`, { startTime, limit });
+    const { databaseInstanceName, startTime, endTime, limit = 5000, ec2InstanceId } = options;
+    logger.debug(`Starting to fetch Oracle logs for instance: ${databaseInstanceName}`, { startTime, endTime, limit });
     let offset = 0;
     let hasMore = true;
     let totalRecords = 0;
@@ -201,10 +203,12 @@ async function fetchAllOracleLogs(options: any): Promise<OracleErrorLog[]> {
             const sqlScript = getOracleLogsScript({
                 limit,
                 offset,
-                startTime
+                startTime,
+                endTime
             });
-
+            /* eslint-disable no-await-in-loop */
             const result = await executeOracleScript(sqlScript, databaseInstanceName, ec2InstanceId);
+            /* eslint-enable no-await-in-loop */
             const parsedResult: PaginationResult = typeof result === 'string' ? safeParseJson(result) : result;
             if (!parsedResult || !parsedResult.data || parsedResult.data.length === 0) {
                 break;
@@ -221,7 +225,7 @@ async function fetchAllOracleLogs(options: any): Promise<OracleErrorLog[]> {
                             return true;
                         }
 
-                        let messageText = record.messageText;
+                        let { messageText } = record;
                         try {
                             messageText = JSON.stringify(decodeURIComponent(messageText));
                             JSON.parse(messageText);
@@ -402,8 +406,8 @@ function getUniqueOracleErrorsAndRespectiveCount(
                 : undefined;
             const timestamp2 =
                 Array.isArray(groupedLogs[key]) &&
-                groupedLogs[key].length > 0 &&
-                groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
+                    groupedLogs[key].length > 0 &&
+                    groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
                     ? new Date(groupedLogs[key][groupedLogs[key].length - 1].timestamp).getTime()
                     : undefined;
 

@@ -596,8 +596,11 @@ function safeParseJson(jsonString: string) {
     }
 }
 
+function getHoursInMilliseconds(hours: number): number {
+    return hours * 60 * 60 * 1000;
+}
 function hoursAgoTimestamp(hours: number = 24): number {
-    return Date.now() - 1000 * 60 * 60 * Number(hours);
+    return Date.now() - getHoursInMilliseconds(hours);
 }
 
 function toMB(bytes: number): number {
@@ -625,6 +628,7 @@ export {
     deleteOlderFilesInDirectory,
     generateHash,
     safeParseJson,
+    getHoursInMilliseconds,
     hoursAgoTimestamp,
     toMB,
     containsErrorKeywords,

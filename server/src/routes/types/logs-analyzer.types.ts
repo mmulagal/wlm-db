@@ -62,7 +62,9 @@ type LogsAnalyzerBody = Static<typeof LogsAnalyzerBody>;
 
 const ReportIdentifier = Type.Object({
     id: Type.String(),
-    creationTime: Type.Number()
+    creationTime: Type.Number(),
+    startTime: Type.Optional(Type.Number()),
+    endTime: Type.Optional(Type.Number())
 });
 const LAPRReadiness = Type.Object({
     ready: Type.Optional(Type.Boolean()),
@@ -110,6 +112,8 @@ const LatestReportObject = Type.Object({
         jobId: Type.String(),
         creationTime: Type.Number(),
         errorCount: Type.Number(),
+        startTime: Type.Optional(Type.Number()),
+        endTime: Type.Optional(Type.Number()),
         severityCounts: Type.Optional(SeverityCounts)
     })
 });

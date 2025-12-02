@@ -240,7 +240,9 @@ async function updateLogsAnalysisReportsInDB(
         credentialsId,
         resourceId,
         databaseInstanceId,
-        jobId
+        jobId,
+        startTime,
+        endTime
     });
 
     await createLogsAnalysisReports([
@@ -496,7 +498,7 @@ async function handleLogsAnalysis(
         logger.info('Logs analysis completed successfully for jobId:', jobId);
         logger.debug(`Logs analysis response: ${JSON.stringify(jsonSsmLogsResponse)}`);
 
-        const [{ data: { startTime, endTime } = {} } = {}] =
+        const [{ data: { startTime: analysisStartTime, endTime: analysisEndTime } = {} } = {}] =
             (jsonSsmLogsResponse as unknown as [{ data: { startTime: number; endTime: number } }]) || [];
 
         await updateLogsAnalysisReportsInDB(
@@ -507,12 +509,17 @@ async function handleLogsAnalysis(
             jobId,
             databaseType,
             jsonSsmLogsResponse,
-            startTime ? new Date(startTime) : undefined,
-            endTime ? new Date(endTime) : undefined
+            analysisStartTime ? new Date(analysisStartTime) : new Date(logsAnalyzerFromTimestamp),
+            analysisEndTime
+                ? new Date(analysisEndTime)
+                : new Date(logsAnalyzerFromTimestamp + (logsWindowDuration || 24) * 60 * 60 * 1000)
         );
         await updateLongRunningAuditGroup(AuditStatus.SUCCESS, 'Logs analysis completed successfully');
-        const { items: [{ id, latestReport: { creationTime, errorCount, severityCounts } = {} } = {}] = [] } =
-            await getLatestLogsAnalysisReports(accountId, region, credentialsId, databaseType, jobId);
+        const {
+            items: [
+                { id, latestReport: { creationTime, errorCount, severityCounts, startTime, endTime } = {} } = {}
+            ] = []
+        } = await getLatestLogsAnalysisReports(accountId, region, credentialsId, databaseType, jobId);
 
         await updateJobDetails(accountId, jobId, {
             endTime: Date.now(),
@@ -522,7 +529,9 @@ async function handleLogsAnalysis(
                     creationTime,
                     id,
                     errorCount,
-                    severityCounts
+                    severityCounts,
+                    startTime,
+                    endTime
                 }
             }
         });
@@ -697,15 +706,21 @@ async function listLogsAnalysisReportsIdentifiers(
         pageSize,
         select: {
             id: true,
-            creation_time: true
+            creation_time: true,
+            start_time: true,
+            end_time: true
         }
     });
 
     if (response && response.length > 0) {
-        const reports = response.map(({ id, creation_time: creationTime }) => ({
-            id,
-            creationTime: creationTime.getTime()
-        }));
+        const reports = response.map(
+            ({ id, creation_time: creationTime, start_time: startTime, end_time: endTime }) => ({
+                id,
+                creationTime: creationTime.getTime(),
+                startTime: startTime ? startTime.getTime() : undefined,
+                endTime: endTime ? endTime.getTime() : undefined
+            })
+        );
 
         return {
             reports
@@ -1312,7 +1327,9 @@ async function getLatestLogsAnalysisReports(
                 database_instance_id: true,
                 logs_analysis_data: true,
                 resource_id: true,
-                job_id: true
+                job_id: true,
+                start_time: true,
+                end_time: true
             },
             jobId,
             databaseType
@@ -1341,6 +1358,8 @@ async function getLatestLogsAnalysisReports(
             creationTime: number;
             errorCount: number;
             severityCounts?: SeverityCountsType;
+            startTime?: number;
+            endTime?: number;
         };
     }> = [];
     instanceReportsMap.forEach((report, instanceId) => {
@@ -1382,7 +1401,9 @@ async function getLatestLogsAnalysisReports(
                     jobId: jobIdFromReport,
                     creationTime: report.creation_time.getTime(),
                     errorCount: logsAnalysisData?.remediationRecommendation?.length,
-                    severityCounts
+                    severityCounts,
+                    startTime: report.start_time ? report.start_time.getTime() : undefined,
+                    endTime: report.end_time ? report.end_time.getTime() : undefined
                 } // TODO: can be extended to include host level report/ instance level report count if needed.
             });
         }
