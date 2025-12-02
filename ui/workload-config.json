@@ -13,15 +13,17 @@
             "iframeUrl": "/wlmdb/index.html"
         }
     ],
-    "focus": {
-        "id": "database",
-        "suffixPlural": "critical event",
-        "suffixSingular": "critical events",
-        "dataUrl": "/wlmdb/v1/focus-status",
-        "primaryCtaTo": "/databases/dashboard",
-        "primaryCtaBluexpTo": "/fsxdb/dashboard",
-        "primaryCtaLabel": "Databases"
-    },
+    "focus": [
+        {
+            "id": "database",
+            "suffixPlural": "critical event",
+            "suffixSingular": "critical events",
+            "dataUrl": "/wlmdb/v1/focus-status",
+            "primaryCtaTo": "/databases/dashboard",
+            "primaryCtaBluexpTo": "/fsxdb/dashboard",
+            "primaryCtaLabel": "Databases"
+        }
+    ],
     "widget": {
         "title": "Databases",
         "marketingUrl": "/databases/marketing",
