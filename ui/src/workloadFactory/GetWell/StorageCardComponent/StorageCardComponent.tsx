@@ -1071,8 +1071,11 @@ const StorageCardComponent = ({
                             {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
                             {loading || dismissDisableButton() ? '' : renderDismissButton()}
                             <div
-                                className={styles.buttonSection}
-                                // style={{ width: windowSize.width >= 1770 ? '170px' : '20%' }}
+                                className={
+                                    isDarkTheme
+                                        ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                        : styles.buttonSection
+                                }
                             >
                                 <TooltipComponent
                                     title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
@@ -1080,29 +1083,37 @@ const StorageCardComponent = ({
                                     width="120px"
                                     height="30px"
                                 >
-                                    <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
-                                        <DsButton variant="secondary" isDisabled>
-                                            {setButtonText()}
-                                        </DsButton>
-                                    </div>
+                                    <DsButton variant="secondary" isDisabled>
+                                        {setButtonText()}
+                                    </DsButton>
                                 </TooltipComponent>
                             </div>
                         </div>
                     ) : optimizingInstanceData &&
                       cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
                       cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZING ? (
-                        <TooltipComponent
-                            title={GENERAL.OPTIMIZATION_IN_PROGRESS}
-                            placement="bottom"
-                            width="310px"
-                            height="50px"
-                        >
-                            <div className={isDarkTheme ? styles.buttonSectionDarkMode : ''}>
-                                <DsButton variant="secondary" isDisabled>
-                                    {setButtonText()}
-                                </DsButton>
+                        <div className={styles.buttonGroup}>
+                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
+                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
+                            <div
+                                className={
+                                    isDarkTheme
+                                        ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                        : styles.buttonSection
+                                }
+                            >
+                                <TooltipComponent
+                                    title={GENERAL.OPTIMIZATION_IN_PROGRESS}
+                                    placement="bottom"
+                                    width="310px"
+                                    height="50px"
+                                >
+                                    <DsButton variant="secondary" isDisabled>
+                                        {setButtonText()}
+                                    </DsButton>
+                                </TooltipComponent>
                             </div>
-                        </TooltipComponent>
+                        </div>
                     ) : disableOptimizeButtonTooltip ? (
                         <div className={styles.buttonGroup}>
                             {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
