@@ -1952,6 +1952,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             activating: 0
         },
         mssqlhighAvailability: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0,
@@ -2048,7 +2049,8 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         severityObj: {},
         isAsmEnable: false,
         isFraEnable: false,
-        isArchiveEnable: false
+        isArchiveEnable: false,
+        isHaMssqlEnable: false
     };
 
     const configState: any = {
@@ -2672,35 +2674,39 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                     GETWELL_VALUES[instanceAssessmentData?.crr?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.crr;
 
-                getAssessmentGroupedByConfigurations.mssqlhighAvailability.optimized +=
-                    instance?.assessments?.deploymentType !== GENERAL.FCI ||
-                    (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability)
+                if (instance?.assessments?.deploymentType === GENERAL.FCI) {
+                    getAssessmentGroupedByConfigurations.isHaMssqlEnable = true;
+                    getAssessmentGroupedByConfigurations.mssqlhighAvailability.total++;
+                    getAssessmentGroupedByConfigurations.mssqlhighAvailability.optimized +=
+                        instance?.assessments?.deploymentType !== GENERAL.FCI ||
+                        (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability)
+                            ? 1
+                            : 0;
+                    const hsStateList = getConfigStateList(
+                        [...(instanceAssessmentData?.highAvailability || [])],
+                        [...(instanceAssessmentData?.dismissedConfigurations?.highAvailability || [])],
+                        DBType.MSSQL
+                    );
+                    getAssessmentGroupedByConfigurations.mssqlhighAvailability.dismissed += checkConfigState(
+                        hsStateList,
+                        CONFIG_STATES.DISMISSED
+                    )
                         ? 1
                         : 0;
-                const hsStateList = getConfigStateList(
-                    [...(instanceAssessmentData?.highAvailability || [])],
-                    [...(instanceAssessmentData?.dismissedConfigurations?.highAvailability || [])],
-                    DBType.MSSQL
-                );
-                getAssessmentGroupedByConfigurations.mssqlhighAvailability.dismissed += checkConfigState(
-                    hsStateList,
-                    CONFIG_STATES.DISMISSED
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.mssqlhighAvailability.activating += checkConfigState(
-                    hsStateList,
-                    CONFIG_STATES.ACTIVATING
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.mssqlhighAvailability.partiallyDismissed += checkConfigState(
-                    hsStateList,
-                    CONFIG_STATES.PARTIAL
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.mssqlhighAvailability = 'Critical';
+                    getAssessmentGroupedByConfigurations.mssqlhighAvailability.activating += checkConfigState(
+                        hsStateList,
+                        CONFIG_STATES.ACTIVATING
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.mssqlhighAvailability.partiallyDismissed += checkConfigState(
+                        hsStateList,
+                        CONFIG_STATES.PARTIAL
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.mssqlhighAvailability = 'Critical';
+                }
             }
         });
     });

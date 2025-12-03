@@ -5734,16 +5734,22 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             })
         );
     } else {
+        let totalInstance = 0;
+        if (configKey === 'mssqlhighAvailability') {
+            // For above configs we need to calculate dynamic total instance as all instance might not be FCI.
+            totalInstance = configData?.[configKey]?.total || 0;
+        } else {
+            totalInstance = configData?.total || 0;
+        }
         dispatch(
             setSelectedConfigSummary({
-                totalInstances: configData?.total || 0,
+                totalInstances: totalInstance,
                 optimizedInstances,
                 dismissedInstances,
                 activatingInstances,
                 partialDismissInstances,
-                notOptimizedInstances:
-                    configData?.total - (optimizedInstances + dismissedInstances + activatingInstances),
-                optimizationScore: `${Math.round((optimizedInstances / (configData?.total || 1)) * 100)}%`,
+                notOptimizedInstances: totalInstance - (optimizedInstances + dismissedInstances + activatingInstances),
+                optimizationScore: `${Math.round((optimizedInstances / (totalInstance || 1)) * 100)}%`,
                 severity: configData?.severityObj?.[configKey] || '',
                 configState: configStateValue,
                 tooltipText

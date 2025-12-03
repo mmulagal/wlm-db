@@ -49,6 +49,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     const mainSectionRef = useRef<HTMLDivElement>(null);
     const [hasScrollbar, setHasScrollbar] = useState(false);
     const [oracleAssessmentDynamicKeys, setOracleAssessmentDynamicKeys] = useState<string[]>(oracleAssessmentKeys);
+    const [mssqlAssessmentDynamicKeys, setMssqlAssessmentDynamicKeys] = useState<string[]>(mssqlAssessmentKeys);
 
     // For popup
     const [isOpen, setIsOpen] = useState(false);
@@ -102,8 +103,20 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     }
                 })
             );
+        } else if (configEngineType === DBType.MSSQL) {
+            setMssqlAssessmentDynamicKeys(
+                mssqlAssessmentKeys.filter(key => {
+                    if (key === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) {
+                        if (configData?.isHaMssqlEnable) {
+                            return key;
+                        }
+                    } else {
+                        return key;
+                    }
+                })
+            );
         }
-    }, [oracleAssessmentKeys, configData]);
+    }, [oracleAssessmentKeys, mssqlAssessmentKeys, configData]);
 
     // Close on outside click
     useEffect(() => {
@@ -182,7 +195,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     // Function to check if a tile should be visible based on applied filters
     const shouldShowTile = (assessmentKey: string): boolean => {
         const currentAssessmentKeys =
-            configEngineType === DBType.ORACLE ? oracleAssessmentDynamicKeys : mssqlAssessmentKeys;
+            configEngineType === DBType.ORACLE ? oracleAssessmentDynamicKeys : mssqlAssessmentDynamicKeys;
 
         // Check if the assessment key belongs to the current engine type
         if (!currentAssessmentKeys.includes(assessmentKey)) {
@@ -211,22 +224,26 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
     // Get current engine-specific assessment keys
     const currentAssessmentKeys =
-        configEngineType === DBType.ORACLE ? oracleAssessmentDynamicKeys : mssqlAssessmentKeys;
+        configEngineType === DBType.ORACLE ? oracleAssessmentDynamicKeys : mssqlAssessmentDynamicKeys;
 
     const filteredConfigurations = currentAssessmentKeys.filter(key => shouldShowTile(key)).length;
 
     // Calculate separate counts for MSSQL and Oracle radio buttons using per-engine applied categories
-    const mssqlTotalConfigurations = mssqlAssessmentKeys.length;
-    const mssqlFilteredConfigurations = mssqlAssessmentKeys.filter(key => {
-        const tileCategory = getCategoryForAssessment(key);
-        const tileSeverity = derivedSeverity(key);
-        const appliedCats = appliedCategoriesMssql;
-        const appliedSev = appliedSeverityMssql;
-        if (appliedCats.length === 0 && appliedSev.length === 0) return false;
-        const categoryMatch = appliedCats.length > 0 ? appliedCats.includes(tileCategory) : false;
-        const severityMatch = appliedSev.length > 0 && tileSeverity ? appliedSev.includes(tileSeverity) : false;
-        return categoryMatch && severityMatch;
-    }).length;
+    const mssqlTotalConfigurations = useMemo(() => mssqlAssessmentDynamicKeys.length, [mssqlAssessmentDynamicKeys]);
+    const mssqlFilteredConfigurations = useMemo(
+        () =>
+            mssqlAssessmentDynamicKeys.filter(key => {
+                const tileCategory = getCategoryForAssessment(key);
+                const tileSeverity = derivedSeverity(key);
+                const appliedCats = appliedCategoriesMssql;
+                const appliedSev = appliedSeverityMssql;
+                if (appliedCats.length === 0 && appliedSev.length === 0) return false;
+                const categoryMatch = appliedCats.length > 0 ? appliedCats.includes(tileCategory) : false;
+                const severityMatch = appliedSev.length > 0 && tileSeverity ? appliedSev.includes(tileSeverity) : false;
+                return categoryMatch && severityMatch;
+            }).length,
+        [mssqlAssessmentDynamicKeys, appliedCategoriesMssql, appliedSeverityMssql]
+    );
 
     const oracleTotalConfigurations = useMemo(() => oracleAssessmentDynamicKeys.length, [oracleAssessmentDynamicKeys]);
 
@@ -345,6 +362,9 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 total = configData?.oracleTotal || 1;
                 afterOutOfTotal = configData?.oracleTotal;
             }
+        } else if (headingText === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) {
+            total = configData?.[key]?.total || 1;
+            afterOutOfTotal = configData?.[key]?.total;
         } else {
             total = configData?.total || 1;
             afterOutOfTotal = configData?.total;
@@ -1134,6 +1154,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     )}
                 {configEngineType === DBType.MSSQL &&
+                    configData?.isHaMssqlEnable &&
                     shouldShowTile(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) && (
                         <div className={styles.tile}>
                             {renderOptimizationBar(
