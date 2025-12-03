@@ -61,11 +61,6 @@
                         "tooltip": "PostgreSQL: 15 instances"
                     }
                 ]
-            },
-            {
-                "id": "savings-opportunities",
-                "type": "metric",
-                "label": "Savings opportunities"
             }
         ]
     },
