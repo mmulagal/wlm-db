@@ -1,8 +1,9 @@
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { useDialog } from '@netapp/design-system';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { useEffect, useState } from 'react';
-import { DsButton, DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
+import { DsButton, DsTypography } from '@tlveng/wlm-ds';
 import OnboardingAccordions from '../OnboardingAccordions/OnboardingAccordions';
 import ScrollableCard from '../ScrollableCard/ScrollableCard';
 import styles from './LogAnalyzerOnboarding.module.scss';
@@ -29,10 +30,13 @@ import {
 import store from '../../../../../store/store';
 import { addAllLogAnalysisData } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
+import DialogComponent from '../../../../../common/Dialog/DialogComponent';
+import AnalyzeCustomTimeframe from '../LogAnalyserHeader/AnalyzeCustomTimeframe/AnalyzeCustomTimeframe';
 
 const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const { setDialog, closeDialog } = useDialog();
 
     const [isActive, setIsActive] = useState(false);
 
@@ -42,6 +46,12 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
         useAppSelector(state => state.getWellOptimize);
 
     const { data, loading } = useAppSelector(state => state.agenticAI.logAnalyzerPricing);
+    const {
+        selectedCustomAnalysisTimeFrameUnit,
+        selectedCustomAnalysisTime,
+        durationCustomAnalysis,
+        startCustomAnalysisTime
+    } = useAppSelector(state => state.agenticAI);
     const { data: preReqData, loading: preReqLoading } = useAppSelector(state => state.agenticAI.logAnalyzerPreReq);
 
     useEffect(() => {
@@ -72,19 +82,50 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
     const [scanErrorInvestigation] = useScanErrorInvestigationMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
-    const activateHandler = () => {
+    const activateHandler = (type: string) => {
         dispatch(setLogAnalyzerState(ERROR_ANALYZER_STATUS.RUNNING));
         const credId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM;
         const regionId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM;
         const key = uniqueHostRow(`${selectedResourceId}_${selectedDatabaseInstance}`, credId, regionId);
         logAnalyzerScanUpdate(key, true, dispatch);
+        let newPayload = {};
+        if (type === 'custom') {
+            const startTimeDate =
+                startCustomAnalysisTime &&
+                startCustomAnalysisTime.toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+
+            const dateTimeString = `${startTimeDate} ${selectedCustomAnalysisTime?.label} ${selectedCustomAnalysisTimeFrameUnit?.label}`;
+
+            const localDate = new Date(dateTimeString);
+
+            const timestamp = Date.UTC(
+                localDate.getFullYear(),
+                localDate.getMonth(),
+                localDate.getDate(),
+                localDate.getHours(),
+                localDate.getMinutes(),
+                localDate.getSeconds(),
+                localDate.getMilliseconds()
+            );
+
+            newPayload = {
+                logsAnalyzerFromTimestamp: timestamp,
+                logsWindowDuration: durationCustomAnalysis
+            };
+        } else {
+            newPayload = {};
+        }
         scanErrorInvestigation({
             credentialId: credId,
             regionId,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
             dbType,
-            payload: {}
+            payload: newPayload
         }).then((res: any) => {
             const newObj = {
                 credentialId: credId,
@@ -128,6 +169,24 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
         );
     };
 
+    //function to invoke dialog for custom timeframe
+    const handleCustomTimeframe = () => {
+        setDialog(
+            <DialogComponent
+                header={t('databases.log-analyzer.analyze-now-custom-timeframe')}
+                content={<AnalyzeCustomTimeframe />}
+                primaryButton={t('databases.log-analyzer.start')}
+                secondaryButton={t('databases.log-analyzer.cancel')}
+                callback={() => {
+                    activateHandler('custom');
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+            />
+        );
+    };
+
     return (
         <div className={styles['log-analyzer-onboarding']}>
             <ScrollableCard dbType={dbType} />
@@ -147,7 +206,7 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
                             >
                                 <RefreshIcon />
                             </div>
-                            <DsButton
+                            {/* <DsButton
                                 onClick={activateHandler}
                                 isThin
                                 variant="primary"
@@ -155,7 +214,34 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
                                 data-testid="wlm-db-mssql-log-analyzer-activate-button"
                             >
                                 {t('databases.log-analyzer.activate')}
-                            </DsButton>
+                            </DsButton> */}
+
+                            <DsButton
+                                children={t('databases.log-analyzer.scan-now')}
+                                variant="primary"
+                                isDisabled={!isActive || preReqLoading}
+                                isThin
+                                dropDown={{
+                                    trigger: 'click',
+                                    autoPosition: true,
+                                    items: [
+                                        {
+                                            id: 'wlm-db-last-24-hours',
+                                            label: 'last 24 hours',
+                                            onClick: () => {
+                                                activateHandler('manual');
+                                            }
+                                        },
+                                        {
+                                            id: 'wlm-db-custom-timeframe',
+                                            label: 'Custom timeframe',
+                                            onClick: () => {
+                                                handleCustomTimeframe();
+                                            }
+                                        }
+                                    ]
+                                }}
+                            />
                         </div>
                     </div>
                     <div className={styles.infoSection}>

@@ -47,13 +47,33 @@ export const initialSandboxState: AgenticAIEntities = {
     },
     selectedErrorInvestigationRow: null,
     selectedViewInvestigationRow: null,
-    uniqueErrorGraphType: 'over-time'
+    uniqueErrorGraphType: 'over-time',
+    selectedCustomAnalysisTimeFrameUnit: {
+        id: 1,
+        label: 'AM',
+        value: 'AM'
+    },
+    selectedCustomAnalysisTime: { id: 1, label: '12:00', value: '12:00' },
+    durationCustomAnalysis: 24,
+    startCustomAnalysisTime: new Date()
 };
 
 const agenticAISlice = createSlice({
     name: 'agenticAI',
     initialState: initialSandboxState,
     reducers: {
+        setCustomAnalysisStartTime(state, action: PayloadAction<Date | undefined>) {
+            state.startCustomAnalysisTime = action.payload;
+        },
+        setCustomAnalysisDurationInHours(state, action: PayloadAction<number | string>) {
+            state.durationCustomAnalysis = action.payload;
+        },
+        setCustomAnalysisTime(state, action: PayloadAction<any>) {
+            state.selectedCustomAnalysisTime = action.payload;
+        },
+        setCustomAnalysisTimeFrameUnit(state, action: PayloadAction<any>) {
+            state.selectedCustomAnalysisTimeFrameUnit = action.payload;
+        },
         setSelectedGraphType: (state, action: PayloadAction<any>) => {
             state.uniqueErrorGraphType = action.payload;
         },
@@ -172,6 +192,10 @@ const agenticAISlice = createSlice({
 });
 
 export const {
+    setCustomAnalysisStartTime,
+    setCustomAnalysisDurationInHours,
+    setCustomAnalysisTime,
+    setCustomAnalysisTimeFrameUnit,
     setSelectedGraphType,
     setSelectedErrorTags,
     setSelectedViewErrorInvestigationRow,

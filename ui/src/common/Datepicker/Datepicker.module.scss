@@ -1,0 +1,237 @@
+.wrapper {
+    display: inline-block;
+
+    .label {
+        margin-bottom: 4px;
+    }
+
+    .inputContainer {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .input {
+        border: 1px solid var(--border);
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        width: 384px;
+        background: var(--content-background);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    // Highlight state when popup is open
+    .inputOpen {
+        border: var(--border-width-200, 2px) solid var(--field-border-selected, #0067c5);
+    }
+
+    .calendarIcon {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+}
+
+// --- Popup container ---
+
+.popup {
+    position: absolute;
+    background: var(--content-background, #ffffff);
+
+    padding: 24px;
+
+    width: 280px;
+    box-shadow: 2px 2px 6px 0 var(--border-drop-shadow, #e0e0e0);
+    z-index: 99999;
+
+    // --- Header ---
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .arrow {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .monthYearContainer {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        position: relative; // anchor for year dropdown
+        cursor: pointer;
+
+        .chevron {
+            // dropdown arrow icon
+            transition: transform 160ms ease-in-out;
+            transform-origin: 50% 50%;
+        }
+
+        .chevronOpen {
+            // rotate 180deg when year list visible
+            transform: rotate(180deg);
+        }
+
+        .monthYear {
+            font-weight: 600;
+            user-select: none;
+        }
+
+        // Year popup: total width 150px (132px year column + centered 4px scrollbar + 14px side spacing)
+        .yearSelect {
+            position: absolute;
+            top: calc(100% + 2px); // 2px below the arrow
+            left: 0;
+            width: 150px; // total popup width
+            max-height: 240px;
+            background: var(--content-background, #ffffff);
+            box-sizing: border-box;
+            padding-top: 4px; // 4px space from top before first year
+            padding-bottom: 4px;
+            /* Side padding leaves 7px left + 7px right around centered 4px scrollbar in remaining 18px space */
+            padding-left: 0;
+            padding-right: 0; // keep content flush; using internal width for centering scrollbar illusion
+            overflow-y: auto; // vertical scroll only
+            overflow-x: hidden;
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: var(--border-subtle) transparent;
+            z-index: 20;
+            box-shadow: 4px 4px 12px var(--border-drop-shadow);
+            border-radius: 4px;
+        }
+
+        // Custom WebKit scrollbar (4px width) visually centered inside remaining width
+        .yearSelect::-webkit-scrollbar {
+            width: 4px;
+        }
+        .yearSelect::-webkit-scrollbar-track {
+            background: var(--content-background, #ffffff); // ensure pure white behind thumb
+            margin: 0;
+        }
+        .yearSelect::-webkit-scrollbar {
+            background: var(--content-background, #ffffff); // no track coloration
+        }
+        // Firefox fallback: white track, colored thumb only
+        .yearSelect {
+            scrollbar-color: var(--border-subtle, #d0d0d0) var(--content-background, #ffffff);
+        }
+        .yearSelect::-webkit-scrollbar-thumb {
+            background: var(--border-subtle, #d0d0d0);
+            border-radius: 4px;
+        }
+        .yearSelect::-webkit-scrollbar-thumb:hover {
+            background: var(--border, #b5b5b5);
+        }
+
+        .yearOption {
+            height: 52px;
+            line-height: 52px;
+            width: 132px; // fixed width for year label column
+            padding: 0 12px 0 12px; // horizontal padding inside year column
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: var(--text-default, #1c1c1c);
+            box-sizing: border-box;
+
+            &:hover {
+                background-color: var(--background-hover);
+            }
+        }
+
+        .currentYear {
+            color: var(--text-button-primary);
+            font-weight: 600;
+        }
+    }
+
+    .overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+    }
+
+    // (Year dropdown styles moved inside .monthYearContainer scope)
+
+    // --- Calendar grid ---
+    .daysGrid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        text-align: center;
+        gap: 4px;
+        margin-top: 6px;
+    }
+
+    .dayName {
+        font-weight: bold;
+        font-size: 12px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .day {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        cursor: pointer;
+
+        &:hover {
+            background: var(--border);
+            border-radius: 32px;
+        }
+    }
+
+    .selected {
+        background: var(--notification-information, #518bec);
+        border-radius: 32px;
+        color: white;
+    }
+
+    // --- Footer ---
+    .footer {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+
+        .rightSide {
+            display: flex;
+            gap: 24px;
+        }
+
+        button {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+    }
+
+    .disabled {
+        opacity: 0.3;
+        pointer-events: none;
+    }
+
+    .disabledDay {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+}

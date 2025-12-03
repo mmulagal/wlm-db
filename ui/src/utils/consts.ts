@@ -343,6 +343,21 @@ export const SEVERITIES = {
     SIXTEEN: '16'
 };
 
+export const timeUnits = [
+    { id: 1, label: '12:00', value: '12:00' },
+    { id: 2, label: '11:00', value: '11:00' },
+    { id: 3, label: '10:00', value: '10:00' },
+    { id: 4, label: '09:00', value: '09:00' },
+    { id: 5, label: '08:00', value: '08:00' },
+    { id: 6, label: '07:00', value: '07:00' },
+    { id: 7, label: '06:00', value: '06:00' },
+    { id: 8, label: '05:00', value: '05:00' },
+    { id: 9, label: '04:00', value: '04:00' },
+    { id: 10, label: '03:00', value: '03:00' },
+    { id: 11, label: '02:00', value: '02:00' },
+    { id: 12, label: '01:00', value: '01:00' }
+];
+
 export const CREATE_DATABASE_YAML = 'Create_Database';
 
 export const CHATBOT_SUGGESTION_BUBBLES = [

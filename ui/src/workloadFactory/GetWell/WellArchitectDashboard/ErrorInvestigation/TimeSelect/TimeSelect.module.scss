@@ -11,9 +11,13 @@
         .multiSelect {
             [class*='textFieldInput'] {
                 padding: 2px 12px !important;
+                width: 92% !important;
             }
             [class*='dsTextFramePopover'] {
                 width: 300px !important;
+            }
+            [class*='dsDropDownList'] {
+                min-width: max-content !important;
             }
             [class*='inputWithActionsContainer'] {
                 height: 29px !important;

@@ -9,7 +9,7 @@ import {
     setSelectedInvestigationDate
 } from '../../../../../store/workloadFactory/agenticAISlice';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { formatDateWithTime } from '../../../../../utils/utilityFunctions';
+import { formatDateRange } from '../../../../../utils/utilityFunctions';
 
 const TimeSelect = () => {
     const dispatch = useDispatch();
@@ -23,7 +23,7 @@ const TimeSelect = () => {
         const options = investigationDates.map(date => ({
             id: date.id,
             value: date.creationTime,
-            label: formatDateWithTime(date.creationTime)
+            label: formatDateRange(date.startTime, date.endTime)
         }));
         dispatch(setSelectedInvestigationDate(options[0]));
         setDateOptions(options);

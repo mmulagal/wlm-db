@@ -732,6 +732,14 @@ export const formatTime = (date: string | number) => {
     return moment(new Date(parseInt(dateStr))).format('hh:mm A');
 };
 
+export const formatDateRange = (startTime: string | number, endTime: string | number) => {
+    const startStr = (startTime && startTime.toString()) || '';
+    const endStr = (endTime && endTime.toString()) || '';
+    const startFormatted = moment(new Date(parseInt(startStr))).format('MMMM DD, YYYY, hh:mm A');
+    const endFormatted = moment(new Date(parseInt(endStr))).format('MMMM DD, YYYY, hh:mm A');
+    return `${startFormatted} - ${endFormatted}`;
+};
+
 export const getTimeDifferenceInDays = (timeStamp1: number, timeStamp2: number) =>
     Math.floor((timeStamp1 - timeStamp2) / 1000 / 60 / 60 / 24);
 

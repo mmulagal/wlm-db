@@ -1,5 +1,5 @@
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
-import { DsButton, TooltipInfo } from '@netapp/design-system';
+import { DsButton, TooltipInfo, useDialog } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
@@ -11,6 +11,8 @@ import { useLazyGetSubTaskListQuery, useScanErrorInvestigationMutation } from '.
 import { WLF_TABS } from '../../../../../utils/consts';
 import { handleLogAnalyzerJob, logAnalyzerScanUpdate } from '../ErrorInvestigationUtility';
 import { uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
+import DialogComponent from '../../../../../common/Dialog/DialogComponent';
+import AnalyzeCustomTimeframe from './AnalyzeCustomTimeframe/AnalyzeCustomTimeframe';
 
 interface LogAnalyserHeaderProps {
     uniqueErrors: number;
@@ -21,12 +23,19 @@ interface LogAnalyserHeaderProps {
 const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHeaderProps; dbType: string }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const { setDialog, closeDialog } = useDialog();
 
     const [instKey, setInstKey] = useState('');
 
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const { selectedResourceId, selectedDatabaseInstance, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
         useAppSelector(state => state.getWellOptimize);
+    const {
+        selectedCustomAnalysisTimeFrameUnit,
+        selectedCustomAnalysisTime,
+        durationCustomAnalysis,
+        startCustomAnalysisTime
+    } = useAppSelector(state => state.agenticAI);
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
     const { investigationDatesLoading, noData } = useAppSelector(state => state.agenticAI);
     const { scanInProgress } = useAppSelector(state => state.agenticAI);
@@ -42,21 +51,71 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
         setInstKey(key);
     }, [scanInProgress]);
 
-    const handleScan = () => {
+    const handleScan = (type: string) => {
         const credId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM;
         const regionId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM;
         const key = uniqueHostRow(`${selectedResourceId}_${selectedDatabaseInstance}`, credId, regionId);
         logAnalyzerScanUpdate(key, true, dispatch);
+
+        let newPayload = {};
+        if (type === 'custom') {
+            const startTimeDate =
+                startCustomAnalysisTime &&
+                startCustomAnalysisTime.toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+
+            const dateTimeString = `${startTimeDate} ${selectedCustomAnalysisTime?.label} ${selectedCustomAnalysisTimeFrameUnit?.label}`;
+
+            const localDate = new Date(dateTimeString);
+
+            const timestamp = Date.UTC(
+                localDate.getFullYear(),
+                localDate.getMonth(),
+                localDate.getDate(),
+                localDate.getHours(),
+                localDate.getMinutes(),
+                localDate.getSeconds(),
+                localDate.getMilliseconds()
+            );
+
+            newPayload = {
+                logsAnalyzerFromTimestamp: timestamp,
+                logsWindowDuration: durationCustomAnalysis
+            };
+        } else {
+            newPayload = {};
+        }
         scanErrorInvestigation({
             credentialId: credId,
             regionId,
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
-            payload: {},
+            payload: newPayload,
             dbType
         }).then((res: any) => {
             handleLogAnalyzerJob(dispatch, res, getJobDetailApi, t, false, key, null, dbType);
         });
+    };
+
+    //function to invoke dialog for custom timeframe
+    const handleCustomTimeframe = () => {
+        setDialog(
+            <DialogComponent
+                header={t('databases.log-analyzer.analyze-now-custom-timeframe')}
+                content={<AnalyzeCustomTimeframe />}
+                primaryButton={t('databases.log-analyzer.start')}
+                secondaryButton={t('databases.log-analyzer.cancel')}
+                callback={() => {
+                    handleScan('custom');
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+            />
+        );
     };
 
     return (
@@ -153,7 +212,7 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
                             </div>
                         )}
 
-                        <DsButton
+                        {/* <DsButton
                             variant="Default"
                             isThin
                             type="button"
@@ -162,7 +221,34 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
                             data-testid="wlm-db-error-investigation-investigate-now-button"
                         >
                             {t('databases.log-analyzer.scan-now')}
-                        </DsButton>
+                        </DsButton> */}
+
+                        <DsButton
+                            children={t('databases.log-analyzer.scan-now')}
+                            variant="primary"
+                            isDisabled={loading || scanInProgress?.[instKey]}
+                            isThin
+                            dropDown={{
+                                trigger: 'click',
+                                autoPosition: true,
+                                items: [
+                                    {
+                                        id: 'wlm-db-last-24-hours',
+                                        label: 'last 24 hours',
+                                        onClick: () => {
+                                            handleScan('manual');
+                                        }
+                                    },
+                                    {
+                                        id: 'wlm-db-custom-timeframe',
+                                        label: 'Custom timeframe',
+                                        onClick: () => {
+                                            handleCustomTimeframe();
+                                        }
+                                    }
+                                ]
+                            }}
+                        />
                     </div>
                 </div>
             </div>

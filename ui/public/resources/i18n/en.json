@@ -970,6 +970,13 @@
             "pgsql": "PostgreSQL"
         },
         "log-analyzer": {
+            "start": "Start",
+            "analyze-now-custom-timeframe": "Analyze now - Custom timeframe",
+            "custom-timeframe-text-1": "Specify the timeframe for the error analysis report.",
+            "custom-timeframe-text-2": "The maximum duration is 24 hours. Please select the start date, starting time, and duration.",
+            "starting-time": "Starting time",
+            "duration": "Duration (hours)",
+            "selected-timeframe": "Selected timeframe",
             "tags": "Tags",
             "Compute": "Compute",
             "Storage": "Storage",

@@ -1,0 +1,41 @@
+.custom-timeframe {
+    .secondText {
+        margin-bottom: 40px;
+    }
+
+    .mainContainer {
+        margin-top: 40px;
+        display: flex;
+        gap: 40px;
+        .timeContainer {
+            display: flex;
+            gap: 16px;
+
+            .selectFieldUnit {
+                width: 90px;
+
+                [class*='textFieldHeader'] {
+                    visibility: hidden;
+                }
+            }
+
+            .selectFieldTime {
+                width: 120px;
+            }
+        }
+
+        .textFieldStyle {
+            width: 120px;
+        }
+    }
+
+    .timeFrameContainer {
+        margin-top: 40px;
+        width: 720px;
+        height: 56px;
+        background: var(--background-hover, #f4fbff);
+        padding: 16px 40px 16px 24px;
+        display: flex;
+        gap: 8px;
+    }
+}

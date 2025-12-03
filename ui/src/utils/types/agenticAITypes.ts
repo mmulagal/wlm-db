@@ -20,6 +20,10 @@ export interface ErrorInvestigationGetApiResponse {
 }
 
 export interface AgenticAIEntities {
+    startCustomAnalysisTime: Date | undefined;
+    durationCustomAnalysis: number | string | undefined;
+    selectedCustomAnalysisTime: any;
+    selectedCustomAnalysisTimeFrameUnit: any;
     uniqueErrorGraphType: string;
     selectedErrorTags: string[];
     selectedViewInvestigationRow: [] | any;
@@ -31,7 +35,7 @@ export interface AgenticAIEntities {
     noData: boolean;
     selectedInvestigationDate: { id: string; value: string; label: string } | null;
     investigationDatesLoading: boolean;
-    investigationDates: Array<{ id: string; creationTime: string }> | [];
+    investigationDates: Array<{ id: string; creationTime: string; startTime: string; endTime: string }> | [];
     errorInvestigation: {
         errorInvestigationData: Array<ErrorInvestigationGetApiResponse> | [];
         errorInvestigationLoading: boolean;
