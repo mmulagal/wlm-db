@@ -23,6 +23,39 @@ const ManageReadinessObject = Type.Object({
     missingModules: Type.Array(Type.String({ description: 'Missing powershell modules' }))
 });
 
+// AOAG types
+const AoagReplica = Type.Object({
+    replica: Type.Optional(Type.String()),
+    role: Type.Optional(Type.String()),
+    availabilityMode: Type.Optional(Type.String()),
+    failoverMode: Type.Optional(Type.String()),
+    syncHealth: Type.Optional(Type.String()),
+    connectedState: Type.Optional(Type.String()),
+    isLocalReplica: Type.Optional(Type.Boolean()),
+    secondaryConnections: Type.Optional(Type.String()),
+    primaryConnections: Type.Optional(Type.String()),
+    readRoutingUrl: Type.Optional(Type.String()),
+    isReadReplica: Type.Optional(Type.Number()),
+    isRoutableReadReplica: Type.Optional(Type.Number())
+});
+
+const AoagGroup = Type.Object({
+    agName: Type.Optional(Type.String()),
+    primaryReplica: Type.Optional(Type.String()),
+    readRoutingTargets: Type.Optional(Type.String()),
+    replicas: Type.Optional(Type.Array(AoagReplica))
+});
+
+const AoagDetails = Type.Object({
+    serverInfo: Type.Optional(
+        Type.Object({
+            serverName: Type.Optional(Type.String()),
+            isHadrEnabled: Type.Optional(Type.Number())
+        })
+    ),
+    availabilityGroups: Type.Optional(Type.Array(AoagGroup))
+});
+
 const SqlServerInstanceInfo = Type.Object({
     sqlServerEdition: Type.Optional(Type.String({ description: 'MS SQL Server edition' })),
     sqlServerEngineEdition: Type.Optional(
@@ -90,6 +123,21 @@ const SqlServerInstanceInfo = Type.Object({
                 SqlServerDeploymentModel.SQL_FCI_SHORT
             ]
         })
+    ),
+    // Accept structured AOAG object (normal path) or string fallback if parsing failed
+    aoagDetails: Type.Optional(
+        Type.Union([AoagDetails, Type.String({ description: 'Fallback: raw AOAG JSON string if parsing failed' })])
+    ),
+    // Mapping of AOAG nodes to EC2 instance IDs for easy UI correlation
+    aoagClusterNodeDetails: Type.Optional(
+        Type.Array(
+            Type.Object({
+                node: Type.Optional(Type.String({ description: 'Windows cluster node name' })),
+                ip: Type.Optional(Type.String({ description: 'Windows cluster node IP' })),
+                ec2InstanceId: Type.Optional(Type.String({ description: 'Mapped EC2 instance ID for this node' })),
+                ec2InstanceName: Type.Optional(Type.String({ description: 'Mapped EC2 instance Name for this node' }))
+            })
+        )
     ),
     databaseCount: Type.Optional(Type.Number({ description: 'Number of databases in the SQL Server instance.' })),
     windowsAuthentication: Type.Boolean({

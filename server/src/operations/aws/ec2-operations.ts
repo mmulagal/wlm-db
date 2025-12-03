@@ -1026,6 +1026,9 @@ async function getInstanceDetailsByPrivateIp(
 ) {
     logger.info('Get instance details by private ip', { credentialsId, region, privateIps });
 
+    // Normalize for caching: sort and de-duplicate to ensure stable cache keys regardless of input order
+    const normalizedIps = Array.from(new Set(privateIps)).sort((a, b) => a.localeCompare(b));
+
     const { Reservations } = await describeInstance(
         credentialsId,
         region,
@@ -1033,7 +1036,7 @@ async function getInstanceDetailsByPrivateIp(
             Filters: [
                 {
                     Name: 'private-ip-address',
-                    Values: privateIps
+                    Values: normalizedIps
                 }
             ]
         },

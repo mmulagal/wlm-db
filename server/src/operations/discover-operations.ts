@@ -4,7 +4,7 @@ import randomize from 'randomatic';
 
 import { STORAGE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { FileSystemType } from '@aws-sdk/client-fsx';
-import { compact, uniqBy, isEmpty, cloneDeep } from 'lodash-es';
+import { compact, uniqBy, isEmpty, cloneDeep, uniq } from 'lodash-es';
 import {
     DescribeInstancesCommandInput,
     Filter,
@@ -74,12 +74,11 @@ import {
     SQL_SERVER_VERSION_TO_YEAR,
     HOST_AND_SQL_INFO_PS1,
     INSTALL_WF_POWERSHELL_PREREQS_PS1,
-    REQUIRED_PS_MODULES_FOR_MANAGEMENT,
     FAILURE_INFO,
     FEATURE_PREPREQUISITES
 } from './workloads/mssql/discover-consts';
 import { sendSSMCommand } from '../lib/aws/ssm';
-import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
+import { REQUIRED_PS_MODULES_FOR_MANAGEMENT, SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
 import { NodeDetails, ResourceDetails, MultipleCommandSsmResponse } from '../utils/common-types';
 import {
     DiscoverMsSqlResponseBodyType,
@@ -463,6 +462,51 @@ async function getHostAndSqlInfoFromPsOutput(
                 }
             });
 
+            // Pre-resolve AOAG node IPs to EC2 details ONCE to maximize cache hits
+            let aoagIpToInstanceId = new Map<string, string>();
+            let aoagIpToInstanceName = new Map<string, string>();
+            try {
+                const allAoagIps: string[] = uniq(
+                    compact(
+                        (responseInJson as Array<Record<string, unknown>>)
+                            .filter(
+                                item =>
+                                    (item as any)?.sqlServerDeploymentType ===
+                                        SqlServerDeploymentModel.SQL_AOAG_SHORT && Array.isArray((item as any)?.nodeIps)
+                            )
+                            .flatMap(item => ((item as any).nodeIps as string[]) || [])
+                    ) as string[]
+                );
+                if (allAoagIps.length > 0) {
+                    const clusterNodeDetails =
+                        (await getInstanceDetailsByPrivateIp(credentialsId, region, allAoagIps, {
+                            useCache: true
+                        })) || [];
+                    const idPairs = clusterNodeDetails
+                        .filter(node => node.ec2InstancePrivateIpAddress && node.ec2InstanceId)
+                        .map(
+                            node =>
+                                [node.ec2InstancePrivateIpAddress as string, node.ec2InstanceId as string] as [
+                                    string,
+                                    string
+                                ]
+                        );
+                    const namePairs = clusterNodeDetails
+                        .filter(node => node.ec2InstancePrivateIpAddress && node.ec2InstanceName)
+                        .map(
+                            node =>
+                                [node.ec2InstancePrivateIpAddress as string, node.ec2InstanceName as string] as [
+                                    string,
+                                    string
+                                ]
+                        );
+                    aoagIpToInstanceId = new Map<string, string>(idPairs);
+                    aoagIpToInstanceName = new Map<string, string>(namePairs);
+                }
+            } catch (e) {
+                logger.warn('Failed to pre-resolve AOAG node IPs to EC2 details', e);
+            }
+
             for (const sqlServerInstanceInfo of responseInJson) {
                 // If an SQL Server version is unknown, default to 2015, which
                 // causes no data to be returned for the SQL Server instance.
@@ -598,7 +642,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         windowsClusterNodes,
                         sqlPermissions,
                         availablePsModules,
-                        isSqlCmdAvailable
+                        isSqlCmdAvailable,
+                        aoagDetails
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -641,6 +686,28 @@ async function getHostAndSqlInfoFromPsOutput(
                         ...featureReadiness
                     };
 
+                    // Build AOAG node→EC2 mapping when applicable (use pre-fetched maps)
+                    let aoagClusterNodeDetails:
+                        | Array<{ node?: string; ip?: string; ec2InstanceId?: string }>
+                        | undefined;
+                    if (
+                        sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT &&
+                        Array.isArray(nodeIps) &&
+                        nodeIps.length
+                    ) {
+                        try {
+                            const clusterNodes = Array.isArray(windowsClusterNodes) ? windowsClusterNodes : [];
+                            aoagClusterNodeDetails = clusterNodes.map(node => ({
+                                node: node?.Node,
+                                ip: node?.Address,
+                                ec2InstanceId: node?.Address ? aoagIpToInstanceId.get(node.Address) : undefined,
+                                ec2InstanceName: node?.Address ? aoagIpToInstanceName.get(node.Address) : undefined
+                            }));
+                        } catch (e) {
+                            logger.warn('Failed to build aoagClusterNodeDetails', e);
+                        }
+                    }
+
                     ssmTargetSqlServerInstancesInfo.push({
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
@@ -671,7 +738,12 @@ async function getHostAndSqlInfoFromPsOutput(
                         ...(databaseCount && { databaseCount }),
                         ...(windowsClusterName && { windowsClusterName }),
                         ...(windowsClusterNodes && { windowsClusterNodes }),
-                        ...(manageReadiness && { manageReadiness })
+                        ...(manageReadiness && { manageReadiness }),
+                        ...(sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT &&
+                            aoagDetails && { aoagDetails }),
+                        ...(sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT &&
+                            aoagClusterNodeDetails &&
+                            aoagClusterNodeDetails.length && { aoagClusterNodeDetails })
                     });
                 }
             }

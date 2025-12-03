@@ -2,7 +2,7 @@ import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME, SQL_CASE_INSENSITIV
 
 /* eslint-disable no-useless-escape */
 
-import { GOOGLE_DNS, SCRIPT_VERSON_FILE } from './const';
+import { GOOGLE_DNS, REQUIRED_PS_MODULES_FOR_MANAGEMENT, SCRIPT_VERSON_FILE } from './const';
 import {
     compressResponse,
     invokeOntapRequestTemplate,
@@ -11,7 +11,6 @@ import {
     enableCredSSP,
     invokeCommandWithCredSSP
 } from './common-templates';
-import { REQUIRED_PS_MODULES_FOR_MANAGEMENT } from './discover-consts';
 
 const REQUIRED_DATABASE_CREATE_FILE_LIST: string = `
   'C:\\SSM\\Cleanup-ONTAP.ps1',
@@ -264,6 +263,62 @@ const memoryQuery = `@"
     FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem FOR JSON PATH
 "@`;
 
+// AOAG discovery query builder extracted for reuse in discovery scripts
+const buildAoagQuery = `@"
+SET NOCOUNT ON;
+SELECT
+    (SELECT SERVERPROPERTY('ServerName') AS serverName,
+                    SERVERPROPERTY('IsHadrEnabled') AS isHadrEnabled
+     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER) AS serverInfo,
+    (SELECT
+            ag.name AS agName,
+            gp.primary_replica AS primaryReplica,
+            routing.ReadRoutingTargets AS readRoutingTargets,
+            (
+                SELECT
+                    ar.replica_server_name AS replica,
+                    rs.role_desc AS role,
+                    ar.availability_mode_desc AS availabilityMode,
+                    ar.failover_mode_desc AS failoverMode,
+                    rs.synchronization_health_desc AS syncHealth,
+                    rs.connected_state_desc AS connectedState,
+                    rs.is_local AS isLocalReplica,
+                    ar.secondary_role_allow_connections_desc AS secondaryConnections,
+                    ar.primary_role_allow_connections_desc AS primaryConnections,
+                    ar.read_only_routing_url AS readRoutingUrl,
+                    CASE
+                        WHEN rs.role_desc = 'SECONDARY'
+                         AND ar.secondary_role_allow_connections_desc IN ('ALL','READ_ONLY')
+                        THEN 1 ELSE 0 END AS isReadReplica,
+                    CASE
+                        WHEN rs.role_desc = 'SECONDARY'
+                         AND ar.secondary_role_allow_connections_desc IN ('ALL','READ_ONLY')
+                         AND ar.read_only_routing_url IS NOT NULL
+                        THEN 1 ELSE 0 END AS isRoutableReadReplica
+                FROM sys.availability_replicas ar
+                LEFT JOIN sys.dm_hadr_availability_replica_states rs
+                    ON ar.replica_id = rs.replica_id
+                WHERE ar.group_id = ag.group_id
+                FOR JSON PATH
+            ) AS replicas
+        FROM sys.availability_groups ag
+        LEFT JOIN sys.dm_hadr_availability_group_states gp
+            ON ag.group_id = gp.group_id
+        OUTER APPLY (
+            SELECT STRING_AGG(rtarget.replica_server_name,' -> ')
+                             WITHIN GROUP (ORDER BY rol.routing_priority) AS ReadRoutingTargets
+            FROM sys.availability_replicas pr
+            JOIN sys.availability_read_only_routing_lists rol
+                ON rol.replica_id = pr.replica_id
+            JOIN sys.availability_replicas rtarget
+                ON rol.read_only_replica_id = rtarget.replica_id
+            WHERE pr.group_id = ag.group_id
+                AND pr.replica_server_name = gp.primary_replica
+        ) routing
+        FOR JSON PATH) AS availabilityGroups
+FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+"@`;
+
 const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
     $cpuQuery = ${cpuQuery}
     $diskQuery = ${diskQuery}
@@ -416,8 +471,8 @@ const validateSQLInstanceConnectivity = (
                         ${
                             // prettier-ignore
                             checkManageReadiness
-                                ? ',(SELECT permission_name FROM fn_my_permissions(NULL, \'SERVER\') FOR JSON PATH) as permissions'
-                                : ''
+        ? ',(SELECT permission_name FROM fn_my_permissions(NULL, \'SERVER\') FOR JSON PATH) as permissions'
+        : ''
                         }
                     FOR JSON PATH
 "@
@@ -1839,5 +1894,6 @@ export {
     trendGraphCreateScriptForMssql,
     GET_NODE_IP_ADDRESS,
     GET_FQDN,
-    GET_CLUSTER_NAME
+    GET_CLUSTER_NAME,
+    buildAoagQuery
 };

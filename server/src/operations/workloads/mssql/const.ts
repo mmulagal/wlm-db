@@ -20,6 +20,15 @@ const RSS_OPTIMIZE_LOG_PATH = 'C:\\cfn\\log\\rss-optimize.log.txt';
 const CRR_ASSESSMENT_LOG_PATH = 'C:\\cfn\\log\\crr-assessment.log.txt';
 const HIGH_AVAILABILITY_LOG_PATH = 'C:\\cfn\\log\\high-availability.log.txt';
 
+const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
+  'AWS.Tools.EC2',
+  'AWS.Tools.FSx',
+  'AWS.Tools.SimpleSystemsManagement',
+  'NetApp.ONTAP',
+  'AWS.Tools.BedrockRuntime',
+  'AWS.Tools.CloudWatch'
+`;
+
 export {
     DB_ROWS_COUNT,
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
@@ -41,5 +50,6 @@ export {
     RESILIENCY_OPTIMIZE_LOG_PATH,
     RSS_OPTIMIZE_LOG_PATH,
     CRR_ASSESSMENT_LOG_PATH,
-    HIGH_AVAILABILITY_LOG_PATH
+    HIGH_AVAILABILITY_LOG_PATH,
+    REQUIRED_PS_MODULES_FOR_MANAGEMENT
 };

@@ -1,6 +1,7 @@
 import { SqlServerDeploymentModel } from '../../../utils/consts';
 import { compressResponse, enableCredSSP, invokeCommandWithCredSSP } from './common-templates';
-import { GOOGLE_DNS, DISCOVER_OPERATION_LOG_PATH } from './const';
+import { slqcmdExecutionTemplate, buildAoagQuery } from './ssm-script-utils';
+import { GOOGLE_DNS, DISCOVER_OPERATION_LOG_PATH, REQUIRED_PS_MODULES_FOR_MANAGEMENT } from './const';
 
 const IS_DATABASE_CREATE_POSSIBLE: string = 'isDatabaseCreatePossible';
 const IS_PS7_AVAILABLE: string = 'isPS7Available';
@@ -8,14 +9,6 @@ const UNAVAILABLE_PS_MODULES: string = 'unavailablePsModules';
 const FAILURE_INFO: string = 'failureInfo';
 const ACTIVE_DIRECTORY: string = 'activeDirectory';
 const SQL_SERVER_DEPLOYMENT_TYPE: string = 'sqlServerDeploymentType';
-const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
-  'AWS.Tools.EC2',
-  'AWS.Tools.FSx',
-  'AWS.Tools.SimpleSystemsManagement',
-  'NetApp.ONTAP',
-  'AWS.Tools.BedrockRuntime',
-  'AWS.Tools.CloudWatch'
-`;
 
 const SQL_PERMISSIONS: string = `
 'VIEW ANY DEFINITION',
@@ -459,6 +452,67 @@ const HOST_AND_SQL_INFO_PS1 = [
     return $sqlServerInfo
   }
 
+  # Encapsulated AOAG discovery (query + auth fallbacks + JSON normalization)
+  Function Get-AoagDetails {
+    param(
+      [Parameter(Mandatory = $true)][string]$serverInstance,
+      [Parameter(Mandatory = $false)]$credsFromParameterStore,
+      [Parameter(Mandatory = $true)][string]$instanceName
+    )
+    $result = @{}
+    $result['aoagQueryAttempted'] = $True
+    $aoagQuery = ${buildAoagQuery}
+
+    ${slqcmdExecutionTemplate}
+    $aoagOut = ''
+
+    $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
+    try {
+      if ($credsFromParameterStore -and $credsFromParameterStore.domain.Count -gt 0) {
+        $domainCred = $credsFromParameterStore.domain.Where({$_.sqlInstanceName -eq $instanceName -or $_.sqlInstanceName -eq 'MSSQLSERVER'}, 'First')[0]
+        if ($null -ne $domainCred -and $domainCred.username -and $domainCred.password) {
+          $sqlCredential['useDomainAuth'] = $True
+          $sqlCredential['username'] = $domainCred.username
+          $sqlCredential['password'] = $domainCred.password
+          $result['aoagQueryAuth'] = 'domain'
+        }
+      }
+      if ($sqlCredential['useDomainAuth'] -ne $True -and $credsFromParameterStore -and $credsFromParameterStore.sql.Count -gt 0) {
+        $sqlCred = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName}, 'First')[0]
+        if ($null -ne $sqlCred -and $sqlCred.username -and $sqlCred.password) {
+          $sqlCredential['useSqlAuth'] = $True
+          $sqlCredential['username'] = $sqlCred.username
+          $sqlCredential['password'] = $sqlCred.password
+          $result['aoagQueryAuth'] = 'sql'
+        }
+      }
+      $lines = Call-SqlCmd -SqlCredential $sqlCredential -Query $aoagQuery -InstanceName $serverInstance
+      $aoagOut = $lines
+      if ($sqlCredential['useDomainAuth'] -eq $True) { $result['aoagQueryAuthSucceeded'] = 'domain' }
+      elseif ($sqlCredential['useSqlAuth'] -eq $True) { $result['aoagQueryAuthSucceeded'] = 'sql' }
+    } catch {
+      if ($sqlCredential['useDomainAuth'] -eq $True) { $result['aoagQueryDomainError'] = "$_" }
+      elseif ($sqlCredential['useSqlAuth'] -eq $True) { $result['aoagQuerySqlError'] = "$_" }
+    }
+
+    # Parse / normalize JSON
+    if ($aoagOut) {
+      try {
+        $aoagParsed = $aoagOut | ConvertFrom-Json
+        if ($aoagParsed) {
+          try { if ($aoagParsed.serverInfo -is [string]) { $aoagParsed.serverInfo = $aoagParsed.serverInfo | ConvertFrom-Json } } catch {}
+          try { if ($aoagParsed.availabilityGroups -is [string]) { $aoagParsed.availabilityGroups = $aoagParsed.availabilityGroups | ConvertFrom-Json } } catch {}
+          try { if ($aoagParsed.availabilityGroups) { foreach ($ag in $aoagParsed.availabilityGroups) { if ($ag.Replicas -is [string]) { $ag.Replicas = $ag.Replicas | ConvertFrom-Json } } } } catch {}
+          $result['aoagDetails'] = $aoagParsed
+        } else { $result['aoagDetails'] = $aoagOut }
+      } catch {
+        $result['aoagDetails'] = $aoagOut
+        $result['aoagParseError'] = "$_"
+      }
+      try { $result['aoagOutLen'] = $aoagOut.Length } catch {}
+    }
+    return $result
+  }
 
     
   try {
@@ -665,7 +719,16 @@ const HOST_AND_SQL_INFO_PS1 = [
                $responseObject['sqlServerNodes'] = hostname
               }
             }
-            elseif($isClustered -eq $True) {
+            # If deployment type is AOAG (from cluster-derived or updated value), fetch AOAG details using helper
+            if ($responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] -eq '${SqlServerDeploymentModel.SQL_AOAG_SHORT}') {
+              $aoagResult = Get-AoagDetails -serverInstance $serverInstance -credsFromParameterStore $credsFromParameterStore -instanceName $instanceName
+              if ($aoagResult) {
+                foreach ($k in $aoagResult.Keys) {
+                  $responseObject[$k] = $aoagResult[$k]
+                }
+              }
+            }
+            elseif($isClustered -eq $True -and $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] -ne '${SqlServerDeploymentModel.SQL_AOAG_SHORT}') {
               $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
               $responseObject['sqlServerName'] = if ($sqlServerInfoFromRegistry.ContainsKey('clusterName') -and $sqlServerInfoFromRegistry['clusterName']) {
                 $sqlServerInfoFromRegistry['clusterName']
@@ -680,7 +743,6 @@ const HOST_AND_SQL_INFO_PS1 = [
               $responseObject['sqlServerNodes'] = hostname
             }
             
-
             if( -Not ([string]::IsNullOrEmpty($existingPermissions))) {
               $existingPermissionsAsList = $existingPermissions | ConvertFrom-Json | ForEach-Object { $_.permission_name }
               $responseObject['sqlPermissions'] = $existingPermissionsAsList
@@ -713,7 +775,7 @@ const HOST_AND_SQL_INFO_PS1 = [
       Echo $responseObject
     }
 
-    $response = $instancesInfoList | ConvertTo-Json
+    $response = $instancesInfoList | ConvertTo-Json -Depth 12 -Compress
     if([string]::IsNullOrEmpty($response)) {
       Write-Information "Failed to compress the response because the response is either null or empty. $response"
       return $response
@@ -1105,7 +1167,6 @@ export {
     IS_PS7_AVAILABLE,
     UNAVAILABLE_PS_MODULES,
     IS_DATABASE_CREATE_POSSIBLE,
-    REQUIRED_PS_MODULES_FOR_MANAGEMENT,
     INSTALL_WF_POWERSHELL_PREREQS_PS1,
     FAILURE_INFO,
     ACTIVE_DIRECTORY,

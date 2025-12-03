@@ -53,9 +53,9 @@ import {
     INSTALL_WF_POWERSHELL_PREREQS_PS1,
     IS_DATABASE_CREATE_POSSIBLE,
     IS_PS7_AVAILABLE,
-    REQUIRED_PS_MODULES_FOR_MANAGEMENT,
     UNAVAILABLE_PS_MODULES
 } from './workloads/mssql/discover-consts';
+import { REQUIRED_PS_MODULES_FOR_MANAGEMENT } from './workloads/mssql/const';
 import { getPaginatedDatabaseInstances, getResources } from './database/database-operations';
 import { createResource, deleteDatabaseInstance, deleteResource, upsertDatabaseInstance } from '../lib/database/db';
 import { tagResources } from './aws/sqs-operations';
