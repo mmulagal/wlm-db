@@ -2,7 +2,7 @@ import { createReadStream } from 'node:fs';
 import { groupBy, isEmpty } from 'lodash-es';
 import logger from '../utils/logging';
 import { MSSQL_ERROR_PATTERN, MSSQL_SEVERITY_THRESHOLD } from '../utils/const';
-import { generateHash } from '../utils/utils';
+import { generateHash, parseUtcTimestamp } from '../utils/utils';
 
 interface MsSqlErrorLog {
     timestamp: string;
@@ -98,7 +98,11 @@ function processErrorLogLines(
 
         if (startLogsAnalysisFromTimestamp && match?.groups) {
             const [, errorLogTimestamp] = match;
-            const logTimestamp = new Date(errorLogTimestamp).getTime();
+            if (!errorLogTimestamp) {
+                // Skip this line if timestamp is missing or invalid
+                continue;
+            }
+            const logTimestamp = parseUtcTimestamp(errorLogTimestamp);
             if (
                 logTimestamp >= startLogsAnalysisFromTimestamp &&
                 logTimestamp <= endLogsAnalysisAtTimestamp &&
@@ -190,8 +194,8 @@ async function getUniqueErrorAndRespectiveCount(logs: MsSqlErrorLog[], uniqueLog
                     : undefined,
                 lastOccurrence:
                     Array.isArray(groupedLogs[key]) &&
-                    groupedLogs[key].length > 0 &&
-                    groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
+                        groupedLogs[key].length > 0 &&
+                        groupedLogs[key][groupedLogs[key].length - 1]?.timestamp
                         ? new Date(groupedLogs[key][groupedLogs[key].length - 1].timestamp).getTime()
                         : undefined,
                 severity,

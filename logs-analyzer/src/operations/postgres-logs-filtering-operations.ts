@@ -2,6 +2,7 @@ import { createReadStream } from 'node:fs';
 import { groupBy } from 'lodash-es';
 import logger from '../utils/logging';
 import { PGSQL_ERROR_PATTERN } from '../utils/const';
+import { parseUtcTimestamp } from '../utils/utils';
 
 interface PostgresLog {
     timestamp: string;
@@ -43,7 +44,11 @@ async function readPostgresLogsFile(
 
                 if (startLogsAnalysisFromTimestamp && match) {
                     const [, errorLogTimestamp] = match;
-                    const logTimestamp = new Date(errorLogTimestamp).getTime();
+                    if (!errorLogTimestamp) {
+                        // Skip this line if timestamp is missing or invalid
+                        continue;
+                    }
+                    const logTimestamp = parseUtcTimestamp(errorLogTimestamp);
                     if (logTimestamp >= startLogsAnalysisFromTimestamp && logTimestamp <= endLogsAnalysisAtTimestamp) {
                         const [, timestamp, processId, severity, message] = match;
                         if (!logSet.has(message)) {

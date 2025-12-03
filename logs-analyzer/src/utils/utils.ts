@@ -617,6 +617,31 @@ function containsErrorKeywords(messageText: string): boolean {
     return regex.test(lowerMessage);
 }
 
+/**
+ * Normalizes a timestamp string to UTC by appending 'Z' if not already present.
+ * This ensures JavaScript's Date constructor interprets the timestamp as UTC rather than local time.
+ * 
+ * @param timestamp - Timestamp string in format "YYYY-MM-DD HH:MM:SS.ms" or ISO 8601
+ * @returns Unix epoch timestamp in milliseconds
+ */
+function parseUtcTimestamp(timestamp: string): number {
+    if (!timestamp) {
+        throw new Error('Timestamp is required');
+    }
+
+    // If timestamp already ends with 'Z', parse as-is
+    if (timestamp.endsWith('Z')) {
+        return new Date(timestamp).getTime();
+    }
+
+    // Replace space with 'T' if needed for ISO 8601 format, then append 'Z' for UTC
+    const normalizedTimestamp = timestamp.includes('T')
+        ? `${timestamp}Z`
+        : `${timestamp.replace(' ', 'T')}Z`;
+
+    return new Date(normalizedTimestamp).getTime();
+}
+
 export {
     getPowershellScript,
     getBashScript,
@@ -632,5 +657,6 @@ export {
     hoursAgoTimestamp,
     toMB,
     containsErrorKeywords,
-    getSqlplusScriptForOracle
+    getSqlplusScriptForOracle,
+    parseUtcTimestamp
 };
