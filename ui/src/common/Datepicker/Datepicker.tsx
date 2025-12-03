@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { ReactComponent as DatePickerIcon } from '../../assets/datepicker.svg';
-import styles from './Datepicker.module.scss';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { DsButton } from '@netapp/design-system';
+import { ReactComponent as DatePickerIcon } from '../../assets/datepicker.svg';
+import styles from './Datepicker.module.scss';
 
 interface DatePickerProps {
     value?: Date;

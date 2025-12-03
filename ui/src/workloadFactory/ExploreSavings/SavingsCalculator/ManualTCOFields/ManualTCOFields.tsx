@@ -52,13 +52,6 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
         dispatch(setSelectedMonthlyBYOLCost(textSearch));
     }, [textSearch]);
 
-    // Setting monthly data rate change for FsxW
-    useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
-            dispatch(setMonthlyChangeRate(3));
-        }
-    }, [savingsCalculatorFrom]);
-
     // Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];

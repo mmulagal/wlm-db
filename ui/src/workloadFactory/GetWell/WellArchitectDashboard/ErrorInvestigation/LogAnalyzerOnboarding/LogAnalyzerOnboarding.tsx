@@ -169,7 +169,7 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
         );
     };
 
-    //function to invoke dialog for custom timeframe
+    // function to invoke dialog for custom timeframe
     const handleCustomTimeframe = () => {
         setDialog(
             <DialogComponent

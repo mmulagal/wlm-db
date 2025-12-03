@@ -1,8 +1,10 @@
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDispatch } from 'react-redux';
+import { DsSelect, DsTextField } from '@tlveng/wlm-ds';
+import { DsTypography } from '@netapp/design-system';
 import styles from './AnalyzeCustomTimeframe.module.scss';
 
-import { useDispatch } from 'react-redux';
 import {
     setCustomAnalysisDurationInHours,
     setCustomAnalysisStartTime,
@@ -11,9 +13,7 @@ import {
 } from '../../../../../../store/workloadFactory/agenticAISlice';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { timeUnits } from '../../../../../../utils/consts';
-import { DsSelect, DsTextField } from '@tlveng/wlm-ds';
 import Datepicker from '../../../../../../common/Datepicker/Datepicker';
-import { DsTypography } from '@netapp/design-system';
 
 const AnalyzeCustomTimeframe = () => {
     const dispatch = useDispatch();
@@ -149,7 +149,7 @@ const AnalyzeCustomTimeframe = () => {
 
                 <DsTextField
                     title={t('databases.log-analyzer.duration')}
-                    placeholder={'Duration'}
+                    placeholder="Duration"
                     value={durationCustomAnalysis?.toString() || ''}
                     onChange={(event?: ChangeEvent<HTMLInputElement>) => {
                         dispatch(setCustomAnalysisDurationInHours(event?.target?.value || ''));

@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { ExploreSavingsSliceEntities } from '../../utils/types/exploreSavingsType';
-import { TCO_CALCULATOR_MODE, WLF_TABS } from '../../utils/consts';
+import { SAVINGS_CALC_MODE, TCO_CALCULATOR_MODE, WLF_TABS } from '../../utils/consts';
 
 export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     showOptimizeMode: {
@@ -336,6 +336,21 @@ const exploreSavingsSlice = createSlice({
         },
         setSavingsCalculatorFrom(state, action: PayloadAction<any>) {
             state.savingsCalculatorFrom = action.payload;
+
+            // Set defaults based on calculator mode
+            if (action.payload === SAVINGS_CALC_MODE.AUTO_EBS || action.payload === SAVINGS_CALC_MODE.MANUAL_EBS) {
+                // EBS defaults
+                state.numberOfClonedCopies = 3;
+                state.monthlyChangeRate = 10;
+            } else if (
+                action.payload === SAVINGS_CALC_MODE.AUTO_FSXW ||
+                action.payload === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+                action.payload === SAVINGS_CALC_MODE.ONPREM
+            ) {
+                // FSxW and OnPrem defaults
+                state.numberOfClonedCopies = 1;
+                state.monthlyChangeRate = 3;
+            }
         },
         setSelectedSnapshotFrequency(state, action: PayloadAction<any>) {
             state.selectedSnapshotFrequency = action.payload;

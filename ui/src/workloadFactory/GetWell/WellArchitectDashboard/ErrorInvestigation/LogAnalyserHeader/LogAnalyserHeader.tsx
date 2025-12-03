@@ -100,7 +100,7 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
         });
     };
 
-    //function to invoke dialog for custom timeframe
+    // function to invoke dialog for custom timeframe
     const handleCustomTimeframe = () => {
         setDialog(
             <DialogComponent

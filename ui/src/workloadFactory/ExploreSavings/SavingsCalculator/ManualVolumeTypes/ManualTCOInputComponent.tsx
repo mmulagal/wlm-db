@@ -32,10 +32,10 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         from === 'primary'
             ? manualTCOVolumeTypes?.[type]?.manualTCOStorageAmount
             : manualTCOVolumeTypes2?.[type]?.manualTCOStorageAmount;
-    const [volumeSearch, setVolumeSearch] = useSearchDebounce(300);
+    const [volumeSearch, setVolumeSearch] = useSearchDebounce(500);
     // Storage amount debounce logic
 
-    const [storageAmountSearch, setStorageAmountSearch] = useSearchDebounce(300);
+    const [storageAmountSearch, setStorageAmountSearch] = useSearchDebounce(500);
 
     const [iopsValue, setIOPSValue] = useState<any>(null);
     const defaultIOPSValue =

@@ -45,15 +45,6 @@ const SavingsSelection = ({ printState }: any) => {
         existingInstanceType: ''
     });
 
-    useEffect(() => {
-        if (
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-        ) {
-            setMonthlyChangeRateNo(3);
-        }
-    }, [savingsCalculatorFrom]);
-
     // Debounce variable
     const [clonedText, setClonedText] = useSearchDebounce(1000);
     const [changeRateText, setChangeRateText] = useSearchDebounce(1000);
@@ -61,6 +52,12 @@ const SavingsSelection = ({ printState }: any) => {
     const [byolValue, setByolValue] = useState(monthlyBYOLCost || '');
 
     const { setDialog, closeDialog } = useDialog();
+
+    // Sync local state with Redux state when calculator mode changes
+    useEffect(() => {
+        setNoOfClonedCopies(numberOfClonedCopies);
+        setMonthlyChangeRateNo(monthlyChangeRate);
+    }, [numberOfClonedCopies, monthlyChangeRate, savingsCalculatorFrom]);
 
     useEffect(() => {
         setIsByolField(checkIfByolFieldRequired(selectedHostDetails, isByolField, savingsCalculatorFrom));
