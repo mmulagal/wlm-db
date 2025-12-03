@@ -1737,9 +1737,10 @@ async function discoverOracleResources(
                 }
                 let parsedResponse;
                 try {
-                    parsedResponse = sqlResponseParsing(output || '[]');
+                    parsedResponse = sqlResponseParsing(output || '{}');
                     logger.debug('Parsed SSM ORACLE response', { parsedResponse });
-                    if (!parsedResponse || parsedResponse.length === 0) {
+                    const { hostname, dbInstances } = parsedResponse;
+                    if (!parsedResponse || !Array.isArray(dbInstances) || dbInstances.length === 0) {
                         return;
                     }
                     ec2Instance = {
@@ -1755,7 +1756,7 @@ async function discoverOracleResources(
 
                     const databaseInstanceDetails: DiscoverOracleInstanceType[] = [];
                     // Parsed Response : an array of objects for each database Instance
-                    for (const dbInstance of parsedResponse) {
+                    for (const dbInstance of dbInstances) {
                         const {
                             instance_details: {
                                 instance_id: instanceId,
@@ -1864,6 +1865,7 @@ async function discoverOracleResources(
                         });
                     }
 
+                    ec2Instance.ec2HostName = hostname;
                     ec2Instance.databaseInstanceDetails = databaseInstanceDetails;
                     instancesWithSsmResponse.push(ec2Instance);
                 } catch (err: unknown) {

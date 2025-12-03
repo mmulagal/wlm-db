@@ -1227,6 +1227,9 @@ EOF
     ${loadStorageDetectionModules}
     ${checkOracleModuleAvailability}
 
+    hostname=$(hostname)
+    RESULTS="{\\"hostname\\":\\"$hostname\\", \\"dbInstances\\":["
+
     while IFS=: read -r sid oracle_home; do
         # Check if the instance is running by checking for its PMON process.
         # Skip if the instance process is not running.
@@ -1288,7 +1291,7 @@ EOF
 
     done <<< "$oratab_entries"
 
-    RESULTS+="]"  # end of the JSON array
+    RESULTS+="]}"  # end of the JSON array
     echo $RESULTS
 `;
 
