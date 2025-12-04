@@ -163,8 +163,9 @@ for diskGrp in unOptimizedDiskGroups:
                     log(f"Fetching LUN serial for /vol/{volName}/lun1")
                     lunSerialResponse, lunSerialError = ontapRestApiRequest(fsxId, region, 'GET', f"storage/luns?svm.name={diskGrp['svmName']}&name=/vol/{volName}/lun1&fields=serial_number")
                     if lunSerialError or lunSerialResponse['num_records'] == 0:
-                        log(f"Error fetching LUN serial for /vol/{volName}/lun1: {lunSerialError}")
-                        result[diskGrp['diskGroupName']]['error'] += str(lunSerialError)
+                        errStr = f"Error fetching LUN serial for /vol/{volName}/lun1: {lunSerialError}"
+                        log(errStr)
+                        result[diskGrp['diskGroupName']]['error'] += str(errStr)
                     else:
                         log(f"Successfully fetched LUN serial for /vol/{volName}/lun1: {lunSerialResponse}")
                         result[diskGrp['diskGroupName']]['luns'].append(lunSerialResponse['records'][0]['serial_number'])
@@ -182,21 +183,12 @@ def escape_to_hex(s, charset=':<>#$%*+=?@[!]^~/'):
     pattern = r'([{}])'.format(re.escape(charset))
     return re.sub(pattern, lambda m: '\\\\x{:02x}'.format(ord(m.group(1))), s)
 
-def resolve_lun(serial, byid='/dev/disk/by-id'):
-    esc = escape_to_hex(serial)
-    # collect candidates that end with the escaped serial
-    names = [n for n in os.listdir(byid) if n.endswith(esc)]
-    if not names:
-        return None
-    names.sort(key=lambda n: ('-part' in n, n))
-    link = os.path.join(byid, names[0])
-    return os.path.realpath(link)
-
 def run_shell(cmd, input_str=None):
     return subprocess.run(
         cmd,
         input=input_str,
         check=True,
+        shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True
@@ -213,8 +205,8 @@ def resolve_lun_with_mountpath(serial, byid='/dev/disk/by-id'):
     return os.path.realpath(link)
 
 def resolve_lun(serial):
-    cmd = f"lsblk -o name,serial,fstype -JpS"
-    jsonRes = run_shell([cmd]).stdout
+    cmd = [f'lsblk -o name,serial,fstype -JpS']
+    jsonRes = run_shell(cmd).stdout
     disks = json.loads(jsonRes)
     for disk in disks["blockdevices"]:
         if "serial" in disk and disk["serial"] == serial:
@@ -236,35 +228,25 @@ def wait_for_device(path, timeout=20, interval=0.5):
         time.sleep(interval)
     return False
 
-def _partition_path(device, number=1):
-   suffix = f"p{number}" if device[-1].isdigit() else f"{number}"
-   return f"{device}{suffix}"
-
-def create_partition_and_format(device="/dev/sdd", timeout=30):
-    if os.geteuid() != 0:
-        raise PermissionError("Must run as root.")
-
-    if not is_block_device(device):
-        raise FileNotFoundError(f"{device} not found or not a block device.")
-
-    partition = _partition_path(device, 1)
-
-    # fdisk script: new (n), primary (p), partition 1, accept defaults, write (w)
-    fdisk_script = "n\\np\\n1\\n\\n\\nw\\n"
+def is_multipath_device(path):
     try:
-        run_shell(["fdisk", device], input_str=fdisk_script)
-        run_shell(["partprobe", device])
-        run_shell(["udevadm", "settle"])
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Partitioning failed: {' '.join(e.cmd)}\\n{e.stderr}") from e
+        base_cmd = f"udevadm info --query=property --name={path}"
+        grep_cmd = f"| grep DM_MULTIPATH_DEVICE_PATH"
+        awk_cmd = f"| awk -F= '{{print $2}}'"
+        cmd = (base_cmd + grep_cmd + awk_cmd)
+        out=run_shell(cmd)
+        return out.stdout.strip() == "1"
+    except subprocess.CalledProcessError:
+        return False
 
-    if not wait_for_device(partition, timeout=timeout):
-        raise TimeoutError(f"{partition} did not appear within {timeout}s.")
-
-    if not is_block_device(partition):
-        raise RuntimeError(f"{partition} doesn't belong to a block device.")
-
-    return partition
+def get_multipath_device_UUID(path):
+    try:
+        out = run_shell([f"/lib/udev/scsi_id --whitelisted --replace-whitespace --device={path}"]).stdout
+        uuid = out.strip()
+        return f"/dev/mapper/{uuid}"
+    except subprocess.CalledProcessError:
+        raise RuntimeError(f"Could not get multipath device UUID for {path}")
+        
 
 def add_oracle_asm_disk(target, diskname, oracleasm_bin="/usr/sbin/oracleasm"):
 
@@ -272,12 +254,12 @@ def add_oracle_asm_disk(target, diskname, oracleasm_bin="/usr/sbin/oracleasm"):
         raise FileNotFoundError(f"{oracleasm_bin} not found.")
 
     try:
-        run_shell([oracleasm_bin, "init"])
+        run_shell([f"{oracleasm_bin} init"])
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"oracleasm init failed: {e.stderr}") from e
 
     try:
-        existing = run_shell([oracleasm_bin, "listdisks"]).stdout.splitlines()
+        existing = run_shell([f"{oracleasm_bin} listdisks"]).stdout.splitlines()
     except subprocess.CalledProcessError:
         existing = []
 
@@ -285,15 +267,15 @@ def add_oracle_asm_disk(target, diskname, oracleasm_bin="/usr/sbin/oracleasm"):
         return {"device": target, "diskname": diskname, "status": "exists"}
 
     try:
-        run_shell([oracleasm_bin, "createdisk", diskname, target])
+        run_shell([f"{oracleasm_bin} createdisk {diskname} {target}"])
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"oracleasm createdisk failed: {e.stderr}") from e
 
     try:
-        out = run_shell([oracleasm_bin, "listdisks"]).stdout.splitlines()
+        out = run_shell([f"{oracleasm_bin} listdisks"]).stdout.splitlines()
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"oracleasm listdisks failed: {e.stderr}") from e
-
+    log(f"ASM disks after creation: {out}")
     if diskname not in out:
         raise RuntimeError(f"ASM disk {diskname} not visible after creation.")
 
@@ -368,16 +350,22 @@ for diskGrp in diskGroups:
     diskCount = 1
     for device in targetDevices:
         try:
-            partition = create_partition_and_format(device)
-            log(f"Successfully created partition and formatted {device} as ext4: {partition}")
-            log(f"Adding {partition} as ASM disk {diskGrpName}_DISK{len(result[diskGrp['diskGroupName']]['disks']) + 1}")
+            log(f"Adding {device} as ASM disk {diskGrpName}_DISK{len(result[diskGrp['diskGroupName']]['disks']) + 1}")
             diskName = f"WLMDB_{diskGrpName}_DISK{diskCount}"
-            asmResponse = add_oracle_asm_disk(partition, diskName)
+            if is_multipath_device(device):
+                log(f"Device {device} is a multipath device, using multipath path for ASM disk")
+                device = get_multipath_device_UUID(device)
+                log(f"Using multipath device {device} for ASM disk {diskName}")
+            
+            if not device:
+                raise RuntimeError(f"Could not resolve {device} path for LUN.")
+
+            asmResponse = add_oracle_asm_disk(device, diskName)
 
             result[diskGrp['diskGroupName']]['disks'].append(diskName)
             diskCount += 1
         except Exception as e:
-            log(f"Error creating partition and formatting {device}: {e}")
+            log(f"Error adding {device} to asm disk: {e}")
             result[diskGrp['diskGroupName']]['error'] += str(e)
 
 print(json.dumps(result))
