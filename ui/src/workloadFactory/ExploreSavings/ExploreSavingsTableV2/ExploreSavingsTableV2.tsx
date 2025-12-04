@@ -160,6 +160,16 @@ const ExploreSavingsTableV2 = () => {
                     tooltipTitle = t('databases.explore-savings.disabled-tooltip-limit-exceed');
                 }
 
+                // Only create new object if cellProps actually changed
+                const currentIsDisabled = item.cellProps?.isDisabled;
+                const currentTooltip = item.cellProps?.selectionProps?.title;
+
+                if (currentIsDisabled === isDisabled && currentTooltip === tooltipTitle) {
+                    // Return same object reference if nothing changed - prevents useTable reset
+                    return item;
+                }
+
+                // Only create new object when cellProps actually need to change
                 return {
                     ...item,
                     cellProps: {
@@ -401,18 +411,30 @@ const ExploreSavingsTableV2 = () => {
         selectionType: 'multiple',
         rows: selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? updatedTableData : fsxWTableData || [],
         pageSize: 50,
+        defaultSelectedRows: [],
         isLazyLoading: isDiscoverInProgress || isManagedHostListLoading || multiDataLoading
     });
 
     // Sync table selection state to Redux
     useEffect(() => {
-        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
+        const dataForSelection =
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? updatedTableData : fsxWTableData || [];
 
-        dispatch(setSelectedRowsForExploreSavingsEBSBulk(rowsData));
-    }, [tableProps.selectionState]);
+        if (dataForSelection.length > 0) {
+            const rowsData = getSelectedFromSelectionState(tableProps.selectionState, dataForSelection);
+            dispatch(setSelectedRowsForExploreSavingsEBSBulk(rowsData));
+        }
+    }, [tableProps.selectionState, selectedExploreSavingsTab]);
 
     // Sync Redux selection state back to table when rows are removed externally (e.g., from auth dialog)
+    // or after temporarily empty (during zoom operations)
     useEffect(() => {
+        const dataForSelection =
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? updatedTableData : fsxWTableData || [];
+
+        // only sync if we have dataForSelection
+        if (dataForSelection.length === 0) return;
+
         const currentTableSelectedIds = new Set(
             Object.keys(tableProps.selectionState?.rows || {}).filter(id => tableProps.selectionState?.rows[id])
         );
@@ -424,7 +446,14 @@ const ExploreSavingsTableV2 = () => {
                 tableProps.toggleRowSelection(id)(false);
             }
         });
-    }, [selectedRowsForExploreSavingsEBSBulk]);
+
+        // Find rows that are in Redux but not selected in table
+        reduxSelectedIds.forEach(id => {
+            if (!currentTableSelectedIds.has(id as string)) {
+                tableProps.toggleRowSelection(id as string)(true);
+            }
+        });
+    }, [selectedRowsForExploreSavingsEBSBulk, updatedTableData, fsxWTableData, selectedExploreSavingsTab]);
 
     const handleEBSBulkAction = () => {
         dispatch(setEbsTCOAction('bulk'));
