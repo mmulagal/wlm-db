@@ -117,8 +117,10 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
                 dbEngineType === DatabaseTypes.PG_SQL ? '(postgres)' : ''
             }.`,
             type: 'String',
-            minLength: 8,
-            noEcho: true
+            noEcho: true,
+            Default: '--------',
+            AllowedPattern: '^$|.{8,}$',
+            ConstraintDescription: 'Password must be at least 8 characters when provided'
         },
         {
             name: 'SQLigroupname',

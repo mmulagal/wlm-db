@@ -56,9 +56,10 @@ const validateSAZGen2Throughput = (value: number): boolean => {
     );
 };
 
-const fsxValidationHook = async (request: FastifyRequest, reply: FastifyReply) => {
+const deploymentValidationHook = async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as any;
     const config = body?.fsxConfiguration;
+    const sqlConfig = body?.sqlConfiguration;
 
     if (config) {
         const isGen1 = ['SINGLE_AZ_1', 'MULTI_AZ_1'].includes(config.fsxDeploymentMode);
@@ -98,6 +99,14 @@ const fsxValidationHook = async (request: FastifyRequest, reply: FastifyReply) =
             }
         }
     }
+    if (sqlConfig) {
+        if (!sqlConfig.isManagedServiceAccount && !sqlConfig.serviceAccountPassword) {
+            return reply.code(400).send({
+                error: 'Invalid SQL Configuration',
+                message: 'Service account password is required when not a managed service account.'
+            });
+        }
+    }
 };
 
 export default function deploymentRoutes(fastify: FastifyInstance) {
@@ -106,7 +115,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
     server
         .post(
             `${API_MSSQL_STATIC_TEMPLATE_PREFIX_PATH}`,
-            { schema: CloudFormationTemplateSchema, preHandler: fsxValidationHook },
+            { schema: CloudFormationTemplateSchema, preHandler: deploymentValidationHook },
             async (request, reply) => {
                 const {
                     headers: { 'triggered-from': triggeredFrom },
@@ -141,7 +150,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
         )
         .post(
             `${API_MSSQL_PREFIX_PATH}/cloudformation/deploy`,
-            { schema: DeployTemplateSchema, preHandler: fsxValidationHook },
+            { schema: DeployTemplateSchema, preHandler: deploymentValidationHook },
             async (request, reply) => {
                 const {
                     params: { credentialsId, region },

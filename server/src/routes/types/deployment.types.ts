@@ -23,7 +23,10 @@ const ADConfiguration = Type.Object({
     domainPassword: Type.String(),
     domainDnsname: Type.String(),
     dnsIpaddress: Type.String(),
-    securityGroupId: Type.Optional(Type.String())
+    securityGroupId: Type.Optional(Type.String()),
+    preferredDomainController: Type.Optional(Type.String()),
+    ouPath: Type.Optional(Type.String()),
+    adGroup: Type.Optional(Type.String())
 });
 
 const FSXConfiguration = Type.Object({
@@ -48,12 +51,13 @@ const SQLConfiguration = Type.Object({
     sqlDeploymentMode: Type.String({ enum: ['standalone', 'fci', 'ha'] }),
     sqlAmiId: Type.String(),
     serviceAccountName: Type.String(),
-    serviceAccountPassword: Type.String(),
+    serviceAccountPassword: Type.Optional(Type.String({ minLength: 8 })),
     sqlServerName: Type.String(),
     sqlAmiName: Type.String(),
     sqlCollation: Type.String(),
     isCustomAmi: Type.Optional(Type.Boolean({ default: false })),
-    sqlVersion: Type.Optional(Type.String({ enum: ['postgresql15', 'postgresql16'] }))
+    sqlVersion: Type.Optional(Type.String({ enum: ['postgresql15', 'postgresql16'] })),
+    isManagedServiceAccount: Type.Optional(Type.Boolean({ default: false }))
 });
 
 const PgSqlConfiguration = Type.Pick(SQLConfiguration, [

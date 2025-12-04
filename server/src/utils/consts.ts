@@ -670,7 +670,10 @@ const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
     routeTable1Id: 'RouteTable1Id',
     privateSubnet2Id: 'PrivateSubnet2ID',
     routeTable2Id: 'RouteTable2Id',
-    preferredDomainController: 'PreferredDomainController'
+    preferredDomainController: 'PreferredDomainController',
+    ouPath: 'OUPath',
+    adGroup: 'ADGroup',
+    isManagedServiceAccount: 'IsManagedServiceAccount'
 };
 
 const WLM_ASSETS: Record<string, string> = {
@@ -1042,6 +1045,9 @@ const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: {
     DomainAdminUser: { name: 'domain_admin_user', type: 'string', configType: TF_VARS_CONFIG.AD },
     DomainDNSName: { name: 'domain_dns_name', type: 'string', configType: TF_VARS_CONFIG.AD },
     DomainMemberSGID: { name: 'domain_member_sg_id', type: 'string', configType: TF_VARS_CONFIG.AD },
+    PreferredDomainController: { name: 'preferred_domain_controller', type: 'string', configType: TF_VARS_CONFIG.AD },
+    OUPath: { name: 'ou_path', type: 'string', configType: TF_VARS_CONFIG.AD },
+    ADGroup: { name: 'ad_group', type: 'string', configType: TF_VARS_CONFIG.AD },
     Ec2EndpointExists: { name: 'ec2_endpoint_exists', type: 'boolean', configType: TF_VARS_CONFIG.Endpoint },
     Ec2MessagesEndpointExists: {
         name: 'ec2_messages_endpoint_exists',
@@ -1101,6 +1107,11 @@ const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: {
     SQLServiceAccountPassword: {
         name: 'sql_service_account_password',
         type: 'string',
+        configType: TF_VARS_CONFIG.SQLServer
+    },
+    IsManagedServiceAccount: {
+        name: 'is_managed_service_account',
+        type: 'boolean',
         configType: TF_VARS_CONFIG.SQLServer
     },
     SQLSvmName: { name: 'sql_svm_name', type: 'string', configType: TF_VARS_CONFIG.SQLServer },

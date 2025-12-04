@@ -385,6 +385,12 @@ Conditions:
   HasPreferredDomainController: !Not [!Equals [!Ref PreferredDomainController, ""]]
   HasOUPath: !Not [!Equals [!Ref OUPath, ""]]
   HasADGroup: !Not [!Equals [!Ref ADGroup, ""]]
+Rules:
+  ValidateSQLServiceAccountPassword:
+    RuleCondition: !Equals [!Ref IsManagedServiceAccount, 'false']
+    Assertions:
+      - Assert: !Not [!Equals [!Ref SQLServiceAccountPassword, '--------']]
+        AssertDescription: 'Provide a valid SQL Service Account Password of minimum 8 characters.'
 Resources:
   CredentialsSsmParameter:
     Type: AWS::SSM::Parameter
