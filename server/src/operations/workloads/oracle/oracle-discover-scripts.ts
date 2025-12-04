@@ -717,15 +717,11 @@ get_multipath_mount_details() {
         
         # Try udevadm to get serial number
         if command -v udevadm >/dev/null 2>&1; then
-            local serial=$(sudo udevadm info --query=all --name="$whole_device" 2>/dev/null | grep "ID_SERIAL=" | cut -d'=' -f2)
+            local serial=$(sudo udevadm info --query=all --name="$whole_device" 2>/dev/null | grep "ID_SERIAL_SHORT=" | cut -d'=' -f2)
             if [ -n "$serial" ]; then
-                # Remove vendor prefix and extract vol ID (with or without hyphen)
-                # Handles both "Amazon Elastic Block Store_vol094..." and "Amazon Elastic Block Store_vol-094..."
-                serial=$(echo "$serial" | sed 's/^.*_vol-*\\([0-9a-f]\\+\\)$/vol-\\1/')
-                
-                # Check if serial looks like a volume ID
-                if [[ "$serial" =~ ^vol-[0-9a-f]+$ ]]; then
-                    echo "$serial"
+                # Add hyphen after 'vol' if missing: vol02c901c8ceea1e154 -> vol-02c901c8ceea1e154
+                if [[ "$serial" =~ ^vol-?([0-9a-f]+)$ ]]; then
+                    echo "vol-\${BASH_REMATCH[1]}"
                     return 0
                 fi
             fi
