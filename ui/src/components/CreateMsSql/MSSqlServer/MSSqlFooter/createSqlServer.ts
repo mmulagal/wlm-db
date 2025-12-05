@@ -10,7 +10,7 @@ import {
     setLicenseIdValue,
     setVPCSelectedValue
 } from '../../../../store/mssql/msSqlActionSlice';
-import { GENERAL } from '../../../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { AWS_MANAGED_AD, FORM_OPTIONS, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import { MssqlRequestBody, TagObj } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isFsxnExisting, isFsxnNew, isValidUserName } from '../../../../utils/utilityFunctions';
@@ -129,6 +129,48 @@ const createMssqlPayload = (state: any) => {
         return 'none';
     })();
 
+    // Check if MSSQL Advanced Create mode (Standard Create = Advanced)
+    const isMssqlAdvancedCreate = state.mssqlForm.selectConfig === SELECT_CONFIG.STANDARD_CREATE;
+
+    // Build adConfiguration with conditional fields
+    const adConfiguration: any = {
+        adScenarioType: state.mssqlForm.activeDirectory?.scenarioType || AWS_MANAGED_AD,
+        domainUsername: state.mssqlForm.activeDirectory?.userName || '',
+        domainPassword: state.mssqlForm.activeDirectory?.password || '',
+        domainDnsname: state.mssqlForm.activeDirectory?.domainName?.value || '',
+        dnsIpaddress: state.mssqlForm.activeDirectory?.domainAddress || '',
+        securityGroupId: state.mssqlForm.activeDirectory?.domainName?.data?.securityGroupId || ''
+    };
+
+    // Only add these fields in MSSQL Advanced Create mode
+    if (isMssqlAdvancedCreate) {
+        const preferredDC = state.mssqlForm.activeDirectory?.preferredDomainController || '';
+        const ouPath = state.mssqlForm.activeDirectory?.preferredOUPath || '';
+        const adGroup = state.mssqlForm.activeDirectory?.targetADGroup || '';
+
+        // Always add these fields in Advanced mode (even if empty)
+        adConfiguration.preferredDomainController = preferredDC;
+        adConfiguration.ouPath = ouPath;
+        adConfiguration.adGroup = adGroup;
+    }
+
+    // Build sqlConfiguration with conditional fields
+    const sqlConfiguration: any = {
+        sqlDeploymentMode: state.mssqlForm.dbDeploymentModel?.value || SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE,
+        isCustomAmi: state.mssqlForm.license?.selectedLicenseType === FORM_OPTIONS.CUSTOM_AMI,
+        sqlAmiId: licenseId || '',
+        sqlAmiName: licenceName || '',
+        serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
+        serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
+        sqlCollation: state.mssqlForm.sqlServerCollation?.label || '',
+        sqlServerName: state.mssqlForm.dbName || ''
+    };
+
+    // Only add isManagedServiceAccount in MSSQL Advanced Create mode
+    if (isMssqlAdvancedCreate) {
+        sqlConfiguration.isManagedServiceAccount = state.mssqlForm.activeDirectory?.useManagedServiceAccount || false;
+    }
+
     payload = {
         networkConfiguration: {
             vpcId: state.mssqlForm.regionAndVpc.selectedVPC?.data?.id || '',
@@ -144,14 +186,7 @@ const createMssqlPayload = (state: any) => {
             workloadInstanceType: state.mssqlForm.instanceType?.value || '',
             keyPairName: state.mssqlForm.keyPair.selectedKeyPair?.value || ''
         },
-        adConfiguration: {
-            adScenarioType: state.mssqlForm.activeDirectory?.scenarioType || AWS_MANAGED_AD,
-            domainUsername: state.mssqlForm.activeDirectory?.userName || '',
-            domainPassword: state.mssqlForm.activeDirectory?.password || '',
-            domainDnsname: state.mssqlForm.activeDirectory?.domainName?.value || '',
-            dnsIpaddress: state.mssqlForm.activeDirectory?.domainAddress || '',
-            securityGroupId: state.mssqlForm.activeDirectory?.domainName?.data?.securityGroupId || ''
-        },
+        adConfiguration,
         fsxConfiguration: {
             fsxDeploymentMode,
             fsxFileSystemId: fileSystem?.fsxFileSystemId,
@@ -164,16 +199,7 @@ const createMssqlPayload = (state: any) => {
             encryptionKey: encryptionKey || '',
             snapshotPolicy: selectedSnapshotPolicy || ''
         },
-        sqlConfiguration: {
-            sqlDeploymentMode: state.mssqlForm.dbDeploymentModel?.value || SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE,
-            isCustomAmi: state.mssqlForm.license?.selectedLicenseType === FORM_OPTIONS.CUSTOM_AMI,
-            sqlAmiId: licenseId || '',
-            sqlAmiName: licenceName || '',
-            serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
-            serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
-            sqlCollation: state.mssqlForm.sqlServerCollation?.label || '',
-            sqlServerName: state.mssqlForm.dbName || ''
-        },
+        sqlConfiguration,
         topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
         enableCloudWatch: state.mssqlForm.cloudWatch,
         tags: state.mssqlForm.tags.filter((tag: TagObj) => tag.key)
@@ -201,7 +227,10 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
                 (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
                     !state.mssqlForm.availabilityZones.selectedSubnetNode1));
 
-        const dbCredStateValue = !state.mssqlForm.dbCredentials.password;
+        // Password is only NOT required in Advanced Create mode when managed service account is checked
+        const isAdvancedCreate = state.mssqlForm.selectConfig === SELECT_CONFIG.STANDARD_CREATE;
+        const isPasswordRequired = !(isAdvancedCreate && state.mssqlForm.activeDirectory.useManagedServiceAccount);
+        const dbCredStateValue = isPasswordRequired && !state.mssqlForm.dbCredentials.password;
 
         const adStateValue =
             !state.mssqlForm.activeDirectory.domainAddress ||

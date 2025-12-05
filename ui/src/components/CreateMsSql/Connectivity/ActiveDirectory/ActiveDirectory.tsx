@@ -3,18 +3,22 @@ import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typograp
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
-import { GENERAL } from '../../../../utils/appConstants';
+import AccordionError from '../../../../common/AccordionError/AccordionError';
+import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import styles from './ActiveDirectory.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { adPassVal, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
+import { adPassVal, generateOptionType, sortListOfDict, isValidOUPath } from '../../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setSelectedADDomainAddress,
     setSelectedADDomainName,
     setSelectedADPassword,
     setSelectedADScenarioType,
-    setSelectedADUserName
+    setSelectedADUserName,
+    setActiveDirectoryFields,
+    resetADAdvancedFields
 } from '../../../../store/mssql/mssqlFormSlice';
 import { AWS_MANAGED_AD, USER_MANAGED_AD } from '../../../../utils/consts';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
@@ -28,6 +32,7 @@ const delay = () =>
 
 const ActiveDirectory = () => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
 
     const { adsData, adsLoading } = useAppSelector(state => state.mssql.getAdsList);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
@@ -44,6 +49,11 @@ const ActiveDirectory = () => {
 
     const userName = useAppSelector(state => state.mssqlForm.activeDirectory.userName);
     const password = useAppSelector(state => state.mssqlForm.activeDirectory.password);
+    const preferredDC = useAppSelector(state => state.mssqlForm.activeDirectory.preferredDomainController);
+    const preferredOUPath = useAppSelector(state => state.mssqlForm.activeDirectory.preferredOUPath);
+    const targetADGroup = useAppSelector(state => state.mssqlForm.activeDirectory.targetADGroup);
+    const useManagedServiceAccount = useAppSelector(state => state.mssqlForm.activeDirectory.useManagedServiceAccount);
+    const selectConfig = useAppSelector(state => state.mssqlForm.selectConfig);
 
     // Refs
     const domainNameRef = useRef(null);
@@ -119,6 +129,7 @@ const ActiveDirectory = () => {
             dispatch(setSelectedADScenarioType(''));
             dispatch(setSelectedADUserName(''));
             dispatch(setSelectedADPassword(''));
+            dispatch(resetADAdvancedFields());
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateActiveDirectories]);
@@ -153,7 +164,15 @@ const ActiveDirectory = () => {
                 }, 20);
             }
         }
-    }, [isADNotFilled, selectedADDomainName, isCreateHit]);
+    }, [
+        isADNotFilled,
+        selectedADDomainName,
+        selectedADDomainAddress,
+        userName,
+        password,
+        useManagedServiceAccount,
+        isCreateHit
+    ]);
 
     // Set the Header text here
     const setHeader = () => {
@@ -168,6 +187,15 @@ const ActiveDirectory = () => {
             return <ActionRequired disabled />;
         }
 
+        // Check for validation errors first (even if fields are filled)
+        const passwordError = password && adPassVal(password);
+        const ouPathError = isValidOUPath(preferredOUPath, t);
+
+        if (passwordError || ouPathError) {
+            return <AccordionError />;
+        }
+
+        // Check for required fields
         if (!selectedADDomainName?.label || !selectedADDomainAddress || !userName || !password) {
             return <ActionRequired error={!isADNotFilled} />;
         }
@@ -310,6 +338,48 @@ const ActiveDirectory = () => {
                                 className={styles.textFieldPassword}
                             />
                         </div>
+
+                        {selectConfig === SELECT_CONFIG.STANDARD_CREATE && (
+                            <>
+                                <div className={styles.optionalFieldsContainer}>
+                                    <TextField
+                                        label={t('databases.general.preferred-domain-controller')}
+                                        placeholder=""
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            dispatch(
+                                                setActiveDirectoryFields({ preferredDomainController: e.target.value })
+                                            );
+                                            dispatch(setIsWizardTouched(true));
+                                        }}
+                                        value={preferredDC}
+                                        className={styles.textField}
+                                    />
+                                    <TextField
+                                        label={t('databases.general.preferred-ou-path')}
+                                        placeholder=""
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            dispatch(setActiveDirectoryFields({ preferredOUPath: e.target.value }));
+                                            dispatch(setIsWizardTouched(true));
+                                        }}
+                                        value={preferredOUPath}
+                                        error={isValidOUPath(preferredOUPath, t)}
+                                        className={styles.textField}
+                                    />
+                                </div>
+                                <div className={styles.thirdFieldContainer}>
+                                    <TextField
+                                        label={t('databases.general.target-ad-group')}
+                                        placeholder=""
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            dispatch(setActiveDirectoryFields({ targetADGroup: e.target.value }));
+                                            dispatch(setIsWizardTouched(true));
+                                        }}
+                                        value={targetADGroup}
+                                        className={styles.textField}
+                                    />
+                                </div>
+                            </>
+                        )}
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

@@ -254,6 +254,9 @@ export interface MssqlRequestBody {
         domainDnsname: string;
         dnsIpaddress: string;
         securityGroupId: string;
+        preferredDomainController?: string;
+        ouPath?: string;
+        adGroup?: string;
     };
     fsxConfiguration: {
         fsxDeploymentMode: string;
@@ -276,6 +279,7 @@ export interface MssqlRequestBody {
         serviceAccountPassword: string;
         sqlCollation: string;
         sqlServerName: string;
+        isManagedServiceAccount?: boolean;
     };
     topicArn?: string;
     enableCloudWatch?: boolean;

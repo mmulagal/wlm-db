@@ -14,6 +14,69 @@
         gap: 24px;
     }
 
+    .adSectionTitle {
+        margin-top: 24px;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .optionalFieldsContainer {
+        margin-top: 8px;
+        display: flex;
+        gap: 24px;
+    }
+
+    .thirdFieldContainer {
+        margin-top: 4px;
+        display: flex;
+        gap: 24px;
+    }
+
+    .thirdContainer {
+        margin-top: 8px;
+        display: flex;
+    }
+
+    .fourthContainer {
+        margin-top: 4px;
+        display: flex;
+    }
+
+    .fifthContainer {
+        margin-top: 4px;
+        display: flex;
+    }
+
+    .sixthContainer {
+        margin-top: 4px;
+        display: flex;
+    }
+
+    .checkboxContainer {
+        margin-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .checkboxWrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .checkboxLabel {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .infoText {
+        margin-left: 28px;
+        color: var(--text-secondary);
+        font-style: italic;
+    }
+
     .textField {
         width: 312px;
     }

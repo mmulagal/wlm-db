@@ -55,7 +55,13 @@ export const initialMssqlState: any = {
         domainName: null,
         domainAddress: '',
         userName: '',
-        password: ''
+        password: '',
+        preferredDomainController: '',
+        preferredOUPath: '',
+        targetADGroup: '',
+        organizationalUnit: 'default',
+        adGroup: 'default',
+        useManagedServiceAccount: false
     },
     instanceType: '',
     fsxN: {
@@ -188,6 +194,19 @@ const mssqlFormSlice = createSlice({
         setSelectedADPassword(state, action: PayloadAction<any>) {
             state.activeDirectory.password = action.payload;
         },
+        setActiveDirectoryFields(state, action: PayloadAction<Partial<typeof state.activeDirectory>>) {
+            state.activeDirectory = { ...state.activeDirectory, ...action.payload };
+        },
+        // Reset AD advanced fields
+        resetADAdvancedFields(state) {
+            state.activeDirectory = {
+                ...state.activeDirectory,
+                preferredDomainController: '',
+                preferredOUPath: '',
+                targetADGroup: '',
+                useManagedServiceAccount: false
+            };
+        },
         // Instance Type
         setInstanceType(state, action: PayloadAction<any>) {
             state.instanceType = action.payload;
@@ -277,6 +296,8 @@ export const {
     setSelectedADDomainAddress,
     setSelectedADUserName,
     setSelectedADPassword,
+    setActiveDirectoryFields,
+    resetADAdvancedFields,
     setEncryptionType,
     setEncryptionRow,
     setEncryptionARN,

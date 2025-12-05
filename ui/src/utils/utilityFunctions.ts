@@ -609,6 +609,21 @@ export const dbPassVal = (password: string) => {
     }
 };
 
+export const isValidOUPath = (ouPath: string, t?: TFunction) => {
+    if (!ouPath || ouPath.trim() === '') {
+        return '';
+    }
+
+    // Check if the OU path contains at least one component with format: anything=value
+    const hasValidComponents = /\b[A-Za-z]+\s*=\s*[^,]+/i.test(ouPath);
+
+    if (!hasValidComponents) {
+        return t ? t('databases.general.invalid-ou-path-format') : '';
+    }
+
+    return '';
+};
+
 export const adPassVal = (password: string) => {
     if (password?.length && password.length < 8) {
         return GENERAL.PASSWORD_MIN_LENGTH_8;

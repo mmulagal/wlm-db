@@ -75,7 +75,16 @@
             "dashboard": "Dashboard",
             "well-architected": "Well-architected",
             "recommendations": "Recommendations",
-            "storage-multipath": "Storage multipath"
+            "storage-multipath": "Storage multipath",
+            "preferred-domain-controller": "Preferred domain controller (optional)",
+            "preferred-ou-path": "Preferred organizational unit path (optional)",
+            "target-ad-group": "Target active directory group (optional)",
+            "organizational-unit": "Organizational unit (optional)",
+            "ad-group": "Active Directory group (optional)",
+            "use-managed-service-account": "Use managed service account",
+            "managed-service-account-info": "When enabled, a password is not required for the service account.",
+            "managed-service-account-tooltip": "Enable for Group Managed Service Accounts (gMSA) to simplify credential rotation.",
+            "invalid-ou-path-format": "Invalid OU path format. Proper format: OU=Organizational Unit, CN=Common Name, DC=Domain Component"
         },
         "banner": {
             "pgsql-deployment": "Deployment",

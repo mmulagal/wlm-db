@@ -1,11 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
+import {
+    AccordionCard,
+    AccordionCardContent,
+    PasswordField,
+    TextField,
+    Typography,
+    Checkbox,
+    DsTooltipInfo
+} from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
-import { GENERAL } from '../../../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
-import { setDBCredentialsName, setDBCredentialsPassword } from '../../../../store/mssql/mssqlFormSlice';
+import {
+    setDBCredentialsName,
+    setDBCredentialsPassword,
+    setActiveDirectoryFields
+} from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 
 import styles from './DatabaseCredentials.module.scss';
@@ -22,8 +35,11 @@ type DatabaseCredentialsProps = {
 };
 
 const DatabaseCredentials = ({ wizardType }: DatabaseCredentialsProps) => {
+    const { t } = useTranslation();
     const userName = useAppSelector(state => state.mssqlForm.dbCredentials.name);
     const password = useAppSelector(state => state.mssqlForm.dbCredentials.password);
+    const useManagedServiceAccount = useAppSelector(state => state.mssqlForm.activeDirectory.useManagedServiceAccount);
+    const selectConfig = useAppSelector(state => state.mssqlForm.selectConfig);
 
     const passwordRef = useRef(null);
 
@@ -57,13 +73,47 @@ const DatabaseCredentials = ({ wizardType }: DatabaseCredentialsProps) => {
 
     // Set the Header text here
     const setHeader = () => {
-        if (!credName || !password) {
-            return <ActionRequired error={!isDBPasswordFilled} />;
-        }
-        if (dbPassVal(password) || isValidUserName(credName)) {
+        // Password is only NOT required in MSSQL Advanced Create mode when managed service account is checked
+        const isPasswordRequired =
+            wizardType === WIZARD_TYPE.MSSQL
+                ? !(selectConfig === SELECT_CONFIG.STANDARD_CREATE && useManagedServiceAccount)
+                : true;
+
+        // Check validation errors first (before checking if fields are empty)
+        const passwordError = password && dbPassVal(password);
+        const usernameError = isValidUserName(credName);
+
+        if (passwordError || usernameError) {
             return <AccordionError />;
         }
+
+        // Then check for required fields
+        // Only check password if it's required (i.e., managed service account is NOT checked)
+        if (!credName) {
+            return <ActionRequired error={false} />;
+        }
+
+        if (isPasswordRequired && !password) {
+            return <ActionRequired error={!isDBPasswordFilled} />;
+        }
+
         return <Typography variant="Regular_14">{credName}</Typography>;
+    };
+
+    // Get password field error message
+    const getPasswordError = () => {
+        // Don't show error if in MSSQL Advanced Create mode with managed service account checked
+        if (
+            wizardType === WIZARD_TYPE.MSSQL &&
+            selectConfig === SELECT_CONFIG.STANDARD_CREATE &&
+            useManagedServiceAccount
+        ) {
+            return '';
+        }
+        if (!isDBPasswordFilled) {
+            return GENERAL.ACTION_REQUIRED;
+        }
+        return dbPassVal(password);
     };
 
     const tooltipText = () => (
@@ -107,6 +157,28 @@ const DatabaseCredentials = ({ wizardType }: DatabaseCredentialsProps) => {
                                 ? GENERAL.DATABASE_CREDENTIAL_TEXT
                                 : GENERAL.DATABASE_CREDENTIAL_TEXT_PGSQL}
                         </Typography>
+                        {wizardType === WIZARD_TYPE.MSSQL && selectConfig === SELECT_CONFIG.STANDARD_CREATE && (
+                            <div className={styles.checkboxContainer}>
+                                <div className={styles.checkboxWrapper}>
+                                    <Checkbox
+                                        isChecked={useManagedServiceAccount}
+                                        onChange={(checked: boolean) => {
+                                            dispatch(setActiveDirectoryFields({ useManagedServiceAccount: checked }));
+                                            // Clear password when checkbox is checked
+                                            if (checked) {
+                                                dispatch(setDBCredentialsPassword(''));
+                                            }
+                                        }}
+                                    />
+                                    <Typography variant="Regular_14" className={styles.checkboxLabel}>
+                                        {t('databases.general.use-managed-service-account')}
+                                    </Typography>
+                                    <DsTooltipInfo className={styles.tooltipIcon} trigger="hover">
+                                        {t('databases.general.managed-service-account-tooltip')}
+                                    </DsTooltipInfo>
+                                </div>
+                            </div>
+                        )}
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}
@@ -141,7 +213,7 @@ const DatabaseCredentials = ({ wizardType }: DatabaseCredentialsProps) => {
                             <PasswordField
                                 label={GENERAL.PASSWORD}
                                 ref={passwordRef}
-                                error={!isDBPasswordFilled ? GENERAL.ACTION_REQUIRED : dbPassVal(password)}
+                                error={getPasswordError()}
                                 info={tooltipText()}
                                 // @ts-ignore
                                 isErrorPrefixHidden
@@ -156,7 +228,18 @@ const DatabaseCredentials = ({ wizardType }: DatabaseCredentialsProps) => {
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 value={password}
-                                className={styles.textField}
+                                className={`${styles.textField} ${
+                                    wizardType === WIZARD_TYPE.MSSQL &&
+                                    selectConfig === SELECT_CONFIG.STANDARD_CREATE &&
+                                    useManagedServiceAccount
+                                        ? styles.disabledTooltip
+                                        : ''
+                                }`}
+                                isDisabled={
+                                    wizardType === WIZARD_TYPE.MSSQL &&
+                                    selectConfig === SELECT_CONFIG.STANDARD_CREATE &&
+                                    useManagedServiceAccount
+                                }
                             />
                         </div>
                     </Typography>
