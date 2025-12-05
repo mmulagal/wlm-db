@@ -14,6 +14,7 @@ import { MappedOnTapVolumeResponse } from '../utils/common-types';
 import { paginateListInstanceConfigData } from './database/instance-config-operations';
 import { getGroupedDatabaseInstancesBySeverity, groupResources } from '../lib/database/db';
 import { GroupedDatabaseInstancesBySeverityResult } from '../lib/database/db-types';
+import { IS_DEMO_FLOW } from '../utils/utils';
 
 const logger = getLogger();
 
@@ -151,6 +152,20 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
         };
     }
 
+    if (IS_DEMO_FLOW) {
+        return {
+            items: [
+                { description: 'Auto size configuration missing' },
+                { description: 'Backup configuration missing' },
+                { description: 'Performance tuning needed' },
+                { description: 'Security patch missing' },
+                { description: 'Resource utilization high' }
+            ],
+            severity: 'low',
+            totalItems: 5
+        };
+    }
+
     return {
         items: [{ description: 'All systems operational' }],
         severity: 'low',
@@ -161,11 +176,19 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
 async function getWidgetStatus(accountId: string, credentialsIds?: string, regions?: string) {
     logger.info('Getting widget status for account.', accountId, credentialsIds, regions);
 
-    const count = await groupResources({
+    let count = await groupResources({
         accountId,
         credentialsIdList: credentialsIds ? credentialsIds.split(',') : undefined,
         regionList: regions ? regions.split(',') : undefined
     });
+
+    if (IS_DEMO_FLOW) {
+        count = [
+            { resource_type: 'mssql', _count: { id: 15 } },
+            { resource_type: 'oracle', _count: { id: 10 } },
+            { resource_type: 'pgsql', _count: { id: 5 } }
+        ];
+    }
 
     return {
         items: [
