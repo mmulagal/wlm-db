@@ -8,7 +8,7 @@ import styles from './ExploreSavingsTableV2.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { handleAuthenticate, onClickESHost, shouldAuthDialogOpen } from '../ExploreSavingsUtils';
-import { FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
+import { DBType, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
 import {
     renderAllocatedCapacity,
     renderCellData,
@@ -104,6 +104,10 @@ const ExploreSavingsFsxTable = () => {
             const ebsArray: any = [];
             const fsxArray: any = [];
             result.forEach((item: any) => {
+                // currently filtering for MSSQL hosts only
+                if (item?.hostType !== DBType.MSSQL) {
+                    return;
+                }
                 if (item.storageType === 'EBS') {
                     ebsArray.push(item);
                 } else if (item.storageType === 'FSx for Windows') {

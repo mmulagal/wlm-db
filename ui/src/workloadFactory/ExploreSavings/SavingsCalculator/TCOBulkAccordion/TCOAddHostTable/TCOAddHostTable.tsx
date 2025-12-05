@@ -16,6 +16,7 @@ import { TableTopBar } from '../../../../../common/Lib/Table/TableTopBar';
 import { renderAllocatedCapacity, renderUnmanagedAZ, uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { shouldAuthDialogOpenBulk } from '../../../ExploreSavingsUtils';
+import { DBType } from '../../../../../utils/consts';
 
 interface TCOAddHostTableProps {
     onExploreSavings?: () => void;
@@ -60,6 +61,10 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
             const ebsArray: any = [];
             const fsxArray: any = [];
             result.forEach((item: any) => {
+                // currently filtering for MSSQL hosts only
+                if (item?.hostType !== DBType.MSSQL) {
+                    return;
+                }
                 if (item.storageType === 'EBS') {
                     ebsArray.push(item);
                 } else if (item.storageType === 'FSx for Windows') {
