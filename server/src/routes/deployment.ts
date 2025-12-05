@@ -100,10 +100,14 @@ const deploymentValidationHook = async (request: FastifyRequest, reply: FastifyR
         }
     }
     if (sqlConfig) {
-        if (!sqlConfig.isManagedServiceAccount && !sqlConfig.serviceAccountPassword) {
+        if (
+            !sqlConfig.isManagedServiceAccount &&
+            (!sqlConfig.serviceAccountPassword || sqlConfig.serviceAccountPassword.length < 8)
+        ) {
             return reply.code(400).send({
                 error: 'Invalid SQL Configuration',
-                message: 'Service account password is required when not a managed service account.'
+                message:
+                    'Service account password is required and must be at least 8 characters long when not a managed service account.'
             });
         }
     }

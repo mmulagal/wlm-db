@@ -51,7 +51,7 @@ const SQLConfiguration = Type.Object({
     sqlDeploymentMode: Type.String({ enum: ['standalone', 'fci', 'ha'] }),
     sqlAmiId: Type.String(),
     serviceAccountName: Type.String(),
-    serviceAccountPassword: Type.Optional(Type.String({ minLength: 8 })),
+    serviceAccountPassword: Type.Optional(Type.String()),
     sqlServerName: Type.String(),
     sqlAmiName: Type.String(),
     sqlCollation: Type.String(),
