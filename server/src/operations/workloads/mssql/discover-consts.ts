@@ -526,6 +526,13 @@ const HOST_AND_SQL_INFO_PS1 = [
     $clusterDetails = GetClusterDetails
     $SMBConnections = GetSMBConnections
     $allSqlInstanceNamesFromRegistry = FetchAllSQLInstancesFromRegistry
+
+    # Check Windows Cluster resources for SQL Server Availability Group
+    $isAOAGResourcePresent = $False
+    if ((Get-Service -Name "ClusSvc" -ErrorAction SilentlyContinue).Status -eq "Running") {
+        $aoagResources = Get-ClusterResource -ErrorAction SilentlyContinue | Where-Object { $_.ResourceType -eq "SQL Server Availability Group" }
+        $isAOAGResourcePresent = ($aoagResources.Count -gt 0)
+    }
   
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
     $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "60"} -Method PUT -Uri 'http://169.254.169.254/latest/api/token'
@@ -694,10 +701,11 @@ const HOST_AND_SQL_INFO_PS1 = [
               if($sqlServerInfoFromRegistry.ContainsKey('sqlServerVersion')) {
                 $responseObject['sqlServerVersion'] = $sqlServerInfoFromRegistry['sqlServerVersion']
               }
-              $isHadrEnabled = $sqlServerInfoFromRegistry['hadrEnabled']
-              $isClustered = $sqlServerInfoFromRegistry['isClustered']
             }
             $responseObject['sqlServerName'] = (Get-WmiObject -Class Win32_ComputerSystem).Name
+
+            $isHadrEnabled = $sqlServerInfoFromRegistry['hadrEnabled']
+            $isClustered = $sqlServerInfoFromRegistry['isClustered']
             
             try {
               if($deploymentTypeCheck) {
@@ -712,7 +720,7 @@ const HOST_AND_SQL_INFO_PS1 = [
               $responseObject['failureInfo'] += "SQL query for deployment type failed: $_\`n"
             }
             if($isHadrEnabled -eq $True ) {
-              if($isReadReplicaCreated -eq $True) {
+              if($isReadReplicaCreated -eq $True -or $isAOAGResourcePresent -eq $True) {
                 $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
               } else{
                $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
