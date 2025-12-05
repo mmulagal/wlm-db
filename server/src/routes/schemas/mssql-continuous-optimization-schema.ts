@@ -33,8 +33,8 @@ import { resourceRequest } from './database-hosts-schemas';
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,
-    summary: 'Get database instance parameters drift from recommended settings',
-    description: 'Get database instance parameters drift from recommended settings',
+    summary: 'Get MSSQL database instance parameters drift from recommended settings',
+    description: 'Get MSSQL database instance parameters drift from recommended settings',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     querystring: ContinuousOptimizationQueryString,
@@ -45,8 +45,8 @@ const DriftAssessmentDataCollection = {
 
 const DriftAssessmentPerHost = {
     ...resourceRequest,
-    summary: 'Get database parameter drift from recommended settings for all instances on a host',
-    description: 'Get database parameters drift from recommended settings for all instances on a host',
+    summary: 'Get MSSQL database parameter drift from recommended settings for all instances on a host',
+    description: 'Get MSSQL database parameters drift from recommended settings for all instances on a host',
     params: DatabaseHostSummaryParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     querystring: ContinuousOptimizationQueryString,
@@ -57,8 +57,8 @@ const DriftAssessmentPerHost = {
 
 const BaseTriggerDriftAssessmentSchema = {
     ...resourceRequest,
-    summary: 'Trigger assessment for a database instance',
-    description: 'Trigger assessment for best practice misalignments on a managed database instance',
+    summary: 'Trigger assessment for a MSSQL database instance',
+    description: 'Trigger assessment for best practice misalignments on a managed MSSQL database instance',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     querystring: ContinuousOptimizationQueryString,
@@ -78,11 +78,11 @@ const TriggerOracleDriftAssessmentSchema = {
 };
 
 const OptimizeStorageSchemaDescription =
-    'Fix storage parameters as per the best practice for the selected database instance.';
+    'Fix storage parameters as per the best practice for the selected MSSQL database instance.';
 
 const OptimizeStorageSchema = {
     ...resourceRequest,
-    summary: 'Fix storage for a database instance',
+    summary: 'Fix storage for a MSSQL database instance',
     description: OptimizeStorageSchemaDescription,
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
@@ -94,8 +94,8 @@ const OptimizeStorageSchema = {
 
 const OptimizeSizingSchema = {
     ...resourceRequest,
-    summary: 'Fix storage sizing for a database instance',
-    description: 'Fix sizing parameters as per the best practice for the selected database instance.',
+    summary: 'Fix storage sizing for a MSSQL database instance',
+    description: 'Fix sizing parameters as per the best practice for the selected MSSQL database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeGenericRequestBody,
     tags: [RouteTags.MSSQL_ASSESSMENT],
@@ -106,8 +106,8 @@ const OptimizeSizingSchema = {
 
 const OptimizeComputeSchema = {
     ...resourceRequest,
-    summary: 'Fix compute rightsizing for a database instance',
-    description: 'Fix compute rightsizing as per the best practice for the selected database instance.',
+    summary: 'Fix compute rightsizing for a MSSQL database instance',
+    description: 'Fix compute rightsizing as per the best practice for the selected MSSQL database instance.',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeComputeRequestBody,
     tags: [RouteTags.MSSQL_ASSESSMENT],
@@ -118,8 +118,8 @@ const OptimizeComputeSchema = {
 
 const OptimizeOperatingSystemSchema = {
     ...resourceRequest,
-    summary: 'Fix MPIO settings for a database instance',
-    description: 'Fix MPIO settings parameters as per the best practice for the selected database instance.',
+    summary: 'Fix MPIO settings for a MSSQL database instance',
+    description: 'Fix MPIO settings parameters as per the best practice for the selected MSSQL database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: OptimizeOperatingSystemRequestBody,
@@ -130,8 +130,8 @@ const OptimizeOperatingSystemSchema = {
 
 const OptimizeStorageTierSchema = {
     ...resourceRequest,
-    summary: 'Fix storage-tier settings for a database instance',
-    description: 'Fix storage-tier parameters as per the best practice for the selected database instance.',
+    summary: 'Fix storage-tier settings for a MSSQL database instance',
+    description: 'Fix storage-tier parameters as per the best practice for the selected MSSQL database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: OptimizeGenericRequestBody,
@@ -142,8 +142,9 @@ const OptimizeStorageTierSchema = {
 
 const DriftAssessmentPerAccount = {
     ...resourceRequest,
-    summary: 'Get database parameter drift from recommended settings for all registered instances on an account',
-    description: 'Get database parameter drift from recommended settings for all registered instances on an account',
+    summary: 'Get MSSQL database parameter drift from recommended settings for all registered instances on an account',
+    description:
+        'Get MSSQL database parameter drift from recommended settings for all registered instances on an account',
     params: CredentialsIdParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     querystring: AssessmentQueryStringPerAccount,
@@ -156,7 +157,7 @@ const AvailableSnapshotPolicies = {
     ...resourceRequest,
     summary: 'Get available snapshot policies',
     description:
-        'Get available snapshot policies for a database instance, returns snapshot policies on cluster and SVM level',
+        'Get available snapshot policies for a MSSQL database instance, returns snapshot policies on cluster and SVM level',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
@@ -166,8 +167,8 @@ const AvailableSnapshotPolicies = {
 
 const OptimizeResilienceSchema = {
     ...resourceRequest,
-    summary: 'Fix resilience parameters for database instances',
-    description: 'Fix resilience parameters for database instances',
+    summary: 'Fix resilience parameters for MSSQL database instances',
+    description: 'Fix resilience parameters for MSSQL database instances',
     params: DatabaseHostInstanceSummaryParams,
     body: OptimizeResiliencyBody,
     tags: [RouteTags.MSSQL_ASSESSMENT],
@@ -189,19 +190,19 @@ const BulkOptimizeGeneralSchema = {
 const BulkOptimizeStorageSizingSchema = {
     ...BulkOptimizeGeneralSchema,
     summary: 'Fix storage-sizing',
-    description: 'Fix storage-sizing as per the best practice for selected database instances.'
+    description: 'Fix storage-sizing as per the best practice for selected MSSQL database instances.'
 };
 
 const BulkOptimizeOperatingSystemSchema = {
     ...BulkOptimizeGeneralSchema,
     summary: 'Fix MPIO settings',
-    description: 'Fix mpio settings parameters as per the best practice for selected database instances.'
+    description: 'Fix mpio settings parameters as per the best practice for selected MSSQL database instances.'
 };
 
 const BulkOptimizeStorageTierSchema = {
     ...BulkOptimizeGeneralSchema,
     summary: 'Fix storage-tier',
-    description: 'Fix storage-tier parameters as per the best practice for selected database instances.'
+    description: 'Fix storage-tier parameters as per the best practice for selected MSSQL database instances.'
 };
 
 const BulkOptimizeComputeSchema = {
@@ -210,7 +211,7 @@ const BulkOptimizeComputeSchema = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkOptimizeComputeRequestBody,
     summary: 'Fix compute',
-    description: 'Fix compute parameters as per the best practice for selected database instances.',
+    description: 'Fix compute parameters as per the best practice for selected MSSQL database instances.',
     response: {
         200: JobIdResponse
     }
@@ -219,7 +220,7 @@ const BulkOptimizeComputeSchema = {
 const BulkOptimizeMaxDopSchema = {
     ...BulkOptimizeGeneralSchema,
     summary: 'Fix max-dop',
-    description: 'Fix max-dop parameters as per the best practice for selected database instances.'
+    description: 'Fix max-dop parameters as per the best practice for selected MSSQL database instances.'
 };
 
 const BulkOptimizeAwsBackupSchema = {
@@ -239,7 +240,7 @@ const BaseBulkDismissConfigurationSchema = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkDismissConfigurationRequestBody,
     summary: 'Dismiss Assessment Configurations',
-    description: 'Dismiss Assessment Configurations for selected database instances.',
+    description: 'Dismiss Assessment Configurations for selected MSSQL database instances.',
     response: {
         200: BulkDismissConfigurationResponse
     }
@@ -257,8 +258,8 @@ const BulkDismissOracleConfigurationSchema = {
 
 const BulkOptimizeCloneSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Fix clone parameters for database instances',
-    description: 'Fix clone parameters for database instances',
+    summary: 'Fix clone parameters for MSSQL database instances',
+    description: 'Fix clone parameters for MSSQL database instances',
     body: BulkOptimizeCloneBody,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
@@ -272,7 +273,7 @@ const BulkOptimizeSharedStorageSchema = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkOptimizeHASharedStorageBody,
     summary: 'Fix shared storage parameters as part of High Availability Cluster configuration',
-    description: 'Fix shared storage parameters as per the best practice for selected database instances.',
+    description: 'Fix shared storage parameters as per the best practice for selected MSSQL database instances.',
     response: {
         200: JobIdResponse
     }
@@ -293,7 +294,7 @@ const BulkOptimizeClusterQuorumSchema = {
 const BulkOptimizeSQLServerServiceSchema = {
     ...BulkOptimizeGeneralSchema,
     summary: 'Fix sql server service parameters as part of High Availability Cluster configuration',
-    description: 'Fix sql server service parameters as per the best practice for selected database instances.'
+    description: 'Fix sql server service parameters as per the best practice for selected MSSQL database instances.'
 };
 
 const BulkOptimizeMTUAlignmentSchema = {

@@ -17,8 +17,8 @@ import { AccountIdParams, CredentialsIdParams, OptimizationResponse } from '../t
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,
-    summary: 'Get database instance parameters drift from recommended settings',
-    description: 'Get database instance parameters drift from recommended settings',
+    summary: 'Get Oracle database instance parameters drift from recommended settings',
+    description: 'Get Oracle database instance parameters drift from recommended settings',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
     querystring: ContinuousOptimizationQueryString,
@@ -29,9 +29,9 @@ const DriftAssessmentDataCollection = {
 
 const OracleOptimizeSchema = {
     ...resourceRequest,
-    summary: 'Fix for a oracle database',
+    summary: 'Fix for an Oracle database',
     description:
-        'Fix storage configuration / OS configuration / asm layout optimizations as per best practices for the selected database instances.',
+        'Fix storage configuration / OS configuration / asm layout optimizations as per best practices for the selected Oracle database instances.',
     params: AccountIdParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
     body: OptimizeRequestBody,
@@ -40,8 +40,8 @@ const OracleOptimizeSchema = {
 
 const OracleOptimizeStorageSchema = {
     ...resourceRequest,
-    summary: 'Fix storage for a database instance',
-    description: 'Fix storage parameters as per the best practice for the selected database instance.',
+    summary: 'Fix storage for an Oracle database instance',
+    description: 'Fix storage parameters as per the best practice for the selected Oracle database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
     body: OptimizeStorageRequestBody,
@@ -50,8 +50,8 @@ const OracleOptimizeStorageSchema = {
 
 const DriftAssessmentPerHost = {
     ...resourceRequest,
-    summary: 'Get database parameter drift from recommended settings for all instances on a host',
-    description: 'Get database parameters drift from recommended settings for all instances on a host',
+    summary: 'Get Oracle database parameter drift from recommended settings for all instances on a host',
+    description: 'Get Oracle database parameters drift from recommended settings for all instances on a host',
     params: DatabaseHostSummaryParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
     querystring: ContinuousOptimizationQueryString,
@@ -62,8 +62,9 @@ const DriftAssessmentPerHost = {
 
 const DriftAssessmentPerAccount = {
     ...resourceRequest,
-    summary: 'Get database parameter drift from recommended settings for all registered instances on an account',
-    description: 'Get database parameter drift from recommended settings for all registered instances on an account',
+    summary: 'Get Oracle database parameter drift from recommended settings for all registered instances on an account',
+    description:
+        'Get Oracle database parameter drift from recommended settings for all registered instances on an account',
     params: CredentialsIdParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
     querystring: AssessmentQueryStringPerAccount,
