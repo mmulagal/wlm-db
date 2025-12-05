@@ -444,7 +444,8 @@ async function updateParentJobStatus(
         return parentJob.status;
     }
 
-    while (parentJob.status === JOBSTATUS.IN_PROGRESS) {
+    let retries = 10;
+    while (parentJob.status === JOBSTATUS.IN_PROGRESS && retries > 0) {
         // eslint-disable-next-line no-await-in-loop
         const allSubJobs = await listJobs(accountId, '', '', parentId);
 
@@ -456,7 +457,7 @@ async function updateParentJobStatus(
             } else if (allSubJobs.every(job => job.status === JOBSTATUS.FAILED)) {
                 jobStatus = JOBSTATUS.FAILED;
             } else if (allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)) {
-                jobStatus = errorMsg ? JOBSTATUS.WARNING : JOBSTATUS.COMPLETED;
+                jobStatus = JOBSTATUS.COMPLETED;
             } else if (
                 isSandboxJob &&
                 allSubJobs.some(
@@ -495,6 +496,7 @@ async function updateParentJobStatus(
             return jobStatus;
         }
 
+        retries -= 1;
         // eslint-disable-next-line no-await-in-loop
         await sleep(30000);
     }

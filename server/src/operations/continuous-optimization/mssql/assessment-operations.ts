@@ -4,7 +4,7 @@ import throat from 'throat';
 import { compact, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import getLogger from '../../../utils/logger';
-import { extractSqlInstanceName, IS_DEMO_FLOW } from '../../../utils/utils';
+import { extractSqlInstanceName, IS_DEMO_FLOW, sleep } from '../../../utils/utils';
 import {
     getInstanceInfo,
     getResources,
@@ -52,7 +52,7 @@ import {
     listDatabaseInstanceConfigData
 } from '../../../lib/database/database-instance-config';
 import { getMappedOntapVolumes } from '../../aws/fsx-operations';
-import { registerJob, updateParentJobStatus } from '../../database/job-operations';
+import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { calculateCloneDrift, managedHostsCloneAssessment } from './clone-assessment-operations';
 import { calculateMaxDOPDrift, managedHostsMaxDOPAssessment } from './maxdop-assessment-operations';
 import {
@@ -85,6 +85,7 @@ import {
 } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { handleGetMssqlAssessmentForDemo } from '../../demo-operations';
+import { listJobs } from '../../../lib/database/job';
 
 const logger = getLogger();
 
@@ -1283,6 +1284,73 @@ async function onDemandTriggerMssqlDriftAssessment(
     }
 }
 
+async function triggerMssqlAssessmentAfterOptimization(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    databaseHostId: string,
+    serverNameWithHostName: string,
+    parentJobId: string,
+    instanceToAssess: { id: string },
+    fields?: string
+) {
+    logger.info('Triggering assessment after optimization', {
+        credentialsId,
+        region,
+        accountId,
+        databaseHostId,
+        serverNameWithHostName,
+        parentJobId,
+        instanceId: instanceToAssess?.id,
+        fields
+    });
+
+    await onDemandTriggerMssqlDriftAssessment(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        instanceToAssess.id,
+        AssessmentTriggeredBy.SYSTEM,
+        fields || '',
+        parentJobId
+    );
+
+    let masterJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage = '';
+    if (!IS_DEMO_FLOW) {
+        let retries = 10;
+        while (retries > 0) {
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop
+            const allSubJobs = await listJobs(accountId, '', '', parentJobId);
+            masterJobStatus = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
+                ? JOBSTATUS.IN_PROGRESS
+                : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
+                ? JOBSTATUS.FAILED
+                : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
+                ? JOBSTATUS.COMPLETED
+                : allSubJobs.some(job => job.status === JOBSTATUS.FAILED || job.status === JOBSTATUS.WARNING)
+                ? JOBSTATUS.WARNING
+                : JOBSTATUS.IN_PROGRESS;
+            if (masterJobStatus !== JOBSTATUS.IN_PROGRESS || retries === 0) {
+                errorMessage = allSubJobs.find(job => job.status === JOBSTATUS.FAILED)?.error || '';
+                break;
+            }
+            // eslint-disable-next-line no-await-in-loop
+            await sleep(30000);
+        }
+    }
+
+    await updateJobDetails(accountId, parentJobId, {
+        status: masterJobStatus,
+        endTime: Date.now(),
+        error: errorMessage
+    });
+
+    updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+}
+
 async function updateAssessmentResultsInInstanceMetadata(managedInstance: DatabaseInstancesIncludingResource) {
     const {
         account_id: accountId,
@@ -1332,5 +1400,6 @@ export {
     fetchMssqlDriftAssessment,
     fetchMssqlDriftAssessmentPerHost,
     fetchMssqlDriftAssessmentPerAccount,
-    updateAssessmentResultsInInstanceMetadata
+    updateAssessmentResultsInInstanceMetadata,
+    triggerMssqlAssessmentAfterOptimization
 };

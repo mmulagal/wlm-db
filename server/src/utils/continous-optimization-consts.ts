@@ -59,13 +59,15 @@ const REDIS_URL = process.env.REDIS_ENDPOINT || config.get('redis.endpoint') || 
 enum OptimizeOracleTypes {
     STORAGE_CONFIGURATION = 'storage-configuration',
     STORAGE_LAYOUT = 'storage-layout',
-    STORAGE_OPERATING_SYSTEM = 'storage-operating-system'
+    STORAGE_OPERATING_SYSTEM = 'storage-operating-system',
+    STORAGE_SIZING = 'storage-sizing'
 }
 
 const OracleOptimizeJobDescriptions = {
     [OptimizeOracleTypes.STORAGE_CONFIGURATION]: 'Fix Oracle Storage Configuration',
     [OptimizeOracleTypes.STORAGE_LAYOUT]: 'Fix Oracle Storage Layout',
-    [OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM]: 'Fix Oracle Storage Operating System'
+    [OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM]: 'Fix Oracle Storage Operating System',
+    [OptimizeOracleTypes.STORAGE_SIZING]: 'Fix Oracle Storage Sizing'
 };
 
 enum OptimizeOracleiSCSIStorageOperatingSystem {
@@ -89,6 +91,10 @@ enum OptimizeOracleNFSStorageOperatingSystem {
     NFS_MOUNT_OPTIONS_ADRHOME = 'nfs-mount-options-adrhome',
     NFSV4_DOMAIN_NAME = 'nfsv4-domain-name',
     NFS_CACHING_OPTIONS = 'nfs-caching-options'
+}
+
+enum OptimizeOracleStorageSizing {
+    HEADROOM = 'headroom'
 }
 
 enum OptimizeStorageConfigs {
@@ -680,5 +686,6 @@ export {
     ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     OptimizeOracleNFSStorageOperatingSystem,
     ORACLE_ASM_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
-    MIN_OPTIMIZED_HEADROOM_PERCENTAGE
+    MIN_OPTIMIZED_HEADROOM_PERCENTAGE,
+    OptimizeOracleStorageSizing
 };

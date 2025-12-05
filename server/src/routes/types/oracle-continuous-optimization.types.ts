@@ -4,6 +4,7 @@ import {
     AwsWellArchitecturedPillars,
     OptimizeOracleiSCSIStorageOperatingSystem,
     OptimizeOracleNFSStorageOperatingSystem,
+    OptimizeOracleStorageSizing,
     OptimizeOracleTypes
 } from '../../utils/continous-optimization-consts';
 import {
@@ -94,7 +95,11 @@ const OptimizePerHostRequestBody = Type.Object({
 const HostsToOptimize = Type.Array(
     Type.Object({
         configurationName: Type.Union(
-            [Type.Enum(OptimizeOracleiSCSIStorageOperatingSystem), Type.Enum(OptimizeOracleNFSStorageOperatingSystem)],
+            [
+                Type.Enum(OptimizeOracleiSCSIStorageOperatingSystem),
+                Type.Enum(OptimizeOracleNFSStorageOperatingSystem),
+                Type.Enum(OptimizeOracleStorageSizing)
+            ],
             {
                 description:
                     'Optimization configuration name for the type specified.\n\n' +

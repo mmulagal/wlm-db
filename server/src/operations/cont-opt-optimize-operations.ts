@@ -16,24 +16,20 @@ import {
     StorageTierParams,
     MaxDOPAssesment,
     AwsFsxNBackupConfig,
-    OptimizeMpioTimeoutParams,
-    ResourceDetails
+    OptimizeMpioTimeoutParams
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
     AuditStatus,
     SqlServerDeploymentModel,
     RESOURCESTYPE,
-    SSM_COMMAND_CACHE_TYPE,
-    DatabaseTypes
+    SSM_COMMAND_CACHE_TYPE
 } from '../utils/consts';
 import {
     IS_DEMO_FLOW,
     sqlResponseParsing,
     convertToBytes,
     getResourceNameFromTags,
-    calculateFsxStorageCapacityForHeadroomOptimization,
-    sleep,
     retryWithDelay,
     getServerNameWithHostname,
     parseMultipleCommandResponse,
@@ -45,7 +41,7 @@ import { GET_ONTAP_LUN_DETAILS, RESCAN_EXTEND_LUN } from './workloads/mssql/stor
 import { OPTIMIZE_STORAGE_PARAMS_SCRIPT, SET_MAXDOP } from './workloads/mssql/optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
-import { describeFSx, describeFSxStorageVirtualMachines, updateFsxCapacity } from '../lib/aws/fsx';
+import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
     OptimizeStorageParams,
@@ -56,7 +52,6 @@ import {
     AssessmentStatus,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeOperatingSystemParams,
-    AssessmentTriggeredBy,
     OptimizeStorageConfigsJobNames,
     STORAGE_OPTIMIZE_JOB_PARAM,
     OptimizeStorageRequestParamsType
@@ -87,19 +82,20 @@ import {
 } from './workloads/mssql/mpio-remediation-scripts';
 import { describeInstance } from '../lib/aws/ec2';
 import { getLogVolumeDrift, getTempDbVolumeDrift } from './continuous-optimization/mssql/storage-assessment-operations';
-import { handleOptimizeJobCreation, JobMetadata, getHeadroomDrift } from './continuous-optimization/assessment-utils';
-import { listJobs } from '../lib/database/job';
-import { resetCache } from '../utils/cache';
-import { onDemandTriggerMssqlDriftAssessment } from './continuous-optimization/mssql/assessment-operations';
-import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from './workloads/mssql/const';
-
-import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
-import { onDemandTriggerOracleDriftAssessment } from './continuous-optimization/oracle/assessment-operations';
 import {
-    getOracleStorageConfigRecommendationMap,
-    oracleSpecialStorageConfigNames
-} from './continuous-optimization/oracle/storage-optimize-operations';
+    activeSqlNodeDetails,
+    handleOptimizeJobCreation,
+    JobMetadata
+} from './continuous-optimization/assessment-utils';
+import { resetCache } from '../utils/cache';
+import { triggerMssqlAssessmentAfterOptimization } from './continuous-optimization/mssql/assessment-operations';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from './workloads/mssql/const';
+import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
+import { triggerOracleAssessmentAfterOptimization } from './continuous-optimization/oracle/assessment-operations';
+import { getOracleStorageConfigRecommendationMap } from './continuous-optimization/oracle/storage-optimize-operations';
 import { optimizeStorageConfigParamsOracle } from './continuous-optimization/oracle/ssm-scripts/storage-optimize-scripts';
+import { headroomOptimization } from './continuous-optimization/headroom-assessment';
+import { oracleSpecialStorageConfigNames } from './continuous-optimization/oracle/consts';
 
 const logger = getLogger();
 
@@ -407,17 +403,29 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
                 instanceMetadata || ({} as DatabaseInstanceMetadata)
             );
         }
-        await triggerAssessmentAfterOptimization(
-            credentialsId,
-            region,
-            accountId,
-            databaseHostId,
-            serverNameWithHostName,
-            parentJobId,
-            instanceToAssess,
-            AssessmentCategories.STORAGE,
-            databaseType as RESOURCESTYPE
-        );
+        if (databaseType === RESOURCESTYPE.MSSQL) {
+            await triggerMssqlAssessmentAfterOptimization(
+                credentialsId,
+                region,
+                accountId,
+                databaseHostId,
+                serverNameWithHostName,
+                parentJobId,
+                instanceToAssess,
+                AssessmentCategories.STORAGE
+            );
+        } else if (databaseType === RESOURCESTYPE.ORACLE) {
+            await triggerOracleAssessmentAfterOptimization(
+                credentialsId,
+                region,
+                accountId,
+                databaseHostId,
+                serverNameWithHostName,
+                parentJobId,
+                instanceToAssess,
+                AssessmentCategories.STORAGE
+            );
+        }
     } catch (error) {
         logger.error('Failed to optimize storage', { params, error });
         await updateParentJobStatus(accountId, parentJobId, false, `Failed to optimize storage: ${error}`);
@@ -702,77 +710,6 @@ async function callOntapApi(
     return { parsedResp, jobParamKey };
 }
 
-async function activeSqlNodeDetails(
-    credentialsId: string,
-    region: string,
-    accountId: string,
-    databaseHostId: string,
-    databaseInstanceId: string
-) {
-    logger.info('Getting active node details', {
-        credentialsId,
-        region,
-        accountId,
-        databaseHostId,
-        databaseInstanceId
-    });
-
-    const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-
-    const {
-        fsxn_ids: fsxId,
-        database_instance_name: instanceName,
-        database_instance_id: instanceId,
-        database_type: databaseType,
-        fsx_svm_id: svmDetails,
-        resource: resourceDetail,
-        metadata: instanceMetadata,
-        database_deployment_type: databaseDeploymentType
-    } = instanceDetail as unknown as DatabaseInstance;
-
-    const { metadata, resource_name: sqlServerName } = resourceDetail! as unknown as ResourceDetails;
-    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
-
-    const { isSSMConnected, activeNodeInstanceId, instancesDetails } = await getActiveSqlNode(credentialsId, region, {
-        node1InstanceId,
-        node2InstanceId,
-        accountId,
-        resourceType: databaseType as DatabaseTypes
-    });
-    logger.info('instancesDetails', { instanceIds: instancesDetails?.map(instance => instance?.instanceName) });
-    const sqlAuthEnabled =
-        instancesDetails && instanceDetail
-            ? instancesDetails.some(
-                  instance =>
-                      instance.instanceName === instanceDetail.database_instance_name &&
-                      instance.sqlAuthEnabled === true
-              )
-            : false;
-
-    if (!isSSMConnected && activeNodeInstanceId === undefined) {
-        const errorMessage = `Unable to fix instance ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
-        logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-    }
-
-    const serverNameWithHostName = getServerNameWithHostname(sqlServerName!, instanceName);
-
-    return {
-        sqlAuthEnabled,
-        activeNodeInstanceId,
-        fsxId,
-        instanceId,
-        instanceName,
-        sqlServerName,
-        databaseType,
-        svmDetails,
-        awsAccountId: resourceDetail!.cloud_provider_account_id,
-        serverNameWithHostName,
-        instanceMetadata,
-        databaseDeploymentType
-    };
-}
-
 async function getSvmNameFromId(credentialsId: string, region: string, fsxId: string, svmId: string) {
     logger.info('Getting SVM name from id', { credentialsId, region, fsxId, svmId });
 
@@ -928,7 +865,8 @@ async function modifySizingAttributes(
                         region,
                         filesystemId,
                         parentJobId,
-                        serverNameWithHostName
+                        serverNameWithHostName,
+                        RESOURCESTYPE.MSSQL
                     );
                     childJobsStatus.push(result);
                     break;
@@ -1001,7 +939,7 @@ async function modifySizingAttributes(
                 resourceName: serverNameWithHostName
             };
 
-            await triggerAssessmentAfterOptimization(
+            await triggerMssqlAssessmentAfterOptimization(
                 credentialsId,
                 region,
                 accountId,
@@ -1036,71 +974,6 @@ async function modifySizingAttributes(
             });
         }
     }
-}
-
-async function headroomOptimization(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    fileSystemId: string,
-    parentJobId: string,
-    serverNameWithHostName: string
-) {
-    logger.info('Optimizing FSx for NetApp ONTAP headroom ', { accountId, credentialsId, region, fileSystemId });
-    const jobId = await handleOptimizeJobCreation(
-        accountId,
-        credentialsId,
-        region,
-        serverNameWithHostName,
-        JOBTYPE.WELL_ARCHITECTED,
-        'Fix FSx for NetApp ONTAP headroom',
-        'Fix FSx for NetApp ONTAP headroom',
-        parentJobId
-    );
-
-    let jobStatus;
-    let errorMessage;
-    try {
-        const { headroomPercent, ssdStorageCapacityInBytes, totalUsed } = await getHeadroomDrift(
-            credentialsId,
-            region,
-            fileSystemId,
-            RESOURCESTYPE.MSSQL
-        );
-
-        if (headroomPercent < 35) {
-            logger.info('Under provisioned: Headroom is less than 35%');
-
-            const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, undefined, {
-                useCache: true
-            });
-            const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
-            const existingFsxStorageCapacityGiB = fileSystem?.StorageCapacity;
-            const newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
-                totalUsed,
-                ssdStorageCapacityInBytes
-            );
-            if (existingFsxStorageCapacityGiB && existingFsxStorageCapacityGiB < newFsxStorageCapactiyGiB) {
-                return updateFsxCapacity(credentialsId, region, accountId, fileSystemId, newFsxStorageCapactiyGiB);
-            }
-            errorMessage =
-                'Headroom configuration changed since the last assessment and meets best practices. No action required.';
-            jobStatus = JOBSTATUS.WARNING;
-        }
-        errorMessage = 'Headroom is more than 35%, no action required';
-        jobStatus = JOBSTATUS.WARNING;
-    } catch (error) {
-        errorMessage = `Error while fixing headroom sizing ${error}`;
-        jobStatus = JOBSTATUS.FAILED;
-        updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
-    } finally {
-        await updateJobDetails(accountId, jobId, {
-            status: jobStatus || JOBSTATUS.COMPLETED,
-            endTime: Date.now(),
-            error: errorMessage
-        });
-    }
-    return { jobStatus, errorMessage };
 }
 
 async function resizeLun(
@@ -1787,7 +1660,7 @@ async function optimizeMpio(optimizeMpioPolicyParams: OptimizeMpioPolicyParams) 
             resourceName: serverNameWithHostName,
             cloudProviderAccountId: awsAccountId
         };
-        await triggerAssessmentAfterOptimization(
+        await triggerMssqlAssessmentAfterOptimization(
             credentialsId,
             region,
             accountId,
@@ -2034,7 +1907,7 @@ async function enableMpioAndConfigureSessions(optimizeMpioParams: OptimizeMpioIs
                 resourceName: serverNameWithHostName,
                 cloudProviderAccountId: awsAccountId
             };
-            await triggerAssessmentAfterOptimization(
+            await triggerMssqlAssessmentAfterOptimization(
                 credentialsId,
                 region,
                 accountId,
@@ -2273,7 +2146,7 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
             );
         }
 
-        await triggerAssessmentAfterOptimization(
+        await triggerMssqlAssessmentAfterOptimization(
             credentialsId,
             region,
             accountId,
@@ -2332,7 +2205,7 @@ async function optimizeMpioSessions(optimizeMpioisSessionsParams: OptimizeMpioIs
                 );
             }
 
-            await triggerAssessmentAfterOptimization(
+            await triggerMssqlAssessmentAfterOptimization(
                 credentialsId,
                 region,
                 accountId,
@@ -2471,7 +2344,7 @@ async function enableMpioTimeout(optimizeMpioTimeoutParams: OptimizeMpioTimeoutP
                 instanceMetadata || {}
             );
         }
-        await triggerAssessmentAfterOptimization(
+        await triggerMssqlAssessmentAfterOptimization(
             credentialsId,
             region,
             accountId,
@@ -2924,7 +2797,7 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
                     instanceMetadata || { configsOptimized: {} }
                 );
             }
-            await triggerAssessmentAfterOptimization(
+            await triggerMssqlAssessmentAfterOptimization(
                 credentialsId,
                 region,
                 accountId,
@@ -3143,7 +3016,7 @@ async function handleMaxDopRemediation(
             }
             // clearning all the ssm command cache so that we will get the fresh data in assessment
             resetCache(SSM_COMMAND_CACHE_TYPE);
-            await triggerAssessmentAfterOptimization(
+            await triggerMssqlAssessmentAfterOptimization(
                 credentialsId,
                 region,
                 accountId,
@@ -3319,87 +3192,6 @@ async function handleUpdateAwsBackup(
     );
 }
 
-async function triggerAssessmentAfterOptimization(
-    credentialsId: string,
-    region: string,
-    accountId: string,
-    databaseHostId: string,
-    serverNameWithHostName: string,
-    parentJobId: string,
-    instanceToAssess: { id: string },
-    fields?: string,
-    databaseType?: RESOURCESTYPE
-) {
-    logger.info('Triggering assessment after optimization', {
-        credentialsId,
-        region,
-        accountId,
-        databaseHostId,
-        serverNameWithHostName,
-        parentJobId,
-        instanceId: instanceToAssess?.id,
-        fields
-    });
-
-    if (databaseType === RESOURCESTYPE.MSSQL) {
-        await onDemandTriggerMssqlDriftAssessment(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            instanceToAssess.id,
-            AssessmentTriggeredBy.SYSTEM,
-            fields || '',
-            parentJobId
-        );
-    } else if (databaseType === RESOURCESTYPE.ORACLE) {
-        await onDemandTriggerOracleDriftAssessment(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            instanceToAssess.id,
-            AssessmentTriggeredBy.SYSTEM,
-            fields || '',
-            parentJobId
-        );
-    }
-
-    let masterJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let errorMessage = '';
-    if (!IS_DEMO_FLOW) {
-        let retries = 10;
-        while (retries > 0) {
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop
-            const allSubJobs = await listJobs(accountId, '', '', parentJobId);
-            masterJobStatus = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
-                ? JOBSTATUS.IN_PROGRESS
-                : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
-                ? JOBSTATUS.FAILED
-                : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
-                ? JOBSTATUS.COMPLETED
-                : allSubJobs.some(job => job.status === JOBSTATUS.FAILED || job.status === JOBSTATUS.WARNING)
-                ? JOBSTATUS.WARNING
-                : JOBSTATUS.IN_PROGRESS;
-            if (masterJobStatus !== JOBSTATUS.IN_PROGRESS || retries === 0) {
-                errorMessage = allSubJobs.find(job => job.status === JOBSTATUS.FAILED)?.error || '';
-                break;
-            }
-            // eslint-disable-next-line no-await-in-loop
-            await sleep(30000);
-        }
-    }
-
-    await updateJobDetails(accountId, parentJobId, {
-        status: masterJobStatus,
-        endTime: Date.now(),
-        error: errorMessage
-    });
-
-    updateLongRunningAuditGroup(AuditStatus.SUCCESS);
-}
-
 function isDatabaseInstanceMetadata(value: any): value is DatabaseInstanceMetadata {
     return value && typeof value === 'object' && 'configsOptimized' in value;
 }
@@ -3409,8 +3201,6 @@ export {
     optimizeSizing,
     optimizeOperatingSystemSettings,
     optimizeStorageTier,
-    activeSqlNodeDetails,
     optimizeMaxDop,
-    handleUpdateAwsBackup,
-    triggerAssessmentAfterOptimization
+    handleUpdateAwsBackup
 };

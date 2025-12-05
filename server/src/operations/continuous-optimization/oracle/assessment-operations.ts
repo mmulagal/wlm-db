@@ -17,13 +17,13 @@ import {
     WorkloadInstance
 } from '../../../utils/common-types';
 import { AuditStatus, HttpErrorCodes, RESOURCESTYPE, DatabaseTypes, STORAGE_PROTOCOLS } from '../../../utils/consts';
-import { IS_DEMO_FLOW } from '../../../utils/utils';
+import { IS_DEMO_FLOW, sleep } from '../../../utils/utils';
 import {
     AssessmentCategories,
     AssessmentCategoriesOracle,
     AssessmentTriggeredBy
 } from '../../../utils/continous-optimization-consts';
-import { registerJob, updateParentJobStatus } from '../../database/job-operations';
+import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getOracleDatabaseMappedVolumes } from '../../workloads/oracle/oracle-operations';
 import {
@@ -50,6 +50,7 @@ import {
 } from '../assessment-dismiss-operations';
 import { handleGetOracleAssessmentForDemo } from '../../demo-operations';
 import { StorageAssessment } from './common-types';
+import { listJobs } from '../../../lib/database/job';
 
 const logger = getLogger();
 
@@ -416,6 +417,73 @@ async function onDemandTriggerOracleDriftAssessment(
     }
 }
 
+async function triggerOracleAssessmentAfterOptimization(
+    credentialsId: string,
+    region: string,
+    accountId: string,
+    databaseHostId: string,
+    serverNameWithHostName: string,
+    parentJobId: string,
+    instanceToAssess: { id: string },
+    fields?: string
+) {
+    logger.info('Triggering assessment after optimization', {
+        credentialsId,
+        region,
+        accountId,
+        databaseHostId,
+        serverNameWithHostName,
+        parentJobId,
+        instanceId: instanceToAssess?.id,
+        fields
+    });
+
+    await onDemandTriggerOracleDriftAssessment(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        instanceToAssess.id,
+        AssessmentTriggeredBy.SYSTEM,
+        fields || '',
+        parentJobId
+    );
+
+    let masterJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage = '';
+    if (!IS_DEMO_FLOW) {
+        let retries = 10;
+        while (retries > 0) {
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop
+            const allSubJobs = await listJobs(accountId, '', '', parentJobId);
+            masterJobStatus = allSubJobs.some(job => job.status === JOBSTATUS.IN_PROGRESS)
+                ? JOBSTATUS.IN_PROGRESS
+                : allSubJobs.every(job => job.status === JOBSTATUS.FAILED)
+                ? JOBSTATUS.FAILED
+                : allSubJobs.every(job => job.status === JOBSTATUS.COMPLETED)
+                ? JOBSTATUS.COMPLETED
+                : allSubJobs.some(job => job.status === JOBSTATUS.FAILED || job.status === JOBSTATUS.WARNING)
+                ? JOBSTATUS.WARNING
+                : JOBSTATUS.IN_PROGRESS;
+            if (masterJobStatus !== JOBSTATUS.IN_PROGRESS || retries === 0) {
+                errorMessage = allSubJobs.find(job => job.status === JOBSTATUS.FAILED)?.error || '';
+                break;
+            }
+            // eslint-disable-next-line no-await-in-loop
+            await sleep(30000);
+        }
+    }
+
+    await updateJobDetails(accountId, parentJobId, {
+        status: masterJobStatus,
+        endTime: Date.now(),
+        error: errorMessage
+    });
+
+    updateLongRunningAuditGroup(AuditStatus.SUCCESS);
+}
+
 async function fetchOracleDriftAssessment(
     accountId: string,
     credentialsId: string,
@@ -725,5 +793,6 @@ export {
     fetchOracleDriftAssessment,
     fetchOracleDriftAssessmentPerHost,
     fetchOracleDriftAssessmentPerAccount,
-    initiateInstanceLevelAssessmentDataCollection
+    initiateInstanceLevelAssessmentDataCollection,
+    triggerOracleAssessmentAfterOptimization
 };

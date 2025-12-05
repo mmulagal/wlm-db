@@ -11,7 +11,6 @@ import { IS_DEMO_FLOW, retryWithDelay, sqlResponseParsing, getArtifactsRegionBuc
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { updateJobDetails, registerJob, updateParentJobStatus } from '../../database/job-operations';
-import { activeSqlNodeDetails, triggerAssessmentAfterOptimization } from '../../cont-opt-optimize-operations';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import {
@@ -26,7 +25,7 @@ import {
     optimizeMultiPathConfigFriendlyNamesCommand,
     enableMultipathIoCommand
 } from './ssm-scripts/os-optimization-scripts';
-import { handleOptimizeJobCreation } from '../assessment-utils';
+import { activeSqlNodeDetails, handleOptimizeJobCreation } from '../assessment-utils';
 import getLogger from '../../../utils/logger';
 import {
     OracleJobMetadata,
@@ -39,6 +38,7 @@ import { handleAfdDriftOptimization, handleAsmLibDriftOptimization } from './sto
 import { preSignedUrl } from '../../../lib/aws/s3';
 import { oracleOptimizeStorageOSForNfs } from './storage-os-nfs-optimise-operations';
 import { OptimizeOSParams } from './common-types';
+import { triggerOracleAssessmentAfterOptimization } from './assessment-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -442,7 +442,7 @@ async function oracleOptimizeStorageOS(
                 activeNodeInstanceid: activeNodeInstanceId,
                 resourceName: serverNameWithHostName
             };
-            await triggerAssessmentAfterOptimization(
+            await triggerOracleAssessmentAfterOptimization(
                 credentialsId,
                 region,
                 accountId,
@@ -450,8 +450,7 @@ async function oracleOptimizeStorageOS(
                 serverNameWithHostName,
                 parentJobId,
                 instanceToAssess,
-                AssessmentCategories.STORAGE,
-                RESOURCESTYPE.ORACLE
+                AssessmentCategories.STORAGE
             );
         } catch (error) {
             logger.error(`Error triggering assessment after optimization for databaseHost ${databaseHostId}: ${error}`);

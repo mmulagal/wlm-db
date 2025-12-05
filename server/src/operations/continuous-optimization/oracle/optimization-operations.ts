@@ -14,6 +14,7 @@ import { handleOptimizeJobCreation } from '../assessment-utils';
 import { updateParentJobStatus } from '../../database/job-operations';
 import { validateAndFilterDatabaseHosts } from '../../bulk-cont-opt-operations';
 import { OracleJobMetadata } from './consts';
+import { oracleOptimizeStorageSizing } from './storage-optimize-operations';
 
 const logger = getLogger();
 
@@ -109,6 +110,19 @@ async function handleBulkOptimization(
                             switch (optimizationCategory) {
                                 case OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM: {
                                     await oracleOptimizeStorageOS(
+                                        accountId,
+                                        credentialsId,
+                                        region,
+                                        databaseHostId,
+                                        databaseInstanceId,
+                                        optimizationSubcategory,
+                                        masterOptimizeParentId
+                                    );
+                                    break;
+                                }
+
+                                case OptimizeOracleTypes.STORAGE_SIZING: {
+                                    await oracleOptimizeStorageSizing(
                                         accountId,
                                         credentialsId,
                                         region,

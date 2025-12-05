@@ -1,3 +1,5 @@
+import { OptimizeStorageConfigs } from '../../../utils/continous-optimization-consts';
+
 const NETAPP_HOST_UTILITIES_RELATIVE_PATH = `${process.cwd()}/resources/oracle/packages/NetApp_Linux_Host_Utilities_8.0.rpm`;
 
 interface PerHostJobMetadata {
@@ -51,6 +53,16 @@ interface KernelTcpSlotOptimiseResponse {
 
 const LINUX_LOG_DIRECTORY = '/var/log/netapp/wlmdb';
 
+const oracleSpecialStorageConfigNames = [
+    OptimizeStorageConfigs.TIERING_POLICY,
+    OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS,
+    OptimizeStorageConfigs.COMPRESSION,
+    OptimizeStorageConfigs.DEDUPLICATION,
+    OptimizeStorageConfigs.COMPACTION,
+    OptimizeStorageConfigs.NFS_ROOTONLY,
+    OptimizeStorageConfigs.EXPORT_POLICY
+];
+
 export {
     NETAPP_HOST_UTILITIES_RELATIVE_PATH,
     OracleJobMetadata,
@@ -59,5 +71,6 @@ export {
     InstallHostUtilitiesResponse,
     KernelTcpSlotOptimiseResponse,
     GenericOptimizationResponse,
-    LINUX_LOG_DIRECTORY
+    LINUX_LOG_DIRECTORY,
+    oracleSpecialStorageConfigNames
 };

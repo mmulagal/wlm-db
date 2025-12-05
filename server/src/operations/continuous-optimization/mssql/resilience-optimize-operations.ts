@@ -37,13 +37,12 @@ import {
     retryWithDelay,
     sqlResponseParsing
 } from '../../../utils/utils';
-import { activeSqlNodeDetails } from '../../cont-opt-optimize-operations';
 import { GET_CLUSTER_SNAPSHOT_POLICIES } from '../../workloads/mssql/assessment-scripts';
 import { SET_VOLUME_SNAPSHOT_POLICY } from '../../workloads/mssql/optimization-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
 import { getMappedOntapVolumes, getMZFsxnNodePreference } from '../../aws/fsx-operations';
-import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
+import { activeSqlNodeDetails, handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';

@@ -1,27 +1,17 @@
 import Ajv, { ValidateFunction } from 'ajv';
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
-import ms from 'ms';
-import { GetMetricStatisticsCommandInput } from '@aws-sdk/client-cloudwatch';
 import { getJobs, registerJob } from '../database/job-operations';
-import {
-    calculateFsxStorageCapacityForHeadroomOptimization,
-    convertToBytes,
-    getTimeDifferenceInMinutes
-} from '../../utils/utils';
+import { getServerNameWithHostname, getTimeDifferenceInMinutes } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
-import {
-    AssessmentCategoriesOracle,
-    AssessmentStatus,
-    MIN_OPTIMIZED_HEADROOM_PERCENTAGE
-} from '../../utils/continous-optimization-consts';
+import { AssessmentCategoriesOracle, AssessmentStatus } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
-import type { JobMetadata } from '../../utils/common-types';
+import type { DatabaseInstance, JobMetadata, Metadata, ResourceDetails } from '../../utils/common-types';
 import { OracleJobMetadata } from './oracle/consts';
 import getMissingPermissionsList from '../aws/iam-operations';
-import { getFsxStorageDetails } from '../aws/fsx-operations';
-import { RESOURCESTYPE } from '../../utils/consts';
-import { getMetricStatistics } from '../../lib/aws/cloud-watch';
+import { DatabaseTypes, HttpErrorCodes } from '../../utils/consts';
+import { getInstanceInfo } from '../database/database-operations';
+import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 
 const logger = getLogger();
 
@@ -175,94 +165,75 @@ async function checkForMissingOptimizePermissions(credentialsId: string, region:
     }
 }
 
-async function getHeadroomDrift(
+async function activeSqlNodeDetails(
     credentialsId: string,
     region: string,
-    fileSystemId: string,
-    resourceType: RESOURCESTYPE.MSSQL | RESOURCESTYPE.ORACLE
+    accountId: string,
+    databaseHostId: string,
+    databaseInstanceId: string
 ) {
-    logger.info('Getting headroom drift', { credentialsId, region, fileSystemId, resourceType });
+    logger.info('Getting active node details', {
+        credentialsId,
+        region,
+        accountId,
+        databaseHostId,
+        databaseInstanceId
+    });
 
-    try {
-        const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(credentialsId, region, fileSystemId);
+    const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
 
-        const cwMetricsDataCollectionPeriodSeconds = 1 * 60 * 60; // 1 hour
-        const cwMetricsDataCollectionPeriod = '1h'; // 1 hour
+    const {
+        fsxn_ids: fsxId,
+        database_instance_name: instanceName,
+        database_instance_id: instanceId,
+        database_type: databaseType,
+        fsx_svm_id: svmDetails,
+        resource: resourceDetail,
+        metadata: instanceMetadata,
+        database_deployment_type: databaseDeploymentType
+    } = instanceDetail as unknown as DatabaseInstance;
 
-        let totalUsed = 0;
-        const storageUsedParams: GetMetricStatisticsCommandInput = {
-            EndTime: new Date(),
-            MetricName: 'StorageUsed',
-            Namespace: 'AWS/FSx',
-            Period: cwMetricsDataCollectionPeriodSeconds,
-            StartTime: new Date(Date.now() - ms(cwMetricsDataCollectionPeriod)),
-            Statistics: ['Average'],
-            Dimensions: [
-                {
-                    Name: 'StorageTier',
-                    Value: 'SSD'
-                },
-                {
-                    Name: 'FileSystemId',
-                    Value: fileSystemId
-                },
-                {
-                    Name: 'DataType',
-                    Value: 'All'
-                }
-            ]
-        };
-        const storageUsedMetric = await getMetricStatistics(credentialsId, region, storageUsedParams);
+    const { metadata, resource_name: sqlServerName } = resourceDetail! as unknown as ResourceDetails;
+    const { node1InstanceId, node2InstanceId } = metadata as unknown as Metadata;
 
-        if (storageUsedMetric.Datapoints) {
-            [{ Average: totalUsed }] = storageUsedMetric.Datapoints;
-        } else {
-            const errorMessage = 'Storage used data not found in CloudWatch metrics in last hour';
-            logger.error(errorMessage);
-            throw new Error(errorMessage);
-        }
+    const { isSSMConnected, activeNodeInstanceId, instancesDetails } = await getActiveSqlNode(credentialsId, region, {
+        node1InstanceId,
+        node2InstanceId,
+        accountId,
+        resourceType: databaseType as DatabaseTypes
+    });
+    logger.info('instancesDetails', { instanceIds: instancesDetails?.map(instance => instance?.instanceName) });
+    const sqlAuthEnabled =
+        instancesDetails && instanceDetail
+            ? instancesDetails.some(
+                  instance =>
+                      instance.instanceName === instanceDetail.database_instance_name &&
+                      instance.sqlAuthEnabled === true
+              )
+            : false;
 
-        const headroomPercent = Math.ceil(((ssdStorageCapacityInBytes - totalUsed) / ssdStorageCapacityInBytes) * 100);
-        const minSSdStorageCapacityInBytes = convertToBytes(1024, 'GiB');
-        const minOptimizedHeadroomPercent = MIN_OPTIMIZED_HEADROOM_PERCENTAGE[resourceType];
-        const status =
-            headroomPercent < minOptimizedHeadroomPercent
-                ? AssessmentStatus.UNDER_PROVISIONED
-                : headroomPercent > 50 && ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
-                ? AssessmentStatus.OVER_PROVISIONED
-                : AssessmentStatus.OPTIMIZED;
-
-        // Check for 'fsx:UpdateFileSystem' permissions
-        let missingPermissions: string[] = [];
-        let newFsxStorageCapacityGiB = 0;
-        if (status !== AssessmentStatus.OPTIMIZED) {
-            missingPermissions =
-                (await checkForMissingOptimizePermissions(credentialsId, region, ['fsx:UpdateFileSystem'])) || [];
-            newFsxStorageCapacityGiB = calculateFsxStorageCapacityForHeadroomOptimization(
-                totalUsed,
-                ssdStorageCapacityInBytes,
-                resourceType
-            );
-        }
-
-        return {
-            status,
-            headroomPercent,
-            ssdStorageCapacityInBytes,
-            totalUsed,
-            missingPermissions,
-            newFsxStorageCapacityGiB
-        };
-    } catch (error) {
-        logger.error('Error fetching FSx storage details or CloudWatch metrics', {
-            credentialsId,
-            region,
-            fileSystemId,
-            resourceType,
-            error
-        });
-        throw error;
+    if (!isSSMConnected && activeNodeInstanceId === undefined) {
+        const errorMessage = `Unable to fix instance ${instanceName} in host ${sqlServerName} in account ${accountId} due to SSM connection issues.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
+
+    const serverNameWithHostName = getServerNameWithHostname(sqlServerName!, instanceName);
+
+    return {
+        sqlAuthEnabled,
+        activeNodeInstanceId,
+        fsxId,
+        instanceId,
+        instanceName,
+        sqlServerName,
+        databaseType,
+        svmDetails,
+        awsAccountId: resourceDetail!.cloud_provider_account_id,
+        serverNameWithHostName,
+        instanceMetadata,
+        databaseDeploymentType
+    };
 }
 
 export {
@@ -273,7 +244,7 @@ export {
     validateAssessment,
     UnOptimizedDiskGroups,
     checkForMissingOptimizePermissions,
-    getHeadroomDrift
+    activeSqlNodeDetails
 };
 
 // Re-export type for external usage without creating a runtime export

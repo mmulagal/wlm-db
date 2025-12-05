@@ -914,7 +914,7 @@ function calculateFsxStorageCapacityForHeadroomOptimization(
     // increase newFsxStorageCapacity so that increment is at least 10%
     newFsxStorageCapacity = increase > 10 ? newFsxStorageCapacity : ssdStorageCapacityInBytes * 1.1;
 
-    const newFsxStorageCapacityGiB = sizeInGigaBytes(newFsxStorageCapacity, 'B');
+    const newFsxStorageCapacityGiB = Math.ceil(sizeInGigaBytes(newFsxStorageCapacity, 'B'));
     return newFsxStorageCapacityGiB;
 }
 

@@ -6,6 +6,7 @@ import {
     AssessmentCategoriesOracle,
     AssessmentTriggeredBy,
     OptimizeOracleiSCSIStorageOperatingSystem,
+    OptimizeOracleStorageSizing,
     OptimizeStorageConfigs,
     OptimizeStorageParams,
     OptimizeStorageRequestParams,
@@ -15,7 +16,11 @@ import { StorageAssessment } from './common-types';
 import getLogger from '../../../utils/logger';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getInstanceInfo } from '../../database/database-operations';
-import { fetchOracleDriftAssessment, triggerOracleAssessment } from './assessment-operations';
+import {
+    fetchOracleDriftAssessment,
+    triggerOracleAssessment,
+    triggerOracleAssessmentAfterOptimization
+} from './assessment-operations';
 import { DatabaseInstanceMetadata, DatabaseInstancesIncludingResource, Metadata } from '../../../utils/common-types';
 import {
     OracleGenericParameterDriftResponseType,
@@ -27,8 +32,8 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import { calculateStorageDrift, mapVolumeTypesToIdName } from './storage-assessment-operations';
 import { OracleMappedOntapVolumesResponse } from '../../workloads/oracle/common-types';
-import { UnOptimizedDiskGroups } from '../assessment-utils';
-import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes } from '../../../utils/consts';
+import { activeSqlNodeDetails, handleOptimizeJobCreation, UnOptimizedDiskGroups } from '../assessment-utils';
+import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../../../utils/consts';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import GOLDEN_CONFIG from './golden-config';
 import { getOracleDatabaseMappedVolumes } from '../../workloads/oracle/oracle-operations';
@@ -39,6 +44,8 @@ import {
     mountLunsToDisks,
     addDiskToDiskGroups
 } from './ssm-scripts/storage-optimize-scripts';
+import { OracleJobMetadata, oracleSpecialStorageConfigNames } from './consts';
+import { headroomOptimization } from '../headroom-assessment';
 
 const logger = getLogger();
 
@@ -47,16 +54,6 @@ const STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS = [
     GOLDEN_CONFIG.redoLogDiskLunLayout.name,
     GOLDEN_CONFIG.fraDiskLunLayout.name,
     GOLDEN_CONFIG.archivelogDiskLunLayout.name
-];
-
-const oracleSpecialStorageConfigNames = [
-    OptimizeStorageConfigs.TIERING_POLICY,
-    OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS,
-    OptimizeStorageConfigs.COMPRESSION,
-    OptimizeStorageConfigs.DEDUPLICATION,
-    OptimizeStorageConfigs.COMPACTION,
-    OptimizeStorageConfigs.NFS_ROOTONLY,
-    OptimizeStorageConfigs.EXPORT_POLICY
 ];
 
 interface OptimizeAsmConfigParams {
@@ -710,10 +707,137 @@ async function getOracleStorageConfigRecommendationMap(
     }
 }
 
+async function oracleOptimizeStorageSizing(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    configurationName: string,
+    masterOptimizeParentId?: string
+) {
+    logger.info(
+        `Optimizing storage sizing for ${accountId}, ${credentialsId} ${databaseHostId} ${databaseInstanceId} in ${region} for configuration ${configurationName}`
+    );
+
+    const { activeNodeInstanceId, serverNameWithHostName, fsxId } = await activeSqlNodeDetails(
+        credentialsId,
+        region,
+        accountId,
+        databaseHostId,
+        databaseInstanceId
+    );
+
+    if (!activeNodeInstanceId) {
+        const errorMessage = `Unable to optimize storage sizing for ${databaseInstanceId} in account ${accountId}. Cannot retrieve active node ID from the Oracle configuration.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    let jobDescription = '';
+    switch (configurationName) {
+        case OptimizeOracleStorageSizing.HEADROOM:
+            jobDescription = `Optimize storage headroom for ${serverNameWithHostName}`;
+            break;
+        default:
+            jobDescription = '';
+            break;
+    }
+
+    const jobMetadata: OracleJobMetadata = {
+        hostsToOptimize: [
+            {
+                optimizationType: configurationName,
+                resourceId: databaseHostId,
+                databases: [databaseInstanceId]
+            }
+        ]
+    };
+
+    const parentJobId = await handleOptimizeJobCreation(
+        accountId,
+        credentialsId,
+        region,
+        serverNameWithHostName,
+        JOBTYPE.WELL_ARCHITECTED,
+        jobDescription,
+        jobDescription,
+        masterOptimizeParentId,
+        jobMetadata
+    );
+
+    let parentJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let parentJobError = '';
+
+    switch (configurationName) {
+        case OptimizeOracleStorageSizing.HEADROOM: {
+            try {
+                const result = await headroomOptimization(
+                    accountId,
+                    credentialsId,
+                    region,
+                    fsxId,
+                    parentJobId,
+                    serverNameWithHostName,
+                    RESOURCESTYPE.ORACLE
+                );
+
+                if (result?.jobStatus === JOBSTATUS.FAILED) {
+                    parentJobError = result.errorMessage || 'Headroom optimization failed';
+                    logger.error(parentJobError);
+                    parentJobStatus = JOBSTATUS.FAILED;
+                }
+                if (IS_DEMO_FLOW) {
+                    await updateOptimizedConfigNameInInstanceTable(
+                        accountId,
+                        databaseInstanceId,
+                        [OptimizeOracleStorageSizing.HEADROOM],
+                        'SIZING',
+                        jobMetadata as DatabaseInstanceMetadata
+                    );
+                }
+            } catch (error) {
+                parentJobError = String(error);
+                logger.error(parentJobError);
+                parentJobStatus = JOBSTATUS.FAILED;
+            }
+            break;
+        }
+
+        default:
+            parentJobError = `Unknown configuration name: ${configurationName}`;
+            logger.error(parentJobError);
+            parentJobStatus = JOBSTATUS.FAILED;
+            break;
+    }
+
+    await updateJobDetails(accountId, parentJobId, {
+        status: parentJobStatus,
+        endTime: Date.now(),
+        error: parentJobError || undefined
+    });
+
+    if (parentJobStatus === JOBSTATUS.COMPLETED) {
+        const instanceToAssess = {
+            id: databaseInstanceId
+        };
+        await triggerOracleAssessmentAfterOptimization(
+            credentialsId,
+            region,
+            accountId,
+            databaseHostId,
+            serverNameWithHostName,
+            parentJobId,
+            instanceToAssess,
+            AssessmentCategories.STORAGE
+        );
+    }
+}
+
 export {
     optimizeOracleStorageLayout,
     getOracleStorageConfigRecommendationMap,
-    oracleSpecialStorageConfigNames,
     handleAfdDriftOptimization,
-    handleAsmLibDriftOptimization
+    handleAsmLibDriftOptimization,
+    oracleOptimizeStorageSizing
 };

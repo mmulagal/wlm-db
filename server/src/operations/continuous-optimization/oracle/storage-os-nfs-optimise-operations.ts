@@ -16,7 +16,7 @@ import { IS_DEMO_FLOW, retryWithDelay, sqlResponseParsing } from '../../../utils
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
-import { triggerAssessmentAfterOptimization } from '../../cont-opt-optimize-operations';
+import { triggerOracleAssessmentAfterOptimization } from './assessment-operations';
 
 const logger = getLogger();
 
@@ -202,7 +202,7 @@ async function oracleOptimizeStorageOSForNfs(
             activeNodeInstanceid: activeNodeInstanceId,
             resourceName: serverNameWithHostName
         };
-        await triggerAssessmentAfterOptimization(
+        await triggerOracleAssessmentAfterOptimization(
             credentialsId,
             region,
             accountId,
@@ -210,8 +210,7 @@ async function oracleOptimizeStorageOSForNfs(
             serverNameWithHostName,
             parentJobId,
             instanceToAssess,
-            AssessmentCategories.STORAGE,
-            RESOURCESTYPE.ORACLE
+            AssessmentCategories.STORAGE
         );
     }
 }

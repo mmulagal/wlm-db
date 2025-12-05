@@ -30,7 +30,8 @@ import {
     SizingViolationResponseType,
     StorageParameterDriftResponseType
 } from '../../../routes/types/mssql-continuous-optimisation.types';
-import { checkForMissingOptimizePermissions, getHeadroomDrift } from '../assessment-utils';
+import { checkForMissingOptimizePermissions } from '../assessment-utils';
+import { getHeadroomDrift } from '../headroom-assessment';
 
 const logger = getLogger();
 

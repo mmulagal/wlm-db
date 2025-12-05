@@ -38,11 +38,11 @@ import { getInstanceDetails, getInstanceOntapDetails } from '../../database-host
 import { getServerNameWithHostname, IS_DEMO_FLOW } from '../../../utils/utils';
 import { updateAllOptimizedClonesDemoFlow } from '../../demo-operations';
 import { resetCache } from '../../../utils/cache';
-import { triggerAssessmentAfterOptimization } from '../../cont-opt-optimize-operations';
 import { AssessmentCategories } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { paginateListInstanceConfigData } from '../../database/instance-config-operations';
+import { triggerMssqlAssessmentAfterOptimization } from './assessment-operations';
 
 const logger = getLogger();
 
@@ -284,7 +284,7 @@ async function handleBulkCloneOptimization(
                     }
                     // once the optimize done for the specific instance id in a host, Run the assessment for that
                     resetCache(SSM_COMMAND_CACHE_TYPE);
-                    await triggerAssessmentAfterOptimization(
+                    await triggerMssqlAssessmentAfterOptimization(
                         credentialsId,
                         region,
                         accountId,

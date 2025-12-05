@@ -43,7 +43,7 @@ import {
 import { OS_ASSESSMENT } from './ssm-scripts/os-iscsi-assessment-scripts';
 import { NFS_OS_ASSESSMENT } from './ssm-scripts/os-nfs-assessment-scripts';
 import { ORACLE_STORAGE_SIZING_ASSESSMENT, VOLUME_LUN_CONFIGURATION } from './ssm-scripts/storage-assessment-scripts';
-import { getHeadroomDrift } from '../assessment-utils';
+import { getHeadroomDrift } from '../headroom-assessment';
 
 const logger = getLogger();
 
