@@ -175,12 +175,12 @@ jobs:
             git push https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/TLVeng/wlm-db.git master
 
       - name: Setup helm file
-        uses: mamezou-tech/setup-helmfile@v2.0.0
+        uses: mamezou-tech/setup-helmfile@v2.1.0
         with:
           install-kubectl: "yes"
           install-helm: "yes"
           install-helm-plugins: "yes"
-          helm-s3-plugin-version: "0.9.2"
+          helm-s3-plugin-version: "v0.16.2"
 
       - name: Package Helm Chart
         working-directory: Devops/${{env.IMAGE_NAME}}
