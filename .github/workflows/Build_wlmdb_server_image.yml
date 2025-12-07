@@ -86,7 +86,7 @@ jobs:
         region: us-east-1  # Replace with your second region
         tags: ${{ env.MODE }},${{ steps.gen-tag.outputs.TAG }}
         image_scanning_configuration: true
-        extra_build_args: "--build-arg ARG_WLM_DB_BUILD_GIT=${{steps.gen-hash.outputs.HASH}} --build-arg ARG_WLM_DB_BUILD_MODE=${{env.MODE}}"
+        extra_build_args: "--build-arg ARG_WLMDB_BUILD_GIT=${{steps.gen-hash.outputs.HASH}} --build-arg ARG_WLMDB_BUILD_MODE=${{env.MODE}}"
         #create_repo: true
         #set_repo_policy: true
         #repo_policy_file: ../Ecr-Lifecycle-Policy/ecr-lifecycle-policy.json
