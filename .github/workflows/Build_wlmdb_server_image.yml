@@ -112,116 +112,27 @@ jobs:
           docker push ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ env.MODE }}
           docker push ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}}
 
+    - uses: actions/create-github-app-token@v1
+      id: app-token
+      with:
+        app-id: ${{ vars.APP_ID }}
+        private-key: ${{ secrets.GG_PEM }}
+        owner: TLVDevOps
 
-  update-version:
-    runs-on: wlmdb-runner
-    needs: [build-and-push-region-1]
-    steps:
-      - name: Echo SHORT_SHA
-        run: echo ${{env.SHORT_SHA}}
-      - name: Generate GitHub App Token
-        id: generate-token
-        uses: tibdex/github-app-token@v2
-        with:
-          app_id: ${{ vars.APP_ID }}
-          private_key: ${{ secrets.GG_PEM }}
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: master
-          token: ${{ steps.generate-token.outputs.token }}
-      - name: List contents of the working directory
-        run: ls -la
-
-      - name: Set up environment variables
-        run: |
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.S3_REPO_ACCESS_KEY }}" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.S3_REPO_SECRET_KEY }}" >> $GITHUB_ENV
-          echo "AWS_REGION=us-east-1" >> $GITHUB_ENV
-
-      - name: Update Chart Version
-        id: chart_version_update
-        working-directory: Devops/${{env.IMAGE_NAME}}
-        run: |
-          currentVer=$(grep version Chart.yaml | awk '{print $2}')
-          newVer=$(echo $currentVer | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(length($NF+1)>length($NF))$(NF-1)++; $NF=sprintf("%0*d", length($NF), ($NF+1)%(10^length($NF))); print}')
-          sed -i "s/$currentVer/$newVer/g" Chart.yaml
-          echo "new_version=$newVer" >> $GITHUB_ENV
-      
-      - name: Commit & Push changes
-        working-directory: Devops/${{env.IMAGE_NAME}}
-        run: |
-            git config --global user.name 'teamcityng[bot]'
-            git config --global user.email 'teamcityng[bot]@users.noreply.github.com'
-            git pull https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/TLVeng/wlm-db.git master
-            git commit -m "update chart version to ${{ env.new_version }}" ./Chart.yaml || echo "No changes to commit"
-            git push https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/TLVeng/wlm-db.git master
-  
-      - name: Update Image Version
-        id: image_version_update
-        working-directory: Devops/${{env.IMAGE_NAME}}
-        run: |
-           echo "The new Image Version is: ${{env.SHORT_SHA}}"
-           sed -i "s/^infraversion.*/infraversion: ${{env.SHORT_SHA}}/" values.yaml
-  
-      - name: Commit & Push Vaules changes
-        working-directory: Devops/${{env.IMAGE_NAME}}
-        run: |
-            git config --global user.name 'teamcityng[bot]'
-            git config --global user.email 'teamcityng[bot]@users.noreply.github.com'
-            git pull https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/TLVeng/wlm-db.git master
-            git commit -m "update image version to ${{env.SHORT_SHA}}" ./values.yaml
-            git push https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/TLVeng/wlm-db.git master
-
-      - name: Setup helm file
-        uses: mamezou-tech/setup-helmfile@v2.1.0
-        with:
-          install-kubectl: "yes"
-          install-helm: "yes"
-          install-helm-plugins: "yes"
-          helm-s3-plugin-version: "v0.16.2"
-
-      - name: Package Helm Chart
-        working-directory: Devops/${{env.IMAGE_NAME}}
-        run: |
-          rm -f *.tgz
-          helm package .
-          if [ $? != 0 ]; then exit 1; fi
-            
-      - name: Push to S3 repository
-        working-directory: Devops/${{env.IMAGE_NAME}}
-        run: |
-          helm repo add netappawshelmcharts s3://aws-helm-charts-repository/charts
-          helm s3 push --force ./${{env.IMAGE_NAME}}-${{ env.new_version }}.tgz netappawshelmcharts
-          if [ $? != 0 ]; then exit 2; fi
-         
-      - name: Push to Standby S3 repository
-        working-directory: Devops/${{env.IMAGE_NAME}}
-        run: |
-          export AWS_REGION="us-west-2"
-          echo "Add netappawshelmchartsstandby repository"
-          helm repo add netappawshelmchartsstandby s3://aws-helm-charts-standby-repository/charts
-          helm s3 push --force ./${{env.IMAGE_NAME}}-${{ env.new_version }}.tgz netappawshelmchartsstandby
-          if [ $? != 0 ]; then exit 3; fi
-
-      - name: Display ImageID and Chart Version 
-        run: |
-          echo "The ImageID is: ${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}}"
-          echo "The Chart Version is: ${{env.IMAGE_NAME}}-${{ env.new_version }}.tgz"
-
-      - uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.GG_PEM }}
-          owner: TLVDevOps
-
-      - name: Invoke workflow in another repo with inputs
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: Upgrade_K8S_Service.yml
+    - name: Invoke workflow in another repo with inputs
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+          workflow: Upgrade_K8S_Service-Helm4.yml
           repo: TLVDevOps/eks-cluster-automation
-          inputs: '{"service_name": "wlmdb"}'
+          inputs: '{"service_name": "wlmdb", "image_version": "${{ steps.gen-tag.outputs.TAG }}"}'
     # Required when using the `repo` option. Either a PAT or a token generated from the GitHub app or CLI
           token: "${{ steps.app-token.outputs.token }}"
+    - name: Send failure notification
+      if: failure()
+      run: |
+          curl -H "Content-Type: application/json" -d '{
+          "type": "message",
+          "text": "<br> 🚨 GitHub Actions Workflow Failed! <br> Check the Workflow: ${{ github.workflow }} <br> <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>GitHub Actions Logs</a> <br>"
+          }' "https://prod-70.westus.logic.azure.com:443/workflows/f0883fc97dc1488aae03ea7750871c43/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nNHeajZMm0ljBig3uFUsXXssb-m3_u5rUpyv7cbnQJs"
+
+    
