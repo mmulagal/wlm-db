@@ -59,7 +59,7 @@ jobs:
           lifecycle-policy: /var/tmp/ecr-lifecycle-policy.json
 
     - name: Setup node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@5
       with:
           node-version: 24
     - run: npx prisma generate
