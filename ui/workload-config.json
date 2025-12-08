@@ -16,8 +16,8 @@
     "focus": [
         {
             "id": "database",
-            "suffixPlural": "critical event",
-            "suffixSingular": "critical events",
+            "suffixPlural": "critical events",
+            "suffixSingular": "critical event",
             "dataUrl": "/wlmdb/v1/focus-status",
             "primaryCtaTo": "/databases/dashboard",
             "primaryCtaBluexpTo": "/fsxdb/dashboard",
