@@ -1,0 +1,138 @@
+name: WLMDB DEMO & Deploy Staging
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - server/**
+  schedule:
+    - cron: '45 3 * * *' # Every Day at 04:05AM (Cron is UTC)
+  workflow_dispatch:
+env:
+  ACCOUNT_ID: 718273455463
+  REGION: us-east-1 
+  STANDBYREGION: us-west-2
+  MODE: demo 
+  SHORT_SHA: development-$(echo ${{ github.sha }} | cut -c1-7)  # Set the full commit SHA as an environment variable
+  IMAGE_NAME: wlmdb-simulator
+  GIT_HASH_SHORT: ${{ github.sha }} | cut -c1-7
+ 
+
+jobs:
+  build-and-push-region-1:
+    runs-on: wlmdb-runner
+    steps:
+    - name: Echo SHORT_SHA
+      run: echo ${{env.SHORT_SHA}}
+    - name: Echo GIT_HASH_SHORT
+      run: echo ${{env.GIT_HASH_SHORT}}      
+    - name: Generate GitHub App Token
+      id: generate-token
+      uses: tibdex/github-app-token@v2
+      with:
+        app_id: ${{ vars.APP_ID }}
+        private_key: ${{ secrets.GG_PEM }}
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+          fetch-depth: 0
+          ref: master
+          token: ${{ steps.generate-token.outputs.token }}
+    - name: substitute environment variable
+      run: |
+         sudo apt-get update
+         sudo apt-get install gettext-base
+         export MODE=${{env.MODE}}
+         envsubst "$(printf '${%s} ' $(env | cut -d'=' -f1))" < ecr-lifecycle-policy.json > out.txt && mv out.txt /var/tmp/ecr-lifecycle-policy.json
+      working-directory: ./Devops/Ecr-Lifecycle-Policy
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+          aws-access-key-id: ${{  secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+    - name: Create ECR repo if necessary
+      uses: int128/create-ecr-repository-action@v1
+      with:
+          repository: ${{env.IMAGE_NAME}}
+          lifecycle-policy: /var/tmp/ecr-lifecycle-policy.json
+
+    - name: Setup node
+      uses: actions/setup-node@v6
+      with:
+          node-version: 24
+    - run: npx prisma@6.17.0 generate
+      working-directory: ./server
+    - run: npm install
+      working-directory: ./server
+    - run: npm run build
+      working-directory: ./server
+
+    - name: Generate hash
+      id: gen-hash
+      run: echo "HASH=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+    - name: Generate tag
+      id: gen-tag
+      run: echo "TAG=${{env.MODE}}-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+    - uses: kciter/aws-ecr-action@v5
+      with:
+        path: ./server
+        dockerfile: ./server/Docker-simulator
+        access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        account_id: 718273455463
+        repo: ${{env.IMAGE_NAME}}
+        region: us-east-1  # Replace with your second region
+        tags: ${{ env.MODE }},${{ steps.gen-tag.outputs.TAG }}
+        image_scanning_configuration: true
+        extra_build_args: "--build-arg ARG_WLMDB_BUILD_GIT=${{steps.gen-hash.outputs.HASH}} --build-arg ARG_WLMDB_BUILD_MODE=${{env.MODE}}"
+        #create_repo: true
+        #set_repo_policy: true
+        #repo_policy_file: ../Ecr-Lifecycle-Policy/ecr-lifecycle-policy.json
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+          aws-access-key-id: ${{  secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+    - name: Create Standby ECR repo if necessary
+      uses: int128/create-ecr-repository-action@v1
+      with:
+          repository: ${{env.IMAGE_NAME}}
+          lifecycle-policy: /var/tmp/ecr-lifecycle-policy.json
+    - name: Log in to Amazon ECR
+      id: ecr-login
+      uses: aws-actions/amazon-ecr-login@v1
+    - name: Docker Tag new Region 
+      id: docker_tag
+      run: |
+          docker tag ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}} ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}}
+          docker tag ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ env.MODE }} ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ env.MODE }}
+          docker push ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ env.MODE }}
+          docker push ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}}
+
+    - uses: actions/create-github-app-token@v1
+      id: app-token
+      with:
+        app-id: ${{ vars.APP_ID }}
+        private-key: ${{ secrets.GG_PEM }}
+        owner: TLVDevOps
+
+    - name: Invoke workflow in another repo with inputs
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+          workflow: Upgrade_K8S_Service-Helm4.yml
+          repo: TLVDevOps/eks-cluster-automation
+          inputs: '{"service_name": "wlmdb", "name_space": "wlmdb-demo"}'
+    # Required when using the `repo` option. Either a PAT or a token generated from the GitHub app or CLI
+          token: "${{ steps.app-token.outputs.token }}"
+    - name: Send failure notification
+      if: failure()
+      run: |
+          curl -H "Content-Type: application/json" -d '{
+          "type": "message",
+          "text": "<br> 🚨 GitHub Actions Workflow Failed! <br> Check the Workflow: ${{ github.workflow }} <br> <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>GitHub Actions Logs</a> <br>"
+          }' "https://prod-70.westus.logic.azure.com:443/workflows/f0883fc97dc1488aae03ea7750871c43/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nNHeajZMm0ljBig3uFUsXXssb-m3_u5rUpyv7cbnQJs"
+
+    
