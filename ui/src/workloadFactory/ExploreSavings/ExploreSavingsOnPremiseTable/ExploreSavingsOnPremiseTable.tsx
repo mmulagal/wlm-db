@@ -278,7 +278,7 @@ const ExploreSavingsOnPremiseTable = () => {
                     onClick={() => {
                         onClickESHostOnPrem(dispatch, rowData, isWorkloadFactory);
                     }}
-                    id="explore-savings-table-button"
+                    id="wlm-db-onprem-explore-savings-table-button"
                 >
                     <Typography variant="Regular_14" className={styles.textStyle}>
                         {GENERAL.ES_SAVINGS}

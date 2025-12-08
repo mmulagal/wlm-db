@@ -167,7 +167,7 @@ const ExploreSavingsFsxTable = () => {
                         ? handleDialog(rowData)
                         : onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
                 }}
-                id="explore-savings-table-button"
+                id="wlm-db-fsxw-explore-savings-table-button"
             >
                 <Typography variant="Regular_14" className={styles.textStyle}>
                     {GENERAL.ES_SAVINGS}

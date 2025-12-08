@@ -158,6 +158,7 @@ const DatabaseListTable = () => {
                             variant="primary"
                             className="continue-button"
                             isThin
+                            data-testid="wlm-db-create-new-database-button"
                             isDisabled={resourceLoadingState}
                             onClick={() => {
                                 dispatch(addInitialDBCreateData(initialCreateNewUserState));

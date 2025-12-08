@@ -61,7 +61,13 @@ const AssessmentContainer = ({
                 </div>
             </div>
             <div className={styles.rightSide}>
-                <Button variant="secondary" isThin onClick={onClick} isLoading={isLoading}>
+                <Button
+                    variant="secondary"
+                    data-testid="wlm-db-analyze-now"
+                    isThin
+                    onClick={onClick}
+                    isLoading={isLoading}
+                >
                     {t('databases.general.assess-now')}
                 </Button>
             </div>

@@ -273,7 +273,7 @@ const ExploreSavingsTableV2 = () => {
                                   : onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
                           }
                 }
-                id="explore-savings-table-button"
+                id="wlm-db-ebs-explore-savings-table-button"
             >
                 <Typography variant="Regular_14" className={styles.textStyle}>
                     {GENERAL.ES_SAVINGS}

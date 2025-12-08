@@ -104,6 +104,7 @@ const OracleTabs = () => {
             >
                 <DsTypography
                     variant="Semibold_14"
+                    data-testid="wlm-db-oracle-well-architected-status-tab"
                     className={
                         selectedTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
                             ? `${styles.headerPart1} ${styles.activeText}`
