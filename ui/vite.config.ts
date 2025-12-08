@@ -34,8 +34,15 @@ export default defineConfig({
             ifShortSHA: true,
             ifLog: true,
             ifGlobal: true
-        })
+        }),
         // versionPlugin()
+
+        {
+            name: 'html-transform',
+            transformIndexHtml(html) {
+                return html.replace(/%VITE_APP_ENVIRONMENT%/g, process.env.VITE_APP_ENVIRONMENT || '');
+            }
+        }
     ],
     server: {
         open: true,
