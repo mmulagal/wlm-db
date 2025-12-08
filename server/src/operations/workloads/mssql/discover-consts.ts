@@ -329,6 +329,7 @@ const HOST_AND_SQL_INFO_PS1 = [
     $clusterDetailsResponse = @{}
 
     $clusterDetailsResponse['isClustered'] = $False
+    $clusterDetailsResponse['failureInfo'] = ''
 
     $clusterServiceStatus = (Get-Service -Name "ClusSvc" -ErrorAction SilentlyContinue).Status
     if ($clusterServiceStatus -eq "Running") {
@@ -346,8 +347,16 @@ const HOST_AND_SQL_INFO_PS1 = [
         $windowsClusterNodes = $clusterNodes | ConvertTo-Json -Depth 1
         $clusterDetailsResponse['windowsClusterNodes'] = $windowsClusterNodes
                    
-        If (Get-ClusterResource -ErrorAction SilentlyContinue | ? { $_.ResourceType -eq "SQL Server Availability Group" }) {
+        $aoagResources = Get-ClusterResource -ErrorAction SilentlyContinue | ? { $_.ResourceType -eq "SQL Server Availability Group" }
+        If ($aoagResources -and $aoagResources.Count -gt 0) {
           $clusterDetailsResponse['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
+          try {
+            $clusterDetailsResponse['aoagResourceNames'] = @($aoagResources | Select-Object -ExpandProperty Name)
+            $clusterDetailsResponse['aoagName'] = ($aoagResources | Select-Object -First 1 -ExpandProperty Name)
+          } catch {
+            Write-Information "AOAG resource minimal discovery error: $($_)"
+            $clusterDetailsResponse['${FAILURE_INFO}'] += "AOAG resource minimal discovery error: $($_)\`n"
+          }
         } else {
           $clusterDetailsResponse['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
         }
@@ -504,9 +513,10 @@ const HOST_AND_SQL_INFO_PS1 = [
           try { if ($aoagParsed.availabilityGroups -is [string]) { $aoagParsed.availabilityGroups = $aoagParsed.availabilityGroups | ConvertFrom-Json } } catch {}
           try { if ($aoagParsed.availabilityGroups) { foreach ($ag in $aoagParsed.availabilityGroups) { if ($ag.Replicas -is [string]) { $ag.Replicas = $ag.Replicas | ConvertFrom-Json } } } } catch {}
           $result['aoagDetails'] = $aoagParsed
-        } else { $result['aoagDetails'] = $aoagOut }
+        } else {
+          Write-Information "Failed to fetch AOAG details for instance '$instanceName'."
+        }
       } catch {
-        $result['aoagDetails'] = $aoagOut
         $result['aoagParseError'] = "$_"
       }
       try { $result['aoagOutLen'] = $aoagOut.Length } catch {}
@@ -622,6 +632,7 @@ const HOST_AND_SQL_INFO_PS1 = [
       if ($clusterDetails['isClustered']) {
         $responseObject['windowsClusterName'] = $clusterDetails['name']
         $responseObject['windowsClusterNodes'] = $clusterDetails['windowsClusterNodes']
+        if ($clusterDetails['aoagName']) { $responseObject['aoagNameFromCluster'] = $clusterDetails['aoagName'] }
         $sqlNodes = (Get-ClusterOwnerNode -ResourceType "SQL Server Availability Group" -ErrorAction SilentlyContinue).OwnerNodes.NodeName
       }
         
@@ -733,6 +744,28 @@ const HOST_AND_SQL_INFO_PS1 = [
               if ($aoagResult) {
                 foreach ($k in $aoagResult.Keys) {
                   $responseObject[$k] = $aoagResult[$k]
+                }
+                # Fallback synthesis when aoagDetails is missing due to permission/query issues
+                if (-not $responseObject.ContainsKey('aoagDetails') -or -not $responseObject['aoagDetails']) {
+                  $fallbackAgName = $null
+                  try { if ($clusterDetails['aoagName']) { $fallbackAgName = $clusterDetails['aoagName'] } } catch { Write-Information "Unable to read AOAG name from cluster details for '$instanceName'. Using fallback." }
+                  if (-not $fallbackAgName) { try { if ($responseObject['windowsClusterName']) { $fallbackAgName = $responseObject['windowsClusterName'] } } catch { Write-Information "Unable to read Windows cluster name for '$instanceName'. AOAG name may be empty." } }
+
+                  $replicaNames = @()
+                  try {
+                    if ($responseObject['sqlServerNodes']) {
+                      $replicaNames = $responseObject['sqlServerNodes']
+                      if ($replicaNames -isnot [System.Array]) { $replicaNames = @($replicaNames) }
+                    }
+                  } catch { Write-Information "Unable to read candidate AOAG replica nodes for '$instanceName'." }
+
+                  $serverInfo = @{ 'serverName' = $responseObject['sqlServerName']; 'isHadrEnabled' = 0 }
+                  try {
+                    $serverInfo['isHadrEnabled'] = if ($sqlServerInfoFromRegistry['hadrEnabled']) { 1 } else { 0 }
+                  } catch { Write-Information "Unable to read HADR registry flag for '$instanceName'. Defaulting to 0." }
+
+                  $availabilityGroup = @{ 'agName' = $fallbackAgName; 'replicas' = @($replicaNames | ForEach-Object { @{ 'replica' = $_ } }) }
+                  $responseObject['aoagDetails'] = @{ 'serverInfo' = $serverInfo; 'availabilityGroups' = @($availabilityGroup) }
                 }
               }
             }
