@@ -1,13 +1,13 @@
 name: BE Build & Deploy Staging
 
 on:
-#  push:
-#    branches:
-#      - master
-#    paths:
-#      - server/**
-#  schedule:
-#    - cron: '20 3 * * *' # Every Day at 04:05AM (Cron is UTC)
+  push:
+    branches:
+      - master
+    paths:
+      - server/**
+  schedule:
+    - cron: '20 3 * * *' # Every Day at 04:05AM (Cron is UTC)
   workflow_dispatch:
 env:
   ACCOUNT_ID: 718273455463
