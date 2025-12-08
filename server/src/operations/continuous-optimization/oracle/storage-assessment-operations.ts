@@ -733,13 +733,14 @@ function getNfsOSConfigDrift(
             case 'nfsv4-domain-name': {
                 const idmapdDomainConfig = os?.['idmapd-domain-config'];
                 const mountOptions = os?.['nfs-mount-options']?.['nfs-mount-options'] || [];
+                const domain = os?.['hostname-domain']?.domain || '';
 
                 // Check if NFSv4 mounts exist
                 const hasOntapNfsv4Mount = mountOptions.some(mount => {
                     const options = mount?.options || {};
                     const remotePath = mount?.['remote-path'] || '';
                     return (
-                        options.vers.includes('4') &&
+                        options.vers.startsWith('4') &&
                         volumes?.data?.some(
                             volume =>
                                 volume.name && remotePath && volume.name.includes(remotePath.split('/').pop() || '')
@@ -748,10 +749,11 @@ function getNfsOSConfigDrift(
                 });
 
                 if (
+                    !hasOntapNfsv4Mount ||
                     !nfsv4DomainData?.data ||
                     nfsv4DomainData.error ||
                     !idmapdDomainConfig?.['config-exists'] ||
-                    !hasOntapNfsv4Mount
+                    (idmapdDomainConfig?.error && !domain)
                 ) {
                     const message =
                         nfsv4DomainData?.error ||
@@ -761,7 +763,7 @@ function getNfsOSConfigDrift(
                 }
 
                 const domainName = nfsv4DomainData.data.v4IdDomain || '';
-                const configDomain = idmapdDomainConfig.domain || '';
+                const configDomain = idmapdDomainConfig.domain || domain;
 
                 if (domainName !== configDomain) {
                     violationDetails.push(

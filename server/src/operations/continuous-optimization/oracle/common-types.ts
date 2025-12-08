@@ -132,6 +132,10 @@ interface NFSOSAssessment {
         domain?: string | null;
         'config-exists'?: boolean;
     };
+    'hostname-domain'?: {
+        error?: string | null;
+        domain?: string | null;
+    };
 }
 
 interface StorageAssessment {

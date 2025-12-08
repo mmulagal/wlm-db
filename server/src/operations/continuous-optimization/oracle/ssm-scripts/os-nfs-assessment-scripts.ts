@@ -390,6 +390,48 @@ def get_idmapd_domain_config():
     return result
 `;
 
+const HOSTNAME_DOMAIN = `
+def get_hostname_domain():
+    """Get domain from hostname -d command"""
+    log('Getting domain from hostname -d command')
+    
+    result = {
+        "domain": None,
+        "error": None
+    }
+    
+    try:
+        hostname_result = subprocess.run(
+            ['hostname', '-d'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            timeout=5
+        )
+        
+        if hostname_result.returncode == 0:
+            hostname_domain = hostname_result.stdout.strip()
+            if hostname_domain:
+                result["domain"] = hostname_domain
+                log(f"Successfully retrieved hostname domain: {hostname_domain}")
+            else:
+                log("hostname -d returned empty string")
+        else:
+            error_msg = f"hostname -d command failed: {hostname_result.stderr.strip()}"
+            result["error"] = error_msg
+            log(error_msg)
+    except subprocess.TimeoutExpired:
+        error_msg = "hostname -d command timed out"
+        result["error"] = error_msg
+        log(error_msg)
+    except Exception as e:
+        error_msg = f"Exception while running hostname -d: {str(e)}"
+        result["error"] = error_msg
+        log(error_msg)
+    
+    return result
+`;
+
 const NFS_OS_ASSESSMENT = (ec2InstanceId: string, dbSid: string) => `
 
 ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
@@ -424,6 +466,8 @@ ${ADR_HOME}
 
 ${IDMAPD_DOMAIN_CONFIG}
 
+${HOSTNAME_DOMAIN}
+
 # Run all checks and compile results
 log('Starting comprehensive system assessment')
 
@@ -439,6 +483,9 @@ def run_all_checks():
 
     log('Running idmapd domain configuration checks')
     results["os"]["idmapd-domain-config"] = get_idmapd_domain_config()
+    
+    log('Running hostname domain checks')
+    results["os"]["hostname-domain"] = get_hostname_domain()
     
     # Oracle checks
     log('Running Oracle ADR checks')

@@ -421,7 +421,7 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.CRITICAL,
                 resourceType: 'EC2 Instance',
                 recommendation:
-                    'Workload Factory recommends ensuring that for NFSv4, the domain names in /etc/idmapd.conf on the host and NFS server (show -fields v4-id-domain in ONTAP) match.',
+                    'Workload Factory recommends matching NFSv4 domain names between the host (/etc/idmapd.conf or hostname -d) and NFS server (v4-id-domain in ONTAP).',
                 tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.SECURITY]
             },
             {
