@@ -620,8 +620,8 @@ const DEFAULT_MPIO_TIMEOUT = 60; // seconds
 const DEFAULT_FSX_MTU_VALUE = 9001;
 
 const MIN_OPTIMIZED_HEADROOM_PERCENTAGE = {
-    ORACLE: 90,
-    MSSQL: 90
+    ORACLE: 94,
+    MSSQL: 94
 };
 
 export {
