@@ -44,7 +44,11 @@ import {
     mockPGSqlStandaloneDeploymentStack,
     optimizeMpioSessionsJobData,
     optimizeStorageTierJobData,
-    enableMPIOJobData
+    enableMPIOJobData,
+    createAssessmentData,
+    ORACLE_STORAGE_ASSESSMENT_DATA,
+    ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
+    createAssessmentDataWithRetry
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP, summarizeFirstLevel } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -52,26 +56,6 @@ import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
 import { describeFSxVolumes } from '../lib/aws/fsx';
 import { AssessmentCategories, AssessmentStatus } from '../utils/continous-optimization-consts';
-import {
-    ASSESMENT_CONFIG_DATA,
-    ASSESSMENT_AWS_BACKUP_DATA,
-    ASSESSMENT_CLONE_CONFIG_DATA,
-    ASSESSMENT_CRR_CONFIG_DATA,
-    ASSESSMENT_MAXDOP_CONFIG_DATA,
-    MSSQL_ASSESMENT_CONFIG_DATA,
-    MSSQL_ASSESSMENT_CLONE_CONFIG_DATA,
-    MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA,
-    MAPPED_ONTAP_VOLUMES_DATA,
-    ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
-    MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
-    ORACLE_STORAGE_ASSESSMENT_DATA,
-    ORACLE_MAPPED_ONTAP_VOLUMES_DATA
-} from '../utils/demo-utils/demoInventoryData';
-import {
-    createDatabaseInstanceConfigData,
-    listDatabaseInstanceConfigData
-} from '../lib/database/database-instance-config';
-import { DatabaseInstanceConfigData } from '../lib/database/db-types';
 import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
 import {
     mockResourceAssessmentData,
@@ -94,101 +78,6 @@ import { OracleDriftAssessmentResponseType } from '../routes/types/oracle-contin
 const logger = getLogger();
 const DemoDefaultDatabaseNames = ['RetailBanking', 'MFGSales'];
 const generateRandomEc2InstanceId = () => `i-${randomize('?0', 17, { chars: 'abcdef' })}`;
-
-async function createAssessmentDataWithRetry(
-    configDataRecords: DatabaseInstanceConfigData[],
-    verificationParams: {
-        accountId: string;
-        region: string;
-        credentialsId: string;
-        resourceId: string;
-        databaseInstanceId: string;
-    },
-    databaseType: DatabaseTypes = DatabaseTypes.MS_SQL_SERVER
-) {
-    await createDatabaseInstanceConfigData(configDataRecords);
-
-    logger.info(`Creating demo assessment data for ${databaseType} in ${verificationParams.region}`);
-
-    let retryCount = 0;
-    const maxRetries = 2;
-    let verificationSuccessful = false;
-
-    while (retryCount <= maxRetries && !verificationSuccessful) {
-        try {
-            await new Promise(resolve => {
-                setTimeout(resolve, 500);
-            });
-
-            const verificationResult = await listDatabaseInstanceConfigData({
-                accountId: verificationParams.accountId,
-                region: verificationParams.region,
-                credentialsId: verificationParams.credentialsId,
-                resourceId: verificationParams.resourceId,
-                databaseInstanceIds: [verificationParams.databaseInstanceId]
-            });
-
-            const expectedRecordCount = configDataRecords.length;
-            const actualRecordCount = verificationResult?.length || 0;
-
-            if (actualRecordCount >= expectedRecordCount) {
-                logger.info(`${databaseType} assessment data verification successful`, {
-                    accountId: verificationParams.accountId,
-                    databaseInstanceId: verificationParams.databaseInstanceId,
-                    expectedRecords: expectedRecordCount,
-                    actualRecords: actualRecordCount
-                });
-                verificationSuccessful = true;
-            } else if (retryCount < maxRetries) {
-                logger.info(`${databaseType} assessment data verification failed, retrying...`, {
-                    accountId: verificationParams.accountId,
-                    databaseInstanceId: verificationParams.databaseInstanceId,
-                    expectedRecords: expectedRecordCount,
-                    actualRecords: actualRecordCount,
-                    retryCount: retryCount + 1
-                });
-
-                // Retry creating the data
-                await createDatabaseInstanceConfigData(configDataRecords);
-                retryCount += 1;
-            } else {
-                logger.error(`${databaseType} assessment data verification failed after all retries`, {
-                    accountId: verificationParams.accountId,
-                    databaseInstanceId: verificationParams.databaseInstanceId,
-                    expectedRecords: expectedRecordCount,
-                    actualRecords: actualRecordCount
-                });
-                throw new Error(`Failed to create ${databaseType} assessment data after ${maxRetries + 1} attempts`);
-            }
-        } catch (error) {
-            if (retryCount < maxRetries) {
-                logger.error(`Error during ${databaseType} assessment data verification, retrying...`, {
-                    accountId: verificationParams.accountId,
-                    databaseInstanceId: verificationParams.databaseInstanceId,
-                    error: error instanceof Error ? error.message : error,
-                    retryCount: retryCount + 1
-                });
-                try {
-                    await createDatabaseInstanceConfigData(configDataRecords);
-                } catch (retryError) {
-                    logger.error(`Error during ${databaseType} retry attempt`, {
-                        accountId: verificationParams.accountId,
-                        databaseInstanceId: verificationParams.databaseInstanceId,
-                        retryError: retryError instanceof Error ? retryError.message : retryError
-                    });
-                }
-                retryCount += 1;
-            } else {
-                logger.error(`${databaseType} assessment data creation and verification failed`, {
-                    accountId: verificationParams.accountId,
-                    databaseInstanceId: verificationParams.databaseInstanceId,
-                    error: error instanceof Error ? error.message : error
-                });
-                throw error;
-            }
-        }
-    }
-}
 
 function createJobMockData(
     accountId: string,
@@ -925,14 +814,14 @@ async function createDeploymentMockDataInDBForOracle(
         sqlDeploymentMode = 'ha';
     }
 
-    const instanceId = randomize('0', 10);
+    const instanceId = 'i-5520fe41798c75632';
 
     resourceId = resourceId || randomUUID();
     const fsxId = `fs-${randomize('0', 8)}`;
 
     const metadata = {
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
-        node1InstanceId: generateRandomEc2InstanceId(),
+        node1InstanceId: instanceId,
         creationDate: new Date().getTime().toString(),
         fsxSvmId: 'svm-0491dd89a76b7ca3d',
         storageProtocol: STORAGE_PROTOCOLS.NFS,
@@ -956,7 +845,7 @@ async function createDeploymentMockDataInDBForOracle(
         resourceId,
         credentialsId,
         region,
-        databaseInstanceId: instanceId,
+        databaseInstanceId: 'oracle-dev',
         databaseInstanceName: 'oracle-dev',
         fsxnIds: fsxId,
         isDefault: true,
@@ -1088,97 +977,6 @@ function createEnableMpioJobMockData(
         parentJobId,
         instanceId,
         resourceId
-    );
-}
-
-async function createAssessmentData(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    resourceId: string,
-    databaseInstanceId: string,
-    databaseInstanceName: string = DEFAULT_INSTANCE_NAME,
-    sqlDeploymentType: string = SqlServerDeploymentModel.SQL_STANDALONE_SHORT
-) {
-    accountId = checkAccount(accountId);
-    const baseConfig = {
-        account_id: accountId,
-        credentials_id: credentialsId,
-        region,
-        resource_id: resourceId,
-        database_instance_id: databaseInstanceId,
-        creation_time: new Date(Date.now())
-    };
-    const instanceConfigDataRecord = {
-        ...baseConfig,
-        config_data_type: AssessmentCategories.STORAGE,
-        config_data:
-            databaseInstanceName === DEFAULT_INSTANCE_NAME ? MSSQL_ASSESMENT_CONFIG_DATA : ASSESMENT_CONFIG_DATA
-    };
-    const instanceConfigMappedOntapDataRecord = {
-        ...baseConfig,
-        config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
-        config_data: MAPPED_ONTAP_VOLUMES_DATA
-    };
-
-    const instanceCRRConfigDataRecord = {
-        ...baseConfig,
-        config_data_type: AssessmentCategories.CRR,
-        config_data: ASSESSMENT_CRR_CONFIG_DATA
-    };
-    const instanceAWSBackupConfigDataRecord = {
-        ...baseConfig,
-        config_data_type: AssessmentCategories.AWS_BACKUP,
-        config_data: ASSESSMENT_AWS_BACKUP_DATA
-    };
-    const instanceMaxdopConfigDataRecord = {
-        ...baseConfig,
-        config_data_type: AssessmentCategories.MAXDOP,
-        config_data:
-            databaseInstanceName === DEFAULT_INSTANCE_NAME
-                ? MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA
-                : ASSESSMENT_MAXDOP_CONFIG_DATA
-    };
-    const instanceCloneConfigDataRecord = {
-        ...baseConfig,
-        config_data_type: AssessmentCategories.CLONE,
-        config_data:
-            databaseInstanceName === DEFAULT_INSTANCE_NAME
-                ? MSSQL_ASSESSMENT_CLONE_CONFIG_DATA
-                : ASSESSMENT_CLONE_CONFIG_DATA
-    };
-    const instanceHighAvailabilityDataRecord = {
-        ...baseConfig,
-        config_data_type: AssessmentCategories.HIGH_AVAILABILITY,
-        config_data:
-            databaseInstanceName === DEFAULT_INSTANCE_NAME
-                ? MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
-                : ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
-    };
-    const configDataRecords = [
-        instanceConfigDataRecord,
-        instanceCRRConfigDataRecord,
-        instanceAWSBackupConfigDataRecord,
-        instanceMaxdopConfigDataRecord,
-        instanceCloneConfigDataRecord,
-        instanceConfigMappedOntapDataRecord
-    ];
-
-    const newConfigDataRecords =
-        sqlDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT
-            ? configDataRecords
-            : [...configDataRecords, instanceHighAvailabilityDataRecord];
-
-    await createAssessmentDataWithRetry(
-        newConfigDataRecords,
-        {
-            accountId,
-            region,
-            credentialsId,
-            resourceId,
-            databaseInstanceId
-        },
-        DatabaseTypes.MS_SQL_SERVER
     );
 }
 
@@ -1545,7 +1343,6 @@ export {
     createOperatingSystemMpioSessionsOptimizeJobMockData,
     createStorageTierJobMockData,
     createEnableMpioJobMockData,
-    createAssessmentData,
     prepareDemoSandboxMetadata,
     updateOptimizedConfigMetaData,
     handleGetMssqlAssessmentForDemo,

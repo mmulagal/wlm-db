@@ -66,7 +66,7 @@ import { AssessmentCategories } from '../../../utils/continous-optimization-cons
 import { MountPointDetails, OracleInstanceMountpointResponse } from './common-types';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { getNodeTopology, getStorageData } from '../../database-hosts-util';
-import { PDB_DETAILS } from '../../../utils/demo-utils/demoInventoryData';
+import { PDB_DETAILS } from '../../../utils/demo-utils/demoMockdata';
 
 const YES = 'YES';
 const NO = 'NO';

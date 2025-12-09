@@ -14,7 +14,7 @@ import {
     MSSQL_ASSESSMENT_CLONE_CONFIG_DATA,
     MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
     MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA
-} from '../../../src/utils/demo-utils/demoInventoryData';
+} from '../../../src/utils/demo-utils/demoMockdata';
 
 describe('Assessment Utils', () => {
     it('Should return matching assessment status', async () => {

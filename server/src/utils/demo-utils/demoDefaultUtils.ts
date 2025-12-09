@@ -11,6 +11,7 @@ import {
 } from '../consts';
 import getLogger from '../logger';
 import {
+    createAssessmentData,
     saveFciConfigurationData,
     savePGSQLConfigurationData,
     savePGSQLHaConfigurationData,
@@ -26,7 +27,6 @@ import {
     createStorageTierJobMockData,
     createEnableMpioJobMockData,
     createDeploymentMockDataInDBForPgSql,
-    createAssessmentData,
     prepareDemoSandboxMetadata,
     createDeploymentMockDataInDBForOracle
 } from '../../operations/demo-operations';
@@ -40,6 +40,7 @@ import { getFSXFileSystemListForDemo } from '../../operations/aws/fsx-operations
 import { instanceDemoData, oracleInstanceDemoData } from './instancesResponse';
 import { Metadata } from '../common-types';
 import { triggerLogsAnalysis } from '../../operations/logs-analyzer/logs-analyzer-operations';
+import { DiscoverOracleResponseBodyType } from '../../routes/types/discover.types';
 
 const logger = getLogger();
 
@@ -454,14 +455,26 @@ async function creadteDemoDBData(accountId: string, credentialsList: any) {
     }
 }
 
-async function returnInventorydata(databaseType: DatabaseTypes, instances?: string[]) {
+async function returnInventorydata(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseType: DatabaseTypes,
+    instances?: string[]
+) {
     logger.info('Generate and return inventory data for demo', instances);
     const fsxId = `fs-${randomize('0', 8)}`;
     const ebsVolId = `vol-${randomize('a0', 17)}`;
     const inventoryData =
         databaseType === DatabaseTypes.MS_SQL_SERVER
-            ? inventoryDemoData(fsxId, ebsVolId)
-            : discoverDemoDataOracle(fsxId, ebsVolId);
+            ? await inventoryDemoData(fsxId, ebsVolId)
+            : ((await discoverDemoDataOracle(
+                  accountId,
+                  credentialsId,
+                  region,
+                  fsxId,
+                  ebsVolId
+              )) as unknown as DiscoverOracleResponseBodyType);
 
     if (instances !== undefined && instances.length > 0) {
         const { items: inventoryItems } = inventoryData;

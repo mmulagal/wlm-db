@@ -41,7 +41,7 @@ import {
     OracleDriftAssessmentResponseType,
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
-import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoInventoryData';
+import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoMockdata';
 import { getLatestInstanceAssessmentTime, validateAssessment } from '../assessment-utils';
 import {
     updateFieldsBasedOnDismissedConfigurations,

@@ -59,7 +59,7 @@ import { REQUIRED_PS_MODULES_FOR_MANAGEMENT } from './workloads/mssql/const';
 import { getPaginatedDatabaseInstances, getResources } from './database/database-operations';
 import { createResource, deleteDatabaseInstance, deleteResource, upsertDatabaseInstance } from '../lib/database/db';
 import { tagResources } from './aws/sqs-operations';
-import { createAssessmentData, createAssessmentDataForOracle } from './demo-operations';
+import { createAssessmentDataForOracle } from './demo-operations';
 import { preSignedUrl } from '../lib/aws/s3';
 import {
     DatabaseInstance,
@@ -82,7 +82,7 @@ import {
     SingleRegisterCredentialsResponseType
 } from '../routes/types/register.types';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
-import { DEMO_REGISTER_RESPONSE } from '../utils/demo-utils/demoMockdata';
+import { createAssessmentData, DEMO_REGISTER_RESPONSE } from '../utils/demo-utils/demoMockdata';
 import {
     copyPowerShellModule,
     validateOntapConnectivity,
@@ -3081,7 +3081,7 @@ async function unmanageDatabaseInstance(
         // When all database instances are removed, the EC2 ceases to be a
         // managed resource, since  we aren't managing any SQL Server instance.
         // So we need to remove the EC2 resource from wlmdb.resource table.
-        if (postDeleteDatabaseInstances.length <= 0 && !IS_DEMO_FLOW) {
+        if (postDeleteDatabaseInstances.length <= 0) {
             deleteResource(accountId, resourceId, credentialsId);
         }
     }

@@ -161,7 +161,13 @@ async function getHostAndSqlServerInfo(
 ): Promise<DiscoverMsSqlResponseBodyType> {
     logger.info('Get host and SQL Server info:', { accountId, credentialsId, region, nextToken, instances });
     if (IS_DEMO_FLOW) {
-        return returnInventorydata(DatabaseTypes.MS_SQL_SERVER, instances) as unknown as DiscoverMsSqlResponseBodyType;
+        return (await returnInventorydata(
+            accountId,
+            region,
+            credentialsId,
+            DatabaseTypes.MS_SQL_SERVER,
+            instances
+        )) as unknown as DiscoverMsSqlResponseBodyType;
     }
     const filters: Filter[] = [{ Name: 'platform', Values: ['windows'] }];
     const { ec2Instances: ssmTargets, NextToken } = await discoverEc2Instances(
@@ -1742,7 +1748,13 @@ async function discoverOracleResources(
     });
 
     if (IS_DEMO_FLOW) {
-        return returnInventorydata(DatabaseTypes.ORACLE, ec2InstanceIds) as unknown as DiscoverOracleResponseBodyType;
+        return (await returnInventorydata(
+            accountId,
+            region,
+            credentialsId,
+            DatabaseTypes.ORACLE,
+            ec2InstanceIds
+        )) as unknown as DiscoverOracleResponseBodyType;
     }
 
     const filters = [

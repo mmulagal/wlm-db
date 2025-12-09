@@ -12,8 +12,11 @@ const status = 'CREATE_IN_PROGRESS';
 vi.mock('../../src/lib/database/db.ts', () => ({
     deploymentJobsCount() {
         return DEPLOYMENT_JOBS_COUNT_RESPONSE;
-    },
-    listDeployments() {
+    }
+}));
+
+vi.mock('../../src/operations/database/database-operations.ts', () => ({
+    getDeployments() {
         return jobsSummaryDbResponse;
     }
 }));

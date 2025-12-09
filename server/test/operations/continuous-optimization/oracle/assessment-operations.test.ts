@@ -11,7 +11,7 @@ import { oracleAssessmentMetadata, oracleInstanceMappedVolMetadata } from './ora
 import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
 import { StorageParameterDriftResponseType } from '../../../../src/routes/types/mssql-continuous-optimisation.types';
 import { OracleGenericParameterDriftResponseType } from '../../../../src/routes/types/oracle-continuous-optimization.types';
-import { ORACLE_STORAGE_ASSESSMENT_DATA } from '../../../../src/utils/demo-utils/demoInventoryData';
+import { ORACLE_STORAGE_ASSESSMENT_DATA } from '../../../../src/utils/demo-utils/demoMockdata';
 
 const credentialsId = DEFAULT_AWS_CREDENTIALS_ID;
 const region = DEFAULT_AWS_REGION;
