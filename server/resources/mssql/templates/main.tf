@@ -28,6 +28,8 @@ locals {
   # Terraform does not support doing validation of an variable based on another variable. So we have to do it like this.
   fsx_file_system_name_required     = (local.new_ontap_fsx && var.fsx_file_system_name == "") ? tobool("Validation Error: The fsx_file_system_name variable must be set when new fsx is deployed.") : true
   s3_endpoint_route_tables_required = (!var.s3_endpoint_exists && var.s3_endpoint_route_tables == "") ? tobool("Validation Error: The s3_endpoint_route_tables variable must be set when s3_endpoint_exists is false.") : true
+  # validation for sql_service_account_password
+  sql_service_account_password_required = (!var.is_managed_service_account && var.sql_service_account_password == "") ? tobool("Validation Error: The sql_service_account_password variable must be set when is_managed_service_account is false.") : true
   # validations for the fci deployment
   subnet2_cidrblock_required      = (!local.is_standalone && var.private_subnet2_cidrblock == "") ? tobool("Validation Error: The private_subnet2_cidrblock variable must be set for fci deployment.") : true
   subnet2_id_required             = (!local.is_standalone && var.private_subnet2_id == "") ? tobool("Validation Error: The private_subnet2_id variable must be set for fci deployment.") : true
@@ -210,6 +212,24 @@ variable "domain_member_sg_id" {
     condition     = length(var.domain_member_sg_id) > 0
     error_message = "The domain_member_sg_id value must not be empty."
   }
+}
+
+variable "preferred_domain_controller" {
+  description = "The preferred domain controller"
+  type        = string
+  default     = "{{preferred_domain_controller}}"
+}
+
+variable "ou_path" {
+  description = "The organizational unit path for domain join"
+  type        = string
+  default     = "{{ou_path}}"
+}
+
+variable "ad_group" {
+  description = "The Active Directory group"
+  type        = string
+  default     = "{{ad_group}}"
 }
 
 variable "tf_deploy_role_name" {
@@ -671,14 +691,15 @@ variable "sql_deployment_mode" {
 }
 
 variable "sql_service_account_password" {
-  description = "The password of the SQL service account"
+  description = "The password of the SQL service account. Can be empty when is_managed_service_account is true."
   type        = string
   default     = "{{sql_service_account_password}}"
+}
 
-  validation {
-    condition     = length(var.sql_service_account_password) > 0
-    error_message = "The sql_service_account_password value must not be empty."
-  }
+variable "is_managed_service_account" {
+  description = "Is the SQL service account a managed service account?"
+  type        = bool
+  default     = "{{is_managed_service_account}}"
 }
 
 variable "enable_cloud_watch_log_feature" {

@@ -133,6 +133,24 @@ variable "domain_member_sg_id" {
   default     = ""
 }
 
+variable "preferred_domain_controller" {
+  description = "The preferred domain controller"
+  type        = string
+  default     = ""
+}
+
+variable "ou_path" {
+  description = "The organizational unit path for domain join"
+  type        = string
+  default     = ""
+}
+
+variable "ad_group" {
+  description = "The Active Directory group"
+  type        = string
+  default     = ""
+}
+
 variable "tf_deploy_role_name" {
   description = "The name of the terraform deployment role"
   type        = string
@@ -523,13 +541,15 @@ variable "sql_deployment_mode" {
 }
 
 variable "sql_service_account_password" {
-  description = "The password of the SQL service account"
+  description = "The password of the SQL service account. Can be empty when is_managed_service_account is true."
   type        = string
+  default     = ""
+}
 
-  validation {
-    condition     = length(var.sql_service_account_password) > 0
-    error_message = "The sql_service_account_password value must not be empty."
-  }
+variable "is_managed_service_account" {
+  description = "Is the SQL service account a managed service account?"
+  type        = bool
+  default     = false
 }
 
 variable "enable_cloud_watch_log_feature" {
