@@ -22,10 +22,11 @@ interface ViewAndFixButtonProps {
         };
     };
     loading?: boolean;
+    callOptimizeApi?: (type: string) => void;
 }
 
 // For oracle assessment and optimization
-const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
+const ViewAndFixButton = ({ cardData, loading, callOptimizeApi }: ViewAndFixButtonProps) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { setDialog, closeDialog } = useDialog();
@@ -50,7 +51,16 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
             dispatch(setSelectedOptimizeConfig({ type, data: cardData, engineType: DBType.ORACLE }));
         } else {
-            handleDialog(setDialog, cardData?.block_one?.value, () => {}, closeDialog, cardData, '', {}, DBType.ORACLE);
+            handleDialog(
+                setDialog,
+                cardData?.block_one?.value,
+                callOptimizeApi,
+                closeDialog,
+                cardData,
+                '',
+                {},
+                DBType.ORACLE
+            );
         }
     };
 
@@ -74,7 +84,8 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
             type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
-            type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
+            type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
         ) {
             return t('databases.oracle-inner-page.view-and-fix');
         }
@@ -91,10 +102,17 @@ const ViewAndFixButton = ({ cardData, loading }: ViewAndFixButtonProps) => {
         }
 
         if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
-            // Enable for File system headroom when status is under-provisioned or over-provisioned
-            const enabledStatuses = [GETWELL_STATUS.UNDER_PROVISIONED, GETWELL_STATUS.OVER_PROVISIONED];
+            if (status === GETWELL_STATUS.OVER_PROVISIONED) {
+                return {
+                    isDisable: true,
+                    reason: t('databases.well-architect.file-system-headroom-over-provisioned-error')
+                };
+            }
+            // Enable only for under-provisioned status
+            const enabledStatuses = [GETWELL_STATUS.UNDER_PROVISIONED];
             return { isDisable: loading || !status || !enabledStatuses.includes(status), reason: '' };
         }
+
         return { isDisable: loading || cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED, reason: '' };
     };
 

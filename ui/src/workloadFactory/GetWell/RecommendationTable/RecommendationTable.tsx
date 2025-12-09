@@ -538,8 +538,7 @@ const RecommendationTable = ({
             rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM;
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE;
         if (isCloseButton) {
             setDialog(
                 <DialogComponent

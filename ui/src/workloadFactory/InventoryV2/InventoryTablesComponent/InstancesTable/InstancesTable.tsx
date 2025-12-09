@@ -65,7 +65,11 @@ import {
     setSelectedHostname,
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
-import { setGwPageLoadInstanceData, setLandingFrom } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setGwPageLoadInstanceData,
+    setLandingFrom,
+    setOptimizingData
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import styles from '../InventoryTable.module.scss';
@@ -468,6 +472,8 @@ const InstancesTable = () => {
         } else {
             resourceId = targettedHost?.resourceId;
         }
+
+        dispatch(setOptimizingData({}));
 
         dispatch(
             setGwPageLoadInstanceData({

@@ -660,6 +660,7 @@
             "days-left": " days left",
             "fixing-process-initiated-for": "Fixing process initiated for",
             "process-can-take-min": "This process can take upto 2 minutes. Track progress in ",
+            "failed-to-optimize": "failed to optimize.",
             "register-instance-fixing": "Register instance fixing",
             "register-database-fixing": "Register database fixing",
             "fix-configuration": "Fix configuration",

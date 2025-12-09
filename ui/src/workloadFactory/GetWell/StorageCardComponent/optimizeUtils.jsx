@@ -1,6 +1,6 @@
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
-import { ASSESSMENT_CONFIG_NAMES, DBType, FROM_DIALOG } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, DBType, FROM_DIALOG, GETWELL_STATUS } from '../../../utils/consts';
 import DialogContent from './DialogContent/DialogContent';
 
 const primaryButtonDisable = (engineType, type) => {
@@ -30,11 +30,12 @@ export const handleDialog = (
     singleRowData,
     engineType = DBType.MSSQL
 ) => {
-    // Oracle FILE_SYSTEM_HEADROOM with permissions - show disabled Continue button
+    // Oracle FILE_SYSTEM_HEADROOM with permissions and under provisioned status - show enabled Continue button
     if (
         engineType === DBType.ORACLE &&
         type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
-        (!cardData?.missingPermissions || cardData?.missingPermissions.length === 0)
+        (!cardData?.missingPermissions || cardData?.missingPermissions.length === 0) &&
+        cardData?.block_two?.value === GETWELL_STATUS.UNDER_PROVISIONED
     ) {
         setDialog(
             <DialogComponent
@@ -58,15 +59,12 @@ export const handleDialog = (
                     closeDialog();
                 }}
                 customClass="innerPage"
-                primaryButtonDisabled
-                primaryButtonTooltip={GENERAL.COMING_SOON}
             />
         );
     } else if (
         type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
         type === ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH ||
         type === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
-        (engineType === DBType.ORACLE && type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) ||
         (engineType === DBType.ORACLE && type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE)
     ) {
         setDialog(

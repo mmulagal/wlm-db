@@ -1,15 +1,30 @@
-import { DsTypography, DsButton, useDialog } from '@netapp/design-system';
+import React, { useEffect, useState } from 'react';
+import { DsTypography, DsButton, useDialog, Button } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
+import {
+    useDismissOracleAssessmentMutation,
+    useOptimizeOracleOperatingSystemMutation,
+    useLazyGetSubTaskListQuery
+} from '../../../../../utils/apiService';
 import styles from './OracleCardComponent.module.scss';
 import { useAppSelector, useAppDispatch } from '../../../../../store/storeHooks';
 import StatusSection from './StatusSection';
 import SectionSix from './SectionSix';
 import SectionFive from './SectionFive';
 import ViewAndFixButton from './ViewAndFixButton';
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, DBType } from '../../../../../utils/consts';
-import { useDismissOracleAssessmentMutation } from '../../../../../utils/apiService';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
+    DBType,
+    WLF_TABS,
+    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM
+} from '../../../../../utils/consts';
+import { formatOracleWellArchitectedData, callOptimizeOracleApi } from '../OracleWellArchitectedUtils';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../../store/notificationSlice';
+import { setSelectedHeaderTab } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { DismissDialog } from '../../../../GetWell/StorageCardComponent/DismissDialog/DismissDialog';
 import {
     getSubConfigurationData,
@@ -20,7 +35,61 @@ import {
     areSubConfigurationsNotActive,
     areAllSubConfigurationsActivating as areAllSubConfigurationsActivatingHelper
 } from '../../../../GetWell/StorageCardComponent/StorageCardComponentHelper';
-import { formatOracleWellArchitectedData } from '../OracleWellArchitectedUtils';
+
+export const fixingProcessNotification = (type: string, dispatch: any, isWorkloadFactory: boolean, t: any) => {
+    dispatch(
+        addNotification({
+            notificationType: NOTIFICATION_TYPES.INFO,
+            message: (
+                <div>
+                    {`${t('databases.well-architect.fixing-process-initiated-for')} ${type}. ${t(
+                        'databases.well-architect.process-can-take-min'
+                    )}`}
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => {
+                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                            const path = isWorkloadFactory
+                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                            postBlueXPMessage({
+                                type: BlueXPListeners.navigate,
+                                payload: { pathname: path, replace: true }
+                            });
+                            dispatch(clearNotifications());
+                        }}
+                    >
+                        {t('databases.general.job-monitoring')}.
+                    </Button>
+                </div>
+            )
+        })
+    );
+};
+
+export const createFailedOptimizationMessage = (type: string, dispatch: any, isWorkloadFactory: boolean, t: any) => (
+    <div className={styles.notification}>
+        {type} {t('databases.well-architect.failed-to-optimize')}
+        <Button
+            Component="button"
+            variant="text"
+            onClick={() => {
+                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                const path = isWorkloadFactory ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: path, replace: true }
+                });
+                dispatch(clearNotifications());
+            }}
+        >
+            {t('databases.general.view-job-monitoring')}.
+        </Button>
+    </div>
+);
 
 const OracleCardComponent = ({
     cardData,
@@ -33,6 +102,7 @@ const OracleCardComponent = ({
     const [dismissAction, setDismissAction] = useState(false);
     const [showDismissButton, setShowDismissButton] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const {
         isAssessmentAvailable,
@@ -46,6 +116,9 @@ const OracleCardComponent = ({
     } = useAppSelector(state => state.getWellOptimize);
 
     const [dismissOracleAssessment] = useDismissOracleAssessmentMutation();
+    const [optimizeOracleOs] = useOptimizeOracleOperatingSystemMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+
     const { setDialog, closeDialog } = useDialog();
 
     const [disableText, setDisableText] = useState(false);
@@ -151,6 +224,18 @@ const OracleCardComponent = ({
         // Normal case - show SectionFive
         return <SectionFive cardData={cardData} loading={loading} disableText={disableText} />;
     };
+
+    // This is the function that will be called when the optimize button is clicked from oracle cards
+    const callOracleOptimizeApi = (type: any) =>
+        callOptimizeOracleApi({
+            type,
+            cardData,
+            optimizeOracleOs,
+            getJobDetailApi,
+            dispatch,
+            isWorkloadFactory,
+            t
+        });
 
     // Function For Dismiss
     const handleSingleAction = (action: string) => {
@@ -357,7 +442,11 @@ const OracleCardComponent = ({
                             {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
                             {loading || dismissDisableButton() ? '' : renderDismissButton()}
                             {/* View and Fix Action Button */}
-                            <ViewAndFixButton cardData={cardData} loading={loading ?? undefined} />
+                            <ViewAndFixButton
+                                cardData={cardData}
+                                loading={loading ?? undefined}
+                                callOptimizeApi={callOracleOptimizeApi}
+                            />
                         </div>
                     )}
                 {/* Reactivate button for dismissed configurations */}

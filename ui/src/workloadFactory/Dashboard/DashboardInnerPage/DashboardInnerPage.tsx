@@ -51,7 +51,8 @@ import {
     useOptimizeAwsBackupMutation,
     useDismissMssqlAssessmentMutation,
     useDismissOracleAssessmentMutation,
-    useOptimizeOracleStorageLayoutAsmMutation
+    useOptimizeOracleStorageLayoutAsmMutation,
+    useOptimizeOracleOperatingSystemMutation
 } from '../../../utils/apiService';
 import {
     setCloneDashboardData,
@@ -176,6 +177,7 @@ const DashboardInnerPage = () => {
     const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
     const [dismissOracleAssessment] = useDismissOracleAssessmentMutation();
     const [optimizeOracleStorageLayoutAsm] = useOptimizeOracleStorageLayoutAsmMutation();
+    const [optimizeOracleOs] = useOptimizeOracleOperatingSystemMutation();
 
     const storageLayoutAsmPayload = (configName: string, rowData: any) => ({
         assessments: [
@@ -214,6 +216,74 @@ const DashboardInnerPage = () => {
             } else if (type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT) {
                 apiCall = optimizeOracleStorageLayoutAsm;
                 payload = storageLayoutAsmPayload('archivelog-dg-lun-layout', rowData);
+            } else if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
+                apiCall = optimizeOracleOs;
+                if (operation === ACTION_TYPE.BULK) {
+                    payload = {
+                        type: 'storage-sizing',
+                        hostsToOptimize: [
+                            {
+                                configurationName: 'headroom',
+                                databaseHosts: Object.values(
+                                    rowData.reduce(
+                                        (
+                                            acc: Record<
+                                                string,
+                                                {
+                                                    id: string;
+                                                    credentialsId: string;
+                                                    region: string;
+                                                    databases: string[];
+                                                }
+                                            >,
+                                            {
+                                                databaseHostId,
+                                                instanceId,
+                                                credentialId,
+                                                regionId
+                                            }: {
+                                                databaseHostId: string;
+                                                instanceId: string;
+                                                credentialId: string;
+                                                regionId: string;
+                                            }
+                                        ) => {
+                                            const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
+                                            if (!acc[uniqueRow]) {
+                                                acc[uniqueRow] = {
+                                                    id: databaseHostId,
+                                                    credentialsId: credentialId,
+                                                    region: regionId,
+                                                    databases: []
+                                                };
+                                            }
+                                            acc[uniqueRow].databases.push(instanceId);
+                                            return acc;
+                                        },
+                                        {}
+                                    )
+                                )
+                            }
+                        ]
+                    };
+                } else {
+                    payload = {
+                        type: 'storage-sizing',
+                        hostsToOptimize: [
+                            {
+                                configurationName: 'headroom',
+                                databaseHosts: [
+                                    {
+                                        id: rowData?.databaseHostId,
+                                        credentialsId: rowData?.credentialId,
+                                        region: rowData?.regionId,
+                                        databases: [rowData?.instanceId]
+                                    }
+                                ]
+                            }
+                        ]
+                    };
+                }
             } else {
                 // ToDo - More type will come like optimize for sizing and layout here
                 apiCall = optimizeStorageConfig;
@@ -708,9 +778,10 @@ const DashboardInnerPage = () => {
                 })
             );
             const hostinstances = payload.hostsToOptimize.flatMap((host: any) =>
-                host.databaseHosts.flatMap((databaseHost: any) =>
-                    databaseHost.sqlServerInstances.map((instance: any) => `${databaseHost.id}_${instance}`)
-                )
+                host.databaseHosts.flatMap((databaseHost: any) => {
+                    const instances = databaseHost.sqlServerInstances || databaseHost.databases;
+                    return instances.map((instance: any) => `${databaseHost.id}_${instance}`);
+                })
             );
             dispatch(
                 setInProgressOptimizationData({
@@ -850,7 +921,9 @@ const DashboardInnerPage = () => {
                     dispatch,
                     type,
                     operation,
-                    getBulkInstanceList(payload?.hostsToOptimize, type)
+                    getBulkInstanceList(payload?.hostsToOptimize, type),
+                    false,
+                    configEngineType
                 );
             } else {
                 handleOptimizeStorageJob(
@@ -879,11 +952,15 @@ const DashboardInnerPage = () => {
     const getBulkInstanceList = (jobData: any[], name: string) => {
         const instanceList: any = [];
 
-        jobData.forEach(({ type, databaseHosts }) => {
+        jobData.forEach((hostOptimizeConfig: any) => {
+            const databaseHosts = hostOptimizeConfig.databaseHosts || [];
+            const configType = hostOptimizeConfig.type;
+
             databaseHosts.forEach((host: any) => {
-                host.sqlServerInstances.forEach((instanceId: string) => {
+                const instances = host.sqlServerInstances || host.databases;
+                instances.forEach((instanceId: string) => {
                     instanceList.push({
-                        id: type,
+                        id: configType,
                         name,
                         hostId: host.id,
                         instanceId,

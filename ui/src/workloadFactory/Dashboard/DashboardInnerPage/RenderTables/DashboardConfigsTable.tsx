@@ -554,12 +554,13 @@ const createOracleStorageSizingConfig = (
     configName: string,
     dismissConfigName: string,
     headerKey: string,
-    accessor: string
+    accessor: string,
+    isFixSupported: boolean = false
 ) => ({
     assessmentPath: ['storage', 'sizing'],
     configName,
     dismissConfigName,
-    isFixSupported: false, // Fix is not supported for Oracle storage sizing configurations
+    isFixSupported, // Fix support can be enabled for specific Oracle storage sizing configurations
     dataMapping: (obj: any) => ({
         [accessor]: obj?.current,
         totalObjectsAssessed: obj?.totalObjectsAssessed,
@@ -606,7 +607,8 @@ const oracleFileSystemHeadroomConfig = createOracleStorageSizingConfig(
     'headroom',
     'headroom',
     'databases.well-architect.dashboard-table-headers.file-system-headroom',
-    'fileSystemHeadroom'
+    'fileSystemHeadroom',
+    true // Enable fix support for Oracle file system headroom
 );
 
 // Merge all configurations

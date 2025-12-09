@@ -972,7 +972,6 @@ export const cardDataDefault: any = {
 
 export const formatAssessmentData = (engineType: string | undefined, dispatch: any) => {
     if (engineType === DBType.ORACLE) {
-        // Format data call for oracle
         formatOracleWellArchitectedData(dispatch);
     } else {
         // Format data call for MSSQL
@@ -3751,14 +3750,15 @@ const updateProgressResourceForBulk = (
         ...inProgressResourceOptimizeData,
         [type]: inProgressResourceOptimizeData?.[type]?.filter((instanceId: any) => {
             const jobInstances =
-                jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) =>
-                    host?.sqlServerInstances?.flatMap((instance: any) =>
+                jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) => {
+                    const instances = host?.sqlServerInstances || host?.databases;
+                    return instances?.flatMap((instance: any) =>
                         instance?.clones?.map((clone: any) => {
                             uniqueRanList.push(`${host?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`);
                             return `${host?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`;
                         })
-                    )
-                ) || [];
+                    );
+                }) || [];
             return !jobInstances.includes(instanceId);
         })
     };
@@ -3796,9 +3796,10 @@ const updateProgressResourceForBulk = (
         ...inProgressOptimizationData,
         [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
             const jobInstances =
-                jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) =>
-                    host.sqlServerInstances.map((instance: any) => `${host.id}_${instance?.instanceId}`)
-                ) || [];
+                jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) => {
+                    const instances = host.sqlServerInstances || host.databases;
+                    return instances.map((instance: any) => `${host.id}_${instance?.instanceId}`);
+                }) || [];
             return !jobInstances.includes(instanceId);
         })
     };
@@ -3831,9 +3832,10 @@ const updateProgressForBulk = (
             ...inProgressOptimizationData,
             [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
                 const jobInstances =
-                    jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) =>
-                        host.sqlServerInstances.map((instance: any) => `${host.id}_${instance}`)
-                    ) || [];
+                    jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) => {
+                        const instances = host.sqlServerInstances || host.databases;
+                        return instances.map((instance: any) => `${host.id}_${instance}`);
+                    }) || [];
                 return !jobInstances.includes(instanceId);
             })
         })
@@ -3982,12 +3984,13 @@ const updateAssessmentWithWarningJobs = (
         );
         let successJobCount = 0;
         bulkRowData?.map((row: any) => {
-            const isSuccess = subjobs?.filter(
-                (subjob: any) =>
-                    subjob?.status === JOB_MONITORING_STATUS.COMPLETED &&
-                    subjob?.hostsToOptimize?.[0]?.resourceId === row?.hostId &&
-                    subjob?.hostsToOptimize?.[0]?.sqlServerInstances?.[0] === row?.instanceId
-            );
+            const isSuccess = subjobs?.filter((subjob: any) => {
+                if (subjob?.status !== JOB_MONITORING_STATUS.COMPLETED) return false;
+                if (subjob?.hostsToOptimize?.[0]?.resourceId !== row?.hostId) return false;
+                const sqlServerInstances = subjob?.hostsToOptimize?.[0]?.sqlServerInstances?.[0];
+                const databases = subjob?.hostsToOptimize?.[0]?.databases?.[0];
+                return sqlServerInstances.includes(row?.instanceId) || databases.includes(row?.instanceId);
+            });
             if (isSuccess?.length) {
                 successJobCount++;
                 updateOptimizationStatus(row, dispatch, engineType);
@@ -4157,12 +4160,16 @@ export const handleOptimizeResourceJob = (
 
                         let successJobCount = 0;
                         bulkRowData?.map((row: any) => {
-                            const isSuccess = subjobs?.filter(
-                                (subjob: any) =>
-                                    subjob?.status === JOB_MONITORING_STATUS.COMPLETED &&
-                                    subjob?.hostsToOptimize?.[0]?.resourceId === row?.hostId &&
-                                    subjob?.hostsToOptimize?.[0]?.sqlServerInstances?.[0] === row?.instanceId
-                            );
+                            const isSuccess = subjobs?.filter((subjob: any) => {
+                                if (subjob?.status !== JOB_MONITORING_STATUS.COMPLETED) return false;
+                                if (subjob?.hostsToOptimize?.[0]?.resourceId !== row?.hostId) return false;
+                                const sqlServerInstances = subjob?.hostsToOptimize?.[0]?.sqlServerInstances?.[0];
+                                const databases = subjob?.hostsToOptimize?.[0]?.databases?.[0];
+
+                                return (
+                                    sqlServerInstances.includes(row?.instanceId) || databases.includes(row?.instanceId)
+                                );
+                            });
                             if (isSuccess?.length) {
                                 successJobCount++;
                                 updateOptimizationStatus(row, dispatch, engineType);

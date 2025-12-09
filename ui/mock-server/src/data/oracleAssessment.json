@@ -841,7 +841,7 @@
                 "severity": "critical",
                 "recommendation": "Workload Factory recommends maintaining adequate storage headroom for Oracle database volumes to accommodate data growth and prevent storage-related outages. A minimum of 35% free space is recommended to ensure optimal performance, allow for temporary file operations, and provide buffer for unexpected data growth.",
                 "tags": ["Performance efficiency"],
-                "missingPermissions": ["fsx:UpdateFileSystem"],
+                "missingPermissions": [],
                 "recommendedSizeInGib": 350,
                 "current": "15%",
                 "resourceType": "File system (FSx for ONTAP)",

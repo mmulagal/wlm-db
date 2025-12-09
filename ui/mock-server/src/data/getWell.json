@@ -869,7 +869,7 @@
                 "severity": "critical",
                 "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
                 "tags": ["Performance efficiency"],
-                "missingPermissions": ["fsx:UpdateVolume"],
+                "missingPermissions": [],
                 "resourceType": "File system headroom"
             }
         ],

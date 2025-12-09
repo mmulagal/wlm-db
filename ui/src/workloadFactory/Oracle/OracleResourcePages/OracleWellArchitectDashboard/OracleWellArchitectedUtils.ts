@@ -4,9 +4,13 @@ import {
     setDriftAssessmentData,
     setGwRefreshTimestamp,
     setGwTimestamp,
+    setInProgressHostData,
+    setInProgressOptimizationData,
+    setJobToInstanceMap,
     setOntapConfigTableData,
     setOptimizationBreakDown,
     setOptimizingData,
+    setOptimizingInstanceData,
     setOsConfigTableData
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { addAllOracleHostAssessmentData } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -15,6 +19,7 @@ import {
     CONFIG_NAME_TO_ID_MAPPING,
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
+    DBType,
     FSXN_STORAGE_PROTOCOLS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
@@ -30,8 +35,10 @@ import {
 import {
     areAllSubcategoryConfigurationsDismissed,
     getConfigurationDisplayName,
-    shouldShowOntapOsCard
+    shouldShowOntapOsCard,
+    handleOptimizeStorageJob
 } from '../../../GetWell/GetWellUtils';
+import { createFailedOptimizationMessage, fixingProcessNotification } from './OracleCardComponent/OracleCardComponent';
 
 // Helper function to get the dismiss state for ONTAP/OS cards based on subcategory logic (Oracle version)
 const getOracleOntapOsCardDismissState = (
@@ -1169,6 +1176,8 @@ export const formatOracleWellArchitectedData = (
     isRefresh: boolean = false
 ) => {
     const state = store.getState();
+    const assessmentData = data || state.getWellOptimize.driftAssessmentData;
+    if (!assessmentData) return;
     let optimizingData = state.getWellOptimize.optimizingData || {};
 
     // If this is a refresh (fresh assessment data), clear optimistic state to show actual API status
@@ -1176,12 +1185,6 @@ export const formatOracleWellArchitectedData = (
         optimizingData = {};
         dispatch(setOptimizingData({}));
     }
-
-    const assessmentData = data || state.getWellOptimize.driftAssessmentData;
-
-    if (!assessmentData) return;
-
-    // Process data and get formatted results
     const { cardsData, formatOntapConfigList, formatOsConfigList } = getOracleCardsData(
         assessmentData,
         optimizingData,
@@ -1816,4 +1819,123 @@ export const checkAllOracleConfigurationsDismissed = (cardData: any, assessmentD
 
     // Return true only if there are configurations and ALL of them are dismissed
     return totalConfigs > 0 && dismissedConfigs === totalConfigs;
+};
+
+// Helper function to call Oracle optimize API
+export const callOptimizeOracleApi = ({
+    type,
+    cardData,
+    optimizeOracleOs,
+    getJobDetailApi,
+    dispatch,
+    isWorkloadFactory,
+    t
+}: {
+    type: any;
+    cardData: any;
+    optimizeOracleOs: any;
+    getJobDetailApi: any;
+    dispatch: any;
+    isWorkloadFactory: boolean;
+    t: any;
+}) => {
+    let apiCall = null;
+    let payload: null | object = {};
+    const state = store.getState();
+    const {
+        selectedResourceId,
+        selectedDatabaseInstance,
+        selectedGwInstanceRegionId,
+        selectedGwInstanceCredId,
+        optimizingData,
+        inProgressOptimizationData,
+        inProgressHostData
+    } = state.getWellOptimize;
+    if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
+        apiCall = optimizeOracleOs;
+        payload = {
+            type: 'storage-sizing',
+            hostsToOptimize: [
+                {
+                    configurationName: 'headroom',
+                    databaseHosts: [
+                        {
+                            id: selectedResourceId,
+                            databases: [selectedDatabaseInstance],
+                            credentialsId: selectedGwInstanceCredId,
+                            region: selectedGwInstanceRegionId
+                        }
+                    ]
+                }
+            ]
+        };
+    }
+
+    // call optimize api
+    dispatch(setOptimizingInstanceData(true));
+    dispatch(
+        setOptimizingData({
+            ...optimizingData,
+            [cardData?.id]: 'optimizing'
+        })
+    );
+    dispatch(
+        setInProgressOptimizationData({
+            ...inProgressOptimizationData,
+            [type]: [...(inProgressOptimizationData[type] || []), `${selectedResourceId}_${selectedDatabaseInstance}`]
+        })
+    );
+    dispatch(
+        setInProgressHostData({
+            ...inProgressHostData,
+            [type]: [...(inProgressHostData[type] || []), selectedResourceId]
+        })
+    );
+
+    formatOracleWellArchitectedData(dispatch, undefined, false, false);
+
+    // Use the centralized notification function
+    fixingProcessNotification(type, dispatch, isWorkloadFactory, t);
+
+    let apiCallObj = {};
+    if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
+        apiCallObj = {
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance,
+            payload
+        };
+    }
+
+    apiCall(apiCallObj).then((res: any) => {
+        const failedMsgData = createFailedOptimizationMessage(type, dispatch, isWorkloadFactory, t);
+
+        if (!res.error) {
+            dispatch(
+                setJobToInstanceMap({
+                    ...state.getWellOptimize.jobToInstanceMap,
+                    [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
+                })
+            );
+        }
+
+        handleOptimizeStorageJob(
+            res,
+            {
+                id: cardData?.id,
+                name: type,
+                hostId: selectedResourceId,
+                instanceId: selectedDatabaseInstance,
+                credentialId: selectedGwInstanceCredId,
+                regionId: selectedGwInstanceRegionId
+            },
+            failedMsgData,
+            getJobDetailApi,
+            dispatch,
+            type,
+            '',
+            {},
+            false,
+            DBType.ORACLE
+        );
+    });
 };
