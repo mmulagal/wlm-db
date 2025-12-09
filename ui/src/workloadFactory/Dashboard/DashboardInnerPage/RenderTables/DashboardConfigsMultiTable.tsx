@@ -625,12 +625,10 @@ const DashboardMultiTableConfig = ({
         const root = divRef.current;
         if (!root) return;
 
-        const outerScrollEl = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
+        let outerScrollEl = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
         let innerScrollEl = root.querySelector<HTMLElement>(
             "[class*='expanded-row-section'] [class*='horizontal-scroll']"
         );
-
-        if (!outerScrollEl) return;
 
         const onOuterScroll = () => {
             if (!innerScrollEl) {
@@ -638,20 +636,46 @@ const DashboardMultiTableConfig = ({
                     "[class*='expanded-row-section'] [class*='horizontal-scroll']"
                 );
             }
-            if (innerScrollEl) {
+            if (outerScrollEl && innerScrollEl) {
                 innerScrollEl.scrollLeft = outerScrollEl.scrollLeft;
+                setScrollPos(outerScrollEl.scrollLeft);
             }
-            setScrollPos(outerScrollEl.scrollLeft);
         };
 
-        outerScrollEl.addEventListener('scroll', onOuterScroll, { passive: true });
+        const attachListeners = () => {
+            requestAnimationFrame(() => {
+                outerScrollEl = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
+                innerScrollEl = root.querySelector<HTMLElement>(
+                    "[class*='expanded-row-section'] [class*='horizontal-scroll']"
+                );
 
-        if (innerScrollEl) {
-            innerScrollEl.scrollLeft = outerScrollEl.scrollLeft;
-        }
+                if (outerScrollEl) {
+                    outerScrollEl.addEventListener('scroll', onOuterScroll, { passive: true });
+
+                    if (innerScrollEl) {
+                        innerScrollEl.scrollLeft = outerScrollEl.scrollLeft;
+                    }
+                }
+            });
+        };
+
+        attachListeners();
+
+        const observer = new MutationObserver(() => {
+            const maybeInner = root.querySelector<HTMLElement>(
+                "[class*='expanded-row-section'] [class*='horizontal-scroll']"
+            );
+            if (!innerScrollEl && maybeInner) {
+                innerScrollEl = maybeInner;
+                // Run one sync tick
+                onOuterScroll();
+            }
+        });
+        observer.observe(root, { childList: true, subtree: true });
 
         return () => {
-            outerScrollEl.removeEventListener('scroll', onOuterScroll);
+            if (outerScrollEl) outerScrollEl.removeEventListener('scroll', onOuterScroll);
+            observer.disconnect();
         };
     }, [filteredData]);
     const divRef = useRef<HTMLDivElement>(null);
