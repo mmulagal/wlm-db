@@ -3,6 +3,7 @@ import {
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     DEFAULT_MPIO_TIMEOUT,
+    MIN_OPTIMIZED_HEADROOM_PERCENTAGE,
     SEVERITY
 } from '../../../utils/continous-optimization-consts';
 
@@ -223,7 +224,7 @@ const GOLDEN_CONFIG = {
         },
         {
             parameter: 'headroom',
-            value: '35%',
+            value: `${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL}%`,
             severity: SEVERITY.CRITICAL,
             recommendation:
                 'For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.',

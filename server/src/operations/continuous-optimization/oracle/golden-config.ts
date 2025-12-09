@@ -1,6 +1,7 @@
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AwsWellArchitecturedPillars,
+    MIN_OPTIMIZED_HEADROOM_PERCENTAGE,
     SEVERITY
 } from '../../../utils/continous-optimization-consts';
 
@@ -576,8 +577,7 @@ const GOLDEN_CONFIG = {
             parameter: 'headroom',
             name: 'headroom',
             severity: SEVERITY.CRITICAL,
-            recommendation:
-                'File system headroom recommendation to optimize storage performance, provision file system capacity as 1.2 times of total size of provisioned volume. File system headroom percentages are as follows: Under-provisioned: <20%; Optimized: 20-100%; Over-provisioned: >100%',
+            recommendation: `File system headroom recommendation to optimize storage performance, provision file system capacity as 1.2 times of total size of provisioned volume. File system headroom percentages are as follows: Under-provisioned: <${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.ORACLE}%; Optimized: ${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.ORACLE}%-50%; Over-provisioned: >50%`,
             tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
             resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
         }
