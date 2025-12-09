@@ -673,10 +673,15 @@ async function getCostAllocationTagFsxResource(resourceDetail: ResourceDetails) 
     }
 }
 
-async function getFsxStorageCapacity(credentialsId: string, region: string, fsxId: string) {
+async function getFsxStorageCapacity(
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    cacheParams = { useCache: true }
+) {
     logger.info('Get FSx Storage capacity');
     const cacheKey = `${fsxId}-storage-capacity`;
-    if (hasCache(AWS_FSX_TYPE, cacheKey)) {
+    if (cacheParams.useCache && hasCache(AWS_FSX_TYPE, cacheKey)) {
         const response = readFromCacheByKey(AWS_FSX_TYPE, cacheKey) as FsxStorage;
         return response;
     }
@@ -689,7 +694,7 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
                 FileSystemIds: [fsxId]
             },
             undefined,
-            { useCache: true }
+            cacheParams
         );
 
         const fsxStorage: FsxStorage = {
@@ -697,6 +702,7 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
         };
 
         writeToCache(AWS_FSX_TYPE, cacheKey, fsxStorage);
+
         return fsxStorage;
     } catch (error: any) {
         const errorMessage = `Unable to retrieve FSx for NetApp ONTAP storage capacity: ${error}`;
@@ -707,11 +713,16 @@ async function getFsxStorageCapacity(credentialsId: string, region: string, fsxI
     }
 }
 
-async function getFsxStorageDetails(credentialsId: string, region: string, fileSystemId: string) {
+async function getFsxStorageDetails(
+    credentialsId: string,
+    region: string,
+    fileSystemId: string,
+    cacheParams = { useCache: true }
+) {
     logger.info('Getting FSx storage details', { credentialsId, region, fileSystemId });
     const [fsxSSDCapacity, { Volumes: fsxVolumes }] = await Promise.all([
-        getFsxStorageCapacity(credentialsId, region, fileSystemId),
-        describeFSxVolumes(credentialsId, region, [fileSystemId], undefined, { useCache: true })
+        getFsxStorageCapacity(credentialsId, region, fileSystemId, cacheParams),
+        describeFSxVolumes(credentialsId, region, [fileSystemId], undefined, cacheParams)
     ]);
 
     const { storage } = fsxSSDCapacity ?? {};

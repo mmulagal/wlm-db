@@ -23,7 +23,9 @@ async function getHeadroomDrift(
     logger.info('Getting headroom drift', { credentialsId, region, fileSystemId, resourceType });
 
     try {
-        const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(credentialsId, region, fileSystemId);
+        const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(credentialsId, region, fileSystemId, {
+            useCache: false
+        });
 
         const cwMetricsDataCollectionPeriodSeconds = 1 * 60 * 60; // 1 hour
         const cwMetricsDataCollectionPeriod = '1h'; // 1 hour
