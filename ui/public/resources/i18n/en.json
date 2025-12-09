@@ -980,6 +980,7 @@
             "pgsql": "PostgreSQL"
         },
         "log-analyzer": {
+            "error-msg": "Duration should be between 1 to 24",
             "start": "Start",
             "analyze-now-custom-timeframe": "Analyze now - Custom timeframe",
             "custom-timeframe-text-1": "Specify the timeframe for the error analysis report.",

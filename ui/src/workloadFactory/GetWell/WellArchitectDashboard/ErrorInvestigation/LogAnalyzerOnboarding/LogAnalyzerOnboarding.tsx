@@ -87,6 +87,7 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
         const credId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM;
         const regionId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM;
         const key = uniqueHostRow(`${selectedResourceId}_${selectedDatabaseInstance}`, credId, regionId);
+        const state = store.getState();
         logAnalyzerScanUpdate(key, true, dispatch);
         let newPayload = {};
         if (type === 'custom') {
@@ -114,7 +115,7 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
 
             newPayload = {
                 logsAnalyzerFromTimestamp: timestamp,
-                logsWindowDuration: durationCustomAnalysis
+                logsWindowDuration: state?.agenticAI?.durationCustomAnalysis
             };
         } else {
             newPayload = {};

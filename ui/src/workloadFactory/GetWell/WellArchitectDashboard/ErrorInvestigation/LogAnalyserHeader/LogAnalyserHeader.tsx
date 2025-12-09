@@ -13,6 +13,7 @@ import { handleLogAnalyzerJob, logAnalyzerScanUpdate } from '../ErrorInvestigati
 import { uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
 import DialogComponent from '../../../../../common/Dialog/DialogComponent';
 import AnalyzeCustomTimeframe from './AnalyzeCustomTimeframe/AnalyzeCustomTimeframe';
+import store from '../../../../../store/store';
 
 interface LogAnalyserHeaderProps {
     uniqueErrors: number;
@@ -56,6 +57,7 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
         const regionId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM;
         const key = uniqueHostRow(`${selectedResourceId}_${selectedDatabaseInstance}`, credId, regionId);
         logAnalyzerScanUpdate(key, true, dispatch);
+        const state = store.getState();
 
         let newPayload = {};
         if (type === 'custom') {
@@ -83,7 +85,7 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
 
             newPayload = {
                 logsAnalyzerFromTimestamp: timestamp,
-                logsWindowDuration: durationCustomAnalysis
+                logsWindowDuration: state?.agenticAI?.durationCustomAnalysis
             };
         } else {
             newPayload = {};

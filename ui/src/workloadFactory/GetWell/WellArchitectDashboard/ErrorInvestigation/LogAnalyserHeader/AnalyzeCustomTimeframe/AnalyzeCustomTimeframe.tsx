@@ -1,8 +1,8 @@
-import { ChangeEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
-import { DsSelect, DsTextField } from '@tlveng/wlm-ds';
-import { DsTypography } from '@netapp/design-system';
+import { DsSelect } from '@tlveng/wlm-ds';
+import { DsTypography, TextField } from '@netapp/design-system';
 import styles from './AnalyzeCustomTimeframe.module.scss';
 
 import {
@@ -113,6 +113,17 @@ const AnalyzeCustomTimeframe = () => {
         return `${startTimeDate}, ${selectedCustomAnalysisTime?.label} ${selectedCustomAnalysisTimeFrameUnit?.label} - ${endTimeDate}, ${endTimeFormatted} ${endTimeAmPm}`;
     };
 
+    const checkError = () => {
+        if (!durationCustomAnalysis || durationCustomAnalysis === '') {
+            return t('databases.log-analyzer.error-msg');
+        }
+        const duration = Number(durationCustomAnalysis);
+        if (duration < 1 || duration > 24) {
+            return t('databases.log-analyzer.error-msg');
+        }
+        return '';
+    };
+
     return (
         <div className={styles['custom-timeframe']}>
             <DsTypography variant="Regular_14">{t('databases.log-analyzer.custom-timeframe-text-1')}</DsTypography>
@@ -147,14 +158,19 @@ const AnalyzeCustomTimeframe = () => {
                     />
                 </div>
 
-                <DsTextField
-                    title={t('databases.log-analyzer.duration')}
+                <TextField
+                    label={t('databases.log-analyzer.duration')}
                     placeholder="Duration"
-                    value={durationCustomAnalysis?.toString() || ''}
-                    onChange={(event?: ChangeEvent<HTMLInputElement>) => {
-                        dispatch(setCustomAnalysisDurationInHours(event?.target?.value || ''));
+                    onChange={(event: React.FormEvent<HTMLInputElement>) => {
+                        const value = (event.target as HTMLInputElement).value;
+
+                        if (value === '' || (/^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= 24)) {
+                            dispatch(setCustomAnalysisDurationInHours(value));
+                        }
                     }}
+                    value={durationCustomAnalysis?.toString() || ''}
                     className={styles.textFieldStyle}
+                    error={checkError()}
                 />
             </div>
 
