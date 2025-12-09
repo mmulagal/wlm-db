@@ -1,6 +1,6 @@
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { DsButton, DsToggleSwitch, DsTypography } from '@tlveng/wlm-ds';
@@ -619,6 +619,43 @@ const DashboardMultiTableConfig = ({
         lastColDetails()
     ];
 
+    const [scrollPos, setScrollPos] = useState(0);
+
+    useEffect(() => {
+        const root = divRef.current;
+        if (!root) return;
+
+        const outerScrollEl = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
+        let innerScrollEl = root.querySelector<HTMLElement>(
+            "[class*='expanded-row-section'] [class*='horizontal-scroll']"
+        );
+
+        if (!outerScrollEl) return;
+
+        const onOuterScroll = () => {
+            if (!innerScrollEl) {
+                innerScrollEl = root.querySelector<HTMLElement>(
+                    "[class*='expanded-row-section'] [class*='horizontal-scroll']"
+                );
+            }
+            if (innerScrollEl) {
+                innerScrollEl.scrollLeft = outerScrollEl.scrollLeft;
+            }
+            setScrollPos(outerScrollEl.scrollLeft);
+        };
+
+        outerScrollEl.addEventListener('scroll', onOuterScroll, { passive: true });
+
+        if (innerScrollEl) {
+            innerScrollEl.scrollLeft = outerScrollEl.scrollLeft;
+        }
+
+        return () => {
+            outerScrollEl.removeEventListener('scroll', onOuterScroll);
+        };
+    }, [filteredData]);
+    const divRef = useRef<HTMLDivElement>(null);
+
     const ExpandedRow = useCallback(
         ({ rowData }: any) => {
             dispatch(
@@ -644,6 +681,7 @@ const DashboardMultiTableConfig = ({
                     showDismissedConfigurations={showDismissed}
                     setShowDismissedConfigurations={setShowDismissed}
                     dashboardInstanceData={rowData}
+                    divWidth={divRef.current ? divRef.current.offsetWidth : 0}
                 />
             );
         },
@@ -710,7 +748,7 @@ const DashboardMultiTableConfig = ({
     }, [tableProps.selectionState, inProgressOptimizationData, inProgressStateData, configType]);
 
     return (
-        <div className={styles.renderTable}>
+        <div className={styles.renderTable} ref={divRef}>
             <TableTopBar
                 // @ts-ignore
                 tableProps={tableProps}

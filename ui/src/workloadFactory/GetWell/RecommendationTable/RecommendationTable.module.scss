@@ -2,7 +2,8 @@
     z-index: 1 !important;
     display: flex;
     padding: 32px 20px 20px 40px;
-    width: 100%;
+    position: sticky;
+    left: 0;
 
     &.inventoryClass {
         padding: 32px 10px 20px 10px;
@@ -192,5 +193,11 @@
 .dismissedTableBackground {
     [class*='Table-module_cell'] {
         background-color: var(--main-background) !important;
+    }
+}
+
+.dashboardClass {
+    [class*='Table-module_horizontal-scroll'] {
+        visibility: hidden !important;
     }
 }

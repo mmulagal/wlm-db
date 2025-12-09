@@ -88,7 +88,8 @@ const RecommendationTable = ({
     setShowDismissedConfigurations,
     driftAssessmentData,
     customStyles,
-    dashboardInstanceData
+    dashboardInstanceData,
+    divWidth
 }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -825,6 +826,18 @@ const RecommendationTable = ({
         return cellData || t('databases.general.not-available');
     };
 
+    const lastColWidth = () => {
+        if (from === WLF_TABS.DASHBOARD) {
+            if (showDismissedConfigurations) {
+                return '403px';
+            } else return '393px';
+        } else {
+            if (showDismissedConfigurations) {
+                return '25%';
+            } else return '22%';
+        }
+    };
+
     // In case of error message coming from API we would display the Unavailable with tooltip
     const showUnavailableWithTooltip = (rowData: any) => (
         <div className={styles.tooltipContainer}>
@@ -850,7 +863,7 @@ const RecommendationTable = ({
             id: '1',
             Header: t('databases.well-architect.recommendation-table.headers.configuration'),
             accessor: 'name',
-            width: '15%',
+            width: from === WLF_TABS.DASHBOARD ? '240px' : '15%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
                 <CellWrapper rowData={rowData}>{cellData || t('databases.general.not-available')}</CellWrapper>
@@ -860,7 +873,7 @@ const RecommendationTable = ({
             id: '2',
             Header: t('databases.well-architect.recommendation-table.headers.status'),
             accessor: 'status',
-            width: '13%',
+            width: from === WLF_TABS.DASHBOARD ? '180px' : '13%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
                 <CellWrapper rowData={rowData}>
@@ -899,7 +912,7 @@ const RecommendationTable = ({
             id: '3',
             Header: t('databases.well-architect.recommendation-table.headers.severity'),
             accessor: 'severity',
-            width: '8%',
+            width: from === WLF_TABS.DASHBOARD ? '140px' : '8%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 if (rowData?.errorMessage) {
@@ -938,7 +951,7 @@ const RecommendationTable = ({
             id: '4',
             Header: t('databases.well-architect.recommendation-table.headers.impacted-resources'),
             accessor: 'totalObjectsInViolation',
-            width: '15%',
+            width: from === WLF_TABS.DASHBOARD ? '200px' : '15%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 let type = '';
@@ -1025,7 +1038,7 @@ const RecommendationTable = ({
             id: '5',
             Header: t('databases.well-architect.recommendation-table.headers.tags'),
             accessor: 'tags',
-            width: '10%',
+            width: from === WLF_TABS.DASHBOARD ? '140px' : '10%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
                 <CellWrapper rowData={rowData}>
@@ -1066,7 +1079,7 @@ const RecommendationTable = ({
             id: '6',
             Header: t('databases.well-architect.recommendation-table.headers.recommendations'),
             accessor: 'recommendation',
-            width: 'auto',
+            width: from === WLF_TABS.DASHBOARD ? '232px' : 'auto',
             renderCell: (cellData: any, rowData: any) => (
                 <CellWrapper rowData={rowData}>
                     <div className={styles.recommendation}>
@@ -1101,7 +1114,7 @@ const RecommendationTable = ({
             Header: '',
             accessor: '',
             isSticky: true,
-            width: showDismissedConfigurations ? '25%' : '22%',
+            width: lastColWidth(),
             renderCell: (cellData: any, rowData: any) => (
                 <CellWrapper rowData={rowData}>
                     <div className={styles.buttonGroup}>
@@ -1302,17 +1315,36 @@ const RecommendationTable = ({
         const baseClass = styles.recommendationTable;
         const dismissedClass =
             showDismissedConfigurations === true ? styles.dismissedTableBackground : styles.dismissedTableBackground;
-        const paddingClass = from === WLF_TABS.INVENTORY ? styles.inventoryClass : '';
+        const paddingClass = from === WLF_TABS.INVENTORY ? styles.inventoryClass : styles.dashboardClass;
 
         return `${baseClass} ${dismissedClass} ${paddingClass}`.trim();
     };
 
     return (
-        <div className={getTableClassName()}>
-            <Table
-                // @ts-expect-error - Table props type mismatch
-                tableProps={tableProps}
-            />
+        <div
+            className={getTableClassName()}
+            style={
+                from === WLF_TABS.DASHBOARD
+                    ? { width: `${divWidth - 80}px`, maxWidth: `${divWidth - 80}px` }
+                    : undefined
+            }
+        >
+            {from === WLF_TABS.DASHBOARD ? (
+                <span
+                    className={styles.managedSubTable}
+                    style={{ width: `${divWidth - 80}px`, maxWidth: `${divWidth - 80}px` }}
+                >
+                    <Table
+                        // @ts-expect-error - Table props type mismatch
+                        tableProps={tableProps}
+                    />
+                </span>
+            ) : (
+                <Table
+                    // @ts-expect-error - Table props type mismatch
+                    tableProps={tableProps}
+                />
+            )}
         </div>
     );
 };
