@@ -125,7 +125,7 @@ async function headroomOptimization(
         parentJobId
     );
 
-    let jobStatus: JOBSTATUS = JOBSTATUS.WARNING;
+    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage;
     try {
         const { headroomPercent, ssdStorageCapacityInBytes, totalUsed } = await getHeadroomDrift(
@@ -161,7 +161,6 @@ async function headroomOptimization(
         jobStatus = JOBSTATUS.FAILED;
         updateLongRunningAuditGroup(AuditStatus.FAILED, errorMessage);
     } finally {
-        jobStatus ||= JOBSTATUS.COMPLETED;
         await updateJobDetails(accountId, jobId, {
             status: jobStatus,
             endTime: Date.now(),
