@@ -2820,7 +2820,7 @@ export const getPerfUnmanagedData = (
     }
 };
 
-export const getExploreSavingsRows = (inventoryTableData: { [key: string]: InventoryTableData }) => {
+export const getExploreSavingsRowsMssql = (inventoryTableData: { [key: string]: InventoryTableData }) => {
     // If ES row is disabled than it should come in inventory but not in explore savings table
     const nonFsxnStorageList: Array<InventoryTableData> = [];
     const state = store.getState();
@@ -2830,6 +2830,12 @@ export const getExploreSavingsRows = (inventoryTableData: { [key: string]: Inven
         if (removeSecNodeDiscoveredList.includes(key)) {
             return;
         }
+
+        // EBS rows are only supported for MSSQL hosts. Other DB types are not supported. This will restrict EBS calls for other DB types.
+        if (item?.hostType !== DBType.MSSQL) {
+            return;
+        }
+
         if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
             if (!checkForMixedStorageType(item)) {
                 if (item?.storageType === GENERAL.FSX_FOR_WINDOWS) {

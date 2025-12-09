@@ -82,7 +82,6 @@ import {
     formatDiscoveredOracleInventoryData,
     formatDiscoveredPgsqlInventoryData,
     formatInventoryTableData,
-    getExploreSavingsRows,
     getFsxIdsFromdiscover,
     getInventoryDataCount,
     getMhUnmanagedInstances,
@@ -93,7 +92,8 @@ import {
     getUnmanagedPgsqlHostInstances,
     getUnmanagedOracleHostInstances,
     uniqueHostRow,
-    updateInstancesApiResponse
+    updateInstancesApiResponse,
+    getExploreSavingsRowsMssql
 } from './InventoryUtilsV2';
 import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../store/store';
@@ -2469,7 +2469,7 @@ const InventoryApisV3 = () => {
                 dispatch(setInventoryChartData(inventoryDataCount));
             }
 
-            const exploreSavingsRows = getExploreSavingsRows(inventoryTableDataRef.current);
+            const exploreSavingsRows = getExploreSavingsRowsMssql(inventoryTableDataRef.current);
             const currentExploreSavings = state.exploreSavings.unmanagedExploreSavingsHost;
             if (!isEqual(exploreSavingsRows, currentExploreSavings)) {
                 dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));

@@ -1739,6 +1739,9 @@ const processOracleConfigurationData = (
                     ],
                     DBType.ORACLE
                 );
+                ontapStateList?.forEach(configStateVal => {
+                    setConfigState(configState, 'oracleOntapConfiguration', configStateVal);
+                });
                 getAssessmentGroupedByConfigurations.oracleOntapConfiguration.dismissed += checkConfigState(
                     ontapStateList,
                     CONFIG_STATES.DISMISSED
@@ -1767,6 +1770,9 @@ const processOracleConfigurationData = (
                     [...(instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.os || [])],
                     DBType.ORACLE
                 );
+                osStateList?.forEach(configStateVal => {
+                    setConfigState(configState, 'oracleOperatingSystem', configStateVal);
+                });
                 getAssessmentGroupedByConfigurations.oracleOperatingSystem.dismissed += checkConfigState(
                     osStateList,
                     CONFIG_STATES.DISMISSED
@@ -2458,6 +2464,9 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                     ],
                     DBType.MSSQL
                 );
+                ontapStateList?.forEach(configStateVal => {
+                    setConfigState(configState, 'ontapConfiguration', configStateVal);
+                });
                 getAssessmentGroupedByConfigurations.ontapConfiguration.dismissed += checkConfigState(
                     ontapStateList,
                     CONFIG_STATES.DISMISSED
@@ -2485,6 +2494,9 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                     [...(instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.os || [])],
                     DBType.MSSQL
                 );
+                osStateList?.forEach(configStateVal => {
+                    setConfigState(configState, 'operatingSystem', configStateVal);
+                });
                 getAssessmentGroupedByConfigurations.operatingSystem.dismissed += checkConfigState(
                     osStateList,
                     CONFIG_STATES.DISMISSED
@@ -2687,6 +2699,9 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                         [...(instanceAssessmentData?.dismissedConfigurations?.highAvailability || [])],
                         DBType.MSSQL
                     );
+                    hsStateList?.forEach(configStateVal => {
+                        setConfigState(configState, 'mssqlhighAvailability', configStateVal);
+                    });
                     getAssessmentGroupedByConfigurations.mssqlhighAvailability.dismissed += checkConfigState(
                         hsStateList,
                         CONFIG_STATES.DISMISSED
