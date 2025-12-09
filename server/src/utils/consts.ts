@@ -638,6 +638,9 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     domainDnsname: 'DomainDNSName',
     dnsIpaddress: 'DNSIpAddresses',
     securityGroupId: 'DomainMemberSGID',
+    preferredDomainController: 'PreferredDomainController',
+    ouPath: 'OUPath',
+    adGroup: 'ADGroup',
 
     fsxDeploymentMode: 'DeploymentMode',
     fsxFileSystemId: 'FSxFileSystemId',
@@ -654,6 +657,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     sqlServerName: 'SqlServerName',
     sqlCollation: 'SqlCollation',
     isCustomAmi: 'IsCustomAmi',
+    isManagedServiceAccount: 'IsManagedServiceAccount',
 
     workloadInstanceType: 'WorkloadInstanceType',
     keyPairName: 'KeyPairName',
