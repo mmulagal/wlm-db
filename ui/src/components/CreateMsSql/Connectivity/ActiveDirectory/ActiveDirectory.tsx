@@ -344,10 +344,14 @@ const ActiveDirectory = () => {
                                 <div className={styles.optionalFieldsContainer}>
                                     <TextField
                                         label={t('databases.general.preferred-domain-controller')}
+                                        isOptional
+                                        info={t('databases.general.preferred-domain-controller-tooltip')}
                                         placeholder=""
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                             dispatch(
-                                                setActiveDirectoryFields({ preferredDomainController: e.target.value })
+                                                setActiveDirectoryFields({
+                                                    preferredDomainController: e.target.value
+                                                })
                                             );
                                             dispatch(setIsWizardTouched(true));
                                         }}
@@ -356,6 +360,8 @@ const ActiveDirectory = () => {
                                     />
                                     <TextField
                                         label={t('databases.general.preferred-ou-path')}
+                                        isOptional
+                                        info={t('databases.general.preferred-ou-path-tooltip')}
                                         placeholder=""
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                             dispatch(setActiveDirectoryFields({ preferredOUPath: e.target.value }));
@@ -369,6 +375,8 @@ const ActiveDirectory = () => {
                                 <div className={styles.thirdFieldContainer}>
                                     <TextField
                                         label={t('databases.general.target-ad-group')}
+                                        isOptional
+                                        info={t('databases.general.target-ad-group-tooltip')}
                                         placeholder=""
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                             dispatch(setActiveDirectoryFields({ targetADGroup: e.target.value }));

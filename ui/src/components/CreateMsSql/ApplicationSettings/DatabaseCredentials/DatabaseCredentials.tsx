@@ -154,7 +154,7 @@ const DatabaseCredentials = ({ wizardType }: DatabaseCredentialsProps) => {
                     <Typography>
                         <Typography variant="Regular_14" className={styles.subtext}>
                             {wizardType === WIZARD_TYPE.MSSQL
-                                ? GENERAL.DATABASE_CREDENTIAL_TEXT
+                                ? t('databases.general.database-credential-text')
                                 : GENERAL.DATABASE_CREDENTIAL_TEXT_PGSQL}
                         </Typography>
                         {wizardType === WIZARD_TYPE.MSSQL && selectConfig === SELECT_CONFIG.STANDARD_CREATE && (
