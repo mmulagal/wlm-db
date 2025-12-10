@@ -1295,12 +1295,22 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       text: 'Storage capacity per disk type in GiB'
                   },
                   {
+                      label: 'Total instance hours',
+                      value: `${viewCalculation.ebsCalculation.gp3.totalInstanceHours}`,
+                      text: `Number of volumes (${viewCalculation.ebsCalculation.gp3.numberOfVolumes}) x Average duration each instance runs (${viewCalculation.ebsCalculation.gp3.instanceAvgDuration} hours)`
+                  },
+                  {
+                      label: 'Total instance months',
+                      value: `${viewCalculation.ebsCalculation.gp3.ebsInstanceMonth}`,
+                      text: `Total instance hours (${viewCalculation.ebsCalculation.gp3.totalInstanceHours}) ÷ hours in a month (${viewCalculation.ebsCalculation.gp3.hoursInAMonth})`
+                  },
+                  {
                       label: 'Pricing calculations'
                   },
                   {
                       label: 'EBS storage cost',
                       value: `$${viewCalculation.ebsCalculation.gp3.ebsStorageCost}`,
-                      text: `Total storage amount (${viewCalculation.ebsCalculation.gp3.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.gp3.ebsCapacityPrice})`
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.gp3.storageAmountPerVol}) x instance months (${viewCalculation.ebsCalculation.gp3.ebsInstanceMonth}) x EBS capacity price ($${viewCalculation.ebsCalculation.gp3.ebsCapacityPrice})`
                   },
                   {
                       label: 'Billable IOPS',
@@ -1340,12 +1350,22 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       text: 'Storage capacity per disk type in GiB'
                   },
                   {
+                      label: 'Total instance hours',
+                      value: `${viewCalculation.ebsCalculation.io2.totalInstanceHours}`,
+                      text: `Number of volumes (${viewCalculation.ebsCalculation.io2.numberOfVolumes}) x Average duration each instance runs (${viewCalculation.ebsCalculation.io2.instanceAvgDuration} hours)`
+                  },
+                  {
+                      label: 'Total instance months',
+                      value: `${viewCalculation.ebsCalculation.io2.ebsInstanceMonth}`,
+                      text: `Total instance hours (${viewCalculation.ebsCalculation.io2.totalInstanceHours}) ÷ hours in a month (${viewCalculation.ebsCalculation.io2.hoursInAMonth})`
+                  },
+                  {
                       label: 'Pricing calculations'
                   },
                   {
                       label: 'EBS storage cost',
                       value: `$${viewCalculation.ebsCalculation.io2.ebsStorageCost}`,
-                      text: `Total storage amount (${viewCalculation.ebsCalculation.io2.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.io2.ebsCapacityPrice})`
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.io2.storageAmountPerVol}) x instance months (${viewCalculation.ebsCalculation.io2.ebsInstanceMonth}) x EBS capacity price ($${viewCalculation.ebsCalculation.io2.ebsCapacityPrice})`
                   },
                   {
                       label: 'Billable IOPS',
@@ -1370,12 +1390,22 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       text: 'Storage capacity per disk type in GiB'
                   },
                   {
+                      label: 'Total instance hours',
+                      value: `${viewCalculation.ebsCalculation.io1.totalInstanceHours}`,
+                      text: `Number of volumes (${viewCalculation.ebsCalculation.io1.numberOfVolumes}) x Average duration each instance runs (${viewCalculation.ebsCalculation.io1.instanceAvgDuration} hours)`
+                  },
+                  {
+                      label: 'Total instance months',
+                      value: `${viewCalculation.ebsCalculation.io1.ebsInstanceMonth}`,
+                      text: `Total instance hours (${viewCalculation.ebsCalculation.io1.totalInstanceHours}) ÷ hours in a month (${viewCalculation.ebsCalculation.io1.hoursInAMonth})`
+                  },
+                  {
                       label: 'Pricing calculations'
                   },
                   {
                       label: 'EBS storage cost',
                       value: `$${viewCalculation.ebsCalculation.io1.ebsStorageCost}`,
-                      text: `Total storage amount (${viewCalculation.ebsCalculation.io1.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.io1.ebsCapacityPrice})`
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.io1.storageAmountPerVol}) x instance months (${viewCalculation.ebsCalculation.io1.ebsInstanceMonth}) x EBS capacity price ($${viewCalculation.ebsCalculation.io1.ebsCapacityPrice})`
                   },
                   {
                       label: 'Billable IOPS',
@@ -1400,12 +1430,22 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       text: 'Storage capacity per disk type in GiB'
                   },
                   {
+                      label: 'Total instance hours',
+                      value: `${viewCalculation.ebsCalculation.gp2.totalInstanceHours}`,
+                      text: `Number of volumes (${viewCalculation.ebsCalculation.gp2.numberOfVolumes}) x Average duration each instance runs (${viewCalculation.ebsCalculation.gp2.instanceAvgDuration} hours)`
+                  },
+                  {
+                      label: 'Total instance months',
+                      value: `${viewCalculation.ebsCalculation.gp2.ebsInstanceMonth}`,
+                      text: `Total instance hours (${viewCalculation.ebsCalculation.gp2.totalInstanceHours}) ÷ hours in a month (${viewCalculation.ebsCalculation.gp2.hoursInAMonth})`
+                  },
+                  {
                       label: 'Pricing calculations'
                   },
                   {
                       label: 'EBS storage cost',
                       value: `$${viewCalculation.ebsCalculation.gp2.ebsStorageCost}`,
-                      text: `Total storage amount (${viewCalculation.ebsCalculation.gp2.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.gp2.ebsCapacityPrice})`
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.gp2.storageAmountPerVol}) x instance months (${viewCalculation.ebsCalculation.gp2.ebsInstanceMonth}) x EBS capacity price ($${viewCalculation.ebsCalculation.gp2.ebsCapacityPrice})`
                   }
               ]
             : [],
@@ -1420,12 +1460,22 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       text: 'Storage capacity per disk type in GiB'
                   },
                   {
+                      label: 'Total instance hours',
+                      value: `${viewCalculation.ebsCalculation.st1.totalInstanceHours}`,
+                      text: `Number of volumes (${viewCalculation.ebsCalculation.st1.numberOfVolumes}) x Average duration each instance runs (${viewCalculation.ebsCalculation.st1.instanceAvgDuration} hours)`
+                  },
+                  {
+                      label: 'Total instance months',
+                      value: `${viewCalculation.ebsCalculation.st1.ebsInstanceMonth}`,
+                      text: `Total instance hours (${viewCalculation.ebsCalculation.st1.totalInstanceHours}) ÷ hours in a month (${viewCalculation.ebsCalculation.st1.hoursInAMonth})`
+                  },
+                  {
                       label: 'Pricing calculations'
                   },
                   {
                       label: 'EBS storage cost',
                       value: `$${viewCalculation.ebsCalculation.st1.ebsStorageCost}`,
-                      text: `Total storage amount (${viewCalculation.ebsCalculation.st1.storageAmountPerVol}) x EBS capacity price ($${viewCalculation.ebsCalculation.st1.ebsCapacityPrice})`
+                      text: `Total storage amount (${viewCalculation.ebsCalculation.st1.storageAmountPerVol}) x instance months (${viewCalculation.ebsCalculation.st1.ebsInstanceMonth}) x EBS capacity price ($${viewCalculation.ebsCalculation.st1.ebsCapacityPrice})`
                   }
               ]
             : [],
