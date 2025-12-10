@@ -42,6 +42,8 @@ import {
     EBS_PROTECTED_OPTIONS,
     GIB_IN_BYTE,
     INSTANCE_API_FIELDS,
+    MAX_CLONED_COPIES,
+    MAX_MONTHLY_CHANGE_RATE,
     NETWORK_PERFORMANCE_OPTIONS,
     SAVINGS_CALC_MODE,
     SNAPSHOT_FREQUENCY
@@ -445,7 +447,12 @@ const SavingsCalculatorApi = () => {
     };
 
     const triggerRefreshApi = () => {
-        const hasBasicRequirements = selectedSnapshotFrequency && numberOfClonedCopies && monthlyChangeRate;
+        const hasBasicRequirements =
+            selectedSnapshotFrequency &&
+            numberOfClonedCopies &&
+            numberOfClonedCopies <= MAX_CLONED_COPIES &&
+            monthlyChangeRate &&
+            Number(monthlyChangeRate) <= MAX_MONTHLY_CHANGE_RATE;
         const hasSingleInstanceRequirements =
             selectedInstanceId &&
             ((savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && selectedCloneRefresh) ||
@@ -672,7 +679,9 @@ const SavingsCalculatorApi = () => {
             savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM &&
             selectedSnapshotFrequency &&
             numberOfClonedCopies &&
+            numberOfClonedCopies <= MAX_CLONED_COPIES &&
             monthlyChangeRate &&
+            Number(monthlyChangeRate) <= MAX_MONTHLY_CHANGE_RATE &&
             selectedOnPremRegion
         ) {
             dispatch(setRequestedPayload(newPayload));

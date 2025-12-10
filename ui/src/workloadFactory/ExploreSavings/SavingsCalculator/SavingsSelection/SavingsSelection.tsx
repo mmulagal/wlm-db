@@ -15,7 +15,14 @@ import {
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
-import { FINDINGS, SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY, WLF_TABS } from '../../../../utils/consts';
+import {
+    FINDINGS,
+    MAX_CLONED_COPIES,
+    MAX_MONTHLY_CHANGE_RATE,
+    SAVINGS_CALC_MODE,
+    SNAPSHOT_FREQUENCY,
+    WLF_TABS
+} from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import LearnHowDialog from './LearnHowDialog/LearnHowDialog';
 import { checkIfByolFieldRequired } from '../savingsUtil';
@@ -108,13 +115,13 @@ const SavingsSelection = ({ printState }: any) => {
 
     // Debounce variable update
     useEffect(() => {
-        if ((clonedText || clonedText === '') && clonedText <= 10) {
+        if ((clonedText || clonedText === '') && clonedText <= MAX_CLONED_COPIES) {
             dispatch(setNumberOfClonedCopies(clonedText));
         }
     }, [clonedText]);
 
     useEffect(() => {
-        if ((changeRateText || changeRateText === '') && changeRateText <= 100) {
+        if ((changeRateText || changeRateText === '') && changeRateText <= MAX_MONTHLY_CHANGE_RATE) {
             dispatch(setMonthlyChangeRate(changeRateText));
         }
     }, [changeRateText]);
@@ -173,13 +180,13 @@ const SavingsSelection = ({ printState }: any) => {
     }, [generateCloneRefresh]);
 
     const errorForClonedCopiesCount = () => {
-        if (noOfClonedCopies > 10) {
+        if (noOfClonedCopies > MAX_CLONED_COPIES) {
             return GENERAL.CLONED_COPIES_MAX_LIMIT;
         }
     };
 
     const errorForChangeRate = () => {
-        if (monthlyChangeRateNo > 100) {
+        if (monthlyChangeRateNo > MAX_MONTHLY_CHANGE_RATE) {
             return GENERAL.CHANGE_RATE_MAX_LIMIT;
         }
     };

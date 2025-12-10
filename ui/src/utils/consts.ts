@@ -661,6 +661,10 @@ export const LOG_ANALYZER_POLLING_INTERVAL = 5000;
 
 export const SC_JOB_INTERVAL = 5000;
 
+export const MAX_CLONED_COPIES = 10;
+
+export const MAX_MONTHLY_CHANGE_RATE = 100;
+
 export const INVENTORY_STATUS = {
     MANAGED: 'Managed',
     UNMANAGED: 'Unmanaged',

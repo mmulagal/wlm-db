@@ -24,7 +24,7 @@ import {
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 import { generateManualStorageSavingsPayload } from './savingsUtil';
-import { SAVINGS_CALC_MODE } from '../../../utils/consts';
+import { MAX_CLONED_COPIES, MAX_MONTHLY_CHANGE_RATE, SAVINGS_CALC_MODE } from '../../../utils/consts';
 
 const SavingsCalculatorManualApi = () => {
     const dispatch = useAppDispatch();
@@ -165,7 +165,9 @@ const SavingsCalculatorManualApi = () => {
                 !instanceTypeLoading &&
                 selectedManualRegion &&
                 numberOfClonedCopies &&
+                numberOfClonedCopies <= MAX_CLONED_COPIES &&
                 monthlyChangeRate &&
+                Number(monthlyChangeRate) <= MAX_MONTHLY_CHANGE_RATE &&
                 volumeFilledStatus &&
                 selectedManualInstanceType &&
                 payload?.ec2Instances[0]?.volumes.length
@@ -213,9 +215,9 @@ const SavingsCalculatorManualApi = () => {
 
             const checkValidation = () => {
                 if (
-                    numberOfClonedCopies <= 10 &&
+                    numberOfClonedCopies <= MAX_CLONED_COPIES &&
                     numberOfClonedCopies > 0 &&
-                    Number(monthlyChangeRate) <= 100 &&
+                    Number(monthlyChangeRate) <= MAX_MONTHLY_CHANGE_RATE &&
                     Number(monthlyChangeRate) > 0 &&
                     Number(selectedManualFSXIOPS) > 96 &&
                     Number(selectedManualFSXIOPS) < 400000 &&
