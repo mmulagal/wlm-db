@@ -229,6 +229,7 @@ async function updateFsxCapacity(
         logger.debug('FSX file system capacity updated successfully:', response);
     } catch (err) {
         logger.error('Error updating file system capacity:', err);
+        throw err;
     }
 }
 

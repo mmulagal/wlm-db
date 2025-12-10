@@ -146,18 +146,22 @@ async function headroomOptimization(
             });
             const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
             const existingFsxStorageCapacityGiB = fileSystem?.StorageCapacity;
-            const newFsxStorageCapactiyGiB = calculateFsxStorageCapacityForHeadroomOptimization(
+            const newFsxStorageCapacityGiB = calculateFsxStorageCapacityForHeadroomOptimization(
                 totalUsed,
                 ssdStorageCapacityInBytes,
                 resourceType
             );
-            if (existingFsxStorageCapacityGiB && existingFsxStorageCapacityGiB < newFsxStorageCapactiyGiB) {
-                return updateFsxCapacity(credentialsId, region, accountId, fileSystemId, newFsxStorageCapactiyGiB);
+            if (existingFsxStorageCapacityGiB && existingFsxStorageCapacityGiB < newFsxStorageCapacityGiB) {
+                await updateFsxCapacity(credentialsId, region, accountId, fileSystemId, newFsxStorageCapacityGiB);
+            } else {
+                jobStatus = JOBSTATUS.WARNING;
+                errorMessage =
+                    'Headroom configuration changed since the last assessment and meets best practices. No action required.';
             }
-            errorMessage =
-                'Headroom configuration changed since the last assessment and meets best practices. No action required.';
+        } else {
+            jobStatus = JOBSTATUS.WARNING;
+            errorMessage = `Headroom is more than ${minOptimizedHeadroomPercent}%, no action required`;
         }
-        errorMessage = `Headroom is more than ${minOptimizedHeadroomPercent}%, no action required`;
     } catch (error) {
         errorMessage = `Error while fixing headroom sizing ${error}`;
         jobStatus = JOBSTATUS.FAILED;
