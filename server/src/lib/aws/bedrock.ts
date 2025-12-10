@@ -16,7 +16,7 @@ import getLogger from '../../utils/logger';
 import { MODEL_AVAILABILITY_STATUS } from '../../utils/logs-analyzer/logs-analyzer-consts';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { AWSSDKCacheParams } from '../../utils/common-types';
-import addCacheMiddleware from '../../utils/aws-sdk-middlewares';
+// import addCacheMiddleware from '../../utils/aws-sdk-middlewares';
 
 const logger = getLogger();
 
@@ -31,7 +31,7 @@ async function getBedrockClient(params: BedrockClientParams) {
     logger.debug('Getting bedrock client:', params);
 
     let client: BedrockClient;
-    const { accountId, credentialsId, region, cacheParams = {} } = params;
+    const { accountId, credentialsId, region } = params;
 
     if (!accountId || !credentialsId) {
         client = new BedrockClient({ region });
@@ -47,7 +47,8 @@ async function getBedrockClient(params: BedrockClientParams) {
             sha256: Sha256
         });
     }
-    return addCacheMiddleware(client, { ...cacheParams, credentialsId });
+    // return addCacheMiddleware(client, { ...cacheParams, credentialsId });
+    return client;
 }
 
 async function getBedrockRuntimeClient() {
