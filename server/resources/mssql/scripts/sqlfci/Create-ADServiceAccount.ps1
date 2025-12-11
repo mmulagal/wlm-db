@@ -37,7 +37,6 @@ if($DCName -eq "default" -or $DCName -eq "no-value") {
         $DomainAdminSecurePassword = $SsmParameter.domain.password
         $DomainAdminCreds = (New-Object PSCredential($DomainAdminFullUser,(ConvertTo-SecureString $DomainAdminSecurePassword -AsPlainText -Force)))
         $ServiceAccountPassword = $SsmParameter.sql[0].password
-        $ServiceAccountSecurePassword = ConvertTo-SecureString $ServiceAccountPassword -AsPlainText -Force
         $UserPrincipalName = $ServiceAccountUser + "@" + $DomainDNSName
 
        $createUserSB = {
@@ -59,10 +58,11 @@ if($DCName -eq "default" -or $DCName -eq "no-value") {
                 Write-Host "User already exists."
             } else {
                 Write-Host "Creating user $Using:ServiceAccountUser"
+                $ServiceAccountSecurePassword = ConvertTo-SecureString $Using:ServiceAccountPassword -AsPlainText -Force
                 $newUserParams = @{
                     Name               = $Using:ServiceAccountUser
                     UserPrincipalName  = $Using:UserPrincipalName
-                    AccountPassword    = $Using:ServiceAccountSecurePassword
+                    AccountPassword    = $ServiceAccountSecurePassword
                     Enabled            = $true
                     PasswordNeverExpires = $true
                 }
