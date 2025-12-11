@@ -37,13 +37,23 @@ async function getLogsAnalyzerBedrockRegionsList() {
         compact(
             bedrockSupportedRegionsList.map(
                 throat(5, async region => {
-                    const response = await listFoundationModels(region, { useCache: true });
-                    const { modelSummaries } = response || {};
-                    const regionSupportedModels =
-                        compact(modelSummaries?.map(({ modelId }: FoundationModelSummary) => modelId)) || [];
+                    try {
+                        const response = await listFoundationModels(region, { useCache: true });
+                        const { modelSummaries } = response || {};
+                        const regionSupportedModels =
+                            compact(modelSummaries?.map(({ modelId }: FoundationModelSummary) => modelId)) || [];
 
-                    if (LOGS_ANALYZER_MODEL_IDS.some(id => regionSupportedModels.includes(id))) {
-                        return region;
+                        if (LOGS_ANALYZER_MODEL_IDS.some(id => regionSupportedModels.includes(id))) {
+                            return region;
+                        }
+                    } catch (error) {
+                        // If we can't fetch Bedrock status for a region (e.g., isolated partition regions),
+                        // treat it as not supporting the required models
+                        logger.warn('Failed to fetch Bedrock models for region, marking as unsupported:', {
+                            region,
+                            error: error instanceof Error ? error.message : String(error)
+                        });
+                        return undefined;
                     }
                 })
             )

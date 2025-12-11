@@ -1793,7 +1793,16 @@ enum CLONE_ACTION {
     REFRESH = 'refresh'
 }
 
-const RESTRICTED_FSX_REGIONS: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
+const RESTRICTED_FSX_REGIONS: Array<string> = [
+    'us-gov-east-1',
+    'us-gov-west-1',
+    'cn-north-1',
+    'cn-northwest-1',
+    'eusc-de-east-1',
+    'us-iso-east-1',
+    'us-iso-west-1',
+    'us-isob-east-1'
+];
 
 const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'netapp/wlmdb/ssm-response';
 const CLONE_AGE: number = config.has('clone-age-in-days') ? config.get('clone-age-in-days') : 60; // Fall Back to 60 days as default if not set in config
