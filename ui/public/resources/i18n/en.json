@@ -80,14 +80,14 @@
             "preferred-ou-path": "Preferred organizational unit path",
             "target-ad-group": "Target Active Directory group",
             "optional": "Optional",
-            "preferred-domain-controller-tooltip": "Optionally, enter the preferred domain controller to use for the Active Directory to join.",
-            "preferred-ou-path-tooltip": "Optionally, enter the preferred organizational unit (OU) in the Active Directory to join.(e.g., OU=Sales,OU=Users,DC=example,DC=com)",
-            "target-ad-group-tooltip": "Optionally, enter the target Active Directory group to add the computers to.",
+            "preferred-domain-controller-tooltip": "Preferred server in Active Directory that SQL Server nodes should use for authentication and services.",
+            "preferred-ou-path-tooltip": "Hierarchical address for a container (OU) in the Active Directory, showing its location from the domain root (example: OU=Sales,OU=Users,DC=example,DC=com)",
+            "target-ad-group-tooltip": "Computer group in AD that the SQL Server nodes should be added to.",
             "use-managed-service-account": "Select to Use managed service account for the SQL Server service account.",
             "managed-service-account-info": "When enabled, a password is not required for the service account.",
             "managed-service-account-tooltip": "Enable for Group Managed Service Accounts (gMSA) to simplify credential rotation.",
             "database-credential-text": "Enter a user name and password for a new service account or use existing service account credentials in the Active Directory.",
-            "invalid-ou-path-format": "Invalid format. Proper format: (e.g., OU=Sales,OU=Users,DC=example,DC=com)"
+            "invalid-ou-path-format": "Invalid format. Proper format: (example: OU=Sales,OU=Users,DC=example,DC=com)"
         },
         "banner": {
             "pgsql-deployment": "Deployment",
