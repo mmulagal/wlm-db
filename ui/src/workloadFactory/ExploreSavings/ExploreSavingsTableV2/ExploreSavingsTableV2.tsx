@@ -214,7 +214,8 @@ const ExploreSavingsTableV2 = () => {
                         navigate,
                         () => closeDialog(),
                         t,
-                        registerResourceCredBulk
+                        registerResourceCredBulk,
+                        false
                     );
                 }}
             />
@@ -243,7 +244,8 @@ const ExploreSavingsTableV2 = () => {
                         navigate,
                         () => closeDialog(),
                         t,
-                        registerResourceCredBulk
+                        registerResourceCredBulk,
+                        false
                     );
                 }}
                 customClass={styles.protectionDialog}

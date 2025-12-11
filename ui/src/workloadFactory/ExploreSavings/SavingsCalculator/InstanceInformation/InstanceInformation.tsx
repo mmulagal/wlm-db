@@ -23,7 +23,19 @@ const InstanceInformation = ({ host }: { host?: any }) => {
 
     useEffect(() => {
         if (selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES) {
-            const currentHost = host || selectedHostDetails;
+            let currentHost = host || selectedHostDetails;
+
+            // If host prop exists and matches selectedHostDetails, prefer selectedHostDetails for latest data
+            if (
+                host &&
+                selectedHostDetails &&
+                host.ec2InstanceId === selectedHostDetails.ec2InstanceId &&
+                host.credentialId === selectedHostDetails.credentialId &&
+                host.regionId === selectedHostDetails.regionId
+            ) {
+                currentHost = selectedHostDetails;
+            }
+
             setLoading(currentHost?.loading);
             const hostName = currentHost?.name;
 
@@ -70,12 +82,13 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                 instanceTypelist = currentHost?.ec2Details?.map((inst: any) => inst?.instanceType);
             }
             const serverEdition: any = [];
+
             currentHost?.sqlServerInstances?.map((perRow: any) => {
-                if (
-                    perRow?.databaseServer?.serverEdition &&
-                    !serverEdition.includes(perRow?.databaseServer?.serverEdition)
-                ) {
-                    serverEdition.push(perRow?.databaseServer?.serverEdition);
+                // Check both nested and direct paths for serverEdition
+                const edition = perRow?.databaseServer?.serverEdition || perRow?.serverEdition;
+
+                if (edition && !serverEdition.includes(edition)) {
+                    serverEdition.push(edition);
                 }
             });
             const data: any = [

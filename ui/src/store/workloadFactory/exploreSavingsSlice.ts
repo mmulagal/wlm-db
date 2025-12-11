@@ -157,7 +157,8 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     },
     selectedAuthenticationType: '',
     showOptimizeLink: false,
-    exploreSavingsRouteTab: WLF_TABS.EXPLORE_SAVINGS_EBS
+    exploreSavingsRouteTab: WLF_TABS.EXPLORE_SAVINGS_EBS,
+    instanceDataUpdatedTrigger: null
 };
 
 const exploreSavingsSlice = createSlice({
@@ -579,6 +580,9 @@ const exploreSavingsSlice = createSlice({
                 password: '',
                 userName: ''
             };
+        },
+        setInstanceDataUpdatedTrigger(state, action: PayloadAction<string | null>) {
+            state.instanceDataUpdatedTrigger = action.payload;
         }
     }
 });
@@ -663,7 +667,8 @@ export const {
     setOnPremStorageAndComputeInfoFull,
     setSelectedEsPageInstance,
     resetServerDetailsCredentials,
-    setShowFirstTimeOptimize
+    setShowFirstTimeOptimize,
+    setInstanceDataUpdatedTrigger
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

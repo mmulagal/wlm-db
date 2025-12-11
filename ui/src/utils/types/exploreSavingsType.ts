@@ -101,6 +101,7 @@ export interface ExploreSavingsSliceEntities {
     storageSavingsOnPremLoading: boolean;
     onPremNetworkPerformance: any;
     onPremStorageAndComputeInfo: any;
+    instanceDataUpdatedTrigger: string | null;
 }
 
 export interface StorageSavingsInterface {

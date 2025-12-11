@@ -68,6 +68,7 @@ const initialInventoryV2State: InventorySliceData = {
     resetManagedData: false,
     removeSecNodeDiscoveredList: [],
     unManagedPerfInstanceIdsList: [],
+    unManagedInstanceIdsList: [],
     managedHostInstanceLoading: false,
     selectedHeaderTab: WLF_TABS.DASHBOARD,
     isRefreshed: false,
@@ -310,6 +311,9 @@ const inventoryV2Slice = createSlice({
         setUnManagedPerfInstanceIdsList: (state, action: PayloadAction<any>) => {
             state.unManagedPerfInstanceIdsList = action.payload;
         },
+        setUnManagedInstanceIdsList: (state, action: PayloadAction<any>) => {
+            state.unManagedInstanceIdsList = action.payload;
+        },
         setManagedHostInstanceLoading: (state, action: PayloadAction<any>) => {
             state.managedHostInstanceLoading = action.payload;
         },
@@ -546,6 +550,7 @@ export const {
     setResetManagedData,
     setRemoveSecNodeDiscoveredList,
     setUnManagedPerfInstanceIdsList,
+    setUnManagedInstanceIdsList,
     setManagedHostInstanceLoading,
     setSelectedHeaderTab,
     setIsRefreshed,

@@ -78,6 +78,7 @@ export interface InventorySliceData {
     resetManagedData: boolean;
     removeSecNodeDiscoveredList: Array<string>;
     unManagedPerfInstanceIdsList: Array<string>;
+    unManagedInstanceIdsList: Array<string>;
     managedHostInstanceLoading: boolean;
     selectedHeaderTab: string;
     isRefreshed: boolean;

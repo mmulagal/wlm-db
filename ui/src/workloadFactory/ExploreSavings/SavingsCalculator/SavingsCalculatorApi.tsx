@@ -31,7 +31,8 @@ import {
     setStorageSavingsResponse,
     setViewCalculationsApiResponse,
     setViewCalculationsLoading,
-    setViewCalculationsResponse
+    setViewCalculationsResponse,
+    setInstanceDataUpdatedTrigger
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { setTriggerBulkDataFetch } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import store from '../../../store/store';
@@ -48,7 +49,7 @@ import {
     SAVINGS_CALC_MODE,
     SNAPSHOT_FREQUENCY
 } from '../../../utils/consts';
-import { addInstanceIdToGetPerf, uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
+import { addInstanceIdToGetPerf, addInstanceIdToGetInstance, uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { checkIfEbsProtected, prepareStorageSavingsData, prepareViewCalcData } from './savingsUtil';
 
 interface ONPREM_PAYLOAD {
@@ -92,13 +93,15 @@ const SavingsCalculatorApi = () => {
         onPremStorageAndComputeInfo,
         selectedExCredId,
         selectedExRegionId,
-        showOptimizeMode
+        showOptimizeMode,
+        instanceDataUpdatedTrigger
     } = useAppSelector(state => state.exploreSavings);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const { ebsTCOAction, selectedRowsForExploreSavingsEBSBulk, triggerBulkDataFetch } = useAppSelector(
         state => state.exploreSavingsBulk
     );
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const mssqlInstancesData = useAppSelector(state => state.inventoryV2.mssqlInstancesData);
 
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
     const [getViewCalculationsApi] = useGetViewCalculationsMutation();
@@ -505,21 +508,31 @@ const SavingsCalculatorApi = () => {
 
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
-            // If selected snapshot frequency has some value than trigger TCO APIs else call instance api ti get protection.
+            // If selected snapshot frequency has some value than trigger TCO APIs else call instance api to get protection.
             if (selectedHostDetails && Object.keys(selectedHostDetails).length !== 0) {
-                const isProtectionData = checkIfEbsProtected();
-                if (isProtectionData !== '' || selectedSnapshotFrequency) {
-                    dispatch(setDisableState(false));
-                    triggerRefreshApi();
+                // Check if instance API has already been called for this host
+                const uniqueHostId = uniqueHostRow(
+                    selectedHostDetails?.ec2InstanceId,
+                    selectedHostDetails?.credentialId,
+                    selectedHostDetails?.regionId
+                );
+                const hasInstanceApiData = mssqlInstancesData && mssqlInstancesData[uniqueHostId];
+
+                if (hasInstanceApiData || selectedSnapshotFrequency) {
+                    // Instance API was already called, check protection data and trigger TCO APIs
+                    const isProtectionData = checkIfEbsProtected();
+                    if (isProtectionData !== '' || selectedSnapshotFrequency) {
+                        dispatch(setDisableState(false));
+                        triggerRefreshApi();
+                    }
                 } else {
-                    // If protection data is not present as of now instance api is not getting called so by default setting to daily as for Unknown Protection we are doing the same
-                    dispatch(setSnapshotLoading(false));
+                    // Instance API not called yet, call the instance api with all the fields including protection
                     dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
+                    // Call instance API
+                    dispatch(setSnapshotLoading(true));
+                    addInstanceIdToGetInstance(selectedHostDetails, dispatch);
                     triggerRefreshApi();
-                    // @Todo: check on instance API call
-                    // dispatch(setSnapshotLoading(true));
-                    // // This is similar to expand row in inventory. It will call instance API to get protection data.
-                    // addInstanceIdToGetPerf(selectedHostDetails, dispatch);
+                    dispatch(setSnapshotLoading(false));
                 }
             }
         } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
@@ -547,14 +560,28 @@ const SavingsCalculatorApi = () => {
             // Then trigger the API calls
             if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
                 if (selectedHostDetails && Object.keys(selectedHostDetails).length !== 0) {
-                    const isProtectionData = checkIfEbsProtected();
-                    if (isProtectionData !== '' || selectedSnapshotFrequency) {
-                        dispatch(setDisableState(false));
-                        triggerRefreshApi();
+                    // Check if instance API has already been called for this host
+                    const uniqueHostId = uniqueHostRow(
+                        selectedHostDetails?.ec2InstanceId,
+                        selectedHostDetails?.credentialId,
+                        selectedHostDetails?.regionId
+                    );
+                    const hasInstanceApiData = mssqlInstancesData && mssqlInstancesData[uniqueHostId];
+
+                    if (hasInstanceApiData || selectedSnapshotFrequency) {
+                        // Instance API was already called, check protection data and trigger TCO APIs
+                        const isProtectionData = checkIfEbsProtected();
+                        if (isProtectionData !== '' || selectedSnapshotFrequency) {
+                            dispatch(setDisableState(false));
+                            triggerRefreshApi();
+                        }
                     } else {
-                        dispatch(setSnapshotLoading(false));
+                        // Instance API not called yet, call the instance api with all the fields including protection
                         dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[1]));
+                        dispatch(setSnapshotLoading(true));
+                        addInstanceIdToGetInstance(selectedHostDetails, dispatch);
                         triggerRefreshApi();
+                        dispatch(setSnapshotLoading(false));
                     }
                 }
             } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
@@ -704,6 +731,26 @@ const SavingsCalculatorApi = () => {
         selectedOnPremRegion,
         onPremNetworkPerformance
     ]);
+
+    // Update selectedHostDetails when instance API data is received
+    // This useEffect listens to the trigger flag that gets set when instance API completes
+    useEffect(() => {
+        if (instanceDataUpdatedTrigger && savingsCalculatorFrom !== SAVINGS_CALC_MODE.ONPREM) {
+            // Find the updated row in unManagedHostFormatedList
+            const selectedRow = unManagedHostFormatedList.find(
+                (item: any) =>
+                    uniqueHostRow(item?.id, item?.credentialId, item?.regionId) === instanceDataUpdatedTrigger
+            );
+
+            // If we found the row, update selectedHostDetails and reset the trigger
+            if (selectedRow) {
+                setESInstanceData(selectedRow, dispatch);
+                dispatch(setSelectedHostDetails(selectedRow));
+                // Reset the trigger after successful update
+                dispatch(setInstanceDataUpdatedTrigger(null));
+            }
+        }
+    }, [instanceDataUpdatedTrigger, unManagedHostFormatedList]);
 
     return <></>;
 };

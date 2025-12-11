@@ -83,7 +83,16 @@ const SelectedVolumeSummary = ({ host }: { host?: any }) => {
     };
 
     useEffect(() => {
-        const currentHost = host || selectedHostDetails;
+        let currentHost = host || selectedHostDetails;
+        if (
+            host &&
+            selectedHostDetails &&
+            host.ec2InstanceId === selectedHostDetails.ec2InstanceId &&
+            host.credentialId === selectedHostDetails.credentialId &&
+            host.regionId === selectedHostDetails.regionId
+        ) {
+            currentHost = selectedHostDetails; // Use the most up-to-date data
+        }
         setLoading(currentHost?.loading || getPartnerHostDetailsLoading);
 
         const mergedEbsResourceInfo = host

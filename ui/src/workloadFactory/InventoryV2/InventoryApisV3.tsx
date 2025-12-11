@@ -95,14 +95,18 @@ import {
     updateInstancesApiResponse,
     getExploreSavingsRowsMssql
 } from './InventoryUtilsV2';
-import { setUnmanagedExploreSavingsHost } from '../../store/workloadFactory/exploreSavingsSlice';
+import {
+    setUnmanagedExploreSavingsHost,
+    setInstanceDataUpdatedTrigger
+} from '../../store/workloadFactory/exploreSavingsSlice';
 import store from '../../store/store';
 import {
     DBType,
     EBS_PROTECTED_OPTIONS,
     ERROR_ANALYZER_STATUS,
     INSTANCE_API_FIELDS,
-    SNAPSHOT_FREQUENCY
+    SNAPSHOT_FREQUENCY,
+    SAVINGS_CALC_MODE
 } from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
 import {
@@ -145,6 +149,8 @@ const InventoryApisV3 = () => {
     const pgsqlInstancesData = useAppSelector(state => state.inventoryV2.pgsqlInstancesData);
     const oracleInstancesData = useAppSelector(state => state.inventoryV2.oracleInstancesData);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
+    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
+    const unManagedInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedInstanceIdsList);
     const [runningInstanceList, setRunningInstanceList] = useState<Array<string>>([]);
     const [runningPgsqlInstanceList, setRunningPgsqlInstanceList] = useState<Array<string>>([]);
     const [runningOracleInstanceList, setRunningOracleInstanceList] = useState<Array<string>>([]);
@@ -152,7 +158,6 @@ const InventoryApisV3 = () => {
     const [runningManagedAssessmentList, setRunningManagedAssessmentList] = useState<Array<string>>([]);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
-    const unManagedPerfInstanceIdsList = useAppSelector(state => state.inventoryV2.unManagedPerfInstanceIdsList);
     const allmssqlHostAssessmentDataS = useAppSelector(state => state.inventoryV2.allmssqlHostAssessmentData);
     const allOracleHostAssessmentDataS = useAppSelector(state => state.inventoryV2.allOracleHostAssessmentData);
     const allLogAnalysisDataS = useAppSelector(state => state.inventoryV2.allLogAnalysisData);
@@ -163,6 +168,11 @@ const InventoryApisV3 = () => {
     );
     const dashSandboxSavingsData = useAppSelector(state => state.inventoryV2.dashSandboxSavings.data);
     const dashSandboxListData = useAppSelector(state => state.inventoryV2.dashSandboxList.data);
+
+    // Get Explore Savings state to determine if we should trigger updates
+    const { selectedInstanceId, selectedExCredId, selectedExRegionId, savingsCalculatorFrom } = useAppSelector(
+        state => state.exploreSavings
+    );
 
     const [credId, setCredId] = useState(headerSelectedCred?.data?.credentialsId || '');
     const [regionId, setRegionId] = useState(headerSelectedRegion?.data?.regionCode || '');
@@ -1023,6 +1033,10 @@ const InventoryApisV3 = () => {
             });
             if (result && !result?.error) {
                 const mssqlInstancesDataRes: any = {};
+                const perfMssqlInstancesDataRes: any = {};
+                const state = store.getState();
+                const unManagedInstanceIdsListData = state.inventoryV2.unManagedInstanceIdsList;
+
                 result?.data?.items?.map((host: any) => {
                     const partnerInstanceId = getPartnerInstanceId(host, host?.id);
                     if (
@@ -1042,7 +1056,6 @@ const InventoryApisV3 = () => {
                         ]);
                     }
 
-                    const state = store.getState();
                     const unManagedPerfInstanceIdsListData = state.inventoryV2.unManagedPerfInstanceIdsList;
                     if (
                         partnerInstanceId &&
@@ -1074,6 +1087,27 @@ const InventoryApisV3 = () => {
                             ]?.fields
                         };
                     }
+
+                    // Check if this API call is from unManagedInstanceIdsList (Explore Savings auth flow)
+                    // If so, also update perfMssqlInstancesData to ensure protection and performance data flows to selectedHostDetails
+                    const isFromExploreSavingsAuth = unManagedInstanceIdsListData.includes(
+                        uniqueHostRow(host?.id, instanceCredId, instanceRegionId)
+                    );
+                    if (isFromExploreSavingsAuth) {
+                        perfMssqlInstancesDataRes[uniqueHostRow(host?.id, instanceCredId, instanceRegionId)] = {
+                            isManagedHost:
+                                perfMssqlInstancesDataRef.current?.[
+                                    uniqueHostRow(host?.id, instanceCredId, instanceRegionId)
+                                ]?.isManagedHost ?? isManagedHost,
+                            loading: false,
+                            data: host,
+                            error: host?.errors,
+                            fields:
+                                perfMssqlInstancesDataRef.current?.[
+                                    uniqueHostRow(host?.id, instanceCredId, instanceRegionId)
+                                ]?.fields ?? fields
+                        };
+                    }
                 });
                 if (!mssqlInstancesDataRes?.[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]) {
                     mssqlInstancesDataRes[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
@@ -1088,7 +1122,40 @@ const InventoryApisV3 = () => {
                         ]?.fields
                     };
                 }
+
+                const isFromExploreSavingsAuth = unManagedInstanceIdsListData.includes(
+                    uniqueHostRow(instanceId, instanceCredId, instanceRegionId)
+                );
+                if (
+                    isFromExploreSavingsAuth &&
+                    !perfMssqlInstancesDataRes?.[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)]
+                ) {
+                    perfMssqlInstancesDataRes[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
+                        isManagedHost:
+                            perfMssqlInstancesDataRef.current?.[
+                                uniqueHostRow(instanceId, instanceCredId, instanceRegionId)
+                            ]?.isManagedHost ?? isManagedHost,
+                        loading: false,
+                        data: null,
+                        error: null,
+                        fields:
+                            perfMssqlInstancesDataRef.current?.[
+                                uniqueHostRow(instanceId, instanceCredId, instanceRegionId)
+                            ]?.fields ?? fields
+                    };
+                }
+
                 dispatch(setMssqlInstancesData({ ...mssqlInstancesDataRef.current, ...mssqlInstancesDataRes }));
+
+                // Also dispatch perfMssqlInstancesData if this is from Explore Savings auth flow
+                if (isFromExploreSavingsAuth && Object.keys(perfMssqlInstancesDataRes).length > 0) {
+                    dispatch(
+                        setPerfMssqlInstancesData({
+                            ...perfMssqlInstancesDataRef.current,
+                            ...perfMssqlInstancesDataRes
+                        })
+                    );
+                }
             } else {
                 const mssqlInstancesDataErr: any = {};
                 mssqlInstancesDataErr[uniqueHostRow(instanceId, instanceCredId, instanceRegionId)] = {
@@ -2023,6 +2090,16 @@ const InventoryApisV3 = () => {
         }
     }, [unManagedPerfInstanceIdsList]);
 
+    useEffect(() => {
+        // this updates the mssqlInstancesData with instance api for explore savings page to have all the data
+        if (unManagedInstanceIdsList?.length) {
+            callInstanceApi(unManagedInstanceIdsList, false, [
+                ...INSTANCE_API_FIELDS.UNMANAGED_DEFAULT,
+                ...INSTANCE_API_FIELDS.SUB_TABLE_FIELDS
+            ]);
+        }
+    }, [unManagedInstanceIdsList]);
+
     const resetPerComboValues = () => {
         dispatch(resetPerComboData(null));
         // reset for getManagedHostList
@@ -2473,6 +2550,32 @@ const InventoryApisV3 = () => {
             const currentExploreSavings = state.exploreSavings.unmanagedExploreSavingsHost;
             if (!isEqual(exploreSavingsRows, currentExploreSavings)) {
                 dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
+
+                const {
+                    selectedInstanceId: esInstanceId,
+                    selectedExCredId: esCredId,
+                    selectedExRegionId: esRegionId,
+                    savingsCalculatorFrom: esCalcFrom
+                } = state.exploreSavings;
+                const isExploreSavingsContext =
+                    esCalcFrom === SAVINGS_CALC_MODE.AUTO_EBS || esCalcFrom === SAVINGS_CALC_MODE.AUTO_FSXW;
+
+                if (isExploreSavingsContext && esInstanceId && esCredId && esRegionId) {
+                    const selectedUniqueKey = uniqueHostRow(esInstanceId, esCredId, esRegionId);
+                    // Check if the updated data contains the selected instance
+                    const hasSelectedInstance = exploreSavingsRows.some(
+                        (row: any) => uniqueHostRow(row?.id, row?.credentialId, row?.regionId) === selectedUniqueKey
+                    );
+
+                    if (hasSelectedInstance) {
+                        const selectedRow = exploreSavingsRows.find(
+                            (row: any) => uniqueHostRow(row?.id, row?.credentialId, row?.regionId) === selectedUniqueKey
+                        );
+
+                        // Trigger the update in Explore Savings
+                        dispatch(setInstanceDataUpdatedTrigger(selectedUniqueKey));
+                    }
+                }
             }
 
             // Only call if exploreSavingsRows is not empty and has changed

@@ -9,7 +9,8 @@ import {
     setFsxCredentialStatusPgsql,
     setManagedAssessmentHostIdsList,
     setSelectedHeaderTab,
-    setUnManagedPerfInstanceIdsList
+    setUnManagedPerfInstanceIdsList,
+    setUnManagedInstanceIdsList
 } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
@@ -3451,6 +3452,45 @@ export const addInstanceIdToGetPerf = (rowData: any, dispatch: any) => {
         }
         // This has to be called even if any row is becoming unmanaged row or managed row
     }
+};
+
+export const addInstanceIdToGetInstance = (rowData: any, dispatch: any) => {
+    const state = store.getState();
+    const { unManagedInstanceIdsList, mssqlInstancesData } = state.inventoryV2;
+
+    const uniqueHostId = uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId);
+
+    // Skip if no ec2InstanceId
+    if (!rowData?.ec2InstanceId) {
+        return;
+    }
+
+    // Check if we already have instance data for this host
+    const instanceData = mssqlInstancesData?.[uniqueHostId];
+    const hasCompleteData = instanceData && !instanceData.loading && instanceData.data;
+
+    // Skip if we already have complete data OR if request is currently in progress
+    if (hasCompleteData || (unManagedInstanceIdsList.includes(uniqueHostId) && instanceData?.loading)) {
+        return;
+    }
+
+    const instanceList = [];
+    instanceList.push(uniqueHostId);
+
+    const partnerData = rowData?.ec2Details?.filter((perRow: any) => perRow?.id !== rowData?.ec2InstanceId);
+    if (partnerData && partnerData?.length > 0) {
+        const partnerHostId = uniqueHostRow(partnerData?.[0]?.id, rowData?.credentialId, rowData?.regionId);
+        const partnerData2 = mssqlInstancesData?.[partnerHostId];
+        const hasPartnerData = partnerData2 && !partnerData2.loading && partnerData2.data;
+
+        // Only add partner if we don't have its data yet
+        if (!hasPartnerData) {
+            instanceList.push(partnerHostId);
+        }
+    }
+
+    const updatedList = [...new Set([...unManagedInstanceIdsList, ...instanceList])];
+    dispatch(setUnManagedInstanceIdsList(updatedList));
 };
 
 export const addInstanceIdToGetAssessment = (rowData: any, dispatch: any) => {
