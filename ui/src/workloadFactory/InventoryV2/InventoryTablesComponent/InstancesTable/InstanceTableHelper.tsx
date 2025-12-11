@@ -14,6 +14,7 @@ import {
 import { setFSXId, setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import {
     setBreadCrumbSelectedFrom,
+    setRegisterHostType,
     setSelectedFilterValue,
     setSelectedHeaderTab,
     setSelectedInventoryTab,
@@ -182,6 +183,7 @@ export const handleInstanceMenuSelection = ({
 }: InstanceMenuSelectionParams) => {
     // resetting wizard operation type to single once out of bulk
     dispatch(setWizardOperationType('single'));
+    dispatch(setRegisterHostType(rowData.hostType));
     switch (rowData.hostType) {
         case DBType.MSSQL:
             switch (menuId) {

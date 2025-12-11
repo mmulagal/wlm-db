@@ -830,12 +830,13 @@ const RecommendationTable = ({
         if (from === WLF_TABS.DASHBOARD) {
             if (showDismissedConfigurations) {
                 return '403px';
-            } else return '393px';
-        } else {
-            if (showDismissedConfigurations) {
-                return '25%';
-            } else return '22%';
+            }
+            return '393px';
         }
+        if (showDismissedConfigurations) {
+            return '25%';
+        }
+        return '22%';
     };
 
     // In case of error message coming from API we would display the Unavailable with tooltip

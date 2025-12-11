@@ -28,6 +28,7 @@ import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import {
     setBreadCrumbSelectedFrom,
     setManageSingleInstanceData,
+    setRegisterHostType,
     setSelectedHeaderTab,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -455,6 +456,7 @@ export function getMssqlInstanceTableColumns({
                                         } else {
                                             dispatch(setManageSingleInstanceData(rowData));
                                             dispatch(setWizardOperationType('single'));
+                                            dispatch(setRegisterHostType(DBType.MSSQL));
                                             navigate('../register-wizard');
                                             dispatch(resetAgenticPreCheckData());
                                             postBlueXPMessage({

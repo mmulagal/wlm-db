@@ -114,6 +114,7 @@ export interface InventorySliceData {
     manageSingleInstanceChecks: any;
     manageSingleInstanceData: any;
     bulkDetectedInstanceList: any;
+    registerHostType: string;
 }
 
 export interface InventoryTableData {

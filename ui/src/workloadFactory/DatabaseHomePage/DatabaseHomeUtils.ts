@@ -2940,6 +2940,23 @@ export const formatAssessmentTableData = (data: any, dismissedData: any, engineT
             }
         }
     });
+
+    // If no active data than also we need to add configs from dismissed data
+    if (data?.length === 0 && dismissedData?.length > 0) {
+        dismissedData?.map((item: any) => {
+            const formattedItem = {
+                ...item,
+                name: item?.configurationName,
+                configState: item.configState,
+                dismissedObj: {
+                    configState: item.configState,
+                    startTime: item?.startTime,
+                    endTime: item?.endTime
+                }
+            };
+            result.push(formattedItem);
+        });
+    }
     return result;
 };
 

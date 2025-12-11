@@ -64,7 +64,6 @@ const OracleTabs = () => {
     }, [regionMapping, selectedGwInstanceRegionId]);
 
     const updateLogAnalyzerCheck = () => {
-        dispatch(resetEiData({}));
         const key = uniqueHostRow(waSelectedResourceId, selectedGwInstanceCredId, selectedGwInstanceRegionId);
         const logAnalyzerRow: any = allLogAnalysisData?.find(
             (perLa: any) =>

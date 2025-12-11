@@ -29,6 +29,7 @@ import { ReactComponent as NotActiveNotificationIcon } from '../../../../assets/
 import {
     setBreadCrumbSelectedFrom,
     setManageSingleInstanceData,
+    setRegisterHostType,
     setSelectedHeaderTab,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -565,6 +566,7 @@ export function getOracleDatabaseColumnsList({
                                         } else {
                                             dispatch(setManageSingleInstanceData(rowData));
                                             dispatch(setWizardOperationType('single'));
+                                            dispatch(setRegisterHostType(DBType.ORACLE));
                                             navigate('../register-wizard');
                                             postBlueXPMessage({
                                                 type: BlueXPListeners.navigate,

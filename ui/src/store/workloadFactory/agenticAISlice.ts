@@ -115,7 +115,10 @@ const agenticAISlice = createSlice({
         setErrorInvestigationData: (state, action: PayloadAction<Array<ErrorInvestigationGetApiResponse> | []>) => {
             state.errorInvestigation.errorInvestigationData = action.payload;
         },
-        setInvestigationDateData: (state, action: PayloadAction<Array<{ id: string; creationTime: string }> | []>) => {
+        setInvestigationDateData: (
+            state,
+            action: PayloadAction<Array<{ id: string; creationTime: string; startTime: string; endTime: string }> | []>
+        ) => {
             state.investigationDates = action.payload;
         },
         resetEiFilters: (state, action: PayloadAction<any>) => {

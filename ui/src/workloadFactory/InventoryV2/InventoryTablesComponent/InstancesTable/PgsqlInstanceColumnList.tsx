@@ -24,6 +24,7 @@ import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.sv
 import {
     setBreadCrumbSelectedFrom,
     setManageSingleInstanceData,
+    setRegisterHostType,
     setSelectedHeaderTab,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -374,6 +375,7 @@ export function getPgsqlInstanceTableColumns({
                                         } else {
                                             dispatch(setManageSingleInstanceData(rowData));
                                             dispatch(setWizardOperationType('single'));
+                                            dispatch(setRegisterHostType(DBType.POSTGRESQL));
                                             navigate('../register-wizard');
                                             postBlueXPMessage({
                                                 type: BlueXPListeners.navigate,

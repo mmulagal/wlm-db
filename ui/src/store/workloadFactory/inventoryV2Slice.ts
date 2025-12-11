@@ -126,6 +126,7 @@ const initialInventoryV2State: InventorySliceData = {
     manageSingleInstanceChecks: null,
     manageSingleInstanceData: null,
     wizardOperationType: '',
+    registerHostType: '',
     selectedMultiDetectInstances: [],
     bulkDetectedInstanceList: [],
     landingFromWizard: false
@@ -152,6 +153,9 @@ const inventoryV2Slice = createSlice({
         },
         setWizardOperationType: (state, action: PayloadAction<any>) => {
             state.wizardOperationType = action.payload;
+        },
+        setRegisterHostType: (state, action: PayloadAction<any>) => {
+            state.registerHostType = action.payload;
         },
         setAuthenticationType: (state, action: PayloadAction<any>) => {
             state.authenticationType = action.payload;
@@ -496,6 +500,7 @@ export const {
     setLandingFromWizard,
     setSelectedMultiDetectInstances,
     setWizardOperationType,
+    setRegisterHostType,
     setInstallType,
     setAuthenticationType,
     setSelectedFilterValue,

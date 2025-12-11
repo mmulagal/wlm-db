@@ -162,7 +162,7 @@ const AnalyzeCustomTimeframe = () => {
                     label={t('databases.log-analyzer.duration')}
                     placeholder="Duration"
                     onChange={(event: React.FormEvent<HTMLInputElement>) => {
-                        const value = (event.target as HTMLInputElement).value;
+                        const { value } = event.target as HTMLInputElement;
 
                         if (value === '' || (/^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= 24)) {
                             dispatch(setCustomAnalysisDurationInHours(value));

@@ -7,6 +7,7 @@ import DetectedInstanceTable from './DetectedInstanceTable';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { BulkDetectedInstance } from '../../../../../../utils/types/registerTypes';
 import { getInstanceHeaderContent } from '../DetectInstanceHelper';
+import { DBType } from '../../../../../../utils/consts';
 
 export interface CountSummary {
     total?: number;
@@ -17,7 +18,7 @@ export interface CountSummary {
 const MultiInstanceHeader = ({ engineType }: { engineType: string }) => {
     const { t } = useTranslation();
     const { setDialog, closeDialog } = useDialog();
-    const { bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
+    const { bulkDetectedInstanceList, registerHostType } = useAppSelector(state => state.inventoryV2);
     const [countSummary, setCountSummary] = useState<CountSummary>({});
     const { selectedLabel, icon } = getInstanceHeaderContent(engineType, t);
 
@@ -43,7 +44,11 @@ const MultiInstanceHeader = ({ engineType }: { engineType: string }) => {
         setDialog(
             <div className={styles.dialogContainer}>
                 <DialogComponent
-                    header={t('databases.register-flow.multiinstance-header-dialog-heading')}
+                    header={
+                        registerHostType === DBType.MSSQL
+                            ? t('databases.register-flow.multiinstance-header-dialog-heading')
+                            : t('databases.register-flow.multidatabase-header-dialog-heading')
+                    }
                     content={<DetectedInstanceTable />}
                     primaryButton={t('databases.general.close')}
                     callback={() => {}}

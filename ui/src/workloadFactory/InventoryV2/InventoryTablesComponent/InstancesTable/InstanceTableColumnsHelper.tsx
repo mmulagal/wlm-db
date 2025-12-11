@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { DBType, INVENTORY_STATUS, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../utils/consts';
 import {
     setBreadCrumbSelectedFrom,
+    setRegisterHostType,
     setSelectedHeaderTab,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -113,6 +114,7 @@ export const optimizeAction = (rowData: any, dispatch: any) => {
     dispatch(setLogAnalyzerState(rowData?.logAnalyzer?.status));
     // resetting wizard operation type to single once out of bulk
     dispatch(setWizardOperationType('single'));
+    dispatch(setRegisterHostType(rowData.hostType));
 };
 
 export const protectionTooltipText = (data: any) => (

@@ -33,6 +33,7 @@ const ManageOnlyWizard = () => {
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
+    const { registerHostType } = useAppSelector(state => state.inventoryV2);
     const engineTypeRaw = useAppSelector(
         state => state.inventoryV2.manageSingleInstanceData?.hostType
     ) as keyof typeof manageBulkMuttionApi;
@@ -61,7 +62,11 @@ const ManageOnlyWizard = () => {
         <StepLayout>
             <Header
                 className={styles['manage-instance-wizard']}
-                title={t('databases.register-flow.register-instance')}
+                title={
+                    registerHostType === DBType.MSSQL
+                        ? t('databases.register-flow.register-instance')
+                        : t('databases.register-flow.register-database')
+                }
                 closeButtonProps={{
                     onClick: () => {
                         setTimeout(() => {

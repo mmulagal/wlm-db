@@ -166,6 +166,7 @@
             "authenticate": "Authenticate",
             "prepare": "Prepare",
             "register-instance": "Register instance",
+            "register-database": "Register database",
             "previous": "Previous",
             "next": "Next",
             "register": "Register",
@@ -189,6 +190,7 @@
             "readiness": "Readiness",
             "view-prerequisites-list": "View prerequisites list",
             "detect-instance-table-col": {
+                "database-name": "Database name",
                 "instance-name": "Instance name",
                 "host-name": "Host name",
                 "authenticated-status": "Authentication status",
@@ -223,6 +225,7 @@
             "authenticated-page-content1": "All the selected instances are authenticated",
             "authenticated-page-content2": "Continue to the next step",
             "multiinstance-header-dialog-heading": "Instance authentication and preparation status",
+            "multidatabase-header-dialog-heading": "Database authentication and preparation status",
             "selected-instances": "Selected instances",
             "selected-databases": "Selected databases",
             "successfully-authenticated": "Successfully authenticated",

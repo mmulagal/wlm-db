@@ -13,12 +13,15 @@ import { readinessString } from '../DetectInstanceHelper';
 
 const DetectedInstanceTable = () => {
     const { t } = useTranslation();
-    const { bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
+    const { bulkDetectedInstanceList, registerHostType } = useAppSelector(state => state.inventoryV2);
 
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
-            Header: t('databases.register-flow.detect-instance-table-col.instance-name'),
+            Header:
+                registerHostType === DBType.MSSQL
+                    ? t('databases.register-flow.detect-instance-table-col.instance-name')
+                    : t('databases.register-flow.detect-instance-table-col.database-name'),
             accessor: 'instanceName',
             width: '180px',
             isSortable: true

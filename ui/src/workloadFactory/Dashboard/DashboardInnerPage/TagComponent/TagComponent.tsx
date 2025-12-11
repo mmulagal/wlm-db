@@ -240,8 +240,29 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                 case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
                     setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
                     break;
-                case 'ONTAP':
-                case 'Operating system':
+                case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' },
+                        {
+                            label: t('databases.well-architect.tags.operationalExcellence'),
+                            value: 'operationalExcellence'
+                        },
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        },
+                        { label: t('databases.well-architect.tags.reliability'), value: 'reliability' }
+                    ]);
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM:
+                    setTagData([
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        },
+                        { label: t('databases.well-architect.tags.reliability'), value: 'reliability' }
+                    ]);
+                    break;
                 case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
                     setTagData([
                         {

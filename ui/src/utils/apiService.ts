@@ -132,7 +132,7 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
         const url = typeof args === 'string' ? args : args.url;
         const adjustedUrl = `${baseUrl}/${url}`;
         const adjustedArgs = typeof args === 'string' ? adjustedUrl : { ...args, url: adjustedUrl };
-        //Retry logic
+        // Retry logic
         const MAX_503_RETRIES = 3;
         let attempt = 0;
         let result: any;

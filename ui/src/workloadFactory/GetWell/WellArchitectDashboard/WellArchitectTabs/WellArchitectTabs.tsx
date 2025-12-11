@@ -45,7 +45,6 @@ const WellArchitectTabs = () => {
     };
 
     const updateLogAnalyzerCheck = () => {
-        dispatch(resetEiData({}));
         const key = uniqueHostRow(selectedResourceId, selectedGwInstanceCredId, selectedGwInstanceRegionId);
         const logAnalyzerRow: any = allLogAnalysisData?.find(
             (perLa: any) =>

@@ -11,6 +11,7 @@ import ManageOnlyWizard from './ManageOnlyWizard';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { isAlreadyDetectedCheck } from './ManageInstanceUtils';
+import { DBType } from '../../../../utils/consts';
 
 const Wizard = () => {
     const { t } = useTranslation();
@@ -19,11 +20,16 @@ const Wizard = () => {
     const dispatch = useDispatch();
 
     const { Footer: StepFooter, Content: StepContent } = stepsMap[currentStep];
+    const { registerHostType } = useAppSelector(state => state.inventoryV2);
     return (
         <StepLayout>
             <WizardHeader
                 className={styles['manage-instance-wizard']}
-                title={t('databases.register-flow.register-instance')}
+                title={
+                    registerHostType === DBType.MSSQL
+                        ? t('databases.register-flow.register-instance')
+                        : t('databases.register-flow.register-database')
+                }
                 onExit={() => {
                     setTimeout(() => {
                         dispatch(setLandingFromWizard(true));

@@ -52,6 +52,7 @@ import store from '../../../../store/store';
 import {
     setInProgressInstances,
     setInventoryTableData,
+    setRegisterHostType,
     setSelectedFilterValue,
     setSelectedMultiDetectInstances,
     setTableManageColumnState,
@@ -1085,6 +1086,7 @@ const InstancesTable = () => {
     const handleManageBulk = () => {
         dispatch(setSelectedMultiDetectInstances([]));
         dispatch(setWizardOperationType('bulk'));
+        dispatch(setRegisterHostType(selectedHostType));
         dispatch(resetAgenticPreCheckData());
         if (isWorkloadFactory) {
             navigate('../register-bulk-wizard');
