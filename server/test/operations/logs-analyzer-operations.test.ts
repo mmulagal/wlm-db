@@ -359,4 +359,411 @@ describe('Logs Analyzer Operations', () => {
             }
         });
     });
+
+    describe('Timestamp related tests', () => {
+        it('should throw error when logsAnalyzerFromTimestamp is in the future', async () => {
+            const futureTimestamp = Date.now() + 24 * 60 * 60 * 1000; // 24 hours in the future
+
+            await expect(
+                triggerLogsAnalysis(
+                    ACCOUNT_ID,
+                    TEST_CREDENTIALS_ID,
+                    TEST_REGION,
+                    TEST_RESOURCE_ID,
+                    'f4b7c5d3-e1f6-4g2a-9b5d',
+                    { logsAnalyzerFromTimestamp: futureTimestamp }
+                )
+            ).rejects.toThrow();
+        });
+
+        it('should accept valid past timestamp for logsAnalyzerFromTimestamp and use it as startTime', async () => {
+            const pastTimestamp = Date.now() - 12 * 60 * 60 * 1000; // 12 hours ago
+
+            const result = await triggerLogsAnalysis(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                TEST_RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                {
+                    logsAnalyzerFromTimestamp: pastTimestamp,
+                    logsWindowDuration: 6
+                }
+            );
+
+            expect(result).toHaveProperty('jobId');
+
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, result.jobId);
+
+            const response = await getLatestLogsAnalysisReports(
+                ACCOUNT_ID,
+                TEST_REGION,
+                TEST_CREDENTIALS_ID,
+                'mssql',
+                result.jobId
+            );
+
+            expect(response.items.length).toBeGreaterThan(0);
+            const report = response.items.find(item => item.latestReport.jobId === result.jobId);
+            expect(report).toBeDefined();
+            expect(report?.latestReport.startTime).toBeDefined();
+            // startTime should be close to the provided pastTimestamp (within a small margin)
+            if (report?.latestReport.startTime) {
+                expect(report.latestReport.startTime).toBeGreaterThanOrEqual(pastTimestamp - 1000);
+                expect(report.latestReport.startTime).toBeLessThanOrEqual(Date.now());
+            }
+        });
+
+        it('should use default 24h lookback when logsAnalyzerFromTimestamp is not provided', async () => {
+            const triggerTime = Date.now();
+
+            const result = await triggerLogsAnalysis(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                TEST_RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                {}
+            );
+
+            expect(result).toHaveProperty('jobId');
+
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, result.jobId);
+
+            const response = await getLatestLogsAnalysisReports(
+                ACCOUNT_ID,
+                TEST_REGION,
+                TEST_CREDENTIALS_ID,
+                'mssql',
+                result.jobId
+            );
+
+            expect(response.items.length).toBeGreaterThan(0);
+            const report = response.items.find(item => item.latestReport.jobId === result.jobId);
+            expect(report).toBeDefined();
+
+            if (report?.latestReport.startTime && report?.latestReport.endTime) {
+                // Default lookback is 24 hours, so startTime should be around triggerTime - 24h
+                const expectedStartTime = triggerTime - 24 * 60 * 60 * 1000;
+                expect(report.latestReport.startTime).toBeGreaterThanOrEqual(expectedStartTime - 60000);
+                expect(report.latestReport.startTime).toBeLessThanOrEqual(triggerTime);
+                // endTime should not exceed current time
+                expect(report.latestReport.endTime).toBeLessThanOrEqual(Date.now() + 60000);
+            }
+        });
+
+        it('should include startTime and endTime in latest logs analysis reports', async () => {
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, JOB_ID!);
+
+            const response = await getLatestLogsAnalysisReports(ACCOUNT_ID, TEST_REGION, TEST_CREDENTIALS_ID, 'mssql');
+
+            expect(response).toBeDefined();
+            expect(response.items.length).toBeGreaterThan(0);
+
+            response.items.forEach(item => {
+                expect(item.latestReport).toHaveProperty('startTime');
+                expect(item.latestReport).toHaveProperty('endTime');
+                if (item.latestReport.startTime !== undefined) {
+                    expect(typeof item.latestReport.startTime).toBe('number');
+                }
+                if (item.latestReport.endTime !== undefined) {
+                    expect(typeof item.latestReport.endTime).toBe('number');
+                }
+            });
+        });
+
+        it('should have startTime less than or equal to endTime in reports', async () => {
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, JOB_ID!);
+
+            const response = await getLatestLogsAnalysisReports(ACCOUNT_ID, TEST_REGION, TEST_CREDENTIALS_ID, 'mssql');
+
+            expect(response).toBeDefined();
+            expect(response.items.length).toBeGreaterThan(0);
+
+            response.items.forEach(item => {
+                if (item.latestReport.startTime !== undefined && item.latestReport.endTime !== undefined) {
+                    expect(item.latestReport.startTime).toBeLessThanOrEqual(item.latestReport.endTime);
+                }
+            });
+        });
+
+        it('should include start_time and end_time in report identifiers list', async () => {
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, JOB_ID!);
+
+            const result = await listLogsAnalysisReportsIdentifiers(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                TEST_RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d'
+            );
+
+            expect(result).toBeDefined();
+            expect(Array.isArray(result.reports)).toBe(true);
+            expect(result.reports.length).toBeGreaterThan(0);
+
+            const firstReport = result.reports[0];
+            expect(firstReport).toHaveProperty('startTime');
+            expect(firstReport).toHaveProperty('endTime');
+        });
+
+        it('should handle logsWindowDuration parameter correctly', async () => {
+            const logsWindowDuration = 10; // 10 hours
+            const pastTimestamp = Date.now() - 24 * 60 * 60 * 1000; // 24 hours ago
+
+            const result = await triggerLogsAnalysis(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                TEST_RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                { logsAnalyzerFromTimestamp: pastTimestamp, logsWindowDuration }
+            );
+
+            expect(result).toHaveProperty('jobId');
+
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, result.jobId);
+
+            const response = await getLatestLogsAnalysisReports(
+                ACCOUNT_ID,
+                TEST_REGION,
+                TEST_CREDENTIALS_ID,
+                'mssql',
+                result.jobId
+            );
+
+            expect(response).toBeDefined();
+            expect(response.items.length).toBeGreaterThan(0);
+
+            const report = response.items.find(item => item.latestReport.jobId === result.jobId);
+            expect(report).toBeDefined();
+
+            if (report && report.latestReport.startTime && report.latestReport.endTime) {
+                const durationInHours =
+                    (report.latestReport.endTime - report.latestReport.startTime) / (60 * 60 * 1000);
+                // Duration should be exactly logsWindowDuration hours (with tolerance for processing)
+                expect(durationInHours).toBeLessThanOrEqual(logsWindowDuration + 0.1);
+                expect(durationInHours).toBeGreaterThan(0);
+
+                // Verify endTime = startTime + logsWindowDuration
+                const expectedEndTime = report.latestReport.startTime + logsWindowDuration * 60 * 60 * 1000;
+                expect(report.latestReport.endTime).toBeLessThanOrEqual(expectedEndTime + 60000); // 1 min tolerance
+            }
+        });
+
+        it('should use last analysis end time as start time for subsequent analysis', async () => {
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, JOB_ID!);
+
+            const firstResponse = await getLatestLogsAnalysisReports(
+                ACCOUNT_ID,
+                TEST_REGION,
+                TEST_CREDENTIALS_ID,
+                'mssql'
+            );
+            const firstReportEndTime = firstResponse.items[0]?.latestReport?.endTime;
+
+            const { jobId: secondJobId } = await triggerLogsAnalysis(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                TEST_RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                {}
+            );
+
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, secondJobId);
+
+            const secondResponse = await getLatestLogsAnalysisReports(
+                ACCOUNT_ID,
+                TEST_REGION,
+                TEST_CREDENTIALS_ID,
+                'mssql',
+                secondJobId
+            );
+            const secondReportStartTime = secondResponse.items[0]?.latestReport?.startTime;
+
+            if (firstReportEndTime !== undefined && secondReportStartTime !== undefined) {
+                expect(secondReportStartTime).toBeGreaterThanOrEqual(firstReportEndTime);
+            }
+        });
+
+        it('should handle timestamp value of 1 to use last analysis end time', async () => {
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, JOB_ID!);
+
+            // Get the previous report's end time
+            const previousResponse = await getLatestLogsAnalysisReports(
+                ACCOUNT_ID,
+                TEST_REGION,
+                TEST_CREDENTIALS_ID,
+                'mssql'
+            );
+            const previousEndTime = previousResponse.items[0]?.latestReport?.endTime;
+
+            const result = await triggerLogsAnalysis(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                TEST_RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                { logsAnalyzerFromTimestamp: 1 }
+            );
+
+            expect(result).toHaveProperty('jobId');
+
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, result.jobId);
+
+            const response = await getLatestLogsAnalysisReports(
+                ACCOUNT_ID,
+                TEST_REGION,
+                TEST_CREDENTIALS_ID,
+                'mssql',
+                result.jobId
+            );
+
+            expect(response.items.length).toBeGreaterThan(0);
+            const report = response.items.find(item => item.latestReport.jobId === result.jobId);
+            expect(report).toBeDefined();
+
+            // When timestamp is 1, startTime should be >= previous end time (if exists)
+            if (previousEndTime !== undefined && report?.latestReport.startTime) {
+                expect(report.latestReport.startTime).toBeGreaterThanOrEqual(previousEndTime);
+            }
+        });
+
+        it('should cap endTime at current timestamp', async () => {
+            const logsWindowDuration = 48; // 48 hours - longer than time since startTime
+            const pastTimestamp = Date.now() - 2 * 60 * 60 * 1000; // 2 hours ago
+
+            const result = await triggerLogsAnalysis(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                TEST_RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                { logsAnalyzerFromTimestamp: pastTimestamp, logsWindowDuration }
+            );
+
+            expect(result).toHaveProperty('jobId');
+
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, result.jobId);
+
+            const response = await getLatestLogsAnalysisReports(
+                ACCOUNT_ID,
+                TEST_REGION,
+                TEST_CREDENTIALS_ID,
+                'mssql',
+                result.jobId
+            );
+
+            expect(response.items.length).toBeGreaterThan(0);
+            const report = response.items.find(item => item.latestReport.jobId === result.jobId);
+            expect(report).toBeDefined();
+
+            // endTime should be capped at current time, not startTime + 48 hours
+            if (report?.latestReport.endTime && report?.latestReport.startTime) {
+                // endTime should not exceed current time (with small buffer for execution time)
+                expect(report.latestReport.endTime).toBeLessThanOrEqual(Date.now() + 60000);
+                // endTime should be close to triggerTime, not pastTimestamp + 48 hours
+                const expectedUncappedEnd = pastTimestamp + logsWindowDuration * 60 * 60 * 1000;
+                expect(report.latestReport.endTime).toBeLessThan(expectedUncappedEnd);
+            }
+        });
+
+        it('should accept current timestamp as valid logsAnalyzerFromTimestamp', async () => {
+            const currentTimestamp = Date.now();
+
+            const result = await triggerLogsAnalysis(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                TEST_RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                { logsAnalyzerFromTimestamp: currentTimestamp }
+            );
+
+            expect(result).toHaveProperty('jobId');
+
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, result.jobId);
+
+            const response = await getLatestLogsAnalysisReports(
+                ACCOUNT_ID,
+                TEST_REGION,
+                TEST_CREDENTIALS_ID,
+                'mssql',
+                result.jobId
+            );
+
+            expect(response.items.length).toBeGreaterThan(0);
+            const report = response.items.find(item => item.latestReport.jobId === result.jobId);
+            expect(report).toBeDefined();
+
+            if (report?.latestReport.startTime && report?.latestReport.endTime) {
+                // startTime should be close to currentTimestamp
+                expect(report.latestReport.startTime).toBeGreaterThanOrEqual(currentTimestamp - 1000);
+                // endTime should be close to startTime (since we started from current time)
+                expect(report.latestReport.endTime).toBeGreaterThanOrEqual(report.latestReport.startTime);
+                expect(report.latestReport.endTime).toBeLessThanOrEqual(Date.now() + 60000);
+            }
+        });
+
+        it('should calculate analysisEndTimeFinal correctly with logsWindowDuration', async () => {
+            const logsWindowDuration = 6; // 6 hours
+            const pastTimestamp = Date.now() - 2 * 60 * 60 * 1000; // 2 hours ago
+
+            const result = await triggerLogsAnalysis(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                TEST_RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                { logsAnalyzerFromTimestamp: pastTimestamp, logsWindowDuration }
+            );
+
+            expect(result).toHaveProperty('jobId');
+
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, result.jobId);
+
+            const response = await getLatestLogsAnalysisReports(
+                ACCOUNT_ID,
+                TEST_REGION,
+                TEST_CREDENTIALS_ID,
+                'mssql',
+                result.jobId
+            );
+
+            expect(response.items.length).toBeGreaterThan(0);
+            const report = response.items.find(item => item.latestReport.jobId === result.jobId);
+            expect(report).toBeDefined();
+            if (report?.latestReport.endTime) {
+                expect(report.latestReport.endTime).toBeLessThanOrEqual(Date.now());
+            }
+        });
+
+        it('should store analysisStartTime and analysisEndTime from response when available', async () => {
+            const result = await triggerLogsAnalysis(
+                ACCOUNT_ID,
+                TEST_CREDENTIALS_ID,
+                TEST_REGION,
+                TEST_RESOURCE_ID,
+                'f4b7c5d3-e1f6-4g2a-9b5d',
+                {}
+            );
+
+            await waitForJobCompletion(ACCOUNT_ID, TEST_CREDENTIALS_ID, TEST_REGION, result.jobId);
+
+            const response = await getLatestLogsAnalysisReports(
+                ACCOUNT_ID,
+                TEST_REGION,
+                TEST_CREDENTIALS_ID,
+                'mssql',
+                result.jobId
+            );
+
+            expect(response.items.length).toBeGreaterThan(0);
+            const report = response.items.find(item => item.latestReport.jobId === result.jobId);
+            expect(report).toBeDefined();
+            expect(report?.latestReport).toHaveProperty('startTime');
+            expect(report?.latestReport).toHaveProperty('endTime');
+        });
+    });
 });

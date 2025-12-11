@@ -501,6 +501,12 @@ async function handleLogsAnalysis(
         const [{ data: { startTime: analysisStartTime, endTime: analysisEndTime } = {} } = {}] =
             (jsonSsmLogsResponse as unknown as [{ data: { startTime: number; endTime: number } }]) || [];
 
+        const analysisStartTimeFinal = analysisStartTime
+            ? new Date(analysisStartTime)
+            : new Date(logsAnalyzerFromTimestamp);
+        const analysisEndTimeFinal = analysisEndTime
+            ? new Date(analysisEndTime)
+            : new Date(Math.min(logsAnalyzerFromTimestamp + (logsWindowDuration || 24) * 60 * 60 * 1000, Date.now()));
         await updateLogsAnalysisReportsInDB(
             accountId,
             credentialsId,
@@ -509,10 +515,8 @@ async function handleLogsAnalysis(
             jobId,
             databaseType,
             jsonSsmLogsResponse,
-            analysisStartTime ? new Date(analysisStartTime) : new Date(logsAnalyzerFromTimestamp),
-            analysisEndTime
-                ? new Date(analysisEndTime)
-                : new Date(logsAnalyzerFromTimestamp + (logsWindowDuration || 24) * 60 * 60 * 1000)
+            analysisStartTimeFinal,
+            analysisEndTimeFinal
         );
         await updateLongRunningAuditGroup(AuditStatus.SUCCESS, 'Logs analysis completed successfully');
         const {
@@ -567,15 +571,25 @@ async function getTimestampToProcessLogs(
     const report = await getLastAnalysisData(accountId, databaseHostId, databaseInstanceId);
 
     let timestampLastLogProcessed = Date.now() - ms('24h');
+
     if (logsAnalyzerFromTimestamp !== 1) {
         // If logsAnalyzerFromTimestamp is not 1 (1 is the default value indicating beginning of time), there is a user input passed down, use the provided timestamp
         logger.info('Using provided logsAnalyzerFromTimestamp:', logsAnalyzerFromTimestamp);
-        timestampLastLogProcessed = logsAnalyzerFromTimestamp;
+        timestampLastLogProcessed = logsAnalyzerFromTimestamp > Date.now() ? Date.now() : logsAnalyzerFromTimestamp; // if provided timestamp is in future, use current time
     } else if (report && !isEmpty(report)) {
         // If report exists, use the end time of the last report
         logger.debug('Using end time from the last logs analysis report');
         const { end_time: endTime } = report;
-        timestampLastLogProcessed = endTime ? endTime.getTime() : timestampLastLogProcessed;
+
+        // if endTIme is not older than a day(24hours), use endTime of the last report as the timestamp, else use 24 hours back from current time
+        if (ms('24h') > Date.now() - (endTime ? endTime.getTime() : 0)) {
+            // endTime is within last 24 hours
+            timestampLastLogProcessed = endTime ? endTime.getTime() : timestampLastLogProcessed;
+        } else {
+            // endTime is older than 24 hours
+            logger.debug('Last report end time is older than 24 hours, using 24 hours back from current time');
+            timestampLastLogProcessed = Date.now() - ms('24h');
+        }
     }
     return timestampLastLogProcessed;
 }
@@ -596,6 +610,11 @@ async function triggerLogsAnalysis(
         databaseInstanceId,
         scanParams
     });
+
+    if (scanParams.logsAnalyzerFromTimestamp && scanParams.logsAnalyzerFromTimestamp > Date.now()) {
+        throw createError(HttpErrorCodes.BAD_REQUEST, 'Logs analysis start time cannot be in the future');
+    }
+
     const paginatedResponse = await getPaginatedDatabaseInstances(accountId, {
         credentialsId,
         region,
