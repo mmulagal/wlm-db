@@ -631,7 +631,7 @@ const DashboardMultiTableConfig = ({
         );
 
         const onOuterScroll = () => {
-            if (!innerScrollEl) {
+            if (!innerScrollEl || !innerScrollEl.isConnected) {
                 innerScrollEl = root.querySelector<HTMLElement>(
                     "[class*='expanded-row-section'] [class*='horizontal-scroll']"
                 );
@@ -644,10 +644,16 @@ const DashboardMultiTableConfig = ({
 
         const attachListeners = () => {
             requestAnimationFrame(() => {
-                outerScrollEl = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
-                innerScrollEl = root.querySelector<HTMLElement>(
+                const latestOuter = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
+                const latestInner = root.querySelector<HTMLElement>(
                     "[class*='expanded-row-section'] [class*='horizontal-scroll']"
                 );
+
+                if (outerScrollEl && latestOuter && outerScrollEl !== latestOuter) {
+                    outerScrollEl.removeEventListener('scroll', onOuterScroll);
+                }
+                outerScrollEl = latestOuter || outerScrollEl;
+                innerScrollEl = latestInner || innerScrollEl;
 
                 if (outerScrollEl) {
                     outerScrollEl.addEventListener('scroll', onOuterScroll, { passive: true });
@@ -662,12 +668,19 @@ const DashboardMultiTableConfig = ({
         attachListeners();
 
         const observer = new MutationObserver(() => {
+            const maybeOuter = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
             const maybeInner = root.querySelector<HTMLElement>(
                 "[class*='expanded-row-section'] [class*='horizontal-scroll']"
             );
-            if (!innerScrollEl && maybeInner) {
+
+            if (maybeOuter && maybeOuter !== outerScrollEl) {
+                if (outerScrollEl) outerScrollEl.removeEventListener('scroll', onOuterScroll);
+                outerScrollEl = maybeOuter;
+                outerScrollEl.addEventListener('scroll', onOuterScroll, { passive: true });
+            }
+
+            if (maybeInner && maybeInner !== innerScrollEl) {
                 innerScrollEl = maybeInner;
-                // Run one sync tick
                 onOuterScroll();
             }
         });
@@ -677,7 +690,7 @@ const DashboardMultiTableConfig = ({
             if (outerScrollEl) outerScrollEl.removeEventListener('scroll', onOuterScroll);
             observer.disconnect();
         };
-    }, [filteredData]);
+    }, [filteredData, showDismissed]);
     const divRef = useRef<HTMLDivElement>(null);
 
     const ExpandedRow = useCallback(
