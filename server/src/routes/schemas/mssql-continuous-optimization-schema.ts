@@ -74,6 +74,8 @@ const TriggerDriftAssessmentSchema = {
 
 const TriggerOracleDriftAssessmentSchema = {
     ...BaseTriggerDriftAssessmentSchema,
+    summary: 'Trigger assessment for a Oracle database instance',
+    description: 'Trigger assessment for best practice misalignments on a managed Oracle database instance',
     tags: [RouteTags.ORACLE_ASSESSMENT]
 };
 
@@ -155,7 +157,7 @@ const DriftAssessmentPerAccount = {
 
 const AvailableSnapshotPolicies = {
     ...resourceRequest,
-    summary: 'Get available snapshot policies',
+    summary: 'Get available snapshot policies for MSSQL database instance',
     description:
         'Get available snapshot policies for a MSSQL database instance, returns snapshot policies on cluster and SVM level',
     params: DatabaseHostOptionalInstanceSummaryParams,
@@ -195,13 +197,13 @@ const BulkOptimizeStorageSizingSchema = {
 
 const BulkOptimizeOperatingSystemSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Fix MPIO settings',
+    summary: 'Fix MPIO settings for MSSQL database',
     description: 'Fix mpio settings parameters as per the best practice for selected MSSQL database instances.'
 };
 
 const BulkOptimizeStorageTierSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Fix storage-tier',
+    summary: 'Fix storage-tier for MSSQL database',
     description: 'Fix storage-tier parameters as per the best practice for selected MSSQL database instances.'
 };
 
@@ -210,7 +212,7 @@ const BulkOptimizeComputeSchema = {
     params: AccountIdParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkOptimizeComputeRequestBody,
-    summary: 'Fix compute',
+    summary: 'Fix compute for MSSQL database',
     description: 'Fix compute parameters as per the best practice for selected MSSQL database instances.',
     response: {
         200: JobIdResponse
@@ -219,14 +221,14 @@ const BulkOptimizeComputeSchema = {
 
 const BulkOptimizeMaxDopSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Fix max-dop',
+    summary: 'Fix max-dop for MSSQL database',
     description: 'Fix max-dop parameters as per the best practice for selected MSSQL database instances.'
 };
 
 const BulkOptimizeAwsBackupSchema = {
     ...resourceRequest,
-    summary: 'Enable scheduled AWS FSx for ONTAP backups',
-    description: 'Enable scheduled AWS FSx for ONTAP backups.',
+    summary: 'Enable scheduled AWS FSx for ONTAP backups for MSSQL',
+    description: 'Enable scheduled AWS FSx for ONTAP backups for MSSQL.',
     params: AccountIdParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkOptimizeBackupRequestBody,
@@ -239,7 +241,7 @@ const BaseBulkDismissConfigurationSchema = {
     params: AccountIdParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkDismissConfigurationRequestBody,
-    summary: 'Dismiss Assessment Configurations',
+    summary: 'Dismiss Assessment Configurations for MSSQL database',
     description: 'Dismiss Assessment Configurations for selected MSSQL database instances.',
     response: {
         200: BulkDismissConfigurationResponse
@@ -253,6 +255,8 @@ const BulkDismissConfigurationSchema = {
 
 const BulkDismissOracleConfigurationSchema = {
     ...BaseBulkDismissConfigurationSchema,
+    summary: 'Dismiss Assessment Configurations for Oracle database',
+    description: 'Dismiss Assessment Configurations for selected Oracle database instances.',
     tags: [RouteTags.ORACLE_ASSESSMENT]
 };
 
@@ -272,7 +276,7 @@ const BulkOptimizeSharedStorageSchema = {
     params: AccountIdParams,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     body: BulkOptimizeHASharedStorageBody,
-    summary: 'Fix shared storage parameters as part of High Availability Cluster configuration',
+    summary: 'Fix shared storage parameters as part of High Availability Cluster configuration for MSSQL database',
     description: 'Fix shared storage parameters as per the best practice for selected MSSQL database instances.',
     response: {
         200: JobIdResponse
@@ -281,26 +285,27 @@ const BulkOptimizeSharedStorageSchema = {
 
 const BulkOptimizeHeartbeatSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Fix heartbeat settings in cluster configuration',
-    description: 'Fix heartbeat settings in cluster configuration'
+    summary: 'Fix heartbeat settings in cluster configuration for MSSQL database',
+    description: 'Fix heartbeat settings in cluster configuration for MSSQL database'
 };
 
 const BulkOptimizeClusterQuorumSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Fix cluster quorum type in cluster configuration',
-    description: 'Fix cluster quorum type in cluster configuration'
+    summary: 'Fix cluster quorum type in cluster configuration for MSSQL database',
+    description: 'Fix cluster quorum type in cluster configuration for MSSQL database'
 };
 
 const BulkOptimizeSQLServerServiceSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Fix sql server service parameters as part of High Availability Cluster configuration',
-    description: 'Fix sql server service parameters as per the best practice for selected MSSQL database instances.'
+    summary: 'Fix MSSQL server service parameters as part of High Availability Cluster configuration',
+    description: 'Fix MSSQL server service parameters as per the best practice for selected MSSQL database instances.'
 };
 
 const BulkOptimizeMTUAlignmentSchema = {
     ...BulkOptimizeGeneralSchema,
-    summary: 'Optimize MTU alignment settings',
-    description: 'Optimize MTU alignment settings to match FSx file system MTU for improved network performance.',
+    summary: 'Optimize MTU alignment settings for MSSQL database',
+    description:
+        'Optimize MTU alignment settings to match FSx file system MTU for improved network performance for MSSQL database.',
     body: BulkOptimizeMTURequestBody
 };
 
