@@ -132,8 +132,19 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
         const url = typeof args === 'string' ? args : args.url;
         const adjustedUrl = `${baseUrl}/${url}`;
         const adjustedArgs = typeof args === 'string' ? adjustedUrl : { ...args, url: adjustedUrl };
-        // provide the amended url and other params to the raw base query
-        const result: any = await rawBaseQuery(adjustedArgs, api, extraOptions);
+        //Retry logic
+        const MAX_503_RETRIES = 3;
+        let attempt = 0;
+        let result: any;
+        do {
+            result = await rawBaseQuery(adjustedArgs, api, extraOptions);
+            if (result?.error?.status === 503 && attempt < MAX_503_RETRIES) {
+                attempt += 1;
+                await delay(MIN_RETRY_DELAY);
+                continue;
+            }
+            break;
+        } while (attempt <= MAX_503_RETRIES);
         // For deploy API and discover API if it gets rate exceeded than retry that API
         if (
             (api.endpoint === 'deploySqlTemplate' ||
