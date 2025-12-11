@@ -152,7 +152,12 @@ function stringifyObject(obj: any) {
     if (obj instanceof Error) {
         return obj;
     }
-    return stringify(obj);
+    try {
+        return JSON.stringify(obj);
+    } catch (_e) {
+        // Fallback for circular references or non-serializable objects
+        return stringify(obj);
+    }
 }
 
 initialize();
