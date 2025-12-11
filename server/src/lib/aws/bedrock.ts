@@ -34,7 +34,7 @@ async function getBedrockClient(params: BedrockClientParams) {
     const { accountId, credentialsId, region } = params;
 
     if (!accountId || !credentialsId) {
-        client = new BedrockClient({ region });
+        client = new BedrockClient({ region, authSchemePreference: ['aws.auth#sigv4'] });
     } else {
         const {
             credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
