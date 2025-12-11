@@ -120,6 +120,7 @@ export const DATABASE_SERVICE_PATH = 'database-services';
 export const WORKLOADS = 'workloads';
 
 export const FROM_DIALOG = {
+    CUSTOM_TIMEFRAME: 'CustomTimeframe',
     LOAD_CONFIG: 'load_config',
     SAVE_CONFIG: 'save_config',
     HEADER_CROSS: 'header_cross',

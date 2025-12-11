@@ -21,7 +21,7 @@ import {
     useLazyGetSubTaskListQuery,
     useScanErrorInvestigationMutation
 } from '../../../../../utils/apiService';
-import { DBType, ERROR_ANALYZER_STATUS, WLF_TABS } from '../../../../../utils/consts';
+import { DBType, ERROR_ANALYZER_STATUS, FROM_DIALOG, WLF_TABS } from '../../../../../utils/consts';
 import {
     handleLogAnalyzerJob,
     logAnalyzerScanUpdate,
@@ -46,12 +46,7 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
         useAppSelector(state => state.getWellOptimize);
 
     const { data, loading } = useAppSelector(state => state.agenticAI.logAnalyzerPricing);
-    const {
-        selectedCustomAnalysisTimeFrameUnit,
-        selectedCustomAnalysisTime,
-        durationCustomAnalysis,
-        startCustomAnalysisTime
-    } = useAppSelector(state => state.agenticAI);
+
     const { data: preReqData, loading: preReqLoading } = useAppSelector(state => state.agenticAI.logAnalyzerPreReq);
 
     useEffect(() => {
@@ -92,14 +87,14 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
         let newPayload = {};
         if (type === 'custom') {
             const startTimeDate =
-                startCustomAnalysisTime &&
-                startCustomAnalysisTime.toLocaleDateString('en-US', {
+                state?.agenticAI?.startCustomAnalysisTime &&
+                state?.agenticAI?.startCustomAnalysisTime.toLocaleDateString('en-US', {
                     month: 'long',
                     day: 'numeric',
                     year: 'numeric'
                 });
 
-            const dateTimeString = `${startTimeDate} ${selectedCustomAnalysisTime?.label} ${selectedCustomAnalysisTimeFrameUnit?.label}`;
+            const dateTimeString = `${startTimeDate} ${state?.agenticAI?.selectedCustomAnalysisTime?.label} ${state?.agenticAI?.selectedCustomAnalysisTimeFrameUnit?.label}`;
 
             const localDate = new Date(dateTimeString);
 
@@ -184,6 +179,7 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
                 closeCallback={() => {
                     closeDialog();
                 }}
+                dialogFrom={FROM_DIALOG.CUSTOM_TIMEFRAME}
             />
         );
     };
@@ -207,15 +203,6 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
                             >
                                 <RefreshIcon />
                             </div>
-                            {/* <DsButton
-                                onClick={activateHandler}
-                                isThin
-                                variant="primary"
-                                isDisabled={!isActive || preReqLoading}
-                                data-testid="wlm-db-mssql-log-analyzer-activate-button"
-                            >
-                                {t('databases.log-analyzer.activate')}
-                            </DsButton> */}
 
                             <DsButton
                                 children={t('databases.log-analyzer.scan-now')}
@@ -228,7 +215,7 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
                                     items: [
                                         {
                                             id: 'wlm-db-last-24-hours',
-                                            label: 'last 24 hours',
+                                            label: 'Last 24 hours',
                                             onClick: () => {
                                                 activateHandler('manual');
                                             }

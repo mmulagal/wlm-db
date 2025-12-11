@@ -19,8 +19,8 @@
             "suffixPlural": "critical events",
             "suffixSingular": "critical event",
             "dataUrl": "/wlmdb/v1/focus-status",
-            "primaryCtaTo": "/databases/dashboard",
-            "primaryCtaBluexpTo": "/fsxdb/dashboard",
+            "primaryCtaTo": "/databases/well-architected",
+            "primaryCtaBluexpTo": "/fsxdb/well-architected",
             "primaryCtaLabel": "Databases"
         }
     ],

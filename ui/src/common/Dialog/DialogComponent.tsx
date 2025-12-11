@@ -65,6 +65,7 @@ const DialogComponent = ({
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
     const { selectedOptimizeConfig } = useAppSelector(state => state.inventoryV2);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
+    const { durationCustomAnalysis } = useAppSelector(state => state.agenticAI);
 
     // Memoize the password object to prevent unnecessary re-renders
     const fsxAdminPasswords = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
@@ -188,6 +189,13 @@ const DialogComponent = ({
             return true;
         }
         if (dialogFrom === FROM_DIALOG.WINDOWS_AUTH && (scUsername.length === 0 || scPassword.length === 0)) {
+            return true;
+        }
+        if (
+            dialogFrom === FROM_DIALOG.CUSTOM_TIMEFRAME &&
+            typeof durationCustomAnalysis === 'string' &&
+            durationCustomAnalysis.length === 0
+        ) {
             return true;
         }
         // Condition to disable Apply in FSX Admin and SQL Server password dialogs

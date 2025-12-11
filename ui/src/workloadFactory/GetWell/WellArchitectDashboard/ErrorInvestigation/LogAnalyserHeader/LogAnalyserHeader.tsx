@@ -8,7 +8,7 @@ import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
 import styles from './LogAnalyserHeader.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useLazyGetSubTaskListQuery, useScanErrorInvestigationMutation } from '../../../../../utils/apiService';
-import { WLF_TABS } from '../../../../../utils/consts';
+import { FROM_DIALOG, WLF_TABS } from '../../../../../utils/consts';
 import { handleLogAnalyzerJob, logAnalyzerScanUpdate } from '../ErrorInvestigationUtility';
 import { uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
 import DialogComponent from '../../../../../common/Dialog/DialogComponent';
@@ -31,12 +31,7 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const { selectedResourceId, selectedDatabaseInstance, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
         useAppSelector(state => state.getWellOptimize);
-    const {
-        selectedCustomAnalysisTimeFrameUnit,
-        selectedCustomAnalysisTime,
-        durationCustomAnalysis,
-        startCustomAnalysisTime
-    } = useAppSelector(state => state.agenticAI);
+
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
     const { investigationDatesLoading, noData } = useAppSelector(state => state.agenticAI);
     const { scanInProgress } = useAppSelector(state => state.agenticAI);
@@ -62,14 +57,14 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
         let newPayload = {};
         if (type === 'custom') {
             const startTimeDate =
-                startCustomAnalysisTime &&
-                startCustomAnalysisTime.toLocaleDateString('en-US', {
+                state?.agenticAI?.startCustomAnalysisTime &&
+                state?.agenticAI?.startCustomAnalysisTime.toLocaleDateString('en-US', {
                     month: 'long',
                     day: 'numeric',
                     year: 'numeric'
                 });
 
-            const dateTimeString = `${startTimeDate} ${selectedCustomAnalysisTime?.label} ${selectedCustomAnalysisTimeFrameUnit?.label}`;
+            const dateTimeString = `${startTimeDate} ${state?.agenticAI?.selectedCustomAnalysisTime?.label} ${state?.agenticAI?.selectedCustomAnalysisTimeFrameUnit?.label}`;
 
             const localDate = new Date(dateTimeString);
 
@@ -116,6 +111,7 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
                 closeCallback={() => {
                     closeDialog();
                 }}
+                dialogFrom={FROM_DIALOG.CUSTOM_TIMEFRAME}
             />
         );
     };
@@ -214,17 +210,6 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
                             </div>
                         )}
 
-                        {/* <DsButton
-                            variant="Default"
-                            isThin
-                            type="button"
-                            isDisabled={loading || scanInProgress?.[instKey]}
-                            onClick={handleScan}
-                            data-testid="wlm-db-error-investigation-investigate-now-button"
-                        >
-                            {t('databases.log-analyzer.scan-now')}
-                        </DsButton> */}
-
                         <DsButton
                             children={t('databases.log-analyzer.scan-now')}
                             variant="primary"
@@ -236,7 +221,7 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
                                 items: [
                                     {
                                         id: 'wlm-db-last-24-hours',
-                                        label: 'last 24 hours',
+                                        label: 'Last 24 hours',
                                         onClick: () => {
                                             handleScan('manual');
                                         }

@@ -984,13 +984,13 @@
         },
         "log-analyzer": {
             "error-msg": "Duration should be between 1 to 24",
-            "start": "Start",
-            "analyze-now-custom-timeframe": "Analyze now - Custom timeframe",
-            "custom-timeframe-text-1": "Specify the timeframe for the error analysis report.",
-            "custom-timeframe-text-2": "The maximum duration is 24 hours. Please select the start date, starting time, and duration.",
+            "start": "Apply",
+            "analyze-now-custom-timeframe": "Customize analysis time frame",
+            "custom-timeframe-text-1": "Select the start date, starting time, and duration (max 24 hours) for the error analysis report.",
+
             "starting-time": "Starting time",
             "duration": "Duration (hours)",
-            "selected-timeframe": "Selected timeframe",
+            "selected-timeframe": "Customized time frame",
             "tags": "Tags",
             "Compute": "Compute",
             "Storage": "Storage",

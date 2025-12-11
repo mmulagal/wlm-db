@@ -126,10 +126,10 @@ const AnalyzeCustomTimeframe = () => {
 
     return (
         <div className={styles['custom-timeframe']}>
-            <DsTypography variant="Regular_14">{t('databases.log-analyzer.custom-timeframe-text-1')}</DsTypography>
             <DsTypography variant="Regular_14" className={styles.secondText}>
-                {t('databases.log-analyzer.custom-timeframe-text-2')}
+                {t('databases.log-analyzer.custom-timeframe-text-1')}
             </DsTypography>
+
             <Datepicker value={selectedDate} onChange={handleDateChange} />
             <div className={styles.mainContainer}>
                 <div className={styles.timeContainer}>
