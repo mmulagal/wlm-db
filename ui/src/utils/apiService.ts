@@ -520,7 +520,7 @@ export const headersApi = createApi({
             query: ({ credentialId }) => ({ url: `v1/credentials/${credentialId}/fsx/regions` })
         }),
         getHeadersRegionsWithoutCred: builder.query({
-            query: () => ({ url: 'v1/fsx/regions?includeBedrockStatus=false' })
+            query: () => ({ url: 'v1/fsx/regions?includeBedrockStatus=true' })
         }),
         getStatus: builder.query({
             query: () => 'v1/status'
