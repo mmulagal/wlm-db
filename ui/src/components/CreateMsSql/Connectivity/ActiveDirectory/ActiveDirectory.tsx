@@ -22,6 +22,7 @@ import {
 } from '../../../../store/mssql/mssqlFormSlice';
 import { AWS_MANAGED_AD, USER_MANAGED_AD } from '../../../../utils/consts';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import { setOUPathValue } from '../../../../store/mssql/msSqlActionSlice';
 
 const delay = () =>
     new Promise(resolve => {
@@ -43,6 +44,7 @@ const ActiveDirectory = () => {
 
     const isADNotFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
+    const isOUPathValid = useAppSelector(state => state.msSqlAction.ouPathValid);
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
@@ -60,6 +62,7 @@ const ActiveDirectory = () => {
     const DNSAddressRef = useRef(null);
     const userNameRef = useRef(null);
     const passwordRefAD = useRef(null);
+    const ouPathRef = useRef<HTMLInputElement>(null);
 
     const [versions, setVersions] = useState<
         {
@@ -173,6 +176,14 @@ const ActiveDirectory = () => {
         useManagedServiceAccount,
         isCreateHit
     ]);
+
+    useEffect(() => {
+        if (!isOUPathValid && isCreateHit) {
+            setTimeout(() => {
+                ouPathRef?.current?.focus();
+            }, 60);
+        }
+    }, [isOUPathValid, isCreateHit]);
 
     // Set the Header text here
     const setHeader = () => {
@@ -366,10 +377,12 @@ const ActiveDirectory = () => {
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                             dispatch(setActiveDirectoryFields({ preferredOUPath: e.target.value }));
                                             dispatch(setIsWizardTouched(true));
+                                            dispatch(setOUPathValue(true));
                                         }}
                                         value={preferredOUPath}
                                         error={isValidOUPath(preferredOUPath, t)}
                                         className={styles.textField}
+                                        ref={ouPathRef}
                                     />
                                 </div>
                                 <div className={styles.thirdFieldContainer}>

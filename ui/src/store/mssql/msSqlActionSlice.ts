@@ -11,6 +11,7 @@ const initialState: any = {
     dbNameSelected: true,
     pgDbNameSelected: true,
     licenseIdSelected: true,
+    ouPathValid: true,
     isLoading: false, // To load page while create or save form or estimate cost
     isLoadConfig: false, // To show loading in load config
     isSaveConfigLoading: false, // To show loading while saving config
@@ -64,6 +65,9 @@ const msSqlActionSlice = createSlice({
         },
         setFSXNNameValue(state, action: PayloadAction<any>) {
             state.fsxNNameSelected = action.payload;
+        },
+        setOUPathValue(state, action: PayloadAction<any>) {
+            state.ouPathValid = action.payload;
         },
         setDBNameValue(state, action: PayloadAction<any>) {
             state.dbNameSelected = action.payload;
@@ -158,6 +162,7 @@ export const {
     setAZSelectedValue,
     setDBCredentialPasswordValue,
     setActiveDirectoryValue,
+    setOUPathValue,
     setFSXNNameValue,
     setDBNameValue,
     setPgDBNameValue,

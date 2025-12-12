@@ -8,6 +8,7 @@ import {
     setDBNameValue,
     setFSXNNameValue,
     setLicenseIdValue,
+    setOUPathValue,
     setVPCSelectedValue
 } from '../../../../store/mssql/msSqlActionSlice';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
@@ -211,6 +212,21 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     let payload;
     dispatch(setCreatePressed(true));
     dispatch(setCreateHit(Math.random()));
+
+    // Validate OU path format BEFORE demo mode check to block deployment in all modes
+    const isAdvancedCreate = state.mssqlForm.selectConfig === SELECT_CONFIG.STANDARD_CREATE;
+    const { preferredOUPath } = state.mssqlForm.activeDirectory;
+    const hasInvalidOUPath =
+        isAdvancedCreate &&
+        preferredOUPath &&
+        preferredOUPath.trim() !== '' &&
+        !/\b[A-Za-z]+\s*=\s*[^,]+/i.test(preferredOUPath);
+    dispatch(setOUPathValue(!hasInvalidOUPath));
+
+    if (hasInvalidOUPath) {
+        return;
+    }
+
     if (state.auth.isDemoMode) {
         payload = createMssqlPayload(state);
         console.log('Deploy Payload', payload);
@@ -316,6 +332,8 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
                 ? 'FSx'
                 : licenseIdCheck
                 ? 'License information'
+                : hasInvalidOUPath
+                ? 'Valid Organizational Unit path'
                 : '';
             if (state.chatbot.isShow) {
                 dispatch(

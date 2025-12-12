@@ -98,6 +98,7 @@ const AwsAccount = () => {
     const isProperDBName = useAppSelector(state => state.msSqlAction.dbNameSelected);
     const dbCredPassword = useAppSelector(state => state.mssqlForm.dbCredentials?.password);
     const fsxCredPassword = useAppSelector(state => state.mssqlForm.fsxN?.fsxNPassword);
+    const isOUPathValid = useAppSelector(state => state.msSqlAction.ouPathValid);
     const licenseIdSelectedCheck = useAppSelector(state => state.msSqlAction.licenseIdSelected);
     const isProperPgSqlDbName = useAppSelector(state => state.msSqlAction.pgDbNameSelected);
 
@@ -113,6 +114,7 @@ const AwsAccount = () => {
                 !isDBCredPassword ||
                 !dbPasswordValPass ||
                 !isActiveDirectoryFilled ||
+                !isOUPathValid ||
                 !isFsxNNameFilled ||
                 !fsxPasswordValPass ||
                 !licenseIdSelectedCheck ||
@@ -124,7 +126,7 @@ const AwsAccount = () => {
                 2: !isVPCNotFilled,
                 3: !isAZNotFilled,
                 11: !!(!isDBCredPassword || !dbPasswordValPass),
-                13: !isActiveDirectoryFilled,
+                13: !!(!isActiveDirectoryFilled || !isOUPathValid),
                 15: !!(!isFsxNNameFilled || !fsxPasswordValPass),
                 9: !licenseIdSelectedCheck,
                 10: !isProperDBName,
@@ -140,6 +142,7 @@ const AwsAccount = () => {
         isDBCredPassword,
         isAZNotFilled,
         isActiveDirectoryFilled,
+        isOUPathValid,
         isFsxNNameFilled,
         isProperDBName,
         dbCredPassword,
