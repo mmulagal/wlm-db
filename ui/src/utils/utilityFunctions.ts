@@ -748,10 +748,12 @@ export const formatTime = (date: string | number) => {
 };
 
 export const formatDateRange = (startTime: string | number, endTime: string | number) => {
-    const startStr = (startTime && startTime.toString()) || '';
-    const endStr = (endTime && endTime.toString()) || '';
-    const startFormatted = moment(new Date(parseInt(startStr))).format('MMMM DD, YYYY, hh:mm A');
-    const endFormatted = moment(new Date(parseInt(endStr))).format('MMMM DD, YYYY, hh:mm A');
+    const startMs = Number(startTime);
+    const endMs = Number(endTime);
+
+    const startFormatted = moment.utc(startMs).format('MMMM DD, YYYY, hh:mm A');
+    const endFormatted = moment.utc(endMs).format('MMMM DD, YYYY, hh:mm A');
+
     return `${startFormatted} - ${endFormatted}`;
 };
 
