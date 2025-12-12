@@ -69,7 +69,7 @@ async function getHeadroomDrift(
         const status =
             headroomPercent < minOptimizedHeadroomPercent
                 ? AssessmentStatus.UNDER_PROVISIONED
-                : headroomPercent > 100 && ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
+                : headroomPercent > 50 && ssdStorageCapacityInBytes > minSSdStorageCapacityInBytes! // if overprovisioned, consider optimized if fsxSSDCapacity is 1024 GiB which is the case of smaller databases
                 ? AssessmentStatus.OVER_PROVISIONED
                 : AssessmentStatus.OPTIMIZED;
 
@@ -122,8 +122,8 @@ async function headroomOptimization(
         region,
         serverNameWithHostName,
         JOBTYPE.WELL_ARCHITECTED,
-        'Fix FSx for NetApp ONTAP headroom',
-        'Fix FSx for NetApp ONTAP headroom',
+        'Increasing FSx capacity for optimized NetApp ONTAP headroom',
+        'Increasing FSx capacity for optimized NetApp ONTAP headroom',
         parentJobId
     );
 
