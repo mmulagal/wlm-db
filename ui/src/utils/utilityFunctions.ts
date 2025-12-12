@@ -751,8 +751,9 @@ export const formatDateRange = (startTime: string | number, endTime: string | nu
     const startMs = Number(startTime);
     const endMs = Number(endTime);
 
-    const startFormatted = moment.utc(startMs).format('MMMM DD, YYYY, hh:mm A');
-    const endFormatted = moment.utc(endMs).format('MMMM DD, YYYY, hh:mm A');
+    // Convert UTC timestamp to local time
+    const startFormatted = moment(startMs).format('MMMM DD, YYYY, hh:mm A');
+    const endFormatted = moment(endMs).format('MMMM DD, YYYY, hh:mm A');
 
     return `${startFormatted} - ${endFormatted}`;
 };

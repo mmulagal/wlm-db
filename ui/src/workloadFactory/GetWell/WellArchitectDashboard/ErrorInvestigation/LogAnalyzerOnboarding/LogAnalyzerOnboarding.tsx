@@ -98,15 +98,8 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
 
             const localDate = new Date(dateTimeString);
 
-            const timestamp = Date.UTC(
-                localDate.getFullYear(),
-                localDate.getMonth(),
-                localDate.getDate(),
-                localDate.getHours(),
-                localDate.getMinutes(),
-                localDate.getSeconds(),
-                localDate.getMilliseconds()
-            );
+            // Convert local date to UTC timestamp in milliseconds
+            const timestamp = localDate.getTime();
 
             newPayload = {
                 logsAnalyzerFromTimestamp: timestamp,
