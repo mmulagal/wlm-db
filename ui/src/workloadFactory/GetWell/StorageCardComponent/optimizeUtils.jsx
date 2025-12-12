@@ -65,7 +65,9 @@ export const handleDialog = (
         type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
         type === ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH ||
         type === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
-        (engineType === DBType.ORACLE && type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE)
+        type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
+        (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
+            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED)
     ) {
         setDialog(
             <DialogComponent

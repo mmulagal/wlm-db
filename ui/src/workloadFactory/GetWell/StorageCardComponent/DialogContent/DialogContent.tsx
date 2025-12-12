@@ -14,7 +14,7 @@ import {
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL, DBType } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL, DBType, GETWELL_STATUS } from '../../../../utils/consts';
 import { engineTypeText, ontapConfigTextSet } from '../../../../utils/dialogContentUtils';
 import MSSQLPatchDialog from './MSSQLPatchDialog';
 
@@ -253,6 +253,90 @@ const DialogContent = ({
                     assessmentStatus
                 );
             case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+                // Handle MSSQL over-provisioned headroom case
+                if (engineType === DBType.MSSQL && status === GETWELL_STATUS.OVER_PROVISIONED) {
+                    return (
+                        <div className={styles['storage-tier-block']}>
+                            {createSection(
+                                t('databases.well-architect.action-summary'),
+                                t('databases.well-architect.mssql-headroom-over-provisioned-action-summary')
+                            )}
+
+                            {createSection(
+                                t('databases.well-architect.mssql-headroom-over-provisioned-percentages'),
+                                createContentWithBullets([
+                                    t('databases.well-architect.mssql-headroom-over-provisioned-under'),
+                                    t('databases.well-architect.mssql-headroom-over-provisioned-optimized'),
+                                    t('databases.well-architect.mssql-headroom-over-provisioned-over')
+                                ]),
+                                { width: '712px' }
+                            )}
+
+                            {createSection(
+                                t('databases.well-architect.what-will-happen'),
+                                t('databases.well-architect.mssql-headroom-over-provisioned-what-will-happen')
+                            )}
+
+                            {createSection(
+                                t('databases.well-architect.optimization-steps'),
+                                <>
+                                    <DsTypography variant="Regular_14">
+                                        {t(
+                                            'databases.well-architect.mssql-headroom-over-provisioned-optimization-intro'
+                                        )}
+                                    </DsTypography>
+                                    <div className={styles.content}>
+                                        <div className={styles.row}>
+                                            <DsTypography variant="Semibold_14">1|</DsTypography>
+                                            <DsTypography variant="Regular_14">
+                                                {t('databases.well-architect.mssql-headroom-over-provisioned-step1')}
+                                            </DsTypography>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <DsTypography variant="Semibold_14">2|</DsTypography>
+                                            <DsTypography variant="Regular_14">
+                                                {t('databases.well-architect.mssql-headroom-over-provisioned-step2')}
+                                            </DsTypography>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <DsTypography variant="Semibold_14">3|</DsTypography>
+                                            <DsTypography variant="Regular_14">
+                                                {t('databases.well-architect.mssql-headroom-over-provisioned-step3')}
+                                            </DsTypography>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <DsTypography variant="Semibold_14">4|</DsTypography>
+                                            <DsTypography variant="Regular_14">
+                                                {t('databases.well-architect.mssql-headroom-over-provisioned-step4')}
+                                            </DsTypography>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <DsTypography variant="Semibold_14">5|</DsTypography>
+                                            <DsTypography variant="Regular_14">
+                                                {t('databases.well-architect.mssql-headroom-over-provisioned-step5')}
+                                            </DsTypography>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <DsTypography variant="Semibold_14">6|</DsTypography>
+                                            <DsTypography variant="Regular_14">
+                                                {t('databases.well-architect.mssql-headroom-over-provisioned-step6')}
+                                            </DsTypography>
+                                        </div>
+                                        <div className={styles.row}>
+                                            <DsTypography variant="Semibold_14">7|</DsTypography>
+                                            <DsTypography variant="Regular_14">
+                                                {t('databases.well-architect.mssql-headroom-over-provisioned-step7')}
+                                            </DsTypography>
+                                        </div>
+                                    </div>
+                                </>,
+                                { width: '712px' }
+                            )}
+                        </div>
+                    );
+                }
+
+                // Handle cases with missing permissions (under-provisioned)
                 return missingPermissions && missingPermissions.length ? (
                     <div className={styles['storage-tier-block']}>
                         {createSection(

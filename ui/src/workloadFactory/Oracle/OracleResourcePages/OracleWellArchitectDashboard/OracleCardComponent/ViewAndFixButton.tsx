@@ -66,6 +66,8 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi }: ViewAndFixButt
 
     const viewButtonText = () => {
         const type = cardData?.block_one?.value;
+        const status = cardData?.block_two?.value;
+
         if (
             type === ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT ||
             type === ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT ||
@@ -76,7 +78,8 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi }: ViewAndFixButt
             type === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
             type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
             type === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
-            type === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE
+            type === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
+            (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && status === GETWELL_STATUS.OVER_PROVISIONED)
         ) {
             return t('databases.oracle-inner-page.view');
         }
@@ -85,7 +88,7 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi }: ViewAndFixButt
             type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT ||
-            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
+            (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && status === GETWELL_STATUS.UNDER_PROVISIONED)
         ) {
             return t('databases.oracle-inner-page.view-and-fix');
         }
@@ -102,14 +105,8 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi }: ViewAndFixButt
         }
 
         if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
-            if (status === GETWELL_STATUS.OVER_PROVISIONED) {
-                return {
-                    isDisable: true,
-                    reason: t('databases.well-architect.file-system-headroom-over-provisioned-error')
-                };
-            }
-            // Enable only for under-provisioned status
-            const enabledStatuses = [GETWELL_STATUS.UNDER_PROVISIONED];
+            // Enable for File system headroom when status is under-provisioned or over-provisioned
+            const enabledStatuses = [GETWELL_STATUS.UNDER_PROVISIONED, GETWELL_STATUS.OVER_PROVISIONED];
             return { isDisable: loading || !status || !enabledStatuses.includes(status), reason: '' };
         }
 

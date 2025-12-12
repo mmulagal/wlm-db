@@ -153,7 +153,8 @@ const StorageCardComponent = ({
         if (cardData?.id === 'headroom') {
             return (
                 cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
-                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED
+                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
+                cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
         if (cardData?.id === 'compute-rightsizing') {
@@ -180,14 +181,6 @@ const StorageCardComponent = ({
     }, [cardData]);
 
     const disableOptimizeButtonTooltip = useMemo(() => {
-        if (
-            cardData?.id === 'headroom' &&
-            (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
-                (cardData?.sizingViolations?.overProvisionedDrives?.length &&
-                    !cardData?.sizingViolations?.underProvisionedDrives?.length))
-        ) {
-            return GENERAL.HEADROOM_OVER_PROVISIONED_ERROR;
-        }
         if (
             cardData?.id === 'tempdb-drive-size' &&
             (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
@@ -835,7 +828,9 @@ const StorageCardComponent = ({
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
             type === GENERAL.CLONE_MANAGEMENT ||
-            type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
+            type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
+            (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
+                cardData?.block_two?.value === GETWELL_STATUS.UNDER_PROVISIONED)
         ) {
             return GENERAL.VIEW_AND_FIX;
         }
@@ -855,7 +850,8 @@ const StorageCardComponent = ({
             type === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
             type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
             type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
-            (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && engineType === DBType.ORACLE)
+            (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
+                cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED)
         ) {
             return t('databases.well-architect.view');
         }
