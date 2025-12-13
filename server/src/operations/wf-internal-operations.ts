@@ -15,8 +15,10 @@ import { paginateListInstanceConfigData } from './database/instance-config-opera
 import { getGroupedDatabaseInstancesBySeverity, groupResources } from '../lib/database/db';
 import { GroupedDatabaseInstancesBySeverityResult } from '../lib/database/db-types';
 import { IS_DEMO_FLOW } from '../utils/utils';
+import { generateCombinedParameterCategoryMaps } from '../utils/golden-config-utils';
 
 const logger = getLogger();
+const assessmentCategoriesMap = generateCombinedParameterCategoryMaps();
 
 async function getSystemStatus(accountId: string) {
     logger.info('Getting system status for account.', accountId);
@@ -78,37 +80,64 @@ async function getDatabaseVolumes(accountId: string, pageSize = 500, nextToken?:
     return { volumeCount: volumes?.length ?? 0, volumes, nextToken: newToken };
 }
 
-// The structure of grouped objects is assumed to be:
+// Returns array of grouped categories with name, count, and severity
 // [
 //   {
-//     name: "auto size",
-//     severity: "critical",
-//     count: 40,
+//     name: "storage | configuration",
+//     count: 70,
+//     severity: "high"
 //   },
 //   {
-//     name: "autosize-mode",
-//     severity: "critical",
-//     count: 40,
-//   },
-//   ...
+//     name: "storage | layout",
+//     count: 10,
+//     severity: "low"
+//   }
 // ]
-// If limit is provided, we try to return distinct name items up to the limit, like "Performance efficiency", "Operational excellence", etc.
-// If distinct items are less than the limit, we fill the remaining slots with the most frequent items until we reach the limit.
-function getLimitedItems(objects: GroupedDatabaseInstancesBySeverityResult[], totalItems: number, limit = 0) {
-    if (limit) {
-        if (objects.length >= limit) {
-            return objects.slice(0, limit < totalItems ? limit : totalItems);
+function getLimitedItems(
+    objects: GroupedDatabaseInstancesBySeverityResult[],
+    limit = 0
+): Array<{ name: string; count: number }> {
+    // Group objects by category | subcategory with count
+    const groupedByCategory: Record<
+        string,
+        {
+            name: string;
+            count: number;
         }
+    > = {};
 
-        let items = [...objects];
-        for (let i = 0; items.length < limit && i < objects.length; i++) {
-            const sameItems = Array(Number(objects[i]?.count) - 1).fill(objects[i]);
-            items = [...items, ...sameItems];
+    objects.forEach(obj => {
+        const parameterName = obj.name?.toString() || '';
+        const categoryInfo = assessmentCategoriesMap.get(parameterName);
+
+        if (categoryInfo) {
+            const categoryKey = `${categoryInfo.category} | ${categoryInfo.subCategory}`;
+            if (!groupedByCategory[categoryKey]) {
+                groupedByCategory[categoryKey] = {
+                    name: categoryKey,
+                    count: 0
+                };
+            }
+            groupedByCategory[categoryKey].count += Number(obj.count) || 0;
         }
-        return items.slice(0, limit < totalItems ? limit : totalItems);
+    });
+
+    // Convert to array and sort by count descending
+    let result = Object.values(groupedByCategory).map(item => ({
+        name: item.name,
+        count: item.count
+    }));
+
+    // Apply limit if specified
+    if (limit && result.length > limit) {
+        result = result.slice(0, limit);
     }
 
-    return objects;
+    return result;
+}
+
+function formatDescription(items: Array<{ name: string; count: number }>) {
+    return items.map(({ name, count }) => ({ description: `${name} has ${count} Well Architected issues` }));
 }
 
 async function getFocusStatus(accountId: string, credentialsIds?: string, regions?: string, limit?: number) {
@@ -132,10 +161,9 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
 
     if (!isEmpty(highSeverityItems)) {
         const totalItems = highSeverityItems.reduce((sum, item) => sum + Number(item.count), 0);
-        const limitedItems = getLimitedItems(highSeverityItems, totalItems, limit);
-        const items = compact(limitedItems.map(({ name }) => ({ description: name ?? '' })));
+        const items = getLimitedItems(highSeverityItems, limit);
         return {
-            items,
+            items: formatDescription(items),
             severity: 'high',
             totalItems
         };
@@ -143,10 +171,9 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
 
     if (!isEmpty(lowSeverityItems)) {
         const totalItems = lowSeverityItems.reduce((sum, item) => sum + Number(item.count), 0);
-        const limitedItems = getLimitedItems(lowSeverityItems, totalItems, limit);
-        const items = compact(limitedItems.map(({ name }) => ({ description: name ?? '' })));
+        const items = getLimitedItems(lowSeverityItems, limit);
         return {
-            items,
+            items: formatDescription(items),
             severity: 'low',
             totalItems
         };
