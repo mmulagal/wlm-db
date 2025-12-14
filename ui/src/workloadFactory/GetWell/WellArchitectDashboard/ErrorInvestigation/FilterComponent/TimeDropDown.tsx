@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { useState, useEffect, useRef, useId } from 'react';
+import { useState, useEffect, useRef, useId, useMemo } from 'react';
 import { DsTypography, DsCheckbox } from '@tlveng/wlm-ds';
 import { DsButton } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ import {
 } from '../../../../../store/workloadFactory/agenticAISlice';
 import { DsSelectFsx, DsSelectItemProps } from '../../../../../common/FsxSelectField/fsxSelectField';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { getEnabledTimeOptions, eiTimeOptions } from '../ErrorInvestigationUtility';
 
 export type TimeDropdownProps = {
     options: string[];
@@ -27,9 +28,15 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
     const { t } = useTranslation();
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
-    const { timeRange, noData, investigationDatesLoading, noErrorsDetected, selectedErrorTags } = useAppSelector(
-        state => state.agenticAI
-    );
+    const {
+        timeRange,
+        noData,
+        investigationDatesLoading,
+        noErrorsDetected,
+        selectedErrorTags,
+        selectedInvestigationDate,
+        investigationDates
+    } = useAppSelector(state => state.agenticAI);
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
     const loading = investigationDatesLoading || errorInvestigationLoading;
 
@@ -40,6 +47,38 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const instanceId = useId();
+
+    // Calculate enabled time options based on selected investigation date
+    //Only for timeframe option enable disable
+    const enabledTimeOptions = useMemo(() => {
+        if (dropDownType !== 'timeFrame') {
+            return {};
+        }
+
+        // Find the selected investigation date details from investigationDates
+        const selectedDateDetails = investigationDates.find(date => date.id === selectedInvestigationDate?.id);
+
+        if (!selectedDateDetails) {
+            return {
+                last24: true,
+                last12: false,
+                last6: false,
+                last1: false,
+                custom: true
+            };
+        }
+
+        const startTime =
+            typeof selectedDateDetails.startTime === 'string'
+                ? new Date(selectedDateDetails.startTime).getTime()
+                : Number(selectedDateDetails.startTime);
+        const endTime =
+            typeof selectedDateDetails.endTime === 'string'
+                ? new Date(selectedDateDetails.endTime).getTime()
+                : Number(selectedDateDetails.endTime);
+
+        return getEnabledTimeOptions(startTime, endTime);
+    }, [dropDownType, selectedInvestigationDate, investigationDates]);
 
     useEffect(() => {
         setShowOptions(false);
@@ -155,6 +194,20 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
         setShowOptions(false);
     };
 
+    // Helper function to check if a time option is disabled
+    const isTimeOptionDisabled = (option: string): boolean => {
+        if (dropDownType !== 'timeFrame') return false;
+
+        // Find the key for this option
+        const optionKey = Object.keys(eiTimeOptions).find(
+            key => eiTimeOptions[key as keyof typeof eiTimeOptions] === option
+        );
+
+        if (!optionKey) return false;
+
+        return enabledTimeOptions[optionKey] === false;
+    };
+
     return (
         <div className={styles['time-dropdown']} ref={dropdownRef}>
             <div
@@ -254,31 +307,36 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
                         </div>
                     ) : (
                         /* Regular dropdown options for non-tags */
-                        options.map(option => (
-                            <div
-                                key={option}
-                                className={`${styles['dropdown-option']} ${
-                                    option === selectedValue ? styles.selected : ''
-                                }`}
-                                role="option"
-                                tabIndex={0}
-                                aria-selected={option === selectedValue}
-                                onClick={() => handleSelect(option)}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        handleSelect(option);
-                                        e.preventDefault();
-                                    }
-                                }}
-                            >
-                                <DsTypography
-                                    className={` ${option === selectedValue ? styles.selected : ''}`}
-                                    variant="Regular_14"
+                        options.map(option => {
+                            const isDisabled = isTimeOptionDisabled(option);
+                            return (
+                                <div
+                                    key={option}
+                                    className={`${styles['dropdown-option']} ${
+                                        option === selectedValue ? styles.selected : ''
+                                    } ${isDisabled ? styles.disabled : ''}`}
+                                    role="option"
+                                    tabIndex={isDisabled ? -1 : 0}
+                                    aria-selected={option === selectedValue}
+                                    aria-disabled={isDisabled}
+                                    onClick={() => !isDisabled && handleSelect(option)}
+                                    onKeyDown={e => {
+                                        if (!isDisabled && (e.key === 'Enter' || e.key === ' ')) {
+                                            handleSelect(option);
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                    style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
                                 >
-                                    {option}
-                                </DsTypography>
-                            </div>
-                        ))
+                                    <DsTypography
+                                        className={` ${option === selectedValue ? styles.selected : ''}`}
+                                        variant="Regular_14"
+                                    >
+                                        {option}
+                                    </DsTypography>
+                                </div>
+                            );
+                        })
                     )}
                 </div>
             )}

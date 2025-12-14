@@ -40,11 +40,30 @@ export const eiErrorCodesOptions = {
 };
 
 export const eiTimeOptions = {
-    last24: 'Last 24 hours',
-    last12: 'Last 12 hours',
-    last6: 'Last 6 hours',
-    last1: 'Last 1 hour',
+    last24: 'Full analysis period',
+    last12: 'Last 12 Hours of analysis',
+    last6: 'Last 6 Hours of analysis',
+    last1: 'Last 1 Hour of analysis',
     custom: 'Custom'
+};
+
+/**
+ * Determines which time frame options should be enabled based on the analysis date time difference
+ * @param startTime - Start time of the analysis period in milliseconds
+ * @param endTime - End time of the analysis period in milliseconds
+ * @returns Object with keys as option keys and values as boolean (true = enabled, false = disabled)
+ */
+export const getEnabledTimeOptions = (startTime: number, endTime: number): Record<string, boolean> => {
+    const timeDifferenceMs = endTime - startTime;
+    const timeDifferenceHours = timeDifferenceMs / MS_PER_HOUR;
+
+    return {
+        last24: true,
+        last12: timeDifferenceHours >= 12,
+        last6: timeDifferenceHours >= 6,
+        last1: timeDifferenceHours >= 1,
+        custom: true
+    };
 };
 
 export const filterBySeverity = (
