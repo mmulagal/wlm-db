@@ -16,12 +16,12 @@
     "focus": [
         {
             "id": "database",
-            "suffixPlural": "critical events",
-            "suffixSingular": "critical event",
+            "suffixPlural": "well-architected issues",
+            "suffixSingular": "well-architected issue",
             "dataUrl": "/wlmdb/v1/focus-status",
             "primaryCtaTo": "/databases/well-architected",
             "primaryCtaBluexpTo": "/fsxdb/well-architected",
-            "primaryCtaLabel": "See more"
+            "primaryCtaLabel": "Databases"
         }
     ],
     "widget": {
