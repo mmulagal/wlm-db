@@ -28,6 +28,7 @@ import {
     setStorageSavingsResponse,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
+import { setSelectedRowsForExploreSavingsEBSBulk } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import ManualTCOFields from './ManualTCOFields/ManualTCOFields';
@@ -287,6 +288,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                         onClick: () => {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
                                             dispatch(addExploreSavingsInitialData(null));
+                                            dispatch(setSelectedRowsForExploreSavingsEBSBulk([]));
                                             postBlueXPMessage({
                                                 type: BlueXPListeners.navigate,
                                                 payload: {
