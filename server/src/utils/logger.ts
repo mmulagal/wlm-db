@@ -160,9 +160,36 @@ function stringifyObject(obj: any) {
     }
 }
 
-initialize();
+// Flag to track if log4js initialization failed
+let log4jsInitialized = false;
+
+try {
+    initialize();
+    log4jsInitialized = true;
+} catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn('⚠️  Log4js initialization failed (likely read-only filesystem). Logging will be disabled (using silent no-op logger).');
+}
 
 export default function getLogger(category: 'server' | 'got' | 'simulator' | 'access' = 'server') {
+    if (!log4jsInitialized) {
+        // Return silent no-op logger when initialization fails
+        const noOp = () => {};
+        return {
+            trace: noOp,
+            debug: noOp,
+            info: noOp,
+            warn: noOp,
+            error: noOp,
+            fatal: noOp,
+            mark: noOp,
+            level: 'INFO',
+            isLevelEnabled: () => false,
+            addContext: noOp,
+            removeContext: noOp,
+            clearContext: noOp
+        } as any;
+    }
     return log4js.getLogger(category);
 }
 
