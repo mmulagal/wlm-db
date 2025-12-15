@@ -84,7 +84,7 @@
         "log4js": "^6.9.1",
         "lru-cache": "^11.2.2",
         "moment": "^2.30.1",
-        "nodemailer": "^7.0.6",
+        "nodemailer": "^7.0.11",
         "numeral": "^2.0.6",
         "patch-package": "^8.0.1",
         "prisma": "^6.17.0",
