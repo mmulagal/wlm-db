@@ -44,10 +44,9 @@ ENV ENV_WLMDB_BUILD_MODE $ARG_WLMDB_BUILD_MODE
 ENV NODE_CONFIG_ENV $ARG_WLMDB_BUILD_MODE
 ENV NODE_ENV $ARG_WLMDB_BUILD_MODE
 
+RUN mkdir -p /log
 #Create a non-root group and user, and give them ownership of the app files.
 RUN addgroup -S ${APP_GROUP} && adduser -S -G ${APP_GROUP} -u 1001 ${APP_USER}
-
-
 
 RUN chown -R netappuser:netappgroup /opt/netapp/wlmdb
 RUN chmod 777 /log
