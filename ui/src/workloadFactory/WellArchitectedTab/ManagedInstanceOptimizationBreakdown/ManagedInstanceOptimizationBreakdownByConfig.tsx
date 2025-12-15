@@ -339,7 +339,12 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         return false;
     }, [configData, showNA]);
 
-    const renderOptimizationBar = (assessmentKey: string, headingText: string, key: string, type?: string) => {
+    const renderOptimizationBar = (
+        assessmentKey: string,
+        headingText: string,
+        key: string,
+        type: string = DBType.MSSQL
+    ) => {
         const optimizedCount =
             (configData?.[key]?.optimized || 0) +
             (configData?.[key]?.dismissed || 0) +
@@ -369,10 +374,46 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             total = configData?.total || 1;
             afterOutOfTotal = configData?.total;
         }
-        const optimizePercentage = Math.round(
-            ((inProgressOptimizationData?.[assessmentKey]?.length || 0) / total) * 100
-        );
-        const isLoading = loading || (inProgressOptimizationData?.[assessmentKey]?.length || 0) > 0;
+        let optimizePercentage = 0;
+        let runningConfigType: string | undefined;
+        let optimizeLoading = false;
+
+        // Determine the DBType by checking resource IDs from inProgressOptimizationData
+        const inProgressList = inProgressOptimizationData?.[assessmentKey];
+        if (inProgressList && inProgressList.length > 0) {
+            // Extract resource IDs from the list (format: "resource-id_value")
+            const resourceIds = inProgressList.map((item: string) => item.split('_')[0]);
+
+            // Check if any resource ID matches databaseHostId in MSSQL data
+            const hasMssqlMatch = resourceIds.some((resourceId: string) =>
+                Object.keys(allmssqlHostAssessmentData || {}).some((key: string) => {
+                    const hostData = allmssqlHostAssessmentData[key];
+                    return hostData?.databaseHostId === resourceId;
+                })
+            );
+
+            // Check if any resource ID matches databaseHostId in Oracle data
+            const hasOracleMatch = resourceIds.some((resourceId: string) =>
+                Object.keys(allOracleHostAssessmentData || {}).some((key: string) => {
+                    const hostData = allOracleHostAssessmentData[key];
+                    return hostData?.databaseHostId === resourceId;
+                })
+            );
+
+            // Set runningConfigType based on matches
+            if (hasMssqlMatch) {
+                runningConfigType = DBType.MSSQL;
+            } else if (hasOracleMatch) {
+                runningConfigType = DBType.ORACLE;
+            }
+        }
+
+        if (type === runningConfigType) {
+            optimizePercentage = Math.round(((inProgressOptimizationData?.[assessmentKey]?.length || 0) / total) * 100);
+            optimizeLoading = (inProgressOptimizationData?.[assessmentKey]?.length || 0) > 0;
+        }
+
+        const isLoading = loading || optimizeLoading;
         const width = windowSize.width > 1700 ? '328px' : '248px';
         const identifyType = derivedType(assessmentKey);
         const identifySeverity = derivedSeverity(assessmentKey);

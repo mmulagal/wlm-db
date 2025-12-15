@@ -49,7 +49,7 @@ const TimeDropdown = ({ options, dropDownType, width = 'auto', selectedValue }: 
     const instanceId = useId();
 
     // Calculate enabled time options based on selected investigation date
-    //Only for timeframe option enable disable
+    // Only for timeframe option enable disable
     const enabledTimeOptions = useMemo(() => {
         if (dropDownType !== 'timeFrame') {
             return {};

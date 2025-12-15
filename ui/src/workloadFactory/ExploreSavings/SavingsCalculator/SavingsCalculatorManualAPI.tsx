@@ -193,7 +193,8 @@ const SavingsCalculatorManualApi = () => {
         manualTCOVolumeTypes,
         volumeFilledStatus,
         manualTCOVolumeTypes2,
-        instanceTypeLoading
+        instanceTypeLoading,
+        selectedSnapshotFrequency
     ]);
 
     useEffect(() => {
