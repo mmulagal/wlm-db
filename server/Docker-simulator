@@ -43,4 +43,4 @@ ENV NODE_ENV $ARG_WLMDB_BUILD_MODE
 
 EXPOSE 8085
 
-CMD ["node", "--loader", "./utils/loader.js", "test/simulator/index.ts"]
+CMD ["npx", "tsx", "test/simulator/index.ts"]
