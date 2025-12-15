@@ -265,7 +265,7 @@ async function getOraclePerformanceMetrics(
         const errorMessage = `Error fetching oracle performance metrics from nodes: ${node1InstanceId}, ${response}`;
         throw createError(errorMessage);
     } catch (err) {
-        const errorMessage = `Error fetching oracle performance metrics: ${err}, ${credentialsId}, ${region}`;
+        const errorMessage = `Error fetching oracle performance metrics: ${err}, ${credentialsId}, ${region}. If default auth is not enabled on the instance, performance metrics will not be available unless instance is registered.`;
         logger.error(errorMessage);
         throw createError(errorMessage);
     }
@@ -393,7 +393,7 @@ async function getOracleProtectionStatus(
             return protectionResponse;
         }
     } catch (err) {
-        const errorMessage = `Error fetching oracle protection status: ${err}, ${credentialsId}, ${region}`;
+        const errorMessage = `Error fetching oracle protection status: ${err}, ${credentialsId}, ${region}. If default auth is not enabled on the instance, protection status will not be available unless instance is registered.`;
         logger.error(errorMessage);
         throw createError(errorMessage);
     }
