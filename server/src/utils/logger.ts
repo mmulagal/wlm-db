@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { format } from 'util';
 import { readFileSync } from 'fs';
 import log4js, { Configuration, Layout, LoggingEvent, PatternLayout } from 'log4js';
@@ -167,27 +168,27 @@ try {
     initialize();
     log4jsInitialized = true;
 } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn('⚠️  Log4js initialization failed (likely read-only filesystem). Logging will be disabled (using silent no-op logger).');
+    console.warn(
+        '⚠️  Log4js initialization failed (likely read-only filesystem). Logging will fall back to console output.'
+    );
 }
 
 export default function getLogger(category: 'server' | 'got' | 'simulator' | 'access' = 'server') {
     if (!log4jsInitialized) {
-        // Return silent no-op logger when initialization fails
-        const noOp = () => {};
+        // Return console-based logger when initialization fails
         return {
-            trace: noOp,
-            debug: noOp,
-            info: noOp,
-            warn: noOp,
-            error: noOp,
-            fatal: noOp,
-            mark: noOp,
+            trace: (msg: any, ...args: any[]) => console.log(`[TRACE] ${msg}`, ...args),
+            debug: (msg: any, ...args: any[]) => console.log(`[DEBUG] ${msg}`, ...args),
+            info: (msg: any, ...args: any[]) => console.log(`[INFO] ${msg}`, ...args),
+            warn: (msg: any, ...args: any[]) => console.warn(`[WARN] ${msg}`, ...args),
+            error: (msg: any, ...args: any[]) => console.error(`[ERROR] ${msg}`, ...args),
+            fatal: (msg: any, ...args: any[]) => console.error(`[FATAL] ${msg}`, ...args),
+            mark: () => {},
             level: 'INFO',
-            isLevelEnabled: () => false,
-            addContext: noOp,
-            removeContext: noOp,
-            clearContext: noOp
+            isLevelEnabled: () => true,
+            addContext: () => {},
+            removeContext: () => {},
+            clearContext: () => {}
         } as any;
     }
     return log4js.getLogger(category);
