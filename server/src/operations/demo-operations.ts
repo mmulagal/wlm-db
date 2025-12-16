@@ -815,6 +815,7 @@ async function createDeploymentMockDataInDBForOracle(
     }
 
     const instanceId = 'i-5520fe41798c75632';
+    const databaseInstanceId = 'oracle-dev';
 
     resourceId = resourceId || randomUUID();
     const fsxId = `fs-${randomize('0', 8)}`;
@@ -845,8 +846,8 @@ async function createDeploymentMockDataInDBForOracle(
         resourceId,
         credentialsId,
         region,
-        databaseInstanceId: 'oracle-dev',
-        databaseInstanceName: 'oracle-dev',
+        databaseInstanceId,
+        databaseInstanceName: databaseInstanceId,
         fsxnIds: fsxId,
         isDefault: true,
         instanceState: 'OPEN',
@@ -860,14 +861,14 @@ async function createDeploymentMockDataInDBForOracle(
 
     await upsertDatabaseInstance(accountId, instanceRecord);
     const instanceMetadata = { oracleDeploymentType: OracleDeploymentTenacy.SINGLE_TENANT };
-    await updateInstanceMetadata(accountId, instanceId, instanceMetadata);
+    await updateInstanceMetadata(accountId, databaseInstanceId, instanceMetadata);
 
     await createAssessmentDataForOracle(
         accountId,
         credentialsId,
         region,
         resourceId,
-        instanceId,
+        databaseInstanceId,
         fsxId,
         instanceRecord.storageProtocol
     );
