@@ -17,7 +17,8 @@ import {
     DriftAssessmentPerAccount,
     DriftAssessmentPerHost,
     OracleOptimizeSchema,
-    OracleOptimizeStorageSchema
+    OracleOptimizeStorageConfigurationSchema,
+    OracleOptimizeStorageLayoutSchema
 } from './schemas/oracle-continuous-optimization-schema';
 import { optimizeStorage } from '../operations/cont-opt-optimize-operations';
 import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-dismiss-operations';
@@ -74,7 +75,7 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
         )
         .post(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-configuration`,
-            { schema: OracleOptimizeStorageSchema },
+            { schema: OracleOptimizeStorageConfigurationSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
@@ -142,7 +143,7 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
         )
         .post(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/optimize/storage-layout`,
-            { schema: OracleOptimizeStorageSchema },
+            { schema: OracleOptimizeStorageLayoutSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },

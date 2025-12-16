@@ -48,6 +48,16 @@ const OracleOptimizeStorageSchema = {
     response: OptimizationResponse
 };
 
+const OracleOptimizeStorageConfigurationSchema = {
+    ...OracleOptimizeStorageSchema,
+    summary: 'Fix storage configuration for an Oracle database instance'
+};
+
+const OracleOptimizeStorageLayoutSchema = {
+    ...OracleOptimizeStorageSchema,
+    summary: 'Fix storage layout for an Oracle database instance'
+};
+
 const DriftAssessmentPerHost = {
     ...resourceRequest,
     summary: 'Get Oracle database parameter drift from recommended settings for all instances on a host',
@@ -78,5 +88,7 @@ export {
     DriftAssessmentPerHost,
     DriftAssessmentPerAccount,
     OracleOptimizeStorageSchema,
+    OracleOptimizeStorageConfigurationSchema,
+    OracleOptimizeStorageLayoutSchema,
     OracleOptimizeSchema
 };

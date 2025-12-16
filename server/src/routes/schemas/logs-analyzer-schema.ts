@@ -14,7 +14,7 @@ import { CredentialsIdParams, JobIdResponse } from '../types/generic.types';
 
 const LogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
-    description: 'Trigger logs analysis for a specific database instance in a remote database host machine',
+    description: 'Trigger logs analysis for a specific MSSQL database instance in a remote database host machine',
     params: LogsAnalyzerParams,
     body: LogsAnalyzerBody,
     summary: 'Trigger logs analysis for a specific database instance in a remote database host machine',
@@ -62,9 +62,9 @@ const ListLogsAnalyzerReportsSchema = {
 
 const AnalyzePreRequisitesSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
-    description:
-        'Check pre-requisites for logs analysis for a specific database instance in a remote database host machine',
     summary:
+        'Check pre-requisites for logs analysis for a specific MSSQL database instance in a remote database host machine',
+    description:
         'Logs analysis pre-requisites include checking if Bedrock model is available, if the networking configuration is correct, and if the required IAM policies are in place.',
     params: { ...CredentialsIdParams },
     querystring: AnalyzePreRequisitesQuery,
@@ -75,9 +75,9 @@ const AnalyzePreRequisitesSchema = {
 
 const OracleAnalyzePreRequisitesSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
-    description:
-        'Check pre-requisites for logs analysis for a specific database instance in a remote database host machine',
     summary:
+        'Check pre-requisites for logs analysis for a specific Oracle database instance in a remote database host machine',
+    description:
         'Logs analysis pre-requisites include checking if Bedrock model is available, if the networking configuration is correct, and if the required IAM policies are in place.',
     params: { ...CredentialsIdParams },
     body: OraclePreRequisitesRequestBody,
@@ -88,8 +88,8 @@ const OracleAnalyzePreRequisitesSchema = {
 
 const LatestReportsSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
-    description: 'Logs analysis latest report at each database host level for an account, credentials and region',
-    summary:
+    summary: 'Logs analysis latest report at each MSSQL database host level for an account, credentials and region',
+    description:
         'Logs analysis latest report at each database host level for an account, credentials and region, analyzes the logs analysis reports for all database instances for latest scan time and error count',
     params: CredentialsIdParams,
     response: {
