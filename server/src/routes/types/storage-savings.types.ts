@@ -124,7 +124,7 @@ const StorageMetrics = Type.Object({
     iops: Type.Number(),
     throughput: Type.Number(),
     snapshots: Type.Number(),
-    clones: Type.Number(),
+    clones: Type.Optional(Type.Number()),
     total: Type.Number()
 });
 
