@@ -53,9 +53,13 @@ import {
     setSelectedRowsForDismiss,
     setSelectedRowsForOptimize
 } from '../store/workloadFactory/databaseHomeSlice';
-import { setSelectedExploreSavingsTab } from '../store/workloadFactory/exploreSavingsSlice';
+import {
+    addExploreSavingsInitialData,
+    setSelectedExploreSavingsTab
+} from '../store/workloadFactory/exploreSavingsSlice';
 import { PgsqlInstancesDiscovered } from './types/inventoryV2Types';
 import { addNotification, NOTIFICATION_TYPES } from '../store/notificationSlice';
+import { setSelectedRowsForExploreSavingsEBSBulk } from '../store/workloadFactory/exploreSavingsBulkSlice';
 
 // Extended to store data that requires for another API input or post request
 export interface OptionsWithData extends optionType {
@@ -2137,6 +2141,30 @@ export const checkLeftNavRoute = (route: string) => {
         return true;
     }
     return false;
+};
+
+export const checkLeftNavBXPRoute = (route: string) => {
+    if (
+        route === '/fsxdb/dashboard' ||
+        route === '/fsxdb/inventory' ||
+        route === '/fsxdb/sandboxes' ||
+        route === '/fsxdb/explore-savings' ||
+        route === '/fsxdb/job-monitoring' ||
+        route === '/fsxdb/well-architected'
+    ) {
+        return true;
+    }
+    return false;
+};
+
+// Clear EBS bulk selections when navigating away from Explore Savings
+interface ClearEBSBulkSelectionsDispatch {
+    (action: any): void;
+}
+
+export const clearEBSBulkSelections = (dispatch: ClearEBSBulkSelectionsDispatch): void => {
+    dispatch(setSelectedRowsForExploreSavingsEBSBulk([]));
+    dispatch(addExploreSavingsInitialData(null));
 };
 
 export const handleURLFromDashboard = (value: string, isWorkloadFactory: boolean, navigate?: any) => {

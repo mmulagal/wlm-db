@@ -17,7 +17,14 @@ import { BXP_MESSAGES, WLF_TABS } from './utils/consts';
 import PostgressMainComponent from './components/Postgress/PostgressMainComponent';
 import { useAppSelector } from './store/storeHooks';
 import { useRunOnce } from './common/hooks/useRunOnce';
-import { checkLeftNavRoute, setRoutePath, setSelectedTabInformation, setTabInfoFOrBXP } from './utils/utilityFunctions';
+import {
+    checkLeftNavBXPRoute,
+    checkLeftNavRoute,
+    clearEBSBulkSelections,
+    setRoutePath,
+    setSelectedTabInformation,
+    setTabInfoFOrBXP
+} from './utils/utilityFunctions';
 import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 import Marketing from './Marketing/Marketing';
 
@@ -75,6 +82,10 @@ const Home = () => {
                     replace: true
                 }
             });
+            clearEBSBulkSelections(dispatch);
+        } else if (!isWorkloadFactory && navigationPath && checkLeftNavBXPRoute(navigationPath)) {
+            // Clear EBS bulk selections when navigating away from Explore Savings
+            clearEBSBulkSelections(dispatch);
         }
     }, [navigationPath]);
 
