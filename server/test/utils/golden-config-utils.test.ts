@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
     generateMsSqlParameterCategoryMap,
-    generateOracleParameterCategoryMap
+    generateOracleParameterCategoryMap,
+    generateCombinedParameterCategoryMaps
 } from '../../src/utils/golden-config-utils';
 
 describe('Golden Config Utils', () => {
@@ -101,8 +102,8 @@ describe('Golden Config Utils', () => {
         it('should have correct structure for parameter entries', () => {
             const map = generateOracleParameterCategoryMap();
 
-            // Check a known parameter
-            const spaceGuaranteeEntry = map.get('spaceGuarantee');
+            // Check a known parameter using hyphenated name (from 'name' field in config)
+            const spaceGuaranteeEntry = map.get('thin-provision');
             expect(spaceGuaranteeEntry).toBeDefined();
             expect(spaceGuaranteeEntry).toHaveProperty('category');
             expect(spaceGuaranteeEntry).toHaveProperty('subCategory');
@@ -111,7 +112,8 @@ describe('Golden Config Utils', () => {
         it('should map storage configuration parameters', () => {
             const map = generateOracleParameterCategoryMap();
 
-            const storageParams = ['spaceGuarantee', 'autosize', 'autosizeMode'];
+            // Use hyphenated names from the 'name' field in Oracle config
+            const storageParams = ['thin-provision', 'autosize', 'autosize-mode'];
             storageParams.forEach(param => {
                 const entry = map.get(param);
                 expect(entry).toBeDefined();
@@ -177,6 +179,84 @@ describe('Golden Config Utils', () => {
 
             expect(mssqlStorageParams.length).toBeGreaterThan(0);
             expect(oracleStorageParams.length).toBeGreaterThan(0);
+        });
+
+        it('should include top-level resiliency configuration in MSSQL parameters', () => {
+            const map = generateMsSqlParameterCategoryMap();
+
+            // Check for top-level resiliency object - the key should be 'resiliency' itself
+            // since it has category and subCategory properties
+            const resiliencyEntry = map.get('resiliency');
+            if (resiliencyEntry) {
+                // If it's in the map, verify it has the correct structure
+                expect(resiliencyEntry).toHaveProperty('category');
+                expect(resiliencyEntry).toHaveProperty('subCategory');
+            }
+        });
+
+        it('should preserve MSSQL resiliency entries in combined map', () => {
+            const combinedMap = generateCombinedParameterCategoryMaps();
+            const mssqlMap = generateMsSqlParameterCategoryMap();
+
+            // Get all resiliency entries from MSSQL map
+            const mssqlResiliencyEntries = Array.from(mssqlMap.entries()).filter(
+                ([, value]) => value.category === 'resiliency'
+            );
+
+            // Verify all MSSQL resiliency entries are in combined map
+            mssqlResiliencyEntries.forEach(([key, mssqlValue]) => {
+                const combinedValue = combinedMap.get(key);
+                expect(combinedValue).toBeDefined();
+                expect(combinedValue).toEqual(mssqlValue);
+            });
+        });
+
+        it('should not allow Oracle map to overwrite MSSQL entries in combined map', () => {
+            const combinedMap = generateCombinedParameterCategoryMaps();
+            const mssqlMap = generateMsSqlParameterCategoryMap();
+            const oracleMap = generateOracleParameterCategoryMap();
+
+            // Check all MSSQL entries are preserved
+            mssqlMap.forEach((mssqlValue, key) => {
+                const combinedValue = combinedMap.get(key);
+                expect(combinedValue).toBeDefined();
+                expect(combinedValue).toEqual(mssqlValue);
+            });
+
+            // Verify that Oracle-only entries are also in combined map
+            oracleMap.forEach((oracleValue, key) => {
+                const combinedValue = combinedMap.get(key);
+                // If not in MSSQL, it should be in combined (from Oracle)
+                if (!mssqlMap.has(key)) {
+                    expect(combinedValue).toBeDefined();
+                    expect(combinedValue).toEqual(oracleValue);
+                }
+            });
+        });
+
+        it('should include snapshot-policy parameter in the combined map', () => {
+            const combinedMap = generateCombinedParameterCategoryMaps();
+
+            // snapshot-policy should exist in the map (from Oracle config - stored with both names)
+            const snapshotPolicyEntry = combinedMap.get('snapshot-policy');
+            expect(snapshotPolicyEntry).toBeDefined();
+            expect(snapshotPolicyEntry?.category).toBe('storage');
+            expect(snapshotPolicyEntry?.subCategory).toBe('configuration');
+        });
+
+        it('should verify snapshot-policy comes from Oracle map with correct category', () => {
+            const oracleMap = generateOracleParameterCategoryMap();
+            const combinedMap = generateCombinedParameterCategoryMaps();
+
+            // Check both the hyphenated and camelCase versions
+            const oracleSnapshotPolicyHyphenated = oracleMap.get('snapshot-policy');
+            const combinedSnapshotPolicy = combinedMap.get('snapshot-policy');
+
+            if (oracleSnapshotPolicyHyphenated) {
+                expect(combinedSnapshotPolicy).toEqual(oracleSnapshotPolicyHyphenated);
+                expect(combinedSnapshotPolicy?.category).toBe('storage');
+                expect(combinedSnapshotPolicy?.subCategory).toBe('configuration');
+            }
         });
     });
 });

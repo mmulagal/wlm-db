@@ -137,7 +137,7 @@ function getLimitedItems(
 }
 
 function formatDescription(items: Array<{ name: string; count: number }>) {
-    return items.map(({ name, count }) => ({ description: `${name} has ${count} Well Architected issues` }));
+    return items.map(({ name }) => ({ description: `${name}` }));
 }
 
 async function getFocusStatus(accountId: string, credentialsIds?: string, regions?: string, limit?: number) {

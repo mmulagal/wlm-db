@@ -7,7 +7,8 @@ interface ParameterCategoryMap {
 }
 
 interface ConfigItem {
-    parameter: string;
+    name?: string;
+    parameter?: string;
     category: string;
     subCategory: string;
     [key: string]: unknown;
@@ -32,6 +33,7 @@ function generateMsSqlParameterCategoryMap(): Map<string, ParameterCategoryMap> 
         if (Array.isArray(value)) {
             value.forEach((item: unknown) => {
                 const configItem = item as ConfigItem;
+                // MSSQL uses parameter field
                 if (configItem.parameter && configItem.category && configItem.subCategory) {
                     parameterMap.set(configItem.parameter, {
                         category: configItem.category,
@@ -53,6 +55,7 @@ function generateMsSqlParameterCategoryMap(): Map<string, ParameterCategoryMap> 
         if (Array.isArray(value)) {
             value.forEach((item: unknown) => {
                 const configItem = item as ConfigItem;
+                // MSSQL uses parameter field
                 if (configItem.parameter && configItem.category && configItem.subCategory) {
                     parameterMap.set(configItem.parameter, {
                         category: configItem.category,
@@ -92,8 +95,8 @@ function generateOracleParameterCategoryMap(): Map<string, ParameterCategoryMap>
         if (Array.isArray(value)) {
             value.forEach((item: unknown) => {
                 const configItem = item as ConfigItem;
-                if (configItem.parameter && configItem.category && configItem.subCategory) {
-                    parameterMap.set(configItem.parameter, {
+                if (configItem.name && configItem.category && configItem.subCategory) {
+                    parameterMap.set(configItem.name, {
                         category: configItem.category,
                         subCategory: configItem.subCategory
                     });
@@ -113,8 +116,8 @@ function generateOracleParameterCategoryMap(): Map<string, ParameterCategoryMap>
         if (Array.isArray(value)) {
             value.forEach((item: unknown) => {
                 const configItem = item as ConfigItem;
-                if (configItem.parameter && configItem.category && configItem.subCategory) {
-                    parameterMap.set(configItem.parameter, {
+                if (configItem.name && configItem.category && configItem.subCategory) {
+                    parameterMap.set(configItem.name, {
                         category: configItem.category,
                         subCategory: configItem.subCategory
                     });
@@ -141,22 +144,24 @@ function generateOracleParameterCategoryMap(): Map<string, ParameterCategoryMap>
 
 /**
  * Combines both MSSQL and Oracle parameter category maps into a single map
- * Removes duplicate entries, with Oracle values taking precedence
+ * Keeps both MSSQL and Oracle entries without overwriting
  * @returns Map where key is parameter name and value is {category, subCategory}
  */
 function generateCombinedParameterCategoryMaps(): Map<string, ParameterCategoryMap> {
     const combinedMap = new Map<string, ParameterCategoryMap>();
 
-    // First, add all MSSQL parameters
+    // Add all MSSQL parameters
     const mssqlMap = generateMsSqlParameterCategoryMap();
     mssqlMap.forEach((value, key) => {
         combinedMap.set(key, value);
     });
 
-    // Then, add all Oracle parameters (Oracle values override MSSQL if key exists)
+    // Add all Oracle parameters (only add if key doesn't already exist to preserve MSSQL values)
     const oracleMap = generateOracleParameterCategoryMap();
     oracleMap.forEach((value, key) => {
-        combinedMap.set(key, value);
+        if (!combinedMap.has(key)) {
+            combinedMap.set(key, value);
+        }
     });
 
     return combinedMap;
