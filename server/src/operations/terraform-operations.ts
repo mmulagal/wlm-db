@@ -27,7 +27,8 @@ import {
     PGSQL,
     CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING,
     PGSQL_TERRAFORM_FOLDER_PATH,
-    PGSQL_TERRAFORM_ROOT_MODULE_DISTRIBUTION
+    PGSQL_TERRAFORM_ROOT_MODULE_DISTRIBUTION,
+    TEMP_DIRECTORY
 } from '../utils/consts';
 import { getArtifactsRegionBucketName, isMssql, isPgsql } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -376,8 +377,8 @@ async function createTFVarsFile(
             terraformVariableString += `${tfVarsVpc}${tfVarsEc2}${tfVarsSqlServer}${
                 isMssqlServer ? tfVarsAd : ''
             }${tfVarsFsx}${tfVarsEndpoint}${tfVarsGeneral}`;
-            // Write the Terraform variables to a local file as well.. can be decided whether to use it from local or s3
-            const dirPath = `./resources/${databaseFolderPath}/${deploymentName}/terraform`;
+            // Write the Terraform variables to a temp directory (writable in read-only pods)
+            const dirPath = `${TEMP_DIRECTORY}/${databaseFolderPath}/${deploymentName}/terraform`;
             const localTfVarsPath = `${dirPath}/terraform.tfvars`;
             await mkdir(dirPath, { recursive: true });
             await writeFile(localTfVarsPath, terraformVariableString);
@@ -435,8 +436,8 @@ async function createAndUploadTheTerraformZipFile(
         if (isMssql(resourceType) || isPgsql(resourceType)) {
             const customSQLStandaloneTFPath: string = `${WLMDB}/${deploymentName}/terraform/${deploymentName}.zip`;
 
-            const archiveFolder = `./resources/${type}/${deploymentName}/${deploymentName}.zip`;
-            const folderToBeZipped = `./resources/${type}/${deploymentName}/terraform`;
+            const archiveFolder = `${TEMP_DIRECTORY}/${type}/${deploymentName}/${deploymentName}.zip`;
+            const folderToBeZipped = `${TEMP_DIRECTORY}/${type}/${deploymentName}/terraform`;
             await createArchive(archiveFolder, folderToBeZipped);
             await putObjectBucket(
                 TEMPLATE_BUCKET_REGION,
@@ -461,7 +462,7 @@ async function createAndUploadTheTerraformZipFile(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error while creating terraform zip file');
     } finally {
         try {
-            await rmdir(`./resources/${type}/${deploymentName}`, { recursive: true });
+            await rmdir(`${TEMP_DIRECTORY}/${type}/${deploymentName}`, { recursive: true });
         } catch (err: any) {
             logger.error('Error while deleting the directory', err);
         }

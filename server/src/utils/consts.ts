@@ -1856,8 +1856,11 @@ enum SSM_COMMAND_RUNTIMES {
 }
 const CLOUDFLARE_DNS_IP = '1.1.1.1';
 const NOTIFICATION_SERVICE_NAME = 'Workload Factory for Databases';
+// Temp directory for file operations (writable in read-only pods)
+const TEMP_DIRECTORY = '/tmp';
 
 export {
+    TEMP_DIRECTORY,
     WLMDB,
     AWS_REGIONS,
     IO2_AVAILABLE_REGIONS,
