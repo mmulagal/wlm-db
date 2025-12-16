@@ -23,14 +23,17 @@ vi.mock('@netapp/design-system', () => ({
 vi.mock('../../../../utils/apiService', () => ({
     useAddHostJobScMutation: () => [vi.fn(), {}],
     useAddHostScMutation: () => [vi.fn(), {}],
+    useAssignBackupRecoveryLicenseMutation: () => [vi.fn(), {}],
     useAssignRBACPrivilegesMutation: () => [vi.fn(), {}],
     useConfigureDirectoryMutation: () => [vi.fn(), {}],
     useDeleteHostScMutation: () => [vi.fn(), {}],
     useDiscoverExistingFsxNMutation: () => [vi.fn(), {}],
     useGenerateCredentialIDMutation: () => [vi.fn(), {}],
+    useGetBackupRecoveryLicenseMutation: () => [vi.fn(), {}],
     useGetConnectorsMutation: () => [vi.fn(), {}],
     useGetDiscoverHostResultMutation: () => [vi.fn(), {}],
     useGetFsxDetailsMutation: () => [vi.fn(), {}],
+    useGetOrganizationIdsMutation: () => [vi.fn(), {}],
     useGetRBACPrivilegesMutation: () => [vi.fn(), {}],
     useGetSCCrendentialsMutation: () => [vi.fn(), {}],
     useGetWorkSpaceIDMutation: () => [vi.fn(), {}],
@@ -161,7 +164,11 @@ const mockState = {
     },
     auth: {
         isDemoMode: false,
-        isWorkloadFactory: true
+        isWorkloadFactory: true,
+        orgId: 'test-org-id'
+    },
+    snapCenter: {
+        databaseProtection: {}
     }
 };
 

@@ -26,13 +26,11 @@ import {
     getAggrProtection,
     getAggrStorageSavings,
     wrapContext,
-    getWlmdbPayload,
     setRecommendedValues,
     getCredDetails,
     validateChatbotField,
     databaseTableSort,
     delay,
-    getChatbotParamsFromPayload,
     jobMonitoringStatusMapping,
     addBlankCell,
     createJobMonitorCSV,
@@ -854,13 +852,6 @@ describe('wrapContext', () => {
     });
 });
 
-describe('getWlmdbPayload', () => {
-    it('Return wlmdb payload', () => {
-        const result = getWlmdbPayload({ domainPassword: 'netapp1!' });
-        expect(result?.adConfiguration?.domainPassword).toEqual('********');
-    });
-});
-
 describe('setRecommendedValues', () => {
     it('Return recommended values for dev', () => {
         const result = setRecommendedValues({}, '0');
@@ -972,153 +963,6 @@ describe('delay', () => {
     it('Return delay response', () => {
         const result = delay(100);
         expect(result).toBeDefined();
-    });
-});
-
-describe('getChatbotParamsFromPayload', () => {
-    it('Return chatbot response from payload', () => {
-        const payload = {
-            awsAccount: {
-                selectedCredential: {
-                    data: {
-                        credentialsId: 'cred123'
-                    }
-                }
-            },
-            dbDeploymentModel: {
-                value: 'fci'
-            },
-            regionAndVpc: {
-                selectedRegion: {
-                    data: {
-                        regionCode: 'region123'
-                    }
-                },
-                selectedVPC: {
-                    data: {
-                        id: 'vpc123'
-                    }
-                }
-            },
-            availabilityZones: {
-                selectedAzNode1: {
-                    data: {
-                        availabilityZone: 'AZ_1'
-                    }
-                },
-                selectedSubnetNode1: {
-                    data: {
-                        id: 'subnet_1'
-                    }
-                },
-                selectedAzNode2: {
-                    data: {
-                        availabilityZone: 'AZ_2'
-                    }
-                },
-                selectedSubnetNode2: {
-                    data: {
-                        id: 'subnet_2'
-                    }
-                }
-            },
-            keyPair: {
-                selectedKeyPair: {
-                    data: {
-                        name: 'keypair123'
-                    }
-                }
-            },
-            instanceType: {
-                data: {
-                    instanceType: 'm5.xlarge'
-                }
-            },
-            activeDirectory: {
-                userName: 'admin',
-                password: 'collector@123',
-                domainName: {
-                    value: 'wlm.com'
-                },
-                domainAddress: '10.0.0.1',
-                scenarioType: 'custom'
-            },
-            dbCredentials: {
-                name: 'admin',
-                password: 'netapp1!'
-            },
-            license: {
-                selectedLicenseId: {
-                    value: 'license123'
-                }
-            },
-            fsxN: {
-                fsxNExistingName: {
-                    data: {
-                        fileSystemId: 'fsx123'
-                    }
-                },
-                fsxNNewUserName: 'admin',
-                fsxNPassword: 'netapp1!',
-                fsxNType: 'EXISTING'
-            },
-            throughput: {
-                value: '128'
-            },
-            securityGroup: {
-                selectedExistingSecurityGroup: {
-                    value: 'sg-123'
-                }
-            },
-            dbName: 'sqldatabase',
-            storageCapacity: {
-                capacity: '120',
-                unit: {
-                    value: 'GiB'
-                }
-            },
-            tags: [
-                {
-                    key: 'key1',
-                    value: 'value1'
-                },
-                {
-                    key: '',
-                    value: 'value2'
-                }
-            ],
-            cloudWatch: true
-        };
-        const result = getChatbotParamsFromPayload(payload);
-        expect(result.credentialsId).toEqual('cred123');
-        expect(result.fsxDeploymentMode).toEqual('MULTI_AZ_1');
-        expect(result.region).toEqual('region123');
-        expect(result.vpcId).toEqual('vpc123');
-        expect(result.availabilityZone1).toEqual('AZ_1');
-        expect(result.availabilityZone2).toEqual('AZ_2');
-        expect(result.privateSubnet1Id).toEqual('subnet_1');
-        expect(result.privateSubnet2Id).toEqual('subnet_2');
-        expect(result.keyPairName).toEqual('keypair123');
-        expect(result.workloadInstanceType).toEqual('m5.xlarge');
-        expect(result.domainUsername).toEqual('admin');
-        expect(result.domainPassword).toEqual('collector@123');
-        expect(result.domainDnsname).toEqual('wlm.com');
-        expect(result.dnsIpaddress).toEqual('10.0.0.1');
-        expect(result.serviceAccountName).toEqual('admin');
-        expect(result.serviceAccountPassword).toEqual('netapp1!');
-        expect(result.sqlAmiId).toEqual('license123');
-        expect(result.fsxFileSystemId).toEqual('fsx123');
-        expect(result.fsxUsername).toEqual('admin');
-        expect(result.fsxPassword).toEqual('netapp1!');
-        expect(result.fsxVolThroughput).toEqual(128);
-        expect(result.ontapSgGroupId).toEqual('sg-123');
-        expect(result.sqlServerName).toEqual('sqldatabase');
-        expect(result.fsxType).toEqual('EXISTING');
-        expect(result.sqlDeploymentMode).toEqual('fci');
-        expect(result.databaseSize).toEqual(120);
-        expect(result.tags.length).toEqual(1);
-        expect(result.adScenarioType).toEqual('custom');
-        expect(result.enableCloudWatch).toEqual(true);
     });
 });
 
