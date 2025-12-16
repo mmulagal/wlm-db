@@ -9,7 +9,6 @@ import {
     escapeBackslash,
     generateSqlResourceId,
     getArtifactsRegionBucketName,
-    getEc2Hostname,
     getServerNameWithHostname,
     retryWithDelay,
     IS_DEMO_FLOW,
@@ -1512,12 +1511,7 @@ async function registerOracleInstance(
         const { awsAccountId } =
             derivePropertiesFromARN(ec2Details?.Reservations?.[0]?.Instances?.[0]?.IamInstanceProfile?.Arn || '') || {};
 
-        const [{ Tags: ec2InstanceTags, PrivateDnsName: ec2PrivateDnsName }] =
-            ec2Details?.Reservations?.[0]?.Instances || [];
-
-        const ec2HostName = ec2PrivateDnsName || getEc2Hostname(DatabaseTypes.ORACLE, ec2InstanceTags);
-
-        const [{ databaseInstanceDetails: oracleServerInstances } = {}] = discoverDetails.items || [];
+        const [{ databaseInstanceDetails: oracleServerInstances, ec2HostName } = {}] = discoverDetails.items || [];
         resourceId =
             IS_DEMO_FLOW && databaseHostId ? databaseHostId : generateSqlResourceId(node1InstanceId, undefined);
 
