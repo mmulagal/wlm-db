@@ -1919,6 +1919,9 @@ const InventoryApisV3 = () => {
         runningRegionId: string,
         isEbsProtected: string
     ) => {
+        if (!headerSelectedCred || !headerSelectedRegion) {
+            return;
+        }
         let snapshotFrequency = '';
         if (savingsCalculatorType === GENERAL.FSX_FOR_WINDOWS) {
             // For FSXW it is default set to Daily
