@@ -78,6 +78,7 @@ import {
     setSavingsCalculatorRefresh,
     setUnmanagedExploreSavingsHost
 } from '../../../store/workloadFactory/exploreSavingsSlice';
+import { setSelectedRowsForExploreSavingsEBSBulk } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import InventoryV2 from '../../InventoryV2/InventoryV2';
 import DatabaseHostOverviewV2 from '../../ResourcePage/ResourceHomePage/DatabaseHostOverviewV2';
 import { setIsResourceRefresh } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
@@ -821,6 +822,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         setSelectedTab(value);
         dispatch(setSelectedHeaderTab(value));
         dispatch(addExploreSavingsInitialData(null));
+        // Clear EBS bulk selections when navigating away from Explore Savings
+        dispatch(setSelectedRowsForExploreSavingsEBSBulk([]));
         if (isWorkloadFactory) {
             handleURLFromDashboard(value, isWorkloadFactory, navigate);
         } else {
