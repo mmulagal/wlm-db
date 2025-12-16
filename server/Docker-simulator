@@ -19,9 +19,9 @@ COPY __mocks__ ./__mocks__
 COPY prisma ./prisma/
 COPY patches ./patches/
 
-# Change the permissions of the /resources/mssql directory to give read and write access
-RUN chmod -R 766 ./resources/mssql
-RUN chmod -R 766 ./resources/pgsql
+# Set proper permissions - 755 allows directory traversal (execute bit on directories)
+RUN chmod -R 755 ./resources/mssql
+RUN chmod -R 755 ./resources/pgsql
 
 RUN npm i
 
