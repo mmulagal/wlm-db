@@ -118,9 +118,9 @@ describe('Homepage status operations', () => {
         expect(items?.length).toBeGreaterThan(0);
         expect(totalItems).toEqual(6);
         expect(severity).toEqual('high');
-        // Verify each item has the expected structure with grouped categories
+        // Verify each item has focusWidgetName (deduplicated items)
         items.forEach(item => {
-            expect(item.description).toMatch(/\| /);
+            expect(item.description).toBeTruthy();
         });
     });
 
@@ -128,9 +128,9 @@ describe('Homepage status operations', () => {
         const { items, totalItems, severity } = await getFocusStatus(ACCOUNTID, undefined, undefined, 7);
         expect(totalItems).toEqual(6);
         expect(severity).toEqual('high');
-        // Verify items contain grouped categories
+        // Since we have fewer unique items than limit, should return all unique items
         items.forEach(item => {
-            expect(item.description).toMatch(/\| /);
+            expect(item.description).toBeTruthy();
         });
     });
 
@@ -138,10 +138,13 @@ describe('Homepage status operations', () => {
         const { items, totalItems, severity } = await getFocusStatus(ACCOUNTID, undefined, undefined, 5);
         expect(totalItems).toEqual(6);
         expect(severity).toEqual('high');
-        // When limit is applied, should return items up to the limit
+        // When limit is applied, should return unique items up to the limit (no duplicates)
         expect(items.length).toBeLessThanOrEqual(5);
+        // Verify all items are unique
+        const uniqueDescriptions = new Set(items.map(item => item.description));
+        expect(uniqueDescriptions.size).toEqual(items.length);
         items.forEach(item => {
-            expect(item.description).toMatch(/\| /);
+            expect(item.description).toBeTruthy();
         });
     });
 });

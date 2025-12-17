@@ -64,7 +64,7 @@ import resourceRoutes from './routes/resource';
 import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
-import { execute, initializeDatabase } from './utils/prisma-utils';
+import { execute, initializeDatabase, prisma } from './utils/prisma-utils';
 import sandboxRoutes from './routes/sandbox';
 import { initiateCronOperations } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
@@ -418,5 +418,22 @@ app.listen({ port, host }, err => {
     logger.info(`Server version: ${VERSION}, node-version: ${process.version}, mode: ${process.env.NODE_ENV}`);
     validateSchema();
 });
+
+// Graceful shutdown
+const gracefulShutdown = async (signal: string) => {
+    logger.info(`Received ${signal}, closing server gracefully`);
+    try {
+        await app.close();
+        await prisma.client.$disconnect();
+        logger.info('Database connections closed');
+        process.exit(0);
+    } catch (error) {
+        logger.error('Error during graceful shutdown', error);
+        process.exit(1);
+    }
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 export { app };

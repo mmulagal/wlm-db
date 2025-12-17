@@ -11,6 +11,7 @@ interface ConfigItem {
     parameter?: string;
     category: string;
     subCategory: string;
+    focusWidgetName?: string;
     [key: string]: unknown;
 }
 
@@ -167,9 +168,49 @@ function generateCombinedParameterCategoryMaps(): Map<string, ParameterCategoryM
     return combinedMap;
 }
 
+/**
+ * Generates a simple map of parameter/name to focusWidgetName
+ * For MSSQL: uses parameter field, for Oracle: uses name field
+ * @returns Map where key is parameter/name and value is focusWidgetName
+ */
+
+function extractAndSetFocusWidgetName(item: ConfigItem, focusWidgetMap: Map<string, string>) {
+    if (Array.isArray(item)) {
+        item.forEach(subItem => extractAndSetFocusWidgetName(subItem as ConfigItem, focusWidgetMap));
+    } else if (item.focusWidgetName) {
+        if (item.parameter) {
+            // MSSQL case
+            focusWidgetMap.set(item.parameter, item.focusWidgetName as string);
+        } else if (item.name) {
+            // Oracle case
+            focusWidgetMap.set(item.name, item.focusWidgetName as string);
+        }
+    }
+}
+
+function generateFocusWidgetNameMap(): Map<string, string> {
+    const focusWidgetMap = new Map<string, string>();
+
+    // Process MSSQL and Oracle configuration items
+    [MSSQL_GOLDEN_CONFIG, ORACLE_GOLDEN_CONFIG].forEach(config => {
+        Object.entries(config).forEach(([, value]) => {
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+                Object.entries(value).forEach(([, subValue]) => {
+                    extractAndSetFocusWidgetName(subValue as ConfigItem, focusWidgetMap);
+                });
+            } else {
+                extractAndSetFocusWidgetName(value as ConfigItem, focusWidgetMap);
+            }
+        });
+    });
+
+    return focusWidgetMap;
+}
+
 export {
     generateCombinedParameterCategoryMaps,
     ParameterCategoryMap,
     generateMsSqlParameterCategoryMap,
-    generateOracleParameterCategoryMap
+    generateOracleParameterCategoryMap,
+    generateFocusWidgetNameMap
 };
