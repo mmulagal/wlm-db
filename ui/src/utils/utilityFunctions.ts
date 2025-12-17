@@ -2699,6 +2699,40 @@ export const createSandboxNavigation = (navigate: any) => {
     }
 };
 
+export const checkCustomTimeframeExceedsCurrentTime = (
+    startCustomAnalysisTime: Date | null | undefined,
+    selectedCustomAnalysisTime: { label: string; id: number } | null | undefined,
+    selectedCustomAnalysisTimeFrameUnit: { label: string; id: number } | null | undefined,
+    durationCustomAnalysis: string | number | undefined
+) => {
+    if (!startCustomAnalysisTime || !selectedCustomAnalysisTime || !selectedCustomAnalysisTimeFrameUnit) {
+        return false;
+    }
+
+    const now = new Date();
+    const selectedDate = new Date(startCustomAnalysisTime);
+    const isTodaySelected = selectedDate.toDateString() === now.toDateString();
+
+    if (!isTodaySelected) {
+        return false;
+    }
+
+    const [hours] = selectedCustomAnalysisTime.label.split(':').map(Number);
+    let hour24 = hours;
+
+    if (selectedCustomAnalysisTimeFrameUnit.label === 'PM' && hours !== 12) {
+        hour24 = hours + 12;
+    } else if (selectedCustomAnalysisTimeFrameUnit.label === 'AM' && hours === 12) {
+        hour24 = 0;
+    }
+
+    const currentHours = now.getHours();
+    const remainingHours = currentHours - hour24;
+    const maxDuration = Math.max(1, remainingHours);
+
+    return Number(durationCustomAnalysis) > maxDuration;
+};
+
 export const dashboardRedirectionToWellArchitected = () => {
     const state = store.getState();
     const isWorkloadFactory = state?.auth?.isWorkloadFactory;

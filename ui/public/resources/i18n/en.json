@@ -1023,7 +1023,7 @@
             "investigation-date": "Analysis date",
             "total-errors": "Total errors",
             "last-scan": "Last scan",
-            "new-scan": "New scan in progress. Previous details shown until scan completes.",
+            "new-scan": "New analysis in progress. Previous details shown until scan completes.",
             "stop-scan": "Stop scan",
             "scan-details": "Analysis details",
             "display-activity": "Every analysis scans the last 24 hours from the start time of the analysis.",

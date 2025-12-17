@@ -82,15 +82,44 @@ const AnalyzeCustomTimeframe = () => {
         });
     }, [isTodaySelected, selectedCustomAnalysisTimeFrameUnit]);
 
-    // Reset duration if it exceeds the max allowed when date/time changes
+    // Calculate maximum allowed duration when today is selected
+    const getMaxAllowedDuration = () => {
+        if (!isTodaySelected) {
+            return 24;
+        }
+
+        // Get the selected time and unit, or use defaults
+        const timeToUse = selectedCustomAnalysisTime || timeUnits[0]; // Default to first time slot (12:00)
+        const unitToUse = selectedCustomAnalysisTimeFrameUnit || generateUnitsForTimeFrame[0]; // Default to AM
+
+        const [hours, minutes] = timeToUse.label.split(':').map(Number);
+        let hour24 = hours;
+
+        if (unitToUse.label === 'PM' && hours !== 12) {
+            hour24 = hours + 12;
+        } else if (unitToUse.label === 'AM' && hours === 12) {
+            hour24 = 0;
+        }
+
+        const currentHours = now.getHours();
+
+        // Calculate how many complete hours are available from selected time to current time
+        // For example: 6 PM (18:00) to 7:29 PM (19:29) = 19 - 18 = 1 hour
+        const remainingHours = currentHours - hour24;
+
+        return Math.max(1, remainingHours);
+    };
+
+    // Set default duration based on current time for today's date
     useEffect(() => {
-        if (isTodaySelected && durationCustomAnalysis) {
+        if (isTodaySelected) {
             const maxDuration = getMaxAllowedDuration();
-            if (Number(durationCustomAnalysis) > maxDuration) {
+            // Only set default if duration is not already set or if it's the old default of 24
+            if (!durationCustomAnalysis || durationCustomAnalysis === '24') {
                 dispatch(setCustomAnalysisDurationInHours(maxDuration.toString()));
             }
         }
-    }, [selectedDate, selectedCustomAnalysisTime, selectedCustomAnalysisTimeFrameUnit]);
+    }, [selectedDate, selectedCustomAnalysisTime, selectedCustomAnalysisTimeFrameUnit, isTodaySelected]);
 
     const handleDateChange = (date: Date) => {
         setSelectedDate(date);
@@ -123,7 +152,9 @@ const AnalyzeCustomTimeframe = () => {
 
         endDate.setHours(hour24, minutes || 0, 0, 0);
 
-        endDate.setHours(endDate.getHours() + Number(durationCustomAnalysis));
+        // Cap duration at 24 hours for display purposes
+        const cappedDuration = Math.min(Number(durationCustomAnalysis), 24);
+        endDate.setHours(endDate.getHours() + cappedDuration);
 
         return endDate;
     };
@@ -153,42 +184,24 @@ const AnalyzeCustomTimeframe = () => {
         return `${startTimeDate}, ${selectedCustomAnalysisTime?.label} ${selectedCustomAnalysisTimeFrameUnit?.label} - ${endTimeDate}, ${endTimeFormatted} ${endTimeAmPm}`;
     };
 
-    // Calculate maximum allowed duration when today is selected
-    const getMaxAllowedDuration = () => {
-        if (!isTodaySelected || !selectedCustomAnalysisTime || !selectedCustomAnalysisTimeFrameUnit) {
-            return 24;
-        }
-
-        const [hours, minutes] = selectedCustomAnalysisTime.label.split(':').map(Number);
-        let hour24 = hours;
-
-        if (selectedCustomAnalysisTimeFrameUnit.label === 'PM' && hours !== 12) {
-            hour24 = hours + 12;
-        } else if (selectedCustomAnalysisTimeFrameUnit.label === 'AM' && hours === 12) {
-            hour24 = 0;
-        }
-
-        const currentHours = now.getHours();
-
-        // Calculate how many complete hours are available from selected time to current time
-        // For example: 6 PM (18:00) to 7:29 PM (19:29) = 19 - 18 = 1 hour
-        const remainingHours = currentHours - hour24;
-
-        return Math.max(1, remainingHours);
-    };
-
     const checkError = () => {
         if (!durationCustomAnalysis || durationCustomAnalysis === '') {
             return t('databases.log-analyzer.error-msg');
         }
         const duration = Number(durationCustomAnalysis);
-        const maxDuration = getMaxAllowedDuration();
 
-        if (duration < 1 || duration > maxDuration) {
-            return isTodaySelected
-                ? `Duration must be between 1 and ${maxDuration} hours for today's date`
-                : t('databases.log-analyzer.error-msg');
+        if (duration < 1 || duration > 24) {
+            return t('databases.log-analyzer.error-msg');
         }
+
+        // Check if end time exceeds current time for today's date
+        if (isTodaySelected) {
+            const maxDuration = getMaxAllowedDuration();
+            if (duration > maxDuration) {
+                return t('databases.log-analyzer.select-timeframe-tooltip');
+            }
+        }
+
         return '';
     };
 
@@ -231,12 +244,8 @@ const AnalyzeCustomTimeframe = () => {
                     placeholder="Duration"
                     onChange={(event: React.FormEvent<HTMLInputElement>) => {
                         const { value } = event.target as HTMLInputElement;
-                        const maxDuration = getMaxAllowedDuration();
 
-                        if (
-                            value === '' ||
-                            (/^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= maxDuration)
-                        ) {
+                        if (value === '' || (/^\d+$/.test(value) && Number(value) >= 1)) {
                             dispatch(setCustomAnalysisDurationInHours(value));
                         }
                     }}

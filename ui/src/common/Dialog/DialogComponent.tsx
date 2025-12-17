@@ -14,7 +14,7 @@ import { useAppSelector } from '../../store/storeHooks';
 import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
 // eslint-disable-next-line import/no-cycle
-import { isValidSqlUsername } from '../../utils/utilityFunctions';
+import { isValidSqlUsername, checkCustomTimeframeExceedsCurrentTime } from '../../utils/utilityFunctions';
 import { ReactComponent as ErrorIcon } from '../../assets/error-icon.svg';
 import { ReactComponent as ActionRequiredIcon } from '../../assets/action-required.svg';
 
@@ -65,7 +65,12 @@ const DialogComponent = ({
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
     const { selectedOptimizeConfig } = useAppSelector(state => state.inventoryV2);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
-    const { durationCustomAnalysis } = useAppSelector(state => state.agenticAI);
+    const {
+        durationCustomAnalysis,
+        selectedCustomAnalysisTime,
+        selectedCustomAnalysisTimeFrameUnit,
+        startCustomAnalysisTime
+    } = useAppSelector(state => state.agenticAI);
 
     // Memoize the password object to prevent unnecessary re-renders
     const fsxAdminPasswords = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
@@ -191,10 +196,17 @@ const DialogComponent = ({
         if (dialogFrom === FROM_DIALOG.WINDOWS_AUTH && (scUsername.length === 0 || scPassword.length === 0)) {
             return true;
         }
+        // Disable for custom timeframe if duration is empty, exceeds 24 hours, or exceeds current time for today's date
         if (
             dialogFrom === FROM_DIALOG.CUSTOM_TIMEFRAME &&
-            typeof durationCustomAnalysis === 'string' &&
-            durationCustomAnalysis.length === 0
+            ((typeof durationCustomAnalysis === 'string' && durationCustomAnalysis.length === 0) ||
+                Number(durationCustomAnalysis) > 24 ||
+                checkCustomTimeframeExceedsCurrentTime(
+                    startCustomAnalysisTime,
+                    selectedCustomAnalysisTime,
+                    selectedCustomAnalysisTimeFrameUnit,
+                    durationCustomAnalysis
+                ))
         ) {
             return true;
         }
