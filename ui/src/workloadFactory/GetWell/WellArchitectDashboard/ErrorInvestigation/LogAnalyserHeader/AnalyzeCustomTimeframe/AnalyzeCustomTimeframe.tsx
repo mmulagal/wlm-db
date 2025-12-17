@@ -114,12 +114,14 @@ const AnalyzeCustomTimeframe = () => {
     useEffect(() => {
         if (isTodaySelected) {
             const maxDuration = getMaxAllowedDuration();
-            // Only set default if duration is not already set or if it's the old default of 24
-            if (!durationCustomAnalysis || durationCustomAnalysis === '24') {
+            const currentDuration = durationCustomAnalysis ? durationCustomAnalysis.toString() : '';
+            
+            // Set default if duration is not set, is empty, or is 24 (only on initial load)
+            if (!currentDuration || currentDuration === '24') {
                 dispatch(setCustomAnalysisDurationInHours(maxDuration.toString()));
             }
         }
-    }, [selectedDate, selectedCustomAnalysisTime, selectedCustomAnalysisTimeFrameUnit, isTodaySelected]);
+    }, [selectedDate, selectedCustomAnalysisTime, selectedCustomAnalysisTimeFrameUnit, isTodaySelected, dispatch]);
 
     const handleDateChange = (date: Date) => {
         setSelectedDate(date);
@@ -245,7 +247,8 @@ const AnalyzeCustomTimeframe = () => {
                     onChange={(event: React.FormEvent<HTMLInputElement>) => {
                         const { value } = event.target as HTMLInputElement;
 
-                        if (value === '' || (/^\d+$/.test(value) && Number(value) >= 1)) {
+                        // Allow empty string or valid numbers >= 1
+                        if (value === '' || /^\d+$/.test(value)) {
                             dispatch(setCustomAnalysisDurationInHours(value));
                         }
                     }}

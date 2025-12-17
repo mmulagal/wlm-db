@@ -1000,6 +1000,7 @@
             "pgsql": "PostgreSQL"
         },
         "log-analyzer": {
+            "select-timeframe-tooltip": "End time must be in the past for error analysis. Set to current time or earlier.",
             "error-msg": "Duration should be between 1 to 24",
             "start": "Apply",
             "analyze-now-custom-timeframe": "Customize analysis time frame",
