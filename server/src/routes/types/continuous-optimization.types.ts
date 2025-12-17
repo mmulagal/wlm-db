@@ -104,7 +104,7 @@ const DismissedConfigurationsResponse = Type.Object({
 type DismissedConfigurationsResponseType = Static<typeof DismissedConfigurationsResponse>;
 
 const OptimizeStorageRequestParams = Type.Object({
-    configurationName: Type.String(Type.Enum(OptimizeStorageConfigs)),
+    configurationName: Type.Enum(OptimizeStorageConfigs),
     objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
 });
 

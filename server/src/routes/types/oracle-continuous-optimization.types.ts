@@ -94,12 +94,12 @@ const OptimizePerHostRequestBody = Type.Object({
 
 const HostsToOptimize = Type.Array(
     Type.Object({
-        configurationName: Type.Union(
-            [
-                Type.Enum(OptimizeOracleiSCSIStorageOperatingSystem),
-                Type.Enum(OptimizeOracleNFSStorageOperatingSystem),
-                Type.Enum(OptimizeOracleStorageSizing)
-            ],
+        configurationName: Type.Enum(
+            {
+                ...OptimizeOracleiSCSIStorageOperatingSystem,
+                ...OptimizeOracleNFSStorageOperatingSystem,
+                ...OptimizeOracleStorageSizing
+            },
             {
                 description:
                     'Optimization configuration name for the type specified.\n\n' +
