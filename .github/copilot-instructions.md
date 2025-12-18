@@ -59,10 +59,6 @@ npm run simulator        # start simulator in a separate terminal
 - Prefer named exports and consistent export style per file.
 - Use centralized logger; never `console.*` in server code.
 
-## Validators (AI‑WAD)
-- PowerShell AST: run `pwsh` with `resources/ps/Validate-PsAst.ps1` and parse JSON diagnostics.
-- MSSQL T‑SQL syntax: ephemeral Docker with dynamic port; use `--platform linux/amd64` on arm64 (Apple Silicon).
-
 ## Full Instructions
 
 For complete and detailed instructions, refer to [`AGENTS.md`](../AGENTS.md) and the package-specific rules under `.github/instructions/*`.
