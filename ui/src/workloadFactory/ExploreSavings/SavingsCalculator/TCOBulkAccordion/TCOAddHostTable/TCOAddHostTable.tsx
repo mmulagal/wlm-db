@@ -30,12 +30,19 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
     const [ebsTableData, setEBSTableData] = useState<any>([]);
     const [updatedTableData, setUpdatedTableData] = useState<any>([]);
     const { selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
 
     useEffect(() => {
         if (unManagedHostFormatedList) {
             const result: any = [];
             unManagedHostFormatedList?.map((perRow: any) => {
+                if (
+                    !headerSelectedMultiCredIdsList.includes(perRow?.credentialId) ||
+                    !headerSelectedMultiRegionIdsList.includes(perRow?.regionId)
+                ) {
+                    return;
+                }
                 const instanceList: any = [];
                 const instanceNameList: any = [];
                 perRow?.ec2Details?.map((row: any) => {
@@ -59,7 +66,6 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
             });
             // Initialize two empty arrays
             const ebsArray: any = [];
-            const fsxArray: any = [];
             result.forEach((item: any) => {
                 // currently filtering for MSSQL hosts only
                 if (item?.hostType !== DBType.MSSQL) {
@@ -67,8 +73,6 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
                 }
                 if (item.storageType === 'EBS') {
                     ebsArray.push(item);
-                } else if (item.storageType === 'FSx for Windows') {
-                    fsxArray.push(item);
                 }
             });
             setEBSTableData(ebsArray);
