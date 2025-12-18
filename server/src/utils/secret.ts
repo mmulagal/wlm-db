@@ -40,7 +40,7 @@ export default async function initiateSecrets() {
                     logger.info('<initiateSecrets> DATABASE_URL:', process.env.DATABASE_URL);
                     process.env.DATABASE_URL = `${process.env.DATABASE_URL}${
                         process.env.DATABASE_URL?.includes('?') ? '&' : '?'
-                    }connection_limit=25`;
+                    }connection_limit=25&pool_timeout=25&connect_timeout=10`;
                     logger.info('<add connection limit> DATABASE_URL:', process.env.DATABASE_URL);
                 }
             }

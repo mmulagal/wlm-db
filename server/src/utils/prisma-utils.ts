@@ -2,20 +2,34 @@ import { exec } from 'child_process';
 import getLogger from './logger';
 
 let PrismaClient: typeof import('@prisma/client').PrismaClient;
+let prismaClientModule: any;
 
-// added both condition to work for local & demo simulator
-if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-    PrismaClient = (await import('../../__mocks__/@prisma/client')).PrismaClient;
-} else {
-    PrismaClient = (await import('@prisma/client')).PrismaClient;
+// Lazy load the appropriate PrismaClient based on environment
+async function getPrismaClientModule() {
+    if (prismaClientModule) {
+        return prismaClientModule;
+    }
+
+    // added both condition to work for local & demo simulator
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        prismaClientModule = await import('../../__mocks__/@prisma/client');
+    } else {
+        prismaClientModule = await import('@prisma/client');
+    }
+    return prismaClientModule;
 }
 
 const logger = getLogger();
 
-const prisma = { client: new PrismaClient() };
+const prisma = { client: null as unknown as InstanceType<typeof PrismaClient> };
 
 async function initializeDatabase() {
-    prisma.client = new PrismaClient();
+    // Delay instantiation until initializeDatabase is called (after secrets are loaded)
+    if (!prisma.client) {
+        const module = await getPrismaClientModule();
+        PrismaClient = module.PrismaClient;
+        prisma.client = new PrismaClient();
+    }
 }
 
 // Function to validate user input

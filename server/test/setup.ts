@@ -39,3 +39,12 @@ import './simulator/scopes/cloud-manager/cloud-manager-notification-scope';
 import './simulator/scopes/opentelemetry-scope';
 import './simulator/scopes/jwt-scope';
 import './simulator/scopes/batch-scope';
+
+import { initializeDatabase } from '../src/utils/prisma-utils';
+
+// Initialize database for tests before any test runs
+initializeDatabase().catch(error => {
+    // eslint-disable-next-line no-console
+    console.error('Failed to initialize database in test setup:', error);
+    throw error;
+});

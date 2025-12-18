@@ -61,15 +61,24 @@ type CronJobOptions = {
 async function failLongRunningDeploymentJobs() {
     logger.info('Marking long running (> 4 hours) deployment jobs as failed');
 
-    setInterval(async () => updateLongRunningJobs(), Number(ms(FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL)));
+    setInterval(async () => {
+        try {
+            await updateLongRunningJobs();
+        } catch (error) {
+            logger.error('Error in failLongRunningDeploymentJobs', error);
+        }
+    }, Number(ms(FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL)));
 }
 
 async function failLongRunningResourcePrepareJobs() {
     logger.info('Marking long running (> 1 hour) resource prepare jobs as failed');
-    setInterval(
-        async () => updateLongRunningResourcePrepareJobs(),
-        Number(ms(FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL))
-    );
+    setInterval(async () => {
+        try {
+            await updateLongRunningResourcePrepareJobs();
+        } catch (error) {
+            logger.error('Error in failLongRunningResourcePrepareJobs', error);
+        }
+    }, Number(ms(FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL)));
 }
 
 function purgeOlderJobs() {
@@ -78,13 +87,23 @@ function purgeOlderJobs() {
     const purgeInterval = ms(config.get('db.jobs.purge.interval'));
     const purgeAfter = ms(config.get('db.jobs.purge.older-than'));
 
-    setInterval(async () => deleteOlderJobs(Date.now() - Number(purgeAfter)), Number(purgeInterval));
+    setInterval(async () => {
+        try {
+            await deleteOlderJobs(Date.now() - Number(purgeAfter));
+        } catch (error) {
+            logger.error('Error in purgeOlderJobs', error);
+        }
+    }, Number(purgeInterval));
 }
 
 // Scheduled task to update and manage EC2 instance recommendation preferences based on recent usage, and remove entries for instances no longer available in AWS."
 function updateTcoInstanceRecommendationPreferences() {
     setInterval(async () => {
-        await updateTcoInstRecPrefs();
+        try {
+            await updateTcoInstRecPrefs();
+        } catch (error) {
+            logger.error('Error in updateTcoInstanceRecommendationPreferences', error);
+        }
     }, Number(ms(config.get('db.tco.update-recommendation-preference'))));
 }
 
@@ -195,7 +214,11 @@ async function updateTcoInstRecPrefs() {
 
 function updateManagedInstanceRecommendationPreferences() {
     setInterval(async () => {
-        await updateManagedInstRecPrefs();
+        try {
+            await updateManagedInstRecPrefs();
+        } catch (error) {
+            logger.error('Error in updateManagedInstanceRecommendationPreferences', error);
+        }
     }, Number(ms(config.get('db.managed-instance.update-recommendation-preference'))));
 }
 
@@ -308,7 +331,11 @@ async function logQueueMetrics(queue: Queue) {
 
 async function purgeAssessmentData() {
     setInterval(async () => {
-        await deleteAllButLatestRecordPerConfigDataType();
+        try {
+            await deleteAllButLatestRecordPerConfigDataType();
+        } catch (error) {
+            logger.error('Error in purgeAssessmentData', error);
+        }
     }, Number(ms(config.get('db.assessment.purge.interval'))));
 }
 
