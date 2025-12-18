@@ -94,28 +94,26 @@ const OptimizePerHostRequestBody = Type.Object({
 
 const HostsToOptimize = Type.Array(
     Type.Object({
-        configurationName: Type.Enum(
-            {
-                ...OptimizeOracleiSCSIStorageOperatingSystem,
-                ...OptimizeOracleNFSStorageOperatingSystem,
-                ...OptimizeOracleStorageSizing
-            },
-            {
-                description:
-                    'Optimization configuration name for the type specified.\n\n' +
-                    'For iscsi-storage-operating-system type, valid values are:\n' +
-                    '- tcp-advanced-options\n' +
-                    '- host-utilities\n' +
-                    '- thp-disable\n' +
-                    '- iscsi-replacement-timeout\n' +
-                    '- multipath-io-sessions\n' +
-                    '- multipath-configuration\n' +
-                    '- multipath-friendly-names\n' +
-                    '- multiblock-readcount\n\n' +
-                    'For nfs-storage-operating-system type, valid values are:\n' +
-                    '- kernel-parameters\n'
-            }
-        ),
+        configurationName: Type.String({
+            enum: [
+                ...Object.values(OptimizeOracleiSCSIStorageOperatingSystem),
+                ...Object.values(OptimizeOracleNFSStorageOperatingSystem),
+                ...Object.values(OptimizeOracleStorageSizing)
+            ],
+            description:
+                'Optimization configuration name for the type specified.\n\n' +
+                'For iscsi-storage-operating-system type, valid values are:\n' +
+                '- tcp-advanced-options\n' +
+                '- host-utilities\n' +
+                '- thp-disable\n' +
+                '- iscsi-replacement-timeout\n' +
+                '- multipath-io-sessions\n' +
+                '- multipath-configuration\n' +
+                '- multipath-friendly-names\n' +
+                '- multiblock-readcount\n\n' +
+                'For nfs-storage-operating-system type, valid values are:\n' +
+                '- kernel-parameters\n'
+        }),
         databaseHosts: Type.Array(OptimizePerHostRequestBody)
     })
 );
@@ -123,7 +121,8 @@ const HostsToOptimize = Type.Array(
 type HostsToOptimizeType = Static<typeof HostsToOptimize>;
 
 const OptimizeRequestBody = Type.Object({
-    type: Type.Enum(OptimizeOracleTypes, {
+    type: Type.String({
+        enum: Object.values(OptimizeOracleTypes),
         description: 'Type of optimization to perform',
         examples: ['storage-operating-system']
     }),

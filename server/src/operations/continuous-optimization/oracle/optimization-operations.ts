@@ -59,7 +59,7 @@ async function optimizeOracleDatabase(accountId: string, params: OptimizeRequest
     }
 
     const jobMetadata: OracleJobMetadata = { hostsToOptimize: formatJobMetadata(hostsToOptimize) };
-    const jobDescription = OracleOptimizeJobDescriptions[optimizationType];
+    const jobDescription = OracleOptimizeJobDescriptions[optimizationType as OptimizeOracleTypes];
 
     const masterJobId = await handleOptimizeJobCreation(
         accountId,
