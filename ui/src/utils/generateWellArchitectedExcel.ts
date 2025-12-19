@@ -1735,6 +1735,34 @@ const applySpecialConfigurationStyling = (
     }
 };
 
+// Function to add hyperlink to Configuration Status sheet
+function addConfigurationStatusHyperlink(worksheet: ExcelJS.Worksheet): void {
+    // Find an empty cell on row 15 in the right area (let's use column I, row 1)
+    const hyperlinkCell = worksheet.getCell('I1');
+
+    hyperlinkCell.value = {
+        text: '↖ Back to Configuration Status',
+        hyperlink: "#'Configuration Status'!A1",
+        tooltip: 'Navigate to Configuration Status sheet'
+    };
+
+    // Style the hyperlink
+    hyperlinkCell.font = {
+        color: { argb: 'FF0000FF' }, // Blue color
+        underline: true,
+        bold: true,
+        size: 10
+    };
+
+    hyperlinkCell.alignment = {
+        horizontal: 'center',
+        vertical: 'middle'
+    };
+
+    // Set column width to accommodate the text
+    worksheet.getColumn('I').width = 25;
+}
+
 // Auto-filter configuration
 const addConfigurationAutoFilter = (
     worksheet: ExcelJS.Worksheet,
@@ -1882,6 +1910,9 @@ async function generateProperXlsxWorkbook(
 
         const sheetName = sanitizeWorksheetName(displayName);
         const configSheet = workbook.addWorksheet(sheetName);
+
+        // Add hyperlink to Configuration Status sheet
+        addConfigurationStatusHyperlink(configSheet);
 
         // Add data
         if (MULTI_TABLE_CONFIGS.includes(internalName)) {
