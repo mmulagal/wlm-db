@@ -3,13 +3,13 @@ import { DatabaseHostOptionalInstanceSummaryParams, DatabaseHostSummaryParams } 
 
 import {
     AssessmentQueryStringPerAccount,
-    ContinuousOptimizationQueryString,
-    OptimizeStorageRequestBody
+    ContinuousOptimizationQueryString
 } from '../types/continuous-optimization.types';
 import {
     DriftAssessmentResponsePerAccount,
     DriftAssessmentResponsePerHost,
     OptimizeRequestBody,
+    OptimizeStorageRequestBody,
     OracleDriftAssessmentResponse
 } from '../types/oracle-continuous-optimization.types';
 import { resourceRequest } from './database-hosts-schemas';

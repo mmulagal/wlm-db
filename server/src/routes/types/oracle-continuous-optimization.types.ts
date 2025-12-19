@@ -5,7 +5,8 @@ import {
     OptimizeOracleiSCSIStorageOperatingSystem,
     OptimizeOracleNFSStorageOperatingSystem,
     OptimizeOracleStorageSizing,
-    OptimizeOracleTypes
+    OptimizeOracleTypes,
+    OptimizeStorageRequestParams
 } from '../../utils/continous-optimization-consts';
 import {
     OntapVolume,
@@ -131,6 +132,10 @@ const OptimizeRequestBody = Type.Object({
 
 type OptimizeRequestBodyType = Static<typeof OptimizeRequestBody>;
 
+const OptimizeStorageRequestBody = Type.Object({
+    assessments: Type.Optional(Type.Array(OptimizeStorageRequestParams))
+});
+
 export {
     OracleGenericParameterDriftResponse,
     OracleGenericParameterDriftResponseType,
@@ -144,5 +149,6 @@ export {
     DriftAssessmentResponsePerAccountType,
     OptimizeRequestBody,
     OptimizeRequestBodyType,
-    HostsToOptimizeType
+    HostsToOptimizeType,
+    OptimizeStorageRequestBody
 };

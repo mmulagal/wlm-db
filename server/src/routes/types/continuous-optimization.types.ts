@@ -2,8 +2,7 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 import {
     AssessmentCategories,
     AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    OptimizeStorageConfigs
+    AwsWellArchitecturedPillars
 } from '../../utils/continous-optimization-consts';
 
 const allowedFields = Object.values(AssessmentCategories);
@@ -103,15 +102,6 @@ const DismissedConfigurationsResponse = Type.Object({
 });
 type DismissedConfigurationsResponseType = Static<typeof DismissedConfigurationsResponse>;
 
-const OptimizeStorageRequestParams = Type.Object({
-    configurationName: Type.String({ enum: Object.values(OptimizeStorageConfigs) }),
-    objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
-});
-
-const OptimizeStorageRequestBody = Type.Object({
-    assessments: Type.Optional(Type.Array(OptimizeStorageRequestParams))
-});
-
 export {
     OntapVolume,
     OntapVolumeType,
@@ -125,6 +115,5 @@ export {
     ErrorResponse,
     ErrorResponseType,
     DismissedConfigurationsResponse,
-    DismissedConfigurationsResponseType,
-    OptimizeStorageRequestBody
+    DismissedConfigurationsResponseType
 };
