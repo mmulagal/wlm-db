@@ -23,7 +23,9 @@ import {
     extractVersionDetails,
     getEc2Hostname,
     isCidrContained,
-    summarizeFirstLevel
+    summarizeFirstLevel,
+    camelCaseToHyphenated,
+    hyphenatedToPascalCaseWithSpace
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
@@ -419,5 +421,131 @@ ervisor)\n`;
         expect(result.objWithArrays.arr1).toBe(2);
         // @ts-expect-error wrong type
         expect(result.objWithArrays.arr2).toBe(3);
+    });
+
+    describe('camelCaseToHyphenated', () => {
+        it('should convert simple camelCase to hyphenated', () => {
+            expect(camelCaseToHyphenated('snapshotPolicy')).toBe('snapshot-policy');
+        });
+
+        it('should convert multiple camelCase words to hyphenated', () => {
+            expect(camelCaseToHyphenated('autoSizeMode')).toBe('auto-size-mode');
+        });
+
+        it('should handle already hyphenated strings', () => {
+            expect(camelCaseToHyphenated('snapshot-policy')).toBe('snapshot-policy');
+        });
+
+        it('should handle single word strings', () => {
+            expect(camelCaseToHyphenated('snapshot')).toBe('snapshot');
+        });
+
+        it('should handle empty strings', () => {
+            expect(camelCaseToHyphenated('')).toBe('');
+        });
+
+        it('should convert strings starting with uppercase', () => {
+            expect(camelCaseToHyphenated('SnapshotPolicy')).toBe('snapshot-policy');
+        });
+
+        it('should handle multiple consecutive uppercase letters', () => {
+            expect(camelCaseToHyphenated('awsBackup')).toBe('aws-backup');
+            expect(camelCaseToHyphenated('IOpsPolicy')).toBe('iops-policy');
+        });
+
+        it('should handle strings with numbers', () => {
+            expect(camelCaseToHyphenated('snapshotPolicy2')).toBe('snapshot-policy2');
+            // Note: The regex only converts lowercase-to-uppercase transitions, not number-to-letter
+            expect(camelCaseToHyphenated('policy2Name')).toBe('policy2name');
+        });
+
+        it('should be case-insensitive in output', () => {
+            const result = camelCaseToHyphenated('SnapshotPOLICY');
+            expect(result).toBe(result.toLowerCase());
+        });
+    });
+
+    describe('hyphenatedToPascalCaseWithSpace', () => {
+        it('should convert hyphenated to Pascal case with spaces', () => {
+            expect(hyphenatedToPascalCaseWithSpace('snapshot-policy')).toBe('Snapshot Policy');
+        });
+
+        it('should convert multiple hyphenated words', () => {
+            expect(hyphenatedToPascalCaseWithSpace('auto-size-mode')).toBe('Auto Size Mode');
+        });
+
+        it('should handle single word strings', () => {
+            expect(hyphenatedToPascalCaseWithSpace('snapshot')).toBe('Snapshot');
+        });
+
+        it('should handle empty strings', () => {
+            expect(hyphenatedToPascalCaseWithSpace('')).toBe('');
+        });
+
+        it('should handle camelCase input (no hyphens)', () => {
+            expect(hyphenatedToPascalCaseWithSpace('snapshotPolicy')).toBe('Snapshotpolicy');
+        });
+
+        it('should capitalize first letter of each hyphen-separated word', () => {
+            expect(hyphenatedToPascalCaseWithSpace('aws-backup')).toBe('Aws Backup');
+        });
+
+        it('should handle multiple consecutive hyphens', () => {
+            expect(hyphenatedToPascalCaseWithSpace('snapshot--policy')).toBe('Snapshot  Policy');
+        });
+
+        it('should handle leading and trailing hyphens', () => {
+            expect(hyphenatedToPascalCaseWithSpace('-snapshot-policy-')).toBe(' Snapshot Policy ');
+        });
+
+        it('should lowercase all letters except first of each word', () => {
+            expect(hyphenatedToPascalCaseWithSpace('SNAPSHOT-POLICY')).toBe('Snapshot Policy');
+            expect(hyphenatedToPascalCaseWithSpace('SnApShOt-PoLiCy')).toBe('Snapshot Policy');
+        });
+
+        it('should handle strings with numbers', () => {
+            expect(hyphenatedToPascalCaseWithSpace('snapshot-policy-2')).toBe('Snapshot Policy 2');
+            expect(hyphenatedToPascalCaseWithSpace('policy-2-name')).toBe('Policy 2 Name');
+        });
+    });
+
+    describe('camelCaseToHyphenated and hyphenatedToPascalCaseWithSpace integration', () => {
+        it('should convert camelCase to hyphenated and back to display format', () => {
+            const original = 'snapshotPolicy';
+            const hyphenated = camelCaseToHyphenated(original);
+            const display = hyphenatedToPascalCaseWithSpace(hyphenated);
+
+            expect(hyphenated).toBe('snapshot-policy');
+            expect(display).toBe('Snapshot Policy');
+        });
+
+        it('should handle complex camelCase conversion flow', () => {
+            const original = 'autoSizeMode';
+            const hyphenated = camelCaseToHyphenated(original);
+            const display = hyphenatedToPascalCaseWithSpace(hyphenated);
+
+            expect(hyphenated).toBe('auto-size-mode');
+            expect(display).toBe('Auto Size Mode');
+        });
+
+        it('should work with golden config parameter names', () => {
+            const configParams = [
+                'thinProvision',
+                'autosize',
+                'fractionalReserve',
+                'snapshotPolicy',
+                'compressionEnabled'
+            ];
+
+            configParams.forEach(param => {
+                const hyphenated = camelCaseToHyphenated(param);
+                const display = hyphenatedToPascalCaseWithSpace(hyphenated);
+
+                // Verify hyphenated format has hyphens or is single word
+                expect(hyphenated).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+                // Verify display format has proper capitalization
+                expect(display).toMatch(/^[A-Z][a-z0-9]*(\s[A-Z][a-z0-9]*)*$/);
+            });
+        });
     });
 });

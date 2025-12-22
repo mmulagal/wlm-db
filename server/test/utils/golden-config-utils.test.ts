@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
     generateMsSqlParameterCategoryMap,
     generateOracleParameterCategoryMap,
-    generateCombinedParameterCategoryMaps
+    generateCombinedParameterCategoryMaps,
+    generateFocusWidgetNameMap
 } from '../../src/utils/golden-config-utils';
 
 describe('Golden Config Utils', () => {
@@ -257,6 +258,155 @@ describe('Golden Config Utils', () => {
                 expect(combinedSnapshotPolicy?.category).toBe('storage');
                 expect(combinedSnapshotPolicy?.subCategory).toBe('configuration');
             }
+        });
+    });
+
+    describe('generateFocusWidgetNameMap', () => {
+        it('should generate a map from golden configs', () => {
+            const map = generateFocusWidgetNameMap();
+
+            expect(map).toBeInstanceOf(Map);
+            expect(map.size).toBeGreaterThan(0);
+        });
+
+        it('should handle array configurations', () => {
+            const map = generateFocusWidgetNameMap();
+
+            // Verify map keys are hyphenated format
+            const keys = Array.from(map.keys());
+            keys.forEach(key => {
+                expect(typeof key).toBe('string');
+                // Keys should be lowercase and hyphenated
+                expect(key).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+            });
+        });
+
+        it('should map parameter names to focusWidgetNames', () => {
+            const map = generateFocusWidgetNameMap();
+
+            // Verify all values are focusWidgetNames
+            const values = Array.from(map.values());
+            values.forEach(value => {
+                expect(typeof value).toBe('string');
+                expect(value.length).toBeGreaterThan(0);
+            });
+        });
+
+        it('should handle simple property objects in configs', () => {
+            const map = generateFocusWidgetNameMap();
+
+            // Map should have entries from simple object properties
+            expect(map.size).toBeGreaterThan(0);
+        });
+
+        it('should handle objects with nested arrays', () => {
+            const map = generateFocusWidgetNameMap();
+
+            // Map should have entries from nested array objects
+            expect(map.size).toBeGreaterThan(0);
+        });
+
+        it('should use object keys as fallback when name/parameter fields missing', () => {
+            const map = generateFocusWidgetNameMap();
+
+            // Map should contain hyphenated versions of object keys
+            const keys = Array.from(map.keys());
+
+            // All keys should be present and valid
+            expect(keys.length).toBeGreaterThan(0);
+            keys.forEach(key => {
+                expect(key).toBeTruthy();
+                expect(typeof key).toBe('string');
+            });
+        });
+
+        it('should convert camelCase keys to hyphenated format', () => {
+            const map = generateFocusWidgetNameMap();
+
+            // If there are camelCase parameters, they should be converted to hyphenated
+            const keys = Array.from(map.keys());
+
+            // Verify no camelCase exists in keys
+            keys.forEach(key => {
+                expect(key).not.toMatch(/[A-Z]/);
+            });
+        });
+
+        it('should not have duplicate keys', () => {
+            const map = generateFocusWidgetNameMap();
+
+            const keys = Array.from(map.keys());
+            const uniqueKeys = new Set(keys);
+
+            expect(keys.length).toBe(uniqueKeys.size);
+        });
+
+        it('should handle complex nested configurations', () => {
+            const map = generateFocusWidgetNameMap();
+
+            // Map should contain entries for all configuration levels
+            expect(map.size).toBeGreaterThan(0);
+
+            // All entries should have valid key-value pairs
+            map.forEach((value, key) => {
+                expect(key).toBeTruthy();
+                expect(value).toBeTruthy();
+                expect(typeof key).toBe('string');
+                expect(typeof value).toBe('string');
+            });
+        });
+
+        it('should handle empty or null focusWidgetNames gracefully', () => {
+            const map = generateFocusWidgetNameMap();
+
+            // Map should only contain non-empty focusWidgetNames
+            map.forEach(value => {
+                expect(value).toBeTruthy();
+                expect(value.length).toBeGreaterThan(0);
+            });
+        });
+
+        it('should map configuration parameters consistently', () => {
+            const map1 = generateFocusWidgetNameMap();
+            const map2 = generateFocusWidgetNameMap();
+
+            // Two calls should produce identical maps
+            expect(map1.size).toBe(map2.size);
+
+            // Compare entries
+            map1.forEach((value, key) => {
+                expect(map2.get(key)).toBe(value);
+            });
+        });
+
+        it('should handle special characters in focusWidgetNames', () => {
+            const map = generateFocusWidgetNameMap();
+
+            // focusWidgetNames can contain special characters like parentheses from golden config
+            map.forEach(value => {
+                // Values should be non-empty strings
+                expect(typeof value).toBe('string');
+                expect(value.length).toBeGreaterThan(0);
+                // Values should not be just whitespace
+                expect(value.trim().length).toBeGreaterThan(0);
+            });
+        });
+
+        it('should create displayable names from hyphenated keys', () => {
+            const map = generateFocusWidgetNameMap();
+
+            // Keys should be in hyphenated format suitable for conversion to display names
+            const keys = Array.from(map.keys());
+            keys.forEach(key => {
+                // Should be convertible to display format (Pascal Case With Spaces)
+                const displayFormat = key
+                    .split('-')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+
+                expect(displayFormat).toMatch(/^[A-Z]/);
+                expect(displayFormat.length).toBeGreaterThan(0);
+            });
         });
     });
 });

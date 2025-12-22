@@ -1,5 +1,6 @@
 import MSSQL_GOLDEN_CONFIG from '../operations/continuous-optimization/mssql/golden-config';
 import ORACLE_GOLDEN_CONFIG from '../operations/continuous-optimization/oracle/golden-config';
+import { camelCaseToHyphenated } from './utils';
 
 interface ParameterCategoryMap {
     category: string;
@@ -171,19 +172,44 @@ function generateCombinedParameterCategoryMaps(): Map<string, ParameterCategoryM
 /**
  * Generates a simple map of parameter/name to focusWidgetName
  * For MSSQL: uses parameter field, for Oracle: uses name field
+ * Handles three cases:
+ * 1. Arrays at top level: sizing: [{...}, {...}]
+ * 2. Objects with simple properties: license: { focusWidgetName: '...', category: '...', ... }
+ * 3. Objects with arrays as properties: configuration: { volume: [{...}], lun: [{...}], ... }
+ * Falls back to object key (converted to hyphenated format) if neither name nor parameter exists
  * @returns Map where key is parameter/name and value is focusWidgetName
  */
 
-function extractAndSetFocusWidgetName(item: ConfigItem, focusWidgetMap: Map<string, string>) {
+function extractAndSetFocusWidgetName(item: unknown, focusWidgetMap: Map<string, string>, parentKey?: string) {
     if (Array.isArray(item)) {
-        item.forEach(subItem => extractAndSetFocusWidgetName(subItem as ConfigItem, focusWidgetMap));
-    } else if (item.focusWidgetName) {
-        if (item.parameter) {
-            // MSSQL case
-            focusWidgetMap.set(item.parameter, item.focusWidgetName as string);
-        } else if (item.name) {
-            // Oracle case
-            focusWidgetMap.set(item.name, item.focusWidgetName as string);
+        // Case 1: Handle arrays - process each element
+        item.forEach(subItem => extractAndSetFocusWidgetName(subItem, focusWidgetMap, parentKey));
+    } else if (item && typeof item === 'object') {
+        const configItem = item as ConfigItem;
+
+        // Check if this item has focusWidgetName (Case 2: simple object with properties)
+        if (configItem.focusWidgetName) {
+            let mapKey: string | undefined;
+
+            if (configItem.name) {
+                // Oracle case
+                mapKey = configItem.name;
+            } else if (configItem.parameter) {
+                // MSSQL case
+                mapKey = configItem.parameter;
+            } else if (parentKey) {
+                // Fallback to parent key (converted to hyphenated format) if neither name nor parameter exists
+                mapKey = camelCaseToHyphenated(parentKey);
+            }
+
+            if (mapKey) {
+                focusWidgetMap.set(mapKey, configItem.focusWidgetName as string);
+            }
+        } else {
+            // Case 3: Handle objects with nested properties/arrays
+            Object.entries(configItem).forEach(([key, value]) => {
+                extractAndSetFocusWidgetName(value, focusWidgetMap, key);
+            });
         }
     }
 }
@@ -193,14 +219,8 @@ function generateFocusWidgetNameMap(): Map<string, string> {
 
     // Process MSSQL and Oracle configuration items
     [MSSQL_GOLDEN_CONFIG, ORACLE_GOLDEN_CONFIG].forEach(config => {
-        Object.entries(config).forEach(([, value]) => {
-            if (value && typeof value === 'object' && !Array.isArray(value)) {
-                Object.entries(value).forEach(([, subValue]) => {
-                    extractAndSetFocusWidgetName(subValue as ConfigItem, focusWidgetMap);
-                });
-            } else {
-                extractAndSetFocusWidgetName(value as ConfigItem, focusWidgetMap);
-            }
+        Object.entries(config).forEach(([key, value]) => {
+            extractAndSetFocusWidgetName(value, focusWidgetMap, key);
         });
     });
 

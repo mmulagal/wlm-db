@@ -14,7 +14,7 @@ import { MappedOnTapVolumeResponse } from '../utils/common-types';
 import { paginateListInstanceConfigData } from './database/instance-config-operations';
 import { getGroupedDatabaseInstancesBySeverity, groupResources } from '../lib/database/db';
 import { GroupedDatabaseInstancesBySeverityResult } from '../lib/database/db-types';
-import { IS_DEMO_FLOW } from '../utils/utils';
+import { IS_DEMO_FLOW, hyphenatedToPascalCaseWithSpace } from '../utils/utils';
 import { generateFocusWidgetNameMap } from '../utils/golden-config-utils';
 
 const logger = getLogger();
@@ -97,10 +97,18 @@ function getLimitedItems(
     objects: GroupedDatabaseInstancesBySeverityResult[],
     limit = 0
 ): Array<{ name: string; count: number }> {
-    const mapped = objects.map(obj => ({
-        ...obj,
-        name: focusWidgetNameMap.get(obj.name?.toString() || '') || obj.name
-    }));
+    const mapped = objects.map(obj => {
+        const focusWidgetName = focusWidgetNameMap.get(obj.name?.toString() || '') || obj.name;
+        // Convert hyphenated names to Pascal case with spaces for display
+        const displayName =
+            typeof focusWidgetName === 'string' && focusWidgetName.includes('-')
+                ? hyphenatedToPascalCaseWithSpace(focusWidgetName)
+                : focusWidgetName;
+        return {
+            ...obj,
+            name: displayName
+        };
+    });
 
     // Group by name and sum counts
     const grouped: Record<string, { name: string; count: number }> = {};

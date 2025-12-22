@@ -1427,6 +1427,17 @@ function summarizeFirstLevel(input: any): Summary {
     return String(input) as Summary;
 }
 
+function camelCaseToHyphenated(str: string): string {
+    return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+}
+
+function hyphenatedToPascalCaseWithSpace(str: string): string {
+    return str
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1508,5 +1519,7 @@ export {
     IS_PROD,
     isMultiAzDeployment,
     isRedisConnected,
-    summarizeFirstLevel
+    summarizeFirstLevel,
+    camelCaseToHyphenated,
+    hyphenatedToPascalCaseWithSpace
 };
