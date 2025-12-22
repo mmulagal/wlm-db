@@ -1367,6 +1367,7 @@ function getFsxNameFromTags(tags?: Tag[]) {
 }
 
 const IS_DEMO_FLOW = process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 function isMultiAzDeployment(sqlServerDeploymentType: string) {
     return [SqlServerDeploymentModel.SQL_AOAG_SHORT, SqlServerDeploymentModel.SQL_FCI_SHORT].includes(
@@ -1504,6 +1505,7 @@ export {
     determineStorageType,
     getFsxNameFromTags,
     IS_DEMO_FLOW,
+    IS_PROD,
     isMultiAzDeployment,
     isRedisConnected,
     summarizeFirstLevel

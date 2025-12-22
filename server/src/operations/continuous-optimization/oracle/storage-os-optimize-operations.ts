@@ -7,7 +7,13 @@ import {
     OptimizeOracleiSCSIStorageOperatingSystem,
     OptimizeOracleNFSStorageOperatingSystem
 } from '../../../utils/continous-optimization-consts';
-import { IS_DEMO_FLOW, retryWithDelay, sqlResponseParsing, getArtifactsRegionBucketName } from '../../../utils/utils';
+import {
+    IS_DEMO_FLOW,
+    retryWithDelay,
+    sqlResponseParsing,
+    getArtifactsRegionBucketName,
+    IS_PROD
+} from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { updateJobDetails, registerJob, updateParentJobStatus } from '../../database/job-operations';
@@ -156,7 +162,6 @@ async function oracleOptimizeStorageOS(
 
     let parentJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let parentJobError = '';
-    const isProdEnv = process.env.NODE_ENV === 'production';
     switch (configurationName) {
         case OptimizeOracleiSCSIStorageOperatingSystem.TCP_OPTIONS: {
             try {
@@ -243,7 +248,7 @@ async function oracleOptimizeStorageOS(
 
         case OptimizeOracleiSCSIStorageOperatingSystem.ORACLE_AFD_LOGICAL_BLOCK_SIZE: {
             try {
-                if (isProdEnv) {
+                if (IS_PROD) {
                     throw new Error('AFD logical block size optimization is not supported');
                 }
                 await handleAfdDriftOptimization({
@@ -266,7 +271,7 @@ async function oracleOptimizeStorageOS(
 
         case OptimizeOracleiSCSIStorageOperatingSystem.ORACLE_ASM_LOGICAL_BLOCK_SIZE: {
             try {
-                if (isProdEnv) {
+                if (IS_PROD) {
                     throw new Error('Asmlib logical block size optimization is not supported');
                 }
                 await handleAsmLibDriftOptimization({
@@ -350,7 +355,7 @@ async function oracleOptimizeStorageOS(
         }
 
         case OptimizeOracleiSCSIStorageOperatingSystem.MULTIPATH_ENABLE: {
-            if (isProdEnv) {
+            if (IS_PROD) {
                 throw new Error('Multipath IO enable optimization is not supported');
             }
             try {
@@ -398,7 +403,7 @@ async function oracleOptimizeStorageOS(
 
         case OptimizeOracleiSCSIStorageOperatingSystem.FILESYSTEM_IO_OPTIONS: {
             try {
-                if (isProdEnv) {
+                if (IS_PROD) {
                     throw new Error('Filesystems I/O options optimization is not supported');
                 }
                 await optimizeFilesystemioOptions({
