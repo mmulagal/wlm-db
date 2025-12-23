@@ -69,50 +69,66 @@ const getMappedOntapDataVolume = (
     fi
 
     ${ontapRestApi}
+    ${bashJsonUtils}
+
 
     if [ "$storageProtocol" == "iSCSI" ]; then
-        encodedJunctionPath=$(printf '%s' "$junctionPath" | jq -sRr @uri)
+        encodedJunctionPath=$(url_encode "$junctionPath")
         lunEndpoint="storage/luns?serial_number=$encodedJunctionPath&fields=uuid,name,svm.name,svm.uuid,location.volume.name,location.volume.uuid"
         response=$(ontap_request 'GET' $lunEndpoint)
         check_status "Failed to fetch LUN endpoint data"
 
-        lunId=$(echo "$response" | jq -r '.records[0].uuid')
-        lunName=$(echo "$response" | jq -r '.records[0].name')
-        svmName=$(echo "$response" | jq -r '.records[0].svm.name')
-        svmId=$(echo "$response" | jq -r '.records[0].svm.uuid')
-
-        # Extract volume name (part after /vol/ and before the next /)
-        mountedVolume=$(echo "$response" | jq -r '.records[0].location.volume.name')
-        mountedVolumeId=$(echo "$response" | jq -r '.records[0].location.volume.uuid')
+        lunId=$(extract_nested_value "$response" "records[0].uuid")
+        lunName=$(extract_nested_value "$response" "records[0].name")
+        svmName=$(extract_nested_value "$response" "records[0].svm.name")
+        svmId=$(extract_nested_value "$response" "records[0].svm.uuid")
+        mountedVolume=$(extract_nested_value "$response" "records[0].location.volume.name")
+        mountedVolumeId=$(extract_nested_value "$response" "records[0].location.volume.uuid")
         
         check_status "Failed to extract mounted volume name"
     else
         result=$(ontap_request 'GET' $svmEndpoint)
         check_status "Failed to fetch SVM endpoint data"
 
-        svmResult=$(echo "$result" | jq --arg ip_address "$ipAddress" '
-        .records[] |
-        select(.ip_interfaces != null) |
-        select(.ip_interfaces[] | select(.name == "nfs_smb_management_1" and .ip.address == $ip_address)) |
-        {name: .name, uuid: .uuid}
-        ')
-        check_status "Failed to get matching SVM with IP address"
-
-        svmName=$(echo "$svmResult" | jq -r '.name')
-        svmId=$(echo "$svmResult" | jq -r '.uuid')
-        check_status "Failed to extract SVM name"
+        svmName=$(echo "$result" | awk -v ip="$ipAddress" '
+            /ip_interfaces/ { in_interfaces = 1 }
+            in_interfaces && /"ip"/ && /"address"/ && $0 ~ ip {
+                # Found matching IP, now find the parent SVM name
+                found = 1
+            }
+            found && /"name"/ && !/ip_interfaces/ && !/interface/ {
+                match($0, /"name"[[:space:]]*:[[:space:]]*"([^"]*)"/, arr)
+                if (arr[1]) {
+                    print arr[1]
+                    exit
+                }
+            }')
+        
+        svmId=$(echo "$result" | awk -v ip="$ipAddress" '
+            /ip_interfaces/ { in_interfaces = 1 }
+            in_interfaces && /"ip"/ && /"address"/ && $0 ~ ip {
+                found = 1
+            }
+            found && /"uuid"/ && !/ip_interfaces/ && !/interface/ {
+                match($0, /"uuid"[[:space:]]*:[[:space:]]*"([^"]*)"/, arr)
+                if (arr[1]) {
+                    print arr[1]
+                    exit
+                }
+            }')
 
         volEndpoint="storage/volumes?svm.name=$svmName&nas.path=$junctionPath"
         response=$(ontap_request 'GET' $volEndpoint)
         check_status "Failed to fetch volume endpoint data"
 
-        mountedVolume=$(echo "$response" | jq -r '.records[0].name')
-        mountedVolumeId=$(echo "$response" | jq -r '.records[0].uuid')
+        mountedVolume=$(extract_nested_value "$response" "records[0].name")
+        mountedVolumeId=$(extract_nested_value "$response" "records[0].uuid")
         check_status "Failed to extract mounted volume name"
     fi
 `;
 
 const ontapRestApi = `
+    # Function to make ONTAP REST API requests
     creds=$(aws ssm get-parameter --name "/netapp/wlmdb/$filesystemid" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
     check_status "Credentials not found for $filesystemid in SSM Parameter Store. Please ensure the credentials are stored in SSM Parameter Store with the name /netapp/wlmdb/$filesystemid"
      
@@ -120,8 +136,10 @@ const ontapRestApi = `
     # Second sed is for adding quotes around keys, only if there are no quotes already
     creds=$(echo "$creds" | sed "s/'/\\"/g" | sed 's/\\([^"{},: ]\\+\\):/"\\1":/g')
 
-    fsxusername=$(echo $creds | jq -r '.fsx.username')
-    fsxpassword=$(echo $creds | jq -r '.fsx.password')
+    # Parse FSx credentials using sed
+    fsxusername=$(echo "$creds" | sed -n 's/.*"fsx"[[:space:]]*:[[:space:]]*{[^}]*"username"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p')
+    fsxpassword=$(echo "$creds" | sed -n 's/.*"fsx"[[:space:]]*:[[:space:]]*{[^}]*"password"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p')
+
     
     certsUrl="https://fsx-aws-Certificates.s3.amazonaws.com/bundle-$region.pem"
 
@@ -298,16 +316,78 @@ EOF
 }
 `;
 
+const bashJsonUtils = `
+    # Function to extract JSON value by key
+    extract_json_value() {
+        local json="$1"
+        local key="$2"
+        echo "$json" | sed -n 's/.*"'$key'"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p'
+    }
+
+    # Function to extract JSON value (handles numbers and strings)
+    extract_json_any_value() {
+        local json="$1"
+        local key="$2"
+        echo "$json" | sed -n 's/.*"'$key'"[[:space:]]*:[[:space:]]*\\([^,}]*\\).*/\\1/p' | sed 's/^"\\|"$//g'
+    }
+
+    # Function to extract nested JSON value like records[0].uuid
+    extract_nested_value() {
+        local json="$1"
+        local path="$2"
+        
+        if [[ "$path" == "records[0]."* ]]; then
+            local key=\${path#records[0].}
+            # Extract first record from records array
+            local first_record=$(echo "$json" | sed -n '/\\"records\\"[[:space:]]*:[[:space:]]*\\[/{:a;N;/}[[:space:]]*]/!ba;p}' | sed -n '/{/,/}/p')
+            extract_json_value "$first_record" "$key"
+        else
+            extract_json_value "$json" "$path"
+        fi
+    }
+
+    # URL encode function
+    url_encode() {
+        local string="$1"
+        local strlen=\${#string}
+        local encoded=""
+        local pos c o
+        
+        for (( pos=0 ; pos<strlen ; pos++ )); do
+            c=\${string:$pos:1}
+            case "$c" in
+                [-_.~a-zA-Z0-9] ) o="\${c}" ;;
+                * ) printf -v o '%%%02X' "'$c" ;;
+            esac
+            encoded+="\${o}"
+        done
+        echo "$encoded"
+    }
+`;
+
 const oracleUserAuthLoginCommand = `
     get_oracle_user_auth_login_command() {
         local oracleSid="$1"
         local ec2InstanceId="$2"
 
+        ${bashJsonUtils}
+
         instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
-        oracleInstances=$(echo "$instanceCreds" | jq -c '.oracle')
-        matchingOracleInstance=$(echo "$oracleInstances" | jq -c --arg sid "$oracleSid" '.[] | select(.oracleinstancename == $sid)')
-        username=$(echo "$matchingOracleInstance" | jq -r '.username')
-        password=$(echo "$matchingOracleInstance" | jq -r '.password')
+
+        # Extract oracle array from JSON
+        oracle_section=$(echo "$instanceCreds" | sed -n '/"oracle"[[:space:]]*:[[:space:]]*\\[/,/\\]/p')
+        
+        # Find matching oracle instance by oracleinstancename
+        username=""
+        password=""
+        
+        # Extract the specific oracle instance that matches the SID
+        matching_instance=$(echo "$oracle_section" | sed -n '/oracleinstancename.*'$oracleSid'/,/}/p')
+        
+        if [ -n "$matching_instance" ]; then
+            username=$(extract_json_value "$matching_instance" "username")
+            password=$(extract_json_value "$matching_instance" "password")
+        fi
         
         # Convert username to lowercase
         usernameLowercase=$(echo "$username" | tr '[:upper:]' '[:lower:]')
