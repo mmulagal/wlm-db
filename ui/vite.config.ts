@@ -75,6 +75,11 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: './src/setupTests.ts',
-        css: true
+        css: true,
+        coverage: {
+            provider: 'v8',
+            reporter: ['text', 'html', 'clover', 'json'],
+            reportsDirectory: './coverage'
+        }
     }
 });

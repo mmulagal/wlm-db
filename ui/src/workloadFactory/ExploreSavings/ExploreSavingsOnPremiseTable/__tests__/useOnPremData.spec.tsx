@@ -275,10 +275,7 @@ describe('useOnPremData', () => {
                         {
                             resourceName: 'Host1',
                             deploymentModel: 'standalone',
-                            sqlServerInstances: [
-                                { sqlInstanceName: 'Inst1' },
-                                { sqlInstanceName: 'Inst2' }
-                            ],
+                            sqlServerInstances: [{ sqlInstanceName: 'Inst1' }, { sqlInstanceName: 'Inst2' }],
                             onPremisesNodes: ['Node1']
                         }
                     ]
@@ -458,10 +455,7 @@ describe('useOnPremData', () => {
                         {
                             resourceName: 'Host1',
                             deploymentModel: 'standalone',
-                            sqlServerInstances: [
-                                { sqlInstanceName: 'I1' },
-                                { sqlInstanceName: 'I2' }
-                            ],
+                            sqlServerInstances: [{ sqlInstanceName: 'I1' }, { sqlInstanceName: 'I2' }],
                             onPremisesNodes: ['Node1']
                         }
                     ]
