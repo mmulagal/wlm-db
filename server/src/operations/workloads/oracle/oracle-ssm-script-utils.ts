@@ -92,6 +92,7 @@ const getMappedOntapDataVolume = (
 
         svmResult=$(echo "$result" | jq --arg ip_address "$ipAddress" '
         .records[] |
+        select(.ip_interfaces != null) |
         select(.ip_interfaces[] | select(.name == "nfs_smb_management_1" and .ip.address == $ip_address)) |
         {name: .name, uuid: .uuid}
         ')
