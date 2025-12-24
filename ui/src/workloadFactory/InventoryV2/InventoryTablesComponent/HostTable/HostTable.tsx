@@ -11,6 +11,7 @@ import {
     setTableManageColumnState
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { DBType, INVENTORY_STATUS, WLF_TO_FORM_NAVIGATE, WLF_TO_PROTECT_NAVIGATE } from '../../../../utils/consts';
+import { setDatabaseHostEntryPoint } from '../../../../store/mssql/msSqlActionSlice';
 import styles from '../InventoryTable.module.scss';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { Table } from '../../../../common/Lib/Table/Table';
@@ -237,6 +238,7 @@ const HostTable = () => {
                                                 id: 'wlm-db-deploy-mssql-host',
                                                 label: 'Microsoft SQL Server',
                                                 onClick: () => {
+                                                    dispatch(setDatabaseHostEntryPoint('inventory'));
                                                     if (isWorkloadFactory) {
                                                         navigate(WLF_TO_FORM_NAVIGATE);
                                                         postBlueXPMessage({
@@ -263,6 +265,7 @@ const HostTable = () => {
                                                 id: 'wlm-db-deploy-pgsql-host',
                                                 label: 'PostgreSQL Server',
                                                 onClick: () => {
+                                                    dispatch(setDatabaseHostEntryPoint('inventory'));
                                                     if (isWorkloadFactory) {
                                                         navigate(WLF_TO_PROTECT_NAVIGATE);
                                                         postBlueXPMessage({

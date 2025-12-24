@@ -41,7 +41,17 @@ const PostgressHeader = () => {
     const navigate = useNavigate();
     const handleNavigateWithoutDialog = () => {
         if (databaseHostEntryPoint === 'inventory') {
-            navigate('databases/inventory');
+            if (isWorkloadFactory) {
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../../databases/inventory', replace: true }
+                });
+            } else {
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../../fsxdb/inventory', replace: true }
+                });
+            }
         } else if (databaseHostEntryPoint === 'database') {
             if (isWorkloadFactory) {
                 navigate('/databases');
@@ -121,7 +131,17 @@ const PostgressHeader = () => {
                     // dispatch(setSaveConfigName(''));
                     if (dialogFrom === FROM_DIALOG.HEADER_CROSS) {
                         if (databaseHostEntryPoint === 'inventory') {
-                            navigate('databases/inventory');
+                            if (isWorkloadFactory) {
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: '../../databases/inventory', replace: true }
+                                });
+                            } else {
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: '../../fsxdb/inventory', replace: true }
+                                });
+                            }
                         } else if (databaseHostEntryPoint === 'database') {
                             if (isWorkloadFactory) {
                                 navigate('/databases');

@@ -31,7 +31,7 @@ const MSSqlFooter = () => {
     const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
     const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
     const { databaseHostEntryPoint } = useAppSelector(state => state.msSqlAction);
-    const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
 
     const [deploySqlTemplate] = useDeploySqlTemplateMutation();
 
@@ -66,7 +66,7 @@ const MSSqlFooter = () => {
     };
 
     const handleNavigation = () => {
-        if (isWorkloadFactoryStatus) {
+        if (isWorkloadFactory) {
             navigate(FORM_TO_WLF_NAVIGATE_JOB_MONITORING);
             handleURL('Dashboard', true);
         } else {
@@ -92,7 +92,7 @@ const MSSqlFooter = () => {
                     onClick={() => {
                         clearTimeout(notificationMsg);
                         dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                        const path = isWorkloadFactoryStatus
+                        const path = isWorkloadFactory
                             ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
                             : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
 
@@ -119,9 +119,19 @@ const MSSqlFooter = () => {
 
     const handleCancel = () => {
         if (databaseHostEntryPoint === 'inventory') {
-            navigate('databases/inventory');
+            if (isWorkloadFactory) {
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../../databases/inventory', replace: true }
+                });
+            } else {
+                postBlueXPMessage({
+                    type: BlueXPListeners.navigate,
+                    payload: { pathname: '../../fsxdb/inventory', replace: true }
+                });
+            }
         } else if (databaseHostEntryPoint === 'database') {
-            if (isWorkloadFactoryStatus) {
+            if (isWorkloadFactory) {
                 postBlueXPMessage({
                     type: BlueXPListeners.navigate,
                     payload: { pathname: '../../databases/dashboard', replace: true }
@@ -132,7 +142,7 @@ const MSSqlFooter = () => {
                     payload: { pathname: '../../fsxdb/dashboard', replace: true }
                 });
             }
-        } else if (isWorkloadFactoryStatus) {
+        } else if (isWorkloadFactory) {
             navigateToCanvas('/');
         } else {
             postBlueXPMessage({
