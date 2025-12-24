@@ -15,6 +15,18 @@ type ontapRequestParams = {
     }[];
 };
 
+const sqlplusOutputFormatSettings = `
+SET HEADING OFF;
+SET LINESIZE 500;
+SET FEEDBACK OFF;
+SET TERMOUT OFF;
+SET PAGESIZE 0;
+SET TRIMSPOOL ON;
+WHENEVER SQLERROR EXIT SQL.SQLCODE;
+`;
+
+const parseSpfileProperties = (propertyValue: string, spFilePath: string) =>
+    `$(strings "${spFilePath}" | grep -i "\\.${propertyValue}" | sed "s/.*=//;s/'//g" | tr ',' '\n' | sed '/^$/d' | head -n1)`;
 const checkCommandStatus = `
     check_status() {
         if [ $? -ne 0 ]; then
@@ -30,7 +42,7 @@ const getOracleHomePath = (dbSid: string) => `
         echo "[]"
         exit 0
     fi
-    sid="${dbSid}"
+    dbsid="${dbSid}"
     oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
     if [ -z "$oratab_entries" ]; then
         echo "No entries found in /etc/oratab."
@@ -38,7 +50,10 @@ const getOracleHomePath = (dbSid: string) => `
     fi 
 
     while IFS=: read -r sid home; do
-        if [ "$sid" == "$1" ]; then
+        if [ "$sid" == "$dbsid" ]; then
+            if [ -z "$home" ] || [ ! -d "$home" ]; then
+                exit 1;
+            fi
             echo "$home"
             exit 0;
             break
@@ -1743,5 +1758,7 @@ export {
     oracleStorageInfoFromOntap,
     isASMManagedCheck,
     isStorageASMmanaged,
-    parseSqlplusOutput
+    parseSqlplusOutput,
+    sqlplusOutputFormatSettings,
+    parseSpfileProperties
 };

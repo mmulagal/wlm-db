@@ -7,7 +7,9 @@ import {
     loadOracleUserPermissionsDetectionModule,
     oracleUserAuthLoginCommand,
     isASMManagedCheck,
-    parseSqlplusOutput
+    parseSqlplusOutput,
+    sqlplusOutputFormatSettings,
+    parseSpfileProperties
 } from './oracle-ssm-script-utils';
 
 const debugLog = (logFileName: string) => `
@@ -16,6 +18,258 @@ log() {
     echo "[DEBUG $(date '+%Y-%m-%d %H:%M:%S')] $1" >> ${logFileName}
 }
 `;
+
+const getDataguardDeploymentDetails = `
+    ${parseSqlplusOutput}
+    dataguardDiscoveryErrorMsg=""
+    check_dataguard_deployment() {
+        local ORACLE_SID="$1"
+        # if dataguard is configured, FAL_CLIENT and FAL_SERVER will be configured and have different values in spfile for DB
+        sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
+            export ORACLE_SID="$1"
+            oracle_home=$(${getOracleHomePath('$ORACLE_SID')})
+            export ORACLE_HOME="$oracle_home"
+            spFilePath="\${ORACLE_HOME}/dbs/spfile\${ORACLE_SID}.ora"
+            if [[ ! -f "$spFilePath" ]]; then
+                exit 1
+            fi
+            falClient="${parseSpfileProperties('fal_client', '$spFilePath')}"
+            falServer="${parseSpfileProperties('fal_server', '$spFilePath')}"
+            if [[ -n "$falClient" ]] && [[ -n "$falServer" ]] && [ "$falServer" != "$falClient" ]; then
+                exit 0;
+            fi
+            exit 1;
+EOF
+        return $?
+    }
+
+    # use check_dataguard_deployment before using this function
+    get_dataguard_details_without_creds() {
+        local ORACLE_SID="$1"
+        sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
+            dbUniqueName=""
+            dbName=""
+            associatedHosts=""
+            isPrimaryNode=false
+            export ORACLE_SID="$1"
+            oracle_home=$(${getOracleHomePath('$ORACLE_SID')})
+            export ORACLE_HOME="$oracle_home"
+            proc_pattern="ora_(mrp|pr)[0-9]+_\${ORACLE_SID}\\b"
+            spFilePath="\${ORACLE_HOME}/dbs/spfile\${ORACLE_SID}.ora"
+            if [[ -f "$spFilePath" ]]; then
+                dbUniqueName="${parseSpfileProperties('db_unique_name', '$spFilePath')}"
+                dbName="${parseSpfileProperties('db_name', '$spFilePath')}"
+            else
+                dbUniqueName=""
+                dbName=""
+            fi
+
+            if [[ -z "$dbUniqueName" ]]; then
+                dbUniqueName="$ORACLE_SID"
+            fi
+            listener_file="\${ORACLE_HOME}/network/admin/listener.ora"
+            associatedHosts=$(awk -v listener_file="$listener_file" '
+                BEGIN {
+                    # Pre-parse listener.ora to build service_name -> sid_name mapping
+                    in_sid_desc = 0
+                    global_db = ""
+                    sid_name = ""
+                    while ((getline line < listener_file) > 0) {
+                        if (line ~ /\\(SID_DESC/) {
+                            in_sid_desc = 1
+                            global_db = ""
+                            sid_name = ""
+                        }
+                        if (in_sid_desc) {
+                            if (match(line, /GLOBAL_DBNAME[[:space:]]*=[[:space:]]*([^)]+)/, arr)) {
+                                global_db = arr[1]
+                                gsub(/^[[:space:]]+|[[:space:]]+$/, "", global_db)
+                            }
+                            if (match(line, /SID_NAME[[:space:]]*=[[:space:]]*([^)]+)/, arr)) {
+                                sid_name = arr[1]
+                                gsub(/^[[:space:]]+|[[:space:]]+$/, "", sid_name)
+                            }
+                        }
+                        # End of SID_DESC block - store mapping
+                        if (in_sid_desc && line ~ /\\)[[:space:]]*$/ && global_db != "" && sid_name != "") {
+                            sid_map[toupper(global_db)] = sid_name
+                            in_sid_desc = 0
+                            global_db = ""
+                            sid_name = ""
+                        }
+                    }
+                    close(listener_file)
+                }
+                /^[[:alnum:]_]+[[:space:]]*=/ {
+                    # start new entry - save previous if complete
+                    if (host && port && svc) {
+                        mapped_sid = sid_map[toupper(svc)]
+                        if (mapped_sid == "") mapped_sid = ""
+                        rec[++n] = sprintf("{\\"serviceName\\":\\"%s\\",\\"hostIp\\":\\"%s\\",\\"listenerPort\\":\\"%s\\",\\"sidName\\":\\"%s\\"}", svc, host, port, mapped_sid)
+                    }
+                    host = port = svc = ""
+                }
+                /\\(HOST[[:space:]]*=/ {
+                    if (match($0, /\\(HOST *= *([0-9.]+)\\)/, m)) host = m[1]
+                }
+                /\\(PORT[[:space:]]*=/ {
+                    if (match($0, /\\(PORT *= *([0-9]+)\\)/, m)) port = m[1]
+                }
+                /\\(SERVICE_NAME[[:space:]]*=/ {
+                    if (match($0, /\\(SERVICE_NAME *= *([^) ]+)\\)/, m)) svc = m[1]
+                }
+                /^[[:space:]]*$/ {
+                    if (host && port && svc) {
+                        mapped_sid = sid_map[toupper(svc)]
+                        if (mapped_sid == "") mapped_sid = ""
+                        rec[++n] = sprintf("{\\"serviceName\\":\\"%s\\",\\"hostIp\\":\\"%s\\",\\"listenerPort\\":\\"%s\\",\\"sidName\\":\\"%s\\"}", svc, host, port, mapped_sid)
+                    }
+                    host = port = svc = ""
+                }
+                END {
+                    if (host && port && svc) {
+                        mapped_sid = sid_map[toupper(svc)]
+                        if (mapped_sid == "") mapped_sid = ""
+                        rec[++n] = sprintf("{\\"serviceName\\":\\"%s\\",\\"hostIp\\":\\"%s\\",\\"listenerPort\\":\\"%s\\",\\"sidName\\":\\"%s\\"}", svc, host, port, mapped_sid)
+                    }
+                    print "["
+                    for (i = 1; i <= n; i++) {
+                        printf("%s%s", rec[i], (i < n ? "," : ""))
+                    }
+                    print "]"
+                }' "\${ORACLE_HOME}/network/admin/tnsnames.ora")
+            
+            isPrimaryNode=true
+            if pgrep -f $proc_pattern >/dev/null 2>&1; then
+                isPrimaryNode=false
+            fi
+            echo "{\\"dbUniqueName\\": \\"$dbUniqueName\\", \\"dbName\\": \\"$dbName\\", \\"associatedHosts\\": $associatedHosts, \\"isPrimaryNode\\": $isPrimaryNode }" | tr -d '\n' | tr -d ' '
+EOF
+    }
+
+    ############################################################
+    # All methods below this comment need sqlplus creds to run #
+    ############################################################
+
+    get_dataguard_role() {
+        local ORACLE_SID="$1"
+        dataguard_role=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
+            export ORACLE_SID="$1"
+            $sqlplus_command <<'EOSQL'
+                ${sqlplusOutputFormatSettings}
+                select database_role from v$database;
+EOSQL
+) || return 1
+        dataguard_role=$(parse_sqlplus_output "$dataguard_role")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            dataguardDiscoveryErrorMsg=$dataguard_role
+            exit 1;
+        fi
+        echo "$dataguard_role" | tr -d '\n' | tr -d ' '
+EOF
+)
+    }
+    
+    is_primary_node() {
+        local ORACLE_SID="$1"
+        local role=""
+        role=$(get_dataguard_role "$ORACLE_SID")
+        if [ $? -ne 0 ]; then
+            exit 1
+        fi
+
+        if [ "$role" == "PRIMARY" ] || [ "$role" == "primary" ]; then
+            echo "true"
+        else
+            echo "false"
+        fi
+    }
+
+    get_dataguard_db_name_and_db_unique_name() {
+        local ORACLE_SID="$1"
+        local db_name_and_db_unique_name="";
+        db_name_and_db_unique_name=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
+            export ORACLE_SID="$1"
+            $sqlplus_command <<'EOSQL'
+            ${sqlplusOutputFormatSettings}
+            SELECT JSON_OBJECT(
+             'dbUniqueName' VALUE MAX(CASE WHEN name='db_unique_name' THEN value END),
+             'dbName'       VALUE MAX(CASE WHEN name='db_name' THEN value END)
+            ) AS dataguard_parameters
+            FROM v$parameter
+            WHERE name IN ('db_unique_name','db_name');
+EOSQL
+) || return 1
+
+        db_name_and_db_unique_name=$(parse_sqlplus_output "$db_name_and_db_unique_name")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            dataguardDiscoveryErrorMsg=$db_name_and_db_unique_name
+            exit 1;
+        fi
+        echo "$db_name_and_db_unique_name" | tr -d '\n' | tr -d ' '
+EOF
+)
+    }
+
+    get_dataguard_instance_sync_status() {
+        local ORACLE_SID="$1"
+        local isCDB="$2"
+        local pdbName="$3"
+        local instance_sync_status=""
+        local isPrimaryNode=$(is_primary_node "$ORACLE_SID")
+        instance_sync_status=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$isCDB" "$pdbName" <<'EOF'
+            export ORACLE_SID="$1"
+            isCDB="$2"
+            pdbName="$3"
+            if [ "$isCDB" == "YES" ]; then
+                alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
+            fi
+            $sqlplus_command <<'EOSQL'
+                ${sqlplusOutputFormatSettings}
+                "$alter_cmd"
+                select action from V$DATAGUARD_PROCESS where regexp_like(name, '^(MRP|PR|TMON|TT)') and action <> 'IDLE';
+EOSQL
+) || return 1
+        instance_sync_status=$(parse_sqlplus_output "$instance_sync_status")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            dataguardDiscoveryErrorMsg=$instance_sync_status
+            exit 1;
+        fi
+        if[ isPrimaryNode == "true" ]; then
+            echo "{\\"status\\": $instance_sync_status }" | tr -d '\n' | tr -d ' '
+        else
+            standby_sync_stats="";
+            standby_sync_stats=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$isCDB" "$pdbName" <<'EOF'
+            export ORACLE_SID="$1"
+            isCDB="$2"
+            pdbName="$3"
+            if [ "$isCDB" == "YES" ]; then
+                alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
+            fi
+            $sqlplus_command <<'EOSQL'
+                ${sqlplusOutputFormatSettings}
+                "$alter_cmd"
+                select value from V$DATAGUARD_STATS where name in ('apply lag', 'transport lag');
+EOSQL
+) || return 1
+            standby_sync_stats=$(parse_sqlplus_output "$standby_sync_stats")
+            sqlplus_exit_code=$?
+            if [ $sqlplus_exit_code -ne 0 ]; then
+                dataguardDiscoveryErrorMsg=$standby_sync_stats
+                exit 1;
+            fi
+            transport_lag=$(echo "$standby_sync_stats" | sed -n '2p')
+            apply_lag=$(echo "$standby_sync_stats" | sed -n '1p')
+            echo "{\\"status\\": $instance_sync_status, \\"transportLag\\": \\"$transport_lag\\", \\"applyLag\\": \\"$apply_lag\\" }" | tr -d '\n'
+EOF
+)
+    }
+
+`;
+
 const loadStorageDetectionModules = `
 
     # Function to find mount point details for a given file or directory.
@@ -1222,6 +1476,7 @@ EOF
     ${loadDatabaseDetectionModules}
     ${loadStorageDetectionModules}
     ${checkOracleModuleAvailability}
+    ${getDataguardDeploymentDetails}
 
     hostname=$(hostname)
     RESULTS="{\\"hostname\\":\\"$hostname\\", \\"dbInstances\\":["
@@ -1274,8 +1529,16 @@ EOF
             echo "Failed to retrieve details for instance $ORACLE_SID. Skipping."
             continue
         }
+        
+        isDataguardDeployed=false
+        dataguardDetails="{}"    
+        check_dataguard_deployment "$sid"
+        if [ $? -eq 0 ]; then
+            isDataguardDeployed=true
+            dataguardDetails=$(get_dataguard_details_without_creds "$sid")
+        fi
 
-        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions, \\"remediation_missing_permissions\\": $remediationMissingPermissions}"
+        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions, \\"remediation_missing_permissions\\": $remediationMissingPermissions, \\"isDataguardDeployed\\": $isDataguardDeployed, \\"dataguard_details\\": $dataguardDetails }"
 
         # If not the first object, prepend a comma in the JSON array.
         if [ $FIRST -eq 1 ]; then

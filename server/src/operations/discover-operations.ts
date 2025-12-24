@@ -89,7 +89,8 @@ import {
     DiscoverOracleResponseType,
     DiscoverOracleInstanceType,
     DiscoverOracleResponseBodyType,
-    PgSqlServerInstaceType
+    PgSqlServerInstaceType,
+    OracleDataguardDetailsType
 } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
 import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
@@ -1812,152 +1813,185 @@ async function discoverOracleResources(
         );
 
         await Promise.all(
-            ssmConnectedEc2Instances.map(async ec2Instance => {
-                const ssmResponse = ssmResponseMap.get(ec2Instance.ec2InstanceId);
-                const { output, error } = ssmResponse || {};
-                if (error) {
-                    ec2Instance.error = error;
-                    return instancesWithSsmResponse.push(ec2Instance);
-                }
-                let parsedResponse;
-                try {
-                    parsedResponse = sqlResponseParsing(output || '{}');
-                    logger.debug('Parsed SSM ORACLE response', { parsedResponse });
-                    const { hostname, dbInstances } = parsedResponse;
-                    if (!parsedResponse || !Array.isArray(dbInstances) || dbInstances.length === 0) {
-                        return;
+            ssmConnectedEc2Instances.map(
+                throat(10, async ec2Instance => {
+                    const ssmResponse = ssmResponseMap.get(ec2Instance.ec2InstanceId);
+                    const { output, error } = ssmResponse || {};
+                    if (error) {
+                        ec2Instance.error = error;
+                        return instancesWithSsmResponse.push(ec2Instance);
                     }
-                    ec2Instance = {
-                        ...ec2Instance,
-                        oracleServerDeploymentType: 'Standalone'
-                    };
-
-                    const { oracle: ec2OracleParameters, asm: ec2AsmParameters } = await getEc2SqlParameters(
-                        credentialsId,
-                        region,
-                        ec2Instance.ec2InstanceId
-                    );
-
-                    const databaseInstanceDetails: DiscoverOracleInstanceType[] = [];
-                    // Parsed Response : an array of objects for each database Instance
-                    for (const dbInstance of dbInstances) {
-                        const {
-                            instance_details: {
-                                instance_id: instanceId,
-                                instance_name: instanceName,
-                                version,
-                                instance_state: instanceState
-                            },
-                            database_details: databaseDetails,
-                            storage_details: instanceStorageDetails,
-                            is_default_auth: isDefaultAuthentication,
-                            modules_availability: modulesAvailability,
-                            missing_permissions: missingPermissions,
-                            remediation_missing_permissions: remediationMissingPermissions
-                        } = dbInstance;
-
-                        const { isAwsCliInstalled, isJqInstalled, isPythonInstalled } = modulesAvailability || {};
-
-                        const isOracleAuth =
-                            ec2OracleParameters?.some(
-                                (obj: { oracleinstancename: string; username: string; password: string }) =>
-                                    obj.oracleinstancename === instanceName
-                            ) || false;
-
-                        const isAsmAuth =
-                            ec2AsmParameters?.some(
-                                (obj: { oracleinstancename: string; username: string; password: string }) =>
-                                    obj.oracleinstancename === instanceName
-                            ) || false;
-
-                        let databaseInfo: {
-                            databaseId?: string;
-                            name?: string;
-                            openMode?: string;
-                            isCDB?: string;
-                            error?: string;
-                        } = {};
-
-                        let isCDB;
-                        if (databaseDetails.hasOwnProperty('error')) {
-                            databaseInfo.error = databaseDetails.error;
-                        } else {
-                            const { database_id: databaseId, name, open_mode: openMode } = databaseDetails;
-                            ({ is_cdb: isCDB } = databaseDetails);
-                            databaseInfo = { databaseId, name, openMode, isCDB };
+                    let parsedResponse;
+                    try {
+                        parsedResponse = sqlResponseParsing(output || '{}');
+                        logger.debug('Parsed SSM ORACLE response', { parsedResponse });
+                        const { hostname, dbInstances } = parsedResponse;
+                        if (!parsedResponse || !Array.isArray(dbInstances) || dbInstances.length === 0) {
+                            return;
                         }
-                        const pluggableDatabases = [];
-                        const isContainerDbInstance = isCDB === 'YES';
-                        if (isContainerDbInstance) {
-                            for (const pluggableDatabase of dbInstance.pdb_database_details) {
-                                const { pdb_id: pdbId, pdb_name: pdbName, status: pdbStatus } = pluggableDatabase;
-                                pluggableDatabases.push({
-                                    pdbId,
-                                    pdbName,
-                                    pdbStatus
-                                });
-                            }
-                        }
+                        ec2Instance = {
+                            ...ec2Instance,
+                            oracleServerDeploymentType: 'Standalone'
+                        };
 
-                        const flattenedInstanceStorageDetails: [] = instanceStorageDetails.flat();
-                        const isInstanceStorageAsmManaged = flattenedInstanceStorageDetails.some(
-                            (storage: { isAsmManaged: string }) => storage.isAsmManaged === 'true'
-                        );
-                        const storageDetails = getDiscoveredOracleInstancesStorageDetails(
-                            ec2Instance.ebsVolumeIDs!,
-                            endPointIpWithFsxInfo,
-                            fsIdWithFsxInfo,
-                            subnetListMap,
-                            ebsVolumeToAvailabilityZoneMap,
-                            flattenedInstanceStorageDetails
+                        const { oracle: ec2OracleParameters, asm: ec2AsmParameters } = await getEc2SqlParameters(
+                            credentialsId,
+                            region,
+                            ec2Instance.ec2InstanceId
                         );
 
-                        const missingModules = [
-                            isAwsCliInstalled === 'false' ? 'awsCli' : null,
-                            isJqInstalled === 'false' ? 'jq' : null,
-                            isPythonInstalled === 'false' ? 'python' : null
-                        ].filter(Boolean) as string[];
-
-                        databaseInstanceDetails.push({
-                            instanceId,
-                            instanceName,
-                            version,
-                            instanceState,
-                            instanceType: isContainerDbInstance
-                                ? OracleDeploymentTenacy.MULTI_TENANT
-                                : OracleDeploymentTenacy.SINGLE_TENANT,
-                            databaseCount: isContainerDbInstance ? pluggableDatabases.length : 1,
-                            databaseDetails: databaseInfo,
-                            ...(isContainerDbInstance && {
-                                pluggableDatabases
-                            }),
-                            storage: storageDetails,
-                            isInstanceStorageAsmManaged,
-                            isDefaultAuthentication,
-                            oracleServerAuthentication: isOracleAuth,
-                            asmAuthentication: isAsmAuth,
-                            manageReadiness: {
-                                assessment: {
-                                    missingModules,
-                                    missingSqlPermissions: missingPermissions
+                        const databaseInstanceDetails: DiscoverOracleInstanceType[] = [];
+                        // Parsed Response : an array of objects for each database Instance
+                        for (const dbInstance of dbInstances) {
+                            const {
+                                instance_details: {
+                                    instance_id: instanceId,
+                                    instance_name: instanceName,
+                                    version,
+                                    instance_state: instanceState
                                 },
-                                remediation: {
-                                    missingSqlPermissions: remediationMissingPermissions,
-                                    missingModules
+                                database_details: databaseDetails,
+                                storage_details: instanceStorageDetails,
+                                is_default_auth: isDefaultAuthentication,
+                                modules_availability: modulesAvailability,
+                                missing_permissions: missingPermissions,
+                                remediation_missing_permissions: remediationMissingPermissions,
+                                isDataguardDeployed: isDataGuardDeployed,
+                                dataguard_details: dataguardDetails
+                            } = dbInstance;
+
+                            const { isAwsCliInstalled, isJqInstalled, isPythonInstalled } = modulesAvailability || {};
+
+                            const isOracleAuth =
+                                ec2OracleParameters?.some(
+                                    (obj: { oracleinstancename: string; username: string; password: string }) =>
+                                        obj.oracleinstancename === instanceName
+                                ) || false;
+
+                            const isAsmAuth =
+                                ec2AsmParameters?.some(
+                                    (obj: { oracleinstancename: string; username: string; password: string }) =>
+                                        obj.oracleinstancename === instanceName
+                                ) || false;
+
+                            let databaseInfo: {
+                                databaseId?: string;
+                                name?: string;
+                                openMode?: string;
+                                isCDB?: string;
+                                error?: string;
+                            } = {};
+
+                            let isCDB;
+                            if (databaseDetails.hasOwnProperty('error')) {
+                                databaseInfo.error = databaseDetails.error;
+                            } else {
+                                const { database_id: databaseId, name, open_mode: openMode } = databaseDetails;
+                                ({ is_cdb: isCDB } = databaseDetails);
+                                databaseInfo = { databaseId, name, openMode, isCDB };
+                            }
+                            const pluggableDatabases = [];
+                            const isContainerDbInstance = isCDB === 'YES';
+                            if (isContainerDbInstance) {
+                                for (const pluggableDatabase of dbInstance.pdb_database_details) {
+                                    const { pdb_id: pdbId, pdb_name: pdbName, status: pdbStatus } = pluggableDatabase;
+                                    pluggableDatabases.push({
+                                        pdbId,
+                                        pdbName,
+                                        pdbStatus
+                                    });
                                 }
                             }
-                        });
-                    }
 
-                    ec2Instance.ec2HostName = hostname;
-                    ec2Instance.databaseInstanceDetails = databaseInstanceDetails;
-                    instancesWithSsmResponse.push(ec2Instance);
-                } catch (err: unknown) {
-                    ec2Instance.error = err as string;
-                    logger.warn('Failed to parse SSM response', { error: err });
-                    instancesWithSsmResponse.push(ec2Instance);
-                }
-            })
+                            const flattenedInstanceStorageDetails: [] = instanceStorageDetails.flat();
+                            const isInstanceStorageAsmManaged = flattenedInstanceStorageDetails.some(
+                                (storage: { isAsmManaged: string }) => storage.isAsmManaged === 'true'
+                            );
+                            const storageDetails = getDiscoveredOracleInstancesStorageDetails(
+                                ec2Instance.ebsVolumeIDs!,
+                                endPointIpWithFsxInfo,
+                                fsIdWithFsxInfo,
+                                subnetListMap,
+                                ebsVolumeToAvailabilityZoneMap,
+                                flattenedInstanceStorageDetails
+                            );
+
+                            const missingModules = [
+                                isAwsCliInstalled === 'false' ? 'awsCli' : null,
+                                isJqInstalled === 'false' ? 'jq' : null,
+                                isPythonInstalled === 'false' ? 'python' : null
+                            ].filter(Boolean) as string[];
+
+                            if (isDataGuardDeployed && dataguardDetails) {
+                                const privateIps: string[] = (
+                                    dataguardDetails as OracleDataguardDetailsType
+                                )?.associatedHosts?.map(host => host.hostIp) as string[];
+                                if (privateIps && privateIps.length > 0) {
+                                    // eslint-disable-next-line no-await-in-loop
+                                    const hostDetails = await getInstanceDetailsByPrivateIp(
+                                        credentialsId,
+                                        region,
+                                        privateIps,
+                                        { useCache: true }
+                                    );
+                                    logger.debug(hostDetails);
+                                    dataguardDetails.associatedHosts = (
+                                        dataguardDetails as OracleDataguardDetailsType
+                                    )?.associatedHosts?.map(host => {
+                                        const matchedHost = hostDetails.find(
+                                            ec2detail => ec2detail.ec2InstancePrivateIpAddress === host.hostIp
+                                        );
+                                        return {
+                                            ...host,
+                                            ec2InstanceId: matchedHost ? matchedHost.ec2InstanceId : undefined
+                                        };
+                                    });
+                                }
+                            }
+
+                            databaseInstanceDetails.push({
+                                instanceId,
+                                instanceName,
+                                version,
+                                instanceState,
+                                instanceType: isContainerDbInstance
+                                    ? OracleDeploymentTenacy.MULTI_TENANT
+                                    : OracleDeploymentTenacy.SINGLE_TENANT,
+                                databaseCount: isContainerDbInstance ? pluggableDatabases.length : 1,
+                                databaseDetails: databaseInfo,
+                                ...(isContainerDbInstance && {
+                                    pluggableDatabases
+                                }),
+                                storage: storageDetails,
+                                isInstanceStorageAsmManaged,
+                                isDefaultAuthentication,
+                                oracleServerAuthentication: isOracleAuth,
+                                asmAuthentication: isAsmAuth,
+                                manageReadiness: {
+                                    assessment: {
+                                        missingModules,
+                                        missingSqlPermissions: missingPermissions
+                                    },
+                                    remediation: {
+                                        missingSqlPermissions: remediationMissingPermissions,
+                                        missingModules
+                                    }
+                                },
+                                isDataGuardDeployed,
+                                dataguardDetails: isDataGuardDeployed ? dataguardDetails : undefined
+                            });
+                        }
+
+                        ec2Instance.ec2HostName = hostname;
+                        ec2Instance.databaseInstanceDetails = databaseInstanceDetails;
+                        instancesWithSsmResponse.push(ec2Instance);
+                    } catch (err: unknown) {
+                        ec2Instance.error = err as string;
+                        logger.warn('Failed to parse SSM response', { error: err });
+                        instancesWithSsmResponse.push(ec2Instance);
+                    }
+                })
+            )
         );
     } catch (error: any) {
         logger.error('Failed to discover oracle resources', { error: error.message });
