@@ -8,6 +8,7 @@ import {
     Typography,
     postBlueXPMessage
 } from '@netapp/design-system';
+import { DsSpinner } from '@tlveng/wlm-ds';
 // @ts-ignore
 import { optionType, optionTypeMulti } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
@@ -106,7 +107,6 @@ import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable
 import FetchingDataNotification from '../FetchingDataNotification/FetchingDataNotification';
 import OptimizeInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeInnerPage';
 import OptimizeOntapInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeOntapInnerPage';
-import Marketing from '../../../Marketing/Marketing';
 import InventoryApisV3 from '../../InventoryV2/InventoryApisV3';
 import { setIsRefreshedSandbox } from '../../../store/workloadFactory/sandboxSlice';
 import store from '../../../store/store';
@@ -120,6 +120,7 @@ import OracleResourcePages from '../../Oracle/OracleResourcePages/OracleResource
 import { clearDataMap } from '../../../store/workloadFactory/snapcenterSlice';
 import DashboardOverview from '../../Dashboard/DashboardOverview/DashboardOverview';
 import WellArchitectedTab from '../../WellArchitectedTab/WellArchitectedTab';
+import commonStyles from '../../../utils/CommonStyles.module.scss';
 
 type Tab = {
     tab: string;
@@ -1636,7 +1637,12 @@ const HeaderComponent = ({ tab }: Tab) => {
             </div>
         )
     ) : (
-        <Marketing />
+        <>
+            <div className={commonStyles.loaderOverlay} />
+            <div className={commonStyles.spinnerPlacement}>
+                <DsSpinner isLarge />
+            </div>
+        </>
     );
 };
 
