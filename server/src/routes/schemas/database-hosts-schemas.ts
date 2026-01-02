@@ -212,14 +212,25 @@ const oracleDbHostDetailsSchema = {
 
 const DatabaseHostInstanceDetailsSchema = {
     ...resourceRequest,
-    summary: 'Fetch database server instance details',
-    description:
-        'Fetch database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server. ',
     params: DatabaseHostInstanceSummaryParams,
     querystring: DatabaseHostQueryString,
     response: {
         200: DatabaseHostInstanceSummaryResponse
     }
+};
+
+const MssqlDatabaseHostInstanceDetailsSchema = {
+    ...DatabaseHostInstanceDetailsSchema,
+    summary: 'Fetch MSSQL database server instance details',
+    description:
+        'Fetch MSSQL database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.'
+};
+
+const OracleDatabaseHostInstanceDetailsSchema = {
+    ...DatabaseHostInstanceDetailsSchema,
+    summary: 'Fetch Oracle database server instance details',
+    description:
+        'Fetch Oracle database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network), storage savings, usage cost and databases in the server.'
 };
 
 const DatabasesListSchemaV2 = {
@@ -239,7 +250,8 @@ export {
     DatabaseHostsSummarySchemaV2,
     DatabaseHostDiagramSchema,
     DatabaseHostDetailsSchemaV2,
-    DatabaseHostInstanceDetailsSchema,
+    MssqlDatabaseHostInstanceDetailsSchema,
+    OracleDatabaseHostInstanceDetailsSchema,
     DatabasesListSchemaV2,
     GetDriveInfoSchemaV2,
     GetCollationDetailsSchemaV2,

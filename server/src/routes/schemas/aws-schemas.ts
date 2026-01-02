@@ -92,7 +92,7 @@ const GetFSxRegionsSchema = {
     tags: [RouteTags.AWS],
     params: AwsParams,
     query: IncludeBedrockStatusQueryParam,
-    summary: 'List AWS regions that supports FSx',
+    summary: 'List AWS regions that support FSx for given credentials',
     description: 'List the AWS regions enabled for the given account and supports Amazon FSx for NetApp ONTAP',
     response: {
         200: FSxRegionsResponse
@@ -103,7 +103,7 @@ const GetGenericFSxRegionsSchema = {
     tags: [RouteTags.AWS],
     params: AccountIdParams,
     query: IncludeBedrockStatusQueryParam,
-    summary: 'List AWS regions that supports FSx',
+    summary: 'List AWS regions that support FSx',
     description: 'List the AWS regions enabled for the given account and supports Amazon FSx for NetApp ONTAP',
     response: {
         200: FSxRegionsResponse

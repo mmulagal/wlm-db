@@ -3,10 +3,14 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { DATABASE_TYPE } from '@prisma/client';
 import {
     AnalyzePreRequisitesSchema,
-    GetLogsAnalyzerSchema,
-    LatestReportsSchema,
-    ListLogsAnalyzerReportsSchema,
-    LogsAnalyzerSchema,
+    MssqlGetLogsAnalyzerSchema,
+    OracleGetLogsAnalyzerSchema,
+    MssqlLatestReportsSchema,
+    OracleLatestReportsSchema,
+    MssqlListLogsAnalyzerReportsSchema,
+    OracleListLogsAnalyzerReportsSchema,
+    MssqlLogsAnalyzerSchema,
+    OracleLogsAnalyzerSchema,
     OracleAnalyzePreRequisitesSchema
 } from './schemas/logs-analyzer-schema';
 import castRequest from './utils';
@@ -63,7 +67,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${MSSQL_API_PREFIX_PATH}/logs-analysis/summary`,
-        { schema: LatestReportsSchema },
+        { schema: MssqlLatestReportsSchema },
         async (request, reply) => {
             const {
                 params: { accountId, region, credentialsId }
@@ -76,7 +80,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
     );
     server.post(
         `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis`,
-        { schema: LogsAnalyzerSchema },
+        { schema: MssqlLogsAnalyzerSchema },
         async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
@@ -97,7 +101,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis`,
-        { schema: GetLogsAnalyzerSchema },
+        { schema: MssqlGetLogsAnalyzerSchema },
         async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
@@ -120,7 +124,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis/reports`,
-        { schema: ListLogsAnalyzerReportsSchema },
+        { schema: MssqlListLogsAnalyzerReportsSchema },
         async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
@@ -142,7 +146,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
 
     server.post(
         `${ORACLE_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis`,
-        { schema: LogsAnalyzerSchema },
+        { schema: OracleLogsAnalyzerSchema },
         async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
@@ -163,7 +167,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${ORACLE_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis/reports`,
-        { schema: ListLogsAnalyzerReportsSchema },
+        { schema: OracleListLogsAnalyzerReportsSchema },
         async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
@@ -185,7 +189,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${ORACLE_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/logs-analysis`,
-        { schema: GetLogsAnalyzerSchema },
+        { schema: OracleGetLogsAnalyzerSchema },
         async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
@@ -208,7 +212,7 @@ export default function logsAnalyzerRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${ORACLE_API_PREFIX_PATH}/logs-analysis/summary`,
-        { schema: LatestReportsSchema },
+        { schema: OracleLatestReportsSchema },
         async (request, reply) => {
             const {
                 params: { accountId, region, credentialsId }

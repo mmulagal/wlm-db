@@ -14,24 +14,32 @@ import { CredentialsIdParams, JobIdResponse } from '../types/generic.types';
 
 const LogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
-    description: 'Trigger logs analysis for a specific MSSQL database instance in a remote database host machine',
     params: LogsAnalyzerParams,
     body: LogsAnalyzerBody,
-    summary: 'Trigger logs analysis for a specific database instance in a remote database host machine',
     response: {
         200: JobIdResponse
     }
 };
 
+const MssqlLogsAnalyzerSchema = {
+    ...LogsAnalyzerSchema,
+    summary: 'Trigger MSSQL logs analysis for a specific database instance',
+    description: 'Trigger logs analysis for a specific MSSQL database instance in a remote database host machine'
+};
+
+const OracleLogsAnalyzerSchema = {
+    ...LogsAnalyzerSchema,
+    summary: 'Trigger Oracle logs analysis for a specific database instance',
+    description: 'Trigger logs analysis for a specific Oracle database instance in a remote database host machine'
+};
+
 const GetLogsAnalyzerSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
-    description: 'Get logs analysis for a specific database instance in a remote database host machine',
     params: LogsAnalyzerParams,
     querystring: Type.Object({
         jobId: Type.Optional(Type.String()),
         id: Type.Optional(Type.String())
     }),
-    summary: 'Get logs analysis for a specific database instance in a remote database host machine',
     response: {
         200: Type.Object({
             remediationRecommendation: Type.Array(RemediationRecommendationObject)
@@ -42,14 +50,24 @@ const GetLogsAnalyzerSchema = {
     }
 };
 
+const MssqlGetLogsAnalyzerSchema = {
+    ...GetLogsAnalyzerSchema,
+    summary: 'Get MSSQL logs analysis for a specific database instance',
+    description: 'Get logs analysis for a specific MSSQL database instance in a remote database host machine'
+};
+
+const OracleGetLogsAnalyzerSchema = {
+    ...GetLogsAnalyzerSchema,
+    summary: 'Get Oracle logs analysis for a specific database instance',
+    description: 'Get logs analysis for a specific Oracle database instance in a remote database host machine'
+};
+
 const ListLogsAnalyzerReportsSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
-    description: 'List logs analysis reports for a specific database instance',
     params: LogsAnalyzerParams,
     querystring: Type.Object({
         pageSize: Type.Optional(Type.Number())
     }),
-    summary: 'List logs analysis for a specific database instance',
     response: {
         200: Type.Object({
             reports: Type.Array(ReportIdentifier)
@@ -58,6 +76,18 @@ const ListLogsAnalyzerReportsSchema = {
             message: Type.String()
         })
     }
+};
+
+const MssqlListLogsAnalyzerReportsSchema = {
+    ...ListLogsAnalyzerReportsSchema,
+    summary: 'List MSSQL logs analysis reports for a specific database instance',
+    description: 'List logs analysis reports for a specific MSSQL database instance'
+};
+
+const OracleListLogsAnalyzerReportsSchema = {
+    ...ListLogsAnalyzerReportsSchema,
+    summary: 'List Oracle logs analysis reports for a specific database instance',
+    description: 'List logs analysis reports for a specific Oracle database instance'
 };
 
 const AnalyzePreRequisitesSchema = {
@@ -88,20 +118,35 @@ const OracleAnalyzePreRequisitesSchema = {
 
 const LatestReportsSchema = {
     tags: [RouteTags.LOGS_ANALYSIS],
-    summary: 'Logs analysis latest report at each MSSQL database host level for an account, credentials and region',
-    description:
-        'Logs analysis latest report at each database host level for an account, credentials and region, analyzes the logs analysis reports for all database instances for latest scan time and error count',
     params: CredentialsIdParams,
     response: {
         200: LatestReports
     }
 };
 
+const MssqlLatestReportsSchema = {
+    ...LatestReportsSchema,
+    summary: 'Get MSSQL logs analysis latest reports summary',
+    description:
+        'Logs analysis latest report at each MSSQL database host level for an account, credentials and region, analyzes the logs analysis reports for all database instances for latest scan time and error count'
+};
+
+const OracleLatestReportsSchema = {
+    ...LatestReportsSchema,
+    summary: 'Get Oracle logs analysis latest reports summary',
+    description:
+        'Logs analysis latest report at each Oracle database host level for an account, credentials and region, analyzes the logs analysis reports for all database instances for latest scan time and error count'
+};
+
 export {
-    LogsAnalyzerSchema,
-    GetLogsAnalyzerSchema,
+    MssqlLogsAnalyzerSchema,
+    OracleLogsAnalyzerSchema,
+    MssqlGetLogsAnalyzerSchema,
+    OracleGetLogsAnalyzerSchema,
     AnalyzePreRequisitesSchema,
-    ListLogsAnalyzerReportsSchema,
-    LatestReportsSchema,
+    MssqlListLogsAnalyzerReportsSchema,
+    OracleListLogsAnalyzerReportsSchema,
+    MssqlLatestReportsSchema,
+    OracleLatestReportsSchema,
     OracleAnalyzePreRequisitesSchema
 };

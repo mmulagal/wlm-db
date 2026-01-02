@@ -11,7 +11,8 @@ import {
     DatabasesCreateSchema,
     DatabaseHostsSummarySchemaV2,
     DatabaseHostDetailsSchemaV2,
-    DatabaseHostInstanceDetailsSchema,
+    MssqlDatabaseHostInstanceDetailsSchema,
+    OracleDatabaseHostInstanceDetailsSchema,
     DatabasesListSchemaV2,
     GetDriveInfoSchemaV2,
     GetCollationDetailsSchemaV2,
@@ -155,7 +156,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
         )
         .get(
             `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId`,
-            { schema: DatabaseHostInstanceDetailsSchema },
+            { schema: MssqlDatabaseHostInstanceDetailsSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
@@ -253,7 +254,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
         )
         .get(
             `${ORACLE_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId`,
-            { schema: DatabaseHostInstanceDetailsSchema },
+            { schema: OracleDatabaseHostInstanceDetailsSchema },
             async (request, reply) => {
                 const {
                     params: { accountId, credentialsId, region, databaseHostId, databaseInstanceId },
