@@ -20,7 +20,11 @@
             "https://cloudmanager.netapp.com",
             "https://api.workloads.netapp.com",
             "https://console.bluexp.netapp.com",
-            "https://console.netapp.com"
+            "https://console.netapp.com",
+            "https://preprod.console.workloads.netapp.com",
+            "https://preprod.cloudmanager.netapp.com",
+            "https://preprod.console.bluexp.netapp.com",
+            "https://preprod.console.netapp.com"
         ]
     }
 }
