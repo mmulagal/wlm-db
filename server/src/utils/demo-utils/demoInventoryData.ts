@@ -1103,6 +1103,200 @@ async function discoverDemoDataOracle(
                         }
                     }
                 ]
+            },
+            // DataGuard Primary Instance
+            {
+                ec2InstanceId: 'i-0123456789abcdef0',
+                ec2InstanceType: 'm5.large',
+                ec2InstanceName: 'DATAGUARD-PRIMARY-oracle19c-normal-nfs-141225181923',
+                ec2HostName: 'ip-10-0-131-169.ap-south-1.compute.internal',
+                ec2UsageOperation: 'RunInstances:0014',
+                ssmState: 'connected',
+                ebsVolumeIDs: [ebsVolId],
+                ebsVolumes: [
+                    {
+                        DeviceName: '/dev/xvda',
+                        Ebs: {
+                            AttachTime: '2025-03-07T03:34:27.000Z',
+                            DeleteOnTermination: true,
+                            Status: 'attached',
+                            VolumeId: ebsVolId
+                        }
+                    }
+                ],
+                vpc: {
+                    id: 'vpc-075ecf35aaafc2a4f',
+                    name: 'aoag2',
+                    cidrBlock: '10.0.0.0/16'
+                },
+                error: undefined,
+                platform: 'Red Hat Enterprise Linux with SQL Server Standard',
+                oracleServerDeploymentType: 'Standalone',
+                databaseInstanceDetails: [
+                    {
+                        instanceName: 'dataguard-primary',
+                        instanceId: 'dataguard-primary',
+                        instanceState: 'OPEN',
+                        version: '19.0.0.0.0',
+                        instanceType: 'SINGLE_TENANT',
+                        databaseCount: 1,
+                        databaseDetails: {
+                            databaseId: '1167481941',
+                            openMode: 'READ WRITE'
+                        },
+                        oracleServerAuthentication: false,
+                        isDefaultAuthentication: true,
+                        isInstanceStorageAsmManaged: false,
+                        asmAuthentication: false,
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                svmId: 'svm-098b3b2800853b868',
+                                fileSystemStorageType: 'SSD',
+                                fileSystemName: 'wlmdb-fsx-1737951297350',
+                                deploymentType: 'MULTI_AZ_1',
+                                zones: ['ap-south-1c', 'ap-south-1b'],
+                                mountDetails: [
+                                    {
+                                        mountPoint: '/data_141225182258',
+                                        protocol: 'NFS',
+                                        mountIp: '198.19.255.89'
+                                    }
+                                ]
+                            }
+                        ],
+                        manageReadiness: {
+                            assessment: {
+                                missingSqlPermissions: [],
+                                missingModules: []
+                            },
+                            remediation: {
+                                missingSqlPermissions: [],
+                                missingModules: []
+                            }
+                        },
+                        isDataGuardDeployed: true,
+                        dataguardDetails: {
+                            dbUniqueName: 'dataguard-primary',
+                            dbName: 'dg1',
+                            associatedHosts: [
+                                {
+                                    serviceName: 'dataguard-primary',
+                                    hostIp: '127.0.0.1',
+                                    ec2InstanceId: 'i-0123456789abcdef0',
+                                    listenerPort: '1532',
+                                    sidName: 'dataguard-primary'
+                                },
+                                {
+                                    serviceName: 'dataguard-secondary',
+                                    hostIp: '127.0.0.2',
+                                    ec2InstanceId: 'i-0123456789abcdef1',
+                                    listenerPort: '1532',
+                                    sidName: ''
+                                }
+                            ],
+                            isPrimary: true
+                        }
+                    }
+                ]
+            },
+            // DataGuard Standby Instance
+            {
+                ec2InstanceId: 'i-0123456789abcdef1',
+                ec2InstanceType: 'm5.large',
+                ec2InstanceName: 'DATAGAURD-STANDBY-oracle19c-normal-nfs-141225181923',
+                ec2HostName: 'ip-10-0-131-169.ap-south-1.compute.internal',
+                ec2UsageOperation: 'RunInstances:0014',
+                ssmState: 'connected',
+                ebsVolumeIDs: [ebsVolId],
+                ebsVolumes: [
+                    {
+                        DeviceName: '/dev/xvda',
+                        Ebs: {
+                            AttachTime: '2025-03-07T03:34:27.000Z',
+                            DeleteOnTermination: true,
+                            Status: 'attached',
+                            VolumeId: ebsVolId
+                        }
+                    }
+                ],
+                vpc: {
+                    id: 'vpc-075ecf35aaafc2a4f',
+                    name: 'aoag2',
+                    cidrBlock: '10.0.0.0/16'
+                },
+                error: undefined,
+                platform: 'Red Hat Enterprise Linux with SQL Server Standard',
+                oracleServerDeploymentType: 'Standalone',
+                databaseInstanceDetails: [
+                    {
+                        instanceName: 'dataguard-secondary',
+                        instanceId: 'dataguard-secondary',
+                        instanceState: 'OPEN',
+                        version: '19.0.0.0.0',
+                        instanceType: 'SINGLE_TENANT',
+                        databaseCount: 1,
+                        databaseDetails: {
+                            databaseId: '1167481941',
+                            openMode: 'READ WRITE'
+                        },
+                        oracleServerAuthentication: false,
+                        isDefaultAuthentication: true,
+                        isInstanceStorageAsmManaged: false,
+                        asmAuthentication: false,
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                svmId: 'svm-098b3b2800853b868',
+                                fileSystemStorageType: 'SSD',
+                                fileSystemName: 'wlmdb-fsx-1737951297350',
+                                deploymentType: 'MULTI_AZ_1',
+                                zones: ['ap-south-1c', 'ap-south-1b'],
+                                mountDetails: [
+                                    {
+                                        mountPoint: '/data_141225182258',
+                                        protocol: 'NFS',
+                                        mountIp: '198.19.255.89'
+                                    }
+                                ]
+                            }
+                        ],
+                        manageReadiness: {
+                            assessment: {
+                                missingSqlPermissions: [],
+                                missingModules: []
+                            },
+                            remediation: {
+                                missingSqlPermissions: [],
+                                missingModules: []
+                            }
+                        },
+                        isDataGuardDeployed: true,
+                        dataguardDetails: {
+                            dbUniqueName: 'dataguard-secondary',
+                            dbName: 'dg1',
+                            associatedHosts: [
+                                {
+                                    serviceName: 'dataguard-primary',
+                                    hostIp: '127.0.0.1',
+                                    ec2InstanceId: 'i-0123456789abcdef0',
+                                    listenerPort: '1532',
+                                    sidName: ''
+                                },
+                                {
+                                    serviceName: 'dataguard-secondary',
+                                    hostIp: '127.0.0.2',
+                                    ec2InstanceId: 'i-0123456789abcdef1',
+                                    listenerPort: '1532',
+                                    sidName: 'dataguard-secondary'
+                                }
+                            ],
+                            isPrimary: false
+                        }
+                    }
+                ]
             }
         ] as unknown as DiscoverOracleResponseType[];
         ORACLE_DISCOVERY_RES.items = discoveryRes;
