@@ -105,32 +105,10 @@ const getMappedOntapDataVolume = (
         result=$(ontap_request 'GET' $svmEndpoint)
         check_status "Failed to fetch SVM endpoint data"
 
-        svmName=$(echo "$result" | awk -v ip="$ipAddress" '
-            /ip_interfaces/ { in_interfaces = 1 }
-            in_interfaces && /"ip"/ && /"address"/ && $0 ~ ip {
-                # Found matching IP, now find the parent SVM name
-                found = 1
-            }
-            found && /"name"/ && !/ip_interfaces/ && !/interface/ {
-                match($0, /"name"[[:space:]]*:[[:space:]]*"([^"]*)"/, arr)
-                if (arr[1]) {
-                    print arr[1]
-                    exit
-                }
-            }')
-        
-        svmId=$(echo "$result" | awk -v ip="$ipAddress" '
-            /ip_interfaces/ { in_interfaces = 1 }
-            in_interfaces && /"ip"/ && /"address"/ && $0 ~ ip {
-                found = 1
-            }
-            found && /"uuid"/ && !/ip_interfaces/ && !/interface/ {
-                match($0, /"uuid"[[:space:]]*:[[:space:]]*"([^"]*)"/, arr)
-                if (arr[1]) {
-                    print arr[1]
-                    exit
-                }
-            }')
+        # Find SVM with matching IP address in ip_interfaces where name is nfs_smb_management_1
+        svmResult=$(find_svm_by_ip "$result" "$ipAddress")
+        svmName=$(echo "$svmResult" | cut -d'|' -f1)
+        svmId=$(echo "$svmResult" | cut -d'|' -f2)
 
         volEndpoint="storage/volumes?svm.name=$svmName&nas.path=$junctionPath"
         response=$(ontap_request 'GET' $volEndpoint)
@@ -377,6 +355,57 @@ const bashJsonUtils = `
             encoded+="\${o}"
         done
         echo "$encoded"
+    }
+
+    find_svm_by_ip() {
+        local json="$1"
+        local target_ip="$2"
+        
+        # Flatten JSON to single line
+        local flat=$(echo "$json" | tr -d '\\n\\r')
+        
+        # Extract records array content
+        local records=$(echo "$flat" | sed 's/.*"records"[[:space:]]*:[[:space:]]*\\[//' | sed 's/\\][^]]*$//')
+        
+        # Split into individual records by finding balanced braces
+        # split by top-level record boundaries
+        local current_record=""
+        local brace_count=0
+        local i=0
+        local len=\${#records}
+        local found_name=""
+        local found_uuid=""
+        
+        while [ $i -lt $len ]; do
+            local char="\${records:$i:1}"
+            current_record="$current_record$char"
+            
+            if [ "$char" = "{" ]; then
+                brace_count=$((brace_count + 1))
+            elif [ "$char" = "}" ]; then
+                brace_count=$((brace_count - 1))
+                
+                if [ $brace_count -eq 0 ]; then
+                    # End of a record - check if it matches
+                    if echo "$current_record" | grep -q "nfs_smb_management_1"; then
+                        if echo "$current_record" | grep -q "\\"address\\"[[:space:]]*:[[:space:]]*\\"$target_ip\\""; then
+                            # Found matching record - extract top-level name and uuid
+                            # Name appears before ip_interfaces
+                            found_name=$(echo "$current_record" | sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*"ip_interfaces".*/\\1/p')
+                            if [ -z "$found_name" ]; then
+                                found_name=$(echo "$current_record" | sed -n 's/^[^"]*"name"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p')
+                            fi
+                            found_uuid=$(echo "$current_record" | sed -n 's/.*"uuid"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' | head -1)
+                            break
+                        fi
+                    fi
+                    current_record=""
+                fi
+            fi
+            i=$((i + 1))
+        done
+        
+        echo "$found_name|$found_uuid"
     }
 `;
 
