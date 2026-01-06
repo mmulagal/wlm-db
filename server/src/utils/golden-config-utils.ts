@@ -12,7 +12,8 @@ interface ConfigItem {
     parameter?: string;
     category: string;
     subCategory: string;
-    focusWidgetName?: string;
+    recommendation?: string;
+    summary?: string;
     [key: string]: unknown;
 }
 
@@ -170,14 +171,14 @@ function generateCombinedParameterCategoryMaps(): Map<string, ParameterCategoryM
 }
 
 /**
- * Generates a simple map of parameter/name to focusWidgetName
+ * Generates a simple map of parameter/name to recommendation
  * For MSSQL: uses parameter field, for Oracle: uses name field
  * Handles three cases:
  * 1. Arrays at top level: sizing: [{...}, {...}]
- * 2. Objects with simple properties: license: { focusWidgetName: '...', category: '...', ... }
+ * 2. Objects with simple properties: license: { recommendation: '...', category: '...', ... }
  * 3. Objects with arrays as properties: configuration: { volume: [{...}], lun: [{...}], ... }
  * Falls back to object key (converted to hyphenated format) if neither name nor parameter exists
- * @returns Map where key is parameter/name and value is focusWidgetName
+ * @returns Map where key is parameter/name and value is recommendation
  */
 
 function extractAndSetFocusWidgetName(item: unknown, focusWidgetMap: Map<string, string>, parentKey?: string) {
@@ -187,8 +188,8 @@ function extractAndSetFocusWidgetName(item: unknown, focusWidgetMap: Map<string,
     } else if (item && typeof item === 'object') {
         const configItem = item as ConfigItem;
 
-        // Check if this item has focusWidgetName (Case 2: simple object with properties)
-        if (configItem.focusWidgetName) {
+        // Check if this item has summary or recommendation (Case 2: simple object with properties)
+        if (configItem.summary || configItem.recommendation) {
             let mapKey: string | undefined;
 
             if (configItem.name) {
@@ -203,7 +204,8 @@ function extractAndSetFocusWidgetName(item: unknown, focusWidgetMap: Map<string,
             }
 
             if (mapKey) {
-                focusWidgetMap.set(mapKey, configItem.focusWidgetName as string);
+                const displayText = configItem.summary || (configItem.recommendation as string);
+                focusWidgetMap.set(mapKey, displayText);
             }
         } else {
             // Case 3: Handle objects with nested properties/arrays

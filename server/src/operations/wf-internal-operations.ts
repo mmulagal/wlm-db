@@ -181,11 +181,11 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
     if (IS_DEMO_FLOW) {
         return {
             items: [
-                { description: 'Auto size configuration' },
-                { description: 'Backup configuration' },
-                { description: 'Performance tuning' },
-                { description: 'Security patch' },
-                { description: 'Resource utilization' }
+                { description: 'Enable thin provisioning for optimal storage efficiency' },
+                { description: 'Enable volume autogrow to prevent storage capacity issues' },
+                { description: 'Disable fractional reserve to maximize usable capacity' },
+                { description: 'Enable space allocation for write failure notification' },
+                { description: 'Enable Multipath I/O for iSCSI storage resilience' }
             ],
             severity: 'medium',
             totalItems: 5
