@@ -90,7 +90,7 @@ async function getDatabaseVolumes(accountId: string, pageSize = 500, nextToken?:
 //   {
 //     name: "storage | layout",
 //     count: 10,
-//     severity: "low"
+//     severity: "medium"
 //   }
 // ]
 function getLimitedItems(
@@ -173,7 +173,7 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
         const items = getLimitedItems(lowSeverityItems, limit);
         return {
             items: formatDescription(items),
-            severity: 'low',
+            severity: 'medium',
             totalItems
         };
     }
@@ -187,7 +187,7 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
                 { description: 'Security patch' },
                 { description: 'Resource utilization' }
             ],
-            severity: 'low',
+            severity: 'medium',
             totalItems: 5
         };
     }
