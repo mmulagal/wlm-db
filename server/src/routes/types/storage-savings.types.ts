@@ -209,7 +209,8 @@ const StorageSavingsCapacityResponse = Type.Object({
 
 const additionalParams = {
     hostname: Type.Optional(Type.String()),
-    deploymentType: Type.Optional(Type.String())
+    deploymentType: Type.Optional(Type.String()),
+    resourceName: Type.Optional(Type.String())
 };
 
 const StorageSavingsResponse = Type.Intersect([

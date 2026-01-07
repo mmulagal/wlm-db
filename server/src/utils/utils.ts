@@ -1438,6 +1438,36 @@ function hyphenatedToPascalCaseWithSpace(str: string): string {
         .join(' ');
 }
 
+/**
+ * Finds the most frequent value in an array of strings
+ * @param values Array of string values
+ * @returns The most frequent string value, or undefined if array is empty
+ */
+function getMostFrequentValue(values: string[]): string | undefined {
+    if (values.length === 0) {
+        return undefined;
+    }
+
+    const frequencyMap = new Map<string, number>();
+
+    for (const value of values) {
+        const currentCount = frequencyMap.get(value) ?? 0;
+        frequencyMap.set(value, currentCount + 1);
+    }
+
+    let maxCount = -1;
+    let mostFrequent: string | undefined;
+
+    for (const [value, count] of frequencyMap.entries()) {
+        if (count > maxCount) {
+            maxCount = count;
+            mostFrequent = value;
+        }
+    }
+
+    return mostFrequent;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1521,5 +1551,6 @@ export {
     isRedisConnected,
     summarizeFirstLevel,
     camelCaseToHyphenated,
-    hyphenatedToPascalCaseWithSpace
+    hyphenatedToPascalCaseWithSpace,
+    getMostFrequentValue
 };

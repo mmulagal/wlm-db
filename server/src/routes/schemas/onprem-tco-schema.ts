@@ -5,7 +5,9 @@ import {
     OnPremTcoExploreSavingsRequestBody,
     OnPremTcoExploreSavingsResponse,
     UploadMetricsFileBody,
-    OnPremDatabaseResourceObject
+    OnPremDatabaseResourceObject,
+    BulkOnPremTcoExploreSavingsRequestBody,
+    BulkOnPremTcoExploreSavingsResponse
 } from '../types/onprem-tco.types';
 import { JobIdResponse, NextTokenQueryString } from '../types/generic.types';
 
@@ -98,6 +100,16 @@ const OnpremTcoExploreSavingsSchema = {
     }
 };
 
+const BulkOnpremTcoExploreSavingsSchema = {
+    tags: [RouteTags.ONPREM_TCO],
+    summary: 'Explore potential savings for multiple OnPremises resources',
+    description: 'Explore potential savings for multiple OnPremises resources in a single request',
+    body: BulkOnPremTcoExploreSavingsRequestBody,
+    response: {
+        202: BulkOnPremTcoExploreSavingsResponse
+    }
+};
+
 export {
     GeneratePayloadInternal,
     DeleteOnPremReport,
@@ -105,5 +117,6 @@ export {
     UploadOnPremTcoDataSchema,
     ListOnPremDatabaseResourcesSchema,
     GetOnPremDatabaseResourceSchema,
-    OnpremTcoExploreSavingsSchema
+    OnpremTcoExploreSavingsSchema,
+    BulkOnpremTcoExploreSavingsSchema
 };

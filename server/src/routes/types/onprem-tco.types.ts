@@ -2,7 +2,9 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 import {
     StorageSavingsCalculationsMetricsResponse,
     StorageSavingsRequestBody,
-    StorageSavingsResponse
+    StorageSavingsResponse,
+    BulkStorageSavingsCalculationsMetricsResponse,
+    BulkStorageSavingsResponse
 } from './storage-savings.types';
 import { NETWORK_PERF } from '../../utils/continous-optimization-consts';
 
@@ -58,6 +60,30 @@ const OnPremTcoExploreSavingsRequestBody = Type.Object({
     snapshotInfo: Type.Optional(StorageSavingsRequestBody)
 });
 
+const BulkResources = Type.Object({
+    resourceId: Type.String(),
+    sqlInstanceData: Type.Optional(Type.Array(SqlInstanceDetailsRequestObject))
+});
+
+const BulkOnPremTcoExploreSavingsRequestBody = Type.Object({
+    regionCode: Type.String(),
+    resources: Type.Array(BulkResources, {
+        description: 'List of resources with their SQL instance details',
+        minimum: 1,
+        maximum: 5
+    }),
+    snapshotInfo: Type.Optional(StorageSavingsRequestBody)
+});
+
+const BulkOnPremTcoExploreSavingsResponse = Type.Object({
+    region: Type.String(),
+    regionCode: Type.String(),
+    calculations: BulkStorageSavingsCalculationsMetricsResponse,
+    storageSavings: BulkStorageSavingsResponse
+});
+
+type BulkResourcesType = Static<typeof BulkResources>;
+
 const OnPremTcoResourceObject = Type.Object({
     resourceId: Type.String(),
     resourceName: Type.String(),
@@ -99,5 +125,8 @@ export {
     OnPremTcoExploreSavingsResponse,
     SqlInstanceDetailsRequestObjectType,
     OnPremDatabaseResourceObject,
-    OnPremDatabaseResourcesObjectType
+    OnPremDatabaseResourcesObjectType,
+    BulkOnPremTcoExploreSavingsRequestBody,
+    BulkOnPremTcoExploreSavingsResponse,
+    BulkResourcesType
 };

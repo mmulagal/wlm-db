@@ -1,4 +1,5 @@
 import { DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE } from '@prisma/client';
+import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from './db';
@@ -75,7 +76,7 @@ async function listOnPremDatabaseResources(
     databaseType: DATABASE_TYPE,
     pageSize?: number,
     nextToken?: string,
-    resourceId?: string,
+    resourceIds?: string[],
     timestamp?: Date,
     sort: string = 'creation_time',
     sortOrder: string = 'desc'
@@ -88,7 +89,7 @@ async function listOnPremDatabaseResources(
         where: {
             account_id: accountId,
             database_type: databaseType,
-            ...(resourceId && { resource_id: resourceId }),
+            ...(!isEmpty(resourceIds) && { resource_id: { in: resourceIds } }),
             ...(timestamp && { creation_time: timestamp })
         },
         orderBy: [

@@ -10,7 +10,8 @@ import {
     GeneratePayloadInternal,
     DeleteOnPremReport,
     OnpremTcoExploreSavingsSchema,
-    GetOnPremDatabaseResourceSchema
+    GetOnPremDatabaseResourceSchema,
+    BulkOnpremTcoExploreSavingsSchema
 } from './schemas/onprem-tco-schema';
 import {
     downloadSqlServerDataCollectorScript,
@@ -19,6 +20,7 @@ import {
     generatePayload,
     deleteOnPremTcoReportResourceRecord,
     getOnPremResourceExploreSavings,
+    getOnPremBulkResourceExploreSavings,
     getIndividualOnPremDatabaseResource
 } from '../operations/onprem-tco-operations';
 import { MSSQL } from '../utils/consts';
@@ -127,6 +129,20 @@ export default function onPremTcoRoutes(fastify: FastifyInstance) {
                 sqlInstanceData,
                 snapshotInfo
             );
+            return reply.send(response);
+        }
+    );
+
+    server.post(
+        `${API_PATH_ON_PREM_TCO}/explore-savings`,
+        { schema: BulkOnpremTcoExploreSavingsSchema },
+        async (request: FastifyRequest, reply) => {
+            const {
+                params: { accountId },
+                body: { regionCode, resources, snapshotInfo }
+            } = castRequest(request);
+
+            const response = await getOnPremBulkResourceExploreSavings(accountId, regionCode, resources, snapshotInfo);
             return reply.send(response);
         }
     );
