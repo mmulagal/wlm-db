@@ -1196,7 +1196,7 @@ async function getOnPremDatabaseResources(
         databaseType,
         apiPageSize,
         nextToken,
-        [resourceId ?? ''],
+        resourceId ? [resourceId] : undefined,
         timestamp
     );
 
@@ -1400,6 +1400,7 @@ async function getOnPremResourceExploreSavings(
 }
 
 function deduplicateResourcesByLatestVersion(resources: any[]): any[] {
+    logger.info('Deduplicating resources by latest version', { resourceCount: resources.length });
     const sortedResources = resources.sort(
         (a, b) => new Date(b.creation_time).getTime() - new Date(a.creation_time).getTime()
     );
@@ -1436,6 +1437,10 @@ async function processResourceDataForBulkAnalysis(
         }
     >
 > {
+    logger.info('Processing resource data for bulk analysis', {
+        resourceCount: deduplicatedResources.length,
+        regionCode
+    });
     const resourceDataMap = new Map<
         string,
         {
@@ -1644,28 +1649,8 @@ async function getOnPremBulkResourceExploreSavings(
             });
         });
 
-        // Build aggregated EC2 instances with deduplicated volumes
-        const aggregatedEc2Instances: ManualModeInstancesType = [];
         const primaryVolumesArray = Array.from(accumulatedPrimaryVolumes.values());
         const secondaryVolumesArray = Array.from(accumulatedSecondaryVolumes.values());
-
-        if (!isEmpty(primaryVolumesArray)) {
-            aggregatedEc2Instances.push({
-                ec2InstanceDescription: 'Primary',
-                ec2InstanceType: 'm5.xlarge', // Placeholder instance type for volume aggregation
-                isPrimary: true,
-                volumes: primaryVolumesArray as any
-            });
-        }
-
-        if (!isEmpty(secondaryVolumesArray)) {
-            aggregatedEc2Instances.push({
-                ec2InstanceDescription: 'Secondary',
-                ec2InstanceType: 'm5.xlarge', // Placeholder instance type for volume aggregation
-                isPrimary: false,
-                volumes: secondaryVolumesArray as any
-            });
-        }
 
         // Prepare parameters for marketing API call
         const {
@@ -1725,10 +1710,25 @@ async function getOnPremBulkResourceExploreSavings(
         const representativeInstanceType =
             getMostFrequentValue(currentInstanceTypes) || currentInstanceTypes[0] || 'm5.xlarge';
 
-        const ec2InstancesWithRealType = aggregatedEc2Instances.map(instance => ({
-            ...instance,
-            ec2InstanceType: representativeInstanceType
-        }));
+        // Build aggregated EC2 instances with actual representative instance type
+        const aggregatedEc2Instances: ManualModeInstancesType = [];
+        if (!isEmpty(primaryVolumesArray)) {
+            aggregatedEc2Instances.push({
+                ec2InstanceDescription: 'Primary',
+                ec2InstanceType: representativeInstanceType,
+                isPrimary: true,
+                volumes: primaryVolumesArray as any
+            });
+        }
+
+        if (!isEmpty(secondaryVolumesArray)) {
+            aggregatedEc2Instances.push({
+                ec2InstanceDescription: 'Secondary',
+                ec2InstanceType: representativeInstanceType,
+                isPrimary: false,
+                volumes: secondaryVolumesArray as any
+            });
+        }
 
         // Get the most common current license edition from all resources for existing storage calculation
         const currentLicenses = Array.from(resourceDataMap.values()).map(r => {
@@ -1744,7 +1744,7 @@ async function getOnPremBulkResourceExploreSavings(
                 regionCode,
                 {
                     ...params,
-                    ec2Instances: ec2InstancesWithRealType,
+                    ec2Instances: aggregatedEc2Instances,
                     sqlServerEdition: mostCommonRecommendedLicense || STANDARD_EDITION
                 },
                 deduplicatedResources.length,
@@ -1755,7 +1755,7 @@ async function getOnPremBulkResourceExploreSavings(
                 regionCode,
                 {
                     ...params,
-                    ec2Instances: ec2InstancesWithRealType,
+                    ec2Instances: aggregatedEc2Instances,
                     sqlServerEdition: mostCommonCurrentLicense
                 },
                 deduplicatedResources.length,
