@@ -41,8 +41,8 @@ vi.mock('../../../../../utils/CommonStyles.module.scss', () => ({
 }));
 
 describe('FileSettingsMode Component', () => {
-    const createMockStore = (selectedNewUserConfig = 'Quick create') => {
-        return configureStore({
+    const createMockStore = (selectedNewUserConfig = 'Quick create') =>
+        configureStore({
             reducer: {
                 createNewUser: createNewUserSlice.reducer
             },
@@ -52,7 +52,6 @@ describe('FileSettingsMode Component', () => {
                 }
             }
         });
-    };
 
     it('should have Quick create selected by default', () => {
         const store = createMockStore('Quick create');

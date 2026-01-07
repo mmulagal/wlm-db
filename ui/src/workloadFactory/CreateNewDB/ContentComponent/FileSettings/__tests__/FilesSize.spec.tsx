@@ -63,8 +63,8 @@ vi.mock('../../../../../utils/utilityFunctions', () => ({
 }));
 
 describe('FilesSize Component', () => {
-    const createMockStore = (createNewUserState = {}, msSqlActionState = {}) => {
-        return configureStore({
+    const createMockStore = (createNewUserState = {}, msSqlActionState = {}) =>
+        configureStore({
             reducer: {
                 createNewUser: createNewUserSlice.reducer,
                 msSqlAction: msSqlActionSlice.reducer
@@ -89,7 +89,6 @@ describe('FilesSize Component', () => {
                 }
             }
         });
-    };
 
     it('should update data size in store when changed', () => {
         const store = createMockStore();

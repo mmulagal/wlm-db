@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { isEqual } from 'lodash';
+import isEqual from 'lodash/isEqual';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
     useGetMssqlInstanceDataV2Mutation,
@@ -16,8 +16,6 @@ import {
     setDisableState,
     setGetPartnerHostDetailsLoading,
     setOnPremRegionsLoading,
-    setRequestedPayload,
-    setRequestedRegion,
     setSavingsCalculatorRefresh,
     setSelectedHostDetails,
     setSelectedPartnerHostDetails,
@@ -32,7 +30,12 @@ import {
     setViewCalculationsApiResponse,
     setViewCalculationsLoading,
     setViewCalculationsResponse,
-    setInstanceDataUpdatedTrigger
+    setInstanceDataUpdatedTrigger,
+    setOnPremBulkLoadingStart,
+    setOnPremBulkLoadingSuccess,
+    setOnPremBulkLoadingError,
+    setRequestedPayload,
+    setRequestedRegion
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { setTriggerBulkDataFetch } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import store from '../../../store/store';
@@ -69,6 +72,19 @@ interface ONPREM_PAYLOAD {
     };
     totalPrimaryHostStorage?: number;
     totalSecondaryHostStorage?: number;
+    hostName?: {
+        [key: string]: {
+            sqlInstanceData: Array<{
+                sqlInstanceId?: string;
+                noOfVcpusInUse?: number;
+                memory?: string | number;
+                networkPerformance?: string;
+                totalIops?: string | number;
+                totalThroughput?: string | number;
+                totalStorage?: number;
+            }>;
+        };
+    };
 }
 
 const SavingsCalculatorApi = () => {
@@ -87,19 +103,22 @@ const SavingsCalculatorApi = () => {
         selectedHostDetails,
         selectedOnPremHostId,
         selectedOnPremRegion,
-        requestedPayload,
-        requestedRegion,
         onPremNetworkPerformance,
         onPremStorageAndComputeInfo,
         selectedExCredId,
         selectedExRegionId,
         showOptimizeMode,
-        instanceDataUpdatedTrigger
+        instanceDataUpdatedTrigger,
+        requestedPayload,
+        requestedRegion
     } = useAppSelector(state => state.exploreSavings);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
-    const { ebsTCOAction, selectedRowsForExploreSavingsEBSBulk, triggerBulkDataFetch } = useAppSelector(
-        state => state.exploreSavingsBulk
-    );
+    const {
+        ebsTCOAction,
+        selectedRowsForExploreSavingsEBSBulk,
+        selectedRowsForExploreSavingsOnPremBulk,
+        triggerBulkDataFetch
+    } = useAppSelector(state => state.exploreSavingsBulk);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const mssqlInstancesData = useAppSelector(state => state.inventoryV2.mssqlInstancesData);
 
@@ -155,91 +174,115 @@ const SavingsCalculatorApi = () => {
         }
     }, [unManagedHostFormatedList, selectedInstanceId]);
 
+    // Create payload for comparison to prevent unnecessary API calls
     const createOnPremPayload = () => {
-        // To create payload for OnPrem Savings calculator API call
-        let payload: ONPREM_PAYLOAD = {
+        const hostsToProcess =
+            selectedRowsForExploreSavingsOnPremBulk && selectedRowsForExploreSavingsOnPremBulk.length > 0
+                ? selectedRowsForExploreSavingsOnPremBulk
+                : selectedOnPremHostId
+                ? [{ resourceId: selectedOnPremHostId, resourceName: selectedOnPremHostId }]
+                : [];
+
+        const payload: ONPREM_PAYLOAD = {
             snapshotInfo: {
                 snapshotFrequency: selectedSnapshotFrequency?.value || 'daily',
                 clonedCopiesCount: numberOfClonedCopies || 1,
                 monthlyChangeRatePercentage: monthlyChangeRate || 3
-            }
+            },
+            hostName: {}
         };
 
-        if (selectedOnPremRegion?.data?.regionCode) {
-            payload = {
-                ...payload,
-                regionCode: selectedOnPremRegion?.data?.regionCode
-            };
-        }
-
-        if (onPremStorageAndComputeInfo) {
+        hostsToProcess.forEach((host: any) => {
             const computeInfo: any = [];
-            Object.keys(onPremStorageAndComputeInfo).forEach(key => {
-                const value = onPremStorageAndComputeInfo[key];
-                computeInfo.push({
-                    sqlInstanceId: value?.sqlInstanceId,
-                    noOfVcpusInUse: value?.noOfVcpusInUse || 0,
-                    memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
-                    networkPerformance:
-                        (onPremNetworkPerformance?.value
-                            ? NETWORK_PERFORMANCE_OPTIONS?.[onPremNetworkPerformance?.value || '']
-                            : value?.networkPerformance) || 'upTo10',
-                    totalIops: value?.totalIops || 0,
-                    totalThroughput: value?.totalThroughput || 0,
-                    totalStorage: Number(value?.totalStorage || 0) * GIB_IN_BYTE
+
+            if (onPremStorageAndComputeInfo) {
+                Object.keys(onPremStorageAndComputeInfo).forEach(key => {
+                    if (key.startsWith(`${host.resourceId}_`)) {
+                        const value = onPremStorageAndComputeInfo[key];
+                        computeInfo.push({
+                            sqlInstanceId: value?.sqlInstanceId,
+                            noOfVcpusInUse: value?.noOfVcpusInUse || 0,
+                            memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
+                            networkPerformance:
+                                (onPremNetworkPerformance?.value
+                                    ? NETWORK_PERFORMANCE_OPTIONS?.[onPremNetworkPerformance?.value || '']
+                                    : value?.networkPerformance) || 'upTo10',
+                            totalIops: value?.totalIops || 0,
+                            totalThroughput: value?.totalThroughput || 0,
+                            totalStorage: Number(value?.totalStorage || 0) * GIB_IN_BYTE
+                        });
+                    }
                 });
-            });
-            if (computeInfo) {
-                payload = {
-                    ...payload,
+            }
+
+            if (computeInfo.length > 0) {
+                payload.hostName![host.resourceName || host.resourceId] = {
                     sqlInstanceData: computeInfo
                 };
             }
-        }
+        });
 
         return payload;
     };
 
-    const getStorageSavingsOnPremData = async (payload: any) => {
+    const getBulkOnPremStorageSavingsData = async () => {
+        // Use the shared payload creation function
+        const bulkPayload = createOnPremPayload();
+
+        // Check if we have any hosts to process
+        if (!bulkPayload.hostName || Object.keys(bulkPayload.hostName).length === 0) {
+            return;
+        }
+
         try {
-            // On Prem savings calculator API call
-            dispatch(setDisableState(false));
-            const result: any = await getStorageSavingsOnPremDataApi({
-                databaseHostId: selectedOnPremHostId,
-                payload
+            dispatch(setOnPremBulkLoadingStart());
+
+            // Add regionCode to the payload
+            if (selectedOnPremRegion?.data?.regionCode) {
+                bulkPayload.regionCode = selectedOnPremRegion?.data?.regionCode;
+            }
+
+            // Make a single API call with the bulk payload
+            const result = await getStorageSavingsOnPremDataApi({
+                databaseHostId: 'bulk', // Use a special identifier for bulk operations
+                payload: bulkPayload
             });
-            if (result && !result?.error) {
-                // Store full API response
-                dispatch(setStorageSavingsOnPremResponse(result?.data));
 
-                // Based on the response, format the savings calculator page data and store it in the store
-                dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data?.storageSavings)));
+            // Check if API call failed
+            const hasErrors = result?.error;
 
-                // Based on the response, format the view calculations page data and store it in the store
-                dispatch(setViewCalculationsApiResponse(result?.data?.calculations));
+            if (hasErrors) {
+                dispatch(setOnPremBulkLoadingError());
+                return;
+            }
+
+            // The API should return the aggregated response directly with the new payload structure
+            const responseData = result?.data;
+
+            if (responseData) {
+                // Store the responses directly
+                dispatch(setStorageSavingsOnPremResponse(responseData));
                 dispatch(
-                    setViewCalculationsResponse(
-                        formatViewCalcData(result?.data?.calculations, selectedDeploymentModel, monthlyChangeRate)
+                    setStorageSavingsResponse(
+                        formatStorageSavingsRecommendedData(responseData.storageSavings || responseData)
                     )
                 );
-                // Set loading to false
-                dispatch(setDisableState(false));
-                dispatch(setStorageSavingsOnPremLoading(false));
-                dispatch(setStorageSavingsLoading(false));
-                dispatch(setViewCalculationsLoading(false));
-            } else {
-                dispatch(setDisableState(true));
-                dispatch(setStorageSavingsOnPremLoading(false));
-                dispatch(setStorageSavingsOnPremResponse(null));
-                dispatch(setStorageSavingsLoading(false));
-                dispatch(setViewCalculationsLoading(false));
+                dispatch(setViewCalculationsApiResponse(responseData.calculations || responseData));
+                dispatch(
+                    setViewCalculationsResponse(
+                        formatViewCalcData(
+                            responseData.calculations || responseData,
+                            selectedDeploymentModel,
+                            monthlyChangeRate
+                        )
+                    )
+                );
             }
+
+            // Set loading to false
+            dispatch(setOnPremBulkLoadingSuccess());
         } catch (error) {
-            dispatch(setDisableState(true));
-            dispatch(setStorageSavingsOnPremResponse(null));
-            dispatch(setStorageSavingsOnPremLoading(false));
-            dispatch(setStorageSavingsLoading(false));
-            dispatch(setViewCalculationsLoading(false));
+            dispatch(setOnPremBulkLoadingError());
         }
     };
 
@@ -588,6 +631,17 @@ const SavingsCalculatorApi = () => {
                 dispatch(setSnapshotLoading(false));
                 dispatch(setDisableState(false));
                 triggerRefreshApi();
+            } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+                // For on-prem bulk mode, trigger API refresh
+                if (
+                    selectedRowsForExploreSavingsOnPremBulk &&
+                    selectedRowsForExploreSavingsOnPremBulk.length > 0 &&
+                    onPremStorageAndComputeInfo &&
+                    Object.keys(onPremStorageAndComputeInfo).length > 0
+                ) {
+                    dispatch(setSnapshotLoading(false));
+                    dispatch(setDisableState(false));
+                }
             }
         }
     }, [triggerBulkDataFetch]);
@@ -700,9 +754,11 @@ const SavingsCalculatorApi = () => {
         const comparedPayloadValues =
             isEqual(newPayload, requestedPayload) &&
             selectedOnPremRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
+
         if (
             !comparedPayloadValues &&
-            selectedOnPremHostId &&
+            (selectedOnPremHostId ||
+                (selectedRowsForExploreSavingsOnPremBulk && selectedRowsForExploreSavingsOnPremBulk.length > 0)) &&
             savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM &&
             selectedSnapshotFrequency &&
             numberOfClonedCopies &&
@@ -719,17 +775,18 @@ const SavingsCalculatorApi = () => {
             dispatch(setViewCalculationsLoading(true));
             dispatch(setStorageSavingsOnPremLoading(true));
             setTimeout(() => {
-                getStorageSavingsOnPremData(newPayload);
+                getBulkOnPremStorageSavingsData();
             }, 1);
         }
     }, [
         selectedOnPremHostId,
+        selectedRowsForExploreSavingsOnPremBulk,
         selectedSnapshotFrequency,
         numberOfClonedCopies,
         monthlyChangeRate,
-        onPremStorageAndComputeInfo,
         selectedOnPremRegion,
-        onPremNetworkPerformance
+        onPremNetworkPerformance,
+        onPremStorageAndComputeInfo
     ]);
 
     // Update selectedHostDetails when instance API data is received

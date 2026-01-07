@@ -79,8 +79,8 @@ vi.mock('../../../../utils/appConstants', () => ({
 }));
 
 describe('ContentComponent', () => {
-    const createMockStore = (overrides = {}) => {
-        return configureStore({
+    const createMockStore = (overrides = {}) =>
+        configureStore({
             reducer: {
                 [createNewUserSlice.name]: createNewUserSlice.reducer,
                 auth: authSlice.reducer
@@ -112,7 +112,6 @@ describe('ContentComponent', () => {
                 }
             } as any
         });
-    };
 
     beforeEach(() => {
         vi.clearAllMocks();

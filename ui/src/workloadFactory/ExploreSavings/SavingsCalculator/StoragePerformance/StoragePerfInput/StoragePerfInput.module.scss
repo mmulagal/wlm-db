@@ -1,11 +1,13 @@
 .computeInputComponent {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 24px;
+    grid-column: 2 / -1;
 
     .col2,
     .col3,
     .col4 {
-        width: 191px;
+        width: 100%;
 
         [class*='FieldWrapper-module_bottom-margin'] {
             margin-bottom: 0 !important;
@@ -19,7 +21,7 @@
         display: flex;
         flex-direction: column;
         gap: 4px;
-        width: 191px;
+        width: 100%;
         position: relative;
 
         .inputField {

@@ -583,6 +583,28 @@ const exploreSavingsSlice = createSlice({
         },
         setInstanceDataUpdatedTrigger(state, action: PayloadAction<string | null>) {
             state.instanceDataUpdatedTrigger = action.payload;
+        },
+        // Combined action for on-prem bulk loading start state
+        setOnPremBulkLoadingStart(state) {
+            state.disableState = false;
+            state.storageSavingsOnPremLoading = true;
+            state.storageSavingsLoading = true;
+            state.viewCalculationsLoading = true;
+        },
+        // Combined action for on-prem bulk loading success state
+        setOnPremBulkLoadingSuccess(state) {
+            state.disableState = false;
+            state.storageSavingsOnPremLoading = false;
+            state.storageSavingsLoading = false;
+            state.viewCalculationsLoading = false;
+        },
+        // Combined action for on-prem bulk loading error state
+        setOnPremBulkLoadingError(state) {
+            state.disableState = true;
+            state.storageSavingsOnPremLoading = false;
+            state.storageSavingsLoading = false;
+            state.viewCalculationsLoading = false;
+            state.storageSavingsOnPremResponse = null;
         }
     }
 });
@@ -668,7 +690,10 @@ export const {
     setSelectedEsPageInstance,
     resetServerDetailsCredentials,
     setShowFirstTimeOptimize,
-    setInstanceDataUpdatedTrigger
+    setInstanceDataUpdatedTrigger,
+    setOnPremBulkLoadingStart,
+    setOnPremBulkLoadingSuccess,
+    setOnPremBulkLoadingError
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

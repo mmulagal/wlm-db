@@ -1,131 +1,195 @@
 {
-  "count": 3,
-  "items": [
-      {
-          "resourceId": "S923WRN1",
-          "resourceName": "OnPrem-AOAG",
-          "deploymentModel": "AOAG",
-          "creationTime": 1704785588798,
-          "sqlServerInstances": [
-              {
-                  "sqlInstanceId": "8",
-                  "noOfVcpusInUse": 8,
-                  "memory": 6904355840,
-                  "networkPerformance": "upTo10",
-                  "sqlInstanceName": "AOAG-Instance1",
-                  "noOfDatabases": 6,
-                  "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
-                  "sqlVersion": "Microsoft SQL Server 2022",
-                  "totalIops": 100,
-                  "totalThroughput": 128,
-                  "totalStorage": 1073741824,
-                  "isReadReplica": true
-              },
-              {
-                "sqlInstanceId": "9",
-                "noOfVcpusInUse": 8,
-                "memory": 6904355840,
-                "networkPerformance": "upTo10",
-                "sqlInstanceName": "AOAG-Instance2",
-                "noOfDatabases": 6,
-                "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
-                "sqlVersion": "Microsoft SQL Server 2022",
-                "totalIops": 100,
-                "totalThroughput": 128,
-                "totalStorage": 1073741824,
-                "isReadReplica": false
-            },
-            {
-                "sqlInstanceId":"{\r\n    \"error\":  \"Error running query instanceGuid on instance WLMDBSTD2SCALE\\\\INSTANCE30\"\r\n}",
-                "sqlInstanceName": "INSTANCE30",
-                "errorMessage": "Failed to format SQL instance details InternalServerError: Error parsing storageDetailsByDb: Error running query 'storageDetailsByDb' on instance WLMDBSTD2SCALE\\INSTANCE30"
-            }
-          ],
-          "onPremisesNodes": [
-              "AOAG-Node1",
-              "AOAG-Node2"
-          ]
-      },
-      {
-          "resourceId": "ASJHIJI0",
-          "resourceName": "OnPrem-FCI",
-          "deploymentModel": "FCI",
-          "creationTime": 1704785588798,
-          "sqlServerInstances": [
-              {
-                  "sqlInstanceId": "AD5BF4D8-E683-4E3A-BF88-EA5B40FE9AAC",
-                  "noOfVcpusInUse": 4,
-                  "memory": 561774592,
-                  "networkPerformance": "upTo10",
-                  "sqlInstanceName": "MSSQLSERVER",
-                  "noOfDatabases": 1,
-                  "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
-                  "sqlVersion": "Microsoft SQL Server 2022",
-                  "totalIops": 100,
-                  "totalThroughput": 128,
-                  "totalStorage": 0.015625,
-                  "isReadReplica": false
-              },
-              {
-                  "sqlInstanceId": "E7A86AFB-12D4-4A69-8942-43E548CAD2B2",
-                  "noOfVcpusInUse": 4,
-                  "memory": 574230528,
-                  "networkPerformance": "upTo10",
-                  "sqlInstanceName": "FCIInstance1",
-                  "noOfDatabases": 1,
-                  "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
-                  "sqlVersion": "Microsoft SQL Server 2022",
-                  "totalIops": 100,
-                  "totalThroughput": 128,
-                  "totalStorage": 0.015625,
-                  "isReadReplica": false
-              },
-              {
-                  "sqlInstanceId": "3",
-                  "noOfVcpusInUse": 4,
-                  "memory": 565460992,
-                  "networkPerformance": "upTo10",
-                  "sqlInstanceName": "FCIInstance2",
-                  "noOfDatabases": 1,
-                  "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
-                  "sqlVersion": "Microsoft SQL Server 2022",
-                  "totalIops": 100,
-                  "totalThroughput": 128,
-                  "totalStorage": 1073741824,
-                  "isReadReplica": false
-              }
-          ],
-          "onPremisesNodes": [
-              "FCI-Node1",
-              "FCI-Node2",
-              "FCI-Node3",
-              "FCI-Node4"
-          ]
-      },
-      {
-          "resourceId": "WJIF66X2",
-          "resourceName": "OnPrem-Standalone",
-          "deploymentModel": "Standalone",
-          "creationTime": 1704785588798,
-          "sqlServerInstances": [
-              {
-                  "sqlInstanceId": "3",
-                  "noOfVcpusInUse": 4,
-                  "memory": 958869504,
-                  "networkPerformance": "upTo10",
-                  "sqlInstanceName": "MSSQLSERVER",
-                  "noOfDatabases": 10,
-                  "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
-                  "sqlVersion": "Microsoft SQL Server 2022",
-                  "totalIops": 100.18,
-                  "totalThroughput": 128,
-                  "totalStorage": 1073741824,
-                  "isReadReplica": false
-              }
-          ],
-          "onPremisesNodes": [
-              "OnPrem-Standalone"
-          ]
-      }
-  ]
+    "count": 5,
+    "items": [
+        {
+            "resourceId": "S923WRN1",
+            "resourceName": "OnPrem-AOAG",
+            "deploymentModel": "AOAG",
+            "creationTime": 1704785588798,
+            "sqlServerInstances": [
+                {
+                    "sqlInstanceId": "8",
+                    "noOfVcpusInUse": 8,
+                    "memory": 6904355840,
+                    "networkPerformance": "upTo10",
+                    "sqlInstanceName": "AOAG-Instance1",
+                    "noOfDatabases": 6,
+                    "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+                    "sqlVersion": "Microsoft SQL Server 2022",
+                    "totalIops": 100,
+                    "totalThroughput": 128,
+                    "totalStorage": 1073741824,
+                    "isReadReplica": true
+                },
+                {
+                    "sqlInstanceId": "9",
+                    "noOfVcpusInUse": 8,
+                    "memory": 6904355840,
+                    "networkPerformance": "upTo10",
+                    "sqlInstanceName": "AOAG-Instance2",
+                    "noOfDatabases": 6,
+                    "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+                    "sqlVersion": "Microsoft SQL Server 2022",
+                    "totalIops": 100,
+                    "totalThroughput": 128,
+                    "totalStorage": 1073741824,
+                    "isReadReplica": false
+                },
+                {
+                    "sqlInstanceId": "{\r\n    \"error\":  \"Error running query instanceGuid on instance WLMDBSTD2SCALE\\\\INSTANCE30\"\r\n}",
+                    "sqlInstanceName": "INSTANCE30",
+                    "errorMessage": "Failed to format SQL instance details InternalServerError: Error parsing storageDetailsByDb: Error running query 'storageDetailsByDb' on instance WLMDBSTD2SCALE\\INSTANCE30"
+                }
+            ],
+            "onPremisesNodes": ["AOAG-Node1", "AOAG-Node2"]
+        },
+        {
+            "resourceId": "ASJHIJI0",
+            "resourceName": "OnPrem-FCI",
+            "deploymentModel": "FCI",
+            "creationTime": 1704785588798,
+            "sqlServerInstances": [
+                {
+                    "sqlInstanceId": "AD5BF4D8-E683-4E3A-BF88-EA5B40FE9AAC",
+                    "noOfVcpusInUse": 4,
+                    "memory": 561774592,
+                    "networkPerformance": "upTo10",
+                    "sqlInstanceName": "MSSQLSERVER",
+                    "noOfDatabases": 1,
+                    "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+                    "sqlVersion": "Microsoft SQL Server 2022",
+                    "totalIops": 100,
+                    "totalThroughput": 128,
+                    "totalStorage": 0.015625,
+                    "isReadReplica": false
+                },
+                {
+                    "sqlInstanceId": "E7A86AFB-12D4-4A69-8942-43E548CAD2B2",
+                    "noOfVcpusInUse": 3,
+                    "memory": 574230528,
+                    "networkPerformance": "upTo10",
+                    "sqlInstanceName": "FCIInstance1",
+                    "noOfDatabases": 1,
+                    "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+                    "sqlVersion": "Microsoft SQL Server 2022",
+                    "totalIops": 100,
+                    "totalThroughput": 128,
+                    "totalStorage": 0.015625,
+                    "isReadReplica": false
+                },
+                {
+                    "sqlInstanceId": "2",
+                    "noOfVcpusInUse": 4,
+                    "memory": 565460992,
+                    "networkPerformance": "upTo10",
+                    "sqlInstanceName": "FCIInstance2",
+                    "noOfDatabases": 1,
+                    "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+                    "sqlVersion": "Microsoft SQL Server 2022",
+                    "totalIops": 100,
+                    "totalThroughput": 128,
+                    "totalStorage": 1073741824,
+                    "isReadReplica": false
+                },
+                {
+                    "sqlInstanceId": "1",
+                    "noOfVcpusInUse": 6,
+                    "memory": 565460992,
+                    "networkPerformance": "upTo10",
+                    "sqlInstanceName": "FCIInstance2",
+                    "noOfDatabases": 1,
+                    "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+                    "sqlVersion": "Microsoft SQL Server 2022",
+                    "totalIops": 100,
+                    "totalThroughput": 128,
+                    "totalStorage": 1073741824,
+                    "isReadReplica": false
+                }
+            ],
+            "onPremisesNodes": ["FCI-Node1", "FCI-Node2", "FCI-Node3", "FCI-Node4"]
+        },
+        {
+            "resourceId": "WJIF66X2",
+            "resourceName": "OnPrem-Standalone",
+            "deploymentModel": "Standalone",
+            "creationTime": 1704785588798,
+            "sqlServerInstances": [
+                {
+                    "sqlInstanceId": "3",
+                    "noOfVcpusInUse": 4,
+                    "memory": 958869504,
+                    "networkPerformance": "upTo10",
+                    "sqlInstanceName": "MSSQLSERVER",
+                    "noOfDatabases": 10,
+                    "sqlEdition": "Enterprise Evaluation Edition (64-bit)",
+                    "sqlVersion": "Microsoft SQL Server 2022",
+                    "totalIops": 100.18,
+                    "totalThroughput": 128,
+                    "totalStorage": 1073741824,
+                    "isReadReplica": false
+                }
+            ],
+            "onPremisesNodes": ["OnPrem-Standalone"]
+        },
+        {
+            "resourceId": "XPREM001",
+            "resourceName": "OnPrem-Production-DB1",
+            "deploymentModel": "AOAG",
+            "creationTime": 1704785588798,
+            "sqlServerInstances": [
+                {
+                    "sqlInstanceId": "PROD-001",
+                    "noOfVcpusInUse": 16,
+                    "memory": 13808711680,
+                    "networkPerformance": "upTo10",
+                    "sqlInstanceName": "ProductionDB1-Primary",
+                    "noOfDatabases": 12,
+                    "sqlEdition": "Enterprise Edition (64-bit)",
+                    "sqlVersion": "Microsoft SQL Server 2022",
+                    "totalIops": 500,
+                    "totalThroughput": 256,
+                    "totalStorage": 2147483648,
+                    "isReadReplica": false
+                },
+                {
+                    "sqlInstanceId": "PROD-002",
+                    "noOfVcpusInUse": 16,
+                    "memory": 13808711680,
+                    "networkPerformance": "upTo10",
+                    "sqlInstanceName": "ProductionDB1-Secondary",
+                    "noOfDatabases": 12,
+                    "sqlEdition": "Enterprise Edition (64-bit)",
+                    "sqlVersion": "Microsoft SQL Server 2022",
+                    "totalIops": 500,
+                    "totalThroughput": 256,
+                    "totalStorage": 2147483648,
+                    "isReadReplica": true
+                }
+            ],
+            "onPremisesNodes": ["PROD-Node1", "PROD-Node2", "PROD-Node3"]
+        },
+        {
+            "resourceId": "XPREM002",
+            "resourceName": "OnPrem-DevTest-Server",
+            "deploymentModel": "Standalone",
+            "creationTime": 1704785588798,
+            "sqlServerInstances": [
+                {
+                    "sqlInstanceId": "DEV-001",
+                    "noOfVcpusInUse": 8,
+                    "memory": 6904355840,
+                    "networkPerformance": "upTo10",
+                    "sqlInstanceName": "DevTestInstance",
+                    "noOfDatabases": 5,
+                    "sqlEdition": "Standard Edition (64-bit)",
+                    "sqlVersion": "Microsoft SQL Server 2019",
+                    "totalIops": 200,
+                    "totalThroughput": 128,
+                    "totalStorage": 536870912,
+                    "isReadReplica": false
+                }
+            ],
+            "onPremisesNodes": ["DevTest-Server"]
+        }
+    ]
 }

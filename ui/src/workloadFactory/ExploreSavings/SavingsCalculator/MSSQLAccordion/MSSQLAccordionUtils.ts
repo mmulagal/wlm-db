@@ -72,5 +72,70 @@ export const generateHostMsSqlInstanceData = (
             actualServerInstallationMode
         };
     }
+
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM && storageSavingsResponse) {
+        const computeArray = Array.isArray(storageSavingsResponse?.compute)
+            ? storageSavingsResponse.compute
+            : [storageSavingsResponse?.compute].filter(Boolean);
+        const licenseArray = Array.isArray(storageSavingsResponse?.license)
+            ? storageSavingsResponse.license
+            : [storageSavingsResponse?.license].filter(Boolean);
+
+        // Find compute and license data by matching hostname
+        const hostCompute = computeArray.find((item: any) => item.hostname === hostName);
+        const hostLicense = licenseArray.find((item: any) => item.hostname === hostName);
+
+        // If no match found, fall back to msSqlInstance (which contains data for single host or first host)
+        if (!hostCompute && !hostLicense) {
+            return msSqlInstance;
+        }
+
+        let instanceType = '';
+        if (hostCompute?.recommended?.instanceType) {
+            instanceType = hostCompute.recommended.instanceType.split(',')[0];
+        }
+
+        let serverEdition = '';
+        if (hostLicense?.recommended?.sqlServerEdition) {
+            serverEdition = hostLicense.recommended.sqlServerEdition.split(',')[0];
+        }
+
+        let windowsServer = '';
+        if (hostCompute?.recommended?.windowsOsVersion) {
+            windowsServer = hostCompute.recommended.windowsOsVersion.split(',')[0];
+        }
+
+        let serverInstallationMode = '';
+        if (hostCompute?.deploymentType) {
+            serverInstallationMode =
+                hostCompute.deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG ||
+                hostCompute.deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+                    ? DATABASE_DEPLOYMENT_MODE.FAILOVER_CLUSTER_INSTANCES
+                    : hostCompute.deploymentType;
+        }
+
+        // For OnPrem, get serverVersion from selectedHostDetails if available
+        let serverVersion = '';
+        if (selectedHostDetails?.recommendedInstance?.serverVersion) {
+            serverVersion = selectedHostDetails.recommendedInstance.serverVersion;
+        } else if (hostCompute?.recommended?.serverVersion) {
+            // Try to get from API response if available
+            serverVersion = hostCompute.recommended.serverVersion;
+        }
+
+        const editionUpgradeCheck =
+            hostLicense?.existing?.sqlServerEdition?.includes('Enterprise') &&
+            hostLicense?.recommended?.sqlServerEdition?.includes('Standard');
+
+        return {
+            serverInstallationMode: serverInstallationMode || DATABASE_DEPLOYMENT_MODE.STANDALONE,
+            serverEdition,
+            serverVersion,
+            instanceType,
+            windowsServer,
+            editionUpgradeCheck
+        };
+    }
+
     return msSqlInstance;
 };

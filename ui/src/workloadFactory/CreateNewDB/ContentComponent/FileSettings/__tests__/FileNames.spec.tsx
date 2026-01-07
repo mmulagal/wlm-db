@@ -78,8 +78,8 @@ vi.mock('../../../../../common/hooks/useDelayedError', () => ({
 }));
 
 describe('FileNames Component', () => {
-    const createMockStore = (createNewUserState = {}, msSqlActionState = {}) => {
-        return configureStore({
+    const createMockStore = (createNewUserState = {}, msSqlActionState = {}) =>
+        configureStore({
             reducer: {
                 createNewUser: createNewUserSlice.reducer,
                 msSqlAction: msSqlActionSlice.reducer,
@@ -123,7 +123,6 @@ describe('FileNames Component', () => {
                 }
             }
         });
-    };
 
     it('should update data file name in store when changed', () => {
         const store = createMockStore();

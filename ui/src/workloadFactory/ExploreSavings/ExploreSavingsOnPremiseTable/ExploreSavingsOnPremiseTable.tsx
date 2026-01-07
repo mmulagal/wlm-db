@@ -12,10 +12,11 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { compressSync } from 'fflate';
+import { useTranslation } from 'react-i18next';
 import styles from './ExploreSavingsOnPremiseTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { onClickESHostOnPrem } from '../ExploreSavingsUtils';
+import { onClickESHostOnPrem, onClickESHostOnPremBulk } from '../ExploreSavingsUtils';
 import { formatDateWithTime, getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/SQLServerDataCollector.ps1?raw';
@@ -34,14 +35,21 @@ import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { useOnPremData } from './useOnPremData';
 import useResize from '../../../common/hooks/useResize';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
+import BulkActionContainer from '../../../common/BulkAction/BulkActionContainer';
+import {
+    setSelectedRowsForExploreSavingsOnPremBulk,
+    setOnPremTCOAction
+} from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 
 const ExploreSavingsOnPremiseTable = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { fetchOnPremData, error } = useOnPremData();
     const windowSize = useResize();
     const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
     const { onPremiseData, onPremiseDataLoading } = useAppSelector(state => state.exploreSavings);
+    const { selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(state => state.exploreSavingsBulk);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const [getUploadScript] = useGetUploadScriptMutation();
     const [deleteOnPremTco] = useDeleteOnPremTcoMutation();
@@ -485,10 +493,57 @@ const ExploreSavingsOnPremiseTable = () => {
         isHorizontalScroll: true,
         isSorting: false,
         columns: ExploreSavingsColDefs,
+        selectionType: 'multiple',
         rows: tableData || [],
         pageSize: 50,
+        defaultSelectedRows: [],
         isLazyLoading: onPremiseDataLoading || isUploadLoading
     });
+
+    // Sync table selection state to Redux
+    useEffect(() => {
+        const selectedRowIds = Object.keys(tableProps.selectionState?.rows || {}).filter(
+            key => tableProps.selectionState?.rows[key]
+        );
+        if (selectedRowIds.length > 0) {
+            const selectedRows = tableData.filter((row: any) => selectedRowIds.includes(String(row.id)));
+            dispatch(setSelectedRowsForExploreSavingsOnPremBulk(selectedRows));
+        } else {
+            dispatch(setSelectedRowsForExploreSavingsOnPremBulk([]));
+        }
+    }, [tableProps.selectionState, tableData]);
+
+    // Sync Redux selection state back to table when rows are removed externally
+    useEffect(() => {
+        if (
+            selectedRowsForExploreSavingsOnPremBulk &&
+            selectedRowsForExploreSavingsOnPremBulk.length > 0 &&
+            tableData &&
+            tableData.length > 0
+        ) {
+            const selectedIds = selectedRowsForExploreSavingsOnPremBulk.map((row: any) => row.id);
+            const currentlySelected = Object.keys(tableProps.selectionState?.rows || {}).filter(
+                key => tableProps.selectionState?.rows[key]
+            );
+            const needsUpdate = selectedIds.some((id: any) => !currentlySelected.includes(String(id)));
+
+            if (needsUpdate) {
+                selectedIds.forEach((id: any) => {
+                    tableProps.toggleRowSelection?.(String(id));
+                });
+            }
+        }
+    }, [selectedRowsForExploreSavingsOnPremBulk, tableData]);
+
+    const handleOnPremBulkAction = () => {
+        if (selectedRowsForExploreSavingsOnPremBulk.length > 0) {
+            // Set bulk action in Redux
+            dispatch(setOnPremTCOAction('bulk'));
+
+            // Use the new bulk function that handles all selected hosts
+            onClickESHostOnPremBulk(dispatch, selectedRowsForExploreSavingsOnPremBulk, isWorkloadFactory);
+        }
+    };
 
     const tableComponentProps = {
         lazyLoadingText: lazyLoadComponent()
@@ -526,7 +581,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 tableProps={tableProps}
                 pluralTitle="Microsoft SQL Server hosts on-premises"
                 singularTitle="Microsoft SQL Server host on-premises"
-                subTitle="Includes results from uploaded scripts."
+                subTitle={`Includes results from uploaded scripts.\n${t('databases.explore-savings.select-upto-five')}`}
                 actionsRight={
                     <div className={styles.actions}>
                         <FileUpload handleFileChange={handleFileChange} />
@@ -542,6 +597,9 @@ const ExploreSavingsOnPremiseTable = () => {
                     </div>
                 }
             />
+            {selectedRowsForExploreSavingsOnPremBulk.length > 0 && (
+                <BulkActionContainer action="Explore savings" onClick={handleOnPremBulkAction} />
+            )}
             <Table
                 {...tableComponentProps}
                 // @ts-ignore

@@ -4,6 +4,12 @@
 
     margin-top: 24px;
 
+    [class*='header-name'] {
+        [class*='Checkbox-module'] {
+            display: none !important;
+        }
+    }
+
     [class*='Table-module_table-wrapper'] {
         [class*='Table-module_right-border'] {
             cursor: not-allowed !important;

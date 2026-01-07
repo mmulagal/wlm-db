@@ -419,7 +419,7 @@ const TCOBulkAccordion = () => {
 
         setDialog(
             <DialogComponent
-                header="Add hosts and explore savings"
+                header={t('databases.explore-savings.add-hosts-header')}
                 content={
                     <TCOAddHostTable
                         onExploreSavings={addHostsDialogCallback}
@@ -436,8 +436,8 @@ const TCOBulkAccordion = () => {
                         }}
                     />
                 }
-                primaryButton="Explore savings"
-                secondaryButton="Close"
+                primaryButton={t('databases.explore-savings.explore-savings-button')}
+                secondaryButton={t('databases.explore-savings.close')}
                 callback={() => {
                     if (exploreSavingsHandler) {
                         exploreSavingsHandler();

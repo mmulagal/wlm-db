@@ -4,7 +4,9 @@ import { ExploreSavingsBulkSliceEntities } from '../../utils/types/exploreSaving
 
 const initialHeaderState: ExploreSavingsBulkSliceEntities = {
     selectedRowsForExploreSavingsEBSBulk: [],
+    selectedRowsForExploreSavingsOnPremBulk: [],
     ebsTCOAction: '',
+    onPremTCOAction: '',
     selectedAddHostRows: [],
     bulkAuthCredentials: {},
     // rows that require auth when doing a bulk action
@@ -20,8 +22,14 @@ const exploreSavingsBulkSlice = createSlice({
         setSelectedRowsForExploreSavingsEBSBulk: (state, action: PayloadAction<any>) => {
             state.selectedRowsForExploreSavingsEBSBulk = action.payload;
         },
+        setSelectedRowsForExploreSavingsOnPremBulk: (state, action: PayloadAction<any>) => {
+            state.selectedRowsForExploreSavingsOnPremBulk = action.payload;
+        },
         setEbsTCOAction: (state, action: PayloadAction<any>) => {
             state.ebsTCOAction = action.payload;
+        },
+        setOnPremTCOAction: (state, action: PayloadAction<any>) => {
+            state.onPremTCOAction = action.payload;
         },
         setSelectedAddHostRows: (state, action: PayloadAction<any>) => {
             state.selectedAddHostRows = action.payload;
@@ -62,7 +70,9 @@ const exploreSavingsBulkSlice = createSlice({
 
 export const {
     setSelectedRowsForExploreSavingsEBSBulk,
+    setSelectedRowsForExploreSavingsOnPremBulk,
     setEbsTCOAction,
+    setOnPremTCOAction,
     setSelectedAddHostRows,
     setBulkAuthCredentials,
     setRowsRequiringAuthBulk,

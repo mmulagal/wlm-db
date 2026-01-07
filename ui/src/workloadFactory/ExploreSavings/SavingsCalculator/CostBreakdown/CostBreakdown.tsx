@@ -22,8 +22,12 @@ const CostBreakdown = ({ disableState = false }: CB) => {
     const [loading, setLoading] = useState(false);
 
     const checkForTooltip = (() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
-            // Handle AUTO_EBS array format - check if ANY host has Enterprise→Standard downgrade
+        if (
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
+            storageSavingsResponse
+        ) {
+            // Handle AUTO_EBS/ONPREM array format - check if ANY host has Enterprise→Standard downgrade
             const licenseArray = Array.isArray(storageSavingsResponse?.license)
                 ? storageSavingsResponse.license
                 : [storageSavingsResponse?.license].filter(Boolean);

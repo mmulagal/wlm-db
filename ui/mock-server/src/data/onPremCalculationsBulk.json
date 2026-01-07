@@ -1,0 +1,565 @@
+{
+    "region": "US East (N. Virginia)",
+    "regionCode": "us-east-1",
+    "calculations": {
+        "multi": {
+            "fsxCloneCalculation": {
+                "fsxnSsdPrice": {
+                    "unit": "UsdPerGiB",
+                    "price": 0.25
+                },
+                "ssdMonthlyCost": 0.04,
+                "clonedCopiesCount": 2,
+                "totalFsxnCapacity": 2147483648,
+                "ssdStoragePerMonth": 171798691.84,
+                "totalCloneMonthlyCost": 0.04,
+                "desiredStorageCapacity": 171798691.84,
+                "changeRateBetweenClones": 8,
+                "monthlyChangeRatePercentage": 8,
+                "effectiveFsxnStorageCapacity": 171798691.84,
+                "percentageOfDataOnSsdStorage": 1,
+                "savingsFromCompressionAndDeduplication": 0,
+                "storageSavingsFromCompressionAndDeduplication": 0
+            },
+            "fsxOntapCalculation": {
+                "maxSsdIops": 102400,
+                "ebsCapacity": 2147483648,
+                "includedIops": 3,
+                "fsxnIopsPrice": 0.034,
+                "maxThroughput": 8192,
+                "maxSsdTierSize": 422212465065984,
+                "ssdMonthlyCost": 512,
+                "includedSsdIops": 6144,
+                "numberOfVolumes": 2,
+                "fsxnStoragePrice": {
+                    "unit": "UsdPerGiB",
+                    "price": 0.25
+                },
+                "requiredNumOfFsx": 1,
+                "additionalSsdIops": 0,
+                "fsxnCapacityPrice": {
+                    "unit": "UsdPerGiB",
+                    "price": 0.0438
+                },
+                "ratioAfterSavings": 1,
+                "provisionedSsdIops": 6144,
+                "ssdStoragePerMonth": 2147483648,
+                "capacityMonthlyCost": 0,
+                "capacityPoolStorage": 0,
+                "fsxnThroughputPrice": 1.2,
+                "desiredStorageCapacity": 2147483648,
+                "billedAdditionalSsdIops": 0,
+                "totalMonthlyCostForFSxSsd": 512,
+                "totalMonthlyStorageCharge": 512,
+                "requiredNumOfFsxFractional": 0.12,
+                "minFileSystemsNumForSsdIops": 0.12,
+                "minFileSystemsNumForStorage": 0.010416666666666666,
+                "totalMonthlyCostForCapacity": 0,
+                "effectiveFsxnStorageCapacity": 2147483648,
+                "greaterOfSsdAndMinAllowedSsd": 2199023255552,
+                "percentageOfDataOnSSDStorage": 1,
+                "percentageOfDataOnSsdStorage": 1,
+                "minThroughputCapacityRequired": 256,
+                "provisionedThroughputCapacity": 256,
+                "totalThroughputAndIopsMonthly": 307.2,
+                "additionalBilledCostForSsdIops": 0,
+                "dataOnCapacityPoolStorageFactor": 0,
+                "suggestedFsxnThroughputCapacity": 256,
+                "minFileSystemsNumForThroughputCapacity": 0.0625,
+                "savingsFromCompressionAndDeduplication": 0,
+                "totalMonthlyFsxnThroughputCapacityCost": 307.2,
+                "storageSavingsFromCompressionAndDeduplication": 0
+            },
+            "fsxOntapSnapshotCalculation": {
+                "fsxnSsdPrice": {
+                    "unit": "UsdPerGiB",
+                    "price": 0.25
+                },
+                "ssdMonthlyCost": 512,
+                "fsxnCapacityPrice": {
+                    "unit": "UsdPerGiB",
+                    "price": 0.0438
+                },
+                "ratioAfterSavings": 1,
+                "ssdStoragePerMonth": 17179869.184,
+                "capacityMonthlyCost": 0.0063072,
+                "capacityPoolStorage": 154618822.656,
+                "desiredStorageCapacity": 171798691.84,
+                "totalSnapshotMonthlyCost": 0.0103072,
+                "totalMonthlyCostForCapacity": 0.0063072,
+                "effectiveFsxnStorageCapacity": 171798691.84,
+                "percentageOfDataOnSsdStorage": 0.1,
+                "dataOnCapacityPoolStorageFactor": 0.9,
+                "totalSnapshotMonthlyCostForFsxSsd": 0.004,
+                "savingsFromCompressionAndDeduplication": 0,
+                "storageSavingsFromCompressionAndDeduplication": 0
+            }
+        },
+        "ebsCalculation": {
+            "gp2": {
+                "ebsIopsCost": 0,
+                "billableIops": 0,
+                "billableMbps": 0,
+                "hoursInAMonth": 730,
+                "ebsStorageCost": 0.2,
+                "numberOfVolumes": 2,
+                "ebsCapacityPrice": {
+                    "unit": "UsdPerGiB",
+                    "price": 0.1
+                },
+                "ebsInstanceMonth": 2,
+                "ebsThroughputCost": 0,
+                "totalBillableIops": 0,
+                "totalInstanceHours": 1460,
+                "ebsTotalCostMonthly": 0.304,
+                "instanceAvgDuration": 730,
+                "storageAmountPerVol": 1073741824,
+                "billableThroughputGbps": 0,
+                "billableThroughputMbps": 0
+            }
+        },
+        "ebsCloneCalculation": {
+            "gp2": {
+                "iops": 0,
+                "capacity": 0.2,
+                "throughput": 0,
+                "clonedCopiesCount": 2,
+                "totalCloneMonthlyCost": 0.2
+            }
+        },
+        "ebsSnapshotCalculation": {
+            "gp2": {
+                "storageAmount": 2147483648,
+                "totalSnapshots": 60,
+                "ebsSnapshotCost": 0.104,
+                "numberOfVolumes": 2,
+                "ebsInstanceMonth": 2,
+                "ebsSnapshotPrice": {
+                    "unit": "UsdPerGiB",
+                    "price": 0.05
+                },
+                "totalSnapshotCost": 0.104,
+                "initialSnapshotCost": 0.1,
+                "totalEbsSnapshotCost": 0.104,
+                "monthlyCostOfSnapshots": 0.0002666666666666667,
+                "monthlyCostPerSnapshot": 0.0002666666666666667,
+                "incrementalSnapshotCost": 0.004,
+                "amountChangedPerSnapshot": 5726623.061333334,
+                "monthlyChangeRatePercentage": 8,
+                "discountForPartialStorageMonth": 0.00013333333333333334
+            }
+        },
+        "existingComputeCalculation": [
+            {
+                "hostname": "OnPrem-Standalone",
+                "hoursInMonth": 730,
+                "instanceType": "m5.xlarge",
+                "machineDetails": [
+                    {
+                        "price": 0.876,
+                        "basePrice": 0.376,
+                        "hoursInMonth": 730,
+                        "instanceType": "m5.xlarge",
+                        "licenseIncluded": true,
+                        "computeMonthlyPrice": 274.48,
+                        "licenseMonthlyPrice": 365.0,
+                        "instanceMonthlyPrice": 639.48
+                    }
+                ],
+                "computeHourlyPrice": 0.376,
+                "computeMonthlyPrice": 274.48,
+                "instanceMonthlyPrice": 639.48
+            },
+            {
+                "hostname": "OnPrem-AOAG",
+                "hoursInMonth": 730,
+                "instanceType": "c3.xlarge",
+                "machineDetails": [
+                    {
+                        "price": 1.066,
+                        "basePrice": 0.376,
+                        "hoursInMonth": 730,
+                        "instanceType": "c3.xlarge",
+                        "licenseIncluded": true,
+                        "computeMonthlyPrice": 274.48,
+                        "licenseMonthlyPrice": 503.7,
+                        "instanceMonthlyPrice": 778.18
+                    }
+                ],
+                "computeHourlyPrice": 0.376,
+                "computeMonthlyPrice": 274.48,
+                "instanceMonthlyPrice": 778.18
+            },
+            {
+                "hostname": "OnPrem-FCI",
+                "hoursInMonth": 730,
+                "instanceType": "m5.2xlarge",
+                "machineDetails": [
+                    {
+                        "price": 1.752,
+                        "basePrice": 0.752,
+                        "hoursInMonth": 730,
+                        "instanceType": "m5.2xlarge",
+                        "licenseIncluded": true,
+                        "computeMonthlyPrice": 548.96,
+                        "licenseMonthlyPrice": 1401.6,
+                        "instanceMonthlyPrice": 1950.56
+                    }
+                ],
+                "computeHourlyPrice": 0.752,
+                "computeMonthlyPrice": 548.96,
+                "instanceMonthlyPrice": 1950.56
+            }
+        ],
+        "existingLicenseCalculation": [
+            {
+                "hostname": "OnPrem-Standalone",
+                "hoursInMonth": 730,
+                "licenseIncluded": true,
+                "sqlServerEdition": "Standard Edition",
+                "licenseHourlyPrice": 0.5,
+                "licenseMonthlyPrice": 365.0
+            },
+            {
+                "hostname": "OnPrem-AOAG",
+                "hoursInMonth": 730,
+                "licenseIncluded": true,
+                "sqlServerEdition": "Enterprise Edition",
+                "licenseHourlyPrice": 0.69,
+                "licenseMonthlyPrice": 503.7
+            },
+            {
+                "hostname": "OnPrem-FCI",
+                "hoursInMonth": 730,
+                "licenseIncluded": true,
+                "sqlServerEdition": "Enterprise Edition",
+                "licenseHourlyPrice": 1.92,
+                "licenseMonthlyPrice": 1401.6
+            }
+        ],
+        "recommendedComputeCalculation": [
+            {
+                "hostname": "OnPrem-Standalone",
+                "hoursInMonth": 730,
+                "instanceType": "m5.xlarge",
+                "machineDetails": [
+                    {
+                        "price": 0.876,
+                        "basePrice": 0.376,
+                        "hoursInMonth": 730,
+                        "instanceType": "m5.xlarge",
+                        "licenseIncluded": true,
+                        "computeMonthlyPrice": 274.48,
+                        "licenseMonthlyPrice": 365.0,
+                        "instanceMonthlyPrice": 639.48
+                    }
+                ],
+                "computeHourlyPrice": 0.376,
+                "computeMonthlyPrice": 274.48,
+                "instanceMonthlyPrice": 639.48
+            },
+            {
+                "hostname": "OnPrem-AOAG",
+                "hoursInMonth": 730,
+                "instanceType": "c3.xlarge",
+                "machineDetails": [
+                    {
+                        "price": 1.066,
+                        "basePrice": 0.376,
+                        "hoursInMonth": 730,
+                        "instanceType": "c3.xlarge",
+                        "licenseIncluded": true,
+                        "computeMonthlyPrice": 274.48,
+                        "licenseMonthlyPrice": 503.7,
+                        "instanceMonthlyPrice": 778.18
+                    }
+                ],
+                "computeHourlyPrice": 0.376,
+                "computeMonthlyPrice": 274.48,
+                "instanceMonthlyPrice": 778.18
+            },
+            {
+                "hostname": "OnPrem-FCI",
+                "hoursInMonth": 730,
+                "instanceType": "m7i-flex.2xlarge",
+                "machineDetails": [
+                    {
+                        "price": 1.453,
+                        "basePrice": 0.732,
+                        "hoursInMonth": 730,
+                        "instanceType": "m7i-flex.2xlarge",
+                        "licenseIncluded": true,
+                        "computeMonthlyPrice": 534.36,
+                        "licenseMonthlyPrice": 700.8,
+                        "instanceMonthlyPrice": 1235.16
+                    }
+                ],
+                "computeHourlyPrice": 0.732,
+                "computeMonthlyPrice": 534.36,
+                "instanceMonthlyPrice": 1235.16
+            }
+        ],
+        "recommendedLicenseCalculation": [
+            {
+                "hostname": "OnPrem-Standalone",
+                "hoursInMonth": 730,
+                "licenseIncluded": true,
+                "sqlServerEdition": "Standard Edition",
+                "licenseHourlyPrice": 0.5,
+                "licenseMonthlyPrice": 365.0
+            },
+            {
+                "hostname": "OnPrem-AOAG",
+                "hoursInMonth": 730,
+                "licenseIncluded": true,
+                "sqlServerEdition": "Standard Edition",
+                "licenseHourlyPrice": 0.69,
+                "licenseMonthlyPrice": 503.7
+            },
+            {
+                "hostname": "OnPrem-FCI",
+                "hoursInMonth": 730,
+                "licenseIncluded": true,
+                "sqlServerEdition": "Standard Edition",
+                "licenseHourlyPrice": 0.96,
+                "licenseMonthlyPrice": 700.8
+            }
+        ]
+    },
+    "storageSavings": {
+        "ebs": {
+            "iops": 0,
+            "total": 0.5,
+            "clones": 0.2,
+            "capacity": 0.2,
+            "snapshots": 0.1,
+            "throughput": 0
+        },
+        "fsx": {
+            "iops": 0,
+            "total": 819.26,
+            "clones": 0.04,
+            "capacity": 512,
+            "snapshots": 0.02,
+            "throughput": 307.2
+        },
+        "multi": {
+            "fsxBreakdown": {
+                "fsxDataLunSize": 946373815562,
+                "fsxLogVolumeSize": 260252799280,
+                "fsxDataVolumeSize": 1041011197120,
+                "fsxStorageCapacity": 2199023255552,
+                "fsxBufferVolumeSize": 769658139444,
+                "fsxQuorumVolumeSize": 24000000000,
+                "fsxTempDbVolumeSize": 104101119712
+            },
+            "fsxCalculation": {
+                "ssdIop": 6144,
+                "savings": 0,
+                "useCase": "Low-latency",
+                "regionName": "US East (N. Virginia)",
+                "throughput": 0,
+                "percentageSsd": 100,
+                "deploymentType": "Multi",
+                "numberOfVolumes": 2,
+                "capacityPoolTier": 0,
+                "effectiveCapacity": 2147483648,
+                "ssdTierReqCapacity": 2147483648,
+                "throughputCapacity": 256,
+                "totalStorageCapacity": 214748364800,
+                "monthlySnapshotCapacity": 171798691.84
+            }
+        },
+        "compute": [
+            {
+                "hostname": "OnPrem-Standalone",
+                "existing": {
+                    "hoursInMonth": 730,
+                    "instanceType": "m5.xlarge",
+                    "machineDetails": [
+                        {
+                            "price": 0.876,
+                            "basePrice": 0.376,
+                            "hoursInMonth": 730,
+                            "instanceType": "m5.xlarge",
+                            "licenseIncluded": true,
+                            "computeMonthlyPrice": 274.48,
+                            "licenseMonthlyPrice": 365.0,
+                            "instanceMonthlyPrice": 639.48
+                        }
+                    ],
+                    "computeHourlyPrice": 0.376,
+                    "computeMonthlyPrice": 274.48,
+                    "instanceMonthlyPrice": 639.48,
+                    "finding": "OPTIMIZED"
+                },
+                "recommended": {
+                    "hoursInMonth": 730,
+                    "instanceType": "m5.xlarge",
+                    "machineDetails": [
+                        {
+                            "price": 0.876,
+                            "basePrice": 0.376,
+                            "hoursInMonth": 730,
+                            "instanceType": "m5.xlarge",
+                            "licenseIncluded": true,
+                            "computeMonthlyPrice": 274.48,
+                            "licenseMonthlyPrice": 365.0,
+                            "instanceMonthlyPrice": 639.48
+                        }
+                    ],
+                    "computeHourlyPrice": 0.376,
+                    "computeMonthlyPrice": 274.48,
+                    "instanceMonthlyPrice": 639.48
+                }
+            },
+            {
+                "hostname": "OnPrem-AOAG",
+                "existing": {
+                    "hoursInMonth": 730,
+                    "instanceType": "c3.xlarge",
+                    "machineDetails": [
+                        {
+                            "price": 1.066,
+                            "basePrice": 0.376,
+                            "hoursInMonth": 730,
+                            "instanceType": "c3.xlarge",
+                            "licenseIncluded": true,
+                            "computeMonthlyPrice": 274.48,
+                            "licenseMonthlyPrice": 503.7,
+                            "instanceMonthlyPrice": 778.18
+                        }
+                    ],
+                    "computeHourlyPrice": 0.376,
+                    "computeMonthlyPrice": 274.48,
+                    "instanceMonthlyPrice": 778.18,
+                    "finding": "OPTIMIZED"
+                },
+                "recommended": {
+                    "hoursInMonth": 730,
+                    "instanceType": "c3.xlarge",
+                    "machineDetails": [
+                        {
+                            "price": 1.066,
+                            "basePrice": 0.376,
+                            "hoursInMonth": 730,
+                            "instanceType": "c3.xlarge",
+                            "licenseIncluded": true,
+                            "computeMonthlyPrice": 274.48,
+                            "licenseMonthlyPrice": 503.7,
+                            "instanceMonthlyPrice": 778.18
+                        }
+                    ],
+                    "computeHourlyPrice": 0.376,
+                    "computeMonthlyPrice": 274.48,
+                    "instanceMonthlyPrice": 778.18
+                }
+            },
+            {
+                "hostname": "OnPrem-FCI",
+                "existing": {
+                    "hoursInMonth": 730,
+                    "instanceType": "m5.2xlarge",
+                    "machineDetails": [
+                        {
+                            "price": 1.752,
+                            "basePrice": 0.752,
+                            "hoursInMonth": 730,
+                            "instanceType": "m5.2xlarge",
+                            "licenseIncluded": true,
+                            "computeMonthlyPrice": 548.96,
+                            "licenseMonthlyPrice": 1401.6,
+                            "instanceMonthlyPrice": 1950.56
+                        }
+                    ],
+                    "computeHourlyPrice": 0.752,
+                    "computeMonthlyPrice": 548.96,
+                    "instanceMonthlyPrice": 1950.56,
+                    "finding": "NOT_OPTIMIZED"
+                },
+                "recommended": {
+                    "hoursInMonth": 730,
+                    "instanceType": "m7i-flex.2xlarge",
+                    "machineDetails": [
+                        {
+                            "price": 1.453,
+                            "basePrice": 0.732,
+                            "hoursInMonth": 730,
+                            "instanceType": "m7i-flex.2xlarge",
+                            "licenseIncluded": true,
+                            "computeMonthlyPrice": 534.36,
+                            "licenseMonthlyPrice": 700.8,
+                            "instanceMonthlyPrice": 1235.16
+                        }
+                    ],
+                    "computeHourlyPrice": 0.732,
+                    "computeMonthlyPrice": 534.36,
+                    "instanceMonthlyPrice": 1235.16
+                }
+            }
+        ],
+        "license": [
+            {
+                "hostname": "OnPrem-Standalone",
+                "existing": {
+                    "hoursInMonth": 730,
+                    "licenseIncluded": true,
+                    "sqlServerEdition": "Standard Edition",
+                    "licenseHourlyPrice": 0.5,
+                    "licenseMonthlyPrice": 365.0,
+                    "finding": "OPTIMIZED"
+                },
+                "recommended": {
+                    "hoursInMonth": 730,
+                    "licenseIncluded": true,
+                    "sqlServerEdition": "Standard Edition",
+                    "licenseHourlyPrice": 0.5,
+                    "licenseMonthlyPrice": 365.0,
+                    "message": "License already optimized"
+                }
+            },
+            {
+                "hostname": "OnPrem-AOAG",
+                "existing": {
+                    "hoursInMonth": 730,
+                    "licenseIncluded": true,
+                    "sqlServerEdition": "Enterprise Edition",
+                    "licenseHourlyPrice": 0.69,
+                    "licenseMonthlyPrice": 503.7,
+                    "finding": "NOT_OPTIMIZED"
+                },
+                "recommended": {
+                    "hoursInMonth": 730,
+                    "licenseIncluded": true,
+                    "sqlServerEdition": "Standard Edition",
+                    "licenseHourlyPrice": 0.69,
+                    "licenseMonthlyPrice": 503.7,
+                    "message": "License downgrade recommended from Enterprise to Standard Edition"
+                }
+            },
+            {
+                "hostname": "OnPrem-FCI",
+                "existing": {
+                    "hoursInMonth": 730,
+                    "licenseIncluded": true,
+                    "sqlServerEdition": "Enterprise Edition",
+                    "licenseHourlyPrice": 1.92,
+                    "licenseMonthlyPrice": 1401.6,
+                    "finding": "NOT_OPTIMIZED"
+                },
+                "recommended": {
+                    "hoursInMonth": 730,
+                    "licenseIncluded": true,
+                    "sqlServerEdition": "Standard Edition",
+                    "licenseHourlyPrice": 0.96,
+                    "licenseMonthlyPrice": 700.8,
+                    "message": "License downgrade recommended from Enterprise to Standard Edition"
+                }
+            }
+        ],
+        "totalSummary": {
+            "existing": 5556.86,
+            "recommended": 2375.62
+        }
+    }
+}

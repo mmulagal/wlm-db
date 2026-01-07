@@ -1,0 +1,81 @@
+.tcoOnPremBulkAccordion {
+    .header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin: 16px 0 16px 32px;
+    }
+
+    .accordionScrollContainer {
+        max-height: 700px;
+        overflow-y: auto;
+
+        &::-webkit-scrollbar {
+            width: 4px;
+            background-color: var(--border-scroller);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            border-radius: 4px;
+            background-color: var(--border-scroller);
+            width: 4px;
+            height: 4px;
+            -webkit-box-shadow: inset 0 0 6px var(--grey-25);
+            box-shadow: inset 0 0 6px var(--grey-25);
+        }
+    }
+
+    .loadingState {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        min-height: 200px;
+        color: var(--text-secondary);
+    }
+
+    .centerValue {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+
+        .centerText {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+    }
+
+    .rightWidgetButton {
+        margin-right: 8px;
+
+        button {
+            font-size: 14px;
+            color: var(--text-primary);
+            padding: 4px 8px;
+
+            &:hover {
+                color: var(--primary-hover);
+            }
+
+            &:disabled {
+                color: var(--text-disabled);
+                cursor: none;
+            }
+        }
+    }
+
+    [class*='accordion-table'] {
+        [class*='accordionScrollContainer'] {
+            width: calc(100% - 16px);
+
+            .accordionContent {
+                padding: 0 40px 32px 0;
+            }
+        }
+    }
+
+    .setWidth {
+        width: 920px;
+    }
+}

@@ -62,7 +62,9 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         selectedOnPremRegion,
         selectedExRegionId
     } = useAppSelector(state => state.exploreSavings);
-    const { selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
+    const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(
+        state => state.exploreSavingsBulk
+    );
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
@@ -81,16 +83,41 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         setConfigData(configDataList || []);
     }, [configDataList]);
 
+    // Helper function to get the active selected rows based on current mode
+    const getActiveSelectedRows = () => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+            return selectedRowsForExploreSavingsEBSBulk || [];
+        }
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+            return selectedRowsForExploreSavingsOnPremBulk || [];
+        }
+        return [];
+    };
+
     // useEffect to manage shouldRenderMultipleHosts so that on Add hosts and remove hosts the Save Configuration and create template button visibility can be handled
     useEffect(() => {
-        const shouldRender =
+        // Check for EBS bulk mode
+        const isEBSBulk =
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
             selectedRowsForExploreSavingsEBSBulk &&
             selectedRowsForExploreSavingsEBSBulk.length > 1;
+
+        // Check for On-Prem bulk mode
+        const isOnPremBulk =
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM &&
+            selectedRowsForExploreSavingsOnPremBulk &&
+            selectedRowsForExploreSavingsOnPremBulk.length > 1;
+
+        const shouldRender = isEBSBulk || isOnPremBulk;
+
         const isBulk =
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && selectedRowsForExploreSavingsEBSBulk.length > 0;
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && selectedRowsForExploreSavingsEBSBulk.length > 0) ||
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM &&
+                selectedRowsForExploreSavingsOnPremBulk &&
+                selectedRowsForExploreSavingsOnPremBulk.length > 0);
+
         setBulkModeState({ isBulkMode: isBulk, shouldRenderMultipleHosts: shouldRender });
-    }, [savingsCalculatorFrom, selectedRowsForExploreSavingsEBSBulk]);
+    }, [savingsCalculatorFrom, selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOnPremBulk]);
 
     useEffect(() => {
         if (
@@ -135,8 +162,12 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
 
     useEffect(() => {
         let instanceType = '';
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
-            // Handle AUTO_EBS array format
+        if (
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
+            storageSavingsResponse
+        ) {
+            // Handle AUTO_EBS and ONPREM array format
             const computeArray = Array.isArray(storageSavingsResponse?.compute)
                 ? storageSavingsResponse.compute
                 : [storageSavingsResponse?.compute].filter(Boolean);
@@ -149,8 +180,12 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         }
 
         let serverEdition = '';
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
-            // Handle AUTO_EBS array format
+        if (
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
+            storageSavingsResponse
+        ) {
+            // Handle AUTO_EBS and ONPREM array format
             const licenseArray = Array.isArray(storageSavingsResponse?.license)
                 ? storageSavingsResponse.license
                 : [storageSavingsResponse?.license].filter(Boolean);
@@ -163,8 +198,12 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         }
 
         let windowsServer = '';
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
-            // Handle AUTO_EBS array format
+        if (
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
+            storageSavingsResponse
+        ) {
+            // Handle AUTO_EBS and ONPREM array format
             const computeArray = Array.isArray(storageSavingsResponse?.compute)
                 ? storageSavingsResponse.compute
                 : [storageSavingsResponse?.compute].filter(Boolean);
@@ -176,8 +215,12 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             windowsServer = storageSavingsResponse?.compute?.recommended?.windowsOsVersion.split(',')[0];
         }
         const editionUpgradeCheck = (() => {
-            if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
-                // Handle AUTO_EBS array format
+            if (
+                (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
+                storageSavingsResponse
+            ) {
+                // Handle AUTO_EBS and ONPREM array format
                 const licenseArray = Array.isArray(storageSavingsResponse?.license)
                     ? storageSavingsResponse.license
                     : [storageSavingsResponse?.license].filter(Boolean);
@@ -431,29 +474,47 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                     ) : (
                         <div className={styles.accordionContentWrapperSingle}>
                             {bulkModeState.isBulkMode ? (
-                                // Render multiple hosts for AUTO_EBS mode
+                                // Render multiple hosts for bulk mode (EBS or On-Prem)
                                 <>
-                                    {selectedRowsForExploreSavingsEBSBulk.map((host: any, hostIndex: number) => {
-                                        // Match selectedHostDetails to this specific host by ec2InstanceId
+                                    {getActiveSelectedRows().map((host: any, hostIndex: number) => {
+                                        // Match selectedHostDetails to this specific host
                                         let hostDetails = host;
-                                        if (
-                                            selectedHostDetails &&
-                                            host.ec2InstanceId === selectedHostDetails.ec2InstanceId &&
-                                            host.credentialId === selectedHostDetails.credentialId &&
-                                            host.regionId === selectedHostDetails.regionId
-                                        ) {
-                                            hostDetails = selectedHostDetails;
+
+                                        // For EBS mode, match by ec2InstanceId
+                                        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+                                            if (
+                                                selectedHostDetails &&
+                                                host.ec2InstanceId === selectedHostDetails.ec2InstanceId &&
+                                                host.credentialId === selectedHostDetails.credentialId &&
+                                                host.regionId === selectedHostDetails.regionId
+                                            ) {
+                                                hostDetails = selectedHostDetails;
+                                            }
                                         }
 
+                                        // For On-Prem mode, use host data directly with enriched structure
+                                        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+                                            // For OnPrem, the host object already contains the necessary data
+                                            // Enrich it with recommendedInstance structure for consistency
+                                            hostDetails = {
+                                                ...host,
+                                                recommendedInstance: {
+                                                    serverInstallationMode: host.deploymentModel,
+                                                    serverVersion: host.sqlServerInstances?.[0]?.sqlVersion
+                                                }
+                                            };
+                                        }
+
+                                        // name property is used for Auto_EBS and resourceName for OnPrem
                                         const hostMsSqlData = generateHostMsSqlInstanceData(
-                                            host.name,
+                                            host.name || host.resourceName,
                                             savingsCalculatorFrom,
                                             storageSavingsResponse,
                                             msSqlInstance,
                                             hostDetails // Pass host-specific details (with instance API data if available)
                                         );
                                         return (
-                                            <div key={host.id || `host-${hostIndex}`}>
+                                            <div key={host.id || host.resourceId || `host-${hostIndex}`}>
                                                 <DsTypography
                                                     variant="Semibold_14"
                                                     className={styles.setFont}
@@ -463,9 +524,26 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                                     }}
                                                 >
                                                     {`${GENERAL.MS_SQL_SINGLE_INSTANCES} - ${
-                                                        host.name || host.hostname || `Host ${hostIndex + 1}`
+                                                        host.name ||
+                                                        host.resourceName ||
+                                                        host.hostname ||
+                                                        `Host ${hostIndex + 1}`
                                                     }`}
                                                 </DsTypography>
+
+                                                {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES &&
+                                                    MSSQLServerInstanceForOnPremise(hostMsSqlData, storageType).map(
+                                                        (
+                                                            data: { label: string; text: string; value: string },
+                                                            index: number
+                                                        ) => (
+                                                            <TableLayout
+                                                                data={data}
+                                                                key={`${host.id || host.resourceId}-onprem-${index}`}
+                                                                type={WLF_TABS.MSSQL_ON_PREMISES}
+                                                            />
+                                                        )
+                                                    )}
 
                                                 {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES &&
                                                     MSSQLServerInstance(hostMsSqlData, storageType).map(
@@ -475,7 +553,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                                         ) => (
                                                             <TableLayout
                                                                 data={data}
-                                                                key={`${host.id}-regular-${index}`}
+                                                                key={`${host.id || host.resourceId}-regular-${index}`}
                                                             />
                                                         )
                                                     )}

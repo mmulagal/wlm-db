@@ -8,7 +8,7 @@ import ViewCalculationsFsxw from '../data/viewCalculationsFsxw.json';
 import UploadScript from '../data/uploadScript.json';
 import SendEmail from '../data/sendEmail.json';
 import ExploreSavingsOnPrem from '../data/exploreSavingsOnPrem.json';
-import OnPremCalculations from '../data/onPremCalculations.json';
+import OnPremCalculationsBulk from '../data/onPremCalculationsBulk.json';
 
 const router = require('express').Router();
 
@@ -38,7 +38,7 @@ router.get(`${BASE_URL}/v1/mssql/onprem-tco/resources`, async (req: {}, res: any
 
 router.post(`${BASE_URL}/v1/mssql/onprem-tco/resources/:resourceId/explore-savings`, async (req: {}, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, OnPremCalculations);
+        generateResponse(res, 200, OnPremCalculationsBulk);
     }, 100);
 });
 

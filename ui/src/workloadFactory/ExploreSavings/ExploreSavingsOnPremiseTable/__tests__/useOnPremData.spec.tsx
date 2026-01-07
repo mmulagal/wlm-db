@@ -15,14 +15,13 @@ vi.mock('../../../../utils/apiService', () => ({
 }));
 
 describe('useOnPremData', () => {
-    const createMockStore = (initialOnPremData: any = null) => {
-        return configureStore({
+    const createMockStore = (initialOnPremData: any = null) =>
+        configureStore({
             reducer: {
                 exploreSavings: (state = { onPremiseData: initialOnPremData, onPremiseDataLoading: false }) => state,
                 notifications: notificationSlice.reducer
             }
         });
-    };
 
     const wrapper = ({ children, store }: any) => <Provider store={store}>{children}</Provider>;
 

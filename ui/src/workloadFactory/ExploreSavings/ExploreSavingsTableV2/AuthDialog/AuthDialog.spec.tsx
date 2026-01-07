@@ -35,8 +35,8 @@ const createMockStore = (
     userName = '',
     password = '',
     actionsDisabled = false
-) => {
-    return configureStore({
+) =>
+    configureStore({
         reducer: {
             exploreSavings: () => ({
                 selectedAuthenticationType,
@@ -45,7 +45,6 @@ const createMockStore = (
             dialogComponent: () => ({ actionsDisabled })
         }
     });
-};
 
 // Helper function to render component
 const renderComponent = (

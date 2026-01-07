@@ -119,15 +119,33 @@ const InstanceInformation = ({ host }: { host?: any }) => {
 
     useEffect(() => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
-            const findingsLicenseData = storageSavingsResponse && (storageSavingsResponse?.license?.finding || '-');
-            const findingsDbModel = selectedOnPremHostDetails?.deploymentModel?.includes(GENERAL.AOAG)
+            // For on-prem bulk mode, use the host prop if available
+            const currentHost = host || selectedOnPremHostDetails;
+            const hostName = currentHost?.resourceName;
+
+            const findingsLicenseData = (() => {
+                if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM && storageSavingsResponse) {
+                    // Handle ONPREM array format for bulk
+                    const licenseArray = Array.isArray(storageSavingsResponse?.license)
+                        ? storageSavingsResponse.license
+                        : [storageSavingsResponse?.license].filter(Boolean);
+
+                    // Find license data by matching hostname
+                    const hostLicense = licenseArray.find((item: any) => item.hostname === hostName);
+                    return hostLicense?.finding || '-';
+                }
+                // Handle single object format for non-bulk mode
+                return storageSavingsResponse && (storageSavingsResponse?.license?.finding || '-');
+            })();
+
+            const findingsDbModel = currentHost?.deploymentModel?.includes(GENERAL.AOAG)
                 ? FINDINGS.NOT_OPTIMIZED
                 : FINDINGS.OPTIMIZED;
 
-            setNoOfInstances(selectedOnPremHostDetails?.totalInstance || 0);
+            setNoOfInstances(currentHost?.totalInstance || 0);
 
             const serverEdition: any = [];
-            selectedOnPremHostDetails?.sqlServerInstances?.map((perRow: any) => {
+            currentHost?.sqlServerInstances?.map((perRow: any) => {
                 if (perRow?.sqlEdition && !serverEdition.includes(perRow?.sqlEdition)) {
                     serverEdition.push(perRow?.sqlEdition);
                 }
@@ -141,14 +159,14 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                 },
                 {
                     details: 'Deployment model',
-                    value: selectedOnPremHostDetails?.deploymentModel || GENERAL.NOT_AVAILABLE,
+                    value: currentHost?.deploymentModel || GENERAL.NOT_AVAILABLE,
                     id: '3',
                     findings: findingsDbModel
                 }
             ];
             setTableData(data);
         }
-    }, [selectedOnPremHostDetails, storageSavingsResponse]);
+    }, [selectedOnPremHostDetails, storageSavingsResponse, host]);
 
     const InstanceColDefs: ColumnProps[] = [
         {

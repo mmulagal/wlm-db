@@ -96,10 +96,11 @@ export const comparisonData = (calculatedResponse: any) => {
                 : '$0',
             ebs: (() => {
                 if (
-                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
+                    (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                        savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
                     Array.isArray(calculatedResponse?.compute)
                 ) {
-                    // Handle AUTO_EBS array format - sum all existing compute costs
+                    // Handle AUTO_EBS/ONPREM array format - sum all existing compute costs
                     let totalExistingComputePrice = 0;
                     calculatedResponse.compute.forEach((computeObj: any) => {
                         totalExistingComputePrice += Number(computeObj?.existing?.computeMonthlyPrice || 0);
@@ -124,10 +125,11 @@ export const comparisonData = (calculatedResponse: any) => {
                 : '$0',
             ebs: (() => {
                 if (
-                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
+                    (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                        savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
                     Array.isArray(calculatedResponse?.license)
                 ) {
-                    // Handle AUTO_EBS array format - sum all existing license costs
+                    // Handle AUTO_EBS/ONPREM array format - sum all existing license costs
                     let totalExistingLicensePrice = 0;
                     calculatedResponse.license.forEach((licenseObj: any) => {
                         totalExistingLicensePrice += Number(licenseObj?.existing?.licenseMonthlyPrice || 0);

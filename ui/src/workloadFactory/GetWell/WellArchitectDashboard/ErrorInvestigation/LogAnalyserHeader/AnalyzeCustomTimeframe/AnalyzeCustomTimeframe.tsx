@@ -115,7 +115,7 @@ const AnalyzeCustomTimeframe = () => {
         if (isTodaySelected) {
             const maxDuration = getMaxAllowedDuration();
             const currentDuration = durationCustomAnalysis ? durationCustomAnalysis.toString() : '';
-            
+
             // Set default if duration is not set, is empty, or is 24 (only on initial load)
             if (!currentDuration || currentDuration === '24') {
                 dispatch(setCustomAnalysisDurationInHours(maxDuration.toString()));

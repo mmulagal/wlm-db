@@ -32,7 +32,9 @@ const ViewCalculations = ({ statusCheck }: any) => {
     const { t } = useTranslation();
     const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
     const { viewCalculationsResponse, savingsCalculatorFrom } = useAppSelector(state => state.exploreSavings);
-    const { selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
+    const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(
+        state => state.exploreSavingsBulk
+    );
 
     const getDynamicBreadcrumbTitle = () => {
         // For manual modes, use the manual breadcrumb title
@@ -50,6 +52,16 @@ const ViewCalculations = ({ statusCheck }: any) => {
             }
             if (selectedRowsForExploreSavingsEBSBulk.length === 1) {
                 return selectedRowsForExploreSavingsEBSBulk[0]?.name || selectedServerName;
+            }
+        }
+
+        // For ONPREM mode with bulk selection capability
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM && selectedRowsForExploreSavingsOnPremBulk) {
+            if (selectedRowsForExploreSavingsOnPremBulk.length > 1) {
+                return `${selectedRowsForExploreSavingsOnPremBulk.length} hosts selected`;
+            }
+            if (selectedRowsForExploreSavingsOnPremBulk.length === 1) {
+                return selectedRowsForExploreSavingsOnPremBulk[0]?.resourceName || selectedServerName;
             }
         }
 

@@ -17,14 +17,13 @@ vi.mock('../../../utils/utilityFunctions', async () => {
 });
 
 // Helper function to create mock store
-const createMockStore = (selectedTab = WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE, isWorkloadFactory = true) => {
-    return configureStore({
+const createMockStore = (selectedTab = WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE, isWorkloadFactory = true) =>
+    configureStore({
         reducer: {
             auth: () => ({ isWorkloadFactory }),
             exploreSavings: () => ({ selectedExploreSavingsTab: selectedTab })
         }
     });
-};
 
 // Helper function to render component
 const renderComponent = (selectedTab = WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE, isWorkloadFactory = true) => {

@@ -50,6 +50,8 @@ import {
     resetRowsRequiringAuthBulk,
     setBulkAuthStatus,
     setSelectedRowsForExploreSavingsEBSBulk,
+    setSelectedRowsForExploreSavingsOnPremBulk,
+    setOnPremTCOAction,
     setTriggerBulkDataFetch
 } from '../../store/workloadFactory/exploreSavingsBulkSlice';
 
@@ -67,52 +69,53 @@ export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFacto
     });
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.ONPREM));
 
+    // Set single host in bulk selection array to use accordion UI
+    dispatch(setSelectedRowsForExploreSavingsOnPremBulk([rowData]));
+    dispatch(setOnPremTCOAction(''));
+
     dispatch(setDisableState(true));
     dispatch(setMonthlyChangeRate(3));
 
     if (rowData?.sqlServerInstances?.length) {
         const storagePerfAndCompute: any = {};
         rowData?.sqlServerInstances?.map((instance: any) => {
-            if (!storagePerfAndCompute?.[instance?.sqlInstanceName]) {
-                storagePerfAndCompute[instance?.sqlInstanceName] = {};
+            // Use same key format as bulk mode: resourceId_instanceName
+            const uniqueKey = `${rowData.resourceId}_${instance?.sqlInstanceName}`;
+            if (!storagePerfAndCompute?.[uniqueKey]) {
+                storagePerfAndCompute[uniqueKey] = {};
             }
-            storagePerfAndCompute[instance?.sqlInstanceName].totalStorage = formatFractionalNumber(
+            storagePerfAndCompute[uniqueKey].totalStorage = formatFractionalNumber(
                 Number(instance?.totalStorage || 0) / GIB_IN_BYTE,
                 3
             );
-            storagePerfAndCompute[instance?.sqlInstanceName].totalIops = formatFractionalNumber(instance?.totalIops, 3);
-            storagePerfAndCompute[instance?.sqlInstanceName].totalThroughput = formatFractionalNumber(
-                instance?.totalThroughput,
-                3
-            );
-            storagePerfAndCompute[instance?.sqlInstanceName].noOfVcpusInUse = instance?.noOfVcpusInUse;
-            storagePerfAndCompute[instance?.sqlInstanceName].memory = formatFractionalNumber(
+            storagePerfAndCompute[uniqueKey].totalIops = formatFractionalNumber(instance?.totalIops, 3);
+            storagePerfAndCompute[uniqueKey].totalThroughput = formatFractionalNumber(instance?.totalThroughput, 3);
+            storagePerfAndCompute[uniqueKey].noOfVcpusInUse = instance?.noOfVcpusInUse;
+            storagePerfAndCompute[uniqueKey].memory = formatFractionalNumber(
                 Number(instance?.memory || 0) / GIB_IN_BYTE,
                 3
             );
-            storagePerfAndCompute[instance?.sqlInstanceName].sqlInstanceName = instance?.sqlInstanceName;
-            storagePerfAndCompute[instance?.sqlInstanceName].sqlInstanceId = instance?.sqlInstanceId;
-            storagePerfAndCompute[instance?.sqlInstanceName].networkPerformance =
-                rowData?.sqlServerInstances?.[0]?.networkPerformance;
+            storagePerfAndCompute[uniqueKey].sqlInstanceName = instance?.sqlInstanceName;
+            storagePerfAndCompute[uniqueKey].sqlInstanceId = instance?.sqlInstanceId;
+            storagePerfAndCompute[uniqueKey].networkPerformance = rowData?.sqlServerInstances?.[0]?.networkPerformance;
+            storagePerfAndCompute[uniqueKey].hostResourceName = rowData?.resourceName; // Add host name for reference
         });
         dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
     }
 
-    setTimeout(() => {
-        dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
-        dispatch(
-            setSelectedEsPageInstance({
-                instanceId: '',
-                credentialId: '',
-                regionId: '',
-                deploymentModel: rowData?.deploymentModel,
-                serverName: rowData?.resourceName || GENERAL.ES_SERVER_NAME
-            })
-        );
-        dispatch(setSelectedOnPremHostId(rowData?.resourceId));
-        dispatch(setSelectedServerName(rowData?.resourceName || GENERAL.ES_SERVER_NAME));
-        setESInstanceOnPremData(rowData, dispatch);
-    }, 500);
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+    dispatch(
+        setSelectedEsPageInstance({
+            instanceId: '',
+            credentialId: '',
+            regionId: '',
+            deploymentModel: rowData?.deploymentModel,
+            serverName: rowData?.resourceName || GENERAL.ES_SERVER_NAME
+        })
+    );
+    dispatch(setSelectedOnPremHostId(rowData?.resourceId));
+    dispatch(setSelectedServerName(rowData?.resourceName || GENERAL.ES_SERVER_NAME));
+    setESInstanceOnPremData(rowData, dispatch);
 };
 
 export const onClickESHost = (
@@ -232,6 +235,71 @@ export const setESInstanceOnPremData = (data: any, dispatch: any) => {
             }
         })
     );
+};
+
+export const onClickESHostOnPremBulk = (dispatch: any, selectedHosts: any[], isWorkloadFactory: boolean) => {
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${
+                isWorkloadFactory
+                    ? './storage-saving-calculator?type=onprem&mode=auto'
+                    : '../fsxdb/storage-saving-calculator?type=onprem&mode=auto'
+            }`,
+            replace: true
+        }
+    });
+    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.ONPREM));
+
+    dispatch(setDisableState(true));
+    dispatch(setMonthlyChangeRate(3));
+
+    // Combine storage and compute info from ALL selected hosts
+    const storagePerfAndCompute: any = {};
+    selectedHosts.forEach((rowData: any) => {
+        if (rowData?.sqlServerInstances?.length) {
+            rowData.sqlServerInstances.forEach((instance: any) => {
+                // Use a unique key combining host resourceId and instance name to avoid conflicts
+                const uniqueKey = `${rowData.resourceId}_${instance.sqlInstanceName}`;
+                if (!storagePerfAndCompute[uniqueKey]) {
+                    storagePerfAndCompute[uniqueKey] = {};
+                }
+                storagePerfAndCompute[uniqueKey].totalStorage = formatFractionalNumber(
+                    Number(instance?.totalStorage || 0) / GIB_IN_BYTE,
+                    3
+                );
+                storagePerfAndCompute[uniqueKey].totalIops = formatFractionalNumber(instance?.totalIops, 3);
+                storagePerfAndCompute[uniqueKey].totalThroughput = formatFractionalNumber(instance?.totalThroughput, 3);
+                storagePerfAndCompute[uniqueKey].noOfVcpusInUse = instance?.noOfVcpusInUse;
+                storagePerfAndCompute[uniqueKey].memory = formatFractionalNumber(
+                    Number(instance?.memory || 0) / GIB_IN_BYTE,
+                    3
+                );
+                storagePerfAndCompute[uniqueKey].sqlInstanceName = instance?.sqlInstanceName;
+                storagePerfAndCompute[uniqueKey].sqlInstanceId = instance?.sqlInstanceId;
+                storagePerfAndCompute[uniqueKey].networkPerformance = instance?.networkPerformance;
+                storagePerfAndCompute[uniqueKey].hostResourceName = rowData?.resourceName; // Add host name for reference
+            });
+        }
+    });
+    dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
+
+    // Use first host for basic navigation setup
+    const firstHost = selectedHosts[0];
+
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+    dispatch(
+        setSelectedEsPageInstance({
+            instanceId: '',
+            credentialId: '',
+            regionId: '',
+            deploymentModel: firstHost?.deploymentModel,
+            serverName: `${selectedHosts.length} hosts selected`
+        })
+    );
+    dispatch(setSelectedOnPremHostId(firstHost?.resourceId));
+    dispatch(setSelectedServerName(`${selectedHosts.length} hosts selected`));
+    setESInstanceOnPremData(firstHost, dispatch);
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {
@@ -366,7 +434,7 @@ export const formatViewCalcData = (
 ) => {
     const state = store.getState();
     const { savingsCalculatorFrom } = state.exploreSavings;
-    const { selectedRowsForExploreSavingsEBSBulk } = state.exploreSavingsBulk;
+    const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOnPremBulk } = state.exploreSavingsBulk;
 
     // Check if we're dealing with bulk calculations (arrays) vs single calculations (objects)
     const isBulkCalculation = Array.isArray(viewCalculations.recommendedComputeCalculation);
@@ -490,8 +558,16 @@ export const formatViewCalcData = (
 
     // Create host-specific data for bulk calculations
     const hostCalculationData = isBulkCalculation
-        ? selectedRowsForExploreSavingsEBSBulk
-              .map((host: any) => createHostInstanceCalculationData(host.name))
+        ? (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+              ? selectedRowsForExploreSavingsOnPremBulk
+              : selectedRowsForExploreSavingsEBSBulk
+          )
+              .map((host: any) => {
+                  // For EBS, host is an object with .name property
+                  // For on-prem, host is an object with .resourceName property
+                  const hostName = savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ? host.resourceName : host.name;
+                  return createHostInstanceCalculationData(hostName);
+              })
               .filter(Boolean)
         : [];
 
@@ -1141,12 +1217,27 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
         }
 
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+            // Handle ONPREM mode with array format for compute and license (similar to EBS bulk)
+            const computeArray = Array.isArray(data?.compute) ? data.compute : [data?.compute].filter(Boolean);
+            const licenseArray = Array.isArray(data?.license) ? data.license : [data?.license].filter(Boolean);
+
+            // Calculate total costs by summing all objects in arrays using reduce
+            const totalComputePrice = computeArray.reduce(
+                (total: number, computeObj: any) => total + Number(computeObj?.recommended?.computeMonthlyPrice || 0),
+                0
+            );
+
+            const totalLicensePrice = licenseArray.reduce(
+                (total: number, licenseObj: any) => total + Number(licenseObj?.recommended?.licenseMonthlyPrice || 0),
+                0
+            );
+
             result = {
                 ...data,
                 recommendedInstance: {
-                    ...data?.compute?.recommended?.machineDetails?.[0],
-                    licenseMonthlyPrice: data?.license?.recommended?.licenseMonthlyPrice,
-                    computeMonthlyPrice: data?.compute?.recommended?.computeMonthlyPrice
+                    ...computeArray[0]?.recommended?.machineDetails?.[0],
+                    licenseMonthlyPrice: totalLicensePrice,
+                    computeMonthlyPrice: totalComputePrice
                 },
                 totalSummary: {
                     ...data?.totalSummary,

@@ -51,6 +51,7 @@ import OptimizedModel from './OptimizedModel/OptimizedModel';
 import CalculatorMode from './CalculatorMode/CalculatorMode';
 import { prepareViewCalcData } from './savingsUtil';
 import TCOBulkAccordion from './TCOBulkAccordion/TCOBulkAccordion';
+import TCOOnPremBulkAccordion from './TCOOnPremBulkAccordion/TCOOnPremBulkAccordion';
 
 const SavingsCalculator = ({ statusCheck }: any) => {
     const { t } = useTranslation();
@@ -81,7 +82,9 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         selectedCalculatorMode
     } = useAppSelector(state => state.exploreSavings);
 
-    const { selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
+    const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(
+        state => state.exploreSavingsBulk
+    );
 
     const { isWorkloadFactory, userMetadata } = useAppSelector(state => state.auth);
 
@@ -427,11 +430,15 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                             >
                                 <SavingsHeader />
                                 <OnPremRegion />
-                                <SavingsSelectedHost />
-                                <InstanceInformation />
-                                <ComputeInformation printState={printState} />
-                                <StoragePerformance printState={printState} />
-                                <SavingsSelection printState={printState} />
+
+                                {/* Render accordion UI if any on-prem hosts selected (bulk mode) */}
+                                {savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM &&
+                                    selectedRowsForExploreSavingsOnPremBulk.length >= 1 && (
+                                        <>
+                                            <SavingsSelection printState={printState} />
+                                            <TCOOnPremBulkAccordion />
+                                        </>
+                                    )}
                             </div>
                         )}
 

@@ -3,6 +3,10 @@
     display: flex;
     flex-direction: column;
 
+    &.onPremMode {
+        padding-top: 0;
+    }
+
     .firstRow {
         display: flex;
         gap: 24px;

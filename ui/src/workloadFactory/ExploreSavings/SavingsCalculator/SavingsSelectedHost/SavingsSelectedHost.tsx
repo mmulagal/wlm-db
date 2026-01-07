@@ -5,7 +5,11 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
-const SavingsSelectedHost = () => {
+interface SavingsSelectedHostProps {
+    host?: any;
+}
+
+const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
     const isDisabled = false;
     const {
         selectedHostDetails,
@@ -22,9 +26,10 @@ const SavingsSelectedHost = () => {
 
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+            const currentHost = host || selectedOnPremHostDetails;
             setTotalVolume(0);
-            setHostname(selectedOnPremHostDetails?.resourceName);
-            setNoOfInstances(selectedOnPremHostDetails?.totalInstance);
+            setHostname(currentHost?.resourceName);
+            setNoOfInstances(currentHost?.totalInstance || currentHost?.sqlServerInstances?.length || 0);
         } else {
             let volumeCount = 0;
             if (selectedHostDetails?.ebsResourceInfo?.length) {
@@ -37,7 +42,7 @@ const SavingsSelectedHost = () => {
             setHostname(selectedHostDetails?.name);
             setNoOfInstances(selectedHostDetails?.totalInstance);
         }
-    }, [selectedHostDetails, selectedPartnerHostDetails, selectedOnPremHostDetails]);
+    }, [selectedHostDetails, selectedPartnerHostDetails, selectedOnPremHostDetails, host]);
 
     return (
         <div className={styles.selectedHosts}>

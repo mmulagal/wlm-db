@@ -39,8 +39,10 @@ export const useOnPremData = () => {
                 const perRowInstance = perRow?.sqlServerInstances?.filter(
                     (perInstance: any) => !perInstance?.errorMessage
                 );
+                const uniqueId = `id${Math.random().toString(16).slice(2)}`;
                 const rowData = {
                     ...perRow,
+                    id: uniqueId, // Add id field for table selection
                     sqlServerInstances: perRowInstance,
                     deploymentModel: perInstallationMode,
                     onPremNode: perRow?.onPremisesNodes[0],
@@ -48,7 +50,7 @@ export const useOnPremData = () => {
                     instanceNameList:
                         perRowInstance?.map((detail: { sqlInstanceName: string }) => detail?.sqlInstanceName) || [],
                     nameForSorting: perRow?.resourceName?.toLowerCase(),
-                    uniqueId: `id${Math.random().toString(16).slice(2)}`
+                    uniqueId
                 };
                 result.push(rowData);
             });

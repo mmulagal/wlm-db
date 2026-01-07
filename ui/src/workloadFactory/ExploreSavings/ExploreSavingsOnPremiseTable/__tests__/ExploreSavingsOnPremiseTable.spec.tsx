@@ -5,10 +5,9 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import ExploreSavingsOnPremiseTable from '../ExploreSavingsOnPremiseTable';
 import exploreSavingsSlice from '../../../../store/workloadFactory/exploreSavingsSlice';
-import notificationSlice from '../../../../store/notificationSlice';
+import notificationSlice, { NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import authSlice from '../../../../store/authSlice';
 import { JOB_MONITORING_STATUS } from '../../../../utils/consts';
-import { NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 
 // Mock fflate
 vi.mock('fflate', () => ({
@@ -118,8 +117,8 @@ vi.mock('../../../utils/utilityFunctions', () => ({
 describe('ExploreSavingsOnPremiseTable', () => {
     let store: any;
 
-    const createMockStore = (overrides = {}) => {
-        return configureStore({
+    const createMockStore = (overrides = {}) =>
+        configureStore({
             reducer: {
                 exploreSavings: exploreSavingsSlice.reducer,
                 notifications: notificationSlice.reducer,
@@ -147,7 +146,6 @@ describe('ExploreSavingsOnPremiseTable', () => {
                     immutableCheck: false
                 })
         });
-    };
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -156,7 +154,9 @@ describe('ExploreSavingsOnPremiseTable', () => {
         // Mock FileReader with immediate callback
         global.FileReader = class MockFileReader {
             onload: any = null;
+
             onerror: any = null;
+
             result: any = null;
 
             readAsText() {
@@ -355,6 +355,7 @@ describe('ExploreSavingsOnPremiseTable', () => {
             // Override FileReader to simulate error
             global.FileReader = class MockFileReaderError {
                 onload: any = null;
+
                 onerror: any = null;
 
                 readAsText() {

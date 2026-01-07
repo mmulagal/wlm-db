@@ -82,8 +82,11 @@ const SavingsSelection = ({ printState }: any) => {
     }, [textSearch]);
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
-            // Handle AUTO_EBS array format
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+        ) {
+            // Handle AUTO_EBS/ONPREM array format
             const computeArray = Array.isArray(storageSavingsResponse?.compute)
                 ? storageSavingsResponse.compute
                 : [storageSavingsResponse?.compute].filter(Boolean);
@@ -206,7 +209,7 @@ const SavingsSelection = ({ printState }: any) => {
         <>
             {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                 <div
-                    className={styles.savingsSelection}
+                    className={`${styles.savingsSelection} ${styles.onPremMode}`}
                     id="savings-calculator-input-group"
                     style={{ marginBottom: '20px' }}
                 >
