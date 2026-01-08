@@ -13,7 +13,6 @@ interface ConfigItem {
     category: string;
     subCategory: string;
     recommendation?: string;
-    summary?: string;
     [key: string]: unknown;
 }
 
@@ -188,8 +187,8 @@ function extractAndSetFocusWidgetName(item: unknown, focusWidgetMap: Map<string,
     } else if (item && typeof item === 'object') {
         const configItem = item as ConfigItem;
 
-        // Check if this item has summary or recommendation (Case 2: simple object with properties)
-        if (configItem.summary || configItem.recommendation) {
+        // Check if this item has recommendation (Case 2: simple object with properties)
+        if (configItem.recommendation) {
             let mapKey: string | undefined;
 
             if (configItem.name) {
@@ -204,8 +203,7 @@ function extractAndSetFocusWidgetName(item: unknown, focusWidgetMap: Map<string,
             }
 
             if (mapKey) {
-                const displayText = configItem.summary || (configItem.recommendation as string);
-                focusWidgetMap.set(mapKey, displayText);
+                focusWidgetMap.set(mapKey, configItem.recommendation as string);
             }
         } else {
             // Case 3: Handle objects with nested properties/arrays
