@@ -87,7 +87,10 @@ export const getOracleDisplayNameToTechnicalKeyMapping = () => ({
     [ASSESSMENT_CONFIG_NAMES.ASM_SETUP]: 'asm-setup',
     [ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY]: 'asm-external-redundancy',
     [ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE]: 'afd-logical-block-size',
-    [ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE]: 'asmlib-logical-block-size'
+    [ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE]: 'asmlib-logical-block-size',
+    [ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION]: 'dnfs-consistent-ip-resolution',
+    [ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE]: 'dnfs-configuration-file',
+    [ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE]: 'dnfs-no-shared-cache'
 });
 
 // Helper function to get technical key to display name mapping for MSSQL

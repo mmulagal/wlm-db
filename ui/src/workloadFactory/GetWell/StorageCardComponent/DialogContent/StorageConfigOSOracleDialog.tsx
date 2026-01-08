@@ -299,6 +299,43 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                         )}
                     </div>
                 );
+            case ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE:
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.dnfs-config-file-action-summary')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                            t('databases.well-architect.dnfs-config-file-optimization-step-1'),
+                            t('databases.well-architect.dnfs-config-file-optimization-step-2')
+                        ])}
+                        {createSection(
+                            t('databases.well-architect.note'),
+                            t('databases.well-architect.dnfs-config-file-note')
+                        )}
+                    </div>
+                );
+            case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
+                return (
+                    <div className={styles['storage-tier-block']}>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.dnfs-no-shared-cache-action-summary')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                            t('databases.well-architect.dnfs-no-shared-cache-optimization-step-1'),
+                            t('databases.well-architect.dnfs-no-shared-cache-optimization-step-2'),
+                            t('databases.well-architect.dnfs-no-shared-cache-optimization-step-3'),
+                            t('databases.well-architect.dnfs-no-shared-cache-optimization-step-4')
+                        ])}
+                        {createSection(
+                            t('databases.well-architect.note'),
+                            t('databases.well-architect.dnfs-no-shared-cache-note')
+                        )}
+                    </div>
+                );
+
             default:
                 return null;
         }

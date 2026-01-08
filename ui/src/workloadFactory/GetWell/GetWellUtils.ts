@@ -1950,7 +1950,12 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
         'ASM data disk group LUNs': 'data-dg-lun-layout',
         'ASM logs disk group LUNs': 'redolog-dg-lun-layout',
         'ASM FRA disk group LUNs': 'fra-dg-lun-layout',
-        'ASM archive log disk group LUNs': 'archivelog-dg-lun-layout'
+        'ASM archive log disk group LUNs': 'archivelog-dg-lun-layout',
+
+        // dnfs configurations
+        'dNFS consistent IP resolution': 'dnfs-consistent-ip-resolution',
+        'dNFS configuration file': 'dnfs-configuration-file',
+        'dNFS no shared cache': 'dnfs-no-shared-cache'
     };
 
     return nameMapping[displayName] || displayName;

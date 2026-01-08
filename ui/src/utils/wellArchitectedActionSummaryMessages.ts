@@ -523,6 +523,14 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 wellArchitectMessages.note1
             ].join('\n');
 
+        case ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE:
+            return [wellArchitectMessages['dnfs-config-file-action-summary'], wellArchitectMessages.note1].join('\n');
+
+        case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
+            return [wellArchitectMessages['dnfs-no-shared-cache-action-summary'], wellArchitectMessages.note1].join(
+                '\n'
+            );
+
         case ASSESSMENT_CONFIG_NAMES.ASM_SETUP:
             return [wellArchitectMessages['oracle-asm-setup-action-summary'], wellArchitectMessages.note1].join('\n');
 

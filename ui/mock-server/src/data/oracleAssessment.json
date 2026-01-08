@@ -817,6 +817,65 @@
                     ],
                     "totalObjectsAssessed": "1",
                     "totalObjectsInViolation": "1"
+                },
+                {
+                    "parameter": "dnfs-consistent-ip-resolution",
+                    "name": "dnfs-consistent-ip-resolution",
+                    "status": "not-optimized",
+                    "recommended": "",
+                    "severity": "Critical",
+                    "recommendation": "Workload Factory recommends avoiding the use of Direct NFS (dNFS) with any type of round-robin name resolution, including DNS, DDNS, NIS, or any other method. This includes the DNS load balancing feature available in ONTAP. Ensuring consistent IP address resolution is crucial for maintaining database stability and preventing potential crashes or data corruption.",
+                    "objectsInViolation": ["i-0a1b2c3d4e5f67890"],
+                    "violationDetails": [
+                        {
+                            "objectName": "i-0a1b2c3d4e5f67890",
+                            "objectType": "EC2 Instance",
+                            "value": "round-robin DNS resolution detected",
+                            "recommended": "consistent IP address resolution"
+                        }
+                    ],
+                    "tags": ["Performance Efficiency", "Reliability"],
+                    "current": "round-robin DNS resolution detected",
+                    "totalObjectsAssessed": 1,
+                    "totalObjectsInViolation": 1,
+                    "resourceType": "EC2 Instance"
+                },
+                {
+                    "parameter": "dnfs-configuration-file",
+                    "name": "dnfs-configuration-file",
+                    "status": "not-optimized",
+                    "recommended": "",
+                    "severity": "Critical",
+                    "recommendation": "Workload Factory recommends verifying and optimizing the oranfstab file content to ensure proper Direct NFS (dNFS) usage. The oranfstab file is essential for configuring advanced dNFS features such as multipathing and specific NFS options. Proper configuration ensures efficient data access and management.",
+                    "objectsInViolation": ["i-0a1b2c3d4e5f67890"],
+                    "violationDetails": [
+                        {
+                            "objectName": "i-0a1b2c3d4e5f67890",
+                            "objectType": "EC2 Instance",
+                            "value": "oranfstab file missing or misconfigured",
+                            "recommended": "properly configured oranfstab with multipathing"
+                        }
+                    ],
+                    "tags": ["Performance Efficiency", "Reliability"],
+                    "current": "oranfstab file missing or misconfigured",
+                    "totalObjectsAssessed": 1,
+                    "totalObjectsInViolation": 1,
+                    "resourceType": "EC2 Instance"
+                },
+                {
+                    "parameter": "dnfs-no-shared-cache",
+                    "name": "dnfs-no-shared-cache",
+                    "status": "not-optimized",
+                    "recommended": "",
+                    "severity": "Critical",
+                    "recommendation": "Workload Factory recommends configuring the nosharecache mount option for environments where Direct NFS (dNFS) is enabled, and a source volume is mounted more than once on a single server with nested NFS mounts. This configuration prevents cache sharing between mounts, ensuring data consistency and optimal performance.",
+                    "objectsInViolation": [],
+                    "violationDetails": [],
+                    "tags": ["Performance Efficiency", "Reliability"],
+                    "current": "nosharecache configured correctly",
+                    "totalObjectsAssessed": 1,
+                    "totalObjectsInViolation": 1,
+                    "resourceType": "EC2 Instance"
                 }
             ]
         },

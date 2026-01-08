@@ -916,7 +916,10 @@ export const GETWELL_CONFIG: any = {
     'asm-external-redundancy': 'ASM external redundancy',
     'afd-logical-block-size': 'ASM filter driver logical block size alignment',
     'asmlib-logical-block-size': 'ASMLib logical block size alignment',
-    'swap-space': 'swap_space'
+    'swap-space': 'swap_space',
+    'dnfs-consistent-ip-resolution': 'dNFS consistent IP resolution',
+    'dnfs-configuration-file': 'dNFS configuration file',
+    'dnfs-no-shared-cache': 'dNFS no shared cache'
 };
 
 export const GW_TOOLTIP_KEYS_MAPPING: any = {
@@ -1009,6 +1012,9 @@ export const ASSESSMENT_CONFIG_NAMES = {
     ASM_EXTERNAL_REDUNDANCY: 'ASM external redundancy',
     AFD_LOGICAL_BLOCK_SIZE: 'ASM filter driver logical block size alignment',
     ASMLIB_LOGICAL_BLOCK_SIZE: 'ASMLib logical block size alignment',
+    DNFS_CONSISTENT_IP_RESOLUTION: 'dNFS consistent IP resolution',
+    DNFS_CONFIGURATION_FILE: 'dNFS configuration file',
+    DNFS_NO_SHARED_CACHE: 'dNFS no shared cache',
     SWAP_SPACE: 'Swap space',
     HIGH_AVAILABILITY: 'highAvailability',
     // Additional constants for wellArchitectedActionSummaryMessages
@@ -1031,7 +1037,7 @@ export const ASSESSMENT_CONFIG_NAMES = {
     MICROSOFT_SQL_SERVER_PATCH_SHORT: 'Microsoft SQL Server patch'
 };
 
-// Configuration names mapping for unified display names
+// Configuration names mapping for unified display names for the export pdf
 export const CONFIG_NAMES = {
     // Oracle Storage sizing configurations
     'swap-space': ASSESSMENT_CONFIG_NAMES.SWAP_SPACE,
@@ -1090,6 +1096,9 @@ export const CONFIG_NAMES = {
     'asm-external-redundancy': ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY,
     'afd-logical-block-size': ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE,
     'asmlib-logical-block-size': ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE,
+    'dnfs-consistent-ip-resolution': ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION,
+    'dnfs-configuration-file': ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE,
+    'dnfs-no-shared-cache': ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE,
 
     // Special configurations
     ontap_configuration: ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS,
@@ -1160,7 +1169,8 @@ export const CONFIG_NAMES = {
 export const GW_CONFIG_OPTIMIZE_NA = [
     'TempDB placement',
     GENERAL.LICENSE_SQL_SERVER,
-    ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME
+    ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME,
+    ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION
 ];
 
 export const categoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];
@@ -1263,7 +1273,11 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         'asm-setup': 'os',
         'asm-external-redundancy': 'os',
         'afd-logical-block-size': 'os',
-        'asmlib-logical-block-size': 'os'
+        'asmlib-logical-block-size': 'os',
+        // dnfs specific configurations
+        'dnfs-consistent-ip-resolution': 'os',
+        'dnfs-configuration-file': 'os',
+        'dnfs-no-shared-cache': 'os'
     },
     STORAGE_LAYOUT_MAP: {
         [ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]: 'data-files-location',

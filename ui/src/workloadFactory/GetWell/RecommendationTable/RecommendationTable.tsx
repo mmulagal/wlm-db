@@ -480,7 +480,10 @@ const RecommendationTable = ({
                 name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
                 name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME ||
                 name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
-                name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM)
+                name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+                name === ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION ||
+                name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
+                name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE)
         ) {
             return false;
         }
@@ -517,6 +520,8 @@ const RecommendationTable = ({
             name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
             name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
             name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
+            name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
+            name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE ||
             (name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && engineType === DBType.ORACLE)
         ) {
             return t('databases.well-architect.view');
@@ -539,7 +544,10 @@ const RecommendationTable = ({
             rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE;
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE;
+
         if (isCloseButton) {
             setDialog(
                 <DialogComponent
@@ -981,7 +989,10 @@ const RecommendationTable = ({
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
-                            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE
                         ) {
                             type = 'EC2 instances';
                         } else if (rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY) {
@@ -1181,9 +1192,7 @@ const RecommendationTable = ({
                                         >
                                             <div>
                                                 <DsButton variant="secondary" isDisabled>
-                                                    {innerPageCheck(rowData?.name)
-                                                        ? t('databases.well-architect.view-and-fix')
-                                                        : t('databases.well-architect.fix')}
+                                                    {t('databases.well-architect.view-and-fix')}
                                                 </DsButton>
                                             </div>
                                         </TooltipComponent>

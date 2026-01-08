@@ -194,6 +194,8 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:
                 case ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME:
                 case ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE:
+                case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
                     return <StorageConfigOSOracleDialog type={type} createOSConfigSection={createONTAPConfigSection} />;
 
                 // Oracle storage sizing cards
