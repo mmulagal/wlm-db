@@ -57,33 +57,22 @@ import { checkIfEbsProtected, prepareStorageSavingsData, prepareViewCalcData } f
 
 interface ONPREM_PAYLOAD {
     regionCode?: string;
-    sqlInstanceData?: Array<{
-        sqlInstanceId?: string;
-        noOfVcpusInUse?: number;
-        memory?: string;
-        networkPerformance?: string;
-        totalIops?: string;
-        totalThroughput?: string;
+    resources?: Array<{
+        resourceId: string;
+        sqlInstanceData: Array<{
+            sqlInstanceId?: string;
+            noOfVcpusInUse?: number;
+            memory?: number;
+            networkPerformance?: string;
+            totalIops?: number | string;
+            totalThroughput?: number | string;
+            totalStorage?: number;
+        }>;
     }>;
     snapshotInfo?: {
         snapshotFrequency?: string;
         clonedCopiesCount?: number;
         monthlyChangeRatePercentage?: number;
-    };
-    totalPrimaryHostStorage?: number;
-    totalSecondaryHostStorage?: number;
-    hostName?: {
-        [key: string]: {
-            sqlInstanceData: Array<{
-                sqlInstanceId?: string;
-                noOfVcpusInUse?: number;
-                memory?: string | number;
-                networkPerformance?: string;
-                totalIops?: string | number;
-                totalThroughput?: string | number;
-                totalStorage?: number;
-            }>;
-        };
     };
 }
 
@@ -189,17 +178,21 @@ const SavingsCalculatorApi = () => {
                 clonedCopiesCount: numberOfClonedCopies || 1,
                 monthlyChangeRatePercentage: monthlyChangeRate || 3
             },
-            hostName: {}
+            resources: []
         };
 
+        if (selectedOnPremRegion?.data?.regionCode) {
+            payload.regionCode = selectedOnPremRegion?.data?.regionCode;
+        }
+
         hostsToProcess.forEach((host: any) => {
-            const computeInfo: any = [];
+            const sqlInstanceData: any = [];
 
             if (onPremStorageAndComputeInfo) {
                 Object.keys(onPremStorageAndComputeInfo).forEach(key => {
                     if (key.startsWith(`${host.resourceId}_`)) {
                         const value = onPremStorageAndComputeInfo[key];
-                        computeInfo.push({
+                        sqlInstanceData.push({
                             sqlInstanceId: value?.sqlInstanceId,
                             noOfVcpusInUse: value?.noOfVcpusInUse || 0,
                             memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
@@ -215,10 +208,11 @@ const SavingsCalculatorApi = () => {
                 });
             }
 
-            if (computeInfo.length > 0) {
-                payload.hostName![host.resourceName || host.resourceId] = {
-                    sqlInstanceData: computeInfo
-                };
+            if (sqlInstanceData.length > 0) {
+                payload.resources!.push({
+                    resourceId: host.resourceId,
+                    sqlInstanceData
+                });
             }
         });
 
@@ -230,21 +224,15 @@ const SavingsCalculatorApi = () => {
         const bulkPayload = createOnPremPayload();
 
         // Check if we have any hosts to process
-        if (!bulkPayload.hostName || Object.keys(bulkPayload.hostName).length === 0) {
+        if (!bulkPayload.resources || bulkPayload.resources.length === 0) {
             return;
         }
 
         try {
             dispatch(setOnPremBulkLoadingStart());
 
-            // Add regionCode to the payload
-            if (selectedOnPremRegion?.data?.regionCode) {
-                bulkPayload.regionCode = selectedOnPremRegion?.data?.regionCode;
-            }
-
             // Make a single API call with the bulk payload
             const result = await getStorageSavingsOnPremDataApi({
-                databaseHostId: 'bulk', // Use a special identifier for bulk operations
                 payload: bulkPayload
             });
 

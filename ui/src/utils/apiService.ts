@@ -1207,7 +1207,7 @@ export const exploreSavingsApi = createApi({
         }),
         getOnPremCalculations: builder.mutation({
             query: ({ databaseHostId, payload }) => ({
-                url: `v1/mssql/onprem-tco/resources/${databaseHostId}/explore-savings`,
+                url: 'v1/mssql/onprem-tco/explore-savings',
                 method: 'POST',
                 body: payload
             })
