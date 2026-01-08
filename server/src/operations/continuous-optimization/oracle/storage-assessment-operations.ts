@@ -482,7 +482,7 @@ function getOSConfigDrift(
 
             case 'filesystems-io-options': {
                 const oracleParamsData = os?.['oracle-parameters']?.['filesystemio-options'];
-                if (oracleParamsData?.found === false || oracleParamsData?.value !== 'SETALL') {
+                if (oracleParamsData?.found === false || oracleParamsData?.value?.toLowerCase() !== 'setall') {
                     violationDetails = [
                         createViolationDetail(
                             'filesystemio_options',
