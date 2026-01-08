@@ -1890,22 +1890,22 @@ async function getOnPremBulkResourceExploreSavings(
             calculations: {
                 recommendedComputeCalculation: resourceResults.map(r => ({
                     ...r.recommendedCompute,
-                    resourceId: r.resourceId,
+                    resourceName: r.resourceName,
                     deploymentType: r.deploymentType
                 })),
                 recommendedLicenseCalculation: resourceResults.map(r => ({
                     ...r.recommendedLicense,
-                    resourceId: r.resourceId,
+                    resourceName: r.resourceName,
                     deploymentType: r.deploymentType
                 })),
                 existingComputeCalculation: resourceResults.map(r => ({
                     ...r.existingCompute,
-                    resourceId: r.resourceId,
+                    resourceName: r.resourceName,
                     deploymentType: r.deploymentType
                 })),
                 existingLicenseCalculation: resourceResults.map(r => ({
                     ...r.existingLicense,
-                    resourceId: r.resourceId,
+                    resourceName: r.resourceName,
                     deploymentType: r.deploymentType
                 })),
                 ebsCalculation: storageResults?.ebsCalculation,
