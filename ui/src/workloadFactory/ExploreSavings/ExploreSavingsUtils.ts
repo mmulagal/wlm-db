@@ -55,7 +55,15 @@ import {
     setTriggerBulkDataFetch
 } from '../../store/workloadFactory/exploreSavingsBulkSlice';
 
-export const onClickESHostOnPrem = (dispatch: any, rowData: any, isWorkloadFactory: boolean) => {
+export const onClickESHostOnPrem = (
+    dispatch: any,
+    rowData: any,
+    isWorkloadFactory: boolean,
+    navigate?: NavigateFunction
+) => {
+    if (navigate && isWorkloadFactory) {
+        navigate('../databases/saving-calculator');
+    }
     postBlueXPMessage({
         type: BlueXPListeners.navigate,
         payload: {

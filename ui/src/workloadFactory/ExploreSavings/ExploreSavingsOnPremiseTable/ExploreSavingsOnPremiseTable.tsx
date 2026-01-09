@@ -40,10 +40,12 @@ import {
     setSelectedRowsForExploreSavingsOnPremBulk,
     setOnPremTCOAction
 } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
+import { useNavigate } from 'react-router-dom';
 
 const ExploreSavingsOnPremiseTable = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { fetchOnPremData, error } = useOnPremData();
     const windowSize = useResize();
     const [tableData, setTableData] = useState<any>([]);
@@ -284,7 +286,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 <div
                     className={styles.detectManage}
                     onClick={() => {
-                        onClickESHostOnPrem(dispatch, rowData, isWorkloadFactory);
+                        onClickESHostOnPrem(dispatch, rowData, isWorkloadFactory, navigate);
                     }}
                     id="wlm-db-onprem-explore-savings-table-button"
                 >
