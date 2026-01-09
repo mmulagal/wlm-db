@@ -918,6 +918,7 @@ export const GETWELL_CONFIG: any = {
     'asmlib-logical-block-size': 'ASMLib logical block size alignment',
     'swap-space': 'swap_space',
     'dnfs-consistent-ip-resolution': 'dNFS consistent IP resolution',
+    'dnfs-enablement': 'dNFS enablement',
     'dnfs-configuration-file': 'dNFS configuration file',
     'dnfs-no-shared-cache': 'dNFS no shared cache'
 };
@@ -1014,6 +1015,7 @@ export const ASSESSMENT_CONFIG_NAMES = {
     ASMLIB_LOGICAL_BLOCK_SIZE: 'ASMLib logical block size alignment',
     DNFS_CONSISTENT_IP_RESOLUTION: 'dNFS consistent IP resolution',
     DNFS_CONFIGURATION_FILE: 'dNFS configuration file',
+    DNFS_ENABLEMENT: 'dNFS enablement',
     DNFS_NO_SHARED_CACHE: 'dNFS no shared cache',
     SWAP_SPACE: 'Swap space',
     HIGH_AVAILABILITY: 'highAvailability',
@@ -1097,6 +1099,7 @@ export const CONFIG_NAMES = {
     'afd-logical-block-size': ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE,
     'asmlib-logical-block-size': ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE,
     'dnfs-consistent-ip-resolution': ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION,
+    'dnfs-enablement': ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT,
     'dnfs-configuration-file': ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE,
     'dnfs-no-shared-cache': ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE,
 
@@ -1276,6 +1279,7 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         'asmlib-logical-block-size': 'os',
         // dnfs specific configurations
         'dnfs-consistent-ip-resolution': 'os',
+        'dnfs-enablement': 'os',
         'dnfs-configuration-file': 'os',
         'dnfs-no-shared-cache': 'os'
     },

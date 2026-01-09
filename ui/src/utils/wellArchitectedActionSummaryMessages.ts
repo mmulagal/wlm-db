@@ -526,6 +526,9 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
         case ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE:
             return [wellArchitectMessages['dnfs-config-file-action-summary'], wellArchitectMessages.note1].join('\n');
 
+        case ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT:
+            return [wellArchitectMessages['dnfs-enablement-action-summary'], wellArchitectMessages.note1].join('\n');
+
         case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
             return [wellArchitectMessages['dnfs-no-shared-cache-action-summary'], wellArchitectMessages.note1].join(
                 '\n'

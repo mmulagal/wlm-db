@@ -482,6 +482,7 @@ const RecommendationTable = ({
                 name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
                 name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
                 name === ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION ||
+                name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT ||
                 name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
                 name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE)
         ) {
@@ -521,6 +522,7 @@ const RecommendationTable = ({
             name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
             name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
             name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
+            name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT ||
             name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE ||
             (name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && engineType === DBType.ORACLE)
         ) {
@@ -545,6 +547,7 @@ const RecommendationTable = ({
             rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE;
 
@@ -991,6 +994,7 @@ const RecommendationTable = ({
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION ||
+                            rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE
                         ) {

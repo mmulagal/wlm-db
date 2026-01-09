@@ -883,6 +883,28 @@
                                         "resourceType": "EC2 Instance"
                                     },
                                     {
+                                        "parameter": "dnfs-enablement",
+                                        "name": "dnfs-enablement",
+                                        "status": "optimized",
+                                        "recommended": "",
+                                        "severity": "Critical",
+                                        "recommendation": "Workload Factory recommends enabling Direct NFS (dNFS) for your Oracle environment. Enabling dNFS can improve database performance and simplify NFS storage management by allowing Oracle to manage NFS I/O directly.",
+                                        "objectsInViolation": ["i-0a1b2c3d4e5f67890"],
+                                        "violationDetails": [
+                                            {
+                                                "objectName": "i-0a1b2c3d4e5f67890",
+                                                "objectType": "EC2 Instance",
+                                                "value": "oranfstab file missing or misconfigured",
+                                                "recommended": "properly configured oranfstab with multipathing"
+                                            }
+                                        ],
+                                        "tags": ["Performance Efficiency", "Reliability"],
+                                        "current": "oranfstab file missing or misconfigured",
+                                        "totalObjectsAssessed": 1,
+                                        "totalObjectsInViolation": 1,
+                                        "resourceType": "EC2 Instance"
+                                    },
+                                    {
                                         "parameter": "dnfs-configuration-file",
                                         "name": "dnfs-configuration-file",
                                         "status": "optimized",
@@ -1987,6 +2009,28 @@
                                         ],
                                         "tags": ["Performance Efficiency", "Reliability"],
                                         "current": "round-robin DNS resolution detected",
+                                        "totalObjectsAssessed": 1,
+                                        "totalObjectsInViolation": 1,
+                                        "resourceType": "EC2 Instance"
+                                    },
+                                    {
+                                        "parameter": "dnfs-enablement",
+                                        "name": "dnfs-enablement",
+                                        "status": "not-optimized",
+                                        "recommended": "",
+                                        "severity": "Critical",
+                                        "recommendation": "Workload Factory recommends enabling Direct NFS (dNFS) for your Oracle environment. Enabling dNFS can improve database performance and simplify NFS storage management by allowing Oracle to manage NFS I/O directly.",
+                                        "objectsInViolation": ["i-0a1b2c3d4e5f67890"],
+                                        "violationDetails": [
+                                            {
+                                                "objectName": "i-0a1b2c3d4e5f67890",
+                                                "objectType": "EC2 Instance",
+                                                "value": "oranfstab file missing or misconfigured",
+                                                "recommended": "properly configured oranfstab with multipathing"
+                                            }
+                                        ],
+                                        "tags": ["Performance Efficiency", "Reliability"],
+                                        "current": "oranfstab file missing or misconfigured",
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 1,
                                         "resourceType": "EC2 Instance"
