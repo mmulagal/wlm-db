@@ -60,6 +60,14 @@ const OSOracleTable = ({ type, data, lastColDetails, handleBulkAction }: any) =>
             width: 'auto',
             renderCell: (cellData: any) => cellData || t('databases.general.not-available-table-columns')
         },
+        {
+            Header: t('databases.oracle-inner-page.recommended-value'),
+            accessor: 'recommended',
+            id: '3',
+            width: 'auto',
+            filterOptions: 'auto',
+            renderCell: (cellData: any) => cellData || t('databases.general.not-available-table-columns')
+        },
         lastColDetails(type, {})
     ];
 
