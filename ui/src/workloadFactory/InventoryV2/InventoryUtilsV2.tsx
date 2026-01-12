@@ -23,6 +23,7 @@ import {
     ERROR_ANALYZER_STATUS,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    FSX_FOR_ONTAP_CRED_OPTION,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
@@ -3059,6 +3060,104 @@ export const updateInstanceBulkStatus = (action: InstanceActions, response: any)
     });
 
     return updatedInventoryTableData;
+};
+
+export const detectAuthFieldsValidation = (entryData: any, engineType: string) => {
+    const state = store.getState();
+    const { detectManageUserName, detectManagePassword, detectWindowsAuthentication, authenticationType } =
+        state.inventoryV2;
+
+    // Checks if the respective authentication fields are present
+    const isAuthValid = () => !!(detectManageUserName && detectManagePassword);
+    const isWindowsAuthValid = () => !!(detectWindowsAuthentication?.username && detectWindowsAuthentication?.password);
+    switch (engineType) {
+        case DBType.ORACLE: {
+            const isDefault = entryData?.isDefaultAuthentication;
+            const isOracleAuth = entryData?.oracleServerAuthentication;
+
+            // In Oracle if isDefaultAuthentication is true then no need to check for Oracle auth
+            if (isDefault === true) {
+                return true;
+            }
+            if (isDefault === false) {
+                // Need both Oracle Auth
+                if (!isOracleAuth) {
+                    return isAuthValid();
+                }
+                return true;
+            }
+            return false; // If isDefault is undefined or null, return false
+        }
+        case DBType.MSSQL:
+        default: {
+            // Check when neither SQL Server nor Windows Domain User is authenticated
+            if (
+                !entryData?.sqlServerAuthentication &&
+                !entryData?.windowsAuthentication &&
+                !entryData?.windowsDomainUserAuthentication
+            ) {
+                // Based on authentication type is SQL Server or Windows, check if the respective fields are valid
+                if (authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) {
+                    return isAuthValid();
+                }
+                if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+                    return isWindowsAuthValid();
+                }
+                return false;
+            }
+            return true;
+        }
+    }
+};
+
+export const detectFsxFieldsValidation = (entryData: any, engineType: string) => {
+    const state = store.getState();
+    const {
+        detectOntapUsername,
+        detectOntapPassword,
+        detectOntapCredentialsByFsx,
+        selectedFSxForOntapCredentials,
+        fsxCredentialStatusObj
+    } = state.inventoryV2;
+
+    // Get list of unregistered FSx IDs that need credentials
+    const getUnregisteredFsxIds = (): string[] => {
+        const storage = entryData?.storage;
+        if (!storage || !Array.isArray(storage)) return [];
+
+        return storage
+            .filter(item => {
+                // Only include FSXN type items with valid IDs
+                if (item.type !== 'FSXN' || !item.id) return false;
+                // Exclude already registered FSx
+                const statusObj = fsxCredentialStatusObj?.[item.id];
+                return statusObj !== true;
+            })
+            .map(item => item.id);
+    };
+
+    const unregisteredFsxIds = getUnregisteredFsxIds();
+
+    // If no FSx needs authentication, return true
+    if (unregisteredFsxIds.length === 0) {
+        return true;
+    }
+
+    // Validate based on radio selection mode
+    if (selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED) {
+        // Use single credentials for all FSx
+        return !!(detectOntapUsername && detectOntapPassword);
+    }
+
+    if (selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY) {
+        // Each FSx must have its own credentials
+        return unregisteredFsxIds.every(fsxId => {
+            const cred = detectOntapCredentialsByFsx[fsxId];
+            return !!(cred?.username && cred?.password);
+        });
+    }
+
+    return false;
 };
 
 export const detectFieldsValidation = (entryData: any, engineType: string) => {

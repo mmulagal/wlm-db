@@ -438,6 +438,11 @@ export const AUTHENTICATION_TYPE = {
     WINDOWS_AUTHENTICATION: 'Windows authentication'
 };
 
+export const FSX_FOR_ONTAP_CRED_OPTION = {
+    USE_THE_SAME_CRED: 'Use the same credentials for all resources',
+    MANAGE_CRED_MANUALLY: 'Manage credentials manually'
+};
+
 export const DEPLOY_ENDPOINT = '/cloudformation/deploy';
 export const CREATE_DB_ENDPOINT = (databaseHostId: any) => `/database-hosts/${databaseHostId}/database`;
 export const CREATE_SANDBOX_ENDPOINT = '/sandboxes';

@@ -6,32 +6,58 @@ import DetectContent from './DetectContent/DetectContent';
 import ManageWizardFooter from '../ManageWizardFooter';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import AuthenticatedScreen from './AuthenticatedScreen/AuthenticatedScreen';
-import { ACTION_TYPE } from '../../../../../utils/consts';
+import { ACTION_TYPE, DBType } from '../../../../../utils/consts';
 import { BulkDetectedInstance, UseWizardReturn } from '../../../../../utils/types/registerTypes';
+import NewAuthenticatedScreen from './NewAuthenticatedScreen/NewAuthenticatedScreen';
 
 export const Content = () => {
-    const { wizardOperationType, selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
+    const { wizardOperationType, selectedMultiDetectInstances, manageSingleInstanceData } = useAppSelector(
+        state => state.inventoryV2
+    );
+
+    // @Todo : Will be moved to utility file once oracle register revamp is done
+    const isAuthorizedSingleInstance = useMemo(() => {
+        if (!manageSingleInstanceData) return false;
+        return !!(
+            manageSingleInstanceData.sqlServerAuthentication ||
+            manageSingleInstanceData.windowsAuthentication ||
+            manageSingleInstanceData.windowsDomainUserAuthentication
+        );
+    }, [manageSingleInstanceData]);
 
     const isAuth = useMemo(
         () => selectedMultiDetectInstances?.every((item: BulkDetectedInstance) => item?.authorized),
         []
     );
 
-    return (
-        <div className={styles['detect-step']}>
-            {wizardOperationType === ACTION_TYPE.SINGLE && (
-                <div style={{ width: '100%' }}>
-                    <DetectHeader />
-                </div>
-            )}
+    const renderContent = () => {
+        // Single operation with MSSQL and authenticated
+        if (
+            wizardOperationType === ACTION_TYPE.SINGLE &&
+            manageSingleInstanceData?.hostType === DBType.MSSQL &&
+            isAuthorizedSingleInstance
+        ) {
+            return <NewAuthenticatedScreen />;
+        }
 
-            {wizardOperationType === ACTION_TYPE.BULK && isAuth && <AuthenticatedScreen />}
+        // All other cases
+        return (
+            <>
+                {wizardOperationType === ACTION_TYPE.SINGLE && (
+                    <div style={{ width: '100%' }}>
+                        <DetectHeader />
+                    </div>
+                )}
 
-            {(wizardOperationType !== ACTION_TYPE.BULK || (wizardOperationType === ACTION_TYPE.BULK && !isAuth)) && (
-                <DetectContent />
-            )}
-        </div>
-    );
+                {wizardOperationType === ACTION_TYPE.BULK && isAuth && <AuthenticatedScreen />}
+
+                {(wizardOperationType !== ACTION_TYPE.BULK ||
+                    (wizardOperationType === ACTION_TYPE.BULK && !isAuth)) && <DetectContent />}
+            </>
+        );
+    };
+
+    return <div className={styles['detect-step']}>{renderContent()}</div>;
 };
 
 export const Footer = () => {

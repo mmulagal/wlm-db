@@ -342,7 +342,10 @@ const DetectContent = () => {
                         authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
                         windowsAuthInputFields()}
 
-                    {manageSingleInstanceData?.fsxId && !manageSingleInstanceData?.isFsxRegistered && fsxInputFields()}
+                    {manageSingleInstanceData?.fsxId &&
+                        !manageSingleInstanceData?.isFsxRegistered &&
+                        manageSingleInstanceData?.hostType !== DBType.MSSQL &&
+                        fsxInputFields()}
 
                     {isAsmAuthRequired(manageSingleInstanceData, manageSingleInstanceData?.hostType) && oracleASM()}
                 </>

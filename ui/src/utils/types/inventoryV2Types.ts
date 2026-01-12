@@ -1,5 +1,11 @@
 import { ErrorInvestigationInstance } from './agenticAITypes';
 
+/** FSx authentication status value */
+export type FsxAuthStatus = 'success' | 'failed' | 'pending';
+
+/** Map of FSx IDs to their authentication status */
+export type FsxAuthStatusMap = Record<string, FsxAuthStatus>;
+
 interface OptionType {
     id: number;
     label: string;
@@ -7,6 +13,7 @@ interface OptionType {
 }
 
 export interface InventorySliceData {
+    selectedFSxForOntapCredentials: string;
     landingFromWizard: boolean;
     selectedMultiDetectInstances: OptionType[];
     wizardOperationType: string;
@@ -67,6 +74,7 @@ export interface InventorySliceData {
     detectManagePassword: string;
     detectOntapUsername: string;
     detectOntapPassword: string;
+    detectOntapCredentialsByFsx: Record<string, { username: string; password: string }>;
     detectWindowsAuthentication: {
         username: string;
         password: string;
@@ -116,6 +124,7 @@ export interface InventorySliceData {
     manageSingleInstanceData: any;
     bulkDetectedInstanceList: any;
     registerHostType: string;
+    fsxAuthStatus: FsxAuthStatusMap;
 }
 
 export interface InventoryTableData {

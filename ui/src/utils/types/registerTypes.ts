@@ -95,6 +95,8 @@ export interface WizardState {
     asmPasswordFromWizard?: string;
     authenticationTypeSelected?: string;
     hitNext?: boolean;
+    hitNextForStep2?: boolean;
+    fsxAllAuthFailed?: boolean;
     installMissingAWS?: boolean;
     installMissingAWSList?: string[];
     installMissingPowershell?: boolean;

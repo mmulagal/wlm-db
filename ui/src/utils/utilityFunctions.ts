@@ -25,6 +25,7 @@ import {
     ERR_MSG_TO_CHECK,
     FORM_OPTIONS,
     FSXN_STORAGE_PROTOCOLS,
+    FSX_FOR_ONTAP_CRED_OPTION,
     GETWELL_STATUS,
     GIB_IN_BYTE,
     JM_DOWNLOAD,
@@ -1791,6 +1792,7 @@ export const removeOldApisError = (data: any) => {
     return false;
 };
 
+// @Todo: This function will be removed once the Oracle Register Revamp is completed
 // This function will create post payload for register credential API (registerResourceCredentials)
 export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string, rowData: any) => {
     const state = store.getState();
@@ -1859,6 +1861,116 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
         return { credentials: credList, clusterNodesIpAddress: addresses, checkManageReadiness };
     }
     return { credentials: credList, checkManageReadiness };
+};
+
+/**
+ * Creates a payload containing only authentication credentials (SQL Server/Oracle) for resource registration.
+ * Excludes FSx credentials. Used when registering authentication separately from storage credentials.
+ * @param sqlServerInstance - The SQL Server or database instance name
+ * @param rowData - The row data containing credential information and instance details
+ * @returns Payload object with authentication credentials only
+ */
+export const createAuthOnlyPayload = (sqlServerInstance: string, rowData: any) => {
+    const state = store.getState();
+    const {
+        detectManageUserName,
+        detectManagePassword,
+        detectWindowsAuthentication,
+        detectAsmAuthentication,
+        authenticationType
+    } = state?.inventoryV2;
+
+    const credList = [];
+    let checkManageReadiness = false;
+
+    // SQL Server Auth
+    if (
+        detectManageUserName &&
+        detectManagePassword &&
+        authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+    ) {
+        credList.push({
+            resourceId: sqlServerInstance,
+            resourceType: rowData?.hostType === DBType.MSSQL ? DETECT_HOST_VAR.MSSQL : rowData?.hostType?.toUpperCase(),
+            username: detectManageUserName,
+            password: detectManagePassword
+        });
+        checkManageReadiness = true;
+    }
+    // Windows Auth
+    else if (
+        detectWindowsAuthentication.username &&
+        detectWindowsAuthentication.password &&
+        authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+    ) {
+        credList.push({
+            resourceId: sqlServerInstance,
+            resourceType: DETECT_HOST_VAR.WINDOWS,
+            username: detectWindowsAuthentication.username,
+            password: detectWindowsAuthentication.password
+        });
+        checkManageReadiness = true;
+    }
+
+    // Oracle ASM (optional)
+    if (rowData?.hostType === DBType.ORACLE && detectAsmAuthentication?.username && detectAsmAuthentication?.password) {
+        credList.push({
+            resourceId: sqlServerInstance,
+            resourceType: DETECT_HOST_VAR.ORACLE_ASM,
+            username: detectAsmAuthentication.username,
+            password: detectAsmAuthentication.password
+        });
+    }
+
+    // Cluster node addresses for FCI
+    if (rowData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+        const addresses = rowData?.windowsClusterNodes?.map((obj: { Address: string; Node: string }) => obj?.Address);
+        return { credentials: credList, clusterNodesIpAddress: addresses, checkManageReadiness };
+    }
+    return { credentials: credList, checkManageReadiness };
+};
+
+/**
+ * Creates a payload containing only FSx for ONTAP credentials for resource registration.
+ * Used when registering FSx storage credentials separately from database authentication.
+ * @param fsxIds - Array of FSx for ONTAP file system IDs that need authentication
+ * @param rowData - The row data containing FSx credential information
+ * @returns Payload object with FSx credentials only
+ */
+export const createFsxOnlyPayload = (fsxIds: string[], rowData: any) => {
+    const state = store.getState();
+    const { detectOntapUsername, detectOntapPassword, detectOntapCredentialsByFsx, selectedFSxForOntapCredentials } =
+        state?.inventoryV2;
+
+    const credList: { resourceId: string; resourceType: string; username: string; password: string }[] = [];
+
+    if (selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED) {
+        // Same credentials for all FSx
+        fsxIds.forEach(fsxId => {
+            if (detectOntapUsername && detectOntapPassword) {
+                credList.push({
+                    resourceId: fsxId,
+                    resourceType: DETECT_HOST_VAR.FSX,
+                    username: detectOntapUsername,
+                    password: detectOntapPassword
+                });
+            }
+        });
+    } else {
+        fsxIds.forEach(fsxId => {
+            const cred = detectOntapCredentialsByFsx[fsxId];
+            if (cred?.username && cred?.password) {
+                credList.push({
+                    resourceId: fsxId,
+                    resourceType: DETECT_HOST_VAR.FSX,
+                    username: cred.username,
+                    password: cred.password
+                });
+            }
+        });
+    }
+
+    return { credentials: credList, checkManageReadiness: true };
 };
 
 export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) =>

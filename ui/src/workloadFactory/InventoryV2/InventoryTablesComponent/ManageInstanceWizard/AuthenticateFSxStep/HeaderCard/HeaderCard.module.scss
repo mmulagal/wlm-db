@@ -1,0 +1,21 @@
+.headerCard {
+    width: 79%;
+    height: 116px;
+    background-color: var(--hover-background);
+    box-shadow: 2px 2px 6px 0 var(--border-drop-shadow, #e0e0e0);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+
+    .rightSide {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        .radioGroup {
+            display: flex;
+            gap: 32px;
+        }
+    }
+}

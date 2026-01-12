@@ -5,7 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { useMemo } from 'react';
 import styles from './ManageInstanceWizard.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { detectFieldsValidation, saveFsxInCredRegisteredObj, updateInstanceStatus } from '../../InventoryUtilsV2';
+import {
+    detectAuthFieldsValidation,
+    detectFieldsValidation,
+    detectFsxFieldsValidation,
+    saveFsxInCredRegisteredObj,
+    updateInstanceStatus
+} from '../../InventoryUtilsV2';
 import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import {
     useLazyGetSubTaskListQuery,
@@ -13,12 +19,18 @@ import {
     useManageBulkV2OracleInstanceMutation,
     useRegisterResourceCredentialsBulkMutation
 } from '../../../../utils/apiService';
-import { createDetectHostPayload } from '../../../../utils/utilityFunctions';
+import {
+    createAuthOnlyPayload,
+    createDetectHostPayload,
+    createFsxOnlyPayload
+} from '../../../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import {
     setInventoryTableData,
     setManageSingleInstanceReadiness,
-    setSelectedMultiDetectInstances
+    setSelectedFSxForOntapCredentials,
+    setSelectedMultiDetectInstances,
+    setFsxAuthStatus
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     createDetectHostPayloadBulk,
@@ -27,8 +39,16 @@ import {
     handleSingleInstanceManage,
     updateDetectBulkResponse
 } from './ManageInstanceUtils';
-import { ACTION_TYPE, DBType, DETECT_PAYLOAD_SIZE } from '../../../../utils/consts';
+import {
+    ACTION_TYPE,
+    DBType,
+    DETECT_HOST_VAR,
+    DETECT_PAYLOAD_SIZE,
+    FSX_FOR_ONTAP_CRED_OPTION,
+    RESPONSE_STATUS
+} from '../../../../utils/consts';
 import { BulkDetectedInstance, UseWizardReturn } from '../../../../utils/types/registerTypes';
+import { FsxAuthStatusMap } from '../../../../utils/types/inventoryV2Types';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -45,6 +65,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, setState }: UseWizardReturn = useWizard();
 
     const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
+    const fsxCredentialStatusObj = useAppSelector(state => state.inventoryV2.fsxCredentialStatusObj);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
     const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
     const { wizardOperationType, selectedMultiDetectInstances, bulkDetectedInstanceList } = useAppSelector(
@@ -251,6 +272,232 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         }
     };
 
+    /**
+     * Handles the registration of authentication credentials (SQL Server/Oracle) for a single instance.
+     * Validates and submits authentication credentials via the bulk registration API.
+     * Updates inventory state and advances wizard on success, shows error notification on failure.
+     */
+    const handleRegisterAuthCredentials = async () => {
+        dispatch(setIsDetectHostLoading(true));
+        dispatch(setManageSingleInstanceReadiness(null));
+        const sqlServerInstance =
+            manageSingleInstanceData?.sqlServerInstance || manageSingleInstanceData?.databaseInstanceName || '';
+        try {
+            const credList = createAuthOnlyPayload(sqlServerInstance, manageSingleInstanceData);
+            const payload = {
+                items: [
+                    {
+                        ...credList,
+                        ec2InstanceId: manageSingleInstanceData?.ec2InstanceId,
+                        region: manageSingleInstanceData?.regionId,
+                        credentialsId: manageSingleInstanceData?.credentialId
+                    }
+                ]
+            };
+            if (payload?.items?.some(item => item?.credentials?.length > 0)) {
+                const result = await registerResourceCredBulk({ payload });
+                if (result && !result?.error && result?.data) {
+                    const registerDetails = result?.data?.items?.[0]?.registerDetails || [];
+                    const errors: string[] = [];
+                    let hasErrors = false;
+
+                    registerDetails.forEach((detail: any) => {
+                        if (detail?.databaseServerError) {
+                            errors.push(detail.databaseServerError);
+                            hasErrors = true;
+                        }
+                        if (detail?.oracleAsmError) {
+                            errors.push(detail.oracleAsmError);
+                            hasErrors = true;
+                        }
+                    });
+
+                    if (hasErrors) {
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                message: errors.join(' ') || t('databases.register-flow.manage-detect-fail-message')
+                            })
+                        );
+                    } else {
+                        // Update inventory table data
+                        const updatedInventoryTableData = updateInstanceStatus(
+                            'detect',
+                            manageSingleInstanceData,
+                            manageSingleInstanceData
+                        );
+                        dispatch(setInventoryTableData(updatedInventoryTableData));
+                        if (result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness) {
+                            dispatch(
+                                setManageSingleInstanceReadiness(
+                                    result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness
+                                )
+                            );
+                        }
+                        goToNextStep();
+                    }
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: t('databases.register-flow.manage-detect-fail-message')
+                        })
+                    );
+                }
+            } else {
+                // No auth credentials needed, skip to next step
+                goToNextStep();
+            }
+        } catch (error) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: t('databases.register-flow.manage-detect-fail-message')
+                })
+            );
+        } finally {
+            dispatch(setIsDetectHostLoading(false));
+        }
+    };
+
+    /**
+     * Handles the registration of FSx for ONTAP credentials for a single instance.
+     * Identifies unregistered FSx file systems from storage array and submits their credentials via the bulk registration API.
+     * Handles partial failures by switching to manual credential mode. Updates inventory state and advances wizard on success.
+     */
+    const handleRegisterFsxCredentials = async () => {
+        dispatch(setIsDetectHostLoading(true));
+        dispatch(setManageSingleInstanceReadiness(null));
+
+        // Get FSx IDs from storage array that need authentication
+        const getUnregisteredFsxIds = (): string[] => {
+            const storage = manageSingleInstanceData?.storage;
+            if (!storage || !Array.isArray(storage)) return [];
+
+            return storage
+                .filter(item => {
+                    if (item.type !== DETECT_HOST_VAR.FSXN || !item.id) return false;
+                    // Exclude already registered FSx
+                    const statusObj = fsxCredentialStatusObj?.[item.id];
+                    return statusObj !== true;
+                })
+                .map(item => item.id);
+        };
+
+        const fsxIds = getUnregisteredFsxIds();
+
+        // If no FSx needs authentication, skip to next step
+        if (fsxIds.length === 0) {
+            goToNextStep();
+            dispatch(setIsDetectHostLoading(false));
+            return;
+        }
+
+        try {
+            const credList = createFsxOnlyPayload(fsxIds, manageSingleInstanceData);
+            const payload = {
+                items: [
+                    {
+                        ...credList,
+                        ec2InstanceId: manageSingleInstanceData?.ec2InstanceId,
+                        region: manageSingleInstanceData?.regionId,
+                        credentialsId: manageSingleInstanceData?.credentialId
+                    }
+                ]
+            };
+
+            if (payload?.items?.some(item => item?.credentials?.length > 0)) {
+                const result = await registerResourceCredBulk({ payload });
+                if (result && !result?.error && result?.data) {
+                    const registerDetails = result?.data?.items?.[0]?.registerDetails || [];
+                    const failedFsxIds: string[] = [];
+                    const successFsxIds: string[] = [];
+
+                    registerDetails.forEach((detail: any) => {
+                        if (detail?.fsxnError) {
+                            failedFsxIds.push(detail.resourceId);
+                        } else if (detail?.resourceType === 'FSX') {
+                            successFsxIds.push(detail.resourceId);
+                        }
+                    });
+
+                    // Update FSx auth status in state
+                    const authStatusUpdate: FsxAuthStatusMap = {};
+                    failedFsxIds.forEach(fsxId => {
+                        authStatusUpdate[fsxId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                    });
+                    successFsxIds.forEach(fsxId => {
+                        authStatusUpdate[fsxId] = RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success';
+                    });
+                    dispatch(setFsxAuthStatus(authStatusUpdate));
+
+                    if (failedFsxIds.length > 0) {
+                        if (failedFsxIds.length < fsxIds.length) {
+                            // Partial failure - switch to manual mode and show which ones failed
+                            dispatch(setSelectedFSxForOntapCredentials(FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY));
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    message: t('databases.register-flow.fsx-partial-auth-fail-message', {
+                                        failedCount: failedFsxIds.length
+                                    })
+                                })
+                            );
+                        } else {
+                            // All failed - stay on USE_THE_SAME_CRED mode with error
+                            setState({ fsxAllAuthFailed: true });
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    message: t('databases.register-flow.fsx-all-auth-fail-message', {
+                                        count: fsxIds.length
+                                    })
+                                })
+                            );
+                        }
+                    } else {
+                        // All FSx authenticated successfully
+                        fsxIds.forEach(fsxId => {
+                            saveFsxInCredRegisteredObj(fsxId, dispatch);
+                        });
+                        const updatedInventoryTableData = updateInstanceStatus(
+                            'detect',
+                            manageSingleInstanceData,
+                            manageSingleInstanceData
+                        );
+                        dispatch(setInventoryTableData(updatedInventoryTableData));
+                        if (result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness) {
+                            dispatch(
+                                setManageSingleInstanceReadiness(
+                                    result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness
+                                )
+                            );
+                        }
+                        goToNextStep();
+                    }
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: t('databases.register-flow.manage-detect-fail-message')
+                        })
+                    );
+                }
+            } else {
+                goToNextStep();
+            }
+        } catch (error) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: t('databases.register-flow.manage-detect-fail-message')
+                })
+            );
+        } finally {
+            dispatch(setIsDetectHostLoading(false));
+        }
+    };
+
     const goForward = () => {
         if (wizardOperationType === ACTION_TYPE.SINGLE) {
             setState({ hitNext: true });
@@ -258,6 +505,50 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             if (fieldsCorrect) {
                 handleRegisterResourceCred(engineType);
             }
+        }
+    };
+
+    const goAuthForwardForSingleRegister = () => {
+        if (wizardOperationType === ACTION_TYPE.SINGLE) {
+            // Check if instance is already authenticated
+            const isAlreadyAuthenticated = !!(
+                manageSingleInstanceData?.sqlServerAuthentication ||
+                manageSingleInstanceData?.windowsAuthentication ||
+                manageSingleInstanceData?.windowsDomainUserAuthentication
+            );
+
+            // If already authenticated, skip API call and go to next step
+            if (isAlreadyAuthenticated) {
+                goToNextStep();
+                return;
+            }
+
+            setState({ hitNext: true });
+            const fieldsCorrect = detectAuthFieldsValidation(manageSingleInstanceData, engineType);
+            if (fieldsCorrect) {
+                handleRegisterAuthCredentials();
+            }
+        }
+    };
+
+    const goFsxForwardForSingleRegister = () => {
+        // Check if all FSx are already authenticated using storage array and fsxCredentialStatusObj
+        const storage = manageSingleInstanceData?.storage;
+        const fsxnItems = storage?.filter((item: any) => item.type === DETECT_HOST_VAR.FSXN && item.id) || [];
+
+        const isFsxAlreadyAuthenticated =
+            fsxnItems.length === 0 || fsxnItems.every((item: any) => fsxCredentialStatusObj?.[item.id] === true);
+
+        // If already authenticated, skip API call and go to next step
+        if (isFsxAlreadyAuthenticated) {
+            goToNextStep();
+            return;
+        }
+
+        setState({ hitNextForStep2: true });
+        const fieldsCorrect = detectFsxFieldsValidation(manageSingleInstanceData, engineType);
+        if (fieldsCorrect) {
+            handleRegisterFsxCredentials();
         }
     };
 
@@ -318,7 +609,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     return (
         <>
-            {wizardOperationType !== ACTION_TYPE.BULK && (
+            {wizardOperationType !== ACTION_TYPE.BULK && manageSingleInstanceData?.hostType !== DBType.MSSQL && (
                 <WizardFooter className={styles['pw-footer']} style={style}>
                     {currentStepIndex !== 0 && (
                         <DsButton
@@ -343,6 +634,55 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         </DsButton>
                     )}
                     {currentStepIndex === 1 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
+                            isThin
+                            onClick={handleManage}
+                            variant="primary"
+                            {...rest}
+                        >
+                            {t('databases.register-flow.register')}
+                        </DsButton>
+                    )}
+                </WizardFooter>
+            )}
+            {wizardOperationType !== ACTION_TYPE.BULK && manageSingleInstanceData?.hostType === DBType.MSSQL && (
+                <WizardFooter className={styles['pw-footer']} style={style}>
+                    {currentStepIndex !== 0 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-back-${currentStep}`}
+                            isThin
+                            onClick={goBack}
+                            variant="secondary"
+                        >
+                            {t('databases.register-flow.previous')}
+                        </DsButton>
+                    )}
+                    {currentStepIndex === 0 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
+                            isThin
+                            onClick={goAuthForwardForSingleRegister}
+                            variant="primary"
+                            isLoading={detectHostLoading}
+                            {...rest}
+                        >
+                            {t('databases.register-flow.next')}
+                        </DsButton>
+                    )}
+                    {currentStepIndex === 1 && (
+                        <DsButton
+                            data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
+                            isThin
+                            onClick={goFsxForwardForSingleRegister}
+                            variant="primary"
+                            isLoading={detectHostLoading}
+                            {...rest}
+                        >
+                            {t('databases.register-flow.next')}
+                        </DsButton>
+                    )}
+                    {currentStepIndex === 2 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
                             isThin

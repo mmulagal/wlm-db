@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { InventorySliceData } from '../../utils/types/inventoryV2Types';
-import { AUTHENTICATION_TYPE, DBType, WLF_TABS } from '../../utils/consts';
+import { FsxAuthStatus, FsxAuthStatusMap, InventorySliceData } from '../../utils/types/inventoryV2Types';
+import { AUTHENTICATION_TYPE, DBType, FSX_FOR_ONTAP_CRED_OPTION, WLF_TABS } from '../../utils/consts';
 import {
     getInitialInstanceTableColState,
     getInitialHostTableColState,
@@ -57,6 +57,8 @@ const initialInventoryV2State: InventorySliceData = {
     detectManagePassword: '',
     detectOntapUsername: '',
     detectOntapPassword: '',
+    detectOntapCredentialsByFsx: {} as Record<string, { username: string; password: string }>,
+    fsxAuthStatus: {} as FsxAuthStatusMap,
     detectWindowsAuthentication: {
         username: '',
         password: ''
@@ -130,13 +132,17 @@ const initialInventoryV2State: InventorySliceData = {
     registerHostType: '',
     selectedMultiDetectInstances: [],
     bulkDetectedInstanceList: [],
-    landingFromWizard: false
+    landingFromWizard: false,
+    selectedFSxForOntapCredentials: FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setSelectedFSxForOntapCredentials: (state, action: PayloadAction<string>) => {
+            state.selectedFSxForOntapCredentials = action.payload;
+        },
         setLandingFromWizard: (state, action: PayloadAction<any>) => {
             state.landingFromWizard = action.payload;
         },
@@ -286,6 +292,31 @@ const inventoryV2Slice = createSlice({
         },
         setDetectONTAPPassword: (state, action: PayloadAction<any>) => {
             state.detectOntapPassword = action.payload;
+        },
+        setDetectONTAPCredentialsByFsx: (
+            state,
+            action: PayloadAction<{ fsxName: string; username?: string; password?: string }>
+        ) => {
+            const { fsxName, username, password } = action.payload;
+            if (!state.detectOntapCredentialsByFsx[fsxName]) {
+                state.detectOntapCredentialsByFsx[fsxName] = { username: '', password: '' };
+            }
+            if (username !== undefined) {
+                state.detectOntapCredentialsByFsx[fsxName].username = username;
+            }
+            if (password !== undefined) {
+                state.detectOntapCredentialsByFsx[fsxName].password = password;
+            }
+        },
+        setFsxAuthStatus: (
+            state,
+            action: PayloadAction<{ fsxId: string; status: FsxAuthStatus } | FsxAuthStatusMap>
+        ) => {
+            if ('fsxId' in action.payload) {
+                state.fsxAuthStatus[action.payload.fsxId] = action.payload.status;
+            } else {
+                state.fsxAuthStatus = action.payload;
+            }
         },
         setDetectWindowsAuthentication: (
             state,
@@ -501,6 +532,7 @@ const inventoryV2Slice = createSlice({
 });
 
 export const {
+    setSelectedFSxForOntapCredentials,
     setLandingFromWizard,
     setSelectedMultiDetectInstances,
     setWizardOperationType,
@@ -547,6 +579,8 @@ export const {
     setDetectManagePassword,
     setDetectONTAPUserName,
     setDetectONTAPPassword,
+    setDetectONTAPCredentialsByFsx,
+    setFsxAuthStatus,
     setResetManagedData,
     setRemoveSecNodeDiscoveredList,
     setUnManagedPerfInstanceIdsList,
