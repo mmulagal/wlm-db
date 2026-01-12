@@ -21,13 +21,7 @@ import {
     WLMDB,
     HOURS_IN_MONTH
 } from '../utils/consts';
-import {
-    convertGiBToBytes,
-    getArtifactsRegionBucketName,
-    sizeInGigaBytes,
-    IS_DEMO_FLOW,
-    getMostFrequentValue
-} from '../utils/utils';
+import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes, IS_DEMO_FLOW } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -47,7 +41,8 @@ import {
     createOnPremTcoReportData,
     listOnPremDatabaseResources,
     removeOnPremTcoReportData,
-    updateOnPremTcoReportRecord
+    updateOnPremTcoReportRecord,
+    bulkUpdateOnPremTcoReportRecords
 } from '../lib/database/onprem-tco';
 import { getInstanceTypesFromInstanceRequirementsCommand } from '../lib/aws/ec2';
 import {
@@ -1399,6 +1394,58 @@ async function getOnPremResourceExploreSavings(
     }
 }
 
+// ============================================================================
+// Types for Bulk Resource Explore Savings
+// ============================================================================
+
+type EbsVolumeType = {
+    volumeType: string;
+    volumeNumber: number;
+    storageAmount: number;
+    volumeIops?: number;
+    throughput?: number;
+};
+
+type ResourcePrepData = {
+    resourceId: string;
+    resourceName: string;
+    deploymentType: string;
+    windowsConfig: WindowsConfig;
+    sqlInstanceDetails: SqlInstanceDetails[];
+    currentLicenseEdition: string;
+    recommendedLicenseEdition: string;
+    finding: string;
+};
+
+type ResourceDataWithInstanceTypes = ResourcePrepData & {
+    currentInstanceType?: string;
+    recommendedInstanceType?: string;
+};
+
+type IndividualResourceInfo = {
+    resourceId: string;
+    resourceName: string;
+    deploymentType: string;
+    existingNodeCount: number;
+    recommendedNodeCount: number;
+    currentLicenseEdition: string;
+    recommendedLicenseEdition: string;
+    finding: string;
+    currentInstanceType?: string;
+    recommendedInstanceType?: string;
+};
+
+type ResourceWithPricing = IndividualResourceInfo & {
+    currentLicenseType: string;
+    recommendedLicenseType: string;
+    currentPricing: Record<string, Record<string, { pricePerUnit: number }>>;
+    recommendedPricing: Record<string, Record<string, { pricePerUnit: number }>>;
+};
+
+// ============================================================================
+// Utility Functions for Bulk Resource Explore Savings
+// ============================================================================
+
 function deduplicateResourcesByLatestVersion(resources: any[]): any[] {
     logger.info('Deduplicating resources by latest version', { resourceCount: resources.length });
     const sortedResources = resources.sort(
@@ -1415,147 +1462,545 @@ function deduplicateResourcesByLatestVersion(resources: any[]): any[] {
 }
 
 /**
- * Process individual resources to collect their data
+ * Aggregates EBS volumes by type to avoid duplicate volumeType error from marketing API
  */
-async function processResourceDataForBulkAnalysis(
-    deduplicatedResources: any[],
-    resources: Array<{ resourceId: string; sqlInstanceData?: SqlInstanceDetailsRequestObjectType[] }>,
-    regionCode: string,
-    snapshotInfo?: StorageSavingsRequestBodyType
-): Promise<
-    Map<
-        string,
-        {
-            resourceId: string;
-            resourceName: string;
-            deploymentType: string;
-            windowsConfig: WindowsConfig;
-            sqlInstanceDetails: SqlInstanceDetails[];
-            recommendedLicenseEdition: string;
-            primaryEbsVolumes: unknown[];
-            secondaryEbsVolumes: unknown[];
-        }
-    >
-> {
-    logger.info('Processing resource data for bulk analysis', {
-        resourceCount: deduplicatedResources.length,
-        regionCode
-    });
-    const resourceDataMap = new Map<
-        string,
-        {
-            resourceId: string;
-            resourceName: string;
-            deploymentType: string;
-            windowsConfig: WindowsConfig;
-            sqlInstanceDetails: SqlInstanceDetails[];
-            recommendedLicenseEdition: string;
-            primaryEbsVolumes: unknown[];
-            secondaryEbsVolumes: unknown[];
-        }
-    >();
-
-    await Promise.all(
-        deduplicatedResources.map(async onPremDatabaseResource => {
-            const {
-                resource_id: resourceId,
-                host_config: hostConfig,
-                database_instances_data: persistedSqlInstancesDetails,
-                database_deployment_type: deploymentType
-            } = onPremDatabaseResource;
-
-            const rawSqlInstanceDetails = persistedSqlInstancesDetails as unknown as SqlInstanceDetails[];
-            const { windowsSystemName: resourceName } = hostConfig as unknown as WindowsConfig;
-
-            // Get the sqlInstanceData for this specific resource from the request
-            const resource = resources.find(r => r.resourceId === resourceId);
-            const sqlInstanceData = resource?.sqlInstanceData;
-
-            // If user provided sqlInstanceData or snapshotInfo for this resource, use it; otherwise use persisted data
-            const shouldUseRequestData = sqlInstanceData !== undefined || snapshotInfo !== undefined;
-
-            let sqlInstanceDetailsToUse: SqlInstanceDetails[];
-            if (shouldUseRequestData && sqlInstanceData) {
-                // Update details based on user request
-                const updatedSqlDetailsBasedOnRequest = rawSqlInstanceDetails.map(detail => {
-                    try {
-                        const {
-                            numDatabases: { primary: numDatabases, secondary: numDatabasesSecondary }
-                        } = parseSqlUsageParams(detail);
-                        const instanceData = sqlInstanceData.find(
-                            (data: { sqlInstanceId: string }) => data.sqlInstanceId === detail.instanceGuid
-                        );
-                        if (instanceData) {
-                            const {
-                                noOfVcpusInUse,
-                                memory,
-                                networkPerformance,
-                                totalIops,
-                                totalThroughput,
-                                totalStorage: incomingTotalStorage
-                            } = instanceData;
-
-                            const primaryDbRatio = numDatabases / (numDatabases + numDatabasesSecondary);
-                            const secondaryDbRatio = numDatabasesSecondary / (numDatabases + numDatabasesSecondary);
-                            return {
-                                ...detail,
-                                ...(noOfVcpusInUse && { noOfVcpusInUse }),
-                                ...(networkPerformance && { networkPerformance }),
-                                ...(memory && { memory }),
-                                ...(totalIops && { totalIops }),
-                                ...(totalThroughput && { totalThroughput }),
-                                ...(numDatabases &&
-                                    incomingTotalStorage && {
-                                        totalStorage: sizeInGigaBytes(incomingTotalStorage, 'B') * primaryDbRatio
-                                    }),
-                                ...(numDatabasesSecondary &&
-                                    incomingTotalStorage && {
-                                        totalSecondaryStorage:
-                                            sizeInGigaBytes(incomingTotalStorage, 'B') * secondaryDbRatio
-                                    }),
-                                deploymentType
-                            };
-                        }
-                        return {
-                            ...detail,
-                            deploymentType
-                        };
-                    } catch (error) {
-                        const errorMessage = `Error updating SQL instance details based on request. ${error}`;
-                        logger.warn({ errorMessage, detail });
-                        return undefined;
-                    }
-                });
-                sqlInstanceDetailsToUse = compact(updatedSqlDetailsBasedOnRequest) as SqlInstanceDetails[];
-            } else {
-                // Use persisted raw details when no user input provided
-                sqlInstanceDetailsToUse = compact(rawSqlInstanceDetails) as SqlInstanceDetails[];
-            }
-
-            // Get license recommendations for this resource
-            const { recommendedLicenseEdition } = getOnpremLicenseRecommendations(sqlInstanceDetailsToUse);
-
-            // Get EBS volumes for this resource
-            const { primaryEbsVolumes, secondaryEbsVolumes } = deriveEbsVolumesListForMarketing(
-                regionCode,
-                sqlInstanceDetailsToUse
-            );
-
-            resourceDataMap.set(resourceId, {
-                resourceId,
-                resourceName,
-                deploymentType,
-                windowsConfig: hostConfig as unknown as WindowsConfig,
-                sqlInstanceDetails: sqlInstanceDetailsToUse,
-                recommendedLicenseEdition,
-                primaryEbsVolumes,
-                secondaryEbsVolumes
+function aggregateVolumesByType(volumes: EbsVolumeType[]): EbsVolumeType[] {
+    const volumeMap = new Map<string, EbsVolumeType>();
+    for (const volume of volumes) {
+        const existing = volumeMap.get(volume.volumeType);
+        if (existing) {
+            const hasIops = existing.volumeIops !== undefined || volume.volumeIops !== undefined;
+            const hasThroughput = existing.throughput !== undefined || volume.throughput !== undefined;
+            volumeMap.set(volume.volumeType, {
+                volumeType: volume.volumeType,
+                volumeNumber: existing.volumeNumber + volume.volumeNumber,
+                storageAmount: existing.storageAmount + volume.storageAmount,
+                volumeIops: hasIops ? Math.max(existing.volumeIops || 0, volume.volumeIops || 0) : undefined,
+                throughput: hasThroughput ? Math.max(existing.throughput || 0, volume.throughput || 0) : undefined
             });
+        } else {
+            volumeMap.set(volume.volumeType, { ...volume });
+        }
+    }
+    return Array.from(volumeMap.values());
+}
+
+/**
+ * Gets the existing node count for a resource based on deployment type.
+ * For FCI/AOAG deployments, parses ownerNodes from SQL instance to get actual cluster node count.
+ * Falls back to windowsConfig.nodeDetails.length if ownerNodes is not available.
+ */
+function getExistingNodeCount(
+    deploymentType: string,
+    sqlInstanceDetails: SqlInstanceDetails[],
+    windowsConfig: WindowsConfig
+): number {
+    logger.info('Getting existing node count', { deploymentType, sqlInstanceCount: sqlInstanceDetails.length });
+    // For FCI/AOAG, try to get node count from ownerNodes in the SQL instance
+    if (deploymentType !== DATABASE_DEPLOYMENT_TYPE.Standalone && sqlInstanceDetails.length > 0) {
+        const firstInstance = sqlInstanceDetails[0];
+        if (firstInstance.ownerNodes) {
+            try {
+                const ownerNodes = JSON.parse(firstInstance.ownerNodes);
+                if (Array.isArray(ownerNodes) && ownerNodes.length > 0) {
+                    return ownerNodes.length;
+                }
+            } catch (e) {
+                logger.warn('Failed to parse ownerNodes, falling back to windowsConfig.nodeDetails', {
+                    ownerNodes: firstInstance.ownerNodes,
+                    error: e
+                });
+            }
+        }
+    }
+    // Fallback to windowsConfig.nodeDetails.length
+    return windowsConfig.nodeDetails.length;
+}
+
+/**
+ * Prepares resource data by updating SQL instance details based on user input
+ */
+function prepareResourceData(
+    onPremDatabaseResource: any,
+    resources: Array<{ resourceId: string; sqlInstanceData?: SqlInstanceDetailsRequestObjectType[] }>
+): ResourcePrepData | null {
+    const {
+        resource_id: resourceId,
+        host_config: hostConfig,
+        database_instances_data: persistedSqlInstancesDetails,
+        database_deployment_type: deploymentType
+    } = onPremDatabaseResource;
+
+    const rawSqlInstanceDetails = persistedSqlInstancesDetails as unknown as SqlInstanceDetails[];
+    const windowsConfig = hostConfig as unknown as WindowsConfig;
+    const { windowsSystemName: resourceName } = windowsConfig;
+
+    const resourceRequest = resources.find(r => r.resourceId === resourceId);
+    const sqlInstanceData = resourceRequest?.sqlInstanceData;
+
+    let sqlInstanceDetailsToUse: SqlInstanceDetails[];
+    if (sqlInstanceData) {
+        const updatedSqlDetailsBasedOnRequest = rawSqlInstanceDetails.map(detail => {
+            try {
+                const {
+                    numDatabases: { primary: numDatabases, secondary: numDatabasesSecondary }
+                } = parseSqlUsageParams(detail);
+                const instanceData = sqlInstanceData.find(
+                    (data: { sqlInstanceId: string }) => data.sqlInstanceId === detail.instanceGuid
+                );
+                if (instanceData) {
+                    const {
+                        noOfVcpusInUse,
+                        memory,
+                        networkPerformance,
+                        totalIops,
+                        totalThroughput,
+                        totalStorage: incomingTotalStorage
+                    } = instanceData;
+
+                    const primaryDbRatio = numDatabases / (numDatabases + numDatabasesSecondary);
+                    const secondaryDbRatio = numDatabasesSecondary / (numDatabases + numDatabasesSecondary);
+                    return {
+                        ...detail,
+                        ...(noOfVcpusInUse && { noOfVcpusInUse }),
+                        ...(networkPerformance && { networkPerformance }),
+                        ...(memory && { memory }),
+                        ...(totalIops && { totalIops }),
+                        ...(totalThroughput && { totalThroughput }),
+                        ...(numDatabases &&
+                            incomingTotalStorage && {
+                                totalStorage: sizeInGigaBytes(incomingTotalStorage, 'B') * primaryDbRatio
+                            }),
+                        ...(numDatabasesSecondary &&
+                            incomingTotalStorage && {
+                                totalSecondaryStorage: sizeInGigaBytes(incomingTotalStorage, 'B') * secondaryDbRatio
+                            }),
+                        deploymentType
+                    };
+                }
+                return { ...detail, deploymentType };
+            } catch (error) {
+                logger.warn({ errorMessage: `Error updating SQL instance details: ${error}`, detail });
+                return undefined;
+            }
+        });
+        sqlInstanceDetailsToUse = compact(updatedSqlDetailsBasedOnRequest) as SqlInstanceDetails[];
+    } else {
+        sqlInstanceDetailsToUse = compact(rawSqlInstanceDetails) as SqlInstanceDetails[];
+    }
+
+    const { currentLicenseEdition, recommendedLicenseEdition, finding } =
+        getOnpremLicenseRecommendations(sqlInstanceDetailsToUse);
+
+    return {
+        resourceId,
+        resourceName,
+        deploymentType,
+        windowsConfig,
+        sqlInstanceDetails: sqlInstanceDetailsToUse,
+        currentLicenseEdition,
+        recommendedLicenseEdition,
+        finding
+    };
+}
+
+/**
+ * Derives instance types for a resource
+ */
+async function deriveInstanceTypesForResource(
+    prepData: ResourcePrepData,
+    regionCode: string
+): Promise<ResourceDataWithInstanceTypes> {
+    const { windowsConfig, sqlInstanceDetails, currentLicenseEdition, recommendedLicenseEdition } = prepData;
+
+    const [currentInstanceType, recommendedInstanceType] = await Promise.all([
+        deriveHostConfigBasedInstanceType(
+            regionCode,
+            windowsConfig,
+            isNonFreeEnterpriseEdition(currentLicenseEdition) ? ENTERPRISE_EDITION : STANDARD_EDITION
+        ),
+        deriveSqlUsageBasedInstanceType(regionCode, sqlInstanceDetails, recommendedLicenseEdition)
+    ]);
+
+    return { ...prepData, currentInstanceType, recommendedInstanceType };
+}
+
+/**
+ * Collects and aggregates EBS volumes from all resources
+ */
+function collectAndAggregateEbsVolumes(
+    validResourceDataList: ResourceDataWithInstanceTypes[],
+    regionCode: string
+): {
+    combinedPrimaryEbsVolumes: EbsVolumeType[];
+    combinedSecondaryEbsVolumes: EbsVolumeType[];
+    totalNodeCount: number;
+} {
+    let combinedPrimaryEbsVolumes: EbsVolumeType[] = [];
+    let combinedSecondaryEbsVolumes: EbsVolumeType[] = [];
+    let totalNodeCount = 0;
+
+    for (const resourceData of validResourceDataList) {
+        const { windowsConfig, sqlInstanceDetails } = resourceData;
+
+        const ebsVolumes = deriveEbsVolumesListForMarketing(regionCode, sqlInstanceDetails);
+        if (ebsVolumes) {
+            const { primaryEbsVolumes, secondaryEbsVolumes } = ebsVolumes;
+            if (primaryEbsVolumes) {
+                combinedPrimaryEbsVolumes = [...combinedPrimaryEbsVolumes, ...primaryEbsVolumes];
+            }
+            if (secondaryEbsVolumes) {
+                combinedSecondaryEbsVolumes = [...combinedSecondaryEbsVolumes, ...secondaryEbsVolumes];
+            }
+        }
+        totalNodeCount += windowsConfig.nodeDetails.length;
+    }
+
+    return {
+        combinedPrimaryEbsVolumes: aggregateVolumesByType(combinedPrimaryEbsVolumes),
+        combinedSecondaryEbsVolumes: aggregateVolumesByType(combinedSecondaryEbsVolumes),
+        totalNodeCount
+    };
+}
+
+/**
+ * Builds combined EC2 instances for marketing API calls
+ */
+function buildCombinedEc2Instances(
+    combinedPrimaryEbsVolumes: EbsVolumeType[],
+    combinedSecondaryEbsVolumes: EbsVolumeType[],
+    currentInstanceType: string,
+    recommendedInstanceType: string
+): { existingEc2Instances: ManualModeInstancesType; recommendedEc2Instances: ManualModeInstancesType } {
+    const existingEc2Instances: ManualModeInstancesType = [];
+    const recommendedEc2Instances: ManualModeInstancesType = [];
+
+    if (!isEmpty(combinedPrimaryEbsVolumes)) {
+        existingEc2Instances.push({
+            ec2InstanceDescription: 'Combined Primary',
+            ec2InstanceType: currentInstanceType,
+            isPrimary: true,
+            volumes: combinedPrimaryEbsVolumes
+        });
+        recommendedEc2Instances.push({
+            ec2InstanceDescription: 'Combined Primary',
+            ec2InstanceType: recommendedInstanceType,
+            isPrimary: true,
+            volumes: combinedPrimaryEbsVolumes
+        });
+    }
+    if (!isEmpty(combinedSecondaryEbsVolumes)) {
+        existingEc2Instances.push({
+            ec2InstanceDescription: 'Combined Secondary',
+            ec2InstanceType: currentInstanceType,
+            isPrimary: false,
+            volumes: combinedSecondaryEbsVolumes
+        });
+        recommendedEc2Instances.push({
+            ec2InstanceDescription: 'Combined Secondary',
+            ec2InstanceType: recommendedInstanceType,
+            isPrimary: false,
+            volumes: combinedSecondaryEbsVolumes
+        });
+    }
+
+    return { existingEc2Instances, recommendedEc2Instances };
+}
+
+/**
+ * Fetches pricing for all resources by deduplicating instance types and batching API calls
+ */
+type PricingDetails = Record<string, Record<string, { pricePerUnit: number }>>;
+
+function isEnterpriseEditionForPricing(licenseEdition: string): boolean {
+    return licenseEdition.toLowerCase().includes('enterprise');
+}
+
+async function fetchPricingForResources(
+    individualResourceInfo: IndividualResourceInfo[],
+    regionCode: string
+): Promise<ResourceWithPricing[]> {
+    // Step 1: Collect unique instance type + license type combinations
+    const uniquePricingRequests = new Map<string, { instanceType: string; licenseType: string }>();
+
+    const resourceLicenseTypes = individualResourceInfo.map(resourceInfo => {
+        const { currentLicenseEdition, recommendedLicenseEdition, currentInstanceType, recommendedInstanceType } =
+            resourceInfo;
+
+        const currentLicenseType = isEnterpriseEditionForPricing(currentLicenseEdition)
+            ? PRICING_LICENSE_KEYS.SQL_ENT
+            : PRICING_LICENSE_KEYS.SQL_STD;
+        const recommendedLicenseType = isEnterpriseEditionForPricing(recommendedLicenseEdition)
+            ? PRICING_LICENSE_KEYS.SQL_ENT
+            : PRICING_LICENSE_KEYS.SQL_STD;
+
+        // Add to unique requests map only when instance types are defined
+        if (currentInstanceType) {
+            const currentKey = `${currentInstanceType}|${currentLicenseType}`;
+            if (!uniquePricingRequests.has(currentKey)) {
+                uniquePricingRequests.set(currentKey, {
+                    instanceType: currentInstanceType,
+                    licenseType: currentLicenseType
+                });
+            }
+        }
+        if (recommendedInstanceType) {
+            const recommendedKey = `${recommendedInstanceType}|${recommendedLicenseType}`;
+            if (!uniquePricingRequests.has(recommendedKey)) {
+                uniquePricingRequests.set(recommendedKey, {
+                    instanceType: recommendedInstanceType,
+                    licenseType: recommendedLicenseType
+                });
+            }
+        }
+
+        return { currentLicenseType, recommendedLicenseType };
+    });
+
+    // Step 2: Fetch pricing for unique combinations in parallel
+    const uniqueRequests = Array.from(uniquePricingRequests.entries());
+    const pricingResults = await Promise.all(
+        uniqueRequests.map(async ([key, { instanceType, licenseType }]) => {
+            const pricing = await getSqlInstancePricingDetails(
+                regionCode,
+                instanceType,
+                'windows',
+                undefined,
+                licenseType
+            );
+            return { key, pricing };
         })
     );
 
-    return resourceDataMap;
+    // Step 3: Build pricing cache from results
+    const pricingCache = new Map<string, PricingDetails>();
+    for (const { key, pricing } of pricingResults) {
+        pricingCache.set(key, pricing as PricingDetails);
+    }
+
+    // Step 4: Map resources to their pricing using cache
+    return individualResourceInfo.map((resourceInfo, index) => {
+        const { currentInstanceType, recommendedInstanceType } = resourceInfo;
+        const { currentLicenseType, recommendedLicenseType } = resourceLicenseTypes[index];
+
+        const currentKey = currentInstanceType ? `${currentInstanceType}|${currentLicenseType}` : '';
+        const recommendedKey = recommendedInstanceType ? `${recommendedInstanceType}|${recommendedLicenseType}` : '';
+
+        return {
+            ...resourceInfo,
+            currentLicenseType,
+            recommendedLicenseType,
+            currentPricing: currentKey ? pricingCache.get(currentKey) : undefined,
+            recommendedPricing: recommendedKey ? pricingCache.get(recommendedKey) : undefined
+        } as ResourceWithPricing;
+    });
 }
+
+/**
+ * Builds per-resource compute and license calculation objects
+ */
+function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[]) {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const existingComputeCalculation: any[] = [];
+    const existingLicenseCalculation: any[] = [];
+    const recommendedComputeCalculation: any[] = [];
+    const recommendedLicenseCalculation: any[] = [];
+    const computeSavings: any[] = [];
+    const licenseSavings: any[] = [];
+    const perResourceAssessmentData: any[] = [];
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+
+    for (const resourceInfo of resourcesWithPricing) {
+        const {
+            resourceId,
+            resourceName,
+            deploymentType,
+            existingNodeCount,
+            recommendedNodeCount,
+            currentLicenseEdition,
+            recommendedLicenseEdition,
+            finding,
+            currentInstanceType,
+            recommendedInstanceType,
+            currentLicenseType,
+            recommendedLicenseType,
+            currentPricing,
+            recommendedPricing
+        } = resourceInfo;
+
+        // Extract pricing details
+        const currentPrice = currentPricing?.[currentInstanceType!]?.[currentLicenseType]?.pricePerUnit || 0;
+        const currentBasePrice = currentPricing?.[currentInstanceType!]?.NA?.pricePerUnit || 0;
+        const currentLicensePrice = currentPrice - currentBasePrice;
+
+        const recommendedPrice =
+            recommendedPricing?.[recommendedInstanceType!]?.[recommendedLicenseType]?.pricePerUnit || 0;
+        const recommendedBasePrice = recommendedPricing?.[recommendedInstanceType!]?.NA?.pricePerUnit || 0;
+        const recommendedLicensePrice = recommendedPrice - recommendedBasePrice;
+
+        // Calculate monthly costs (using respective node counts for existing vs recommended)
+        const existingComputeMonthlyPrice = currentBasePrice * HOURS_IN_MONTH * existingNodeCount;
+        const existingInstanceMonthlyPrice = currentPrice * HOURS_IN_MONTH * existingNodeCount;
+        const existingLicenseMonthlyPrice = currentLicensePrice * HOURS_IN_MONTH * existingNodeCount;
+
+        const recommendedComputeMonthlyPrice = recommendedBasePrice * HOURS_IN_MONTH * recommendedNodeCount;
+        const recommendedInstanceMonthlyPrice = recommendedPrice * HOURS_IN_MONTH * recommendedNodeCount;
+        const recommendedLicenseMonthlyPrice = recommendedLicensePrice * HOURS_IN_MONTH * recommendedNodeCount;
+
+        // Build machine details for each node (FCI/AOAG have multiple nodes)
+        const currentMachineDetail = {
+            instanceType: currentInstanceType,
+            price: currentPrice,
+            basePrice: currentBasePrice,
+            computeMonthlyPrice: currentBasePrice * HOURS_IN_MONTH,
+            instanceMonthlyPrice: currentPrice * HOURS_IN_MONTH,
+            licenseMonthlyPrice: currentLicensePrice * HOURS_IN_MONTH,
+            hoursInMonth: HOURS_IN_MONTH,
+            licenseIncluded: true
+        };
+        const recommendedMachineDetail = {
+            instanceType: recommendedInstanceType,
+            price: recommendedPrice,
+            basePrice: recommendedBasePrice,
+            computeMonthlyPrice: recommendedBasePrice * HOURS_IN_MONTH,
+            instanceMonthlyPrice: recommendedPrice * HOURS_IN_MONTH,
+            licenseMonthlyPrice: recommendedLicensePrice * HOURS_IN_MONTH,
+            hoursInMonth: HOURS_IN_MONTH,
+            licenseIncluded: true
+        };
+
+        // Create machineDetails array with one entry per node
+        const currentMachineDetails = Array.from({ length: existingNodeCount }, () => ({ ...currentMachineDetail }));
+        const recommendedMachineDetails = Array.from({ length: recommendedNodeCount }, () => ({
+            ...recommendedMachineDetail
+        }));
+
+        // For multi-node deployments, join instance types with ", " to match single-resource format
+        const existingInstanceTypeDisplay = Array(existingNodeCount).fill(currentInstanceType).join(', ');
+        const recommendedInstanceTypeDisplay = Array(recommendedNodeCount).fill(recommendedInstanceType).join(', ');
+
+        // Calculate total hourly prices (sum across all nodes)
+        const existingComputeHourlyPrice = currentBasePrice * existingNodeCount;
+        const recommendedComputeHourlyPrice = recommendedBasePrice * recommendedNodeCount;
+        const existingLicenseHourlyPrice = currentLicensePrice * existingNodeCount;
+        const recommendedLicenseHourlyPrice = recommendedLicensePrice * recommendedNodeCount;
+
+        // Build compute calculation objects (include licenseMonthlyPrice for completeness)
+        existingComputeCalculation.push({
+            resourceName,
+            deploymentType,
+            instanceType: existingInstanceTypeDisplay,
+            computeHourlyPrice: existingComputeHourlyPrice,
+            computeMonthlyPrice: existingComputeMonthlyPrice,
+            instanceMonthlyPrice: existingInstanceMonthlyPrice,
+            licenseMonthlyPrice: existingLicenseMonthlyPrice,
+            hoursInMonth: HOURS_IN_MONTH,
+            nodeCount: existingNodeCount,
+            machineDetails: currentMachineDetails
+        });
+
+        recommendedComputeCalculation.push({
+            resourceName,
+            deploymentType,
+            instanceType: recommendedInstanceTypeDisplay,
+            computeHourlyPrice: recommendedComputeHourlyPrice,
+            computeMonthlyPrice: recommendedComputeMonthlyPrice,
+            instanceMonthlyPrice: recommendedInstanceMonthlyPrice,
+            licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
+            hoursInMonth: HOURS_IN_MONTH,
+            nodeCount: recommendedNodeCount,
+            machineDetails: recommendedMachineDetails
+        });
+
+        // Build license calculation objects
+        existingLicenseCalculation.push({
+            resourceName,
+            deploymentType,
+            licenseEdition: currentLicenseEdition,
+            licenseHourlyPrice: existingLicenseHourlyPrice,
+            licenseMonthlyPrice: existingLicenseMonthlyPrice,
+            hoursInMonth: HOURS_IN_MONTH,
+            nodeCount: existingNodeCount
+        });
+
+        recommendedLicenseCalculation.push({
+            resourceName,
+            deploymentType,
+            licenseEdition: recommendedLicenseEdition,
+            licenseHourlyPrice: recommendedLicenseHourlyPrice,
+            licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
+            hoursInMonth: HOURS_IN_MONTH,
+            nodeCount: recommendedNodeCount
+        });
+
+        // Build storage savings compute/license arrays (include licenseMonthlyPrice in compute for UI display)
+        computeSavings.push({
+            resourceName,
+            deploymentType,
+            existing: {
+                instanceType: existingInstanceTypeDisplay,
+                computeHourlyPrice: existingComputeHourlyPrice,
+                computeMonthlyPrice: existingComputeMonthlyPrice,
+                instanceMonthlyPrice: existingInstanceMonthlyPrice,
+                licenseMonthlyPrice: existingLicenseMonthlyPrice,
+                hoursInMonth: HOURS_IN_MONTH,
+                machineDetails: currentMachineDetails
+            },
+            recommended: {
+                instanceType: recommendedInstanceTypeDisplay,
+                computeHourlyPrice: recommendedComputeHourlyPrice,
+                computeMonthlyPrice: recommendedComputeMonthlyPrice,
+                instanceMonthlyPrice: recommendedInstanceMonthlyPrice,
+                licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
+                hoursInMonth: HOURS_IN_MONTH,
+                machineDetails: recommendedMachineDetails
+            }
+        });
+
+        licenseSavings.push({
+            resourceName,
+            deploymentType,
+            existing: {
+                licenseEdition: currentLicenseEdition,
+                licenseHourlyPrice: existingLicenseHourlyPrice,
+                licenseMonthlyPrice: existingLicenseMonthlyPrice,
+                hoursInMonth: HOURS_IN_MONTH
+            },
+            recommended: {
+                licenseEdition: recommendedLicenseEdition,
+                licenseHourlyPrice: recommendedLicenseHourlyPrice,
+                licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
+                hoursInMonth: HOURS_IN_MONTH
+            },
+            finding
+        });
+
+        // Build per-resource assessment data for DB storage
+        perResourceAssessmentData.push({
+            resourceId,
+            existingComputeCalculation: existingComputeCalculation[existingComputeCalculation.length - 1],
+            existingLicenseCalculation: existingLicenseCalculation[existingLicenseCalculation.length - 1],
+            recommendedComputeCalculation: recommendedComputeCalculation[recommendedComputeCalculation.length - 1],
+            recommendedLicenseCalculation: recommendedLicenseCalculation[recommendedLicenseCalculation.length - 1],
+            computeSavings: computeSavings[computeSavings.length - 1],
+            licenseSavings: licenseSavings[licenseSavings.length - 1]
+        });
+    }
+
+    return {
+        existingComputeCalculation,
+        existingLicenseCalculation,
+        recommendedComputeCalculation,
+        recommendedLicenseCalculation,
+        computeSavings,
+        licenseSavings,
+        perResourceAssessmentData
+    };
+}
+
+// ============================================================================
+// Main Bulk Resource Explore Savings Function
+// ============================================================================
 
 async function getOnPremBulkResourceExploreSavings(
     accountId: string,
@@ -1592,348 +2037,273 @@ async function getOnPremBulkResourceExploreSavings(
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
 
-    // Deduplicate by resource_id, keeping only the latest record (most recent creation_time)
+    // Deduplicate by resource_id, keeping only the latest record
     const deduplicatedResources = deduplicateResourcesByLatestVersion(onPremDatabaseResources);
 
     try {
-        // First pass: process each resource individually to collect their data
-        const resourceDataMap = await processResourceDataForBulkAnalysis(
-            deduplicatedResources,
-            resources,
-            regionCode,
-            snapshotInfo
+        // Step 1: Prepare all resource data
+        const resourcePrepDataList = compact(
+            deduplicatedResources.map(resource => prepareResourceData(resource, resources))
         );
 
-        // Second pass: aggregate volumes from all resources
-        const accumulatedPrimaryVolumes = new Map<
-            string,
-            { volumeType: string; volumeNumber: number; storageAmount: number; volumeIops: number; throughput: number }
-        >();
-        const accumulatedSecondaryVolumes = new Map<
-            string,
-            { volumeType: string; volumeNumber: number; storageAmount: number; volumeIops: number; throughput: number }
-        >();
+        if (isEmpty(resourcePrepDataList)) {
+            const errorMessage = 'No valid resources found for bulk analysis.';
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
 
-        // Accumulate and deduplicate volumes from all resources
-        Array.from(resourceDataMap.values()).forEach(resourceData => {
-            resourceData.primaryEbsVolumes?.forEach((volume: any) => {
-                const key = volume.volumeType;
-                if (accumulatedPrimaryVolumes.has(key)) {
-                    const existing = accumulatedPrimaryVolumes.get(key)!;
-                    accumulatedPrimaryVolumes.set(key, {
-                        volumeType: key,
-                        volumeNumber: existing.volumeNumber + volume.volumeNumber,
-                        storageAmount: existing.storageAmount + volume.storageAmount,
-                        volumeIops: Math.max(existing.volumeIops, volume.volumeIops),
-                        throughput: Math.max(existing.throughput, volume.throughput)
-                    });
-                } else {
-                    accumulatedPrimaryVolumes.set(key, volume);
-                }
-            });
+        // Step 2: Derive instance types for all resources in parallel
+        const resourceDataWithInstanceTypes = await Promise.all(
+            resourcePrepDataList.map(prepData => deriveInstanceTypesForResource(prepData, regionCode))
+        );
 
-            resourceData.secondaryEbsVolumes?.forEach((volume: any) => {
-                const key = volume.volumeType;
-                if (accumulatedSecondaryVolumes.has(key)) {
-                    const existing = accumulatedSecondaryVolumes.get(key)!;
-                    accumulatedSecondaryVolumes.set(key, {
-                        volumeType: key,
-                        volumeNumber: existing.volumeNumber + volume.volumeNumber,
-                        storageAmount: existing.storageAmount + volume.storageAmount,
-                        volumeIops: Math.max(existing.volumeIops, volume.volumeIops),
-                        throughput: Math.max(existing.throughput, volume.throughput)
-                    });
-                } else {
-                    accumulatedSecondaryVolumes.set(key, volume);
-                }
-            });
+        // Filter out resources where instance types could not be derived
+        const validResourceDataList = resourceDataWithInstanceTypes.filter(data => {
+            if (!data.currentInstanceType || !data.recommendedInstanceType) {
+                logger.warn(`Could not derive instance types for resource ${data.resourceId}, skipping`);
+                return false;
+            }
+            return true;
         });
 
-        const primaryVolumesArray = Array.from(accumulatedPrimaryVolumes.values());
-        const secondaryVolumesArray = Array.from(accumulatedSecondaryVolumes.values());
+        if (isEmpty(validResourceDataList)) {
+            const errorMessage = 'No valid resources with instance types found for bulk analysis.';
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
 
-        // Prepare parameters for marketing API call
+        // Step 3: Collect and aggregate EBS volumes
+        const { combinedPrimaryEbsVolumes, combinedSecondaryEbsVolumes, totalNodeCount } =
+            collectAndAggregateEbsVolumes(validResourceDataList, regionCode);
+
+        // Step 4: Build individual resource info for compute/license breakdown
+        const individualResourceInfo: IndividualResourceInfo[] = validResourceDataList.map(
+            ({
+                resourceId,
+                resourceName,
+                deploymentType,
+                windowsConfig,
+                sqlInstanceDetails,
+                currentLicenseEdition,
+                recommendedLicenseEdition,
+                finding,
+                currentInstanceType,
+                recommendedInstanceType
+            }) => ({
+                resourceId,
+                resourceName,
+                deploymentType,
+                existingNodeCount: getExistingNodeCount(deploymentType, sqlInstanceDetails, windowsConfig),
+                // For recommended, use 2 nodes for FCI/AOAG (same logic as single-resource flow)
+                recommendedNodeCount: deploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ? 1 : 2,
+                currentLicenseEdition,
+                recommendedLicenseEdition,
+                finding,
+                currentInstanceType,
+                recommendedInstanceType
+            })
+        );
+
+        // Step 5: Build combined EC2 instances for marketing API calls
+        const { existingEc2Instances, recommendedEc2Instances } = buildCombinedEc2Instances(
+            combinedPrimaryEbsVolumes,
+            combinedSecondaryEbsVolumes,
+            validResourceDataList[0].currentInstanceType!,
+            validResourceDataList[0].recommendedInstanceType!
+        );
+
+        // Step 6: Determine combined license editions
+        const hasEnterpriseEdition = individualResourceInfo.some(info =>
+            isNonFreeEnterpriseEdition(info.currentLicenseEdition)
+        );
+        const combinedExistingLicenseEdition = hasEnterpriseEdition ? ENTERPRISE_EDITION : STANDARD_EDITION;
+
+        const hasRecommendedEnterprise = individualResourceInfo.some(info =>
+            isNonFreeEnterpriseEdition(info.recommendedLicenseEdition)
+        );
+        const combinedRecommendedLicenseEdition = hasRecommendedEnterprise ? ENTERPRISE_EDITION : STANDARD_EDITION;
+
+        // Step 7: Prepare base params for marketing API calls
         const {
             clonedCopiesCount = 1,
             monthlyChangeRatePercentage = 8,
             snapshotFrequency = 'Daily'
         } = snapshotInfo || {};
 
-        // Determine the most common deployment type from resources for better accuracy
-        const deploymentTypes = Array.from(resourceDataMap.values()).map(r => r.deploymentType);
-        const mostCommonDeploymentType = getMostFrequentValue(deploymentTypes) || 'Standalone';
-
-        const params = {
+        const baseParams = {
             clonedCopiesCount,
             snapshotFrequency,
             monthlyChangeRatePercentage,
-            sqlServerDeploymentType: mostCommonDeploymentType
+            sqlServerDeploymentType: 'Standalone'
         };
 
-        // Get the most common recommended license edition from all resources
-        const recommendedLicenses = Array.from(resourceDataMap.values()).map(r => r.recommendedLicenseEdition);
-        const mostCommonRecommendedLicense = getMostFrequentValue(recommendedLicenses) || STANDARD_EDITION;
-
-        // Third pass: derive instance types for all resources first (needed for EC2 instances in marketing API call)
-        const resourceInstanceTypes = new Map<string, { current: string; recommended: string }>();
-        await Promise.all(
-            Array.from(resourceDataMap.values()).map(async resourceData => {
-                const { resourceId, windowsConfig, sqlInstanceDetails, recommendedLicenseEdition } = resourceData;
-                const { currentLicenseEdition } = getOnpremLicenseRecommendations(sqlInstanceDetails);
-
-                const [currentInstanceType, recommendedInstanceType] = await Promise.all([
-                    deriveHostConfigBasedInstanceType(
-                        regionCode,
-                        windowsConfig,
-                        isNonFreeEnterpriseEdition(currentLicenseEdition) ? ENTERPRISE_EDITION : STANDARD_EDITION
-                    ),
-                    deriveSqlUsageBasedInstanceType(regionCode, sqlInstanceDetails, recommendedLicenseEdition)
-                ]);
-
-                if (!currentInstanceType || !recommendedInstanceType) {
-                    throw createError(
-                        HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                        `Failed to derive instance types for resource ${resourceId}`
-                    );
-                }
-
-                resourceInstanceTypes.set(resourceId, {
-                    current: currentInstanceType,
-                    recommended: recommendedInstanceType
-                });
-            })
-        );
-
-        // Update EC2 instances to use a representative existing instance type instead of placeholder
-        // Use the most common instance type from all resources for more accurate bulk representation
-        const currentInstanceTypes = Array.from(resourceInstanceTypes.values()).map(instance => instance.current);
-        const representativeInstanceType =
-            getMostFrequentValue(currentInstanceTypes) || currentInstanceTypes[0] || 'm5.xlarge';
-
-        // Build aggregated EC2 instances with actual representative instance type
-        const aggregatedEc2Instances: ManualModeInstancesType = [];
-        if (!isEmpty(primaryVolumesArray)) {
-            aggregatedEc2Instances.push({
-                ec2InstanceDescription: 'Primary',
-                ec2InstanceType: representativeInstanceType,
-                isPrimary: true,
-                volumes: primaryVolumesArray as any
-            });
-        }
-
-        if (!isEmpty(secondaryVolumesArray)) {
-            aggregatedEc2Instances.push({
-                ec2InstanceDescription: 'Secondary',
-                ec2InstanceType: representativeInstanceType,
-                isPrimary: false,
-                volumes: secondaryVolumesArray as any
-            });
-        }
-
-        // Get the most common current license edition from all resources for existing storage calculation
-        const currentLicenses = Array.from(resourceDataMap.values()).map(r => {
-            const { currentLicenseEdition } = getOnpremLicenseRecommendations(r.sqlInstanceDetails);
-            return currentLicenseEdition;
-        });
-        const mostCommonCurrentLicense = getMostFrequentValue(currentLicenses) || STANDARD_EDITION;
-
-        // Call marketing API in parallel for BOTH existing and recommended storage calculations
-        const [storageResults, existingStorageResults] = await Promise.all([
+        // Step 8: Call marketing APIs AND fetch pricing in parallel (independent operations)
+        const [
+            existingConfigData,
+            existingConfigCalculations,
+            recommendedConfigData,
+            recommendedConfigCalculations,
+            resourcesWithPricing
+        ] = await Promise.all([
             performManualModeStorageSavingsCalculations(
                 accountId,
                 regionCode,
                 {
-                    ...params,
-                    ec2Instances: aggregatedEc2Instances,
-                    sqlServerEdition: mostCommonRecommendedLicense || STANDARD_EDITION
+                    ...baseParams,
+                    ec2Instances: existingEc2Instances,
+                    sqlServerEdition: combinedExistingLicenseEdition
                 },
-                deduplicatedResources.length,
+                totalNodeCount,
+                true
+            ),
+            getManualModeStorageSavingsCalculationMetrics(
+                accountId,
+                regionCode,
+                {
+                    ...baseParams,
+                    ec2Instances: existingEc2Instances,
+                    sqlServerEdition: combinedExistingLicenseEdition
+                },
+                totalNodeCount,
                 true
             ),
             performManualModeStorageSavingsCalculations(
                 accountId,
                 regionCode,
                 {
-                    ...params,
-                    ec2Instances: aggregatedEc2Instances,
-                    sqlServerEdition: mostCommonCurrentLicense
+                    ...baseParams,
+                    ec2Instances: recommendedEc2Instances,
+                    sqlServerEdition: combinedRecommendedLicenseEdition
                 },
-                deduplicatedResources.length,
+                totalNodeCount,
                 true
-            )
+            ),
+            getManualModeStorageSavingsCalculationMetrics(
+                accountId,
+                regionCode,
+                {
+                    ...baseParams,
+                    ec2Instances: recommendedEc2Instances,
+                    sqlServerEdition: combinedRecommendedLicenseEdition
+                },
+                totalNodeCount,
+                true
+            ),
+            // Fetch pricing for compute/license calculations in parallel with marketing APIs
+            fetchPricingForResources(individualResourceInfo, regionCode)
         ]);
 
-        // Fourth pass: calculate per-resource pricing using the derived instance types
-        const resourceResults = await Promise.all(
-            Array.from(resourceDataMap.values()).map(async resourceData => {
-                const { resourceId, resourceName, deploymentType, sqlInstanceDetails, recommendedLicenseEdition } =
-                    resourceData;
+        // Step 9: Build per-resource calculations
+        const {
+            existingComputeCalculation,
+            existingLicenseCalculation,
+            recommendedComputeCalculation,
+            recommendedLicenseCalculation,
+            computeSavings,
+            licenseSavings,
+            perResourceAssessmentData
+        } = buildPerResourceCalculations(resourcesWithPricing);
 
-                const { currentLicenseEdition } = getOnpremLicenseRecommendations(sqlInstanceDetails);
-                const { current: currentInstanceType, recommended: recommendedInstanceType } =
-                    resourceInstanceTypes.get(resourceId) || { current: '', recommended: '' };
+        // Step 10: Extract shared storage data from API responses
+        const {
+            ebs,
+            fsx,
+            single,
+            multi,
+            totalSummary: { existing: existingTotalSummary } = {}
+        } = existingConfigData || {};
 
-                // Get pricing for both current and recommended instance types in parallel
-                const currentLicenseType =
-                    currentLicenseEdition === ENTERPRISE_EDITION
-                        ? PRICING_LICENSE_KEYS.SQL_ENT
-                        : PRICING_LICENSE_KEYS.SQL_STD;
-                const recommendedLicenseType =
-                    recommendedLicenseEdition === ENTERPRISE_EDITION
-                        ? PRICING_LICENSE_KEYS.SQL_ENT
-                        : PRICING_LICENSE_KEYS.SQL_STD;
+        const { totalSummary: { recommended: recommendedTotalSummary } = {} } = recommendedConfigData || {};
 
-                const [currentPricing, recommendedPricing] = await Promise.all([
-                    getSqlInstancePricingDetails(
-                        regionCode,
-                        currentInstanceType,
-                        'windows',
-                        undefined,
-                        currentLicenseType
-                    ),
-                    getSqlInstancePricingDetails(
-                        regionCode,
-                        recommendedInstanceType,
-                        'windows',
-                        undefined,
-                        recommendedLicenseType
-                    )
-                ]);
+        // Step 11: Build aggregated response
+        const aggregatedCalculations = {
+            existingComputeCalculation,
+            existingLicenseCalculation,
+            recommendedComputeCalculation,
+            recommendedLicenseCalculation,
+            ebsCalculation: existingConfigCalculations?.ebsCalculation,
+            ebsCloneCalculation: existingConfigCalculations?.ebsCloneCalculation,
+            ebsSnapshotCalculation: existingConfigCalculations?.ebsSnapshotCalculation,
+            single: existingConfigCalculations?.single,
+            recommendedSingle: recommendedConfigCalculations?.single,
+            totalSummary: {
+                existing: existingTotalSummary,
+                recommended: recommendedTotalSummary
+            }
+        };
 
-                const currentPrice = currentPricing?.[currentInstanceType]?.[currentLicenseType]?.pricePerUnit || 0;
-                const currentBasePrice = currentPricing?.[currentInstanceType]?.NA?.pricePerUnit || 0;
-                const currentLicensePrice = currentPrice - currentBasePrice;
+        const aggregatedStorageSavings = {
+            compute: computeSavings,
+            license: licenseSavings,
+            ebs,
+            fsx,
+            single,
+            multi,
+            totalSummary: {
+                existing: existingTotalSummary,
+                recommended: recommendedTotalSummary
+            }
+        };
 
-                const recommendedPrice =
-                    recommendedPricing?.[recommendedInstanceType]?.[recommendedLicenseType]?.pricePerUnit || 0;
-                const recommendedBasePrice = recommendedPricing?.[recommendedInstanceType]?.NA?.pricePerUnit || 0;
-                const recommendedLicensePrice = recommendedPrice - recommendedBasePrice;
-
-                return {
-                    resourceId,
-                    resourceName,
-                    deploymentType,
-                    currentInstanceType,
-                    recommendedInstanceType,
-                    currentLicenseEdition,
-                    recommendedLicenseEdition,
-                    existingCompute: {
-                        instanceType: currentInstanceType,
-                        computeHourlyPrice: currentBasePrice,
-                        computeMonthlyPrice: currentBasePrice * HOURS_IN_MONTH,
-                        instanceMonthlyPrice: currentPrice * HOURS_IN_MONTH,
-                        hoursInMonth: HOURS_IN_MONTH,
-                        machineDetails: [
-                            {
-                                instanceType: currentInstanceType,
-                                price: currentPrice,
-                                basePrice: currentBasePrice,
-                                computeMonthlyPrice: currentBasePrice * HOURS_IN_MONTH,
-                                instanceMonthlyPrice: currentPrice * HOURS_IN_MONTH,
-                                licenseMonthlyPrice: currentLicensePrice * HOURS_IN_MONTH,
-                                hoursInMonth: HOURS_IN_MONTH,
-                                licenseIncluded: true
-                            }
-                        ]
-                    },
-                    recommendedCompute: {
-                        instanceType: recommendedInstanceType,
-                        computeHourlyPrice: recommendedBasePrice,
-                        computeMonthlyPrice: recommendedBasePrice * HOURS_IN_MONTH,
-                        instanceMonthlyPrice: recommendedPrice * HOURS_IN_MONTH,
-                        hoursInMonth: HOURS_IN_MONTH,
-                        machineDetails: [
-                            {
-                                instanceType: recommendedInstanceType,
-                                price: recommendedPrice,
-                                basePrice: recommendedBasePrice,
-                                computeMonthlyPrice: recommendedBasePrice * HOURS_IN_MONTH,
-                                instanceMonthlyPrice: recommendedPrice * HOURS_IN_MONTH,
-                                licenseMonthlyPrice: recommendedLicensePrice * HOURS_IN_MONTH,
-                                hoursInMonth: HOURS_IN_MONTH,
-                                licenseIncluded: true
-                            }
-                        ]
-                    },
-                    existingLicense: {
-                        licenseHourlyPrice: currentLicensePrice,
-                        licenseIncluded: true,
-                        licenseMonthlyPrice: currentLicensePrice * HOURS_IN_MONTH,
-                        hoursInMonth: HOURS_IN_MONTH,
-                        sqlServerEdition: currentLicenseEdition
-                    },
-                    recommendedLicense: {
-                        licenseHourlyPrice: recommendedLicensePrice,
-                        licenseIncluded: true,
-                        licenseMonthlyPrice: recommendedLicensePrice * HOURS_IN_MONTH,
-                        hoursInMonth: HOURS_IN_MONTH,
-                        sqlServerEdition: recommendedLicenseEdition
+        // Step 12: Store assessment data in DB for each resource using bulk transaction
+        const bulkUpdates = perResourceAssessmentData.map(
+            ({
+                resourceId,
+                existingComputeCalculation: resExistingCompute,
+                existingLicenseCalculation: resExistingLicense,
+                recommendedComputeCalculation: resRecommendedCompute,
+                recommendedLicenseCalculation: resRecommendedLicense,
+                computeSavings: resComputeSavings,
+                licenseSavings: resLicenseSavings
+            }) => {
+                const resourceStorageSavings = {
+                    compute: resComputeSavings,
+                    license: resLicenseSavings,
+                    ebs,
+                    fsx,
+                    single,
+                    multi,
+                    totalSummary: {
+                        existing: existingTotalSummary,
+                        recommended: recommendedTotalSummary
                     }
                 };
-            })
+                const resourceCalculations = {
+                    existingComputeCalculation: resExistingCompute,
+                    existingLicenseCalculation: resExistingLicense,
+                    recommendedComputeCalculation: resRecommendedCompute,
+                    recommendedLicenseCalculation: resRecommendedLicense,
+                    ebsCalculation: existingConfigCalculations?.ebsCalculation,
+                    ebsCloneCalculation: existingConfigCalculations?.ebsCloneCalculation,
+                    ebsSnapshotCalculation: existingConfigCalculations?.ebsSnapshotCalculation,
+                    single: existingConfigCalculations?.single,
+                    recommendedSingle: recommendedConfigCalculations?.single,
+                    totalSummary: {
+                        existing: existingTotalSummary,
+                        recommended: recommendedTotalSummary
+                    }
+                };
+                return {
+                    resourceId,
+                    data: {
+                        assessment_data: {
+                            storageSavings: resourceStorageSavings,
+                            calculations: resourceCalculations
+                        }
+                    }
+                };
+            }
         );
 
-        if (isEmpty(resourceResults)) {
-            const errorMessage = 'No analysis results found for the provided resources.';
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-        }
-
-        // Combine existing and recommended totalSummary from both storage results
-        const combinedTotalSummary = {
-            existing: existingStorageResults?.totalSummary?.existing || 0,
-            recommended: storageResults?.totalSummary?.recommended || 0
-        };
+        // Fire-and-forget: Store assessment data in DB without blocking the response
+        bulkUpdateOnPremTcoReportRecords(accountId, bulkUpdates).catch(error => {
+            logger.error('Failed to store bulk assessment data in DB', { accountId, error });
+        });
 
         return {
             region,
             regionCode,
-            calculations: {
-                recommendedComputeCalculation: resourceResults.map(r => ({
-                    ...r.recommendedCompute,
-                    resourceName: r.resourceName,
-                    deploymentType: r.deploymentType
-                })),
-                recommendedLicenseCalculation: resourceResults.map(r => ({
-                    ...r.recommendedLicense,
-                    resourceName: r.resourceName,
-                    deploymentType: r.deploymentType
-                })),
-                existingComputeCalculation: resourceResults.map(r => ({
-                    ...r.existingCompute,
-                    resourceName: r.resourceName,
-                    deploymentType: r.deploymentType
-                })),
-                existingLicenseCalculation: resourceResults.map(r => ({
-                    ...r.existingLicense,
-                    resourceName: r.resourceName,
-                    deploymentType: r.deploymentType
-                })),
-                ebsCalculation: storageResults?.ebsCalculation,
-                ebsCloneCalculation: storageResults?.ebsCloneCalculation,
-                ebsSnapshotCalculation: storageResults?.ebsSnapshotCalculation,
-                single: storageResults?.single,
-                multi: storageResults?.multi,
-                totalSummary: combinedTotalSummary
-            },
-            storageSavings: {
-                compute: resourceResults.map(r => ({
-                    resourceName: r.resourceName,
-                    deploymentType: r.deploymentType,
-                    existing: r.existingCompute,
-                    recommended: r.recommendedCompute
-                })),
-                license: resourceResults.map(r => ({
-                    resourceName: r.resourceName,
-                    deploymentType: r.deploymentType,
-                    existing: r.existingLicense,
-                    recommended: r.recommendedLicense
-                })),
-                ebs: storageResults?.ebs,
-                fsx: storageResults?.fsx,
-                single: storageResults?.single,
-                multi: storageResults?.multi,
-                totalSummary: combinedTotalSummary
-            }
+            calculations: aggregatedCalculations,
+            storageSavings: aggregatedStorageSavings,
+            ...(snapshotInfo && { snapShotInfo: snapshotInfo })
         };
     } catch (error) {
         const errorMessage = `Failed to fetch bulk assessment data. ${error}`;
