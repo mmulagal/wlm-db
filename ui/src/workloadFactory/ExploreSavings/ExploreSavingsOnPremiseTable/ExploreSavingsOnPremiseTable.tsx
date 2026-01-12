@@ -284,10 +284,18 @@ const ExploreSavingsOnPremiseTable = () => {
         renderCell: (cellData: any, rowData: any) => (
             <div className={styles.lasColContainer}>
                 <div
-                    className={styles.detectManage}
-                    onClick={() => {
-                        onClickESHostOnPrem(dispatch, rowData, isWorkloadFactory, navigate);
-                    }}
+                    className={
+                        selectedRowsForExploreSavingsOnPremBulk.length > 0
+                            ? styles.detectManageDisable
+                            : styles.detectManage
+                    }
+                    onClick={
+                        selectedRowsForExploreSavingsOnPremBulk.length > 0
+                            ? undefined
+                            : () => {
+                                  onClickESHostOnPrem(dispatch, rowData, isWorkloadFactory, navigate);
+                              }
+                    }
                     id="wlm-db-onprem-explore-savings-table-button"
                 >
                     <Typography variant="Regular_14" className={styles.textStyle}>
@@ -296,7 +304,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 </div>
 
                 <div className={styles.deleteMenu}>
-                    {!isDemoMode && (
+                    {!isDemoMode && selectedRowsForExploreSavingsOnPremBulk.length === 0 && (
                         <MenuPopover
                             isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
                             menuItems={menuItems(rowData)}
@@ -325,7 +333,7 @@ const ExploreSavingsOnPremiseTable = () => {
                         />
                     )}
 
-                    {isDemoMode && (
+                    {(isDemoMode || selectedRowsForExploreSavingsOnPremBulk.length > 0) && (
                         <div className={styles.menuPointerDisabled}>
                             <span className={styles.menuPointer}>...</span>
                         </div>

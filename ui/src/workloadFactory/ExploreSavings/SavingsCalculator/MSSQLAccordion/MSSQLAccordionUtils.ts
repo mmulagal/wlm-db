@@ -81,9 +81,9 @@ export const generateHostMsSqlInstanceData = (
             ? storageSavingsResponse.license
             : [storageSavingsResponse?.license].filter(Boolean);
 
-        // Find compute and license data by matching hostname
-        const hostCompute = computeArray.find((item: any) => item.hostname === hostName);
-        const hostLicense = licenseArray.find((item: any) => item.hostname === hostName);
+        // Find compute and license data by matching resourceName (ONPREM API returns resourceName)
+        const hostCompute = computeArray.find((item: any) => item.resourceName === hostName);
+        const hostLicense = licenseArray.find((item: any) => item.resourceName === hostName);
 
         // If no match found, fall back to msSqlInstance (which contains data for single host or first host)
         if (!hostCompute && !hostLicense) {
@@ -109,7 +109,9 @@ export const generateHostMsSqlInstanceData = (
         if (hostCompute?.deploymentType) {
             serverInstallationMode =
                 hostCompute.deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG ||
-                hostCompute.deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+                hostCompute.deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG ||
+                hostCompute.deploymentType === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE_CAPS ||
+                hostCompute.deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
                     ? DATABASE_DEPLOYMENT_MODE.FAILOVER_CLUSTER_INSTANCES
                     : hostCompute.deploymentType;
         }

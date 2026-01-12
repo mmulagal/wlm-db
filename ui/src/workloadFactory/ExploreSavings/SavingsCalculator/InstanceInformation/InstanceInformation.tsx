@@ -130,8 +130,8 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                         ? storageSavingsResponse.license
                         : [storageSavingsResponse?.license].filter(Boolean);
 
-                    // Find license data by matching hostname
-                    const hostLicense = licenseArray.find((item: any) => item.hostname === hostName);
+                    // Find license data by matching resourceName (ONPREM API returns resourceName)
+                    const hostLicense = licenseArray.find((item: any) => item.resourceName === hostName);
                     return hostLicense?.finding || '-';
                 }
                 // Handle single object format for non-bulk mode

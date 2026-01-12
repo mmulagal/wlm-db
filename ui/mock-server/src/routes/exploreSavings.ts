@@ -36,7 +36,7 @@ router.get(`${BASE_URL}/v1/mssql/onprem-tco/resources`, async (req: {}, res: any
     }, 100);
 });
 
-router.post(`${BASE_URL}/v1/mssql/onprem-tco/resources/:resourceId/explore-savings`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/mssql/onprem-tco/explore-savings`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, OnPremCalculationsBulk);
     }, 100);

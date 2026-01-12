@@ -476,11 +476,19 @@ export const formatViewCalcData = (
         const existingComputeArray: any = viewCalculationsResponse?.existingComputeCalculation;
         const existingLicenseArray: any = viewCalculationsResponse?.existingLicenseCalculation;
 
-        // Find the compute and license data by matching hostname
-        const recommendedCompute = recommendedComputeArray?.find((item: any) => item.hostname === hostName);
-        const recommendedLicense = recommendedLicenseArray?.find((item: any) => item.hostname === hostName);
-        const existingCompute = existingComputeArray?.find((item: any) => item.hostname === hostName);
-        const existingLicense = existingLicenseArray?.find((item: any) => item.hostname === hostName);
+        // Find the compute and license data by matching hostname (EBS) or resourceName (ONPREM)
+        const recommendedCompute = recommendedComputeArray?.find(
+            (item: any) => item.hostname === hostName || item.resourceName === hostName
+        );
+        const recommendedLicense = recommendedLicenseArray?.find(
+            (item: any) => item.hostname === hostName || item.resourceName === hostName
+        );
+        const existingCompute = existingComputeArray?.find(
+            (item: any) => item.hostname === hostName || item.resourceName === hostName
+        );
+        const existingLicense = existingLicenseArray?.find(
+            (item: any) => item.hostname === hostName || item.resourceName === hostName
+        );
 
         // Get the raw machine data from formatViewCalcInstance
         const fsxMachineData = formatViewCalcInstance(
