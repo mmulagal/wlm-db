@@ -50,6 +50,8 @@ export interface TableTopBarProps {
     singularTitle: string;
     /** A title to be used when there are more than one row */
     pluralTitle: string;
+    /** Total length of the table rows */
+    tableRowsLength?: number;
     /** Should add a tooltip in the table TopBar? */
     info?: ReactNode;
     /** Custom class name */
@@ -81,6 +83,7 @@ export const TableTopBar = ({
     tableProps,
     singularTitle,
     pluralTitle,
+    tableRowsLength,
     info,
     className,
     initialTextFilter,
@@ -97,12 +100,24 @@ export const TableTopBar = ({
     const { organizedRows, updateTextFilter, rows, filterState, resetFilters, selectionState, isLazyLoading } =
         tableProps;
     const [inputTextFilter, setInputTextFilter] = useState(initialTextFilter);
-    const itemCount = rows.length;
+    const itemCount = tableRowsLength ?? rows.length;
     const filteredItemCount = organizedRows.length;
 
     const textFilter = filterState?.textFilter;
     const showFilterText = filterState?.count > 0 || textFilter;
     const showSelectionText = selectionState && selectionState?.count > 0;
+
+    /**
+     * Determines whether to show the filtered count in the format "filtered/total".
+     * When tableRowsLength is provided (indicating pre-filtered data like hidden sub-table rows),
+     * only show "filtered/total" if there are active user-applied filters (search or column filters).
+     * This prevents showing "8/11" when 3 rows are simply in expandable sub-tables,
+     * instead showing just "11" until the user actually applies a filter.
+     */
+    const hasActiveFilters = showFilterText;
+    const showFilteredCount = tableRowsLength
+        ? hasActiveFilters && itemCount !== filteredItemCount
+        : itemCount !== filteredItemCount;
 
     return (
         <div className={classNames(styles.base, className)}>
@@ -110,11 +125,7 @@ export const TableTopBar = ({
             <Typography variant="Semibold_16" isEllipsis className={classNames(styles.title, titleClassName)}>
                 <div className={styles.tableMainTitleContainer}>
                     <span>{itemCount === 1 ? singularTitle : pluralTitle}</span>
-                    {!hideCount && (
-                        <span>
-                            ({itemCount === filteredItemCount ? itemCount : `${filteredItemCount}/${itemCount}`})
-                        </span>
-                    )}
+                    {!hideCount && <span>({showFilteredCount ? `${filteredItemCount}/${itemCount}` : itemCount})</span>}
                     {info && <TooltipInfo isAppendedToBody>{info}</TooltipInfo>}
                     {showFilterText && (
                         <span>{`| Filtered by${textFilter ? ' search' : ''}${

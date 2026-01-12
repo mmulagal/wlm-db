@@ -1163,6 +1163,7 @@ const InstancesTable = () => {
                     tableProps={tableProps}
                     pluralTitle={title}
                     singularTitle={title}
+                    tableRowsLength={instanceTableRows?.length}
                     exportToCsvOptions={{ fileName: exportToCsvFileName }}
                     subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     actionsRight={
