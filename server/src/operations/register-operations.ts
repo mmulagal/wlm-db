@@ -2711,7 +2711,8 @@ async function validateOracleCredentials(
             }
         }
     }
-
+    let shouldThrowError = false;
+    let errorMessage = '';
     if (fsxCredentials) {
         parsedResponse.fsxResults.map(async (fsxResult: FSxCredsRegistration) => {
             if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
@@ -2721,6 +2722,8 @@ async function validateOracleCredentials(
                     fsxnError: fsxResult.ontaperror
                 });
                 paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+                shouldThrowError = true;
+                errorMessage += `FSx ONTAP connectivity failed: ${fsxResult.ontaperror}. `;
             } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
                 response.push({
                     resourceId: fsxCredentials.resourceId,
@@ -2752,6 +2755,8 @@ async function validateOracleCredentials(
                         }
                     }
                 });
+                shouldThrowError = true;
+                errorMessage += `Oracle connectivity failed for instance ${instance.oracleInstanceName}: ${instance.oracleError}. `;
             } else if (instance.oracleInstanceConnectivity === true) {
                 const { oracleInstanceName, oracleEdition } = instance;
                 const missingPermissions = instanceIdToMissingPermissionsMap.get(oracleInstanceName) || [];
@@ -2804,6 +2809,10 @@ async function validateOracleCredentials(
         oracleAsmCredentials,
         allOracleAsmCredentials
     );
+
+    if (shouldThrowError) {
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, `One or more instances failed validation: ${errorMessage}`);
+    }
 
     return response;
 }
