@@ -136,10 +136,13 @@ export interface ManageColumnsProps {
     allColumns: ColumnProps[];
     updateColumnState: Function;
     columnsState: HashTable<ColumnStateType>;
+    /** When a manual width is applied to the Manage Columns header cell */
+    isManualWidth?: boolean;
 }
 
 export const ManageColumns = (props: ManageColumnsProps) => {
     const [isOpen, setIsOpen] = useState(false);
+    const { isManualWidth } = props;
     return (
         <Popover
             visible={isOpen}
@@ -152,7 +155,7 @@ export const ManageColumns = (props: ManageColumnsProps) => {
                     })}
                     onClick={() => setIsOpen(prev => !prev)}
                 >
-                    <AddIcon />
+                    <AddIcon style={{ marginLeft: isManualWidth ? 20 : 0 }} />
                 </ButtonBase>
             }
             containerClass={styles.base}

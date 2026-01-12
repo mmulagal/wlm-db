@@ -18,6 +18,22 @@
         }
     }
 
+    .lastContainer {
+        display: flex;
+        gap: 16px;
+
+        .arrow {
+            svg {
+                transform: rotate(90deg);
+                -webkit-transform: rotate(90deg);
+                &.arrow-down {
+                    transform: rotate(270deg);
+                    -webkit-transform: rotate(270deg);
+                }
+            }
+        }
+    }
+
     .menuPointerDisabled {
         font-weight: 600;
         font-size: 22px;
@@ -84,6 +100,10 @@
         }
     }
 
+    .tooltipContainerMulti {
+        flex-direction: column;
+    }
+
     .ec2Separator {
         border-bottom: 1px solid var(--border);
     }
@@ -95,7 +115,6 @@
 
     .jobMenuPopover {
         width: fit-content;
-        margin-left: -12px;
     }
 
     .table {
@@ -108,10 +127,8 @@
         [class*='_table'] {
             [class*='_body'] {
                 [class*='_row'] {
-                    [class*='_cell'] {
-                        &:nth-last-child(2) {
-                            border-left: 1px solid var(--border) !important;
-                        }
+                    > span:nth-last-of-type(2) {
+                        border-left: 1px solid var(--border);
                     }
                 }
             }
@@ -353,9 +370,9 @@
         height: 20px !important;
     }
 
-    [class*='Table-module_horizontal-scroll']::-webkit-scrollbar {
-        height: 14px !important;
-    }
+    // [class*='Table-module_horizontal-scroll']::-webkit-scrollbar {
+    //     height: 14px !important;
+    // }
 
     .protectionTooltipMessage {
         padding: 16px 24px;

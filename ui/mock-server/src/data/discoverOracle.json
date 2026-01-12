@@ -1,5 +1,5 @@
 {
-    "count": 11,
+    "count": 12,
     "items": [
         {
             "ec2InstanceId": "i-031a1616860f41fe3",
@@ -273,17 +273,18 @@
             ]
         },
         {
-            "ec2InstanceId": "i-07f8c2f7b14dac941",
+            "ec2InstanceId": "i-0123456789abcdef0",
             "ec2InstanceType": "m5.large",
             "ssmState": "connected",
-            "ec2InstanceName": "oracle19c-pdb-SLES15-nfs-010925004039",
-            "ec2UsageOperation": "RunInstances:000g",
+            "ec2InstanceName": "DATAGAURD-PRIMARY-oracle19c-normal-nfs-141225181923",
+            "ec2HostName": "ip-10-0-131-169.ap-south-1.compute.internal",
+            "ec2UsageOperation": "RunInstances:0014",
             "vpc": {
-                "id": "vpc-84b3afe6",
-                "name": "wlmdb-vpc",
-                "cidrBlock": "172.31.0.0/16"
+                "id": "vpc-075ecf35aaafc2a4f",
+                "name": "aoag2",
+                "cidrBlock": "10.0.0.0/16"
             },
-            "platform": "SUSE Linux",
+            "platform": "Red Hat Enterprise Linux with SQL Server Standard",
             "oracleServerDeploymentType": "Standalone",
             "databaseInstanceDetails": [
                 {
@@ -294,7 +295,7 @@
                     "instanceType": "SINGLE_TENANT",
                     "databaseCount": 1,
                     "databaseDetails": {
-                        "databaseId": "1158294080",
+                        "databaseId": "1167481941",
                         "openMode": "READ WRITE"
                     },
                     "oracleServerAuthentication": false,
@@ -304,30 +305,378 @@
                     "storage": [
                         {
                             "type": "FSXN",
-                            "id": "fs-0d5efc3057c4f12cb",
-                            "svmId": "svm-0a333def9bfd29537",
+                            "id": "fs-01d9727eb6a7d3e9a",
+                            "svmId": "svm-098b3b2800853b868",
                             "fileSystemStorageType": "SSD",
-                            "fileSystemName": "wlmdb-fsx-1",
+                            "fileSystemName": "wlmdb-fsx-1737951297350",
                             "deploymentType": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1c", "ap-southeast-1b"],
+                            "zones": [
+                                "ap-south-1c",
+                                "ap-south-1b"
+                            ],
                             "mountDetails": [
                                 {
-                                    "mountPoint": "/data_010925004501",
+                                    "mountPoint": "/data_141225182258",
                                     "protocol": "NFS",
-                                    "mountIp": "172.31.255.252"
+                                    "mountIp": "198.19.255.89"
                                 }
                             ]
                         }
                     ],
                     "manageReadiness": {
                         "assessment": {
-                            "missingModules": [],
-                            "missingPermissions": []
+                            "missingSqlPermissions": [],
+                            "missingModules": []
                         },
                         "remediation": {
-                            "missingModules": [],
-                            "missingSqlPermissions": []
+                            "missingSqlPermissions": [],
+                            "missingModules": []
                         }
+                    },
+                    "isDataGuardDeployed": true,
+                    "dataguardDetails": {
+                        "dbUniqueName": "pdbnas1",
+                        "dbName": "dg1",
+                        "associatedHosts": [
+                            {
+                            "serviceName": "pdbnas1",
+                            "hostIp": "127.0.0.1",
+                            "ec2InstanceId": "i-0123456789abcdef0",
+                            "listenerPort": "1532",
+                            "sidName": "pdbnas1"
+                            },
+                            {
+                            "serviceName": "pdbnas1s",
+                            "hostIp": "127.0.0.2",
+                            "ec2InstanceId": "i-0123456789abcdef1",
+                            "listenerPort": "1532",
+                            "sidName": ""
+                            },
+                            {
+                            "serviceName": "pdbnas2",
+                            "hostIp": "127.0.0.1",
+                            "ec2InstanceId": "i-0123456789abcdef0",
+                            "listenerPort": "1532",
+                            "sidName": "pdbnas2"
+                            },
+                            {
+                            "serviceName": "pdbnas2s",
+                            "hostIp": "127.0.0.2",
+                            "ec2InstanceId": "i-0123456789abcdef1",
+                            "listenerPort": "1532",
+                            "sidName": ""
+                            }
+                        ],
+                        "isPrimary": true
+                    }
+                },
+                {
+                    "instanceName": "pdbnas2",
+                    "instanceId": "pdbnas2",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "MULTI_TENANT",
+                    "databaseCount": 2,
+                    "databaseDetails": {
+                        "databaseId": "1394066496",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "pluggableDatabases": [
+                        {
+                            "pdbName": "PDB6",
+                            "pdbId": "3",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB$SEED",
+                            "pdbId": "2",
+                            "pdbStatus": "NORMAL"
+                        }
+                    ],
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-01d9727eb6a7d3e9a",
+                            "svmId": "svm-098b3b2800853b868",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-1737951297350",
+                            "deploymentType": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-south-1c",
+                                "ap-south-1b"
+                            ],
+                            "mountDetails": [
+                                {
+                                    "mountPoint": "/data_141225182258",
+                                    "protocol": "NFS",
+                                    "mountIp": "198.19.255.89"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "FSXN",
+                            "id": "fs-01d9727eb6a7d3e9a23",
+                            "svmId": "svm-098b3b2800853b868",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-1737951297350",
+                            "deploymentType": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-south-1c",
+                                "ap-south-1b"
+                            ],
+                            "mountDetails": [
+                                {
+                                    "mountPoint": "/data_141225182258",
+                                    "protocol": "NFS",
+                                    "mountIp": "198.19.255.89"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    },
+                    "isDataGuardDeployed": true,
+                    "dataguardDetails": {
+                    "dbUniqueName": "pdbnas2",
+                    "dbName": "dg2",
+                    "associatedHosts": [
+                        {
+                        "serviceName": "pdbnas1",
+                        "hostIp": "127.0.0.1",
+                        "ec2InstanceId": "i-0123456789abcdef0",
+                        "listenerPort": "1532",
+                        "sidName": "pdbnas1"
+                        },
+                        {
+                        "serviceName": "pdbnas1s",
+                        "hostIp": "127.0.0.2",
+                        "ec2InstanceId": "i-0123456789abcdef1",
+                        "listenerPort": "1532",
+                        "sidName": ""
+                        },
+                        {
+                        "serviceName": "pdbnas2",
+                        "hostIp": "127.0.0.1",
+                        "ec2InstanceId": "i-0123456789abcdef0",
+                        "listenerPort": "1532",
+                        "sidName": "pdbnas2"
+                        },
+                        {
+                        "serviceName": "pdbnas2s",
+                        "hostIp": "127.0.0.2",
+                        "ec2InstanceId": "i-0123456789abcdef1",
+                        "listenerPort": "1532",
+                        "sidName": ""
+                        }
+                    ],
+                    "isPrimary": true
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-0123456789abcdef1",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "DATAGAURD-STANDBY-oracle19c-normal-nfs-141225181923",
+            "ec2HostName": "ip-10-0-131-169.ap-south-1.compute.internal",
+            "ec2UsageOperation": "RunInstances:0014",
+            "vpc": {
+                "id": "vpc-075ecf35aaafc2a4f",
+                "name": "aoag2",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux with SQL Server Standard",
+            "oracleServerDeploymentType": "Standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "pdbnas1s",
+                    "instanceId": "pdbnas1s",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "1167481941",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-01d9727eb6a7d3e9a",
+                            "svmId": "svm-098b3b2800853b868",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-1737951297350",
+                            "deploymentType": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-south-1c",
+                                "ap-south-1b"
+                            ],
+                            "mountDetails": [
+                                {
+                                    "mountPoint": "/data_141225182258",
+                                    "protocol": "NFS",
+                                    "mountIp": "198.19.255.89"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    },
+                    "isDataGuardDeployed": true,
+                    "dataguardDetails": {
+                    "dbUniqueName": "pdbnas1s",
+                    "dbName": "dg1",
+                    "associatedHosts": [
+                        {
+                        "serviceName": "pdbnas1",
+                        "hostIp": "127.0.0.1",
+                        "ec2InstanceId": "i-0123456789abcdef0",
+                        "listenerPort": "1532",
+                        "sidName": ""
+                        },
+                        {
+                        "serviceName": "pdbnas1s",
+                        "hostIp": "127.0.0.2",
+                        "ec2InstanceId": "i-0123456789abcdef1",
+                        "listenerPort": "1532",
+                        "sidName": "pdbnas1s"
+                        },
+                        {
+                        "serviceName": "pdbnas2",
+                        "hostIp": "127.0.0.1",
+                        "ec2InstanceId": "i-0123456789abcdef0",
+                        "listenerPort": "1532",
+                        "sidName": ""
+                        },
+                        {
+                        "serviceName": "pdbnas2s",
+                        "hostIp": "127.0.0.2",
+                        "ec2InstanceId": "i-0123456789abcdef1",
+                        "listenerPort": "1532",
+                        "sidName": "pdbnas2s"
+                        }
+                    ],
+                    "isPrimary": false
+                    }
+                },
+                {
+                    "instanceName": "pdbnas2s",
+                    "instanceId": "pdbnas2s",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "MULTI_TENANT",
+                    "databaseCount": 2,
+                    "databaseDetails": {
+                        "databaseId": "1394066496",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "pluggableDatabases": [
+                        {
+                            "pdbName": "PDB6",
+                            "pdbId": "3",
+                            "pdbStatus": "NORMAL"
+                        },
+                        {
+                            "pdbName": "PDB$SEED",
+                            "pdbId": "2",
+                            "pdbStatus": "NORMAL"
+                        }
+                    ],
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-01d9727eb6a7d3e9a",
+                            "svmId": "svm-098b3b2800853b868",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-1737951297350",
+                            "deploymentType": "MULTI_AZ_1",
+                            "zones": [
+                                "ap-south-1c",
+                                "ap-south-1b"
+                            ],
+                            "mountDetails": [
+                                {
+                                    "mountPoint": "/data_141225182258",
+                                    "protocol": "NFS",
+                                    "mountIp": "198.19.255.89"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    },
+                    "isDataGuardDeployed": true,
+                    "dataguardDetails": {
+                    "dbUniqueName": "pdbnas2s",
+                    "dbName": "dg2",
+                    "associatedHosts": [
+                        {
+                        "serviceName": "pdbnas1",
+                        "hostIp": "127.0.0.1",
+                        "ec2InstanceId": "i-0123456789abcdef0",
+                        "listenerPort": "1532",
+                        "sidName": ""
+                        },
+                        {
+                        "serviceName": "pdbnas1s",
+                        "hostIp": "127.0.0.2",
+                        "ec2InstanceId": "i-0123456789abcdef1",
+                        "listenerPort": "1532",
+                        "sidName": "pdbnas1s"
+                        },
+                        {
+                        "serviceName": "pdbnas2",
+                        "hostIp": "127.0.0.1",
+                        "ec2InstanceId": "i-0123456789abcdef0",
+                        "listenerPort": "1532",
+                        "sidName": ""
+                        },
+                        {
+                        "serviceName": "pdbnas2s",
+                        "hostIp": "127.0.0.2",
+                        "ec2InstanceId": "i-0123456789abcdef1",
+                        "listenerPort": "1532",
+                        "sidName": "pdbnas2s"
+                        }
+                    ],
+                    "isPrimary": false
                     }
                 }
             ]

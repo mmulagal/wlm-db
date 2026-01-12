@@ -267,6 +267,7 @@ export interface DatabaseInstancesSummaryInterface {
         status: string;
         type: string;
     }>;
+    dataguardDetails?: any;
     databaseCount?: number;
     isInstanceStorageAsmManaged?: boolean;
     statusColText?: string;
@@ -575,6 +576,7 @@ export interface OracleInstancesDiscovered {
             protocol: string;
         }>;
     }>;
+    dataguardDetails?: any;
 }
 
 export interface SQLServerInstancesDiscovered {
@@ -601,6 +603,7 @@ export interface SQLServerInstancesDiscovered {
         zones?: Array<string>;
     }>;
     manageReadiness?: any;
+    dataguardDetails?: any;
 }
 
 export interface PgsqlInstancesDiscovered {

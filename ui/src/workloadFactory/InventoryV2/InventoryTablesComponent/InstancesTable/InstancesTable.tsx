@@ -1,5 +1,5 @@
 import { DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -32,21 +32,13 @@ import {
 import {
     addHostHandlerSc,
     getDeregisterContent,
-    getOptimizationStatusData,
+    instanceExtraDataUpdate,
     manageActionCol,
     uniqueHostRow,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
-import { bxpRedirect, isSmbProtocol } from '../../../../utils/utilityFunctions';
-import {
-    ACTION_CTA,
-    DBType,
-    DETECT_HOST_VAR,
-    FROM_DIALOG,
-    INVENTORY_STATUS,
-    WLF_TABS,
-    DEMO_MODE_PROTECTION_CRITERIA
-} from '../../../../utils/consts';
+import { bxpRedirect, collapseAllRows, isSmbProtocol } from '../../../../utils/utilityFunctions';
+import { ACTION_CTA, DBType, DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
@@ -109,6 +101,8 @@ import {
     handleInstanceMenuSelection,
     inventoryBannerFilterUpdates
 } from './InstanceTableHelper';
+import { ReactComponent as ArrowIcon } from '../../../../assets/row_arrow.svg';
+import DgReplicaTable from './ReplicaTable/DgReplicaTable';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -144,8 +138,10 @@ const InstancesTable = () => {
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
     const [loading, setLoading] = useState(false);
+    const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined);
 
     const menuOpenedRowDetail: any = useRef(null);
+    const inventoryTableRef = useRef<HTMLDivElement>(null);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
 
@@ -294,6 +290,80 @@ const InstancesTable = () => {
         pgsqlFullHostDataLoading,
         multiDataLoading
     ]);
+
+    // This might be used when we have scroll sync between parent and expanded child table
+    // const [scrollPos, setScrollPos] = useState(0);
+
+    // useEffect(() => {
+    //     const root = inventoryTableRef.current;
+    //     if (!root) return;
+
+    //     let outerScrollEl = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
+    //     let innerScrollEl = root.querySelector<HTMLElement>(
+    //         "[class*='expanded-row-section'] [class*='horizontal-scroll']"
+    //     );
+
+    //     const onOuterScroll = () => {
+    //         if (!innerScrollEl || !innerScrollEl.isConnected) {
+    //             innerScrollEl = root.querySelector<HTMLElement>(
+    //                 "[class*='expanded-row-section'] [class*='horizontal-scroll']"
+    //             );
+    //         }
+    //         if (outerScrollEl && innerScrollEl) {
+    //             innerScrollEl.scrollLeft = outerScrollEl.scrollLeft;
+    //             setScrollPos(outerScrollEl.scrollLeft);
+    //         }
+    //     };
+
+    //     const attachListeners = () => {
+    //         requestAnimationFrame(() => {
+    //             const latestOuter = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
+    //             const latestInner = root.querySelector<HTMLElement>(
+    //                 "[class*='expanded-row-section'] [class*='horizontal-scroll']"
+    //             );
+
+    //             if (outerScrollEl && latestOuter && outerScrollEl !== latestOuter) {
+    //                 outerScrollEl.removeEventListener('scroll', onOuterScroll);
+    //             }
+    //             outerScrollEl = latestOuter || outerScrollEl;
+    //             innerScrollEl = latestInner || innerScrollEl;
+
+    //             if (outerScrollEl) {
+    //                 outerScrollEl.addEventListener('scroll', onOuterScroll, { passive: true });
+
+    //                 if (innerScrollEl) {
+    //                     innerScrollEl.scrollLeft = outerScrollEl.scrollLeft;
+    //                 }
+    //             }
+    //         });
+    //     };
+
+    //     attachListeners();
+
+    //     const observer = new MutationObserver(() => {
+    //         const maybeOuter = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
+    //         const maybeInner = root.querySelector<HTMLElement>(
+    //             "[class*='expanded-row-section'] [class*='horizontal-scroll']"
+    //         );
+
+    //         if (maybeOuter && maybeOuter !== outerScrollEl) {
+    //             if (outerScrollEl) outerScrollEl.removeEventListener('scroll', onOuterScroll);
+    //             outerScrollEl = maybeOuter;
+    //             outerScrollEl.addEventListener('scroll', onOuterScroll, { passive: true });
+    //         }
+
+    //         if (maybeInner && maybeInner !== innerScrollEl) {
+    //             innerScrollEl = maybeInner;
+    //             onOuterScroll();
+    //         }
+    //     });
+    //     observer.observe(root, { childList: true, subtree: true });
+
+    //     return () => {
+    //         if (outerScrollEl) outerScrollEl.removeEventListener('scroll', onOuterScroll);
+    //         observer.disconnect();
+    //     };
+    // }, []);
 
     const getColumnFilterMap = () => {
         switch (selectedHostType) {
@@ -664,6 +734,34 @@ const InstancesTable = () => {
         );
     };
 
+    /**
+     * Expands or collapses a table row to show/hide the DataGuard replica sub-table
+     * First collapses all other expanded rows, then toggles the expansion state of the clicked row
+     *
+     * @param updateRowState - Function to update the row's state (expand/collapse)
+     * @param rowData - The row data containing the unique row id
+     * @param currentRowState - The current state of the row including isExpanded flag
+     * @param rowState - The state object containing all rows' states
+     */
+    const expandTableRow = (
+        updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
+        rowData: { id: any },
+        currentRowState: { isExpanded: any },
+        rowState: any
+    ) => {
+        collapseAllRows(updateRowState, rowState);
+        updateRowState(rowData.id)({
+            isExpanded: !currentRowState?.isExpanded
+        });
+    };
+
+    const shouldShowDataGuardArrow = (rowData: any) => {
+        if (rowData?.hasReplicas) {
+            return true;
+        }
+        return false;
+    };
+
     const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any, extraStep?: boolean) => {
         const state = store.getState();
         const dialogKeyValue = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
@@ -730,125 +828,17 @@ const InstancesTable = () => {
         );
     };
 
-    const disableManageCheck = (rowData: any) => {
-        let errorMessage = '';
-        let isDisabled = false;
-        if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
-            isDisabled = true;
-            errorMessage = GENERAL.NON_MSSQL_BULK_CTA;
-        } else if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-            isDisabled = true;
-            errorMessage = 'The instance is already managed by Workload Factory.';
-        } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-            isDisabled = true;
-            errorMessage = 'The instance is not authenticated.';
-        } else if (rowData?.serverInstallationMode === GENERAL.AOAG) {
-            isDisabled = true;
-            errorMessage = GENERAL.AOAG_MANAGE_DISABLE;
-        } else if (rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP && !rowData?.fsxId) {
-            isDisabled = true;
-            errorMessage =
-                rowData?.hostType === DBType.ORACLE
-                    ? GENERAL.FSXN_MANAGE_SUPPORTED_ORACLE
-                    : GENERAL.FSXN_MANAGE_SUPPORTED;
-        } else if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
-            isDisabled = true;
-            errorMessage = GENERAL.HOST_DOWN;
-        } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
-            isDisabled = true;
-            errorMessage = GENERAL.SSM_DOWN;
-        } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
-            isDisabled = true;
-            errorMessage =
-                selectedHostType === DBType.ORACLE
-                    ? t('databases.register-flow.oracle-server-instance-down')
-                    : t('databases.register-flow.sql-server-instance-down');
-        }
-        return { isDisabled, errorMessage };
-    };
-
-    const setStatusForFilter = (rowData?: any) => {
-        if (
-            rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
-            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-        ) {
-            return INVENTORY_STATUS.ONLINE;
-        }
-        if (rowData?.status === INVENTORY_STATUS.STOPPED || rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) {
-            return INVENTORY_STATUS.OFFLINE;
-        }
-        return rowData?.status;
-    };
-
     const updatedTableData = useMemo(
         () =>
-            instanceTableRows?.map((row: any) => {
-                const { isDisabled, errorMessage } = disableManageCheck(row);
-                const optimizationData = getOptimizationStatusData(row, t);
-                let optimizationStatus;
-                let optimizationDisableMsg;
-                let optimizationIsDisabled;
-                if (
-                    typeof optimizationData === 'object' &&
-                    optimizationData !== null &&
-                    'displayValue' in optimizationData
-                ) {
-                    optimizationStatus = optimizationData.displayValue;
-                    optimizationDisableMsg = optimizationData.disableMsg;
-                    optimizationIsDisabled = optimizationData.isDisabled;
-                } else {
-                    optimizationStatus = optimizationData;
-                    optimizationDisableMsg = '';
-                    optimizationIsDisabled = false;
-                }
-                // Compute protection from cache
-                const hostFqdn = (row?.hostRow?.fqdn || row?.hostRow?.name || row?.name || '').toLowerCase();
-                const hostShort = hostFqdn.split('.')[0];
-                let isProtected = false;
-
-                if (isDemoMode) {
-                    // Demo mode: Specific instances should show "Edit Protection" based on mock data
-                    const hostName = (row?.hostRow?.name || row?.name || '').toLowerCase();
-                    const instanceName = (row?.databaseInstanceName || '').toLowerCase();
-
-                    // Check against demo mode criteria from constants
-                    isProtected = DEMO_MODE_PROTECTION_CRITERIA.instances.some(
-                        criteria => criteria.hostName === hostName && criteria.instanceNames.includes(instanceName)
-                    );
-                } else {
-                    // Normal mode: Use SnapCenter cache
-                    const instName = (row?.databaseInstanceName || '').toLowerCase();
-                    const possibleKeys = [
-                        `${hostFqdn}::${instName}`,
-                        `${hostShort}::${instName}`,
-                        // Named instance full form host\\instance
-                        `${hostFqdn}::${hostShort}\\${instName}`,
-                        `${hostShort}::${hostShort}\\${instName}`,
-                        // Default instance MSSQLSERVER variants
-                        `${hostFqdn}::${hostShort}`,
-                        `${hostShort}::${hostShort}`
-                    ];
-                    isProtected = possibleKeys.some(k => instanceProtection?.[k]?.protected === true);
-                }
-
-                return {
-                    ...row,
-                    isProtected,
-                    statusAccessor: setStatusForFilter(row),
-                    optimizationStatus,
-                    optimizationDisableMsg,
-                    cellProps: {
-                        ...row.cellProps,
-                        isDisabled,
-                        selectionProps: {
-                            title: errorMessage,
-                            titleProps: {
-                                placement: 'bottom'
-                            }
-                        }
+            instanceTableRows
+                ?.filter((row: any) => {
+                    // Exclude Oracle DataGuard standby instances from the table
+                    if (selectedHostType === DBType.ORACLE && row?.isReplica) {
+                        return false;
                     }
-                };
-            }),
+                    return true;
+                })
+                ?.map((row: any) => instanceExtraDataUpdate(row, t, instanceProtection, isDemoMode)),
         [instanceTableRows, instanceProtection, isDemoMode]
     );
 
@@ -866,6 +856,41 @@ const InstancesTable = () => {
 
     const getTableColDefsPerEngineType = () => getInstanceTableColumns({ t, updatedTableData, selectedHostType });
 
+    /**
+     * Renders the expanded row content showing DataGuard replica sub-table
+     *
+     * This memoized component is used by the Table component to render expanded row content
+     * for Oracle DataGuard primary instances. When a primary row is expanded, this component
+     * renders a DgReplicaTable showing all standby replicas associated with that primary.
+     *
+     * Memoization ensures the component only re-renders when dependencies change:
+     * - inventoryTableRef: For calculating table width to match parent
+     * - handleProtection: Handler for initiating protection workflows
+     * - handleDialog: Handler for showing deregister confirmation dialog
+     * - optimizeAction: Handler for navigating to well-architected analysis
+     * - handleEditProtection: Handler for editing existing protection policies
+     *
+     * @param rowData - The primary database instance row data containing replicasList
+     * @returns DgReplicaTable component displaying replica instances
+     */
+    const ExpandedRow = useCallback(
+        ({ rowData }: any) => (
+            <DgReplicaTable
+                width={inventoryTableRef.current ? inventoryTableRef.current.offsetWidth : 0}
+                rowData={rowData}
+                handleProtection={handleProtection}
+                handleDialog={handleDialog}
+                optimizeAction={optimizeAction}
+                handleEditProtection={handleEditProtection}
+            />
+        ),
+        [inventoryTableRef, handleProtection, handleDialog, optimizeAction, handleEditProtection]
+    );
+    const tableComponentProps = {
+        ExpandedRow,
+        lazyLoadingText: 'Loading'
+    };
+
     const tableProps = useTable({
         isSorting: false,
         columns: getTableColDefsPerEngineType(),
@@ -881,9 +906,11 @@ const InstancesTable = () => {
             )
         ),
         manageColumnsProps: {
-            renderCell: (cellData: any, rowData: any) => {
+            width: selectedHostType === DBType.ORACLE ? '90px' : '62px',
+            renderCell: (cellData: any, rowData: any, { updateRowState, rowsState }: any) => {
                 const menu = [];
                 let isBedRockAvailable = true;
+                const currentRowState = rowsState[rowData.id];
                 if (
                     regionMapping &&
                     rowData?.regionId &&
@@ -1008,43 +1035,62 @@ const InstancesTable = () => {
                 };
 
                 return (
-                    <div className={styles.jobMenuPopover}>
-                        {disableMenu() ? (
-                            <TooltipComponent placement="bottom" title={disableMsg} width={width} height={height}>
-                                <div className={styles.menuPointerDisabled}>
-                                    <span className={styles.menuPointer}>...</span>
-                                </div>
-                            </TooltipComponent>
-                        ) : (
-                            <MenuPopover
-                                isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                                menuItems={[...menu]}
-                                toggleMenu={(toggleType: string, menuId: string) => {
-                                    if (toggleType === 'close') {
-                                        menuOpenedRowDetail.current = null;
-                                        setOpenedRow(null);
-                                    } else if (toggleType === 'open') {
-                                        menuOpenedRowDetail.current = null;
-                                        setOpenedRow(rowData.id);
-                                        menuOpenedRowDetail.current = rowData.id;
-                                    } else if (toggleType === 'selectedOption') {
-                                        menuOpenedRowDetail.current = null;
-                                        setOpenedRow(null);
-                                        handleInstanceMenuSelection({
-                                            menuId,
-                                            rowData,
-                                            dispatch,
-                                            navigate,
-                                            handleProtection,
-                                            handleDialog,
-                                            optimizeAction,
-                                            handleEditProtection
-                                        });
+                    <div className={styles.lastContainer}>
+                        <div
+                            className={styles.jobMenuPopover}
+                            style={{ marginLeft: selectedHostType === DBType.ORACLE ? '-24px' : '-12px' }}
+                        >
+                            {disableMenu() ? (
+                                <TooltipComponent placement="bottom" title={disableMsg} width={width} height={height}>
+                                    <div className={styles.menuPointerDisabled}>
+                                        <span className={styles.menuPointer}>...</span>
+                                    </div>
+                                </TooltipComponent>
+                            ) : (
+                                <MenuPopover
+                                    isMenuOpen={
+                                        menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id
                                     }
-                                }}
-                                CustomMenu={undefined}
-                                disabledText={undefined}
-                            />
+                                    menuItems={[...menu]}
+                                    toggleMenu={(toggleType: string, menuId: string) => {
+                                        if (toggleType === 'close') {
+                                            menuOpenedRowDetail.current = null;
+                                            setOpenedRow(null);
+                                        } else if (toggleType === 'open') {
+                                            menuOpenedRowDetail.current = null;
+                                            setOpenedRow(rowData.id);
+                                            menuOpenedRowDetail.current = rowData.id;
+                                        } else if (toggleType === 'selectedOption') {
+                                            menuOpenedRowDetail.current = null;
+                                            setOpenedRow(null);
+                                            handleInstanceMenuSelection({
+                                                menuId,
+                                                rowData,
+                                                dispatch,
+                                                navigate,
+                                                handleProtection,
+                                                handleDialog,
+                                                optimizeAction,
+                                                handleEditProtection
+                                            });
+                                        }
+                                    }}
+                                    CustomMenu={undefined}
+                                    disabledText={undefined}
+                                />
+                            )}
+                        </div>
+
+                        {shouldShowDataGuardArrow(rowData) && (
+                            <div className={styles.arrow}>
+                                <ArrowIcon
+                                    className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                    onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    }}
+                                />
+                            </div>
                         )}
                     </div>
                 );
@@ -1107,7 +1153,7 @@ const InstancesTable = () => {
     };
 
     return (
-        <div className={styles.inventoryTable}>
+        <div className={styles.inventoryTable} ref={inventoryTableRef}>
             <div
                 //  @ts-ignore
                 className={`${styles.table} ${styles.leftBorder}`}
@@ -1145,6 +1191,7 @@ const InstancesTable = () => {
                     }
                 />
                 <Table
+                    {...tableComponentProps}
                     // @ts-ignore
                     tableProps={tableProps}
                     isDoubleRow

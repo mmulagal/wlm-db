@@ -1,5 +1,5 @@
 {
-    "count": 3,
+    "count": 5,
     "items": [
         {
             "id": "65c6fd61d60cd207",
@@ -158,6 +158,1034 @@
                     "isManaged": true,
                     "instanceState": "Down",
                     "isDefault": false
+                }
+            ]
+        },
+        {
+            "id": "49804875-87b1-4cc1-9979-ef4ddfe01e13",
+            "name": "ip-171-30-40-16.ap-southeast-1.compute.internal",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "connected",
+            "storageAllocation": {
+                "fsxn": 121014998532096,
+                "fsxw": 0,
+                "ebs": 0
+            },
+            "platform": "Red Hat Enterprise Linux 8.10 (Ootpa)",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "oracle-primary",
+                    "databaseInstanceId": "oracle-primary",
+                    "isManaged": true,
+                    "instanceState": "Up",
+                    "isDefault": true
+                }
+            ],
+            "fsxnResourceInfo": [
+                {
+                    "id": "fs-03773e21b2f0e39b4",
+                    "capacityCost": 0,
+                    "operationalCost": 0.8999999999999999,
+                    "size": 38482906972160
+                },
+                {
+                    "id": "fs-0e6e7434cb27e5701",
+                    "capacityCost": 0,
+                    "operationalCost": 0.8999999999999999,
+                    "size": 68719476736
+                },
+                {
+                    "id": "fs-03773e21b2f0e39c4",
+                    "capacityCost": 0,
+                    "operationalCost": 0.8999999999999999,
+                    "size": 27487790694400
+                },
+                {
+                    "id": "fs-03773e21b2f0e39d4",
+                    "capacityCost": 0,
+                    "operationalCost": 0.8999999999999999,
+                    "size": 27487790694400
+                },
+                {
+                    "id": "fs-03773e21b2f0e39d4",
+                    "capacityCost": 0,
+                    "operationalCost": 0.8999999999999999,
+                    "size": 27487790694400
+                }
+            ],
+            "estimatedUsageCost": {
+                "compute": 1448.9405,
+                "storage": {
+                    "fsxn": 4.5,
+                    "ebs": 3,
+                    "fsxnBreakDownById": [
+                        {
+                            "id": "fs-03773e21b2f0e39b4",
+                            "capacityCost": 0,
+                            "operationalCost": 0.8999999999999999,
+                            "size": 38482906972160
+                        },
+                        {
+                            "id": "fs-0e6e7434cb27e5701",
+                            "capacityCost": 0,
+                            "operationalCost": 0.8999999999999999,
+                            "size": 68719476736
+                        },
+                        {
+                            "id": "fs-03773e21b2f0e39c4",
+                            "capacityCost": 0,
+                            "operationalCost": 0.8999999999999999,
+                            "size": 27487790694400
+                        },
+                        {
+                            "id": "fs-03773e21b2f0e39d4",
+                            "capacityCost": 0,
+                            "operationalCost": 0.8999999999999999,
+                            "size": 27487790694400
+                        },
+                        {
+                            "id": "fs-03773e21b2f0e39d4",
+                            "capacityCost": 0,
+                            "operationalCost": 0.8999999999999999,
+                            "size": 27487790694400
+                        }
+                    ]
+                },
+                "connectivity": 0,
+                "others": 0,
+                "estimationType": "pricing"
+            },
+            "nodeTopology": {
+                "awsAccount": "139180723135",
+                "region": "US East (Ohio)",
+                "vpcId": "vpc-84b3ade6",
+                "vpcName": "VPC-1",
+                "vpcCidr": "172.30.0.0/20",
+                "keyPairName": "test_key",
+                "ec2Details": [
+                    {
+                        "id": "i-0123456789abcdef01",
+                        "ebsVolumeId": "vol-03a71f23f5a2f64f1",
+                        "name": "oracle-00562",
+                        "nodeStatus": "running",
+                        "instanceType": "m6in.16xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    }
+                ],
+                "activeDirectoryDetails": {
+                    "name": "",
+                    "address": ""
+                },
+                "fqdn": "ip-172-31-44-223.ap-southeast-1.compute.internal",
+                "nodeIpAddress": "13.212.164.236"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "oracle-primary",
+                    "databaseInstanceName": "oracle-primary",
+                    "status": "Up",
+                    "isInstanceStorageAsmManaged": false,
+                    "databaseCount": 1,
+                    "databaseInstanceTopology": {
+                        "serverType": "ORACLE",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fs-95959110",
+                        "fileSystemName": "DBSFSX",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "AVAILABLE",
+                        "fileSystemStorageCapacity": 35840,
+                        "fileSystemThroughputCapacity": 512,
+                        "fileSystemStorageType": "SSD",
+                        "storageSummary": {
+                            "volumes": [
+                                {
+                                    "id": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a",
+                                    "name": "oraclearch2",
+                                    "luns": [
+                                        {
+                                            "id": "1b1ed9f2-eee7-11ef-8fbb-837e18df6f7d",
+                                            "name": "/vol/wlmdb_oraclearch_1735809893269/lun4"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "id": "db1ed9f2-eee7-11ef-8fbb-837e18df6f7a",
+                                    "name": "oracledata2",
+                                    "luns": [
+                                        {
+                                            "id": "1b1ed9f2-eee7-11ef-8fbb-837e18df6f7b",
+                                            "name": "/vol/wlmdb_oracledata_1735809893269/lun2"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "id": "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a",
+                                    "name": "oracleredo2",
+                                    "luns": [
+                                        {
+                                            "id": "1b1ed9f2-eee7-11ef-8fbb-837e18df6f7c",
+                                            "name": "/vol/wlmdb_oracletemp_1735809893269/lun3"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "totalVolumes": 3,
+                            "totalLuns": 3
+                        }
+                    },
+                    "protection": {
+                        "isSqlNativeEnabled": false,
+                        "isAwsBackupEnabled": {
+                            "fsxn": true,
+                            "fsxw": false,
+                            "ebs": false
+                        },
+                        "isFsxOntapSnapshotsEnabled": true
+                    },
+                    "performance": {
+                        "assessment": "Excellent ( <=1 ms )",
+                        "rwMetrics": {
+                            "latency": {
+                                "read": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 3.9,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 4,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 4.2,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 3.8,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 5.1,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 4.5,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 4.333,
+                                        "unit": "Milliseconds"
+                                    }
+                                ],
+                                "write": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 5.2,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 4.8,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 6.1,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 5.5,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 4.9,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 5,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 5.3,
+                                        "unit": "Milliseconds"
+                                    }
+                                ]
+                            },
+                            "iops": {
+                                "read": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 180,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 170,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 190,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 175,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 185,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 165,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 195,
+                                        "unit": "IOPS"
+                                    }
+                                ],
+                                "write": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 120,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 150,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 130,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 160,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 140,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 155,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 135,
+                                        "unit": "IOPS"
+                                    }
+                                ]
+                            },
+                            "throughput": {
+                                "read": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 360,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 480,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 640,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 960,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 760,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 880,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 560,
+                                        "unit": "Kilobytes/Second"
+                                    }
+                                ],
+                                "write": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 320,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 200,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 540,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 180,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 600,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 280,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 440,
+                                        "unit": "Kilobytes/Second"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "size": 63669534720,
+                            "used": 50005102592,
+                            "physicalUsed": 3278786560,
+                            "ssdUsed": 4343635968,
+                            "capacityPoolUsed": 98363595,
+                            "snapshotUsed": 297222144,
+                            "protocol": [
+                                "NFS"
+                            ]
+                        }
+                    },
+                    "resourceUtilization": {
+                        "cpu": [
+                            {
+                                "timestamp": "2025-12-30T09:23:20.460Z",
+                                "value": 48,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2025-12-31T09:23:20.460Z",
+                                "value": 67,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2026-01-01T09:23:20.460Z",
+                                "value": 52,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2026-01-02T09:23:20.460Z",
+                                "value": 28,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2026-01-03T09:23:20.460Z",
+                                "value": 75,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2026-01-04T09:23:20.460Z",
+                                "value": 35,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2026-01-05T09:23:20.460Z",
+                                "value": 55,
+                                "unit": "Percent"
+                            }
+                        ]
+                    },
+                    "sqlServerDeploymentType": "Standalone",
+                    "databases": [
+                        {
+                            "name": "ordbsdl",
+                            "status": "ONLINE",
+                            "type": "Single tenant",
+                            "size": 2500000000,
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ],
+                    "dataguardDetails": {
+                        "dbUniqueName": "oracle-primary",
+                        "dbName": "dg2",
+                        "associatedHosts": [
+                            {
+                            "serviceName": "oracle-primary",
+                            "hostIp": "127.0.0.1",
+                            "ec2InstanceId": "i-0123456789abcdef01",
+                            "listenerPort": "1532",
+                            "sidName": "oracle-primary"
+                            },
+                            {
+                            "serviceName": "oracle-standby",
+                            "hostIp": "127.0.0.2",
+                            "ec2InstanceId": "i-0123456789abcdef11",
+                            "listenerPort": "1532",
+                            "sidName": "oracle-standby"
+                            }
+                        ],
+                        "isPrimary": true,
+                        "status": {
+                            "instanceSyncStatus": "SYNCING"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "49804875-87b1-4cc1-9979-ef4ddfe01e132",
+            "name": "ip-173-30-40-16.ap-southeast-1.compute.internal",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "connected",
+            "storageAllocation": {
+                "fsxn": 121014998532096,
+                "fsxw": 0,
+                "ebs": 0
+            },
+            "platform": "Red Hat Enterprise Linux 8.10 (Ootpa)",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "oracle-standby",
+                    "databaseInstanceId": "oracle-standby",
+                    "isManaged": true,
+                    "instanceState": "Up",
+                    "isDefault": true
+                }
+            ],
+            "fsxnResourceInfo": [
+                {
+                    "id": "fs-03773e21b2f0e39b4",
+                    "capacityCost": 0,
+                    "operationalCost": 0.8999999999999999,
+                    "size": 38482906972160
+                },
+                {
+                    "id": "fs-0e6e7434cb27e5701",
+                    "capacityCost": 0,
+                    "operationalCost": 0.8999999999999999,
+                    "size": 68719476736
+                },
+                {
+                    "id": "fs-03773e21b2f0e39c4",
+                    "capacityCost": 0,
+                    "operationalCost": 0.8999999999999999,
+                    "size": 27487790694400
+                },
+                {
+                    "id": "fs-03773e21b2f0e39d4",
+                    "capacityCost": 0,
+                    "operationalCost": 0.8999999999999999,
+                    "size": 27487790694400
+                },
+                {
+                    "id": "fs-03773e21b2f0e39d4",
+                    "capacityCost": 0,
+                    "operationalCost": 0.8999999999999999,
+                    "size": 27487790694400
+                }
+            ],
+            "estimatedUsageCost": {
+                "compute": 1448.9405,
+                "storage": {
+                    "fsxn": 4.5,
+                    "ebs": 3,
+                    "fsxnBreakDownById": [
+                        {
+                            "id": "fs-03773e21b2f0e39b4",
+                            "capacityCost": 0,
+                            "operationalCost": 0.8999999999999999,
+                            "size": 38482906972160
+                        },
+                        {
+                            "id": "fs-0e6e7434cb27e5701",
+                            "capacityCost": 0,
+                            "operationalCost": 0.8999999999999999,
+                            "size": 68719476736
+                        },
+                        {
+                            "id": "fs-03773e21b2f0e39c4",
+                            "capacityCost": 0,
+                            "operationalCost": 0.8999999999999999,
+                            "size": 27487790694400
+                        },
+                        {
+                            "id": "fs-03773e21b2f0e39d4",
+                            "capacityCost": 0,
+                            "operationalCost": 0.8999999999999999,
+                            "size": 27487790694400
+                        },
+                        {
+                            "id": "fs-03773e21b2f0e39d4",
+                            "capacityCost": 0,
+                            "operationalCost": 0.8999999999999999,
+                            "size": 27487790694400
+                        }
+                    ]
+                },
+                "connectivity": 0,
+                "others": 0,
+                "estimationType": "pricing"
+            },
+            "nodeTopology": {
+                "awsAccount": "139180723135",
+                "region": "US East (Ohio)",
+                "vpcId": "vpc-84b3ade6",
+                "vpcName": "VPC-1",
+                "vpcCidr": "172.30.0.0/20",
+                "keyPairName": "test_key",
+                "ec2Details": [
+                    {
+                        "id": "i-0123456789abcdef11",
+                        "ebsVolumeId": "vol-03a71f23f5a2f64f1",
+                        "name": "oracle-00561",
+                        "nodeStatus": "running",
+                        "instanceType": "m6in.16xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    }
+                ],
+                "activeDirectoryDetails": {
+                    "name": "",
+                    "address": ""
+                },
+                "fqdn": "ip-172-31-44-223.ap-southeast-1.compute.internal",
+                "nodeIpAddress": "13.212.164.236"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "oracle-standby",
+                    "databaseInstanceName": "oracle-standby",
+                    "status": "Up",
+                    "isInstanceStorageAsmManaged": false,
+                    "databaseCount": 1,
+                    "databaseInstanceTopology": {
+                        "serverType": "ORACLE",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fs-95959110",
+                        "fileSystemName": "DBSFSX",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "AVAILABLE",
+                        "fileSystemStorageCapacity": 35840,
+                        "fileSystemThroughputCapacity": 512,
+                        "fileSystemStorageType": "SSD",
+                        "storageSummary": {
+                            "volumes": [
+                                {
+                                    "id": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a",
+                                    "name": "oraclearch2",
+                                    "luns": [
+                                        {
+                                            "id": "1b1ed9f2-eee7-11ef-8fbb-837e18df6f7d",
+                                            "name": "/vol/wlmdb_oraclearch_1735809893269/lun4"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "id": "db1ed9f2-eee7-11ef-8fbb-837e18df6f7a",
+                                    "name": "oracledata2",
+                                    "luns": [
+                                        {
+                                            "id": "1b1ed9f2-eee7-11ef-8fbb-837e18df6f7b",
+                                            "name": "/vol/wlmdb_oracledata_1735809893269/lun2"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "id": "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a",
+                                    "name": "oracleredo2",
+                                    "luns": [
+                                        {
+                                            "id": "1b1ed9f2-eee7-11ef-8fbb-837e18df6f7c",
+                                            "name": "/vol/wlmdb_oracletemp_1735809893269/lun3"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "totalVolumes": 3,
+                            "totalLuns": 3
+                        }
+                    },
+                    "protection": {
+                        "isSqlNativeEnabled": false,
+                        "isAwsBackupEnabled": {
+                            "fsxn": true,
+                            "fsxw": false,
+                            "ebs": false
+                        },
+                        "isFsxOntapSnapshotsEnabled": true
+                    },
+                    "performance": {
+                        "assessment": "Excellent ( <=1 ms )",
+                        "rwMetrics": {
+                            "latency": {
+                                "read": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 3.9,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 4,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 4.2,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 3.8,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 5.1,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 4.5,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 4.333,
+                                        "unit": "Milliseconds"
+                                    }
+                                ],
+                                "write": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 5.2,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 4.8,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 6.1,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 5.5,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 4.9,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 5,
+                                        "unit": "Milliseconds"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 5.3,
+                                        "unit": "Milliseconds"
+                                    }
+                                ]
+                            },
+                            "iops": {
+                                "read": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 180,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 170,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 190,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 175,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 185,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 165,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 195,
+                                        "unit": "IOPS"
+                                    }
+                                ],
+                                "write": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 120,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 150,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 130,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 160,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 140,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 155,
+                                        "unit": "IOPS"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 135,
+                                        "unit": "IOPS"
+                                    }
+                                ]
+                            },
+                            "throughput": {
+                                "read": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 360,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 480,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 640,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 960,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 760,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 880,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 560,
+                                        "unit": "Kilobytes/Second"
+                                    }
+                                ],
+                                "write": [
+                                    {
+                                        "timestamp": "2025-12-30T09:23:20.460Z",
+                                        "value": 320,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2025-12-31T09:23:20.460Z",
+                                        "value": 200,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-01T09:23:20.460Z",
+                                        "value": 540,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-02T09:23:20.460Z",
+                                        "value": 180,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-03T09:23:20.460Z",
+                                        "value": 600,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-04T09:23:20.460Z",
+                                        "value": 280,
+                                        "unit": "Kilobytes/Second"
+                                    },
+                                    {
+                                        "timestamp": "2026-01-05T09:23:20.460Z",
+                                        "value": 440,
+                                        "unit": "Kilobytes/Second"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "size": 63669534720,
+                            "used": 50005102592,
+                            "physicalUsed": 3278786560,
+                            "ssdUsed": 4343635968,
+                            "capacityPoolUsed": 98363595,
+                            "snapshotUsed": 297222144,
+                            "protocol": [
+                                "NFS"
+                            ]
+                        }
+                    },
+                    "resourceUtilization": {
+                        "cpu": [
+                            {
+                                "timestamp": "2025-12-30T09:23:20.460Z",
+                                "value": 48,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2025-12-31T09:23:20.460Z",
+                                "value": 67,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2026-01-01T09:23:20.460Z",
+                                "value": 52,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2026-01-02T09:23:20.460Z",
+                                "value": 28,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2026-01-03T09:23:20.460Z",
+                                "value": 75,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2026-01-04T09:23:20.460Z",
+                                "value": 35,
+                                "unit": "Percent"
+                            },
+                            {
+                                "timestamp": "2026-01-05T09:23:20.460Z",
+                                "value": 55,
+                                "unit": "Percent"
+                            }
+                        ]
+                    },
+                    "sqlServerDeploymentType": "Standalone",
+                    "databases": [
+                        {
+                            "name": "ordbsdl",
+                            "status": "ONLINE",
+                            "type": "Single tenant",
+                            "size": 2500000000,
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ],
+                    "dataguardDetails": {
+                        "dbUniqueName": "oracle-standby",
+                        "dbName": "dg2",
+                        "associatedHosts": [
+                            {
+                            "serviceName": "oracle-primary",
+                            "hostIp": "127.0.0.1",
+                            "ec2InstanceId": "i-0123456789abcdef01",
+                            "listenerPort": "1532",
+                            "sidName": "oracle-primary"
+                            },
+                            {
+                            "serviceName": "oracle-standby",
+                            "hostIp": "127.0.0.2",
+                            "ec2InstanceId": "i-0123456789abcdef11",
+                            "listenerPort": "1532",
+                            "sidName": "oracle-standby"
+                            }
+                        ],
+                        "isPrimary": false,
+                        "status": {
+                            "instanceSyncStatus": "APPLYING",
+                            "trasnportLag": "DD HH:MI:SS",
+                            "applyLag": "DD HH:MI:SS"
+                        }
+                    }
                 }
             ]
         }

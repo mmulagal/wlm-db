@@ -16,7 +16,9 @@ import { GENERAL } from '../../utils/appConstants';
 import {
     ACTION_CTA,
     AUTHENTICATION_TYPE,
+    DATABASE_DEPLOYMENT_MODE,
     DBType,
+    DEMO_MODE_PROTECTION_CRITERIA,
     DETECT_HOST_VAR,
     ERROR_ANALYZER_STATUS,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
@@ -31,6 +33,7 @@ import {
     SC_JOB_INTERVAL,
     SQL_DEPLOYMENT_MODE,
     STATUS_CONST,
+    STORAGE_TYPES,
     WLF_TABS
 } from '../../utils/consts';
 import {
@@ -78,6 +81,7 @@ import {
     formatOracleOptimizationBreakDown,
     getOracleCardsData
 } from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+import { isAuthRequiredForInstance } from './InventoryTablesComponent/ManageInstanceWizard/DetectInstanceStep/DetectContent/DetectContentHelper';
 
 export const uniqueHostRow = (id: string, cred: string, region: string) => `${id}_${cred}_${region}`;
 
@@ -272,7 +276,13 @@ export const managedInstancesCount = (row: ManagedHostsRowInterface) => {
 
 export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) => {
     let installationMode = '';
-    if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
+    if (
+        row?.hostType === DBType.ORACLE &&
+        row?.databaseInstancesSummary &&
+        row?.databaseInstancesSummary?.[0]?.dataguardDetails?.dbUniqueName
+    ) {
+        installationMode = DATABASE_DEPLOYMENT_MODE.DATAGUARD;
+    } else if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
         for (let i = 0; i < row?.databaseInstancesSummary?.length; i++) {
             const val = row?.databaseInstancesSummary[i];
             if (val?.sqlServerDeploymentType) {
@@ -299,6 +309,25 @@ export const getInstallationMode = (row: ManagedHostsRowInterface | undefined) =
 
 export const getAllInstallationMode = (row: ManagedHostsRowInterface | undefined) => {
     const installationMode: Array<string> = [];
+    if (row?.hostType === DBType.ORACLE && row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
+        // Loop through all database instances to check for DataGuard
+        for (let i = 0; i < row?.databaseInstancesSummary?.length; i++) {
+            const val = row?.databaseInstancesSummary[i];
+            let perInstallationMode = '';
+
+            // Check if this instance has DataGuard deployed
+            if (val?.dataguardDetails?.dbUniqueName) {
+                perInstallationMode = DATABASE_DEPLOYMENT_MODE.DATAGUARD;
+            } else {
+                perInstallationMode = DATABASE_DEPLOYMENT_MODE.STANDALONE;
+            }
+
+            if (perInstallationMode && !installationMode.includes(perInstallationMode)) {
+                installationMode.push(perInstallationMode);
+            }
+        }
+        return installationMode;
+    }
     if (row?.databaseInstancesSummary && row?.databaseInstancesSummary?.length > 0) {
         for (let i = 0; i < row?.databaseInstancesSummary?.length; i++) {
             const val = row?.databaseInstancesSummary[i];
@@ -1223,7 +1252,27 @@ export const formatOracleDiscoveredRows = (
     const totalInstanceCount = discoveredRow?.databaseInstanceDetails?.length || 0;
     const ssmState = getDiscoverSsmState(discoveredRow);
     const perInstanceStatus = getOracleDiscoverPerInstanceStatus(discoveredRow, ssmState);
-    const installationMode = discoveredRow?.oracleServerDeploymentType || '';
+    let installationMode = discoveredRow?.oracleServerDeploymentType || '';
+    const installationModeList: Array<string> = [];
+    if (discoveredRow?.databaseInstanceDetails) {
+        for (let i = 0; i < discoveredRow?.databaseInstanceDetails?.length; i++) {
+            const val = discoveredRow?.databaseInstanceDetails[i];
+            let perInstallationMode = '';
+
+            // Check if this instance has DataGuard deployed
+            if (val?.dataguardDetails?.dbUniqueName) {
+                perInstallationMode = DATABASE_DEPLOYMENT_MODE.DATAGUARD;
+                installationMode = DATABASE_DEPLOYMENT_MODE.DATAGUARD;
+            } else {
+                perInstallationMode = discoveredRow?.oracleServerDeploymentType || '';
+            }
+
+            if (perInstallationMode && !installationModeList.includes(perInstallationMode)) {
+                installationModeList.push(perInstallationMode);
+            }
+        }
+    }
+
     const actionObj = getDiscoveredActions(perInstanceStatus, installationMode);
     const ec2Details = [
         {
@@ -1245,7 +1294,7 @@ export const formatOracleDiscoveredRows = (
         protocol:
             discoveredRow?.databaseInstanceDetails?.[0]?.storage?.[0]?.mountDetails?.[0]?.protocol ||
             GENERAL.NOT_AVAILABLE,
-        serverAllInstallationMode: [installationMode],
+        serverAllInstallationMode: installationModeList,
         vpcId: discoveredRow?.vpc?.id,
         vpcName: discoveredRow?.vpc?.name,
         vpcCidr: discoveredRow?.vpc?.cidrBlock,
@@ -3110,8 +3159,9 @@ export const getDiscoveredHostDeploymentV2 = (host: any) => {
     const deploymentType =
         host?.sqlServerDeploymentType || host?.oracleServerDeploymentType || host?.pgsqlServerDeploymentType || '';
     let type = '';
-
-    if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+    if (host?.dataguardDetails?.dbUniqueName) {
+        type = DATABASE_DEPLOYMENT_MODE.DATAGUARD;
+    } else if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
         type = GENERAL.AOAG;
     } else if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
         type = GENERAL.FAILOVER_CLUSTER_INSTANCES;
@@ -4407,4 +4457,405 @@ export const calculateDbBannerCounts = (instanceTableRows: any, type: string) =>
         }
     });
     return result;
+};
+
+/**
+ * Enriches Oracle instances with DataGuard replica flags
+ * Adds isReplica, hasReplicas, replicasCount, and replicasList to each Oracle instance
+ *
+ * @param allInstanceTableRows - The instance table rows to enrich
+ * @param dataguardRows - Array of DataGuard configurations from groupDataGuardConfigurations
+ * @returns Enriched instance table rows with DataGuard flags
+ */
+export const enrichInstancesWithDataGuardFlags = (allInstanceTableRows: any[], dataguardRows: any[]): any[] => {
+    if (!dataguardRows || dataguardRows.length === 0) {
+        return allInstanceTableRows;
+    }
+
+    return allInstanceTableRows.map((instance: any) => {
+        // Skip non-Oracle instances
+        if (instance.hostType !== DBType.ORACLE) {
+            return instance;
+        }
+
+        let isReplica = false;
+        let hasReplicas = false;
+        let replicasCount = 0;
+        let replicasList: any[] = [];
+
+        // Check all DataGuard configurations
+        dataguardRows.forEach((dgConfig: any) => {
+            // Check if this instance is a standby (replica)
+            if (dgConfig.standby && dgConfig.standby.length > 0) {
+                const isStandby = dgConfig.standby.some(
+                    (standby: any) =>
+                        standby.databaseInstanceName === instance.databaseInstanceName &&
+                        standby.credentialId === instance.credentialId &&
+                        standby.regionId === instance.regionId &&
+                        standby.ec2InstanceId === instance.ec2InstanceId
+                );
+                if (isStandby) {
+                    isReplica = true;
+                }
+            }
+
+            // Check if this instance is a primary with standbys
+            if (
+                dgConfig.primary &&
+                dgConfig.primary.databaseInstanceName === instance.databaseInstanceName &&
+                dgConfig.primary.credentialId === instance.credentialId &&
+                dgConfig.primary.regionId === instance.regionId &&
+                dgConfig.primary.ec2InstanceId === instance.ec2InstanceId &&
+                dgConfig.standby &&
+                dgConfig.standby.length > 0
+            ) {
+                hasReplicas = true;
+                replicasCount = dgConfig.standby.length;
+                replicasList = dgConfig.standby;
+            }
+        });
+
+        return {
+            ...instance,
+            isReplica,
+            hasReplicas,
+            replicasCount,
+            replicasList
+        };
+    });
+};
+
+/**
+ * Groups Oracle DataGuard configurations from inventory data
+ * Groups instances by their DataGuard associatedHosts EC2 instances and dbName
+ *
+ * @param inventoryTableData - The inventory table data object
+ * @param allInstanceTableRows - Enriched instance table rows with all computed fields
+ * @returns Array of DataGuard configurations, making it easier to search by EC2 instance IDs
+ *
+ * Example output:
+ * [
+ *   {
+ *     configKey: "dg2_i-xxx0_i-xxx1_credid_regionid",
+ *     dbName: "dg2",
+ *     ec2InstanceCluster: ["i-xxx0", "i-xxx1"],
+ *     primary: { instanceName: "oracle-primary", ec2InstanceId: "i-xxx0", ... },
+ *     standby: [{ instanceName: "oracle-standby", ec2InstanceId: "i-xxx1", ... }],
+ *     credentialId: "...",
+ *     regionId: "..."
+ *   },
+ *   {
+ *     configKey: "dg1_i-xxx0_i-xxx1_credid_regionid",
+ *     dbName: "dg1",
+ *     ec2InstanceCluster: ["i-xxx0", "i-xxx1"],
+ *     primary: { instanceName: "pdbnas1", ec2InstanceId: "i-xxx0", ... },
+ *     standby: [{ instanceName: "pdbnas1s", ec2InstanceId: "i-xxx1", ... }],
+ *     credentialId: "...",
+ *     regionId: "..."
+ *   }
+ * ]
+ */
+export const groupDataGuardConfigurations = (inventoryTableData: any, allInstanceTableRows: any[] = []) => {
+    const dataGuardGroups: Record<string, any> = {};
+    const processedInstances = new Set<string>(); // Track processed instances to avoid duplicates
+
+    // Iterate through all hosts in inventory
+    Object.values(inventoryTableData || {}).forEach((host: any) => {
+        // Only process Oracle hosts
+        if (host?.hostType !== DBType.ORACLE) {
+            return;
+        }
+
+        const { sqlServerInstances = [], ec2InstanceId, credentialId, regionId, name: hostName } = host;
+
+        // Process each SQL Server instance (Oracle instance)
+        sqlServerInstances.forEach((instance: any) => {
+            const { dataguardDetails, databaseInstanceName } = instance;
+
+            // Only process DataGuard-enabled instances
+            if (
+                !dataguardDetails ||
+                !dataguardDetails.associatedHosts ||
+                dataguardDetails.associatedHosts.length === 0
+            ) {
+                return;
+            }
+
+            const { dbName, isPrimary, associatedHosts } = dataguardDetails;
+
+            // Skip if essential data is missing
+            if (!dbName || !databaseInstanceName) {
+                return;
+            }
+
+            // Create unique instance identifier to prevent duplicate processing
+            const instanceId = `${ec2InstanceId}_${databaseInstanceName}_${credentialId}_${regionId}`;
+            if (processedInstances.has(instanceId)) {
+                return;
+            }
+            processedInstances.add(instanceId);
+
+            // Extract and sort EC2 instance IDs from associatedHosts to create a consistent cluster identifier
+            const ec2InstanceIds = associatedHosts
+                .map((host: any) => host.ec2InstanceId)
+                .filter((id: string) => id) // Remove undefined/null values
+                .sort(); // Sort to ensure consistent key regardless of order
+
+            // Skip if no valid EC2 instance IDs found
+            if (ec2InstanceIds.length === 0) {
+                return;
+            }
+
+            // Create unique key: dbName_sortedEc2Ids_credId_regionId
+            // This ensures all instances with the same dbName and EC2 cluster are grouped together
+            const ec2ClusterKey = ec2InstanceIds.join('_');
+            const configKey = `${dbName}_${ec2ClusterKey}_${credentialId}_${regionId}`;
+
+            // Initialize the group if it doesn't exist
+            if (!dataGuardGroups[configKey]) {
+                dataGuardGroups[configKey] = {
+                    configKey, // Include the key in the object for easier reference
+                    dbName,
+                    ec2InstanceCluster: ec2InstanceIds,
+                    primary: null,
+                    standby: [],
+                    credentialId,
+                    regionId,
+                    associatedHosts // Keep full associatedHosts info for reference
+                };
+            }
+
+            // Find enriched instance data from allInstanceTableRows
+            // Match by databaseInstanceName, credentialId, regionId, and ec2InstanceId
+            const enrichedInstance = allInstanceTableRows.find(
+                (row: any) =>
+                    row.databaseInstanceName === databaseInstanceName &&
+                    row.credentialId === credentialId &&
+                    row.regionId === regionId &&
+                    row.ec2InstanceId === ec2InstanceId
+            );
+
+            // Use enriched instance data if available, otherwise fallback to basic instance data
+            const instanceData = enrichedInstance || {
+                ...instance,
+                ec2InstanceId,
+                credentialId,
+                regionId,
+                hostName,
+                hostStatus: host.status,
+                ssmState: host.ssmState,
+                platform: host.platform,
+                resourceId: host.resourceId
+            };
+
+            // Classify as primary or standby based on isPrimary flag
+            if (isPrimary) {
+                // Only set primary if not already set (should only be one primary per config)
+                if (!dataGuardGroups[configKey].primary) {
+                    dataGuardGroups[configKey].primary = instanceData;
+                }
+                // Multiple primary instances found for DataGuard config - skip duplicates
+            } else {
+                // Add to standby list
+                dataGuardGroups[configKey].standby.push(instanceData);
+            }
+        });
+    });
+
+    // Convert object to array and filter out groups without a primary
+    // A DataGuard configuration without a primary is incomplete and should not be returned
+    return Object.values(dataGuardGroups).filter((group: any) => group.primary !== null);
+};
+
+/**
+ * Filters storage objects to return only FSx for NetApp ONTAP (FSXN) type storage
+ *
+ * @param data - Object containing a storage array with various storage types
+ * @returns Array of FSXN storage objects, or empty array if no storage data exists
+ *
+ * Example output:
+ * [
+ *   {
+ *     type: "FSXN",
+ *     fileSystemId: "fs-xxx",
+ *     fileSystemName: "my-fsxn-filesystem",
+ *     ...
+ *   }
+ * ]
+ */
+export const getFsxList = (data: any) => {
+    if (!data?.storage || !Array.isArray(data.storage)) {
+        return [];
+    }
+    // Filter to return only FSXN type storage objects
+    return data.storage.filter((storageItem: any) => storageItem?.type === STORAGE_TYPES.FSXN);
+};
+
+/**
+ * Determines if a database instance should be disabled for management actions
+ * Checks multiple conditions including host type, authentication status, deployment mode,
+ * file system type, and instance status to decide if the manage action should be disabled
+ *
+ * @param rowData - The database instance row data containing status, type, and configuration details
+ * @param selectedHostType - The type of database host (MSSQL, ORACLE, POSTGRESQL)
+ * @param t - Translation function for internationalized error messages
+ * @returns Object with isDisabled flag and corresponding errorMessage
+ *
+ * Conditions checked:
+ * - PostgreSQL instances (not supported for bulk management)
+ * - Already managed instances
+ * - Unauthenticated instances
+ * - AOAG (Always On Availability Groups) deployments
+ * - Non-FSxN storage without FSx ID
+ * - Offline host status
+ * - Offline SSM state
+ * - Down instance status
+ */
+const disableManageCheck = (rowData: any, selectedHostType: string, t: TFunction) => {
+    let errorMessage = '';
+    let isDisabled = false;
+    if (rowData?.hostType === DBType.POSTGRESQL) {
+        isDisabled = true;
+        errorMessage = t('databases.register-flow.no-bulk-cta');
+    } else if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+        isDisabled = true;
+        errorMessage = t('databases.register-flow.already-managed-instance');
+    } else if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
+        isDisabled = true;
+        errorMessage = t('databases.register-flow.not-authenticated-instance');
+    } else if (rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.AOAG) {
+        isDisabled = true;
+        errorMessage = t('databases.register-flow.aoag-manage-disable');
+    } else if (rowData.fileSystemType !== STORAGE_TYPES.FSX_FOR_ONTAP && !rowData?.fsxId) {
+        isDisabled = true;
+        errorMessage =
+            rowData?.hostType === DBType.ORACLE
+                ? t('databases.register-flow.fsxn-manage-supported-oracle')
+                : t('databases.register-flow.fsxn-manage-supported');
+    } else if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
+        isDisabled = true;
+        errorMessage = t('databases.register-flow.host-down');
+    } else if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+        isDisabled = true;
+        errorMessage = t('databases.register-flow.ssm-down');
+    } else if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+        isDisabled = true;
+        errorMessage =
+            selectedHostType === DBType.ORACLE
+                ? t('databases.register-flow.oracle-server-instance-down')
+                : t('databases.register-flow.sql-server-instance-down');
+    }
+    return { isDisabled, errorMessage };
+};
+
+/**
+ * Normalizes instance status values for consistent filtering and display
+ * Maps various raw status values to standardized status strings
+ *
+ * @param rowData - Optional row data object containing status information
+ * @returns Normalized status string (ONLINE, OFFLINE) or original status value
+ *
+ * Status mappings:
+ * - "running" (lowercase) or "Up" (case-sensitive) → ONLINE
+ * - "stopped" or "Down" (case-sensitive) → OFFLINE
+ * - Other values → returned as-is
+ */
+const setStatusForFilter = (rowData?: any) => {
+    if (
+        rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
+        rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+    ) {
+        return INVENTORY_STATUS.ONLINE;
+    }
+    if (rowData?.status === INVENTORY_STATUS.STOPPED || rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) {
+        return INVENTORY_STATUS.OFFLINE;
+    }
+    return rowData?.status;
+};
+
+/**
+ * Enriches database instance row data with computed properties for table display and interactions
+ * This function augments raw instance data with UI-specific properties including management state,
+ * optimization status, protection status, and normalized status values
+ *
+ * @param row - The database instance row data to enrich
+ * @param t - Translation function for internationalized messages
+ * @param instanceProtection - Cache object containing SnapCenter protection status for instances
+ * @param isDemoMode - Boolean indicating if the application is running in demo mode
+ * @returns Enriched row object with additional computed properties
+ *
+ * Computed properties added:
+ * - isProtected: Boolean indicating if instance has SnapCenter protection configured
+ * - statusAccessor: Normalized status string for consistent filtering (ONLINE/OFFLINE)
+ * - optimizationStatus: Well-architected assessment status display value
+ * - optimizationDisableMsg: Message explaining why optimization actions are disabled (if applicable)
+ * - cellProps.isDisabled: Boolean indicating if management actions should be disabled
+ * - cellProps.selectionProps: Tooltip configuration showing why selection is disabled
+ *
+ * Protection status logic:
+ * - Demo mode: Uses DEMO_MODE_PROTECTION_CRITERIA to determine protection status
+ * - Normal mode: Checks instanceProtection cache with multiple key patterns (FQDN, short name, instance variants)
+ */
+export const instanceExtraDataUpdate = (row: any, t: TFunction, instanceProtection: any, isDemoMode: any) => {
+    const { isDisabled, errorMessage } = disableManageCheck(row, row?.hostType, t);
+    const optimizationData = getOptimizationStatusData(row, t);
+    let optimizationStatus;
+    let optimizationDisableMsg;
+    let optimizationIsDisabled;
+    if (typeof optimizationData === 'object' && optimizationData !== null && 'displayValue' in optimizationData) {
+        optimizationStatus = optimizationData.displayValue;
+        optimizationDisableMsg = optimizationData.disableMsg;
+        optimizationIsDisabled = optimizationData.isDisabled;
+    } else {
+        optimizationStatus = optimizationData;
+        optimizationDisableMsg = '';
+        optimizationIsDisabled = false;
+    }
+    // Compute protection from cache
+    const hostFqdn = (row?.hostRow?.fqdn || row?.hostRow?.name || row?.name || '').toLowerCase();
+    const hostShort = hostFqdn.split('.')[0];
+    let isProtected = false;
+
+    if (isDemoMode) {
+        // Demo mode: Specific instances should show "Edit Protection" based on mock data
+        const hostName = (row?.hostRow?.name || row?.name || '').toLowerCase();
+        const instanceName = (row?.databaseInstanceName || '').toLowerCase();
+
+        // Check against demo mode criteria from constants
+        isProtected = DEMO_MODE_PROTECTION_CRITERIA.instances.some(
+            criteria => criteria.hostName === hostName && criteria.instanceNames.includes(instanceName)
+        );
+    } else {
+        // Normal mode: Use SnapCenter cache
+        const instName = (row?.databaseInstanceName || '').toLowerCase();
+        const possibleKeys = [
+            `${hostFqdn}::${instName}`,
+            `${hostShort}::${instName}`,
+            // Named instance full form host\\instance
+            `${hostFqdn}::${hostShort}\\${instName}`,
+            `${hostShort}::${hostShort}\\${instName}`,
+            // Default instance MSSQLSERVER variants
+            `${hostFqdn}::${hostShort}`,
+            `${hostShort}::${hostShort}`
+        ];
+        isProtected = possibleKeys.some(k => instanceProtection?.[k]?.protected === true);
+    }
+
+    return {
+        ...row,
+        isProtected,
+        statusAccessor: setStatusForFilter(row),
+        optimizationStatus,
+        optimizationDisableMsg,
+        cellProps: {
+            ...row.cellProps,
+            isDisabled,
+            selectionProps: {
+                title: errorMessage,
+                titleProps: {
+                    placement: 'bottom'
+                }
+            }
+        }
+    };
 };

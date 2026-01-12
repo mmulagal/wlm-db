@@ -13,6 +13,7 @@ import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { compressSync } from 'fflate';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import styles from './ExploreSavingsOnPremiseTable.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -40,7 +41,6 @@ import {
     setSelectedRowsForExploreSavingsOnPremBulk,
     setOnPremTCOAction
 } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
-import { useNavigate } from 'react-router-dom';
 
 const ExploreSavingsOnPremiseTable = () => {
     const { t } = useTranslation();

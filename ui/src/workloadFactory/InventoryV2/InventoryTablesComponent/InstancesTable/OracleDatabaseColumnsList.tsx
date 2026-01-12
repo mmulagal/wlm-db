@@ -7,8 +7,8 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
     ACTION_CTA,
+    DATABASE_DEPLOYMENT_MODE,
     DBType,
-    ERROR_ANALYZER_STATUS,
     INVENTORY_STATUS,
     INVENTORY_TABLE_STATUS,
     PROTECTION_COLUMN_TEXT_STATUS,
@@ -18,14 +18,13 @@ import {
 } from '../../../../utils/consts';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
-import { formatDateWithTime, formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
+import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
 import { instanceNameHyperLink, optimizeAction, protectionTooltipText } from './InstanceTableColumnsHelper';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
-import { ReactComponent as NotActiveNotificationIcon } from '../../../../assets/NotActiveNotificationIcon.svg';
 import {
     setBreadCrumbSelectedFrom,
     setManageSingleInstanceData,
@@ -59,7 +58,7 @@ export function getOracleDatabaseColumnsList({
                 { label: 'Online', value: 'Online' },
                 { label: 'Offline', value: 'Offline' }
             ],
-            width: '256px',
+            width: '260px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
                 const name = rowData?.databaseInstanceName;
@@ -140,6 +139,38 @@ export function getOracleDatabaseColumnsList({
                     {cellData || t('databases.general.not-available-table-columns')}
                 </DsTypography>
             )
+        },
+        {
+            Header: t('databases.databases-table.oracle.headers.deployment-model'),
+            accessor: 'serverInstallationMode',
+            id: '8',
+            width: '213px',
+            filterOptions: getFilterOptions(updatedTableData, 'serverInstallationMode'),
+            renderCell: (cellData: string, rowData: any) => {
+                if (cellData === DATABASE_DEPLOYMENT_MODE.DATAGUARD) {
+                    return (
+                        <div className={styles.firstColumnClass}>
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {cellData || t('databases.general.not-available-table-columns')}
+                            </DsTypography>
+                            {rowData.replicasCount > 0 && (
+                                <div className={styles.firstColText}>
+                                    <DsTypography variant="Regular_13" className={styles.colText}>
+                                        {`${t('databases.general.primary')} | ${rowData.replicasCount || 0} ${t(
+                                            'databases.general.replica'
+                                        )}(s)`}
+                                    </DsTypography>
+                                </div>
+                            )}
+                        </div>
+                    );
+                }
+                return (
+                    <DsTypography variant="Regular_13" className={styles.colText}>
+                        {cellData || t('databases.general.not-available-table-columns')}
+                    </DsTypography>
+                );
+            }
         },
         {
             Header: t('databases.databases-table.oracle.headers.registration-status'),
@@ -302,18 +333,6 @@ export function getOracleDatabaseColumnsList({
             }
         },
         {
-            Header: t('databases.databases-table.oracle.headers.deployment-model'),
-            accessor: 'serverInstallationMode',
-            id: '8',
-            width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'serverInstallationMode'),
-            renderCell: (cellData: string) => (
-                <DsTypography variant="Regular_13" className={styles.colText}>
-                    {cellData || t('databases.general.not-available-table-columns')}
-                </DsTypography>
-            )
-        },
-        {
             Header: t('databases.databases-table.oracle.headers.performance'),
             accessor: 'performance.assessment',
             id: '9',
@@ -419,9 +438,71 @@ export function getOracleDatabaseColumnsList({
                 if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
                     loading = true;
                 }
+
+                const fsxList = rowData?.fsxList || [];
+                const hasManyFsx = fsxList.length > 1;
+
                 return (
                     <>
-                        {!loading && rowData?.fsxId && (
+                        {!loading && hasManyFsx && (
+                            <div className={styles.fsxNameContainer}>
+                                <div className={styles.ssmOffline}>
+                                    <Popover
+                                        popoverClass=""
+                                        children={
+                                            <div
+                                                className={`${styles.tooltipContainer} ${styles.tooltipContainerMulti} ${styles.fsxNamePopOver}`}
+                                            >
+                                                {fsxList.map((fsx: any, index: number) => (
+                                                    <div
+                                                        key={index}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '8px',
+                                                            marginBottom: index < fsxList.length - 1 ? '8px' : '0'
+                                                        }}
+                                                    >
+                                                        <DsTypography variant="Regular_13">
+                                                            {fsx?.fileSystemName ||
+                                                                t('databases.general.not-available-table-columns')}{' '}
+                                                            | ID:{' '}
+                                                            {fsx?.id ||
+                                                                t('databases.general.not-available-table-columns')}
+                                                        </DsTypography>
+                                                        <Popover
+                                                            popoverClass={styles['copy-popover']}
+                                                            children="Copied"
+                                                            container={
+                                                                <CopyToClipboardCommon
+                                                                    value={fsx?.id}
+                                                                    iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                                                />
+                                                            }
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        }
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive
+                                        isAppendedToBody={false}
+                                        container={<TooltipIcon />}
+                                    />
+                                </div>
+                                <div className={styles.fsxName}>
+                                    <DsTypography
+                                        className={styles.fsxNameText}
+                                        variant="Regular_13"
+                                        title={`${fsxList.length} ${t('databases.general.fsx-for-ontap')}`}
+                                    >
+                                        {`${fsxList.length} ${t('databases.general.fsx-for-ontap')}`}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        )}
+                        {!loading && !hasManyFsx && rowData?.fsxId && (
                             <div className={styles.fsxNameContainer}>
                                 <div className={styles.ssmOffline}>
                                     <Popover
@@ -460,7 +541,7 @@ export function getOracleDatabaseColumnsList({
                             </div>
                         )}
                         {loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && !rowData?.fsxId && (
+                        {!cellData && !loading && !rowData?.fsxId && !hasManyFsx && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {t('databases.general.not-available-table-columns')}
                             </DsTypography>

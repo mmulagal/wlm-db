@@ -19,6 +19,11 @@
             "fix-after-operation-ends": "You will be able to fix after the current well-architected operation ends."
         },
         "general": {
+            "fsx-for-ontap": "FSx for ONTAP",
+            "replicas": "Replicas",
+            "replica": "Replica",
+            "primary": "Primary",
+            "standby": "Standby",
             "dismiss": "Dismiss",
             "inventory": "Inventory",
             "view-and-fix": "View and fix",
@@ -123,6 +128,11 @@
             "not-active-databases": "Not active databases"
         },
         "register-flow": {
+            "smb-protocol-disabled": "Action not supported on SQL server using SMB protocol",
+            "no-bulk-cta": "Bulk manage is not supported for PostgreSQL.",
+            "already-managed-instance": "The instance is already managed by Workload Factory.",
+            "not-authenticated-instance": "The instance is not authenticated.",
+            "aoag-manage-disable": "Register instance is not supported for Always on availability group deployment model.",
             "register-bulk-disable-tooltip": "No instances are eligible for registration at this time.",
             "register-bulk-disable-tooltip-oracle": "No databases are eligible for registration at this time.",
             "register-multiple-instances": "Register multiple instances",
@@ -239,6 +249,10 @@
             "manage-min-permissions-requirement-content2-oracle": " At least one capability must meet the minimum prerequisites and be in \"Ready\" status before proceeding. To register this Oracle database, please address the necessary prerequisites and try again.",
             "sql-server-instance-down": "SQL Server instance is down.",
             "oracle-server-instance-down": "Oracle Server instance is down.",
+            "fsxn-manage-supported": "Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be registered.",
+            "fsxn-manage-supported-oracle": "Only Oracle databases with FSx for ONTAP file system storage can be registered.",
+            "host-down": "Host is down.",
+            "ssm-down": "SSM is not connected.",
             "non-mssql-assessment-na": "Well-architected analysis is only available for Microsoft SQL Server and Oracle registered instances.",
             "optional-credentials": "(Optional)",
             "capabilities-information": {

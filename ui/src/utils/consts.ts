@@ -177,7 +177,8 @@ export const SQL_DEPLOYMENT_MODE = {
 export const DATABASE_DEPLOYMENT_MODE = {
     FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
     STANDALONE: 'Standalone',
-    AOAG: 'Always on availability group'
+    AOAG: 'Always on availability group',
+    DATAGUARD: 'Data Guard'
 };
 
 export const TENANCY = {
@@ -232,6 +233,11 @@ export const FSXN_STORAGE_PROTOCOLS = {
     ISCSI: 'iSCSI',
     SMB: 'SMB',
     NFS: 'NFS'
+};
+
+export const STORAGE_TYPES = {
+    FSX_FOR_ONTAP: 'FSx for ONTAP',
+    FSXN: 'FSXN'
 };
 
 export const MAX_SAVED_CONFIG = 100;

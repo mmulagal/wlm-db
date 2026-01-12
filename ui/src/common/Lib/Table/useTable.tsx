@@ -776,6 +776,7 @@ export const useTable = ({
                                   allColumns={pColumns}
                                   columnsState={table.columnsState}
                                   updateColumnState={updateColumnState}
+                                  isManualWidth={!!manageColumnsProps.width && manageColumnsProps.width !== '62px'}
                               />
                           ),
                           accessor: '',

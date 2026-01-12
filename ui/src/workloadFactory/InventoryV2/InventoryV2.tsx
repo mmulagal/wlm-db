@@ -15,20 +15,19 @@ import {
 import { GENERAL } from '../../utils/appConstants';
 import { categorizeStorageSize, formatSize, formatSizeTwoPrecision } from '../../utils/utilityFunctions';
 import {
+    enrichInstancesWithDataGuardFlags,
     getDiscoveredHostDeploymentV2,
     getFileSystemName,
+    getFsxList,
     getOptimizationStatus,
     getProtectionText,
+    groupDataGuardConfigurations,
     sortDatabaseTableData,
     sortInstanceTableData,
     sortInventoryTableData,
     uniqueHostRow
 } from './InventoryUtilsV2';
-import {
-    setAllOracleHostAssessmentLoading,
-    setFullInventoryTablesRows,
-    setInventoryTablesRows
-} from '../../store/workloadFactory/inventoryV2Slice';
+import { setFullInventoryTablesRows, setInventoryTablesRows } from '../../store/workloadFactory/inventoryV2Slice';
 import store from '../../store/store';
 import EngineTypeSelector from './EngineTypeSelector/EngineTypeSelector';
 
@@ -202,6 +201,8 @@ const InventoryV2 = () => {
 
                         const fileSystemName = getFileSystemName(perRow);
 
+                        const fsxList = getFsxList(perRow);
+
                         // assessment loading for mssql and oracle
                         if (
                             perRow?.statusColText === INVENTORY_STATUS.MANAGED &&
@@ -268,6 +269,7 @@ const InventoryV2 = () => {
                             hostRow: perHost,
                             name: perHost?.name,
                             hostType: perHost?.hostType,
+                            fsxList,
                             serverInstallationMode: getDiscoveredHostDeploymentV2(perRow),
                             loading: inventoryTableData?.[key]?.loading,
                             fullManagedInstanceLoading: inventoryTableData?.[key]?.fullManagedInstanceLoading,
@@ -374,6 +376,11 @@ const InventoryV2 = () => {
                     });
                 }
             });
+
+            const dataguardRows = groupDataGuardConfigurations(inventoryTableData, allInstanceTableRows);
+
+            // Add isReplica and hasReplicas flags to Oracle instances based on DataGuard configurations
+            allInstanceTableRows = enrichInstancesWithDataGuardFlags(allInstanceTableRows, dataguardRows);
 
             // sort it based on action and whether it is disable or enable
             dispatch(
