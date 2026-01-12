@@ -314,7 +314,7 @@ const bashJsonUtils = `
     extract_json_value() {
         local json="$1"
         local key="$2"
-        echo "$json" | sed -n 's/.*"'$key'"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p'
+        echo "$json" | sed -n 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' | head -1
     }
 
     # Function to extract JSON value (handles numbers and strings)
@@ -324,20 +324,77 @@ const bashJsonUtils = `
         echo "$json" | sed -n 's/.*"'$key'"[[:space:]]*:[[:space:]]*\\([^,}]*\\).*/\\1/p' | sed 's/^"\\|"$//g'
     }
 
-    # Function to extract nested JSON value like records[0].uuid
     extract_nested_value() {
-        local json="$1"
-        local path="$2"
-        
-        if [[ "$path" == "records[0]."* ]]; then
-            local key=\${path#records[0].}
-            # Extract first record from records array
-            local first_record=$(echo "$json" | sed -n '/\\"records\\"[[:space:]]*:[[:space:]]*\\[/{:a;N;/}[[:space:]]*]/!ba;p}' | sed -n '/{/,/}/p')
-            extract_json_value "$first_record" "$key"
-        else
+    local json="$1"
+    local path="$2"
+    
+    # Check if path starts with "records[0]."
+    case "$path" in
+        "records[0]."*)
+            # Remove prefix using sed (brackets are special in bash parameter expansion)
+            local key
+            key=$(echo "$path" | sed 's/^records\\[0\\]\\.//')
+            
+            # Flatten JSON to single line for easier parsing
+            local flat
+            flat=$(echo "$json" | tr -d '\n\r' | tr -s ' ')
+            
+            # Extract content after "records": [
+            local after_records
+            after_records=$(echo "$flat" | sed 's/.*"records"[[:space:]]*:[[:space:]]*\\[//')
+            
+            # Extract first complete object by counting braces
+            local first_record=""
+            local brace_count=0
+            local started=0
+            local i=0
+            local len=\${#after_records}
+            
+            while [ $i -lt $len ]; do
+                local char="\${after_records:$i:1}"
+                
+                if [ "$char" = "{" ]; then
+                    if [ $brace_count -eq 0 ]; then
+                        started=1
+                    fi
+                    brace_count=$((brace_count + 1))
+                    first_record="\${first_record}\${char}"
+                elif [ "$char" = "}" ]; then
+                    brace_count=$((brace_count - 1))
+                    first_record="\${first_record}\${char}"
+                    if [ $brace_count -eq 0 ] && [ $started -eq 1 ]; then
+                        break
+                    fi
+                elif [ $started -eq 1 ]; then
+                    first_record="\${first_record}\${char}"
+                fi
+                i=$((i + 1))
+            done
+            
+            if [ -z "$first_record" ]; then
+                return 1
+            fi
+            
+            # Handle nested keys like "svm.name"
+            case "$key" in
+                *.*)
+                    # Two-level nested: svm.name
+                    local parent="\${key%%.*}"
+                    local child="\${key#*.}"
+                    echo "$first_record" | sed -n 's/.*"'"$parent"'"[[:space:]]*:[[:space:]]*{[^}]*"'"$child"'"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' | head -1
+                    ;;
+                *)
+                    # Simple key - use grep to find FIRST occurrence (non-greedy)
+                    echo "$first_record" | grep -o '"'"$key"'"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*:[[:space:]]*"\\([^"]*\\)".*/\\1/'
+                    ;;
+            esac
+            ;;
+        *)
             extract_json_value "$json" "$path"
-        fi
-    }
+            ;;
+    esac
+}
+
 
     # URL encode function
     url_encode() {
