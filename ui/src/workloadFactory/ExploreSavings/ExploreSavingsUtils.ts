@@ -245,7 +245,15 @@ export const setESInstanceOnPremData = (data: any, dispatch: any) => {
     );
 };
 
-export const onClickESHostOnPremBulk = (dispatch: any, selectedHosts: any[], isWorkloadFactory: boolean) => {
+export const onClickESHostOnPremBulk = (
+    dispatch: any,
+    selectedHosts: any[],
+    isWorkloadFactory: boolean,
+    navigate?: NavigateFunction
+) => {
+    if (navigate && isWorkloadFactory) {
+        navigate('../databases/saving-calculator');
+    }
     postBlueXPMessage({
         type: BlueXPListeners.navigate,
         payload: {

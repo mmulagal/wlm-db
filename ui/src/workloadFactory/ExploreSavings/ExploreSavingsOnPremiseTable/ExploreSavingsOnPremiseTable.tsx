@@ -551,7 +551,7 @@ const ExploreSavingsOnPremiseTable = () => {
             dispatch(setOnPremTCOAction('bulk'));
 
             // Use the new bulk function that handles all selected hosts
-            onClickESHostOnPremBulk(dispatch, selectedRowsForExploreSavingsOnPremBulk, isWorkloadFactory);
+            onClickESHostOnPremBulk(dispatch, selectedRowsForExploreSavingsOnPremBulk, isWorkloadFactory, navigate);
         }
     };
 
