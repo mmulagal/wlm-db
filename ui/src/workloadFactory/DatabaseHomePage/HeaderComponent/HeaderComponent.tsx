@@ -186,10 +186,9 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     const { refreshTime, refreshTimeSandbox, secondaryCTAFlow } = useAppSelector(state => state.headers);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const { isDemoMode, accountId, userMetadata } = useAppSelector(state => state.auth);
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
-    const topBarFlag = useAppSelector(state => state?.auth?.features?.active['NetApp.NewNav/*']);
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
 
@@ -338,11 +337,23 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                 if (checkValueSavedForCred(options, value)) {
                     dispatch(setHeaderSelectedMultiCred([value]));
+                    localStorage.setItem(
+                        `occm.fsx.lastCredentialIdMultiple.${userMetadata?.sub}.${accountId}`,
+                        JSON.stringify([{ value: value?.data?.credentialsId, label: value?.data?.name }])
+                    );
                 } else {
                     dispatch(setHeaderSelectedMultiCred([options[0]]));
+                    localStorage.setItem(
+                        `occm.fsx.lastCredentialIdMultiple.${userMetadata?.sub}.${accountId}`,
+                        JSON.stringify([{ value: options[0]?.data?.credentialsId, label: options[0]?.data?.name }])
+                    );
                 }
             } else {
                 dispatch(setHeaderSelectedMultiCred([options[0]]));
+                localStorage.setItem(
+                    `occm.fsx.lastCredentialIdMultiple.${userMetadata?.sub}.${accountId}`,
+                    JSON.stringify([{ value: options[0]?.data?.credentialsId, label: options[0]?.data?.name }])
+                );
             }
         }
         return options;
@@ -366,11 +377,23 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                 if (checkValueSavedForRegion(options, regionValue)) {
                     dispatch(setHeaderSelectedMultiRegion([regionValue]));
+                    localStorage.setItem(
+                        `occm.fsx.lastRegionCodeMultiple.${userMetadata?.sub}.${accountId}`,
+                        JSON.stringify([{ value: regionValue?.data?.regionCode, label: regionValue?.label }])
+                    );
                 } else {
                     dispatch(setHeaderSelectedMultiRegion([defaultOption]));
+                    localStorage.setItem(
+                        `occm.fsx.lastRegionCodeMultiple.${userMetadata?.sub}.${accountId}`,
+                        JSON.stringify([{ value: defaultOption?.data?.regionCode, label: defaultOption?.label }])
+                    );
                 }
             } else {
                 dispatch(setHeaderSelectedMultiRegion([defaultOption]));
+                localStorage.setItem(
+                    `occm.fsx.lastRegionCodeMultiple.${userMetadata?.sub}.${accountId}`,
+                    JSON.stringify([{ value: defaultOption?.data?.regionCode, label: defaultOption?.label }])
+                );
             }
         }
         return options;
@@ -984,6 +1007,20 @@ const HeaderComponent = ({ tab }: Tab) => {
                     variant="underline"
                     onSelect={(option: any) => {
                         dispatch(setHeaderSelectedMultiCred(option));
+                        if (option && option.length > 0) {
+                            const formattedData = option.map((item: any) => ({
+                                value: item?.data?.credentialsId,
+                                label: item?.data?.name
+                            }));
+                            localStorage.setItem(
+                                `occm.fsx.lastCredentialIdMultiple.${userMetadata?.sub}.${accountId}`,
+                                JSON.stringify(formattedData)
+                            );
+                        } else {
+                            localStorage.removeItem(
+                                `occm.fsx.lastCredentialIdMultiple.${userMetadata?.sub}.${accountId}`
+                            );
+                        }
                     }}
                     placeholder="No credentials selected"
                     isCleanable={false}
@@ -1026,6 +1063,20 @@ const HeaderComponent = ({ tab }: Tab) => {
                     variant="underline"
                     onSelect={(option: any) => {
                         dispatch(setHeaderSelectedMultiRegion(option));
+                        if (option && option.length > 0) {
+                            const formattedData = option.map((item: any) => ({
+                                value: item?.id,
+                                label: item?.label
+                            }));
+                            localStorage.setItem(
+                                `occm.fsx.lastRegionCodeMultiple.${userMetadata?.sub}.${accountId}`,
+                                JSON.stringify(formattedData)
+                            );
+                        } else {
+                            localStorage.removeItem(
+                                `occm.fsx.lastRegionCodeMultiple.${userMetadata?.sub}.${accountId}`
+                            );
+                        }
                     }}
                     isCleanable={false}
                     isSelectAll

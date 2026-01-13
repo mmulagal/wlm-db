@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 interface AuthState {
     userMetadata: {
         email: string;
+        sub: string;
     };
     accountId: string;
     accessToken: string;
@@ -40,7 +41,8 @@ const initialState: AuthState = {
     isWorkloadFactory: false,
     refreshBlocked: false,
     userMetadata: {
-        email: ''
+        email: '',
+        sub: ''
     },
     orgId: '',
     initialPathName: ''
@@ -56,7 +58,7 @@ const authSlice = createSlice({
         updateOrgId: (state, action: PayloadAction<string>) => {
             state.orgId = action.payload;
         },
-        updateUserMetaData: (state, action: PayloadAction<{ email: string }>) => {
+        updateUserMetaData: (state, action: PayloadAction<{ email: string; sub: string }>) => {
             state.userMetadata = action.payload;
         },
         updateFeatures: (state, action: PayloadAction<string>) => {
