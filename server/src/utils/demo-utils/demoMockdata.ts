@@ -6167,6 +6167,36 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
             domain: 'dbsqa.mssql.com',
             'config-file': '/etc/idmapd.conf',
             'config-exists': true
+        },
+        'dnfs-oranfstab': {
+            oranfstab_servers: [
+                {
+                    server: 'fsxnfsv3',
+                    paths: ['172.31.255.252'],
+                    exports: [
+                        { export: '/oracledata2', mount: '/mnt/oradata' },
+                        { export: '/oraclearch2', mount: '/mnt/oraarch' }
+                    ],
+                    nfs_version: 'NFSv3',
+                    options: ['rsize:262144', 'wsize:262144', 'tcp_nodelay', 'noactimeo', 'nolock']
+                },
+                {
+                    server: 'fsxnfsv4',
+                    paths: ['172.31.255.231'],
+                    exports: [{ export: '/oracleredo2', mount: '/mnt/oraredoctl' }],
+                    nfs_version: 'NFSv4',
+                    options: ['rsize:65536', 'wsize:65536', 'tcp_nodelay']
+                }
+            ],
+            error: null
+        },
+        'dnfs-ip-resolution': {
+            dns_resolution: {
+                fsxnfsv3: ['172.31.255.252'],
+                fsxnfsv4: ['172.31.255.231'],
+                '172.31.255.231': ['172.31.255.231']
+            },
+            error: null
         }
     },
     nfsv4DomainData: {

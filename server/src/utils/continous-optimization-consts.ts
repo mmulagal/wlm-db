@@ -481,7 +481,9 @@ const ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'nfs-mount-options-databasefiles',
         'nfs-mount-options-adrhome',
         'nfsv4-domain-name',
-        'nfs-caching-options'
+        'nfs-caching-options',
+        'dnfs-enabled',
+        'dnfs-consistent-ip-resolution'
     ]
 };
 

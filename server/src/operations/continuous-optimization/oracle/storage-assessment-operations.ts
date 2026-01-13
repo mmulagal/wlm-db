@@ -564,6 +564,8 @@ function getNfsOSConfigDrift(
         })
         .join(', ');
 
+    let isDnfsEnabled = false;
+
     osNfsConfigData.forEach(config => {
         const violationDetails: GenericViolationResponseType[] = [];
 
@@ -739,8 +741,9 @@ function getNfsOSConfigDrift(
                 const hasOntapNfsv4Mount = mountOptions.some(mount => {
                     const options = mount?.options || {};
                     const remotePath = mount?.['remote-path'] || '';
+                    const versValue = typeof options.vers === 'string' ? options.vers : '';
                     return (
-                        options.vers.startsWith('4') &&
+                        versValue.startsWith('4') &&
                         volumes?.data?.some(
                             volume =>
                                 volume.name && remotePath && volume.name.includes(remotePath.split('/').pop() || '')
@@ -776,6 +779,74 @@ function getNfsOSConfigDrift(
                     );
                 }
                 osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
+                break;
+            }
+            case 'dnfs-enabled': {
+                const dnfsServers = storageAssessmentData?.dnfsServers;
+                if (dnfsServers?.error) {
+                    osDrift.push({
+                        name: config.name,
+                        errorMessage: `Failed to retrieve dNFS server configuration: ${dnfsServers.error}`
+                    });
+                    break;
+                }
+
+                const dnfsData = dnfsServers?.data || [];
+                isDnfsEnabled = dnfsData.length > 0;
+
+                if (!isDnfsEnabled) {
+                    violationDetails.push(
+                        createViolationDetail(
+                            'dNFS',
+                            'EC2 instance',
+                            'dNFS is not enabled',
+                            'dNFS should be enabled for optimal performance'
+                        )
+                    );
+                }
+
+                osDrift.push(
+                    createAssessment(config, 1, violationDetails.length > 0 ? [ec2InstanceId] : [], violationDetails)
+                );
+                break;
+            }
+            case 'dnfs-consistent-ip-resolution': {
+                if (!isDnfsEnabled) {
+                    logger.info('Skipping dNFS consistent IP resolution check - dNFS not enabled', {
+                        ec2InstanceId,
+                        databaseInstanceName
+                    });
+                    break;
+                }
+
+                const dnfsIpData = os?.['dnfs-ip-resolution'];
+                if (!dnfsIpData) {
+                    logger.info('Skipping dNFS consistent IP resolution check - no dNFS IP resolution data', {
+                        ec2InstanceId,
+                        databaseInstanceName
+                    });
+                    break;
+                }
+
+                const dnsResolution = dnfsIpData?.dns_resolution || {};
+
+                // Check if any hostname resolves to multiple IPs (round-robin DNS)
+                Object.entries(dnsResolution).forEach(([hostname, ips]) => {
+                    if (Array.isArray(ips) && ips.length > 1 && !ips[0]?.startsWith('Error:')) {
+                        violationDetails.push(
+                            createViolationDetail(
+                                hostname,
+                                'EC2 instance',
+                                `Resolves to ${ips.length} IPs: ${(ips as string[]).join(', ')}`,
+                                'Single consistent IP address resolution'
+                            )
+                        );
+                    }
+                });
+
+                osDrift.push(
+                    createAssessment(config, 1, violationDetails.length > 0 ? [ec2InstanceId] : [], violationDetails)
+                );
                 break;
             }
             default:

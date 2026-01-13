@@ -110,7 +110,8 @@ interface NFSOSAssessment {
         error?: string | null;
         'nfs-mount-options'?: Array<{
             error?: string | null;
-            options?: Record<string, string>;
+            options?: Record<string, string | boolean>;
+            server?: string;
             'mount-point'?: string;
             'remote-path'?: string;
             'filesystem-type'?: string;
@@ -135,6 +136,23 @@ interface NFSOSAssessment {
     'hostname-domain'?: {
         error?: string | null;
         domain?: string | null;
+    };
+    'dnfs-oranfstab'?: {
+        oranfstab_servers?: Array<{
+            server: string;
+            paths: string[];
+            exports: Array<{
+                export: string;
+                mount: string;
+            }>;
+            nfs_version: string | null;
+            options: Record<string, string | boolean>;
+        }>;
+        error?: string | null;
+    };
+    'dnfs-ip-resolution'?: {
+        dns_resolution?: Record<string, string[]>;
+        error?: string | null;
     };
 }
 

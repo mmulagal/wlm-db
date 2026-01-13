@@ -432,6 +432,138 @@ def get_hostname_domain():
     return result
 `;
 
+const PARSE_ORANFSTAB = `
+def parse_oranfstab(path='/etc/oranfstab'):
+    """Parse /etc/oranfstab file and extract server configurations with options"""
+    log('Collecting oranfstab data')
+    servers = []
+    cur = None
+    error = None
+    try:
+        with open(path) as f:
+            for line in f:
+                l = line.strip()
+                if not l or l.startswith('#'):
+                    continue
+                if l.startswith('server:'):
+                    if cur:
+                        servers.append(cur)
+                    cur = {
+                        'server': l.split(':', 1)[1].strip(),
+                        'paths': [],
+                        'exports': [],
+                        'nfs_version': None,
+                        'options': {}
+                    }
+                elif cur:
+                    if l.startswith('path:'):
+                        cur['paths'].append(l.split(':', 1)[1].strip())
+                    elif l.startswith('export:'):
+                        m = re.match(r'export:\\s*(\\S+)(?:\\s+mount:\\s*(\\S+))?', l)
+                        if m:
+                            cur['exports'].append({'export': m.group(1), 'mount': m.group(2)})
+                    elif l.startswith('nfs_version:'):
+                        cur['nfs_version'] = l.split(':', 1)[1].strip()
+                    elif ':' in l:
+                        # Options with values like rsize:262144, wsize:262144
+                        key, value = l.split(':', 1)
+                        cur['options'][key.strip()] = value.strip()
+                    else:
+                        # Boolean options like tcp_nodelay, noactimeo, nolock
+                        cur['options'][l] = True
+            if cur:
+                servers.append(cur)
+        log(f"oranfstab data collected: {len(servers)} servers")
+    except FileNotFoundError:
+        error = f"File not found: {path}"
+        log(error)
+    except Exception as e:
+        error = f"Error parsing oranfstab: {str(e)}"
+        log(error)
+    return {'oranfstab_servers': servers, 'error': error}
+`;
+
+const RESOLVE_HOSTNAMES = `
+def resolve_hostnames(hostnames):
+    socket.setdefaulttimeout(10)
+    res = {}
+    for h in hostnames:
+        try:
+            # Check if hostname is already an IP address (IPv4 or IPv6)
+            # Using ipaddress module for Python 3.6+ compatibility
+            is_ip = False
+            try:
+                ipaddress.ip_address(h)
+                is_ip = True
+            except ValueError:
+                pass
+            
+            if is_ip:
+                # Already an IP address, no need for DNS resolution
+                res[h] = [h]
+            else:
+                # Domain name - resolve to IP addresses
+                ips = set()
+                for ai in socket.getaddrinfo(h, None):
+                    ips.add(ai[4][0])
+                res[h] = list(ips)
+        except Exception as e:
+            res[h] = ["Error: {}".format(e)]
+    return res
+`;
+
+const GET_ORANFSTAB_DATA = `
+${PARSE_ORANFSTAB}
+`;
+
+const GET_DNS_RESOLUTION = `
+${PARSE_ORANFSTAB}
+
+${RESOLVE_HOSTNAMES}
+
+def get_dns_resolution():
+    log('Collecting DNS resolution data from oranfstab')
+    
+    oranfstab_path = '/etc/oranfstab'
+    
+    try:
+        hostnames = set()
+        
+        # Collect hostnames from oranfstab
+        oranfstab_result = parse_oranfstab(oranfstab_path)
+        oranfstab_servers = oranfstab_result.get('oranfstab_servers', [])
+        for s in oranfstab_servers:
+            # Add 'server' field if it looks like a hostname or IP
+            server = s.get('server', '').strip()
+            if server and not server.startswith('/'):
+                # Valid if it's an IP pattern or contains a dot (FQDN/IP)
+                if re.match(r'^[\\d\\.]+$', server) or '.' in server or ':' in server:
+                    hostnames.add(server)
+            
+            # Add 'paths' field entries if they look like hostnames or IPs
+            for p in s.get('paths', []):
+                p = p.strip() if p else ''
+                if p and not p.startswith('/'):
+                    if re.match(r'^[\\d\\.]+$', p) or '.' in p or ':' in p:
+                        hostnames.add(p)
+        
+        dns_resolution = resolve_hostnames(hostnames)
+        log(f"DNS resolution collected for {len(hostnames)} hostnames")
+        
+        return {
+            'dns_resolution': dns_resolution,
+            'error': None
+        }
+        
+    except Exception as e:
+        error_msg = f"Exception while collecting DNS resolution: {str(e)}"
+        log(error_msg)
+        return {
+            'dns_resolution': {},
+            'error': error_msg
+        }
+`;
+
 const NFS_OS_ASSESSMENT = (ec2InstanceId: string, dbSid: string) => `
 
 ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
@@ -454,6 +586,8 @@ import json
 import subprocess
 import re
 import datetime
+import socket
+import ipaddress
 from pathlib import Path
 
 ${pythonLogger('storageOsAssessment.log')}
@@ -467,6 +601,10 @@ ${ADR_HOME}
 ${IDMAPD_DOMAIN_CONFIG}
 
 ${HOSTNAME_DOMAIN}
+
+${GET_ORANFSTAB_DATA}
+
+${GET_DNS_RESOLUTION}
 
 # Run all checks and compile results
 log('Starting comprehensive system assessment')
@@ -486,6 +624,12 @@ def run_all_checks():
     
     log('Running hostname domain checks')
     results["os"]["hostname-domain"] = get_hostname_domain()
+
+    log('Running dNFS oranfstab data collection')
+    results["os"]["dnfs-oranfstab"] = parse_oranfstab()
+
+    log('Running dNFS IP resolution')
+    results["os"]["dnfs-ip-resolution"] = get_dns_resolution()
     
     # Oracle checks
     log('Running Oracle ADR checks')

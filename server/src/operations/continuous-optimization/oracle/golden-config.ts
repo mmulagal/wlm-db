@@ -542,7 +542,59 @@ const GOLDEN_CONFIG = {
                 recommendation:
                     'Workload Factory recommends avoiding the use of the following mount options in standalone deployments to prevent disabling cache: "cio", "actimeo=0", "noac", and "forcedirectio".',
                 tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+            },
+            {
+                parameter: 'dnfs-enabled',
+                name: 'dnfs-enabled',
+                recommended: 'Enabled',
+                category: 'storage',
+                subCategory: 'configuration',
+                focusWidgetName: 'Operating system',
+                severity: SEVERITY.CRITICAL,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends Direct NFS (dNFS) is enabled, ensuring data consistency and optimal performance.',
+                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
+            },
+            {
+                parameter: 'dnfs-consistent-ip-resolution',
+                name: 'dnfs-consistent-ip-resolution',
+                recommended: 'No round-robin IP resolution',
+                category: 'storage',
+                subCategory: 'configuration',
+                focusWidgetName: 'Operating system',
+                severity: SEVERITY.CRITICAL,
+                resourceType: 'EC2 Instance',
+                recommendation:
+                    'Workload Factory recommends avoiding the use of Direct NFS (dNFS) with any type of round-robin name resolution, including DNS, DDNS, NIS, or any other method. This includes the DNS load balancing feature available in ONTAP. Ensuring consistent IP address resolution is crucial for maintaining database stability and preventing potential crashes or data corruption.',
+                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
             }
+            // {
+            //     parameter: 'dnfs-configuration-file',
+            //     name: 'dnfs-configuration-file',
+            //     recommended: 'Optimized oranfstab content',
+            //     category: 'storage',
+            //     subCategory: 'configuration',
+            //     focusWidgetName: 'Operating system',
+            //     severity: SEVERITY.CRITICAL,
+            //     resourceType: 'EC2 Instance',
+            //     recommendation:
+            //         'Workload Factory recommends verifying and optimizing the oranfstab file content to ensure proper Direct NFS (dNFS) usage. The oranfstab file is essential for configuring advanced dNFS features such as multipathing and specific NFS options. Proper configuration ensures efficient data access and management.',
+            //     tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
+            // },
+            // {
+            //     parameter: 'dnfs-no-shared-cache',
+            //     name: 'dnfs-no-shared-cache',
+            //     recommended: 'Enabled nosharecache mount option',
+            //     category: 'storage',
+            //     subCategory: 'configuration',
+            //     focusWidgetName: 'Operating system',
+            //     severity: SEVERITY.CRITICAL,
+            //     resourceType: 'EC2 Instance',
+            //     recommendation:
+            //         'Workload Factory recommends configuring the nosharecache mount option for environments where Direct NFS (dNFS) is enabled, and a source volume is mounted more than once on a single server with nested NFS mounts. This configuration prevents cache sharing between mounts, ensuring data consistency and optimal performance.',
+            //     tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
+            // }
         ]
     },
     archivePlacement: {
