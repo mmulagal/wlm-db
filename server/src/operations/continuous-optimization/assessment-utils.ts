@@ -60,7 +60,7 @@ async function handleOptimizeJobCreation(
     const filterParams = {
         status: JOBSTATUS.IN_PROGRESS,
         resourceName: serverNameWithHostName,
-        typeFilter: jobType,
+        type: jobType,
         region,
         credentialsId,
         ...(parentJobId && { parentJobId })
