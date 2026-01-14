@@ -1,7 +1,7 @@
 import { compressSync, decompressSync } from 'fflate';
 import createError from 'http-errors';
 import { DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { compact, isEmpty } from 'lodash-es';
+import { compact, isEmpty, sumBy } from 'lodash-es';
 import {
     ArchitectureType,
     CpuManufacturer,
@@ -21,7 +21,13 @@ import {
     WLMDB,
     HOURS_IN_MONTH
 } from '../utils/consts';
-import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes, IS_DEMO_FLOW } from '../utils/utils';
+import {
+    convertGiBToBytes,
+    convertToBytes,
+    getArtifactsRegionBucketName,
+    sizeInGigaBytes,
+    IS_DEMO_FLOW
+} from '../utils/utils';
 import getLogger from '../utils/logger';
 import { registerJob } from './database/job-operations';
 import { updateJob } from '../lib/database/job';
@@ -217,6 +223,35 @@ async function saveReportInReportingRegistry(accountId: string, fileName: string
     );
 }
 
+function calculateTotalAllocatedCapacity(sqlServerInfo: SqlInstanceDetails[]): string {
+    let totalAllocatedMb = 0;
+
+    for (const instance of sqlServerInfo) {
+        let storageDetails: StorageDetailByDB[] = [];
+
+        // Parse storage details
+        if (typeof instance.storageDetailsByDb === 'string') {
+            try {
+                storageDetails = JSON.parse(instance.storageDetailsByDb);
+            } catch (error) {
+                logger.error('Failed to parse storageDetailsByDb JSON in calculateTotalAllocatedCapacity', {
+                    rawStorageDetails: instance.storageDetailsByDb,
+                    error
+                });
+            }
+        } else if (Array.isArray(instance.storageDetailsByDb)) {
+            storageDetails = instance.storageDetailsByDb;
+        }
+
+        // Sum up allocated sizes only if we have valid storage details
+        if (storageDetails.length > 0) {
+            totalAllocatedMb += sumBy(storageDetails, db => db?.allocatedSizeMb ?? 0);
+        }
+    }
+
+    return String(convertToBytes(totalAllocatedMb, 'MiB')); // MiB to bytes as string
+}
+
 async function saveReportInWlmdbDatabase(
     accountId: string,
     databaseType: DATABASE_TYPE,
@@ -224,6 +259,7 @@ async function saveReportInWlmdbDatabase(
 ) {
     logger.info('Saving Report in WLMDB Database', { accountId, databaseType });
     const { windowsConfig, sqlServerInfo, scriptVersion, timestamp } = data;
+    windowsConfig.totalAllocatedCapacity = calculateTotalAllocatedCapacity(sqlServerInfo);
 
     if (!isEmpty(sqlServerInfo) && !isEmpty(windowsConfig)) {
         const hostIds = windowsConfig.nodeDetails?.map(({ hostId }) => hostId);
@@ -1213,18 +1249,28 @@ async function getOnPremDatabaseResources(
                 } = onPremDatabaseResource;
                 const rawSqlInstanceDetails = persistedSqlInstancesDetails as unknown as SqlInstanceDetails[];
 
-                const { clusterNodeNames: onPremisesNodes, windowsSystemName: resourceName } =
-                    hostConfig as unknown as WindowsConfig;
+                let {
+                    clusterNodeNames: onPremisesNodes,
+                    windowsSystemName: resourceName,
+                    totalAllocatedCapacity
+                } = hostConfig as unknown as WindowsConfig;
                 const sqlServerInstances = Array.isArray(rawSqlInstanceDetails)
                     ? formatSqlInstanceDetails(rawSqlInstanceDetails)
                     : [];
+
+                // Ensure totalAllocatedCapacity is always set by recalculating for older reports
+                if (totalAllocatedCapacity === undefined && Array.isArray(rawSqlInstanceDetails)) {
+                    totalAllocatedCapacity = calculateTotalAllocatedCapacity(rawSqlInstanceDetails);
+                }
+
                 return {
                     resourceId: onpremResourceId,
                     resourceName,
                     deploymentModel: deploymentType,
                     creationTime: new Date(reportCreationTime).getTime(),
                     sqlServerInstances,
-                    onPremisesNodes
+                    onPremisesNodes,
+                    totalAllocatedCapacity
                 };
             })
         );
@@ -2329,5 +2375,6 @@ export {
     getOnPremResourceExploreSavings,
     getOnPremBulkResourceExploreSavings,
     saveReportInReportingRegistry,
-    processEbsDisks
+    processEbsDisks,
+    calculateTotalAllocatedCapacity
 };

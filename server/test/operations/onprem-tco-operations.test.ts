@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { listOnPremDatabaseResources, removeOnPremTcoReportData } from '../../src/lib/database/onprem-tco';
 import {
     getOnpremLicenseRecommendations,
@@ -8,10 +11,50 @@ import {
     groupSqlServerInstancesByDeploymentType,
     saveReportInWlmdbDatabase,
     processEbsDisks,
-    getOnPremBulkResourceExploreSavings
+    getOnPremBulkResourceExploreSavings,
+    calculateTotalAllocatedCapacity
 } from '../../src/operations/onprem-tco-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_REGION, MSSQL } from '../../src/utils/consts';
 import { convertGiBToBytes, sleep } from '../../src/utils/utils';
+import { WindowsConfig, SqlInstanceDetails } from '../../src/utils/onprem-tco/onprem-tco-generic.types';
+
+const loadJson = (filename: string) => {
+    const filePath = path.join(__dirname, '../../src/utils/demo-utils/onPremRecords', filename);
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+};
+
+describe('calculateTotalAllocatedCapacity utility', () => {
+
+    it('computes totalAllocatedCapacity for DemoAOAG', () => {
+        const data: {
+            windowsConfig: WindowsConfig;
+            sqlServerInfo: SqlInstanceDetails[];
+        } = loadJson('SQLServerDataResponse-DemoAOAG.json');
+        const totalAllocatedCapacity = calculateTotalAllocatedCapacity(data.sqlServerInfo);
+        // Expected value: sum of allocatedSizeMb from all databases * 1024 * 1024 (bytes conversion)
+        expect(totalAllocatedCapacity).toBe('964494884864');
+    });
+
+    it('computes totalAllocatedCapacity for DemoFCI', () => {
+        const data: {
+            windowsConfig: WindowsConfig;
+            sqlServerInfo: SqlInstanceDetails[];
+        } = loadJson('SQLServerDataResponse-DemoFCI.json');
+        const totalAllocatedCapacity = calculateTotalAllocatedCapacity(data.sqlServerInfo);
+        // Expected value: sum of allocatedSizeMb from all databases * 1024 * 1024 (bytes conversion)
+        expect(totalAllocatedCapacity).toBe('2012079980544');
+    });
+
+    it('computes totalAllocatedCapacity for DemoSTD', () => {
+        const data: {
+            windowsConfig: WindowsConfig;
+            sqlServerInfo: SqlInstanceDetails[];
+        } = loadJson('SQLServerDataResponse-DemoSTD.json');
+        const totalAllocatedCapacity = calculateTotalAllocatedCapacity(data.sqlServerInfo);
+        // Expected value: sum of allocatedSizeMb from all databases * 1024 * 1024 (bytes conversion)
+        expect(totalAllocatedCapacity).toBe('819467386880');
+    });
+});
 
 const reportData = {
     scriptVersion: '1.0.0',

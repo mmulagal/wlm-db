@@ -105,7 +105,8 @@ const OnPremDatabaseResourceObject = Type.Composite([
     OnPremTcoResourceObject,
     Type.Object({
         sqlServerInstances: Type.Array(SqlInstanceDetailsResponseObject),
-        onPremisesNodes: Type.Array(Type.String())
+        onPremisesNodes: Type.Array(Type.String()),
+        totalAllocatedCapacity: Type.Optional(Type.String()) // in bytes, as string
     })
 ]);
 

@@ -36,6 +36,7 @@ interface WindowsConfig {
     nodeDetails: NodeDetail[];
     windowsSystemName: string;
     belongsToCluster: boolean;
+    totalAllocatedCapacity?: string; // in bytes, as string
 }
 
 interface LicenceUsageDetail {
