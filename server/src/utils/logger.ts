@@ -69,6 +69,15 @@ function getTraceData() {
 }
 
 function initialize() {
+    console.log('Initializing log4js logger...');
+    console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(
+        `${
+            isEmpty(process.env.ENV_WLMDB_BUILD_MODE)
+                ? 'not set'
+                : `ENV_WLMDB_BUILD_MODE: ${process.env.ENV_WLMDB_BUILD_MODE}`
+        }`
+    );
     const path =
         isEmpty(process.env.ENV_WLMDB_BUILD_MODE) || process.env.NODE_ENV === 'simulator'
             ? config.get<string>('log4js.local-config-file')
