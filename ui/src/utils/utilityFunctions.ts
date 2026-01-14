@@ -721,14 +721,34 @@ export const bytesToTB = (bytes: number) => {
     return TB.toFixed(2);
 };
 
-// function to convert byte to GiB
-export const byteToGiB = (value: number) => {
-    if (value === null || value === undefined) return 0;
-    if (isNaN(value)) return 0;
-    if (value <= 0) return 0;
-    const gib = value / 1024 ** 3;
+export const formatStorageSize = (bytes: number) => {
+    if (bytes === null || bytes === undefined || isNaN(bytes) || bytes <= 0) {
+        return {
+            value: 0,
+            unit: 'databases.oracle-inner-page.gib'
+        };
+    }
 
-    return +gib.toFixed(2);
+    const gib = bytes / 1024 ** 3;
+    const formattedGib = +gib.toFixed(2);
+
+    // Check if we need TiB (when GiB has more than 3 digits in integer part)
+    const gibString = formattedGib.toString();
+    const integerPart = gibString.split('.')[0];
+    const shouldUseTiB = integerPart.length > 3;
+
+    if (shouldUseTiB) {
+        const tib = bytes / 1024 ** 4;
+        return {
+            value: +tib.toFixed(2),
+            unit: 'databases.resource-overview.tib'
+        };
+    }
+
+    return {
+        value: formattedGib,
+        unit: 'databases.oracle-inner-page.gib'
+    };
 };
 
 export const formatDateAssess = (date: string | number) => {

@@ -4,13 +4,17 @@ import styles from './OracleCapacityUtilization.module.scss';
 import MultiRingDoughnut from './MultiRingDoughnut/MultiRingDoughnut';
 import Square from '../../../../../common/Square/Square';
 import SeparatorComponent from '../../../../../common/SeparatorComponent/SeparatorComponent';
-import { byteToGiB } from '../../../../../utils/utilityFunctions';
+import { formatStorageSize } from '../../../../../utils/utilityFunctions';
 
 type OCUProps = { resourceDetails: any; resourceLoading: boolean };
 
 const OracleCapacityUtilization = ({ resourceDetails, resourceLoading }: OCUProps) => {
     const data = resourceDetails?.storage?.fsxn;
     const { t } = useTranslation();
+    const usedStorageData = formatStorageSize(data?.used);
+    const ssdStorageData = formatStorageSize(data?.ssdUsed);
+    const capacityPoolData = formatStorageSize(data?.capacityPoolUsed);
+
     return (
         <div className={styles.oracleCapacityUtilization}>
             <div className={styles.headSection}>
@@ -32,7 +36,7 @@ const OracleCapacityUtilization = ({ resourceDetails, resourceLoading }: OCUProp
                         {resourceLoading && <DsFlashingDotsLoader />}
                         {!resourceLoading && (
                             <DsTypography variant="Semibold_14">
-                                {byteToGiB(data?.used)} {t('databases.oracle-inner-page.gib')}
+                                {usedStorageData?.value} {t(usedStorageData?.unit)}
                             </DsTypography>
                         )}
                         <div className={styles.itemBottom}>
@@ -49,7 +53,7 @@ const OracleCapacityUtilization = ({ resourceDetails, resourceLoading }: OCUProp
                         {resourceLoading && <DsFlashingDotsLoader />}
                         {!resourceLoading && (
                             <DsTypography variant="Semibold_14">
-                                {byteToGiB(data?.ssdUsed)} {t('databases.oracle-inner-page.gib')}
+                                {ssdStorageData?.value} {t(ssdStorageData?.unit)}
                             </DsTypography>
                         )}
                         <div className={styles.itemBottom}>
@@ -66,7 +70,7 @@ const OracleCapacityUtilization = ({ resourceDetails, resourceLoading }: OCUProp
                         {resourceLoading && <DsFlashingDotsLoader />}
                         {!resourceLoading && (
                             <DsTypography variant="Semibold_14">
-                                {byteToGiB(data?.capacityPoolUsed)} {t('databases.oracle-inner-page.gib')}
+                                {capacityPoolData?.value} {t(capacityPoolData?.unit)}
                             </DsTypography>
                         )}
                         <div className={styles.itemBottom}>

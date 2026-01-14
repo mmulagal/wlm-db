@@ -3,7 +3,7 @@ import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { Chart, registerables } from 'chart.js';
 import { useTranslation } from 'react-i18next';
 import styles from './MultiRingDoughnut.module.scss';
-import { bytesToTB, byteToGiB } from '../../../../../../utils/utilityFunctions';
+import { bytesToTB, formatStorageSize } from '../../../../../../utils/utilityFunctions';
 
 Chart.register(...registerables);
 
@@ -14,6 +14,7 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading, resourceType }: M
     const data = resourceDetails?.storage?.fsxn;
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
+    const formattedSize = formatStorageSize(data?.size ?? 0);
 
     const doughnutOptions = {
         cutout: 60,
@@ -27,22 +28,23 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading, resourceType }: M
     const buildChartData = () => {
         if (!data) return null;
 
-        const sizeGiB = byteToGiB(data?.size ?? 0);
-        const usedGiB = byteToGiB(data?.used ?? 0);
-        const ssdUsedGiB = byteToGiB(data?.ssdUsed ?? 0);
-        const capacityPoolUsedGiB = byteToGiB(data?.capacityPoolUsed ?? 0);
+        // all values are in bytes for calculations
+        const sizeInBytes = data?.size ?? 0;
+        const usedInBytes = data?.used ?? 0;
+        const ssdUsedInBytes = data?.ssdUsed ?? 0;
+        const capacityPoolUsedInBytes = data?.capacityPoolUsed ?? 0;
 
-        const remainingGiB = Math.max(0, sizeGiB - usedGiB);
-        const remainingPoolGiB = Math.max(0, sizeGiB - (ssdUsedGiB + capacityPoolUsedGiB));
+        const remaining = Math.max(0, sizeInBytes - usedInBytes);
+        const remainingPool = Math.max(0, sizeInBytes - (ssdUsedInBytes + capacityPoolUsedInBytes));
 
         return {
             datasets: [
                 {
-                    data: [usedGiB, remainingGiB],
+                    data: [usedInBytes, remaining],
                     backgroundColor: ['#5E8DCD', '#E0E0E0']
                 },
                 {
-                    data: [ssdUsedGiB, capacityPoolUsedGiB, remainingPoolGiB],
+                    data: [ssdUsedInBytes, capacityPoolUsedInBytes, remainingPool],
                     backgroundColor: ['#0BAFFC', '#A815F3', '#FFF']
                 }
             ]
@@ -84,12 +86,10 @@ const MultiRingDoughnut = ({ resourceDetails, resourceLoading, resourceType }: M
                             variant={resourceType === 'mssql' ? 'Regular_24' : 'Regular_32'}
                             style={{ lineHeight: 'unset' }}
                         >
-                            {resourceType === 'mssql' ? bytesToTB(data?.size ?? 0) : byteToGiB(data?.size ?? 0)}
+                            {resourceType === 'mssql' ? bytesToTB(data?.size ?? 0) : formattedSize.value}
                         </DsTypography>
                         <DsTypography variant="Regular_20" style={{ lineHeight: 'unset' }}>
-                            {resourceType === 'mssql'
-                                ? t('databases.resource-overview.tib')
-                                : t('databases.oracle-inner-page.gib')}
+                            {resourceType === 'mssql' ? t('databases.resource-overview.tib') : t(formattedSize.unit)}
                         </DsTypography>
                     </div>
                 )}
