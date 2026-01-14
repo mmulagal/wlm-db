@@ -221,6 +221,1761 @@
             ]
         },
         {
+            "error": "Error: 605, Severity: 21, State: 1.",
+            "cause": "Attempt to fetch a logical page failed because it is beyond the end of the database. This critical error indicates severe corruption or structural damage to the database file on AWS FSx for NetApp ONTAP storage, where page allocation has become inconsistent.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 605, Severity: 21, State: 1. Attempt to fetch a logical page (1:45678) in database 'ProductionDB' failed. It belongs to allocation unit 72057594039894016, not to 72057594039894032.",
+            "count": 47,
+            "remediation": [
+                "Run DBCC CHECKDB immediately to identify the extent of page allocation corruption",
+                "Check AWS FSx for NetApp ONTAP storage system health and file system integrity",
+                "Verify that the database files are not corrupted on the underlying FSx storage",
+                "Consider restoring the database from a known good backup if corruption is widespread",
+                "Contact Microsoft support for assistance with severe page allocation corruption",
+                "Monitor FSx storage performance metrics to identify any I/O subsystem issues",
+                "Review recent storage operations or maintenance that may have caused the corruption"
+            ],
+            "severity": "21",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "605",
+            "uniqueErrorKey": "605",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 4
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "error": "Error: 926, Severity: 22, State: 1.",
+            "cause": "Database cannot be opened. It has been marked SUSPECT by recovery. This critical failure indicates that the database recovery process failed, likely due to corruption or I/O failures on AWS FSx for NetApp ONTAP storage during startup recovery operations.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 926, Severity: 22, State: 1. Database 'ProductionDB' cannot be opened. It has been marked SUSPECT by recovery. See the SQL Server error log for more information.",
+            "count": 42,
+            "remediation": [
+                "Check the SQL Server error log for specific details about the recovery failure",
+                "Verify AWS FSx for NetApp ONTAP storage integrity and accessibility",
+                "Attempt to restore the database from a clean backup if recovery continues to fail",
+                "Use emergency mode (ALTER DATABASE SET EMERGENCY) only as a last resort for data extraction",
+                "Check for hardware failures or connectivity issues with the FSx storage subsystem",
+                "Run DBCC CHECKDB after successful recovery to verify database integrity",
+                "Consider enabling database page verification to detect future corruption early"
+            ],
+            "severity": "22",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "926",
+            "uniqueErrorKey": "926",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "error": "Error: 5243, Severity: 22, State: 1.",
+            "cause": "An inconsistency was detected during an internal operation. This critical system error indicates severe corruption or hardware-level failures affecting database structures on AWS FSx for NetApp ONTAP storage that compromise SQL Server's internal consistency checks.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 5243, Severity: 22, State: 1. An inconsistency was detected during an internal operation in database 'ProductionDB'(ID:5). Please contact technical support. Reference number 3.",
+            "count": 38,
+            "remediation": [
+                "Contact Microsoft technical support immediately as this indicates critical system corruption",
+                "Document all error details and reference numbers for the support case",
+                "Check AWS FSx for NetApp ONTAP storage system health and run hardware diagnostics",
+                "Consider emergency database restoration from clean backups",
+                "Review recent system changes, updates, or maintenance that may have triggered the corruption",
+                "Monitor storage I/O performance and error rates on the FSx system",
+                "Prepare for potential database rebuild if corruption cannot be repaired"
+            ],
+            "severity": "22",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "5243",
+            "uniqueErrorKey": "5243",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "error": "Error: 3313, Severity: 21, State: 1.",
+            "cause": "During redoing of a logged operation in database, an error occurred at log record. This indicates transaction log corruption or I/O failures during database recovery operations on AWS FSx for NetApp ONTAP storage, preventing proper transaction replay.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 3313, Severity: 21, State: 1. During redoing of a logged operation in database 'ProductionDB', an error occurred at log record ID (684:1456:23). The specific failure is 605.",
+            "count": 35,
+            "remediation": [
+                "Check the transaction log file integrity on AWS FSx for NetApp ONTAP storage",
+                "Verify that the log file is not corrupted and is accessible",
+                "Run DBCC CHECKDB to assess database and log file consistency",
+                "Consider restoring from a point-in-time backup before the corruption occurred",
+                "Check FSx storage performance and I/O error rates during recovery operations",
+                "Review backup chain integrity and ensure log backup continuity",
+                "Monitor storage latency metrics that may affect log replay performance"
+            ],
+            "severity": "21",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "3313",
+            "uniqueErrorKey": "3313",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 3
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "error": "Error: 3456, Severity: 21, State: 1.",
+            "cause": "Redo failed for transaction log record. This critical error occurs when SQL Server cannot properly replay a transaction from the log during database recovery, indicating log corruption or storage I/O failures on AWS FSx for NetApp ONTAP.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 3456, Severity: 21, State: 1. Redo failed for transaction log record (684:1789:45). The specific failure is 823. Database 'ProductionDB' will be marked suspect.",
+            "count": 32,
+            "remediation": [
+                "Check the specific underlying error (823) which indicates I/O device problems on FSx storage",
+                "Verify AWS FSx for NetApp ONTAP storage system health and connectivity",
+                "Run hardware diagnostics on the storage subsystem to identify device failures",
+                "Consider database restoration from clean backups if log corruption is confirmed",
+                "Check transaction log backup chain for consistency and integrity",
+                "Monitor FSx I/O performance metrics and error rates during recovery attempts",
+                "Contact AWS support if FSx storage hardware issues are suspected"
+            ],
+            "severity": "21",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "3456",
+            "uniqueErrorKey": "3456",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 2
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 1
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "error": "Error: 823, Severity: 24, State: 1.",
+            "cause": "The operating system returned error to SQL Server during a read or write request. This critical I/O error indicates hardware problems with AWS FSx for NetApp ONTAP storage, potentially caused by disk failures, network connectivity issues, or storage controller problems.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 823, Severity: 24, State: 1. The operating system returned error 21(The device is not ready.) to SQL Server during a read at offset 0x000000f4c38000 in file 'C:\\Database\\ProductionDB.mdf'.",
+            "count": 26,
+            "remediation": [
+                "Check AWS FSx for NetApp ONTAP storage health and run diagnostic tests",
+                "Verify network connectivity between SQL Server and FSx storage endpoints",
+                "Review CloudWatch metrics for FSx I/O performance and error rates",
+                "Run DBCC CHECKDB to identify any data corruption caused by I/O errors",
+                "Contact AWS support to investigate potential hardware failures in FSx infrastructure",
+                "Consider increasing FSx throughput capacity if I/O bottlenecks are identified",
+                "Monitor system event logs for additional hardware error messages"
+            ],
+            "severity": "24",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "823",
+            "uniqueErrorKey": "823",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 26
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 0
+                }
+            ]
+        },
+        {
+            "error": "Error: 824, Severity: 24, State: 1.",
+            "cause": "SQL Server detected a logical consistency-based I/O error. This critical error indicates data corruption in pages read from AWS FSx for NetApp ONTAP storage, suggesting potential hardware failures or storage subsystem issues.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 824, Severity: 24, State: 1. SQL Server detected a logical consistency-based I/O error: incorrect checksum (expected: 0xa456b789; actual: 0x12345678). It occurred during a read of page (1:12345) in database ID 5 at offset 0x00000000c0a000 in file 'C:\\Database\\ProductionDB.mdf'.",
+            "count": 23,
+            "remediation": [
+                "Run DBCC CHECKDB immediately to assess the extent of data corruption",
+                "Check AWS FSx for NetApp ONTAP storage integrity and file system consistency",
+                "Verify page checksums are enabled in SQL Server database options",
+                "Consider restoring affected pages from clean backups if available",
+                "Monitor FSx storage performance metrics for I/O subsystem issues",
+                "Contact Microsoft support for assistance with severe data corruption",
+                "Review backup strategies to ensure faster recovery from corruption events"
+            ],
+            "severity": "24",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "824",
+            "uniqueErrorKey": "824",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 23
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 0
+                }
+            ]
+        },
+        {
+            "error": "Error: 825, Severity: 21, State: 1.",
+            "cause": "A read of the file failed with error. SQL Server was able to successfully read the data after retrying the read operation. This indicates intermittent I/O issues with AWS FSx for NetApp ONTAP storage that may worsen over time.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 825, Severity: 21, State: 1. A read of the file 'C:\\Database\\ProductionDB.mdf' at offset 0x00000012c38000 succeeded after failing 3 time(s) with error: The device is not ready. Additional messages in the SQL Server error log may provide more detail.",
+            "count": 21,
+            "remediation": [
+                "Monitor AWS FSx for NetApp ONTAP storage latency and throughput metrics",
+                "Check for network connectivity issues between SQL Server and FSx endpoints",
+                "Review FSx storage configuration for appropriate performance tier and capacity",
+                "Consider increasing FSx throughput capacity if I/O retries are frequent",
+                "Verify FSx storage health in AWS console and check for maintenance events",
+                "Run storage diagnostics to identify potential hardware degradation",
+                "Monitor error frequency to determine if replacement storage is needed"
+            ],
+            "severity": "21",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "825",
+            "uniqueErrorKey": "825",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 21
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 0
+                }
+            ]
+        },
+        {
+            "error": "Error: 3201, Severity: 22, State: 1.",
+            "cause": "Cannot open backup device. This error occurs when SQL Server cannot access the backup location on AWS FSx for NetApp ONTAP storage due to permissions, connectivity, or storage availability issues.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 3201, Severity: 22, State: 1. Cannot open backup device 'Z:\\Backups\\ProductionDB_Full.bak'. Operating system error 53(The network path was not found.).",
+            "count": 19,
+            "remediation": [
+                "Verify network connectivity to AWS FSx for NetApp ONTAP storage endpoints",
+                "Check if the FSx file system is mounted and accessible to SQL Server",
+                "Validate SQL Server service account permissions on the FSx storage path",
+                "Ensure the backup directory exists on the FSx file system",
+                "Review FSx security groups and network ACLs for proper access",
+                "Test connectivity using UNC path from SQL Server host to FSx storage",
+                "Consider using local backup with subsequent copy to FSx as workaround"
+            ],
+            "severity": "22",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "3201",
+            "uniqueErrorKey": "3201",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 19
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 0
+                }
+            ]
+        },
+        {
+            "error": "Error: 3202, Severity: 22, State: 1.",
+            "cause": "Write on backup device failed. This critical error indicates that SQL Server cannot write backup data to AWS FSx for NetApp ONTAP storage, potentially due to insufficient space, I/O failures, or connectivity issues.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 3202, Severity: 22, State: 1. Write on 'Z:\\Backups\\ProductionDB_Full.bak' failed: 112(There is not enough space on the disk.)",
+            "count": 18,
+            "remediation": [
+                "Check available disk space on AWS FSx for NetApp ONTAP storage",
+                "Verify FSx storage capacity and consider expanding if near limits",
+                "Monitor FSx throughput utilization and increase if bottlenecked",
+                "Check for I/O errors or connectivity issues with FSx storage",
+                "Validate backup compression settings to reduce storage requirements",
+                "Consider implementing backup file rotation to manage space usage",
+                "Review CloudWatch metrics for FSx storage performance and capacity"
+            ],
+            "severity": "22",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "3202",
+            "uniqueErrorKey": "3202",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 18
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 0
+                }
+            ]
+        },
+        {
+            "error": "Error: 5123, Severity: 22, State: 1.",
+            "cause": "CREATE FILE encountered operating system error while attempting to open or create the physical file. This indicates issues with AWS FSx for NetApp ONTAP storage access, permissions, or availability when creating database files.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 5123, Severity: 22, State: 1. CREATE FILE encountered operating system error 3(The system cannot find the path specified.) while attempting to open or create the physical file 'Z:\\Database\\NewDB.mdf'.",
+            "count": 16,
+            "remediation": [
+                "Verify that the FSx file system path exists and is accessible",
+                "Check SQL Server service account permissions on AWS FSx storage",
+                "Ensure the FSx file system is properly mounted and available",
+                "Validate network connectivity between SQL Server and FSx endpoints",
+                "Review FSx security group rules and network ACLs",
+                "Test file system access using Windows Explorer or command line",
+                "Consider creating the directory structure manually if missing"
+            ],
+            "severity": "22",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "5123",
+            "uniqueErrorKey": "5123",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 16
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 0
+                }
+            ]
+        },
+        {
+            "error": "Error: 5181, Severity: 22, State: 1.",
+            "cause": "Could not restart database due to corruption or I/O failures. This critical error prevents SQL Server from bringing the database online, often caused by storage issues on AWS FSx for NetApp ONTAP during recovery operations.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 5181, Severity: 22, State: 1. Could not restart database 'ProductionDB'. Reverting to the previous status.",
+            "count": 15,
+            "remediation": [
+                "Check the SQL Server error log for specific details about the restart failure",
+                "Run DBCC CHECKDB to identify database corruption issues",
+                "Verify AWS FSx for NetApp ONTAP storage health and accessibility",
+                "Check for I/O errors or connectivity issues with the FSx storage",
+                "Consider restoring the database from a clean backup if corruption is severe",
+                "Monitor FSx storage performance and error rates during restart attempts",
+                "Review recent changes that may have caused the database restart failure"
+            ],
+            "severity": "22",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "5181",
+            "uniqueErrorKey": "5181",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 15
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 0
+                }
+            ]
+        },
+        {
+            "error": "Error: 9001, Severity: 21, State: 1.",
+            "cause": "The log for database is not available. This error occurs when SQL Server cannot access the transaction log file on AWS FSx for NetApp ONTAP storage, preventing database operations and recovery.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 9001, Severity: 21, State: 1. The log for database 'ProductionDB' is not available. Check the operating system error log for related error messages. Resolve any errors and restart the database.",
+            "count": 14,
+            "remediation": [
+                "Verify that the transaction log file exists on AWS FSx storage",
+                "Check file permissions for the SQL Server service account on FSx",
+                "Ensure the FSx file system is mounted and accessible",
+                "Review network connectivity between SQL Server and FSx endpoints",
+                "Check for I/O errors or storage failures in FSx CloudWatch metrics",
+                "Consider emergency log file recreation if corruption is confirmed",
+                "Monitor FSx storage health and performance during log operations"
+            ],
+            "severity": "21",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "9001",
+            "uniqueErrorKey": "9001",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 14
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 0
+                }
+            ]
+        },
+        {
+            "error": "Error: 9002, Severity: 21, State: 1.",
+            "cause": "The transaction log for database is full due to LOG_BACKUP. This critical error occurs when the transaction log cannot grow on AWS FSx for NetApp ONTAP storage, preventing new transactions from being logged.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 9002, Severity: 21, State: 1. The transaction log for database 'ProductionDB' is full due to 'LOG_BACKUP'.",
+            "count": 13,
+            "remediation": [
+                "Perform immediate transaction log backup to AWS FSx storage location",
+                "Check available disk space on AWS FSx for NetApp ONTAP storage",
+                "Verify that log backup operations are completing successfully",
+                "Consider increasing FSx storage capacity if frequently running out of space",
+                "Review log backup frequency and adjust retention policies",
+                "Monitor log file growth patterns and implement proactive management",
+                "Check for long-running transactions that may prevent log truncation"
+            ],
+            "severity": "21",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "9002",
+            "uniqueErrorKey": "9002",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 13
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 0
+                }
+            ]
+        },
+        {
+            "error": "Error: 17053, Severity: 21, State: 1.",
+            "cause": "Operating system error occurred during file operation. This error indicates serious I/O problems with AWS FSx for NetApp ONTAP storage that affect SQL Server's ability to perform basic file operations on database files.",
+            "context": "2025-02-24 20:08:17.83 Server      Error: 17053, Severity: 21, State: 1. SQLServerLogMgr::LogWriter: Operating system error 1117(The request could not be performed because of an I/O device error.) encountered.",
+            "count": 12,
+            "remediation": [
+                "Check AWS FSx for NetApp ONTAP storage system health immediately",
+                "Review CloudWatch metrics for FSx I/O errors and performance issues",
+                "Verify network connectivity and stability between SQL Server and FSx",
+                "Run hardware diagnostics on the FSx storage infrastructure",
+                "Contact AWS support to investigate potential FSx hardware failures",
+                "Consider failover to backup systems if critical I/O errors persist",
+                "Monitor system event logs for additional I/O device error messages"
+            ],
+            "severity": "21",
+            "tags": [
+                "Storage"
+            ],
+            "firstOccurrence": 1740445200000,
+            "lastOccurrence": 1740528000000,
+            "errorCode": "17053",
+            "uniqueErrorKey": "17053",
+            "hourlyErrorCounts": [
+                {
+                    "hour": 1740445200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740448800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740452400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740456000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740459600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740463200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740466800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740470400000,
+                    "count": 12
+                },
+                {
+                    "hour": 1740474000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740477600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740481200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740484800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740488400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740492000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740495600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740499200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740502800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740506400000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740510000000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740513600000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740517200000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740520800000,
+                    "count": 0
+                },
+                {
+                    "hour": 1740524400000,
+                    "count": 0
+                }
+            ]
+        },
+        {
             "error": "Error: 25729, Severity: 18, State: 1.",
             "cause": "The event data stream was disconnected due to an internal error. This is typically related to network connectivity issues, storage subsystem problems, or resource constraints affecting SQL Server's ability to maintain event data streams. Since you're using AWS FSx for NetApp ONTAP as storage, this could indicate an issue with the storage connectivity or performance.",
             "context": "2025-02-24 20:08:17.83 Server      Error: 25729, Severity: 18, State: 1. Event data stream was disconnected due to an internal error.",
