@@ -444,6 +444,16 @@ export const AUTHENTICATION_TYPE = {
     WINDOWS_AUTHENTICATION: 'Windows authentication'
 };
 
+export const CREDENTIAL_OPTIONS = {
+    SAME_FOR_ALL: 'same',
+    MANUAL: 'manual'
+};
+
+export const PREPARE_PAGE_TABS = {
+    PREREQUISITE_CHECK: 'Prerequisite check view',
+    INSTANCE_READINESS: 'Instance readiness view'
+};
+
 export const FSX_FOR_ONTAP_CRED_OPTION = {
     USE_THE_SAME_CRED: 'Use the same credentials for all resources',
     MANAGE_CRED_MANUALLY: 'Manage credentials manually'

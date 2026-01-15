@@ -5,10 +5,16 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import styles from './ManageInstanceWizard.module.scss';
-import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
 import * as SelectInstancesStep from './SelectInstancesStep/SelectInstancesStep';
-import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
+import * as AuthenticateBulkInstance from './SelectInstancesStep/AuthenticateBulkInstance';
+import * as AuthenticateFSxStep from './AuthenticateFSxStep/AuthenticateFSxStep';
+
+import {
+    setLandingFromWizard,
+    resetInstanceAuthStatus,
+    resetFsxAuthStatus
+} from '../../../../store/workloadFactory/inventoryV2Slice';
 import { DBType } from '../../../../utils/consts';
 
 const Wizard = () => {
@@ -29,6 +35,9 @@ const Wizard = () => {
                         : t('databases.register-flow.register-database')
                 }
                 onExit={() => {
+                    // Reset auth status for fresh state on next registration
+                    dispatch(resetInstanceAuthStatus());
+                    dispatch(resetFsxAuthStatus());
                     setTimeout(() => {
                         dispatch(setLandingFromWizard(true));
                         navigate('../databases/inventory');
@@ -55,14 +64,18 @@ const RegisterBulkWizard = () => {
 
     const MANAGE_STEPS = [
         {
-            key: 'select-instances',
+            key: 'authenticate-instance',
             label:
                 selectedHostType === DBType.ORACLE
                     ? t('databases.register-flow.select-databases')
-                    : t('databases.register-flow.select-instances'),
-            component: SelectInstancesStep
+                    : t('databases.register-flow.authenticate-instance'),
+            component: selectedHostType !== DBType.ORACLE ? AuthenticateBulkInstance : SelectInstancesStep
         },
-        { key: 'detect-instance', label: t('databases.register-flow.authenticate'), component: DetectInstanceStep },
+        {
+            key: 'authenticate-fsx',
+            label: t('databases.register-flow.authenticate-fsx-for-ontap'),
+            component: AuthenticateFSxStep
+        },
         { key: 'manage-instance', label: t('databases.register-flow.prepare'), component: ManageInstanceStep }
     ];
 
@@ -77,7 +90,7 @@ const RegisterBulkWizard = () => {
         <WizardContextProvider
             stepsMap={stepsMap}
             stepPaths={stepPaths}
-            initialStep="select-instances"
+            initialStep="authenticate-instance"
             initialPath="regular"
             initialState={initialState}
         >

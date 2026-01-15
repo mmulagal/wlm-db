@@ -6,6 +6,12 @@ export type FsxAuthStatus = 'success' | 'failed' | 'pending';
 /** Map of FSx IDs to their authentication status */
 export type FsxAuthStatusMap = Record<string, FsxAuthStatus>;
 
+/** Instance authentication status value */
+export type InstanceAuthStatus = 'success' | 'failed' | 'pending';
+
+/** Map of Instance IDs to their authentication status */
+export type InstanceAuthStatusMap = Record<string, InstanceAuthStatus>;
+
 interface OptionType {
     id: number;
     label: string;
@@ -13,12 +19,27 @@ interface OptionType {
 }
 
 export interface InventorySliceData {
+    selectedPreparePageTab: string;
     selectedFSxForOntapCredentials: string;
     landingFromWizard: boolean;
     selectedMultiDetectInstances: OptionType[];
+    selectedRowsForBulkRegister: any[];
     wizardOperationType: string;
     manageInstanceInstallAction: any;
     authenticationType: string;
+    credentialOption: string;
+    bulkInstanceCredentials: {
+        authMode: any;
+        username: string;
+        password: string;
+    };
+    instanceCredentials: {
+        [key: string]: {
+            authMode: any;
+            username: string;
+            password: string;
+        };
+    };
     tableManageColumnState: any;
     selectedFilterValue: {} | any;
     selectedInventoryTab: string;
@@ -125,6 +146,7 @@ export interface InventorySliceData {
     bulkDetectedInstanceList: any;
     registerHostType: string;
     fsxAuthStatus: FsxAuthStatusMap;
+    instanceAuthStatus: InstanceAuthStatusMap;
 }
 
 export interface InventoryTableData {

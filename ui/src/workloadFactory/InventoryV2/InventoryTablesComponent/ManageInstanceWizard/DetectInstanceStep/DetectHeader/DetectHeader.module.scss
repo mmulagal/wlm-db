@@ -67,6 +67,12 @@
         min-width: 0;
         overflow: hidden;
         border-right: 1px solid var(--border);
+
+        .long-text {
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+        }
     }
 
     .columnWidth {
@@ -175,6 +181,10 @@
         position: sticky;
         top: -40px;
     }
+}
+
+.instanceReadinessTable {
+    margin-top: 40px;
 }
 
 .dialogContainer {

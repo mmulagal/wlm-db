@@ -8,29 +8,49 @@ import HeaderCard from './HeaderCard/HeaderCard';
 import InputCard from './InputCard/InputCard';
 import FsxAuthenticatedScreen from './FsxAuthenticatedScreen/FsxAuthenticatedScreen';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { getAllFsxFromStorage, areAllFsxAuthenticated, hasPartialAuthSuccess } from './AuthenticateFsxUtils';
+import { areAllFsxAuthenticated, hasPartialAuthSuccess } from './AuthenticateFsxUtils';
+import { ACTION_TYPE } from '../../../../../utils/consts';
 
 export const Content = () => {
-    const { manageSingleInstanceData, fsxCredentialStatusObj, fsxAuthStatus } = useAppSelector(
-        state => state.inventoryV2
-    );
+    const {
+        manageSingleInstanceData,
+        fsxCredentialStatusObj,
+        fsxAuthStatus,
+        wizardOperationType,
+        selectedMultiDetectInstances
+    } = useAppSelector(state => state.inventoryV2);
 
-    // Get FSx list from storage array
-    const fsxListFromStorage = useMemo(
-        () => getAllFsxFromStorage(manageSingleInstanceData?.storage),
-        [manageSingleInstanceData?.storage]
-    );
+    const isBulkMode = wizardOperationType === ACTION_TYPE.BULK;
 
     // Check if all FSx are authenticated by checking fsxCredentialStatusObj
-    const isFsxAuthenticated = useMemo(() => {
-        if (!manageSingleInstanceData) return false;
-        return areAllFsxAuthenticated(manageSingleInstanceData?.storage, fsxCredentialStatusObj);
-    }, [manageSingleInstanceData, fsxCredentialStatusObj]);
+    const isFsxAuthenticated = useMemo(
+        () =>
+            areAllFsxAuthenticated(
+                manageSingleInstanceData?.storage,
+                fsxCredentialStatusObj,
+                isBulkMode,
+                selectedMultiDetectInstances
+            ),
+        [isBulkMode, manageSingleInstanceData?.storage, selectedMultiDetectInstances, fsxCredentialStatusObj]
+    );
 
     // Check if we have partial success to disable radio buttons
     const hasPartialSuccess = useMemo(
-        () => hasPartialAuthSuccess(manageSingleInstanceData?.storage, fsxCredentialStatusObj, fsxAuthStatus),
-        [manageSingleInstanceData?.storage, fsxCredentialStatusObj, fsxAuthStatus]
+        () =>
+            hasPartialAuthSuccess(
+                manageSingleInstanceData?.storage,
+                fsxCredentialStatusObj,
+                fsxAuthStatus,
+                isBulkMode,
+                selectedMultiDetectInstances
+            ),
+        [
+            isBulkMode,
+            manageSingleInstanceData?.storage,
+            selectedMultiDetectInstances,
+            fsxCredentialStatusObj,
+            fsxAuthStatus
+        ]
     );
 
     const renderContent = () => {
@@ -42,7 +62,7 @@ export const Content = () => {
         return (
             <>
                 <HeaderCard isRadioDisabled={hasPartialSuccess} />
-                <InputCard />
+                <InputCard isBulkMode={isBulkMode} />
             </>
         );
     };

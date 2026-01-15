@@ -4,16 +4,23 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as SingleAuth } from '../../../../../../assets/SingleAuth.svg';
 import styles from './FsxAuthenticatedScreen.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { getAllFsxFromStorage } from '../AuthenticateFsxUtils';
+import { getAllFsxFromStorage, getAllFsxFromBulkStorage } from '../AuthenticateFsxUtils';
+import { ACTION_TYPE } from '../../../../../../utils/consts';
 
 const FsxAuthenticatedScreen = () => {
     const { t } = useTranslation();
-    const { manageSingleInstanceData } = useAppSelector(state => state.inventoryV2);
-
-    const fsxList = useMemo(
-        () => getAllFsxFromStorage(manageSingleInstanceData?.storage),
-        [manageSingleInstanceData?.storage]
+    const { manageSingleInstanceData, wizardOperationType, selectedMultiDetectInstances } = useAppSelector(
+        state => state.inventoryV2
     );
+
+    const isBulkMode = wizardOperationType === ACTION_TYPE.BULK;
+
+    const fsxList = useMemo(() => {
+        if (isBulkMode) {
+            return getAllFsxFromBulkStorage(selectedMultiDetectInstances);
+        }
+        return getAllFsxFromStorage(manageSingleInstanceData?.storage);
+    }, [isBulkMode, manageSingleInstanceData?.storage, selectedMultiDetectInstances]);
 
     const fsxCount = fsxList.length;
 

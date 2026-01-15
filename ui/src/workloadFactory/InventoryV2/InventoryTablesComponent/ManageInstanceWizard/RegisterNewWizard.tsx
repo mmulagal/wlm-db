@@ -7,7 +7,11 @@ import styles from './ManageInstanceWizard.module.scss';
 import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
+import {
+    setLandingFromWizard,
+    resetInstanceAuthStatus,
+    resetFsxAuthStatus
+} from '../../../../store/workloadFactory/inventoryV2Slice';
 
 import { DBType } from '../../../../utils/consts';
 import * as AuthenticateFSxStep from './AuthenticateFSxStep/AuthenticateFSxStep';
@@ -30,6 +34,9 @@ const Wizard = () => {
                         : t('databases.register-flow.register-database')
                 }
                 onExit={() => {
+                    // Reset auth status for fresh state on next registration
+                    dispatch(resetInstanceAuthStatus());
+                    dispatch(resetFsxAuthStatus());
                     setTimeout(() => {
                         dispatch(setLandingFromWizard(true));
                         navigate('../databases/inventory');

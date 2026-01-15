@@ -14,9 +14,19 @@ import { ReactComponent as Success } from '../../../../../../assets/success.svg'
 import { ReactComponent as Failure } from '../../../../../../assets/error-icon.svg';
 import { FSX_FOR_ONTAP_CRED_OPTION, RESPONSE_STATUS } from '../../../../../../utils/consts';
 import { FsxAuthStatus } from '../../../../../../utils/types/inventoryV2Types';
-import { FsxItem, getAllFsxFromStorage, getFsxNeedingAuth } from '../AuthenticateFsxUtils';
+import {
+    FsxItem,
+    getAllFsxFromStorage,
+    getFsxNeedingAuth,
+    getAllFsxFromBulkStorage,
+    getFsxNeedingAuthFromBulk
+} from '../AuthenticateFsxUtils';
 
-const InputCard = () => {
+interface InputCardProps {
+    isBulkMode?: boolean;
+}
+
+const InputCard = ({ isBulkMode = false }: InputCardProps) => {
     const {
         detectOntapUsername,
         detectOntapPassword,
@@ -24,14 +34,29 @@ const InputCard = () => {
         detectOntapCredentialsByFsx,
         fsxAuthStatus,
         fsxCredentialStatusObj,
-        manageSingleInstanceData
+        manageSingleInstanceData,
+        selectedMultiDetectInstances
     } = useAppSelector(state => state.inventoryV2);
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { state, setState }: UseWizardReturn = useWizard();
     const { hitNextForStep2, fsxAllAuthFailed } = state;
-    const fullFsxList = getAllFsxFromStorage(manageSingleInstanceData?.storage);
-    const fsxList = getFsxNeedingAuth(manageSingleInstanceData?.storage, fsxCredentialStatusObj);
+
+    // Get FSx lists based on mode (bulk vs single)
+    const fullFsxList = useMemo(() => {
+        if (isBulkMode) {
+            return getAllFsxFromBulkStorage(selectedMultiDetectInstances);
+        }
+        return getAllFsxFromStorage(manageSingleInstanceData?.storage);
+    }, [isBulkMode, manageSingleInstanceData?.storage, selectedMultiDetectInstances]);
+
+    const fsxList = useMemo(() => {
+        if (isBulkMode) {
+            return getFsxNeedingAuthFromBulk(selectedMultiDetectInstances, fsxCredentialStatusObj);
+        }
+        return getFsxNeedingAuth(manageSingleInstanceData?.storage, fsxCredentialStatusObj);
+    }, [isBulkMode, manageSingleInstanceData?.storage, selectedMultiDetectInstances, fsxCredentialStatusObj]);
+
     const fsxNames = useMemo(() => [...new Set(fsxList.map((fsx: FsxItem) => fsx.fsxName))], [fsxList]);
 
     // Track the previous mode to detect switches
@@ -46,7 +71,7 @@ const InputCard = () => {
             // Find all authenticated FSx and populate their credentials
             fsxNames.forEach((fsxName: string) => {
                 const authStatus = fsxAuthStatus[fsxName];
-                const isAuthenticated = authStatus.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
+                const isAuthenticated = authStatus?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
 
                 if (isAuthenticated && detectOntapUsername && detectOntapPassword) {
                     // Only populate if not already set

@@ -30,7 +30,8 @@ import {
     setManageSingleInstanceReadiness,
     setSelectedFSxForOntapCredentials,
     setSelectedMultiDetectInstances,
-    setFsxAuthStatus
+    setFsxAuthStatus,
+    setInstanceAuthStatus
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     createDetectHostPayloadBulk,
@@ -40,6 +41,12 @@ import {
     updateDetectBulkResponse
 } from './ManageInstanceUtils';
 import {
+    areAllInstancesAuthenticated,
+    createBulkAuthPayload,
+    validateBulkInstanceCredentials
+} from './SelectInstancesStep/AuthenticateBulkUtils';
+import { areAllFsxAuthenticated } from './AuthenticateFSxStep/AuthenticateFsxUtils';
+import {
     ACTION_TYPE,
     DBType,
     DETECT_HOST_VAR,
@@ -48,7 +55,7 @@ import {
     RESPONSE_STATUS
 } from '../../../../utils/consts';
 import { BulkDetectedInstance, UseWizardReturn } from '../../../../utils/types/registerTypes';
-import { FsxAuthStatusMap } from '../../../../utils/types/inventoryV2Types';
+import { FsxAuthStatusMap, InstanceAuthStatusMap } from '../../../../utils/types/inventoryV2Types';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -64,13 +71,22 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     const { currentStepIndex, currentStep, gotoPreviousStep, goToNextStep, setState }: UseWizardReturn = useWizard();
 
-    const manageSingleInstanceData = useAppSelector(state => state.inventoryV2.manageSingleInstanceData);
-    const fsxCredentialStatusObj = useAppSelector(state => state.inventoryV2.fsxCredentialStatusObj);
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
-    const manageSingleInstanceChecks = useAppSelector(state => state.inventoryV2.manageSingleInstanceChecks);
-    const { wizardOperationType, selectedMultiDetectInstances, bulkDetectedInstanceList } = useAppSelector(
-        state => state.inventoryV2
-    );
+
+    // Consolidated inventoryV2 state selectors
+    const {
+        manageSingleInstanceData,
+        fsxCredentialStatusObj,
+        manageSingleInstanceChecks,
+        wizardOperationType,
+        selectedMultiDetectInstances,
+        bulkDetectedInstanceList,
+        credentialOption,
+        bulkInstanceCredentials,
+        instanceCredentials,
+        instanceAuthStatus,
+        registerHostType
+    } = useAppSelector(state => state.inventoryV2);
 
     const bulkInstanceData = useMemo(
         () => getBulkDetectChecks(selectedMultiDetectInstances),
@@ -83,7 +99,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const [manageBulkV2InstanceApi] = useManageBulkV2MssqlInstanceMutation();
     const [manageBulkV2OracleInstanceApi] = useManageBulkV2OracleInstanceMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
-    const engineType = useAppSelector(state => state.inventoryV2.manageSingleInstanceData?.hostType);
+    const engineType = manageSingleInstanceData?.hostType;
 
     const goBack = () => {
         setState({ hitNext: false });
@@ -434,6 +450,10 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     if (failedFsxIds.length > 0) {
                         if (failedFsxIds.length < fsxIds.length) {
                             // Partial failure - switch to manual mode and show which ones failed
+                            // Mark successful FSx as registered so they won't be re-sent
+                            successFsxIds.forEach(fsxId => {
+                                saveFsxInCredRegisteredObj(fsxId, dispatch);
+                            });
                             dispatch(setSelectedFSxForOntapCredentials(FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY));
                             dispatch(
                                 addNotification({
@@ -485,6 +505,223 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 }
             } else {
                 goToNextStep();
+            }
+        } catch (error) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: t('databases.register-flow.manage-detect-fail-message')
+                })
+            );
+        } finally {
+            dispatch(setIsDetectHostLoading(false));
+        }
+    };
+
+    /**
+     * Handles bulk instance authentication for the new bulk register flow.
+     * Authenticates multiple instances with either same credentials or per-instance credentials.
+     * Updates instanceAuthStatus for each instance based on API response.
+     */
+    const handleBulkInstanceAuthenticate = async () => {
+        const hostType = registerHostType || DBType.MSSQL;
+
+        // Check if all instances are already authenticated - skip API call
+        if (areAllInstancesAuthenticated(selectedMultiDetectInstances, instanceAuthStatus, hostType)) {
+            goToNextStep();
+            return;
+        }
+
+        // Validate credentials before making API call
+        const validationResult = validateBulkInstanceCredentials(
+            selectedMultiDetectInstances,
+            credentialOption,
+            bulkInstanceCredentials,
+            instanceCredentials,
+            instanceAuthStatus,
+            hostType
+        );
+
+        if (!validationResult.isValid) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: validationResult.errorMessage || t('databases.register-flow.manage-detect-fail-message')
+                })
+            );
+            return;
+        }
+
+        dispatch(setIsDetectHostLoading(true));
+
+        // Notify user that authentication may take time
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: t('databases.register-flow.bulk-auth-in-progress')
+            })
+        );
+
+        // Create payload using bulk auth utility
+        const payloadItems = createBulkAuthPayload(
+            selectedMultiDetectInstances,
+            credentialOption,
+            bulkInstanceCredentials,
+            instanceCredentials,
+            instanceAuthStatus,
+            hostType
+        );
+
+        // If no credentials to send (all already authenticated), proceed to next step
+        if (payloadItems.length === 0) {
+            dispatch(setIsDetectHostLoading(false));
+            goToNextStep();
+            return;
+        }
+
+        // Helper to split array into batches
+        const chunkArray = (arr: any[], size: number) =>
+            Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
+
+        const batches = chunkArray(payloadItems, DETECT_PAYLOAD_SIZE);
+        const authStatusUpdates: InstanceAuthStatusMap = {};
+        // Track manageReadiness updates for successful instances
+        const manageReadinessUpdates: Record<string, any> = {};
+
+        try {
+            for (let i = 0; i < batches.length; i++) {
+                const batchPayload = { items: batches[i] };
+
+                const result = await registerResourceCredBulk({ payload: batchPayload });
+
+                if (result && !result?.error && result?.data) {
+                    // Process response for this batch - update auth status per instance
+                    const resultItems = result?.data?.items || [];
+
+                    resultItems.forEach((resultItem: any) => {
+                        const registerDetails = resultItem?.registerDetails || [];
+
+                        registerDetails.forEach((detail: any) => {
+                            const resourceId = detail?.resourceId;
+                            if (!resourceId) return;
+
+                            // Check for errors to determine success/failure
+                            const hasError = !!(
+                                detail?.databaseServerError ||
+                                detail?.oracleAsmError ||
+                                detail?.requiredModuleError
+                            );
+
+                            authStatusUpdates[resourceId] = hasError
+                                ? (RESPONSE_STATUS.FAILED.toLowerCase() as 'failed')
+                                : (RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success');
+
+                            // Track manageReadiness for successful instances
+                            if (!hasError && detail?.manageReadiness) {
+                                manageReadinessUpdates[resourceId] = detail.manageReadiness;
+                            }
+                        });
+                    });
+                } else {
+                    // API call failed - mark all instances in batch as failed
+                    batchPayload.items.forEach(item => {
+                        item.credentials.forEach((cred: { resourceId: string }) => {
+                            authStatusUpdates[cred.resourceId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                        });
+                    });
+
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: t('databases.register-flow.manage-detect-fail-message')
+                        })
+                    );
+                }
+            }
+
+            // Update Redux state with auth status updates
+            Object.entries(authStatusUpdates).forEach(([instanceId, status]) => {
+                dispatch(setInstanceAuthStatus({ instanceId, status }));
+            });
+
+            // Update inventoryTableData and selectedMultiDetectInstances for successful instances
+            if (Object.keys(manageReadinessUpdates).length > 0) {
+                // Update inventoryTableData for each successful instance
+                // Each dispatch updates the store, so subsequent updateInstanceStatus calls see updated state
+                selectedMultiDetectInstances.forEach((instance: any) => {
+                    const instanceData = instance.data || instance;
+                    const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+
+                    if (instanceId && manageReadinessUpdates[instanceId]) {
+                        // Also save FSx credential status for successful instances with FSx storage
+                        const fsxId = instanceData?.fsxId;
+                        if (fsxId) {
+                            saveFsxInCredRegisteredObj(fsxId, dispatch);
+                        }
+
+                        // Update inventory table data for this instance
+                        const updatedInventoryTableData = updateInstanceStatus('detect', instanceData, instanceData);
+                        dispatch(setInventoryTableData(updatedInventoryTableData));
+                    }
+                });
+
+                // Update selectedMultiDetectInstances with manageReadiness
+                const updatedInstances = selectedMultiDetectInstances.map((instance: any) => {
+                    const instanceData = instance.data || instance;
+                    const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+
+                    if (instanceId && manageReadinessUpdates[instanceId]) {
+                        // Update the instance with new manageReadiness
+                        if (instance.data) {
+                            return {
+                                ...instance,
+                                data: {
+                                    ...instance.data,
+                                    manageReadiness: manageReadinessUpdates[instanceId]
+                                }
+                            };
+                        }
+                        return {
+                            ...instance,
+                            manageReadiness: manageReadinessUpdates[instanceId]
+                        };
+                    }
+                    return instance;
+                });
+                dispatch(setSelectedMultiDetectInstances(updatedInstances));
+            }
+
+            // Check if all instances are now authenticated
+            const updatedAuthStatus = { ...instanceAuthStatus, ...authStatusUpdates };
+            if (areAllInstancesAuthenticated(selectedMultiDetectInstances, updatedAuthStatus, hostType)) {
+                goToNextStep();
+            } else {
+                // Show notification about partial success
+                const successCount = Object.values(authStatusUpdates).filter(
+                    s => s === RESPONSE_STATUS.SUCCESS.toLowerCase()
+                ).length;
+                const failedCount = Object.values(authStatusUpdates).filter(
+                    s => s === RESPONSE_STATUS.FAILED.toLowerCase()
+                ).length;
+
+                if (successCount > 0 && failedCount > 0) {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.WARNING,
+                            message: t('databases.register-flow.bulk-auth-partial-success', {
+                                successCount,
+                                failedCount
+                            })
+                        })
+                    );
+                } else if (failedCount > 0) {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: t('databases.register-flow.bulk-auth-all-failed')
+                        })
+                    );
+                }
             }
         } catch (error) {
             dispatch(
@@ -552,27 +789,45 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         }
     };
 
+    // @Todo: Will be refactored when Oracle regiter revamp is completed
     const bulkGoForward = (currentStepIndexVal: number) => {
+        // Detect if this is the new bulk register flow (from InstancesTable selection)
+        // In new flow, step 0 is AuthenticateBulkInstance; in old flow, step 0 is SelectInstancesStep
+        const isNewBulkFlow = registerHostType && currentStep === 'authenticate-instance';
+
         if (currentStepIndexVal === 0) {
-            if (selectedMultiDetectInstances.length > 0) {
-                goToNextStep();
+            if (isNewBulkFlow) {
+                // New flow: Step 0 is AuthenticateBulkInstance - call bulk instance auth handler
+                handleBulkInstanceAuthenticate();
             } else {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: t('databases.register-flow.bulk-instance-select-text')
-                    })
-                );
+                // Old flow: Step 0 is SelectInstancesStep - just check if instances are selected
+                if (selectedMultiDetectInstances.length > 0) {
+                    goToNextStep();
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: t('databases.register-flow.bulk-instance-select-text')
+                        })
+                    );
+                }
             }
         } else if (currentStepIndexVal === 1) {
-            const isAuth = selectedMultiDetectInstances.every((instance: any) => instance?.authorized);
-            if (isAuth) {
+            // Check if all FSx from all selected instances are authenticated
+            const isFsxAlreadyAuthenticated = areAllFsxAuthenticated(
+                undefined,
+                fsxCredentialStatusObj,
+                true,
+                selectedMultiDetectInstances
+            );
+
+            if (isFsxAlreadyAuthenticated) {
                 goToNextStep();
             } else {
-                setState({ hitNext: true });
+                setState({ hitNextForStep2: true });
                 // @ts-ignore
                 const engineType = selectedMultiDetectInstances[0]?.data?.hostType || DBType.MSSQL;
-                const fieldsCorrect = detectFieldsValidation(bulkInstanceData, engineType);
+                const fieldsCorrect = detectFsxFieldsValidation(manageSingleInstanceData, engineType);
                 if (fieldsCorrect) {
                     handleMultiRegisterResourceCred();
                 }
@@ -714,7 +969,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
                             isThin
                             onClick={() => bulkGoForward(currentStepIndex)}
-                            isLoading={detectHostLoading && currentStepIndex === 1}
+                            isLoading={detectHostLoading}
                             variant="primary"
                             {...rest}
                         >

@@ -1,0 +1,280 @@
+.authenticateBulkInstance {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    width: 79%;
+    margin-top: 40px;
+    margin-bottom: 40px;
+
+    .authenticationTypeSection {
+        background: var(--hover-background, #f4fbff);
+        display: flex;
+        gap: 40px;
+        align-items: center;
+        padding: 16px 40px;
+        box-shadow: 2px 2px 6px 0px rgba(224, 224, 224, 1);
+        height: 116px;
+
+        .instanceIcon {
+            width: 120px;
+            height: 83px;
+            position: relative;
+
+            .iconContainer {
+                position: relative;
+                width: 120px;
+                height: 60px;
+                border: 2px dashed #544da8;
+                border-radius: 12px;
+                padding: 8px 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                .purpleBox {
+                    width: 19.766px;
+                    height: 19.091px;
+                    background: #de9eff;
+                    border-radius: 1px;
+                    position: absolute;
+                    top: 10px;
+                    left: 23px;
+                }
+
+                .instanceGraphic {
+                    width: 38px;
+                    height: 42px;
+                    position: relative;
+                }
+            }
+
+            .passText {
+                font-family: 'SF Pro', sans-serif;
+                font-size: 14px;
+                font-weight: 400;
+                line-height: 24px;
+                color: #404040;
+                text-align: center;
+                margin-top: 8px;
+            }
+        }
+
+        .credentialsSection {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            justify-content: center;
+
+            .sectionTitle {
+                color: var(--text-primary, #404040);
+            }
+
+            .radioGroup {
+                display: flex;
+                gap: 34px;
+                align-items: center;
+            }
+        }
+    }
+
+    .formSection {
+        background: var(--background-content, white);
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        padding: 40px;
+        height: 240px;
+        box-shadow: 2px 2px 6px 0px rgba(224, 224, 224, 1);
+
+        .formHeader {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: flex-start;
+
+            .formTitle {
+                color: var(--text-primary, #1c1c1c);
+            }
+
+            .instanceTooltip {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                background: var(--background-content, white);
+
+                .tooltipItem {
+                    background: var(--background-content, white);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    padding: 16px;
+                    width: 100%;
+                    position: relative;
+                    box-shadow: inset 0px -1px 0px 0px var(--border-drop-shadow, #e0e0e0);
+
+                    .tooltipItemContent {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 4px;
+                        align-items: flex-start;
+                        width: 100%;
+                    }
+                }
+            }
+        }
+
+        .formFields {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+
+            .selectField {
+                min-width: 112px;
+                flex: 0 0 25%;
+                max-width: 402px;
+            }
+
+            .textField {
+                flex: 0 0 24.9%;
+                max-width: 400px;
+            }
+
+            .passwordField {
+                flex: 0 0 24.9%;
+            }
+        }
+    }
+    [class*='Select-module_bottom-margin'] {
+        margin-bottom: 0 !important;
+    }
+    .manualCredentialsSection {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        box-shadow: 2px 2px 6px 0px rgba(224, 224, 224, 1);
+
+        .instanceRow {
+            background: var(--background-content, white);
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            padding: 40px;
+
+            .instanceInfo {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                width: 15%;
+                max-width: 234px;
+                flex-shrink: 0;
+
+                .instanceName {
+                    color: var(--text-primary, #404040);
+                }
+
+                .instanceStatus {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                }
+
+                .instanceHeader {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    width: 100%;
+                }
+            }
+
+            .instanceFields {
+                display: flex;
+                gap: 24px;
+                align-items: center;
+                flex: 1;
+                width: 100%;
+
+                .instanceSelectField {
+                    width: 30%;
+                }
+
+                .instanceTextField {
+                    width: 30%;
+                }
+
+                .instancePasswordField {
+                    width: 30%;
+                }
+
+                .closeButtonContainer {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    flex-shrink: 0;
+                    position: relative;
+                    top: 8px;
+
+                    .closeButton {
+                        width: 24px;
+                        height: 24px;
+                        border: none;
+                        background: transparent;
+                        cursor: pointer;
+                        padding: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        overflow: hidden;
+
+                        svg {
+                            width: 100%;
+                            height: 100%;
+                        }
+
+                        &:hover {
+                            opacity: 0.7;
+                        }
+                    }
+                }
+            }
+
+            // Auth status on the right side (similar to FSx)
+            .authStatusRight {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0;
+                min-width: 150px;
+
+                .successIcon {
+                    width: 16px;
+                    height: 16px;
+                    color: var(--notification-success, #48a08b);
+                }
+
+                .failedIcon {
+                    width: 16px;
+                    height: 16px;
+                    color: var(--notification-danger, #d14343);
+                }
+            }
+        }
+    }
+
+    .authenticatedScreen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 40px;
+        gap: 24px;
+        background: var(--background-content, white);
+        box-shadow: 2px 2px 6px 0px rgba(224, 224, 224, 1);
+        text-align: center;
+    }
+
+    .errorBorder {
+        [class*='Select__control'] {
+            border-color: var(--notification-danger, #d14343);
+        }
+    }
+}

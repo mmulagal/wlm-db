@@ -9,7 +9,7 @@ import NoteComponent from './NoteComponent/NoteComponent';
 import PermissionListComponent from './PermissionListComponent/PermissionListComponent';
 import DetectHeader from '../DetectInstanceStep/DetectHeader/DetectHeader';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { ACTION_TYPE, DBType, MANAGE_STATES } from '../../../../../utils/consts';
+import { ACTION_TYPE, DBType, MANAGE_STATES, PREPARE_PAGE_TABS } from '../../../../../utils/consts';
 import {
     setBulkDetectedInstanceList,
     setManageSingleInstanceChecks
@@ -50,6 +50,10 @@ import {
     getManageReadinessFromInstance,
     updateItemWithAgenticData
 } from './ManageInstanceStepHelper';
+import BulkAuthenticationHeader from '../DetectInstanceStep/DetectHeader/BulkAuthenticationHeader';
+import AuthenticationTabsForBulk from './AuthenticationTabsForBulk/AuthenticationTabsForBulk';
+import { selectedTabSelection } from '../../../../../store/workloadFactory/databaseHomeSlice';
+import InstanceReadinessTable from '../DetectInstanceStep/DetectHeader/InstanceReadinessTable';
 
 export const Content = () => {
     const { t } = useTranslation();
@@ -61,6 +65,7 @@ export const Content = () => {
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
     const {
         manageSingleInstanceData,
+        selectedPreparePageTab,
         manageSingleInstanceReadiness,
         selectedMultiDetectInstances,
         manageSingleInstanceChecks: manageChecks
@@ -380,7 +385,8 @@ export const Content = () => {
 
             {wizardOperationType === ACTION_TYPE.BULK && (
                 <div style={{ marginBottom: '40px', width: '100%' }}>
-                    <MultiInstanceHeader engineType={hostType} />
+                    {hostType === DBType.ORACLE && <MultiInstanceHeader engineType={hostType} />}
+                    {hostType === DBType.MSSQL && <BulkAuthenticationHeader engineType={hostType} />}
                 </div>
             )}
 
@@ -389,39 +395,72 @@ export const Content = () => {
                 <DsTypography variant="Regular_14">{t(contentKeys.content2)}</DsTypography>
             </div>
 
-            {/* Action component */}
-            {wizardOperationType === ACTION_TYPE.SINGLE &&
-                manageChecks &&
-                shouldShowActionComponent(manageChecks, hostType) && (
-                    <ActionComponent manageChecks={manageChecks} engineType={hostType} />
-                )}
-            {wizardOperationType === ACTION_TYPE.BULK &&
-                manageMultiChecks &&
-                shouldShowActionComponent(manageMultiChecks, hostType) && (
-                    <ActionComponent manageChecks={manageMultiChecks} engineType={hostType} />
-                )}
+            {hostType === DBType.MSSQL && wizardOperationType === ACTION_TYPE.BULK ? (
+                <>
+                    <AuthenticationTabsForBulk />
+                    {selectedPreparePageTab === PREPARE_PAGE_TABS.PREREQUISITE_CHECK && (
+                        <>
+                            {wizardOperationType === ACTION_TYPE.BULK &&
+                                manageMultiChecks &&
+                                shouldShowActionComponent(manageMultiChecks, hostType) && (
+                                    <ActionComponent manageChecks={manageMultiChecks} engineType={hostType} />
+                                )}
 
-            {/* Accordions */}
-            {wizardOperationType === ACTION_TYPE.SINGLE && manageChecks && (
-                <PermissionListComponent
-                    manageChecks={manageChecks}
-                    policiesList={policiesList}
-                    engineType={hostType}
-                />
-            )}
+                            {wizardOperationType === ACTION_TYPE.BULK && manageMultiChecks && (
+                                <PermissionListComponent
+                                    manageChecks={manageMultiChecks}
+                                    policiesList={policiesList}
+                                    engineType={hostType}
+                                />
+                            )}
 
-            {wizardOperationType === ACTION_TYPE.BULK && manageMultiChecks && (
-                <PermissionListComponent
-                    manageChecks={manageMultiChecks}
-                    policiesList={policiesList}
-                    engineType={hostType}
-                />
-            )}
+                            {wizardOperationType === ACTION_TYPE.BULK &&
+                                manageMultiChecks?.installMissingPowershell && <NoteComponent />}
+                        </>
+                    )}
 
-            {/* Note */}
-            {wizardOperationType === ACTION_TYPE.SINGLE && manageChecks?.installMissingPowershell && <NoteComponent />}
-            {wizardOperationType === ACTION_TYPE.BULK && manageMultiChecks?.installMissingPowershell && (
-                <NoteComponent />
+                    {selectedPreparePageTab === PREPARE_PAGE_TABS.INSTANCE_READINESS && <InstanceReadinessTable />}
+                </>
+            ) : (
+                // Old flow here
+                <>
+                    {/* Action component */}
+                    {wizardOperationType === ACTION_TYPE.SINGLE &&
+                        manageChecks &&
+                        shouldShowActionComponent(manageChecks, hostType) && (
+                            <ActionComponent manageChecks={manageChecks} engineType={hostType} />
+                        )}
+                    {wizardOperationType === ACTION_TYPE.BULK &&
+                        manageMultiChecks &&
+                        shouldShowActionComponent(manageMultiChecks, hostType) && (
+                            <ActionComponent manageChecks={manageMultiChecks} engineType={hostType} />
+                        )}
+
+                    {/* Accordions */}
+                    {wizardOperationType === ACTION_TYPE.SINGLE && manageChecks && (
+                        <PermissionListComponent
+                            manageChecks={manageChecks}
+                            policiesList={policiesList}
+                            engineType={hostType}
+                        />
+                    )}
+
+                    {wizardOperationType === ACTION_TYPE.BULK && manageMultiChecks && (
+                        <PermissionListComponent
+                            manageChecks={manageMultiChecks}
+                            policiesList={policiesList}
+                            engineType={hostType}
+                        />
+                    )}
+
+                    {/* Note */}
+                    {wizardOperationType === ACTION_TYPE.SINGLE && manageChecks?.installMissingPowershell && (
+                        <NoteComponent />
+                    )}
+                    {wizardOperationType === ACTION_TYPE.BULK && manageMultiChecks?.installMissingPowershell && (
+                        <NoteComponent />
+                    )}
+                </>
             )}
         </div>
     );

@@ -1,0 +1,22 @@
+.aoagTooltip {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .bulletList {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        .bulletRow {
+            display: flex;
+            gap: 4px;
+            align-items: flex-start;
+
+            svg {
+                flex-shrink: 0;
+                margin-top: 4px;
+            }
+        }
+    }
+}

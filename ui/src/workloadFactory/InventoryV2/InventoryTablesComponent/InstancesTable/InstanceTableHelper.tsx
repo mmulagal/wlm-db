@@ -1,13 +1,18 @@
+import React from 'react';
 import { TFunction } from 'i18next';
 import { Dispatch } from '@reduxjs/toolkit';
 import { NavigateFunction } from 'react-router-dom';
 import { TooltipInfo } from '@netapp/design-system';
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import {
+    DATABASE_DEPLOYMENT_MODE,
     DBType,
+    DETECT_HOST_VAR,
     ERROR_ANALYZER_STATUS,
     INVENTORY_STATUS,
     INVENTORY_TABLE_STATUS,
+    SQL_DEPLOYMENT_MODE,
+    STORAGE_TYPES,
     WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../../utils/consts';
@@ -39,6 +44,8 @@ import {
 } from '../../../../store/workloadFactory/inventorybannerSlice';
 import { createSandboxNavigation, formatDateWithTime } from '../../../../utils/utilityFunctions';
 import { ReactComponent as NotActiveNotificationIcon } from '../../../../assets/NotActiveNotificationIcon.svg';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
+import tooltipStyles from './InstanceTableHelper.module.scss';
 
 export interface InstanceMenuSelectionParams {
     menuId: string;
@@ -542,4 +549,206 @@ export const logAnalyzerStatusCol = (styles: any, t: any, rowData: any, cellData
             <DsTypography variant="Regular_14">{cellData}</DsTypography>
         </div>
     );
+};
+
+/**
+ * Result from isInstanceActionDisabled function
+ */
+export interface InstanceDisabledResult {
+    isDisabled: boolean;
+    disableMsg: string;
+    tooltipWidth?: string;
+    tooltipHeight?: string;
+}
+
+/**
+ * Determines if an instance row should have its actions (menu/register/select) disabled
+ *
+ * Used by:
+ * - disableMenu in manageColumnsProps (for menu/register button)
+ * - isRowSelectableForBulkRegister (for bulk selection checkbox)
+ * - getDisabledSelectionTooltip (for tooltip message)
+ *
+ * @param rowData - The instance row data
+ * @param selectedHostType - Current database type filter (MSSQL, Oracle, PGSQL)
+ * @param t - i18next translation function
+ * @returns Object containing isDisabled flag and reason message
+ */
+export const isInstanceActionDisabled = (
+    rowData: any,
+    selectedHostType: string,
+    t: TFunction
+): InstanceDisabledResult => {
+    // Already managed instances don't need to be disabled for existing actions
+    // but they cannot be selected for bulk registration
+    if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+        return {
+            isDisabled: false,
+            disableMsg: ''
+        };
+    }
+
+    // Check host offline status
+    if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
+        return {
+            isDisabled: true,
+            disableMsg: t('databases.bulk-register.host-down'),
+            tooltipWidth: '120px',
+            tooltipHeight: '33px'
+        };
+    }
+
+    // Check SSM status
+    if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+        return {
+            isDisabled: true,
+            disableMsg: t('databases.bulk-register.ssm-down'),
+            tooltipWidth: '250px',
+            tooltipHeight: '50px'
+        };
+    }
+
+    // Check instance running status
+    if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+        return {
+            isDisabled: true,
+            disableMsg:
+                selectedHostType === DBType.ORACLE
+                    ? t('databases.register-flow.oracle-server-instance-down')
+                    : t('databases.register-flow.sql-server-instance-down'),
+            tooltipWidth: '220px',
+            tooltipHeight: '33px'
+        };
+    }
+
+    // Check detect option flags
+    if (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) {
+        return {
+            isDisabled: true,
+            disableMsg: rowData?.detectOptionDisableMsg || '',
+            tooltipWidth: '250px',
+            tooltipHeight: '33px'
+        };
+    }
+
+    // Check FSx/ONTAP storage requirement for unmanaged instances
+    if (
+        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+        rowData?.fileSystemType !== STORAGE_TYPES.FSX_FOR_ONTAP &&
+        !rowData?.fsxId
+    ) {
+        return {
+            isDisabled: true,
+            disableMsg:
+                selectedHostType === DBType.ORACLE
+                    ? t('databases.bulk-register.fsxn-manage-supported-oracle')
+                    : t('databases.bulk-register.fsxn-manage-supported'),
+            tooltipWidth: '340px',
+            tooltipHeight: '50px'
+        };
+    }
+
+    // Check AOAG deployment type for unmanaged instances
+    if (
+        rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.AOAG &&
+        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
+    ) {
+        return {
+            isDisabled: true,
+            disableMsg: t('databases.bulk-register.aoag-manage-disable'),
+            tooltipWidth: '320px',
+            tooltipHeight: '50px'
+        };
+    }
+
+    return {
+        isDisabled: false,
+        disableMsg: ''
+    };
+};
+
+/**
+ * Check if an instance can be selected for bulk registration.
+ * Uses isInstanceActionDisabled as the base check plus additional bulk-specific checks.
+ *
+ * @param rowData - The instance row data
+ * @param selectedHostType - Current database type filter
+ * @param t - i18next translation function
+ * @returns true if the row can be selected for bulk registration
+ */
+export const isRowSelectableForBulkRegister = (rowData: any, selectedHostType: string, t: TFunction): boolean => {
+    // Only allow bulk selection for MSSQL
+    if (selectedHostType !== DBType.MSSQL) return false;
+
+    // Allow both UNMANAGED and UNDETECTED instances for bulk registration
+    if (
+        rowData?.statusColText !== INVENTORY_STATUS.UNMANAGED &&
+        rowData?.statusColText !== INVENTORY_STATUS.UNDETECTED
+    ) {
+        return false;
+    }
+
+    // Check AOAG - cannot be selected
+    const deploymentModel = rowData?.serverInstallationMode?.toLowerCase();
+    const isAOAG =
+        deploymentModel === SQL_DEPLOYMENT_MODE.AOAG ||
+        rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.AOAG ||
+        rowData?.serverInstallationMode === 'AOAG';
+    if (isAOAG) return false;
+
+    // Use the shared disable logic
+    const { isDisabled } = isInstanceActionDisabled(rowData, selectedHostType, t);
+    return !isDisabled;
+};
+
+/**
+ * Get tooltip message for disabled bulk selection checkbox.
+ * Uses isInstanceActionDisabled as the base check plus additional bulk-specific messages.
+ *
+ * @param rowData - The instance row data
+ * @param selectedHostType - Current database type filter
+ * @param t - i18next translation function
+ * @returns Tooltip message for why selection is disabled (string or JSX for AOAG)
+ */
+export const getDisabledSelectionTooltip = (
+    rowData: any,
+    selectedHostType: string,
+    t: TFunction
+): string | React.ReactNode => {
+    // Check AOAG first (specific bulk registration message with bullet points)
+    const deploymentModel = rowData?.serverInstallationMode?.toLowerCase();
+    const isAOAG =
+        deploymentModel === SQL_DEPLOYMENT_MODE.AOAG ||
+        rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.AOAG ||
+        rowData?.serverInstallationMode === 'AOAG';
+    if (isAOAG) {
+        return (
+            <div className={tooltipStyles.aoagTooltip}>
+                <DsTypography variant="Semibold_13">{t('databases.bulk-register.aoag-tooltip-title')}</DsTypography>
+                <div className={tooltipStyles.bulletList}>
+                    <div className={tooltipStyles.bulletRow}>
+                        <Bullet />
+                        <DsTypography variant="Regular_13">
+                            {t('databases.bulk-register.aoag-tooltip-bullet1')}
+                        </DsTypography>
+                    </div>
+                    <div className={tooltipStyles.bulletRow}>
+                        <Bullet />
+                        <DsTypography variant="Regular_13">
+                            {t('databases.bulk-register.aoag-tooltip-bullet2')}
+                        </DsTypography>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Already managed - specific bulk registration message
+    if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+        return t('databases.bulk-register.already-registered');
+    }
+
+    // Use the shared disable logic for other cases
+    const { disableMsg } = isInstanceActionDisabled(rowData, selectedHostType, t);
+    return disableMsg;
 };

@@ -1,0 +1,30 @@
+.authTabs {
+    margin-top: 48px;
+
+    border-bottom: 1px solid var(--grey-30);
+    display: flex;
+    gap: 4px;
+    width: 55.9%;
+
+    .headers {
+        height: 35px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: 600;
+        padding-bottom: 12px;
+        gap: 8px;
+    }
+
+    .headerWidthFirst {
+        width: 260px;
+    }
+
+    .active {
+        border-bottom: 2px solid var(--text-button-primary);
+    }
+
+    .activeText {
+        color: var(--text-button-primary);
+    }
+}

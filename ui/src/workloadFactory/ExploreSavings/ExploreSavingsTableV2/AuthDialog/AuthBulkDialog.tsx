@@ -130,14 +130,14 @@ const AuthBulkDialog = () => {
         if (selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
             return t('databases.register-flow.detect-windows-username');
         }
-        return t('databases.explore-savings.mssql-user-name');
+        return t('databases.register-flow.detect-mssql-username');
     };
 
     const getPasswordLabel = () => {
         if (selectedAuthenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
             return t('databases.register-flow.detect-windows-password');
         }
-        return t('databases.explore-savings.mssql-password');
+        return t('databases.register-flow.detect-mssql-password');
     };
 
     const getUsernamePlaceholder = () => {

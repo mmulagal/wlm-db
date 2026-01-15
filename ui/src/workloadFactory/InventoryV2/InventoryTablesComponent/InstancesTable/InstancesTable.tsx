@@ -38,7 +38,7 @@ import {
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
 import { bxpRedirect, collapseAllRows, isSmbProtocol } from '../../../../utils/utilityFunctions';
-import { ACTION_CTA, DBType, DETECT_HOST_VAR, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import { ACTION_CTA, DBType, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
@@ -47,6 +47,7 @@ import {
     setRegisterHostType,
     setSelectedFilterValue,
     setSelectedMultiDetectInstances,
+    setSelectedRowsForBulkRegister,
     setTableManageColumnState,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -93,19 +94,25 @@ import { mssqlInstanceColumnFilterMap } from './MssqlInstanceColumnList';
 import { oracleDatabaseColumnFilterMap } from './OracleDatabaseColumnsList';
 import { pgsqlInstanceColumnFilterMap } from './PgsqlInstanceColumnList';
 import { getInitialInstanceTableColState } from '../../../../utils/manageColumnUtils';
+import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
 import WindowsAuthDialog from '../ProtectionDialogs/WindowsAuthDialog';
 import {
     getInstableTableTopMenuOptions,
     getInstanceTableMenuOptions,
     handleInstanceMenuSelection,
-    inventoryBannerFilterUpdates
+    inventoryBannerFilterUpdates,
+    isInstanceActionDisabled,
+    isRowSelectableForBulkRegister,
+    getDisabledSelectionTooltip
 } from './InstanceTableHelper';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
 
-    const { instanceTableRows, tableManageColumnState } = useAppSelector(state => state.inventoryV2);
+    const { instanceTableRows, tableManageColumnState, selectedRowsForBulkRegister } = useAppSelector(
+        state => state.inventoryV2
+    );
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -724,27 +731,93 @@ const InstancesTable = () => {
         );
     };
 
-    const updatedTableData = useMemo(
-        () => instanceTableRows?.map((row: any) => instanceExtraDataUpdate(row, t, instanceProtection, isDemoMode)),
-        [instanceTableRows, instanceProtection, isDemoMode]
-    );
+    // Maximum number of instances that can be selected for bulk register
+    const MAX_BULK_REGISTER_SELECTION = 10;
 
+    // For Oracle: Check if there are any registerable rows (used for the Register button in TableTopBar)
     const isUnregisteredRows = useMemo(
         () =>
+            selectedHostType === DBType.ORACLE &&
             instanceTableRows?.some((row: any) => {
                 const { colText, disableMsg } = manageActionCol(t, selectedHostType, row);
-                if (selectedHostType === DBType.ORACLE) {
-                    return colText === ACTION_CTA.REGISTER_DATABASE && disableMsg === '';
-                }
-                return colText === ACTION_CTA.MANAGE_INSTANCES && disableMsg === '';
+                return colText === ACTION_CTA.REGISTER_DATABASE && disableMsg === '';
             }),
-        [instanceTableRows]
+        [instanceTableRows, selectedHostType, t]
+    );
+
+    // For Oracle: Navigate to bulk registration wizard
+    const handleManageBulk = () => {
+        dispatch(setSelectedMultiDetectInstances([]));
+        dispatch(setWizardOperationType('bulk'));
+        dispatch(setRegisterHostType(selectedHostType));
+        dispatch(resetAgenticPreCheckData());
+        if (isWorkloadFactory) {
+            navigate('../register-bulk-wizard');
+        } else {
+            navigate('../fsxdb/register-bulk-wizard');
+        }
+    };
+
+    // For Oracle: Tooltip content when Register button is disabled
+    const getPopoverContent = () => t('databases.register-flow.register-bulk-disable-tooltip-oracle');
+
+    const updatedTableData = useMemo(
+        () =>
+            instanceTableRows?.map((row: any) => {
+                const processedRow = instanceExtraDataUpdate(row, t, instanceProtection, isDemoMode);
+                const isSelectable = isRowSelectableForBulkRegister(processedRow, selectedHostType, t);
+                const tooltipMsg = !isSelectable ? getDisabledSelectionTooltip(processedRow, selectedHostType, t) : '';
+
+                // Add cellProps for selection control
+                return {
+                    ...processedRow,
+                    cellProps: {
+                        ...processedRow.cellProps,
+                        isDisabled: !isSelectable,
+                        selectionProps: {
+                            title: tooltipMsg
+                        }
+                    }
+                };
+            }),
+        [instanceTableRows, instanceProtection, isDemoMode, selectedHostType]
     );
 
     const getTableColDefsPerEngineType = () => getInstanceTableColumns({ t, updatedTableData, selectedHostType });
 
+    // Compute selectable rows for bulk register
+    const selectableRowsForBulk = useMemo(
+        () => updatedTableData?.filter((row: any) => !row.cellProps?.isDisabled) || [],
+        [updatedTableData]
+    );
+
+    // Determine if header checkbox should be enabled
+    const isHeaderCheckboxEnabled = useMemo(() => {
+        if (selectedHostType !== DBType.MSSQL) return false;
+        if (loading) return false;
+        return selectableRowsForBulk.length > 0;
+    }, [selectedHostType, loading, selectableRowsForBulk]);
+
+    // Check if max selection limit reached
+    const isMaxSelectionReached = useMemo(
+        () => selectedRowsForBulkRegister.length >= MAX_BULK_REGISTER_SELECTION,
+        [selectedRowsForBulkRegister]
+    );
+
+    // Compute header checkbox tooltip message
+    const headerCheckboxTooltip = useMemo(() => {
+        if (!isHeaderCheckboxEnabled) {
+            return t('databases.bulk-register.select-header-disabled');
+        }
+        if (isMaxSelectionReached) {
+            return t('databases.bulk-register.max-selection-reached', { max: MAX_BULK_REGISTER_SELECTION });
+        }
+        return '';
+    }, [isHeaderCheckboxEnabled, isMaxSelectionReached]);
+
     const tableProps = useTable({
         isSorting: false,
+        selectionType: selectedHostType === DBType.MSSQL ? 'multiple' : 'none',
         columns: getTableColDefsPerEngineType(),
         rows: updatedTableData,
         pageSize: 50,
@@ -752,6 +825,11 @@ const InstancesTable = () => {
         isManagedColumns: true,
         isLazyLoading: loading,
         initialFilterState: getInitialFilter(),
+        defaultSelectedRows: [],
+        selectAllProps: {
+            isDisabled: !isHeaderCheckboxEnabled || isMaxSelectionReached,
+            title: headerCheckboxTooltip
+        },
         initialColumnState: Object.fromEntries(
             Object.entries(getInitialInstanceTableColState(selectedHostType)).filter(
                 ([_, value]) => value !== undefined
@@ -804,92 +882,22 @@ const InstancesTable = () => {
                     );
                 }
 
-                let disableMsg = '';
-                let width = '';
-                let height = '';
-                const disableMenu = () => {
-                    if (
-                        rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                        rowData.statusColText === INVENTORY_STATUS.UNDETECTED ||
-                        rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS
-                    ) {
-                        return true;
-                    }
-
-                    // if (rowData?.loading) {
-                    //     disableMsg = GENERAL.INVENTORY_LOADING_DISABLED;
-                    //     width = '170px';
-                    //     height = '33px';
-                    //     return true;
-                    // }
-                    if (
-                        rowData?.status === INVENTORY_STATUS.OFFLINE &&
-                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
-                    ) {
-                        disableMsg = GENERAL.HOST_DOWN;
-                        width = '120px';
-                        height = '33px';
-                        return true;
-                    }
-                    if (
-                        rowData?.ssmState === INVENTORY_STATUS.OFFLINE &&
-                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
-                    ) {
-                        disableMsg = GENERAL.SSM_DOWN;
-                        width = '250px';
-                        height = '50px';
-                        return true;
-                    }
-                    if (
-                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN &&
-                        rowData?.statusColText !== INVENTORY_STATUS.MANAGED
-                    ) {
-                        disableMsg =
-                            selectedHostType === DBType.ORACLE
-                                ? t('databases.register-flow.oracle-server-instance-down')
-                                : t('databases.register-flow.sql-server-instance-down');
-                        width = '220px';
-                        height = '33px';
-                        return true;
-                    }
-                    if (
-                        rowData?.detectOption === DETECT_HOST_VAR.DISABLE ||
-                        rowData?.detectOption === DETECT_HOST_VAR.HIDE
-                    ) {
-                        disableMsg = rowData?.detectOptionDisableMsg;
-                        width = '250px';
-                        height = '33px';
-                        return true;
-                    }
-                    if (
-                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
-                        rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP &&
-                        !rowData?.fsxId
-                    ) {
-                        disableMsg =
-                            selectedHostType === DBType.ORACLE
-                                ? GENERAL.FSXN_MANAGE_SUPPORTED_ORACLE
-                                : GENERAL.FSXN_MANAGE_SUPPORTED;
-                        width = '340px';
-                        height = '50px';
-                        return true;
-                    }
-                    if (
-                        rowData?.serverInstallationMode === GENERAL.AOAG &&
-                        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
-                    ) {
-                        disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
-                        width = '320px';
-                        height = '50px';
-                        return true;
-                    }
-                    return false;
-                };
+                // Use shared utility for disabling logic
+                const disableResult = isInstanceActionDisabled(rowData, selectedHostType, t);
+                // For menu, also disable if status is unmanaged/undetected/in-progress
+                const shouldDisableMenu =
+                    rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                    rowData.statusColText === INVENTORY_STATUS.UNDETECTED ||
+                    rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS ||
+                    disableResult.isDisabled;
+                const { disableMsg } = disableResult;
+                const width = disableResult.tooltipWidth || '';
+                const height = disableResult.tooltipHeight || '';
 
                 return (
                     <div className={styles.lastContainer}>
                         <div className={styles.jobMenuPopover} style={{ marginLeft: '-12px' }}>
-                            {disableMenu() ? (
+                            {shouldDisableMenu ? (
                                 <TooltipComponent placement="bottom" title={disableMsg} width={width} height={height}>
                                     <div className={styles.menuPointerDisabled}>
                                         <span className={styles.menuPointer}>...</span>
@@ -966,11 +974,56 @@ const InstancesTable = () => {
         dispatch(setTableManageColumnState({ ...tableManageColumnState, instanceTable: tableProps.columnsState }));
     }, [tableProps.columnsState]);
 
-    const handleManageBulk = () => {
-        dispatch(setSelectedMultiDetectInstances([]));
+    // Sync table selection state to Redux for bulk register
+    useEffect(() => {
+        if (selectedHostType !== DBType.MSSQL) {
+            // Clear selection when switching away from MSSQL
+            if (selectedRowsForBulkRegister.length > 0) {
+                dispatch(setSelectedRowsForBulkRegister([]));
+            }
+            return;
+        }
+
+        const selectedRowIds = Object.keys(tableProps.selectionState?.rows || {}).filter(
+            key => tableProps.selectionState?.rows[key]
+        );
+
+        // Limit selection to MAX_BULK_REGISTER_SELECTION
+        const limitedSelectedIds = selectedRowIds.slice(0, MAX_BULK_REGISTER_SELECTION);
+
+        if (limitedSelectedIds.length > 0) {
+            const selectedRows = updatedTableData?.filter((row: any) => limitedSelectedIds.includes(String(row.id)));
+            dispatch(setSelectedRowsForBulkRegister(selectedRows || []));
+        } else {
+            dispatch(setSelectedRowsForBulkRegister([]));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tableProps.selectionState, updatedTableData, selectedHostType]);
+
+    // Clear selection when host type changes
+    useEffect(() => {
+        if (selectedRowsForBulkRegister.length > 0) {
+            dispatch(setSelectedRowsForBulkRegister([]));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedHostType]);
+
+    /**
+     * Handler for bulk register action from the BulkActionContainer
+     * Uses the selected rows from table checkboxes to navigate to bulk wizard
+     */
+    const handleBulkRegisterAction = () => {
+        if (selectedRowsForBulkRegister.length === 0) return;
+
+        // Set the selected instances for the bulk wizard
+        dispatch(setSelectedMultiDetectInstances(selectedRowsForBulkRegister));
         dispatch(setWizardOperationType('bulk'));
         dispatch(setRegisterHostType(selectedHostType));
         dispatch(resetAgenticPreCheckData());
+
+        // Clear the table selection after navigating
+        dispatch(setSelectedRowsForBulkRegister([]));
+
         if (isWorkloadFactory) {
             navigate('../register-bulk-wizard');
         } else {
@@ -978,19 +1031,17 @@ const InstancesTable = () => {
         }
     };
 
-    const getPopoverContent = (selectedHostType: string) => {
-        switch (selectedHostType) {
-            case DBType.ORACLE:
-                return t('databases.register-flow.register-bulk-disable-tooltip-oracle');
-            case DBType.MSSQL:
-                return t('databases.register-flow.register-bulk-disable-tooltip');
-            default:
-                return t('databases.register-flow.register-bulk-disable-tooltip');
-        }
-    };
-
     return (
         <div className={styles.inventoryTable} ref={inventoryTableRef}>
+            {/* Show BulkActionContainer above the table when rows are selected */}
+            {selectedHostType === DBType.MSSQL && selectedRowsForBulkRegister.length > 0 && (
+                <BulkActionContainer
+                    action={t('databases.bulk-register.register-selected-instances', {
+                        count: selectedRowsForBulkRegister.length
+                    })}
+                    onClick={handleBulkRegisterAction}
+                />
+            )}
             <div
                 //  @ts-ignore
                 className={`${styles.table} ${styles.leftBorder}`}
@@ -1003,28 +1054,30 @@ const InstancesTable = () => {
                     exportToCsvOptions={{ fileName: exportToCsvFileName }}
                     subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     actionsRight={
-                        <div className={styles.manageInstanceButton}>
-                            {!loading && !isUnregisteredRows ? (
-                                <Popover
-                                    isAppendedToBody
-                                    children={getPopoverContent(selectedHostType)}
-                                    trigger="hover"
-                                    container={
-                                        <DsButton isThin isDisabled>
-                                            {buttonText}
-                                        </DsButton>
-                                    }
-                                />
-                            ) : (
-                                <DsButton
-                                    isThin
-                                    onClick={() => handleManageBulk()}
-                                    isDisabled={loading || !isUnregisteredRows}
-                                >
-                                    {buttonText}
-                                </DsButton>
-                            )}
-                        </div>
+                        selectedHostType === DBType.ORACLE ? (
+                            <div className={styles.manageInstanceButton}>
+                                {!loading && !isUnregisteredRows ? (
+                                    <Popover
+                                        isAppendedToBody
+                                        children={getPopoverContent()}
+                                        trigger="hover"
+                                        container={
+                                            <DsButton isThin isDisabled>
+                                                {buttonText}
+                                            </DsButton>
+                                        }
+                                    />
+                                ) : (
+                                    <DsButton
+                                        isThin
+                                        onClick={() => handleManageBulk()}
+                                        isDisabled={loading || !isUnregisteredRows}
+                                    >
+                                        {buttonText}
+                                    </DsButton>
+                                )}
+                            </div>
+                        ) : undefined
                     }
                 />
                 <Table

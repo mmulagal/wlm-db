@@ -1,6 +1,19 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { FsxAuthStatus, FsxAuthStatusMap, InventorySliceData } from '../../utils/types/inventoryV2Types';
-import { AUTHENTICATION_TYPE, DBType, FSX_FOR_ONTAP_CRED_OPTION, WLF_TABS } from '../../utils/consts';
+import {
+    FsxAuthStatus,
+    FsxAuthStatusMap,
+    InstanceAuthStatus,
+    InstanceAuthStatusMap,
+    InventorySliceData
+} from '../../utils/types/inventoryV2Types';
+import {
+    AUTHENTICATION_TYPE,
+    CREDENTIAL_OPTIONS,
+    DBType,
+    FSX_FOR_ONTAP_CRED_OPTION,
+    WLF_TABS,
+    PREPARE_PAGE_TABS
+} from '../../utils/consts';
 import {
     getInitialInstanceTableColState,
     getInitialHostTableColState,
@@ -8,6 +21,7 @@ import {
 } from '../../utils/manageColumnUtils';
 
 const initialInventoryV2State: InventorySliceData = {
+    selectedPreparePageTab: PREPARE_PAGE_TABS.PREREQUISITE_CHECK,
     breadCrumbSelectedFrom: '',
     inventoryTableData: null,
     inventoryChartData: null,
@@ -59,6 +73,7 @@ const initialInventoryV2State: InventorySliceData = {
     detectOntapPassword: '',
     detectOntapCredentialsByFsx: {} as Record<string, { username: string; password: string }>,
     fsxAuthStatus: {} as FsxAuthStatusMap,
+    instanceAuthStatus: {} as InstanceAuthStatusMap,
     detectWindowsAuthentication: {
         username: '',
         password: ''
@@ -119,6 +134,16 @@ const initialInventoryV2State: InventorySliceData = {
     },
     createResourceApiLoading: false,
     authenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
+    credentialOption: CREDENTIAL_OPTIONS.SAME_FOR_ALL,
+    bulkInstanceCredentials: {
+        authMode: {
+            label: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
+            value: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+        },
+        username: '',
+        password: ''
+    },
+    instanceCredentials: {},
     manageInstanceInstallAction: {
         installMissingAWS: false,
         installMissingPowershell: false,
@@ -133,13 +158,17 @@ const initialInventoryV2State: InventorySliceData = {
     selectedMultiDetectInstances: [],
     bulkDetectedInstanceList: [],
     landingFromWizard: false,
-    selectedFSxForOntapCredentials: FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED
+    selectedFSxForOntapCredentials: FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED,
+    selectedRowsForBulkRegister: [] as any[]
 };
 
 const inventoryV2Slice = createSlice({
     name: 'inventoryV2',
     initialState: initialInventoryV2State,
     reducers: {
+        setSelectedPreparePageTab: (state, action: PayloadAction<string>) => {
+            state.selectedPreparePageTab = action.payload;
+        },
         setSelectedFSxForOntapCredentials: (state, action: PayloadAction<string>) => {
             state.selectedFSxForOntapCredentials = action.payload;
         },
@@ -151,6 +180,9 @@ const inventoryV2Slice = createSlice({
         },
         setBulkDetectedInstanceList: (state, action: PayloadAction<any>) => {
             state.bulkDetectedInstanceList = action.payload;
+        },
+        setSelectedRowsForBulkRegister: (state, action: PayloadAction<any[]>) => {
+            state.selectedRowsForBulkRegister = action.payload;
         },
         setInstallType: (state, action: PayloadAction<Partial<typeof state.manageInstanceInstallAction>>) => {
             state.manageInstanceInstallAction = {
@@ -166,6 +198,31 @@ const inventoryV2Slice = createSlice({
         },
         setAuthenticationType: (state, action: PayloadAction<any>) => {
             state.authenticationType = action.payload;
+        },
+        setCredentialOption: (state, action: PayloadAction<string>) => {
+            state.credentialOption = action.payload;
+        },
+        setBulkInstanceCredentials: (state, action: PayloadAction<Partial<typeof state.bulkInstanceCredentials>>) => {
+            state.bulkInstanceCredentials = {
+                ...state.bulkInstanceCredentials,
+                ...action.payload
+            };
+        },
+        setInstanceCredentials: (
+            state,
+            action: PayloadAction<{
+                instanceId: string;
+                credentials: Partial<{ authMode: any; username: string; password: string }>;
+            }>
+        ) => {
+            const { instanceId, credentials } = action.payload;
+            state.instanceCredentials[instanceId] = {
+                ...state.instanceCredentials[instanceId],
+                ...credentials
+            };
+        },
+        removeInstanceCredentials: (state, action: PayloadAction<string>) => {
+            delete state.instanceCredentials[action.payload];
         },
         setTableManageColumnState: (state, action: PayloadAction<any>) => {
             state.tableManageColumnState = action.payload;
@@ -317,6 +374,22 @@ const inventoryV2Slice = createSlice({
             } else {
                 state.fsxAuthStatus = action.payload;
             }
+        },
+        resetFsxAuthStatus: state => {
+            state.fsxAuthStatus = {};
+        },
+        setInstanceAuthStatus: (
+            state,
+            action: PayloadAction<{ instanceId: string; status: InstanceAuthStatus } | InstanceAuthStatusMap>
+        ) => {
+            if ('instanceId' in action.payload) {
+                state.instanceAuthStatus[action.payload.instanceId] = action.payload.status;
+            } else {
+                state.instanceAuthStatus = action.payload;
+            }
+        },
+        resetInstanceAuthStatus: state => {
+            state.instanceAuthStatus = {};
         },
         setDetectWindowsAuthentication: (
             state,
@@ -532,6 +605,7 @@ const inventoryV2Slice = createSlice({
 });
 
 export const {
+    setSelectedPreparePageTab,
     setSelectedFSxForOntapCredentials,
     setLandingFromWizard,
     setSelectedMultiDetectInstances,
@@ -539,6 +613,10 @@ export const {
     setRegisterHostType,
     setInstallType,
     setAuthenticationType,
+    setCredentialOption,
+    setBulkInstanceCredentials,
+    setInstanceCredentials,
+    removeInstanceCredentials,
     setSelectedFilterValue,
     setSelectedInventoryTab,
     setSelectedOptimizeConfig,
@@ -581,6 +659,9 @@ export const {
     setDetectONTAPPassword,
     setDetectONTAPCredentialsByFsx,
     setFsxAuthStatus,
+    resetFsxAuthStatus,
+    setInstanceAuthStatus,
+    resetInstanceAuthStatus,
     setResetManagedData,
     setRemoveSecNodeDiscoveredList,
     setUnManagedPerfInstanceIdsList,
@@ -622,7 +703,8 @@ export const {
     setManageSingleInstanceChecks,
     setManageSingleInstanceReadiness,
     setManageSingleInstanceData,
-    setBulkDetectedInstanceList
+    setBulkDetectedInstanceList,
+    setSelectedRowsForBulkRegister
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;
