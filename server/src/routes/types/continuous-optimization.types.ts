@@ -19,7 +19,7 @@ const ContinuousOptimizationQueryString = Type.Object({
     nextToken: Type.Optional(Type.String())
 });
 
-const AssessmentQueryStringPerAccount = Type.Composite([
+const AssessmentQueryStringPerAccount = Type.Intersect([
     ContinuousOptimizationQueryString,
     Type.Object({
         pageSize: Type.Optional(Type.Integer())

@@ -26,7 +26,7 @@ const SqlInstanceDetailsRequestObject = Type.Object({
 type SqlInstanceDetailsRequestObjectType = Static<typeof SqlInstanceDetailsRequestObject>;
 
 const SqlInstanceDetailsResponseObject = Type.Union([
-    Type.Composite([
+    Type.Intersect([
         SqlInstanceDetailsRequestObject,
         Type.Object({
             sqlInstanceName: Type.String(),
@@ -91,7 +91,7 @@ const OnPremTcoResourceObject = Type.Object({
     creationTime: Type.Number()
 });
 
-const OnPremTcoExploreSavingsResponse = Type.Composite([
+const OnPremTcoExploreSavingsResponse = Type.Intersect([
     OnPremTcoResourceObject,
     Type.Object({
         region: Type.String(),
@@ -101,7 +101,7 @@ const OnPremTcoExploreSavingsResponse = Type.Composite([
     })
 ]);
 
-const OnPremDatabaseResourceObject = Type.Composite([
+const OnPremDatabaseResourceObject = Type.Intersect([
     OnPremTcoResourceObject,
     Type.Object({
         sqlServerInstances: Type.Array(SqlInstanceDetailsResponseObject),

@@ -52,7 +52,7 @@ const SandboxInfoResponseBody = Type.Object({
     nextToken: Type.Optional(Type.String())
 });
 
-const SandboxParams = Type.Composite([
+const SandboxParams = Type.Intersect([
     DatabaseHostSummaryParams,
     Type.Object({
         sandboxName: Type.String({ maxLength: 27, pattern: '^[a-zA-Z_][a-zA-Z0-9_]*$' }),

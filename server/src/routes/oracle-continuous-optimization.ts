@@ -158,7 +158,7 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                     databaseInstanceId,
                     optimizationTargets: assessments
                 } as OptimizeStorageParams);
-                return reply.send({ jobId });
+                return reply.send({ jobId: jobId as string });
             }
         )
         .post(

@@ -49,9 +49,7 @@ const PricingServiceRequest = Type.Object({
                     size: Type.Number({ description: 'Volume size in GiB' }),
                     throughput: Type.Optional(Type.Number({ description: 'Throughput is in MBps' })),
                     iops: Type.Optional(Type.Number()),
-                    volumeType: Type.String(
-                        Type.String({ enum: ['gp2', 'io1', 'st1', 'sc1', 'gp3', 'io2'], default: 'gp3' })
-                    )
+                    volumeType: Type.String({ enum: ['gp2', 'io1', 'st1', 'sc1', 'gp3', 'io2'], default: 'gp3' })
                 })
             )
         })

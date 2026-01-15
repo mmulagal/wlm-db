@@ -227,7 +227,7 @@ type DiscoverMsSqlResponseBodyType = Static<typeof DiscoverMsSqlResponseBody>;
 type SqlServerInstanceInfoType = Static<typeof SqlServerInstanceInfo>;
 type DiscoverResponseInfoType = Static<typeof DiscoverResponseInfo>;
 
-const DiscoverInstanceParams = Type.Composite([
+const DiscoverInstanceParams = Type.Intersect([
     CredentialsIdParams,
     Type.Object({
         instanceId: Type.String({ description: 'AWS EC2 instance ID' })

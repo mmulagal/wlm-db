@@ -6,7 +6,7 @@ const InternalUpdateInstRecQueryString = Type.Object({
     fields: Type.Optional(Type.String())
 });
 
-const StorageSavingsRequestParams = Type.Composite([
+const StorageSavingsRequestParams = Type.Intersect([
     CredentialsIdParams,
     Type.Object({
         instanceId: Type.String({ description: 'AWS EC2 instance ID' })
@@ -56,7 +56,7 @@ const ManualModeInstances = Type.Array(
         volumes: Type.Optional(
             Type.Array(
                 Type.Object({
-                    volumeType: Type.String(Type.String({ enum: ['gp2', 'gp3', 'io1', 'io2', 'st1'] })),
+                    volumeType: Type.String({ enum: ['gp2', 'gp3', 'io1', 'io2', 'st1'] }),
                     volumeNumber: Type.Number({
                         minimum: 1
                     }),

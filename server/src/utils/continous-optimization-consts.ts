@@ -1,5 +1,5 @@
 import config from 'config';
-import { Static, Type } from '@sinclair/typebox';
+import { Static, Type } from 'typebox';
 import { RESOURCESTYPE, WLMDB } from './consts';
 import { DatabaseInstanceMetadata } from './common-types';
 
@@ -319,7 +319,7 @@ interface OptimizeStorageParams {
 }
 
 const OptimizeStorageRequestParams = Type.Object({
-    configurationName: Type.String(Type.Enum(OptimizeStorageConfigs)),
+    configurationName: Type.String({ enum: Object.values(OptimizeStorageConfigs) }),
     objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
 });
 type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;

@@ -295,7 +295,7 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply
                     .header('Content-Type', 'image/png')
                     .header('Content-Disposition', 'attachment; filename="diagram.png"')
-                    .send(response.file);
+                    .send(response.file as any);
             }
         );
     }

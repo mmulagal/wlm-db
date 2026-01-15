@@ -7,7 +7,7 @@ import {
     AccountIdParams
 } from './generic.types';
 
-const JobSummaryQueryString = Type.Composite([
+const JobSummaryQueryString = Type.Intersect([
     CredentialsIdRegionQueryParams,
     Type.Object({
         startTime: Type.Optional(Type.Number()),
@@ -37,7 +37,7 @@ const JobSummaryByTimeResponse = Type.Array(Type.Optional(JobSummaryByTimeRecord
 
 type JobSummaryByTimeRecordType = Static<typeof JobSummaryByTimeRecord>;
 
-const ListJobsQueryString = Type.Composite([
+const ListJobsQueryString = Type.Intersect([
     CredentialsIdRegionQueryParams,
     Type.Object({
         parentJobId: Type.Optional(Type.String()),
@@ -75,7 +75,7 @@ const JobObject = Type.Object({
 
 const ListJobsResponse = Type.Object({
     count: Type.Number(),
-    items: Type.Array(Type.Composite([CredentialsIdRegionParams, JobObject])),
+    items: Type.Array(Type.Intersect([CredentialsIdRegionParams, JobObject])),
     nextToken: Type.Optional(Type.String())
 });
 
@@ -93,7 +93,7 @@ const JobDetailsResponse = Type.Object({
     startTime: Type.Number(),
     endTime: Type.Optional(Type.Number()),
     error: Type.Optional(Type.String()),
-    subJobs: Type.Optional(Type.Array(Type.Composite([CredentialsIdRegionParams, JobObject]))),
+    subJobs: Type.Optional(Type.Array(Type.Intersect([CredentialsIdRegionParams, JobObject]))),
     metadata: Type.Optional(Type.Any())
 });
 
@@ -144,7 +144,7 @@ const CreateJobObject = Type.Object({
 });
 type JobRecordType = Static<typeof CreateJobObject>;
 
-const CreateJobRequestBody = Type.Composite([
+const CreateJobRequestBody = Type.Intersect([
     CredentialsIdRegionQueryParams,
     Type.Object({ items: Type.Array(CreateJobObject) })
 ]);
@@ -152,7 +152,7 @@ const CreateJobResponse = Type.Object({
     count: Type.Number()
 });
 const JobsParams = Type.Object({ accountId: Type.String({ minLength: 1 }), jobId: Type.String({ minLength: 1 }) });
-const JobsParamsWriter = Type.Composite([AccountIdParams, Type.Object({ jobId: Type.String({ minLength: 1 }) })]);
+const JobsParamsWriter = Type.Intersect([AccountIdParams, Type.Object({ jobId: Type.String({ minLength: 1 }) })]);
 
 export {
     ListJobsQueryString,

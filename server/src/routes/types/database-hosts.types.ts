@@ -21,19 +21,19 @@ const DatabaseHostObjectParams = Type.Object({
 });
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
-const DatabaseHostSummaryParams = Type.Composite([
+const DatabaseHostSummaryParams = Type.Intersect([
     CredentialsIdParams,
     Type.Object({ databaseHostId: Type.String({ minLength: 1, description: API_DESCRIPTION.DATABASE_HOST_ID_DESC }) })
 ]);
 
-const DatabaseHostInstanceSummaryParams = Type.Composite([
+const DatabaseHostInstanceSummaryParams = Type.Intersect([
     DatabaseHostSummaryParams,
     Type.Object({
         databaseInstanceId: Type.String({ minLength: 1, description: API_DESCRIPTION.DATABASE_INSTANCE_ID_DESC })
     })
 ]);
 
-const DatabaseHostOptionalInstanceSummaryParams = Type.Composite([
+const DatabaseHostOptionalInstanceSummaryParams = Type.Intersect([
     DatabaseHostSummaryParams,
     Type.Optional(
         Type.Object({ databaseInstanceId: Type.String({ description: API_DESCRIPTION.DATABASE_INSTANCE_ID_DESC }) })
@@ -178,7 +178,7 @@ const RWPerformanceResponse = Type.Object({
     // The union type is added as same schme is used for mssql, pgsql and oracle but pgsql and oracle does not support trend graph now,. Once they support trend graph, we can remove unused type
 });
 
-const LatencyResponse = Type.Composite([
+const LatencyResponse = Type.Intersect([
     RWPerformanceResponse,
     Type.Object({ serverIo: Type.Optional(Type.Number({ description: 'Database server IO performance for latency' })) })
 ]);

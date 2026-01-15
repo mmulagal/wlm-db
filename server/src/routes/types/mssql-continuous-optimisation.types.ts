@@ -423,7 +423,7 @@ type MTUOptimizePerHostRequestBodyType = Static<typeof MTUOptimizePerHostRequest
 type BackupOptimizePerHostRequestBodyType = Static<typeof BackupOptimizePerHostRequestBody>;
 
 const OptimizeOperatingSystemRequestBody = Type.Object({
-    configurationName: Type.String(Type.Enum(OptimizeOperatingSystemParams))
+    configurationName: Type.String({ enum: Object.values(OptimizeOperatingSystemParams) })
 });
 
 const OptimizeGenericRequestBody = Type.Object({

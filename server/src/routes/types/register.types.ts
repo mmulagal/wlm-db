@@ -3,14 +3,14 @@ import { RESOURCESTYPE } from '../../utils/consts';
 import { API_DESCRIPTION } from '../../utils/schema-description-consts';
 import { AccountIdCredentialsIdParams, CredentialsIdParams } from './generic.types';
 
-const RegisterInstanceParams = Type.Composite([
+const RegisterInstanceParams = Type.Intersect([
     CredentialsIdParams,
     Type.Object({
         instanceId: Type.String({ description: 'AWS EC2 instance ID' })
     })
 ]);
 
-const UnmanageInstanceParams = Type.Composite([
+const UnmanageInstanceParams = Type.Intersect([
     AccountIdCredentialsIdParams,
     Type.Object({
         resourceId: Type.String({ description: 'Workload Factory resource ID.', minLength: 1 })

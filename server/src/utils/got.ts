@@ -68,6 +68,7 @@ const hooks: Hooks = {
             return error;
         }
     ],
+    beforeCache: [],
     init: [],
     beforeRedirect: [],
     beforeRequest: [

@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import Handlebars from 'handlebars';
 import { readFileSync, createWriteStream } from 'fs';
-import { mkdir, writeFile, rmdir, cp } from 'fs/promises';
+import { mkdir, writeFile, rm, cp } from 'fs/promises';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import archiver from 'archiver';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
@@ -462,7 +462,7 @@ async function createAndUploadTheTerraformZipFile(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error while creating terraform zip file');
     } finally {
         try {
-            await rmdir(`${TEMP_DIRECTORY}/${type}/${deploymentName}`, { recursive: true });
+            await rm(`${TEMP_DIRECTORY}/${type}/${deploymentName}`, { recursive: true });
         } catch (err: any) {
             logger.error('Error while deleting the directory', err);
         }

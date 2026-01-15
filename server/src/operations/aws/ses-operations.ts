@@ -14,7 +14,7 @@ const sendEmail = async (from: string, to: string[], subject: string, content: s
     const sesClient = await getSES();
     const transporter = createTransport({
         SES: { sesClient, SendEmailCommand }
-    });
+    } as Parameters<typeof createTransport>[0]);
 
     try {
         await transporter.sendMail({

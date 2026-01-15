@@ -11,7 +11,7 @@ const FileSystemCredentialsStatusResponse = Type.Object({
     isRegistered: Type.Boolean()
 });
 
-const FileSystemCredentialsStatusParams = Type.Composite([
+const FileSystemCredentialsStatusParams = Type.Intersect([
     CredentialsIdParams,
     Type.Object({ fileSystemId: Type.String({ minLength: 1 }) })
 ]);

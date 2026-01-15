@@ -410,7 +410,7 @@ function parseProductsResponse(response: GetProductsCommandOutput): {
 
     const pricingDetails: { [metric: string]: { pricePerUnit: number; unit: string } } = {};
     if (response.PriceList && !isEmpty(response.PriceList)) {
-        response.PriceList.forEach(priceItem => {
+        response.PriceList.forEach((priceItem: any) => {
             const item = (priceItem as LazyJsonString).deserializeJSON();
             const { terms, product } = item;
 
@@ -953,7 +953,7 @@ async function getSqlInstancePricingDetails(
         [instanceType: string]: { [preInstalledSw: string]: { pricePerUnit: number; unit: string } };
     } = {};
     if (pricingResult?.PriceList) {
-        pricingResult.PriceList.forEach(priceItem => {
+        pricingResult.PriceList.forEach((priceItem: any) => {
             const item = (priceItem as LazyJsonString).deserializeJSON();
             const { terms, product } = item;
 
