@@ -16,5 +16,5 @@ export function getDatabaseTableColumns({
     if (selectedHostType === DBType.ORACLE) {
         return OraclePDBTableColDefs({ t, databaseTableRows });
     }
-    return MssqlPgsqlDatabaseTableColDefs({ t, databaseTableRows });
+    return MssqlPgsqlDatabaseTableColDefs({ t, databaseTableRows, databaseType: selectedHostType });
 }

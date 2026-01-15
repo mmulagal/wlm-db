@@ -115,9 +115,7 @@ export const TableTopBar = ({
      * instead showing just "11" until the user actually applies a filter.
      */
     const hasActiveFilters = showFilterText;
-    const showFilteredCount = tableRowsLength
-        ? hasActiveFilters && itemCount !== filteredItemCount
-        : itemCount !== filteredItemCount;
+    const showFilteredCount = (tableRowsLength ? hasActiveFilters : true) && itemCount !== filteredItemCount;
 
     return (
         <div className={classNames(styles.base, className)}>

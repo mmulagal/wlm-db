@@ -1,23 +1,16 @@
 import { DsTypography, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-    DBType,
-    DETECT_HOST_VAR,
-    FROM_DIALOG,
-    INVENTORY_STATUS,
-    DEMO_MODE_PROTECTION_CRITERIA
-} from '../../../../utils/consts';
+import { DBType, FROM_DIALOG } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
-import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedFilterValue, setTableManageColumnState } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { useTable } from '../../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
-import { bxpRedirect, createSandboxNavigation } from '../../../../utils/utilityFunctions';
+import { bxpRedirect, collapseAllRows, createSandboxNavigation } from '../../../../utils/utilityFunctions';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
 import { handleProtectionUtil } from '../../AddHostUtils';
@@ -57,7 +50,7 @@ import {
     setWorkSpaceData,
     setSelectedAgent
 } from '../../../../store/workloadFactory/snapcenterSlice';
-import { addHostHandlerSc } from '../../InventoryUtilsV2';
+import { addHostHandlerSc, determineProtectionStatusMssql, mssqlDatabaseMenuOptions } from '../../InventoryUtilsV2';
 import { getDatabaseTableColumns } from './DatabaseTableColumns';
 import { mssqlPgsqlDatabaseColumnFilterMap } from './MssqlPgsqlDatabaseTableColumns';
 import { oraclePDBColumnFilterMap } from './OraclePDBTableColumns';
@@ -65,6 +58,8 @@ import { getInitialDatabaseTableColState } from '../../../../utils/manageColumnU
 import WindowsAuthDialog from '../ProtectionDialogs/WindowsAuthDialog';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { updateOrgId } from '../../../../store/authSlice';
+import AoagReplicaTable from './ReplicaTable/AoagReplicaTable';
+import { ReactComponent as ArrowIcon } from '../../../../assets/row_arrow.svg';
 
 const DatabasesTable = () => {
     const { t } = useTranslation();
@@ -79,6 +74,7 @@ const DatabasesTable = () => {
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
+    const databaseTableRef = useRef<HTMLDivElement>(null);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -105,12 +101,17 @@ const DatabasesTable = () => {
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const [getOrganizationIds] = useGetOrganizationIdsMutation();
 
-    // Function to check if protect option should be disabled
-    const isProtectDisabled = (rowData: any): boolean =>
-        rowData?.hostType !== GENERAL.MICROSOFT_SQL_SERVER_TYPE ||
-        !rowData?.instanceRow?.fsxId ||
-        !rowData?.hostRow?.nodeIpAddress ||
-        rowData?.status !== 'ONLINE';
+    const updatedTableData = useMemo(
+        () =>
+            databaseTableRows?.filter((row: any) => {
+                // Exclude AOAG standby instances from the table
+                if (selectedHostType === DBType.MSSQL && row?.isReplica) {
+                    return false;
+                }
+                return true;
+            }),
+        [databaseTableRows, selectedHostType]
+    );
 
     useEffect(() => {
         setLoading(
@@ -237,7 +238,7 @@ const DatabasesTable = () => {
             <DialogComponent
                 header={t('databases.inventory.protect-header-database')}
                 content={<FetchingDialog />}
-                secondaryButton={GENERAL.CANCEL}
+                secondaryButton={t('databases.general.cancel')}
                 closeCallback={() => {
                     dispatch(cancelProtectionForRow(key));
                     closeDialog();
@@ -265,7 +266,7 @@ const DatabasesTable = () => {
                 }
                 content={<WindowsAuthDialog />}
                 primaryButton={t('databases.inventory.continue')}
-                secondaryButton={GENERAL.CANCEL}
+                secondaryButton={t('databases.general.cancel')}
                 closeCallback={() => {
                     dispatch(cancelProtectionForRow(key));
                     closeDialog();
@@ -302,7 +303,7 @@ const DatabasesTable = () => {
                                         notificationType: NOTIFICATION_TYPES.ERROR,
                                         message:
                                             result?.data?.items[0]?.registerDetails[0]?.databaseServerError ||
-                                            'Authentication failed. Please check the credentials and try again.'
+                                            t('databases.inventory.authentication-failed-msg')
                                     })
                                 );
                             } else {
@@ -402,7 +403,7 @@ const DatabasesTable = () => {
                 }
                 content={<NoAgentDialog dialogType="database" />}
                 primaryButton={t('databases.inventory.redirect')}
-                secondaryButton={GENERAL.CANCEL}
+                secondaryButton={t('databases.general.cancel')}
                 closeCallback={() => {
                     closeDialog();
                 }}
@@ -571,10 +572,54 @@ const DatabasesTable = () => {
         isDemoMode
     ]);
 
+    /**
+     * Expands or collapses a table row to show/hide AOAG replica details
+     *
+     * @param updateRowState - Function to update the row's state (expand/collapse)
+     * @param rowData - The row data containing the unique row id
+     * @param currentRowState - The current state of the row including isExpanded flag
+     * @param rowState - The state object containing all rows' states
+     */
+    const expandTableRow = (
+        updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
+        rowData: { id: any },
+        currentRowState: { isExpanded: any },
+        rowState: any
+    ) => {
+        collapseAllRows(updateRowState, rowState);
+        updateRowState(rowData.id)({
+            isExpanded: !currentRowState?.isExpanded
+        });
+    };
+
+    const shouldShowAoagArrow = (rowData: any) => {
+        if (rowData?.hasReplicas && rowData?.isPrimary) {
+            return true;
+        }
+        return false;
+    };
+
+    const ExpandedRow = useCallback(
+        ({ rowData }: any) => (
+            <AoagReplicaTable
+                width={databaseTableRef.current ? databaseTableRef.current.offsetWidth : 0}
+                rowData={rowData}
+                handleProtection={handleProtection}
+                handleEditProtectionDb={handleEditProtectionDb}
+                handleViewProtectionDetailsDb={handleViewProtectionDetailsDb}
+            />
+        ),
+        [databaseTableRef]
+    );
+    const tableComponentProps = {
+        ExpandedRow,
+        lazyLoadingText: 'Loading'
+    };
+
     const tableProps = useTable({
         isSorting: false,
         columns: getTableColDefsPerEngineType(),
-        rows: databaseTableRows,
+        rows: updatedTableData,
         pageSize: 50,
         selectionType: 'none',
         isHorizontalScroll: true,
@@ -588,119 +633,78 @@ const DatabasesTable = () => {
             )
         ),
         manageColumnsProps: {
-            renderCell: (cellData: any, rowData: any) => {
+            width: selectedHostType === DBType.MSSQL ? '90px' : '62px',
+            renderCell: (cellData: any, rowData: any, { updateRowState, rowsState }: any) => {
+                const currentRowState = rowsState[rowData.id];
                 if (rowData?.hostType === DBType.ORACLE) {
                     return null;
                 }
-                let disableOption = false;
-                let disableMessage = '';
 
-                if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
-                    disableOption = true;
-                    disableMessage = GENERAL.COMING_SOON;
-                } else if (rowData?.type === GENERAL.SYSTEM_DATABASE) {
-                    disableOption = true;
-                    disableMessage = 'Create sandbox option is not available for system database.';
-                }
-                // Determine protection status
-                let isProtected = false;
-
-                if (isDemoMode) {
-                    // Demo mode: Specific databases should show "Edit Protection" based on mock data
-                    const hostName = (rowData?.hostRow?.name || rowData?.hostName || '').toLowerCase();
-                    const dbName = (rowData?.name || '').toLowerCase();
-
-                    // Check against demo mode criteria from constants
-                    isProtected = DEMO_MODE_PROTECTION_CRITERIA.databases.some(
-                        criteria => criteria.hostName === hostName && criteria.databaseNames.includes(dbName)
-                    );
-                } else {
-                    // Normal mode: Use SnapCenter cache first, fall back to status text
-                    const hostFqdn = (rowData?.hostRow?.fqdn || rowData?.hostName || '').toLowerCase();
-                    const hostShort = hostFqdn.split('.')[0];
-                    const instanceShort = (rowData?.databaseInstanceName || '').toLowerCase();
-                    const dbName = (rowData?.name || '').toLowerCase();
-                    const possibleKeys = [
-                        `${hostFqdn}::${instanceShort}::${dbName}`,
-                        `${hostShort}::${instanceShort}::${dbName}`,
-                        `${hostFqdn}::mssqlserver::${dbName}`,
-                        `${hostShort}::mssqlserver::${dbName}`
-                    ];
-                    const isProtectedCache = possibleKeys.some(k => databaseProtection?.[k]?.protected === true);
-                    const statusVal = (rowData?.protectionStatus || rowData?.status || '').toLowerCase();
-                    isProtected = isProtectedCache || statusVal === 'protected';
-                }
-                const menu = [
-                    {
-                        id: 'createSandbox',
-                        displayName: t('databases.instance-table.menu-options.create-sandbox'),
-                        disabled: disableOption,
-                        infoText: disableMessage
-                    },
-                    {
-                        id: isProtected ? 'editProtection' : 'protect',
-                        displayName: isProtected
-                            ? t('databases.instance-table.menu-options.edit-protection')
-                            : t('databases.instance-table.menu-options.protect'),
-                        disabled: isProtectDisabled(rowData)
-                    },
-                    ...(isProtected
-                        ? [
-                              {
-                                  id: 'viewProtectionDetails',
-                                  displayName: t('databases.instance-table.menu-options.view-protection-details'),
-                                  disabled: false
-                              }
-                          ]
-                        : [])
-                ];
+                const isProtected = determineProtectionStatusMssql(isDemoMode, rowData, databaseProtection);
+                const menu = mssqlDatabaseMenuOptions(t, isProtected, rowData);
                 return (
-                    <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={[...menu]}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
+                    <div className={styles.lastContainer}>
+                        <div
+                            className={styles.jobMenuPopover}
+                            style={{ marginLeft: selectedHostType === DBType.MSSQL ? '-24px' : '-12px' }}
+                        >
+                            <MenuPopover
+                                isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                                menuItems={[...menu]}
+                                toggleMenu={(toggleType: string, menuId: string) => {
+                                    if (toggleType === 'close') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
+                                    } else if (toggleType === 'open') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(rowData.id);
+                                        menuOpenedRowDetail.current = rowData.id;
+                                    } else if (toggleType === 'selectedOption') {
+                                        menuOpenedRowDetail.current = null;
+                                        setOpenedRow(null);
 
-                                    if (menuId === 'createSandbox') {
-                                        dispatch(
-                                            setSelectedSandboxHeaderValue({
-                                                credId: rowData?.credentialId,
-                                                regionId: rowData?.regionId
-                                            })
-                                        );
-                                        dispatch(
-                                            setSelectedCsData({
-                                                host: rowData?.hostName,
-                                                instance: rowData?.databaseInstanceName,
-                                                database: rowData?.name
-                                            })
-                                        );
-                                        createSandboxNavigation(navigate);
-                                    }
+                                        if (menuId === 'createSandbox') {
+                                            dispatch(
+                                                setSelectedSandboxHeaderValue({
+                                                    credId: rowData?.credentialId,
+                                                    regionId: rowData?.regionId
+                                                })
+                                            );
+                                            dispatch(
+                                                setSelectedCsData({
+                                                    host: rowData?.hostName,
+                                                    instance: rowData?.databaseInstanceName,
+                                                    database: rowData?.name
+                                                })
+                                            );
+                                            createSandboxNavigation(navigate);
+                                        }
 
-                                    // Protect POC code
-                                    if (menuId === 'protect') {
-                                        handleProtection(rowData);
-                                    } else if (menuId === 'editProtection') {
-                                        handleEditProtectionDb(rowData);
-                                    } else if (menuId === 'viewProtectionDetails') {
-                                        handleViewProtectionDetailsDb(rowData);
+                                        // Protect POC code
+                                        if (menuId === 'protect') {
+                                            handleProtection(rowData);
+                                        } else if (menuId === 'editProtection') {
+                                            handleEditProtectionDb(rowData);
+                                        } else if (menuId === 'viewProtectionDetails') {
+                                            handleViewProtectionDetailsDb(rowData);
+                                        }
                                     }
-                                }
-                            }}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
+                                }}
+                                CustomMenu={undefined}
+                                disabledText={undefined}
+                            />
+                        </div>
+                        {shouldShowAoagArrow(rowData) && (
+                            <div className={styles.arrow}>
+                                <ArrowIcon
+                                    className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                    onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                    }}
+                                />
+                            </div>
+                        )}
                     </div>
                 );
             }
@@ -711,7 +715,7 @@ const DatabasesTable = () => {
         dispatch(setTableManageColumnState({ ...tableManageColumnState, databaseTable: tableProps.columnsState }));
     }, [tableProps.columnsState]);
     return (
-        <div className={styles.inventoryTable}>
+        <div className={styles.inventoryTable} ref={databaseTableRef}>
             <div
                 //  @ts-ignore
                 className={styles.table}
@@ -719,12 +723,14 @@ const DatabasesTable = () => {
                 <TableTopBar
                     // @ts-ignore
                     tableProps={tableProps}
-                    pluralTitle="Databases"
-                    singularTitle="Database"
+                    tableRowsLength={databaseTableRows?.length}
+                    pluralTitle={t('databases.well-architect.databases')}
+                    singularTitle={t('databases.well-architect.database')}
                     exportToCsvOptions={{ fileName: `DatabaseTable-${new Date(Date.now()).toLocaleString()}.csv` }}
-                    subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
+                    subTitle={t('databases.inventory.database-table-upper-text')}
                 />
                 <Table
+                    {...tableComponentProps}
                     // @ts-ignore
                     tableProps={tableProps}
                     isDoubleRow

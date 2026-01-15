@@ -19,11 +19,18 @@
             "fix-after-operation-ends": "You will be able to fix after the current well-architected operation ends."
         },
         "general": {
+            "availability-groups": "Availability Groups",
+            "failover-cluster-instances": "Failover Cluster Instances",
+            "aoag": "AOAG",
+            "always-on-availability-group": "Always on availability group",
+            "standalone": "Standalone",
+            "high-availability": "High availability",
             "fsx-for-ontap": "FSx for ONTAP",
             "replicas": "Replicas",
             "replica": "Replica",
             "primary": "Primary",
             "standby": "Standby",
+            "secondary-replica": "Secondary Replica",
             "dismiss": "Dismiss",
             "inventory": "Inventory",
             "view-and-fix": "View and fix",
@@ -987,6 +994,8 @@
             "capacity": "Capacity"
         },
         "inventory": {
+            "authentication-failed-msg": "Authentication failed. Please check the credentials and try again.",
+            "database-table-upper-text": "This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates.",
             "windows-auth-text": "Registering Microsoft SQL Server hosts in NetApp backup and recovery requires Windows credentials with administrative access.",
             "enter-windows-username": "Enter Windows user name",
             "enter-password": "Enter password",
@@ -1351,7 +1360,8 @@
                 "performance": "Performance",
                 "aws-credentials": "AWS credentials",
                 "aws-account": "AWS account",
-                "region": "Region"
+                "region": "Region",
+                "availability-group": "Availability group"
             },
             "not-analyzed": "Not analyzed",
             "menu-options": {
@@ -1379,7 +1389,10 @@
                 "database-size": "Database size",
                 "aws-credentials": "AWS credentials",
                 "aws-account": "AWS account",
-                "region": "Region"
+                "region": "Region",
+                "availability-group": "Availability group",
+                "role": "Role",
+                "deployment-model":"Deployment model"
             },
             "oracle": {
                 "headers": {

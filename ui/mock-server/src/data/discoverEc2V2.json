@@ -154,6 +154,7 @@
                     "sqlServerNodes": ["EC2AMAZ-3UTIH78"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "AOAG",
+                    "baseDeploymentType": "FCI",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
                     "storage": [
@@ -198,6 +199,7 @@
                     "sqlServerNodes": ["EC2AMAZ-3UTIH78"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "AOAG",
+                    "baseDeploymentType": "FCI",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
                     "storage": [
@@ -661,6 +663,7 @@
                     "sqlServerNodes": ["sqlnode1-17126", "sqlnode2-17126"],
                     "nodeIps": ["172.31.48.44", "172.31.10.206"],
                     "sqlServerDeploymentType": "AOAG",
+                    "baseDeploymentType": "Standalone",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
                     "storage": [

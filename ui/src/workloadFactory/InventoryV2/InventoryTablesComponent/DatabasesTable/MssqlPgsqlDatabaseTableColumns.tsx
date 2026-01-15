@@ -3,9 +3,8 @@ import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { Popover, TooltipInfo } from '@netapp/design-system';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
+import { DBType, INVENTORY_STATUS, REPLICA_ROLES } from '../../../../utils/consts';
 import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
-import { GENERAL } from '../../../../utils/appConstants';
 import ProtectionIcons from '../../../../common/ProtectionIcons/ProtectionIcons';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
@@ -13,10 +12,12 @@ import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 
 export function MssqlPgsqlDatabaseTableColDefs({
     t,
-    databaseTableRows
+    databaseTableRows,
+    databaseType
 }: {
     t: TFunction;
     databaseTableRows: any[];
+    databaseType?: string;
 }): ColumnProps[] {
     const allColumns: ColumnProps[] = [
         {
@@ -30,7 +31,9 @@ export function MssqlPgsqlDatabaseTableColDefs({
                 const name = rowData?.name;
                 return (
                     <div>
-                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {name || t('databases.general.not-available-table-columns')}
+                        </DsTypography>
                         <div className={styles.firstColText}>
                             {rowData?.status === 'ONLINE' && (
                                 <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
@@ -61,7 +64,7 @@ export function MssqlPgsqlDatabaseTableColDefs({
             id: '2',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: string) => cellData || t('databases.general.not-available-table-columns')
         },
         {
             Header: t('databases.databases-table.headers.host-name'),
@@ -69,8 +72,63 @@ export function MssqlPgsqlDatabaseTableColDefs({
             id: '3',
             width: '200px',
             filterOptions: getFilterOptions(databaseTableRows, 'hostName'),
-            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: string) => cellData || t('databases.general.not-available-table-columns')
         },
+        ...(databaseType === DBType.MSSQL
+            ? [
+                  {
+                      Header: t('databases.databases-table.headers.deployment-model'),
+                      accessor: 'serverInstallationMode',
+                      id: '11',
+                      width: '200px',
+                      filterOptions: getFilterOptions(databaseTableRows, 'serverInstallationMode'),
+                      renderCell: (cellData: string) => (
+                          <DsTypography variant="Regular_13" className={styles.colText} title={cellData}>
+                              {cellData || t('databases.general.not-available-table-columns')}
+                          </DsTypography>
+                      )
+                  },
+                  {
+                      Header: t('databases.databases-table.headers.availability-group'),
+                      accessor: 'availabilityGroup',
+                      id: '12',
+                      width: '200px',
+                      filterOptions: getFilterOptions(databaseTableRows, 'availabilityGroup'),
+                      renderCell: (cellData: string, rowData: any) => {
+                          if (cellData) {
+                              return (
+                                  <div className={styles.firstColumnClass}>
+                                      <DsTypography variant="Regular_13" className={styles.colText}>
+                                          {cellData || t('databases.general.not-available-table-columns')}
+                                      </DsTypography>
+                                      {rowData.replicasCount > 0 && rowData?.isPrimary && (
+                                          <div className={styles.firstColText}>
+                                              <DsTypography variant="Regular_13" className={styles.colText}>
+                                                  {`${rowData.replicasCount || 0} ${t(
+                                                      'databases.general.replica'
+                                                  )}(s) | ${t('databases.general.primary')}`}
+                                              </DsTypography>
+                                          </div>
+                                      )}
+                                      {rowData?.replicaRole === REPLICA_ROLES.SECONDARY && (
+                                          <div className={styles.firstColText}>
+                                              <DsTypography variant="Regular_13" className={styles.colText}>
+                                                  {`${t('databases.general.secondary-replica')}`}
+                                              </DsTypography>
+                                          </div>
+                                      )}
+                                  </div>
+                              );
+                          }
+                          return (
+                              <DsTypography variant="Regular_13" className={styles.colText}>
+                                  {cellData || t('databases.general.not-available-table-columns')}
+                              </DsTypography>
+                          );
+                      }
+                  }
+              ]
+            : []),
         {
             Header: t('databases.databases-table.headers.protection-status'),
             accessor: 'isProtected',
@@ -91,7 +149,7 @@ export function MssqlPgsqlDatabaseTableColDefs({
                                 </div>
                             </div>
                         )}
-                        {!protectionData && GENERAL.NOT_AVAILABLE}
+                        {!protectionData && t('databases.general.not-available-table-columns')}
                     </>
                 );
             }
@@ -102,7 +160,7 @@ export function MssqlPgsqlDatabaseTableColDefs({
             id: '5',
             width: '200px',
             filterOptions: getFilterOptions(databaseTableRows, 'type'),
-            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: string) => cellData || t('databases.general.not-available-table-columns')
         },
         {
             Header: t('databases.databases-table.headers.database-size'),
@@ -117,7 +175,8 @@ export function MssqlPgsqlDatabaseTableColDefs({
                 { label: '10 GiB - 5 TiB', value: '10 GiB - 5 TiB' },
                 { label: '5 TiB+', value: '5 TiB+' }
             ],
-            renderCell: (cellData: any, rowData: any) => formatSize(rowData?.size)
+            renderCell: (cellData: any, rowData: any) =>
+                formatSize(rowData?.size) || t('databases.general.not-available-table-columns')
         },
         {
             id: '7',
@@ -149,15 +208,15 @@ export function MssqlPgsqlDatabaseTableColDefs({
                                 <DsTypography
                                     className={styles.fsxNameText}
                                     variant="Regular_13"
-                                    title={cellData || GENERAL.NOT_AVAILABLE}
+                                    title={cellData || t('databases.general.not-available-table-columns')}
                                 >
-                                    {cellData || GENERAL.NOT_AVAILABLE}
+                                    {cellData || t('databases.general.not-available-table-columns')}
                                 </DsTypography>
                             </div>
                         </div>
                     ) : (
                         <DsTypography variant="Regular_13" className={styles.colText}>
-                            {GENERAL.NOT_AVAILABLE}
+                            {t('databases.general.not-available-table-columns')}
                         </DsTypography>
                     )}
                 </>
@@ -170,7 +229,7 @@ export function MssqlPgsqlDatabaseTableColDefs({
             width: '184px',
             isSortable: true,
             filterOptions: getFilterOptions(databaseTableRows, 'credentialName'),
-            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: string) => cellData || t('databases.general.not-available-table-columns')
         },
         {
             Header: t('databases.databases-table.headers.aws-account'),
@@ -179,7 +238,7 @@ export function MssqlPgsqlDatabaseTableColDefs({
             width: '184px',
             filterOptions: getFilterOptions(databaseTableRows, 'accountId'),
             isSortable: true,
-            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: string) => cellData || t('databases.general.not-available-table-columns')
         },
         {
             Header: t('databases.databases-table.headers.region'),
@@ -188,7 +247,7 @@ export function MssqlPgsqlDatabaseTableColDefs({
             width: '184px',
             isSortable: true,
             filterOptions: getFilterOptions(databaseTableRows, 'regionName'),
-            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: string) => cellData || t('databases.general.not-available-table-columns')
         }
     ];
 

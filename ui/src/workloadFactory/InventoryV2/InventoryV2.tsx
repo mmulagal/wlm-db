@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../store/storeHooks';
 import styles from './Inventory.module.scss';
 import InventoryTab from './InventoryTab/InventoryTab';
@@ -16,16 +17,20 @@ import { GENERAL } from '../../utils/appConstants';
 import { categorizeStorageSize, formatSize, formatSizeTwoPrecision } from '../../utils/utilityFunctions';
 import {
     enrichInstancesWithDataGuardFlags,
+    enrichDatabasesWithAOAGFlags,
     getDiscoveredHostDeploymentV2,
     getFileSystemName,
     getFsxList,
     getOptimizationStatus,
     getProtectionText,
     groupDataGuardConfigurations,
+    groupAOAGConfigurations,
     sortDatabaseTableData,
     sortInstanceTableData,
     sortInventoryTableData,
-    uniqueHostRow
+    uniqueHostRow,
+    getDiscoveredHostDeploymentAtHostLevel,
+    getAvailabilityGroupListForAoag
 } from './InventoryUtilsV2';
 import { setFullInventoryTablesRows, setInventoryTablesRows } from '../../store/workloadFactory/inventoryV2Slice';
 import store from '../../store/store';
@@ -36,6 +41,7 @@ import PGSQLBanner from './InventoryBanners/PGSQLBanner/PGSQLBanner';
 import OracleBanner from './InventoryBanners/MSSQLBanner/OracleBanner';
 
 const InventoryV2 = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const {
         inventoryTableData,
@@ -137,6 +143,11 @@ const InventoryV2 = () => {
                 } else {
                     vpcIdAndNameText = `${GENERAL.NOT_AVAILABLE} | ID: ${GENERAL.NOT_AVAILABLE}`;
                 }
+                const serverAllInstallationModeList = getDiscoveredHostDeploymentAtHostLevel(
+                    inventoryTableData[key],
+                    t
+                );
+
                 const rowData = {
                     ...inventoryTableData[key],
                     id: String(hostUniqueId++),
@@ -149,8 +160,8 @@ const InventoryV2 = () => {
                     vpcIdAndNameText,
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                     nameForSorting: inventoryTableData[key]?.name?.toLowerCase(),
-                    serverAllInstallationModeText: inventoryTableData[key]?.serverAllInstallationMode
-                        ? inventoryTableData[key]?.serverAllInstallationMode.join(', ')
+                    serverAllInstallationModeText: serverAllInstallationModeList
+                        ? serverAllInstallationModeList.join(', ')
                         : inventoryTableData[key]?.serverInstallationMode
                 };
                 if (inventoryTableData[key]?.hostType === DBType.ORACLE) {
@@ -252,6 +263,8 @@ const InventoryV2 = () => {
                         } else {
                             logAnalysisLoading = allLogAnalysisLoading;
                         }
+
+                        const availabilityGroupList = getAvailabilityGroupListForAoag(perRow);
                         const perRowData = {
                             ...perRow,
                             logAnalyzer: {
@@ -270,7 +283,7 @@ const InventoryV2 = () => {
                             name: perHost?.name,
                             hostType: perHost?.hostType,
                             fsxList,
-                            serverInstallationMode: getDiscoveredHostDeploymentV2(perRow),
+                            serverInstallationMode: getDiscoveredHostDeploymentV2(perRow, t),
                             loading: inventoryTableData?.[key]?.loading,
                             fullManagedInstanceLoading: inventoryTableData?.[key]?.fullManagedInstanceLoading,
                             subLoading: perRow?.loading,
@@ -306,6 +319,7 @@ const InventoryV2 = () => {
                             resourceId: perHost?.resourceId,
                             ec2InstanceId: perHost?.ec2InstanceId,
                             fileSystemName,
+                            availabilityGroupList,
                             managementStatus,
                             ...(perHost?.hostType === DBType.ORACLE && {
                                 protocol: perHost?.sqlServerInstances?.[0]?.protocol || GENERAL.NOT_AVAILABLE,
@@ -333,6 +347,7 @@ const InventoryV2 = () => {
                         ) {
                             return;
                         }
+                        const serverInstallationMode = getDiscoveredHostDeploymentV2(perRow, t);
                         perRow?.databases?.map((perDatabase: any) => {
                             const protectionText = getProtectionText({
                                 ...perDatabase,
@@ -363,7 +378,8 @@ const InventoryV2 = () => {
                                 sizeRange: categorizeStorageSize(formatSize(perDatabase?.size)),
                                 'Database size': formatSize(perDatabase?.size),
                                 resourceId: perHost?.resourceId,
-                                ec2InstanceId: perHost?.ec2InstanceId
+                                ec2InstanceId: perHost?.ec2InstanceId,
+                                serverInstallationMode
                             };
                             // Only add Oracle PDB databases or all non-Oracle databases
                             if (
@@ -382,12 +398,15 @@ const InventoryV2 = () => {
             // Add isReplica and hasReplicas flags to Oracle instances based on DataGuard configurations
             allInstanceTableRows = enrichInstancesWithDataGuardFlags(allInstanceTableRows, dataguardRows);
 
-            // sort it based on action and whether it is disable or enable
+            // Group AOAG configurations for MSSQL and enrich database rows with AOAG flags
+            const aoagRows = groupAOAGConfigurations(inventoryTableData, allDatabaseTableRows);
+            const enrichedDatabaseRows = enrichDatabasesWithAOAGFlags(allDatabaseTableRows, aoagRows);
+
             dispatch(
                 setFullInventoryTablesRows({
                     hosts: sortInventoryTableData(allHostTableRows),
                     instances: sortInstanceTableData(allInstanceTableRows),
-                    databases: sortDatabaseTableData(allDatabaseTableRows)
+                    databases: sortDatabaseTableData(enrichedDatabaseRows)
                 })
             );
 
@@ -400,7 +419,7 @@ const InventoryV2 = () => {
                         allInstanceTableRows.filter((row: any) => row.hostType === engineType)
                     ),
                     databases: sortDatabaseTableData(
-                        allDatabaseTableRows.filter((row: any) => row.hostType === engineType)
+                        enrichedDatabaseRows.filter((row: any) => row.hostType === engineType)
                     )
                 })
             );

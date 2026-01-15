@@ -31,6 +31,7 @@ import {
     PARTNER_NODE,
     PREPARE_API_ENDPOINT,
     PROTECTION_TEXT_STATUS,
+    REPLICA_ROLES,
     SC_JOB_INTERVAL,
     SQL_DEPLOYMENT_MODE,
     STATUS_CONST,
@@ -647,8 +648,20 @@ export const getPrimaryClusterNode = (
             if (testedNodes.includes(host?.ec2InstanceId || '')) {
                 return;
             }
+            const isCurrentAoagFciOrFci = host?.sqlServerInstances?.some(
+                (perSql: SQLServerInstancesDiscovered) =>
+                    (perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
+                        perSql?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) ||
+                    perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+            );
             // To find partner node in a cluster
             let partnerNode = newDiscoveredHostData.filter((perHost: DiscoverHostInterface) => {
+                const isAoagFciOrFci = perHost?.sqlServerInstances?.some(
+                    (perSql: SQLServerInstancesDiscovered) =>
+                        (perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
+                            perSql?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) ||
+                        perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+                );
                 const isSameCluster = host?.nodesList?.every(
                     (val: string) =>
                         perHost?.ec2InstanceId !== host?.ec2InstanceId &&
@@ -658,7 +671,7 @@ export const getPrimaryClusterNode = (
                         perHost?.regionId === host?.regionId
                 );
                 // checking same vpc or not
-                if (isSameCluster && perHost?.vpc?.id === host?.vpc?.id) {
+                if (isCurrentAoagFciOrFci && isAoagFciOrFci && isSameCluster && perHost?.vpc?.id === host?.vpc?.id) {
                     return perHost;
                 }
             })?.[0];
@@ -2558,7 +2571,12 @@ export const updateSqlServerInstancesForBothNodes = (
                 perRow = perRowNode;
             }
             let allocatedCapacity = 0;
-            if (getDiscoveredHostDeploymentV2(perRow) === GENERAL.AOAG) {
+            const deploymentType =
+                perRow?.sqlServerDeploymentType ||
+                perRow?.oracleServerDeploymentType ||
+                perRow?.pgsqlServerDeploymentType ||
+                '';
+            if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
                 allocatedCapacity =
                     (perRowNode?.storage?.fsxn?.size || 0) +
                     (perRowNode?.storage?.fsxw?.size || 0) +
@@ -3253,21 +3271,92 @@ export const detectFieldsValidation = (entryData: any, engineType: string) => {
     }
 };
 
-export const getDiscoveredHostDeploymentV2 = (host: any) => {
+export const getDiscoveredHostDeploymentAtHostLevel = (row: any, t: TFunction) => {
+    const installationMode: Array<string> = [];
+    if (row?.hostType === DBType.ORACLE && row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
+        // Loop through all database instances to check for DataGuard
+        for (let i = 0; i < row?.sqlServerInstances?.length; i++) {
+            const val = row?.sqlServerInstances[i];
+            let perInstallationMode = '';
+
+            // Check if this instance has DataGuard deployed
+            if (val?.dataguardDetails?.dbUniqueName) {
+                perInstallationMode = DATABASE_DEPLOYMENT_MODE.DATAGUARD;
+            } else {
+                perInstallationMode = DATABASE_DEPLOYMENT_MODE.STANDALONE;
+            }
+
+            if (perInstallationMode && !installationMode.includes(perInstallationMode)) {
+                installationMode.push(perInstallationMode);
+            }
+        }
+        return installationMode;
+    }
+    if (row?.sqlServerInstances && row?.sqlServerInstances?.length > 0) {
+        for (let i = 0; i < row?.sqlServerInstances?.length; i++) {
+            const val = row?.sqlServerInstances[i];
+            let perInstallationMode = '';
+            if (val?.sqlServerDeploymentType) {
+                perInstallationMode = val?.sqlServerDeploymentType;
+            } else if (val?.databaseInstanceTopology?.serverInstallationMode) {
+                perInstallationMode = val?.databaseInstanceTopology?.serverInstallationMode;
+            }
+
+            if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+                perInstallationMode = t('databases.general.failover-cluster-instances');
+            } else if (
+                perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
+                val?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+            ) {
+                perInstallationMode = `(${t('databases.general.aoag')}) ${t(
+                    'databases.general.failover-cluster-instances'
+                )}`;
+            } else if (
+                perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
+                val?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+            ) {
+                perInstallationMode = `(${t('databases.general.aoag')}) ${t('databases.general.standalone')}`;
+            } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+                perInstallationMode = t('databases.general.aoag');
+            } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+                perInstallationMode = t('databases.general.standalone');
+            } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+                perInstallationMode = t('databases.general.high-availability');
+            }
+            if (!installationMode.includes(perInstallationMode)) {
+                installationMode.push(perInstallationMode);
+            }
+        }
+        return installationMode;
+    }
+    return [];
+};
+
+export const getDiscoveredHostDeploymentV2 = (host: any, t: TFunction) => {
     // This will get deployment type in case of unmanaged hosts
     const deploymentType =
         host?.sqlServerDeploymentType || host?.oracleServerDeploymentType || host?.pgsqlServerDeploymentType || '';
     let type = '';
     if (host?.dataguardDetails?.dbUniqueName) {
         type = DATABASE_DEPLOYMENT_MODE.DATAGUARD;
+    } else if (
+        deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
+        host?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+    ) {
+        type = `(${t('databases.general.aoag')}) ${t('databases.general.failover-cluster-instances')}`;
+    } else if (
+        deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
+        host?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+    ) {
+        type = `(${t('databases.general.aoag')}) ${t('databases.general.standalone')}`;
     } else if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
-        type = GENERAL.AOAG;
+        type = t('databases.general.aoag');
     } else if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
-        type = GENERAL.FAILOVER_CLUSTER_INSTANCES;
+        type = t('databases.general.failover-cluster-instances');
     } else if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-        type = GENERAL.STANDALONE;
+        type = t('databases.general.standalone');
     } else if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
-        type = GENERAL.HA;
+        type = t('databases.general.high-availability');
     } else {
         type = deploymentType;
     }
@@ -4791,6 +4880,267 @@ export const getFsxList = (data: any) => {
 };
 
 /**
+ * Groups MSSQL AOAG (Always On Availability Group) databases by cluster and AG name
+ * Groups databases from AOAG configurations by their cluster EC2 instances and availability group name
+ *
+ * @param inventoryTableData - The inventory table data object
+ * @param allDatabaseTableRows - Database table rows to search for AOAG databases
+ * @returns Array of AOAG configurations grouped by cluster and AG name
+ *
+ * Example output:
+ * [
+ *   {
+ *     configKey: "sathishaoag_i-xxx1_i-xxx2_credid_regionid",
+ *     agName: "sathishaoag",
+ *     ec2InstanceCluster: ["i-xxx1", "i-xxx2"],
+ *     primary: { name: "11RetailBanking", replicaRole: "PRIMARY", ... },
+ *     standby: [
+ *       { name: "12MFGSales", replicaRole: "SECONDARY", ... },
+ *       { name: "21RetailBanking", replicaRole: "SECONDARY", ... }
+ *     ],
+ *     credentialId: "...",
+ *     regionId: "..."
+ *   }
+ * ]
+ */
+export const groupAOAGConfigurations = (inventoryTableData: any, allDatabaseTableRows: any[] = []) => {
+    const aoagConfigMap: { [key: string]: any } = {};
+
+    if (!inventoryTableData) {
+        return [];
+    }
+
+    // Iterate through inventory to find AOAG instances
+    Object.keys(inventoryTableData).forEach((hostKey: string) => {
+        const hostData = inventoryTableData[hostKey];
+
+        // Only process MSSQL hosts
+        if (hostData?.hostType !== DBType.MSSQL) {
+            return;
+        }
+
+        // Process each SQL Server instance
+        hostData?.sqlServerInstances?.forEach((instance: any) => {
+            // Only process AOAG deployments
+            if (
+                (instance?.sqlServerDeploymentType !== DATABASE_DEPLOYMENT_MODE.AOAG_CAPS &&
+                    instance?.sqlServerDeploymentType !== DATABASE_DEPLOYMENT_MODE.AOAG) ||
+                !instance?.aoagDetails ||
+                !instance?.aoagClusterNodeDetails
+            ) {
+                return;
+            }
+
+            const { aoagDetails } = instance;
+            const clusterNodes = instance.aoagClusterNodeDetails;
+
+            // Extract EC2 instance IDs from cluster nodes
+            const ec2InstanceIds = clusterNodes
+                .map((node: any) => node?.ec2InstanceId)
+                .filter(Boolean)
+                .sort();
+
+            if (ec2InstanceIds.length === 0) {
+                return;
+            }
+
+            // Process each availability group
+            aoagDetails?.availabilityGroups?.forEach((ag: any) => {
+                const agName = ag?.agName;
+                if (!agName) {
+                    return;
+                }
+
+                // Create a unique key for this AOAG configuration
+                const configKey = `${agName}_${ec2InstanceIds.join('_')}_${hostData.credentialId}_${hostData.regionId}`;
+
+                // Skip if already processed
+                if (aoagConfigMap[configKey]) {
+                    return;
+                }
+
+                // Find all databases belonging to this availability group
+                // Only search hosts whose EC2 instance IDs are part of this AOAG cluster
+                const agDatabases: any[] = [];
+                const seenDatabases = new Set<string>();
+
+                // Search through all instances across MSSQL hosts in the same cluster
+                Object.keys(inventoryTableData).forEach((searchKey: string) => {
+                    const searchHost = inventoryTableData[searchKey];
+
+                    // Only process MSSQL hosts with same credential and region,
+                    // AND whose EC2 instance ID is part of this AOAG cluster
+                    if (
+                        searchHost?.hostType !== DBType.MSSQL ||
+                        searchHost?.credentialId !== hostData.credentialId ||
+                        searchHost?.regionId !== hostData.regionId ||
+                        !ec2InstanceIds.includes(searchHost?.ec2InstanceId)
+                    ) {
+                        return;
+                    }
+
+                    // Search through instances
+                    searchHost?.sqlServerInstances?.forEach((searchInstance: any) => {
+                        // Only process AOAG instances
+                        if (
+                            searchInstance?.sqlServerDeploymentType !== DATABASE_DEPLOYMENT_MODE.AOAG_CAPS &&
+                            searchInstance?.sqlServerDeploymentType !== DATABASE_DEPLOYMENT_MODE.AOAG
+                        ) {
+                            return;
+                        }
+
+                        // Collect databases from this instance that belong to the AG
+                        searchInstance?.databases?.forEach((db: any) => {
+                            if (db?.availabilityGroup === agName) {
+                                // Create unique key to avoid duplicate database entries from the same instance
+                                const uniqueKey = `${searchHost?.ec2InstanceId}_${searchInstance?.databaseInstanceId}_${db?.name}`;
+
+                                // Only add if we haven't seen this exact database on this instance before
+                                if (!seenDatabases.has(uniqueKey)) {
+                                    seenDatabases.add(uniqueKey);
+                                    agDatabases.push({
+                                        ...db,
+                                        hostName: searchHost?.name,
+                                        ec2InstanceId: searchHost?.ec2InstanceId,
+                                        databaseInstanceId: searchInstance?.databaseInstanceId,
+                                        databaseInstanceName: searchInstance?.databaseInstanceName,
+                                        credentialId: searchHost?.credentialId,
+                                        regionId: searchHost?.regionId
+                                    });
+                                }
+                            }
+                        });
+                    });
+                });
+
+                // Find primary and standby databases
+                const primaryDatabase = agDatabases.find((db: any) => db?.replicaRole === REPLICA_ROLES.PRIMARY);
+                const standbyDatabases = agDatabases.filter((db: any) => db?.replicaRole === REPLICA_ROLES.SECONDARY);
+
+                // Store the AOAG configuration
+                aoagConfigMap[configKey] = {
+                    configKey,
+                    agName,
+                    ec2InstanceCluster: ec2InstanceIds,
+                    primary: primaryDatabase || null,
+                    standby: standbyDatabases,
+                    credentialId: hostData.credentialId,
+                    regionId: hostData.regionId
+                };
+            });
+        });
+    });
+
+    return Object.values(aoagConfigMap);
+};
+
+/**
+ * Enriches database rows with AOAG replica flags
+ * Adds isReplica, isPrimary, hasReplicas, replicasCount, and replicasList to each AOAG database
+ *
+ * @param allDatabaseTableRows - The database table rows to enrich
+ * @param aoagRows - Array of AOAG configurations from groupAOAGConfigurations
+ * @returns Enriched database table rows with AOAG flags
+ */
+export const enrichDatabasesWithAOAGFlags = (allDatabaseTableRows: any[], aoagRows: any[]): any[] => {
+    if (!aoagRows || aoagRows.length === 0) {
+        return allDatabaseTableRows;
+    }
+
+    // Create a lookup map for database rows by unique key
+    const dbRowLookup: { [key: string]: any } = {};
+    allDatabaseTableRows.forEach((dbRow: any) => {
+        const key = `${dbRow.ec2InstanceId}_${dbRow.databaseInstanceId}_${dbRow.name}`;
+        dbRowLookup[key] = dbRow;
+    });
+
+    // Create a lookup map for AOAG info
+    const aoagLookup: { [key: string]: any } = {};
+
+    aoagRows.forEach((aoagConfig: any) => {
+        const { agName, primary, standby, ec2InstanceCluster } = aoagConfig;
+
+        // Add primary database info
+        if (primary) {
+            const primaryKey = `${primary.ec2InstanceId}_${primary.databaseInstanceId}_${primary.name}`;
+
+            // Build replicasList with full database row objects
+            const replicasList = standby.map((s: any) => {
+                const standbyKey = `${s.ec2InstanceId}_${s.databaseInstanceId}_${s.name}`;
+                const standbyDbRow = dbRowLookup[standbyKey];
+                // Return the full database row if found, otherwise return minimal info
+                return (
+                    standbyDbRow || {
+                        name: s.name,
+                        hostName: s.hostName,
+                        ec2InstanceId: s.ec2InstanceId,
+                        synchronizationState: s.synchronizationState,
+                        databaseInstanceId: s.databaseInstanceId,
+                        databaseInstanceName: s.databaseInstanceName
+                    }
+                );
+            });
+
+            aoagLookup[primaryKey] = {
+                isPrimary: true,
+                isReplica: false,
+                hasReplicas: standby.length > 0,
+                replicasCount: standby.length,
+                replicasList,
+                agName,
+                ec2InstanceCluster
+            };
+        }
+
+        // Add standby database info
+        standby.forEach((standbyDb: any) => {
+            const standbyKey = `${standbyDb.ec2InstanceId}_${standbyDb.databaseInstanceId}_${standbyDb.name}`;
+
+            // Build primaryDatabase with full database row object
+            let primaryDatabaseFull = null;
+            if (primary) {
+                const primaryKey = `${primary.ec2InstanceId}_${primary.databaseInstanceId}_${primary.name}`;
+                const primaryDbRow = dbRowLookup[primaryKey];
+                primaryDatabaseFull = primaryDbRow || {
+                    name: primary.name,
+                    hostName: primary.hostName,
+                    ec2InstanceId: primary.ec2InstanceId,
+                    synchronizationState: primary.synchronizationState,
+                    databaseInstanceId: primary.databaseInstanceId,
+                    databaseInstanceName: primary.databaseInstanceName
+                };
+            }
+
+            aoagLookup[standbyKey] = {
+                isPrimary: false,
+                isReplica: true,
+                hasReplicas: false,
+                replicasCount: 0,
+                replicasList: [],
+                primaryDatabase: primaryDatabaseFull,
+                agName,
+                ec2InstanceCluster
+            };
+        });
+    });
+
+    // Enrich database rows with AOAG flags
+    return allDatabaseTableRows.map((dbRow: any) => {
+        const lookupKey = `${dbRow.ec2InstanceId}_${dbRow.databaseInstanceId}_${dbRow.name}`;
+        const aoagInfo = aoagLookup[lookupKey];
+
+        if (aoagInfo) {
+            return {
+                ...dbRow,
+                ...aoagInfo
+            };
+        }
+
+        return dbRow;
+    });
+};
+
+/**
  * Determines if a database instance should be disabled for management actions
  * Checks multiple conditions including host type, authentication status, deployment mode,
  * file system type, and instance status to decide if the manage action should be disabled
@@ -4957,4 +5307,97 @@ export const instanceExtraDataUpdate = (row: any, t: TFunction, instanceProtecti
             }
         }
     };
+};
+
+export const determineProtectionStatusMssql = (
+    isDemoMode: boolean | undefined,
+    rowData: any,
+    databaseProtection: any
+) => {
+    // Determine protection status
+    let isProtected = false;
+
+    if (isDemoMode) {
+        // Demo mode: Specific databases should show "Edit Protection" based on mock data
+        const hostName = (rowData?.hostRow?.name || rowData?.hostName || '').toLowerCase();
+        const dbName = (rowData?.name || '').toLowerCase();
+
+        // Check against demo mode criteria from constants
+        isProtected = DEMO_MODE_PROTECTION_CRITERIA.databases.some(
+            criteria => criteria.hostName === hostName && criteria.databaseNames.includes(dbName)
+        );
+    } else {
+        // Normal mode: Use SnapCenter cache first, fall back to status text
+        const hostFqdn = (rowData?.hostRow?.fqdn || rowData?.hostName || '').toLowerCase();
+        const hostShort = hostFqdn.split('.')[0];
+        const instanceShort = (rowData?.databaseInstanceName || '').toLowerCase();
+        const dbName = (rowData?.name || '').toLowerCase();
+        const possibleKeys = [
+            `${hostFqdn}::${instanceShort}::${dbName}`,
+            `${hostShort}::${instanceShort}::${dbName}`,
+            `${hostFqdn}::mssqlserver::${dbName}`,
+            `${hostShort}::mssqlserver::${dbName}`
+        ];
+        const isProtectedCache = possibleKeys.some(k => databaseProtection?.[k]?.protected === true);
+        const statusVal = (rowData?.protectionStatus || rowData?.status || '').toLowerCase();
+        isProtected = isProtectedCache || statusVal === 'protected';
+    }
+    return isProtected;
+};
+
+// Function to check if protect option should be disabled
+export const isProtectDisabled = (rowData: any): boolean =>
+    rowData?.hostType !== GENERAL.MICROSOFT_SQL_SERVER_TYPE ||
+    !rowData?.instanceRow?.fsxId ||
+    !rowData?.hostRow?.nodeIpAddress ||
+    rowData?.status !== 'ONLINE';
+
+export const mssqlDatabaseMenuOptions = (t: TFunction, isProtected: boolean, rowData: any) => {
+    let disableOption = false;
+    let disableMessage = '';
+
+    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+        disableOption = true;
+        disableMessage = GENERAL.COMING_SOON;
+    } else if (rowData?.type === GENERAL.SYSTEM_DATABASE) {
+        disableOption = true;
+        disableMessage = 'Create sandbox option is not available for system database.';
+    }
+    return [
+        {
+            id: 'createSandbox',
+            displayName: t('databases.instance-table.menu-options.create-sandbox'),
+            disabled: disableOption,
+            infoText: disableMessage
+        },
+        {
+            id: isProtected ? 'editProtection' : 'protect',
+            displayName: isProtected
+                ? t('databases.instance-table.menu-options.edit-protection')
+                : t('databases.instance-table.menu-options.protect'),
+            disabled: isProtectDisabled(rowData)
+        },
+        ...(isProtected
+            ? [
+                  {
+                      id: 'viewProtectionDetails',
+                      displayName: t('databases.instance-table.menu-options.view-protection-details'),
+                      disabled: false
+                  }
+              ]
+            : [])
+    ];
+};
+
+/**
+ * Extracts availability group names from aoagDetails
+ * @param perRow - Row data containing aoagDetails
+ * @returns Array of availability group names, or empty array if aoagDetails is not available
+ */
+export const getAvailabilityGroupListForAoag = (perRow: any): string[] => {
+    if (!perRow?.aoagDetails?.availabilityGroups) {
+        return [];
+    }
+
+    return perRow?.aoagDetails?.availabilityGroups.map((ag: any) => ag.agName);
 };

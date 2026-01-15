@@ -2,6 +2,418 @@
     "count": 6,
     "items": [
         {
+            "id": "resource-id-aoag1",
+            "name": "aoag1primary",
+            "nodeStatus": "running",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "Connected",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "MSSQLSERVER",
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": true
+                }
+            ],
+            "nodeTopology": {
+                "windowsClusterName": "aoag1.wlmqaauto.com",
+                "fqdn": "aoag1.wlmqaauto.com",
+                "nodeIpAddress": "10.0.130.169",
+                "awsAccount": "1234",
+                "region": "US East (N.Virginia)",
+                "vpcId": "vpc1",
+                "vpcName": "wlmdb-vpc1",
+                "vpcCidr": "10.20.30.0/24",
+                "keyPairName": "keypair",
+                "ec2Details": [
+                    {
+                        "id": "i-0db20e831d1ce41a1",
+                        "name": "wlmdb1-ec2",
+                        "ebsVolumeId": "ebs-volume1",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    }
+                ],
+                "activeDirectoryDetails": {
+                    "name": "",
+                    "address": ""
+                }
+            },
+            "estimatedUsageCost": {
+                "compute": 700,
+                "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+                "connectivity": 100,
+                "others": 24,
+                "estimationType": "pricing"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "111",
+                    "databaseInstanceName": "MSSQLSERVER",
+                    "status": "Up",
+                    "databaseCount": 2,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databaseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "AOAG",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol": ["SMB"],
+                            "size": 5530543487713.25,
+                            "used": 29686813949952,
+                            "spaceSavings": 9895604649984,
+                            "spaceSavingsPercentage": 33.33
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }
+                    },
+                    "sqlServerDeploymentType": "AOAG",
+                    "baseDeploymentType": "FCI",
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "11RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": "N/A",
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": "N/A"
+                            },
+                            "availabilityGroup": "sathishaoag",
+                            "replicaRole": "PRIMARY",
+                            "synchronizationState": "SYNCHRONIZED",
+                            "isReadableSecondary": false
+                        },
+                        {
+                            "name": "12MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            },
+                            "availabilityGroup": "sathishaoag",
+                            "replicaRole": "SECONDARY",
+                            "synchronizationState": "SYNCHRONIZED",
+                            "isReadableSecondary": true
+                        }
+                    ],
+                    "aoagDetails": {
+                        "serverInfo": {
+                            "serverName": "aoag1primary",
+                            "isHadrEnabled": 1
+                        },
+                        "availabilityGroups": [
+                            {
+                                "agName": "sathishaoag",
+                                "primaryReplica": "aoag1primary",
+                                "readRoutingTargets": "aoag1primary -> aoag1standby",
+                                "replicas": [
+                                    {
+                                        "replica": "aoag1primary",
+                                        "role": "PRIMARY",
+                                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                                        "failoverMode": "MANUAL",
+                                        "syncHealth": "HEALTHY",
+                                        "connectedState": "CONNECTED",
+                                        "isLocalReplica": false,
+                                        "secondaryConnections": "NO",
+                                        "primaryConnections": "ALL",
+                                        "isReadReplica": 0,
+                                        "isRoutableReadReplica": 0
+                                    },
+                                    {
+                                        "replica": "aoag1standby",
+                                        "role": "SECONDARY",
+                                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                                        "failoverMode": "MANUAL",
+                                        "syncHealth": "HEALTHY",
+                                        "connectedState": "CONNECTED",
+                                        "isLocalReplica": true,
+                                        "secondaryConnections": "NO",
+                                        "primaryConnections": "ALL",
+                                        "isReadReplica": 1,
+                                        "isRoutableReadReplica": 1
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "aoagClusterNodeDetails": [
+                        {
+                            "node": "aoag1primary",
+                            "ip": "10.0.141.2",
+                            "ec2InstanceId": "i-0db20e831d1ce41a1",
+                            "ec2InstanceName": "sqlnode-43685"
+                        },
+                        {
+                            "node": "aoag1standby",
+                            "ip": "10.0.142.19",
+                            "ec2InstanceId": "i-0e6a7b54b2b5951a2",
+                            "ec2InstanceName": "sqlnode-24348"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "resource-id-aoag2",
+            "name": "aoag1standby",
+            "nodeStatus": "running",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "Connected",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "MSSQLSERVER",
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": true
+                }
+            ],
+            "nodeTopology": {
+                "windowsClusterName": "aoag2.wlmqaauto.com",
+                "fqdn": "aoag2.wlmqaauto.com",
+                "nodeIpAddress": "10.0.130.168",
+                "awsAccount": "1234",
+                "region": "US East (N.Virginia)",
+                "vpcId": "vpc1",
+                "vpcName": "test1-vpc",
+                "vpcCidr": "10.20.30.0/24",
+                "keyPairName": "keypair",
+                "ec2Details": [
+                    {
+                        "id": "i-0e6a7b54b2b5951a2",
+                        "name": "wlmdb1-ec2",
+                        "ebsVolumeId": "ebs-volume1",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "availability-zone-4",
+                        "subnetId": "subnet-adda86fb"
+                    }
+                ],
+                "activeDirectoryDetails": {
+                    "name": "",
+                    "address": ""
+                }
+            },
+            "estimatedUsageCost": {
+                "compute": 700,
+                "storage": { "fsxn": 0, "fsxw": 200, "ebs": 0 },
+                "connectivity": 100,
+                "others": 24,
+                "estimationType": "pricing"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "121",
+                    "databaseInstanceName": "MSSQLSERVER",
+                    "status": "Up",
+                    "databaseCount": 9,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2019",
+                        "serverEdition": "SQL Server Standard Edition",
+                        "serverVersion": "Microsoft SQL Server 2019",
+                        "activeNode": "SQLNODE1-65579",
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
+                        "activeConnections": 8,
+                        "creationDate": "1716955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": "SQLServer-Prod-01"
+                    },
+                    "databaseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "AOAG",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fsx-id-1",
+                        "fileSystemName": "fsxname",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 0,
+                        "fileSystemThroughputCapacity": 0,
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 8
+                    },
+                    "performance": {
+                        "latency": 10,
+                        "assessment": "High"
+                    },
+                    "storage": {
+                        "fsxn": {
+                            "protocol": [],
+                            "size": 5530543487713.25,
+                            "used": 29686813949952,
+                            "spaceSavings": 9895604649984,
+                            "spaceSavingsPercentage": 33.33
+                        },
+                        "fsxw": {
+                            "size": 0,
+                            "used": 0,
+                            "spaceSavings": 0,
+                            "spaceSavingsPercentage": 0
+                        },
+                        "ebs": {
+                            "size": 0
+                        }
+                    },
+                    "sqlServerDeploymentType": "AOAG",
+                    "baseDeploymentType": "FCI",
+                    "databaseInstanceErrors": "",
+                    "databases": [
+                        {
+                            "name": "21RetailBanking",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 566935683072,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            },
+                            "availabilityGroup": "sathishaoag",
+                            "replicaRole": "SECONDARY",
+                            "synchronizationState": "SYNCHRONIZED",
+                            "isReadableSecondary": true
+                        },
+                        {
+                            "name": "22MFGSales",
+                            "status": "ONLINE",
+                            "type": "User Database",
+                            "size": 17179869184,
+                            "collation": "SQL_Latin1_General_CP1_CI_AS",
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            },
+                            "availabilityGroup": "sathishaoag",
+                            "replicaRole": "SECONDARY",
+                            "synchronizationState": "SYNCHRONIZED",
+                            "isReadableSecondary": true
+                        }
+                    ],
+                    "aoagDetails": {
+                        "serverInfo": {
+                            "serverName": "aoag1standby",
+                            "isHadrEnabled": 1
+                        },
+                        "availabilityGroups": [
+                            {
+                                "agName": "sathishaoag",
+                                "primaryReplica": "aoag1primary",
+                                "readRoutingTargets": "aoag1primary -> aoag1standby",
+                                "replicas": [
+                                    {
+                                        "replica": "aoag1primary",
+                                        "role": "PRIMARY",
+                                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                                        "failoverMode": "MANUAL",
+                                        "syncHealth": "HEALTHY",
+                                        "connectedState": "CONNECTED",
+                                        "isLocalReplica": false,
+                                        "secondaryConnections": "NO",
+                                        "primaryConnections": "ALL",
+                                        "isReadReplica": 0,
+                                        "isRoutableReadReplica": 0
+                                    },
+                                    {
+                                        "replica": "aoag1standby",
+                                        "role": "SECONDARY",
+                                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                                        "failoverMode": "MANUAL",
+                                        "syncHealth": "HEALTHY",
+                                        "connectedState": "CONNECTED",
+                                        "isLocalReplica": true,
+                                        "secondaryConnections": "NO",
+                                        "primaryConnections": "ALL",
+                                        "isReadReplica": 1,
+                                        "isRoutableReadReplica": 1
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "aoagClusterNodeDetails": [
+                        {
+                            "node": "aoag1primary",
+                            "ip": "10.0.141.2",
+                            "ec2InstanceId": "i-0db20e831d1ce41a1",
+                            "ec2InstanceName": "sqlnode-43685"
+                        },
+                        {
+                            "node": "aoag1standby",
+                            "ip": "10.0.142.19",
+                            "ec2InstanceId": "i-0e6a7b54b2b5951a2",
+                            "ec2InstanceName": "sqlnode-24348"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "id": "resource-id-1",
             "name": "Database hostname 1",
             "nodeStatus": "running",

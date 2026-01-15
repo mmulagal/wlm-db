@@ -178,7 +178,13 @@ export const DATABASE_DEPLOYMENT_MODE = {
     FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
     STANDALONE: 'Standalone',
     AOAG: 'Always on availability group',
-    DATAGUARD: 'Data Guard'
+    DATAGUARD: 'Data Guard',
+    AOAG_CAPS: 'AOAG'
+};
+
+export const REPLICA_ROLES = {
+    PRIMARY: 'PRIMARY',
+    SECONDARY: 'SECONDARY'
 };
 
 export const TENANCY = {

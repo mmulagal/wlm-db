@@ -604,6 +604,7 @@ export interface SQLServerInstancesDiscovered {
     sqlServerNodes?: Array<string>;
     nodeIps?: Array<string>;
     sqlServerDeploymentType?: string;
+    baseDeploymentType?: string;
     databaseCount?: number;
     sqlServerAuthentication?: boolean;
     storage?: Array<DiscoveredStorageObj>;

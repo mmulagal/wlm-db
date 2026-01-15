@@ -8,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 import {
     ACTION_CTA,
     DBType,
-    ERROR_ANALYZER_STATUS,
     INVENTORY_STATUS,
     INVENTORY_TABLE_STATUS,
     PROTECTION_COLUMN_TEXT_STATUS,
@@ -17,10 +16,9 @@ import {
 } from '../../../../utils/consts';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
-import { formatDateWithTime, getFilterOptions } from '../../../../utils/utilityFunctions';
+import { getFilterOptions } from '../../../../utils/utilityFunctions';
 import { instanceNameHyperLink, optimizeAction, protectionTooltipText } from './InstanceTableColumnsHelper';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
-import { ReactComponent as NotActiveNotificationIcon } from '../../../../assets/NotActiveNotificationIcon.svg';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
@@ -201,10 +199,87 @@ export function getMssqlInstanceTableColumns({
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'serverInstallationMode'),
             renderCell: (cellData: string) => (
-                <DsTypography variant="Regular_13" className={styles.colText}>
+                <DsTypography variant="Regular_13" className={styles.colText} title={cellData}>
                     {cellData || t('databases.general.not-available-table-columns')}
                 </DsTypography>
             )
+        },
+        {
+            Header: t('databases.instance-table.headers.availability-group'),
+            accessor: 'availabilityGroupList',
+            id: '14',
+            width: '213px',
+            filterOptions: getFilterOptions(updatedTableData, 'availabilityGroupList'),
+            renderCell: (cellData: string, rowData: any) => {
+                let loading = rowData?.loading || rowData?.subLoading;
+                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+                    loading = true;
+                }
+
+                const availabilityGroupList = rowData?.availabilityGroupList || [];
+                const hasMultipleGroups = availabilityGroupList.length > 1;
+                const hasSingleGroup = availabilityGroupList.length === 1;
+
+                return (
+                    <>
+                        {!loading && hasMultipleGroups && (
+                            <div className={styles.fsxNameContainer}>
+                                <div className={styles.ssmOffline}>
+                                    <Popover
+                                        popoverClass=""
+                                        children={
+                                            <div
+                                                className={`${styles.tooltipContainer} ${styles.tooltipContainerMulti} ${styles.fsxNamePopOver}`}
+                                            >
+                                                <DsTypography variant="Semibold_13" className={styles.colText}>
+                                                    {t('databases.general.availability-groups')}:
+                                                </DsTypography>
+                                                {availabilityGroupList.map((group: any, index: number) => (
+                                                    <div key={index}>
+                                                        <DsTypography variant="Regular_13">
+                                                            {group ||
+                                                                t('databases.general.not-available-table-columns')}
+                                                        </DsTypography>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        }
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive
+                                        isAppendedToBody={false}
+                                        container={<TooltipIcon />}
+                                    />
+                                </div>
+                                <div className={styles.fsxName}>
+                                    <DsTypography
+                                        className={styles.fsxNameText}
+                                        variant="Regular_13"
+                                        title={`${availabilityGroupList.length} ${t(
+                                            'databases.general.availability-groups'
+                                        )}s`}
+                                    >
+                                        {`${availabilityGroupList.length} ${t(
+                                            'databases.general.availability-groups'
+                                        )}s`}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        )}
+                        {!loading && hasSingleGroup && (
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {availabilityGroupList[0]}
+                            </DsTypography>
+                        )}
+                        {loading && <DsFlashingDotsLoader />}
+                        {!loading && availabilityGroupList.length === 0 && (
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {t('databases.general.not-available-table-columns')}
+                            </DsTypography>
+                        )}
+                    </>
+                );
+            }
         },
         {
             Header: t('databases.instance-table.headers.protection-status'),
