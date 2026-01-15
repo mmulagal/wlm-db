@@ -202,6 +202,20 @@ export const handleRedirectWithParams = (isWorkloadFactory: boolean, baseUrl: st
     }
 };
 
+export const getDomainURL = () => {
+    const stageURL = 'https://staging.console.workloads.netapp.com/';
+    const prodURL = 'https://console.workloads.netapp.com';
+
+    let baseUrl = stageURL;
+    if (import.meta.env.VITE_APP_ENVIRONMENT === PRODUCTION) {
+        baseUrl = prodURL;
+    } else {
+        baseUrl = stageURL;
+    }
+
+    return baseUrl;
+};
+
 export const bxpRedirect = async (
     isWorkloadFactory: boolean,
     rowData?: any,

@@ -2,15 +2,38 @@ import { useAppSelector } from './store/storeHooks';
 import './App.css';
 import Home from './Home';
 import { BlueXPListeners, ThemeProvider, postBlueXPMessage } from '@netapp/design-system';
+import { FSxpertWidget } from 'fsxpert-widget';
 import ErrorPage from './common/ErrorPage/ErrorPage';
 import { useInitialize } from './utils/appConfig';
 import ComponentLoader from './common/ComponentLoader/ComponentLoader';
 import { useEffect, useRef } from 'react';
 import { DsProvider } from '@tlveng/wlm-ds';
+import { getDomainURL } from './utils/utilityFunctions';
 
 function App() {
-    const { loading, accountId, accessToken } = useAppSelector(state => state.auth);
+    const { loading, accountId, accessToken, isDemoMode, isWorkloadFactory, userMetadata } = useAppSelector(
+        state => state.auth
+    );
     const readyNotifiedRef = useRef(false);
+    // @ts-ignore
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+
+    // Remove 'Bearer ' prefix from accessToken if present
+    const cleanAccessToken = accessToken?.startsWith('Bearer ') ? accessToken.substring(7) : accessToken;
+
+    const fsxpertConfig = {
+        accessToken: cleanAccessToken,
+        accountId: accountId,
+        userMetadata: userMetadata,
+        features: {
+            active: { 'Platform.BlueXP/DarkTheme': isDarkTheme }
+        },
+        isDemoMode: isDemoMode /* optional */,
+
+        extraData: {
+            domain: getDomainURL()
+        }
+    };
 
     useInitialize();
 
@@ -23,9 +46,6 @@ function App() {
         }
     }, [accessToken]);
 
-    // @ts-ignore
-    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-
     return (
         <DsProvider theme={isDarkTheme ? 'dark' : 'light'}>
             <ThemeProvider isIframe theme={isDarkTheme ? 'dark' : 'light'}>
@@ -34,7 +54,15 @@ function App() {
                         <ComponentLoader style={{ margin: '0 auto' }} />
                     </div>
                 )}
-                {!loading && (accountId ? <Home /> : <ErrorPage message="Account Id required" />)}
+                {!loading &&
+                    (accountId ? (
+                        <>
+                            {!isWorkloadFactory && <FSxpertWidget config={fsxpertConfig} />}
+                            <Home />
+                        </>
+                    ) : (
+                        <ErrorPage message="Account Id required" />
+                    ))}
             </ThemeProvider>
         </DsProvider>
     );

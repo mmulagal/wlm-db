@@ -42,6 +42,7 @@
         "uuid": "^13.0.0",
         "vite": "^7.1.9",
         "vite-tsconfig-paths": "^6.0.3",
+        "fsxpert-widget": "https://github.com/TLVeng/fsxpert-widget.git#v1.0.4",
         "web-vitals": "^5.1.0"
     },
     "scripts": {

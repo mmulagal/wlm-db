@@ -46,7 +46,13 @@ export default defineConfig({
     ],
     server: {
         open: true,
-        port: 4300
+        port: 4300,
+        proxy: {
+            '^/wlmfsxpert-widget/.*': {
+                target: 'https://staging.console.workloads.netapp.com',
+                changeOrigin: true
+            }
+        }
     },
     build: {
         outDir: 'build',
