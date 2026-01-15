@@ -1954,7 +1954,7 @@ export const getConfigurationTechnicalName = (displayName: string, type: string)
 
         // dnfs configurations
         'dNFS consistent IP resolution': 'dnfs-consistent-ip-resolution',
-        'dNFS enablement': 'dnfs-enablement',
+        'dNFS enablement': 'dnfs-enabled',
         'dNFS configuration file': 'dnfs-configuration-file',
         'dNFS no shared cache': 'dnfs-no-shared-cache'
     };

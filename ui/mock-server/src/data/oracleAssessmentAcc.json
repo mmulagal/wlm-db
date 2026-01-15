@@ -883,8 +883,8 @@
                                         "resourceType": "EC2 Instance"
                                     },
                                     {
-                                        "parameter": "dnfs-enablement",
-                                        "name": "dnfs-enablement",
+                                        "parameter": "dnfs-enabled",
+                                        "name": "dnfs-enabled",
                                         "status": "optimized",
                                         "recommended": "",
                                         "severity": "Critical",
@@ -2014,8 +2014,8 @@
                                         "resourceType": "EC2 Instance"
                                     },
                                     {
-                                        "parameter": "dnfs-enablement",
-                                        "name": "dnfs-enablement",
+                                        "parameter": "dnfs-enabled",
+                                        "name": "dnfs-enabled",
                                         "status": "not-optimized",
                                         "recommended": "",
                                         "severity": "Critical",

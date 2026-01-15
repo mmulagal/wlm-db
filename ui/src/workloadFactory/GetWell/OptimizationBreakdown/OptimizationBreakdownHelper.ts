@@ -89,7 +89,7 @@ export const getOracleDisplayNameToTechnicalKeyMapping = () => ({
     [ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE]: 'afd-logical-block-size',
     [ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE]: 'asmlib-logical-block-size',
     [ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION]: 'dnfs-consistent-ip-resolution',
-    [ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT]: 'dnfs-enablement',
+    [ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT]: 'dnfs-enabled',
     [ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE]: 'dnfs-configuration-file',
     [ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE]: 'dnfs-no-shared-cache'
 });
