@@ -4758,6 +4758,12 @@ export const groupDataGuardConfigurations = (inventoryTableData: any, allInstanc
 
         // Process each SQL Server instance (Oracle instance)
         sqlServerInstances.forEach((instance: any) => {
+            if (
+                isAuthRequiredForInstance(instance, DBType.ORACLE) &&
+                instance?.statusColText !== INVENTORY_STATUS.MANAGED
+            ) {
+                return;
+            }
             const { dataguardDetails, databaseInstanceName } = instance;
 
             // Only process DataGuard-enabled instances
@@ -4769,7 +4775,7 @@ export const groupDataGuardConfigurations = (inventoryTableData: any, allInstanc
                 return;
             }
 
-            const { dbName, isPrimary, associatedHosts } = dataguardDetails;
+            const { dbName, isPrimaryNode, associatedHosts } = dataguardDetails;
 
             // Skip if essential data is missing
             if (!dbName || !databaseInstanceName) {
@@ -4836,8 +4842,8 @@ export const groupDataGuardConfigurations = (inventoryTableData: any, allInstanc
                 resourceId: host.resourceId
             };
 
-            // Classify as primary or standby based on isPrimary flag
-            if (isPrimary) {
+            // Classify as primary or standby based on isPrimaryNode flag
+            if (isPrimaryNode) {
                 // Only set primary if not already set (should only be one primary per config)
                 if (!dataGuardGroups[configKey].primary) {
                     dataGuardGroups[configKey].primary = instanceData;

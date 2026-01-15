@@ -1,5 +1,5 @@
 import { DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -101,8 +101,6 @@ import {
     handleInstanceMenuSelection,
     inventoryBannerFilterUpdates
 } from './InstanceTableHelper';
-import { ReactComponent as ArrowIcon } from '../../../../assets/row_arrow.svg';
-import DgReplicaTable from './ReplicaTable/DgReplicaTable';
 
 const InstancesTable = () => {
     const { t } = useTranslation();
@@ -290,80 +288,6 @@ const InstancesTable = () => {
         pgsqlFullHostDataLoading,
         multiDataLoading
     ]);
-
-    // This might be used when we have scroll sync between parent and expanded child table
-    // const [scrollPos, setScrollPos] = useState(0);
-
-    // useEffect(() => {
-    //     const root = inventoryTableRef.current;
-    //     if (!root) return;
-
-    //     let outerScrollEl = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
-    //     let innerScrollEl = root.querySelector<HTMLElement>(
-    //         "[class*='expanded-row-section'] [class*='horizontal-scroll']"
-    //     );
-
-    //     const onOuterScroll = () => {
-    //         if (!innerScrollEl || !innerScrollEl.isConnected) {
-    //             innerScrollEl = root.querySelector<HTMLElement>(
-    //                 "[class*='expanded-row-section'] [class*='horizontal-scroll']"
-    //             );
-    //         }
-    //         if (outerScrollEl && innerScrollEl) {
-    //             innerScrollEl.scrollLeft = outerScrollEl.scrollLeft;
-    //             setScrollPos(outerScrollEl.scrollLeft);
-    //         }
-    //     };
-
-    //     const attachListeners = () => {
-    //         requestAnimationFrame(() => {
-    //             const latestOuter = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
-    //             const latestInner = root.querySelector<HTMLElement>(
-    //                 "[class*='expanded-row-section'] [class*='horizontal-scroll']"
-    //             );
-
-    //             if (outerScrollEl && latestOuter && outerScrollEl !== latestOuter) {
-    //                 outerScrollEl.removeEventListener('scroll', onOuterScroll);
-    //             }
-    //             outerScrollEl = latestOuter || outerScrollEl;
-    //             innerScrollEl = latestInner || innerScrollEl;
-
-    //             if (outerScrollEl) {
-    //                 outerScrollEl.addEventListener('scroll', onOuterScroll, { passive: true });
-
-    //                 if (innerScrollEl) {
-    //                     innerScrollEl.scrollLeft = outerScrollEl.scrollLeft;
-    //                 }
-    //             }
-    //         });
-    //     };
-
-    //     attachListeners();
-
-    //     const observer = new MutationObserver(() => {
-    //         const maybeOuter = root.querySelector<HTMLElement>("[class*='horizontal-scroll']");
-    //         const maybeInner = root.querySelector<HTMLElement>(
-    //             "[class*='expanded-row-section'] [class*='horizontal-scroll']"
-    //         );
-
-    //         if (maybeOuter && maybeOuter !== outerScrollEl) {
-    //             if (outerScrollEl) outerScrollEl.removeEventListener('scroll', onOuterScroll);
-    //             outerScrollEl = maybeOuter;
-    //             outerScrollEl.addEventListener('scroll', onOuterScroll, { passive: true });
-    //         }
-
-    //         if (maybeInner && maybeInner !== innerScrollEl) {
-    //             innerScrollEl = maybeInner;
-    //             onOuterScroll();
-    //         }
-    //     });
-    //     observer.observe(root, { childList: true, subtree: true });
-
-    //     return () => {
-    //         if (outerScrollEl) outerScrollEl.removeEventListener('scroll', onOuterScroll);
-    //         observer.disconnect();
-    //     };
-    // }, []);
 
     const getColumnFilterMap = () => {
         switch (selectedHostType) {
@@ -734,34 +658,6 @@ const InstancesTable = () => {
         );
     };
 
-    /**
-     * Expands or collapses a table row to show/hide the DataGuard replica sub-table
-     * First collapses all other expanded rows, then toggles the expansion state of the clicked row
-     *
-     * @param updateRowState - Function to update the row's state (expand/collapse)
-     * @param rowData - The row data containing the unique row id
-     * @param currentRowState - The current state of the row including isExpanded flag
-     * @param rowState - The state object containing all rows' states
-     */
-    const expandTableRow = (
-        updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
-        rowData: { id: any },
-        currentRowState: { isExpanded: any },
-        rowState: any
-    ) => {
-        collapseAllRows(updateRowState, rowState);
-        updateRowState(rowData.id)({
-            isExpanded: !currentRowState?.isExpanded
-        });
-    };
-
-    const shouldShowDataGuardArrow = (rowData: any) => {
-        if (rowData?.hasReplicas) {
-            return true;
-        }
-        return false;
-    };
-
     const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any, extraStep?: boolean) => {
         const state = store.getState();
         const dialogKeyValue = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
@@ -829,16 +725,7 @@ const InstancesTable = () => {
     };
 
     const updatedTableData = useMemo(
-        () =>
-            instanceTableRows
-                ?.filter((row: any) => {
-                    // Exclude Oracle DataGuard standby instances from the table
-                    if (selectedHostType === DBType.ORACLE && row?.isReplica) {
-                        return false;
-                    }
-                    return true;
-                })
-                ?.map((row: any) => instanceExtraDataUpdate(row, t, instanceProtection, isDemoMode)),
+        () => instanceTableRows?.map((row: any) => instanceExtraDataUpdate(row, t, instanceProtection, isDemoMode)),
         [instanceTableRows, instanceProtection, isDemoMode]
     );
 
@@ -856,41 +743,6 @@ const InstancesTable = () => {
 
     const getTableColDefsPerEngineType = () => getInstanceTableColumns({ t, updatedTableData, selectedHostType });
 
-    /**
-     * Renders the expanded row content showing DataGuard replica sub-table
-     *
-     * This memoized component is used by the Table component to render expanded row content
-     * for Oracle DataGuard primary instances. When a primary row is expanded, this component
-     * renders a DgReplicaTable showing all standby replicas associated with that primary.
-     *
-     * Memoization ensures the component only re-renders when dependencies change:
-     * - inventoryTableRef: For calculating table width to match parent
-     * - handleProtection: Handler for initiating protection workflows
-     * - handleDialog: Handler for showing deregister confirmation dialog
-     * - optimizeAction: Handler for navigating to well-architected analysis
-     * - handleEditProtection: Handler for editing existing protection policies
-     *
-     * @param rowData - The primary database instance row data containing replicasList
-     * @returns DgReplicaTable component displaying replica instances
-     */
-    const ExpandedRow = useCallback(
-        ({ rowData }: any) => (
-            <DgReplicaTable
-                width={inventoryTableRef.current ? inventoryTableRef.current.offsetWidth : 0}
-                rowData={rowData}
-                handleProtection={handleProtection}
-                handleDialog={handleDialog}
-                optimizeAction={optimizeAction}
-                handleEditProtection={handleEditProtection}
-            />
-        ),
-        [inventoryTableRef, handleProtection, handleDialog, optimizeAction, handleEditProtection]
-    );
-    const tableComponentProps = {
-        ExpandedRow,
-        lazyLoadingText: 'Loading'
-    };
-
     const tableProps = useTable({
         isSorting: false,
         columns: getTableColDefsPerEngineType(),
@@ -906,7 +758,7 @@ const InstancesTable = () => {
             )
         ),
         manageColumnsProps: {
-            width: selectedHostType === DBType.ORACLE ? '90px' : '62px',
+            width: '62px',
             renderCell: (cellData: any, rowData: any, { updateRowState, rowsState }: any) => {
                 const menu = [];
                 let isBedRockAvailable = true;
@@ -1036,10 +888,7 @@ const InstancesTable = () => {
 
                 return (
                     <div className={styles.lastContainer}>
-                        <div
-                            className={styles.jobMenuPopover}
-                            style={{ marginLeft: selectedHostType === DBType.ORACLE ? '-24px' : '-12px' }}
-                        >
+                        <div className={styles.jobMenuPopover} style={{ marginLeft: '-12px' }}>
                             {disableMenu() ? (
                                 <TooltipComponent placement="bottom" title={disableMsg} width={width} height={height}>
                                     <div className={styles.menuPointerDisabled}>
@@ -1080,18 +929,6 @@ const InstancesTable = () => {
                                 />
                             )}
                         </div>
-
-                        {shouldShowDataGuardArrow(rowData) && (
-                            <div className={styles.arrow}>
-                                <ArrowIcon
-                                    className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
-                                    onClick={(e: any) => {
-                                        e.stopPropagation();
-                                        expandTableRow(updateRowState, rowData, currentRowState, rowsState);
-                                    }}
-                                />
-                            </div>
-                        )}
                     </div>
                 );
             }
@@ -1163,7 +1000,6 @@ const InstancesTable = () => {
                     tableProps={tableProps}
                     pluralTitle={title}
                     singularTitle={title}
-                    tableRowsLength={instanceTableRows?.length}
                     exportToCsvOptions={{ fileName: exportToCsvFileName }}
                     subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     actionsRight={
@@ -1192,7 +1028,6 @@ const InstancesTable = () => {
                     }
                 />
                 <Table
-                    {...tableComponentProps}
                     // @ts-ignore
                     tableProps={tableProps}
                     isDoubleRow

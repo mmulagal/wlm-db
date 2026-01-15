@@ -367,7 +367,7 @@
                             "sidName": ""
                             }
                         ],
-                        "isPrimary": true
+                        "isPrimaryNode": true
                     }
                 },
                 {
@@ -481,7 +481,7 @@
                             "sidName": ""
                             }
                         ],
-                        "isPrimary": true
+                        "isPrimaryNode": true
                     }
                 }
             ]
@@ -581,7 +581,7 @@
                             "sidName": "pdbnas2s"
                             }
                         ],
-                        "isPrimary": false
+                        "isPrimaryNode": false
                     }
                 },
                 {
@@ -643,40 +643,40 @@
                         }
                     },
                     "isDataGuardDeployed": true,
-                    "dataguardDetails": {
-                    "dbUniqueName": "pdbnas2s",
-                    "dbName": "dg2",
-                    "associatedHosts": [
-                        {
-                        "serviceName": "pdbnas1",
-                        "hostIp": "127.0.0.1",
-                        "ec2InstanceId": "i-0123456789abcdef0",
-                        "listenerPort": "1532",
-                        "sidName": ""
-                        },
-                        {
-                        "serviceName": "pdbnas1s",
-                        "hostIp": "127.0.0.2",
-                        "ec2InstanceId": "i-0123456789abcdef1",
-                        "listenerPort": "1532",
-                        "sidName": "pdbnas1s"
-                        },
-                        {
-                        "serviceName": "pdbnas2",
-                        "hostIp": "127.0.0.1",
-                        "ec2InstanceId": "i-0123456789abcdef0",
-                        "listenerPort": "1532",
-                        "sidName": ""
-                        },
-                        {
-                        "serviceName": "pdbnas2s",
-                        "hostIp": "127.0.0.2",
-                        "ec2InstanceId": "i-0123456789abcdef1",
-                        "listenerPort": "1532",
-                        "sidName": "pdbnas2s"
-                        }
-                    ],
-                    "isPrimary": false
+                        "dataguardDetails": {
+                        "dbUniqueName": "pdbnas2s",
+                        "dbName": "dg2",
+                        "associatedHosts": [
+                            {
+                            "serviceName": "pdbnas1",
+                            "hostIp": "127.0.0.1",
+                            "ec2InstanceId": "i-0123456789abcdef0",
+                            "listenerPort": "1532",
+                            "sidName": ""
+                            },
+                            {
+                            "serviceName": "pdbnas1s",
+                            "hostIp": "127.0.0.2",
+                            "ec2InstanceId": "i-0123456789abcdef1",
+                            "listenerPort": "1532",
+                            "sidName": "pdbnas1s"
+                            },
+                            {
+                            "serviceName": "pdbnas2",
+                            "hostIp": "127.0.0.1",
+                            "ec2InstanceId": "i-0123456789abcdef0",
+                            "listenerPort": "1532",
+                            "sidName": ""
+                            },
+                            {
+                            "serviceName": "pdbnas2s",
+                            "hostIp": "127.0.0.2",
+                            "ec2InstanceId": "i-0123456789abcdef1",
+                            "listenerPort": "1532",
+                            "sidName": "pdbnas2s"
+                            }
+                        ],
+                        "isPrimaryNode": false
                     }
                 }
             ]

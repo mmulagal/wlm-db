@@ -666,7 +666,7 @@
                             "sidName": "oracle-standby"
                             }
                         ],
-                        "isPrimary": true,
+                        "isPrimaryNode": true,
                         "status": {
                             "instanceSyncStatus": "SYNCING"
                         }
@@ -1179,7 +1179,7 @@
                             "sidName": "oracle-standby"
                             }
                         ],
-                        "isPrimary": false,
+                        "isPrimaryNode": false,
                         "status": {
                             "instanceSyncStatus": "APPLYING",
                             "trasnportLag": "DD HH:MI:SS",

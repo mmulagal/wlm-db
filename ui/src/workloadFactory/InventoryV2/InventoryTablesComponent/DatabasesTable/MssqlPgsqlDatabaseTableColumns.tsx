@@ -104,9 +104,11 @@ export function MssqlPgsqlDatabaseTableColDefs({
                                       {rowData.replicasCount > 0 && rowData?.isPrimary && (
                                           <div className={styles.firstColText}>
                                               <DsTypography variant="Regular_13" className={styles.colText}>
-                                                  {`${rowData.replicasCount || 0} ${t(
-                                                      'databases.general.replica'
-                                                  )}(s) | ${t('databases.general.primary')}`}
+                                                  {`${t('databases.general.primary')} | ${rowData.replicasCount || 0} ${
+                                                      rowData.replicasCount <= 1
+                                                          ? t('databases.general.replica')
+                                                          : t('databases.general.replicas')
+                                                  }`}
                                               </DsTypography>
                                           </div>
                                       )}

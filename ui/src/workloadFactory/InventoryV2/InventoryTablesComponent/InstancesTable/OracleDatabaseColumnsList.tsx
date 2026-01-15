@@ -153,12 +153,28 @@ export function getOracleDatabaseColumnsList({
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {cellData || t('databases.general.not-available-table-columns')}
                             </DsTypography>
-                            {rowData.replicasCount > 0 && (
+
+                            <div className={styles.firstColText}>
+                                {rowData.replicasCount > 0 && rowData?.dataguardDetails?.isPrimaryNode && (
+                                    <DsTypography variant="Regular_13" className={styles.colText}>
+                                        {`${t('databases.general.primary')} | ${rowData.replicasCount || 0} ${
+                                            rowData.replicasCount <= 1
+                                                ? t('databases.general.replica')
+                                                : t('databases.general.replicas')
+                                        }`}
+                                    </DsTypography>
+                                )}
+                                {!rowData.hasReplicas && rowData?.dataguardDetails?.isPrimaryNode && (
+                                    <DsTypography variant="Regular_13" className={styles.colText}>
+                                        {`${t('databases.general.primary')}`}
+                                    </DsTypography>
+                                )}
+                            </div>
+
+                            {!rowData?.dataguardDetails?.isPrimaryNode && (
                                 <div className={styles.firstColText}>
                                     <DsTypography variant="Regular_13" className={styles.colText}>
-                                        {`${t('databases.general.primary')} | ${rowData.replicasCount || 0} ${t(
-                                            'databases.general.replica'
-                                        )}(s)`}
+                                        {`${t('databases.general.standby')}`}
                                     </DsTypography>
                                 </div>
                             )}
