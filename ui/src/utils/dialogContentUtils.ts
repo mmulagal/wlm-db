@@ -149,7 +149,7 @@ const ontapConfigTextSet = (
             return 'Multipath I/O Status = Enabled';
         case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_POLICY:
             return 'Multipath I/O Policy = Round Robin';
-        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
+        case 'Multipath I/O Sessions':
             return 'Multipath I/O Sessions = 5';
         case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_TIMEOUT:
             return 'Multipath I/O Timeout = 60 seconds';
