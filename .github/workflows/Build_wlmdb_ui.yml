@@ -13,6 +13,7 @@ on:
 env:
   ENVIRONMENT: staging
   REGION: us-east-1
+  TOKEN_UI: ${{ secrets.BXP_UI_TOKEN }}
   TOKEN: ${{ secrets.UI_PKGS }}
 
 
@@ -59,6 +60,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.13.0
+      - name: Configure Git credentials
+        run: |
+           git config --global url."https://${{ env.TOKEN_UI }}@github.com/".insteadOf "https://github.com/"
+        env:
+            NPM_TOKEN: ${{ env.TOKEN_UI }}
 
       - name: Configure npm for GitHub Packages
         run: |
