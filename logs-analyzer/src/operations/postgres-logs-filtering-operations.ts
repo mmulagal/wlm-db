@@ -46,6 +46,7 @@ async function readPostgresLogsFile(
                     const [, errorLogTimestamp] = match;
                     if (!errorLogTimestamp) {
                         // Skip this line if timestamp is missing or invalid
+                        /* eslint-disable no-continue */
                         continue;
                     }
                     const logTimestamp = parseUtcTimestamp(errorLogTimestamp);

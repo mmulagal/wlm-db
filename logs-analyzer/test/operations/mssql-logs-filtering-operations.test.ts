@@ -5,7 +5,7 @@ import {
 
 describe('readMsSqlLogsFile', () => {
     it('should process valid MSSQL log files and return unique error logs', async () => {
-        const logsFilePath = 'Logs/mssql/ERRORLOG';
+        const logsFilePath = 'SampleLogs/mssql/ERRORLOG';
 
         const response = await readMsSqlLogsFile(logsFilePath);
 
@@ -13,7 +13,7 @@ describe('readMsSqlLogsFile', () => {
     });
 
     it('should get unique error logs from the file and their respective count', async () => {
-        const logsFilePath = 'Logs/mssql/ERRORLOG';
+        const logsFilePath = 'SampleLogs/mssql/ERRORLOG';
 
         const logs = await readMsSqlLogsFile(logsFilePath);
 

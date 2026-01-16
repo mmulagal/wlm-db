@@ -26,7 +26,7 @@ import {
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import { DatabaseInstanceRecord, PaginatedDatabaseInstancesResponse } from '../../../src/lib/database/db-types';
 import { ResourceDetails } from '../../../src/utils/common-types';
-import { prisma } from '../../../src/utils/prisma-utils';
+import { initializeDatabase, prisma } from '../../../src/utils/prisma-utils';
 
 // Helper function to extract items from listDatabaseInstances response
 function getInstancesArray(
@@ -42,6 +42,9 @@ function getInstancesArray(
 }
 
 describe('List deployments', () => {
+    beforeAll(async () => {
+        await initializeDatabase();
+    });
     it('should return a list of deployments', async () => {
         await createDeployment(ACCOUNT_ID, {
             deploymentId:
@@ -181,6 +184,9 @@ describe('List deployments', () => {
 });
 
 describe('Database instance operations', () => {
+    beforeAll(async () => {
+        await initializeDatabase();
+    });
     it('Create/update/list/delete database instance record', async () => {
         const databaseResource = await createResource(ACCOUNT_ID, {
             resourceId: 'i-rwithDBInstance',
@@ -261,6 +267,9 @@ describe('Database instance operations', () => {
 });
 
 describe('Tracked EC2 operations', () => {
+    beforeAll(async () => {
+        await initializeDatabase();
+    });
     it('should create tracked EC2 records', async () => {
         const trackedEc2Records = [
             {
@@ -333,6 +342,9 @@ describe('Tracked EC2 operations', () => {
     });
 });
 describe('Database Host Configuration Operations', () => {
+    beforeAll(async () => {
+        await initializeDatabase();
+    });
     it('Should update database host configurations successfully', async () => {
         // Create a resource with the provided details.
         await createResource(ACCOUNT_ID, {
@@ -397,6 +409,7 @@ describe('Enhanced Database Functions - New Features Tests', () => {
     let testDatabaseInstance3Id: string;
 
     beforeAll(async () => {
+        await initializeDatabase();
         // Create test resources with different properties for comprehensive testing
         testResource1 = await createResource(ACCOUNT_ID, {
             resourceId: 'new-features-resource-1',
@@ -529,6 +542,9 @@ describe('Enhanced Database Functions - New Features Tests', () => {
     });
 
     describe('listResources with includeDatabaseInstances', () => {
+        beforeAll(async () => {
+            await initializeDatabase();
+        });
         it('should include database instances when includeDatabaseInstances is true', async () => {
             // Create fresh test data for this test to avoid Prismock data persistence issues
             const testResource = await createResource(ACCOUNT_ID, {
@@ -708,6 +724,9 @@ describe('Enhanced Database Functions - New Features Tests', () => {
     });
 
     describe('listResources with selectKeys', () => {
+        beforeAll(async () => {
+            await initializeDatabase();
+        });
         it('should return only specified fields when selectKeys is provided', async () => {
             // Create fresh test data
             const testResource = await createResource(ACCOUNT_ID, {
@@ -831,6 +850,9 @@ describe('Enhanced Database Functions - New Features Tests', () => {
     });
 
     describe('listDatabaseInstances with selectKeys', () => {
+        beforeAll(async () => {
+            await initializeDatabase();
+        });
         it('should return only specified fields when selectKeys is provided', async () => {
             // Create fresh test data
             const testResource = await createResource(ACCOUNT_ID, {
@@ -1001,6 +1023,9 @@ describe('Enhanced Database Functions - New Features Tests', () => {
     });
 
     describe('listDatabaseInstances with additionalResourceFields', () => {
+        beforeAll(async () => {
+            await initializeDatabase();
+        });
         it('should include additional resource fields when specified', async () => {
             // Create fresh test data
             const testResource = await createResource(ACCOUNT_ID, {
@@ -1214,6 +1239,9 @@ describe('Enhanced Database Functions - New Features Tests', () => {
 });
 
 describe('weeklyDemoDatabaseCleanup', () => {
+    beforeAll(async () => {
+        await initializeDatabase();
+    });
     it('should clean all demo tables (insert one entry per table, cleanup, verify empty)', async () => {
         const accountId = ACCOUNT_ID;
         const credentialsId = DEFAULT_AWS_CREDENTIALS_ID;

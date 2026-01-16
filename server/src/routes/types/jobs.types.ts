@@ -1,4 +1,4 @@
-import { Static, Type } from '@fastify/type-provider-typebox';
+import { Evaluate, Static, Type } from '@fastify/type-provider-typebox';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import {
     CredentialsIdRegionQueryParams,
@@ -7,13 +7,15 @@ import {
     AccountIdParams
 } from './generic.types';
 
-const JobSummaryQueryString = Type.Intersect([
-    CredentialsIdRegionQueryParams,
-    Type.Object({
-        startTime: Type.Optional(Type.Number()),
-        endTime: Type.Optional(Type.Number())
-    })
-]);
+const JobSummaryQueryString = Evaluate(
+    Type.Intersect([
+        CredentialsIdRegionQueryParams,
+        Type.Object({
+            startTime: Type.Optional(Type.Number()),
+            endTime: Type.Optional(Type.Number())
+        })
+    ])
+);
 
 type JobSummaryQueryType = Static<typeof JobSummaryQueryString>;
 
@@ -37,23 +39,25 @@ const JobSummaryByTimeResponse = Type.Array(Type.Optional(JobSummaryByTimeRecord
 
 type JobSummaryByTimeRecordType = Static<typeof JobSummaryByTimeRecord>;
 
-const ListJobsQueryString = Type.Intersect([
-    CredentialsIdRegionQueryParams,
-    Type.Object({
-        parentJobId: Type.Optional(Type.String()),
-        sort: Type.Optional(Type.String()),
-        sortOrder: Type.Optional(Type.String()),
-        initiator: Type.Optional(Type.String()),
-        type: Type.Optional(Type.String()),
-        status: Type.Optional(Type.String()),
-        startTime: Type.Optional(Type.Number()),
-        endTime: Type.Optional(Type.Number()),
-        limit: Type.Optional(Type.Number()),
-        nextToken: Type.Optional(Type.String()),
-        includeSubJobs: Type.Optional(Type.Boolean()),
-        resourceName: Type.Optional(Type.String())
-    })
-]);
+const ListJobsQueryString = Evaluate(
+    Type.Intersect([
+        CredentialsIdRegionQueryParams,
+        Type.Object({
+            parentJobId: Type.Optional(Type.String()),
+            sort: Type.Optional(Type.String()),
+            sortOrder: Type.Optional(Type.String()),
+            initiator: Type.Optional(Type.String()),
+            type: Type.Optional(Type.String()),
+            status: Type.Optional(Type.String()),
+            startTime: Type.Optional(Type.Number()),
+            endTime: Type.Optional(Type.Number()),
+            limit: Type.Optional(Type.Number()),
+            nextToken: Type.Optional(Type.String()),
+            includeSubJobs: Type.Optional(Type.Boolean()),
+            resourceName: Type.Optional(Type.String())
+        })
+    ])
+);
 
 type ListJobsQueryType = Static<typeof ListJobsQueryString>;
 
@@ -75,7 +79,7 @@ const JobObject = Type.Object({
 
 const ListJobsResponse = Type.Object({
     count: Type.Number(),
-    items: Type.Array(Type.Intersect([CredentialsIdRegionParams, JobObject])),
+    items: Type.Array(Evaluate(Type.Intersect([CredentialsIdRegionParams, JobObject]))),
     nextToken: Type.Optional(Type.String())
 });
 
@@ -93,7 +97,7 @@ const JobDetailsResponse = Type.Object({
     startTime: Type.Number(),
     endTime: Type.Optional(Type.Number()),
     error: Type.Optional(Type.String()),
-    subJobs: Type.Optional(Type.Array(Type.Intersect([CredentialsIdRegionParams, JobObject]))),
+    subJobs: Type.Optional(Type.Array(Evaluate(Type.Intersect([CredentialsIdRegionParams, JobObject])))),
     metadata: Type.Optional(Type.Any())
 });
 
@@ -144,15 +148,16 @@ const CreateJobObject = Type.Object({
 });
 type JobRecordType = Static<typeof CreateJobObject>;
 
-const CreateJobRequestBody = Type.Intersect([
-    CredentialsIdRegionQueryParams,
-    Type.Object({ items: Type.Array(CreateJobObject) })
-]);
+const CreateJobRequestBody = Evaluate(
+    Type.Intersect([CredentialsIdRegionQueryParams, Type.Object({ items: Type.Array(CreateJobObject) })])
+);
 const CreateJobResponse = Type.Object({
     count: Type.Number()
 });
 const JobsParams = Type.Object({ accountId: Type.String({ minLength: 1 }), jobId: Type.String({ minLength: 1 }) });
-const JobsParamsWriter = Type.Intersect([AccountIdParams, Type.Object({ jobId: Type.String({ minLength: 1 }) })]);
+const JobsParamsWriter = Evaluate(
+    Type.Intersect([AccountIdParams, Type.Object({ jobId: Type.String({ minLength: 1 }) })])
+);
 
 export {
     ListJobsQueryString,

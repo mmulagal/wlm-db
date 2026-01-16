@@ -3,9 +3,14 @@ import {
     deleteAllButLatestRecordPerConfigDataType
 } from '../../../src/lib/database/database-instance-config';
 import { paginateListInstanceConfigData } from '../../../src/operations/database/instance-config-operations';
+import { initializeDatabase } from '../../../src/utils/prisma-utils';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID } from '../../utils/consts';
 
 describe('database instance config operations', () => {
+    beforeAll(async () => {
+        await initializeDatabase();
+    });
+
     it('should remove all but latest database instance config records', async () => {
         const DatabaseInstanceConfigDataRecords = [
             {

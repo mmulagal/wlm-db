@@ -69,8 +69,8 @@ const BulkOnPremTcoExploreSavingsRequestBody = Type.Object({
     regionCode: Type.String(),
     resources: Type.Array(BulkResources, {
         description: 'List of resources with their SQL instance details',
-        minimum: 1,
-        maximum: 5
+        minItems: 1,
+        maxItems: 5
     }),
     snapshotInfo: Type.Optional(StorageSavingsRequestBody)
 });

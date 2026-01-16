@@ -620,7 +620,6 @@ function containsErrorKeywords(messageText: string): boolean {
 /**
  * Normalizes a timestamp string to UTC by appending 'Z' if not already present.
  * This ensures JavaScript's Date constructor interprets the timestamp as UTC rather than local time.
- * 
  * @param timestamp - Timestamp string in format "YYYY-MM-DD HH:MM:SS.ms" or ISO 8601
  * @returns Unix epoch timestamp in milliseconds
  */
