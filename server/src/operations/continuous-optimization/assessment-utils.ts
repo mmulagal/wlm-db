@@ -244,8 +244,18 @@ export {
     validateAssessment,
     UnOptimizedDiskGroups,
     checkForMissingOptimizePermissions,
-    activeSqlNodeDetails
+    activeSqlNodeDetails,
+    normalizeNfsVersion
 };
+
+//  e.g., "NFSv3" -> 3, "NFSv4" -> 4, "3" -> 3, "4.0" -> 4, "4.1" -> 4.1
+function normalizeNfsVersion(version: string | null): number | null {
+    if (!version) {
+        return null;
+    }
+    const cleaned = version.toLowerCase().replace(/nfsv?/i, '').trim();
+    return parseFloat(cleaned);
+}
 
 // Re-export type for external usage without creating a runtime export
 export type { JobMetadata };

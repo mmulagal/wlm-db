@@ -483,7 +483,9 @@ const ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'nfsv4-domain-name',
         'nfs-caching-options',
         'dnfs-enabled',
-        'dnfs-consistent-ip-resolution'
+        'dnfs-consistent-ip-resolution',
+        'dnfs-configuration-file',
+        'dnfs-no-shared-cache'
     ]
 };
 

@@ -44,6 +44,7 @@ import { OS_ASSESSMENT } from './ssm-scripts/os-iscsi-assessment-scripts';
 import { NFS_OS_ASSESSMENT } from './ssm-scripts/os-nfs-assessment-scripts';
 import { ORACLE_STORAGE_SIZING_ASSESSMENT, VOLUME_LUN_CONFIGURATION } from './ssm-scripts/storage-assessment-scripts';
 import { getHeadroomDrift } from '../headroom-assessment';
+import { normalizeNfsVersion } from '../assessment-utils';
 
 const logger = getLogger();
 
@@ -849,6 +850,190 @@ function getNfsOSConfigDrift(
                 );
                 break;
             }
+            case 'dnfs-configuration-file': {
+                if (!isDnfsEnabled) {
+                    logger.info('Skipping dNFS configuration file check - dNFS is not enabled', {
+                        ec2InstanceId,
+                        databaseInstanceName
+                    });
+                    break;
+                }
+
+                // Check server, path, export, and nfs version matching for volumes mounted for the database
+                const oranfstabData = os?.['dnfs-oranfstab'];
+                const nfsMountData = os?.['nfs-mount-options'];
+
+                if (oranfstabData?.error || nfsMountData?.error) {
+                    const errors = [
+                        oranfstabData?.error && `oranfstab: ${oranfstabData.error}`,
+                        nfsMountData?.error && `NFS mount options: ${nfsMountData.error}`
+                    ].filter(Boolean);
+                    osDrift.push({
+                        name: config.name,
+                        errorMessage: `Failed to retrieve configuration: ${errors.join('; ')}`
+                    });
+                    break;
+                }
+
+                const oranfstabServers = oranfstabData?.oranfstab_servers || [];
+                const mountOptions = nfsMountData?.['nfs-mount-options'] || [];
+                const volumeNames = volumes?.data?.map(vol => vol.name) || [];
+
+                if (oranfstabServers.length === 0 || mountOptions.length === 0) {
+                    logger.info('Skipping dNFS configuration file check - no oranfstab or NFS mount data', {
+                        ec2InstanceId,
+                        databaseInstanceName
+                    });
+                    break;
+                }
+
+                // Filter exports to only those used by this database (matching volume names)
+                const oranfstabExportsFlattened = oranfstabServers.flatMap(entry =>
+                    (entry.exports || [])
+                        .filter(exportEntry => volumeNames.some(volName => exportEntry.export?.includes(volName)))
+                        .map(exportEntry => ({
+                            server: entry.server,
+                            paths: entry.paths || [],
+                            nfsVersion: entry.nfs_version,
+                            options: entry.options || {},
+                            exportPath: exportEntry.export,
+                            mountPath: exportEntry.mount
+                        }))
+                );
+
+                // Compare each oranfstab export with fstab mounts
+                oranfstabExportsFlattened.forEach(oranfstabExport => {
+                    const {
+                        server: oranfstabServer,
+                        paths: oranfstabPaths,
+                        nfsVersion: oranfstabNfsVersion,
+                        options: oranfstabOptions,
+                        exportPath,
+                        mountPath
+                    } = oranfstabExport;
+
+                    const matchingMount = mountOptions.find(
+                        mount => mount?.['mount-point'] === mountPath || mount?.['remote-path'] === exportPath
+                    );
+                    if (!matchingMount) {
+                        return;
+                    }
+
+                    const fstabServer = matchingMount.server || '';
+                    const fstabRemotePath = matchingMount?.['remote-path'] || '';
+                    const fstabVersion = matchingMount?.options?.vers?.toString() || '';
+                    const mismatches: { field: string; fstab: string; oranfstab: string }[] = [];
+
+                    const addMismatch = (field: string, fstab: string, oranfstab: string, condition: boolean) => {
+                        if (fstab && oranfstab && condition) {
+                            mismatches.push({ field, fstab, oranfstab });
+                        }
+                    };
+
+                    // Server: oranfstab.paths contains IP addresses while server is a logical name
+                    const serverMatches = fstabServer === oranfstabServer || oranfstabPaths.includes(fstabServer);
+                    addMismatch('server', fstabServer, oranfstabServer, !serverMatches);
+                    addMismatch('export', fstabRemotePath, exportPath, fstabRemotePath !== exportPath);
+
+                    // NFS version comparison with normalization
+                    const normalizedFstabVersion = normalizeNfsVersion(fstabVersion);
+                    const normalizedOranfstabVersion = normalizeNfsVersion(oranfstabNfsVersion);
+                    addMismatch(
+                        'nfs_version:',
+                        `NFSv${fstabVersion}`,
+                        oranfstabNfsVersion || '',
+                        normalizedFstabVersion !== normalizedOranfstabVersion
+                    );
+
+                    // Compare rsize and wsize
+                    ['rsize', 'wsize'].forEach(option => {
+                        const fstabValue = matchingMount?.options?.[option]?.toString() || '';
+                        const oranfstabValue = oranfstabOptions?.[option]?.toString() || '';
+                        addMismatch(option, fstabValue, oranfstabValue, fstabValue !== oranfstabValue);
+                    });
+
+                    if (mismatches.length > 0) {
+                        violationDetails.push(
+                            createViolationDetail(
+                                mountPath || exportPath,
+                                'NFS configuration',
+                                mismatches.map(m => `${m.field}: ${m.oranfstab}`).join('; '),
+                                mismatches.map(m => `${m.field}: ${m.fstab}`).join('; ')
+                            )
+                        );
+                    }
+                });
+
+                osDrift.push(
+                    createAssessment(config, 1, violationDetails.length > 0 ? [ec2InstanceId] : [], violationDetails)
+                );
+                break;
+            }
+            case 'dnfs-no-shared-cache': {
+                // nosharecache mount option is required when:
+                // (a) dNFS is enabled AND
+                // (b) a source volume (same remote path) is mounted more than once
+                // (c) nested mounts are considered separate mounts
+                const nfsMountData = os?.['nfs-mount-options'];
+
+                if (!isDnfsEnabled) {
+                    logger.info('Skipping nosharecache check - dNFS is not enabled', {
+                        ec2InstanceId,
+                        databaseInstanceName
+                    });
+                    break;
+                }
+
+                if (nfsMountData?.error) {
+                    osDrift.push({
+                        name: config.name,
+                        errorMessage: `Failed to retrieve NFS mount options: ${nfsMountData.error}`
+                    });
+                    break;
+                }
+
+                const mountOptions = nfsMountData?.['nfs-mount-options'] || [];
+
+                // Group mounts by source volume
+                const mountsByVolume = mountOptions.reduce((acc, mount) => {
+                    const remotePath = mount?.['remote-path'] || '';
+                    if (remotePath) {
+                        (acc[remotePath] ||= []).push(mount);
+                    }
+                    return acc;
+                }, {} as Record<string, typeof mountOptions>);
+
+                // Check each volume - only require nosharecache if same volume is mounted multiple times
+                Object.entries(mountsByVolume).forEach(([remotePath, mounts]) => {
+                    const hasMultipleMounts = mounts.length > 1;
+
+                    if (hasMultipleMounts) {
+                        // nosharecache is required for all mounts of this volume
+                        mounts.forEach(mount => {
+                            const mountPoint = mount?.['mount-point'] || '';
+                            const options = mount?.options || {};
+                            const hasNosharecache = options.nosharecache === true || options.nosharecache === 'true';
+
+                            if (!hasNosharecache) {
+                                violationDetails.push(
+                                    createViolationDetail(
+                                        `${remotePath}:${mountPoint}`,
+                                        'NFS mount option',
+                                        'nosharecache=not set',
+                                        'nosharecache=enabled'
+                                    )
+                                );
+                            }
+                        });
+                    }
+                });
+
+                osDrift.push(
+                    createAssessment(config, 1, violationDetails.length > 0 ? [ec2InstanceId] : [], violationDetails)
+                );
+                break;
+            }
+
             default:
                 break;
         }

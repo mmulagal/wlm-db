@@ -77,15 +77,10 @@ def get_nfs_mount_options():
                 server, remote_path, mount_point, fs_type, options = match.groups()
                 mount_data.append((mount_point, server, remote_path, fs_type, options))
         
+        # Sort by mount point path length (shorter paths first)
         mount_data.sort(key=lambda x: len(x[0]))
-        processed_mounts = []
+        
         for mount_point, server, remote_path, fs_type, options in mount_data:
-            # Check if this is a subdirectory of any already processed mount
-            is_subdirectory = any(mount_point.startswith(existing + '/') for existing, _, _, _, _ in processed_mounts)
-
-            if is_subdirectory:
-                continue
-
             # Parse options into dictionary
             option_dict = {}
             for opt in options.split(','):
@@ -117,8 +112,6 @@ def get_nfs_mount_options():
                 'filesystem-type': fs_type,
                 'options': option_dict
             })
-            
-            processed_mounts.append((mount_point, server, remote_path, fs_type, options))
         
         return {
             "nfs-mount-options": mount_info,
@@ -524,13 +517,11 @@ ${RESOLVE_HOSTNAMES}
 def get_dns_resolution():
     log('Collecting DNS resolution data from oranfstab')
     
-    oranfstab_path = '/etc/oranfstab'
-    
     try:
         hostnames = set()
         
         # Collect hostnames from oranfstab
-        oranfstab_result = parse_oranfstab(oranfstab_path)
+        oranfstab_result = parse_oranfstab()
         oranfstab_servers = oranfstab_result.get('oranfstab_servers', [])
         for s in oranfstab_servers:
             # Add 'server' field if it looks like a hostname or IP
