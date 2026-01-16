@@ -7,8 +7,8 @@
     "main": "index.ts",
     "scripts": {
         "build": "rimraf dist && tsc && copyfiles -u 0 \"src/**/*.json\" dist",
-        "start": "node --loader ./dist/src/utils/loader.js dist/src/index.js",
-        "dev": "tsx --watch src/index.ts --exclude test/**/*",
+        "start": "cross-env NODE_ENV=local_dev node --loader ./dist/src/utils/loader.js dist/src/index.js",
+        "dev": "cross-env NODE_ENV=local_dev tsx --watch src/index.ts --exclude test/**/*",
         "simulator": "cross-env NODE_ENV=simulator tsx --watch test/simulator/index.ts",
         "format": "../node_modules/prettier/bin-prettier.js --write \"{src,test}/**/*.ts\"",
         "format:check": "../node_modules/prettier/bin-prettier.js --check \"{src,test}/**/*.ts\"",

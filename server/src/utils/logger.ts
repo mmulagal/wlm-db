@@ -79,12 +79,19 @@ function initialize() {
         }`
     );
     const path =
-        isEmpty(process.env.ENV_WLMDB_BUILD_MODE) || process.env.NODE_ENV === 'simulator'
+        isEmpty(process.env.ENV_WLMDB_BUILD_MODE) || process.env.NODE_ENV === 'demo'
             ? config.get<string>('log4js.local-config-file')
             : config.get<string>('log4js.config-file');
     const configuration: Configuration = JSON.parse(readFileSync(path).toString());
+    const isLocal = process.env.NODE_ENV === 'local_dev' || isEmpty(process.env.NODE_ENV);
+    const logDir = isLocal ? 'logs' : '//log';
+
     Object.values(configuration.appenders).forEach(appender => {
         if (appender.type === 'console' || appender.type === 'file') {
+            if (appender.type === 'file' && appender.filename) {
+                appender.filename = appender.filename.replace('//log', logDir);
+            }
+
             if (isPatternLayout(appender.layout)) {
                 const { layout: patternLayout } = appender;
 
