@@ -1196,7 +1196,7 @@ async function discoverDemoDataOracle(
                                     sidName: ''
                                 }
                             ],
-                            isPrimary: true
+                            isPrimaryNode: true
                         }
                     }
                 ]
@@ -1293,7 +1293,7 @@ async function discoverDemoDataOracle(
                                     sidName: 'dataguard-secondary'
                                 }
                             ],
-                            isPrimary: false
+                            isPrimaryNode: false
                         }
                     }
                 ]

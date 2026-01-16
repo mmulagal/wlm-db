@@ -29,13 +29,20 @@ const getDataguardDeploymentDetails = `
             export ORACLE_SID="$1"
             oracle_home=$(${getOracleHomePath('$ORACLE_SID')})
             export ORACLE_HOME="$oracle_home"
-            spFilePath="\${ORACLE_HOME}/dbs/spfile\${ORACLE_SID}.ora"
-            if [[ ! -f "$spFilePath" ]]; then
+            spFilePath="$ORACLE_HOME/dbs/spfile$ORACLE_SID.ora"
+            
+            # For Oracle 21c, spfile will be located in ORACLE_BASE/dbs.
+            if [ ! -f "$spFilePath" ]; then
+                spFilePath="$ORACLE_BASE/dbs/spfile$ORACLE_SID.ora"
+            fi
+            if [ ! -f "$spFilePath" ]; then
                 exit 1
             fi
             falClient="${parseSpfileProperties('fal_client', '$spFilePath')}"
             falServer="${parseSpfileProperties('fal_server', '$spFilePath')}"
-            if [[ -n "$falClient" ]] && [[ -n "$falServer" ]] && [ "$falServer" != "$falClient" ]; then
+            
+            # In some cases, the fal_client may not be set, but fal_server is set for dataguard configuration to fetch logs from target destination.
+            if [[ ( -n "$falClient" && -n "$falServer" && "$falServer" != "$falClient" ) || ( -z "$falClient" && -n "$falServer" ) ]]; then
                 exit 0;
             fi
             exit 1;
@@ -55,7 +62,14 @@ EOF
             oracle_home=$(${getOracleHomePath('$ORACLE_SID')})
             export ORACLE_HOME="$oracle_home"
             proc_pattern="ora_(mrp|pr)[0-9]+_\${ORACLE_SID}\\b"
-            spFilePath="\${ORACLE_HOME}/dbs/spfile\${ORACLE_SID}.ora"
+            spFilePath="$ORACLE_HOME/dbs/spfile$ORACLE_SID.ora"
+            # For Oracle 21c, spfile will be located in ORACLE_BASE/dbs.
+            if [ ! -f "$spFilePath" ]; then
+                spFilePath="$ORACLE_BASE/dbs/spfile$ORACLE_SID.ora"
+            fi
+            if [[ ! -f "$spFilePath" ]]; then
+                exit 1
+            fi
             if [[ -f "$spFilePath" ]]; then
                 dbUniqueName="${parseSpfileProperties('db_unique_name', '$spFilePath')}"
                 dbName="${parseSpfileProperties('db_name', '$spFilePath')}"
