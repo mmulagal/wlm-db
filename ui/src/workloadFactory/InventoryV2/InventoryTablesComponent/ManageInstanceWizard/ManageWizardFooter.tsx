@@ -944,7 +944,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const bulkGoForward = (currentStepIndexVal: number) => {
         // Detect if this is the new bulk register flow (from InstancesTable selection)
         // In new flow, step 0 is AuthenticateBulkInstance; in old flow, step 0 is SelectInstancesStep
-        const isNewBulkFlow = registerHostType && currentStep === 'authenticate-instance';
+        const isNewBulkFlow = registerHostType === DBType.MSSQL && currentStep === 'authenticate-instance';
 
         if (currentStepIndexVal === 0) {
             if (isNewBulkFlow) {
