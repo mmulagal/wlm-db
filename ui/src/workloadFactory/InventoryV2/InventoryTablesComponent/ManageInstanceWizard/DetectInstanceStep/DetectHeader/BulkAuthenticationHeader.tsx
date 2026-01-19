@@ -1,4 +1,4 @@
-import { DsButton, DsTypography, useDialog } from '@netapp/design-system';
+import { DsTypography, useDialog } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import styles from './DetectHeader.module.scss';
@@ -8,37 +8,63 @@ import { useAppSelector } from '../../../../../../store/storeHooks';
 import { BulkDetectedInstance } from '../../../../../../utils/types/registerTypes';
 import { getInstanceHeaderContent } from '../DetectInstanceHelper';
 import { DBType } from '../../../../../../utils/consts';
+import { isInstanceAuthenticated } from '../../SelectInstancesStep/AuthenticateBulkUtils';
 
 export interface CountSummary {
-    total?: number;
-    success?: number;
-    readyForManagement?: number;
+    total: number;
+    success: number;
+    readyForManagement: number;
 }
 
 const BulkAuthenticationHeader = ({ engineType }: { engineType: string }) => {
     const { t } = useTranslation();
     const { setDialog, closeDialog } = useDialog();
-    const { bulkDetectedInstanceList, registerHostType } = useAppSelector(state => state.inventoryV2);
-    const [countSummary, setCountSummary] = useState<CountSummary>({});
+    const { bulkDetectedInstanceList, registerHostType, selectedMultiDetectInstances, instanceAuthStatus } =
+        useAppSelector(state => state.inventoryV2);
     const { selectedLabel, icon } = getInstanceHeaderContent(engineType, t);
+    const [countSummary, setCountSummary] = useState<CountSummary>({
+        total: 0,
+        success: 0,
+        readyForManagement: 0
+    });
 
     useEffect(() => {
-        const newCountSummary = {
+        const newCountSummary: CountSummary = {
             total: 0,
             success: 0,
             readyForManagement: 0
         };
-        bulkDetectedInstanceList.forEach((item: BulkDetectedInstance) => {
+
+        // Use bulkDetectedInstanceList if available
+        // Otherwise fall back to selectedMultiDetectInstances with instanceAuthStatus check
+        const dataSource =
+            bulkDetectedInstanceList && bulkDetectedInstanceList.length > 0
+                ? bulkDetectedInstanceList
+                : selectedMultiDetectInstances;
+
+        dataSource?.forEach((item: BulkDetectedInstance) => {
             newCountSummary.total += 1;
-            if (item?.authorized) {
+
+            // Get instance data for auth check
+            const instanceData = item?.data || item;
+            const instanceId = instanceData?.databaseInstanceName || item?.databaseInstanceName || '';
+
+            // Check if instance is authenticated using the utility function
+            // This checks BOTH pre-authentication status AND wizard auth status
+            const isAuthenticated = isInstanceAuthenticated(instanceId, instanceData, instanceAuthStatus, engineType);
+
+            if (isAuthenticated) {
                 newCountSummary.success += 1;
-                if (item?.readyCount > 0) {
+
+                // Only count as ready for management if readyCount is available and > 0
+                if (item?.readyCount !== undefined && item?.readyCount > 0) {
                     newCountSummary.readyForManagement += 1;
                 }
             }
         });
+
         setCountSummary(newCountSummary);
-    }, [bulkDetectedInstanceList]);
+    }, [bulkDetectedInstanceList, selectedMultiDetectInstances, instanceAuthStatus, engineType]);
 
     const handleManageDialog = () => {
         setDialog(
@@ -81,7 +107,7 @@ const BulkAuthenticationHeader = ({ engineType }: { engineType: string }) => {
                 <div className={`${styles.column}`}>
                     <div className={styles['long-text']}>
                         <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
-                            {countSummary.success}
+                            {countSummary.readyForManagement}
                         </DsTypography>
                         <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
                             Out of
@@ -98,12 +124,6 @@ const BulkAuthenticationHeader = ({ engineType }: { engineType: string }) => {
                     >
                         {t('databases.register-flow.ready-for-management')}
                     </DsTypography>
-                </div>
-
-                <div className={styles.buttonBlock}>
-                    <DsButton type="text" onClick={handleManageDialog}>
-                        {t('databases.register-flow.view-details')}
-                    </DsButton>
                 </div>
             </div>
         </div>

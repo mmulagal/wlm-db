@@ -147,8 +147,11 @@
             "all-selected-instances": "All selected instances",
             "authentication-failed": "Authentication failed",
             "authenticated": "Authenticated",
-            "instances-authenticated": "Instances authenticated",
-            "all-instances-count": "All {{count}} instances",
+            "instances-authenticated": "The selected instances are already authenticated.",
+            "prepare-all-ready": "Complete (All instances)",
+            "prepare-none-ready": "Incomplete (All instances)",
+            "prepare-partial-ready": "{{readyCount}} out of {{totalCount}} completed",
+            "all-instances-count": "{{count}} instances",
             "smb-protocol-disabled": "Action not supported on SQL server using SMB protocol",
             "no-bulk-cta": "Bulk manage is not supported for PostgreSQL.",
             "already-managed-instance": "The instance is already managed by Workload Factory.",
@@ -162,6 +165,10 @@
             "note": "Note",
             "prerequisite-check": "Prerequisite check",
             "install-note": "Installing missing PowerShell module 7 requires a system reboot at your convenience. Select 'Register' to authorize Workload Factory to automatically install PowerShell 7.",
+            "instances-require-netapp-modules": "{{count}} {{instanceText}} the installation of missing NetApp PowerShell modules",
+            "instances-require-powershell7": "{{count}} {{instanceText}} the installation of missing PowerShell module 7",
+            "powershell7-reboot-notice": "Please be aware that installing the missing PowerShell module 7 will necessitate a system reboot at your convenience.",
+            "powershell7-authorization-notice": "Select 'Register' to authorize Workload Factory to automatically install PowerShell 7.",
             "view-policy": "View policy",
             "create-database-copies-sandbox": "Create sandbox (database clone)",
             "error-investigation": "Error analysis",
@@ -206,7 +213,7 @@
             "fsx-partial-auth-fail-message": "{{failedCount}} FSx for ONTAP resources did not pass the authentication process.",
             "fsx-authentication-failed": "Authentication failed",
             "fsx-authenticated": "Authenticated",
-            "bulk-auth-partial-success": "{{successCount}} instances authenticated successfully, {{failedCount}} failed. Please update credentials for failed instances.",
+            "bulk-auth-partial-success": "{{failedCount}} instances failed the authentication process. You can either enter new credentials and try again, or remove the instance by clicking the \"x\" icon, and then click \"next\".",
             "bulk-auth-all-failed": "Authentication failed for all instances. Please check your credentials and try again.",
             "bulk-auth-in-progress": "Note: The authentication process may take up to 1 minute.",
             "instance-authenticated": "The selected instance has already been authenticated.",
@@ -233,6 +240,8 @@
             "additional-compute-optimizer-permissions": "Additional Compute Optimizer permissions",
             "readiness": "Readiness",
             "view-prerequisites-list": "View prerequisites list",
+            "setup-details": "Setup details",
+            "missing-prerequisite": "Missing prerequisite",
             "detect-instance-table-col": {
                 "database-name": "Database name",
                 "instance-name": "Instance name",
@@ -243,7 +252,8 @@
                 "review-well-architected": "Review well-architected ",
                 "fix-well-architected": "Fix well-architected ",
                 "create-database": "Create database",
-                "create-sandbox": "Create sandbox"
+                "create-sandbox": "Create sandbox",
+                "error-analysis": "Error analysis"
             },
             "instance-header": {
                 "instance-name": "Instance name",
@@ -1425,7 +1435,7 @@
                 "region": "Region",
                 "availability-group": "Availability group",
                 "role": "Role",
-                "deployment-model":"Deployment model"
+                "deployment-model": "Deployment model"
             },
             "oracle": {
                 "headers": {

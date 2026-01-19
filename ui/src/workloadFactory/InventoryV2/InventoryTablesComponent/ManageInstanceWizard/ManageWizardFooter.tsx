@@ -35,7 +35,6 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     createDetectHostPayloadBulk,
-    getBulkDetectChecks,
     handleMultiInstanceManage,
     handleSingleInstanceManage,
     updateDetectBulkResponse
@@ -45,7 +44,7 @@ import {
     createBulkAuthPayload,
     validateBulkInstanceCredentials
 } from './SelectInstancesStep/AuthenticateBulkUtils';
-import { areAllFsxAuthenticated } from './AuthenticateFSxStep/AuthenticateFsxUtils';
+import { areAllFsxAuthenticated, getFsxNeedingAuthFromBulk } from './AuthenticateFSxStep/AuthenticateFsxUtils';
 import {
     ACTION_TYPE,
     DBType,
@@ -87,11 +86,6 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         instanceAuthStatus,
         registerHostType
     } = useAppSelector(state => state.inventoryV2);
-
-    const bulkInstanceData = useMemo(
-        () => getBulkDetectChecks(selectedMultiDetectInstances),
-        [selectedMultiDetectInstances]
-    );
 
     const dispatch = useDispatch();
 
@@ -181,6 +175,164 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
                         message: t('databases.register-flow.manage-detect-fail-message')
+                    })
+                );
+            }
+        } catch (error) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: t('databases.register-flow.manage-detect-fail-message')
+                })
+            );
+        } finally {
+            dispatch(setIsDetectHostLoading(false));
+        }
+    };
+
+    /**
+     * Handles bulk FSx for ONTAP authentication for the new bulk register flow.
+     * Authenticates FSx credentials for all selected instances.
+     * Similar to handleRegisterFsxCredentials but for bulk mode.
+     */
+    const handleBulkFsxAuthenticate = async () => {
+        // Get all unique FSx needing authentication from all selected instances
+        const fsxNeedingAuth = getFsxNeedingAuthFromBulk(selectedMultiDetectInstances, fsxCredentialStatusObj);
+
+        // If no FSx needs authentication, skip to next step
+        if (fsxNeedingAuth.length === 0) {
+            goToNextStep();
+            return;
+        }
+
+        dispatch(setIsDetectHostLoading(true));
+
+        // Notify user that FSx authentication is in progress
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: t('databases.register-flow.bulk-auth-in-progress')
+            })
+        );
+
+        const fsxIds = fsxNeedingAuth.map(fsx => fsx.fsxId);
+
+        // Group FSx by the first instance that contains them (for credential/region info)
+        // We need ec2InstanceId, region, and credentialsId from one of the instances
+        const getInstanceForFsx = (fsxId: string): BulkDetectedInstance | undefined =>
+            selectedMultiDetectInstances.find((instance: BulkDetectedInstance) => {
+                const storage = instance.data?.storage || instance.storage;
+                return storage?.some((item: any) => item.id === fsxId && item.type === DETECT_HOST_VAR.FSXN);
+            }) as BulkDetectedInstance | undefined;
+
+        // Create payload items - one per unique FSx, using instance info for API call context
+        const payloadItems: any[] = [];
+        const processedFsxIds = new Set<string>();
+
+        fsxIds.forEach(fsxId => {
+            if (processedFsxIds.has(fsxId)) return;
+
+            const instance = getInstanceForFsx(fsxId);
+            if (!instance) return;
+
+            const instanceData = instance.data || instance;
+            const credList = createFsxOnlyPayload([fsxId], instanceData);
+
+            if (credList.credentials && credList.credentials.length > 0) {
+                payloadItems.push({
+                    ...credList,
+                    ec2InstanceId: instanceData?.ec2InstanceId,
+                    region: instanceData?.regionId,
+                    credentialsId: instanceData?.credentialId
+                });
+                processedFsxIds.add(fsxId);
+            }
+        });
+
+        // If no credentials to send, proceed to next step
+        if (payloadItems.length === 0) {
+            dispatch(setIsDetectHostLoading(false));
+            goToNextStep();
+            return;
+        }
+
+        // Helper to split array into batches
+        const chunkArray = (arr: any[], size: number) =>
+            Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
+
+        const batches = chunkArray(payloadItems, DETECT_PAYLOAD_SIZE);
+        const authStatusUpdates: FsxAuthStatusMap = {};
+        const successFsxIds: string[] = [];
+        const failedFsxIds: string[] = [];
+
+        try {
+            for (let i = 0; i < batches.length; i++) {
+                const batchPayload = { items: batches[i] };
+
+                const result = await registerResourceCredBulk({ payload: batchPayload });
+
+                if (result && !result?.error && result?.data) {
+                    // Process response for this batch
+                    const resultItems = result?.data?.items || [];
+
+                    resultItems.forEach((resultItem: any) => {
+                        const registerDetails = resultItem?.registerDetails || [];
+
+                        registerDetails.forEach((detail: any) => {
+                            const resourceId = detail?.resourceId;
+                            if (!resourceId) return;
+
+                            if (detail?.fsxnError) {
+                                failedFsxIds.push(resourceId);
+                                authStatusUpdates[resourceId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                            } else if (detail?.resourceType === 'FSX') {
+                                successFsxIds.push(resourceId);
+                                authStatusUpdates[resourceId] = RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success';
+                            }
+                        });
+                    });
+                } else {
+                    // API call failed - mark all FSx in batch as failed
+                    batchPayload.items.forEach(item => {
+                        item.credentials.forEach((cred: { resourceId: string }) => {
+                            failedFsxIds.push(cred.resourceId);
+                            authStatusUpdates[cred.resourceId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                        });
+                    });
+                }
+            }
+
+            // Update Redux state with FSx auth status updates
+            dispatch(setFsxAuthStatus(authStatusUpdates));
+
+            // Mark successful FSx as registered
+            successFsxIds.forEach(fsxId => {
+                saveFsxInCredRegisteredObj(fsxId, dispatch);
+            });
+
+            // Check results and proceed accordingly
+            if (failedFsxIds.length === 0) {
+                // All FSx authenticated successfully
+                goToNextStep();
+            } else if (successFsxIds.length > 0 && failedFsxIds.length > 0) {
+                // Partial success - switch to manual mode for failed ones
+                dispatch(setSelectedFSxForOntapCredentials(FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY));
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.WARNING,
+                        message: t('databases.register-flow.fsx-partial-auth-fail-message', {
+                            failedCount: failedFsxIds.length
+                        })
+                    })
+                );
+            } else {
+                // All failed
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: t('databases.register-flow.fsx-all-auth-fail-message', {
+                            count: fsxIds.length
+                        })
                     })
                 );
             }
@@ -709,7 +861,6 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.WARNING,
                             message: t('databases.register-flow.bulk-auth-partial-success', {
-                                successCount,
                                 failedCount
                             })
                         })
@@ -829,7 +980,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 const engineType = selectedMultiDetectInstances[0]?.data?.hostType || DBType.MSSQL;
                 const fieldsCorrect = detectFsxFieldsValidation(manageSingleInstanceData, engineType);
                 if (fieldsCorrect) {
-                    handleMultiRegisterResourceCred();
+                    // Use handleBulkFsxAuthenticate for FSx-only authentication (similar to single flow)
+                    handleBulkFsxAuthenticate();
                 }
             }
         }

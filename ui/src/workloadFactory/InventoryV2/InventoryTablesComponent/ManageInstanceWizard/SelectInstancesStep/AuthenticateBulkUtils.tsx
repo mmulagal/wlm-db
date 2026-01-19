@@ -257,8 +257,10 @@ export const isInstanceAuthenticated = (
     instanceAuthStatus: InstanceAuthStatusMap | undefined,
     hostType: string = DBType.MSSQL
 ): boolean => {
+    const data = instanceData?.data || instanceData;
+
     // First check if instance is already authenticated based on data fields
-    if (!isAuthRequiredForInstance(instanceData, hostType)) {
+    if (!isAuthRequiredForInstance(data, hostType)) {
         return true;
     }
 

@@ -55,6 +55,40 @@
         border-right: 1px solid var(--border);
     }
 
+    .readinessSectionBulk {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-right: 24px;
+        width: 220px;
+        flex-shrink: 0;
+
+        .statusRow {
+            display: flex;
+            gap: 8px;
+        }
+
+        .iconWrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .statusIcon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .blueIcon {
+            color: var(--info);
+            width: 24px;
+            height: 24px;
+        }
+    }
+
     .valueSection {
         display: flex;
         flex-direction: column;
@@ -122,5 +156,19 @@
         border-top: 1px solid var(--border);
         font-size: 14px;
         background: var(--content-background);
+    }
+
+    .tooltipContent {
+        display: flex;
+        flex-direction: column;
+        padding: 8px;
+        min-width: 180px;
+    }
+
+    .tooltipDivider {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 8px 0;
+        width: 100%;
     }
 }

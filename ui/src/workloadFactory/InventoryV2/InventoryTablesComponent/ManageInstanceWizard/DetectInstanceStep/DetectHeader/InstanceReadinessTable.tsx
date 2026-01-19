@@ -1,21 +1,66 @@
-import { DsTypography, Table, useTable, Popover } from '@netapp/design-system';
+import { DsTypography, Table, useTable } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './DetectHeader.module.scss';
 import { ReactComponent as Success } from '../../../../../../assets/success.svg';
 import { ReactComponent as Cross } from '../../../../../../assets/black-cross.svg';
-import { ReactComponent as TooltipIcon } from '../../../../../../assets/tooltipGrey.svg';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import DotComponent from '../../../../../../common/DotComponent/DotComponent';
 import { DBType, MANAGE_STATES } from '../../../../../../utils/consts';
-import TooltipCard from '../../../../../../common/TooltipCard/TooltipCard';
-import { readinessString } from '../DetectInstanceHelper';
+import { BulkDetectedInstance, ManageReadinessData } from '../../../../../../utils/types/registerTypes';
+import { isInstanceAuthenticated } from '../../SelectInstancesStep/AuthenticateBulkUtils';
+import { getPermissionState } from '../../ManageInstanceUtils';
+
+// Render status cell with icon
+const renderStatusCell = (status: string) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {status === MANAGE_STATES.READY ? <Success /> : <Cross />}
+        <DsTypography variant="Regular_14">{status}</DsTypography>
+    </div>
+);
 
 const InstanceReadinessTable = () => {
     const { t } = useTranslation();
-    const { bulkDetectedInstanceList, registerHostType } = useAppSelector(state => state.inventoryV2);
+    const { bulkDetectedInstanceList, registerHostType, selectedMultiDetectInstances, instanceAuthStatus } =
+        useAppSelector(state => state.inventoryV2);
 
-    const ColDefs: ColumnProps[] = [
+    // Use bulkDetectedInstanceList if available, otherwise fall back to selectedMultiDetectInstances
+    const dataSource =
+        bulkDetectedInstanceList && bulkDetectedInstanceList.length > 0
+            ? bulkDetectedInstanceList
+            : selectedMultiDetectInstances || [];
+
+    // Prepare rows with proper data mapping
+    const tableRows = dataSource.map((item: BulkDetectedInstance) => {
+        const instanceId = item?.id ?? '';
+        const isAuthenticated = isInstanceAuthenticated(instanceId, item, instanceAuthStatus, registerHostType);
+
+        // Get manageReadiness data - check both item level and data level
+        const manageReadinessData: ManageReadinessData = item?.manageReadiness || item?.data?.manageReadiness || {};
+
+        // Use getPermissionState like ManageInstanceStepHelper
+        const assessment = getPermissionState('assessment', manageReadinessData);
+        const remediation = getPermissionState('remediation', manageReadinessData);
+        const dbcreation = getPermissionState('dbcreation', manageReadinessData);
+        const sandbox = getPermissionState('sandbox', manageReadinessData);
+        const errorInvestigation = getPermissionState('errorInvestigation', manageReadinessData);
+
+        return {
+            id: item?.id,
+            instanceName: item?.instanceName || item?.data?.databaseInstanceName || item?.databaseInstanceName || '-',
+            authenticationStatus: isAuthenticated
+                ? t('databases.general.authenticated')
+                : t('databases.general.unauthenticated'),
+            isAuthenticated,
+            reviewWellArchitected: assessment,
+            fixWellArchitected: remediation,
+            createDatabase: dbcreation,
+            createSandbox: sandbox,
+            errorAnalysis: errorInvestigation
+        };
+    });
+
+    const baseColumns: ColumnProps[] = [
         {
             id: '1',
             Header:
@@ -23,65 +68,51 @@ const InstanceReadinessTable = () => {
                     ? t('databases.register-flow.detect-instance-table-col.instance-name')
                     : t('databases.register-flow.detect-instance-table-col.database-name'),
             accessor: 'instanceName',
-            width: '184px',
             isSortable: true
         },
         {
             id: '2',
             Header: t('databases.register-flow.detect-instance-table-col.review-well-architected'),
-            accessor: 'hostName',
-            width: '250px',
-            filterOptions: 'auto',
-            isSortable: true
+            accessor: 'reviewWellArchitected',
+            renderCell: (cellData: string) => renderStatusCell(cellData)
         },
         {
             id: '3',
             Header: t('databases.register-flow.detect-instance-table-col.fix-well-architected'),
-            accessor: 'authenticationStatus',
-            width: '250px',
-            filterOptions: 'auto',
-            renderCell: (cellData: any) => {
-                if (cellData === t('databases.general.authenticated')) {
-                    return <DotComponent color="var(--success)" value={cellData} />;
-                }
-                if (cellData === t('databases.general.unauthenticated')) {
-                    return <DotComponent color="var(--toggle-off-bg)" value={cellData} />;
-                }
-            }
-        },
+            accessor: 'fixWellArchitected',
+            renderCell: (cellData: string) => renderStatusCell(cellData)
+        }
+    ];
+
+    // MSSQL-specific columns (Create Database, Create Sandbox)
+    const mssqlColumns: ColumnProps[] = [
         {
             id: '4',
             Header: t('databases.register-flow.detect-instance-table-col.create-database'),
-            accessor: 'readinessStatus',
-            width: '184px',
-            filterOptions: 'auto',
-            renderCell: (cellData: any, rowData: any) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {cellData === MANAGE_STATES.READY ? <Success /> : <Cross />}
-                    <DsTypography variant="Regular_14">{readinessString(cellData, t)}</DsTypography>
-                </div>
-            )
+            accessor: 'createDatabase',
+            renderCell: (cellData: string) => renderStatusCell(cellData)
         },
         {
             id: '5',
             Header: t('databases.register-flow.detect-instance-table-col.create-sandbox'),
-            accessor: 'readyCount',
-            width: '184px',
-            filterOptions: 'auto',
-            renderCell: (cellData: any, rowData: any) => (
-                <div className={styles.tooltipContainer}>
-                    <Popover
-                        popoverClass=""
-                        children={<TooltipCard listObj={rowData?.perRowState} registerFlow />}
-                        trigger="hover"
-                        isAppendedToBody={false}
-                        container={<TooltipIcon />}
-                    />
-                    <DsTypography variant="Regular_14">{`${cellData}/${rowData?.totalCount}`}</DsTypography>
-                </div>
-            )
+            accessor: 'createSandbox',
+            renderCell: (cellData: string) => renderStatusCell(cellData)
         }
     ];
+
+    // Error Analysis column (common to all)
+    const errorAnalysisColumn: ColumnProps = {
+        id: registerHostType === DBType.MSSQL ? '6' : '4',
+        Header: t('databases.register-flow.detect-instance-table-col.error-analysis'),
+        accessor: 'errorAnalysis',
+        renderCell: (cellData: string) => renderStatusCell(cellData)
+    };
+
+    // Build final column list based on database type
+    const ColDefs: ColumnProps[] =
+        registerHostType === DBType.MSSQL
+            ? [...baseColumns, ...mssqlColumns, errorAnalysisColumn]
+            : [...baseColumns, errorAnalysisColumn];
 
     const tableProps = useTable({
         // @ts-ignore
@@ -91,7 +122,7 @@ const InstanceReadinessTable = () => {
         isSorting: false,
         selectionType: 'none',
         columns: ColDefs,
-        rows: bulkDetectedInstanceList,
+        rows: tableRows,
         isHorizontalScroll: false,
         isVerticalScroll: true,
         isLazyLoading: false

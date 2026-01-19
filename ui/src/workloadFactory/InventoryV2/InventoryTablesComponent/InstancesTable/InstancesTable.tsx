@@ -1015,8 +1015,22 @@ const InstancesTable = () => {
     const handleBulkRegisterAction = () => {
         if (selectedRowsForBulkRegister.length === 0) return;
 
+        // Transform rows to the expected BulkDetectedInstance format
+        // The wizard expects items with a .data property containing the row data
+        const transformedInstances = selectedRowsForBulkRegister.map((row: any) => {
+            const isAuthorized = row?.authorized ?? false;
+            return {
+                id: row.id,
+                label: `${row.databaseInstanceName}, ${row.name}`,
+                value: row.name,
+                data: row, // Wrap the row data under .data property
+                authorized: isAuthorized,
+                manageReadiness: row.manageReadiness
+            };
+        });
+
         // Set the selected instances for the bulk wizard
-        dispatch(setSelectedMultiDetectInstances(selectedRowsForBulkRegister));
+        dispatch(setSelectedMultiDetectInstances(transformedInstances));
         dispatch(setWizardOperationType('bulk'));
         dispatch(setRegisterHostType(selectedHostType));
         dispatch(resetAgenticPreCheckData());

@@ -23,12 +23,12 @@ function App() {
 
     const fsxpertConfig = {
         accessToken: cleanAccessToken,
-        accountId: accountId,
-        userMetadata: userMetadata,
+        accountId,
+        userMetadata,
         features: {
             active: { 'Platform.BlueXP/DarkTheme': isDarkTheme }
         },
-        isDemoMode: isDemoMode /* optional */,
+        isDemoMode /* optional */,
 
         extraData: {
             domain: getDomainURL()

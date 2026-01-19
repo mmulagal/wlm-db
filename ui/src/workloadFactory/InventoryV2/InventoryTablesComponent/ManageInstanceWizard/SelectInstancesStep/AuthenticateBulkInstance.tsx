@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as InstancesImage } from '../../../../../assets/Instances_Img.svg';
+import { ReactComponent as SingleAuth } from '../../../../../assets/SingleAuth.svg';
 import { ReactComponent as Success } from '../../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg';
 import ManageWizardFooter from '../ManageWizardFooter';
@@ -189,17 +190,37 @@ export const Content = () => {
 
     // Render authenticated screen when all instances are authenticated
     if (allAuthenticated && instances.length > 0) {
+        const authenticatedTooltipContent = (
+            <div className={styles.authenticatedTooltipContent}>
+                {instances.map((instance, index) => (
+                    <div
+                        key={instance.instanceId}
+                        className={`${styles.authenticatedTooltipRow} ${
+                            index !== instances.length - 1 ? styles.authenticatedTooltipRowWithBorder : ''
+                        }`}
+                    >
+                        <DsTypography variant="Semibold_14">{instance.instanceName}</DsTypography>
+                    </div>
+                ))}
+            </div>
+        );
+
         return (
             <div className={styles.authenticateBulkInstance}>
                 <div className={styles.authenticatedScreen}>
-                    <InstancesImage />
+                    <SingleAuth />
                     <div className={styles.authenticatedTextContainer}>
                         <DsTypography variant="Semibold_14">
                             {t('databases.register-flow.instances-authenticated')}
                         </DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.register-flow.all-instances-count', { count: instances.length })}
-                        </DsTypography>
+                        <div className={styles.instancesInfo}>
+                            <TooltipInfo trigger="hover" placement="bottom">
+                                {authenticatedTooltipContent}
+                            </TooltipInfo>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.register-flow.all-instances-count', { count: instances.length })}
+                            </DsTypography>
+                        </div>
                     </div>
                 </div>
             </div>

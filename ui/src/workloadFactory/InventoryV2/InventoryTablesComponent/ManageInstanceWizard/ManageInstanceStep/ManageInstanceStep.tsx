@@ -52,8 +52,8 @@ import {
 } from './ManageInstanceStepHelper';
 import BulkAuthenticationHeader from '../DetectInstanceStep/DetectHeader/BulkAuthenticationHeader';
 import AuthenticationTabsForBulk from './AuthenticationTabsForBulk/AuthenticationTabsForBulk';
-import { selectedTabSelection } from '../../../../../store/workloadFactory/databaseHomeSlice';
 import InstanceReadinessTable from '../DetectInstanceStep/DetectHeader/InstanceReadinessTable';
+import { isInstanceAuthenticated } from '../SelectInstancesStep/AuthenticateBulkUtils';
 
 export const Content = () => {
     const { t } = useTranslation();
@@ -68,7 +68,8 @@ export const Content = () => {
         selectedPreparePageTab,
         manageSingleInstanceReadiness,
         selectedMultiDetectInstances,
-        manageSingleInstanceChecks: manageChecks
+        manageSingleInstanceChecks: manageChecks,
+        instanceAuthStatus
     } = useAppSelector(state => state.inventoryV2);
     const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
     const { discoveredOracleHostData } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
@@ -330,15 +331,20 @@ export const Content = () => {
                 }
             });
 
+            // Check authentication using both pre-auth and wizard auth status
+            const instanceId = item?.data?.databaseInstanceName || item?.databaseInstanceName || item?.id || '';
+            const isAuthenticated = isInstanceAuthenticated(instanceId, item, instanceAuthStatus, hostType);
+
             newTableData.push({
                 ...item,
                 id: item?.id,
                 instanceName: item?.data?.databaseInstanceName,
-                authenticationStatus: item?.authorized
+                authorized: isAuthenticated, // Update authorized status based on auth check
+                authenticationStatus: isAuthenticated
                     ? t('databases.general.authenticated')
                     : t('databases.general.unauthenticated'),
                 hostName: item?.data?.name,
-                readinessStatus: item?.authorized ? manageStates?.overallState : MANAGE_STATES.NOT_READY,
+                readinessStatus: isAuthenticated ? manageStates?.overallState : MANAGE_STATES.NOT_READY,
                 readyCount: manageStates?.readyCount,
                 totalCount: hostType === DBType.MSSQL ? 5 : 3,
                 perRowState: manageStates?.perRowState || [],
@@ -353,10 +359,12 @@ export const Content = () => {
         setManageMultiChecks(multiChecks);
         dispatch(setBulkDetectedInstanceList(newTableData));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedMultiDetectInstances, agenticPreReqData]);
+    }, [selectedMultiDetectInstances, agenticPreReqData, instanceAuthStatus]);
 
+    // Fetch error investigation prerequisites for bulk mode
+    // This API call is needed to determine errorInvestigation readiness status
     useEffect(() => {
-        if (wizardOperationType === ACTION_TYPE.BULK) {
+        if (wizardOperationType === ACTION_TYPE.BULK && selectedMultiDetectInstances?.length > 0) {
             if (hostType === DBType.MSSQL) {
                 fetchErrorInvestigationStateBulk(
                     selectedMultiDetectInstances,
@@ -413,9 +421,6 @@ export const Content = () => {
                                     engineType={hostType}
                                 />
                             )}
-
-                            {wizardOperationType === ACTION_TYPE.BULK &&
-                                manageMultiChecks?.installMissingPowershell && <NoteComponent />}
                         </>
                     )}
 

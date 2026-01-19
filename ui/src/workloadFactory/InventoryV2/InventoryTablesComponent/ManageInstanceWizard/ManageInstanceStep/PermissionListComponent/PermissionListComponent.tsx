@@ -1,17 +1,57 @@
 import { DsTypography } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AccordionItem, ManageInstanceAccordion } from '../ManageInstanceAccordion/ManageInstanceAccordion';
 import styles from './PermissionListComponent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { PermissionListComponentItems } from './PermissionListComponentItems';
+import { MANAGE_STATES, ACTION_TYPE, DBType } from '../../../../../../utils/consts';
 
 const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any) => {
     const { t } = useTranslation();
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [disableAll] = useState(false);
-    const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
+    const { wizardOperationType, bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
     const { loading } = useAppSelector(state => state.agenticAI.agenticRegisterFlowChecks);
+
+    // Calculate readiness counts for bulk MSSQL mode
+    const readinessCounts = useMemo(() => {
+        if (
+            wizardOperationType === ACTION_TYPE.BULK &&
+            engineType === DBType.MSSQL &&
+            Array.isArray(bulkDetectedInstanceList)
+        ) {
+            const capabilities = ['assessment', 'remediation', 'dbcreation', 'sandbox', 'errorInvestigation'];
+            const counts: Record<string, { ready: number; total: number; missingInstances: string[] }> = {};
+
+            capabilities.forEach(cap => {
+                // Get instances that are NOT ready for this specific capability
+                const missingInstances: string[] = [];
+                let readyCount = 0;
+
+                bulkDetectedInstanceList.forEach((instance: any) => {
+                    // Get the status for this capability directly from manageStates
+                    const status = instance?.manageStates?.[cap];
+                    if (status === MANAGE_STATES.READY) {
+                        readyCount++;
+                    } else {
+                        // Get instance name for tooltip
+                        const instanceName = instance?.instanceName || instance?.data?.databaseInstanceName;
+                        missingInstances.push(instanceName);
+                    }
+                });
+
+                counts[cap] = {
+                    ready: readyCount,
+                    total: bulkDetectedInstanceList.length,
+                    missingInstances
+                };
+            });
+
+            return counts;
+        }
+        return null;
+    }, [wizardOperationType, engineType, bulkDetectedInstanceList]);
 
     const items: AccordionItem[] = PermissionListComponentItems(
         t,
@@ -32,6 +72,8 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
                     setExpandedId={setExpandedId}
                     disableAll={disableAll}
                     errorInvestigationLoading={loading}
+                    readinessCounts={readinessCounts}
+                    engineType={engineType}
                 />
             </div>
         </div>
