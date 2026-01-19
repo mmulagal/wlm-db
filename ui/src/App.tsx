@@ -2,7 +2,7 @@ import { useAppSelector } from './store/storeHooks';
 import './App.css';
 import Home from './Home';
 import { BlueXPListeners, ThemeProvider, postBlueXPMessage } from '@netapp/design-system';
-import { FSxpertWidget } from 'fsxpert-widget';
+// import { FSxpertWidget } from 'fsxpert-widget';
 import ErrorPage from './common/ErrorPage/ErrorPage';
 import { useInitialize } from './utils/appConfig';
 import ComponentLoader from './common/ComponentLoader/ComponentLoader';
@@ -19,21 +19,21 @@ function App() {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     // Remove 'Bearer ' prefix from accessToken if present
-    const cleanAccessToken = accessToken?.startsWith('Bearer ') ? accessToken.substring(7) : accessToken;
+    // const cleanAccessToken = accessToken?.startsWith('Bearer ') ? accessToken.substring(7) : accessToken;
 
-    const fsxpertConfig = {
-        accessToken: cleanAccessToken,
-        accountId,
-        userMetadata,
-        features: {
-            active: { 'Platform.BlueXP/DarkTheme': isDarkTheme }
-        },
-        isDemoMode /* optional */,
+    // const fsxpertConfig = {
+    //     accessToken: cleanAccessToken,
+    //     accountId,
+    //     userMetadata,
+    //     features: {
+    //         active: { 'Platform.BlueXP/DarkTheme': isDarkTheme }
+    //     },
+    //     isDemoMode /* optional */,
 
-        extraData: {
-            domain: getDomainURL()
-        }
-    };
+    //     extraData: {
+    //         domain: getDomainURL()
+    //     }
+    // };
 
     useInitialize();
 
@@ -57,7 +57,7 @@ function App() {
                 {!loading &&
                     (accountId ? (
                         <>
-                            {!isWorkloadFactory && <FSxpertWidget config={fsxpertConfig} />}
+                            {/* {!isWorkloadFactory && <FSxpertWidget config={fsxpertConfig} />} */}
                             <Home />
                         </>
                     ) : (
