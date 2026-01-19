@@ -10,7 +10,7 @@ import {
 } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { compressSync } from 'fflate';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -41,6 +41,7 @@ import {
     setSelectedRowsForExploreSavingsOnPremBulk,
     setOnPremTCOAction
 } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
+import { setOnPremiseData } from '../../../store/workloadFactory/exploreSavingsSlice';
 
 const ExploreSavingsOnPremiseTable = () => {
     const { t } = useTranslation();
@@ -48,7 +49,6 @@ const ExploreSavingsOnPremiseTable = () => {
     const navigate = useNavigate();
     const { fetchOnPremData, error } = useOnPremData();
     const windowSize = useResize();
-    const [tableData, setTableData] = useState<any>([]);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
     const { onPremiseData, onPremiseDataLoading } = useAppSelector(state => state.exploreSavings);
     const { selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(state => state.exploreSavingsBulk);
@@ -70,13 +70,45 @@ const ExploreSavingsOnPremiseTable = () => {
         }
     ];
 
-    useEffect(() => {
-        if (onPremiseData) {
-            setTableData(onPremiseData);
-        } else {
-            setTableData([]);
+    const updatedTableData = useMemo(() => {
+        if (!onPremiseData || onPremiseData.length === 0) {
+            return [];
         }
-    }, [onPremiseData]);
+
+        return onPremiseData.map((item: any) => {
+            const isSelected = selectedRowsForExploreSavingsOnPremBulk.some(
+                (selectedRow: any) => selectedRow.id === item.id
+            );
+
+            const limitReached = selectedRowsForExploreSavingsOnPremBulk.length >= 5;
+            const shouldDisableDueToLimit = limitReached && !isSelected;
+
+            const isDisabled = shouldDisableDueToLimit;
+
+            let tooltipTitle = '';
+            if (shouldDisableDueToLimit) {
+                tooltipTitle = t('databases.explore-savings.disabled-tooltip-limit-exceed');
+            }
+
+            // Only create new object if cellProps actually changed
+            const currentIsDisabled = item.cellProps?.isDisabled;
+            const currentTooltip = item.cellProps?.selectionProps?.title;
+
+            if (currentIsDisabled === isDisabled && currentTooltip === tooltipTitle) {
+                return item;
+            }
+
+            return {
+                ...item,
+                cellProps: {
+                    isDisabled,
+                    selectionProps: {
+                        title: tooltipTitle
+                    }
+                }
+            };
+        });
+    }, [onPremiseData, selectedRowsForExploreSavingsOnPremBulk]);
 
     useEffect(() => {
         fetchOnPremData();
@@ -122,7 +154,6 @@ const ExploreSavingsOnPremiseTable = () => {
             return;
         }
 
-        setTableData([]); // This code needs to be removed
         setIsUploadLoading(true);
 
         if (selectedFile) {
@@ -133,9 +164,6 @@ const ExploreSavingsOnPremiseTable = () => {
                     if (isDemoMode) {
                         setTimeout(() => {
                             setIsUploadLoading(false);
-                            if (onPremiseData) {
-                                setTableData(onPremiseData);
-                            }
                             dispatch(
                                 addNotification({
                                     notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -185,10 +213,6 @@ const ExploreSavingsOnPremiseTable = () => {
                                             event.target.value = ''; // Clear the file input
                                             clearInterval(jobInterval);
                                         } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                                            if (onPremiseData) {
-                                                setTableData(onPremiseData);
-                                            }
-
                                             setIsUploadLoading(false);
                                             dispatch(
                                                 addNotification({
@@ -202,10 +226,6 @@ const ExploreSavingsOnPremiseTable = () => {
                                     });
                                 }, 5000);
                             } else {
-                                if (onPremiseData) {
-                                    setTableData(onPremiseData);
-                                }
-
                                 setIsUploadLoading(false);
                                 event.target.value = ''; // Clear the file input
                             }
@@ -248,8 +268,8 @@ const ExploreSavingsOnPremiseTable = () => {
         deleteOnPremTco({ resourceId: rowData.resourceId })
             .then((res: any) => {
                 if (res && res?.data?.count === 1) {
-                    const updatedTableData = tableData.filter((item: any) => item.uniqueId !== rowData.uniqueId);
-                    setTableData(updatedTableData);
+                    const updatedData = onPremiseData.filter((item: any) => item.uniqueId !== rowData.uniqueId);
+                    dispatch(setOnPremiseData(updatedData));
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -365,7 +385,7 @@ const ExploreSavingsOnPremiseTable = () => {
             accessor: 'deploymentModel',
             id: '2',
             width: windowSize.width >= 1920 ? '15.24%' : '245px',
-            filterOptions: getFilterOptions(tableData, 'deploymentModel'),
+            filterOptions: getFilterOptions(updatedTableData, 'deploymentModel'),
             renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },
 
@@ -504,7 +524,7 @@ const ExploreSavingsOnPremiseTable = () => {
         isSorting: false,
         columns: ExploreSavingsColDefs,
         selectionType: 'multiple',
-        rows: tableData || [],
+        rows: updatedTableData || [],
         pageSize: 50,
         defaultSelectedRows: [],
         isLazyLoading: onPremiseDataLoading || isUploadLoading
@@ -512,24 +532,26 @@ const ExploreSavingsOnPremiseTable = () => {
 
     // Sync table selection state to Redux
     useEffect(() => {
-        const selectedRowIds = Object.keys(tableProps.selectionState?.rows || {}).filter(
-            key => tableProps.selectionState?.rows[key]
-        );
-        if (selectedRowIds.length > 0) {
-            const selectedRows = tableData.filter((row: any) => selectedRowIds.includes(String(row.id)));
-            dispatch(setSelectedRowsForExploreSavingsOnPremBulk(selectedRows));
-        } else {
-            dispatch(setSelectedRowsForExploreSavingsOnPremBulk([]));
+        if (onPremiseData && onPremiseData.length > 0) {
+            const selectedRowIds = Object.keys(tableProps.selectionState?.rows || {}).filter(
+                key => tableProps.selectionState?.rows[key]
+            );
+            if (selectedRowIds.length > 0) {
+                const selectedRows = onPremiseData.filter((row: any) => selectedRowIds.includes(String(row.id)));
+                dispatch(setSelectedRowsForExploreSavingsOnPremBulk(selectedRows));
+            } else {
+                dispatch(setSelectedRowsForExploreSavingsOnPremBulk([]));
+            }
         }
-    }, [tableProps.selectionState, tableData]);
+    }, [tableProps.selectionState, onPremiseData]);
 
     // Sync Redux selection state back to table when rows are removed externally
     useEffect(() => {
         if (
             selectedRowsForExploreSavingsOnPremBulk &&
             selectedRowsForExploreSavingsOnPremBulk.length > 0 &&
-            tableData &&
-            tableData.length > 0
+            onPremiseData &&
+            onPremiseData.length > 0
         ) {
             const selectedIds = selectedRowsForExploreSavingsOnPremBulk.map((row: any) => row.id);
             const currentlySelected = Object.keys(tableProps.selectionState?.rows || {}).filter(
@@ -543,7 +565,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 });
             }
         }
-    }, [selectedRowsForExploreSavingsOnPremBulk, tableData]);
+    }, [selectedRowsForExploreSavingsOnPremBulk, onPremiseData]);
 
     const handleOnPremBulkAction = () => {
         if (selectedRowsForExploreSavingsOnPremBulk.length > 0) {
@@ -591,7 +613,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 tableProps={tableProps}
                 pluralTitle="Microsoft SQL Server hosts on-premises"
                 singularTitle="Microsoft SQL Server host on-premises"
-                subTitle={`Includes results from uploaded scripts.\n${t('databases.explore-savings.select-upto-five')}`}
+                subTitle={`Includes results from uploaded scripts. ${t('databases.explore-savings.select-upto-five')}`}
                 actionsRight={
                     <div className={styles.actions}>
                         <FileUpload handleFileChange={handleFileChange} />

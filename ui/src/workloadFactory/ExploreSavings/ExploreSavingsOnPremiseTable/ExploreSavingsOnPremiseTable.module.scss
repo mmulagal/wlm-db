@@ -4,6 +4,14 @@
 
     margin-top: 24px;
 
+    [class*='TableTopBar-module_base'] {
+        [class*='TableTopBar-module_title'] {
+            > [class*='Typography-module_Regular_14'] {
+                white-space: normal !important;
+            }
+        }
+    }
+
     [class*='header-name'] {
         [class*='Checkbox-module'] {
             display: none !important;
