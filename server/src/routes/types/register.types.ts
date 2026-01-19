@@ -191,6 +191,12 @@ const SingleInstanceRegisterCredentialsRequestBody = Type.Object({
             description: 'Check if the instance is ready for management. Default is false.',
             default: false
         })
+    ),
+    isReplicaInfoRequired: Type.Optional(
+        Type.Boolean({
+            description: 'Whether to fetch replica node information for clustered databases. Default is false.',
+            default: false
+        })
     )
 });
 
@@ -226,6 +232,13 @@ const SingleRegisterCredentialsResponse = Type.Object({
     )
 });
 
+const replicaNodeInfoObject = Type.Object({
+    ec2InstanceId: Type.String(),
+    ec2HostName: Type.String(),
+    databaseName: Type.Optional(Type.String()),
+    role: Type.String()
+});
+
 const RegisterCredentialsResponse = Type.Object({
     items: Type.Array(
         Type.Object({
@@ -235,7 +248,8 @@ const RegisterCredentialsResponse = Type.Object({
             errorMessage: Type.Optional(
                 Type.String({ description: 'Error details, if any, of a failed credentials registration.' })
             ),
-            registerDetails: Type.Array(SingleRegisterCredentialsResponse)
+            registerDetails: Type.Array(SingleRegisterCredentialsResponse),
+            replicaInfo: Type.Optional(Type.Array(replicaNodeInfoObject))
         })
     )
 });
@@ -254,6 +268,8 @@ type RegisterCredentialsResponseType = Static<typeof RegisterCredentialsResponse
 type SingleRegisterCredentialsResponseType = Static<typeof SingleRegisterCredentialsResponse>;
 
 type RegisterCredentialsType = Static<typeof RegisterCredentials>;
+
+type ReplicaInfoType = Static<typeof replicaNodeInfoObject>;
 
 export {
     PrepareResourceResponseBody,
@@ -279,5 +295,6 @@ export {
     MultiInstanceUnmanageResponseBody,
     DatabaseInstanceQueryString,
     checkCredentialsExistenceResponse,
-    checkCredentialsExistenceQueryParams
+    checkCredentialsExistenceQueryParams,
+    ReplicaInfoType
 };

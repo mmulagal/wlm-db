@@ -92,7 +92,7 @@ describe('Manage operations', () => {
                 password: 'password'
             }
         ];
-        const response = await validateAndStoreDiscoveredParameters(
+        const { response } = await validateAndStoreDiscoveredParameters(
             ACCOUNT_ID,
             credentialsId,
             'us-east-1',
@@ -119,7 +119,7 @@ describe('Manage operations', () => {
             }
         ];
 
-        const response = await validateOracleCredentials(
+        const { response } = await validateOracleCredentials(
             ACCOUNT_ID,
             credentialsId,
             TEST_REGION,
@@ -159,7 +159,7 @@ describe('Manage operations', () => {
             }
         ];
 
-        const response = await validateOracleCredentials(
+        const { response } = await validateOracleCredentials(
             ACCOUNT_ID,
             credentialsId,
             TEST_REGION,

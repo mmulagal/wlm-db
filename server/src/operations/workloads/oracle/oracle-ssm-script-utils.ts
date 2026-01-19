@@ -675,10 +675,139 @@ const initializeResultObject = `
     fi
 `;
 
-const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string) => `
+const dataguardDeploymentUtilities = `
+
+    check_dataguard_deployment() {
+        local ORACLE_SID="$1"
+        # if dataguard is configured, FAL_CLIENT and FAL_SERVER will be configured and have different values in spfile for DB
+        sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
+            export ORACLE_SID="$1"
+            oracle_home=$(${getOracleHomePath('$ORACLE_SID')})
+            export ORACLE_HOME="$oracle_home"
+            spFilePath="\${ORACLE_HOME}/dbs/spfile\${ORACLE_SID}.ora"
+            if [[ ! -f "$spFilePath" ]]; then
+                exit 1
+            fi
+            falClient="${parseSpfileProperties('fal_client', '$spFilePath')}"
+            falServer="${parseSpfileProperties('fal_server', '$spFilePath')}"
+            if [[ -n "$falClient" ]] && [[ -n "$falServer" ]] && [ "$falServer" != "$falClient" ]; then
+                exit 0;
+            fi
+            exit 1;
+EOF
+        return $?
+    }
+
+
+    # Get Data Guard node IPs by querying v$dataguard_config for db_unique_name
+    # and parsing tnsnames.ora for HOST values.
+    get_dataguard_node_details() {
+        local ORACLE_SID="$1"
+        export ORACLE_SID
+
+        oracle_home=$(${getOracleHomePath('$ORACLE_SID')})
+        export ORACLE_HOME="$oracle_home"
+
+        # Get TNS_ADMIN path (directory only, not file)
+        if [ -z "$TNS_ADMIN" ]; then
+            TNS_ADMIN="\${ORACLE_HOME}/network/admin"
+        fi
+
+        TNSNAMES_FILE="\${TNS_ADMIN}/tnsnames.ora"
+
+        get_dg_members() {
+            local ORACLE_SID="$1"
+            sudo -i -u oracle bash <<EOF
+                export ORACLE_SID="$ORACLE_SID"
+                $sqlplus_command
+                SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+                SELECT db_unique_name || '|' || dest_role FROM v\\$dataguard_config;
+EOF
+        }
+
+        # Parse tnsnames.ora to get HOST for a given alias using awk
+        get_host_from_tnsnames() {
+            local alias="$1"
+            local tns_file="$2"
+
+            if [ ! -f "$tns_file" ]; then
+                echo ""
+                return
+            fi
+
+            awk -v alias="$alias" '
+            BEGIN {
+                IGNORECASE = 1
+                found = 0
+            }
+            # Match the alias at the start of a line (with optional whitespace)
+            $0 ~ "^[[:space:]]*" alias "[[:space:]]*=" {
+                found = 1
+            }
+            # If we found our alias, look for HOST
+            found == 1 && /HOST[[:space:]]*=/ {
+                # Extract the HOST value
+                match($0, /HOST[[:space:]]*=[[:space:]]*([^)]+)/)
+                if (RSTART > 0) {
+                    hostpart = substr($0, RSTART)
+                    gsub(/HOST[[:space:]]*=[[:space:]]*/, "", hostpart)
+                    gsub(/\\).*/, "", hostpart)
+                    gsub(/[[:space:]]/, "", hostpart)
+                    print hostpart
+                    exit
+                }
+            }
+            # If we hit a new alias definition, stop looking
+            found == 1 && /^[[:space:]]*[a-zA-Z0-9_]+[[:space:]]*=/ && $0 !~ alias {
+                exit
+            }
+            ' "$tns_file"
+        }
+
+        # Main execution
+        # Store DG members in a variable
+        dg_members=$(get_dg_members "$ORACLE_SID" "$sqlplus_command")
+
+        echo "{"
+        echo "  \\"members\\": ["
+
+        first=true
+        echo "$dg_members" | while IFS='|' read -r db_unique_name dest_role; do
+            # Skip empty lines
+            [ -z "$db_unique_name" ] && continue
+
+            # Trim whitespace
+            db_unique_name=$(echo "$db_unique_name" | xargs)
+            dest_role=$(echo "$dest_role" | xargs)
+
+            # Get HOST from tnsnames.ora
+            host=$(get_host_from_tnsnames "$db_unique_name" "$TNSNAMES_FILE")
+
+            if [ "$first" = true ]; then
+                first=false
+            else
+                echo ","
+            fi
+
+            if [ -n "$host" ]; then
+                echo -n "    {\\"dbUniqueName\\": \\"\${db_unique_name}\\", \\"destRole\\": \\"\${dest_role}\\", \\"host\\": \\"\${host}\\"}"
+            else
+                echo -n "    {\\"dbUniqueName\\": \\"\${db_unique_name}\\", \\"destRole\\": \\"\${dest_role}\\", \\"host\\": null}"
+            fi
+
+        done
+
+        echo ""
+        echo "  ]"
+        echo "}"
+    }
+`;
+
+const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string, isReplicaInfoRequired: boolean) => `
     ec2InstanceId="${ec2InstanceId}"
     oracleSid="${dbSid}"
     oracleSid_temp="${dbSid}_temp"
+    isReplicaInfoRequired="${isReplicaInfoRequired}"
 
     ${oracleUserAuthLoginCommand}
     if [ "$isAwsCliInstalled" == "true" ] && [ "$isJqInstalled" == "true" ]; then
@@ -708,8 +837,17 @@ EOF
 
         oracleError="null"
         dbVersion="null"
+        isDataGuardConfigured="false"
+        dataguardDetails="null"
         if is_instance_connectivity_possible >/dev/null 2>&1; then
             isInstanceConnectivityPossible="true"
+            ${dataguardDeploymentUtilities}
+            check_dataguard_deployment "$oracleSid"
+            if [ $? -eq 0 ] && [ "$isReplicaInfoRequired" = "true" ]; then
+                isDataGuardConfigured="true"
+                # DataGuard is configured, fetch details with creds
+                dataguardDetails=$(get_dataguard_node_details "$oracleSid")
+            fi
         else
             isInstanceConnectivityPossible="false"
             oracleError="Failed to connect to Oracle instance, please ensure that the credentials are correct and the Oracle instance is running."
@@ -726,7 +864,7 @@ EOF
         if [ "$isInstanceConnectivityPossible" == "false" ]; then
             result="{\\"oracleInstanceConnectivity\\": false, \\"oracleInstanceName\\": \\"$oracleSid_temp\\", \\"oracleEdition\\": \\"$dbVersion\\", \\"oracleError\\": \\"$oracleError\\"}"
         else
-            result="{\\"oracleInstanceConnectivity\\": true, \\"oracleInstanceName\\": \\"$oracleSid\\", \\"oracleEdition\\": \\"$dbVersion\\", \\"oracleError\\": \\"$oracleError\\"}"
+            result="{\\"oracleInstanceConnectivity\\": true, \\"oracleInstanceName\\": \\"$oracleSid\\", \\"oracleEdition\\": \\"$dbVersion\\", \\"oracleError\\": \\"$oracleError\\", \\"isDataGuardConfigured\\": \\"$isDataGuardConfigured\\", \\"dataGuardDetails\\": $dataguardDetails }"
         fi
         # Add result to instances array inside resultObject
         resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$result" | jq '.')" '.instances += [$res]')
@@ -1003,7 +1141,6 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
 
 const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => `
         ${checkOracleModuleAvailability}
-    
         modulesAvailability=$(check_oracle_module_availability)
     
         isAwsCliInstalled=$(echo "$modulesAvailability" | grep -o '"isAwsCliInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')

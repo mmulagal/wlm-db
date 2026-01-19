@@ -54,7 +54,7 @@ export default function registerRoutes(fastify: FastifyInstance) {
                 body: { credentials, clusterNodesIpAddress, checkManageReadiness }
             } = castRequest(request);
 
-            const response = await validateAndStoreDiscoveredParameters(
+            const { response } = await validateAndStoreDiscoveredParameters(
                 accountId,
                 credentialsId,
                 region,

@@ -902,6 +902,8 @@ interface OracleInstanceRegistration {
     oracleInstanceConnectivity: boolean;
     oracleError?: string;
     oracleEdition?: string;
+    isDataGuardConfigured?: string;
+    dataGuardDetails?: any;
 }
 
 interface IgroupMissingInitiators {

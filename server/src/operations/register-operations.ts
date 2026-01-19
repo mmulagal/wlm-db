@@ -77,6 +77,7 @@ import {
     MultiInstanceManageResponseBodyType,
     RegisterCredentialsResponseType,
     RegisterCredentialsType,
+    ReplicaInfoType,
     SingleInstanceRegisterCredentialsRequestBodyType,
     SingleRegisterCredentialsResponseType
 } from '../routes/types/register.types';
@@ -1921,22 +1922,32 @@ async function registerResourceCredentials(
     await Promise.all(
         credentialsTobeValidated.map(
             throat(3, async resource => {
-                const { credentialsId, region, ec2InstanceId, credentials, checkManageReadiness } = resource;
-                const registerResponse = await validateAndStoreDiscoveredParameters(
+                const {
+                    credentialsId,
+                    region,
+                    ec2InstanceId,
+                    credentials,
+                    checkManageReadiness,
+                    isReplicaInfoRequired
+                } = resource;
+                const { response: registerResponse, replicaInfoObject } = await validateAndStoreDiscoveredParameters(
                     accountId,
                     credentialsId,
                     region,
                     ec2InstanceId,
                     credentials,
                     undefined,
-                    checkManageReadiness
+                    checkManageReadiness,
+                    false,
+                    isReplicaInfoRequired
                 );
 
                 response.items.push({
                     ec2InstanceId,
                     credentialsId,
                     region,
-                    registerDetails: Array.isArray(registerResponse) ? registerResponse : [registerResponse]
+                    registerDetails: Array.isArray(registerResponse) ? registerResponse : [registerResponse],
+                    ...(isReplicaInfoRequired === true ? { replicaInfo: replicaInfoObject } : {})
                 });
             })
         )
@@ -1967,14 +1978,16 @@ async function validateAndStoreDiscoveredParameters(
     credentials: RegisterCredentialsType[],
     clusterNodesIpAddress?: string[],
     checkManageReadiness: boolean = false,
-    singleInstanceRegistration: boolean = false
+    singleInstanceRegistration: boolean = false,
+    isReplicaInfoRequired: boolean = false
 ) {
     logger.info('Validate and store SSM parameters', {
         accountId,
         credentialsId,
         region,
         instanceId,
-        checkManageReadiness
+        checkManageReadiness,
+        isReplicaInfoRequired
     });
 
     if (IS_DEMO_FLOW) {
@@ -2020,7 +2033,7 @@ async function validateAndStoreDiscoveredParameters(
         };
 
         credentials.forEach(processCredential);
-        return response;
+        return { response, replicaInfoObject: [] };
     }
 
     try {
@@ -2058,7 +2071,7 @@ async function validateAndStoreDiscoveredParameters(
             }
         }
 
-        const detectResponse = await validateCredentials(
+        const { response: detectResponse, replicaInfoObject } = await validateCredentials(
             accountId,
             credentialsId,
             region,
@@ -2069,7 +2082,8 @@ async function validateAndStoreDiscoveredParameters(
             oracleCredentials,
             oracleAsmCredentials,
             instanceIds,
-            checkManageReadiness
+            checkManageReadiness,
+            isReplicaInfoRequired
         );
 
         // resource-credentials support until UI makes changes to use register-credentials API across
@@ -2084,17 +2098,20 @@ async function validateAndStoreDiscoveredParameters(
             const instanceDetails = detectResponse.find(item => item.resourceId === credentials[0]?.resourceId);
             if (instanceDetails) {
                 return {
-                    databaseCount: instanceDetails.databaseCount,
-                    databaseServerEdition: instanceDetails.sqlServerEdition,
-                    manageReadiness: instanceDetails.manageReadiness,
-                    databaseServerError: instanceDetails.sqlServerError,
-                    requiredModuleError: instanceDetails.requiredModuleError,
-                    fsxnError: instanceDetails.fsxnError
-                } as SingleRegisterCredentialsResponseType;
+                    response: {
+                        databaseCount: instanceDetails.databaseCount,
+                        databaseServerEdition: instanceDetails.sqlServerEdition,
+                        manageReadiness: instanceDetails.manageReadiness,
+                        databaseServerError: instanceDetails.sqlServerError,
+                        requiredModuleError: instanceDetails.requiredModuleError,
+                        fsxnError: instanceDetails.fsxnError
+                    } as SingleRegisterCredentialsResponseType,
+                    replicaInfoObject
+                };
             }
         }
 
-        return detectResponse;
+        return { response: detectResponse, replicaInfoObject };
     } catch (error: any) {
         logger.error('Failed to validate credentials', error);
         throw createError(error?.statusCode || HttpErrorCodes.BAD_REQUEST, error.message);
@@ -2278,7 +2295,8 @@ async function validateCredentials(
     oracleCredentials: RegisterCredentialsType[],
     oracleAsmCredentials: RegisterCredentialsType[],
     instanceIds: string[],
-    checkManageReadiness: boolean = false
+    checkManageReadiness: boolean = false,
+    isReplicaInfoRequired: boolean = false
 ) {
     logger.info('Validate credentials', {
         instanceId,
@@ -2288,7 +2306,8 @@ async function validateCredentials(
         windowsUserCredentials,
         oracleCredentials,
         oracleAsmCredentials,
-        checkManageReadiness
+        checkManageReadiness,
+        isReplicaInfoRequired
     });
 
     const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
@@ -2353,7 +2372,8 @@ async function validateCredentials(
                 instanceIds,
                 allDatabaseCredentials,
                 allOracleAsmCredentials,
-                checkManageReadiness
+                checkManageReadiness,
+                isReplicaInfoRequired
             );
         } else {
             response = await validateWindowsCredentials(
@@ -2435,6 +2455,7 @@ async function validateWindowsCredentials(
     let parsedResponse;
     let command = '$WarningPreference = "SilentlyContinue";';
     const newSqlCredentials = cloneDeep(sqlCredentials);
+    const replicaInfoObject: ReplicaInfoType[] = []; // Use this to add AOAG replica info in future
 
     if (fsxCredentials || sqlCredentials.length || windowsUserCredentials) {
         // Get signed url for aws_ssm.zip to install the ps modules
@@ -2575,7 +2596,7 @@ async function validateWindowsCredentials(
         allWindowsUserCredentials
     );
 
-    return response;
+    return { response, replicaInfoObject };
 }
 
 async function validateOracleCredentials(
@@ -2589,7 +2610,8 @@ async function validateOracleCredentials(
     instanceIds: string[],
     allDatabaseCredentials: RegisterCredentialsType[] = [],
     allOracleAsmCredentials: RegisterCredentialsType[] = [],
-    checkManageReadiness: boolean = false
+    checkManageReadiness: boolean = false,
+    isReplicaInfoRequired: boolean = false
 ) {
     logger.info('Validate Oracle credentials', {
         accountId,
@@ -2601,7 +2623,8 @@ async function validateOracleCredentials(
         checkManageReadiness,
         allDatabaseCredentialsLength: allDatabaseCredentials.length,
         allOracleAsmCredentialsLength: allOracleAsmCredentials.length,
-        instanceIds
+        instanceIds,
+        isReplicaInfoRequired
     });
 
     let command = '';
@@ -2634,7 +2657,8 @@ async function validateOracleCredentials(
 
     if (oracleCredentials.length) {
         command += oracleCredentials.reduce(
-            (acc: string, { resourceId }) => `${acc}${validateOracleInstanceConnectivity(instanceId, resourceId)}\n`,
+            (acc: string, { resourceId }) =>
+                `${acc}${validateOracleInstanceConnectivity(instanceId, resourceId, isReplicaInfoRequired)}\n`,
             ''
         );
     }
@@ -2668,6 +2692,7 @@ async function validateOracleCredentials(
     const response: Record<string, any>[] = [];
     const paramsToDelete: string[] = [];
     const instancesToBeDeleted: string[] = [];
+    const replicaInfoObject: ReplicaInfoType[] = [];
 
     const instanceIdToMissingPermissionsMap = new Map<string, string[]>();
     const instanceIdToRemediationMissingPermissionsMap = new Map<string, string[]>();
@@ -2741,44 +2766,71 @@ async function validateOracleCredentials(
     }
 
     if (oracleCredentials.length) {
-        parsedResponse.instances.forEach((instance: OracleInstanceRegistration) => {
-            if (instance.oracleInstanceConnectivity === false) {
-                instancesToBeDeleted.push(instance.oracleInstanceName);
-                response.push({
-                    resourceId: instance.oracleInstanceName,
-                    resourceType: RESOURCESTYPE.ORACLE,
-                    databaseServerError: instance.oracleError,
-                    manageReadiness: {
-                        assessment: {
-                            missingSqlPermissions: ['Invalid credentials provided'],
-                            missingModules
+        await Promise.all(
+            parsedResponse.instances.map(async (instance: OracleInstanceRegistration) => {
+                if (instance.oracleInstanceConnectivity === false) {
+                    instancesToBeDeleted.push(instance.oracleInstanceName);
+                    response.push({
+                        resourceId: instance.oracleInstanceName,
+                        resourceType: RESOURCESTYPE.ORACLE,
+                        databaseServerError: instance.oracleError,
+                        manageReadiness: {
+                            assessment: {
+                                missingSqlPermissions: ['Invalid credentials provided'],
+                                missingModules
+                            }
+                        }
+                    });
+                    shouldThrowError = true;
+                    errorMessage += `Oracle connectivity failed for instance ${instance.oracleInstanceName}: ${instance.oracleError}. `;
+                } else if (instance.oracleInstanceConnectivity === true) {
+                    const { oracleInstanceName, oracleEdition, isDataGuardConfigured, dataGuardDetails } = instance;
+                    if (isDataGuardConfigured) {
+                        const dgHostIps = dataGuardDetails?.members?.map((dg: any) => dg.host).filter(Boolean) || [];
+                        // Get EC2 instance details for those IPs
+                        if (dgHostIps.length > 0) {
+                            const dgEc2Details = await getInstanceDetailsByPrivateIp(credentialsId, region, dgHostIps, {
+                                useCache: true
+                            });
+                            logger.info('Data Guard EC2 details', { dgEc2Details });
+                            for (const dgMember of dataGuardDetails.members) {
+                                const matchingEc2 = dgEc2Details?.find(
+                                    ec2 =>
+                                        ec2.ec2InstancePrivateIpAddress &&
+                                        ec2.ec2InstancePrivateIpAddress === dgMember.host
+                                );
+                                if (matchingEc2) {
+                                    replicaInfoObject.push({
+                                        ec2InstanceId: matchingEc2.ec2InstanceId,
+                                        ec2HostName: matchingEc2.ec2InstanceName || '',
+                                        role: dgMember.destRole,
+                                        databaseName: dgMember.dbUniqueName
+                                    });
+                                }
+                            }
                         }
                     }
-                });
-                shouldThrowError = true;
-                errorMessage += `Oracle connectivity failed for instance ${instance.oracleInstanceName}: ${instance.oracleError}. `;
-            } else if (instance.oracleInstanceConnectivity === true) {
-                const { oracleInstanceName, oracleEdition } = instance;
-                const missingPermissions = instanceIdToMissingPermissionsMap.get(oracleInstanceName) || [];
-                const remediationMissingPermissions =
-                    instanceIdToRemediationMissingPermissionsMap.get(oracleInstanceName) || [];
-                response.push({
-                    resourceId: oracleInstanceName,
-                    resourceType: RESOURCESTYPE.ORACLE,
-                    databaseServerEdition: oracleEdition,
-                    manageReadiness: {
-                        assessment: {
-                            missingSqlPermissions: missingPermissions,
-                            missingModules
-                        },
-                        remediation: {
-                            missingSqlPermissions: remediationMissingPermissions,
-                            missingModules
+                    const missingPermissions = instanceIdToMissingPermissionsMap.get(oracleInstanceName) || [];
+                    const remediationMissingPermissions =
+                        instanceIdToRemediationMissingPermissionsMap.get(oracleInstanceName) || [];
+                    response.push({
+                        resourceId: oracleInstanceName,
+                        resourceType: RESOURCESTYPE.ORACLE,
+                        databaseServerEdition: oracleEdition,
+                        manageReadiness: {
+                            assessment: {
+                                missingSqlPermissions: missingPermissions,
+                                missingModules
+                            },
+                            remediation: {
+                                missingSqlPermissions: remediationMissingPermissions,
+                                missingModules
+                            }
                         }
-                    }
-                });
-            }
-        });
+                    });
+                }
+            })
+        );
     }
 
     if (oracleAsmCredentials?.length) {
@@ -2814,7 +2866,7 @@ async function validateOracleCredentials(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, `One or more instances failed validation: ${errorMessage}`);
     }
 
-    return response;
+    return { response, replicaInfoObject };
 }
 
 async function verifyAndCreateCredentials(
