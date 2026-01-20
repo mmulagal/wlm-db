@@ -626,7 +626,6 @@ export interface SQLServerInstancesDiscovered {
     sqlServerNodes?: Array<string>;
     nodeIps?: Array<string>;
     sqlServerDeploymentType?: string;
-    baseDeploymentType?: string;
     databaseCount?: number;
     sqlServerAuthentication?: boolean;
     storage?: Array<DiscoveredStorageObj>;
@@ -636,6 +635,18 @@ export interface SQLServerInstancesDiscovered {
     }>;
     manageReadiness?: any;
     dataguardDetails?: any;
+    aoagDetails?: {
+        serverInfo?: {
+            serverName?: string;
+            isHadrEnabled?: number;
+        };
+        availabilityGroups?: Array<{
+            agName?: string;
+            primaryReplica?: string;
+            replicas?: Array<any>;
+        }>;
+        baseDeploymentType?: string;
+    };
 }
 
 export interface PgsqlInstancesDiscovered {

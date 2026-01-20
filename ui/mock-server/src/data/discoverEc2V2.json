@@ -1,5 +1,5 @@
 {
-    "count": 28,
+    "count": 29,
     "items": [
         {
             "ec2InstanceId": "i-0a6c761f84a4adfd1",
@@ -154,7 +154,6 @@
                     "sqlServerNodes": ["EC2AMAZ-3UTIH78"],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "AOAG",
-                    "baseDeploymentType": "FCI",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
                     "storage": [
@@ -181,7 +180,62 @@
                             "missingSqlPermissions": ["abc", "def"],
                             "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
                         }
-                    }
+                    },
+                    "aoagDetails": {
+                        "serverInfo": {
+                            "serverName": "sqlsataog1",
+                            "isHadrEnabled": 1
+                        },
+                        "availabilityGroups": [
+                            {
+                                "agName": "satag1",
+                                "primaryReplica": "sqlsataog1",
+                                "replicas": [
+                                    {
+                                        "replica": "sqlsataog1",
+                                        "role": "PRIMARY",
+                                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                                        "failoverMode": "MANUAL",
+                                        "syncHealth": "HEALTHY",
+                                        "connectedState": "CONNECTED",
+                                        "isLocalReplica": true,
+                                        "secondaryConnections": "ALL",
+                                        "primaryConnections": "ALL",
+                                        "isReadReplica": 0,
+                                        "isRoutableReadReplica": 0
+                                    },
+                                    {
+                                        "replica": "sqlsataog2",
+                                        "role": "SECONDARY",
+                                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                                        "failoverMode": "MANUAL",
+                                        "syncHealth": "HEALTHY",
+                                        "connectedState": "CONNECTED",
+                                        "isLocalReplica": false,
+                                        "secondaryConnections": "ALL",
+                                        "primaryConnections": "ALL",
+                                        "isReadReplica": 1,
+                                        "isRoutableReadReplica": 0
+                                    }
+                                ]
+                            }
+                        ],
+                        "baseDeploymentType": "FCI"
+                    },
+                    "aoagClusterNodeDetails": [
+                        {
+                            "node": "sqlsataog1",
+                            "ip": "10.0.136.148",
+                            "ec2InstanceId": "i-0756aefb9a361daa9",
+                            "ec2InstanceName": "sqlnode-78780"
+                        },
+                        {
+                            "node": "sqlsataog2",
+                            "ip": "10.0.133.34",
+                            "ec2InstanceId": "i-0756aefb9a361daa92",
+                            "ec2InstanceName": "sqlnode-28427"
+                        }
+                    ]
                 },
                 {
                     "sqlServerInstance": "NEO",
@@ -663,7 +717,6 @@
                     "sqlServerNodes": ["sqlnode1-17126", "sqlnode2-17126"],
                     "nodeIps": ["172.31.48.44", "172.31.10.206"],
                     "sqlServerDeploymentType": "AOAG",
-                    "baseDeploymentType": "Standalone",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
                     "storage": [
@@ -697,7 +750,174 @@
                             "missingSqlPermissions": [],
                             "missingModules": []
                         }
-                    }
+                    },
+                    "aoagDetails": {
+                        "serverInfo": {
+                            "serverName": "sqlsataog2",
+                            "isHadrEnabled": 1
+                        },
+                        "availabilityGroups": [
+                            {
+                                "agName": "satag1",
+                                "primaryReplica": "sqlsataog1",
+                                "replicas": [
+                                    {
+                                        "replica": "sqlsataog1",
+                                        "role": "PRIMARY",
+                                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                                        "failoverMode": "MANUAL",
+                                        "syncHealth": "HEALTHY",
+                                        "connectedState": "CONNECTED",
+                                        "isLocalReplica": true,
+                                        "secondaryConnections": "ALL",
+                                        "primaryConnections": "ALL",
+                                        "isReadReplica": 1,
+                                        "isRoutableReadReplica": 0
+                                    },
+                                    {
+                                        "replica": "sqlsataog2",
+                                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                                        "failoverMode": "MANUAL",
+                                        "secondaryConnections": "ALL",
+                                        "primaryConnections": "ALL",
+                                        "isReadReplica": 0,
+                                        "isRoutableReadReplica": 0
+                                    }
+                                ]
+                            }
+                        ],
+                        "baseDeploymentType": "Standalone"
+                    },
+                    "aoagClusterNodeDetails": [
+                        {
+                            "node": "sqlsataog1",
+                            "ip": "10.0.136.148",
+                            "ec2InstanceId": "i-008b54cdabafdbc58",
+                            "ec2InstanceName": "sqlnode-78780"
+                        },
+                        {
+                            "node": "sqlsataog2",
+                            "ip": "10.0.133.34",
+                            "ec2InstanceId": "i-07520036b6a7a1fd3",
+                            "ec2InstanceName": "sqlnode-28427"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-008b54cdabafdbc582",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "sqlnode1-17126",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "MSSQLSERVER2",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "14.0.3460.9",
+                    "sqlServerProductYear": 2017,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "windowsDomainUserAuthentication": false,
+                    "sqlServerEdition": "Enterprise Evaluation Edition (64-bit)",
+                    "sqlServerEngineEdition": 3,
+                    "sqlServerName": "WEBER2",
+                    "serverGuid": "FF715E64-E06E-4623-B2C8-EC86F98DAEF9",
+                    "failureInfo": "Failed to get network drives from Windows Registry.\n",
+                    "sqlServerNodes": ["sqlnode1-17126", "sqlnode2-17126"],
+                    "nodeIps": ["172.31.48.44", "172.31.10.206"],
+                    "sqlServerDeploymentType": "AOAG",
+                    "databaseCount": 4,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-0d5efc3057c4f12cb",
+                            "svmId": "svm-03ecf75504bab65d5",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    },
+                    "aoagDetails": {
+                        "serverInfo": {
+                            "serverName": "sqlsataog2",
+                            "isHadrEnabled": 1
+                        },
+                        "availabilityGroups": [
+                            {
+                                "agName": "satag1",
+                                "primaryReplica": "sqlsataog1",
+                                "replicas": [
+                                    {
+                                        "replica": "sqlsataog1",
+                                        "role": "PRIMARY",
+                                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                                        "failoverMode": "MANUAL",
+                                        "syncHealth": "HEALTHY",
+                                        "connectedState": "CONNECTED",
+                                        "isLocalReplica": true,
+                                        "secondaryConnections": "ALL",
+                                        "primaryConnections": "ALL",
+                                        "isReadReplica": 1,
+                                        "isRoutableReadReplica": 0
+                                    },
+                                    {
+                                        "replica": "sqlsataog2",
+                                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                                        "failoverMode": "MANUAL",
+                                        "secondaryConnections": "ALL",
+                                        "primaryConnections": "ALL",
+                                        "isReadReplica": 0,
+                                        "isRoutableReadReplica": 0
+                                    }
+                                ]
+                            }
+                        ],
+                        "baseDeploymentType": "Standalone"
+                    },
+                    "aoagClusterNodeDetails": [
+                        {
+                            "node": "sqlsataog1",
+                            "ip": "10.0.136.148",
+                            "ec2InstanceId": "i-008b54cdabafdbc58",
+                            "ec2InstanceName": "sqlnode-78780"
+                        },
+                        {
+                            "node": "sqlsataog2",
+                            "ip": "10.0.133.34",
+                            "ec2InstanceId": "i-008b54cdabafdbc582",
+                            "ec2InstanceName": "sqlnode-28427"
+                        }
+                    ]
                 }
             ]
         },

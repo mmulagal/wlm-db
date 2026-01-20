@@ -651,7 +651,8 @@ export const getPrimaryClusterNode = (
             const isCurrentAoagFciOrFci = host?.sqlServerInstances?.some(
                 (perSql: SQLServerInstancesDiscovered) =>
                     (perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
-                        perSql?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) ||
+                        perSql?.aoagDetails?.baseDeploymentType?.toLowerCase() ===
+                            SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) ||
                     perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
             );
             // To find partner node in a cluster
@@ -659,7 +660,8 @@ export const getPrimaryClusterNode = (
                 const isAoagFciOrFci = perHost?.sqlServerInstances?.some(
                     (perSql: SQLServerInstancesDiscovered) =>
                         (perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
-                            perSql?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) ||
+                            perSql?.aoagDetails?.baseDeploymentType?.toLowerCase() ===
+                                SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) ||
                         perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
                 );
                 const isSameCluster = host?.nodesList?.every(
@@ -3306,14 +3308,14 @@ export const getDiscoveredHostDeploymentAtHostLevel = (row: any, t: TFunction) =
                 perInstallationMode = t('databases.general.failover-cluster-instances');
             } else if (
                 perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
-                val?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+                val?.aoagDetails?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
             ) {
                 perInstallationMode = `(${t('databases.general.aoag')}) ${t(
                     'databases.general.failover-cluster-instances'
                 )}`;
             } else if (
                 perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
-                val?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                val?.aoagDetails?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
             ) {
                 perInstallationMode = `(${t('databases.general.aoag')}) ${t('databases.general.standalone')}`;
             } else if (perInstallationMode?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
@@ -3341,12 +3343,12 @@ export const getDiscoveredHostDeploymentV2 = (host: any, t: TFunction) => {
         type = DATABASE_DEPLOYMENT_MODE.DATAGUARD;
     } else if (
         deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
-        host?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+        host?.aoagDetails?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
     ) {
         type = `(${t('databases.general.aoag')}) ${t('databases.general.failover-cluster-instances')}`;
     } else if (
         deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
-        host?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+        host?.aoagDetails?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
     ) {
         type = `(${t('databases.general.aoag')}) ${t('databases.general.standalone')}`;
     } else if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {

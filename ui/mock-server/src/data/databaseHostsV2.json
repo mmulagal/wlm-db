@@ -105,7 +105,6 @@
                         }
                     },
                     "sqlServerDeploymentType": "AOAG",
-                    "baseDeploymentType": "FCI",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -188,7 +187,8 @@
                                     }
                                 ]
                             }
-                        ]
+                        ],
+                        "baseDeploymentType": "FCI"
                     },
                     "aoagClusterNodeDetails": [
                         {
@@ -311,7 +311,6 @@
                         }
                     },
                     "sqlServerDeploymentType": "AOAG",
-                    "baseDeploymentType": "FCI",
                     "databaseInstanceErrors": "",
                     "databases": [
                         {
@@ -394,7 +393,8 @@
                                     }
                                 ]
                             }
-                        ]
+                        ],
+                        "baseDeploymentType": "FCI"
                     },
                     "aoagClusterNodeDetails": [
                         {
