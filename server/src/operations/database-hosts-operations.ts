@@ -53,6 +53,7 @@ import {
     getNativeSQLProtection,
     getPerformanceMetrics,
     getDataBasesSummary,
+    getAoagDetails,
     getNativeSQLBackedupDatabases,
     getActiveSqlNode,
     getServerDetails,
@@ -1404,7 +1405,8 @@ async function getDatabaseDetails(
     getProtection: boolean,
     databaseInstances: DatabaseInstance[],
     activeNodeInstanceId?: string,
-    sqlAuthEnabled?: boolean
+    sqlAuthEnabled?: boolean,
+    includeAoag?: boolean
 ) {
     logger.info('Getting database details', {
         accountId,
@@ -1415,6 +1417,7 @@ async function getDatabaseDetails(
         activeNodeInstanceId,
         getProtection,
         sqlAuthEnabled,
+        includeAoag,
         databaseInstancesLength: databaseInstances.length
     });
     try {
@@ -1431,7 +1434,8 @@ async function getDatabaseDetails(
                     sqlAuthEnabled,
                     accountId,
                     credentialsId,
-                    newinstanceNames
+                    newinstanceNames,
+                    includeAoag
                 ),
                 ...(getProtection
                     ? [
@@ -1467,13 +1471,24 @@ async function getDatabaseDetails(
 
         const response = Object.entries(databases).reduce((acc, [instName, dbs]) => {
             if (Array.isArray(dbs)) {
-                acc[instName] = (dbs as DatabaseDetails[]).map(
-                    (database: DatabaseDetails): UserDatabase => ({
-                        name: database.databaseName,
-                        size: database.databaseSize,
-                        status: database.databaseStatus,
-                        collation: database.collationName ?? '',
-                        type: MSSQL_SYSTEM_DATABASES.includes(database?.databaseName?.toLowerCase())
+                acc[instName] = (dbs as DatabaseDetails[]).map((database: DatabaseDetails): UserDatabase => {
+                    const {
+                        databaseName,
+                        databaseSize,
+                        databaseStatus,
+                        collationName,
+                        availabilityGroup,
+                        replicaRole,
+                        synchronizationState,
+                        isReadableSecondary
+                    } = database;
+
+                    return {
+                        name: databaseName,
+                        size: databaseSize,
+                        status: databaseStatus,
+                        collation: collationName ?? '',
+                        type: MSSQL_SYSTEM_DATABASES.includes(databaseName?.toLowerCase())
                             ? MSSQL_DATABASE_TYPES.SYSTEM
                             : MSSQL_DATABASE_TYPES.USER,
                         ...(getProtection && {
@@ -1481,16 +1496,13 @@ async function getDatabaseDetails(
                                 isAwsBackupEnabled: {
                                     fsxn: IS_DEMO_FLOW
                                         ? true
-                                        : checkKey(
-                                              awsBackup[instName]?.volumeDBMapWithBackupFlag,
-                                              database.databaseName
-                                          ),
+                                        : checkKey(awsBackup[instName]?.volumeDBMapWithBackupFlag, databaseName),
                                     fsxw: false,
                                     ebs: false
                                 },
                                 isFsxOntapSnapshotsEnabled: IS_DEMO_FLOW
                                     ? true
-                                    : checkKey(ontapBackup[instName], database.databaseName),
+                                    : checkKey(ontapBackup[instName], databaseName),
                                 isSqlNativeEnabled:
                                     backedupDatabases?.[instName] && backedupDatabases?.[instName].includes('error')
                                         ? false
@@ -1498,19 +1510,24 @@ async function getDatabaseDetails(
                                               backedupDatabases?.[instName] &&
                                                   backedupDatabases[instName]?.find(
                                                       (e: { backedupDatabases: string }) =>
-                                                          e.backedupDatabases === database.databaseName
+                                                          e.backedupDatabases === databaseName
                                                   )
                                           ),
-                                isCRREnabled: IS_DEMO_FLOW
-                                    ? true
-                                    : checkKey(crrBackup[instName], database.databaseName),
+                                isCRREnabled: IS_DEMO_FLOW ? true : checkKey(crrBackup[instName], databaseName),
                                 isAppConsistentBackupEnabled:
-                                    IS_DEMO_FLOW ||
-                                    checkKey(isAppConsistentBackupEnabled[instName], database.databaseName)
+                                    IS_DEMO_FLOW || checkKey(isAppConsistentBackupEnabled[instName], databaseName)
                             }
-                        })
-                    })
-                );
+                        }),
+                        // AOAG fields - only included when database is part of an AG (non-null values from LEFT JOIN)
+                        ...(includeAoag &&
+                            availabilityGroup && {
+                                availabilityGroup,
+                                replicaRole,
+                                synchronizationState,
+                                isReadableSecondary: isReadableSecondary === 1
+                            })
+                    };
+                });
             } else {
                 logger.error(
                     `Error while fetching database details for instance ${instName} for account ${accountId} for credentials ${credentialsId} in region ${region}.`
@@ -1586,6 +1603,7 @@ async function getDatabaseInstancesSummary(
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
     const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLowerCase());
     const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLowerCase());
+    const shouldQueryAoag = fieldsValues?.includes(DatabaseHostsQueryFields.AOAG.toLowerCase());
 
     let serverDetails: any;
     let databaseInstancetopologyData: any;
@@ -1598,6 +1616,7 @@ async function getDatabaseInstancesSummary(
     let ontapStorageSavings: any;
     let databases: Record<string, any[]>;
     let resourceTrendsData: any;
+    let aoagDetailsData: any;
     const errormessages: { [index: string]: string } = {};
 
     const instanceNames = databaseInstances.map((instance: DatabaseInstance) => instance.database_instance_name);
@@ -1631,6 +1650,7 @@ async function getDatabaseInstancesSummary(
             nodeTopologyData,
             ontapStorageSavings,
             databases,
+            aoagDetailsData,
             resourceTrendsData
         ] = await Promise.all(
             [
@@ -1718,9 +1738,13 @@ async function getDatabaseInstancesSummary(
                               shouldQueryDatabasesWithProtection,
                               databaseInstances,
                               activeNodeInstanceId,
-                              isSqlAuthEnabled
+                              isSqlAuthEnabled,
+                              shouldQueryAoag // Include AOAG fields in database list when requested
                           )
                       ]
+                    : [Promise.resolve()]),
+                ...(shouldQueryAoag
+                    ? [getAoagDetails(credentialsId, region, activeNodeInstanceId, instanceNames, isSqlAuthEnabled)]
                     : [Promise.resolve()]),
                 ...(getResourceutilization || getPerformance
                     ? [
@@ -1748,6 +1772,60 @@ async function getDatabaseInstancesSummary(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Error while fetching database instance summary ${accountId}, ${error}`
         );
+    }
+
+    // Pre-fetch EC2 details for all AOAG cluster nodes
+    // This allows us to map replica names to EC2 instance IDs via their IP addresses
+    const aoagIpToInstanceId = new Map<string, string>();
+    const aoagIpToInstanceName = new Map<string, string>();
+    const aoagNodeToIp = new Map<string, string>();
+
+    if (shouldQueryAoag && aoagDetailsData) {
+        try {
+            // Collect all cluster node IPs from all instances' windowsClusterNodes
+            const allClusterNodeIps: string[] = [];
+            for (const instanceData of Object.values(aoagDetailsData) as any[]) {
+                if (instanceData?.windowsClusterNodes && Array.isArray(instanceData.windowsClusterNodes)) {
+                    instanceData.windowsClusterNodes.forEach((node: { Node?: string; Address?: string }) => {
+                        if (node.Address) {
+                            allClusterNodeIps.push(node.Address);
+                            if (node.Node) {
+                                aoagNodeToIp.set(node.Node.toLowerCase(), node.Address);
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Get EC2 details for all cluster node IPs
+            if (allClusterNodeIps.length > 0) {
+                const uniqueIps = [...new Set(allClusterNodeIps)];
+                const clusterNodeEc2Details = await getInstanceDetailsByPrivateIp(credentialsId, region, uniqueIps, {
+                    useCache: true
+                });
+
+                // Build lookup maps: IP -> EC2 instance ID/Name
+                clusterNodeEc2Details?.forEach(node => {
+                    if (node.ec2InstancePrivateIpAddress) {
+                        if (node.ec2InstanceId) {
+                            aoagIpToInstanceId.set(node.ec2InstancePrivateIpAddress, node.ec2InstanceId);
+                        }
+                        if (node.ec2InstanceName) {
+                            aoagIpToInstanceName.set(node.ec2InstancePrivateIpAddress, node.ec2InstanceName);
+                        }
+                    }
+                });
+
+                logger.debug('AOAG cluster node EC2 lookup maps built', {
+                    nodeToIpCount: aoagNodeToIp.size,
+                    ipToInstanceIdCount: aoagIpToInstanceId.size,
+                    ipToInstanceNameCount: aoagIpToInstanceName.size
+                });
+            }
+        } catch (error) {
+            logger.error('Failed to get EC2 details for AOAG cluster nodes', error);
+            // Continue without EC2 details - aoagClusterNodeDetails will just have node names
+        }
     }
 
     return databaseInstances.map((databaseInstance: DatabaseInstance, index) => {
@@ -1803,6 +1881,68 @@ async function getDatabaseInstancesSummary(
             : {};
         databaseInstanceDetails.storage = storageData?.[index];
         databaseInstanceDetails.sqlServerDeploymentType = databaseDeploymentType || '';
+
+        // Attach AOAG details at instance level when requested and available
+        if (shouldQueryAoag && aoagDetailsData?.[instanceName]?.aoagDetails) {
+            const { aoagDetails } = aoagDetailsData[instanceName];
+            // Only attach if there are actual availability groups
+            if (aoagDetails?.availabilityGroups?.length > 0) {
+                databaseInstanceDetails.aoagDetails = aoagDetails;
+                // Build aoagClusterNodeDetails from replica info using Windows Cluster node IPs
+                // Node Name -> IP -> EC2 Instance
+                const clusterNodeDetails: Array<{
+                    node: string;
+                    ip?: string;
+                    ec2InstanceId?: string;
+                    ec2InstanceName?: string;
+                }> = [];
+                // Extract unique replica names from all availability groups
+                const replicaNames = new Set<string>();
+                aoagDetails.availabilityGroups?.forEach((ag: any) => {
+                    ag.replicas?.forEach((replica: any) => {
+                        if (replica.replica) {
+                            replicaNames.add(replica.replica);
+                        }
+                    });
+                });
+                // Map replica names to EC2 instances using Windows Cluster node IPs
+                replicaNames.forEach((replicaName: string) => {
+                    const nodeDetail: { node: string; ip?: string; ec2InstanceId?: string; ec2InstanceName?: string } =
+                        {
+                            node: replicaName
+                        };
+                    // First, try to find IP from Windows Cluster nodes
+                    const nodeIp = aoagNodeToIp.get(replicaName.toLowerCase());
+                    if (nodeIp) {
+                        nodeDetail.ip = nodeIp;
+                        // Use IP to look up EC2 details
+                        const ec2InstanceId = aoagIpToInstanceId.get(nodeIp);
+                        const ec2InstanceName = aoagIpToInstanceName.get(nodeIp);
+                        if (ec2InstanceId) {
+                            nodeDetail.ec2InstanceId = ec2InstanceId;
+                        }
+                        if (ec2InstanceName) {
+                            nodeDetail.ec2InstanceName = ec2InstanceName;
+                        }
+                    } else if (nodeTopologyData?.ec2Details) {
+                        // Fallback: Try to match from nodeTopology
+                        const matchingEc2 = nodeTopologyData.ec2Details.find(
+                            (ec2: any) =>
+                                ec2.name?.toLowerCase()?.includes(replicaName.toLowerCase()) ||
+                                replicaName.toLowerCase()?.includes(ec2.name?.toLowerCase())
+                        );
+                        if (matchingEc2) {
+                            nodeDetail.ec2InstanceId = matchingEc2.id;
+                            nodeDetail.ec2InstanceName = matchingEc2.name;
+                        }
+                    }
+                    clusterNodeDetails.push(nodeDetail);
+                });
+                if (clusterNodeDetails.length > 0) {
+                    databaseInstanceDetails.aoagClusterNodeDetails = clusterNodeDetails;
+                }
+            }
+        }
 
         if (getPerformance && performanceData?.[instanceName]) {
             databaseInstanceDetails.performance = {

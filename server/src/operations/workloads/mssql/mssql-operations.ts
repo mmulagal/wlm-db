@@ -70,7 +70,8 @@ import {
     INSTANCE_DETAILS,
     RESOURCE_UTILIZATION,
     sqlQueryExecution,
-    sqlQueryExecutionWithAuth
+    sqlQueryExecutionWithAuth,
+    getAoagDetailsScript
 } from './ssm-script-utils';
 import { getParameter } from '../../../lib/aws/ssm';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
@@ -143,20 +144,26 @@ async function getDatabasesCount(
     return parsedResponse;
 }
 
+/**
+ * Get databases summary for a resource
+ * @param includeAoag - When true, includes AOAG fields (availabilityGroup, replicaRole, synchronizationState, isReadableSecondary) via LEFT JOINs
+ */
 async function getDataBasesSummary(
     resourceId: string,
     activeNodeInstanceId?: string,
     sqlAuthEnabled = false,
     accountId?: string,
     credentialsId?: string,
-    databaseInstances?: string[]
+    databaseInstances?: string[],
+    includeAoag = false
 ) {
     logger.info(
         'Get databases summary for resource:',
         resourceId,
         sqlAuthEnabled,
         accountId,
-        databaseInstances?.length
+        databaseInstances?.length,
+        includeAoag ? 'with AOAG' : ''
     );
 
     const [resourceDetail] = await listResources({
@@ -192,21 +199,65 @@ async function getDataBasesSummary(
         if (IS_DEMO_FLOW) {
             databaseInstances = [DEFAULT_INSTANCE_NAME];
         }
-        const commands = sqlQueryExecutionWithAuth(databaseInstances, DATABASES, sqlAuthEnabled);
+        // DATABASES is now a function - pass includeAoag to add AOAG fields via LEFT JOINs
+        const commands = sqlQueryExecutionWithAuth(databaseInstances, DATABASES(includeAoag), sqlAuthEnabled);
         const dbSummary = await callSsmExecution({
             credentialsId: credentialsId!,
             region,
             commands: [commands],
             ec2InstanceId: activeNodeInstanceId,
-            comment: 'Get databases summary on node',
+            comment: includeAoag ? 'Get databases summary with AOAG on node' : 'Get databases summary on node',
             cacheData: true,
             shouldReadFromCloudWatchLogs: true
         });
         const cleanDBSummanry = sqlResponseParsing(dbSummary);
         return { databases: cleanDBSummanry };
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         logger.error('Failed to get databases summary', error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Failed to get databases summary. ${error?.message}`);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Failed to get databases summary. ${errorMessage}`);
+    }
+}
+
+/**
+ * Get AOAG details at instance level (serverInfo + availabilityGroups with replicas)
+ * Returns structured AOAG information for AOAG-enabled instances
+ * Uses the same encapsulated Get-AoagDetails function as discovery for consistency
+ * Includes: auth fallbacks, JSON normalization, error tracking
+ */
+async function getAoagDetails(
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    instanceNames: string[],
+    sqlAuthEnabled = false
+): Promise<Record<string, unknown>> {
+    logger.info('Get AOAG details for instance:', {
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        instanceNames,
+        sqlAuthEnabled
+    });
+
+    try {
+        const updatedInstanceNames = IS_DEMO_FLOW ? [DEFAULT_INSTANCE_NAME] : instanceNames;
+        const commands = getAoagDetailsScript(updatedInstanceNames, sqlAuthEnabled);
+        const aoagResponse = await callSsmExecution({
+            credentialsId,
+            region,
+            commands: [commands],
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Get AOAG details for MSSQL instance',
+            cacheData: true,
+            shouldReadFromCloudWatchLogs: true
+        });
+        const parsedResponse = sqlResponseParsing(aoagResponse) as Record<string, unknown>;
+        return parsedResponse;
+    } catch (error: unknown) {
+        logger.error('Failed to get AOAG details', error);
+        // Return empty object instead of throwing - AOAG details are optional
+        return {};
     }
 }
 
@@ -1718,6 +1769,7 @@ export {
     getResourceUtilisation,
     getResourceUtilisationDetails,
     getDataBasesSummary,
+    getAoagDetails,
     getServerSummary,
     getServerDetails,
     getResourceDetails,

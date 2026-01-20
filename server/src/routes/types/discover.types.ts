@@ -53,7 +53,14 @@ const AoagDetails = Type.Object({
             isHadrEnabled: Type.Optional(Type.Number())
         })
     ),
-    availabilityGroups: Type.Optional(Type.Array(AoagGroup))
+    availabilityGroups: Type.Optional(Type.Array(AoagGroup)),
+    // Base deployment type indicates whether underlying AOAG nodes are Standalone or FCI
+    baseDeploymentType: Type.Optional(
+        Type.String({
+            description: 'Underlying deployment type when AOAG: Standalone or FCI',
+            enum: ['Standalone', 'FCI']
+        })
+    )
 });
 
 const SqlServerInstanceInfo = Type.Object({

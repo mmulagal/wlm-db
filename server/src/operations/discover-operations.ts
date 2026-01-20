@@ -644,6 +644,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         databaseCount,
                         failureInfo,
                         sqlServerDeploymentType,
+                        baseDeploymentType,
                         windowsOsVersion,
                         windowsClusterName,
                         windowsClusterNodes,
@@ -715,6 +716,24 @@ async function getHostAndSqlInfoFromPsOutput(
                         }
                     }
 
+                    let processedAoagDetails = aoagDetails;
+                    if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT && aoagDetails) {
+                        processedAoagDetails = { ...aoagDetails };
+
+                        if (baseDeploymentType) {
+                            processedAoagDetails.baseDeploymentType = baseDeploymentType;
+                        }
+
+                        if (processedAoagDetails.serverInfo) {
+                            // Recreate serverInfo with only the fields defined in schema (exclude isClustered)
+                            const { serverName, isHadrEnabled } = processedAoagDetails.serverInfo;
+                            processedAoagDetails.serverInfo = {
+                                ...(serverName && { serverName }),
+                                ...(isHadrEnabled !== undefined && { isHadrEnabled })
+                            };
+                        }
+                    }
+
                     ssmTargetSqlServerInstancesInfo.push({
                         sqlServerVersion,
                         ...(sqlServerName && { sqlServerName }),
@@ -747,7 +766,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         ...(windowsClusterNodes && { windowsClusterNodes }),
                         ...(manageReadiness && { manageReadiness }),
                         ...(sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT &&
-                            aoagDetails && { aoagDetails }),
+                            processedAoagDetails && { aoagDetails: processedAoagDetails }),
                         ...(sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT &&
                             aoagClusterNodeDetails &&
                             aoagClusterNodeDetails.length && { aoagClusterNodeDetails })

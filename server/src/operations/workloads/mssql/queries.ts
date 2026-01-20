@@ -3,17 +3,39 @@ import { SQL_CASE_INSENSITIVE } from '../../../utils/consts';
 const SET_NOCOUNT = 'SET NOCOUNT ON;';
 const FOR_JSON_PATH = 'FOR JSON PATH';
 
-const DATABASES = `${SET_NOCOUNT} SELECT (SELECT databaseId = d.database_id,
+// Parameterized DATABASES query - when includeAoag is true, adds LEFT JOINs for AOAG fields
+const DATABASES = (includeAoag = false) => {
+    const aoagSelectFields = includeAoag
+        ? `,
+            availabilityGroup = ag.name,
+            replicaRole = ars.role_desc,
+            synchronizationState = drs.synchronization_state_desc,
+            isReadableSecondary = CASE WHEN ar.secondary_role_allow_connections > 0 THEN 1 ELSE 0 END`
+        : '';
+
+    const aoagJoins = includeAoag
+        ? `
+LEFT JOIN sys.dm_hadr_database_replica_states drs ON drs.database_id = d.database_id AND drs.is_local = 1
+LEFT JOIN sys.availability_replicas ar ON ar.replica_id = drs.replica_id
+LEFT JOIN sys.dm_hadr_availability_replica_states ars ON ars.replica_id = drs.replica_id AND ars.is_local = 1
+LEFT JOIN sys.availability_groups ag ON ag.group_id = ar.group_id`
+        : '';
+
+    return `${SET_NOCOUNT} SELECT (SELECT 
+            databaseId = d.database_id,
             databaseName = d.name,
             creationDate = d.create_date,
             databaseStatus = d.state_desc,
             databaseSize = t.databaseSize,
-            collationName = d.collation_name
+            collationName = d.collation_name${aoagSelectFields}
             FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
             rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
             databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))
-            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name
+            FROM sys.master_files GROUP BY database_id ) t 
+            JOIN sys.databases d ON d.database_id = t.database_id${aoagJoins}
+            ORDER BY d.name
             ${FOR_JSON_PATH}) as databases`;
+};
 
 const DATABASES_COUNT = () =>
     `${SET_NOCOUNT} SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id ${FOR_JSON_PATH}`;

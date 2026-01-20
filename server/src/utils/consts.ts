@@ -1359,7 +1359,8 @@ enum DatabaseHostsQueryFields {
     DATABASE_INSTANCE_TOPOLOGY = 'databaseInstanceTopology',
     DATABASES_WITH_PROTECTION = 'databasesWithProtection',
     DATABASES = 'databases',
-    DATABASE_SERVER = 'databaseServer' // This has to be removed once the UI is updated to remove the databaseServer field
+    DATABASE_SERVER = 'databaseServer',
+    AOAG = 'aoag'
 }
 
 enum ServerState {

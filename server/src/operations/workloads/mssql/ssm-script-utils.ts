@@ -268,7 +268,8 @@ const buildAoagQuery = `@"
 SET NOCOUNT ON;
 SELECT
     (SELECT SERVERPROPERTY('ServerName') AS serverName,
-                    SERVERPROPERTY('IsHadrEnabled') AS isHadrEnabled
+                    SERVERPROPERTY('IsHadrEnabled') AS isHadrEnabled,
+                    SERVERPROPERTY('IsClustered') AS isClustered
      FOR JSON PATH, WITHOUT_ARRAY_WRAPPER) AS serverInfo,
     (SELECT
             ag.name AS agName,
@@ -318,6 +319,113 @@ SELECT
         FOR JSON PATH) AS availabilityGroups
 FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
 "@`;
+
+/**
+ * AOAG details script with Windows Cluster node details
+ * Uses same pattern as sqlQueryExecutionWithAuth but adds:
+ * 1. Wraps AOAG response under 'aoagDetails' key
+ * 2. Adds 'windowsClusterNodes' with IPs (same as discovery's GetClusterDetails)
+ * Returns: { instanceName: { aoagDetails: {...}, windowsClusterNodes: [...] } }
+ */
+const getAoagDetailsScript = (instances: string[], sqlAuthEnabled = false) => `
+    $sqlInstances = '${JSON.stringify(instances)}' | ConvertFrom-Json
+    $query = ${buildAoagQuery}
+    try {
+        $responseObject = @{}
+        ${getSqlCredentials(sqlAuthEnabled)}
+        ${enableCredSSP}
+        ${invokeCommandWithCredSSP}
+        if ($isAtleastOneCredentialIsOfDomain) {
+            Enable-CredSSP
+        }
+        
+        # Get Windows Cluster nodes with IPs (same as discovery's GetClusterDetails)
+        $windowsClusterNodes = @()
+        try {
+            $clusterServiceStatus = (Get-Service -Name "ClusSvc" -ErrorAction SilentlyContinue).Status
+            if ($clusterServiceStatus -eq "Running") {
+                $windowsClusterNodes = Get-ClusterNetworkInterface -ErrorAction SilentlyContinue | ForEach-Object {
+                    @{
+                        "Address" = $_.Address
+                        "Node" = $_.Node
+                    }
+                }
+            }
+        } catch {
+            Write-Information "Failed to get Windows Cluster nodes: $_"
+        }
+        
+        $sqlInstances | ForEach-Object {
+            $serverInstanceName = $_
+            $instanceName = "$env:COMPUTERNAME"
+            if ($serverInstanceName -ne 'MSSQLSERVER') {
+                $instanceName = "$env:COMPUTERNAME\\$serverInstanceName"
+            }
+            try {
+                ${validateSQLInstanceCredentials}
+                $sqlError = $null
+                if ($sqlCredential.useDomainAuth -eq $True) {
+                    $sqlResponse = Invoke-CommandWithCredSSP -sqlquery $query -instanceName $instanceName
+                } elseif ($sqlCredential.useSqlAuth -eq $True) {
+                    $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $query -y 0 2>> $sqlError
+                }
+
+                if ($($LASTEXITCODE -and $LASTEXITCODE -ne 0) -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
+                    $sqlResponse =  sqlcmd -S $instanceName -Q $query -y 0 2>> $sqlError
+                }
+
+                if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+                    throw $sqlError
+                }
+                
+                # Wrap response under aoagDetails and add cluster nodes
+                $instanceResult = @{}
+                if (-not [string]::IsNullOrEmpty($sqlResponse) -and $sqlResponse -ne "NULL") {
+                    $aoagParsed = $sqlResponse | ConvertFrom-Json
+                    # Normalize nested JSON strings (same as discovery)
+                    try { if ($aoagParsed.serverInfo -is [string]) { $aoagParsed.serverInfo = $aoagParsed.serverInfo | ConvertFrom-Json } } catch {}
+                    try { if ($aoagParsed.availabilityGroups -is [string]) { $aoagParsed.availabilityGroups = $aoagParsed.availabilityGroups | ConvertFrom-Json } } catch {}
+                    try { if ($aoagParsed.availabilityGroups) { foreach ($ag in $aoagParsed.availabilityGroups) { if ($ag.Replicas -is [string]) { $ag.Replicas = $ag.Replicas | ConvertFrom-Json } } } } catch {}
+                    
+                    # Set baseDeploymentType inside aoagDetails based on isClustered
+                    if ($aoagParsed.serverInfo -and $null -ne $aoagParsed.serverInfo.isClustered) {
+                        $baseType = if ($aoagParsed.serverInfo.isClustered -eq 1) { 'FCI' } else { 'Standalone' }
+                        $aoagParsed | Add-Member -MemberType NoteProperty -Name 'baseDeploymentType' -Value $baseType -Force
+                    }
+                    
+                    # Remove isClustered from serverInfo as it's internal-only (used to calculate baseDeploymentType)
+                    if ($aoagParsed.serverInfo) {
+                        $cleanServerInfo = @{}
+                        if ($aoagParsed.serverInfo.serverName) { $cleanServerInfo['serverName'] = $aoagParsed.serverInfo.serverName }
+                        if ($null -ne $aoagParsed.serverInfo.isHadrEnabled) { $cleanServerInfo['isHadrEnabled'] = $aoagParsed.serverInfo.isHadrEnabled }
+                        $aoagParsed.serverInfo = $cleanServerInfo
+                    }
+                    
+                    $instanceResult['aoagDetails'] = $aoagParsed
+                }
+                # Add cluster nodes to each instance response
+                if ($windowsClusterNodes -and $windowsClusterNodes.Count -gt 0) {
+                    $instanceResult['windowsClusterNodes'] = $windowsClusterNodes
+                }
+                $responseObject[$serverInstanceName] = $instanceResult
+            } catch {
+                $responseObject[$serverInstanceName] = @{ 'error' = "$_.Exception.Message" }
+            }
+        }
+        $response = $responseObject | ConvertTo-Json -Depth 10
+        
+        if([string]::IsNullOrEmpty($response)) {
+            Write-Information "Failed to compress the response because the response is either null or empty. $response"
+            return $response
+        }
+        ${compressResponse}
+        return (Deflate-String $response)
+    } catch {
+        Write-Information $_.Exception.Message
+        $responseObject.add('error', $_.Exception.Message)
+        $responseObject | ConvertTo-Json -Depth 10
+    }
+`;
 
 const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
     $cpuQuery = ${cpuQuery}
@@ -1895,5 +2003,6 @@ export {
     GET_NODE_IP_ADDRESS,
     GET_FQDN,
     GET_CLUSTER_NAME,
-    buildAoagQuery
+    buildAoagQuery,
+    getAoagDetailsScript
 };

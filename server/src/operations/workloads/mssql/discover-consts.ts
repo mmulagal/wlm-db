@@ -768,6 +768,9 @@ const HOST_AND_SQL_INFO_PS1 = [
                   $responseObject['aoagDetails'] = @{ 'serverInfo' = $serverInfo; 'availabilityGroups' = @($availabilityGroup) }
                 }
               }
+              # Set baseDeploymentType for AOAG - indicates whether underlying nodes are Standalone or FCI
+              # Note: $isClustered can be 0/1 (from SQL) or $True/$False (from registry), so check for both
+              $responseObject['baseDeploymentType'] = if ($isClustered -eq 1 -or $isClustered -eq $True) { 'FCI' } else { 'Standalone' }
             }
             elseif($isClustered -eq $True -and $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] -ne '${SqlServerDeploymentModel.SQL_AOAG_SHORT}') {
               $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'

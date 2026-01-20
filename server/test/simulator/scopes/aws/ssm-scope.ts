@@ -502,7 +502,7 @@ const checkScriptUpdate = {
 };
 
 const dbSummary = {
-    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES, false)]
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES(), false)]
 };
 
 const validateMpio = {

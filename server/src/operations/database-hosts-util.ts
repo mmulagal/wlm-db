@@ -57,6 +57,11 @@ interface DatabaseDetails {
     databaseStatus: string;
     databaseSize: number;
     collationName: string;
+    // Optional AOAG fields - only present when database is part of an Availability Group
+    availabilityGroup?: string;
+    replicaRole?: string;
+    synchronizationState?: string;
+    isReadableSecondary?: number;
 }
 
 async function getEbsResourceInfo(

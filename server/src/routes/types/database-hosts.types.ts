@@ -366,7 +366,18 @@ const DatabasesResponse = Type.Object({
     protection: Type.Optional(ProtectionPerStorageTypeResponse),
     collation: Type.Optional(Type.String({ minLength: 1 })),
     created: Type.Optional(Type.String({ minLength: 1 })), // Optional for Oracle databases
-    service: Type.Optional(Type.String({ minLength: 1 })) // Optional for Oracle databases
+    service: Type.Optional(Type.String({ minLength: 1 })), // Optional for Oracle databases
+    // AOAG fields - only present when database is part of an Availability Group
+    availabilityGroup: Type.Optional(Type.String({ description: 'Availability Group name this database belongs to' })),
+    replicaRole: Type.Optional(
+        Type.String({ description: 'Replica role: PRIMARY or SECONDARY', enum: ['PRIMARY', 'SECONDARY'] })
+    ),
+    synchronizationState: Type.Optional(
+        Type.String({ description: 'Synchronization state: SYNCHRONIZED, SYNCHRONIZING, NOT_SYNCHRONIZED, etc.' })
+    ),
+    isReadableSecondary: Type.Optional(
+        Type.Boolean({ description: 'Whether this secondary replica allows read operations' })
+    )
 });
 type DatabasesResponseType = Static<typeof DatabasesResponse>;
 
@@ -492,6 +503,57 @@ const VolumeLunDetailsResponse = Type.Object({
     )
 });
 
+// AOAG types for database-hosts API response
+const AoagReplicaResponse = Type.Object({
+    replica: Type.Optional(Type.String({ description: 'Replica server name' })),
+    role: Type.Optional(Type.String({ description: 'Replica role: PRIMARY or SECONDARY' })),
+    availabilityMode: Type.Optional(
+        Type.String({ description: 'Availability mode: SYNCHRONOUS_COMMIT or ASYNCHRONOUS_COMMIT' })
+    ),
+    failoverMode: Type.Optional(Type.String({ description: 'Failover mode: AUTOMATIC or MANUAL' })),
+    syncHealth: Type.Optional(Type.String({ description: 'Synchronization health: HEALTHY or NOT_HEALTHY' })),
+    connectedState: Type.Optional(Type.String({ description: 'Connection state: CONNECTED or DISCONNECTED' })),
+    isLocalReplica: Type.Optional(Type.Boolean({ description: 'Whether this is the local replica' })),
+    secondaryConnections: Type.Optional(Type.String({ description: 'Secondary connections allowed: YES, NO, or ALL' })),
+    primaryConnections: Type.Optional(Type.String({ description: 'Primary connections allowed: YES, NO, or ALL' })),
+    readRoutingUrl: Type.Optional(Type.String({ description: 'Read routing URL for this replica' })),
+    isReadReplica: Type.Optional(Type.Number({ description: '1 if read replica, 0 otherwise' })),
+    isRoutableReadReplica: Type.Optional(Type.Number({ description: '1 if routable read replica, 0 otherwise' }))
+});
+
+const AoagGroupResponse = Type.Object({
+    agName: Type.Optional(Type.String({ description: 'Availability Group name' })),
+    primaryReplica: Type.Optional(Type.String({ description: 'Primary replica server name' })),
+    readRoutingTargets: Type.Optional(Type.String({ description: 'Read routing targets configuration' })),
+    replicas: Type.Optional(Type.Array(AoagReplicaResponse))
+});
+
+const AoagDetailsResponse = Type.Object({
+    serverInfo: Type.Optional(
+        Type.Object({
+            serverName: Type.Optional(Type.String({ description: 'SQL Server name' })),
+            isHadrEnabled: Type.Optional(Type.Number({ description: '1 if HADR is enabled, 0 otherwise' }))
+        })
+    ),
+    availabilityGroups: Type.Optional(Type.Array(AoagGroupResponse)),
+    // Base deployment type indicates whether underlying AOAG nodes are Standalone or FCI
+    baseDeploymentType: Type.Optional(
+        Type.String({
+            description: 'Underlying deployment type when AOAG: Standalone or FCI',
+            enum: ['Standalone', 'FCI']
+        })
+    )
+});
+
+const AoagClusterNodeDetailsResponse = Type.Array(
+    Type.Object({
+        node: Type.Optional(Type.String({ description: 'Windows cluster node name' })),
+        ip: Type.Optional(Type.String({ description: 'Windows cluster node IP address' })),
+        ec2InstanceId: Type.Optional(Type.String({ description: 'Mapped EC2 instance ID for this node' })),
+        ec2InstanceName: Type.Optional(Type.String({ description: 'Mapped EC2 instance Name for this node' }))
+    })
+);
+
 const DatabaseInstanceTopology = Type.Object({
     serverType: Type.String({ enum: ['Microsoft SQL Server', 'ORACLE'] }),
     serverInstallationMode: Type.Union([
@@ -537,6 +599,9 @@ const DatabaseHostInstanceSummaryResponse = Type.Object({
     resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
     sqlServerDeploymentType: Type.Optional(Type.Union([Type.String(), OracleDeploymentType])),
     databases: Type.Optional(Type.Array(DatabasesResponse)),
+    // AOAG instance-level details - only present for MSSQL AOAG deployments when fields includes 'aoag'
+    aoagDetails: Type.Optional(AoagDetailsResponse),
+    aoagClusterNodeDetails: Type.Optional(AoagClusterNodeDetailsResponse),
     errors: Type.Optional(Type.Any())
 });
 type DatabaseHostInstanceSummaryResponseType = Static<typeof DatabaseHostInstanceSummaryResponse>;
