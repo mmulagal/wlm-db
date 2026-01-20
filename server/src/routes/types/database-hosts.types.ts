@@ -13,7 +13,11 @@ import {
 } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
 import { API_DESCRIPTION, API_DESCRIPTION_EXAMPLES } from '../../utils/schema-description-consts';
-import { OracleDeploymentTenacyType, OracleDeploymentType } from '../../operations/workloads/oracle/common-types';
+import {
+    DataguardDetailsResponse,
+    OracleDeploymentTenacyType,
+    OracleDeploymentType
+} from '../../operations/workloads/oracle/common-types';
 
 const allowedFields = Object.values(DatabaseHostsQueryFields);
 const DatabaseHostObjectParams = Type.Object({
@@ -586,6 +590,8 @@ const DatabaseHostInstanceSummaryResponse = Type.Object({
     tenancy: Type.Optional(OracleDeploymentTenacyType), // Oracle specific
     isInstanceStorageAsmManaged: Type.Optional(Type.Boolean()), // Oracle specific
     platform: Type.Optional(Type.String()), // Oracle specific
+    isDataGuardDeployed: Type.Optional(Type.Boolean()), // Oracle dataGuard specific
+    dataguardDetails: Type.Optional(DataguardDetailsResponse), // Oracle dataGuard specific
     databaseInstanceId: Type.String(),
     databaseInstanceName: Type.String(),
     status: Type.String({ enum: [ServerState.UP, ServerState.DOWN, NOT_AVAILABLE] }),

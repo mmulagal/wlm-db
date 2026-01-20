@@ -8,8 +8,8 @@ import {
     oracleUserAuthLoginCommand,
     isASMManagedCheck,
     parseSqlplusOutput,
-    sqlplusOutputFormatSettings,
-    parseSpfileProperties
+    parseSpfileProperties,
+    dataguardDeploymentUtilities
 } from './oracle-ssm-script-utils';
 
 const debugLog = (logFileName: string) => `
@@ -21,34 +21,8 @@ log() {
 
 const getDataguardDeploymentDetails = `
     ${parseSqlplusOutput}
+    ${dataguardDeploymentUtilities}
     dataguardDiscoveryErrorMsg=""
-    check_dataguard_deployment() {
-        local ORACLE_SID="$1"
-        # if dataguard is configured, FAL_CLIENT and FAL_SERVER will be configured and have different values in spfile for DB
-        sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
-            export ORACLE_SID="$1"
-            oracle_home=$(${getOracleHomePath('$ORACLE_SID')})
-            export ORACLE_HOME="$oracle_home"
-            spFilePath="$ORACLE_HOME/dbs/spfile$ORACLE_SID.ora"
-            
-            # For Oracle 21c, spfile will be located in ORACLE_BASE/dbs.
-            if [ ! -f "$spFilePath" ]; then
-                spFilePath="$ORACLE_BASE/dbs/spfile$ORACLE_SID.ora"
-            fi
-            if [ ! -f "$spFilePath" ]; then
-                exit 1
-            fi
-            falClient="${parseSpfileProperties('fal_client', '$spFilePath')}"
-            falServer="${parseSpfileProperties('fal_server', '$spFilePath')}"
-            
-            # In some cases, the fal_client may not be set, but fal_server is set for dataguard configuration to fetch logs from target destination.
-            if [[ ( -n "$falClient" && -n "$falServer" && "$falServer" != "$falClient" ) || ( -z "$falClient" && -n "$falServer" ) ]]; then
-                exit 0;
-            fi
-            exit 1;
-EOF
-        return $?
-    }
 
     # use check_dataguard_deployment before using this function
     get_dataguard_details_without_creds() {
@@ -165,123 +139,69 @@ EOF
     # All methods below this comment need sqlplus creds to run #
     ############################################################
 
-    get_dataguard_role() {
-        local ORACLE_SID="$1"
-        dataguard_role=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
-            export ORACLE_SID="$1"
-            $sqlplus_command <<'EOSQL'
-                ${sqlplusOutputFormatSettings}
-                select database_role from v$database;
-EOSQL
-) || return 1
-        dataguard_role=$(parse_sqlplus_output "$dataguard_role")
-        sqlplus_exit_code=$?
-        if [ $sqlplus_exit_code -ne 0 ]; then
-            dataguardDiscoveryErrorMsg=$dataguard_role
-            exit 1;
-        fi
-        echo "$dataguard_role" | tr -d '\n' | tr -d ' '
-EOF
-)
-    }
-    
-    is_primary_node() {
-        local ORACLE_SID="$1"
-        local role=""
-        role=$(get_dataguard_role "$ORACLE_SID")
-        if [ $? -ne 0 ]; then
-            exit 1
-        fi
-
-        if [ "$role" == "PRIMARY" ] || [ "$role" == "primary" ]; then
-            echo "true"
-        else
-            echo "false"
-        fi
-    }
-
-    get_dataguard_db_name_and_db_unique_name() {
-        local ORACLE_SID="$1"
-        local db_name_and_db_unique_name="";
-        db_name_and_db_unique_name=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
-            export ORACLE_SID="$1"
-            $sqlplus_command <<'EOSQL'
-            ${sqlplusOutputFormatSettings}
-            SELECT JSON_OBJECT(
-             'dbUniqueName' VALUE MAX(CASE WHEN name='db_unique_name' THEN value END),
-             'dbName'       VALUE MAX(CASE WHEN name='db_name' THEN value END)
-            ) AS dataguard_parameters
-            FROM v$parameter
-            WHERE name IN ('db_unique_name','db_name');
-EOSQL
-) || return 1
-
-        db_name_and_db_unique_name=$(parse_sqlplus_output "$db_name_and_db_unique_name")
-        sqlplus_exit_code=$?
-        if [ $sqlplus_exit_code -ne 0 ]; then
-            dataguardDiscoveryErrorMsg=$db_name_and_db_unique_name
-            exit 1;
-        fi
-        echo "$db_name_and_db_unique_name" | tr -d '\n' | tr -d ' '
-EOF
-)
-    }
-
-    get_dataguard_instance_sync_status() {
+    get_dataguard_details_with_creds() {
         local ORACLE_SID="$1"
         local isCDB="$2"
         local pdbName="$3"
-        local instance_sync_status=""
-        local isPrimaryNode=$(is_primary_node "$ORACLE_SID")
-        instance_sync_status=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$isCDB" "$pdbName" <<'EOF'
-            export ORACLE_SID="$1"
-            isCDB="$2"
-            pdbName="$3"
-            if [ "$isCDB" == "YES" ]; then
-                alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
-            fi
-            $sqlplus_command <<'EOSQL'
-                ${sqlplusOutputFormatSettings}
-                "$alter_cmd"
-                select action from V$DATAGUARD_PROCESS where regexp_like(name, '^(MRP|PR|TMON|TT)') and action <> 'IDLE';
-EOSQL
-) || return 1
-        instance_sync_status=$(parse_sqlplus_output "$instance_sync_status")
-        sqlplus_exit_code=$?
-        if [ $sqlplus_exit_code -ne 0 ]; then
-            dataguardDiscoveryErrorMsg=$instance_sync_status
-            exit 1;
+        
+        local db_info=""
+        db_info=$(get_dataguard_db_name_and_db_unique_name "$ORACLE_SID")
+        if [ $? -ne 0 ]; then
+            echo "{\\"error\\": \\"$dataguardDiscoveryErrorMsg\\"}"
+            return 1
         fi
-        if[ isPrimaryNode == "true" ]; then
-            echo "{\\"status\\": $instance_sync_status }" | tr -d '\n' | tr -d ' '
-        else
-            standby_sync_stats="";
-            standby_sync_stats=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$isCDB" "$pdbName" <<'EOF'
-            export ORACLE_SID="$1"
-            isCDB="$2"
-            pdbName="$3"
-            if [ "$isCDB" == "YES" ]; then
-                alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
-            fi
-            $sqlplus_command <<'EOSQL'
-                ${sqlplusOutputFormatSettings}
-                "$alter_cmd"
-                select value from V$DATAGUARD_STATS where name in ('apply lag', 'transport lag');
-EOSQL
-) || return 1
-            standby_sync_stats=$(parse_sqlplus_output "$standby_sync_stats")
-            sqlplus_exit_code=$?
-            if [ $sqlplus_exit_code -ne 0 ]; then
-                dataguardDiscoveryErrorMsg=$standby_sync_stats
-                exit 1;
-            fi
-            transport_lag=$(echo "$standby_sync_stats" | sed -n '2p')
-            apply_lag=$(echo "$standby_sync_stats" | sed -n '1p')
-            echo "{\\"status\\": $instance_sync_status, \\"transportLag\\": \\"$transport_lag\\", \\"applyLag\\": \\"$apply_lag\\" }" | tr -d '\n'
-EOF
-)
+        local dbUniqueName=$(echo "$db_info" | sed 's/.*"dbUniqueName":"\\([^"]*\\)".*/\\1/')
+        local dbName=$(echo "$db_info" | sed 's/.*"dbName":"\\([^"]*\\)".*/\\1/')
+
+        local role=""
+        role=$(get_dataguard_role "$ORACLE_SID")
+        if [ $? -ne 0 ]; then
+            echo "{\\"error\\": \\"$dataguardDiscoveryErrorMsg\\"}"
+            return 1
+        fi
+
+        local isPrimaryNode=""
+        isPrimaryNode=$(is_primary_node "$ORACLE_SID")
+        if [ $? -ne 0 ]; then
+            echo "{\\"error\\": \\"$dataguardDiscoveryErrorMsg\\"}"
+            return 1
+        fi
+
+        # Get associated hosts
+        local associatedHosts=""
+        associatedHosts=$(get_associated_hosts_with_creds "$ORACLE_SID")
+        if [ $? -ne 0 ]; then
+            associatedHosts="[]"
+        fi
+        local syncStatus=""
+        syncStatus=$(get_dataguard_instance_sync_status "$ORACLE_SID" "$isCDB" "$pdbName")
+        if [ $? -ne 0 ]; then
+            syncStatus="{\\"instanceSyncStatus\\":\\"UNKNOWN\\"}"
+        fi
+        echo "{\\"dbUniqueName\\":\\"$dbUniqueName\\",\\"dbName\\":\\"$dbName\\",\\"associatedHosts\\":$associatedHosts,\\"isPrimaryNode\\":$isPrimaryNode,\\"role\\":\\"$role\\",\\"status\\":$syncStatus}" | tr -d '\n'
     }
 
+`;
+
+const GET_DATAGUARD_DETAILS_FOR_ALL_SIDS = (oracleSids: string[], ec2InstanceId: string) => `
+# Get Dataguard details for all provided Oracle SIDs
+oracleSids=(${oracleSids.map(sid => `"${sid}"`).join(' ')})
+resultObject="{}"
+for oracleSid in "\${oracleSids[@]}"; do
+    ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, '$oracleSid')}
+    isDefaultAuth=$(is_default_auth "$oracleSid")
+    ${getDataguardDeploymentDetails}
+    check_dataguard_deployment "$oracleSid"
+    if [ $? -eq 0 ]; then
+        # DataGuard is configured, fetch details with creds
+        dataguardDetails=$(get_dataguard_details_with_creds "$oracleSid" "NO" "")
+        resultObject=$(echo "$resultObject" | jq --arg key "$oracleSid" --argjson val "$dataguardDetails" '. + {($key): $val}')
+    else
+        resultObject=$(echo "$resultObject" | jq --arg key "$oracleSid" '. + {($key): {}}')
+    fi
+done
+
+echo "$resultObject"
 `;
 
 const loadStorageDetectionModules = `
@@ -1548,8 +1468,13 @@ EOF
         dataguardDetails="{}"    
         check_dataguard_deployment "$sid"
         if [ $? -eq 0 ]; then
+            
             isDataguardDeployed=true
-            dataguardDetails=$(get_dataguard_details_without_creds "$sid")
+            if [ "$isDefaultAuth" == "true" ]; then
+                dataguardDetails=$(get_dataguard_details_with_creds "$sid")
+            else
+                dataguardDetails=$(get_dataguard_details_without_creds "$sid")
+            fi
         fi
 
         JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions, \\"remediation_missing_permissions\\": $remediationMissingPermissions, \\"isDataguardDeployed\\": $isDataguardDeployed, \\"dataguard_details\\": $dataguardDetails }"
@@ -2084,5 +2009,6 @@ export {
     fetchOracleDatabasesCount,
     fetchOracleDatabasesDetails,
     getMappedOntapDataVolumeForInstance,
-    debugLog
+    debugLog,
+    GET_DATAGUARD_DETAILS_FOR_ALL_SIDS
 };

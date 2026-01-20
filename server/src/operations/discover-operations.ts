@@ -89,8 +89,7 @@ import {
     DiscoverOracleResponseType,
     DiscoverOracleInstanceType,
     DiscoverOracleResponseBodyType,
-    PgSqlServerInstaceType,
-    OracleDataguardDetailsType
+    PgSqlServerInstaceType
 } from '../routes/types/discover.types';
 import getLogger from '../utils/logger';
 import { describeFSxFileSystems, describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
@@ -103,6 +102,7 @@ import { copyScriptsToHost } from './resource-operations';
 import { discoverPgsqlHosts } from './workloads/pgsql/pgsql-discover-scripts';
 import { discoverOracleHosts } from './workloads/oracle/oracle-discover-scripts';
 import { OracleDeploymentTenacy } from './workloads/oracle/consts';
+import { OracleDataguardDiscoveryDetailsType } from './workloads/oracle/common-types';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -1943,7 +1943,7 @@ async function discoverOracleResources(
 
                             if (isDataGuardDeployed && dataguardDetails) {
                                 const privateIps: string[] = (
-                                    dataguardDetails as OracleDataguardDetailsType
+                                    dataguardDetails as OracleDataguardDiscoveryDetailsType
                                 )?.associatedHosts?.map(host => host.hostIp) as string[];
                                 if (privateIps && privateIps.length > 0) {
                                     // eslint-disable-next-line no-await-in-loop
@@ -1955,7 +1955,7 @@ async function discoverOracleResources(
                                     );
                                     logger.debug(hostDetails);
                                     dataguardDetails.associatedHosts = (
-                                        dataguardDetails as OracleDataguardDetailsType
+                                        dataguardDetails as OracleDataguardDiscoveryDetailsType
                                     )?.associatedHosts?.map(host => {
                                         const matchedHost = hostDetails.find(
                                             ec2detail => ec2detail.ec2InstancePrivateIpAddress === host.hostIp

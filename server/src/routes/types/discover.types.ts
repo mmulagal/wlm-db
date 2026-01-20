@@ -1,6 +1,7 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { DatabaseHostsQueryFields, PGSQL_DEFAULT_INSTANCE_NAME, SqlServerDeploymentModel } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
+import { OracleDataguardDiscoveryDetails } from '../../operations/workloads/oracle/common-types';
 
 const allowedFields = Object.values(DatabaseHostsQueryFields);
 
@@ -330,27 +331,6 @@ const DiscoverPgSqlResponseBody = Type.Object({
     )
 });
 
-const OracleDataguardDetails = Type.Object({
-    dbUniqueName: Type.Optional(Type.String({ description: 'Database unique name' })),
-    dbName: Type.Optional(Type.String({ description: 'Database name' })),
-    associatedHosts: Type.Optional(
-        Type.Array(
-            Type.Object({
-                serviceName: Type.Optional(Type.String({ description: 'Data Guard service name' })),
-                hostIp: Type.Optional(Type.String({ description: 'Data Guard host IP address' })),
-                ec2InstanceId: Type.Optional(Type.String({ description: 'Data Guard host EC2 instance ID' })),
-                listenerPort: Type.Optional(Type.String({ description: 'Data Guard listen port' })),
-                sidName: Type.Optional(Type.String({ description: 'Data Guard SID name' }))
-            })
-        )
-    ),
-    isPrimaryNode: Type.Optional(
-        Type.Boolean({
-            description: 'Is this primary Oracle instance'
-        })
-    )
-});
-
 const OracleDatabaseInstance = Type.Object({
     instanceName: Type.String({ description: 'Oracle instance name' }),
     instanceId: Type.String({ description: 'Oracle instance ID' }),
@@ -455,7 +435,7 @@ const OracleDatabaseInstance = Type.Object({
             description: 'Is Data Guard deployed for Oracle instance?'
         })
     ),
-    dataguardDetails: Type.Optional(OracleDataguardDetails)
+    dataguardDetails: Type.Optional(OracleDataguardDiscoveryDetails)
 });
 
 const DiscoverOracleResponseInfo = Type.Intersect([
@@ -489,7 +469,6 @@ type pgsqlNodeDetailsType = Static<typeof pgSqlServerNode>;
 type DiscoverOracleInstanceType = Static<typeof OracleDatabaseInstance>;
 type DiscoverOracleResponseBodyType = Static<typeof DiscoverOracleResponseBody>;
 type DiscoverOracleResponseType = Static<typeof DiscoverOracleResponseInfo>;
-type OracleDataguardDetailsType = Static<typeof OracleDataguardDetails>;
 
 export {
     DiscoverQuery,
@@ -507,6 +486,5 @@ export {
     DiscoverOracleResponseBody,
     DiscoverOracleInstanceType,
     DiscoverOracleResponseBodyType,
-    DiscoverOracleResponseType,
-    OracleDataguardDetailsType
+    DiscoverOracleResponseType
 };

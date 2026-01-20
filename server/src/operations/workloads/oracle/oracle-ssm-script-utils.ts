@@ -24,6 +24,33 @@ SET PAGESIZE 0;
 SET TRIMSPOOL ON;
 WHENEVER SQLERROR EXIT SQL.SQLCODE;
 `;
+const parseSqlplusOutput = `
+# capture the first line of sqlplus output or the first ORA- error encountered
+# exit code 0 if no error, 1 if error
+parse_sqlplus_output() {
+    local sqlplus_out
+    if [ $# -eq 0 ]; then
+        sqlplus_out=$(cat)
+    else
+        sqlplus_out="$1"
+        shift
+        while [ $# -gt 0 ]; do
+            sqlplus_out=$sqlplus_out$'\n'"$1"
+            shift
+        done
+    fi
+    if printf '%s' "$sqlplus_out" | grep -q 'ORA-'; then
+        local err
+        err=$(printf '%s' "$sqlplus_out" | sed -n '/ORA-/ { s/^[[:space:]]*//; s/[[:space:]]*$//; p; q }')
+        printf '%s' "$err"
+        return 1
+    fi
+    local output
+    output=$(printf '%s' "$sqlplus_out" | sed -n '/[^[:space:]]/ { s/^[[:space:]]*//; s/[[:space:]]*$//; p; q }')
+    printf '%s' "$output"
+    return 0
+}
+`;
 
 const parseSpfileProperties = (propertyValue: string, spFilePath: string) =>
     `$(strings "${spFilePath}" | grep -i "\\.${propertyValue}" | sed "s/.*=//;s/'//g" | tr ',' '\n' | sed '/^$/d' | head -n1)`;
@@ -287,6 +314,296 @@ EOF
     echo $result
 `;
 
+const dataguardDeploymentUtilities = `
+    check_dataguard_deployment() {
+        local ORACLE_SID="$1"
+        # if dataguard is configured, FAL_CLIENT and FAL_SERVER will be configured and have different values in spfile for DB
+        sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
+            export ORACLE_SID="$1"
+            oracle_home=$(${getOracleHomePath('$ORACLE_SID')})
+            export ORACLE_HOME="$oracle_home"
+            spFilePath="$ORACLE_HOME/dbs/spfile$ORACLE_SID.ora"
+            
+            # For Oracle 21c, spfile will be located in ORACLE_BASE/dbs.
+            if [ ! -f "$spFilePath" ]; then
+                spFilePath="$ORACLE_BASE/dbs/spfile$ORACLE_SID.ora"
+            fi
+            if [ ! -f "$spFilePath" ]; then
+                exit 1
+            fi
+            falClient="${parseSpfileProperties('fal_client', '$spFilePath')}"
+            falServer="${parseSpfileProperties('fal_server', '$spFilePath')}"
+            # For log_archive_config, preserve full value to check for DG_CONFIG keyword
+            logArchiveConfig="$(strings "$spFilePath" | grep -i "\\.log_archive_config" | sed "s/^[^=]*=//;s/'//g" | head -n1)"
+            
+            # Data Guard is configured if:
+            # 1. fal_client and fal_server are both set and different, OR
+            # 2. fal_client is not set but fal_server is set (to fetch logs from target destination), OR
+            # 3. log_archive_config contains DG_CONFIG keyword
+            if [[ ( -n "$falClient" && -n "$falServer" && "$falServer" != "$falClient" ) || ( -z "$falClient" && -n "$falServer" ) || ( -n "$logArchiveConfig" && "$logArchiveConfig" == *"DG_CONFIG"* ) ]]; then
+                exit 0;
+            fi
+            exit 1;
+EOF
+        return $?
+    }
+
+    ############################################################
+    # All methods below this comment need sqlplus creds to run #
+    ############################################################
+
+    get_dataguard_role() {
+        local ORACLE_SID="$1"
+        dataguard_role=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
+            export ORACLE_SID="$1"
+            sqlplus_cmd="$2"
+            sqlplus_output=$($sqlplus_cmd <<'EOSQL'
+                ${sqlplusOutputFormatSettings}
+                select database_role from v$database;
+EOSQL
+)       
+        ${parseSqlplusOutput}
+        dataguard_role=$(parse_sqlplus_output "$sqlplus_output")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            dataguardDiscoveryErrorMsg=$dataguard_role
+            exit 1;
+        fi
+        echo "$dataguard_role" | tr -d '\n' | tr -d ' '
+EOF
+)
+        echo "$dataguard_role"
+    }
+    
+    is_primary_node() {
+        local ORACLE_SID="$1"
+        local role=""
+        role=$(get_dataguard_role "$ORACLE_SID")
+        if [ $? -ne 0 ]; then
+            exit 1
+        fi
+
+        if [ "$role" == "PRIMARY" ] || [ "$role" == "primary" ]; then
+            echo "true"
+        else
+            echo "false"
+        fi
+    }
+
+    get_dataguard_db_name_and_db_unique_name() {
+        local ORACLE_SID="$1"
+        local db_name_and_db_unique_name="";
+        db_name_and_db_unique_name=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
+            export ORACLE_SID="$1"
+            sqlplus_command="$2"
+            sqlplus_output=$($sqlplus_command <<'EOSQL'
+            ${sqlplusOutputFormatSettings}
+            SELECT JSON_OBJECT(
+             'dbUniqueName' VALUE MAX(CASE WHEN name='db_unique_name' THEN value END),
+             'dbName'       VALUE MAX(CASE WHEN name='db_name' THEN value END)
+            ) AS dataguard_parameters
+            FROM v$parameter
+            WHERE name IN ('db_unique_name','db_name');
+EOSQL
+)
+        ${parseSqlplusOutput}
+        db_name_and_db_unique_name=$(parse_sqlplus_output "$sqlplus_output")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            dataguardDiscoveryErrorMsg=$db_name_and_db_unique_name
+            exit 1;
+        fi
+        echo "$db_name_and_db_unique_name" | tr -d '\n' | tr -d ' '
+EOF
+)
+        echo "$db_name_and_db_unique_name"
+    }
+
+    get_dataguard_instance_sync_status() {
+        local ORACLE_SID="$1"
+        local isCDB="$2"
+        local pdbName="$3"
+        local instance_sync_status=""
+        local isPrimaryNode=$(is_primary_node "$ORACLE_SID")
+        # Use placeholder for empty pdbName to prevent argument shifting with sudo -i
+        local pdbNameArg="__EMPTY__"
+        instance_sync_status=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$isCDB" "$pdbNameArg" "$sqlplus_command" "$isPrimaryNode" <<'EOF'
+            export ORACLE_SID="$1"
+            isCDB="$2"
+            pdbName="$3"
+            sqlplus_cmd="$4"
+            isPrimaryNode="$5"
+            # Convert placeholder back to empty
+            if [ "$pdbName" == "__EMPTY__" ]; then
+                pdbName=""
+            fi
+            if [ "$isCDB" == "YES" ]; then
+                alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
+            else
+                alter_cmd=""
+            fi
+            sqlplus_output=$($sqlplus_cmd <<EOSQL
+                ${sqlplusOutputFormatSettings}
+                $alter_cmd
+                select action from V\\$DATAGUARD_PROCESS where regexp_like(name, '^(MRP|PR|TMON|TT)') and action <> 'IDLE';
+EOSQL
+)
+        ${parseSqlplusOutput}
+        instance_sync_status=$(parse_sqlplus_output "$sqlplus_output")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            dataguardDiscoveryErrorMsg=$instance_sync_status
+            exit 1;
+        fi
+        if [ "$isPrimaryNode" == "true" ]; then
+            echo "{\\"status\\": \\"$instance_sync_status\\" }" | tr -d '\n' | tr -d ' '
+        else
+            # Already running as oracle user, no need for nested sudo
+            if [ "$isCDB" == "YES" ]; then
+                alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
+            fi
+            standby_sqlplus_output=$($sqlplus_cmd <<EOSQL2
+${sqlplusOutputFormatSettings}
+$alter_cmd
+select value from V\\$DATAGUARD_STATS where name in ('apply lag', 'transport lag');
+EOSQL2
+)
+            standby_sync_stats=$(parse_sqlplus_output "$standby_sqlplus_output")
+            sqlplus_exit_code=$?
+            if [ $sqlplus_exit_code -ne 0 ]; then
+                dataguardDiscoveryErrorMsg=$standby_sync_stats
+                exit 1;
+            fi
+            transport_lag=$(echo "$standby_sync_stats" | sed -n '2p')
+            apply_lag=$(echo "$standby_sync_stats" | sed -n '1p')
+            echo "{\\"status\\": \\"$instance_sync_status\\", \\"transportLag\\": \\"$transport_lag\\", \\"applyLag\\": \\"$apply_lag\\" }" | tr -d '\n'
+        fi
+EOF
+)
+        echo "$instance_sync_status"
+    }
+
+
+    # Get Data Guard node IPs by querying v$dataguard_config for db_unique_name
+    # and parsing tnsnames.ora for HOST values.
+    get_dataguard_node_details() {
+        local ORACLE_SID="$1"
+        export ORACLE_SID
+
+        oracle_home=$(${getOracleHomePath('$ORACLE_SID')})
+        export ORACLE_HOME="$oracle_home"
+
+        # Get TNS_ADMIN path (directory only, not file)
+        if [ -z "$TNS_ADMIN" ]; then
+            TNS_ADMIN="\${ORACLE_HOME}/network/admin"
+        fi
+
+        TNSNAMES_FILE="\${TNS_ADMIN}/tnsnames.ora"
+
+        get_dg_members() {
+            local ORACLE_SID="$1"
+            local sqlplus_cmd="$2"
+            sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_cmd" <<'EOF'
+                export ORACLE_SID="$1"
+                sqlplus_cmd="$2"
+                $sqlplus_cmd <<EOSQL
+SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+SELECT db_unique_name || '|' || dest_role FROM V\\$DATAGUARD_CONFIG;
+EXIT;
+EOSQL
+EOF
+        }
+
+        # Parse tnsnames.ora to get HOST for a given alias using awk
+        get_host_from_tnsnames() {
+            local alias="$1"
+            local tns_file="$2"
+
+            if [ ! -f "$tns_file" ]; then
+                echo ""
+                return
+            fi
+
+            awk -v alias="$alias" '
+            BEGIN {
+                IGNORECASE = 1
+                found = 0
+            }
+            # Match the alias at the start of a line (with optional whitespace)
+            $0 ~ "^[[:space:]]*" alias "[[:space:]]*=" {
+                found = 1
+            }
+            # If we found our alias, look for HOST
+            found == 1 && /HOST[[:space:]]*=/ {
+                # Extract the HOST value
+                match($0, /HOST[[:space:]]*=[[:space:]]*([^)]+)/)
+                if (RSTART > 0) {
+                    hostpart = substr($0, RSTART)
+                    gsub(/HOST[[:space:]]*=[[:space:]]*/, "", hostpart)
+                    gsub(/\\).*/, "", hostpart)
+                    gsub(/[[:space:]]/, "", hostpart)
+                    print hostpart
+                    exit
+                }
+            }
+            # If we hit a new alias definition, stop looking
+            found == 1 && /^[[:space:]]*[a-zA-Z0-9_]+[[:space:]]*=/ && $0 !~ alias {
+                exit
+            }
+            ' "$tns_file"
+        }
+
+        # Main execution
+        # Store DG members in a variable
+        dg_members=$(get_dg_members "$ORACLE_SID" "$sqlplus_command")
+
+        echo "{"
+        echo "  \\"members\\": ["
+
+        first=true
+        while IFS='|' read -r db_unique_name dest_role; do
+            # Skip empty lines
+            [ -z "$db_unique_name" ] && continue
+
+            # Trim whitespace
+            db_unique_name=$(echo "$db_unique_name" | xargs)
+            dest_role=$(echo "$dest_role" | xargs)
+
+            # Get HOST from tnsnames.ora
+            host=$(get_host_from_tnsnames "$db_unique_name" "$TNSNAMES_FILE")
+
+            if [ "$first" = true ]; then
+                first=false
+            else
+                echo ","
+            fi
+
+            if [ -n "$host" ]; then
+                echo -n "    {\\"dbUniqueName\\": \\"\${db_unique_name}\\", \\"destRole\\": \\"\${dest_role}\\", \\"host\\": \\"\${host}\\"}"
+            else
+                echo -n "    {\\"dbUniqueName\\": \\"\${db_unique_name}\\", \\"destRole\\": \\"\${dest_role}\\", \\"host\\": null}"
+            fi
+
+        done <<< "$dg_members"
+
+        echo ""
+        echo "  ]"
+        echo "}"
+    }
+
+    get_associated_hosts_with_creds() {
+        local ORACLE_SID="$1"
+        local dg_domain=""
+        dg_domain=$(get_dataguard_node_details "$ORACLE_SID")
+        # Flatten to single line, transform field names, extract members array
+        local flat_json
+        flat_json=$(echo "$dg_domain" | tr -d '\n' | tr -s ' ')
+        # Transform: dbUniqueName -> sidName, destRole -> role
+        flat_json=$(echo "$flat_json" | sed 's/"dbUniqueName"/"sidName"/g; s/"destRole"/"role"/g')
+        # Extract just the array content after "members":
+        echo "$flat_json" | sed 's/.*"members"[[:space:]]*:[[:space:]]*//; s/[[:space:]]*}[[:space:]]*$//'
+    }
+`;
 const defaultAuthDetectModule = `
     is_default_auth() {
         local ORACLE_SID="$1"
@@ -676,134 +993,6 @@ const initializeResultObject = `
     if [ -z "$resultObject" ]; then
         resultObject='{ "instances": [], "fsxResults": [], "modulesInstallationResults": [], "missingOracleUserPermissions": [], "missingModules": [], "asmResult": "" }'
     fi
-`;
-
-const dataguardDeploymentUtilities = `
-
-    check_dataguard_deployment() {
-        local ORACLE_SID="$1"
-        # if dataguard is configured, FAL_CLIENT and FAL_SERVER will be configured and have different values in spfile for DB
-        sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
-            export ORACLE_SID="$1"
-            oracle_home=$(${getOracleHomePath('$ORACLE_SID')})
-            export ORACLE_HOME="$oracle_home"
-            spFilePath="\${ORACLE_HOME}/dbs/spfile\${ORACLE_SID}.ora"
-            if [[ ! -f "$spFilePath" ]]; then
-                exit 1
-            fi
-            falClient="${parseSpfileProperties('fal_client', '$spFilePath')}"
-            falServer="${parseSpfileProperties('fal_server', '$spFilePath')}"
-            if [[ -n "$falClient" ]] && [[ -n "$falServer" ]] && [ "$falServer" != "$falClient" ]; then
-                exit 0;
-            fi
-            exit 1;
-EOF
-        return $?
-    }
-
-
-    # Get Data Guard node IPs by querying v$dataguard_config for db_unique_name
-    # and parsing tnsnames.ora for HOST values.
-    get_dataguard_node_details() {
-        local ORACLE_SID="$1"
-        export ORACLE_SID
-
-        oracle_home=$(${getOracleHomePath('$ORACLE_SID')})
-        export ORACLE_HOME="$oracle_home"
-
-        # Get TNS_ADMIN path (directory only, not file)
-        if [ -z "$TNS_ADMIN" ]; then
-            TNS_ADMIN="\${ORACLE_HOME}/network/admin"
-        fi
-
-        TNSNAMES_FILE="\${TNS_ADMIN}/tnsnames.ora"
-
-        get_dg_members() {
-            local ORACLE_SID="$1"
-            sudo -i -u oracle bash <<EOF
-                export ORACLE_SID="$ORACLE_SID"
-                $sqlplus_command
-                SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
-                SELECT db_unique_name || '|' || dest_role FROM v\\$dataguard_config;
-EOF
-        }
-
-        # Parse tnsnames.ora to get HOST for a given alias using awk
-        get_host_from_tnsnames() {
-            local alias="$1"
-            local tns_file="$2"
-
-            if [ ! -f "$tns_file" ]; then
-                echo ""
-                return
-            fi
-
-            awk -v alias="$alias" '
-            BEGIN {
-                IGNORECASE = 1
-                found = 0
-            }
-            # Match the alias at the start of a line (with optional whitespace)
-            $0 ~ "^[[:space:]]*" alias "[[:space:]]*=" {
-                found = 1
-            }
-            # If we found our alias, look for HOST
-            found == 1 && /HOST[[:space:]]*=/ {
-                # Extract the HOST value
-                match($0, /HOST[[:space:]]*=[[:space:]]*([^)]+)/)
-                if (RSTART > 0) {
-                    hostpart = substr($0, RSTART)
-                    gsub(/HOST[[:space:]]*=[[:space:]]*/, "", hostpart)
-                    gsub(/\\).*/, "", hostpart)
-                    gsub(/[[:space:]]/, "", hostpart)
-                    print hostpart
-                    exit
-                }
-            }
-            # If we hit a new alias definition, stop looking
-            found == 1 && /^[[:space:]]*[a-zA-Z0-9_]+[[:space:]]*=/ && $0 !~ alias {
-                exit
-            }
-            ' "$tns_file"
-        }
-
-        # Main execution
-        # Store DG members in a variable
-        dg_members=$(get_dg_members "$ORACLE_SID" "$sqlplus_command")
-
-        echo "{"
-        echo "  \\"members\\": ["
-
-        first=true
-        echo "$dg_members" | while IFS='|' read -r db_unique_name dest_role; do
-            # Skip empty lines
-            [ -z "$db_unique_name" ] && continue
-
-            # Trim whitespace
-            db_unique_name=$(echo "$db_unique_name" | xargs)
-            dest_role=$(echo "$dest_role" | xargs)
-
-            # Get HOST from tnsnames.ora
-            host=$(get_host_from_tnsnames "$db_unique_name" "$TNSNAMES_FILE")
-
-            if [ "$first" = true ]; then
-                first=false
-            else
-                echo ","
-            fi
-
-            if [ -n "$host" ]; then
-                echo -n "    {\\"dbUniqueName\\": \\"\${db_unique_name}\\", \\"destRole\\": \\"\${dest_role}\\", \\"host\\": \\"\${host}\\"}"
-            else
-                echo -n "    {\\"dbUniqueName\\": \\"\${db_unique_name}\\", \\"destRole\\": \\"\${dest_role}\\", \\"host\\": null}"
-            fi
-
-        done
-
-        echo ""
-        echo "  ]"
-        echo "}"
-    }
 `;
 
 const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string, isReplicaInfoRequired: boolean) => `
@@ -1925,34 +2114,6 @@ ${logFileCheck()}
 ${pythonScriptInit(oracleStorageInfoFromOntapPythonTemplate(params), 'wlmdb-oracle-storage-information')}
 `;
 
-const parseSqlplusOutput = `
-# capture the first line of sqlplus output or the first ORA- error encountered
-# exit code 0 if no error, 1 if error
-parse_sqlplus_output() {
-    local sqlplus_out
-    if [ $# -eq 0 ]; then
-        sqlplus_out=$(cat) || return 1
-    else
-        sqlplus_out="$1"
-        shift
-        while [ $# -gt 0 ]; do
-            sqlplus_out=$sqlplus_out$'\n'"$1"
-            shift
-        done
-    fi
-    if printf '%s' "$sqlplus_out" | grep -q 'ORA-'; then
-        local err
-        err=$(printf '%s' "$sqlplus_out" | sed -n '/ORA-/ { s/^[[:space:]]*//; s/[[:space:]]*$//; p; q }')
-        printf '%s' "$err"
-        return 1
-    fi
-    local output
-    output=$(printf '%s' "$sqlplus_out" | sed -n '/[^[:space:]]/ { s/^[[:space:]]*//; s/[[:space:]]*$//; p; q }')
-    printf '%s' "$output"
-    return 0
-}
-`;
-
 export {
     getFsxCredentials,
     getOracleProtectionData,
@@ -1986,5 +2147,6 @@ export {
     isStorageASMmanaged,
     parseSqlplusOutput,
     sqlplusOutputFormatSettings,
-    parseSpfileProperties
+    parseSpfileProperties,
+    dataguardDeploymentUtilities
 };

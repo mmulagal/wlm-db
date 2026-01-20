@@ -24,7 +24,6 @@ const loadJson = (filename: string) => {
 };
 
 describe('calculateTotalAllocatedCapacity utility', () => {
-
     it('computes totalAllocatedCapacity for DemoAOAG', () => {
         const data: {
             windowsConfig: WindowsConfig;
