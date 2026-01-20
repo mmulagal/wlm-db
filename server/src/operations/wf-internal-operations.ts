@@ -12,7 +12,7 @@ import { getOnPremDatabaseResources, uploadOnpremTcoData } from './onprem-tco-op
 import { AssessmentCategories, SEVERITY } from '../utils/continous-optimization-consts';
 import { MappedOnTapVolumeResponse } from '../utils/common-types';
 import { paginateListInstanceConfigData } from './database/instance-config-operations';
-import { getGroupedDatabaseInstancesBySeverity, groupResources } from '../lib/database/db';
+import { countDatabaseInstances, getGroupedDatabaseInstancesBySeverity, groupResources } from '../lib/database/db';
 import { GroupedDatabaseInstancesBySeverityResult } from '../lib/database/db-types';
 import { IS_DEMO_FLOW, hyphenatedToPascalCaseWithSpace } from '../utils/utils';
 import { generateFocusWidgetNameMap } from '../utils/golden-config-utils';
@@ -142,17 +142,20 @@ function formatDescription(items: Array<{ name: string; count: number }>) {
 async function getFocusStatus(accountId: string, credentialsIds?: string, regions?: string, limit?: number) {
     logger.info('Getting focus status for account.', accountId, credentialsIds, regions, limit);
     // Always send only one severity. Sort the documents based on severity and send the top ones.
-    // Priority is high > medium > low
+    // Priority is high > medium > low > warning (assessment not run)
     // limit is applied on the number of items to be sent in the response not on the totalItems
     // e.g., if there are 10 high severity items and limit is 5, send only 5 high severity items, totalItems will be 10
 
     const credentialsIdList = credentialsIds?.split(',').map(id => id.trim());
     const regionList = regions?.split(',').map(region => region.trim());
-    const groupedDatabaseInstances = await getGroupedDatabaseInstancesBySeverity({
-        accountId,
-        credentialsIdList,
-        regionList
-    });
+    const [groupedDatabaseInstances, instanceCount] = await Promise.all([
+        getGroupedDatabaseInstancesBySeverity({
+            accountId,
+            credentialsIdList,
+            regionList
+        }),
+        countDatabaseInstances(accountId)
+    ]);
 
     const [highSeverityItems, lowSeverityItems] = partition(groupedDatabaseInstances, {
         severity: SEVERITY.CRITICAL
@@ -175,6 +178,16 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
             items: formatDescription(items),
             severity: 'medium',
             totalItems
+        };
+    }
+
+    // Check if there are database instances but no assessment results
+    // This indicates assessment has not been run yet
+    if (instanceCount._count.id > 0) {
+        return {
+            items: [{ description: 'Assessment has not been run yet. Run assessment to see recommendations.' }],
+            severity: 'warning',
+            totalItems: 0
         };
     }
 

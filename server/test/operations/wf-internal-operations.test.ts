@@ -1,5 +1,11 @@
 import { STORAGE_TYPE } from '@prisma/client';
-import { createResource, deleteResource } from '../../src/lib/database/db';
+import type { MockInstance } from 'vitest';
+import {
+    createResource,
+    deleteResource,
+    upsertDatabaseInstance,
+    deleteDatabaseInstance
+} from '../../src/lib/database/db';
 import { getFocusStatus, getSystemStatus, getWidgetStatus } from '../../src/operations/wf-internal-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID } from '../utils/consts';
 import { prisma } from '../../src/utils/prisma-utils';
@@ -33,7 +39,7 @@ describe('WF Internal Operations', () => {
 });
 
 describe('Homepage status operations', () => {
-    let queryRawSpy: any;
+    let queryRawSpy: MockInstance;
 
     beforeAll(async () => {
         await createResource(ACCOUNTID, {
@@ -146,5 +152,46 @@ describe('Homepage status operations', () => {
         items.forEach(item => {
             expect(item.description).toBeTruthy();
         });
+    });
+});
+
+describe('getFocusStatus - assessment not run warning', () => {
+    const TEST_ACCOUNT_ID = 'account-assessment-warning-test';
+    const TEST_RESOURCE_ID = 'resource-assessment-warning-test';
+    const TEST_INSTANCE_ID = 'i-assessment-warning-test';
+    let queryRawSpy: MockInstance;
+
+    beforeAll(async () => {
+        // Create a database instance without any assessment results
+        await upsertDatabaseInstance(TEST_ACCOUNT_ID, {
+            databaseInstanceId: TEST_INSTANCE_ID,
+            databaseInstanceName: 'test-instance',
+            resourceId: TEST_RESOURCE_ID,
+            region: 'us-east-1',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            databaseType: 'MSSQL',
+            fsxnIds: '',
+            isDefault: false,
+            source: 'wlmdb',
+            sqlDeploymentType: 'standalone',
+            fsxSvmId: {}
+        });
+
+        // Mock $queryRaw to return empty array (no assessment results)
+        queryRawSpy = vi.spyOn(prisma.client, '$queryRaw').mockResolvedValue([]);
+    });
+
+    afterAll(async () => {
+        queryRawSpy.mockRestore();
+        // Clean up test data
+        await deleteDatabaseInstance(TEST_ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, TEST_RESOURCE_ID, [TEST_INSTANCE_ID]);
+    });
+
+    test('should return warning severity when database instances exist but no assessment results', async () => {
+        const { items, totalItems, severity } = await getFocusStatus(TEST_ACCOUNT_ID);
+        expect(severity).toEqual('warning');
+        expect(totalItems).toEqual(0);
+        expect(items.length).toEqual(1);
+        expect(items[0].description).toContain('Assessment has not been run yet');
     });
 });
