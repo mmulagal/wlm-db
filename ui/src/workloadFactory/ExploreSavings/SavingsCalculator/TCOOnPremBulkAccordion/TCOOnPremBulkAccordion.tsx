@@ -3,6 +3,7 @@ import { AccordionCardContent, DsTypography, useDialog } from '@netapp/design-sy
 import { DsButton } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
+import { ReactComponent as Info } from '../../../../assets/info.svg';
 import { AccordionCard, AccordionController } from '../../../../common/AccordionCard/AccordionCard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './TCOOnPremBulkAccordion.module.scss';
@@ -32,18 +33,42 @@ const TCOOnPremBulkAccordion = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(state => state.exploreSavingsBulk);
-    const { onPremiseData, onPremiseDataLoading, storageSavingsLoading, storageSavingsResponse } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const {
+        onPremiseData,
+        onPremiseDataLoading,
+        storageSavingsLoading,
+        storageSavingsResponse,
+        viewCalculationsResponse
+    } = useAppSelector(state => state.exploreSavings);
     const { setDialog, closeDialog } = useDialog();
 
     // State to track total host count
     const [totalHostCount, setTotalHostCount] = useState(0);
 
+    // State to track if SSD tier card should be shown
+    const [showSsdTierCard, setShowSsdTierCard] = useState(false);
+
     // Update total host count whenever selection changes
     useEffect(() => {
         setTotalHostCount(selectedRowsForExploreSavingsOnPremBulk.length);
     }, [selectedRowsForExploreSavingsOnPremBulk]);
+
+    // Check if SSD tier card should be shown based on ebsCapacity
+    useEffect(() => {
+        if (viewCalculationsResponse) {
+            const totalEbsCapacity = viewCalculationsResponse?.fsxOntapCalculation?.ebsCapacity;
+
+            if (totalEbsCapacity !== null && totalEbsCapacity !== undefined) {
+                // Remove commas and extract the number part
+                const numericValue = parseFloat(String(totalEbsCapacity));
+
+                // Show card if less than 800 GiB and if the selected hosts are less than 5
+                setShowSsdTierCard(numericValue < 800 && selectedRowsForExploreSavingsOnPremBulk.length < 5);
+            } else {
+                setShowSsdTierCard(false);
+            }
+        }
+    }, [viewCalculationsResponse, selectedRowsForExploreSavingsOnPremBulk]);
 
     const handleRemoveHost = (hostToRemove: any, event: React.SyntheticEvent) => {
         event.stopPropagation(); // Prevent accordion from toggling
@@ -167,6 +192,15 @@ const TCOOnPremBulkAccordion = () => {
 
     return (
         <div className={styles.tcoOnPremBulkAccordion}>
+            {/* SSD tier card */}
+            {showSsdTierCard && (
+                <div className={styles.ssdContainer}>
+                    <div className={styles.iconWrapper}>
+                        <Info />
+                    </div>
+                    <DsTypography variant="Regular_14">{t('databases.explore-savings.ssd-tier-text')}</DsTypography>
+                </div>
+            )}
             <AccordionController isGrouped>
                 <div className={styles.header}>
                     <DsTypography variant="Semibold_16">

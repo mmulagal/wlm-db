@@ -1,4 +1,19 @@
 .tcoOnPremBulkAccordion {
+    .ssdContainer {
+        min-height: 64px;
+        height: auto;
+        margin: 0 32px 24px 32px;
+        padding: 8px;
+        background-color: var(--notification-information-bg);
+        display: flex;
+        gap: 8px;
+
+        .iconWrapper {
+            position: relative;
+            top: 5px;
+        }
+    }
+
     .header {
         display: flex;
         align-items: center;

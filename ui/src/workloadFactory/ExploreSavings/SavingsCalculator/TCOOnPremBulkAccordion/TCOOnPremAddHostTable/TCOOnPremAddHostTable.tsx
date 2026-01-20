@@ -13,12 +13,17 @@ import {
     setSelectedServerName,
     setSelectedEsPageInstance
 } from '../../../../../store/workloadFactory/exploreSavingsSlice';
-import { getSelectedFromSelectionState, formatFractionalNumber } from '../../../../../utils/utilityFunctions';
+import {
+    getSelectedFromSelectionState,
+    formatFractionalNumber,
+    formatSizeTwoPrecision
+} from '../../../../../utils/utilityFunctions';
 import { GIB_IN_BYTE } from '../../../../../utils/consts';
 import { GENERAL } from '../../../../../utils/appConstants';
 import styles from '../../TCOBulkAccordion/TCOAddHostTable/TCOAddHostTable.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { TableTopBar } from '../../../../../common/Lib/Table/TableTopBar';
+import { renderAllocatedCapacity } from '../../../../InventoryV2/InventoryUtilsV2';
 
 interface TCOOnPremAddHostTableProps {
     onExploreSavings?: () => void;
@@ -49,7 +54,8 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
                 nodeCount: item.onPremisesNodes?.length || 0,
                 nameForSorting: item.resourceName?.toLowerCase(),
                 sqlServerInstances: item.sqlServerInstances,
-                onPremisesNodes: item.onPremisesNodes
+                onPremisesNodes: item.onPremisesNodes,
+                totalAllocatedCapacity: formatSizeTwoPrecision(item.totalAllocatedCapacity)
             }));
             setOnPremTableData(formattedData);
         } else {
@@ -81,16 +87,12 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
             width: '132px'
         },
         {
-            Header: 'Nodes',
-            accessor: 'nodeCount',
+            Header: t('databases.explore-savings.allocated-capacity'),
+            accessor: 'totalAllocatedCapacity',
             isSortable: true,
             id: '3',
             width: '120px',
-            renderCell: (cellData: number, rowData: any) => (
-                <DsTypography variant="Regular_14">
-                    {cellData} {rowData.deploymentModel === 'Standalone' ? 'node' : 'nodes'}
-                </DsTypography>
-            )
+            renderCell: (cellData: string | number, rowData: any) => renderAllocatedCapacity(cellData, rowData)
         }
     ];
 
