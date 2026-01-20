@@ -1845,7 +1845,7 @@ async function fetchPricingForResources(
 /**
  * Builds per-resource compute and license calculation objects
  */
-function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[]) {
+function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[], monthlySqlByolCost?: number) {
     /* eslint-disable @typescript-eslint/no-explicit-any */
     const existingComputeCalculation: any[] = [];
     const existingLicenseCalculation: any[] = [];
@@ -1884,6 +1884,11 @@ function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[
         const recommendedBasePrice = recommendedPricing?.[recommendedInstanceType!]?.NA?.pricePerUnit || 0;
         const recommendedLicensePrice = recommendedPrice - recommendedBasePrice;
 
+        // - If BYOL cost > 0 → false (user brings their own license)
+        // - Otherwise → true only if there's a license price > 0
+        const isUsingByol = monthlySqlByolCost && monthlySqlByolCost > 0;
+        const existingLicenseIncluded = isUsingByol ? false : currentLicensePrice > 0;
+
         // Calculate monthly costs (using respective node counts for existing vs recommended)
         const existingComputeMonthlyPrice = currentBasePrice * HOURS_IN_MONTH * existingNodeCount;
         const existingInstanceMonthlyPrice = currentPrice * HOURS_IN_MONTH * existingNodeCount;
@@ -1902,7 +1907,7 @@ function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[
             instanceMonthlyPrice: currentPrice * HOURS_IN_MONTH,
             licenseMonthlyPrice: currentLicensePrice * HOURS_IN_MONTH,
             hoursInMonth: HOURS_IN_MONTH,
-            licenseIncluded: true
+            licenseIncluded: existingLicenseIncluded
         };
         const recommendedMachineDetail = {
             instanceType: recommendedInstanceType,
@@ -1962,8 +1967,9 @@ function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[
         existingLicenseCalculation.push({
             resourceName,
             deploymentType,
-            licenseEdition: currentLicenseEdition,
+            sqlServerEdition: currentLicenseEdition,
             licenseHourlyPrice: existingLicenseHourlyPrice,
+            licenseIncluded: existingLicenseIncluded,
             licenseMonthlyPrice: existingLicenseMonthlyPrice,
             hoursInMonth: HOURS_IN_MONTH,
             nodeCount: existingNodeCount
@@ -1972,8 +1978,9 @@ function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[
         recommendedLicenseCalculation.push({
             resourceName,
             deploymentType,
-            licenseEdition: recommendedLicenseEdition,
+            sqlServerEdition: recommendedLicenseEdition,
             licenseHourlyPrice: recommendedLicenseHourlyPrice,
+            licenseIncluded: true,
             licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
             hoursInMonth: HOURS_IN_MONTH,
             nodeCount: recommendedNodeCount
@@ -2007,14 +2014,16 @@ function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[
             resourceName,
             deploymentType,
             existing: {
-                licenseEdition: currentLicenseEdition,
+                sqlServerEdition: currentLicenseEdition,
                 licenseHourlyPrice: existingLicenseHourlyPrice,
+                licenseIncluded: existingLicenseIncluded,
                 licenseMonthlyPrice: existingLicenseMonthlyPrice,
                 hoursInMonth: HOURS_IN_MONTH
             },
             recommended: {
-                licenseEdition: recommendedLicenseEdition,
+                sqlServerEdition: recommendedLicenseEdition,
                 licenseHourlyPrice: recommendedLicenseHourlyPrice,
+                licenseIncluded: true,
                 licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
                 hoursInMonth: HOURS_IN_MONTH
             },
@@ -2171,7 +2180,8 @@ async function getOnPremBulkResourceExploreSavings(
         const {
             clonedCopiesCount = 1,
             monthlyChangeRatePercentage = 8,
-            snapshotFrequency = 'Daily'
+            snapshotFrequency = 'Daily',
+            monthlySqlByolCost
         } = snapshotInfo || {};
 
         const baseParams = {
@@ -2246,7 +2256,7 @@ async function getOnPremBulkResourceExploreSavings(
             computeSavings,
             licenseSavings,
             perResourceAssessmentData
-        } = buildPerResourceCalculations(resourcesWithPricing);
+        } = buildPerResourceCalculations(resourcesWithPricing, monthlySqlByolCost);
 
         // Step 10: Extract shared storage data from API responses
         const {
