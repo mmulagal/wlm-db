@@ -16,7 +16,8 @@ import {
     StorageTierParams,
     MaxDOPAssesment,
     AwsFsxNBackupConfig,
-    OptimizeMpioTimeoutParams
+    OptimizeMpioTimeoutParams,
+    SSMDocument
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
@@ -163,7 +164,9 @@ async function getExportPolicyRules(
     fsxId: string,
     activeNodeInstanceId: string,
     svmName: string,
-    existingPolicyName: string
+    existingPolicyName: string,
+    documentName: string,
+    documentVersion: string
 ) {
     logger.info(`Getting export policy rules for policy ${existingPolicyName} in SVM ${svmName}`);
 
@@ -185,8 +188,8 @@ async function getExportPolicyRules(
             commands: commandToFetchExistingPolicyDetails,
             ec2InstanceId: activeNodeInstanceId,
             comment: 'Fetch existing export policy details',
-            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
-            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+            documentName,
+            documentVersion
         })
     );
 
@@ -210,6 +213,8 @@ async function createExportPolicy(
     clients: string[],
     existingPolicyName: string,
     policyName: string,
+    documentName: string,
+    documentVersion: string,
     parentJobId?: string
 ) {
     logger.info(`Creating new export policy in SVM ${svmName} for FSx ${fsxId} `);
@@ -233,7 +238,9 @@ async function createExportPolicy(
             fsxId,
             activeNodeInstanceId,
             svmName,
-            existingPolicyName
+            existingPolicyName,
+            documentName,
+            documentVersion
         );
 
         let newRules = [];
@@ -282,8 +289,8 @@ async function createExportPolicy(
                 commands,
                 ec2InstanceId: activeNodeInstanceId,
                 comment: jobDescription,
-                documentName: SSM_RUN_SHELL_SCRIPT_DOC,
-                documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+                documentName,
+                documentVersion
             })
         );
 
@@ -315,7 +322,7 @@ async function createExportPolicy(
     }
 }
 
-async function optimizeStorageAttributes(params: OptimizeStorageOperationParams) {
+async function optimizeStorageAttributes(params: OptimizeStorageOperationParams & SSMDocument) {
     logger.info('Optimizing storage for', summarizeFirstLevel(params));
     const {
         accountId,
@@ -333,7 +340,9 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
         sqlAuthEnabled,
         svmName,
         optimizationTargets,
-        instanceMetadata
+        instanceMetadata,
+        documentName,
+        documentVersion
     } = params;
     try {
         let recommendationMap;
@@ -375,7 +384,9 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
                 svmName,
                 serverNameWithHostName,
                 resourceType: databaseType as RESOURCESTYPE,
-                recommendationMap
+                recommendationMap,
+                documentName,
+                documentVersion
             });
         }
 
@@ -432,7 +443,7 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams)
     }
 }
 
-async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
+async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSMDocument) {
     const {
         accountId,
         region,
@@ -446,7 +457,9 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
         svmName,
         serverNameWithHostName,
         resourceType,
-        recommendationMap
+        recommendationMap,
+        documentName,
+        documentVersion
     } = params;
     logger.info(
         `Optimizing ONTAP storage for ${accountId} in ${region} for configuration ${JSON.stringify(
@@ -537,6 +550,8 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams) {
                                     clients as string[],
                                     existingPolicyName as string,
                                     value,
+                                    documentName,
+                                    documentVersion,
                                     jobId
                                 );
                             }
@@ -725,8 +740,17 @@ async function getSvmNameFromId(credentialsId: string, region: string, fsxId: st
     return svmName;
 }
 
-async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?: string) {
-    const { accountId, credentialsId, region, databaseHostId, databaseInstanceId, optimizationTargets } = params;
+async function optimizeStorage(params: OptimizeStorageParams & SSMDocument, bulkOptimizeJobId?: string) {
+    const {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        optimizationTargets,
+        documentName,
+        documentVersion
+    } = params;
     logger.info(
         `Optimizing storage for ${accountId}  ${databaseInstanceId} in ${region} for configuration  ${JSON.stringify(
             optimizationTargets
@@ -792,8 +816,10 @@ async function optimizeStorage(params: OptimizeStorageParams, bulkOptimizeJobId?
             svmName,
             optimizationTargets,
             awsAccountId,
-            instanceMetadata
-        } as OptimizeStorageOperationParams);
+            instanceMetadata,
+            documentName,
+            documentVersion
+        } as OptimizeStorageOperationParams & SSMDocument);
         await updateLongRunningAuditGroup(AuditStatus.SUCCESS);
     } catch (error) {
         const errorMessage = `Error while fixing storage ${error}`;

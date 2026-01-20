@@ -63,6 +63,11 @@ import {
     fetchMssqlDriftAssessmentPerHost,
     onDemandTriggerMssqlDriftAssessment
 } from '../operations/continuous-optimization/mssql/assessment-operations';
+import {
+    SSM_RUN_POWERSHELL_SCRIPT_DOC,
+    SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+} from '../operations/workloads/mssql/const';
+import { SSMDocument } from '../utils/common-types';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/mssql';
@@ -125,8 +130,10 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    optimizationTargets: assessments
-                } as OptimizeStorageParams);
+                    optimizationTargets: assessments,
+                    documentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
+                    documentVersion: SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+                } as OptimizeStorageParams & SSMDocument);
                 return reply.send(response);
             }
         )

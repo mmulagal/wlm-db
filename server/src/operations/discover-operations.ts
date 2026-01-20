@@ -101,7 +101,7 @@ import { DatabaseHostSummaryForMultiInstanceResponseType } from '../routes/types
 import { copyScriptsToHost } from './resource-operations';
 import { discoverPgsqlHosts } from './workloads/pgsql/pgsql-discover-scripts';
 import { discoverOracleHosts } from './workloads/oracle/oracle-discover-scripts';
-import { OracleDeploymentTenacy } from './workloads/oracle/consts';
+import { OracleDeploymentTenacy, SSM_RUN_SHELL_SCRIPT_DOC } from './workloads/oracle/consts';
 import { OracleDataguardDiscoveryDetailsType } from './workloads/oracle/common-types';
 
 const { getPreSignedUrl } = preSignedUrl;
@@ -1337,7 +1337,7 @@ async function discoverPgSqlResources(
     ) as DiscoveredEc2InstanceType[];
 
     const ssmCommandInput: SendCommandCommandInput = {
-        DocumentName: 'AWS-RunShellScript',
+        DocumentName: SSM_RUN_SHELL_SCRIPT_DOC,
         InstanceIds: compact(ssmConnectedEc2Instances.map(target => target?.ec2InstanceId)),
         Comment: 'Discover PostgreSQL resources',
         Parameters: {
@@ -1804,7 +1804,7 @@ async function discoverOracleResources(
     ) as DiscoveredEc2InstanceType[];
 
     const ssmCommandInput: SendCommandCommandInput = {
-        DocumentName: 'AWS-RunShellScript',
+        DocumentName: SSM_RUN_SHELL_SCRIPT_DOC,
         InstanceIds: compact(ssmConnectedEc2Instances.map(target => target?.ec2InstanceId)),
         Comment: 'Discover Oracle resources',
         Parameters: {

@@ -912,6 +912,11 @@ interface IgroupMissingInitiators {
     missingIqns: string[];
 }
 
+interface SSMDocument {
+    documentName: string;
+    documentVersion: string;
+}
+
 export {
     BulkDismissConfigurationType,
     Metadata,
@@ -992,5 +997,6 @@ export {
     BulkDismissConfigurationResponseItem,
     PerHostJobMetadata,
     JobMetadata,
-    StorageDismissConfigs
+    StorageDismissConfigs,
+    SSMDocument
 };

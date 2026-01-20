@@ -6,6 +6,10 @@ import { createDatabaseInstanceConfigData } from '../../src/lib/database/databas
 import { updateJobDetails } from '../../src/operations/database/job-operations';
 import optimizeCompute from '../../src/operations/continuous-optimization/compute-optimize-operations';
 import { optimizeClone } from '../../src/operations/continuous-optimization/mssql/clone-optimization-operations';
+import {
+    SSM_RUN_POWERSHELL_SCRIPT_DOC,
+    SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+} from '../../src/operations/workloads/mssql/const';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 const CREDENTIALS_ID = DEFAULT_AWS_CREDENTIALS_ID;
@@ -317,7 +321,9 @@ describe('Continuous optimization optimize operations', () => {
                     configurationName: 'thin-provisioning',
                     objectsToOptimize: ['vol1', 'vol2']
                 }
-            ]
+            ],
+            documentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
         });
         expect(response.jobId).toBeDefined();
         await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });

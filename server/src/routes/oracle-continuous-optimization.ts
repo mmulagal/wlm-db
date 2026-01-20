@@ -26,6 +26,8 @@ import { DatabaseTypes } from '../utils/consts';
 import { optimizeOracleStorageLayout } from '../operations/continuous-optimization/oracle/storage-optimize-operations';
 import { optimizeOracleDatabase } from '../operations/continuous-optimization/oracle/optimization-operations';
 import { OptimizeRequestBodyType } from './types/oracle-continuous-optimization.types';
+import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../operations/workloads/oracle/consts';
+import { SSMDocument } from '../utils/common-types';
 
 const API_PREFIX_PATH = '/v1/oracle/credentials/:credentialsId/regions/:region';
 const ORACLE_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/oracle';
@@ -88,8 +90,10 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                     region,
                     databaseHostId,
                     databaseInstanceId,
-                    optimizationTargets: assessments
-                } as OptimizeStorageParams);
+                    optimizationTargets: assessments,
+                    documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                    documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+                } as OptimizeStorageParams & SSMDocument);
                 return reply.send(response);
             }
         )

@@ -98,9 +98,10 @@ import {
     getOracleDatabaseInstancesSummary
 } from './workloads/oracle/oracle-operations';
 import { trendGraphCreateScriptForMssql } from './workloads/mssql/ssm-script-utils';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from './workloads/mssql/const';
 import { trendGraphCreateScriptForOracle } from './workloads/oracle/oracle-ssm-script-utils';
 import { getPaginatedDatabaseInstances, getResources, populateDbInstances } from './database/database-operations';
-import { SSM_RUN_SHELL_SCRIPT_DOC } from './workloads/pgsql/const';
+import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/pgsql/const';
 import {
     BackupType,
     checkAllTrue,
@@ -2312,12 +2313,18 @@ async function processResourceNodes(
                             });
 
                             let command: string[] = [];
+                            let documentName: string;
+                            let documentVersion: string;
                             if (resourceType === RESOURCESTYPE.MSSQL) {
                                 command = [trendGraphCreateScriptForMssql(databaseHostId, nodeId)];
+                                documentName = SSM_RUN_POWERSHELL_SCRIPT_DOC;
+                                documentVersion = SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION;
                             } else {
                                 dbInstanceNames.forEach(dbSid =>
                                     command.push(trendGraphCreateScriptForOracle(dbSid, nodeId))
                                 );
+                                documentName = SSM_RUN_SHELL_SCRIPT_DOC;
+                                documentVersion = SSM_RUN_SHELL_SCRIPT_DOC_VERSION;
                             }
                             const ssmComment = `Triggering instance performance assessment for account ${accountId}, database host ${databaseHostId}`;
 
@@ -2330,7 +2337,8 @@ async function processResourceNodes(
                                 accountId,
                                 cacheData: true,
                                 executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT,
-                                documentName: SSM_RUN_SHELL_SCRIPT_DOC
+                                documentName,
+                                documentVersion
                             });
 
                             logger.info('Successfully triggered performance assessment for node', {
