@@ -97,8 +97,11 @@ const getMappedOntapDataVolume = (
         lunName=$(extract_nested_value "$response" "records[0].name")
         svmName=$(extract_nested_value "$response" "records[0].svm.name")
         svmId=$(extract_nested_value "$response" "records[0].svm.uuid")
-        mountedVolume=$(extract_nested_value "$response" "records[0].location.volume.name")
-        mountedVolumeId=$(extract_nested_value "$response" "records[0].location.volume.uuid")
+
+        # Extract volume name - look for "volume": { ... "name": "value" (before any nested braces)
+        mountedVolume=$(echo "$response" | tr -d '\n\r' | sed -n 's/.*"volume"[[:space:]]*:[[:space:]]*{[^{]*"name"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' | head -1)
+        # Extract volume uuid - same pattern for uuid
+        mountedVolumeId=$(echo "$response" | tr -d '\n\r' | sed -n 's/.*"volume"[[:space:]]*:[[:space:]]*{[^{]*"uuid"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' | head -1)
         
         check_status "Failed to extract mounted volume name"
     else
