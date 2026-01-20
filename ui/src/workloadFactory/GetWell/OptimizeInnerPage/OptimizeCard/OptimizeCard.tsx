@@ -102,6 +102,18 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                         description: data?.recommendation
                     }
                 };
+            case ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE:
+            case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
+                return {
+                    block_one: { type: 'Impacted EC2 instance', value: data.totalObjectsInViolation || '0' },
+                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
+                    block_three: { type: 'Tags', value: data.tags },
+                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
+                    data: {
+                        title: `${config} recommendation`,
+                        description: data?.recommendation
+                    }
+                };
             case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
             case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
                 return {

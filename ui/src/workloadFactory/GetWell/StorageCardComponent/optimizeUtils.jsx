@@ -161,7 +161,9 @@ export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowDa
     // Check if this is an ASM configuration that should only have a Close button
     const isCloseButton =
         rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
-        rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES;
+        rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
+        rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
+        rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE;
     if (isCloseButton) {
         setDialog(
             <DialogComponent

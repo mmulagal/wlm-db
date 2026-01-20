@@ -107,6 +107,8 @@ const OptimizeOntapInnerPage = () => {
                     });
                     break;
                 case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
+                case ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE:
+                case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
                     setCardHeight({
                         recommendationSection: '180px',
                         tagSection: '276px'
@@ -207,7 +209,9 @@ const OptimizeOntapInnerPage = () => {
     const buttonComponent = (rowData: any) => {
         const buttonText =
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE
                 ? t('databases.well-architect.view')
                 : t('databases.well-architect.fix');
 
@@ -552,6 +556,8 @@ const OptimizeOntapInnerPage = () => {
                         />
                     );
                 case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
+                case ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE:
+                case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
                     return (
                         <OSOracleTable
                             type={selectedOptimizeConfig?.type}
@@ -656,7 +662,9 @@ const OptimizeOntapInnerPage = () => {
         }
         if (
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE
         ) {
             return `Operating System / ${selectedOptimizeConfig?.type}`;
         }

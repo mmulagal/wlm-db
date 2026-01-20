@@ -886,16 +886,16 @@
                                         "parameter": "dnfs-enabled",
                                         "name": "dnfs-enabled",
                                         "status": "optimized",
-                                        "recommended": "",
+                                        "recommended": "Enabled",
                                         "severity": "Critical",
                                         "recommendation": "Workload Factory recommends enabling Direct NFS (dNFS) for your Oracle environment. Enabling dNFS can improve database performance and simplify NFS storage management by allowing Oracle to manage NFS I/O directly.",
                                         "objectsInViolation": ["i-0a1b2c3d4e5f67890"],
                                         "violationDetails": [
                                             {
-                                                "objectName": "i-0a1b2c3d4e5f67890",
+                                                "objectName": "dNFS",
                                                 "objectType": "EC2 Instance",
-                                                "value": "oranfstab file missing or misconfigured",
-                                                "recommended": "properly configured oranfstab with multipathing"
+                                                "value": "dNFS is not enabled",
+                                                "recommended": "dNFS should be enabled for optimal performance"
                                             }
                                         ],
                                         "tags": ["Performance Efficiency", "Reliability"],
@@ -914,10 +914,10 @@
                                         "objectsInViolation": ["i-0a1b2c3d4e5f67890"],
                                         "violationDetails": [
                                             {
-                                                "objectName": "i-0a1b2c3d4e5f67890",
-                                                "objectType": "EC2 Instance",
-                                                "value": "oranfstab file missing or misconfigured",
-                                                "recommended": "properly configured oranfstab with multipathing"
+                                                "objectName": "/mnt/oradata",
+                                                "value": "export: /data_140126063408",
+                                                "objectType": "NFS configuration",
+                                                "recommended": "export: /data_140126063407"
                                             }
                                         ],
                                         "tags": ["Performance Efficiency", "Reliability"],
@@ -930,13 +930,25 @@
                                         "parameter": "dnfs-no-shared-cache",
                                         "name": "dnfs-no-shared-cache",
                                         "status": "optimized",
-                                        "recommended": "",
-                                        "severity": "Critical",
+                                        "recommended": "Enabled nosharecache mount option",
+                                        "severity": "critical",
                                         "recommendation": "Workload Factory recommends configuring the nosharecache mount option for environments where Direct NFS (dNFS) is enabled, and a source volume is mounted more than once on a single server with nested NFS mounts. This configuration prevents cache sharing between mounts, ensuring data consistency and optimal performance.",
-                                        "objectsInViolation": [],
-                                        "violationDetails": [],
-                                        "tags": ["Performance Efficiency", "Reliability"],
-                                        "current": "nosharecache configured correctly",
+                                        "tags": ["Performance efficiency", "Reliability"],
+                                        "objectsInViolation": ["i-0c3582ffabf19181b"],
+                                        "violationDetails": [
+                                            {
+                                                "objectName": "/data_140126063407:/mnt/oradata",
+                                                "value": "nosharecache=not set",
+                                                "objectType": "NFS mount option",
+                                                "recommended": "nosharecache=enabled"
+                                            },
+                                            {
+                                                "objectName": "/data_140126063407:/mnt/oradata/nested",
+                                                "value": "nosharecache=not set",
+                                                "objectType": "NFS mount option",
+                                                "recommended": "nosharecache=enabled"
+                                            }
+                                        ],
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 1,
                                         "resourceType": "EC2 Instance"
@@ -2017,16 +2029,16 @@
                                         "parameter": "dnfs-enabled",
                                         "name": "dnfs-enabled",
                                         "status": "not-optimized",
-                                        "recommended": "",
+                                        "recommended": "Enabled",
                                         "severity": "Critical",
                                         "recommendation": "Workload Factory recommends enabling Direct NFS (dNFS) for your Oracle environment. Enabling dNFS can improve database performance and simplify NFS storage management by allowing Oracle to manage NFS I/O directly.",
                                         "objectsInViolation": ["i-0a1b2c3d4e5f67890"],
                                         "violationDetails": [
                                             {
-                                                "objectName": "i-0a1b2c3d4e5f67890",
+                                                "objectName": "dNFS",
                                                 "objectType": "EC2 Instance",
-                                                "value": "oranfstab file missing or misconfigured",
-                                                "recommended": "properly configured oranfstab with multipathing"
+                                                "value": "dNFS is not enabled",
+                                                "recommended": "dNFS should be enabled for optimal performance"
                                             }
                                         ],
                                         "tags": ["Performance Efficiency", "Reliability"],
@@ -2045,10 +2057,10 @@
                                         "objectsInViolation": ["i-0a1b2c3d4e5f67890"],
                                         "violationDetails": [
                                             {
-                                                "objectName": "i-0a1b2c3d4e5f67890",
-                                                "objectType": "EC2 Instance",
-                                                "value": "oranfstab file missing or misconfigured",
-                                                "recommended": "properly configured oranfstab with multipathing"
+                                                "objectName": "/mnt/oradata",
+                                                "value": "export: /data_140126063408",
+                                                "objectType": "NFS configuration",
+                                                "recommended": "export: /data_140126063407"
                                             }
                                         ],
                                         "tags": ["Performance Efficiency", "Reliability"],
@@ -2061,13 +2073,25 @@
                                         "parameter": "dnfs-no-shared-cache",
                                         "name": "dnfs-no-shared-cache",
                                         "status": "not-optimized",
-                                        "recommended": "",
-                                        "severity": "Critical",
+                                        "recommended": "Enabled nosharecache mount option",
+                                        "severity": "critical",
                                         "recommendation": "Workload Factory recommends configuring the nosharecache mount option for environments where Direct NFS (dNFS) is enabled, and a source volume is mounted more than once on a single server with nested NFS mounts. This configuration prevents cache sharing between mounts, ensuring data consistency and optimal performance.",
-                                        "objectsInViolation": [],
-                                        "violationDetails": [],
-                                        "tags": ["Performance Efficiency", "Reliability"],
-                                        "current": "nosharecache configured correctly",
+                                        "tags": ["Performance efficiency", "Reliability"],
+                                        "objectsInViolation": ["i-0c3582ffabf19181b"],
+                                        "violationDetails": [
+                                            {
+                                                "objectName": "/data_140126063407:/mnt/oradata",
+                                                "value": "nosharecache=not set",
+                                                "objectType": "NFS mount option",
+                                                "recommended": "nosharecache=enabled"
+                                            },
+                                            {
+                                                "objectName": "/data_140126063407:/mnt/oradata/nested",
+                                                "value": "nosharecache=not set",
+                                                "objectType": "NFS mount option",
+                                                "recommended": "nosharecache=enabled"
+                                            }
+                                        ],
                                         "totalObjectsAssessed": 1,
                                         "totalObjectsInViolation": 1,
                                         "resourceType": "EC2 Instance"

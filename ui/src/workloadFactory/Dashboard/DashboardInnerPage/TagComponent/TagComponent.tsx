@@ -50,6 +50,8 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     ]);
                     break;
                 case ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY:
+                case ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE:
+                case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
                     setTagData([
                         { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
                         {

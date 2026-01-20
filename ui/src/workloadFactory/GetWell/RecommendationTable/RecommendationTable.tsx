@@ -482,9 +482,7 @@ const RecommendationTable = ({
                 name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
                 name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
                 name === ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION ||
-                name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT ||
-                name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
-                name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE)
+                name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT)
         ) {
             return false;
         }

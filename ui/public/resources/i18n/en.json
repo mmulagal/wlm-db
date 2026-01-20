@@ -353,6 +353,7 @@
             "view-recommendation": "View recommendation",
             "view-and-fix": " View and fix",
             "view": " View",
+            "fix": " Fix",
             "database-name": "Database name",
             "tenancy": "Tenancy",
             "number-of-pdbs": "Number of PDBs",
@@ -369,7 +370,8 @@
             "impacted-disk-groups": "Impacted Disk Groups",
             "disk-group": "Disk group",
             "redundancy": "Redundancy",
-            "recommended-value": "Recommended value"
+            "recommended-value": "Recommended value",
+            "recommended-mount-options": "Recommended mount options"
         },
         "dismiss": {
             "bulk-actions": "Bulk actions:",
