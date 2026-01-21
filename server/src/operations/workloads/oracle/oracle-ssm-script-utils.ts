@@ -629,6 +629,15 @@ EOF
 }
 `;
 
+const extractJsonValueUtil = `
+    # Function to extract JSON value by key
+    extract_json_value() {
+        local json="$1"
+        local key="$2"
+        echo "$json" | sed -n 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p' | head -1
+    }
+`;
+
 const bashJsonUtils = `
     # Function to extract JSON value by key
     extract_json_value() {
@@ -791,7 +800,7 @@ const oracleUserAuthLoginCommand = `
         local oracleSid="$1"
         local ec2InstanceId="$2"
 
-        ${bashJsonUtils}
+        ${extractJsonValueUtil}
 
         instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
 

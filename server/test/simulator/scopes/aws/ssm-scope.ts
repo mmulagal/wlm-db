@@ -960,6 +960,8 @@ ssmMock
     .resolves(getSampleCommandResponse('oracleDatabaseList'))
     .on(SendCommandCommand, params => params.Comment === 'Get Storage Configuration Assessment for Oracle instance')
     .resolves(getSampleCommandResponse('oracleStorageAssessment'))
+    .on(SendCommandCommand, params => params.Comment === 'Get OS Configuration Assessment for Oracle instance')
+    .resolves(getSampleCommandResponse('oracleStorageAssessment'))
     .on(SendCommandCommand, params => {
         return /# Get SQL Server services/.test(params.Parameters.commands?.[0]);
     })

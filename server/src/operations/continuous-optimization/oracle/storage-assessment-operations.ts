@@ -1933,6 +1933,11 @@ async function calculateStorageDrift(
         return { errorMessage };
     }
 
+    if (!mappedOntapVolumes || isEmpty(mappedOntapVolumes)) {
+        const errorMessage = `No mapped ONTAP volumes found for file system ${fsxFileSystemId}. Please ensure the instance has been properly discovered and configured.`;
+        return { errorMessage };
+    }
+
     const protocol = mappedOntapVolumes[fsxFileSystemId]?.protocol;
     const isASMManaged = mappedOntapVolumes[fsxFileSystemId]?.isASMManaged;
 
@@ -1982,6 +1987,38 @@ async function calculateStorageDrift(
     return storageDriftData;
 }
 
+async function registerAssessmentJobs(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    resourceWithInstanceName: string,
+    parentJobId: string,
+    jobStatus: JOBSTATUS,
+    errorMessage?: string
+) {
+    const assessmentTypes = [
+        'Storage configuration assessment',
+        'Storage layout assessment',
+        'Storage sizing assessment'
+    ];
+
+    await Promise.all(
+        assessmentTypes.map(assessmentName =>
+            registerJob(accountId, credentialsId, region, {
+                name: assessmentName,
+                description: assessmentName,
+                resourceName: resourceWithInstanceName,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                status: jobStatus,
+                type: JOBTYPE.ASSESSMENT,
+                parentJobId,
+                ...(errorMessage && { error: errorMessage })
+            })
+        )
+    );
+}
+
 async function initiateStorageAssessmentCollection(
     accountId: string,
     credentialsId: string,
@@ -2020,54 +2057,50 @@ async function initiateStorageAssessmentCollection(
         errorMessage = `Found no FSx for ONTAP volumes for the database ${databaseInstanceName}.`;
         logger.error(errorMessage);
         jobStatus = JOBSTATUS.FAILED;
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage configuration assessment',
-            description: 'Storage configuration assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: jobStatus,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId,
-            error: errorMessage
-        });
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage layout assessment',
-            description: 'Storage layout assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: jobStatus,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId,
-            error: errorMessage
-        });
-        return;
-    }
-    try {
-        const command = [VOLUME_LUN_CONFIGURATION(instanceRecord)];
-        if (storageProtocol === 'iSCSI') {
-            command.push(
-                OS_ASSESSMENT(
-                    activeNodeInstanceid,
-                    databaseInstanceName,
-                    storageProtocol,
-                    isASMManaged,
-                    mappedDiskGroups
-                )
-            );
-        } else {
-            command.push(NFS_OS_ASSESSMENT(activeNodeInstanceid, databaseInstanceName));
-        }
-        command.push(ORACLE_STORAGE_SIZING_ASSESSMENT);
-        const ssmComment = 'Get Storage Configuration Assessment for Oracle instance';
-
-        const response = await callSsmExecution({
+        await registerAssessmentJobs(
+            accountId,
             credentialsId,
             region,
-            commands: command,
+            resourceWithInstanceName,
+            parentJobId,
+            jobStatus,
+            errorMessage
+        );
+        return;
+    }
+
+    try {
+        const osCommand =
+            storageProtocol === 'iSCSI'
+                ? OS_ASSESSMENT(
+                      activeNodeInstanceid,
+                      databaseInstanceName,
+                      storageProtocol,
+                      isASMManaged,
+                      mappedDiskGroups
+                  )
+                : NFS_OS_ASSESSMENT(activeNodeInstanceid, databaseInstanceName);
+
+        const combinedResponse = await callSsmExecution({
+            credentialsId,
+            region,
+            commands: [VOLUME_LUN_CONFIGURATION(instanceRecord), ORACLE_STORAGE_SIZING_ASSESSMENT],
             ec2InstanceId: activeNodeInstanceid,
-            comment: ssmComment,
+            comment: 'Get Storage Configuration Assessment for Oracle instance',
+            accountId,
+            executionTimeout: ASSESSMENT_SSM_EXECUTION_TIMEOUT,
+            shouldReadFromCloudWatchLogs: true,
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
+        const [storageAssessment, storageSizingAssessment] = parseMultipleCommandResponse(combinedResponse);
+
+        const osAssessmentResponse = await callSsmExecution({
+            credentialsId,
+            region,
+            commands: [osCommand],
+            ec2InstanceId: activeNodeInstanceid,
+            comment: 'Get OS Configuration Assessment for Oracle instance',
             accountId,
             executionTimeout: ASSESSMENT_SSM_EXECUTION_TIMEOUT,
             shouldReadFromCloudWatchLogs: true,
@@ -2075,8 +2108,7 @@ async function initiateStorageAssessmentCollection(
             documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         });
 
-        const parsedResponse = parseMultipleCommandResponse(response);
-        const [storageAssessment, osAssessment, storageSizingAssessment] = parsedResponse;
+        const [osAssessment] = parseMultipleCommandResponse(osAssessmentResponse);
 
         await createDatabaseInstanceConfigData([
             {
@@ -2090,37 +2122,6 @@ async function initiateStorageAssessmentCollection(
                 config_data: { ...storageAssessment, ...osAssessment, ...storageSizingAssessment }
             }
         ]);
-
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage configuration assessment',
-            description: 'Storage configuration assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: jobStatus,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId
-        });
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage layout assessment',
-            description: 'Storage layout assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: jobStatus,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId
-        });
-        await registerJob(accountId, credentialsId, region, {
-            name: 'Storage sizing assessment',
-            description: 'Storage sizing assessment',
-            resourceName: resourceWithInstanceName,
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: jobStatus,
-            type: JOBTYPE.ASSESSMENT,
-            parentJobId
-        });
     } catch (error) {
         logger.error('Error while initiating storage assessment collection', {
             accountId,
@@ -2133,6 +2134,16 @@ async function initiateStorageAssessmentCollection(
         });
         errorMessage = `Error while initiating storage assessment collection. ${error}`;
         jobStatus = JOBSTATUS.FAILED;
+    } finally {
+        await registerAssessmentJobs(
+            accountId,
+            credentialsId,
+            region,
+            resourceWithInstanceName,
+            parentJobId,
+            jobStatus,
+            errorMessage
+        );
     }
 }
 

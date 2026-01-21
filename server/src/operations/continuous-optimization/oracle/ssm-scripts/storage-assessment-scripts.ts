@@ -9,12 +9,10 @@ import {
 } from '../../../workloads/oracle/oracle-ssm-script-utils';
 import { LINUX_LOG_DIRECTORY } from '../consts';
 
-const CHECK_ORACLE_FRA_RMAN_STATUS = (ec2InstanceId: string, dbSid: string) => `
+const CHECK_ORACLE_FRA_RMAN_STATUS = () => `
     check_oracle_fra_rman_status() {
         local ec2InstanceId="$1"
         local oracleSid="$2"
-
-        ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
         local fra_rman_result
         fra_rman_result=$(sudo -i -u oracle bash <<EOF
         set -e
@@ -48,12 +46,11 @@ EOF
 }
 `;
 
-const CHECK_ORACLE_DNFS_SERVERS = (ec2InstanceId: string, dbSid: string) => `
+const CHECK_ORACLE_DNFS_SERVERS = () => `
     check_oracle_dnfs_servers() {
         local ec2InstanceId="$1"
         local oracleSid="$2"
 
-        ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
         local dnfs_servers_result
         dnfs_servers_result=$(sudo -i -u oracle bash <<EOF
         set -e
@@ -381,7 +378,9 @@ binaryVolumes=$(jq -n \
     }')
 
 log "Starting Oracle FRA and RMAN status check"
-${CHECK_ORACLE_FRA_RMAN_STATUS(instanceRecord.activeNodeInstanceid, instanceRecord.id)}
+${getOracleDefaultOrUserAuthCommand(instanceRecord.activeNodeInstanceid, instanceRecord.id)}
+
+${CHECK_ORACLE_FRA_RMAN_STATUS()}
 fra_rman_result=$(check_oracle_fra_rman_status "${instanceRecord.activeNodeInstanceid}" "${instanceRecord.id}")
 log "FRA/RMAN check result: $fra_rman_result"
 
@@ -392,7 +391,7 @@ rman_compression_enabled=$(echo "$fra_rman_result" | sed -n '2p' | tr -d '[:spac
 log "FRA enabled: $fra_enabled, RMAN compression: $rman_compression_enabled"
 
 log "Starting Oracle DNFS servers check"
-${CHECK_ORACLE_DNFS_SERVERS(instanceRecord.activeNodeInstanceid, instanceRecord.id)}
+${CHECK_ORACLE_DNFS_SERVERS()}
 dnfs_result=$(check_oracle_dnfs_servers "${instanceRecord.activeNodeInstanceid}" "${instanceRecord.id}")
 log "DNFS servers check result: $dnfs_result"
 
