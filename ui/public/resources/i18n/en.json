@@ -19,6 +19,7 @@
             "fix-after-operation-ends": "You will be able to fix after the current well-architected operation ends."
         },
         "general": {
+            "save": "Save",
             "availability-groups": "Availability Groups",
             "failover-cluster-instances": "Failover Cluster Instances",
             "aoag": "AOAG",
@@ -299,6 +300,10 @@
             "manage-detect-info-message": "The authentication process is in progress and may take up to 1 minute to complete.",
             "sql-server-authentication": "SQL Server authentication",
             "windows-authentication": "Windows authentication",
+            "change-auth-mode-header": "Change authentication mode",
+            "change-auth-mode-confirmation": "Would you like to apply this authentication mode for all selected instances?",
+            "change-auth-mode-no-option": "No, only for the selected instance",
+            "change-auth-mode-yes-option": "Yes, for all instances",
             "manage-min-permissions-requirement-content1": "'Missing minimum prerequisites:",
             "manage-min-permissions-requirement-content2": " At least one capability must meet the minimum prerequisites and be in \"Ready\" status before proceeding. To register this SQL Server instance, please address the necessary prerequisites and try again.",
             "manage-min-permissions-requirement-content2-oracle": " At least one capability must meet the minimum prerequisites and be in \"Ready\" status before proceeding. To register this Oracle database, please address the necessary prerequisites and try again.",

@@ -2004,7 +2004,7 @@ export const createFsxOnlyPayload = (fsxIds: string[], rowData: any) => {
         });
     }
 
-    return { credentials: credList, checkManageReadiness: true };
+    return { credentials: credList, checkManageReadiness: false };
 };
 
 export const formatUnamanagedHostList = (data: any, mssqlInstancesData: any) =>

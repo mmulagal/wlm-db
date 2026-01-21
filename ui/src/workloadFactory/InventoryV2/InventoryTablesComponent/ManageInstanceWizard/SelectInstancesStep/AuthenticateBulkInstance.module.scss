@@ -317,3 +317,16 @@
         }
     }
 }
+
+// Dialog content styles - kept at root level because dialogs outside the main compoenent
+.authModeDialogContent {
+    padding: 16px 0;
+    min-width: 400px;
+
+    .authModeDialogOptions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 16px;
+    }
+}

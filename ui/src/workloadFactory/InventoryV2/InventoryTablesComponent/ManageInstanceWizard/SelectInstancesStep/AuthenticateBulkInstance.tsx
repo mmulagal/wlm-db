@@ -1,8 +1,8 @@
-import { TooltipInfo, PasswordField } from '@netapp/design-system';
+import { TooltipInfo, PasswordField, useDialog } from '@netapp/design-system';
 import { DsRadioButton, DsTextField, DsTypography } from '@tlveng/wlm-ds';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as CloseIcon } from '@netapp/icons/ic_close.svg';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
@@ -11,6 +11,7 @@ import { ReactComponent as SingleAuth } from '../../../../../assets/SingleAuth.s
 import { ReactComponent as Success } from '../../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg';
 import ManageWizardFooter from '../ManageWizardFooter';
+import DialogComponent from '../../../../../common/Dialog/DialogComponent';
 import {
     setCredentialOption,
     setBulkInstanceCredentials,
@@ -50,9 +51,62 @@ const getAuthFieldLabels = (authModeValue: string, t: (key: string) => string) =
     };
 };
 
+/**
+ * Dialog content component for auth mode change confirmation
+ */
+interface AuthModeChangeDialogContentProps {
+    confirmationText: string;
+    noOptionText: string;
+    yesOptionText: string;
+    onSelectionChange: (applyToAll: boolean) => void;
+}
+
+const AuthModeChangeDialogContent = ({
+    confirmationText,
+    noOptionText,
+    yesOptionText,
+    onSelectionChange
+}: AuthModeChangeDialogContentProps) => {
+    const [applyToAll, setApplyToAll] = useState(false);
+
+    const handleSelection = (value: boolean) => {
+        setApplyToAll(value);
+        onSelectionChange(value);
+    };
+
+    return (
+        <div className={styles.authModeDialogContent}>
+            <DsTypography variant="Regular_14">{confirmationText}</DsTypography>
+            <div className={styles.authModeDialogOptions}>
+                <DsRadioButton
+                    id="auth-mode-no-option"
+                    variant="Default"
+                    title={noOptionText}
+                    isSelected={!applyToAll}
+                    onClick={() => handleSelection(false)}
+                />
+                <DsRadioButton
+                    id="auth-mode-yes-option"
+                    variant="Default"
+                    title={yesOptionText}
+                    isSelected={applyToAll}
+                    onClick={() => handleSelection(true)}
+                />
+            </div>
+        </div>
+    );
+};
+
 export const Content = () => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
+    const { setDialog, closeDialog } = useDialog();
+
+    // Local state to track if auth mode change dialog has been shown
+    const [hasShownAuthModeChangeDialog, setHasShownAuthModeChangeDialog] = useState(false);
+
+    // Ref to track the dialog selection
+    const applyToAllInstancesRef = useRef(false);
 
     // Redux state
     const credentialOption = useAppSelector(state => state.inventoryV2.credentialOption);
@@ -168,8 +222,59 @@ export const Content = () => {
         }
     ];
 
+    // Show confirmation dialog for applying auth mode to all instances
+    const showAuthModeChangeDialog = (uniqueKey: string, newAuthMode: any) => {
+        applyToAllInstancesRef.current = false;
+
+        const handleSave = () => {
+            if (applyToAllInstancesRef.current) {
+                // Apply auth mode to all instances
+                instances.forEach(instance => {
+                    dispatch(
+                        setInstanceCredentials({
+                            instanceId: instance.uniqueKey,
+                            credentials: { authMode: newAuthMode }
+                        })
+                    );
+                });
+            } else {
+                // Only apply to the current instance
+                dispatch(setInstanceCredentials({ instanceId: uniqueKey, credentials: { authMode: newAuthMode } }));
+            }
+            setHasShownAuthModeChangeDialog(true);
+            closeDialog();
+        };
+
+        setDialog(
+            <DialogComponent
+                header={t('databases.register-flow.change-auth-mode-header')}
+                content={
+                    <AuthModeChangeDialogContent
+                        confirmationText={t('databases.register-flow.change-auth-mode-confirmation')}
+                        noOptionText={t('databases.register-flow.change-auth-mode-no-option')}
+                        yesOptionText={t('databases.register-flow.change-auth-mode-yes-option')}
+                        onSelectionChange={(applyToAll: boolean) => {
+                            applyToAllInstancesRef.current = applyToAll;
+                        }}
+                    />
+                }
+                primaryButton={t('databases.general.save')}
+                secondaryButton={t('databases.general.close')}
+                callback={handleSave}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+            />
+        );
+    };
+
     // Handle updating individual instance credentials using uniqueKey to handle duplicate names
     const handleInstanceUpdate = (uniqueKey: string, field: 'authMode' | 'username' | 'password', value: any) => {
+        // For auth mode changes on the first time, show confirmation dialog
+        if (field === 'authMode' && !hasShownAuthModeChangeDialog && instances.length > 1) {
+            showAuthModeChangeDialog(uniqueKey, value);
+            return;
+        }
         dispatch(setInstanceCredentials({ instanceId: uniqueKey, credentials: { [field]: value } }));
     };
 
@@ -436,6 +541,7 @@ export const Content = () => {
                                                 className={styles.closeButton}
                                                 onClick={() => handleRemoveInstance(instance.uniqueKey)}
                                                 aria-label={t('databases.register-flow.remove-instance')}
+                                                disabled={instances.length === 1}
                                             >
                                                 <CloseIcon />
                                             </button>
