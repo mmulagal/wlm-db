@@ -12,14 +12,15 @@ import { ACTION_TYPE, DBType } from '../../../../../../utils/consts';
 type ActionComponentProps = {
     manageChecks: Partial<ManageStates>;
     engineType: string;
+    wizardOperationType: string;
 };
 
-const ActionComponent = ({ manageChecks, engineType }: ActionComponentProps) => {
+const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: ActionComponentProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { state, setState }: UseWizardReturn = useWizard();
     const installActionState = useAppSelector(state => state.inventoryV2.manageInstanceInstallAction);
-    const { wizardOperationType, bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
+    const { bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
 
     // Calculate instance counts and names for bulk operations
     const instanceCounts = useMemo(() => {
@@ -34,19 +35,54 @@ const ActionComponent = ({ manageChecks, engineType }: ActionComponentProps) => 
                 (instance: any) => instance?.manageStates?.installMissingPowershell
             );
 
+            // Instances that need both AWS modules and PowerShell 7
+            const bothInstances = bulkDetectedInstanceList.filter(
+                (instance: any) =>
+                    instance?.manageStates?.installMissingAWS &&
+                    (instance?.manageStates?.installMissingAWSList?.length ?? 0) > 0 &&
+                    instance?.manageStates?.installMissingPowershell
+            );
+
+            // Instances that need only AWS modules (not PowerShell 7)
+            const awsOnlyInstances = awsInstances.filter(
+                (instance: any) => !instance?.manageStates?.installMissingPowershell
+            );
+
+            // Instances that need only PowerShell 7 (not AWS modules)
+            const powershellOnlyInstances = powershellInstances.filter(
+                (instance: any) =>
+                    !instance?.manageStates?.installMissingAWS ||
+                    (instance?.manageStates?.installMissingAWSList?.length ?? 0) === 0
+            );
+
             return {
                 awsCount: awsInstances.length,
                 awsInstanceNames: awsInstances.map((i: any) => i?.instanceName || i?.hostName),
                 powershellCount: powershellInstances.length,
-                powershellInstanceNames: powershellInstances.map((i: any) => i?.instanceName || i?.hostName)
+                powershellInstanceNames: powershellInstances.map((i: any) => i?.instanceName || i?.hostName),
+                bothCount: bothInstances.length,
+                bothInstanceNames: bothInstances.map((i: any) => i?.instanceName || i?.hostName),
+                awsOnlyCount: awsOnlyInstances.length,
+                awsOnlyInstanceNames: awsOnlyInstances.map((i: any) => i?.instanceName || i?.hostName),
+                powershellOnlyCount: powershellOnlyInstances.length,
+                powershellOnlyInstanceNames: powershellOnlyInstances.map((i: any) => i?.instanceName || i?.hostName)
             };
         }
         // For single instance mode
+        const needsAws = manageChecks?.installMissingAWS ? 1 : 0;
+        const needsPowershell = manageChecks?.installMissingPowershell ? 1 : 0;
+        const needsBoth = needsAws && needsPowershell ? 1 : 0;
         return {
-            awsCount: manageChecks?.installMissingAWS ? 1 : 0,
+            awsCount: needsAws,
             awsInstanceNames: [] as string[],
-            powershellCount: manageChecks?.installMissingPowershell ? 1 : 0,
-            powershellInstanceNames: [] as string[]
+            powershellCount: needsPowershell,
+            powershellInstanceNames: [] as string[],
+            bothCount: needsBoth,
+            bothInstanceNames: [] as string[],
+            awsOnlyCount: needsAws && !needsPowershell ? 1 : 0,
+            awsOnlyInstanceNames: [] as string[],
+            powershellOnlyCount: needsPowershell && !needsAws ? 1 : 0,
+            powershellOnlyInstanceNames: [] as string[]
         };
     }, [wizardOperationType, bulkDetectedInstanceList, manageChecks]);
 
@@ -86,22 +122,27 @@ const ActionComponent = ({ manageChecks, engineType }: ActionComponentProps) => 
             {/* MSSQL-specific installation notes */}
             {engineType === DBType.MSSQL && (instanceCounts.awsCount > 0 || instanceCounts.powershellCount > 0) && (
                 <div className={styles.installationNotes}>
-                    {instanceCounts.awsCount > 0 && (
+                    {/* Combined message when both AWS modules and PowerShell 7 are needed */}
+                    {instanceCounts.bothCount > 0 && (
                         <div className={styles.installationRow}>
                             <DsTypography variant="Regular_14">
-                                {t('databases.register-flow.instances-require-netapp-modules', {
-                                    count: instanceCounts.awsCount,
-                                    instanceText:
-                                        instanceCounts.awsCount === 1 ? 'instance requires' : 'instances require'
-                                })}
+                                {wizardOperationType === ACTION_TYPE.SINGLE
+                                    ? t(
+                                          'databases.register-flow.single-instance-require-netapp-modules-and-powershell7'
+                                      )
+                                    : t('databases.register-flow.instances-require-netapp-modules-and-powershell7', {
+                                          count: instanceCounts.bothCount,
+                                          instanceText:
+                                              instanceCounts.bothCount === 1 ? 'instance requires' : 'instances require'
+                                      })}
                             </DsTypography>
-                            {instanceCounts.awsInstanceNames.length > 0 && (
+                            {instanceCounts.bothInstanceNames.length > 0 && (
                                 <TooltipInfo placement="bottom" trigger="hover">
                                     <div className={styles.tooltipContent}>
                                         <DsTypography variant="Semibold_14">
                                             {t('databases.register-flow.instances')}
                                         </DsTypography>
-                                        {instanceCounts.awsInstanceNames.map(name => (
+                                        {instanceCounts.bothInstanceNames.map(name => (
                                             <React.Fragment key={name}>
                                                 <hr className={styles.tooltipDivider} />
                                                 <DsTypography variant="Regular_14">{name}</DsTypography>
@@ -112,34 +153,71 @@ const ActionComponent = ({ manageChecks, engineType }: ActionComponentProps) => 
                             )}
                         </div>
                     )}
+                    {/* AWS modules only (when PowerShell 7 is not needed) */}
+                    {instanceCounts.awsOnlyCount > 0 && (
+                        <div className={styles.installationRow}>
+                            <DsTypography variant="Regular_14">
+                                {wizardOperationType === ACTION_TYPE.SINGLE
+                                    ? t('databases.register-flow.single-instance-require-netapp-modules')
+                                    : t('databases.register-flow.instances-require-netapp-modules', {
+                                          count: instanceCounts.awsOnlyCount,
+                                          instanceText:
+                                              instanceCounts.awsOnlyCount === 1
+                                                  ? 'instance requires'
+                                                  : 'instances require'
+                                      })}
+                            </DsTypography>
+                            {instanceCounts.awsOnlyInstanceNames.length > 0 && (
+                                <TooltipInfo placement="bottom" trigger="hover">
+                                    <div className={styles.tooltipContent}>
+                                        <DsTypography variant="Semibold_14">
+                                            {t('databases.register-flow.instances')}
+                                        </DsTypography>
+                                        {instanceCounts.awsOnlyInstanceNames.map(name => (
+                                            <React.Fragment key={name}>
+                                                <hr className={styles.tooltipDivider} />
+                                                <DsTypography variant="Regular_14">{name}</DsTypography>
+                                            </React.Fragment>
+                                        ))}
+                                    </div>
+                                </TooltipInfo>
+                            )}
+                        </div>
+                    )}
+                    {/* PowerShell 7 only (when AWS modules are not needed) */}
+                    {instanceCounts.powershellOnlyCount > 0 && (
+                        <div className={styles.installationRow}>
+                            <DsTypography variant="Regular_14">
+                                {wizardOperationType === ACTION_TYPE.SINGLE
+                                    ? t('databases.register-flow.single-instance-require-powershell7')
+                                    : t('databases.register-flow.instances-require-powershell7', {
+                                          count: instanceCounts.powershellOnlyCount,
+                                          instanceText:
+                                              instanceCounts.powershellOnlyCount === 1
+                                                  ? 'instance requires'
+                                                  : 'instances require'
+                                      })}
+                            </DsTypography>
+                            {instanceCounts.powershellOnlyInstanceNames.length > 0 && (
+                                <TooltipInfo placement="bottom" trigger="hover">
+                                    <div className={styles.tooltipContent}>
+                                        <DsTypography variant="Semibold_14">
+                                            {t('databases.register-flow.instances')}
+                                        </DsTypography>
+                                        {instanceCounts.powershellOnlyInstanceNames.map(name => (
+                                            <React.Fragment key={name}>
+                                                <hr className={styles.tooltipDivider} />
+                                                <DsTypography variant="Regular_14">{name}</DsTypography>
+                                            </React.Fragment>
+                                        ))}
+                                    </div>
+                                </TooltipInfo>
+                            )}
+                        </div>
+                    )}
+                    {/* PowerShell reboot and authorization notices (shown when any instance needs PowerShell 7) */}
                     {instanceCounts.powershellCount > 0 && (
                         <>
-                            <div className={styles.installationRow}>
-                                <DsTypography variant="Regular_14">
-                                    {t('databases.register-flow.instances-require-powershell7', {
-                                        count: instanceCounts.powershellCount,
-                                        instanceText:
-                                            instanceCounts.powershellCount === 1
-                                                ? 'instance requires'
-                                                : 'instances require'
-                                    })}
-                                </DsTypography>
-                                {instanceCounts.powershellInstanceNames.length > 0 && (
-                                    <TooltipInfo placement="bottom" trigger="hover">
-                                        <div className={styles.tooltipContent}>
-                                            <DsTypography variant="Semibold_14">
-                                                {t('databases.register-flow.instances')}
-                                            </DsTypography>
-                                            {instanceCounts.powershellInstanceNames.map(name => (
-                                                <React.Fragment key={name}>
-                                                    <hr className={styles.tooltipDivider} />
-                                                    <DsTypography variant="Regular_14">{name}</DsTypography>
-                                                </React.Fragment>
-                                            ))}
-                                        </div>
-                                    </TooltipInfo>
-                                )}
-                            </div>
                             <DsTypography variant="Regular_14">
                                 {t('databases.register-flow.powershell7-reboot-notice')}
                             </DsTypography>

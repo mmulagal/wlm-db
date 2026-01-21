@@ -447,6 +447,12 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
      */
     const handleRegisterAuthCredentials = async () => {
         dispatch(setIsDetectHostLoading(true));
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: t('databases.register-flow.bulk-auth-in-progress')
+            })
+        );
         dispatch(setManageSingleInstanceReadiness(null));
         const sqlServerInstance =
             manageSingleInstanceData?.sqlServerInstance || manageSingleInstanceData?.databaseInstanceName || '';
@@ -535,6 +541,12 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
      */
     const handleRegisterFsxCredentials = async () => {
         dispatch(setIsDetectHostLoading(true));
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: t('databases.register-flow.bulk-auth-in-progress')
+            })
+        );
         dispatch(setManageSingleInstanceReadiness(null));
 
         // Get FSx IDs from storage array that need authentication
@@ -869,7 +881,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: t('databases.register-flow.bulk-auth-all-failed')
+                            message: t('databases.register-flow.bulk-auth-all-failed', {
+                                failedCount
+                            })
                         })
                     );
                 }

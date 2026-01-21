@@ -6,6 +6,7 @@
     width: 100%;
     // max-width: 1607px;
     margin-top: 16px;
+    overflow: visible;
 
     .buttonContainer {
         display: flex;
@@ -119,9 +120,11 @@
     }
 
     .table {
+        --table-top-fixed: 65px;
         width: 100%;
         margin-top: -18px;
         margin-bottom: 96px;
+        position: relative;
     }
 
     .leftBorder {
@@ -367,6 +370,11 @@
         }
     }
 
+    // When bulk action container is visible, push table headers down
+    .bulkActionVisible {
+        --table-top-fixed: 112px;
+    }
+
     [class*='Table-module_horizontal-scroll'] {
         height: 20px !important;
     }
@@ -378,6 +386,14 @@
     .protectionTooltipMessage {
         padding: 16px 24px;
         box-shadow: 2px 2px 6px 0px var(--border);
+    }
+
+    [class*='bulkContainer'] {
+        position: sticky;
+        top: 56px;
+        z-index: 5;
+        margin: 0;
+        box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, #e0e0e0);
     }
 }
 

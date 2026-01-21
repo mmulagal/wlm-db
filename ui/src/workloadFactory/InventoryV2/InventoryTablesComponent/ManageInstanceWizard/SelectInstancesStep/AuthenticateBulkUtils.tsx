@@ -39,6 +39,8 @@ export interface BulkInstanceItem {
     ec2InstanceId: string;
     region: string;
     credentialsId: string;
+    /** Unique identifier combining ec2InstanceId and databaseInstanceName to handle duplicate instance names */
+    uniqueKey: string;
 }
 
 /**
@@ -46,18 +48,30 @@ export interface BulkInstanceItem {
  * @param selectedMultiDetectInstances - Array of selected instances from Redux state
  * @returns Array of formatted instance items
  */
+/**
+ * Generate a unique key for an instance by combining ec2InstanceId and databaseInstanceName
+ * This handles cases where multiple instances have the same name on different EC2 hosts
+ */
+export const generateInstanceUniqueKey = (ec2InstanceId: string, databaseInstanceName: string): string =>
+    `${ec2InstanceId}::${databaseInstanceName}`;
+
 export const getSelectedInstancesForBulk = (
     selectedMultiDetectInstances: BulkDetectedInstance[] | undefined
 ): BulkInstanceItem[] => {
     if (!selectedMultiDetectInstances || !Array.isArray(selectedMultiDetectInstances)) return [];
 
-    return selectedMultiDetectInstances.map(instance => ({
-        instanceId: instance.data?.databaseInstanceName || instance.databaseInstanceName || '',
-        instanceName: instance.data?.databaseInstanceName || instance.databaseInstanceName || '',
-        ec2InstanceId: instance.data?.ec2InstanceId || instance.ec2InstanceId || '',
-        region: instance.data?.regionId || instance.region || '',
-        credentialsId: instance.data?.credentialId || instance.credentialsId || ''
-    }));
+    return selectedMultiDetectInstances.map(instance => {
+        const ec2InstanceId = instance.data?.ec2InstanceId || instance.ec2InstanceId || '';
+        const databaseInstanceName = instance.data?.databaseInstanceName || instance.databaseInstanceName || '';
+        return {
+            instanceId: databaseInstanceName,
+            instanceName: databaseInstanceName,
+            ec2InstanceId,
+            region: instance.data?.regionId || instance.region || '',
+            credentialsId: instance.data?.credentialId || instance.credentialsId || '',
+            uniqueKey: generateInstanceUniqueKey(ec2InstanceId, databaseInstanceName)
+        };
+    });
 };
 
 /**
@@ -314,6 +328,9 @@ export const createBulkAuthPayload = (
 
         if (!ec2InstanceId || !instanceId) return;
 
+        // Generate unique key for credential lookup
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
+
         // Skip instances that don't need authentication
         if (!isAuthRequiredForInstance(instanceData, hostType)) return;
 
@@ -330,8 +347,8 @@ export const createBulkAuthPayload = (
             username = bulkInstanceCredentials.username || '';
             password = bulkInstanceCredentials.password || '';
         } else {
-            // MANUAL mode - get per-instance credentials
-            const creds = instanceCredentials[instanceId];
+            // MANUAL mode - get per-instance credentials using uniqueKey
+            const creds = instanceCredentials[uniqueKey];
             authMode = creds?.authMode?.value || '';
             username = creds?.username || '';
             password = creds?.password || '';
@@ -425,7 +442,10 @@ export const validateBulkInstanceCredentials = (
         for (const instance of instancesNeedingAuth) {
             const instanceData = instance.data || instance;
             const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
-            const creds = instanceCredentials[instanceId];
+            const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+            // Use uniqueKey for credential lookup to handle duplicate instance names
+            const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
+            const creds = instanceCredentials[uniqueKey];
 
             if (!creds?.username || !creds?.password) {
                 return { isValid: false, errorMessage: `Please enter credentials for ${instanceId}` };

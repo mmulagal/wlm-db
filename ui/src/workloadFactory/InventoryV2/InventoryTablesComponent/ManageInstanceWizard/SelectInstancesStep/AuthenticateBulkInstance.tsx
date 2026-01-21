@@ -5,6 +5,7 @@ import { ReactComponent as CloseIcon } from '@netapp/icons/ic_close.svg';
 import { useEffect, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import classNames from 'classnames';
 import { ReactComponent as InstancesImage } from '../../../../../assets/Instances_Img.svg';
 import { ReactComponent as SingleAuth } from '../../../../../assets/SingleAuth.svg';
 import { ReactComponent as Success } from '../../../../../assets/success.svg';
@@ -27,6 +28,7 @@ import {
     isInstanceAuthenticated,
     hasInstanceFailed,
     haveAllInstancesFailed,
+    generateInstanceUniqueKey,
     BulkInstanceItem
 } from './AuthenticateBulkUtils';
 
@@ -59,6 +61,9 @@ export const Content = () => {
     const selectedMultiDetectInstances = useAppSelector(state => state.inventoryV2.selectedMultiDetectInstances);
     const instanceAuthStatus = useAppSelector(state => state.inventoryV2.instanceAuthStatus);
     const { selectedHostType } = useAppSelector(state => state.inventoryV2);
+
+    // Get loading state from msSqlAction slice to disable inputs during API calls
+    const isDetectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
 
     // Host type for auth checks (defaults to MSSQL for bulk registration)
     const hostType = selectedHostType || DBType.MSSQL;
@@ -107,10 +112,11 @@ export const Content = () => {
         if (wasUseTheSameCred && isNowManual) {
             // Find all authenticated instances and populate their credentials
             instances.forEach((instance: BulkInstanceItem) => {
-                const originalInstance = (selectedMultiDetectInstances as any[]).find(
-                    (inst: any) =>
-                        (inst.data?.databaseInstanceName || inst.databaseInstanceName) === instance.instanceId
-                );
+                const originalInstance = (selectedMultiDetectInstances as any[]).find((inst: any) => {
+                    const ec2Id = inst.data?.ec2InstanceId || inst.ec2InstanceId || '';
+                    const dbInstanceName = inst.data?.databaseInstanceName || inst.databaseInstanceName || '';
+                    return generateInstanceUniqueKey(ec2Id, dbInstanceName) === instance.uniqueKey;
+                });
                 const instanceData = originalInstance?.data || originalInstance;
                 const authenticated = isInstanceAuthenticated(
                     instance.instanceId,
@@ -120,11 +126,11 @@ export const Content = () => {
                 );
 
                 if (authenticated && username && password) {
-                    // Only populate if not already set
-                    if (!instanceCredentials[instance.instanceId]?.username) {
+                    // Only populate if not already set - use uniqueKey for credentials map
+                    if (!instanceCredentials[instance.uniqueKey]?.username) {
                         dispatch(
                             setInstanceCredentials({
-                                instanceId: instance.instanceId,
+                                instanceId: instance.uniqueKey,
                                 credentials: {
                                     authMode,
                                     username,
@@ -162,24 +168,28 @@ export const Content = () => {
         }
     ];
 
-    // Handle updating individual instance credentials
-    const handleInstanceUpdate = (instanceId: string, field: 'authMode' | 'username' | 'password', value: any) => {
-        dispatch(setInstanceCredentials({ instanceId, credentials: { [field]: value } }));
+    // Handle updating individual instance credentials using uniqueKey to handle duplicate names
+    const handleInstanceUpdate = (uniqueKey: string, field: 'authMode' | 'username' | 'password', value: any) => {
+        dispatch(setInstanceCredentials({ instanceId: uniqueKey, credentials: { [field]: value } }));
     };
 
-    // Handle removing an instance from the selection
-    const handleRemoveInstance = (instanceId: string) => {
-        dispatch(removeInstanceCredentials(instanceId));
-        // Also update selectedMultiDetectInstances
-        const updatedInstances = selectedMultiDetectInstances.filter(
-            (inst: any) => (inst.data?.databaseInstanceName || inst.databaseInstanceName) !== instanceId
-        );
+    // Handle removing an instance from the selection using unique key (ec2InstanceId + instanceName)
+    // to ensure only the specific instance is removed even if multiple instances share the same name
+    const handleRemoveInstance = (uniqueKey: string) => {
+        dispatch(removeInstanceCredentials(uniqueKey));
+        // Filter using unique key (ec2InstanceId::databaseInstanceName) to handle duplicate names
+        const updatedInstances = selectedMultiDetectInstances.filter((inst: any) => {
+            const ec2Id = inst.data?.ec2InstanceId || inst.ec2InstanceId || '';
+            const dbInstanceName = inst.data?.databaseInstanceName || inst.databaseInstanceName || '';
+            const instUniqueKey = generateInstanceUniqueKey(ec2Id, dbInstanceName);
+            return instUniqueKey !== uniqueKey;
+        });
         dispatch(setSelectedMultiDetectInstances(updatedInstances));
     };
 
-    // Get credentials for an instance (from Redux or defaults)
-    const getInstanceCredentials = (instanceId: string) =>
-        instanceCredentials[instanceId] || {
+    // Get credentials for an instance using uniqueKey (from Redux or defaults)
+    const getInstanceCredentials = (uniqueKey: string) =>
+        instanceCredentials[uniqueKey] || {
             authMode: {
                 label: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
                 value: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
@@ -194,7 +204,7 @@ export const Content = () => {
             <div className={styles.authenticatedTooltipContent}>
                 {instances.map((instance, index) => (
                     <div
-                        key={instance.instanceId}
+                        key={instance.uniqueKey}
                         className={`${styles.authenticatedTooltipRow} ${
                             index !== instances.length - 1 ? styles.authenticatedTooltipRowWithBorder : ''
                         }`}
@@ -228,7 +238,7 @@ export const Content = () => {
     }
 
     return (
-        <div className={styles.authenticateBulkInstance}>
+        <div className={classNames(styles.authenticateBulkInstance, { [styles.disabled]: isDetectHostLoading })}>
             {/* Authentication Type Section - Header Card */}
             <div className={styles.authenticationTypeSection}>
                 <div className={styles.instanceIcon}>
@@ -246,7 +256,7 @@ export const Content = () => {
                             title={t('databases.register-flow.use-same-credentials-for-all-instances')}
                             isSelected={credentialOption === CREDENTIAL_OPTIONS.SAME_FOR_ALL}
                             onClick={() => dispatch(setCredentialOption(CREDENTIAL_OPTIONS.SAME_FOR_ALL))}
-                            isDisabled={hasPartialSuccess}
+                            isDisabled={hasPartialSuccess || isDetectHostLoading}
                         />
                         <DsRadioButton
                             id="manual-credentials"
@@ -254,7 +264,7 @@ export const Content = () => {
                             title={t('databases.register-flow.manage-instances-credentials-manually')}
                             isSelected={credentialOption === CREDENTIAL_OPTIONS.MANUAL}
                             onClick={() => dispatch(setCredentialOption(CREDENTIAL_OPTIONS.MANUAL))}
-                            isDisabled={hasPartialSuccess}
+                            isDisabled={hasPartialSuccess || isDetectHostLoading}
                         />
                     </div>
                 </div>
@@ -269,8 +279,13 @@ export const Content = () => {
                         </DsTypography>
                         <TooltipInfo trigger="hover" placement="bottom">
                             <div className={styles.instanceTooltip}>
-                                {instances.map(instance => (
-                                    <div key={instance.instanceId} className={styles.tooltipItem}>
+                                {instances.map((instance, index) => (
+                                    <div
+                                        key={instance.uniqueKey}
+                                        className={`${styles.tooltipItem} ${
+                                            index !== instances.length - 1 ? styles.tooltipItemWithBorder : ''
+                                        }`}
+                                    >
                                         <div className={styles.tooltipItemContent}>
                                             <DsTypography variant="Semibold_13">{instance.instanceName}</DsTypography>
                                         </div>
@@ -291,6 +306,7 @@ export const Content = () => {
                             isClearable={false}
                             isSearchable={false}
                             className={`${styles.selectField} ${allFailed ? styles.errorBorder : ''}`}
+                            isDisabled={isDetectHostLoading}
                         />
 
                         <DsTextField
@@ -303,6 +319,7 @@ export const Content = () => {
                                 getAuthFieldLabels(authMode?.value, t).usernameLabel
                             }`}
                             className={styles.textField}
+                            isDisabled={isDetectHostLoading}
                             {...(allFailed
                                 ? {
                                       message: {
@@ -322,6 +339,7 @@ export const Content = () => {
                             placeholder={t('databases.general.enter-password')}
                             className={styles.passwordField}
                             error={allFailed ? t('databases.register-flow.authentication-failed') : ''}
+                            isDisabled={isDetectHostLoading}
                         />
                     </div>
                 </div>
@@ -331,12 +349,13 @@ export const Content = () => {
             {credentialOption === CREDENTIAL_OPTIONS.MANUAL && (
                 <div className={styles.manualCredentialsSection}>
                     {instances.map((instance, index) => {
-                        const creds = getInstanceCredentials(instance.instanceId);
-                        // Find the original instance data to check authentication status properly
-                        const originalInstance = (selectedMultiDetectInstances as any[]).find(
-                            (inst: any) =>
-                                (inst.data?.databaseInstanceName || inst.databaseInstanceName) === instance.instanceId
-                        );
+                        const creds = getInstanceCredentials(instance.uniqueKey);
+                        // Find the original instance data using uniqueKey to handle duplicate names
+                        const originalInstance = (selectedMultiDetectInstances as any[]).find((inst: any) => {
+                            const ec2Id = inst.data?.ec2InstanceId || inst.ec2InstanceId || '';
+                            const dbInstanceName = inst.data?.databaseInstanceName || inst.databaseInstanceName || '';
+                            return generateInstanceUniqueKey(ec2Id, dbInstanceName) === instance.uniqueKey;
+                        });
                         const instanceData = originalInstance?.data || originalInstance;
                         const authenticated = isInstanceAuthenticated(
                             instance.instanceId,
@@ -348,7 +367,7 @@ export const Content = () => {
 
                         return (
                             <div
-                                key={instance.instanceId}
+                                key={instance.uniqueKey}
                                 className={styles.instanceRow}
                                 style={{ borderTop: index > 0 ? '2px solid #e0e0e0' : 'none' }}
                             >
@@ -365,12 +384,12 @@ export const Content = () => {
                                         label={t('databases.register-flow.select-authentication-mode')}
                                         value={creds.authMode}
                                         onChange={(selectedOption: any) =>
-                                            handleInstanceUpdate(instance.instanceId, 'authMode', selectedOption)
+                                            handleInstanceUpdate(instance.uniqueKey, 'authMode', selectedOption)
                                         }
                                         options={authModeOptions}
                                         isClearable={false}
                                         isSearchable={false}
-                                        isDisabled={authenticated}
+                                        isDisabled={authenticated || isDetectHostLoading}
                                         className={`${styles.instanceSelectField} ${failed ? styles.errorBorder : ''}`}
                                     />
 
@@ -379,7 +398,7 @@ export const Content = () => {
                                         value={creds.username}
                                         onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
                                             handleInstanceUpdate(
-                                                instance.instanceId,
+                                                instance.uniqueKey,
                                                 'username',
                                                 event?.target?.value || ''
                                             )
@@ -388,7 +407,7 @@ export const Content = () => {
                                             getAuthFieldLabels(creds.authMode?.value, t).usernameLabel
                                         }`}
                                         className={styles.instanceTextField}
-                                        isDisabled={authenticated}
+                                        isDisabled={authenticated || isDetectHostLoading}
                                         {...(failed
                                             ? {
                                                   message: {
@@ -403,19 +422,19 @@ export const Content = () => {
                                         label={getAuthFieldLabels(creds.authMode?.value, t).passwordLabel}
                                         value={creds.password}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                            handleInstanceUpdate(instance.instanceId, 'password', e.target.value)
+                                            handleInstanceUpdate(instance.uniqueKey, 'password', e.target.value)
                                         }
                                         placeholder={t('databases.general.enter-password')}
                                         className={styles.instancePasswordField}
-                                        isDisabled={authenticated}
+                                        isDisabled={authenticated || isDetectHostLoading}
                                         error={failed ? t('databases.register-flow.authentication-failed') : ''}
                                     />
 
-                                    {!authenticated && (
+                                    {!authenticated && !isDetectHostLoading && (
                                         <div className={styles.closeButtonContainer}>
                                             <button
                                                 className={styles.closeButton}
-                                                onClick={() => handleRemoveInstance(instance.instanceId)}
+                                                onClick={() => handleRemoveInstance(instance.uniqueKey)}
                                                 aria-label={t('databases.register-flow.remove-instance')}
                                             >
                                                 <CloseIcon />

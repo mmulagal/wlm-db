@@ -20,6 +20,9 @@ export const Content = () => {
         selectedMultiDetectInstances
     } = useAppSelector(state => state.inventoryV2);
 
+    // Get loading state from msSqlAction slice to disable inputs during API calls
+    const isDetectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
+
     const isBulkMode = wizardOperationType === ACTION_TYPE.BULK;
 
     // Check if all FSx are authenticated by checking fsxCredentialStatusObj
@@ -61,8 +64,8 @@ export const Content = () => {
         // FSx needs authentication
         return (
             <>
-                <HeaderCard isRadioDisabled={hasPartialSuccess} />
-                <InputCard isBulkMode={isBulkMode} />
+                <HeaderCard isRadioDisabled={hasPartialSuccess} isLoading={isDetectHostLoading} />
+                <InputCard isBulkMode={isBulkMode} isLoading={isDetectHostLoading} />
             </>
         );
     };

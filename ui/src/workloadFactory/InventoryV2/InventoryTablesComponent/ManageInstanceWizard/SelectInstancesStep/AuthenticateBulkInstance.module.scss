@@ -6,6 +6,15 @@
     margin-top: 40px;
     margin-bottom: 40px;
 
+    &.disabled {
+        color: var(--text-disabled);
+        pointer-events: none;
+
+        [class*='Typography'] {
+            color: var(--text-disabled) !important;
+        }
+    }
+
     .authenticationTypeSection {
         background: var(--hover-background, #f4fbff);
         display: flex;
@@ -110,7 +119,6 @@
                     padding: 16px;
                     width: 100%;
                     position: relative;
-                    box-shadow: inset 0px -1px 0px 0px var(--border-drop-shadow, #e0e0e0);
 
                     .tooltipItemContent {
                         display: flex;
@@ -119,6 +127,10 @@
                         align-items: flex-start;
                         width: 100%;
                     }
+                }
+
+                .tooltipItemWithBorder {
+                    box-shadow: inset 0px -1px 0px 0px var(--border-drop-shadow, #e0e0e0);
                 }
             }
         }

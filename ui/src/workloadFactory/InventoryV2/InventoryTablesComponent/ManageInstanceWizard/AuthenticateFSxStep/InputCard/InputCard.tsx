@@ -2,6 +2,7 @@ import { TooltipInfo, DsTypography, PasswordField, TextField, useWizard } from '
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useMemo } from 'react';
+import classNames from 'classnames';
 import styles from './InputCard.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import {
@@ -24,9 +25,10 @@ import {
 
 interface InputCardProps {
     isBulkMode?: boolean;
+    isLoading?: boolean;
 }
 
-const InputCard = ({ isBulkMode = false }: InputCardProps) => {
+const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) => {
     const {
         detectOntapUsername,
         detectOntapPassword,
@@ -116,7 +118,7 @@ const InputCard = ({ isBulkMode = false }: InputCardProps) => {
     );
 
     return (
-        <div className={styles.inputCard}>
+        <div className={classNames(styles.inputCard, { [styles.disabled]: isLoading })}>
             {selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED && (
                 <div className={styles.card1}>
                     <div className={styles.topHeading}>
@@ -152,6 +154,7 @@ const InputCard = ({ isBulkMode = false }: InputCardProps) => {
                             placeholder={`${t('databases.general.enter')} ${t(
                                 'databases.register-flow.fsx-for-ontap-username'
                             )}`}
+                            isDisabled={isLoading}
                         />
 
                         <PasswordField
@@ -169,6 +172,7 @@ const InputCard = ({ isBulkMode = false }: InputCardProps) => {
                                     : ''
                             }
                             placeholder={t('databases.general.enter-password')}
+                            isDisabled={isLoading}
                         />
                     </div>
                 </div>
@@ -214,7 +218,7 @@ const InputCard = ({ isBulkMode = false }: InputCardProps) => {
                                         placeholder={`${t('databases.general.enter')} ${t(
                                             'databases.register-flow.fsx-for-ontap-username'
                                         )}`}
-                                        isDisabled={isAuthenticated}
+                                        isDisabled={isAuthenticated || isLoading}
                                     />
 
                                     <PasswordField
@@ -236,7 +240,7 @@ const InputCard = ({ isBulkMode = false }: InputCardProps) => {
                                                 : ''
                                         }
                                         placeholder={t('databases.general.enter-password')}
-                                        isDisabled={isAuthenticated}
+                                        isDisabled={isAuthenticated || isLoading}
                                     />
                                 </div>
 

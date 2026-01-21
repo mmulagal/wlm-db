@@ -411,7 +411,11 @@ export const Content = () => {
                             {wizardOperationType === ACTION_TYPE.BULK &&
                                 manageMultiChecks &&
                                 shouldShowActionComponent(manageMultiChecks, hostType) && (
-                                    <ActionComponent manageChecks={manageMultiChecks} engineType={hostType} />
+                                    <ActionComponent
+                                        manageChecks={manageMultiChecks}
+                                        engineType={hostType}
+                                        wizardOperationType={wizardOperationType}
+                                    />
                                 )}
 
                             {wizardOperationType === ACTION_TYPE.BULK && manageMultiChecks && (
@@ -433,12 +437,20 @@ export const Content = () => {
                     {wizardOperationType === ACTION_TYPE.SINGLE &&
                         manageChecks &&
                         shouldShowActionComponent(manageChecks, hostType) && (
-                            <ActionComponent manageChecks={manageChecks} engineType={hostType} />
+                            <ActionComponent
+                                manageChecks={manageChecks}
+                                engineType={hostType}
+                                wizardOperationType={wizardOperationType}
+                            />
                         )}
                     {wizardOperationType === ACTION_TYPE.BULK &&
                         manageMultiChecks &&
                         shouldShowActionComponent(manageMultiChecks, hostType) && (
-                            <ActionComponent manageChecks={manageMultiChecks} engineType={hostType} />
+                            <ActionComponent
+                                manageChecks={manageMultiChecks}
+                                engineType={hostType}
+                                wizardOperationType={wizardOperationType}
+                            />
                         )}
 
                     {/* Accordions */}
@@ -459,12 +471,12 @@ export const Content = () => {
                     )}
 
                     {/* Note */}
-                    {wizardOperationType === ACTION_TYPE.SINGLE && manageChecks?.installMissingPowershell && (
-                        <NoteComponent />
-                    )}
-                    {wizardOperationType === ACTION_TYPE.BULK && manageMultiChecks?.installMissingPowershell && (
-                        <NoteComponent />
-                    )}
+                    {wizardOperationType === ACTION_TYPE.SINGLE &&
+                        manageChecks?.installMissingPowershell &&
+                        hostType === DBType.ORACLE && <NoteComponent />}
+                    {wizardOperationType === ACTION_TYPE.BULK &&
+                        manageMultiChecks?.installMissingPowershell &&
+                        hostType === DBType.ORACLE && <NoteComponent />}
                 </>
             )}
         </div>

@@ -4,6 +4,15 @@
     background-color: var(--content-background);
     box-shadow: 2px 2px 6px 0 var(--border-drop-shadow, #e0e0e0);
 
+    &.disabled {
+        color: var(--text-disabled);
+        pointer-events: none;
+
+        [class*='Typography'] {
+            color: var(--text-disabled) !important;
+        }
+    }
+
     .card1 {
         height: 280px;
         display: flex;

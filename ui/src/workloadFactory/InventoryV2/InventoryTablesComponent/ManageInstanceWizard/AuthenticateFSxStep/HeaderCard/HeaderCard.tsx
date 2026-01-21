@@ -2,6 +2,7 @@ import { DsTypography } from '@tlveng/wlm-ds';
 import { RadioButton } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import classNames from 'classnames';
 import { ReactComponent as FSx } from '../../../../../../assets/FSx.svg';
 import styles from './HeaderCard.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
@@ -10,14 +11,18 @@ import { setSelectedFSxForOntapCredentials } from '../../../../../../store/workl
 
 interface HeaderCardProps {
     isRadioDisabled?: boolean;
+    isLoading?: boolean;
 }
 
-const HeaderCard = ({ isRadioDisabled = false }: HeaderCardProps) => {
+const HeaderCard = ({ isRadioDisabled = false, isLoading = false }: HeaderCardProps) => {
     const dispatch = useDispatch();
     const { selectedFSxForOntapCredentials } = useAppSelector(state => state.inventoryV2);
     const { t } = useTranslation();
+
+    const isDisabled = isRadioDisabled || isLoading;
+
     return (
-        <div className={styles.headerCard}>
+        <div className={classNames(styles.headerCard, { [styles.disabled]: isLoading })}>
             <FSx />
 
             <div className={styles.rightSide}>
@@ -32,7 +37,7 @@ const HeaderCard = ({ isRadioDisabled = false }: HeaderCardProps) => {
                         }}
                         children={t('databases.register-flow.use-the-same-credentials-for-all-resources')}
                         className=""
-                        isDisabled={isRadioDisabled}
+                        isDisabled={isDisabled}
                     />
                     <RadioButton
                         id="select-config-oracle"
@@ -42,7 +47,7 @@ const HeaderCard = ({ isRadioDisabled = false }: HeaderCardProps) => {
                         }}
                         children={t('databases.register-flow.manage-credentials-manually')}
                         className=""
-                        isDisabled={isRadioDisabled}
+                        isDisabled={isDisabled}
                     />
                 </div>
             </div>

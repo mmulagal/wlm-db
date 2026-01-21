@@ -1045,21 +1045,24 @@ const InstancesTable = () => {
         }
     };
 
+    const isBulkActionVisible = selectedHostType === DBType.MSSQL && selectedRowsForBulkRegister.length > 0;
+
     return (
         <div className={styles.inventoryTable} ref={inventoryTableRef}>
-            {/* Show BulkActionContainer above the table when rows are selected */}
-            {selectedHostType === DBType.MSSQL && selectedRowsForBulkRegister.length > 0 && (
-                <BulkActionContainer
-                    action={t('databases.bulk-register.register-selected-instances', {
-                        count: selectedRowsForBulkRegister.length
-                    })}
-                    onClick={handleBulkRegisterAction}
-                />
-            )}
             <div
-                //  @ts-ignore
-                className={`${styles.table} ${styles.leftBorder}`}
+                className={`${styles.table} ${styles.leftBorder} ${
+                    isBulkActionVisible ? styles.bulkActionVisible : ''
+                }`}
             >
+                {/* Show BulkActionContainer above the table when rows are selected */}
+                {isBulkActionVisible && (
+                    <BulkActionContainer
+                        action={t('databases.bulk-register.register-selected-instances', {
+                            count: selectedRowsForBulkRegister.length
+                        })}
+                        onClick={handleBulkRegisterAction}
+                    />
+                )}
                 <TableTopBar
                     // @ts-ignore
                     tableProps={tableProps}

@@ -2,6 +2,7 @@ import { DsTypography, PasswordField, RadioButton, TextField, TooltipInfo, useWi
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import classNames from 'classnames';
 import styles from './DetectContent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { ACTION_TYPE, AUTHENTICATION_TYPE, DBType, DETECT_HOST_VAR } from '../../../../../../utils/consts';
@@ -48,6 +49,9 @@ const DetectContent = () => {
         detectOntapUsername,
         detectOntapPassword
     } = useAppSelector(state => state.inventoryV2);
+
+    // Get loading state from msSqlAction slice to disable inputs during API calls
+    const isDetectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
 
     const bulkInstanceData = useMemo(
         () => getBulkDetectChecks(selectedMultiDetectInstances),
@@ -144,7 +148,7 @@ const DetectContent = () => {
     }, [asmPasswordSearch]);
 
     const authModeRadio = () => (
-        <div className={styles['radio-container']}>
+        <div className={classNames(styles['radio-container'], { [styles.disabled]: isDetectHostLoading })}>
             <DsTypography variant="Semibold_14">{t('databases.register-flow.select-authentication-mode')}</DsTypography>
             <RadioButton
                 id="select-sql-authentication"
@@ -155,6 +159,7 @@ const DetectContent = () => {
                 }}
                 children={t('databases.register-flow.sql-server-authentication')}
                 className=""
+                isDisabled={isDetectHostLoading}
             />
             <RadioButton
                 id="select-windows-authentication"
@@ -167,6 +172,7 @@ const DetectContent = () => {
                 }}
                 children={t('databases.register-flow.windows-authentication')}
                 className=""
+                isDisabled={isDetectHostLoading}
             />
         </div>
     );
@@ -187,6 +193,7 @@ const DetectContent = () => {
                         className={styles.textFieldStyle}
                         error={!detectManageUserName && hitNext ? t('databases.general.action-required') : ''}
                         placeholder={`${t('databases.general.enter')} ${t(config.usernameLabel)}`}
+                        isDisabled={isDetectHostLoading}
                     />
 
                     <PasswordField
@@ -199,6 +206,7 @@ const DetectContent = () => {
                         className={styles.textFieldStyle}
                         error={!detectManagePassword && hitNext ? t('databases.general.action-required') : ''}
                         placeholder={t('databases.general.enter-password')}
+                        isDisabled={isDetectHostLoading}
                     />
                 </div>
             </div>
@@ -225,6 +233,7 @@ const DetectContent = () => {
                             : ''
                     }
                     placeholder={`Enter ${t('databases.register-flow.detect-windows-username')}`}
+                    isDisabled={isDetectHostLoading}
                 />
 
                 <PasswordField
@@ -243,6 +252,7 @@ const DetectContent = () => {
                             : ''
                     }
                     placeholder={t('databases.general.enter-password')}
+                    isDisabled={isDetectHostLoading}
                 />
             </div>
         </div>
@@ -262,6 +272,7 @@ const DetectContent = () => {
                     className={styles.textFieldStyle}
                     error={!detectOntapUsername && hitNext ? t('databases.general.action-required') : ''}
                     placeholder={`${t('databases.general.enter')} ${t('databases.register-flow.detect-fsx-username')}`}
+                    isDisabled={isDetectHostLoading}
                 />
 
                 <PasswordField
@@ -274,6 +285,7 @@ const DetectContent = () => {
                     className={styles.textFieldStyle}
                     error={!detectOntapPassword && hitNext ? t('databases.general.action-required') : ''}
                     placeholder={t('databases.general.enter-password')}
+                    isDisabled={isDetectHostLoading}
                 />
             </div>
         </div>
@@ -308,6 +320,7 @@ const DetectContent = () => {
                         }}
                         className={styles.textFieldStyle}
                         placeholder={`${t('databases.general.enter')} ${t(config.usernameLabel)}`}
+                        isDisabled={isDetectHostLoading}
                     />
 
                     <PasswordField
@@ -319,6 +332,7 @@ const DetectContent = () => {
                         }}
                         className={styles.textFieldStyle}
                         placeholder={`${t('databases.general.enter')} ${t(config.passwordLabel)}`}
+                        isDisabled={isDetectHostLoading}
                     />
                 </div>
             </div>

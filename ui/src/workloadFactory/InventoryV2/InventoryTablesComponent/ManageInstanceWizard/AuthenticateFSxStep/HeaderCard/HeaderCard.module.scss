@@ -8,6 +8,15 @@
     align-items: center;
     gap: 40px;
 
+    &.disabled {
+        color: var(--text-disabled);
+        pointer-events: none;
+
+        [class*='Typography'] {
+            color: var(--text-disabled) !important;
+        }
+    }
+
     .rightSide {
         display: flex;
         flex-direction: column;
