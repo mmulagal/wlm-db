@@ -14,7 +14,8 @@ import * as AuthenticateFSxStep from './AuthenticateFSxStep/AuthenticateFSxStep'
 import {
     setLandingFromWizard,
     resetInstanceAuthStatus,
-    resetFsxAuthStatus
+    resetFsxAuthStatus,
+    setBulkWizardStartAtFsxStep
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { DBType } from '../../../../utils/consts';
 
@@ -61,7 +62,8 @@ const Wizard = () => {
 
 const RegisterBulkWizard = () => {
     const { t } = useTranslation();
-    const { selectedHostType } = useAppSelector(state => state.inventoryV2);
+    const dispatch = useDispatch();
+    const { selectedHostType, bulkWizardStartAtFsxStep } = useAppSelector(state => state.inventoryV2);
 
     const MANAGE_STEPS =
         selectedHostType === DBType.MSSQL
@@ -105,11 +107,21 @@ const RegisterBulkWizard = () => {
     };
     const initialState: any = {};
 
+    // Determine initial step based on whether we're coming from replica authentication
+    const getInitialStep = () => {
+        if (bulkWizardStartAtFsxStep && selectedHostType === DBType.MSSQL) {
+            // Clear the flag after reading it
+            dispatch(setBulkWizardStartAtFsxStep(false));
+            return 'authenticate-fsx';
+        }
+        return selectedHostType === DBType.MSSQL ? 'authenticate-instance' : 'select-instances';
+    };
+
     return (
         <WizardContextProvider
             stepsMap={stepsMap}
             stepPaths={stepPaths}
-            initialStep={selectedHostType === DBType.MSSQL ? 'authenticate-instance' : 'select-instances'}
+            initialStep={getInitialStep()}
             initialPath="regular"
             initialState={initialState}
         >

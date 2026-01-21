@@ -65,6 +65,7 @@ const DialogComponent = ({
     const { selectedSnapshotPolicy, selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
     const { selectedOptimizeConfig } = useAppSelector(state => state.inventoryV2);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
+    const detectReplicaHostLoading = useAppSelector(state => state.msSqlAction.isDetectReplicaHostLoading);
     const {
         durationCustomAnalysis,
         selectedCustomAnalysisTime,
@@ -140,6 +141,7 @@ const DialogComponent = ({
 
     // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() =>
+        (dialogFrom === FROM_DIALOG.MANAGE_WIZARD && detectReplicaHostLoading) ||
         (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) ||
         ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) && isSaveConfigLoading) ||
         (dialogFrom === FROM_DIALOG.FSXADMIN && passwordResetLoading) ||
@@ -159,7 +161,8 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.SQLSERVER &&
             dialogFrom !== FROM_DIALOG.SINGLE_AGENT &&
             dialogFrom !== FROM_DIALOG.EXPLORE_SAVINGS &&
-            dialogFrom !== FROM_DIALOG.WINDOWS_AUTH
+            dialogFrom !== FROM_DIALOG.WINDOWS_AUTH &&
+            dialogFrom !== FROM_DIALOG.MANAGE_WIZARD
         ) {
             closeDialog();
         }

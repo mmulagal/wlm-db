@@ -37,6 +37,7 @@ const initialState: any = {
     dbCreateLogSizeValid: true,
     // Detect Host check - Inventory
     isDetectHostLoading: false, // If Detect host is loading on registerResourceCredentials API call
+    isDetectReplicaHostLoading: false, // If Detect Replica host is loading on registerResourceCredentials API call
     databaseHostEntryPoint: '',
     pricingPayload: null
 };
@@ -148,6 +149,9 @@ const msSqlActionSlice = createSlice({
         setIsDetectHostLoading(state, action: PayloadAction<any>) {
             state.isDetectHostLoading = action.payload;
         },
+        setIsDetectReplicaHostLoading(state, action: PayloadAction<any>) {
+            state.isDetectReplicaHostLoading = action.payload;
+        },
         setPricingPayload(state, action: PayloadAction<any>) {
             state.pricingPayload = action.payload;
         }
@@ -188,6 +192,7 @@ export const {
     setDbCreateDataSizeValid,
     setDbCreateLogSizeValid,
     setIsDetectHostLoading,
+    setIsDetectReplicaHostLoading,
     setPricingPayload
 } = msSqlActionSlice.actions;
 export default msSqlActionSlice;

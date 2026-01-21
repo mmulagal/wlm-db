@@ -1,18 +1,19 @@
-import { DsButton, useWizard, WizardFooter } from '@netapp/design-system';
+import { DsButton, useDialog, useWizard, WizardFooter } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import styles from './ManageInstanceWizard.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     detectAuthFieldsValidation,
     detectFieldsValidation,
     detectFsxFieldsValidation,
+    getReplicaInstanceList,
     saveFsxInCredRegisteredObj,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
-import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
+import { setIsDetectHostLoading, setIsDetectReplicaHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import {
     useLazyGetSubTaskListQuery,
     useManageBulkV2MssqlInstanceMutation,
@@ -31,7 +32,9 @@ import {
     setSelectedFSxForOntapCredentials,
     setSelectedMultiDetectInstances,
     setFsxAuthStatus,
-    setInstanceAuthStatus
+    setInstanceAuthStatus,
+    setWizardOperationType,
+    setBulkWizardStartAtFsxStep
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     createDetectHostPayloadBulk,
@@ -47,14 +50,21 @@ import {
 import { areAllFsxAuthenticated, getFsxNeedingAuthFromBulk } from './AuthenticateFSxStep/AuthenticateFsxUtils';
 import {
     ACTION_TYPE,
+    AUTHENTICATION_TYPE,
+    CREDENTIAL_OPTIONS,
     DBType,
     DETECT_HOST_VAR,
     DETECT_PAYLOAD_SIZE,
+    FROM_DIALOG,
     FSX_FOR_ONTAP_CRED_OPTION,
-    RESPONSE_STATUS
+    RESPONSE_STATUS,
+    SQL_DEPLOYMENT_MODE
 } from '../../../../utils/consts';
 import { BulkDetectedInstance, UseWizardReturn } from '../../../../utils/types/registerTypes';
 import { FsxAuthStatusMap, InstanceAuthStatusMap } from '../../../../utils/types/inventoryV2Types';
+import DialogComponent from '../../../../common/Dialog/DialogComponent';
+import ReplicaInfoDialog from './ReplicaInfoDialog/ReplicaInfoDialog';
+import store from '../../../../store/store';
 
 type PlanningWizardFooterProps = {
     style?: React.CSSProperties;
@@ -65,6 +75,7 @@ type PlanningWizardFooterProps = {
 const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { setDialog, closeDialog } = useDialog();
     const { nextButtonProps, style } = props; // onClick must be taken out otherwise will override footer onClick when spread to button
     const { onClick, ...rest } = nextButtonProps ?? { onClick: null };
 
@@ -441,6 +452,296 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     /**
+     * Handles authentication of replica instances using provided credentials.
+     * This function authenticates selected replica instances in bulk batches,
+     * updates authentication status, and manages the registration readiness state.
+     *
+     * @param credList - Credentials list containing authentication details (username, password, auth mode)
+     *
+     * Process flow:
+     * 1. Validates if replica instances are selected
+     * 2. Checks if all instances are already authenticated (skips API call if true)
+     * 3. Creates bulk authentication payload from selected replicas
+     * 4. Sends credentials in batches (limited by DETECT_PAYLOAD_SIZE)
+     * 5. Updates authentication status and manage readiness state per instance
+     * 6. Shows success notification and proceeds to next step on completion
+     */
+    const handleReplicaAuthCredentials = async (credList: any) => {
+        const updatedState = store.getState();
+        const { replicaSelectedRowsForManage }: any = updatedState?.inventoryV2;
+        if (replicaSelectedRowsForManage && replicaSelectedRowsForManage.length > 0) {
+            const hostType = registerHostType || DBType.MSSQL;
+
+            // Check if all instances are already authenticated - skip API call
+            if (areAllInstancesAuthenticated(replicaSelectedRowsForManage, instanceAuthStatus, hostType)) {
+                goToNextStep();
+                return;
+            }
+
+            dispatch(setIsDetectReplicaHostLoading(true));
+            // Notify user that authentication may take time
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: t('databases.register-flow.bulk-auth-in-progress')
+                })
+            );
+
+            const bulkInstanceCredentials = {
+                authMode: {
+                    value:
+                        credList?.credentials?.[0]?.resourceType === DETECT_HOST_VAR.MSSQL
+                            ? AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                            : AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+                },
+                username: credList?.credentials?.[0]?.username,
+                password: credList?.credentials?.[0]?.password
+            };
+            // Create payload using bulk auth utility
+            const payloadItems = createBulkAuthPayload(
+                replicaSelectedRowsForManage,
+                CREDENTIAL_OPTIONS.SAME_FOR_ALL,
+                bulkInstanceCredentials,
+                instanceCredentials,
+                instanceAuthStatus,
+                hostType
+            );
+
+            // If no credentials to send (all already authenticated), proceed to next step
+            if (payloadItems.length === 0) {
+                goToNextStep();
+                return;
+            }
+
+            // Helper to split array into batches
+            const chunkArray = (arr: any[], size: number) =>
+                Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
+
+            const batches = chunkArray(payloadItems, DETECT_PAYLOAD_SIZE);
+            const authStatusUpdates: InstanceAuthStatusMap = {};
+            // Track manageReadiness updates for successful instances
+            const manageReadinessUpdates: Record<string, any> = {};
+
+            try {
+                for (let i = 0; i < batches.length; i++) {
+                    const batchPayload = { items: batches[i] };
+
+                    const result = await registerResourceCredBulk({ payload: batchPayload });
+
+                    if (result && !result?.error && result?.data) {
+                        // Process response for this batch - update auth status per instance
+                        const resultItems = result?.data?.items || [];
+
+                        resultItems.forEach((resultItem: any) => {
+                            const registerDetails = resultItem?.registerDetails || [];
+
+                            registerDetails.forEach((detail: any) => {
+                                const resourceId = detail?.resourceId;
+                                if (!resourceId) return;
+
+                                // Check for errors to determine success/failure
+                                const hasError = !!(
+                                    detail?.databaseServerError ||
+                                    detail?.oracleAsmError ||
+                                    detail?.requiredModuleError
+                                );
+
+                                authStatusUpdates[resourceId] = hasError
+                                    ? (RESPONSE_STATUS.FAILED.toLowerCase() as 'failed')
+                                    : (RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success');
+
+                                // Track manageReadiness for successful instances
+                                if (!hasError && detail?.manageReadiness) {
+                                    manageReadinessUpdates[resourceId] = detail.manageReadiness;
+                                }
+                            });
+                        });
+                    } else {
+                        // API call failed - mark all instances in batch as failed
+                        batchPayload.items.forEach(item => {
+                            item.credentials.forEach((cred: { resourceId: string }) => {
+                                authStatusUpdates[cred.resourceId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                            });
+                        });
+
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                message: t('databases.register-flow.manage-detect-fail-message')
+                            })
+                        );
+                    }
+                }
+
+                // Update Redux state with auth status updates
+                Object.entries(authStatusUpdates).forEach(([instanceId, status]) => {
+                    dispatch(setInstanceAuthStatus({ instanceId, status }));
+                });
+
+                // Update inventoryTableData and replicaSelectedRowsForManage for successful instances
+                if (Object.keys(manageReadinessUpdates).length > 0) {
+                    // Update inventoryTableData for each successful instance
+                    // Each dispatch updates the store, so subsequent updateInstanceStatus calls see updated state
+                    replicaSelectedRowsForManage.forEach((instance: any) => {
+                        const instanceData = instance.data || instance;
+                        const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+
+                        if (instanceId && manageReadinessUpdates[instanceId]) {
+                            // Update inventory table data for this instance
+                            const updatedInventoryTableData = updateInstanceStatus(
+                                'detect',
+                                instanceData,
+                                instanceData
+                            );
+                            dispatch(setInventoryTableData(updatedInventoryTableData));
+                        }
+                    });
+
+                    // Update selectedMultiDetectInstances with manageReadiness
+                    const updatedInstances = replicaSelectedRowsForManage.map((instance: any) => {
+                        const instanceData = instance.data || instance;
+                        const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+
+                        if (instanceId && manageReadinessUpdates[instanceId]) {
+                            // Update the instance with new manageReadiness
+                            if (instance.data) {
+                                return {
+                                    ...instance,
+                                    data: {
+                                        ...instance.data,
+                                        manageReadiness: manageReadinessUpdates[instanceId]
+                                    }
+                                };
+                            }
+                            return {
+                                ...instance,
+                                manageReadiness: manageReadinessUpdates[instanceId]
+                            };
+                        }
+                        return instance;
+                    });
+                    dispatch(setSelectedMultiDetectInstances(updatedInstances));
+                }
+
+                // Check if all instances are now authenticated
+                const updatedAuthStatus = { ...instanceAuthStatus, ...authStatusUpdates };
+                if (areAllInstancesAuthenticated(replicaSelectedRowsForManage, updatedAuthStatus, hostType)) {
+                    // All authenticated successfully. Store data in multi select and switch to bulk flow
+                    // Combine original instance + authenticated replicas
+                    const newStore = store.getState();
+                    const { selectedMultiDetectInstances: latestSelectedMultiDetectInstances }: any =
+                        newStore?.inventoryV2;
+                    const bulkInstances = [manageSingleInstanceData, ...latestSelectedMultiDetectInstances];
+
+                    // Update to bulk operation mode and flag to start at FSx authentication step
+                    dispatch(setSelectedMultiDetectInstances(bulkInstances));
+                    dispatch(setWizardOperationType(ACTION_TYPE.BULK));
+                    dispatch(setBulkWizardStartAtFsxStep(true));
+
+                    closeDialog();
+                    // Don't call goToNextStep here - the wizard will be re-mounted with bulk flow
+                    // and will start at FSx step based on the flag
+                } else {
+                    const successCount = Object.values(authStatusUpdates).filter(
+                        s => s === RESPONSE_STATUS.SUCCESS.toLowerCase()
+                    ).length;
+                    const failedCount = Object.values(authStatusUpdates).filter(
+                        s => s === RESPONSE_STATUS.FAILED.toLowerCase()
+                    ).length;
+
+                    if (failedCount > 0) {
+                        // Show dialog with failed state
+                        setDialog(
+                            <DialogComponent
+                                header={t('databases.register-flow.authenticate-instances')}
+                                content={
+                                    <ReplicaInfoDialog
+                                        instance={manageSingleInstanceData}
+                                        replicaList={replicaSelectedRowsForManage}
+                                        authStatusMap={updatedAuthStatus}
+                                        showFailedState
+                                    />
+                                }
+                                primaryButton={t('databases.general.continue')}
+                                callback={() => {
+                                    // Use Redux state for decision
+                                    const currentState = store.getState();
+                                    const shouldRetryAuth = currentState.inventoryV2.replicaSelectionForAuth;
+
+                                    if (shouldRetryAuth) {
+                                        // User wants to retry with different credentials
+                                        // Switch to bulk mode and let user authenticate manually
+                                        const newStore = store.getState();
+                                        const {
+                                            selectedMultiDetectInstances: latestSelectedMultiDetectInstances
+                                        }: any = newStore?.inventoryV2;
+                                        const bulkInstances = [
+                                            manageSingleInstanceData,
+                                            ...latestSelectedMultiDetectInstances
+                                        ];
+                                        dispatch(setSelectedMultiDetectInstances(bulkInstances));
+                                        dispatch(setWizardOperationType(ACTION_TYPE.BULK));
+                                        closeDialog();
+                                    } else {
+                                        // User wants to proceed without authenticating failed instances
+                                        // Include only successfully authenticated instances
+                                        const newStore = store.getState();
+                                        const {
+                                            selectedMultiDetectInstances: latestSelectedMultiDetectInstances
+                                        }: any = newStore?.inventoryV2;
+
+                                        // Filter to include only successful instances
+                                        const successfulInstances = latestSelectedMultiDetectInstances.filter(
+                                            (inst: any) => {
+                                                const instanceData = inst.data || inst;
+                                                const instanceId =
+                                                    instanceData?.databaseInstanceName || inst.databaseInstanceName;
+                                                return (
+                                                    instanceId &&
+                                                    updatedAuthStatus[instanceId]?.toLowerCase() ===
+                                                        RESPONSE_STATUS.SUCCESS.toLowerCase()
+                                                );
+                                            }
+                                        );
+
+                                        const bulkInstances = [manageSingleInstanceData, ...successfulInstances];
+                                        dispatch(setSelectedMultiDetectInstances(bulkInstances));
+                                        dispatch(setWizardOperationType(ACTION_TYPE.BULK));
+                                        dispatch(setBulkWizardStartAtFsxStep(true));
+                                        closeDialog();
+                                    }
+                                }}
+                                closeCallback={() => {
+                                    closeDialog();
+                                }}
+                                customClass={styles.dialog}
+                                testId="wlm-db-authenticate-instances-failed-dialog"
+                                dialogFrom={FROM_DIALOG.MANAGE_WIZARD}
+                            />
+                        );
+                    }
+                }
+            } catch (error) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: t('databases.register-flow.manage-detect-fail-message')
+                    })
+                );
+            } finally {
+                dispatch(setIsDetectReplicaHostLoading(false));
+            }
+        } else {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: t('databases.register-flow.selection-required-to-proceed')
+                })
+            );
+        }
+    };
+
+    /**
      * Handles the registration of authentication credentials (SQL Server/Oracle) for a single instance.
      * Validates and submits authentication credentials via the bulk registration API.
      * Updates inventory state and advances wizard on success, shows error notification on failure.
@@ -458,13 +759,16 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             manageSingleInstanceData?.sqlServerInstance || manageSingleInstanceData?.databaseInstanceName || '';
         try {
             const credList = createAuthOnlyPayload(sqlServerInstance, manageSingleInstanceData);
+            const isReplicaInfoRequired =
+                manageSingleInstanceData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG;
             const payload = {
                 items: [
                     {
                         ...credList,
                         ec2InstanceId: manageSingleInstanceData?.ec2InstanceId,
                         region: manageSingleInstanceData?.regionId,
-                        credentialsId: manageSingleInstanceData?.credentialId
+                        credentialsId: manageSingleInstanceData?.credentialId,
+                        isReplicaInfoRequired
                     }
                 ]
             };
@@ -508,7 +812,42 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                                 )
                             );
                         }
-                        goToNextStep();
+                        if (result?.data?.items?.[0]?.replicaInfo) {
+                            const replicaList = getReplicaInstanceList(result?.data?.items?.[0]);
+                            setDialog(
+                                <DialogComponent
+                                    header={t('databases.register-flow.authenticate-instances')}
+                                    content={
+                                        <ReplicaInfoDialog
+                                            instance={manageSingleInstanceData}
+                                            replicaList={replicaList}
+                                        />
+                                    }
+                                    primaryButton={t('databases.general.continue')}
+                                    callback={() => {
+                                        // Use Redux state instead of local state to avoid closure issues
+                                        const currentState = store.getState();
+                                        const shouldAuthenticateReplicas =
+                                            currentState.inventoryV2.registerReplicaSelection;
+
+                                        if (shouldAuthenticateReplicas) {
+                                            handleReplicaAuthCredentials(credList);
+                                        } else {
+                                            closeDialog();
+                                            goToNextStep();
+                                        }
+                                    }}
+                                    closeCallback={() => {
+                                        closeDialog();
+                                    }}
+                                    customClass={styles.dialog}
+                                    testId="wlm-db-authenticate-instances-dialog"
+                                    dialogFrom={FROM_DIALOG.MANAGE_WIZARD}
+                                />
+                            );
+                        } else {
+                            goToNextStep();
+                        }
                     }
                 } else {
                     dispatch(

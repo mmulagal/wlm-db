@@ -3016,6 +3016,63 @@ export const updateInstanceStatus = (
     return updatedInventoryTableData;
 };
 
+/**
+ * Retrieves a list of replica database instances based on replica information from detection results.
+ * This function matches replica information (from AOAG/cluster detection) with existing instances
+ * in the inventory table by filtering on credentials, region, EC2 instance ID, and database instance name.
+ *
+ * @param result - Detection result object containing:
+ *   - replicaInfo: Array of replica instance details (ec2InstanceId, databaseName)
+ *   - credentialsId: AWS credentials ID to filter instances
+ *   - region: AWS region ID to filter instances
+ *
+ * @returns Array of matching replica instances from the inventory table. Returns empty array if:
+ *   - No replica info is provided
+ *   - replicaInfo is not an array
+ *   - replicaInfo array is empty
+ *   - No matching instances found in the inventory
+ *
+ * Process flow:
+ * 1. Extract replica info, credentials, and region from result
+ * 2. Retrieve current instanceTableRows from Redux state
+ * 3. Filter instanceTableRows by matching credentialsId and region
+ * 4. For each replica, find matching instance by ec2InstanceId and databaseName
+ * 5. Add matched instances to the replica list
+ */
+export const getReplicaInstanceList = (result: any) => {
+    const replicaInfo = result?.replicaInfo;
+    const credentialsId = result?.credentialsId;
+    const region = result?.region;
+    const updatedState = store.getState();
+    const { instanceTableRows }: any = updatedState?.inventoryV2;
+    const replicaInstanceList: Array<any> = [];
+
+    // Return early if no replica info
+    if (!replicaInfo || !Array.isArray(replicaInfo) || replicaInfo.length === 0) {
+        return replicaInstanceList;
+    }
+
+    // Filter instanceTableRows by matching credentialsId and region
+    const filteredInstances = instanceTableRows.filter(
+        (row: any) => row?.credentialId === credentialsId && row?.regionId === region
+    );
+
+    // Map replicaInfo to matching instances from instanceTableRows
+    replicaInfo.forEach((replica: any) => {
+        const matchingInstance = filteredInstances.find(
+            (instance: any) =>
+                instance?.ec2InstanceId === replica?.ec2InstanceId &&
+                instance?.databaseInstanceName === replica?.databaseName
+        );
+
+        if (matchingInstance) {
+            replicaInstanceList.push(matchingInstance);
+        }
+    });
+
+    return replicaInstanceList;
+};
+
 export const updateInstanceBulkStatus = (action: InstanceActions, response: any) => {
     const updatedState = store.getState();
     const { inventoryTableData }: any = updatedState?.inventoryV2;

@@ -136,6 +136,7 @@
             "not-active-databases": "Not active databases"
         },
         "register-flow": {
+            "authenticate-instances": "Authenticate instances",
             "instance-readiness-view": "Instance readiness view",
             "prerequisite-check-view": "Prerequisite check view",
             "authenticate-instance": "Authenticate instance",
@@ -213,6 +214,7 @@
             "previous": "Previous",
             "next": "Next",
             "register": "Register",
+            "selection-required-to-proceed": "Select any related instance to proceed.",
             "manage-detect-fail-message": "Workload Factory was unable to authenticate. Please check your network connection, ensure the instance is running, and verify your credentials. Try again after addressing these issues.",
             "fsx-all-auth-fail-message": "Authentication failed for all {{count}} FSx for ONTAP resources.",
             "fsx-partial-auth-fail-message": "Authentication failed for {{failedCount}} FSx for ONTAP resources.",
@@ -315,6 +317,9 @@
             "ssm-down": "SSM is not connected.",
             "non-mssql-assessment-na": "Well-architected analysis is only available for Microsoft SQL Server and Oracle registered instances.",
             "optional-credentials": "(Optional)",
+            "authentication-status": "Authentication status",
+            "success": "Success",
+            "failed": "Failed",
             "capabilities-information": {
                 "review-well-architected-issues": "Gain deep insights into the health and performance of your Microsoft SQL Server instances on FSx for ONTAP with the well-architected feature. It continuously analyzes configurations against industry and vendor best practices, reports misalignments, and provides clear, actionable recommendations to optimize performance, security, and compliance.",
                 "fix-well-architected-issues": "Resolve configuration issues effortlessly with the well-architected feature for Microsoft SQL Server instances on FSx for ONTAP. Fix storage misalignments and other configuration issues automatically with a single click or follow guided steps for manual remediation to ensure optimal performance and compliance.",
@@ -326,6 +331,21 @@
                     "review-well-architected-issues": "Gain deep insights into the health and performance of your Oracle databases on FSx for ONTAP with the well-architected feature. It continuously analyzes configurations against industry and vendor best practices, reports misalignments, and provides clear, actionable recommendations to optimize performance, security, and compliance.",
                     "fix-well-architected-issues": "Resolve configuration issues effortlessly with the well-architected feature for Oracle databases on FSx for ONTAP. Fix storage misalignments and other configuration issues automatically with a single click or follow guided steps for manual remediation to ensure optimal performance and compliance."
                 }
+            },
+            "replica-info-dialog": {
+                "instances-authenticated-successfully": "Instance {{instanceName}} authenticated successfully",
+                "identified-instances-message": "We have identified {{count}} instances from the AOAG deployment model that share at least one availability group with the authenticated instance.",
+                "proceed-authenticate-message": "Would you like to proceed and authenticate these related instances as well?",
+                "yes-authenticate-related": "Yes, I would like to authenticate the related instances",
+                "no-continue-next-step": "No, I want to continue to the next step.",
+                "related-instances": "Related instances",
+                "related-instance": "Related instance",
+                "availability-group": "Availability group",
+                "availability-groups-count": "{{count}} Availability groups",
+                "all-authentication-failed-message": "Authentication failed for {{failedCount}} instances.",
+                "authentication-failed-message": "{{failedCount}}/{{totalCount}} instances you selected, were unable to authenticate.",
+                "authenticate-different-credentials": "I would like to authenticate the related instances using different credentials.",
+                "proceed-without-authenticating": "I would like to proceed to the next step without authenticating these instances."
             }
         },
         "deregister-flow": {

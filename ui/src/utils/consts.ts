@@ -135,7 +135,8 @@ export const FROM_DIALOG = {
     SINGLE_AGENT: 'single_agent',
     LOADER: '',
     EXPLORE_SAVINGS: 'explore_savings',
-    WINDOWS_AUTH: 'windows_auth'
+    WINDOWS_AUTH: 'windows_auth',
+    MANAGE_WIZARD: 'manage_wizard'
 };
 
 export const DBType = {

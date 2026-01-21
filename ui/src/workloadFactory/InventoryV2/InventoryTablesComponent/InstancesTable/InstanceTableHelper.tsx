@@ -691,7 +691,7 @@ export const isRowSelectableForBulkRegister = (rowData: any, selectedHostType: s
     // Check AOAG - cannot be selected
     const deploymentModel = rowData?.serverInstallationMode?.toLowerCase();
     const isAOAG =
-        deploymentModel === SQL_DEPLOYMENT_MODE.AOAG ||
+        deploymentModel.includes(SQL_DEPLOYMENT_MODE.AOAG) ||
         rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.AOAG ||
         rowData?.serverInstallationMode === 'AOAG';
     if (isAOAG) return false;
@@ -715,13 +715,18 @@ export const getDisabledSelectionTooltip = (
     selectedHostType: string,
     t: TFunction
 ): string | React.ReactNode => {
+    // Already managed - specific bulk registration message
+    if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+        return t('databases.bulk-register.already-registered');
+    }
+
     // Check AOAG first (specific bulk registration message with bullet points)
     const deploymentModel = rowData?.serverInstallationMode?.toLowerCase();
-    const isAOAG =
-        deploymentModel === SQL_DEPLOYMENT_MODE.AOAG ||
+    const isAoag =
+        deploymentModel.includes(SQL_DEPLOYMENT_MODE.AOAG) ||
         rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.AOAG ||
         rowData?.serverInstallationMode === 'AOAG';
-    if (isAOAG) {
+    if (isAoag) {
         return (
             <div className={tooltipStyles.aoagTooltip}>
                 <DsTypography variant="Semibold_13">{t('databases.bulk-register.aoag-tooltip-title')}</DsTypography>
@@ -741,11 +746,6 @@ export const getDisabledSelectionTooltip = (
                 </div>
             </div>
         );
-    }
-
-    // Already managed - specific bulk registration message
-    if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-        return t('databases.bulk-register.already-registered');
     }
 
     // Use the shared disable logic for other cases

@@ -27,6 +27,8 @@ export interface InventorySliceData {
     wizardOperationType: string;
     manageInstanceInstallAction: any;
     authenticationType: string;
+    registerReplicaSelection: boolean;
+    replicaSelectionForAuth: boolean;
     credentialOption: string;
     bulkInstanceCredentials: {
         authMode: any;
@@ -143,10 +145,12 @@ export interface InventorySliceData {
     manageSingleInstanceReadiness: any;
     manageSingleInstanceChecks: any;
     manageSingleInstanceData: any;
+    replicaSelectedRowsForManage: any;
     bulkDetectedInstanceList: any;
     registerHostType: string;
     fsxAuthStatus: FsxAuthStatusMap;
     instanceAuthStatus: InstanceAuthStatusMap;
+    bulkWizardStartAtFsxStep: boolean;
 }
 
 export interface InventoryTableData {

@@ -134,6 +134,8 @@ const initialInventoryV2State: InventorySliceData = {
     },
     createResourceApiLoading: false,
     authenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
+    registerReplicaSelection: true, // For AOAG if user is selcting related instances
+    replicaSelectionForAuth: true, // For AOAG if user is proceeding with failed authentication to provide credentials later
     credentialOption: CREDENTIAL_OPTIONS.SAME_FOR_ALL,
     bulkInstanceCredentials: {
         authMode: {
@@ -153,8 +155,10 @@ const initialInventoryV2State: InventorySliceData = {
     manageSingleInstanceReadiness: null,
     manageSingleInstanceChecks: null,
     manageSingleInstanceData: null,
+    replicaSelectedRowsForManage: null,
     wizardOperationType: '',
     registerHostType: '',
+    bulkWizardStartAtFsxStep: false,
     selectedMultiDetectInstances: [],
     bulkDetectedInstanceList: [],
     landingFromWizard: false,
@@ -193,11 +197,20 @@ const inventoryV2Slice = createSlice({
         setWizardOperationType: (state, action: PayloadAction<any>) => {
             state.wizardOperationType = action.payload;
         },
+        setBulkWizardStartAtFsxStep: (state, action: PayloadAction<boolean>) => {
+            state.bulkWizardStartAtFsxStep = action.payload;
+        },
         setRegisterHostType: (state, action: PayloadAction<any>) => {
             state.registerHostType = action.payload;
         },
         setAuthenticationType: (state, action: PayloadAction<any>) => {
             state.authenticationType = action.payload;
+        },
+        setRegisterReplicaSelection: (state, action: PayloadAction<any>) => {
+            state.registerReplicaSelection = action.payload;
+        },
+        setReplicaSelectionForAuth: (state, action: PayloadAction<any>) => {
+            state.replicaSelectionForAuth = action.payload;
         },
         setCredentialOption: (state, action: PayloadAction<string>) => {
             state.credentialOption = action.payload;
@@ -518,6 +531,9 @@ const inventoryV2Slice = createSlice({
         setManageSingleInstanceData: (state, action: PayloadAction<any>) => {
             state.manageSingleInstanceData = action.payload;
         },
+        setReplicaSelectedRowsForManage: (state, action: PayloadAction<any>) => {
+            state.replicaSelectedRowsForManage = action.payload;
+        },
         resetPerComboData: (state, action: PayloadAction<any>) => {
             state.createResourceApiLoading = true;
             state.resetManagedData = true;
@@ -610,9 +626,12 @@ export const {
     setLandingFromWizard,
     setSelectedMultiDetectInstances,
     setWizardOperationType,
+    setBulkWizardStartAtFsxStep,
     setRegisterHostType,
     setInstallType,
     setAuthenticationType,
+    setRegisterReplicaSelection,
+    setReplicaSelectionForAuth,
     setCredentialOption,
     setBulkInstanceCredentials,
     setInstanceCredentials,
@@ -703,6 +722,7 @@ export const {
     setManageSingleInstanceChecks,
     setManageSingleInstanceReadiness,
     setManageSingleInstanceData,
+    setReplicaSelectedRowsForManage,
     setBulkDetectedInstanceList,
     setSelectedRowsForBulkRegister
 } = inventoryV2Slice.actions;
