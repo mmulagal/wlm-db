@@ -1410,7 +1410,6 @@ EOF
     ${loadDatabaseDetectionModules}
     ${loadStorageDetectionModules}
     ${checkOracleModuleAvailability}
-    ${getDataguardDeploymentDetails}
 
     hostname=$(hostname)
     RESULTS="{\\"hostname\\":\\"$hostname\\", \\"dbInstances\\":["
@@ -1463,21 +1462,8 @@ EOF
             echo "Failed to retrieve details for instance $ORACLE_SID. Skipping."
             continue
         }
-        
-        isDataguardDeployed=false
-        dataguardDetails="{}"    
-        check_dataguard_deployment "$sid"
-        if [ $? -eq 0 ]; then
-            
-            isDataguardDeployed=true
-            if [ "$isDefaultAuth" == "true" ]; then
-                dataguardDetails=$(get_dataguard_details_with_creds "$sid")
-            else
-                dataguardDetails=$(get_dataguard_details_without_creds "$sid")
-            fi
-        fi
 
-        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions, \\"remediation_missing_permissions\\": $remediationMissingPermissions, \\"isDataguardDeployed\\": $isDataguardDeployed, \\"dataguard_details\\": $dataguardDetails }"
+        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions, \\"remediation_missing_permissions\\": $remediationMissingPermissions }"
 
         # If not the first object, prepend a comma in the JSON array.
         if [ $FIRST -eq 1 ]; then
