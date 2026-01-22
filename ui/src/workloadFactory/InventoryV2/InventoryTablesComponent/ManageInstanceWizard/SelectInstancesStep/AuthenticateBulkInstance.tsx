@@ -1,7 +1,8 @@
-import { TooltipInfo, PasswordField, useDialog } from '@netapp/design-system';
+import { Popover, PasswordField, useDialog, DsTypography as NdsTypography } from '@netapp/design-system';
 import { DsRadioButton, DsTextField, DsTypography } from '@tlveng/wlm-ds';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as CloseIcon } from '@netapp/icons/ic_close.svg';
+import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info_tooltip.svg';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +22,7 @@ import {
 } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { AUTHENTICATION_TYPE, CREDENTIAL_OPTIONS, DBType } from '../../../../../utils/consts';
 import styles from './AuthenticateBulkInstance.module.scss';
+import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import {
     getSelectedInstancesForBulk,
@@ -306,12 +308,12 @@ export const Content = () => {
     // Render authenticated screen when all instances are authenticated
     if (allAuthenticated && instances.length > 0) {
         const authenticatedTooltipContent = (
-            <div className={styles.authenticatedTooltipContent}>
+            <div className={CommonStyles.tooltipContent}>
                 {instances.map((instance, index) => (
                     <div
                         key={instance.uniqueKey}
-                        className={`${styles.authenticatedTooltipRow} ${
-                            index !== instances.length - 1 ? styles.authenticatedTooltipRowWithBorder : ''
+                        className={`${CommonStyles.tooltipRow} ${
+                            index !== instances.length - 1 ? CommonStyles.tooltipRowWithBorder : ''
                         }`}
                     >
                         <DsTypography variant="Semibold_14">{instance.instanceName}</DsTypography>
@@ -329,9 +331,17 @@ export const Content = () => {
                             {t('databases.register-flow.instances-authenticated')}
                         </DsTypography>
                         <div className={styles.instancesInfo}>
-                            <TooltipInfo trigger="hover" placement="bottom">
+                            <Popover
+                                popoverClass={CommonStyles.scrollablePopover}
+                                trigger="hover"
+                                placement="bottom"
+                                delayHide={200}
+                                interactive
+                                isAppendedToBody
+                                container={<InfoIcon className={CommonStyles.infoIcon} />}
+                            >
                                 {authenticatedTooltipContent}
-                            </TooltipInfo>
+                            </Popover>
                             <DsTypography variant="Regular_14">
                                 {t('databases.register-flow.all-instances-count', { count: instances.length })}
                             </DsTypography>
@@ -382,22 +392,28 @@ export const Content = () => {
                         <DsTypography variant="Semibold_14" className={styles.formTitle}>
                             {t('databases.register-flow.all-selected-instances')} ({instances.length})
                         </DsTypography>
-                        <TooltipInfo trigger="hover" placement="bottom">
-                            <div className={styles.instanceTooltip}>
+                        <Popover
+                            popoverClass={CommonStyles.scrollablePopover}
+                            trigger="hover"
+                            placement="bottom"
+                            delayHide={200}
+                            interactive
+                            isAppendedToBody
+                            container={<InfoIcon className={CommonStyles.infoIcon} />}
+                        >
+                            <div className={CommonStyles.tooltipContent}>
                                 {instances.map((instance, index) => (
                                     <div
                                         key={instance.uniqueKey}
-                                        className={`${styles.tooltipItem} ${
-                                            index !== instances.length - 1 ? styles.tooltipItemWithBorder : ''
+                                        className={`${CommonStyles.tooltipRow} ${
+                                            index !== instances.length - 1 ? CommonStyles.tooltipRowWithBorder : ''
                                         }`}
                                     >
-                                        <div className={styles.tooltipItemContent}>
-                                            <DsTypography variant="Semibold_13">{instance.instanceName}</DsTypography>
-                                        </div>
+                                        <DsTypography variant="Semibold_13">{instance.instanceName}</DsTypography>
                                     </div>
                                 ))}
                             </div>
-                        </TooltipInfo>
+                        </Popover>
                     </div>
 
                     <div className={styles.formFields}>

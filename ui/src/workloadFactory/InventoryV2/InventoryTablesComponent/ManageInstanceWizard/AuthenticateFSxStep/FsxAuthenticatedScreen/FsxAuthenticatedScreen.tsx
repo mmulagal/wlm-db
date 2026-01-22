@@ -1,8 +1,10 @@
-import { TooltipInfo, DsTypography } from '@netapp/design-system';
+import { Popover, DsTypography } from '@netapp/design-system';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info_tooltip.svg';
 import { ReactComponent as SingleAuth } from '../../../../../../assets/SingleAuth.svg';
 import styles from './FsxAuthenticatedScreen.module.scss';
+import CommonStyles from '../../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { getAllFsxFromStorage, getAllFsxFromBulkStorage } from '../AuthenticateFsxUtils';
 import { ACTION_TYPE } from '../../../../../../utils/consts';
@@ -25,12 +27,12 @@ const FsxAuthenticatedScreen = () => {
     const fsxCount = fsxList.length;
 
     const tooltipContent = (
-        <div className={styles.tooltipContent}>
+        <div className={CommonStyles.tooltipContent}>
             {fsxList.map((fsx: { fsxId: string; fsxName: string }, index: number) => (
                 <div
                     key={fsx.fsxId}
-                    className={`${styles.tooltipRow} ${
-                        index !== fsxList.length - 1 ? styles.tooltipRowWithBorder : ''
+                    className={`${CommonStyles.tooltipRow} ${
+                        index !== fsxList.length - 1 ? CommonStyles.tooltipRowWithBorder : ''
                     }`}
                 >
                     <DsTypography variant="Semibold_14">{fsx.fsxName}</DsTypography>
@@ -47,9 +49,17 @@ const FsxAuthenticatedScreen = () => {
                     {t('databases.register-flow.fsx-authenticated-message')}
                 </DsTypography>
                 <div className={styles.fsxInfo}>
-                    <TooltipInfo trigger="hover" placement="bottom">
+                    <Popover
+                        popoverClass={CommonStyles.scrollablePopover}
+                        trigger="hover"
+                        placement="bottom"
+                        delayHide={200}
+                        interactive
+                        isAppendedToBody
+                        container={<InfoIcon className={CommonStyles.infoIcon} />}
+                    >
                         {tooltipContent}
-                    </TooltipInfo>
+                    </Popover>
                     <DsTypography variant="Regular_14">
                         {fsxCount} {t('databases.register-flow.fsx-for-ontap-count')}
                     </DsTypography>

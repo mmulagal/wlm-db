@@ -186,6 +186,21 @@
 .instanceReadinessTable {
     margin-top: 40px;
     width: 55.9%;
+
+    // Override table header sticky position to prevent overflow on scroll
+    [class*='Table-module_header-cell'] {
+        top: 0 !important;
+    }
+
+    .instanceNameCell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .hostNameTooltip {
+        padding: 8px;
+    }
 }
 
 .dialogContainer {

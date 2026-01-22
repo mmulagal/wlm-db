@@ -1,9 +1,8 @@
-import { DsTypography, Table, useTable } from '@netapp/design-system';
+import { DsTypography, Table, useTable, TooltipInfo } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { TFunction } from 'i18next';
 import styles from './DetectHeader.module.scss';
-import { ReactComponent as Success } from '../../../../../../assets/success.svg';
-import { ReactComponent as Cross } from '../../../../../../assets/black-cross.svg';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import DotComponent from '../../../../../../common/DotComponent/DotComponent';
 import { DBType, MANAGE_STATES } from '../../../../../../utils/consts';
@@ -12,10 +11,16 @@ import { isInstanceAuthenticated } from '../../SelectInstancesStep/AuthenticateB
 import { getPermissionState } from '../../ManageInstanceUtils';
 
 // Render status cell with icon
-const renderStatusCell = (status: string) => (
+const renderStatusCell = (status: string, t: TFunction) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {status === MANAGE_STATES.READY ? <Success /> : <Cross />}
-        <DsTypography variant="Regular_14">{status}</DsTypography>
+        {status === MANAGE_STATES.READY ? (
+            <DotComponent color="var(--success)" value={t('databases.register-flow.readiness-status-complete')} />
+        ) : (
+            <DotComponent
+                color="var(--toggle-off-bg)"
+                value={t('databases.register-flow.readiness-status-incomplete')}
+            />
+        )}
     </div>
 );
 
@@ -47,6 +52,7 @@ const InstanceReadinessTable = () => {
 
         return {
             id: item?.id,
+            hostName: item?.hostName || item?.data?.name,
             instanceName: item?.instanceName || item?.data?.databaseInstanceName || item?.databaseInstanceName || '-',
             authenticationStatus: isAuthenticated
                 ? t('databases.general.authenticated')
@@ -68,19 +74,33 @@ const InstanceReadinessTable = () => {
                     ? t('databases.register-flow.detect-instance-table-col.instance-name')
                     : t('databases.register-flow.detect-instance-table-col.database-name'),
             accessor: 'instanceName',
-            isSortable: true
+            isSortable: true,
+            renderCell: (cellData: string, rowData: any) => (
+                <div className={styles.instanceNameCell}>
+                    <span>{cellData}</span>
+                    <TooltipInfo trigger="hover" placement="bottom">
+                        <div className={styles.hostNameTooltip}>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.register-flow.detect-instance-table-col.host-name')}
+                            </DsTypography>
+                            <br />
+                            <DsTypography variant="Regular_14">{rowData?.hostName || '-'}</DsTypography>
+                        </div>
+                    </TooltipInfo>
+                </div>
+            )
         },
         {
             id: '2',
             Header: t('databases.register-flow.detect-instance-table-col.review-well-architected'),
             accessor: 'reviewWellArchitected',
-            renderCell: (cellData: string) => renderStatusCell(cellData)
+            renderCell: (cellData: string) => renderStatusCell(cellData, t)
         },
         {
             id: '3',
             Header: t('databases.register-flow.detect-instance-table-col.fix-well-architected'),
             accessor: 'fixWellArchitected',
-            renderCell: (cellData: string) => renderStatusCell(cellData)
+            renderCell: (cellData: string) => renderStatusCell(cellData, t)
         }
     ];
 
@@ -90,13 +110,13 @@ const InstanceReadinessTable = () => {
             id: '4',
             Header: t('databases.register-flow.detect-instance-table-col.create-database'),
             accessor: 'createDatabase',
-            renderCell: (cellData: string) => renderStatusCell(cellData)
+            renderCell: (cellData: string) => renderStatusCell(cellData, t)
         },
         {
             id: '5',
             Header: t('databases.register-flow.detect-instance-table-col.create-sandbox'),
             accessor: 'createSandbox',
-            renderCell: (cellData: string) => renderStatusCell(cellData)
+            renderCell: (cellData: string) => renderStatusCell(cellData, t)
         }
     ];
 
@@ -105,7 +125,7 @@ const InstanceReadinessTable = () => {
         id: registerHostType === DBType.MSSQL ? '6' : '4',
         Header: t('databases.register-flow.detect-instance-table-col.error-analysis'),
         accessor: 'errorAnalysis',
-        renderCell: (cellData: string) => renderStatusCell(cellData)
+        renderCell: (cellData: string) => renderStatusCell(cellData, t)
     };
 
     // Build final column list based on database type

@@ -127,14 +127,19 @@ const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: Acti
                         <div className={styles.installationRow}>
                             <DsTypography variant="Regular_14">
                                 {wizardOperationType === ACTION_TYPE.SINGLE
-                                    ? t(
-                                          'databases.register-flow.single-instance-require-netapp-modules-and-powershell7'
-                                      )
-                                    : t('databases.register-flow.instances-require-netapp-modules-and-powershell7', {
+                                    ? t('databases.register-flow.single-instance-require-modules-prefix')
+                                    : t('databases.register-flow.instances-require-modules-prefix', {
                                           count: instanceCounts.bothCount,
                                           instanceText:
                                               instanceCounts.bothCount === 1 ? 'instance requires' : 'instances require'
                                       })}
+                                <span className={styles.boldText}>
+                                    {t('databases.register-flow.netapp-powershell-modules')}
+                                </span>
+                                {t('databases.register-flow.and')}
+                                <span className={styles.boldText}>
+                                    {t('databases.register-flow.powershell-module-7')}
+                                </span>
                             </DsTypography>
                             {instanceCounts.bothInstanceNames.length > 0 && (
                                 <TooltipInfo placement="bottom" trigger="hover">
@@ -158,14 +163,17 @@ const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: Acti
                         <div className={styles.installationRow}>
                             <DsTypography variant="Regular_14">
                                 {wizardOperationType === ACTION_TYPE.SINGLE
-                                    ? t('databases.register-flow.single-instance-require-netapp-modules')
-                                    : t('databases.register-flow.instances-require-netapp-modules', {
+                                    ? t('databases.register-flow.single-instance-require-modules-prefix')
+                                    : t('databases.register-flow.instances-require-modules-prefix', {
                                           count: instanceCounts.awsOnlyCount,
                                           instanceText:
                                               instanceCounts.awsOnlyCount === 1
                                                   ? 'instance requires'
                                                   : 'instances require'
                                       })}
+                                <span className={styles.boldText}>
+                                    {t('databases.register-flow.netapp-powershell-modules')}
+                                </span>
                             </DsTypography>
                             {instanceCounts.awsOnlyInstanceNames.length > 0 && (
                                 <TooltipInfo placement="bottom" trigger="hover">
@@ -189,14 +197,17 @@ const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: Acti
                         <div className={styles.installationRow}>
                             <DsTypography variant="Regular_14">
                                 {wizardOperationType === ACTION_TYPE.SINGLE
-                                    ? t('databases.register-flow.single-instance-require-powershell7')
-                                    : t('databases.register-flow.instances-require-powershell7', {
+                                    ? t('databases.register-flow.single-instance-require-modules-prefix')
+                                    : t('databases.register-flow.instances-require-modules-prefix', {
                                           count: instanceCounts.powershellOnlyCount,
                                           instanceText:
                                               instanceCounts.powershellOnlyCount === 1
                                                   ? 'instance requires'
                                                   : 'instances require'
                                       })}
+                                <span className={styles.boldText}>
+                                    {t('databases.register-flow.powershell-module-7')}
+                                </span>
                             </DsTypography>
                             {instanceCounts.powershellOnlyInstanceNames.length > 0 && (
                                 <TooltipInfo placement="bottom" trigger="hover">
@@ -219,10 +230,16 @@ const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: Acti
                     {instanceCounts.powershellCount > 0 && (
                         <>
                             <DsTypography variant="Regular_14">
-                                {t('databases.register-flow.powershell7-reboot-notice')}
+                                {t('databases.register-flow.powershell7-reboot-notice-prefix')}
+                                <span className={styles.boldText}>
+                                    {t('databases.register-flow.powershell-module-7')}
+                                </span>
+                                {t('databases.register-flow.powershell7-reboot-notice-suffix')}
                             </DsTypography>
                             <DsTypography variant="Regular_14">
-                                {t('databases.register-flow.powershell7-authorization-notice')}
+                                {t('databases.register-flow.powershell7-authorization-notice-prefix')}
+                                <span className={styles.boldText}>{t('databases.register-flow.powershell-7')}</span>
+                                {t('databases.register-flow.powershell7-authorization-notice-suffix')}
                             </DsTypography>
                         </>
                     )}

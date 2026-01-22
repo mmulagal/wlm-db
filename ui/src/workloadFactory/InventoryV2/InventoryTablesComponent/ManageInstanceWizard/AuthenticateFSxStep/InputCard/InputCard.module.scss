@@ -85,30 +85,6 @@
         }
     }
 
-    .tooltipContent {
-        display: flex;
-        flex-direction: column;
-        min-width: 240px;
-        max-width: 300px;
-
-        .tooltipRow {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            padding: 16px;
-
-            .tooltipStatus {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-        }
-
-        .tooltipRowWithBorder {
-            border-bottom: 1px solid var(--border-drop-shadow, #e0e0e0);
-        }
-    }
-
     .authStatus {
         display: flex;
         align-items: center;

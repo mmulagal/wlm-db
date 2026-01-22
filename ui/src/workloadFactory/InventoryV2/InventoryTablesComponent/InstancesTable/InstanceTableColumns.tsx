@@ -8,11 +8,13 @@ import { getPgsqlInstanceTableColumns } from './PgsqlInstanceColumnList';
 export function getInstanceTableColumns({
     t,
     updatedTableData,
-    selectedHostType
+    selectedHostType,
+    isBulkSelectionActive
 }: {
     t: TFunction;
     updatedTableData: any[];
     selectedHostType: string;
+    isBulkSelectionActive?: boolean;
 }): ColumnProps[] {
     if (selectedHostType === DBType.ORACLE) {
         return getOracleDatabaseColumnsList({ t, updatedTableData });
@@ -21,8 +23,8 @@ export function getInstanceTableColumns({
         return getPgsqlInstanceTableColumns({ t, updatedTableData });
     }
     if (selectedHostType === DBType.MSSQL) {
-        return getMssqlInstanceTableColumns({ t, updatedTableData });
+        return getMssqlInstanceTableColumns({ t, updatedTableData, isBulkSelectionActive });
     }
     // Default to MSSQL columns
-    return getMssqlInstanceTableColumns({ t, updatedTableData });
+    return getMssqlInstanceTableColumns({ t, updatedTableData, isBulkSelectionActive });
 }

@@ -1,9 +1,11 @@
-import { TooltipInfo, DsTypography, PasswordField, TextField, useWizard } from '@netapp/design-system';
+import { Popover, DsTypography, PasswordField, TextField, useWizard } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useMemo } from 'react';
 import classNames from 'classnames';
+import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info_tooltip.svg';
 import styles from './InputCard.module.scss';
+import CommonStyles from '../../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import {
     setDetectONTAPPassword,
@@ -103,12 +105,12 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
     };
 
     const tooltipContent = (
-        <div className={styles.tooltipContent}>
+        <div className={CommonStyles.tooltipContent}>
             {fullFsxList.map((fsx: FsxItem, index: number) => (
                 <div
                     key={fsx.fsxId}
-                    className={`${styles.tooltipRow} ${
-                        index !== fullFsxList.length - 1 ? styles.tooltipRowWithBorder : ''
+                    className={`${CommonStyles.tooltipRow} ${
+                        index !== fullFsxList.length - 1 ? CommonStyles.tooltipRowWithBorder : ''
                     }`}
                 >
                     <DsTypography variant="Semibold_14">{fsx.fsxName}</DsTypography>
@@ -126,9 +128,17 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                             <DsTypography variant="Semibold_14">
                                 {t('databases.register-flow.all-fsx-for-ontap-resources')} ({fullFsxList.length})
                             </DsTypography>
-                            <TooltipInfo trigger="hover" placement="bottom">
+                            <Popover
+                                popoverClass={CommonStyles.scrollablePopover}
+                                trigger="hover"
+                                placement="bottom"
+                                delayHide={200}
+                                interactive
+                                isAppendedToBody
+                                container={<InfoIcon className={CommonStyles.infoIcon} />}
+                            >
                                 {tooltipContent}
-                            </TooltipInfo>
+                            </Popover>
                         </div>
 
                         <DsTypography variant="Regular_14">

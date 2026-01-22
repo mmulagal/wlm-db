@@ -104,35 +104,6 @@
             .formTitle {
                 color: var(--text-primary, #1c1c1c);
             }
-
-            .instanceTooltip {
-                display: flex;
-                flex-direction: column;
-                align-items: flex-start;
-                background: var(--background-content, white);
-
-                .tooltipItem {
-                    background: var(--background-content, white);
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-start;
-                    padding: 16px;
-                    width: 100%;
-                    position: relative;
-
-                    .tooltipItemContent {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 4px;
-                        align-items: flex-start;
-                        width: 100%;
-                    }
-                }
-
-                .tooltipItemWithBorder {
-                    box-shadow: inset 0px -1px 0px 0px var(--border-drop-shadow, #e0e0e0);
-                }
-            }
         }
 
         .formFields {
@@ -295,20 +266,6 @@
         display: flex;
         align-items: center;
         gap: 12px;
-    }
-
-    .authenticatedTooltipContent {
-        display: flex;
-        flex-direction: column;
-        min-width: 180px;
-    }
-
-    .authenticatedTooltipRow {
-        padding: 8px;
-    }
-
-    .authenticatedTooltipRowWithBorder {
-        border-bottom: 1px solid var(--border);
     }
 
     .errorBorder {

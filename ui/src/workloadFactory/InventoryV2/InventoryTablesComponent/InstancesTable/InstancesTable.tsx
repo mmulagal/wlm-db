@@ -783,7 +783,11 @@ const InstancesTable = () => {
         [instanceTableRows, instanceProtection, isDemoMode, selectedHostType]
     );
 
-    const getTableColDefsPerEngineType = () => getInstanceTableColumns({ t, updatedTableData, selectedHostType });
+    // Check if bulk action is visible (used for disabling row actions)
+    const isBulkActionVisible = selectedHostType === DBType.MSSQL && selectedRowsForBulkRegister.length > 0;
+
+    const getTableColDefsPerEngineType = () =>
+        getInstanceTableColumns({ t, updatedTableData, selectedHostType, isBulkSelectionActive: isBulkActionVisible });
 
     // Compute selectable rows for bulk register
     const selectableRowsForBulk = useMemo(
@@ -1044,8 +1048,6 @@ const InstancesTable = () => {
             navigate('../fsxdb/register-bulk-wizard');
         }
     };
-
-    const isBulkActionVisible = selectedHostType === DBType.MSSQL && selectedRowsForBulkRegister.length > 0;
 
     return (
         <div className={styles.inventoryTable} ref={inventoryTableRef}>
