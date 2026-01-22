@@ -116,11 +116,11 @@ const ReplicaInfoDialog: React.FC<ReplicaInfoDialogProps> = ({
                                         variant="Regular_13"
                                         title={`${availabilityGroupList.length} ${t(
                                             'databases.general.availability-groups'
-                                        )}s`}
+                                        )}`}
                                     >
                                         {`${availabilityGroupList.length} ${t(
                                             'databases.general.availability-groups'
-                                        )}s`}
+                                        )}`}
                                     </DsTypography>
                                 </div>
                             </div>

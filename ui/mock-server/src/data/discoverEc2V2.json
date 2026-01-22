@@ -790,16 +790,16 @@
                     },
                     "aoagClusterNodeDetails": [
                         {
-                            "node": "sqlsataog1",
+                            "node": "WEBER",
                             "ip": "10.0.136.148",
                             "ec2InstanceId": "i-008b54cdabafdbc58",
-                            "ec2InstanceName": "sqlnode-78780"
+                            "ec2InstanceName": "sqlnode1-17126"
                         },
                         {
-                            "node": "sqlsataog2",
+                            "node": "WEBER2",
                             "ip": "10.0.133.34",
-                            "ec2InstanceId": "i-07520036b6a7a1fd3",
-                            "ec2InstanceName": "sqlnode-28427"
+                            "ec2InstanceId": "i-008b54cdabafdbc582",
+                            "ec2InstanceName": "sqlnode1-17126"
                         }
                     ]
                 }
@@ -906,16 +906,16 @@
                     },
                     "aoagClusterNodeDetails": [
                         {
-                            "node": "sqlsataog1",
+                            "node": "WEBER",
                             "ip": "10.0.136.148",
                             "ec2InstanceId": "i-008b54cdabafdbc58",
-                            "ec2InstanceName": "sqlnode-78780"
+                            "ec2InstanceName": "sqlnode1-17126"
                         },
                         {
-                            "node": "sqlsataog2",
+                            "node": "WEBER2",
                             "ip": "10.0.133.34",
                             "ec2InstanceId": "i-008b54cdabafdbc582",
-                            "ec2InstanceName": "sqlnode-28427"
+                            "ec2InstanceName": "sqlnode1-17126"
                         }
                     ]
                 }

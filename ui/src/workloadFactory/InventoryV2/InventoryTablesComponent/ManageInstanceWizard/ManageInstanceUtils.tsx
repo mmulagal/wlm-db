@@ -13,7 +13,6 @@ import {
     AUTHENTICATION_TYPE,
     DBType,
     DETECT_HOST_VAR,
-    FORM_TO_WLF_NAVIGATE_BLUEXP_INVENTORY,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_INVENTORY,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
@@ -25,8 +24,8 @@ import {
     WLF_TABS
 } from '../../../../utils/consts';
 import store, { AppDispatch } from '../../../../store/store';
-import { saveFsxInCredRegisteredObj, uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
-import { InventoryTableInstanceDatInterface, ManageReadinessInterface } from '../../../../utils/types/inventoryV2Types';
+import { uniqueHostRow, updateInstanceStatus } from '../../InventoryUtilsV2';
+import { ManageReadinessInterface } from '../../../../utils/types/inventoryV2Types';
 import {
     BulkDetectedInstance,
     JobResponse,
@@ -40,6 +39,7 @@ import {
     getBulkDetectChecksHelper,
     isAuthRequiredForInstance
 } from './DetectInstanceStep/DetectContent/DetectContentHelper';
+import { saveFsxInCredRegisteredObj } from './ManageWizardUtils';
 
 // Helper function to get engine type display name based on engine type
 const getEngineTypeDisplayName = (engineType: string, messageType: 'single' | 'multi'): string => {

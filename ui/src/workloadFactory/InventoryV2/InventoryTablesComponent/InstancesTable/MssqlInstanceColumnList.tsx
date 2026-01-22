@@ -213,18 +213,13 @@ export function getMssqlInstanceTableColumns({
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'availabilityGroupList'),
             renderCell: (cellData: string, rowData: any) => {
-                let loading = rowData?.loading || rowData?.subLoading;
-                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-                    loading = true;
-                }
-
                 const availabilityGroupList = rowData?.availabilityGroupList || [];
                 const hasMultipleGroups = availabilityGroupList.length > 1;
                 const hasSingleGroup = availabilityGroupList.length === 1;
 
                 return (
                     <>
-                        {!loading && hasMultipleGroups && (
+                        {hasMultipleGroups && (
                             <div className={styles.fsxNameContainer}>
                                 <div className={styles.ssmOffline}>
                                     <Popover
@@ -259,22 +254,21 @@ export function getMssqlInstanceTableColumns({
                                         variant="Regular_13"
                                         title={`${availabilityGroupList.length} ${t(
                                             'databases.general.availability-groups'
-                                        )}s`}
+                                        )}`}
                                     >
                                         {`${availabilityGroupList.length} ${t(
                                             'databases.general.availability-groups'
-                                        )}s`}
+                                        )}`}
                                     </DsTypography>
                                 </div>
                             </div>
                         )}
-                        {!loading && hasSingleGroup && (
+                        {hasSingleGroup && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {availabilityGroupList[0]}
                             </DsTypography>
                         )}
-                        {loading && <DsFlashingDotsLoader />}
-                        {!loading && availabilityGroupList.length === 0 && (
+                        {availabilityGroupList.length === 0 && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {t('databases.general.not-available-table-columns')}
                             </DsTypography>

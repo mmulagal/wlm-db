@@ -143,19 +143,54 @@ router.post(`${BASE_URL}/v1/register-credentials`, async (req: {}, res: any) => 
                         {
                             resourceId: "MSSQLSERVER",
                             resourceType: "MSSQL",
-                            manageReadiness: []
+                            manageReadiness: {
+                                assessment: {
+                                    missingSqlPermissions: [],
+                                    missingModules: []
+                                },
+                                remediation: {
+                                    missingSqlPermissions: [],
+                                    missingModules: []
+                                },
+                                dbcreation: {
+                                    missingSqlPermissions: [],
+                                    missingModules: []
+                                },
+                                sandbox: {
+                                    missingSqlPermissions: [],
+                                    missingModules: []
+                                }
+                            }
                         },
                         {
                             resourceId: "MSSQLSERVER2",
                             resourceType: "MSSQL",
-                            manageReadiness: []
+                            manageReadiness: {
+                                assessment: {
+                                    missingSqlPermissions: [],
+                                    missingModules: []
+                                },
+                                remediation: {
+                                    missingSqlPermissions: [],
+                                    missingModules: []
+                                },
+                                dbcreation: {
+                                    missingSqlPermissions: [],
+                                    missingModules: []
+                                },
+                                sandbox: {
+                                    missingSqlPermissions: [],
+                                    missingModules: []
+                                }
+                            }
                         }
                     ],
                     replicaInfo: [
                         {
                             ec2InstanceId: 'i-008b54cdabafdbc582',
                             ec2HostName: 'WEBER2',
-                            databaseName: 'MSSQLSERVER2',
+                            sqlServerName: 'MSSQLSERVER2',
+                            // databaseName: 'MSSQLSERVER2', --- For oracle case ---
                             role: 'SECONDARY'
                         }
                     ]
