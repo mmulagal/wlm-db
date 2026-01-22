@@ -4173,5 +4173,10 @@
     },
     "disableSelinuxResponse": {
         "status": "optimized"
+    },
+    "checkLinuxRepoConnectivityResponse": {
+        "status": "success",
+        "packageManager": "dnf",
+        "error": null
     }
 }

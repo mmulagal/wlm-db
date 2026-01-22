@@ -1,17 +1,28 @@
 import Ajv, { ValidateFunction } from 'ajv';
+import { isEmpty } from 'lodash-es';
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
+import { CommandFilterKey } from '@aws-sdk/client-ssm';
 import { getJobs, registerJob } from '../database/job-operations';
 import { getServerNameWithHostname, getTimeDifferenceInMinutes } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { AssessmentCategoriesOracle, AssessmentStatus } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
-import type { DatabaseInstance, JobMetadata, Metadata, ResourceDetails } from '../../utils/common-types';
+import type {
+    DatabaseInstance,
+    HostOsPatchAssessmentObject,
+    JobMetadata,
+    Metadata,
+    ResourceAssessmentData,
+    ResourceDetails
+} from '../../utils/common-types';
 import { OracleJobMetadata } from './oracle/consts';
 import getMissingPermissionsList from '../aws/iam-operations';
 import { DatabaseTypes, HttpErrorCodes } from '../../utils/consts';
-import { getInstanceInfo } from '../database/database-operations';
+import { getInstanceInfo, updateDatabaseHostAssessmentData } from '../database/database-operations';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
+import { listSsmCommands } from '../../lib/aws/ssm';
+import { listResources } from '../../lib/database/db';
 
 const logger = getLogger();
 
@@ -236,18 +247,6 @@ async function activeSqlNodeDetails(
     };
 }
 
-export {
-    getMatchingAssessmentStatus,
-    handleOptimizeJobCreation,
-    hasNotOptimizedStatus,
-    getLatestInstanceAssessmentTime,
-    validateAssessment,
-    UnOptimizedDiskGroups,
-    checkForMissingOptimizePermissions,
-    activeSqlNodeDetails,
-    normalizeNfsVersion
-};
-
 //  e.g., "NFSv3" -> 3, "NFSv4" -> 4, "3" -> 3, "4.0" -> 4, "4.1" -> 4.1
 function normalizeNfsVersion(version: string | null): number | null {
     if (!version) {
@@ -257,5 +256,71 @@ function normalizeNfsVersion(version: string | null): number | null {
     return parseFloat(cleaned);
 }
 
-// Re-export type for external usage without creating a runtime export
-export type { JobMetadata };
+async function checkIfPatchBaselineInProgress(
+    credentialsId: string,
+    region: string,
+    instanceIds: string[]
+): Promise<boolean> {
+    logger.info('Checking if patch baseline is in progress', { credentialsId, region, instanceIds });
+
+    for await (const instanceId of instanceIds) {
+        const listPatchBaselineCommandParams = {
+            InstanceId: instanceId,
+            MaxResults: 50,
+            Filters: [
+                {
+                    key: CommandFilterKey.DOCUMENT_NAME,
+                    value: 'AWS-RunPatchBaseline'
+                },
+                {
+                    key: CommandFilterKey.STATUS,
+                    value: 'InProgress'
+                }
+            ]
+        };
+
+        const { Commands = [] } = await listSsmCommands(credentialsId, region, listPatchBaselineCommandParams);
+        if (Commands.length > 0) {
+            logger.warn('Patch baseline is already running on the instance', { instanceId, region, credentialsId });
+            return true;
+        }
+    }
+    return false;
+}
+
+async function updatePatchBaselineStatusForHost(
+    accountId: string,
+    databaseHostId: string,
+    hostOsPatchAssessment?: HostOsPatchAssessmentObject[]
+): Promise<void> {
+    const resources = (await listResources({ accountId, resourceId: databaseHostId })) || [];
+
+    if (!isEmpty(resources) && !isEmpty(hostOsPatchAssessment)) {
+        await Promise.all(
+            resources.map(async ({ credentials_id: credentialsId, assessment_data: assessmentData }) => {
+                const existingAssessmentData = assessmentData as ResourceAssessmentData;
+                const newAssessmentData = {
+                    ...existingAssessmentData,
+                    hostOsPatch: hostOsPatchAssessment,
+                    lastAssessedDate: new Date().getTime().toString()
+                };
+                await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
+            })
+        );
+    }
+}
+
+export {
+    getMatchingAssessmentStatus,
+    handleOptimizeJobCreation,
+    hasNotOptimizedStatus,
+    getLatestInstanceAssessmentTime,
+    validateAssessment,
+    UnOptimizedDiskGroups,
+    checkForMissingOptimizePermissions,
+    activeSqlNodeDetails,
+    normalizeNfsVersion,
+    checkIfPatchBaselineInProgress,
+    updatePatchBaselineStatusForHost,
+    JobMetadata
+};

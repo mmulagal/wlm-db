@@ -6,13 +6,15 @@ import getLogger from '../../../utils/logger';
 import {
     getInstanceInfo,
     getResources,
-    updateDatabaseInstanceAssessmentResults
+    updateDatabaseInstanceAssessmentResults,
+    updateDatabaseHostAssessmentData
 } from '../../database/database-operations';
 import {
     DatabaseInstance,
     DatabaseInstanceConfigurations,
     DatabaseInstancesIncludingResource,
     Metadata,
+    ResourceAssessmentData,
     ResourceDetails,
     WorkloadInstance
 } from '../../../utils/common-types';
@@ -33,10 +35,12 @@ import {
 } from '../../workloads/oracle/common-types';
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
+import { calculateHostOsPatchDrift, managedHostOsPatchAssessment } from './hostOsPatch-assessment-operations';
 
 import {
     DriftAssessmentResponsePerAccountType,
     DriftAssessmentResponsePerHostType,
+    HostOsPatchDriftResponseType,
     OracleDriftAssessmentResponse,
     OracleDriftAssessmentResponseType,
     StorageParameterDriftResponseType
@@ -53,6 +57,108 @@ import { StorageAssessment } from './common-types';
 import { listJobs } from '../../../lib/database/job';
 
 const logger = getLogger();
+
+function hostLevelDriftData(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    _metadata: Metadata,
+    hostLevelAssessmentData: ResourceAssessmentData,
+    fieldsValues: string[]
+) {
+    logger.info('Fetching host level drift data for Oracle', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        fieldsValues
+    });
+
+    const assessmentFlags = {
+        hostOsPatch: fieldsValues?.includes(AssessmentCategoriesOracle.HOST_OS_PATCH.toLowerCase())
+    };
+
+    const hostOsPatchAssessmentResponse = assessmentFlags.hostOsPatch
+        ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId, hostLevelAssessmentData)
+        : undefined;
+
+    const result: { hostOsPatch: HostOsPatchDriftResponseType | { errorMessage: string } | undefined } = {
+        hostOsPatch: hostOsPatchAssessmentResponse
+    };
+
+    return result;
+}
+
+async function initiateHostLevelAssessmentDataCollection(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceRecord: WorkloadInstance,
+    jobId: string,
+    fields: string[]
+) {
+    logger.info('Initiate host level assessment data collection for Oracle', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        resourceName: databaseInstanceRecord.resourceName,
+        jobId,
+        fields,
+        databaseInstanceId: databaseInstanceRecord.id
+    });
+
+    const { resourceName, databaseInstanceObject } = databaseInstanceRecord;
+    const { resource } = databaseInstanceObject as DatabaseInstance;
+    const { metadata, assessment_data: hostLevelAssessmentData } = resource;
+
+    const { node1InstanceId: activeNodeInstanceId } = metadata as Metadata;
+
+    if (!metadata || !activeNodeInstanceId) {
+        const errorMessage = `Active node instance ID not found for Oracle database host ${databaseHostId}.`;
+        logger.error(errorMessage, { accountId, databaseHostId, credentialsId, region });
+        return;
+    }
+
+    let hostOsPatchAssessment;
+    let hostOsPatchErrorMessage;
+
+    if (fields?.includes(AssessmentCategoriesOracle.HOST_OS_PATCH)) {
+        ({ hostOsPatchAssessment, errorMessage: hostOsPatchErrorMessage } =
+            (await managedHostOsPatchAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                activeNodeInstanceId,
+                resourceName,
+                jobId
+            )) || {});
+    }
+
+    const hasAssessmentOrError = [hostOsPatchAssessment, hostOsPatchErrorMessage].some(item => !isEmpty(item));
+
+    if (hasAssessmentOrError) {
+        const existingAssessmentData = hostLevelAssessmentData as ResourceAssessmentData;
+
+        const updatedAssessmentData = {
+            hostOsPatch:
+                hostOsPatchAssessment || (!hostOsPatchErrorMessage ? existingAssessmentData?.hostOsPatch : undefined),
+            errors: {
+                hostOsPatch:
+                    hostOsPatchErrorMessage ||
+                    (!hostOsPatchAssessment ? existingAssessmentData?.errors?.hostOsPatch : undefined)
+            },
+            lastAssessedDate: new Date().getTime().toString()
+        };
+
+        await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, updatedAssessmentData);
+    }
+}
 
 async function initiateInstanceLevelAssessmentDataCollection(
     accountId: string,
@@ -317,17 +423,42 @@ async function triggerOracleAssessment(
             [AssessmentCategoriesOracle.STORAGE].includes(field.toLowerCase() as AssessmentCategoriesOracle)
         );
 
-        if (shouldRunInstanceLevelAssessment) {
-            await initiateInstanceLevelAssessmentDataCollection(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                instanceRecord,
-                parentJobId,
-                fields
+        const shouldRunHostLevelAssessment = fields.some(field =>
+            [AssessmentCategoriesOracle.HOST_OS_PATCH].includes(field.toLowerCase() as AssessmentCategoriesOracle)
+        );
+
+        // Run host-level and instance-level assessments concurrently
+        const assessmentPromises: Promise<void>[] = [];
+
+        if (shouldRunHostLevelAssessment) {
+            assessmentPromises.push(
+                initiateHostLevelAssessmentDataCollection(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    instanceRecord,
+                    parentJobId,
+                    fields
+                )
             );
         }
+
+        if (shouldRunInstanceLevelAssessment) {
+            assessmentPromises.push(
+                initiateInstanceLevelAssessmentDataCollection(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    instanceRecord,
+                    parentJobId,
+                    fields
+                )
+            );
+        }
+
+        await Promise.all(assessmentPromises);
     } catch (error: any) {
         logger.error(error);
         errorMessage = error.message || 'Internal Server Error';
@@ -511,7 +642,12 @@ async function fetchOracleDriftAssessment(
         configurations: instanceConfigurations,
         database_deployment_type: databaseDeploymentType,
         storage_protocol: storageProtocol,
-        resource: { configurations: hostConfigurations, metadata: resourceMetadata, resource_name: databaseHostName }
+        resource: {
+            configurations: hostConfigurations,
+            metadata: resourceMetadata,
+            resource_name: databaseHostName,
+            assessment_data: hostLevelAssessmentData
+        }
     } = instanceDetail as DatabaseInstance;
 
     const instanceDismissedConfigs = (instanceConfigurations as DatabaseInstanceConfigurations)
@@ -562,27 +698,45 @@ async function fetchOracleDriftAssessment(
     }
 
     const assessmentFlags = {
-        storage: fieldsValues.includes(AssessmentCategoriesOracle.STORAGE.toLowerCase())
+        storage: fieldsValues.includes(AssessmentCategoriesOracle.STORAGE.toLowerCase()),
+        hostOsPatch: fieldsValues.includes(AssessmentCategoriesOracle.HOST_OS_PATCH.toLowerCase())
     };
 
-    const storageDriftData = assessmentFlags.storage
-        ? await calculateStorageDrift(
-              accountId,
-              credentialsId,
-              region,
-              databaseHostId,
-              node1InstanceId,
-              databaseInstanceId,
-              databaseInstanceName,
-              databaseDeploymentType || '',
-              fileSystemId,
-              mappedOntapVolumes,
-              assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessment
-          )
-        : {};
+    const [storageDriftData, hostLevelData] = await Promise.all([
+        assessmentFlags.storage
+            ? calculateStorageDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  node1InstanceId,
+                  databaseInstanceId,
+                  databaseInstanceName,
+                  databaseDeploymentType || '',
+                  fileSystemId,
+                  mappedOntapVolumes,
+                  assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessment
+              )
+            : Promise.resolve({}),
+        assessmentFlags.hostOsPatch
+            ? Promise.resolve(
+                  hostLevelDriftData(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      databaseInstanceId,
+                      resourceMetadata as Metadata,
+                      hostLevelAssessmentData as ResourceAssessmentData,
+                      fieldsValues
+                  )
+              )
+            : Promise.resolve({ hostOsPatch: undefined })
+    ]);
 
     let driftAssessmentData: OracleDriftAssessmentResponseType = {
         storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),
+        hostOsPatch: isEmpty(hostLevelData.hostOsPatch) ? undefined : hostLevelData.hostOsPatch,
         dismissedConfigurations,
         fileSystemId,
         databaseInstanceName,

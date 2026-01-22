@@ -87,8 +87,16 @@ async function getInstancesPatchStatus(credentialsId: string, region: string, in
                             Severity: severity,
                             State: state,
                             Title: title,
-                            KBId: kbId
-                        }) => ({ classification, severity, state, title, kbId })
+                            KBId: kbId,
+                            CVEIds: cveIds
+                        }) => ({
+                            classification,
+                            severity,
+                            state,
+                            title,
+                            kbId,
+                            cveIds
+                        })
                     )
                 };
             });

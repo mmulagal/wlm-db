@@ -1019,7 +1019,9 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'Disabling SELinux')
     .resolves(getSampleCommandResponse('disableSelinux'))
     .on(SendCommandCommand, params => params.Comment === 'Check Oracle Database Log Analysis Permissions')
-    .resolves(getSampleCommandResponse('checkOracleDatabaseLogAnalysisPermissions'));
+    .resolves(getSampleCommandResponse('checkOracleDatabaseLogAnalysisPermissions'))
+    .on(SendCommandCommand, params => params.Comment === 'Check if Linux package repositories are reachable')
+    .resolves(getSampleCommandResponse('checkLinuxRepoConnectivity'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1569,6 +1571,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'oracleStorageAssessment',
             JSON.stringify(getCommandInvocationResponse.getOracleStorageAssessmentData)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkLinuxRepoConnectivity'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'checkLinuxRepoConnectivity',
+            JSON.stringify(getCommandInvocationResponse.checkLinuxRepoConnectivityResponse)
         )
     )
     .on(GetCommandInvocationCommand, {

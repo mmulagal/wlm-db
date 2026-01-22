@@ -40,6 +40,7 @@ interface HostOsPatchAssessmentObject {
     missingPatchDetails?: {
         classification?: string;
         kbId?: string;
+        cveIds?: string;
         severity?: string;
         state?: string;
         title?: string;

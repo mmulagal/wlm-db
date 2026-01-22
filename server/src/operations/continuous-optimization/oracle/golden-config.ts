@@ -777,7 +777,18 @@ const GOLDEN_CONFIG = {
             tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
             resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
         }
-    ]
+    ],
+    hostOsPatch: {
+        name: 'host-os-patch',
+        tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
+        category: 'compute',
+        subCategory: 'compute',
+        focusWidgetName: 'Operating system patch',
+        severity: SEVERITY.CRITICAL,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+        recommendation:
+            'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.'
+    }
 };
 
 export default GOLDEN_CONFIG;

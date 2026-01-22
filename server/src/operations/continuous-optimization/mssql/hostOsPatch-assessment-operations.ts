@@ -1,7 +1,6 @@
 import { compact, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { CommandFilterKey } from '@aws-sdk/client-ssm';
 import { listResources } from '../../../lib/database/db';
 
 import getLogger from '../../../utils/logger';
@@ -18,11 +17,10 @@ import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getAllClusterNodeDetails } from '../../database-hosts-operations';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../../aws/ospatch-ssm-operations';
-import { listSsmCommands } from '../../../lib/aws/ssm';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import { updateDatabaseHostAssessmentData } from '../../database/database-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
 import { getResourceNameFromTags } from '../../../utils/utils';
+import { checkIfPatchBaselineInProgress, updatePatchBaselineStatusForHost } from '../assessment-utils';
 
 const logger = getLogger();
 const PATCH_ASSESSMENT_IN_PROGRESS = 'Another patch assessment is already in progress';
@@ -186,34 +184,6 @@ async function managedHostOsPatchAssessment(
     return { hostOsPatchAssessment, errorMessage };
 }
 
-async function checkIfPatchBaselineInProgress(credentialsId: string, region: string, instanceIds: string[]) {
-    logger.info('Checking if patch baseline is in progress', { credentialsId, region, instanceIds });
-
-    for await (const instanceId of instanceIds) {
-        const listPatchBaselineCommandParams = {
-            InstanceId: instanceId,
-            MaxResults: 50,
-            Filters: [
-                {
-                    key: CommandFilterKey.DOCUMENT_NAME,
-                    value: 'AWS-RunPatchBaseline'
-                },
-                {
-                    key: CommandFilterKey.STATUS,
-                    value: 'InProgress'
-                }
-            ]
-        };
-
-        const { Commands = [] } = await listSsmCommands(credentialsId, region, listPatchBaselineCommandParams);
-        if (Commands.length > 0) {
-            logger.warn('Patch baseline is already running on the instance', { instanceId, region, credentialsId });
-            return true;
-        }
-    }
-    return false;
-}
-
 async function runOsPatchAssessment(
     accountId: string,
     credentialsId: string,
@@ -327,26 +297,4 @@ async function runOsPatchAssessment(
     }
 }
 
-async function updatePatchBaselineStatusForHost(
-    accountId: string,
-    databaseHostId: string,
-    hostOsPatchAssessment?: HostOsPatchAssessmentObject[]
-) {
-    const resources = (await listResources({ accountId, resourceId: databaseHostId })) || [];
-
-    if (!isEmpty(resources) && !isEmpty(hostOsPatchAssessment)) {
-        await Promise.all(
-            resources.map(async ({ credentials_id: credentialsId, assessment_data: assessmentData }) => {
-                const existingAssessmentData = assessmentData as ResourceAssessmentData;
-                const newAssessmentData = {
-                    ...existingAssessmentData,
-                    hostOsPatch: hostOsPatchAssessment,
-                    lastAssessedDate: new Date().getTime().toString()
-                };
-                await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, newAssessmentData);
-            })
-        );
-    }
-}
-
-export { calculateHostOsPatchDrift, managedHostOsPatchAssessment, updatePatchBaselineStatusForHost };
+export { calculateHostOsPatchDrift, managedHostOsPatchAssessment };

@@ -48,8 +48,41 @@ const StorageParameterDriftResponse = Type.Object({
 
 type StorageParameterDriftResponseType = Static<typeof StorageParameterDriftResponse>;
 
+const HostOsPatchDriftResponse = Type.Intersect([
+    OracleGenericParameterDriftResponse,
+    Type.Object({
+        ec2InstancesToPatch: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    baselineId: Type.String(),
+                    criticalNonCompliantCount: Type.Number(),
+                    otherNonCompliantCount: Type.Optional(Type.Number()),
+                    ec2InstanceId: Type.String(),
+                    ec2InstanceName: Type.Optional(Type.String()),
+                    operationStartTime: Type.Number(),
+                    operationEndTime: Type.Number(),
+                    securityNonCompliantCount: Type.Number(),
+                    missingPatchDetails: Type.Optional(
+                        Type.Array(
+                            Type.Object({
+                                classification: Type.String(),
+                                cveIds: Type.String(),
+                                severity: Type.String(),
+                                state: Type.String(),
+                                title: Type.String()
+                            })
+                        )
+                    )
+                })
+            )
+        )
+    })
+]);
+type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
+
 const OracleDriftAssessmentResponse = Type.Object({
     storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
+    hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
     dismissedConfigurations: Type.Optional(DismissedConfigurationsResponse),
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
     fileSystemId: Type.Optional(Type.String()),
@@ -143,6 +176,8 @@ export {
     GenericParameterDriftResponseType,
     OracleDriftAssessmentResponseType,
     StorageParameterDriftResponseType,
+    HostOsPatchDriftResponse,
+    HostOsPatchDriftResponseType,
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerHostType,
     DriftAssessmentResponsePerAccount,

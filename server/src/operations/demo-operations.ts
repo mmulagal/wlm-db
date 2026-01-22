@@ -73,7 +73,10 @@ import {
     StorageParameterDriftResponseType
 } from '../routes/types/mssql-continuous-optimisation.types';
 import { OracleDeploymentTenacy, STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS } from './workloads/oracle/consts';
-import { OracleDriftAssessmentResponseType } from '../routes/types/oracle-continuous-optimization.types';
+import {
+    OracleDriftAssessmentResponseType,
+    HostOsPatchDriftResponseType as OracleHostOsPatchDriftResponseType
+} from '../routes/types/oracle-continuous-optimization.types';
 
 const logger = getLogger();
 const DemoDefaultDatabaseNames = ['RetailBanking', 'MFGSales'];
@@ -1247,7 +1250,20 @@ function handleGetOracleAssessmentForDemo(
     assessmentData: OracleDriftAssessmentResponseType
 ) {
     logger.info('Handling Oracle demo for assessment', { accountId });
-    const { metadata: instanceMetadata } = instanceDetail as unknown as DatabaseInstance;
+    const { resource: { metadata = {} } = {}, metadata: instanceMetadata } =
+        instanceDetail as unknown as DatabaseInstance;
+
+    // Handle Oracle host OS patch assessment
+    const hostOsPatchAssessmentResponse = assessmentData?.hostOsPatch as OracleHostOsPatchDriftResponseType;
+    if (!isEmpty(hostOsPatchAssessmentResponse)) {
+        const hostOsPatchOptimized = (metadata as unknown as Metadata).isHostOsPatchOptimized;
+        if (hostOsPatchOptimized) {
+            hostOsPatchAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
+            hostOsPatchAssessmentResponse.recommendation =
+                'Your current Linux host is optimized with security best practices.';
+            assessmentData.hostOsPatch = hostOsPatchAssessmentResponse;
+        }
+    }
 
     // Handle Oracle storage assessment
     const storageAssessmentResponse = assessmentData.storage as StorageParameterDriftResponseType;
