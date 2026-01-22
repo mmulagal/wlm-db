@@ -472,154 +472,160 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSM
             : `Fix Oracle Storage Configuration for ${serverNameWithHostName}`;
 
     await Promise.all(
-        optimizationTargets.map(async data => {
-            const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-                name: jobDescription,
-                description: jobDescription,
-                startTime: Date.now(),
-                type: JOBTYPE.WELL_ARCHITECTED,
-                status: JOBSTATUS.IN_PROGRESS,
-                resourceName: serverNameWithHostName,
-                parentJobId
-            });
+        optimizationTargets.map(
+            throat(1, async data => {
+                const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+                    name: jobDescription,
+                    description: jobDescription,
+                    startTime: Date.now(),
+                    type: JOBTYPE.WELL_ARCHITECTED,
+                    status: JOBSTATUS.IN_PROGRESS,
+                    resourceName: serverNameWithHostName,
+                    parentJobId
+                });
 
-            logger.debug(`Job created with id ${jobId}`);
+                logger.debug(`Job created with id ${jobId}`);
 
-            let newJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-            let newJobError;
-            let newJobDescription;
+                let newJobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
+                let newJobError;
+                let newJobDescription;
 
-            try {
-                const { configurationName, objectsToOptimize } = data;
-                const configKey = Object.keys(optimizationConfigs).find(
-                    key => optimizationConfigs[key as keyof typeof optimizationConfigs] === configurationName
-                );
+                try {
+                    const { configurationName, objectsToOptimize } = data;
+                    const configKey = Object.keys(optimizationConfigs).find(
+                        key => optimizationConfigs[key as keyof typeof optimizationConfigs] === configurationName
+                    );
 
-                if (!configurationName) {
-                    throw new Error('Storage configuration not found');
-                }
-
-                const recommendedValues: Record<
-                    string,
-                    { objectsToOptimize: string[]; additionalInfo: Record<string, unknown> }
-                > = {};
-                if (
-                    resourceType === RESOURCESTYPE.ORACLE &&
-                    oracleSpecialStorageConfigNames.includes(configurationName as OptimizeStorageConfigs)
-                ) {
-                    if (!recommendationMap?.[configurationName]) {
-                        newJobError = 'Failed to fetch latest well-architected recommendations';
-                        if (OptimizeStorageConfigs.NFS_ROOTONLY === configurationName) {
-                            newJobError =
-                                'NFS rootonly configuration not applicable when dNFS is not enabled and NFSv4 is not in use.';
-                        }
-                        throw new Error(newJobError);
+                    if (!configurationName) {
+                        throw new Error('Storage configuration not found');
                     }
-                    const map = recommendationMap[configurationName];
-                    // Convert the new structure to the format expected by the rest of the code
-                    Object.entries(map.recommended).forEach(([recommendedValue, objects]) => {
-                        recommendedValues[recommendedValue] = {
-                            objectsToOptimize: objects,
-                            additionalInfo: map.additionalInfo
+
+                    const recommendedValues: Record<
+                        string,
+                        { objectsToOptimize: string[]; additionalInfo: Record<string, unknown> }
+                    > = {};
+                    if (
+                        resourceType === RESOURCESTYPE.ORACLE &&
+                        oracleSpecialStorageConfigNames.includes(configurationName as OptimizeStorageConfigs)
+                    ) {
+                        if (!recommendationMap?.[configurationName]) {
+                            newJobError = 'Failed to fetch latest well-architected recommendations';
+                            if (OptimizeStorageConfigs.NFS_ROOTONLY === configurationName) {
+                                newJobError =
+                                    'NFS rootonly configuration not applicable when dNFS is not enabled and NFSv4 is not in use.';
+                            }
+                            throw new Error(newJobError);
+                        }
+                        const map = recommendationMap[configurationName];
+                        // Convert the new structure to the format expected by the rest of the code
+                        Object.entries(map.recommended).forEach(([recommendedValue, objects]) => {
+                            recommendedValues[recommendedValue] = {
+                                objectsToOptimize: objects,
+                                additionalInfo: map.additionalInfo
+                            };
+                        });
+                    } else {
+                        recommendedValues[''] = {
+                            objectsToOptimize,
+                            additionalInfo: {}
                         };
-                    });
-                } else {
-                    recommendedValues[''] = {
-                        objectsToOptimize,
-                        additionalInfo: {}
-                    };
-                }
+                    }
 
-                let objectsOptimized = 0;
-                let jobParamKey = '';
-                let parsedResp: any;
+                    let objectsOptimized = 0;
+                    let jobParamKey = '';
+                    let parsedResp: any;
 
-                const apiResults = await Promise.all(
-                    Object.entries(recommendedValues).map(
-                        throat(3, async ([value, { objectsToOptimize: volumesLunsToOptimize, additionalInfo }]) => {
-                            if (configurationName === OptimizeStorageConfigs.EXPORT_POLICY) {
-                                const { vserverName, exportPolicyName: existingPolicyName, clients } = additionalInfo;
-                                value = `wlmdb_export_policy_${Date.now()}`;
-                                await createExportPolicy(
-                                    accountId,
+                    const apiResults = await Promise.all(
+                        Object.entries(recommendedValues).map(
+                            throat(3, async ([value, { objectsToOptimize: volumesLunsToOptimize, additionalInfo }]) => {
+                                if (configurationName === OptimizeStorageConfigs.EXPORT_POLICY) {
+                                    const {
+                                        vserverName,
+                                        exportPolicyName: existingPolicyName,
+                                        clients
+                                    } = additionalInfo;
+                                    value = `wlmdb_export_policy_${Date.now()}`;
+                                    await createExportPolicy(
+                                        accountId,
+                                        region,
+                                        credentialsId,
+                                        fsxId,
+                                        activeNodeInstanceId,
+                                        vserverName as string,
+                                        clients as string[],
+                                        existingPolicyName as string,
+                                        value,
+                                        documentName,
+                                        documentVersion,
+                                        jobId
+                                    );
+                                }
+
+                                const result = await callOntapApi(
+                                    apiRequestData,
+                                    configKey!,
+                                    volumesLunsToOptimize,
+                                    svmName,
+                                    resourceType,
+                                    fsxId,
                                     region,
                                     credentialsId,
-                                    fsxId,
                                     activeNodeInstanceId,
-                                    vserverName as string,
-                                    clients as string[],
-                                    existingPolicyName as string,
-                                    value,
-                                    documentName,
-                                    documentVersion,
-                                    jobId
+                                    jobDescription,
+                                    value
                                 );
-                            }
+                                return result;
+                            })
+                        )
+                    );
 
-                            const result = await callOntapApi(
-                                apiRequestData,
-                                configKey!,
-                                volumesLunsToOptimize,
-                                svmName,
-                                resourceType,
-                                fsxId,
-                                region,
-                                credentialsId,
-                                activeNodeInstanceId,
-                                jobDescription,
-                                value
-                            );
-                            return result;
-                        })
-                    )
-                );
+                    apiResults.forEach(result => {
+                        ({ parsedResp, jobParamKey } = result);
+                        objectsOptimized += parsedResp?.num_records || 0;
+                    });
 
-                apiResults.forEach(result => {
-                    ({ parsedResp, jobParamKey } = result);
-                    objectsOptimized += parsedResp?.num_records || 0;
-                });
+                    objectsOptimized = IS_DEMO_FLOW ? objectsToOptimize.length : objectsOptimized;
+                    // with bulk optimization of volumes, user can send 1/2/3 vol ids to optimize but ssm response will hardcoded to reply with 3 as optimized.
 
-                objectsOptimized = IS_DEMO_FLOW ? objectsToOptimize.length : objectsOptimized;
-                // with bulk optimization of volumes, user can send 1/2/3 vol ids to optimize but ssm response will hardcoded to reply with 3 as optimized.
+                    const optimizeMessage = `Fixed ${objectsOptimized}/${
+                        objectsToOptimize.length
+                    } ${jobParamKey} in ${serverNameWithHostName} for configuration parameter '${
+                        OptimizeStorageConfigsJobNames[configKey as keyof typeof OptimizeStorageConfigsJobNames]
+                    }'`;
 
-                const optimizeMessage = `Fixed ${objectsOptimized}/${
-                    objectsToOptimize.length
-                } ${jobParamKey} in ${serverNameWithHostName} for configuration parameter '${
-                    OptimizeStorageConfigsJobNames[configKey as keyof typeof OptimizeStorageConfigsJobNames]
-                }'`;
-
-                if (objectsOptimized !== objectsToOptimize.length) {
-                    if (objectsOptimized === 0) {
-                        const optimizeErrorMessage = `Failed to fix ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}`;
-                        logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
-                        newJobStatus = JOBSTATUS.FAILED;
-                        newJobError = optimizeErrorMessage;
+                    if (objectsOptimized !== objectsToOptimize.length) {
+                        if (objectsOptimized === 0) {
+                            const optimizeErrorMessage = `Failed to fix ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}`;
+                            logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
+                            newJobStatus = JOBSTATUS.FAILED;
+                            newJobError = optimizeErrorMessage;
+                        } else {
+                            const unOptimizedObjects = parsedResp?.cli_output
+                                ? objectsToOptimize.filter(obj => !parsedResp.cli_output.includes(obj))
+                                : objectsToOptimize.slice(objectsOptimized);
+                            const optimizeErrorMessage = `Failed to fix ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
+                            newJobStatus = JOBSTATUS.FAILED;
+                            newJobError = optimizeErrorMessage;
+                        }
                     } else {
-                        const unOptimizedObjects = parsedResp?.cli_output
-                            ? objectsToOptimize.filter(obj => !parsedResp.cli_output.includes(obj))
-                            : objectsToOptimize.slice(objectsOptimized);
-                        const optimizeErrorMessage = `Failed to fix ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
-                        newJobStatus = JOBSTATUS.FAILED;
-                        newJobError = optimizeErrorMessage;
+                        newJobDescription = optimizeMessage;
+                        newJobStatus = JOBSTATUS.COMPLETED;
                     }
-                } else {
-                    newJobDescription = optimizeMessage;
-                    newJobStatus = JOBSTATUS.COMPLETED;
+                } catch (error) {
+                    const errorMessage = `Error while fixing storage ${error}`;
+                    logger.error(errorMessage);
+                    newJobStatus = JOBSTATUS.FAILED;
+                    newJobError = errorMessage;
+                } finally {
+                    await updateJobDetails(accountId, jobId, {
+                        status: newJobStatus,
+                        endTime: Date.now(),
+                        error: newJobError,
+                        description: newJobDescription
+                    });
                 }
-            } catch (error) {
-                const errorMessage = `Error while fixing storage ${error}`;
-                logger.error(errorMessage);
-                newJobStatus = JOBSTATUS.FAILED;
-                newJobError = errorMessage;
-            } finally {
-                await updateJobDetails(accountId, jobId, {
-                    status: newJobStatus,
-                    endTime: Date.now(),
-                    error: newJobError,
-                    description: newJobDescription
-                });
-            }
-        })
+            })
+        )
     );
 }
 
