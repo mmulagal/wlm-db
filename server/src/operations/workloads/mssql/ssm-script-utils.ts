@@ -355,6 +355,20 @@ const getAoagDetailsScript = (instances: string[], sqlAuthEnabled = false) => `
             Write-Information "Failed to get Windows Cluster nodes: $_"
         }
         
+        # Database-level AG validation query - checks if THIS instance has databases in any AG
+        $databaseAgQuery = @"
+SET NOCOUNT ON;
+SELECT 
+    (SELECT COUNT(*) FROM sys.dm_hadr_database_replica_states WHERE is_local = 1) AS databasesInAgCount,
+    (SELECT DISTINCT ag.name AS agName 
+     FROM sys.dm_hadr_database_replica_states drs
+     INNER JOIN sys.availability_replicas ar ON ar.replica_id = drs.replica_id
+     INNER JOIN sys.availability_groups ag ON ag.group_id = ar.group_id
+     WHERE drs.is_local = 1
+     FOR JSON PATH) AS participatingAgs
+FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+"@
+        
         $sqlInstances | ForEach-Object {
             $serverInstanceName = $_
             $instanceName = "$env:COMPUTERNAME"
@@ -364,6 +378,33 @@ const getAoagDetailsScript = (instances: string[], sqlAuthEnabled = false) => `
             try {
                 ${validateSQLInstanceCredentials}
                 $sqlError = $null
+                
+                # First, check database-level AG participation for this instance
+                $databasesInAgCount = 0
+                $participatingAgs = @()
+                try {
+                    $dbAgResponse = $null
+                    if ($sqlCredential.useDomainAuth -eq $True) {
+                        $dbAgResponse = Invoke-CommandWithCredSSP -sqlquery $databaseAgQuery -instanceName $instanceName
+                    } elseif ($sqlCredential.useSqlAuth -eq $True) {
+                        $dbAgResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $databaseAgQuery -y 0 2>> $null
+                    }
+                    if ($($LASTEXITCODE -and $LASTEXITCODE -ne 0) -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
+                        $dbAgResponse = sqlcmd -S $instanceName -Q $databaseAgQuery -y 0 2>> $null
+                    }
+                    if (-not [string]::IsNullOrEmpty($dbAgResponse) -and $dbAgResponse -ne "NULL") {
+                        $dbAgParsed = $dbAgResponse | ConvertFrom-Json
+                        $databasesInAgCount = $dbAgParsed.databasesInAgCount
+                        if ($dbAgParsed.participatingAgs -is [string]) {
+                            try { $participatingAgs = $dbAgParsed.participatingAgs | ConvertFrom-Json } catch { $participatingAgs = @() }
+                        } else {
+                            $participatingAgs = $dbAgParsed.participatingAgs
+                        }
+                    }
+                } catch {
+                    Write-Information "Database-level AG check failed for instance '$instanceName': $_"
+                }
+                
                 if ($sqlCredential.useDomainAuth -eq $True) {
                     $sqlResponse = Invoke-CommandWithCredSSP -sqlquery $query -instanceName $instanceName
                 } elseif ($sqlCredential.useSqlAuth -eq $True) {
@@ -387,21 +428,33 @@ const getAoagDetailsScript = (instances: string[], sqlAuthEnabled = false) => `
                     try { if ($aoagParsed.availabilityGroups -is [string]) { $aoagParsed.availabilityGroups = $aoagParsed.availabilityGroups | ConvertFrom-Json } } catch {}
                     try { if ($aoagParsed.availabilityGroups) { foreach ($ag in $aoagParsed.availabilityGroups) { if ($ag.Replicas -is [string]) { $ag.Replicas = $ag.Replicas | ConvertFrom-Json } } } } catch {}
                     
-                    # Set baseDeploymentType inside aoagDetails based on isClustered
-                    if ($aoagParsed.serverInfo -and $null -ne $aoagParsed.serverInfo.isClustered) {
-                        $baseType = if ($aoagParsed.serverInfo.isClustered -eq 1) { 'FCI' } else { 'Standalone' }
-                        $aoagParsed | Add-Member -MemberType NoteProperty -Name 'baseDeploymentType' -Value $baseType -Force
-                    }
+                    # Check if HADR is enabled for this instance
+                    $isHadrEnabled = $aoagParsed.serverInfo.isHadrEnabled -eq 1
                     
-                    # Remove isClustered from serverInfo as it's internal-only (used to calculate baseDeploymentType)
-                    if ($aoagParsed.serverInfo) {
-                        $cleanServerInfo = @{}
-                        if ($aoagParsed.serverInfo.serverName) { $cleanServerInfo['serverName'] = $aoagParsed.serverInfo.serverName }
-                        if ($null -ne $aoagParsed.serverInfo.isHadrEnabled) { $cleanServerInfo['isHadrEnabled'] = $aoagParsed.serverInfo.isHadrEnabled }
-                        $aoagParsed.serverInfo = $cleanServerInfo
+                    # Only return aoagDetails if HADR is enabled AND this instance has databases in AG
+                    if ($isHadrEnabled -and $databasesInAgCount -gt 0) {
+                        # Filter availabilityGroups to only include AGs this instance participates in
+                        if ($participatingAgs -and $participatingAgs.Count -gt 0 -and $aoagParsed.availabilityGroups) {
+                            $participatingAgNames = @($participatingAgs | ForEach-Object { $_.agName })
+                            $aoagParsed.availabilityGroups = @($aoagParsed.availabilityGroups | Where-Object { $participatingAgNames -contains $_.agName })
+                        }
+                        
+                        # Set baseDeploymentType inside aoagDetails based on isClustered
+                        if ($aoagParsed.serverInfo -and $null -ne $aoagParsed.serverInfo.isClustered) {
+                            $baseType = if ($aoagParsed.serverInfo.isClustered -eq 1) { 'FCI' } else { 'Standalone' }
+                            $aoagParsed | Add-Member -MemberType NoteProperty -Name 'baseDeploymentType' -Value $baseType -Force
+                        }
+                        
+                        # Remove isClustered from serverInfo as it's internal-only (used to calculate baseDeploymentType)
+                        if ($aoagParsed.serverInfo) {
+                            $cleanServerInfo = @{}
+                            if ($aoagParsed.serverInfo.serverName) { $cleanServerInfo['serverName'] = $aoagParsed.serverInfo.serverName }
+                            if ($null -ne $aoagParsed.serverInfo.isHadrEnabled) { $cleanServerInfo['isHadrEnabled'] = $aoagParsed.serverInfo.isHadrEnabled }
+                            $aoagParsed.serverInfo = $cleanServerInfo
+                        }
+                        
+                        $instanceResult['aoagDetails'] = $aoagParsed
                     }
-                    
-                    $instanceResult['aoagDetails'] = $aoagParsed
                 }
                 # Add cluster nodes to each instance response
                 if ($windowsClusterNodes -and $windowsClusterNodes.Count -gt 0) {

@@ -4,7 +4,7 @@ import randomize from 'randomatic';
 
 import { STORAGE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { FileSystemType } from '@aws-sdk/client-fsx';
-import { compact, uniqBy, isEmpty, cloneDeep, uniq } from 'lodash-es';
+import { compact, uniqBy, isEmpty, cloneDeep, uniq, isArray } from 'lodash-es';
 import {
     DescribeInstancesCommandInput,
     Filter,
@@ -78,7 +78,12 @@ import {
     FEATURE_PREPREQUISITES
 } from './workloads/mssql/discover-consts';
 import { sendSSMCommand } from '../lib/aws/ssm';
-import { REQUIRED_PS_MODULES_FOR_MANAGEMENT, SSM_RUN_POWERSHELL_SCRIPT_DOC } from './workloads/mssql/const';
+import {
+    REQUIRED_PS_MODULES_FOR_MANAGEMENT,
+    SSM_RUN_POWERSHELL_SCRIPT_DOC,
+    AOAG_ROLE_PRIMARY,
+    AOAG_ROLE_SECONDARY
+} from './workloads/mssql/const';
 import { NodeDetails, ResourceDetails, MultipleCommandSsmResponse } from '../utils/common-types';
 import {
     DiscoverMsSqlResponseBodyType,
@@ -459,7 +464,7 @@ async function getHostAndSqlInfoFromPsOutput(
                     if (item.hasOwnProperty('windowsClusterNodes')) {
                         item.windowsClusterNodes = JSON.parse(item.windowsClusterNodes);
                         // DBS-3941 fix
-                        if (!Array.isArray(item.windowsClusterNodes)) {
+                        if (!isArray(item.windowsClusterNodes)) {
                             item.windowsClusterNodes = [item.windowsClusterNodes];
                         }
                         item.nodeIps = item.windowsClusterNodes.map(({ Address }: { Address: string }) => Address);
@@ -704,7 +709,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         nodeIps.length
                     ) {
                         try {
-                            const clusterNodes = Array.isArray(windowsClusterNodes) ? windowsClusterNodes : [];
+                            const clusterNodes = isArray(windowsClusterNodes) ? windowsClusterNodes : [];
                             aoagClusterNodeDetails = clusterNodes.map(node => ({
                                 node: node?.Node,
                                 ip: node?.Address,
@@ -731,6 +736,37 @@ async function getHostAndSqlInfoFromPsOutput(
                                 ...(serverName && { serverName }),
                                 ...(isHadrEnabled !== undefined && { isHadrEnabled })
                             };
+                        }
+
+                        // Normalize role field for replicas missing it (common when queried from secondary)
+                        // When querying from SECONDARY, remote replicas don't have role_desc from DMV
+                        // We derive role from primaryReplica: if replica matches primaryReplica -> PRIMARY, else SECONDARY
+                        if (
+                            processedAoagDetails.availabilityGroups &&
+                            isArray(processedAoagDetails.availabilityGroups)
+                        ) {
+                            processedAoagDetails.availabilityGroups = processedAoagDetails.availabilityGroups.map(
+                                (ag: any) => {
+                                    const { primaryReplica, replicas, ...restAg } = ag;
+                                    if (replicas && isArray(replicas)) {
+                                        const normalizedReplicas = replicas.map((replica: any) => {
+                                            const { role, replica: replicaName, ...restReplica } = replica;
+                                            return {
+                                                replica: replicaName,
+                                                // Derive role if missing: PRIMARY if matches primaryReplica, else SECONDARY
+                                                role:
+                                                    role ||
+                                                    (replicaName === primaryReplica
+                                                        ? AOAG_ROLE_PRIMARY
+                                                        : AOAG_ROLE_SECONDARY),
+                                                ...restReplica
+                                            };
+                                        });
+                                        return { ...restAg, primaryReplica, replicas: normalizedReplicas };
+                                    }
+                                    return ag;
+                                }
+                            );
                         }
                     }
 

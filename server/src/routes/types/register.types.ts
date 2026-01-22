@@ -235,6 +235,7 @@ const SingleRegisterCredentialsResponse = Type.Object({
 const replicaNodeInfoObject = Type.Object({
     ec2InstanceId: Type.String(),
     ec2HostName: Type.String(),
+    sqlServerName: Type.Optional(Type.String()),
     databaseName: Type.Optional(Type.String()),
     role: Type.String()
 });

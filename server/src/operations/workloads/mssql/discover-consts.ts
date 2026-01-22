@@ -369,6 +369,87 @@ const HOST_AND_SQL_INFO_PS1 = [
     return $clusterDetailsResponse
   }
 
+  # Get FCI owner nodes for a specific SQL Server clustered instance
+  # Returns the nodes that are part of that specific FCI (typically 2 nodes)
+  Function Get-FciOwnerNodes {
+    param([string]$sqlServerName)
+    
+    $nodes = @()
+    try {
+      # Try direct match by clustered SQL Server name
+      # Pattern: "SQL Network Name (<ClusteredSQLServerName>)"
+      $resourceName = "SQL Network Name (" + $sqlServerName + ")"
+      $resource = Get-ClusterResource -Name $resourceName -ErrorAction SilentlyContinue
+      
+      if ($resource) {
+        $nodes = @((Get-ClusterOwnerNode -InputObject $resource).OwnerNodes.NodeName)
+      } else {
+        # Fallback: find SQL Network Name resource where current host is an owner
+        $sqlNetworkResources = Get-ClusterResource -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "SQL Network Name*" }
+        foreach ($res in $sqlNetworkResources) {
+          $ownerNodes = @((Get-ClusterOwnerNode -InputObject $res -ErrorAction SilentlyContinue).OwnerNodes.NodeName)
+          if ($ownerNodes -contains $env:COMPUTERNAME) {
+            $nodes = $ownerNodes
+            break
+          }
+        }
+      }
+    } catch {
+      Write-Information "Failed to get FCI owner nodes for '$sqlServerName': $_"
+    }
+    
+    # Fallback to hostname if no nodes found
+    if ($nodes.Count -eq 0) { $nodes = @(hostname) }
+    return $nodes
+  }
+
+  # Helper function to set SQL Server deployment type and related fields based on cluster status
+  # Handles both FCI and Standalone deployment types
+  Function Set-SqlDeploymentType {
+    param(
+      [hashtable]$ResponseObject,
+      [object]$IsClustered,
+      [hashtable]$SqlServerInfoFromRegistry,
+      [hashtable]$ClusterDetails
+    )
+    
+    # Check if clustered (handle both SQL SERVERPROPERTY int (0/1) and PowerShell boolean ($True/$False))
+    $isClusteredBool = ($IsClustered -eq 1 -or $IsClustered -eq $True)
+    
+    if ($isClusteredBool) {
+      # Set FCI deployment type
+      $ResponseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
+      
+      # Determine cluster name with fallback chain: Registry -> Cluster Details -> Computer Name
+      $clusterName = $null
+      if ($SqlServerInfoFromRegistry -and $SqlServerInfoFromRegistry.ContainsKey('clusterName') -and $SqlServerInfoFromRegistry['clusterName']) {
+        $clusterName = $SqlServerInfoFromRegistry['clusterName']
+      } elseif ($ClusterDetails -and $ClusterDetails.ContainsKey('name') -and $ClusterDetails['name']) {
+        $clusterName = $ClusterDetails['name']
+      } else {
+        $clusterName = (Get-WmiObject -Class Win32_ComputerSystem).Name
+      }
+      $ResponseObject['sqlServerName'] = $clusterName
+    } else {
+      # Set Standalone deployment type
+      $ResponseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
+      $ResponseObject['sqlServerNodes'] = hostname
+    }
+  }
+
+  # Helper function to get base deployment type for AOAG instances
+  # Returns 'FCI' if underlying nodes are clustered, 'Standalone' otherwise
+  Function Get-BaseDeploymentType {
+    param([object]$IsClustered)
+    
+    # Check if clustered (handle both SQL SERVERPROPERTY int (0/1) and PowerShell boolean ($True/$False))
+    if ($IsClustered -eq 1 -or $IsClustered -eq $True) {
+      return 'FCI'
+    } else {
+      return 'Standalone'
+    }
+  }
+
   Function FetchAllSQLInstancesFromRegistry {
     $sqlInstances = @()
     $registryPath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\Instance Names\\SQL"
@@ -462,6 +543,7 @@ const HOST_AND_SQL_INFO_PS1 = [
   }
 
   # Encapsulated AOAG discovery (query + auth fallbacks + JSON normalization)
+  # When credentials are available, also checks database-level AG participation
   Function Get-AoagDetails {
     param(
       [Parameter(Mandatory = $true)][string]$serverInstance,
@@ -474,6 +556,7 @@ const HOST_AND_SQL_INFO_PS1 = [
 
     ${slqcmdExecutionTemplate}
     $aoagOut = ''
+    $hasValidCredentials = $False
 
     $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
     try {
@@ -484,6 +567,7 @@ const HOST_AND_SQL_INFO_PS1 = [
           $sqlCredential['username'] = $domainCred.username
           $sqlCredential['password'] = $domainCred.password
           $result['aoagQueryAuth'] = 'domain'
+          $hasValidCredentials = $True
         }
       }
       if ($sqlCredential['useDomainAuth'] -ne $True -and $credsFromParameterStore -and $credsFromParameterStore.sql.Count -gt 0) {
@@ -493,8 +577,53 @@ const HOST_AND_SQL_INFO_PS1 = [
           $sqlCredential['username'] = $sqlCred.username
           $sqlCredential['password'] = $sqlCred.password
           $result['aoagQueryAuth'] = 'sql'
+          $hasValidCredentials = $True
         }
       }
+      
+      $result['hasValidCredentials'] = $hasValidCredentials
+      
+      # When credentials are available, first check database-level AG participation
+      # This determines if THIS SQL instance actually has databases in any AG
+      if ($hasValidCredentials) {
+        $databaseAgQuery = @"
+SET NOCOUNT ON;
+SELECT 
+    (SELECT COUNT(*) FROM sys.dm_hadr_database_replica_states WHERE is_local = 1) AS databasesInAgCount,
+    (SELECT DISTINCT ag.name AS agName 
+     FROM sys.dm_hadr_database_replica_states drs
+     INNER JOIN sys.availability_replicas ar ON ar.replica_id = drs.replica_id
+     INNER JOIN sys.availability_groups ag ON ag.group_id = ar.group_id
+     WHERE drs.is_local = 1
+     FOR JSON PATH) AS participatingAgs
+FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+"@
+        try {
+          $dbAgOut = Call-SqlCmd -SqlCredential $sqlCredential -Query $databaseAgQuery -InstanceName $serverInstance
+          if ($dbAgOut) {
+            $dbAgParsed = $dbAgOut | ConvertFrom-Json
+            $result['databasesInAgCount'] = $dbAgParsed.databasesInAgCount
+            if ($dbAgParsed.participatingAgs -is [string]) {
+              try { $result['participatingAgs'] = $dbAgParsed.participatingAgs | ConvertFrom-Json } catch { $result['participatingAgs'] = @() }
+            } else {
+              $result['participatingAgs'] = $dbAgParsed.participatingAgs
+            }
+            
+            # If NO databases in AG for this instance, mark for exclusion
+            if ($dbAgParsed.databasesInAgCount -eq 0) {
+              $result['instanceHasDatabasesInAg'] = $False
+              # Return early - this instance is not really participating in AOAG at database level
+              return $result
+            } else {
+              $result['instanceHasDatabasesInAg'] = $True
+            }
+          }
+        } catch {
+          $result['databaseAgCheckError'] = "$_"
+          # Continue with normal AOAG query on error - don't block discovery
+        }
+      }
+      
       $lines = Call-SqlCmd -SqlCredential $sqlCredential -Query $aoagQuery -InstanceName $serverInstance
       $aoagOut = $lines
       if ($sqlCredential['useDomainAuth'] -eq $True) { $result['aoagQueryAuthSucceeded'] = 'domain' }
@@ -512,6 +641,25 @@ const HOST_AND_SQL_INFO_PS1 = [
           try { if ($aoagParsed.serverInfo -is [string]) { $aoagParsed.serverInfo = $aoagParsed.serverInfo | ConvertFrom-Json } } catch {}
           try { if ($aoagParsed.availabilityGroups -is [string]) { $aoagParsed.availabilityGroups = $aoagParsed.availabilityGroups | ConvertFrom-Json } } catch {}
           try { if ($aoagParsed.availabilityGroups) { foreach ($ag in $aoagParsed.availabilityGroups) { if ($ag.Replicas -is [string]) { $ag.Replicas = $ag.Replicas | ConvertFrom-Json } } } } catch {}
+          
+          # Filter availabilityGroups to only include AGs this instance participates in (when credentials available)
+          if ($hasValidCredentials -and $result['participatingAgs'] -and $aoagParsed.availabilityGroups) {
+            $participatingAgNames = @()
+            foreach ($ag in $result['participatingAgs']) {
+              if ($ag.agName) { $participatingAgNames += $ag.agName }
+            }
+            
+            if ($participatingAgNames.Count -gt 0) {
+              $filteredAgs = @()
+              foreach ($ag in $aoagParsed.availabilityGroups) {
+                if ($participatingAgNames -contains $ag.agName) {
+                  $filteredAgs += $ag
+                }
+              }
+              $aoagParsed.availabilityGroups = $filteredAgs
+            }
+          }
+          
           $result['aoagDetails'] = $aoagParsed
         } else {
           Write-Information "Failed to fetch AOAG details for instance '$instanceName'."
@@ -734,57 +882,121 @@ const HOST_AND_SQL_INFO_PS1 = [
               if($isReadReplicaCreated -eq $True -or $isAOAGResourcePresent -eq $True) {
                 $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
               } else{
-               $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
-               $responseObject['sqlServerNodes'] = hostname
+               # HADR enabled but no AOAG resources - fallback to FCI or Standalone
+               Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails
               }
+            } else {
+              # HADR (AlwaysOn) is NOT enabled for this SQL instance - cannot be AOAG
+              # Override deployment type to FCI or Standalone based on isClustered
+              # This handles named instances where AlwaysOn was never enabled
+              Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails
             }
             # If deployment type is AOAG (from cluster-derived or updated value), fetch AOAG details using helper
             if ($responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] -eq '${SqlServerDeploymentModel.SQL_AOAG_SHORT}') {
               $aoagResult = Get-AoagDetails -serverInstance $serverInstance -credsFromParameterStore $credsFromParameterStore -instanceName $instanceName
+              
               if ($aoagResult) {
-                foreach ($k in $aoagResult.Keys) {
-                  $responseObject[$k] = $aoagResult[$k]
-                }
-                # Fallback synthesis when aoagDetails is missing due to permission/query issues
-                if (-not $responseObject.ContainsKey('aoagDetails') -or -not $responseObject['aoagDetails']) {
-                  $fallbackAgName = $null
-                  try { if ($clusterDetails['aoagName']) { $fallbackAgName = $clusterDetails['aoagName'] } } catch { Write-Information "Unable to read AOAG name from cluster details for '$instanceName'. Using fallback." }
-                  if (-not $fallbackAgName) { try { if ($responseObject['windowsClusterName']) { $fallbackAgName = $responseObject['windowsClusterName'] } } catch { Write-Information "Unable to read Windows cluster name for '$instanceName'. AOAG name may be empty." } }
-
-                  $replicaNames = @()
-                  try {
-                    if ($responseObject['sqlServerNodes']) {
-                      $replicaNames = $responseObject['sqlServerNodes']
-                      if ($replicaNames -isnot [System.Array]) { $replicaNames = @($replicaNames) }
+                # Check if credentials are available and database-level validation was performed
+                if ($aoagResult['hasValidCredentials'] -eq $True) {
+                  # Credentials available - use database-level validation for accurate deployment type
+                  if ($aoagResult['instanceHasDatabasesInAg'] -eq $False) {
+                    # This instance has NO databases participating in any AG
+                    # Override deployment type back to Standalone or FCI based on isClustered
+                    Write-Information "Instance '$instanceName' has IsHadrEnabled but NO databases in AG. Changing deployment type."
+                    
+                    Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails
+                    
+                    # Add validation note for debugging (optional - can be removed if not needed in API response)
+                    $responseObject['aoagValidationNote'] = 'Instance has HADR enabled but no databases in AG'
+                    # Don't add aoagDetails or baseDeploymentType since this is not really AOAG
+                  } else {
+                    # Instance HAS databases in AG - keep as AOAG with filtered aoagDetails
+                    # Only copy relevant keys (exclude internal validation fields)
+                    $internalKeys = @('hasValidCredentials', 'instanceHasDatabasesInAg', 'databasesInAgCount', 'participatingAgs', 'databaseAgCheckError')
+                    foreach ($k in $aoagResult.Keys) {
+                      if ($k -notin $internalKeys) {
+                        $responseObject[$k] = $aoagResult[$k]
+                      }
                     }
-                  } catch { Write-Information "Unable to read candidate AOAG replica nodes for '$instanceName'." }
+                    
+                    if ($aoagResult['databasesInAgCount']) {
+                      $responseObject['databasesInAgCount'] = $aoagResult['databasesInAgCount']
+                    }
+                    $responseObject['baseDeploymentType'] = Get-BaseDeploymentType -IsClustered $isClustered
+                  }
+                } else {
+                  # No credentials available - show AOAG for all with HADR enabled
+                  # This is acceptable as we can't definitively validate without DB access
+                  foreach ($k in $aoagResult.Keys) {
+                    $responseObject[$k] = $aoagResult[$k]
+                  }
+                  
+                  # Fallback synthesis when aoagDetails is missing due to permission/query issues
+                  if (-not $responseObject.ContainsKey('aoagDetails') -or -not $responseObject['aoagDetails']) {
+                    $fallbackAgName = $null
+                    try { if ($clusterDetails['aoagName']) { $fallbackAgName = $clusterDetails['aoagName'] } } catch { Write-Information "Unable to read AOAG name from cluster details for '$instanceName'. Using fallback." }
+                    if (-not $fallbackAgName) { try { if ($responseObject['windowsClusterName']) { $fallbackAgName = $responseObject['windowsClusterName'] } } catch { Write-Information "Unable to read Windows cluster name for '$instanceName'. AOAG name may be empty." } }
 
-                  $serverInfo = @{ 'serverName' = $responseObject['sqlServerName']; 'isHadrEnabled' = 0 }
-                  try {
-                    $serverInfo['isHadrEnabled'] = if ($sqlServerInfoFromRegistry['hadrEnabled']) { 1 } else { 0 }
-                  } catch { Write-Information "Unable to read HADR registry flag for '$instanceName'. Defaulting to 0." }
+                    $replicaNames = @()
+                    try {
+                      if ($responseObject['sqlServerNodes']) {
+                        $replicaNames = $responseObject['sqlServerNodes']
+                        if ($replicaNames -isnot [System.Array]) { $replicaNames = @($replicaNames) }
+                      }
+                    } catch { Write-Information "Unable to read candidate AOAG replica nodes for '$instanceName'." }
 
-                  $availabilityGroup = @{ 'agName' = $fallbackAgName; 'replicas' = @($replicaNames | ForEach-Object { @{ 'replica' = $_ } }) }
-                  $responseObject['aoagDetails'] = @{ 'serverInfo' = $serverInfo; 'availabilityGroups' = @($availabilityGroup) }
+                    $serverInfo = @{ 'serverName' = $responseObject['sqlServerName']; 'isHadrEnabled' = 0 }
+                    try {
+                      $serverInfo['isHadrEnabled'] = if ($sqlServerInfoFromRegistry['hadrEnabled']) { 1 } else { 0 }
+                    } catch { Write-Information "Unable to read HADR registry flag for '$instanceName'. Defaulting to 0." }
+
+                    $availabilityGroup = @{ 'agName' = $fallbackAgName; 'replicas' = @($replicaNames | ForEach-Object { @{ 'replica' = $_ } }) }
+                    $responseObject['aoagDetails'] = @{ 'serverInfo' = $serverInfo; 'availabilityGroups' = @($availabilityGroup) }
+                  }
+                  
+                  # Set baseDeploymentType for AOAG
+                  $responseObject['baseDeploymentType'] = Get-BaseDeploymentType -IsClustered $isClustered
                 }
               }
               # Set baseDeploymentType for AOAG - indicates whether underlying nodes are Standalone or FCI
               # Note: $isClustered can be 0/1 (from SQL) or $True/$False (from registry), so check for both
-              $responseObject['baseDeploymentType'] = if ($isClustered -eq 1 -or $isClustered -eq $True) { 'FCI' } else { 'Standalone' }
+              $responseObject['baseDeploymentType'] = Get-BaseDeploymentType -IsClustered $isClustered
             }
             elseif($isClustered -eq $True -and $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] -ne '${SqlServerDeploymentModel.SQL_AOAG_SHORT}') {
-              $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
-              $responseObject['sqlServerName'] = if ($sqlServerInfoFromRegistry.ContainsKey('clusterName') -and $sqlServerInfoFromRegistry['clusterName']) {
-                $sqlServerInfoFromRegistry['clusterName']
-              } elseif ($clusterDetails.ContainsKey('name') -and $clusterDetails['name']) {
-                $clusterDetails['name']
-              } else {
-                (Get-WmiObject -Class Win32_ComputerSystem).Name
-              }
+              # isClustered but not AOAG - set as FCI
+              Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails
             }
             else{
-              $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
-              $responseObject['sqlServerNodes'] = hostname
+              # Default to Standalone
+              Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails
+            }
+            
+            # Update sqlServerNodes based on final deployment type
+            # Standalone: 1 node (hostname)
+            # FCI: 2 nodes (FCI owner nodes)
+            # AOAG: Based on baseDeploymentType (Standalone=1 node, FCI=2 nodes)
+            $finalDeploymentType = $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}']
+            $baseDeploymentType = $responseObject['baseDeploymentType']
+            
+            if ($finalDeploymentType -eq '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}') {
+              # Pure Standalone - just hostname
+              $responseObject['sqlServerNodes'] = @(hostname)
+            }
+            elseif ($finalDeploymentType -eq '${SqlServerDeploymentModel.SQL_FCI_SHORT}') {
+              # Pure FCI - get FCI owner nodes for this SQL Server
+              $sqlServerNameForFci = $responseObject['sqlServerName']
+              $responseObject['sqlServerNodes'] = Get-FciOwnerNodes -sqlServerName $sqlServerNameForFci
+            }
+            elseif ($finalDeploymentType -eq '${SqlServerDeploymentModel.SQL_AOAG_SHORT}') {
+              # AOAG - depends on baseDeploymentType
+              if ($baseDeploymentType -eq 'FCI') {
+                # AOAG on FCI - get FCI owner nodes
+                $sqlServerNameForFci = $responseObject['sqlServerName']
+                $responseObject['sqlServerNodes'] = Get-FciOwnerNodes -sqlServerName $sqlServerNameForFci
+              } else {
+                # AOAG on Standalone - just hostname
+                $responseObject['sqlServerNodes'] = @(hostname)
+              }
             }
             
             if( -Not ([string]::IsNullOrEmpty($existingPermissions))) {

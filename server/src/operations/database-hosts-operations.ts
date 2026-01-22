@@ -1,7 +1,7 @@
 import { STORAGE_TYPE } from '@prisma/client';
 import { DescribeInstancesCommandOutput, DeviceType, Volume } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
-import { compact, isEmpty, omit } from 'lodash-es';
+import { compact, isEmpty, omit, isArray } from 'lodash-es';
 import throat from 'throat';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { listResources } from '../lib/database/db';
@@ -98,7 +98,12 @@ import {
     getOracleDatabaseInstancesSummary
 } from './workloads/oracle/oracle-operations';
 import { trendGraphCreateScriptForMssql } from './workloads/mssql/ssm-script-utils';
-import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from './workloads/mssql/const';
+import {
+    SSM_RUN_POWERSHELL_SCRIPT_DOC,
+    SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION,
+    AOAG_ROLE_PRIMARY,
+    AOAG_ROLE_SECONDARY
+} from './workloads/mssql/const';
 import { trendGraphCreateScriptForOracle } from './workloads/oracle/oracle-ssm-script-utils';
 import { getPaginatedDatabaseInstances, getResources, populateDbInstances } from './database/database-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/pgsql/const';
@@ -115,6 +120,27 @@ import {
     getNodeTopology,
     getStorageData
 } from './database-hosts-util';
+
+// AOAG type definitions
+interface AoagReplica {
+    replica?: string;
+    role?: string;
+    availabilityMode?: string;
+    failoverMode?: string;
+    syncHealth?: string;
+    connectedState?: string;
+    isLocalReplica?: boolean;
+    secondaryConnections?: string;
+    primaryConnections?: string;
+    readRoutingUrl?: string;
+}
+
+interface AoagGroup {
+    agName?: string;
+    primaryReplica?: string;
+    readRoutingTargets?: string;
+    replicas?: AoagReplica[];
+}
 
 const logger = getLogger();
 
@@ -1786,7 +1812,7 @@ async function getDatabaseInstancesSummary(
             // Collect all cluster node IPs from all instances' windowsClusterNodes
             const allClusterNodeIps: string[] = [];
             for (const instanceData of Object.values(aoagDetailsData) as any[]) {
-                if (instanceData?.windowsClusterNodes && Array.isArray(instanceData.windowsClusterNodes)) {
+                if (instanceData?.windowsClusterNodes && isArray(instanceData.windowsClusterNodes)) {
                     instanceData.windowsClusterNodes.forEach((node: { Node?: string; Address?: string }) => {
                         if (node.Address) {
                             allClusterNodeIps.push(node.Address);
@@ -1886,9 +1912,35 @@ async function getDatabaseInstancesSummary(
         // Attach AOAG details at instance level when requested and available
         if (shouldQueryAoag && aoagDetailsData?.[instanceName]?.aoagDetails) {
             const { aoagDetails } = aoagDetailsData[instanceName];
+            let { availabilityGroups } = aoagDetails || {};
+
             // Only attach if there are actual availability groups
-            if (aoagDetails?.availabilityGroups?.length > 0) {
-                databaseInstanceDetails.aoagDetails = aoagDetails;
+            if (availabilityGroups && availabilityGroups.length > 0) {
+                // Normalize role field for replicas missing it (common when queried from secondary)
+                // When querying from SECONDARY, remote replicas don't have role_desc from DMV
+                // Derive role from primaryReplica: if replica matches primaryReplica -> PRIMARY, else SECONDARY
+                if (isArray(availabilityGroups)) {
+                    availabilityGroups = (availabilityGroups as AoagGroup[]).map(ag => {
+                        const { primaryReplica, replicas, ...restAg } = ag;
+                        if (replicas && isArray(replicas)) {
+                            const normalizedReplicas = replicas.map(replica => {
+                                const { role, replica: replicaName, ...restReplica } = replica;
+                                return {
+                                    replica: replicaName,
+                                    // Derive role if missing: PRIMARY if matches primaryReplica, else SECONDARY
+                                    role:
+                                        role ||
+                                        (replicaName === primaryReplica ? AOAG_ROLE_PRIMARY : AOAG_ROLE_SECONDARY),
+                                    ...restReplica
+                                };
+                            });
+                            return { ...restAg, primaryReplica, replicas: normalizedReplicas };
+                        }
+                        return ag;
+                    });
+                }
+
+                databaseInstanceDetails.aoagDetails = { ...aoagDetails, availabilityGroups };
                 // Build aoagClusterNodeDetails from replica info using Windows Cluster node IPs
                 // Node Name -> IP -> EC2 Instance
                 const clusterNodeDetails: Array<{
