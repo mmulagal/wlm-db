@@ -1194,17 +1194,11 @@ const HeaderComponent = ({ tab }: Tab) => {
     );
 
     const checkConditionForHeaderComponent = () => {
-        if (
-            statusChk ||
-            (!statusChk &&
-                (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS ||
-                    tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
-                    tabInfo === WLF_TABS.EXPLORE_SAVINGS_ONPREM ||
-                    landingFromWizard))
-        ) {
-            return true;
+        if (statusChk === undefined) {
+            return false;
         }
-        return false;
+
+        return true;
     };
 
     // Job monitoring select drop down
