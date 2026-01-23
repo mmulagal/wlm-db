@@ -1944,9 +1944,7 @@ function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[
             computeHourlyPrice: existingComputeHourlyPrice,
             computeMonthlyPrice: existingComputeMonthlyPrice,
             instanceMonthlyPrice: existingInstanceMonthlyPrice,
-            licenseMonthlyPrice: existingLicenseMonthlyPrice,
             hoursInMonth: HOURS_IN_MONTH,
-            nodeCount: existingNodeCount,
             machineDetails: currentMachineDetails
         });
 
@@ -1957,9 +1955,7 @@ function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[
             computeHourlyPrice: recommendedComputeHourlyPrice,
             computeMonthlyPrice: recommendedComputeMonthlyPrice,
             instanceMonthlyPrice: recommendedInstanceMonthlyPrice,
-            licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
             hoursInMonth: HOURS_IN_MONTH,
-            nodeCount: recommendedNodeCount,
             machineDetails: recommendedMachineDetails
         });
 
@@ -1971,8 +1967,7 @@ function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[
             licenseHourlyPrice: existingLicenseHourlyPrice,
             licenseIncluded: existingLicenseIncluded,
             licenseMonthlyPrice: existingLicenseMonthlyPrice,
-            hoursInMonth: HOURS_IN_MONTH,
-            nodeCount: existingNodeCount
+            hoursInMonth: HOURS_IN_MONTH
         });
 
         recommendedLicenseCalculation.push({
@@ -1982,8 +1977,7 @@ function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[
             licenseHourlyPrice: recommendedLicenseHourlyPrice,
             licenseIncluded: true,
             licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
-            hoursInMonth: HOURS_IN_MONTH,
-            nodeCount: recommendedNodeCount
+            hoursInMonth: HOURS_IN_MONTH
         });
 
         // Build storage savings compute/license arrays (include licenseMonthlyPrice in compute for UI display)
@@ -1995,7 +1989,6 @@ function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[
                 computeHourlyPrice: existingComputeHourlyPrice,
                 computeMonthlyPrice: existingComputeMonthlyPrice,
                 instanceMonthlyPrice: existingInstanceMonthlyPrice,
-                licenseMonthlyPrice: existingLicenseMonthlyPrice,
                 hoursInMonth: HOURS_IN_MONTH,
                 machineDetails: currentMachineDetails
             },
@@ -2004,7 +1997,6 @@ function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[
                 computeHourlyPrice: recommendedComputeHourlyPrice,
                 computeMonthlyPrice: recommendedComputeMonthlyPrice,
                 instanceMonthlyPrice: recommendedInstanceMonthlyPrice,
-                licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
                 hoursInMonth: HOURS_IN_MONTH,
                 machineDetails: recommendedMachineDetails
             }
@@ -2184,68 +2176,62 @@ async function getOnPremBulkResourceExploreSavings(
             monthlySqlByolCost
         } = snapshotInfo || {};
 
+        // Determine combined deployment type: if any resource is FCI or AOAG, use that for Multi-AZ FSx pricing
+        const hasMultiAzDeployment = individualResourceInfo.some(
+            info =>
+                info.deploymentType === DATABASE_DEPLOYMENT_TYPE.FCI ||
+                info.deploymentType === DATABASE_DEPLOYMENT_TYPE.AOAG
+        );
+        const combinedDeploymentType = hasMultiAzDeployment
+            ? DATABASE_DEPLOYMENT_TYPE.FCI // Use FCI to trigger Multi-AZ pricing
+            : DATABASE_DEPLOYMENT_TYPE.Standalone;
+
         const baseParams = {
             clonedCopiesCount,
             snapshotFrequency,
             monthlyChangeRatePercentage,
-            sqlServerDeploymentType: 'Standalone'
+            sqlServerDeploymentType: combinedDeploymentType
         };
 
         // Step 8: Call marketing APIs AND fetch pricing in parallel (independent operations)
-        const [
-            existingConfigData,
-            existingConfigCalculations,
-            recommendedConfigData,
-            recommendedConfigCalculations,
-            resourcesWithPricing
-        ] = await Promise.all([
-            performManualModeStorageSavingsCalculations(
-                accountId,
-                regionCode,
-                {
-                    ...baseParams,
-                    ec2Instances: existingEc2Instances,
-                    sqlServerEdition: combinedExistingLicenseEdition
-                },
-                totalNodeCount,
-                true
-            ),
-            getManualModeStorageSavingsCalculationMetrics(
-                accountId,
-                regionCode,
-                {
-                    ...baseParams,
-                    ec2Instances: existingEc2Instances,
-                    sqlServerEdition: combinedExistingLicenseEdition
-                },
-                totalNodeCount,
-                true
-            ),
-            performManualModeStorageSavingsCalculations(
-                accountId,
-                regionCode,
-                {
-                    ...baseParams,
-                    ec2Instances: recommendedEc2Instances,
-                    sqlServerEdition: combinedRecommendedLicenseEdition
-                },
-                totalNodeCount,
-                true
-            ),
-            getManualModeStorageSavingsCalculationMetrics(
-                accountId,
-                regionCode,
-                {
-                    ...baseParams,
-                    ec2Instances: recommendedEc2Instances,
-                    sqlServerEdition: combinedRecommendedLicenseEdition
-                },
-                totalNodeCount,
-                true
-            ),
-            // Fetch pricing for compute/license calculations in parallel with marketing APIs
-            fetchPricingForResources(individualResourceInfo, regionCode)
-        ]);
+        const [existingConfigData, existingConfigCalculations, recommendedConfigData, resourcesWithPricing] =
+            await Promise.all([
+                performManualModeStorageSavingsCalculations(
+                    accountId,
+                    regionCode,
+                    {
+                        ...baseParams,
+                        ec2Instances: existingEc2Instances,
+                        sqlServerEdition: combinedExistingLicenseEdition
+                    },
+                    totalNodeCount,
+                    true
+                ),
+                getManualModeStorageSavingsCalculationMetrics(
+                    accountId,
+                    regionCode,
+                    {
+                        ...baseParams,
+                        ec2Instances: existingEc2Instances,
+                        sqlServerEdition: combinedExistingLicenseEdition
+                    },
+                    totalNodeCount,
+                    true
+                ),
+                performManualModeStorageSavingsCalculations(
+                    accountId,
+                    regionCode,
+                    {
+                        ...baseParams,
+                        ec2Instances: recommendedEc2Instances,
+                        sqlServerEdition: combinedRecommendedLicenseEdition
+                    },
+                    totalNodeCount,
+                    true
+                ),
+                // Fetch pricing for compute/license calculations in parallel with marketing APIs
+                fetchPricingForResources(individualResourceInfo, regionCode)
+            ]);
 
         // Step 9: Build per-resource calculations
         const {
@@ -2279,7 +2265,7 @@ async function getOnPremBulkResourceExploreSavings(
             ebsCloneCalculation: existingConfigCalculations?.ebsCloneCalculation,
             ebsSnapshotCalculation: existingConfigCalculations?.ebsSnapshotCalculation,
             single: existingConfigCalculations?.single,
-            recommendedSingle: recommendedConfigCalculations?.single,
+            multi: existingConfigCalculations?.multi,
             totalSummary: {
                 existing: existingTotalSummary,
                 recommended: recommendedTotalSummary
@@ -2331,7 +2317,7 @@ async function getOnPremBulkResourceExploreSavings(
                     ebsCloneCalculation: existingConfigCalculations?.ebsCloneCalculation,
                     ebsSnapshotCalculation: existingConfigCalculations?.ebsSnapshotCalculation,
                     single: existingConfigCalculations?.single,
-                    recommendedSingle: recommendedConfigCalculations?.single,
+                    multi: existingConfigCalculations?.multi,
                     totalSummary: {
                         existing: existingTotalSummary,
                         recommended: recommendedTotalSummary
