@@ -251,14 +251,25 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 );
             } else {
                 // All failed
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: t('databases.register-flow.fsx-all-auth-fail-message', {
-                            count: fsxIds.length
+                if (fsxIds.length === 1) {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: t('databases.register-flow.fsx-partial-auth-fail-message', {
+                                count: fsxIds.length
+                            })
                         })
-                    })
-                );
+                    );
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: t('databases.register-flow.fsx-all-auth-fail-message', {
+                                count: fsxIds.length
+                            })
+                        })
+                    );
+                }
             }
         } catch (error) {
             dispatch(
@@ -821,7 +832,16 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             })
                         })
                     );
-                } else if (failedCount > 0) {
+                } else if (failedCount === 1) {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.WARNING,
+                            message: t('databases.register-flow.bulk-auth-partial-success', {
+                                failedCount
+                            })
+                        })
+                    );
+                } else if (failedCount > 1) {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,

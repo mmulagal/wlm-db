@@ -707,7 +707,7 @@
                     "sqlServerVersion": "14.0.3460.9",
                     "sqlServerProductYear": 2017,
                     "isDefaultInstance": true,
-                    "windowsAuthentication": false,
+                    "windowsAuthentication": true,
                     "windowsDomainUserAuthentication": false,
                     "sqlServerEdition": "Enterprise Evaluation Edition (64-bit)",
                     "sqlServerEngineEdition": 3,

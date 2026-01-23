@@ -228,20 +228,11 @@ const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: Acti
                     )}
                     {/* PowerShell reboot and authorization notices (shown when any instance needs PowerShell 7) */}
                     {instanceCounts.powershellCount > 0 && (
-                        <>
-                            <DsTypography variant="Regular_14">
-                                {t('databases.register-flow.powershell7-reboot-notice-prefix')}
-                                <span className={styles.boldText}>
-                                    {t('databases.register-flow.powershell-module-7')}
-                                </span>
-                                {t('databases.register-flow.powershell7-reboot-notice-suffix')}
-                            </DsTypography>
-                            <DsTypography variant="Regular_14">
-                                {t('databases.register-flow.powershell7-authorization-notice-prefix')}
-                                <span className={styles.boldText}>{t('databases.register-flow.powershell-7')}</span>
-                                {t('databases.register-flow.powershell7-authorization-notice-suffix')}
-                            </DsTypography>
-                        </>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.register-flow.powershell7-reboot-notice-prefix')}
+                            <span className={styles.boldText}>{t('databases.register-flow.powershell-module-7')}</span>
+                            {t('databases.register-flow.powershell7-reboot-notice-suffix')}
+                        </DsTypography>
                     )}
                 </div>
             )}

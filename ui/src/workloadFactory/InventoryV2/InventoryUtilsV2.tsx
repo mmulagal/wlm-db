@@ -3169,36 +3169,6 @@ export const getDiscoveredHostDeploymentV2 = (host: any, t: TFunction) => {
     return type;
 };
 
-export const handleManageTriggerNotification = (instancesToManage: any, dispatch: any, styles: any) => {
-    if (instancesToManage.length === 1) {
-        dispatch(
-            addNotification({
-                notificationType: NOTIFICATION_TYPES.INFO,
-                message: (
-                    <div className={styles.notification}>
-                        {GENERAL.INSTANCE_MANAGE_REQUEST[0]}
-                        <span className={styles.bold}>{instancesToManage[0]}</span>
-                        {GENERAL.INSTANCE_MANAGE_REQUEST[1]}
-                    </div>
-                )
-            })
-        );
-    } else {
-        dispatch(
-            addNotification({
-                notificationType: NOTIFICATION_TYPES.INFO,
-                message: (
-                    <div className={styles.notification}>
-                        {GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[0]}
-                        <span className={styles.bold}>{instancesToManage.length}</span>
-                        {GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[1]}
-                    </div>
-                )
-            })
-        );
-    }
-};
-
 export const handleManageNotification = (
     instancesToManage: any,
     successfullInstances: any,

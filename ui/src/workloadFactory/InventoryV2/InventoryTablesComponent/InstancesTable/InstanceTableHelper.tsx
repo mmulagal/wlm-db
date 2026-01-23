@@ -729,7 +729,6 @@ export const getDisabledSelectionTooltip = (
     if (isAoag) {
         return (
             <div className={tooltipStyles.aoagTooltip}>
-                <DsTypography variant="Semibold_13">{t('databases.bulk-register.aoag-tooltip-title')}</DsTypography>
                 <div className={tooltipStyles.bulletList}>
                     <div className={tooltipStyles.bulletRow}>
                         <Bullet />
