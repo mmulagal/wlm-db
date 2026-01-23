@@ -9,7 +9,8 @@ import {
     isASMManagedCheck,
     parseSqlplusOutput,
     parseSpfileProperties,
-    dataguardDeploymentUtilities
+    dataguardDeploymentUtilities,
+    defaultAuthDetectModule
 } from './oracle-ssm-script-utils';
 
 const debugLog = (logFileName: string) => `
@@ -1385,31 +1386,11 @@ const discoverOracleHosts = `
         exit 0
     fi
 
-    is_default_auth() {
-        local ORACLE_SID="$1"
-        local result
-        result=$(sudo -i -u oracle bash <<EOF
-                export ORACLE_SID="$ORACLE_SID"
-                sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
-                WHENEVER SQLERROR EXIT SQL.SQLCODE
-                SET HEADING OFF
-                SET FEEDBACK OFF
-                SET VERIFY OFF
-                SET PAGESIZE 0
-                SELECT 'OK' FROM dual;
-                EXIT;
-EOSQL
-EOF
-)
-        if echo "$result" | grep -q "^OK"; then
-            echo "true"
-        else
-            echo "false"
-        fi
-}
+    ${defaultAuthDetectModule}
     ${loadDatabaseDetectionModules}
     ${loadStorageDetectionModules}
     ${checkOracleModuleAvailability}
+    ${getDataguardDeploymentDetails}
 
     hostname=$(hostname)
     RESULTS="{\\"hostname\\":\\"$hostname\\", \\"dbInstances\\":["
@@ -1462,8 +1443,20 @@ EOF
             echo "Failed to retrieve details for instance $ORACLE_SID. Skipping."
             continue
         }
+        isDataguardDeployed=false
+        dataguardDetails="{}"    
+        check_dataguard_deployment "$sid"
+        if [ $? -eq 0 ]; then
+            
+            isDataguardDeployed=true
+            if [ "$isDefaultAuth" == "true" ]; then
+                dataguardDetails=$(get_dataguard_details_with_creds "$sid")
+            else
+                dataguardDetails=$(get_dataguard_details_without_creds "$sid")
+            fi
+        fi
 
-        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions, \\"remediation_missing_permissions\\": $remediationMissingPermissions }"
+        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions, \\"remediation_missing_permissions\\": $remediationMissingPermissions, \\"isDataguardDeployed\\": $isDataguardDeployed, \\"dataguard_details\\": $dataguardDetails }"
 
         # If not the first object, prepend a comma in the JSON array.
         if [ $FIRST -eq 1 ]; then

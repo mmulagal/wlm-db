@@ -29,11 +29,37 @@ import {
     paginateDescribeAvailablePatches,
     paginateDescribeInstancePatches
 } from '@aws-sdk/client-ssm';
+import { gzipSync } from 'node:zlib';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
 import getLogger from '../../utils/logger';
+import { SSM_RUN_SHELL_SCRIPT_DOC } from '../../operations/workloads/oracle/consts';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from '../../operations/workloads/mssql/const';
 
 const logger = getLogger();
+
+// Limit is 64KB, use a slightly smaller threshold to account for parameter and document overhead
+const SSM_COMMAND_COMPRESSION_THRESHOLD = 62 * 1024;
+
+// Bash decompression script template - decompresses gzipped base64 payload and executes
+const BASH_DECOMPRESS_TEMPLATE = (compressedBase64: string) => `#!/bin/bash
+d='${compressedBase64}'
+echo "$d" | base64 -d | gunzip | bash`;
+
+// PowerShell decompression script template - decompresses gzipped base64 payload and executes
+const POWERSHELL_DECOMPRESS_TEMPLATE = (base64Data: string) => `$ErrorActionPreference="Stop"
+$d=@"
+${base64Data}
+"@
+$b=[Convert]::FromBase64String($d)
+$m=New-Object IO.MemoryStream
+$m.Write($b,0,$b.Length)
+$m.Position=0
+$g=New-Object IO.Compression.GzipStream($m,[IO.Compression.CompressionMode]::Decompress)
+$r=New-Object IO.StreamReader($g)
+$s=$r.ReadToEnd()
+$r.Close();$g.Close();$m.Close()
+Invoke-Expression $s`;
 
 async function getSSMClient(region: string, credentialsId?: string, accountId?: string) {
     logger.debug('Getting SSM client:', region, credentialsId, accountId);
@@ -56,6 +82,55 @@ async function sendSSMCommand(
     accountId?: string
 ) {
     logger.info('Send SSM Command', { credentialsId, region, params: params?.Comment, accountId });
+
+    // Compress commands if they exceed size threshold
+    const isBashScript = params.DocumentName === SSM_RUN_SHELL_SCRIPT_DOC;
+    const isPowerShellScript = params.DocumentName === SSM_RUN_POWERSHELL_SCRIPT_DOC;
+
+    if ((isBashScript || isPowerShellScript) && params.Parameters?.commands) {
+        const commandsStr = JSON.stringify(params.Parameters.commands);
+        const commandsSize = Buffer.byteLength(commandsStr, 'utf8');
+
+        logger.info(`SSM command size: ${commandsSize} bytes`);
+
+        if (commandsSize > SSM_COMMAND_COMPRESSION_THRESHOLD) {
+            logger.info('Compressing large SSM command...');
+
+            // Join commands array into single script
+            const scriptContent = Array.isArray(params.Parameters.commands)
+                ? params.Parameters.commands.join('\n')
+                : params.Parameters.commands;
+
+            // Compress the script with maximum compression
+            const compressed = gzipSync(scriptContent, { level: 9 });
+            const compressedBase64 = compressed.toString('base64');
+
+            logger.info(
+                `Compressed size: ${compressedBase64.length} bytes (${Math.round(
+                    (compressedBase64.length / commandsSize) * 100
+                )}% of original)`
+            );
+
+            // Replace commands with appropriate decompression wrapper
+            if (isBashScript) {
+                params.Parameters.commands = [BASH_DECOMPRESS_TEMPLATE(compressedBase64)];
+            } else {
+                // Split base64 into chunks for PowerShell here-string readability (80 char lines)
+                const chunks = compressedBase64.match(/.{1,80}/g) || [compressedBase64];
+                const base64Data = chunks.join('\n');
+                params.Parameters.commands = [POWERSHELL_DECOMPRESS_TEMPLATE(base64Data)];
+            }
+
+            const finalSize = Buffer.byteLength(JSON.stringify(params), 'utf8');
+            logger.info(`Final SSM request size: ${finalSize} bytes`);
+
+            if (finalSize > SSM_COMMAND_COMPRESSION_THRESHOLD) {
+                throw new Error(
+                    `Compressed payload still exceeds SSM limit: ${finalSize} bytes. Original: ${commandsSize} bytes`
+                );
+            }
+        }
+    }
 
     const ssmClient = await getSSMClient(region, credentialsId, accountId);
     const sendCommand = new SendCommandCommand(params);
@@ -253,5 +328,6 @@ export {
     describeInstancePatchStates,
     describeInstancePatches,
     describeAvailablePatches,
-    describeInstanceInformation
+    describeInstanceInformation,
+    SSM_COMMAND_COMPRESSION_THRESHOLD
 };

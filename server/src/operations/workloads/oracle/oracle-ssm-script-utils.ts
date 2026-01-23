@@ -315,6 +315,7 @@ EOF
 `;
 
 const dataguardDeploymentUtilities = `
+    ${parseSqlplusOutput}
     check_dataguard_deployment() {
         local ORACLE_SID="$1"
         # if dataguard is configured, FAL_CLIENT and FAL_SERVER will be configured and have different values in spfile for DB
@@ -362,17 +363,16 @@ EOF
                 select database_role from v$database;
 EOSQL
 )       
-        ${parseSqlplusOutput}
-        dataguard_role=$(parse_sqlplus_output "$sqlplus_output")
+        echo "$sqlplus_output"
+EOF
+)
+        dataguard_role=$(parse_sqlplus_output "$dataguard_role")
         sqlplus_exit_code=$?
         if [ $sqlplus_exit_code -ne 0 ]; then
             dataguardDiscoveryErrorMsg=$dataguard_role
             exit 1;
         fi
-        echo "$dataguard_role" | tr -d '\n' | tr -d ' '
-EOF
-)
-        echo "$dataguard_role"
+        echo "$dataguard_role" | tr -d '\n'
     }
     
     is_primary_node() {
@@ -383,7 +383,7 @@ EOF
             exit 1
         fi
 
-        if [ "$role" == "PRIMARY" ] || [ "$role" == "primary" ]; then
+        if [[ "$role" == *PRIMARY* ]] || [[ "$role" == *primary* ]]; then
             echo "true"
         else
             echo "false"
@@ -392,11 +392,11 @@ EOF
 
     get_dataguard_db_name_and_db_unique_name() {
         local ORACLE_SID="$1"
-        local db_name_and_db_unique_name="";
+        local db_name_and_db_unique_name=""
         db_name_and_db_unique_name=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
             export ORACLE_SID="$1"
-            sqlplus_command="$2"
-            sqlplus_output=$($sqlplus_command <<'EOSQL'
+            sqlplus_cmd="$2"
+            sqlplus_output=$($sqlplus_cmd <<'EOSQL'
             ${sqlplusOutputFormatSettings}
             SELECT JSON_OBJECT(
              'dbUniqueName' VALUE MAX(CASE WHEN name='db_unique_name' THEN value END),
@@ -406,81 +406,82 @@ EOF
             WHERE name IN ('db_unique_name','db_name');
 EOSQL
 )
-        ${parseSqlplusOutput}
-        db_name_and_db_unique_name=$(parse_sqlplus_output "$sqlplus_output")
+        echo "$sqlplus_output"
+EOF
+)
+        db_name_and_db_unique_name=$(parse_sqlplus_output "$db_name_and_db_unique_name")
         sqlplus_exit_code=$?
         if [ $sqlplus_exit_code -ne 0 ]; then
             dataguardDiscoveryErrorMsg=$db_name_and_db_unique_name
             exit 1;
         fi
         echo "$db_name_and_db_unique_name" | tr -d '\n' | tr -d ' '
-EOF
-)
-        echo "$db_name_and_db_unique_name"
     }
 
     get_dataguard_instance_sync_status() {
         local ORACLE_SID="$1"
         local isCDB="$2"
         local pdbName="$3"
-        local instance_sync_status=""
         local isPrimaryNode=$(is_primary_node "$ORACLE_SID")
         # Use placeholder for empty pdbName to prevent argument shifting with sudo -i
         local pdbNameArg="__EMPTY__"
-        instance_sync_status=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$isCDB" "$pdbNameArg" "$sqlplus_command" "$isPrimaryNode" <<'EOF'
+
+        # First EOF > EOSQL: Get sync status action
+        instance_sync_status=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$isCDB" "$pdbNameArg" "$sqlplus_command" <<'EOF'
             export ORACLE_SID="$1"
             isCDB="$2"
             pdbName="$3"
             sqlplus_cmd="$4"
-            isPrimaryNode="$5"
-            # Convert placeholder back to empty
-            if [ "$pdbName" == "__EMPTY__" ]; then
-                pdbName=""
-            fi
-            if [ "$isCDB" == "YES" ]; then
-                alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
-            else
-                alter_cmd=""
-            fi
+            [ "$pdbName" == "__EMPTY__" ] && pdbName=""
+            [ "$isCDB" == "YES" ] && alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;" || alter_cmd=""
             sqlplus_output=$($sqlplus_cmd <<EOSQL
                 ${sqlplusOutputFormatSettings}
                 $alter_cmd
                 select action from V\\$DATAGUARD_PROCESS where regexp_like(name, '^(MRP|PR|TMON|TT)') and action <> 'IDLE';
 EOSQL
 )
-        ${parseSqlplusOutput}
-        instance_sync_status=$(parse_sqlplus_output "$sqlplus_output")
+        echo "$sqlplus_output"
+EOF
+)
+        instance_sync_status=$(parse_sqlplus_output "$instance_sync_status")
         sqlplus_exit_code=$?
         if [ $sqlplus_exit_code -ne 0 ]; then
             dataguardDiscoveryErrorMsg=$instance_sync_status
             exit 1;
         fi
+
+        # If primary node, return early with status only
         if [ "$isPrimaryNode" == "true" ]; then
             echo "{\\"status\\": \\"$instance_sync_status\\" }" | tr -d '\n' | tr -d ' '
-        else
-            # Already running as oracle user, no need for nested sudo
-            if [ "$isCDB" == "YES" ]; then
-                alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
-            fi
-            standby_sqlplus_output=$($sqlplus_cmd <<EOSQL2
+            return
+        fi
+
+        # Second EOF > EOSQL: Get standby lag stats (only for non-primary)
+        standby_sqlplus_output=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$isCDB" "$pdbNameArg" "$sqlplus_command" <<'EOF'
+            export ORACLE_SID="$1"
+            isCDB="$2"
+            pdbName="$3"
+            sqlplus_cmd="$4"
+            [ "$pdbName" == "__EMPTY__" ] && pdbName=""
+            [ "$isCDB" == "YES" ] && alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;" || alter_cmd=""
+            sqlplus_output=$($sqlplus_cmd <<EOSQL
 ${sqlplusOutputFormatSettings}
 $alter_cmd
 select value from V\\$DATAGUARD_STATS where name in ('apply lag', 'transport lag');
-EOSQL2
+EOSQL
 )
-            standby_sync_stats=$(parse_sqlplus_output "$standby_sqlplus_output")
-            sqlplus_exit_code=$?
-            if [ $sqlplus_exit_code -ne 0 ]; then
-                dataguardDiscoveryErrorMsg=$standby_sync_stats
-                exit 1;
-            fi
-            transport_lag=$(echo "$standby_sync_stats" | sed -n '2p')
-            apply_lag=$(echo "$standby_sync_stats" | sed -n '1p')
-            echo "{\\"status\\": \\"$instance_sync_status\\", \\"transportLag\\": \\"$transport_lag\\", \\"applyLag\\": \\"$apply_lag\\" }" | tr -d '\n'
-        fi
+        echo "$sqlplus_output"
 EOF
 )
-        echo "$instance_sync_status"
+        standby_sync_stats=$(parse_sqlplus_output "$standby_sqlplus_output")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            dataguardDiscoveryErrorMsg=$standby_sync_stats
+            exit 1;
+        fi
+        transport_lag=$(echo "$standby_sync_stats" | sed -n '2p')
+        apply_lag=$(echo "$standby_sync_stats" | sed -n '1p')
+        echo "{\\"status\\": \\"$instance_sync_status\\", \\"transportLag\\": \\"$transport_lag\\", \\"applyLag\\": \\"$apply_lag\\" }" | tr -d '\n'
     }
 
 
@@ -2157,5 +2158,6 @@ export {
     parseSqlplusOutput,
     sqlplusOutputFormatSettings,
     parseSpfileProperties,
-    dataguardDeploymentUtilities
+    dataguardDeploymentUtilities,
+    defaultAuthDetectModule
 };
