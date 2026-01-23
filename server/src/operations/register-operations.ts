@@ -72,7 +72,6 @@ import {
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { getParameter, deleteParameters } from '../lib/aws/ssm';
 import { registerFsxOntapCredentials, listFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
-import { getAoagDetails } from './workloads/mssql/mssql-operations';
 import {
     MultiInstanceManageMsSqlRequestBodyType,
     MultiInstanceManageResponseBodyType,
@@ -2434,194 +2433,6 @@ async function validateCredentials(
  * Collects AOAG replica information for registered SQL Server instances
  * Returns an array of replica info objects with EC2 instance details
  */
-async function collectAoagReplicaInfo({
-    accountId,
-    credentialsId,
-    region,
-    instanceId,
-    instanceIds,
-    sqlCredentials,
-    windowsUserCredentials
-}: {
-    accountId: string;
-    credentialsId: string;
-    region: string;
-    instanceId: string;
-    instanceIds: string[];
-    sqlCredentials: RegisterCredentialsType[];
-    windowsUserCredentials: RegisterCredentialsType[];
-}): Promise<ReplicaInfoType[]> {
-    logger.info('Collect AOAG replica info', {
-        accountId,
-        credentialsId,
-        region,
-        instanceId,
-        instanceIds,
-        sqlCredentials,
-        windowsUserCredentials
-    });
-
-    const replicaInfoResult: ReplicaInfoType[] = [];
-
-    // Extract the SQL instance names being registered
-    // Credentials can come from either SQL auth or Windows auth, so check both
-    const registeredInstanceNames = [
-        ...sqlCredentials.map(({ resourceId }) => resourceId),
-        ...windowsUserCredentials.map(({ resourceId }) => resourceId)
-    ];
-
-    logger.debug('AOAG replica collection: registered SQL instance names', {
-        registeredInstanceNames,
-        instanceIds
-    });
-
-    // Discover SQL Server instances to get deployment type information
-    const discoverResult = await getHostAndSqlServerInfo(
-        accountId,
-        credentialsId,
-        region,
-        undefined,
-        undefined,
-        instanceIds
-    );
-
-    // Extract SQL Server instances from all discovered EC2 hosts
-    // Filter to ONLY the instances being registered (not all instances on the host)
-    const allSqlServerInstances: SqlServerInstanceInfoType[] = [];
-    if (discoverResult.items) {
-        for (const ec2Host of discoverResult.items) {
-            const { sqlServerInstances } = ec2Host;
-            if (sqlServerInstances) {
-                // Filter to match only the registered instance names
-                const matchingInstances = sqlServerInstances.filter(({ sqlServerInstance }) =>
-                    registeredInstanceNames.includes(sqlServerInstance)
-                );
-                allSqlServerInstances.push(...matchingInstances);
-            }
-        }
-    }
-
-    logger.debug('AOAG replica collection: matched SQL instances', {
-        matchedCount: allSqlServerInstances.length,
-        instances: allSqlServerInstances.map(({ sqlServerInstance, sqlServerDeploymentType }) => ({
-            sqlServerInstance,
-            sqlServerDeploymentType
-        }))
-    });
-
-    // Check if any of the REGISTERED instances is AOAG deployment
-    const aoagInstances = allSqlServerInstances.filter(
-        ({ sqlServerDeploymentType }) => sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
-    );
-
-    if (aoagInstances.length === 0) {
-        return replicaInfoResult;
-    }
-
-    // Get AOAG details for instances
-    const instanceNames = aoagInstances.map(({ sqlServerInstance }) => sqlServerInstance);
-    const aoagDetailsData = await getAoagDetails(credentialsId, region, instanceId, instanceNames, false);
-
-    // Build EC2 instance mapping from cluster nodes
-    // Map Windows Cluster node IPs to EC2 instance details
-    const aoagIpToEc2Details = new Map<string, { instanceId: string; instanceName: string }>();
-
-    // Collect all unique cluster node IPs first
-    const allClusterNodeIps: string[] = [];
-    for (const { windowsClusterNodes } of aoagInstances) {
-        if (windowsClusterNodes && isArray(windowsClusterNodes)) {
-            for (const clusterNode of windowsClusterNodes) {
-                const { Address } = clusterNode || {};
-                if (Address) {
-                    allClusterNodeIps.push(Address);
-                }
-            }
-        }
-    }
-
-    // Make a single call to get EC2 details for all cluster node IPs
-    if (allClusterNodeIps.length > 0) {
-        const uniqueIps = [...new Set(allClusterNodeIps)];
-        const clusterNodeEc2Details = await getInstanceDetailsByPrivateIp(credentialsId, region, uniqueIps, {
-            useCache: true
-        });
-
-        // Build lookup map: IP -> { instanceId, instanceName }
-        if (clusterNodeEc2Details && isArray(clusterNodeEc2Details)) {
-            for (const {
-                ec2InstancePrivateIpAddress,
-                ec2InstanceId: nodeEc2Id,
-                ec2InstanceName: nodeEc2Name
-            } of clusterNodeEc2Details) {
-                if (ec2InstancePrivateIpAddress && nodeEc2Id) {
-                    aoagIpToEc2Details.set(ec2InstancePrivateIpAddress, {
-                        instanceId: nodeEc2Id,
-                        instanceName: nodeEc2Name || ''
-                    });
-                }
-            }
-        }
-
-        logger.debug('AOAG cluster node EC2 lookup map built', {
-            uniqueIpsCount: uniqueIps.length,
-            mappedIpsCount: aoagIpToEc2Details.size
-        });
-    }
-
-    // Parse AOAG details and populate replicaInfoResult
-    for (const [instName, aoagData] of Object.entries(aoagDetailsData) as [string, any][]) {
-        const { aoagDetails: { availabilityGroups } = {} } = aoagData || {};
-
-        if (availabilityGroups && isArray(availabilityGroups)) {
-            for (const { primaryReplica, replicas } of availabilityGroups) {
-                if (replicas && isArray(replicas)) {
-                    for (const { role: replicaRole, replica: replicaName } of replicas) {
-                        // Determine role reliably:
-                        // 1. Use role field if present (PRIMARY/SECONDARY)
-                        // 2. If role is missing but replica name matches primaryReplica -> PRIMARY
-                        // 3. Otherwise -> SECONDARY
-                        const role =
-                            replicaRole || (replicaName === primaryReplica ? AOAG_ROLE_PRIMARY : AOAG_ROLE_SECONDARY);
-
-                        // Map replica name to EC2 instance using cluster node IPs
-                        const matchingAoagInst = aoagInstances.find(
-                            ({ sqlServerInstance }) => sqlServerInstance === instName
-                        );
-
-                        const { windowsClusterNodes } = matchingAoagInst || {};
-                        if (windowsClusterNodes) {
-                            const clusterNode = windowsClusterNodes.find(
-                                (node: any) => node?.Node?.toLowerCase() === replicaName?.toLowerCase()
-                            );
-
-                            const { Address } = clusterNode || {};
-                            if (Address) {
-                                const ec2Details = aoagIpToEc2Details.get(Address);
-
-                                if (ec2Details) {
-                                    replicaInfoResult.push({
-                                        ec2InstanceId: ec2Details.instanceId,
-                                        ec2HostName: ec2Details.instanceName,
-                                        sqlServerName: replicaName,
-                                        role
-                                    });
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    logger.info('AOAG replica info collected', {
-        replicaCount: replicaInfoResult.length,
-        aoagInstancesCount: aoagInstances.length
-    });
-
-    return replicaInfoResult;
-}
-
 async function validateWindowsCredentials(
     accountId: string,
     credentialsId: string,
@@ -2673,7 +2484,8 @@ async function validateWindowsCredentials(
             instanceId,
             resourcesWithSqlAuth,
             false,
-            checkManageReadiness
+            checkManageReadiness,
+            isReplicaInfoRequired
         )};\n`;
     }
 
@@ -2683,11 +2495,12 @@ async function validateWindowsCredentials(
             instanceId,
             resourcesWithWindowsAuth,
             true,
-            checkManageReadiness
+            checkManageReadiness,
+            isReplicaInfoRequired
         )};\n`;
     }
 
-    command += '$responseObject | ConvertTo-Json -Compress';
+    command += '$responseObject | ConvertTo-Json -Compress -Depth 10';
 
     const ssmresponse = await callSsmExecution({
         credentialsId,
@@ -2779,27 +2592,100 @@ async function validateWindowsCredentials(
         });
     }
 
-    // Collect AOAG replica information if SQL credentials validation succeeded
-    // AND replica info is explicitly requested (isReplicaInfoRequired = true)
-    // This is used to provide replica node details in the registration response
-    // Note: Credentials can be either SQL auth (sqlCredentials) or Windows auth (windowsUserCredentials)
-    const hasValidCredentials = sqlCredentials.length > 0 || windowsUserCredentials.length > 0;
-    const hasSqlConnectivity = parsedResponse.instances?.some((inst: any) => inst.sqlInstanceConnectivity === true);
-
-    if (isReplicaInfoRequired && hasValidCredentials && hasSqlConnectivity) {
+    // Process AOAG replica information from validation response (if available)
+    if (isReplicaInfoRequired) {
         try {
-            const aoagReplicaInfo = await collectAoagReplicaInfo({
-                accountId,
-                credentialsId,
-                region,
-                instanceId,
-                instanceIds,
-                sqlCredentials,
-                windowsUserCredentials
-            });
-            replicaInfoObject.push(...aoagReplicaInfo);
+            const instancesWithAoag = parsedResponse.instances?.filter(
+                (inst: any) => inst.sqlInstanceConnectivity === true && inst.aoagDetails
+            );
+
+            if (instancesWithAoag && instancesWithAoag.length > 0) {
+                const allClusterNodeIps: string[] = [];
+                const nodeToIpMap = new Map<string, string>();
+
+                for (const inst of instancesWithAoag) {
+                    const { windowsClusterNodes } = inst;
+                    if (windowsClusterNodes && isArray(windowsClusterNodes)) {
+                        for (const clusterNode of windowsClusterNodes) {
+                            const { Address, Node } = clusterNode || {};
+                            if (Address) {
+                                allClusterNodeIps.push(Address);
+                                if (Node) {
+                                    nodeToIpMap.set(Node.toLowerCase(), Address);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Get EC2 instance details for all cluster node IPs
+                const aoagIpToEc2Details = new Map<string, { instanceId: string; instanceName: string }>();
+                if (allClusterNodeIps.length > 0) {
+                    const uniqueIps = [...new Set(allClusterNodeIps)];
+                    const clusterNodeEc2Details = await getInstanceDetailsByPrivateIp(
+                        credentialsId,
+                        region,
+                        uniqueIps,
+                        {
+                            useCache: true
+                        }
+                    );
+
+                    if (clusterNodeEc2Details && isArray(clusterNodeEc2Details)) {
+                        for (const {
+                            ec2InstancePrivateIpAddress,
+                            ec2InstanceId: nodeEc2Id,
+                            ec2InstanceName: nodeEc2Name
+                        } of clusterNodeEc2Details) {
+                            if (ec2InstancePrivateIpAddress && nodeEc2Id) {
+                                aoagIpToEc2Details.set(ec2InstancePrivateIpAddress, {
+                                    instanceId: nodeEc2Id,
+                                    instanceName: nodeEc2Name || ''
+                                });
+                            }
+                        }
+                    }
+                }
+
+                for (const inst of instancesWithAoag) {
+                    const { aoagDetails } = inst;
+                    const { availabilityGroups } = aoagDetails || {};
+
+                    if (availabilityGroups && isArray(availabilityGroups)) {
+                        for (const { primaryReplica, replicas } of availabilityGroups) {
+                            if (replicas && isArray(replicas)) {
+                                for (const { role: replicaRole, replica: replicaName } of replicas) {
+                                    // Determine role: use role field or derive from primaryReplica
+                                    const role =
+                                        replicaRole ||
+                                        (replicaName === primaryReplica ? AOAG_ROLE_PRIMARY : AOAG_ROLE_SECONDARY);
+
+                                    // Map replica name to EC2 instance via cluster node IPs
+                                    const nodeIp = nodeToIpMap.get(replicaName?.toLowerCase() || '');
+                                    if (nodeIp) {
+                                        const ec2Details = aoagIpToEc2Details.get(nodeIp);
+                                        if (ec2Details) {
+                                            replicaInfoObject.push({
+                                                ec2InstanceId: ec2Details.instanceId,
+                                                ec2HostName: ec2Details.instanceName,
+                                                sqlServerName: replicaName,
+                                                role
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                logger.debug('AOAG replica info collected from validation response', {
+                    replicaCount: replicaInfoObject.length,
+                    aoagInstancesCount: instancesWithAoag.length
+                });
+            }
         } catch (error) {
-            logger.error('Failed to collect AOAG replica information:', error);
+            logger.error('Failed to process AOAG replica information from validation response:', error);
         }
     }
 

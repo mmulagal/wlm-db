@@ -384,13 +384,31 @@ const HOST_AND_SQL_INFO_PS1 = [
       if ($resource) {
         $nodes = @((Get-ClusterOwnerNode -InputObject $resource).OwnerNodes.NodeName)
       } else {
-        # Fallback: find SQL Network Name resource where current host is an owner
+        # Fallback 1: Try to find SQL Network Name resource that contains the SQL Server name
         $sqlNetworkResources = Get-ClusterResource -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "SQL Network Name*" }
+        
+        # First, try to match by SQL Server name in resource name (case-insensitive)
         foreach ($res in $sqlNetworkResources) {
-          $ownerNodes = @((Get-ClusterOwnerNode -InputObject $res -ErrorAction SilentlyContinue).OwnerNodes.NodeName)
-          if ($ownerNodes -contains $env:COMPUTERNAME) {
-            $nodes = $ownerNodes
-            break
+          if ($res.Name -match [regex]::Escape($sqlServerName)) {
+            $nodes = @((Get-ClusterOwnerNode -InputObject $res -ErrorAction SilentlyContinue).OwnerNodes.NodeName)
+            if ($nodes.Count -gt 0) { break }
+          }
+        }
+        
+        # Fallback 2: If still no match, find SQL Network Name resource where current host is an owner
+        # But only select the one with the smallest owner count (most specific FCI)
+        if ($nodes.Count -eq 0) {
+          $candidateResource = $null
+          $minOwnerCount = [int]::MaxValue
+          foreach ($res in $sqlNetworkResources) {
+            $ownerNodes = @((Get-ClusterOwnerNode -InputObject $res -ErrorAction SilentlyContinue).OwnerNodes.NodeName)
+            if ($ownerNodes -contains $env:COMPUTERNAME) {
+              if ($ownerNodes.Count -lt $minOwnerCount) {
+                $candidateResource = $res
+                $minOwnerCount = $ownerNodes.Count
+                $nodes = $ownerNodes
+              }
+            }
           }
         }
       }
@@ -404,23 +422,26 @@ const HOST_AND_SQL_INFO_PS1 = [
   }
 
   # Helper function to set SQL Server deployment type and related fields based on cluster status
-  # Handles both FCI and Standalone deployment types
+  # Handles FCI, Standalone, and AOAG deployment types
   Function Set-SqlDeploymentType {
     param(
       [hashtable]$ResponseObject,
       [object]$IsClustered,
       [hashtable]$SqlServerInfoFromRegistry,
-      [hashtable]$ClusterDetails
+      [hashtable]$ClusterDetails,
+      [bool]$IsAoag = $False
     )
     
     # Check if clustered (handle both SQL SERVERPROPERTY int (0/1) and PowerShell boolean ($True/$False))
     $isClusteredBool = ($IsClustered -eq 1 -or $IsClustered -eq $True)
     
-    if ($isClusteredBool) {
-      # Set FCI deployment type
+    if ($IsAoag) {
+      $ResponseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
+      $ResponseObject['baseDeploymentType'] = if ($isClusteredBool) { 'FCI' } else { 'Standalone' }
+    } elseif ($isClusteredBool) {
       $ResponseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
+      if ($ResponseObject.ContainsKey('baseDeploymentType')) { $ResponseObject.Remove('baseDeploymentType') }
       
-      # Determine cluster name with fallback chain: Registry -> Cluster Details -> Computer Name
       $clusterName = $null
       if ($SqlServerInfoFromRegistry -and $SqlServerInfoFromRegistry.ContainsKey('clusterName') -and $SqlServerInfoFromRegistry['clusterName']) {
         $clusterName = $SqlServerInfoFromRegistry['clusterName']
@@ -431,8 +452,8 @@ const HOST_AND_SQL_INFO_PS1 = [
       }
       $ResponseObject['sqlServerName'] = $clusterName
     } else {
-      # Set Standalone deployment type
       $ResponseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_STANDALONE_SHORT}'
+      if ($ResponseObject.ContainsKey('baseDeploymentType')) { $ResponseObject.Remove('baseDeploymentType') }
       $ResponseObject['sqlServerNodes'] = hostname
     }
   }
@@ -684,13 +705,6 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
     $clusterDetails = GetClusterDetails
     $SMBConnections = GetSMBConnections
     $allSqlInstanceNamesFromRegistry = FetchAllSQLInstancesFromRegistry
-
-    # Check Windows Cluster resources for SQL Server Availability Group
-    $isAOAGResourcePresent = $False
-    if ((Get-Service -Name "ClusSvc" -ErrorAction SilentlyContinue).Status -eq "Running") {
-        $aoagResources = Get-ClusterResource -ErrorAction SilentlyContinue | Where-Object { $_.ResourceType -eq "SQL Server Availability Group" }
-        $isAOAGResourcePresent = ($aoagResources.Count -gt 0)
-    }
   
     $vcpus = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
     $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "60"} -Method PUT -Uri 'http://169.254.169.254/latest/api/token'
@@ -865,6 +879,7 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
 
             $isHadrEnabled = $sqlServerInfoFromRegistry['hadrEnabled']
             $isClustered = $sqlServerInfoFromRegistry['isClustered']
+            $isReadReplicaCreated = $False
             
             try {
               if($deploymentTypeCheck) {
@@ -878,17 +893,16 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
               Write-Information "SQL query for deployment type failed.Continuing with registry values for deployment type."
               $responseObject['failureInfo'] += "SQL query for deployment type failed: $_\`n"
             }
-            if($isHadrEnabled -eq $True ) {
-              if($isReadReplicaCreated -eq $True -or $isAOAGResourcePresent -eq $True) {
-                $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_AOAG_SHORT}'
-              } else{
-               # HADR enabled but no AOAG resources - fallback to FCI or Standalone
-               Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails
-              }
+            
+            # Deployment type logic - per-instance check (not cluster-wide)
+            # Only mark as AOAG if THIS instance has HADR enabled AND has replicas configured
+            # non-AOAG FCI instances as AOAG when other FCIs in same cluster are in an AG
+            if($isHadrEnabled -eq $True -and $isReadReplicaCreated -eq $True) {
+              # This instance has HADR enabled AND has replicas - it's AOAG
+              Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails -IsAoag $True
             } else {
-              # HADR (AlwaysOn) is NOT enabled for this SQL instance - cannot be AOAG
-              # Override deployment type to FCI or Standalone based on isClustered
-              # This handles named instances where AlwaysOn was never enabled
+              # Either HADR is not enabled, or no replicas configured for THIS instance
+              # Set to FCI or Standalone based on isClustered
               Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails
             }
             # If deployment type is AOAG (from cluster-derived or updated value), fetch AOAG details using helper
@@ -922,7 +936,7 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
                     if ($aoagResult['databasesInAgCount']) {
                       $responseObject['databasesInAgCount'] = $aoagResult['databasesInAgCount']
                     }
-                    $responseObject['baseDeploymentType'] = Get-BaseDeploymentType -IsClustered $isClustered
+                    # baseDeploymentType already set by Set-SqlDeploymentType -IsAoag $True
                   }
                 } else {
                   # No credentials available - show AOAG for all with HADR enabled
@@ -953,22 +967,10 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
                     $availabilityGroup = @{ 'agName' = $fallbackAgName; 'replicas' = @($replicaNames | ForEach-Object { @{ 'replica' = $_ } }) }
                     $responseObject['aoagDetails'] = @{ 'serverInfo' = $serverInfo; 'availabilityGroups' = @($availabilityGroup) }
                   }
-                  
-                  # Set baseDeploymentType for AOAG
-                  $responseObject['baseDeploymentType'] = Get-BaseDeploymentType -IsClustered $isClustered
+                  # baseDeploymentType already set by Set-SqlDeploymentType -IsAoag $True
                 }
               }
-              # Set baseDeploymentType for AOAG - indicates whether underlying nodes are Standalone or FCI
-              # Note: $isClustered can be 0/1 (from SQL) or $True/$False (from registry), so check for both
-              $responseObject['baseDeploymentType'] = Get-BaseDeploymentType -IsClustered $isClustered
-            }
-            elseif($isClustered -eq $True -and $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] -ne '${SqlServerDeploymentModel.SQL_AOAG_SHORT}') {
-              # isClustered but not AOAG - set as FCI
-              Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails
-            }
-            else{
-              # Default to Standalone
-              Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails
+              # baseDeploymentType already set by Set-SqlDeploymentType -IsAoag $True
             }
             
             # Update sqlServerNodes based on final deployment type

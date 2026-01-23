@@ -586,12 +586,14 @@ const validateSQLInstanceConnectivity = (
     ec2instanceId: string,
     sqlInstanceNames: string[] = [DEFAULT_MSSQL_INSTANCE_NAME],
     windowsUser: boolean = false,
-    checkManageReadiness: boolean = false
+    checkManageReadiness: boolean = false,
+    isReplicaInfoRequired: boolean = false
 ) => ` 
     $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
     $ProgressPreference = 'SilentlyContinue'
     $checkManageReadiness = [System.Convert]::ToBoolean('${checkManageReadiness}')
     $windowsUser = [System.Convert]::ToBoolean('${windowsUser}')
+    $isReplicaInfoRequired = [System.Convert]::ToBoolean('${isReplicaInfoRequired}')
 
     $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
     if ($connection -ne $True) {
@@ -727,6 +729,114 @@ const validateSQLInstanceConnectivity = (
                             }
                             $instanceResponse['availablePsModules'] = $availablePsModuleList
                         }
+                        
+                        # AOAG detection and details fetching (if isReplicaInfoRequired = true)
+                        if ($isReplicaInfoRequired -eq $True) {
+                            try {
+                                # Database-level AG validation query - checks if THIS instance has databases in any AG
+                                $databaseAgQuery = @"
+SET NOCOUNT ON;
+SELECT 
+    (SELECT COUNT(*) FROM sys.dm_hadr_database_replica_states WHERE is_local = 1) AS databasesInAgCount,
+    (SELECT DISTINCT ag.name AS agName 
+     FROM sys.dm_hadr_database_replica_states drs
+     INNER JOIN sys.availability_replicas ar ON ar.replica_id = drs.replica_id
+     INNER JOIN sys.availability_groups ag ON ag.group_id = ar.group_id
+     WHERE drs.is_local = 1
+     FOR JSON PATH) AS participatingAgs
+FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+"@
+                                # AOAG details query
+                                $aoagQuery = ${buildAoagQuery}
+                                
+                                $databasesInAgCount = 0
+                                $participatingAgs = @()
+                                
+                                # Run database-level AG check
+                                $dbAgResponse = $null
+                                ${
+                                    windowsUser
+                                        ? '$dbAgResponse = Invoke-CommandWithCredSSP -sqlquery $databaseAgQuery -instanceName $serverInstanceName'
+                                        : '$dbAgResponse = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -Q $databaseAgQuery -y 0 2> $null'
+                                }
+                                
+                                if (-not [string]::IsNullOrEmpty($dbAgResponse) -and $dbAgResponse -ne "NULL") {
+                                    $dbAgParsed = $dbAgResponse | ConvertFrom-Json
+                                    $databasesInAgCount = $dbAgParsed.databasesInAgCount
+                                    if ($dbAgParsed.participatingAgs -is [string]) {
+                                        try { $participatingAgs = $dbAgParsed.participatingAgs | ConvertFrom-Json } catch { $participatingAgs = @() }
+                                    } else {
+                                        $participatingAgs = $dbAgParsed.participatingAgs
+                                    }
+                                }
+                                
+                                # Only fetch AOAG details if this instance has databases in AG
+                                if ($databasesInAgCount -gt 0) {
+                                    $aoagResponse = $null
+                                    ${
+                                        windowsUser
+                                            ? '$aoagResponse = Invoke-CommandWithCredSSP -sqlquery $aoagQuery -instanceName $serverInstanceName'
+                                            : '$aoagResponse = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -Q $aoagQuery -y 0 2> $null'
+                                    }
+                                    
+                                    if (-not [string]::IsNullOrEmpty($aoagResponse) -and $aoagResponse -ne "NULL") {
+                                        $aoagParsed = $aoagResponse | ConvertFrom-Json
+                                        
+                                        # Normalize nested JSON strings
+                                        try { if ($aoagParsed.serverInfo -is [string]) { $aoagParsed.serverInfo = $aoagParsed.serverInfo | ConvertFrom-Json } } catch {}
+                                        try { if ($aoagParsed.availabilityGroups -is [string]) { $aoagParsed.availabilityGroups = $aoagParsed.availabilityGroups | ConvertFrom-Json } } catch {}
+                                        try { if ($aoagParsed.availabilityGroups) { foreach ($ag in $aoagParsed.availabilityGroups) { if ($ag.Replicas -is [string]) { $ag.Replicas = $ag.Replicas | ConvertFrom-Json } } } } catch {}
+                                        
+                                        $isHadrEnabled = $aoagParsed.serverInfo.isHadrEnabled -eq 1
+                                        
+                                        if ($isHadrEnabled) {
+                                            # Filter availabilityGroups to only AGs this instance participates in
+                                            if ($participatingAgs -and $participatingAgs.Count -gt 0 -and $aoagParsed.availabilityGroups) {
+                                                $participatingAgNames = @($participatingAgs | ForEach-Object { $_.agName })
+                                                $aoagParsed.availabilityGroups = @($aoagParsed.availabilityGroups | Where-Object { $participatingAgNames -contains $_.agName })
+                                            }
+                                            
+                                            # Set baseDeploymentType based on isClustered
+                                            if ($aoagParsed.serverInfo -and $null -ne $aoagParsed.serverInfo.isClustered) {
+                                                $baseType = if ($aoagParsed.serverInfo.isClustered -eq 1) { 'FCI' } else { 'Standalone' }
+                                                $aoagParsed | Add-Member -MemberType NoteProperty -Name 'baseDeploymentType' -Value $baseType -Force
+                                            }
+                                            
+                                            # Remove isClustered from serverInfo (internal only)
+                                            if ($aoagParsed.serverInfo) {
+                                                $cleanServerInfo = @{}
+                                                if ($aoagParsed.serverInfo.serverName) { $cleanServerInfo['serverName'] = $aoagParsed.serverInfo.serverName }
+                                                if ($null -ne $aoagParsed.serverInfo.isHadrEnabled) { $cleanServerInfo['isHadrEnabled'] = $aoagParsed.serverInfo.isHadrEnabled }
+                                                $aoagParsed.serverInfo = $cleanServerInfo
+                                            }
+                                            
+                                            $instanceResponse['aoagDetails'] = $aoagParsed
+                                        }
+                                    }
+                                    
+                                    # Get Windows Cluster nodes with IPs for replica mapping
+                                    try {
+                                        $clusterServiceStatus = (Get-Service -Name "ClusSvc" -ErrorAction SilentlyContinue).Status
+                                        if ($clusterServiceStatus -eq "Running") {
+                                            $windowsClusterNodes = Get-ClusterNetworkInterface -ErrorAction SilentlyContinue | ForEach-Object {
+                                                @{
+                                                    "Address" = $_.Address
+                                                    "Node" = $_.Node
+                                                }
+                                            }
+                                            if ($windowsClusterNodes -and $windowsClusterNodes.Count -gt 0) {
+                                                $instanceResponse['windowsClusterNodes'] = $windowsClusterNodes
+                                            }
+                                        }
+                                    } catch {
+                                        Write-Information "Failed to get Windows Cluster nodes: $_"
+                                    }
+                                }
+                            } catch {
+                                Write-Information "AOAG detection failed for instance '$sqlinstancename': $_"
+                            }
+                        }
+                        
                         $responseObject['instances'] += $instanceResponse
                     }
                 } catch {
