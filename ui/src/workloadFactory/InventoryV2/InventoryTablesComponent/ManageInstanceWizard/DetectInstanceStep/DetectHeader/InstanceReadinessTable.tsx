@@ -52,7 +52,7 @@ const InstanceReadinessTable = () => {
 
         return {
             id: item?.id,
-            hostName: item?.hostName || item?.data?.name,
+            hostName: item?.hostName || item?.data?.name || item?.hostRow?.name,
             instanceName: item?.instanceName || item?.data?.databaseInstanceName || item?.databaseInstanceName || '-',
             authenticationStatus: isAuthenticated
                 ? t('databases.general.authenticated')

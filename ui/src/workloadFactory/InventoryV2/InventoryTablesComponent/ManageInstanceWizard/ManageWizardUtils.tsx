@@ -271,7 +271,11 @@ export const getReplicaInstanceList = (result: any, manageSingleInstanceData: an
                 instance?.ec2InstanceId === replica?.ec2InstanceId &&
                 instance?.databaseInstanceName === replica?.sqlServerName &&
                 instance?.statusColText !== INVENTORY_STATUS.MANAGED &&
-                instance?.databaseInstanceName !== manageSingleInstanceData?.databaseInstanceName
+                // Exclude the primary instance itself
+                !(
+                    instance?.ec2InstanceId === manageSingleInstanceData?.ec2InstanceId &&
+                    instance?.databaseInstanceName === manageSingleInstanceData?.databaseInstanceName
+                )
         );
 
         if (matchingInstance) {
@@ -311,7 +315,12 @@ export const getReplicaInstanceListForAuthenticatedRow = (manageSingleInstanceDa
             (instance: any) =>
                 instance?.ec2InstanceId === replica?.ec2InstanceId &&
                 instance?.statusColText !== INVENTORY_STATUS.MANAGED &&
-                instance?.databaseInstanceName !== manageSingleInstanceData?.databaseInstanceName
+                instance?.sqlServerName?.toLowerCase() === replica?.node?.toLowerCase() &&
+                // Exclude the primary instance itself
+                !(
+                    instance?.ec2InstanceId === manageSingleInstanceData?.ec2InstanceId &&
+                    instance?.databaseInstanceName === manageSingleInstanceData?.databaseInstanceName
+                )
         );
 
         if (matchingInstance) {

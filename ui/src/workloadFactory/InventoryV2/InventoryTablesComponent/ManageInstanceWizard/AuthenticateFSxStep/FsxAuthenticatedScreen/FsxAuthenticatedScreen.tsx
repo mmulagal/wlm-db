@@ -19,7 +19,13 @@ const FsxAuthenticatedScreen = () => {
             return getAllFsxFromBulkStorage(selectedMultiDetectInstances, discoverContext);
         }
         return getAllFsxFromStorage(manageSingleInstanceData?.storage, instanceIdentifiers, discoverContext);
-    }, [isBulkMode, manageSingleInstanceData?.storage, selectedMultiDetectInstances, instanceIdentifiers, discoverContext]);
+    }, [
+        isBulkMode,
+        manageSingleInstanceData?.storage,
+        selectedMultiDetectInstances,
+        instanceIdentifiers,
+        discoverContext
+    ]);
 
     const fsxCount = fsxList.length;
 
