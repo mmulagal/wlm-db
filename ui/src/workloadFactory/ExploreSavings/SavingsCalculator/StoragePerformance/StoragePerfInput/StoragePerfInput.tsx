@@ -5,8 +5,23 @@ import styles from './StoragePerfInput.module.scss';
 import { useSearchDebounce } from '../../../../../common/hooks/useSearchDebounce';
 import { setOnPremStorageAndComputeInfo } from '../../../../../store/workloadFactory/exploreSavingsSlice';
 
-const StoragePerfInput = ({ data, printState }: any) => {
+interface StoragePerfData {
+    sqlInstanceName?: string;
+    totalStorage?: number | string;
+    totalIops?: number | string;
+    totalThroughput?: number | string;
+}
+
+interface StoragePerfInputProps {
+    data?: StoragePerfData;
+    printState?: boolean;
+    uniqueKey?: string;
+}
+
+const StoragePerfInput = ({ data, printState, uniqueKey }: StoragePerfInputProps) => {
     const dispatch = useDispatch();
+    // Use uniqueKey if provided (bulk mode with resourceId_instanceName), otherwise fall back to sqlInstanceName (single host mode)
+    const storeKey = uniqueKey || data?.sqlInstanceName;
 
     useEffect(() => {
         if (data) {
@@ -29,13 +44,13 @@ const StoragePerfInput = ({ data, printState }: any) => {
         if (totalStorageAmountSearch !== null && totalStorageAmountSearch !== undefined) {
             dispatch(
                 setOnPremStorageAndComputeInfo({
-                    type: data?.sqlInstanceName,
+                    type: storeKey,
                     mode: 'totalStorage',
                     value: totalStorageAmountSearch
                 })
             );
         }
-    }, [totalStorageAmountSearch]);
+    }, [totalStorageAmountSearch, storeKey]);
 
     const [iops, setIOPS] = useState<any>(null);
 
@@ -50,13 +65,13 @@ const StoragePerfInput = ({ data, printState }: any) => {
         if (iopsSearch !== null && iopsSearch !== undefined) {
             dispatch(
                 setOnPremStorageAndComputeInfo({
-                    type: data?.sqlInstanceName,
+                    type: storeKey,
                     mode: 'totalIops',
                     value: iopsSearch
                 })
             );
         }
-    }, [iopsSearch]);
+    }, [iopsSearch, storeKey]);
 
     const [throughput, setThroughput] = useState<any>(null);
 
@@ -71,13 +86,13 @@ const StoragePerfInput = ({ data, printState }: any) => {
         if (throughputSearch !== null && throughputSearch !== undefined) {
             dispatch(
                 setOnPremStorageAndComputeInfo({
-                    type: data?.sqlInstanceName,
+                    type: storeKey,
                     mode: 'totalThroughput',
                     value: throughputSearch
                 })
             );
         }
-    }, [throughputSearch]);
+    }, [throughputSearch, storeKey]);
 
     return (
         <div className={styles.computeInputComponent}>

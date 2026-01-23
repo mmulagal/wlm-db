@@ -49,7 +49,12 @@ const ComputeInformation = ({ printState, host }: any) => {
                         <div className={styles.col1}>
                             <DsTypography variant="Regular_14">{hostSpecificData[key]?.sqlInstanceName}</DsTypography>
                         </div>
-                        <ComputeInputComponent data={hostSpecificData[key]} index={index} printState={printState} />
+                        <ComputeInputComponent
+                            data={hostSpecificData[key]}
+                            uniqueKey={key}
+                            index={index}
+                            printState={printState}
+                        />
                     </div>
                 ))}
             </div>

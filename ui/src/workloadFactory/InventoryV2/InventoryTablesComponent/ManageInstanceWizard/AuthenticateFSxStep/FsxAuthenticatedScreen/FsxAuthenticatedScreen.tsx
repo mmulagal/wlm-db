@@ -6,23 +6,20 @@ import { ReactComponent as SingleAuth } from '../../../../../../assets/SingleAut
 import styles from './FsxAuthenticatedScreen.module.scss';
 import CommonStyles from '../../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { getAllFsxFromStorage, getAllFsxFromBulkStorage } from '../AuthenticateFsxUtils';
-import { ACTION_TYPE } from '../../../../../../utils/consts';
+import { getAllFsxFromStorage, getAllFsxFromBulkStorage, useFsxDiscoverContext } from '../AuthenticateFsxUtils';
 
 const FsxAuthenticatedScreen = () => {
     const { t } = useTranslation();
-    const { manageSingleInstanceData, wizardOperationType, selectedMultiDetectInstances } = useAppSelector(
-        state => state.inventoryV2
-    );
+    const { manageSingleInstanceData, selectedMultiDetectInstances } = useAppSelector(state => state.inventoryV2);
 
-    const isBulkMode = wizardOperationType === ACTION_TYPE.BULK;
+    const { discoverContext, instanceIdentifiers, isBulkMode } = useFsxDiscoverContext();
 
     const fsxList = useMemo(() => {
         if (isBulkMode) {
-            return getAllFsxFromBulkStorage(selectedMultiDetectInstances);
+            return getAllFsxFromBulkStorage(selectedMultiDetectInstances, discoverContext);
         }
-        return getAllFsxFromStorage(manageSingleInstanceData?.storage);
-    }, [isBulkMode, manageSingleInstanceData?.storage, selectedMultiDetectInstances]);
+        return getAllFsxFromStorage(manageSingleInstanceData?.storage, instanceIdentifiers, discoverContext);
+    }, [isBulkMode, manageSingleInstanceData?.storage, selectedMultiDetectInstances, instanceIdentifiers, discoverContext]);
 
     const fsxCount = fsxList.length;
 

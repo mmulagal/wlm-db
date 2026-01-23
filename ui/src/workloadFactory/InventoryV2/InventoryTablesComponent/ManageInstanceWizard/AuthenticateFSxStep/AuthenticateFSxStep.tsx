@@ -8,22 +8,16 @@ import HeaderCard from './HeaderCard/HeaderCard';
 import InputCard from './InputCard/InputCard';
 import FsxAuthenticatedScreen from './FsxAuthenticatedScreen/FsxAuthenticatedScreen';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { areAllFsxAuthenticated, hasPartialAuthSuccess } from './AuthenticateFsxUtils';
-import { ACTION_TYPE } from '../../../../../utils/consts';
+import { areAllFsxAuthenticated, hasPartialAuthSuccess, useFsxDiscoverContext } from './AuthenticateFsxUtils';
 
 export const Content = () => {
-    const {
-        manageSingleInstanceData,
-        fsxCredentialStatusObj,
-        fsxAuthStatus,
-        wizardOperationType,
-        selectedMultiDetectInstances
-    } = useAppSelector(state => state.inventoryV2);
+    const { manageSingleInstanceData, fsxCredentialStatusObj, fsxAuthStatus, selectedMultiDetectInstances } =
+        useAppSelector(state => state.inventoryV2);
 
     // Get loading state from msSqlAction slice to disable inputs during API calls
     const isDetectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
 
-    const isBulkMode = wizardOperationType === ACTION_TYPE.BULK;
+    const { discoverContext, instanceIdentifiers, isBulkMode } = useFsxDiscoverContext();
 
     // Check if all FSx are authenticated by checking fsxCredentialStatusObj
     const isFsxAuthenticated = useMemo(
@@ -32,9 +26,18 @@ export const Content = () => {
                 manageSingleInstanceData?.storage,
                 fsxCredentialStatusObj,
                 isBulkMode,
-                selectedMultiDetectInstances
+                selectedMultiDetectInstances,
+                instanceIdentifiers,
+                discoverContext
             ),
-        [isBulkMode, manageSingleInstanceData?.storage, selectedMultiDetectInstances, fsxCredentialStatusObj]
+        [
+            isBulkMode,
+            manageSingleInstanceData?.storage,
+            selectedMultiDetectInstances,
+            fsxCredentialStatusObj,
+            instanceIdentifiers,
+            discoverContext
+        ]
     );
 
     // Check if we have partial success to disable radio buttons
@@ -45,14 +48,18 @@ export const Content = () => {
                 fsxCredentialStatusObj,
                 fsxAuthStatus,
                 isBulkMode,
-                selectedMultiDetectInstances
+                selectedMultiDetectInstances,
+                instanceIdentifiers,
+                discoverContext
             ),
         [
             isBulkMode,
             manageSingleInstanceData?.storage,
             selectedMultiDetectInstances,
             fsxCredentialStatusObj,
-            fsxAuthStatus
+            fsxAuthStatus,
+            instanceIdentifiers,
+            discoverContext
         ]
     );
 

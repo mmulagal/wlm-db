@@ -50,7 +50,7 @@ const StoragePerformance = ({ printState, host }: any) => {
                         <div className={styles.col1}>
                             <DsTypography variant="Regular_14">{hostSpecificData[key]?.sqlInstanceName}</DsTypography>
                         </div>
-                        <StoragePerfInput printState={printState} data={hostSpecificData[key]} />
+                        <StoragePerfInput printState={printState} data={hostSpecificData[key]} uniqueKey={key} />
                     </div>
                 ))}
             </div>

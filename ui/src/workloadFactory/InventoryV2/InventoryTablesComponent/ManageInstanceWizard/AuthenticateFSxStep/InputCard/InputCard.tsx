@@ -22,7 +22,8 @@ import {
     getAllFsxFromStorage,
     getFsxNeedingAuth,
     getAllFsxFromBulkStorage,
-    getFsxNeedingAuthFromBulk
+    getFsxNeedingAuthFromBulk,
+    useFsxDiscoverContext
 } from '../AuthenticateFsxUtils';
 
 interface InputCardProps {
@@ -37,29 +38,49 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
         selectedFSxForOntapCredentials,
         detectOntapCredentialsByFsx,
         fsxAuthStatus,
-        fsxCredentialStatusObj,
-        manageSingleInstanceData,
-        selectedMultiDetectInstances
+        fsxCredentialStatusObj
     } = useAppSelector(state => state.inventoryV2);
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { state, setState }: UseWizardReturn = useWizard();
     const { hitNextForStep2, fsxAllAuthFailed } = state;
 
+    // Use the consolidated hook for discover context and instance identifiers
+    const { discoverContext, instanceIdentifiers, manageSingleInstanceData, selectedMultiDetectInstances } =
+        useFsxDiscoverContext();
+
     // Get FSx lists based on mode (bulk vs single)
     const fullFsxList = useMemo(() => {
         if (isBulkMode) {
-            return getAllFsxFromBulkStorage(selectedMultiDetectInstances);
+            return getAllFsxFromBulkStorage(selectedMultiDetectInstances, discoverContext);
         }
-        return getAllFsxFromStorage(manageSingleInstanceData?.storage);
-    }, [isBulkMode, manageSingleInstanceData?.storage, selectedMultiDetectInstances]);
+        return getAllFsxFromStorage(manageSingleInstanceData?.storage, instanceIdentifiers, discoverContext);
+    }, [
+        isBulkMode,
+        manageSingleInstanceData?.storage,
+        selectedMultiDetectInstances,
+        instanceIdentifiers,
+        discoverContext
+    ]);
 
     const fsxList = useMemo(() => {
         if (isBulkMode) {
-            return getFsxNeedingAuthFromBulk(selectedMultiDetectInstances, fsxCredentialStatusObj);
+            return getFsxNeedingAuthFromBulk(selectedMultiDetectInstances, fsxCredentialStatusObj, discoverContext);
         }
-        return getFsxNeedingAuth(manageSingleInstanceData?.storage, fsxCredentialStatusObj);
-    }, [isBulkMode, manageSingleInstanceData?.storage, selectedMultiDetectInstances, fsxCredentialStatusObj]);
+        return getFsxNeedingAuth(
+            manageSingleInstanceData?.storage,
+            fsxCredentialStatusObj,
+            instanceIdentifiers,
+            discoverContext
+        );
+    }, [
+        isBulkMode,
+        manageSingleInstanceData?.storage,
+        selectedMultiDetectInstances,
+        fsxCredentialStatusObj,
+        instanceIdentifiers,
+        discoverContext
+    ]);
 
     const fsxNames = useMemo(() => [...new Set(fsxList.map((fsx: FsxItem) => fsx.fsxName))], [fsxList]);
 

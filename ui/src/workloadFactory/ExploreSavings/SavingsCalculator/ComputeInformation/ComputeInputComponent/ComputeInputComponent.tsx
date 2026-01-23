@@ -12,8 +12,24 @@ import { generateOptionType } from '../../../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { NETWORK_PERFORMANCE_OPTIONS } from '../../../../../utils/consts';
 
-const ComputeInputComponent = ({ data, index, printState }: any) => {
+interface ComputeInputData {
+    sqlInstanceName?: string;
+    noOfVcpusInUse?: number | string;
+    memory?: number | string;
+    networkPerformance?: string;
+}
+
+interface ComputeInputComponentProps {
+    data?: ComputeInputData;
+    uniqueKey?: string;
+    index: number;
+    printState?: boolean;
+}
+
+const ComputeInputComponent = ({ data, uniqueKey, index, printState }: ComputeInputComponentProps) => {
     const dispatch = useDispatch();
+    // Use uniqueKey if provided (bulk mode with resourceId_instanceName), otherwise fall back to sqlInstanceName (single host mode)
+    const storeKey = uniqueKey || data?.sqlInstanceName;
 
     useEffect(() => {
         if (data) {
@@ -37,13 +53,13 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
         if (numberOfCpuSearch !== null && numberOfCpuSearch !== undefined) {
             dispatch(
                 setOnPremStorageAndComputeInfo({
-                    type: data?.sqlInstanceName,
+                    type: storeKey,
                     mode: 'noOfVcpusInUse',
                     value: numberOfCpuSearch
                 })
             );
         }
-    }, [numberOfCpuSearch]);
+    }, [numberOfCpuSearch, storeKey]);
 
     const [memory, setMemory] = useState<any>(null);
 
@@ -58,13 +74,13 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
         if (memorySearch !== null && memorySearch !== undefined) {
             dispatch(
                 setOnPremStorageAndComputeInfo({
-                    type: data?.sqlInstanceName,
+                    type: storeKey,
                     mode: 'memory',
                     value: memorySearch
                 })
             );
         }
-    }, [memorySearch]);
+    }, [memorySearch, storeKey]);
 
     const generateNetworkPerfOptions = useMemo<optionType[]>((): optionType[] => {
         const arr = ['Up to 10 Gbps', 'Above 10 Gbps'];
@@ -133,7 +149,7 @@ const ComputeInputComponent = ({ data, index, printState }: any) => {
                         dispatch(setOnPremNetworkPerformance(selectedOptions));
                         dispatch(
                             setOnPremStorageAndComputeInfo({
-                                type: data?.sqlInstanceName,
+                                type: storeKey,
                                 mode: 'networkPerformance',
                                 value: NETWORK_PERFORMANCE_OPTIONS?.[selectedOptions?.value] || 'upTo10'
                             })

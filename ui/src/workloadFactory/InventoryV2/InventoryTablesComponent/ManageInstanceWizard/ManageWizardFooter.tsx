@@ -32,7 +32,11 @@ import {
     createBulkAuthPayload,
     validateBulkInstanceCredentials
 } from './SelectInstancesStep/AuthenticateBulkUtils';
-import { areAllFsxAuthenticated, getFsxNeedingAuthFromBulk } from './AuthenticateFSxStep/AuthenticateFsxUtils';
+import {
+    areAllFsxAuthenticated,
+    getFsxNeedingAuthFromBulk,
+    DiscoverDataContext
+} from './AuthenticateFSxStep/AuthenticateFsxUtils';
 import {
     ACTION_TYPE,
     DBType,
@@ -84,6 +88,14 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         instanceAuthStatus,
         registerHostType
     } = useAppSelector(state => state.inventoryV2);
+    const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
+    const { discoveredOracleHostData } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
+
+    // Build discover data context for fallback lookup when storage is missing
+    const discoverContext: DiscoverDataContext = {
+        discoveredHostData,
+        discoveredOracleHostData
+    };
 
     const dispatch = useDispatch();
 
@@ -105,7 +117,11 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
      */
     const handleBulkFsxAuthenticate = async () => {
         // Get all unique FSx needing authentication from all selected instances
-        const fsxNeedingAuth = getFsxNeedingAuthFromBulk(selectedMultiDetectInstances, fsxCredentialStatusObj);
+        const fsxNeedingAuth = getFsxNeedingAuthFromBulk(
+            selectedMultiDetectInstances,
+            fsxCredentialStatusObj,
+            discoverContext
+        );
 
         // If no FSx needs authentication, skip to next step
         if (fsxNeedingAuth.length === 0) {
@@ -928,7 +944,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 undefined,
                 fsxCredentialStatusObj,
                 true,
-                selectedMultiDetectInstances
+                selectedMultiDetectInstances,
+                undefined,
+                discoverContext
             );
 
             if (isFsxAlreadyAuthenticated) {
