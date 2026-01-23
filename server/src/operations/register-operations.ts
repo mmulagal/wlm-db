@@ -578,10 +578,6 @@ async function registerSqlInstance(
                             failureReason =
                                 'Unable to authenticate with the SQL Server instance. Windows authentication or SQL Server authentication is required.';
                         } else if (
-                            sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
-                        ) {
-                            failureReason = 'Always On availability group environments are not supported.';
-                        } else if (
                             modulesInstallationResponse &&
                             modulesToInstall.includes('AWS.Tools.SimpleSystemsManagement') &&
                             !modulesInstallationResponse.availablePSModules.includes(
@@ -1112,13 +1108,6 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                         throw Error(
                                             'SQL Server instance is not hosted on storage of type FSx for NetApp.'
                                         );
-                                    }
-
-                                    if (
-                                        sqlInstanceInfo.sqlServerDeploymentType ===
-                                        SqlServerDeploymentModel.SQL_AOAG_SHORT
-                                    ) {
-                                        throw Error('Always On availability group environments are not supported.');
                                     }
 
                                     try {
