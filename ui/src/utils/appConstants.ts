@@ -1017,8 +1017,6 @@ export const GENERAL = {
     ES_TOTAL_PROVISIONED_IOPS: 'Total provisioned IOPS',
     ES_TOTAL_THROUGHPUT_MBPS: 'Total throughput MB/s',
     // Explore savings
-    IOPS_DISABLE_TOOLTIP: "IOPS doesn't apply to this disc type volumes.",
-    THROUGHPUT_DISABLE_TOOLTIP: "Throughput doesn't apply to this disc type volumes.",
     ES_SNAPSHOT_FREQUENCY: 'Snapshot frequency',
     ES_NO_SNAPSHOT_STORAGE: 'No snapshot storage',
     ES_CLONE_REFRESH_FREQUENCY: 'Clone refresh frequency',

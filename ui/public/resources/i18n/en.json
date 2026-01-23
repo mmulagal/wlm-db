@@ -1424,7 +1424,9 @@
             "authentication-failed-bulk-tooltip-option1": "Enter new credentials and click \"Apply,\" ",
             "authentication-failed-bulk-tooltip-option2": "Remove the failed database from the list and click \"Apply.\"",
             "authentication-bulk-dialog-header": "To explore savings, you must authenticate selected databases.",
-            "authentication-bulk-dialog-content-someAuthRequired": "selected databases are already authenticated. Provide credentials for the remaining three databases."
+            "authentication-bulk-dialog-content-someAuthRequired": "selected databases are already authenticated. Provide credentials for the remaining three databases.",
+            "iops-disabled-tooltip": "IOPS doesn't apply to this disk type volumes.",
+            "throughput-disabled-tooltip": "Throughput doesn't apply to this disk type volumes."
         },
         "instance-table": {
             "headers": {

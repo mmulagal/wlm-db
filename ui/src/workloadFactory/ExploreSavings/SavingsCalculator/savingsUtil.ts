@@ -1258,17 +1258,17 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Total monthly storage cost',
                 value: `$${viewCalculation.ebsCalculation.totalEbsStorageCost}`,
-                text: 'Total storage cost across all volume disc types'
+                text: 'Total storage cost across all volume disk types'
             },
             {
                 label: 'Total monthly iops cost',
                 value: `$${viewCalculation.ebsCalculation.totalEbsIopsCost}`,
-                text: 'Total iops cost across all volume disc types'
+                text: 'Total iops cost across all volume disk types'
             },
             {
                 label: 'Total monthly throughput cost',
                 value: `$${viewCalculation.ebsCalculation.totalEbsThroughputCost}`,
-                text: 'Total throughput cost across all volume disc types'
+                text: 'Total throughput cost across all volume disk types'
             },
             {
                 label: 'Total monthly snapshots cost',

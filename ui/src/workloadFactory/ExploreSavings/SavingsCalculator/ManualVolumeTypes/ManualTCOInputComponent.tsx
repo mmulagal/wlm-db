@@ -1,13 +1,13 @@
 import { DsTextField, Popover, TextField } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './ManualTCOInputComponent.module.scss';
 import {
     setSecondaryVolumeTypeOperation,
     setVolumeTypeOperation
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { GENERAL } from '../../../../utils/appConstants';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 
 type ManualInputs = {
@@ -19,6 +19,7 @@ type ManualInputs = {
 
 const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable = false, from }: ManualInputs) => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { manualTCOVolumeTypes, manualTCOVolumeTypes2 } = useAppSelector(state => state.exploreSavings);
 
     const [volumeValue, setVolumeValue] = useState<any>(null);
@@ -334,7 +335,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 {IOPSDisable ? (
                     <DsTextField
                         title="Provisioned IOPS per volume"
-                        disabledReason={GENERAL.IOPS_DISABLE_TOOLTIP}
+                        disabledReason={t('databases.explore-savings.iops-disabled-tooltip')}
                         isDisabled
                         className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
@@ -354,7 +355,7 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
                 {throughPutDisable ? (
                     <DsTextField
                         title="Throughput (MB/s)"
-                        disabledReason={GENERAL.THROUGHPUT_DISABLE_TOOLTIP}
+                        disabledReason={t('databases.explore-savings.throughput-disabled-tooltip')}
                         isDisabled
                         className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
