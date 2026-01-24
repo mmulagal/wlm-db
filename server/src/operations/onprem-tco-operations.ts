@@ -1532,38 +1532,6 @@ function aggregateVolumesByType(volumes: EbsVolumeType[]): EbsVolumeType[] {
 }
 
 /**
- * Gets the existing node count for a resource based on deployment type.
- * For FCI/AOAG deployments, parses ownerNodes from SQL instance to get actual cluster node count.
- * Falls back to windowsConfig.nodeDetails.length if ownerNodes is not available.
- */
-function getExistingNodeCount(
-    deploymentType: string,
-    sqlInstanceDetails: SqlInstanceDetails[],
-    windowsConfig: WindowsConfig
-): number {
-    logger.info('Getting existing node count', { deploymentType, sqlInstanceCount: sqlInstanceDetails.length });
-    // For FCI/AOAG, try to get node count from ownerNodes in the SQL instance
-    if (deploymentType !== DATABASE_DEPLOYMENT_TYPE.Standalone && sqlInstanceDetails.length > 0) {
-        const firstInstance = sqlInstanceDetails[0];
-        if (firstInstance.ownerNodes) {
-            try {
-                const ownerNodes = JSON.parse(firstInstance.ownerNodes);
-                if (Array.isArray(ownerNodes) && ownerNodes.length > 0) {
-                    return ownerNodes.length;
-                }
-            } catch (e) {
-                logger.warn('Failed to parse ownerNodes, falling back to windowsConfig.nodeDetails', {
-                    ownerNodes: firstInstance.ownerNodes,
-                    error: e
-                });
-            }
-        }
-    }
-    // Fallback to windowsConfig.nodeDetails.length
-    return windowsConfig.nodeDetails.length;
-}
-
-/**
  * Prepares resource data by updating SQL instance details based on user input
  */
 function prepareResourceData(
@@ -2128,7 +2096,6 @@ async function getOnPremBulkResourceExploreSavings(
                 resourceName,
                 deploymentType,
                 windowsConfig,
-                sqlInstanceDetails,
                 currentLicenseEdition,
                 recommendedLicenseEdition,
                 finding,
@@ -2138,7 +2105,7 @@ async function getOnPremBulkResourceExploreSavings(
                 resourceId,
                 resourceName,
                 deploymentType,
-                existingNodeCount: getExistingNodeCount(deploymentType, sqlInstanceDetails, windowsConfig),
+                existingNodeCount: windowsConfig.nodeDetails.length,
                 // For recommended, use 2 nodes for FCI/AOAG (same logic as single-resource flow)
                 recommendedNodeCount: deploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ? 1 : 2,
                 currentLicenseEdition,
