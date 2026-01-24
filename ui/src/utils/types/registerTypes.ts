@@ -23,6 +23,8 @@ export interface ManageStates {
     credentialsId: string;
     databaseInstanceName: string;
     manageReadinessData?: ManageReadinessData;
+    regionId: string;
+    credentialId: string;
 }
 
 export interface BulkDetectedInstance {

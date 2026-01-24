@@ -179,8 +179,8 @@ export const callManageSingleInstanceApi = async (
         items: [
             {
                 ec2InstanceId: manageSingleInstanceChecks?.ec2InstanceId,
-                region: manageSingleInstanceChecks?.region,
-                credentialsId: manageSingleInstanceChecks?.credentialsId,
+                region: manageSingleInstanceChecks?.region || manageSingleInstanceChecks?.regionId,
+                credentialsId: manageSingleInstanceChecks?.credentialsId || manageSingleInstanceChecks?.credentialId,
                 databaseInstanceNames: [manageSingleInstanceChecks?.databaseInstanceName],
                 modulesToInstall: installModules
             }
@@ -489,8 +489,9 @@ export const callManageMultiInstanceApi = async (
             ];
 
             const ec2InstanceId: string = instance?.ec2InstanceId || instance?.data?.ec2InstanceId || '';
-            const region: string = instance?.region || instance?.data?.regionId || '';
-            const credentialsId: string = instance?.credentialsId || instance?.data?.credentialId || '';
+            const region: string = instance?.region || instance?.regionId || instance?.data?.regionId || '';
+            const credentialsId: string =
+                instance?.credentialsId || instance?.credentialId || instance?.data?.credentialId || '';
             const databaseInstanceName: string =
                 instance?.databaseInstanceName || instance?.data?.databaseInstanceName || '';
 

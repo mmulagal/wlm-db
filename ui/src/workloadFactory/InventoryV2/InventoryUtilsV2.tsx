@@ -645,18 +645,14 @@ export const getPrimaryClusterNode = (
             }
             const isCurrentAoagFciOrFci = host?.sqlServerInstances?.some(
                 (perSql: SQLServerInstancesDiscovered) =>
-                    (perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
-                        perSql?.aoagDetails?.baseDeploymentType?.toLowerCase() ===
-                            SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) ||
+                    perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG ||
                     perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
             );
             // To find partner node in a cluster
             let partnerNode = newDiscoveredHostData.filter((perHost: DiscoverHostInterface) => {
                 const isAoagFciOrFci = perHost?.sqlServerInstances?.some(
                     (perSql: SQLServerInstancesDiscovered) =>
-                        (perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
-                            perSql?.aoagDetails?.baseDeploymentType?.toLowerCase() ===
-                                SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) ||
+                        perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG ||
                         perSql?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
                 );
                 const isSameCluster = host?.nodesList?.every(
@@ -2481,8 +2477,8 @@ export const getEc2DetailsForUnmanagedHost = (
         });
     } else if (
         inventoryRow?.ec2Details &&
-        inventoryRow?.ec2Details?.length > 1 &&
-        !instanceRow?.data?.clusterNodeDetails
+        inventoryRow?.ec2Details?.length > 1
+        // !instanceRow?.data?.clusterNodeDetails // Excluding bcz for AOAG it will have full cluster list
     ) {
         instanceId = inventoryRow?.ec2Details?.[0]?.id || '';
         ec2Details = inventoryRow?.ec2Details;
@@ -2490,37 +2486,39 @@ export const getEc2DetailsForUnmanagedHost = (
         instanceId = instanceRow?.data?.nodeTopology?.ec2Details?.[0]?.id || '';
         ec2Details.push(instanceRow?.data?.nodeTopology?.ec2Details?.[0]);
     }
-    if (instanceRow?.data?.clusterNodeDetails) {
-        if (instanceId) {
-            const partnerNode = instanceRow?.data?.clusterNodeDetails?.filter(
-                perInst => perInst?.ec2InstanceId !== instanceId
-            );
-            if (partnerNode && partnerNode?.length > 0) {
-                ec2Details.push({
-                    id: partnerNode[0]?.ec2InstanceId,
-                    name: partnerNode[0]?.ec2InstanceName,
-                    instanceType: partnerNode[0]?.ec2InstanceType
-                });
-            }
-        } else {
-            const node1 = instanceRow?.data?.clusterNodeDetails?.[0];
-            const node2 = instanceRow?.data?.clusterNodeDetails?.[1];
-            if (node1) {
-                ec2Details.push({
-                    id: node1?.ec2InstanceId,
-                    name: node1?.ec2InstanceName,
-                    instanceType: node1?.ec2InstanceType
-                });
-            }
-            if (node2) {
-                ec2Details.push({
-                    id: node2?.ec2InstanceId,
-                    name: node2?.ec2InstanceName,
-                    instanceType: node2?.ec2InstanceType
-                });
-            }
-        }
-    }
+
+    // Excluding bcz for AOAG it will have full cluster list. So will rely on mapped EC2Details above.
+    // if (instanceRow?.data?.clusterNodeDetails) {
+    //     if (instanceId) {
+    //         const partnerNode = instanceRow?.data?.clusterNodeDetails?.filter(
+    //             perInst => perInst?.ec2InstanceId !== instanceId
+    //         );
+    //         if (partnerNode && partnerNode?.length > 0) {
+    //             ec2Details.push({
+    //                 id: partnerNode[0]?.ec2InstanceId,
+    //                 name: partnerNode[0]?.ec2InstanceName,
+    //                 instanceType: partnerNode[0]?.ec2InstanceType
+    //             });
+    //         }
+    //     } else {
+    //         const node1 = instanceRow?.data?.clusterNodeDetails?.[0];
+    //         const node2 = instanceRow?.data?.clusterNodeDetails?.[1];
+    //         if (node1) {
+    //             ec2Details.push({
+    //                 id: node1?.ec2InstanceId,
+    //                 name: node1?.ec2InstanceName,
+    //                 instanceType: node1?.ec2InstanceType
+    //             });
+    //         }
+    //         if (node2) {
+    //             ec2Details.push({
+    //                 id: node2?.ec2InstanceId,
+    //                 name: node2?.ec2InstanceName,
+    //                 instanceType: node2?.ec2InstanceType
+    //             });
+    //         }
+    //     }
+    // }
     return ec2Details;
 };
 
