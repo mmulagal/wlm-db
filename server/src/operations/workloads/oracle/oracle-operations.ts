@@ -615,10 +615,12 @@ async function getOracleDatabaseInstancesSummary(
     // Run getOracleStorageInfoFromOntap concurrently with databaseInstances.map
     const [storageInfoFromOntap, hostInfo, dataguardInfo, results] = await Promise.all([
         getStorage ? getOracleStorageInfoFromOntap(activeNodeInstanceId, databaseInstances) : Promise.resolve(),
-        getOracleInstanceDetails(accountId, credentialsId, region, activeNodeInstanceId, {
-            fetchServerDetails: true,
-            oracleSids: databaseInstances.map(db => db.database_instance_id)
-        }),
+        getOracleHostSummary
+            ? getOracleInstanceDetails(accountId, credentialsId, region, activeNodeInstanceId, {
+                  fetchServerDetails: true,
+                  oracleSids: databaseInstances.map(db => db.database_instance_id)
+              })
+            : Promise.resolve(),
         getDataguardDetailsForAllInstances(
             accountId,
             credentialsId,
