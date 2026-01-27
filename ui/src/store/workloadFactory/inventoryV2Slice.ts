@@ -145,6 +145,12 @@ const initialInventoryV2State: InventorySliceData = {
         username: '',
         password: ''
     },
+    oracleBulkDatabaseCredentials: {
+        oracleUsername: '',
+        oraclePassword: '',
+        oracleASM: '',
+        asmPassword: ''
+    },
     instanceCredentials: {},
     manageInstanceInstallAction: {
         installMissingAWS: false,
@@ -218,6 +224,15 @@ const inventoryV2Slice = createSlice({
         setBulkInstanceCredentials: (state, action: PayloadAction<Partial<typeof state.bulkInstanceCredentials>>) => {
             state.bulkInstanceCredentials = {
                 ...state.bulkInstanceCredentials,
+                ...action.payload
+            };
+        },
+        setOracleBulkDatabaseCredentials: (
+            state,
+            action: PayloadAction<Partial<typeof state.oracleBulkDatabaseCredentials>>
+        ) => {
+            state.oracleBulkDatabaseCredentials = {
+                ...state.oracleBulkDatabaseCredentials,
                 ...action.payload
             };
         },
@@ -634,6 +649,7 @@ export const {
     setReplicaSelectionForAuth,
     setCredentialOption,
     setBulkInstanceCredentials,
+    setOracleBulkDatabaseCredentials,
     setInstanceCredentials,
     removeInstanceCredentials,
     setSelectedFilterValue,

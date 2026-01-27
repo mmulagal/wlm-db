@@ -348,18 +348,16 @@ const DetectContent = () => {
                         manageSingleInstanceData?.hostType === DBType.MSSQL &&
                         authModeRadio()}
 
+                    {/* Oracle auth fields shown directly (no radio), MSSQL shown when SQL Server Auth selected */}
                     {isAuthRequiredForInstance(manageSingleInstanceData, manageSingleInstanceData?.hostType) &&
-                        authenticationTypeSelected === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION &&
+                        (manageSingleInstanceData?.hostType === DBType.ORACLE ||
+                            authenticationTypeSelected === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) &&
                         mssqlInputFields(manageSingleInstanceData?.hostType)}
 
                     {isAuthRequiredForInstance(manageSingleInstanceData, manageSingleInstanceData?.hostType) &&
+                        manageSingleInstanceData?.hostType === DBType.MSSQL &&
                         authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
                         windowsAuthInputFields()}
-
-                    {manageSingleInstanceData?.fsxId &&
-                        !manageSingleInstanceData?.isFsxRegistered &&
-                        manageSingleInstanceData?.hostType !== DBType.MSSQL &&
-                        fsxInputFields()}
 
                     {isAsmAuthRequired(manageSingleInstanceData, manageSingleInstanceData?.hostType) && oracleASM()}
                 </>

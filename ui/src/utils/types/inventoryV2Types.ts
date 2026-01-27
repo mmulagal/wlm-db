@@ -35,11 +35,19 @@ export interface InventorySliceData {
         username: string;
         password: string;
     };
+    oracleBulkDatabaseCredentials: {
+        oracleUsername: string;
+        oraclePassword: string;
+        oracleASM: string;
+        asmPassword: string;
+    };
     instanceCredentials: {
         [key: string]: {
             authMode: any;
             username: string;
             password: string;
+            oracleASM?: string;
+            asmPassword?: string;
         };
     };
     tableManageColumnState: any;

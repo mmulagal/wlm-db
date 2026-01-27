@@ -14,14 +14,19 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
     const { wizardOperationType, bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
     const { loading } = useAppSelector(state => state.agenticAI.agenticRegisterFlowChecks);
 
-    // Calculate readiness counts for bulk MSSQL mode
+    // Calculate readiness counts for bulk MSSQL/Oracle mode
     const readinessCounts = useMemo(() => {
         if (
             wizardOperationType === ACTION_TYPE.BULK &&
-            engineType === DBType.MSSQL &&
+            (engineType === DBType.MSSQL || engineType === DBType.ORACLE) &&
             Array.isArray(bulkDetectedInstanceList)
         ) {
-            const capabilities = ['assessment', 'remediation', 'dbcreation', 'sandbox', 'errorInvestigation'];
+            // Oracle has only 3 capabilities: assessment, dbcreation, errorInvestigation
+            // MSSQL has 5 capabilities: assessment, remediation, dbcreation, sandbox, errorInvestigation
+            const capabilities =
+                engineType === DBType.ORACLE
+                    ? ['assessment', 'remediation', 'errorInvestigation']
+                    : ['assessment', 'remediation', 'dbcreation', 'sandbox', 'errorInvestigation'];
             const counts: Record<string, { ready: number; total: number; missingInstances: string[] }> = {};
 
             capabilities.forEach(cap => {

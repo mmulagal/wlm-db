@@ -784,7 +784,9 @@ const InstancesTable = () => {
     );
 
     // Check if bulk action is visible (used for disabling row actions)
-    const isBulkActionVisible = selectedHostType === DBType.MSSQL && selectedRowsForBulkRegister.length > 0;
+    const isBulkActionVisible =
+        (selectedHostType === DBType.MSSQL || selectedHostType === DBType.ORACLE) &&
+        selectedRowsForBulkRegister.length > 0;
 
     const getTableColDefsPerEngineType = () =>
         getInstanceTableColumns({ t, updatedTableData, selectedHostType, isBulkSelectionActive: isBulkActionVisible });
@@ -797,7 +799,7 @@ const InstancesTable = () => {
 
     // Determine if header checkbox should be enabled
     const isHeaderCheckboxEnabled = useMemo(() => {
-        if (selectedHostType !== DBType.MSSQL) return false;
+        if (selectedHostType !== DBType.MSSQL && selectedHostType !== DBType.ORACLE) return false;
         if (loading) return false;
         return selectableRowsForBulk.length > 0;
     }, [selectedHostType, loading, selectableRowsForBulk]);
@@ -811,17 +813,21 @@ const InstancesTable = () => {
     // Compute header checkbox tooltip message
     const headerCheckboxTooltip = useMemo(() => {
         if (!isHeaderCheckboxEnabled) {
-            return t('databases.bulk-register.select-header-disabled');
+            return t(
+                selectedHostType === DBType.ORACLE
+                    ? 'databases.bulk-register.select-header-disabled-oracle'
+                    : 'databases.bulk-register.select-header-disabled'
+            );
         }
         if (isMaxSelectionReached) {
             return t('databases.bulk-register.max-selection-reached', { max: MAX_BULK_REGISTER_SELECTION });
         }
         return '';
-    }, [isHeaderCheckboxEnabled, isMaxSelectionReached]);
+    }, [isHeaderCheckboxEnabled, isMaxSelectionReached, selectedHostType]);
 
     const tableProps = useTable({
         isSorting: false,
-        selectionType: selectedHostType === DBType.MSSQL ? 'multiple' : 'none',
+        selectionType: selectedHostType === DBType.MSSQL || selectedHostType === DBType.ORACLE ? 'multiple' : 'none',
         columns: getTableColDefsPerEngineType(),
         rows: updatedTableData,
         pageSize: 50,
@@ -888,13 +894,17 @@ const InstancesTable = () => {
 
                 // Use shared utility for disabling logic
                 const disableResult = isInstanceActionDisabled(rowData, selectedHostType, t);
-                // For menu, also disable if status is unmanaged/undetected/in-progress
+                // For menu, also disable if status is unmanaged/undetected/in-progress or bulk selection is active
                 const shouldDisableMenu =
+                    isBulkActionVisible ||
                     rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
                     rowData.statusColText === INVENTORY_STATUS.UNDETECTED ||
                     rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS ||
                     disableResult.isDisabled;
-                const { disableMsg } = disableResult;
+                // Show bulk selection message when bulk is active, otherwise show the disable reason
+                const menuDisableMsg = isBulkActionVisible
+                    ? t('databases.bulk-register.action-disabled-during-bulk-selection')
+                    : disableResult.disableMsg;
                 const width = disableResult.tooltipWidth || '';
                 const height = disableResult.tooltipHeight || '';
 
@@ -902,7 +912,12 @@ const InstancesTable = () => {
                     <div className={styles.lastContainer}>
                         <div className={styles.jobMenuPopover} style={{ marginLeft: '-12px' }}>
                             {shouldDisableMenu ? (
-                                <TooltipComponent placement="bottom" title={disableMsg} width={width} height={height}>
+                                <TooltipComponent
+                                    placement="bottom"
+                                    title={menuDisableMsg}
+                                    width={width}
+                                    height={height}
+                                >
                                     <div className={styles.menuPointerDisabled}>
                                         <span className={styles.menuPointer}>...</span>
                                     </div>
@@ -980,8 +995,8 @@ const InstancesTable = () => {
 
     // Sync table selection state to Redux for bulk register
     useEffect(() => {
-        if (selectedHostType !== DBType.MSSQL) {
-            // Clear selection when switching away from MSSQL
+        if (selectedHostType !== DBType.MSSQL && selectedHostType !== DBType.ORACLE) {
+            // Clear selection when switching away from MSSQL/Oracle
             if (selectedRowsForBulkRegister.length > 0) {
                 dispatch(setSelectedRowsForBulkRegister([]));
             }
@@ -1059,7 +1074,12 @@ const InstancesTable = () => {
                 {/* Show BulkActionContainer above the table when rows are selected */}
                 {isBulkActionVisible && (
                     <BulkActionContainer
-                        action={t('databases.bulk-register.register-selected-instances')}
+                        action={t(
+                            selectedHostType === DBType.ORACLE
+                                ? 'databases.bulk-register.register-selected-databases'
+                                : 'databases.bulk-register.register-selected-instances',
+                            { count: selectedRowsForBulkRegister.length }
+                        )}
                         onClick={handleBulkRegisterAction}
                     />
                 )}
@@ -1070,32 +1090,6 @@ const InstancesTable = () => {
                     singularTitle={title}
                     exportToCsvOptions={{ fileName: exportToCsvFileName }}
                     subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
-                    actionsRight={
-                        selectedHostType === DBType.ORACLE ? (
-                            <div className={styles.manageInstanceButton}>
-                                {!loading && !isUnregisteredRows ? (
-                                    <Popover
-                                        isAppendedToBody
-                                        children={getPopoverContent()}
-                                        trigger="hover"
-                                        container={
-                                            <DsButton isThin isDisabled>
-                                                {buttonText}
-                                            </DsButton>
-                                        }
-                                    />
-                                ) : (
-                                    <DsButton
-                                        isThin
-                                        onClick={() => handleManageBulk()}
-                                        isDisabled={loading || !isUnregisteredRows}
-                                    >
-                                        {buttonText}
-                                    </DsButton>
-                                )}
-                            </div>
-                        ) : undefined
-                    }
                 />
                 <Table
                     // @ts-ignore

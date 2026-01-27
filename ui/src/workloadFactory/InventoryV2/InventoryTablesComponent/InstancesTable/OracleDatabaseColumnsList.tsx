@@ -39,10 +39,12 @@ import { logAnalyzerStatusCol } from './InstanceTableHelper';
 
 export function getOracleDatabaseColumnsList({
     t,
-    updatedTableData
+    updatedTableData,
+    isBulkSelectionActive
 }: {
     t: TFunction;
     updatedTableData: any[];
+    isBulkSelectionActive?: boolean;
 }): ColumnProps[] {
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -614,12 +616,17 @@ export function getOracleDatabaseColumnsList({
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
                 const { colText, disableMsg } = manageActionCol(t, DBType.ORACLE, rowData);
+                // Disable action button when bulk selection is active
+                const isDisabledByBulkSelection = isBulkSelectionActive;
+                const effectiveDisableMsg = isDisabledByBulkSelection
+                    ? t('databases.bulk-register.action-disabled-during-bulk-selection')
+                    : disableMsg;
                 return (
                     <>
-                        {disableMsg ? (
+                        {effectiveDisableMsg ? (
                             <Popover
                                 isAppendedToBody
-                                children={disableMsg}
+                                children={effectiveDisableMsg}
                                 trigger="hover"
                                 container={
                                     <div className={styles.buttonContainer}>

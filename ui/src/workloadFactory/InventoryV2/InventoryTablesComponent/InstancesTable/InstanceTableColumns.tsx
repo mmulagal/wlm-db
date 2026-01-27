@@ -17,7 +17,7 @@ export function getInstanceTableColumns({
     isBulkSelectionActive?: boolean;
 }): ColumnProps[] {
     if (selectedHostType === DBType.ORACLE) {
-        return getOracleDatabaseColumnsList({ t, updatedTableData });
+        return getOracleDatabaseColumnsList({ t, updatedTableData, isBulkSelectionActive });
     }
     if (selectedHostType === DBType.POSTGRESQL) {
         return getPgsqlInstanceTableColumns({ t, updatedTableData });

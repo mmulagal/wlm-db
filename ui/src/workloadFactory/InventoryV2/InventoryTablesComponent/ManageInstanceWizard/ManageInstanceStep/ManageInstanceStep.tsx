@@ -5,7 +5,6 @@ import { useDispatch } from 'react-redux';
 import ManageWizardFooter from '../ManageWizardFooter';
 import styles from './ManageInstanceStep.module.scss';
 import ActionComponent from './ActionComponent/ActionComponent';
-import NoteComponent from './NoteComponent/NoteComponent';
 import PermissionListComponent from './PermissionListComponent/PermissionListComponent';
 import DetectHeader from '../DetectInstanceStep/DetectHeader/DetectHeader';
 import { useAppSelector } from '../../../../../store/storeHooks';
@@ -14,7 +13,6 @@ import {
     setBulkDetectedInstanceList,
     setManageSingleInstanceChecks
 } from '../../../../../store/workloadFactory/inventoryV2Slice';
-import MultiInstanceHeader from '../DetectInstanceStep/DetectHeader/MultiInstanceHeader';
 import {
     hasMissingJQ,
     hasMissingPowershell7,
@@ -393,8 +391,7 @@ export const Content = () => {
 
             {wizardOperationType === ACTION_TYPE.BULK && (
                 <div style={{ marginBottom: '40px', width: '100%' }}>
-                    {hostType === DBType.ORACLE && <MultiInstanceHeader engineType={hostType} />}
-                    {hostType === DBType.MSSQL && <BulkAuthenticationHeader engineType={hostType} />}
+                    <BulkAuthenticationHeader engineType={hostType} />
                 </div>
             )}
 
@@ -403,7 +400,7 @@ export const Content = () => {
                 <DsTypography variant="Regular_14">{t(contentKeys.content2)}</DsTypography>
             </div>
 
-            {hostType === DBType.MSSQL && wizardOperationType === ACTION_TYPE.BULK ? (
+            {(hostType === DBType.MSSQL || hostType === DBType.ORACLE) && wizardOperationType === ACTION_TYPE.BULK ? (
                 <>
                     <AuthenticationTabsForBulk />
                     {selectedPreparePageTab === PREPARE_PAGE_TABS.PREREQUISITE_CHECK && (
@@ -469,14 +466,6 @@ export const Content = () => {
                             engineType={hostType}
                         />
                     )}
-
-                    {/* Note */}
-                    {wizardOperationType === ACTION_TYPE.SINGLE &&
-                        manageChecks?.installMissingPowershell &&
-                        hostType === DBType.ORACLE && <NoteComponent />}
-                    {wizardOperationType === ACTION_TYPE.BULK &&
-                        manageMultiChecks?.installMissingPowershell &&
-                        hostType === DBType.ORACLE && <NoteComponent />}
                 </>
             )}
         </div>

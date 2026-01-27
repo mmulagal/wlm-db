@@ -677,8 +677,8 @@ export const isInstanceActionDisabled = (
  * @returns true if the row can be selected for bulk registration
  */
 export const isRowSelectableForBulkRegister = (rowData: any, selectedHostType: string, t: TFunction): boolean => {
-    // Only allow bulk selection for MSSQL
-    if (selectedHostType !== DBType.MSSQL) return false;
+    // Only allow bulk selection for MSSQL and Oracle
+    if (selectedHostType !== DBType.MSSQL && selectedHostType !== DBType.ORACLE) return false;
 
     // Allow both UNMANAGED and UNDETECTED instances for bulk registration
     if (
@@ -688,13 +688,15 @@ export const isRowSelectableForBulkRegister = (rowData: any, selectedHostType: s
         return false;
     }
 
-    // Check AOAG - cannot be selected
-    const deploymentModel = rowData?.serverInstallationMode?.toLowerCase();
-    const isAOAG =
-        deploymentModel.includes(SQL_DEPLOYMENT_MODE.AOAG) ||
-        rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.AOAG ||
-        rowData?.serverInstallationMode === 'AOAG';
-    if (isAOAG) return false;
+    // Check AOAG - cannot be selected (MSSQL only)
+    if (selectedHostType === DBType.MSSQL) {
+        const deploymentModel = rowData?.serverInstallationMode?.toLowerCase();
+        const isAOAG =
+            deploymentModel.includes(SQL_DEPLOYMENT_MODE.AOAG) ||
+            rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.AOAG ||
+            rowData?.serverInstallationMode === 'AOAG';
+        if (isAOAG) return false;
+    }
 
     // Use the shared disable logic
     const { isDisabled } = isInstanceActionDisabled(rowData, selectedHostType, t);

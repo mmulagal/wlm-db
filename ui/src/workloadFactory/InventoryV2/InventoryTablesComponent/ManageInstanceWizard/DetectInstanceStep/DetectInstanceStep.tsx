@@ -9,21 +9,18 @@ import AuthenticatedScreen from './AuthenticatedScreen/AuthenticatedScreen';
 import { ACTION_TYPE, DBType } from '../../../../../utils/consts';
 import { BulkDetectedInstance, UseWizardReturn } from '../../../../../utils/types/registerTypes';
 import NewAuthenticatedScreen from './NewAuthenticatedScreen/NewAuthenticatedScreen';
+import { isAuthRequiredForInstance } from './DetectContent/DetectContentHelper';
 
 export const Content = () => {
     const { wizardOperationType, selectedMultiDetectInstances, manageSingleInstanceData } = useAppSelector(
         state => state.inventoryV2
     );
 
-    // @Todo : Will be moved to utility file once oracle register revamp is done
-    const isAuthorizedSingleInstance = useMemo(() => {
-        if (!manageSingleInstanceData) return false;
-        return !!(
-            manageSingleInstanceData.sqlServerAuthentication ||
-            manageSingleInstanceData.windowsAuthentication ||
-            manageSingleInstanceData.windowsDomainUserAuthentication
-        );
-    }, [manageSingleInstanceData]);
+    // Check if single instance is already authorized
+    const isAuthorizedSingleInstance = useMemo(
+        () => !isAuthRequiredForInstance(manageSingleInstanceData, manageSingleInstanceData?.hostType),
+        [manageSingleInstanceData]
+    );
 
     const isAuth = useMemo(
         () => selectedMultiDetectInstances?.every((item: BulkDetectedInstance) => item?.authorized),
@@ -31,16 +28,11 @@ export const Content = () => {
     );
 
     const renderContent = () => {
-        // Single operation with MSSQL and authenticated
-        if (
-            wizardOperationType === ACTION_TYPE.SINGLE &&
-            manageSingleInstanceData?.hostType === DBType.MSSQL &&
-            isAuthorizedSingleInstance
-        ) {
+        // Single operation with MSSQL or Oracle and authenticated
+        if (wizardOperationType === ACTION_TYPE.SINGLE && isAuthorizedSingleInstance) {
             return <NewAuthenticatedScreen />;
         }
 
-        // All other cases
         return (
             <>
                 {wizardOperationType === ACTION_TYPE.SINGLE && (

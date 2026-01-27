@@ -106,6 +106,28 @@
             }
         }
 
+        .formContainer {
+            display: flex;
+            gap: 56px;
+            width: 100%;
+
+            .oracleFormFields {
+                display: flex;
+                gap: 24px;
+                align-items: flex-start;
+                width: 50%;
+
+                .textField {
+                    width: 50%;
+                    max-width: 400px;
+                }
+
+                .passwordField {
+                    width: 50%;
+                }
+            }
+        }
+
         .formFields {
             display: flex;
             gap: 24px;

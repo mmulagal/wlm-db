@@ -6,17 +6,7 @@ import RegisterNewWizard from './RegisterNewWizard';
 
 const RegisterWizard = () => {
     const { wizardOperationType, manageSingleInstanceData } = useAppSelector(state => state.inventoryV2);
-    return (
-        <>
-            {wizardOperationType === ACTION_TYPE.BULK ? (
-                <RegisterBulkWizard />
-            ) : manageSingleInstanceData?.hostType !== DBType.MSSQL ? (
-                <ManageInstanceWizard />
-            ) : (
-                <RegisterNewWizard />
-            )}
-        </>
-    );
+    return <>{wizardOperationType === ACTION_TYPE.BULK ? <RegisterBulkWizard /> : <RegisterNewWizard />}</>;
 };
 
 export default RegisterWizard;

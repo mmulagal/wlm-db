@@ -46,16 +46,26 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
     const { t } = useTranslation();
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
 
-    // Helper to get capability key from item id
-    const getCapabilityKey = (itemId: string): string | null => {
-        const mapping: Record<string, string> = {
+    // Helper to get capability key from item id based on engine type
+    const getCapabilityKey = (itemId: string, engine?: string): string | null => {
+        // Oracle has only 3 capabilities: assessment, dbcreation, errorInvestigation
+        if (engine === DBType.ORACLE) {
+            const oracleMapping: Record<string, string> = {
+                '1': 'assessment',
+                '2': 'remediation',
+                '3': 'errorInvestigation'
+            };
+            return oracleMapping[itemId] || null;
+        }
+        // MSSQL has 5 capabilities
+        const mssqlMapping: Record<string, string> = {
             '1': 'assessment',
             '2': 'remediation',
             '3': 'dbcreation',
             '4': 'sandbox',
             '5': 'errorInvestigation'
         };
-        return mapping[itemId] || null;
+        return mssqlMapping[itemId] || null;
     };
 
     const handleToggle = (id: string) => {
@@ -144,11 +154,11 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                                     </div>
                                 </div>
 
-                                {/* Readiness status column for bulk MSSQL */}
-                                {engineType === DBType.MSSQL &&
+                                {/* Readiness status column for bulk MSSQL/Oracle */}
+                                {(engineType === DBType.MSSQL || engineType === DBType.ORACLE) &&
                                     readinessCounts &&
                                     (() => {
-                                        const capKey = getCapabilityKey(item.id);
+                                        const capKey = getCapabilityKey(item.id, engineType);
                                         const counts = capKey ? readinessCounts[capKey] : null;
 
                                         if (!counts) return null;
@@ -212,7 +222,7 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
 
                                 <div className={styles['accordion-status']}>
                                     <DsTypography className={styles.text} variant="Semibold_14">
-                                        {engineType === DBType.MSSQL
+                                        {engineType === DBType.MSSQL || engineType === DBType.ORACLE
                                             ? t('databases.log-analyzer.setup-details')
                                             : t('databases.register-flow.view-prerequisites-list')}
                                     </DsTypography>

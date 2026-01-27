@@ -455,3 +455,214 @@ export const validateBulkInstanceCredentials = (
 
     return { isValid: true, errorMessage: '' };
 };
+
+/**
+ * Oracle bulk credentials interface
+ */
+export interface OracleBulkCredentials {
+    oracleUsername: string;
+    oraclePassword: string;
+    oracleASM: string;
+    asmPassword: string;
+}
+
+/**
+ * Oracle instance credentials interface for manual mode
+ */
+export interface OracleInstanceCredentials {
+    username: string;
+    password: string;
+    oracleASM?: string;
+    asmPassword?: string;
+}
+
+/**
+ * Create bulk authentication payload for Oracle databases
+ * Groups credentials by ec2InstanceId for efficient API calls
+ * Handles both Oracle DB credentials and ASM credentials if required
+ * @param selectedInstances - Array of selected instances
+ * @param credentialOption - SAME_FOR_ALL or MANUAL
+ * @param oracleBulkDatabaseCredentials - Credentials for SAME_FOR_ALL mode
+ * @param instanceCredentials - Per-instance credentials for MANUAL mode
+ * @param instanceAuthStatus - Current auth status to skip already authenticated instances
+ * @returns Array of payload items for the bulk registration API
+ */
+export const createOracleBulkAuthPayload = (
+    selectedInstances: BulkDetectedInstance[] | undefined,
+    credentialOption: string,
+    oracleBulkDatabaseCredentials: OracleBulkCredentials,
+    instanceCredentials: Record<string, OracleInstanceCredentials>,
+    instanceAuthStatus: InstanceAuthStatusMap | undefined
+): BulkAuthPayloadItem[] => {
+    if (!selectedInstances || !Array.isArray(selectedInstances)) return [];
+
+    // Group instances by ec2InstanceId for efficient API calls
+    const instanceMap: Record<string, BulkAuthPayloadItem> = {};
+
+    selectedInstances.forEach(instance => {
+        const instanceData = instance.data || instance;
+        const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
+        const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+
+        if (!ec2InstanceId || !instanceId) return;
+
+        // Generate unique key for credential lookup
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
+
+        // Skip instances that don't need authentication
+        if (!isAuthRequiredForInstance(instanceData, DBType.ORACLE)) return;
+
+        // Skip instances that are already successfully authenticated in wizard
+        if (instanceAuthStatus?.[instanceId]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return;
+
+        // Get credentials based on credential option
+        let username: string;
+        let password: string;
+        let oracleASM: string;
+        let asmPassword: string;
+
+        if (credentialOption === CREDENTIAL_OPTIONS.SAME_FOR_ALL) {
+            username = oracleBulkDatabaseCredentials.oracleUsername || '';
+            password = oracleBulkDatabaseCredentials.oraclePassword || '';
+            oracleASM = oracleBulkDatabaseCredentials.oracleASM || '';
+            asmPassword = oracleBulkDatabaseCredentials.asmPassword || '';
+        } else {
+            // MANUAL mode - get per-instance credentials using uniqueKey
+            const creds = instanceCredentials[uniqueKey];
+            username = creds?.username || '';
+            password = creds?.password || '';
+            oracleASM = creds?.oracleASM || '';
+            asmPassword = creds?.asmPassword || '';
+        }
+
+        // Skip if required credentials are empty
+        if (!username || !password) return;
+
+        // Create Oracle DB credential
+        const oracleCredential: BulkCredentialItem = {
+            resourceId: instanceId,
+            resourceType: DETECT_HOST_VAR.ORACLE,
+            username,
+            password
+        };
+
+        const credentials: BulkCredentialItem[] = [oracleCredential];
+
+        // Add ASM credential if instance requires ASM and credentials are provided
+        const isAsmRequired = instanceData?.isInstanceStorageAsmManaged === true;
+        if (isAsmRequired && oracleASM && asmPassword) {
+            const asmCredential: BulkCredentialItem = {
+                resourceId: instanceId,
+                resourceType: DETECT_HOST_VAR.ORACLE_ASM,
+                username: oracleASM,
+                password: asmPassword
+            };
+            credentials.push(asmCredential);
+        }
+
+        // If already present, merge credentials arrays
+        if (instanceMap[ec2InstanceId]) {
+            const existing = instanceMap[ec2InstanceId].credentials;
+            credentials.forEach(cred => {
+                // Avoid duplicate resourceId/resourceType combos
+                if (!existing.some(e => e.resourceId === cred.resourceId && e.resourceType === cred.resourceType)) {
+                    existing.push(cred);
+                }
+            });
+        } else {
+            instanceMap[ec2InstanceId] = {
+                credentials,
+                ec2InstanceId,
+                region: instanceData?.regionId || instance.region || '',
+                credentialsId: instanceData?.credentialId || instance.credentialsId || '',
+                checkManageReadiness: true
+            };
+        }
+    });
+
+    return Object.values(instanceMap);
+};
+
+/**
+ * Validate Oracle bulk instance credentials before API call
+ * @param selectedInstances - Array of selected instances
+ * @param credentialOption - SAME_FOR_ALL or MANUAL
+ * @param oracleBulkDatabaseCredentials - Credentials for SAME_FOR_ALL mode
+ * @param instanceCredentials - Per-instance credentials for MANUAL mode
+ * @param instanceAuthStatus - Current auth status
+ * @returns Validation result with isValid flag and error message
+ */
+export const validateOracleBulkInstanceCredentials = (
+    selectedInstances: BulkDetectedInstance[] | undefined,
+    credentialOption: string,
+    oracleBulkDatabaseCredentials: OracleBulkCredentials,
+    instanceCredentials: Record<string, OracleInstanceCredentials>,
+    instanceAuthStatus: InstanceAuthStatusMap | undefined
+): { isValid: boolean; errorMessage: string } => {
+    if (!selectedInstances || selectedInstances.length === 0) {
+        return { isValid: false, errorMessage: 'No databases selected' };
+    }
+
+    // Get instances that need authentication
+    const instancesNeedingAuth = selectedInstances.filter(instance => {
+        const instanceData = instance.data || instance;
+        const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
+
+        // Skip already authenticated instances
+        if (!isAuthRequiredForInstance(instanceData, DBType.ORACLE)) return false;
+        if (instanceAuthStatus?.[instanceId]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return false;
+
+        return true;
+    });
+
+    // If no instances need auth, validation passes
+    if (instancesNeedingAuth.length === 0) {
+        return { isValid: true, errorMessage: '' };
+    }
+
+    // Check if any instance requires ASM
+    const anyInstanceRequiresAsm = instancesNeedingAuth.some(instance => {
+        const instanceData = instance.data || instance;
+        return instanceData?.isInstanceStorageAsmManaged === true;
+    });
+
+    if (credentialOption === CREDENTIAL_OPTIONS.SAME_FOR_ALL) {
+        // Validate Oracle bulk credentials
+        if (!oracleBulkDatabaseCredentials.oracleUsername || !oracleBulkDatabaseCredentials.oraclePassword) {
+            return { isValid: false, errorMessage: 'Please enter Oracle username and password' };
+        }
+        // ASM credentials are optional but if ASM is required and one is provided, both must be provided
+        if (anyInstanceRequiresAsm) {
+            const hasAsmUser = !!oracleBulkDatabaseCredentials.oracleASM;
+            const hasAsmPass = !!oracleBulkDatabaseCredentials.asmPassword;
+            if (hasAsmUser !== hasAsmPass) {
+                return { isValid: false, errorMessage: 'Please enter both ASM username and password' };
+            }
+        }
+    } else {
+        // Validate per-instance credentials
+        for (const instance of instancesNeedingAuth) {
+            const instanceData = instance.data || instance;
+            const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
+            const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+            const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
+            const creds = instanceCredentials[uniqueKey];
+
+            if (!creds?.username || !creds?.password) {
+                return { isValid: false, errorMessage: `Please enter Oracle credentials for ${instanceId}` };
+            }
+
+            // Validate ASM credentials if instance requires ASM
+            const isAsmRequired = instanceData?.isInstanceStorageAsmManaged === true;
+            if (isAsmRequired) {
+                const hasAsmUser = !!creds?.oracleASM;
+                const hasAsmPass = !!creds?.asmPassword;
+                if (hasAsmUser !== hasAsmPass) {
+                    return { isValid: false, errorMessage: `Please enter both ASM credentials for ${instanceId}` };
+                }
+            }
+        }
+    }
+
+    return { isValid: true, errorMessage: '' };
+};

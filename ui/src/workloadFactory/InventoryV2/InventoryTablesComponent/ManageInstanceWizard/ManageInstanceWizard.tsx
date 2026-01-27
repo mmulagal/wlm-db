@@ -12,6 +12,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { setLandingFromWizard } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { isAlreadyDetectedCheck } from './ManageInstanceUtils';
 import { DBType } from '../../../../utils/consts';
+import * as AuthenticateFSxStep from './AuthenticateFSxStep/AuthenticateFSxStep';
 
 const Wizard = () => {
     const { t } = useTranslation();
@@ -60,8 +61,18 @@ const Wizard = () => {
 
 const ManageInstanceWizard = () => {
     const { t } = useTranslation();
+
     const MANAGE_STEPS = [
-        { key: 'detect-instance', label: t('databases.register-flow.authenticate'), component: DetectInstanceStep },
+        {
+            key: 'detect-instance',
+            label: t('databases.register-flow.authenticate-database'),
+            component: DetectInstanceStep
+        },
+        {
+            key: 'authenticate-fsx-step',
+            label: t('databases.register-flow.authenticate-fsx-for-ontap'),
+            component: AuthenticateFSxStep
+        },
         { key: 'manage-instance', label: t('databases.register-flow.prepare'), component: ManageInstanceStep }
     ];
 

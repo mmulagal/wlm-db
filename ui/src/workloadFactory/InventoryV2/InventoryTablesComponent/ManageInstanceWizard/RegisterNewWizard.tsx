@@ -66,10 +66,17 @@ const Wizard = () => {
 
 const RegisterNewWizard = () => {
     const { t } = useTranslation();
+    const { registerHostType, manageSingleInstanceData } = useAppSelector(state => state.inventoryV2);
+
+    // Determine if this is an Oracle database for dynamic step labels
+    const isOracle = registerHostType === DBType.ORACLE || manageSingleInstanceData?.hostType === DBType.ORACLE;
+
     const MANAGE_STEPS = [
         {
             key: 'detect-instance',
-            label: t('databases.register-flow.authenticate-instance'),
+            label: isOracle
+                ? t('databases.register-flow.authenticate-database')
+                : t('databases.register-flow.authenticate-instance'),
             component: DetectInstanceStep
         },
         {

@@ -6,9 +6,8 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import styles from './ManageInstanceWizard.module.scss';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
-import * as SelectInstancesStep from './SelectInstancesStep/SelectInstancesStep';
-import * as DetectInstanceStep from './DetectInstanceStep/DetectInstanceStep';
 import * as AuthenticateBulkInstance from './SelectInstancesStep/AuthenticateBulkInstance';
+import * as AuthenticateOracleBulkInstance from './SelectInstancesStep/AuthenticateOracleBulkInstance';
 import * as AuthenticateFSxStep from './AuthenticateFSxStep/AuthenticateFSxStep';
 
 import {
@@ -65,40 +64,27 @@ const RegisterBulkWizard = () => {
     const dispatch = useDispatch();
     const { selectedHostType, bulkWizardStartAtFsxStep } = useAppSelector(state => state.inventoryV2);
 
-    const MANAGE_STEPS =
-        selectedHostType === DBType.MSSQL
-            ? [
-                  {
-                      key: 'authenticate-instance',
-                      label:
-                          selectedHostType === DBType.ORACLE
-                              ? t('databases.register-flow.select-databases')
-                              : t('databases.register-flow.authenticate-instance'),
-                      component: selectedHostType !== DBType.ORACLE ? AuthenticateBulkInstance : SelectInstancesStep
-                  },
-                  {
-                      key: 'authenticate-fsx',
-                      label: t('databases.register-flow.authenticate-fsx-for-ontap'),
-                      component: AuthenticateFSxStep
-                  },
-                  { key: 'manage-instance', label: t('databases.register-flow.prepare'), component: ManageInstanceStep }
-              ]
-            : [
-                  {
-                      key: 'select-instances',
-                      label:
-                          selectedHostType === DBType.ORACLE
-                              ? t('databases.register-flow.select-databases')
-                              : t('databases.register-flow.select-instances'),
-                      component: SelectInstancesStep
-                  },
-                  {
-                      key: 'detect-instance',
-                      label: t('databases.register-flow.authenticate'),
-                      component: DetectInstanceStep
-                  },
-                  { key: 'manage-instance', label: t('databases.register-flow.prepare'), component: ManageInstanceStep }
-              ];
+    const isOracle = selectedHostType === DBType.ORACLE;
+
+    const MANAGE_STEPS = [
+        {
+            key: isOracle ? 'authenticate-database' : 'authenticate-instance',
+            label: isOracle
+                ? t('databases.register-flow.authenticate-database')
+                : t('databases.register-flow.authenticate-instance'),
+            component: isOracle ? AuthenticateOracleBulkInstance : AuthenticateBulkInstance
+        },
+        {
+            key: 'authenticate-fsx',
+            label: t('databases.register-flow.authenticate-fsx-for-ontap'),
+            component: AuthenticateFSxStep
+        },
+        {
+            key: 'manage-instance',
+            label: t('databases.register-flow.prepare'),
+            component: ManageInstanceStep
+        }
+    ];
 
     const stepsMap = Object.fromEntries(MANAGE_STEPS.map(({ key, component }) => [key, component]));
 
@@ -109,12 +95,12 @@ const RegisterBulkWizard = () => {
 
     // Determine initial step based on whether we're coming from replica authentication
     const getInitialStep = () => {
-        if (bulkWizardStartAtFsxStep && selectedHostType === DBType.MSSQL) {
+        if (bulkWizardStartAtFsxStep) {
             // Clear the flag after reading it
             dispatch(setBulkWizardStartAtFsxStep(false));
             return 'authenticate-fsx';
         }
-        return selectedHostType === DBType.MSSQL ? 'authenticate-instance' : 'select-instances';
+        return isOracle ? 'authenticate-database' : 'authenticate-instance';
     };
 
     return (
