@@ -1,3 +1,5 @@
+import { afterAll, beforeAll } from 'vitest';
+import { STORAGE_TYPE } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import { getAllClusterNodeDetails, getDatabaseHostSummaryV2 } from '../../src/operations/database-hosts-operations';
 import { ACCOUNT_ID, SECRETS } from '../../src/utils/consts';
@@ -17,7 +19,7 @@ beforeAll(async () => {
         cloudProviderName: 'AWS',
         region: 'ap-southeast-1',
         credentialsId: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
-        storageType: 'FSXN',
+        storageType: STORAGE_TYPE.FSXN,
         metadata: {
             node1InstanceId: 'i-07e76a4b916548dc0',
             node2InstanceId: 'i-0880a21327284f67c',
@@ -32,10 +34,6 @@ afterAll(async () => {
 });
 
 describe('Database host operations', () => {
-    // it('Get databases in a server', async () => {
-    //     const resp = await getDatabases(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
-    //     expect(resp).toBeDefined();
-    // });
     it('Get databases host summary', async () => {
         const resp = await getDatabaseHostSummaryV2(
             ACCOUNT_ID,
@@ -74,5 +72,47 @@ describe('Database host operations', () => {
             '36E53042-04E8-40C9-AE69-26E56CB0D216'
         );
         expect(response.ec2InstanceId).toBeDefined();
+    });
+
+    it('AOAG: should handle AOAG resources with sqlDeploymentType metadata', async () => {
+        const aoagMetadata = {
+            node1InstanceId: 'i-0a1b2c3d4e5f6aoag1',
+            node2InstanceId: 'i-0a1b2c3d4e5f6aoag2',
+            sqlDeploymentType: 'AOAG'
+        };
+        expect(aoagMetadata.sqlDeploymentType).toBe('AOAG');
+        expect(aoagMetadata.node1InstanceId).toBeDefined();
+        expect(aoagMetadata.node2InstanceId).toBeDefined();
+    });
+
+    it('AOAG: should have correct AOAG metadata structure', async () => {
+        const resp = await getDatabaseHostSummaryV2(
+            ACCOUNT_ID,
+            '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            'serverDetails',
+            {
+                id: null,
+                account_id: ACCOUNT_ID,
+                resource_id: '36E53042-04E8-40C9-AE69-26E56CB0D216',
+                resource_name: 'test-resource',
+                resource_type: 'MSSQL',
+                co_relation_id: 'fs-f6082f35c1db',
+                cloud_provider_account_id: 'test-aws-account',
+                cloud_provider_name: 'AWS',
+                region: 'ap-southeast-1',
+                credentials_id: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+                storage_type: 'FSXN',
+                metadata: {
+                    node1InstanceId: 'i-07e76a4b916548dc0',
+                    node2InstanceId: 'i-0880a21327284f67c',
+                    sqlDeploymentType: 'FCI'
+                }
+            },
+            undefined,
+            false
+        );
+        expect(resp).toBeDefined();
     });
 });

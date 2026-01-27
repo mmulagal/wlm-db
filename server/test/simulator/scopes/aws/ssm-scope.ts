@@ -505,6 +505,10 @@ const dbSummary = {
     commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES(), false)]
 };
 
+const dbSummaryWithAoag = {
+    commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], DATABASES(true), false)]
+};
+
 const validateMpio = {
     commands: [CHECK_MPIO_POLICY]
 };
@@ -744,6 +748,8 @@ ssmMock
     .on(SendCommandCommand, { Parameters: checkScriptUpdate })
     .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand)
     .on(SendCommandCommand, { Parameters: dbSummary })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommand)
+    .on(SendCommandCommand, { Parameters: dbSummaryWithAoag })
     .resolves(listSendCommandCommandResponse.dbSummaryCommand)
     .on(SendCommandCommand, { Parameters: pgsqlInstanceInfo })
     .resolves(listSendCommandCommandResponse.getPgsqlInstanceInfoCommand)
@@ -1021,7 +1027,15 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'Check Oracle Database Log Analysis Permissions')
     .resolves(getSampleCommandResponse('checkOracleDatabaseLogAnalysisPermissions'))
     .on(SendCommandCommand, params => params.Comment === 'Check if Linux package repositories are reachable')
-    .resolves(getSampleCommandResponse('checkLinuxRepoConnectivity'));
+    .resolves(getSampleCommandResponse('checkLinuxRepoConnectivity'))
+    .on(SendCommandCommand, params => params.Comment === 'Get AOAG details for MSSQL instance')
+    .resolves(getSampleCommandResponse('getAoagDetails'))
+    .on(SendCommandCommand, params => {
+        // Match AOAG database AG check query
+        const commandStr = params.Parameters?.commands?.[0] || '';
+        return commandStr.includes('databasesInAgCount') && commandStr.includes('participatingAgs');
+    })
+    .resolves(getSampleCommandResponse('aoagDatabaseAgCheck'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1712,8 +1726,24 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkOracleDatabaseLogAnalysisPermissions'
     })
+    .resolves(getSampleCommandResponseWithOutput('checkOracleDatabaseLogAnalysisPermissions', JSON.stringify('true\n')))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getAoagDetails'
+    })
     .resolves(
-        getSampleCommandResponseWithOutput('checkOracleDatabaseLogAnalysisPermissions', JSON.stringify('true\n'))
+        getSampleCommandResponseWithOutput(
+            'getAoagDetails',
+            JSON.stringify(getCommandInvocationResponse.aoagDetailsResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-aoagDatabaseAgCheck'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'aoagDatabaseAgCheck',
+            JSON.stringify(getCommandInvocationResponse.aoagDatabaseAgCheckResponse)
+        )
     );
 
 ssmMock.on(GetParametersByPathCommand).callsFake(input => {

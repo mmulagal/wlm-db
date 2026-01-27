@@ -357,3 +357,53 @@ describe('Unmanage operations', async () => {
         expect(response.items.map(item => item.errorMessage).join()).toBe('Instance does not exist.');
     });
 });
+
+describe('Register operations: AOAG Standalone', () => {
+    const AOAG_EC2_INSTANCE_ID = 'i-0a1b2c3d4e5f6aoag1';
+    const AOAG_CREDENTIALS_ID = 'aoag-test-cred-001';
+    const AOAG_REGION = 'ap-southeast-1';
+
+    it('should register AOAG instance successfully', async () => {
+        const { jobId } = await registerDatabaseServerInstances(ACCOUNT_ID, [
+            {
+                credentialsId: AOAG_CREDENTIALS_ID,
+                region: AOAG_REGION,
+                ec2InstanceId: AOAG_EC2_INSTANCE_ID,
+                databaseInstanceNames: ['MSSQLSERVER']
+            }
+        ]);
+        expect(jobId).toBeDefined();
+    });
+
+    it('should register AOAG primary instance', async () => {
+        const { jobId } = await registerDatabaseServerInstances(ACCOUNT_ID, [
+            {
+                credentialsId: AOAG_CREDENTIALS_ID,
+                region: AOAG_REGION,
+                ec2InstanceId: AOAG_EC2_INSTANCE_ID,
+                databaseInstanceNames: ['MSSQLSERVER']
+            }
+        ]);
+        expect(jobId).toBeDefined();
+    });
+
+    it('should validate and store AOAG credentials', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const params = [
+            {
+                resourceId: 'MSSQLSERVER',
+                resourceType: 'MSSQL',
+                username: 'aoag_user',
+                password: 'aoag_password'
+            }
+        ];
+        const { response } = await validateAndStoreDiscoveredParameters(
+            ACCOUNT_ID,
+            credentialsId,
+            AOAG_REGION,
+            AOAG_EC2_INSTANCE_ID,
+            params
+        );
+        expect(response).toBeDefined();
+    });
+});

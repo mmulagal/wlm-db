@@ -4178,5 +4178,55 @@
         "status": "success",
         "packageManager": "dnf",
         "error": null
+    },
+    "aoagDetailsResponse": {
+        "MSSQLSERVER": {
+            "aoagDetails": {
+                "serverInfo": { "serverName": "PRD-SQL-CRM-AG1", "isHadrEnabled": 1 },
+                "baseDeploymentType": "Standalone",
+                "availabilityGroups": [
+                    {
+                        "agName": "DemoAOAG",
+                        "primaryReplica": "PRD-SQL-CRM-AG1",
+                        "replicas": [
+                            {
+                                "replica": "PRD-SQL-CRM-AG1",
+                                "role": "PRIMARY",
+                                "availabilityMode": "SYNCHRONOUS_COMMIT",
+                                "failoverMode": "AUTOMATIC",
+                                "syncHealth": "HEALTHY",
+                                "connectedState": "CONNECTED",
+                                "isLocalReplica": true,
+                                "secondaryConnections": "ALL",
+                                "primaryConnections": "ALLOW_ALL_CONNECTIONS",
+                                "isReadReplica": 0,
+                                "isRoutableReadReplica": 0
+                            },
+                            {
+                                "replica": "PRD-SQL-CRM-AG2",
+                                "role": "SECONDARY",
+                                "availabilityMode": "SYNCHRONOUS_COMMIT",
+                                "failoverMode": "AUTOMATIC",
+                                "syncHealth": "HEALTHY",
+                                "connectedState": "CONNECTED",
+                                "isLocalReplica": false,
+                                "secondaryConnections": "ALL",
+                                "primaryConnections": "ALLOW_ALL_CONNECTIONS",
+                                "isReadReplica": 1,
+                                "isRoutableReadReplica": 1
+                            }
+                        ]
+                    }
+                ]
+            },
+            "windowsClusterNodes": [
+                { "Node": "PRD-SQL-CRM-AG1", "Address": "10.0.6.201" },
+                { "Node": "PRD-SQL-CRM-AG2", "Address": "10.0.28.201" }
+            ]
+        }
+    },
+    "aoagDatabaseAgCheckResponse": {
+        "databasesInAgCount": 2,
+        "participatingAgs": [{ "agName": "DemoAOAG" }]
     }
 }

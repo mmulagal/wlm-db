@@ -23,6 +23,34 @@ describe('Discover operations', () => {
     // });
 });
 
+describe('Discover operations: AOAG Standalone', () => {
+    it('should return AOAG details for AOAG standalone instances', async () => {
+        const response = await getHostAndSqlServerInfo(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 20);
+        const aoagInstance = response.items.find(
+            item =>
+                item.sqlServerInstances?.[0]?.sqlServerDeploymentType === 'AOAG' &&
+                item.sqlServerInstances?.[0]?.aoagDetails !== undefined
+        );
+        expect(aoagInstance).toBeDefined();
+        expect(aoagInstance?.sqlServerInstances?.[0]?.aoagDetails).toBeDefined();
+        expect(aoagInstance?.sqlServerInstances?.[0]?.aoagClusterNodeDetails).toBeDefined();
+        expect(aoagInstance?.sqlServerInstances?.[0]?.aoagClusterNodeDetails?.length).toBeGreaterThan(0);
+    }, 10000);
+
+    it('should return aoagClusterNodeDetails with required fields', async () => {
+        const response = await getHostAndSqlServerInfo(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 20);
+        const aoagInstance = response.items.find(
+            item =>
+                item.sqlServerInstances?.[0]?.sqlServerDeploymentType === 'AOAG' &&
+                item.sqlServerInstances?.[0]?.aoagClusterNodeDetails !== undefined
+        );
+        const clusterNodeDetails = aoagInstance?.sqlServerInstances?.[0]?.aoagClusterNodeDetails?.[0];
+        expect(clusterNodeDetails?.node).toBeDefined();
+        expect(clusterNodeDetails?.ip).toBeDefined();
+        expect(clusterNodeDetails?.ec2InstanceId).toBeDefined();
+    }, 10000);
+});
+
 describe('Discover operations: PGSQL', () => {
     it('Discover EC2 instances hosting PostgreSQL Server', async () => {
         const response = await discoverPgSqlResources(ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 10);
