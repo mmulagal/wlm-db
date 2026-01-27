@@ -75,6 +75,8 @@ jobs:
     - name: Generate tag
       id: gen-tag
       run: echo "TAG=${{env.MODE}}-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+    - name: Set Docker API version to match daemon
+      run: echo "DOCKER_API_VERSION=1.43" >> "$GITHUB_ENV"
     - name: Set up Docker Buildx
       id: buildx
       uses: docker/setup-buildx-action@v3
