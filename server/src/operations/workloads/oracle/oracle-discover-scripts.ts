@@ -1411,23 +1411,23 @@ const discoverOracleHosts = `
             if [ $? -ne 0 ]; then
                 DATABASE_DETAILS='{"error": "failed to retrieve database details for instance '$sid'"}'
             fi
-            
-            is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
-
-            if [ "$is_cdb" == "YES" ]; then
-                PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
-                pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
-            else
-                PDB_DATABASE_DETAILS="null"
-            fi
-
 
             if [ "$isDefaultAuth" == "true" ]; then
+                is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
+                if [[ "$is_cdb" == "YES" ]]; then
+                    PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
+                    pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
+                else
+                    PDB_DATABASE_DETAILS="null"
+                fi
+
                 ${getInstanceStorageDetails}
                 # Default auth enabled means the user has sysdba privileges, so no missing permissions.
                 missingPermissions="[]"
                 remediationMissingPermissions="[]"
             else
+                PDB_DATABASE_DETAILS="null"
+                is_cdb="NO"
                 ${getStorageWithoutCreds}
                 ${checkOraclePermissionsInDiscovery}
                 isAwsCliInstalled=$(echo "$modulesAvailability" | grep -o '"isAwsCliInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')

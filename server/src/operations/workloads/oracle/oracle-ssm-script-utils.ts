@@ -339,9 +339,10 @@ const dataguardDeploymentUtilities = `
             
             # Data Guard is configured if:
             # 1. fal_client and fal_server are both set and different, OR
-            # 2. fal_client is not set but fal_server is set (to fetch logs from target destination), OR
-            # 3. log_archive_config contains DG_CONFIG keyword
-            if [[ ( -n "$falClient" && -n "$falServer" && "$falServer" != "$falClient" ) || ( -z "$falClient" && -n "$falServer" ) || ( -n "$logArchiveConfig" && "$logArchiveConfig" == *"DG_CONFIG"* ) ]]; then
+            # 2. fal_client is not set but fal_server is set (to fetch logs from target destination, usually a state for standby), OR
+            # 3. fal_server is not set but fal_client is set (to send logs to target destination, usually a state for primary), OR
+            # 4. log_archive_config contains DG_CONFIG keyword
+            if [[ ( -n "$falClient" && -n "$falServer" && "$falServer" != "$falClient" ) || ( -z "$falClient" && -n "$falServer" ) || ( -n "$falClient" && -z "$falServer" ) || ( -n "$logArchiveConfig" && "$logArchiveConfig" == *"DG_CONFIG"* ) ]]; then
                 exit 0;
             fi
             exit 1;
@@ -623,6 +624,24 @@ EOSQL
 EOF
 )
         if echo "$result" | grep -q "^OK"; then
+            local open_mode
+            open_mode=$(sudo -i -u oracle bash <<'EOF'
+                    export ORACLE_SID="$ORACLE_SID"
+                    sqlplus -S / as sysdba 2>/dev/null <<EOSQL
+                    WHENEVER SQLERROR EXIT SQL.SQLCODE
+                    SET HEADING OFF
+                    SET FEEDBACK OFF
+                    SET VERIFY OFF
+                    SET PAGESIZE 0
+                    SELECT open_mode FROM v$database;
+                    EXIT;
+EOSQL
+EOF
+)
+            if echo "$open_mode" | grep -iq "MOUNTED"; then
+                echo "false"
+                return
+            fi
             echo "true"
         else
             echo "false"
