@@ -323,7 +323,7 @@ function formatEbsCalculationObject(
 
     const ebsStorageAmountSize =
         storageAmountSize && storageAmountUnit
-            ? convertToBytes(storageAmountSize, storageAmountUnit) || 0
+            ? Number(convertToBytes(storageAmountSize, storageAmountUnit)) * ebsNumberOfVolumes || 0
             : storageAmountSizeAutoMode && storageAmountUnitAutoMode
             ? convertToBytes(storageAmountSizeAutoMode, storageAmountUnitAutoMode) || 0
             : 0;
