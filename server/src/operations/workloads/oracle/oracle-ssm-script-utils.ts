@@ -824,8 +824,8 @@ const oracleUserAuthLoginCommand = `
 
         instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
 
-        # Extract oracle array from JSON
-        oracle_section=$(echo "$instanceCreds" | sed -n '/"oracle"[[:space:]]*:[[:space:]]*\\[/,/\\]/p')
+        # Extract oracle array from JSON using grep -o instead of sed, because SSM returns single-line JSON and sed's line-based range patterns would match the entire line (including other sections).
+        oracle_section=$(echo "$instanceCreds" | grep -o '"oracle"[[:space:]]*:[[:space:]]*\\[[^]]*\\]')
         
         # Find matching oracle instance by oracleinstancename
         username=""
