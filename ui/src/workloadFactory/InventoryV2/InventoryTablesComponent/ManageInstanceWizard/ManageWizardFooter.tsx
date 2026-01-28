@@ -260,7 +260,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
                             message: t('databases.register-flow.fsx-partial-auth-fail-message', {
-                                count: fsxIds.length
+                                failedCount: fsxIds.length
                             })
                         })
                     );
