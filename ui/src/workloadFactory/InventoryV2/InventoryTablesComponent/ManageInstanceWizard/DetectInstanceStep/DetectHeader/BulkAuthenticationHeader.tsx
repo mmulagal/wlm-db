@@ -91,7 +91,7 @@ const BulkAuthenticationHeader = ({ engineType }: { engineType: string }) => {
                 {/* image */}
                 <div className={`${styles.column} ${styles.columnImage}`}>{icon}</div>
 
-                <div className={styles.column}>
+                <div className={styles.column} style={{ maxWidth: '220px' }}>
                     <DsTypography variant="Semibold_24" className={styles.titleText} style={{ lineHeight: 'unset' }}>
                         {countSummary.success}
                     </DsTypography>
@@ -104,7 +104,7 @@ const BulkAuthenticationHeader = ({ engineType }: { engineType: string }) => {
                     </DsTypography>
                 </div>
 
-                <div className={`${styles.column}`}>
+                <div className={`${styles.column}`} style={{ maxWidth: '220px' }}>
                     <div className={styles['long-text']}>
                         <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
                             {countSummary.readyForManagement}
