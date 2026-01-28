@@ -621,11 +621,14 @@ export const isInstanceActionDisabled = (
         };
     }
 
-    // Check detect option flags
-    if (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) {
+    // Check detect option flags - only disable if detectOption is set AND has a disable message
+    if (
+        (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) &&
+        rowData?.detectOptionDisableMsg
+    ) {
         return {
             isDisabled: true,
-            disableMsg: rowData?.detectOptionDisableMsg || '',
+            disableMsg: rowData?.detectOptionDisableMsg,
             tooltipWidth: '250px',
             tooltipHeight: '33px'
         };
@@ -668,8 +671,46 @@ export const isInstanceActionDisabled = (
 };
 
 /**
+ * Check if a row has a valid deployment type for bulk registration.
+ * For MSSQL: Only Standalone and FCI (Failover Cluster Instances) are allowed.
+ * For Oracle: Only Standalone is allowed (Data Guard is coming soon).
+ *
+ * @param rowData - The instance row data
+ * @param selectedHostType - Current database type filter
+ * @returns Object with isValid flag and reason if invalid
+ */
+export const isValidDeploymentForBulk = (
+    rowData: any,
+    selectedHostType: string
+): { isValid: boolean; reason?: string } => {
+    const deploymentModel = rowData?.serverInstallationMode?.toLowerCase() || '';
+
+    if (selectedHostType === DBType.MSSQL) {
+        // AOAG is not supported for bulk registration
+        const isAOAG =
+            deploymentModel.includes(SQL_DEPLOYMENT_MODE.AOAG) ||
+            rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.AOAG ||
+            rowData?.serverInstallationMode === 'AOAG' ||
+            deploymentModel === 'aoag';
+        if (isAOAG) {
+            return { isValid: false, reason: 'aoag' };
+        }
+    }
+
+    if (selectedHostType === DBType.ORACLE) {
+        // Data Guard is coming soon - not supported for bulk registration yet
+        const isDataGuard = rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.DATAGUARD;
+        if (isDataGuard) {
+            return { isValid: false, reason: 'dataguard' };
+        }
+    }
+
+    return { isValid: true };
+};
+
+/**
  * Check if an instance can be selected for bulk registration.
- * Uses isInstanceActionDisabled as the base check plus additional bulk-specific checks.
+ * This should align with the Register button's enable/disable state from manageActionCol.
  *
  * @param rowData - The instance row data
  * @param selectedHostType - Current database type filter
@@ -680,7 +721,8 @@ export const isRowSelectableForBulkRegister = (rowData: any, selectedHostType: s
     // Only allow bulk selection for MSSQL and Oracle
     if (selectedHostType !== DBType.MSSQL && selectedHostType !== DBType.ORACLE) return false;
 
-    // Allow both UNMANAGED and UNDETECTED instances for bulk registration
+    // Only unregistered instances can be selected (UNMANAGED or UNDETECTED)
+    // This aligns with manageActionCol which shows "Register" for non-MANAGED status
     if (
         rowData?.statusColText !== INVENTORY_STATUS.UNMANAGED &&
         rowData?.statusColText !== INVENTORY_STATUS.UNDETECTED
@@ -688,15 +730,9 @@ export const isRowSelectableForBulkRegister = (rowData: any, selectedHostType: s
         return false;
     }
 
-    // Check AOAG - cannot be selected (MSSQL only)
-    if (selectedHostType === DBType.MSSQL) {
-        const deploymentModel = rowData?.serverInstallationMode?.toLowerCase();
-        const isAOAG =
-            deploymentModel.includes(SQL_DEPLOYMENT_MODE.AOAG) ||
-            rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.AOAG ||
-            rowData?.serverInstallationMode === 'AOAG';
-        if (isAOAG) return false;
-    }
+    // Check deployment type - only Standalone and FCI allowed for MSSQL, only Standalone for Oracle
+    const { isValid } = isValidDeploymentForBulk(rowData, selectedHostType);
+    if (!isValid) return false;
 
     // Use the shared disable logic
     const { isDisabled } = isInstanceActionDisabled(rowData, selectedHostType, t);
@@ -710,7 +746,7 @@ export const isRowSelectableForBulkRegister = (rowData: any, selectedHostType: s
  * @param rowData - The instance row data
  * @param selectedHostType - Current database type filter
  * @param t - i18next translation function
- * @returns Tooltip message for why selection is disabled (string or JSX for AOAG)
+ * @returns Tooltip message for why selection is disabled (string or JSX for AOAG/DataGuard)
  */
 export const getDisabledSelectionTooltip = (
     rowData: any,
@@ -722,13 +758,15 @@ export const getDisabledSelectionTooltip = (
         return t('databases.bulk-register.already-registered');
     }
 
-    // Check AOAG first (specific bulk registration message with bullet points)
+    // Check deployment type validity
+    const { isValid, reason } = isValidDeploymentForBulk(rowData, selectedHostType);
     const deploymentModel = rowData?.serverInstallationMode?.toLowerCase();
     const isAoag =
         deploymentModel.includes(SQL_DEPLOYMENT_MODE.AOAG) ||
         rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.AOAG ||
         rowData?.serverInstallationMode === 'AOAG';
-    if (isAoag) {
+    // Check AOAG (specific bulk registration message with bullet points)
+    if ((!isValid && reason === 'aoag') || isAoag) {
         return (
             <div className={tooltipStyles.aoagTooltip}>
                 <div className={tooltipStyles.bulletList}>
@@ -749,7 +787,108 @@ export const getDisabledSelectionTooltip = (
         );
     }
 
+    // Check Data Guard - Coming soon for Oracle
+    if (!isValid && reason === 'dataguard') {
+        return t('databases.bulk-register.dataguard-coming-soon');
+    }
+
     // Use the shared disable logic for other cases
     const { disableMsg } = isInstanceActionDisabled(rowData, selectedHostType, t);
     return disableMsg;
+};
+
+/**
+ * Maximum number of instances that can be selected for bulk registration
+ */
+export const MAX_BULK_REGISTER_SELECTION = 10;
+
+/**
+ * Checks if header checkbox should be enabled for bulk selection.
+ * Conditions:
+ * 1. Visible rows count must be <= 10
+ * 2. ALL visible rows must be unregistered (UNMANAGED or UNDETECTED)
+ * 3. ALL visible rows must be Standalone or FCI deployment (no AOAG or Data Guard)
+ *
+ * @param visibleRows - Array of currently visible/filtered rows
+ * @param selectedHostType - Current database type filter
+ * @param t - i18next translation function
+ * @returns Object with isEnabled flag and reason if disabled
+ */
+export const shouldEnableHeaderCheckbox = (
+    visibleRows: any[],
+    selectedHostType: string,
+    t: TFunction
+): { isEnabled: boolean; disableReason: string } => {
+    // Only allow bulk selection for MSSQL and Oracle
+    if (selectedHostType !== DBType.MSSQL && selectedHostType !== DBType.ORACLE) {
+        return {
+            isEnabled: false,
+            disableReason: t('databases.bulk-register.not-supported-for-engine')
+        };
+    }
+
+    // No rows to select
+    if (!visibleRows || visibleRows.length === 0) {
+        return {
+            isEnabled: false,
+            disableReason:
+                selectedHostType === DBType.ORACLE
+                    ? t('databases.bulk-register.select-header-disabled-oracle')
+                    : t('databases.bulk-register.select-header-disabled')
+        };
+    }
+
+    // Check if visible rows exceed limit
+    if (visibleRows.length > MAX_BULK_REGISTER_SELECTION) {
+        return {
+            isEnabled: false,
+            disableReason: t('databases.bulk-register.too-many-visible-rows', { max: MAX_BULK_REGISTER_SELECTION })
+        };
+    }
+
+    // Check if ANY visible row is already registered
+    const hasRegisteredRows = visibleRows.some(
+        row =>
+            row?.statusColText === INVENTORY_STATUS.MANAGED ||
+            row?.managementStatus === INVENTORY_STATUS.REGISTERED ||
+            row?.managementStatus === INVENTORY_STATUS.IN_PROGRESS
+    );
+    if (hasRegisteredRows) {
+        return {
+            isEnabled: false,
+            disableReason:
+                selectedHostType === DBType.ORACLE
+                    ? t('databases.bulk-register.select-header-disabled-oracle')
+                    : t('databases.bulk-register.select-header-disabled')
+        };
+    }
+
+    // Check if ANY visible row has unsupported deployment type (AOAG or Data Guard)
+    const hasInvalidDeployment = visibleRows.some(row => {
+        const { isValid } = isValidDeploymentForBulk(row, selectedHostType);
+        return !isValid;
+    });
+    if (hasInvalidDeployment) {
+        return {
+            isEnabled: false,
+            disableReason:
+                selectedHostType === DBType.ORACLE
+                    ? t('databases.bulk-register.select-header-disabled-oracle')
+                    : t('databases.bulk-register.select-header-disabled')
+        };
+    }
+
+    // Check if all rows are selectable (using existing logic)
+    const selectableRows = visibleRows.filter(row => isRowSelectableForBulkRegister(row, selectedHostType, t));
+    if (selectableRows.length === 0) {
+        return {
+            isEnabled: false,
+            disableReason:
+                selectedHostType === DBType.ORACLE
+                    ? t('databases.bulk-register.select-header-disabled-oracle')
+                    : t('databases.bulk-register.select-header-disabled')
+        };
+    }
+
+    return { isEnabled: true, disableReason: '' };
 };

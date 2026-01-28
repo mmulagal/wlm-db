@@ -48,12 +48,12 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
 
     // Helper to get capability key from item id based on engine type
     const getCapabilityKey = (itemId: string, engine?: string): string | null => {
-        // Oracle has only 3 capabilities: assessment, dbcreation, errorInvestigation
+        // Oracle has 3 capabilities: assessment, remediation, errorInvestigation
         if (engine === DBType.ORACLE) {
             const oracleMapping: Record<string, string> = {
                 '1': 'assessment',
                 '2': 'remediation',
-                '3': 'errorInvestigation'
+                '5': 'errorInvestigation'
             };
             return oracleMapping[itemId] || null;
         }

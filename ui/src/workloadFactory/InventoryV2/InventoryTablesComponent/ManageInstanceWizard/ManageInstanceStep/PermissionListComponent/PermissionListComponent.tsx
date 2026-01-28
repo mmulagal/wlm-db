@@ -21,7 +21,7 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
             (engineType === DBType.MSSQL || engineType === DBType.ORACLE) &&
             Array.isArray(bulkDetectedInstanceList)
         ) {
-            // Oracle has only 3 capabilities: assessment, dbcreation, errorInvestigation
+            // Oracle has only 3 capabilities: assessment, remediation, errorInvestigation
             // MSSQL has 5 capabilities: assessment, remediation, dbcreation, sandbox, errorInvestigation
             const capabilities =
                 engineType === DBType.ORACLE

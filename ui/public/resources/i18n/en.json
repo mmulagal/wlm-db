@@ -369,15 +369,18 @@
             "already-registered": "This instance is already registered.",
             "select-header-disabled": "Select individual unregistered Standalone or FCI instances to enable bulk registration.",
             "select-header-disabled-oracle": "Select individual unregistered databases to enable bulk registration.",
+            "max-selection-reached": "Maximum of {{max}} instances can be selected for bulk registration.",
+            "too-many-visible-rows": "Filter the table to show {{max}} or fewer unregistered instances to enable bulk selection.",
             "register-selected-instances": "Register {{count}} selected instance(s)",
             "register-selected-databases": "Register {{count}} selected database(s)",
-            "max-selection-reached": "You have reached the maximum number of {{max}} instances for this bulk action.",
             "host-down": "Host is down.",
             "ssm-down": "SSM is not connected.",
             "fsxn-manage-supported": "Only Microsoft SQL Server instances with FSx for ONTAP file system storage can be registered.",
             "fsxn-manage-supported-oracle": "Only Oracle databases with FSx for ONTAP file system storage can be registered.",
             "aoag-manage-disable": "Register instance is not supported for Always on availability group deployment model.",
-            "action-disabled-during-bulk-selection": "Row actions are disabled while instances are selected for bulk registration."
+            "action-disabled-during-bulk-selection": "Row actions are disabled while instances are selected for bulk registration.",
+            "dataguard-coming-soon": "Registration for Data Guard databases is coming soon.",
+            "not-supported-for-engine": "Bulk registration is not supported for this database type."
         },
         "oracle-inner-page": {
             "overview": "Overview",

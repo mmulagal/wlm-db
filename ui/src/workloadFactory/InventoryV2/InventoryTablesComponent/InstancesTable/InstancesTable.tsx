@@ -104,7 +104,9 @@ import {
     inventoryBannerFilterUpdates,
     isInstanceActionDisabled,
     isRowSelectableForBulkRegister,
-    getDisabledSelectionTooltip
+    getDisabledSelectionTooltip,
+    shouldEnableHeaderCheckbox,
+    MAX_BULK_REGISTER_SELECTION
 } from './InstanceTableHelper';
 
 const InstancesTable = () => {
@@ -731,9 +733,6 @@ const InstancesTable = () => {
         );
     };
 
-    // Maximum number of instances that can be selected for bulk register
-    const MAX_BULK_REGISTER_SELECTION = 10;
-
     // For Oracle: Check if there are any registerable rows (used for the Register button in TableTopBar)
     const isUnregisteredRows = useMemo(
         () =>
@@ -761,26 +760,42 @@ const InstancesTable = () => {
     // For Oracle: Tooltip content when Register button is disabled
     const getPopoverContent = () => t('databases.register-flow.register-bulk-disable-tooltip-oracle');
 
+    // Track selected IDs for max limit - use state that only updates when crossing threshold
+    const [maxLimitState, setMaxLimitState] = useState<{
+        isMaxReached: boolean;
+        selectedIds: Set<string>;
+    }>({ isMaxReached: false, selectedIds: new Set() });
+
     const updatedTableData = useMemo(
         () =>
             instanceTableRows?.map((row: any) => {
                 const processedRow = instanceExtraDataUpdate(row, t, instanceProtection, isDemoMode);
                 const isSelectable = isRowSelectableForBulkRegister(processedRow, selectedHostType, t);
-                const tooltipMsg = !isSelectable ? getDisabledSelectionTooltip(processedRow, selectedHostType, t) : '';
+                let tooltipMsg = !isSelectable ? getDisabledSelectionTooltip(processedRow, selectedHostType, t) : '';
+
+                // Check if this row is disabled due to max selection limit
+                const isRowSelected = maxLimitState.selectedIds.has(String(processedRow.id));
+                const isDisabledByMaxLimit = maxLimitState.isMaxReached && !isRowSelected && isSelectable;
+
+                if (isDisabledByMaxLimit) {
+                    tooltipMsg = t('databases.bulk-register.max-selection-reached', {
+                        max: MAX_BULK_REGISTER_SELECTION
+                    });
+                }
 
                 // Add cellProps for selection control
                 return {
                     ...processedRow,
                     cellProps: {
                         ...processedRow.cellProps,
-                        isDisabled: !isSelectable,
+                        isDisabled: !isSelectable || isDisabledByMaxLimit,
                         selectionProps: {
                             title: tooltipMsg
                         }
                     }
                 };
             }),
-        [instanceTableRows, instanceProtection, isDemoMode, selectedHostType]
+        [instanceTableRows, instanceProtection, isDemoMode, selectedHostType, maxLimitState, t]
     );
 
     // Check if bulk action is visible (used for disabling row actions)
@@ -791,39 +806,19 @@ const InstancesTable = () => {
     const getTableColDefsPerEngineType = () =>
         getInstanceTableColumns({ t, updatedTableData, selectedHostType, isBulkSelectionActive: isBulkActionVisible });
 
-    // Compute selectable rows for bulk register
-    const selectableRowsForBulk = useMemo(
-        () => updatedTableData?.filter((row: any) => !row.cellProps?.isDisabled) || [],
-        [updatedTableData]
-    );
-
-    // Determine if header checkbox should be enabled
-    const isHeaderCheckboxEnabled = useMemo(() => {
-        if (selectedHostType !== DBType.MSSQL && selectedHostType !== DBType.ORACLE) return false;
-        if (loading) return false;
-        return selectableRowsForBulk.length > 0;
-    }, [selectedHostType, loading, selectableRowsForBulk]);
-
     // Check if max selection limit reached
     const isMaxSelectionReached = useMemo(
         () => selectedRowsForBulkRegister.length >= MAX_BULK_REGISTER_SELECTION,
         [selectedRowsForBulkRegister]
     );
 
-    // Compute header checkbox tooltip message
-    const headerCheckboxTooltip = useMemo(() => {
-        if (!isHeaderCheckboxEnabled) {
-            return t(
-                selectedHostType === DBType.ORACLE
-                    ? 'databases.bulk-register.select-header-disabled-oracle'
-                    : 'databases.bulk-register.select-header-disabled'
-            );
-        }
-        if (isMaxSelectionReached) {
-            return t('databases.bulk-register.max-selection-reached', { max: MAX_BULK_REGISTER_SELECTION });
-        }
-        return '';
-    }, [isHeaderCheckboxEnabled, isMaxSelectionReached, selectedHostType]);
+    // State for header checkbox - will be updated based on filtered rows
+    const [headerCheckboxEnabled, setHeaderCheckboxEnabled] = useState(false);
+    const [headerCheckboxTooltip, setHeaderCheckboxTooltip] = useState(
+        selectedHostType === DBType.ORACLE
+            ? t('databases.bulk-register.select-header-disabled-oracle')
+            : t('databases.bulk-register.select-header-disabled')
+    );
 
     const tableProps = useTable({
         isSorting: false,
@@ -837,7 +832,7 @@ const InstancesTable = () => {
         initialFilterState: getInitialFilter(),
         defaultSelectedRows: [],
         selectAllProps: {
-            isDisabled: !isHeaderCheckboxEnabled || isMaxSelectionReached,
+            isDisabled: !headerCheckboxEnabled || isMaxSelectionReached || loading,
             title: headerCheckboxTooltip
         },
         initialColumnState: Object.fromEntries(
@@ -962,6 +957,42 @@ const InstancesTable = () => {
         }
     });
 
+    // Update header checkbox state based on filtered/visible rows
+    const filteredRowsCount = tableProps.organizedRows?.length ?? 0;
+    const filterCount = tableProps.filterState?.count ?? 0;
+    const textFilter = tableProps.filterState?.textFilter ?? '';
+
+    useEffect(() => {
+        if (loading) {
+            setHeaderCheckboxEnabled(false);
+            setHeaderCheckboxTooltip(
+                selectedHostType === DBType.ORACLE
+                    ? t('databases.bulk-register.select-header-disabled-oracle')
+                    : t('databases.bulk-register.select-header-disabled')
+            );
+            return;
+        }
+
+        // Compute header state based on visible/filtered rows
+        const visibleRows = tableProps.organizedRows || [];
+        const newState = shouldEnableHeaderCheckbox(visibleRows, selectedHostType, t);
+
+        // Update enabled state
+        setHeaderCheckboxEnabled(newState.isEnabled);
+
+        // Compute tooltip
+        if (!newState.isEnabled) {
+            setHeaderCheckboxTooltip(newState.disableReason);
+        } else if (selectedRowsForBulkRegister.length >= MAX_BULK_REGISTER_SELECTION) {
+            setHeaderCheckboxTooltip(
+                t('databases.bulk-register.max-selection-reached', { max: MAX_BULK_REGISTER_SELECTION })
+            );
+        } else {
+            setHeaderCheckboxTooltip('');
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filteredRowsCount, filterCount, textFilter, selectedHostType, selectedRowsForBulkRegister.length]);
+
     // Handle banner filter views when instances table is already open
     useEffect(() => {
         inventoryBannerFilterUpdates(
@@ -1000,6 +1031,8 @@ const InstancesTable = () => {
             if (selectedRowsForBulkRegister.length > 0) {
                 dispatch(setSelectedRowsForBulkRegister([]));
             }
+            // Reset max limit state
+            setMaxLimitState({ isMaxReached: false, selectedIds: new Set() });
             return;
         }
 
@@ -1009,6 +1042,22 @@ const InstancesTable = () => {
 
         // Limit selection to MAX_BULK_REGISTER_SELECTION
         const limitedSelectedIds = selectedRowIds.slice(0, MAX_BULK_REGISTER_SELECTION);
+
+        // Update max limit state for disabling checkboxes
+        const newIsMaxReached = limitedSelectedIds.length >= MAX_BULK_REGISTER_SELECTION;
+        const newSelectedIds = new Set(limitedSelectedIds);
+
+        // Only update if max state changed or selected IDs changed
+        setMaxLimitState(prev => {
+            const idsChanged =
+                prev.selectedIds.size !== newSelectedIds.size ||
+                [...newSelectedIds].some(id => !prev.selectedIds.has(id));
+
+            if (prev.isMaxReached !== newIsMaxReached || idsChanged) {
+                return { isMaxReached: newIsMaxReached, selectedIds: newSelectedIds };
+            }
+            return prev;
+        });
 
         if (limitedSelectedIds.length > 0) {
             const selectedRows = updatedTableData?.filter((row: any) => limitedSelectedIds.includes(String(row.id)));

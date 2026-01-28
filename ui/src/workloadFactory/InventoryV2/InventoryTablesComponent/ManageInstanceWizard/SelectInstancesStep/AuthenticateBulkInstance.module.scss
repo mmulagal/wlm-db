@@ -197,6 +197,7 @@
                 align-items: center;
                 flex: 1;
                 width: 100%;
+                flex-wrap: wrap;
 
                 .instanceSelectField {
                     width: 30%;
@@ -208,6 +209,16 @@
 
                 .instancePasswordField {
                     width: 30%;
+                }
+
+                .oracleInstanceTextField {
+                    width: 22%;
+                    min-width: 180px;
+                }
+
+                .oracleInstancePasswordField {
+                    width: 22%;
+                    min-width: 180px;
                 }
 
                 .closeButtonContainer {

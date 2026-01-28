@@ -631,11 +631,15 @@ export function getOracleDatabaseColumnsList({
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
                 const { colText, disableMsg } = manageActionCol(t, DBType.ORACLE, rowData);
+                // Check if this is a Data Guard deployment (coming soon)
+                const isDataGuard = rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.DATAGUARD;
+                const dataGuardDisableMsg = isDataGuard ? t('databases.bulk-register.dataguard-coming-soon') : '';
+
                 // Disable action button when bulk selection is active
                 const isDisabledByBulkSelection = isBulkSelectionActive;
                 const effectiveDisableMsg = isDisabledByBulkSelection
                     ? t('databases.bulk-register.action-disabled-during-bulk-selection')
-                    : disableMsg;
+                    : dataGuardDisableMsg || disableMsg;
                 return (
                     <>
                         {effectiveDisableMsg ? (
