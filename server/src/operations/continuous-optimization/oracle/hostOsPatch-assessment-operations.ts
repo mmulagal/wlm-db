@@ -10,7 +10,7 @@ import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../..
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../../aws/ospatch-ssm-operations';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
-import { getResourceNameFromTags, sqlResponseParsing } from '../../../utils/utils';
+import { getResourceNameFromTags, sleep, sqlResponseParsing } from '../../../utils/utils';
 import { HostOsPatchDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
 import { checkLinuxRepoConnectivityScript } from './ssm-scripts/host-assessment-scripts';
 import GOLDEN_CONFIG from './golden-config';
@@ -176,6 +176,9 @@ async function runLinuxOsPatchAssessment(
             }
             return false;
         });
+
+        // Wait for AWS Patch Manager to prepare scan results before querying patch status
+        await sleep(5000);
 
         // Get patch status results
         const response = await getInstancesPatchStatus(credentialsId, region, instanceIds);
