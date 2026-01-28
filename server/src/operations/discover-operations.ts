@@ -701,7 +701,7 @@ async function getHostAndSqlInfoFromPsOutput(
 
                     // Build AOAG node→EC2 mapping when applicable (use pre-fetched maps)
                     let aoagClusterNodeDetails:
-                        | Array<{ node?: string; ip?: string; ec2InstanceId?: string }>
+                        | Array<{ node?: string; ip?: string; ec2InstanceId?: string; ec2InstanceName?: string }>
                         | undefined;
                     if (
                         sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT &&
@@ -710,12 +710,60 @@ async function getHostAndSqlInfoFromPsOutput(
                     ) {
                         try {
                             const clusterNodes = isArray(windowsClusterNodes) ? windowsClusterNodes : [];
-                            aoagClusterNodeDetails = clusterNodes.map(node => ({
-                                node: node?.Node,
-                                ip: node?.Address,
-                                ec2InstanceId: node?.Address ? aoagIpToInstanceId.get(node.Address) : undefined,
-                                ec2InstanceName: node?.Address ? aoagIpToInstanceName.get(node.Address) : undefined
-                            }));
+
+                            // For FCI+AOAG: aoagClusterNodeDetails.node should be the FCI virtual names (replica names)
+                            let aoagDetailsForMapping = aoagDetails;
+                            if (isArray(aoagDetails)) {
+                                aoagDetailsForMapping =
+                                    aoagDetails.find((item: any) => item && typeof item === 'object') || {};
+                            }
+                            if (baseDeploymentType === 'FCI' && aoagDetailsForMapping?.availabilityGroups) {
+                                // Extract unique replica names from all availability groups
+                                const replicaNames = new Set<string>();
+                                aoagDetailsForMapping.availabilityGroups.forEach((ag: any) => {
+                                    ag.replicas?.forEach((replica: any) => {
+                                        if (replica.replica) {
+                                            replicaNames.add(replica.replica);
+                                        }
+                                    });
+                                });
+
+                                // Build mapping: replica name -> IP -> EC2 details
+                                // For FCI, we match replica names to Windows cluster nodes by checking
+                                // if the replica (FCI virtual name) matches any cluster node's SQL Server resource
+                                aoagClusterNodeDetails = [];
+                                replicaNames.forEach(replicaName => {
+                                    // Find a cluster node IP that has this FCI instance
+                                    // For FCI, multiple physical nodes can host the same FCI, so we pick the first matching IP
+                                    const matchingClusterNode = clusterNodes.find(
+                                        (cn: any) => cn?.Address && aoagIpToInstanceId.has(cn.Address)
+                                    );
+                                    if (matchingClusterNode) {
+                                        // Find the EC2 instance that corresponds to this replica
+                                        // We use the IP mapping to get EC2 details
+                                        const nodeIp = matchingClusterNode.Address;
+                                        aoagClusterNodeDetails!.push({
+                                            node: replicaName, // FCI virtual name
+                                            ip: nodeIp,
+                                            ec2InstanceId: aoagIpToInstanceId.get(nodeIp),
+                                            ec2InstanceName: aoagIpToInstanceName.get(nodeIp)
+                                        });
+                                    } else {
+                                        // Fallback: add replica without EC2 mapping
+                                        aoagClusterNodeDetails!.push({
+                                            node: replicaName // FCI virtual name
+                                        });
+                                    }
+                                });
+                            } else {
+                                // Standalone AOAG: Windows hostname = SQL Server name, use windowsClusterNodes directly
+                                aoagClusterNodeDetails = clusterNodes.map((node: any) => ({
+                                    node: node?.Node,
+                                    ip: node?.Address,
+                                    ec2InstanceId: node?.Address ? aoagIpToInstanceId.get(node.Address) : undefined,
+                                    ec2InstanceName: node?.Address ? aoagIpToInstanceName.get(node.Address) : undefined
+                                }));
+                            }
                         } catch (e) {
                             logger.warn('Failed to build aoagClusterNodeDetails', e);
                         }
@@ -723,15 +771,27 @@ async function getHostAndSqlInfoFromPsOutput(
 
                     let processedAoagDetails = aoagDetails;
                     if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT && aoagDetails) {
-                        processedAoagDetails = { ...aoagDetails };
+                        // Handle case where aoagDetails is an array (from PowerShell JSON serialization)
+                        let aoagDetailsObj = aoagDetails;
+                        if (isArray(aoagDetails)) {
+                            aoagDetailsObj = aoagDetails.find((item: any) => item && typeof item === 'object') || {};
+                        }
+                        processedAoagDetails = { ...aoagDetailsObj };
 
                         if (baseDeploymentType) {
                             processedAoagDetails.baseDeploymentType = baseDeploymentType;
                         }
 
                         if (processedAoagDetails.serverInfo) {
-                            // Recreate serverInfo with only the fields defined in schema (exclude isClustered)
-                            const { serverName, isHadrEnabled } = processedAoagDetails.serverInfo;
+                            let serverInfoObj = processedAoagDetails.serverInfo;
+                            if (typeof serverInfoObj === 'string') {
+                                try {
+                                    serverInfoObj = JSON.parse(serverInfoObj);
+                                } catch {
+                                    serverInfoObj = {};
+                                }
+                            }
+                            const { serverName, isHadrEnabled } = serverInfoObj;
                             processedAoagDetails.serverInfo = {
                                 ...(serverName && { serverName }),
                                 ...(isHadrEnabled !== undefined && { isHadrEnabled })

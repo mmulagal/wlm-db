@@ -750,7 +750,7 @@ ssmMock
     .on(SendCommandCommand, { Parameters: dbSummary })
     .resolves(listSendCommandCommandResponse.dbSummaryCommand)
     .on(SendCommandCommand, { Parameters: dbSummaryWithAoag })
-    .resolves(listSendCommandCommandResponse.dbSummaryCommand)
+    .resolves(getSampleCommandResponse('dbSummaryWithAoagCommand'))
     .on(SendCommandCommand, { Parameters: pgsqlInstanceInfo })
     .resolves(listSendCommandCommandResponse.getPgsqlInstanceInfoCommand)
     .on(SendCommandCommand, params => {
@@ -1183,6 +1183,15 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryCommand'
     })
     .resolves(getCommandInvocationResponse.dbSummaryResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryWithAoagCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'dbSummaryWithAoagCommand',
+            JSON.stringify(getCommandInvocationResponse.dbSummaryWithAoagDatabases)
+        )
+    )
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeStorageCommand'
     })

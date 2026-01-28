@@ -1,39 +1,41 @@
-import { afterAll, beforeAll } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { STORAGE_TYPE } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import { getAllClusterNodeDetails, getDatabaseHostSummaryV2 } from '../../src/operations/database-hosts-operations';
 import { ACCOUNT_ID, SECRETS } from '../../src/utils/consts';
 import { createResource, deleteResource } from '../../src/lib/database/db';
+import { initializeDatabase } from '../../src/utils/prisma-utils';
 
 SECRETS.AUTH_CLIENT_ID = `${faker.string.alphanumeric(20)}`;
 SECRETS.SIGNURL_ACCESS_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 SECRETS.SIGNURL_SECRET_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-beforeAll(async () => {
-    await createResource(ACCOUNT_ID, {
-        resourceId: '36E53042-04E8-40C9-AE69-26E56CB0D216',
-        resourceName: 'test-resource',
-        resourceType: 'MSSQL',
-        coRelationId: 'fs-f6082f35c1db',
-        cloudProviderAccountId: 'test-aws-account',
-        cloudProviderName: 'AWS',
-        region: 'ap-southeast-1',
-        credentialsId: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
-        storageType: STORAGE_TYPE.FSXN,
-        metadata: {
-            node1InstanceId: 'i-07e76a4b916548dc0',
-            node2InstanceId: 'i-0880a21327284f67c',
-            sqlDeploymentType: 'FCI'
-        }
-    });
-});
-
-afterAll(async () => {
-    await deleteResource(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
-    await deleteResource(ACCOUNT_ID, 'fs-f6082f35c1db');
-});
-
 describe('Database host operations', () => {
+    beforeAll(async () => {
+        // Ensure database is initialized before test runs
+        await initializeDatabase();
+        await createResource(ACCOUNT_ID, {
+            resourceId: '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            resourceName: 'test-resource',
+            resourceType: 'MSSQL',
+            coRelationId: 'fs-f6082f35c1db',
+            cloudProviderAccountId: 'test-aws-account',
+            cloudProviderName: 'AWS',
+            region: 'ap-southeast-1',
+            credentialsId: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            storageType: STORAGE_TYPE.FSXN,
+            metadata: {
+                node1InstanceId: 'i-07e76a4b916548dc0',
+                node2InstanceId: 'i-0880a21327284f67c',
+                sqlDeploymentType: 'FCI'
+            }
+        });
+    });
+
+    afterAll(async () => {
+        await deleteResource(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
+        await deleteResource(ACCOUNT_ID, 'fs-f6082f35c1db');
+    });
     it('Get databases host summary', async () => {
         const resp = await getDatabaseHostSummaryV2(
             ACCOUNT_ID,

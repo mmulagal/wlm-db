@@ -4228,5 +4228,17 @@
     "aoagDatabaseAgCheckResponse": {
         "databasesInAgCount": 2,
         "participatingAgs": [{ "agName": "DemoAOAG" }]
+    },
+    "dbSummaryWithAoagDatabases": {
+        "MSSQLSERVER": [
+            { "databaseId": 177, "databaseName": "RetailBanking", "creationDate": "2023-04-11T17:49:40.963", "databaseStatus": "ONLINE", "databaseSize": 566935683072, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "SalesAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
+            { "databaseId": 34, "databaseName": "MFGSales", "creationDate": "2023-04-11T17:23:39.663", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "SalesAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
+            { "databaseId": 203, "databaseName": "AssetManagement", "creationDate": "2023-04-11T17:49:48.887", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "FinanceAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
+            { "databaseId": 58, "databaseName": "HRAudit", "creationDate": "2023-04-11T17:43:09.220", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "FinanceAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
+            { "databaseId": 234, "databaseName": "PrivateBanking", "creationDate": "2023-04-11T17:49:58.353", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "FinanceAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
+            { "databaseId": 30, "databaseName": "SalesData", "creationDate": "2023-04-11T17:23:38.587", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "SalesAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
+            { "databaseId": 24, "databaseName": "ExpenseTracker", "creationDate": "2023-04-11T17:23:36.840", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": null, "replicaRole": null, "synchronizationState": null, "isReadableSecondary": null },
+            { "databaseId": 250, "databaseName": "TimeSheet", "creationDate": "2023-04-11T17:50:03.333", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": null, "replicaRole": null, "synchronizationState": null, "isReadableSecondary": null }
+        ]
     }
 }

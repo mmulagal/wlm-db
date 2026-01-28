@@ -1632,6 +1632,12 @@ async function getDatabaseInstancesSummary(
     const shouldQueryNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLowerCase());
     const shouldQueryAoag = fieldsValues?.includes(DatabaseHostsQueryFields.AOAG.toLowerCase());
 
+    // In demo mode, only include AOAG fields in database query if deployment is actually AOAG
+    const hasAoagDeployment = databaseInstances.some(
+        instance => instance.database_deployment_type?.toUpperCase() === 'AOAG'
+    );
+    const shouldIncludeAoagInQuery = IS_DEMO_FLOW ? shouldQueryAoag && hasAoagDeployment : shouldQueryAoag;
+
     let serverDetails: any;
     let databaseInstancetopologyData: any;
     let performanceData: any;
@@ -1766,7 +1772,7 @@ async function getDatabaseInstancesSummary(
                               databaseInstances,
                               activeNodeInstanceId,
                               isSqlAuthEnabled,
-                              shouldQueryAoag // Include AOAG fields in database list when requested
+                              shouldIncludeAoagInQuery // In demo mode, only include AOAG fields for AOAG deployment type
                           )
                       ]
                     : [Promise.resolve()]),

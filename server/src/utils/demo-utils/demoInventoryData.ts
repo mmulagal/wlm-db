@@ -778,7 +778,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             // AOAG Standalone Instances (2-node cluster with default instance)
             // ============================================================
             {
-                ec2InstanceId: 'i-0a1b2c3d4e5f6aoag1',
+                ec2InstanceId: 'i-0a1b2c3d4e5f6a0a1',
                 ec2InstanceType: 'm5.xlarge',
                 ec2UsageOperation: 'RunInstances:0002',
                 ssmState: 'connected',
@@ -814,7 +814,9 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         storage: [
                             {
                                 type: 'FSXN',
-                                id: fsxId
+                                id: fsxId,
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
                             }
                         ],
                         deploymentTypes: [
@@ -869,13 +871,13 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                             {
                                 node: 'PRD-SQL-CRM-AG1',
                                 ip: '10.0.6.201',
-                                ec2InstanceId: 'i-0a1b2c3d4e5f6aoag1',
+                                ec2InstanceId: 'i-0a1b2c3d4e5f6a0a1',
                                 ec2InstanceName: 'PRD-SQL-CRM-AG1'
                             },
                             {
                                 node: 'PRD-SQL-CRM-AG2',
                                 ip: '10.0.28.201',
-                                ec2InstanceId: 'i-0a1b2c3d4e5f6aoag2',
+                                ec2InstanceId: 'i-0a1b2c3d4e5f6a0a2',
                                 ec2InstanceName: 'PRD-SQL-CRM-AG2'
                             }
                         ]
@@ -883,7 +885,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 ]
             },
             {
-                ec2InstanceId: 'i-0a1b2c3d4e5f6aoag2',
+                ec2InstanceId: 'i-0a1b2c3d4e5f6a0a2',
                 ec2InstanceType: 'm5.xlarge',
                 ec2UsageOperation: 'RunInstances:0002',
                 ssmState: 'connected',
@@ -919,7 +921,9 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         storage: [
                             {
                                 type: 'FSXN',
-                                id: fsxId
+                                id: fsxId,
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
                             }
                         ],
                         deploymentTypes: [
@@ -974,13 +978,13 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                             {
                                 node: 'PRD-SQL-CRM-AG1',
                                 ip: '10.0.6.201',
-                                ec2InstanceId: 'i-0a1b2c3d4e5f6aoag1',
+                                ec2InstanceId: 'i-0a1b2c3d4e5f6a0a1',
                                 ec2InstanceName: 'PRD-SQL-CRM-AG1'
                             },
                             {
                                 node: 'PRD-SQL-CRM-AG2',
                                 ip: '10.0.28.201',
-                                ec2InstanceId: 'i-0a1b2c3d4e5f6aoag2',
+                                ec2InstanceId: 'i-0a1b2c3d4e5f6a0a2',
                                 ec2InstanceName: 'PRD-SQL-CRM-AG2'
                             }
                         ]
