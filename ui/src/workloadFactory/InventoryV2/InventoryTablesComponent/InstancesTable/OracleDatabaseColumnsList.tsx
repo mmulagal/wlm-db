@@ -63,7 +63,13 @@ export function getOracleDatabaseColumnsList({
             width: '260px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                const name = rowData?.databaseInstanceName;
+                let name = rowData?.databaseInstanceName;
+                if (
+                    rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.DATAGUARD &&
+                    rowData?.dataguardDetails?.dbName
+                ) {
+                    name = rowData?.dataguardDetails?.dbName;
+                }
                 return (
                     <div className={styles.firstColumnClass}>
                         <DsTypography
@@ -116,15 +122,24 @@ export function getOracleDatabaseColumnsList({
             id: '2',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'databaseInstanceName'),
-            renderCell: (cellData: string) => (
-                <DsTypography
-                    title={cellData || t('databases.general.not-available-table-columns')}
-                    variant="Regular_13"
-                    className={`${styles.colText} ${styles.textClass}`}
-                >
-                    {cellData || t('databases.general.not-available-table-columns')}
-                </DsTypography>
-            )
+            renderCell: (cellData: string, rowData: any) => {
+                let name = cellData;
+                if (
+                    rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.DATAGUARD &&
+                    rowData?.dataguardDetails?.dbUniqueName
+                ) {
+                    name = rowData?.dataguardDetails?.dbUniqueName;
+                }
+                return (
+                    <DsTypography
+                        title={name || t('databases.general.not-available-table-columns')}
+                        variant="Regular_13"
+                        className={`${styles.colText} ${styles.textClass}`}
+                    >
+                        {name || t('databases.general.not-available-table-columns')}
+                    </DsTypography>
+                );
+            }
         },
         {
             Header: t('databases.databases-table.oracle.headers.host-name'),
