@@ -160,6 +160,7 @@ describe('getFocusStatus - assessment not run warning', () => {
     const TEST_RESOURCE_ID = 'resource-assessment-warning-test';
     const TEST_INSTANCE_ID = 'i-assessment-warning-test';
     let queryRawSpy: MockInstance;
+    let aggregateSpy: MockInstance;
 
     beforeAll(async () => {
         // Create a database instance without any assessment results
@@ -177,12 +178,22 @@ describe('getFocusStatus - assessment not run warning', () => {
             fsxSvmId: {}
         });
 
-        // Mock $queryRaw to return empty array (no assessment results)
+        // Mock $queryRaw to return empty array (no severity items from assessment)
         queryRawSpy = vi.spyOn(prisma.client, '$queryRaw').mockResolvedValue([]);
+
+        // Mock aggregate to return 0 instances with assessment results (prismock limitation)
+        aggregateSpy = vi.spyOn(prisma.client.database_instances, 'aggregate').mockResolvedValue({
+            _count: { id: 0 },
+            _avg: {},
+            _sum: {},
+            _min: {},
+            _max: {}
+        });
     });
 
     afterAll(async () => {
         queryRawSpy.mockRestore();
+        aggregateSpy.mockRestore();
         // Clean up test data
         await deleteDatabaseInstance(TEST_ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, TEST_RESOURCE_ID, [TEST_INSTANCE_ID]);
     });
@@ -192,6 +203,6 @@ describe('getFocusStatus - assessment not run warning', () => {
         expect(severity).toEqual('warning');
         expect(totalItems).toEqual(0);
         expect(items.length).toEqual(1);
-        expect(items[0].description).toContain('Assessment has not been run yet');
+        expect(items[0].description).toContain('well-architected');
     });
 });

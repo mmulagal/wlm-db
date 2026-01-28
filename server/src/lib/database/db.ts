@@ -876,11 +876,20 @@ async function deleteOlderDeployments(olderDate: number) {
 
 async function countDatabaseInstances(
     accountId?: string,
-    credentialsId?: string,
-    region?: string,
-    resourceType?: string
+    credentialsIdList?: string[],
+    regionList?: string[],
+    resourceType?: string,
+    additionalFilters?: {
+        assessmentResults?: boolean;
+    }
 ) {
-    logger.info('Counting managed instances', { accountId, credentialsId, region, resourceType });
+    logger.info('Counting managed instances', {
+        accountId,
+        credentialsIdList,
+        regionList,
+        resourceType,
+        additionalFilters
+    });
 
     if (accountId) {
         accountId = checkAccount(accountId);
@@ -892,9 +901,10 @@ async function countDatabaseInstances(
         },
         where: {
             ...(accountId && { account_id: accountId }),
-            ...(credentialsId && { credentials_id: credentialsId }),
-            ...(region && { region }),
-            ...(resourceType && { resource_type: resourceType })
+            ...(!isEmpty(credentialsIdList) && { credentials_id: { in: credentialsIdList } }),
+            ...(!isEmpty(regionList) && { region: { in: regionList } }),
+            ...(resourceType && { resource_type: resourceType }),
+            ...(additionalFilters?.assessmentResults && { assessment_results: { not: {} } })
         }
     });
 }

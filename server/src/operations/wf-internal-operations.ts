@@ -148,13 +148,13 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
 
     const credentialsIdList = credentialsIds?.split(',').map(id => id.trim());
     const regionList = regions?.split(',').map(region => region.trim());
-    const [groupedDatabaseInstances, instanceCount] = await Promise.all([
+    const [groupedDatabaseInstances, assessedInstanceCount] = await Promise.all([
         getGroupedDatabaseInstancesBySeverity({
             accountId,
             credentialsIdList,
             regionList
         }),
-        countDatabaseInstances(accountId)
+        countDatabaseInstances(accountId, credentialsIdList, regionList, undefined, { assessmentResults: true })
     ]);
 
     const [highSeverityItems, lowSeverityItems] = partition(groupedDatabaseInstances, {
@@ -181,11 +181,10 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
         };
     }
 
-    // Check if there are database instances but no assessment results
-    // This indicates assessment has not been run yet
-    if (instanceCount._count.id > 0) {
+    // Check if assessment has not been run (no instances with assessment_results)
+    if (assessedInstanceCount?._count?.id === 0) {
         return {
-            items: [{ description: 'Assessment has not been run yet. Run assessment to see recommendations.' }],
+            items: [{ description: 'No databases well-architected issues analysis performed' }],
             severity: 'warning',
             totalItems: 0
         };
