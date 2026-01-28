@@ -497,7 +497,7 @@ export const fetchErrorInvestigationStateBulk = async (
         const keysToFetch = new Set<string>(); // Only keys that need API calls
 
         selectedMultiDetectInstances.forEach((instance: BulkDetectedInstance) => {
-            const { ec2InstanceId, credentialId, regionId, hostRow, databaseHostId } = instance.data || instance || {};
+            const { ec2InstanceId, credentialId, regionId, hostRow, databaseHostId } = instance.data || {};
 
             if (ec2InstanceId && credentialId && regionId) {
                 const key = `${credentialId}_${regionId}_${ec2InstanceId}`;

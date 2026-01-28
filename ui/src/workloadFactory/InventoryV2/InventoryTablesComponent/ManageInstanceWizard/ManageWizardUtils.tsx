@@ -30,6 +30,33 @@ import { updateInstanceStatus } from '../../InventoryUtilsV2';
 import { areAllInstancesAuthenticated, createBulkAuthPayload } from './SelectInstancesStep/AuthenticateBulkUtils';
 import { setIsDetectReplicaHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import { InstanceAuthStatusMap } from '../../../../utils/types/inventoryV2Types';
+import { isAlreadyDetectedCheckBulkSelection } from './ManageInstanceUtils';
+
+/**
+ * Wraps an instance in the bulk format { data: instance } to match the SelectInstances dropdown structure.
+ * This ensures consistent data structure between bulk selection flow and AOAG flow.
+ * @param instance - The instance row from instanceTableRows
+ * @returns Instance wrapped in bulk format with data property
+ */
+export const wrapInstanceForBulk = (instance: any) => {
+    // If already wrapped, return as-is
+    if (instance?.data && typeof instance.data === 'object' && instance.data.ec2InstanceId) {
+        return instance;
+    }
+
+    const isAuthorized = isAlreadyDetectedCheckBulkSelection(instance);
+
+    return {
+        ...instance,
+        id: instance?.id,
+        label: `${instance?.databaseInstanceName}, ${instance?.name}, ${
+            isAuthorized ? 'Authenticated' : 'Unauthenticated'
+        }`,
+        value: instance?.name,
+        data: instance,
+        authorized: isAuthorized
+    };
+};
 
 /**
  * Validates database authentication credentials (SQL Server/Windows/Oracle) without FSx registration.
@@ -279,7 +306,8 @@ export const getReplicaInstanceList = (result: any, manageSingleInstanceData: an
         );
 
         if (matchingInstance) {
-            replicaInstanceList.push(matchingInstance);
+            // Wrap instance in bulk format for consistency with SelectInstances dropdown
+            replicaInstanceList.push(wrapInstanceForBulk(matchingInstance));
         }
     });
 
@@ -324,7 +352,8 @@ export const getReplicaInstanceListForAuthenticatedRow = (manageSingleInstanceDa
         );
 
         if (matchingInstance) {
-            replicaInstanceList.push(matchingInstance);
+            // Wrap instance in bulk format for consistency with SelectInstances dropdown
+            replicaInstanceList.push(wrapInstanceForBulk(matchingInstance));
         }
     });
 
@@ -422,7 +451,10 @@ export const handleReplicaAuthenticationDialog = (
                                 return !isAuthRequiredForInstance(replicaData, hostType);
                             });
 
-                            const bulkInstances = [manageSingleInstanceData, ...replicaSelectedRowsForManage];
+                            const bulkInstances = [
+                                wrapInstanceForBulk(manageSingleInstanceData),
+                                ...replicaSelectedRowsForManage
+                            ];
 
                             // Update to bulk operation mode and flag to start at FSx authentication step
                             dispatch(setSelectedMultiDetectInstances(bulkInstances));
@@ -661,7 +693,10 @@ export const handleReplicaAuthenticationAndDialog = async (
                     const newStore = store.getState();
                     const { selectedMultiDetectInstances: latestSelectedMultiDetectInstances }: any =
                         newStore?.inventoryV2;
-                    const bulkInstances = [manageSingleInstanceData, ...latestSelectedMultiDetectInstances];
+                    const bulkInstances = [
+                        wrapInstanceForBulk(manageSingleInstanceData),
+                        ...latestSelectedMultiDetectInstances
+                    ];
 
                     // Update to bulk operation mode and flag to start at FSx authentication step
                     dispatch(setSelectedMultiDetectInstances(bulkInstances));
@@ -706,7 +741,7 @@ export const handleReplicaAuthenticationAndDialog = async (
                                             selectedMultiDetectInstances: latestSelectedMultiDetectInstances
                                         }: any = newStore?.inventoryV2;
                                         const bulkInstances = [
-                                            manageSingleInstanceData,
+                                            wrapInstanceForBulk(manageSingleInstanceData),
                                             ...latestSelectedMultiDetectInstances
                                         ];
                                         dispatch(setSelectedMultiDetectInstances(bulkInstances));
@@ -734,7 +769,10 @@ export const handleReplicaAuthenticationAndDialog = async (
                                             }
                                         );
 
-                                        const bulkInstances = [manageSingleInstanceData, ...successfulInstances];
+                                        const bulkInstances = [
+                                            wrapInstanceForBulk(manageSingleInstanceData),
+                                            ...successfulInstances
+                                        ];
                                         dispatch(setSelectedMultiDetectInstances(bulkInstances));
                                         dispatch(setWizardOperationType(ACTION_TYPE.BULK));
                                         dispatch(setBulkWizardStartAtFsxStep(true));
