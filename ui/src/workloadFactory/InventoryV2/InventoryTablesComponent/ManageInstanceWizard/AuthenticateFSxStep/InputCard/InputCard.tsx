@@ -1,7 +1,7 @@
 import { Popover, DsTypography, PasswordField, TextField, useWizard } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useCallback } from 'react';
 import classNames from 'classnames';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info_tooltip.svg';
 import styles from './InputCard.module.scss';
@@ -82,7 +82,15 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
         discoverContext
     ]);
 
-    const fsxNames = useMemo(() => [...new Set(fsxList.map((fsx: FsxItem) => fsx.fsxName))], [fsxList]);
+    // Get unique FSx items by fsxId for MANAGE_CRED_MANUALLY mode
+    const uniqueFsxList = useMemo(() => {
+        const seenIds = new Set<string>();
+        return fsxList.filter((fsx: FsxItem) => {
+            if (seenIds.has(fsx.fsxId)) return false;
+            seenIds.add(fsx.fsxId);
+            return true;
+        });
+    }, [fsxList]);
 
     // Track the previous mode to detect switches
     const prevModeRef = useRef(selectedFSxForOntapCredentials);
@@ -94,16 +102,16 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
 
         if (wasUseTheSameCred && isNowManageManually) {
             // Find all authenticated FSx and populate their credentials
-            fsxNames.forEach((fsxName: string) => {
-                const authStatus = fsxAuthStatus[fsxName];
+            uniqueFsxList.forEach((fsx: FsxItem) => {
+                const authStatus = fsxAuthStatus[fsx.fsxId];
                 const isAuthenticated = authStatus?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
 
                 if (isAuthenticated && detectOntapUsername && detectOntapPassword) {
-                    // Only populate if not already set
-                    if (!detectOntapCredentialsByFsx[fsxName]?.username) {
+                    // Only populate if not already set (credentials are keyed by fsxId)
+                    if (!detectOntapCredentialsByFsx[fsx.fsxId]?.username) {
                         dispatch(
                             setDetectONTAPCredentialsByFsx({
-                                fsxName,
+                                fsxId: fsx.fsxId,
                                 username: detectOntapUsername,
                                 password: detectOntapPassword
                             })
@@ -114,16 +122,20 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
         }
 
         prevModeRef.current = selectedFSxForOntapCredentials;
-    }, [selectedFSxForOntapCredentials, fsxNames, fsxAuthStatus, detectOntapUsername, detectOntapPassword, dispatch]);
+    }, [
+        selectedFSxForOntapCredentials,
+        uniqueFsxList,
+        fsxAuthStatus,
+        detectOntapUsername,
+        detectOntapPassword,
+        dispatch
+    ]);
 
-    // Helper to get auth status for a specific FSx
-    const getFsxAuthStatus = (fsxName: string): FsxAuthStatus | undefined => {
-        const fsx = fsxList.find(f => f.fsxName === fsxName);
-        if (fsx && fsxAuthStatus[fsx.fsxId]) {
-            return fsxAuthStatus[fsx.fsxId];
-        }
-        return undefined;
-    };
+    // Helper to get auth status for a specific FSx by fsxId (memoized for referential stability)
+    const getFsxAuthStatusById = useCallback(
+        (fsxId: string): FsxAuthStatus | undefined => fsxAuthStatus[fsxId],
+        [fsxAuthStatus]
+    );
 
     const tooltipContent = (
         <div className={CommonStyles.tooltipContent}>
@@ -211,8 +223,8 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
 
             {selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY && (
                 <div className={styles.card2}>
-                    {fsxNames.map((fsxName: string, index: number) => {
-                        const authStatus = getFsxAuthStatus(fsxName);
+                    {uniqueFsxList.map((fsx: FsxItem, index: number) => {
+                        const authStatus = getFsxAuthStatusById(fsx.fsxId);
                         const isAuthenticated =
                             authStatus && authStatus.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
                         const isFailed =
@@ -220,28 +232,30 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
 
                         return (
                             <div
-                                key={fsxName}
-                                className={`${styles.row} ${index !== fsxNames.length - 1 ? styles.rowWithBorder : ''}`}
+                                key={fsx.fsxId}
+                                className={`${styles.row} ${
+                                    index !== uniqueFsxList.length - 1 ? styles.rowWithBorder : ''
+                                }`}
                             >
                                 <div className={styles.firstCol}>
-                                    <DsTypography variant="Semibold_14">{fsxName}</DsTypography>
+                                    <DsTypography variant="Semibold_14">{fsx.fsxName}</DsTypography>
                                 </div>
 
                                 <div className={styles.textFieldContainer}>
                                     <TextField
                                         label={t('databases.register-flow.fsx-for-ontap-username')}
-                                        value={detectOntapCredentialsByFsx[fsxName]?.username || ''}
+                                        value={detectOntapCredentialsByFsx[fsx.fsxId]?.username || ''}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                             dispatch(
                                                 setDetectONTAPCredentialsByFsx({
-                                                    fsxName,
+                                                    fsxId: fsx.fsxId,
                                                     username: e.target.value
                                                 })
                                             );
                                         }}
                                         className={`${styles.textFieldStyle} ${isFailed ? styles.errorBorder : ''}`}
                                         error={
-                                            (!detectOntapCredentialsByFsx[fsxName]?.username && hitNextForStep2) ||
+                                            (!detectOntapCredentialsByFsx[fsx.fsxId]?.username && hitNextForStep2) ||
                                             isFailed
                                                 ? t('databases.general.action-required')
                                                 : ''
@@ -254,18 +268,18 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
 
                                     <PasswordField
                                         label={t('databases.register-flow.fsx-for-ontap-password')}
-                                        value={detectOntapCredentialsByFsx[fsxName]?.password || ''}
+                                        value={detectOntapCredentialsByFsx[fsx.fsxId]?.password || ''}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                             dispatch(
                                                 setDetectONTAPCredentialsByFsx({
-                                                    fsxName,
+                                                    fsxId: fsx.fsxId,
                                                     password: e.target.value
                                                 })
                                             );
                                         }}
                                         className={`${styles.textFieldStyle} ${isFailed ? styles.errorBorder : ''}`}
                                         error={
-                                            (!detectOntapCredentialsByFsx[fsxName]?.password && hitNextForStep2) ||
+                                            (!detectOntapCredentialsByFsx[fsx.fsxId]?.password && hitNextForStep2) ||
                                             isFailed
                                                 ? t('databases.general.action-required')
                                                 : ''

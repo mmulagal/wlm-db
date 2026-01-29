@@ -1195,7 +1195,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 setState({ hitNextForStep2: true });
                 // @ts-ignore
                 const engineType = selectedMultiDetectInstances[0]?.data?.hostType || DBType.MSSQL;
-                const fieldsCorrect = detectFsxFieldsValidation(manageSingleInstanceData, engineType);
+                // Pass bulk mode flag and selected instances for proper FSx validation
+                const fieldsCorrect = detectFsxFieldsValidation(null, engineType, true, selectedMultiDetectInstances);
                 if (fieldsCorrect) {
                     // Use handleBulkFsxAuthenticate for FSx-only authentication (similar to single flow)
                     handleBulkFsxAuthenticate();

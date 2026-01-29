@@ -380,17 +380,17 @@ const inventoryV2Slice = createSlice({
         },
         setDetectONTAPCredentialsByFsx: (
             state,
-            action: PayloadAction<{ fsxName: string; username?: string; password?: string }>
+            action: PayloadAction<{ fsxId: string; username?: string; password?: string }>
         ) => {
-            const { fsxName, username, password } = action.payload;
-            if (!state.detectOntapCredentialsByFsx[fsxName]) {
-                state.detectOntapCredentialsByFsx[fsxName] = { username: '', password: '' };
+            const { fsxId, username, password } = action.payload;
+            if (!state.detectOntapCredentialsByFsx[fsxId]) {
+                state.detectOntapCredentialsByFsx[fsxId] = { username: '', password: '' };
             }
             if (username !== undefined) {
-                state.detectOntapCredentialsByFsx[fsxName].username = username;
+                state.detectOntapCredentialsByFsx[fsxId].username = username;
             }
             if (password !== undefined) {
-                state.detectOntapCredentialsByFsx[fsxName].password = password;
+                state.detectOntapCredentialsByFsx[fsxId].password = password;
             }
         },
         setFsxAuthStatus: (
@@ -405,6 +405,11 @@ const inventoryV2Slice = createSlice({
         },
         resetFsxAuthStatus: state => {
             state.fsxAuthStatus = {};
+            // Also reset FSx credentials for fresh state on next wizard
+            state.detectOntapUsername = '';
+            state.detectOntapPassword = '';
+            state.detectOntapCredentialsByFsx = {};
+            state.selectedFSxForOntapCredentials = FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED;
         },
         setInstanceAuthStatus: (
             state,
@@ -418,6 +423,21 @@ const inventoryV2Slice = createSlice({
         },
         resetInstanceAuthStatus: state => {
             state.instanceAuthStatus = {};
+            // Also reset instance authentication credentials for fresh state on next wizard
+            state.detectManageUserName = '';
+            state.detectManagePassword = '';
+            state.detectWindowsAuthentication = { username: '', password: '' };
+            state.authenticationType = AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION;
+            state.credentialOption = CREDENTIAL_OPTIONS.SAME_FOR_ALL;
+            state.bulkInstanceCredentials = {
+                authMode: {
+                    label: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
+                    value: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                },
+                username: '',
+                password: ''
+            };
+            state.instanceCredentials = {};
         },
         setDetectWindowsAuthentication: (
             state,

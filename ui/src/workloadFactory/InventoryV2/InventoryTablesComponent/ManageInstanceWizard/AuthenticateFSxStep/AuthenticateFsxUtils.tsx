@@ -16,6 +16,7 @@ export interface StorageItem {
     id: string;
     svmId?: string;
     protocol?: string;
+    name?: string; // FSx name if available
 }
 
 // FSx item interface with formatted fields
@@ -38,6 +39,7 @@ export interface InstanceIdentifiers {
     regionId?: string;
     hostType?: string;
     fsxId?: string; // Direct fsxId from instance data (fallback when storage/discover is missing)
+    fileSystemName?: string; // FSx name from instance data (for display)
 }
 
 // Return type for the custom hook
@@ -81,7 +83,8 @@ export const useFsxDiscoverContext = (): FsxDiscoverContextResult => {
             credentialId: manageSingleInstanceData.credentialId,
             regionId: manageSingleInstanceData.regionId,
             hostType: manageSingleInstanceData.hostType,
-            fsxId: manageSingleInstanceData.fsxId // Direct fsxId fallback
+            fsxId: manageSingleInstanceData.fsxId, // Direct fsxId fallback
+            fileSystemName: manageSingleInstanceData.fileSystemName // FSx name for display
         };
     }, [isBulkMode, manageSingleInstanceData]);
 
@@ -140,7 +143,7 @@ export const getStorageFromDiscoverData = (
 };
 
 // Extract FSx list from storage array - returns all FSXN type items
-// Falls back to discover data, then to direct fsxId from instance data
+// Also includes direct fsxId from instance data to get all related FSx
 export const getAllFsxFromStorage = (
     storage: StorageItem[] | undefined,
     instanceIdentifiers?: InstanceIdentifiers,
@@ -153,27 +156,35 @@ export const getAllFsxFromStorage = (
         effectiveStorage = getStorageFromDiscoverData(instanceIdentifiers, discoverContext);
     }
 
-    // Extract FSx from storage if available
+    // Use a Set to track unique FSx IDs
+    const seenFsxIds = new Set<string>();
     const fsxFromStorage: FsxItem[] = [];
+
+    // Extract FSx from storage if available
     if (effectiveStorage && Array.isArray(effectiveStorage)) {
-        effectiveStorage
-            .filter(item => item.type === DETECT_HOST_VAR.FSXN && item.id)
-            .forEach(item => {
+        const fsxnItems = effectiveStorage.filter(item => item.type === DETECT_HOST_VAR.FSXN && item.id);
+        fsxnItems.forEach(item => {
+            if (!seenFsxIds.has(item.id)) {
+                seenFsxIds.add(item.id);
+                // Try to get name from storage item first, then from instanceIdentifiers if single FSx
+                let fsxName = item.name;
+                if (!fsxName && fsxnItems.length === 1 && instanceIdentifiers?.fileSystemName) {
+                    fsxName = instanceIdentifiers.fileSystemName;
+                }
                 fsxFromStorage.push({
                     fsxId: item.id,
-                    fsxName: item.id
+                    fsxName: fsxName || item.id // Fall back to id if name not available
                 });
-            });
+            }
+        });
     }
 
-    // If no FSx found from storage/discover, use direct fsxId from instance data as fallback
-    if (fsxFromStorage.length === 0 && instanceIdentifiers?.fsxId) {
-        return [
-            {
-                fsxId: instanceIdentifiers.fsxId,
-                fsxName: instanceIdentifiers.fsxId
-            }
-        ];
+    // Also add direct fsxId from instance data
+    if (instanceIdentifiers?.fsxId && !seenFsxIds.has(instanceIdentifiers.fsxId)) {
+        fsxFromStorage.push({
+            fsxId: instanceIdentifiers.fsxId,
+            fsxName: instanceIdentifiers.fileSystemName || instanceIdentifiers.fsxId
+        });
     }
 
     return fsxFromStorage;
@@ -199,14 +210,15 @@ export const getAllFsxFromBulkStorage = (
     selectedInstances.forEach(instance => {
         const storage = instance.data?.storage || instance.storage;
 
-        // Build instance identifiers for discover data lookup (including fsxId fallback)
+        // Build instance identifiers for discover data lookup (including fsxId and fileSystemName fallback)
         const instanceIdentifiers: InstanceIdentifiers = {
             ec2InstanceId: instance.data?.ec2InstanceId || instance.ec2InstanceId,
             databaseInstanceName: instance.data?.databaseInstanceName || instance.databaseInstanceName,
             credentialId: instance.data?.credentialId || instance.credentialsId,
             regionId: instance.data?.regionId || instance.region,
             hostType: instance.data?.hostType,
-            fsxId: instance.data?.fsxId || instance.fsxId // Direct fsxId fallback
+            fsxId: instance.data?.fsxId || instance.fsxId, // Direct fsxId fallback
+            fileSystemName: instance.data?.fileSystemName || instance.fileSystemName // FSx name for display
         };
 
         const instanceFsx = getAllFsxFromStorage(storage, instanceIdentifiers, discoverContext);

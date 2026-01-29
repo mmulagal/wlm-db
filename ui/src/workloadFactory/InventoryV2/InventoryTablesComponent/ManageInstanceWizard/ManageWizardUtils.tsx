@@ -213,11 +213,19 @@ export const detectFieldsValidation = (entryData: any, engineType: string) => {
 
 /**
  * Validates FSx for ONTAP credentials. Supports shared or per-FSx credential modes.
- * @param entryData - Instance with storage array
+ * Works for both single instance mode and bulk mode.
+ * @param entryData - Instance with storage array (for single mode)
  * @param engineType - Database type ('oracle', 'mssql', 'pgsql')
+ * @param isBulkMode - Optional flag to indicate bulk mode
+ * @param selectedInstances - Optional array of selected instances for bulk mode
  * @returns True if FSx credentials are valid for all unregistered instances
  */
-export const detectFsxFieldsValidation = (entryData: any, engineType: string) => {
+export const detectFsxFieldsValidation = (
+    entryData: any,
+    engineType: string,
+    isBulkMode?: boolean,
+    selectedInstances?: any[]
+) => {
     const state = store.getState();
     const {
         detectOntapUsername,
@@ -229,6 +237,31 @@ export const detectFsxFieldsValidation = (entryData: any, engineType: string) =>
 
     // Get list of unregistered FSx IDs that need credentials
     const getUnregisteredFsxIds = (): string[] => {
+        if (isBulkMode && selectedInstances && Array.isArray(selectedInstances)) {
+            // Bulk mode: aggregate FSx from all selected instances
+            const allFsxIds = new Set<string>();
+            selectedInstances.forEach(instance => {
+                const storage = instance.data?.storage || instance.storage;
+                if (storage && Array.isArray(storage)) {
+                    storage.forEach(item => {
+                        if (item.type === 'FSXN' && item.id) {
+                            // Only include if not already registered
+                            if (fsxCredentialStatusObj?.[item.id] !== true) {
+                                allFsxIds.add(item.id);
+                            }
+                        }
+                    });
+                }
+                // Also add direct fsxId from instance (may be different from storage)
+                const directFsxId = instance.data?.fsxId || instance.fsxId;
+                if (directFsxId && fsxCredentialStatusObj?.[directFsxId] !== true) {
+                    allFsxIds.add(directFsxId);
+                }
+            });
+            return Array.from(allFsxIds);
+        }
+
+        // Single mode: get FSx from entryData
         const storage = entryData?.storage;
         if (!storage || !Array.isArray(storage)) return [];
 

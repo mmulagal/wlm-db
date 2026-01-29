@@ -59,6 +59,8 @@
             display: flex;
             flex-direction: column;
             min-width: 208px;
+            padding-top: 24px; // Offset to align with input fields
+            font-weight: 500;
         }
     }
 

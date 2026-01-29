@@ -1,5 +1,6 @@
 import { useWizard } from '@netapp/design-system/dist/components/Wizard';
-import { useMemo } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import ManageWizardFooter from '../ManageWizardFooter';
 import styles from './AuthenticateFSxStep.module.scss';
 
@@ -8,9 +9,18 @@ import HeaderCard from './HeaderCard/HeaderCard';
 import InputCard from './InputCard/InputCard';
 import FsxAuthenticatedScreen from './FsxAuthenticatedScreen/FsxAuthenticatedScreen';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { areAllFsxAuthenticated, hasPartialAuthSuccess, useFsxDiscoverContext } from './AuthenticateFsxUtils';
+import {
+    areAllFsxAuthenticated,
+    hasPartialAuthSuccess,
+    useFsxDiscoverContext,
+    getAllFsxFromStorage,
+    getAllFsxFromBulkStorage
+} from './AuthenticateFsxUtils';
+import { setSelectedFSxForOntapCredentials } from '../../../../../store/workloadFactory/inventoryV2Slice';
+import { FSX_FOR_ONTAP_CRED_OPTION } from '../../../../../utils/consts';
 
 export const Content = () => {
+    const dispatch = useDispatch();
     const { manageSingleInstanceData, fsxCredentialStatusObj, fsxAuthStatus, selectedMultiDetectInstances } =
         useAppSelector(state => state.inventoryV2);
 
@@ -19,7 +29,28 @@ export const Content = () => {
 
     const { discoverContext, instanceIdentifiers, isBulkMode } = useFsxDiscoverContext();
 
-    // Check if all FSx are authenticated by checking fsxCredentialStatusObj
+    // Memoized: Get all FSx list (data is fixed when wizard opens)
+    const allFsxList = useMemo(
+        () =>
+            isBulkMode
+                ? getAllFsxFromBulkStorage(selectedMultiDetectInstances, discoverContext)
+                : getAllFsxFromStorage(manageSingleInstanceData?.storage, instanceIdentifiers, discoverContext),
+        [isBulkMode, selectedMultiDetectInstances, discoverContext, manageSingleInstanceData?.storage, instanceIdentifiers]
+    );
+    const hasSingleFsx = allFsxList.length === 1;
+
+    // Track if we've already set the mode to avoid re-running
+    const hasSetModeRef = useRef(false);
+
+    // Auto-select MANAGE_CRED_MANUALLY when there's only 1 FSx (run once on mount)
+    useEffect(() => {
+        if (hasSingleFsx && !hasSetModeRef.current) {
+            hasSetModeRef.current = true;
+            dispatch(setSelectedFSxForOntapCredentials(FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY));
+        }
+    }, [hasSingleFsx, dispatch]);
+
+    // Memoized: Check if all FSx are authenticated (reacts to credential status changes)
     const isFsxAuthenticated = useMemo(
         () =>
             areAllFsxAuthenticated(
@@ -30,17 +61,10 @@ export const Content = () => {
                 instanceIdentifiers,
                 discoverContext
             ),
-        [
-            isBulkMode,
-            manageSingleInstanceData?.storage,
-            selectedMultiDetectInstances,
-            fsxCredentialStatusObj,
-            instanceIdentifiers,
-            discoverContext
-        ]
+        [manageSingleInstanceData?.storage, fsxCredentialStatusObj, isBulkMode, selectedMultiDetectInstances, instanceIdentifiers, discoverContext]
     );
 
-    // Check if we have partial success to disable radio buttons
+    // Memoized: Check if we have partial success to disable radio buttons (reacts to auth status changes)
     const hasPartialSuccess = useMemo(
         () =>
             hasPartialAuthSuccess(
@@ -52,16 +76,11 @@ export const Content = () => {
                 instanceIdentifiers,
                 discoverContext
             ),
-        [
-            isBulkMode,
-            manageSingleInstanceData?.storage,
-            selectedMultiDetectInstances,
-            fsxCredentialStatusObj,
-            fsxAuthStatus,
-            instanceIdentifiers,
-            discoverContext
-        ]
+        [manageSingleInstanceData?.storage, fsxCredentialStatusObj, fsxAuthStatus, isBulkMode, selectedMultiDetectInstances, instanceIdentifiers, discoverContext]
     );
+
+    // Disable radio when: partial success OR only 1 FSx
+    const isRadioDisabled = hasPartialSuccess || hasSingleFsx;
 
     const renderContent = () => {
         if (isFsxAuthenticated) {
@@ -71,7 +90,7 @@ export const Content = () => {
         // FSx needs authentication
         return (
             <>
-                <HeaderCard isRadioDisabled={hasPartialSuccess} isLoading={isDetectHostLoading} />
+                <HeaderCard isRadioDisabled={isRadioDisabled} isLoading={isDetectHostLoading} />
                 <InputCard isBulkMode={isBulkMode} isLoading={isDetectHostLoading} />
             </>
         );

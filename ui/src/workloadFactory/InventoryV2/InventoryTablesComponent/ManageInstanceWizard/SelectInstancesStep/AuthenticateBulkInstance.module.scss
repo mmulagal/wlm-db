@@ -172,9 +172,11 @@
                 width: 15%;
                 max-width: 234px;
                 flex-shrink: 0;
+                padding-top: 24px; // Offset to align with input fields (below labels)
 
                 .instanceName {
                     color: var(--text-primary, #404040);
+                    font-weight: 500;
                 }
 
                 .instanceStatus {
