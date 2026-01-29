@@ -753,6 +753,7 @@ export const getDisabledSelectionTooltip = (
     selectedHostType: string,
     t: TFunction
 ): string | React.ReactNode => {
+    const aoagRegisterFlag = localStorage.getItem('aoagRegisterEnabled');
     // Already managed - specific bulk registration message
     if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
         return t('databases.bulk-register.already-registered');
@@ -767,6 +768,9 @@ export const getDisabledSelectionTooltip = (
         rowData?.serverInstallationMode === 'AOAG';
     // Check AOAG (specific bulk registration message with bullet points)
     if ((!isValid && reason === 'aoag') || isAoag) {
+        if (aoagRegisterFlag !== 'true') {
+            return t('databases.bulk-register.aoag-coming-soon');
+        }
         return (
             <div className={tooltipStyles.aoagTooltip}>
                 <div className={tooltipStyles.bulletList}>

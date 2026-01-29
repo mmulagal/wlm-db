@@ -380,6 +380,7 @@
             "aoag-manage-disable": "Register instance is not supported for Always on availability group deployment model.",
             "action-disabled-during-bulk-selection": "Row actions are disabled while instances are selected for bulk registration.",
             "dataguard-coming-soon": "Registration for Data Guard databases is coming soon.",
+            "aoag-coming-soon": "Registration for AOAG instances is coming soon.",
             "not-supported-for-engine": "Bulk registration is not supported for this database type."
         },
         "oracle-inner-page": {
