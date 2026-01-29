@@ -576,7 +576,6 @@ const rescanExtendRegex = /#Rescan and extend the LUN/;
 const moveClusterGroupsRegex = /#Move Cluster Groups/;
 const checkNodeStatusRegex = /#Check Node Status/;
 const getMappedOntapVolumesRegex = /#Get Mapped Ontap Volumes/;
-const getStorageAssessmentDataRegex = /#Get Storage Configuration Assessment/;
 const getPgsqlStorageSavingsRegex = /#PG SQL Storage Savings/;
 const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
 const getVCPUAndMaxDopDetails = /#Get vCPU and MAXDOP Details/;
@@ -824,9 +823,10 @@ ssmMock
         return getMappedOntapVolumesRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
-    .on(SendCommandCommand, params => {
-        return getStorageAssessmentDataRegex.test(params.Parameters.commands?.[0]);
-    })
+    .on(
+        SendCommandCommand,
+        params => params.Comment === 'Get Storage Configuration Assessment for MSSQL Database Instance'
+    )
     .resolves(listSendCommandCommandResponse.getStorageAssessmentCommandResponse)
     .on(SendCommandCommand, params => {
         return /'Test-Connection -ComputerName "www.catalog.update.microsoft.com"/.test(

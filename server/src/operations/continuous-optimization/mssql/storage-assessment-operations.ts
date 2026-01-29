@@ -100,7 +100,7 @@ async function initiateStorageAssessmentCollection(
         }
 
         const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
-        const ssmComment = 'Get Storage Configuration Assessment';
+        const ssmComment = 'Get Storage Configuration Assessment for MSSQL Database Instance';
 
         const response = await callSsmExecution({
             credentialsId,
