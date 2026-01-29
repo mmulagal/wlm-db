@@ -943,9 +943,9 @@ async function getOracleDatabaseInstancesSummary(
         const allHostIps: string[] = [];
         Object.values(dataguardInfo).forEach((dgDetails: any) => {
             if (dgDetails?.associatedHosts && Array.isArray(dgDetails.associatedHosts)) {
-                dgDetails.associatedHosts.forEach((host: { host?: string }) => {
-                    if (host.host) {
-                        allHostIps.push(host.host);
+                dgDetails.associatedHosts.forEach((host: { hostIp?: string }) => {
+                    if (host.hostIp) {
+                        allHostIps.push(host.hostIp);
                     }
                 });
             }
@@ -968,16 +968,16 @@ async function getOracleDatabaseInstancesSummary(
                 const dgInfo = dataguardInfo[result.databaseInstanceName];
                 // Transform associatedHosts to include EC2 instance IDs
                 const transformedAssociatedHosts = dgInfo.associatedHosts?.map(
-                    (host: { sidName?: string; role?: string; host?: string }) => {
+                    (host: { sidName?: string; serviceName?: string; role?: string; hostIp?: string }) => {
                         const matchedEc2 = hostEc2Details.find(
-                            ec2detail => ec2detail.ec2InstancePrivateIpAddress === host.host
+                            ec2detail => ec2detail.ec2InstancePrivateIpAddress === host.hostIp
                         );
                         return {
                             sidName: host.sidName,
-                            serviceName: host.sidName,
+                            serviceName: host.serviceName || host.sidName,
                             role: host.role,
                             ec2InstanceId: matchedEc2?.ec2InstanceId,
-                            hostIp: host.host
+                            hostIp: host.hostIp
                         };
                     }
                 );

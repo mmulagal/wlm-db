@@ -2057,7 +2057,11 @@ async function discoverOracleResources(
                                             ec2detail => ec2detail.ec2InstancePrivateIpAddress === host.hostIp
                                         );
                                         return {
-                                            ...host,
+                                            sidName: host.sidName,
+                                            serviceName: host.serviceName || host.sidName,
+                                            role: host.role,
+                                            listenerPort: host.listenerPort,
+                                            hostIp: host.hostIp,
                                             ec2InstanceId: matchedHost ? matchedHost.ec2InstanceId : undefined
                                         };
                                     });

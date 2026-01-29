@@ -599,9 +599,11 @@ EOF
         dg_domain=$(get_dataguard_node_details "$ORACLE_SID")
         # Flatten to single line, transform field names, extract members array
         local flat_json
-        flat_json=$(echo "$dg_domain" | tr -d '\n' | tr -s ' ')
-        # Transform: dbUniqueName -> sidName, destRole -> role
-        flat_json=$(echo "$flat_json" | sed 's/"dbUniqueName"/"sidName"/g; s/"destRole"/"role"/g')
+        flat_json=$(echo "$dg_domain" | tr -d '\\n' | tr -s ' ')
+        # Transform: dbUniqueName -> sidName, destRole -> role, host -> hostIp
+        flat_json=$(echo "$flat_json" | sed 's/"dbUniqueName"/"sidName"/g; s/"destRole"/"role"/g; s/"host"/"hostIp"/g')
+        # Add serviceName field by duplicating sidName value
+        flat_json=$(echo "$flat_json" | sed 's/"sidName":[[:space:]]*"\\([^"]*\\)"/"sidName": "\\1", "serviceName": "\\1"/g')
         # Extract just the array content after "members":
         echo "$flat_json" | sed 's/.*"members"[[:space:]]*:[[:space:]]*//; s/[[:space:]]*}[[:space:]]*$//'
     }
