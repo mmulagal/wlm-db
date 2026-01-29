@@ -2117,7 +2117,7 @@ async function getOnPremBulkResourceExploreSavings(
         );
 
         // Step 5: Build combined EC2 instances for marketing API calls
-        const { existingEc2Instances, recommendedEc2Instances } = buildCombinedEc2Instances(
+        const { existingEc2Instances } = buildCombinedEc2Instances(
             combinedPrimaryEbsVolumes,
             combinedSecondaryEbsVolumes,
             validResourceDataList[0].currentInstanceType!,
@@ -2129,11 +2129,6 @@ async function getOnPremBulkResourceExploreSavings(
             isNonFreeEnterpriseEdition(info.currentLicenseEdition)
         );
         const combinedExistingLicenseEdition = hasEnterpriseEdition ? ENTERPRISE_EDITION : STANDARD_EDITION;
-
-        const hasRecommendedEnterprise = individualResourceInfo.some(info =>
-            isNonFreeEnterpriseEdition(info.recommendedLicenseEdition)
-        );
-        const combinedRecommendedLicenseEdition = hasRecommendedEnterprise ? ENTERPRISE_EDITION : STANDARD_EDITION;
 
         // Step 7: Prepare base params for marketing API calls
         const {
@@ -2160,50 +2155,33 @@ async function getOnPremBulkResourceExploreSavings(
             sqlServerDeploymentType: combinedDeploymentType
         };
 
-        const totalRecommendedNodeCount = individualResourceInfo.reduce(
-            (sum, info) => sum + info.recommendedNodeCount,
-            0
-        );
-
         // Step 8: Call marketing APIs AND fetch pricing in parallel (independent operations)
-        const [existingConfigData, existingConfigCalculations, recommendedConfigData, resourcesWithPricing] =
-            await Promise.all([
-                performManualModeStorageSavingsCalculations(
-                    accountId,
-                    regionCode,
-                    {
-                        ...baseParams,
-                        ec2Instances: existingEc2Instances,
-                        sqlServerEdition: combinedExistingLicenseEdition
-                    },
-                    totalNodeCount,
-                    true
-                ),
-                getManualModeStorageSavingsCalculationMetrics(
-                    accountId,
-                    regionCode,
-                    {
-                        ...baseParams,
-                        ec2Instances: existingEc2Instances,
-                        sqlServerEdition: combinedExistingLicenseEdition
-                    },
-                    totalNodeCount,
-                    true
-                ),
-                performManualModeStorageSavingsCalculations(
-                    accountId,
-                    regionCode,
-                    {
-                        ...baseParams,
-                        ec2Instances: recommendedEc2Instances,
-                        sqlServerEdition: combinedRecommendedLicenseEdition
-                    },
-                    totalRecommendedNodeCount,
-                    true
-                ),
-                // Fetch pricing for compute/license calculations in parallel with marketing APIs
-                fetchPricingForResources(individualResourceInfo, regionCode)
-            ]);
+        const [existingConfigData, existingConfigCalculations, resourcesWithPricing] = await Promise.all([
+            performManualModeStorageSavingsCalculations(
+                accountId,
+                regionCode,
+                {
+                    ...baseParams,
+                    ec2Instances: existingEc2Instances,
+                    sqlServerEdition: combinedExistingLicenseEdition
+                },
+                totalNodeCount,
+                true
+            ),
+            getManualModeStorageSavingsCalculationMetrics(
+                accountId,
+                regionCode,
+                {
+                    ...baseParams,
+                    ec2Instances: existingEc2Instances,
+                    sqlServerEdition: combinedExistingLicenseEdition
+                },
+                totalNodeCount,
+                true
+            ),
+            // Fetch pricing for compute/license calculations in parallel with marketing APIs
+            fetchPricingForResources(individualResourceInfo, regionCode)
+        ]);
 
         // Step 9: Build per-resource calculations
         const {
@@ -2217,17 +2195,34 @@ async function getOnPremBulkResourceExploreSavings(
         } = buildPerResourceCalculations(resourcesWithPricing, monthlySqlByolCost);
 
         // Step 10: Extract shared storage data from API responses
-        const {
-            ebs,
-            fsx,
-            single,
-            multi,
-            totalSummary: { existing: existingTotalSummary } = {}
-        } = existingConfigData || {};
+        const { ebs, fsx, single, multi } = existingConfigData || {};
 
-        const { totalSummary: { recommended: recommendedTotalSummary } = {} } = recommendedConfigData || {};
+        // Step 11: Calculate totalSummary based on per-resource calculations (same as single flow)
+        // existing = EBS total + sum of existing compute monthly prices + sum of existing license monthly prices
+        // recommended = FSx total + sum of recommended compute monthly prices + sum of recommended license monthly prices
+        const totalExistingComputeMonthlyPrice = existingComputeCalculation.reduce(
+            (sum, calc) => sum + (calc.computeMonthlyPrice || 0),
+            0
+        );
+        const totalExistingLicenseMonthlyPrice = existingLicenseCalculation.reduce(
+            (sum, calc) => sum + (calc.licenseMonthlyPrice || 0),
+            0
+        );
+        const totalRecommendedComputeMonthlyPrice = recommendedComputeCalculation.reduce(
+            (sum, calc) => sum + (calc.computeMonthlyPrice || 0),
+            0
+        );
+        const totalRecommendedLicenseMonthlyPrice = recommendedLicenseCalculation.reduce(
+            (sum, calc) => sum + (calc.licenseMonthlyPrice || 0),
+            0
+        );
 
-        // Step 11: Build aggregated response
+        const existingTotalSummary =
+            Number(ebs?.total || 0) + totalExistingComputeMonthlyPrice + totalExistingLicenseMonthlyPrice;
+        const recommendedTotalSummary =
+            Number(fsx?.total || 0) + totalRecommendedComputeMonthlyPrice + totalRecommendedLicenseMonthlyPrice;
+
+        // Step 12: Build aggregated response
         const aggregatedCalculations = {
             existingComputeCalculation,
             existingLicenseCalculation,
@@ -2257,7 +2252,7 @@ async function getOnPremBulkResourceExploreSavings(
             }
         };
 
-        // Step 12: Store assessment data in DB for each resource using bulk transaction
+        // Step 13: Store assessment data in DB for each resource using bulk transaction
         const bulkUpdates = perResourceAssessmentData.map(
             ({
                 resourceId,
@@ -2268,6 +2263,16 @@ async function getOnPremBulkResourceExploreSavings(
                 computeSavings: resComputeSavings,
                 licenseSavings: resLicenseSavings
             }) => {
+                // Calculate per-resource totalSummary (same logic as single flow)
+                const resExistingTotalSummary =
+                    Number(ebs?.total || 0) +
+                    Number(resExistingCompute?.computeMonthlyPrice || 0) +
+                    Number(resExistingLicense?.licenseMonthlyPrice || 0);
+                const resRecommendedTotalSummary =
+                    Number(fsx?.total || 0) +
+                    Number(resRecommendedCompute?.computeMonthlyPrice || 0) +
+                    Number(resRecommendedLicense?.licenseMonthlyPrice || 0);
+
                 const resourceStorageSavings = {
                     compute: resComputeSavings,
                     license: resLicenseSavings,
@@ -2276,8 +2281,8 @@ async function getOnPremBulkResourceExploreSavings(
                     single,
                     multi,
                     totalSummary: {
-                        existing: existingTotalSummary,
-                        recommended: recommendedTotalSummary
+                        existing: resExistingTotalSummary,
+                        recommended: resRecommendedTotalSummary
                     }
                 };
                 const resourceCalculations = {
@@ -2291,8 +2296,8 @@ async function getOnPremBulkResourceExploreSavings(
                     single: existingConfigCalculations?.single,
                     multi: existingConfigCalculations?.multi,
                     totalSummary: {
-                        existing: existingTotalSummary,
-                        recommended: recommendedTotalSummary
+                        existing: resExistingTotalSummary,
+                        recommended: resRecommendedTotalSummary
                     }
                 };
                 return {
