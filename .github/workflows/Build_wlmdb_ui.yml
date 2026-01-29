@@ -88,7 +88,7 @@ jobs:
           aws s3 cp ./build/workload-config.json s3://staging-workloads-components/wlmdb/workload-config.json --cache-control='no-store'
           aws s3 cp ./build/workload-policies.json s3://staging-workloads-components/wlmdb/workload-policies.json --cache-control='no-store'
           echo "Create-Invalidation"
-          aws configure set preview.cloudfront true
+          #aws configure set preview.cloudfront true
           aws cloudfront create-invalidation --distribution-id E17H3MZ1OBF4FR --paths '/wlmdb/*'
         working-directory: ./ui
       - name: Upload UI to AWS s3 Stand By
@@ -100,7 +100,7 @@ jobs:
           aws s3 cp ./build/workload-config.json s3://standby.staging-workloads-components/wlmdb/workload-config.json --cache-control='no-store'
           aws s3 cp ./build/workload-policies.json s3://standby.staging-workloads-components/wlmdb/workload-policies.json --cache-control='no-store'
           echo "Create-Invalidation"
-          aws configure set preview.cloudfront true
+          #aws configure set preview.cloudfront true
           aws cloudfront create-invalidation --distribution-id E2ETLUP9HI6NSO --paths '/wlmdb/*'
         working-directory: ./ui
       - name: Send failure notification
