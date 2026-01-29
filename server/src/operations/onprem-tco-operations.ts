@@ -2160,6 +2160,11 @@ async function getOnPremBulkResourceExploreSavings(
             sqlServerDeploymentType: combinedDeploymentType
         };
 
+        const totalRecommendedNodeCount = individualResourceInfo.reduce(
+            (sum, info) => sum + info.recommendedNodeCount,
+            0
+        );
+
         // Step 8: Call marketing APIs AND fetch pricing in parallel (independent operations)
         const [existingConfigData, existingConfigCalculations, recommendedConfigData, resourcesWithPricing] =
             await Promise.all([
@@ -2193,7 +2198,7 @@ async function getOnPremBulkResourceExploreSavings(
                         ec2Instances: recommendedEc2Instances,
                         sqlServerEdition: combinedRecommendedLicenseEdition
                     },
-                    totalNodeCount,
+                    totalRecommendedNodeCount,
                     true
                 ),
                 // Fetch pricing for compute/license calculations in parallel with marketing APIs

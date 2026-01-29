@@ -169,17 +169,19 @@ const TrendGraphResponse = Type.Array(
 );
 
 const RWPerformanceResponse = Type.Object({
-    read: Type.Union([
-        Type.Optional(Type.Number({ description: 'Database server read performance for latency, IOPS or throughput' })),
-        Type.Optional(TrendGraphResponse)
-    ]),
-    write: Type.Union([
-        Type.Optional(
-            Type.Number({ description: 'Database server write performance for latency, IOPS or throughput' })
-        ),
-        Type.Optional(TrendGraphResponse)
-    ])
-    // The union type is added as same schme is used for mssql, pgsql and oracle but pgsql and oracle does not support trend graph now,. Once they support trend graph, we can remove unused type
+    read: Type.Optional(
+        Type.Union([
+            Type.Number({ description: 'Database server read performance for latency, IOPS or throughput' }),
+            TrendGraphResponse
+        ])
+    ),
+    write: Type.Optional(
+        Type.Union([
+            Type.Number({ description: 'Database server write performance for latency, IOPS or throughput' }),
+            TrendGraphResponse
+        ])
+    )
+    // The union type is added as same schema is used for mssql, pgsql and oracle but pgsql and oracle does not support trend graph now. Once they support trend graph, we can remove unused type
 });
 
 const LatencyResponse = Type.Intersect([
