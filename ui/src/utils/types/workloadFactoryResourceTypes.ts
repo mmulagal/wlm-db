@@ -203,6 +203,19 @@ export interface WorkloadFactoryResourceDetails {
             remaining: string;
         };
     };
+    sqlServerDeploymentType: string;
+    aoagDetails?: {
+        serverInfo?: {
+            serverName?: string;
+            isHadrEnabled?: number;
+        };
+        availabilityGroups?: Array<{
+            agName?: string;
+            primaryReplica?: string;
+            replicas?: Array<any>;
+        }>;
+        baseDeploymentType?: string;
+    };
 }
 
 export interface WorkloadFactoryDatabaseItem {

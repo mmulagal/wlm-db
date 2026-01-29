@@ -494,6 +494,12 @@ export const handleReplicaAuthenticationDialog = (
                             dispatch(setWizardOperationType(ACTION_TYPE.BULK));
 
                             if (isAllReplicasAuthenticated) {
+                                dispatch(
+                                    addNotification({
+                                        notificationType: NOTIFICATION_TYPES.INFO,
+                                        message: t('databases.register-flow.instances-authenticated')
+                                    })
+                                );
                                 dispatch(setBulkWizardStartAtFsxStep(true));
                                 // All replicas are already authenticated, proceed to next step
                             }

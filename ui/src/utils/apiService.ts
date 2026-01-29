@@ -422,7 +422,7 @@ export const workloadFactoryResourceApiV2 = createApi({
     endpoints: builder => ({
         getResourceDetailsV2: builder.query({
             query: ({ credentialId, region, id, sqlInstanceId }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology`
+                url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}?fields=serverDetails,databaseInstanceTopology,storage,performance,resourceUtilization,dbCount,nodeTopology,aoag`
             })
         }),
         getOracleOverviewDetails: builder.mutation({

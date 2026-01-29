@@ -6,6 +6,7 @@ import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg'
 import styles from './ResourceHeader.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { DBType, INVENTORY_STATUS, TENANCY, WELL_ARCHITECTED_TABS } from '../../../../../utils/consts';
+import { getDiscoveredHostDeploymentV2 } from '../../../../InventoryV2/InventoryUtilsV2';
 
 type ResourceHeaderProps = {
     selectedHostname: string;
@@ -45,6 +46,8 @@ const ResourceHeader = ({
         }
         return tenancy;
     };
+
+    const deploymentType = getDiscoveredHostDeploymentV2(resourceDetails, t);
 
     return (
         <div className={styles.cardHeader}>
@@ -97,16 +100,8 @@ const ResourceHeader = ({
 
                     {/* section 3 */}
                     <div className={`${styles.column}`}>
-                        <DsTypography
-                            variant="Semibold_14"
-                            className={styles.titleText}
-                            title={resourceDetails?.topology?.serverInstallationMode}
-                        >
-                            {resourceLoading ? (
-                                <DsFlashingDotsLoader />
-                            ) : (
-                                resourceDetails?.topology?.serverInstallationMode
-                            )}
+                        <DsTypography variant="Semibold_14" className={styles.titleText} title={deploymentType}>
+                            {resourceLoading ? <DsFlashingDotsLoader /> : deploymentType}
                         </DsTypography>
 
                         <DsTypography

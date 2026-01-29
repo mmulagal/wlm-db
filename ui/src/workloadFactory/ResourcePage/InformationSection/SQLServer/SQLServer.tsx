@@ -1,10 +1,12 @@
 import { Typography } from '@netapp/design-system';
 import moment from 'moment';
+import { useTranslation } from 'react-i18next';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 import styles from './SQLServer.module.scss';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
+import { getDiscoveredHostDeploymentV2 } from '../../../InventoryV2/InventoryUtilsV2';
 
 type sqlServer = {
     handleToggle: any;
@@ -12,25 +14,17 @@ type sqlServer = {
 };
 
 const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
+    const { t } = useTranslation();
     const { resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+    const deploymentType = getDiscoveredHostDeploymentV2(resourceDetails, t);
     const contentArea = () => (
         <>
             <div className={commonStyles.row}>
                 <Typography variant="Semibold_14" className={commonStyles.heading}>
                     {GENERAL.DEPLOYMENT_MODEL_INFO}
                 </Typography>
-                <Typography
-                    variant="Regular_14"
-                    className={commonStyles.valueCSS}
-                    title={
-                        resourceDetails?.topology?.serverInstallationMode === 'Standalone'
-                            ? 'Standalone Instance'
-                            : 'Always On Failover Cluster Instance'
-                    }
-                >
-                    {resourceDetails?.topology?.serverInstallationMode === 'Standalone'
-                        ? 'Standalone Instance'
-                        : 'Always On Failover Cluster Instance'}
+                <Typography variant="Regular_14" className={commonStyles.valueCSS} title={deploymentType}>
+                    {deploymentType}
                 </Typography>
             </div>
 

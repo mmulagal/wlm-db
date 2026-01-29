@@ -35,7 +35,13 @@ export const Content = () => {
             isBulkMode
                 ? getAllFsxFromBulkStorage(selectedMultiDetectInstances, discoverContext)
                 : getAllFsxFromStorage(manageSingleInstanceData?.storage, instanceIdentifiers, discoverContext),
-        [isBulkMode, selectedMultiDetectInstances, discoverContext, manageSingleInstanceData?.storage, instanceIdentifiers]
+        [
+            isBulkMode,
+            selectedMultiDetectInstances,
+            discoverContext,
+            manageSingleInstanceData?.storage,
+            instanceIdentifiers
+        ]
     );
     const hasSingleFsx = allFsxList.length === 1;
 
@@ -61,7 +67,14 @@ export const Content = () => {
                 instanceIdentifiers,
                 discoverContext
             ),
-        [manageSingleInstanceData?.storage, fsxCredentialStatusObj, isBulkMode, selectedMultiDetectInstances, instanceIdentifiers, discoverContext]
+        [
+            manageSingleInstanceData?.storage,
+            fsxCredentialStatusObj,
+            isBulkMode,
+            selectedMultiDetectInstances,
+            instanceIdentifiers,
+            discoverContext
+        ]
     );
 
     // Memoized: Check if we have partial success to disable radio buttons (reacts to auth status changes)
@@ -76,7 +89,15 @@ export const Content = () => {
                 instanceIdentifiers,
                 discoverContext
             ),
-        [manageSingleInstanceData?.storage, fsxCredentialStatusObj, fsxAuthStatus, isBulkMode, selectedMultiDetectInstances, instanceIdentifiers, discoverContext]
+        [
+            manageSingleInstanceData?.storage,
+            fsxCredentialStatusObj,
+            fsxAuthStatus,
+            isBulkMode,
+            selectedMultiDetectInstances,
+            instanceIdentifiers,
+            discoverContext
+        ]
     );
 
     // Disable radio when: partial success OR only 1 FSx
