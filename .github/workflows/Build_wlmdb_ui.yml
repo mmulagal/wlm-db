@@ -48,7 +48,10 @@ jobs:
           version: 2
           verbose: false
           arch: amd64
-
+      - name: Ensure .aws config dir exists
+        run: |
+            mkdir -p ~/.aws
+            touch ~/.aws/config
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
