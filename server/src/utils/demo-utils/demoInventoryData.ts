@@ -834,7 +834,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                             baseDeploymentType: 'Standalone',
                             availabilityGroups: [
                                 {
-                                    agName: 'DemoAOAG',
+                                    agName: 'ProdAOAG',
                                     primaryReplica: 'PRD-SQL-CRM-AG1',
                                     replicas: [
                                         {
@@ -941,7 +941,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                             baseDeploymentType: 'Standalone',
                             availabilityGroups: [
                                 {
-                                    agName: 'DemoAOAG',
+                                    agName: 'ProdAOAG',
                                     primaryReplica: 'PRD-SQL-CRM-AG1',
                                     replicas: [
                                         {

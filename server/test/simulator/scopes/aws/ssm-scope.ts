@@ -749,8 +749,21 @@ ssmMock
     .resolves(listSendCommandCommandResponse.checkSrciptUpdateCommand)
     .on(SendCommandCommand, { Parameters: dbSummary })
     .resolves(listSendCommandCommandResponse.dbSummaryCommand)
-    .on(SendCommandCommand, { Parameters: dbSummaryWithAoag })
-    .resolves(getSampleCommandResponse('dbSummaryWithAoagCommand'))
+    .on(SendCommandCommand, params => {
+        // Match AOAG database summary query and differentiate by EC2 instance
+        const commandStr = params.Parameters?.commands?.[0] || '';
+        const isAoagDbQuery =
+            commandStr.includes('dm_hadr_database_replica_states') ||
+            JSON.stringify(params.Parameters) === JSON.stringify(dbSummaryWithAoag.Parameters);
+        return isAoagDbQuery;
+    })
+    .callsFake(async (params: any) => {
+        // Return different CommandId for primary vs secondary AOAG host
+        const instanceId = params.InstanceIds?.[0];
+        const isSecondaryHost = instanceId === 'i-0a1b2c3d4e5f6a0a2';
+        const commandName = isSecondaryHost ? 'dbSummaryWithAoagSecondaryCommand' : 'dbSummaryWithAoagCommand';
+        return getSampleCommandResponse(commandName);
+    })
     .on(SendCommandCommand, { Parameters: pgsqlInstanceInfo })
     .resolves(listSendCommandCommandResponse.getPgsqlInstanceInfoCommand)
     .on(SendCommandCommand, params => {
@@ -1029,13 +1042,7 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'Check if Linux package repositories are reachable')
     .resolves(getSampleCommandResponse('checkLinuxRepoConnectivity'))
     .on(SendCommandCommand, params => params.Comment === 'Get AOAG details for MSSQL instance')
-    .resolves(getSampleCommandResponse('getAoagDetails'))
-    .on(SendCommandCommand, params => {
-        // Match AOAG database AG check query
-        const commandStr = params.Parameters?.commands?.[0] || '';
-        return commandStr.includes('databasesInAgCount') && commandStr.includes('participatingAgs');
-    })
-    .resolves(getSampleCommandResponse('aoagDatabaseAgCheck'));
+    .resolves(getSampleCommandResponse('getAoagDetails'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1190,6 +1197,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'dbSummaryWithAoagCommand',
             JSON.stringify(getCommandInvocationResponse.dbSummaryWithAoagDatabases)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryWithAoagSecondaryCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'dbSummaryWithAoagSecondaryCommand',
+            JSON.stringify(getCommandInvocationResponse.dbSummaryWithAoagDatabasesSecondary)
         )
     )
     .on(GetCommandInvocationCommand, {
@@ -1743,15 +1759,6 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'getAoagDetails',
             JSON.stringify(getCommandInvocationResponse.aoagDetailsResponse)
-        )
-    )
-    .on(GetCommandInvocationCommand, {
-        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-aoagDatabaseAgCheck'
-    })
-    .resolves(
-        getSampleCommandResponseWithOutput(
-            'aoagDatabaseAgCheck',
-            JSON.stringify(getCommandInvocationResponse.aoagDatabaseAgCheckResponse)
         )
     );
 

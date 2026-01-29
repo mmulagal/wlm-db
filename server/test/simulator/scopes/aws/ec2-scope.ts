@@ -187,6 +187,30 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
     if (instanceFilters && instancesQueryPrivateIps) {
         const reservations = [];
         const { items } = inventoryDemoData('fsx', 'ebsTest'); // private-ip-address filter is only added to get partner node details of instances using ebs; revisit when the filter is used for other purposes
+
+        // Build AOAG IP → EC2 details map for correct cluster node resolution
+        const aoagIpToEc2Map = new Map<string, { id: string; name: string; type: string }>();
+        items.forEach(host => {
+            const aoagInstance = host.sqlServerInstances?.find(
+                (sql: any) => sql.sqlServerDeploymentType === 'AOAG' && sql.windowsClusterNodes?.length > 0
+            );
+            if (aoagInstance) {
+                aoagInstance.windowsClusterNodes.forEach((node: any) => {
+                    if (node.Address && node.Node) {
+                        // Find the host that matches this node name
+                        const matchingHost = items.find(h => h.ec2InstanceName === node.Node);
+                        if (matchingHost) {
+                            aoagIpToEc2Map.set(node.Address, {
+                                id: matchingHost.ec2InstanceId,
+                                name: matchingHost.ec2InstanceName,
+                                type: matchingHost.ec2InstanceType || 'm5.xlarge'
+                            });
+                        }
+                    }
+                });
+            }
+        });
+
         let instancesWithEbs = items.filter(instance =>
             instance.sqlServerInstances?.find(
                 ({ nodeIps, storage }) =>
@@ -205,25 +229,88 @@ ec2Mock.on(DescribeInstancesCommand).callsFake(async (command: DescribeInstances
             const dummyInstanceDetails = cloneDeep(describeInstanceResponse.Reservations[0].Instances[0]);
             const dummyResevation = cloneDeep(describeInstanceResponse.Reservations[0]);
             dummyInstanceDetails.PrivateIpAddress = privateIp;
-            dummyInstanceDetails.Tags = [
-                {
-                    Key: 'Name',
-                    Value: `sqlnode-${randomize('0', 5)}`
-                }
-            ];
-            if (!isEmpty(compact(instancesWithEbs))) {
-                const dummyInstanceRef = sample(instancesWithEbs);
-                const dummyInstanceId = dummyInstanceRef.ec2InstanceId;
-                dummyInstanceDetails.InstanceId = dummyInstanceId;
-                dummyInstanceDetails.InstanceType = dummyInstanceRef?.ec2InstanceType;
-                instancesWithEbs = instancesWithEbs.filter(instance => instance.ec2InstanceId !== dummyInstanceId);
+
+            // Check if this IP belongs to an AOAG demo host - use correct EC2 details
+            const aoagEc2Details = aoagIpToEc2Map.get(privateIp);
+            if (aoagEc2Details) {
+                dummyInstanceDetails.InstanceId = aoagEc2Details.id;
+                dummyInstanceDetails.InstanceType = aoagEc2Details.type;
+                dummyInstanceDetails.Tags = [
+                    {
+                        Key: 'Name',
+                        Value: aoagEc2Details.name
+                    }
+                ];
                 instances?.push(dummyInstanceDetails);
                 dummyResevation.Instances = instances;
                 reservations?.push(dummyResevation);
+            } else {
+                // Existing random logic for non-AOAG hosts (EBS, FCI, etc.)
+                dummyInstanceDetails.Tags = [
+                    {
+                        Key: 'Name',
+                        Value: `sqlnode-${randomize('0', 5)}`
+                    }
+                ];
+                if (!isEmpty(compact(instancesWithEbs))) {
+                    const dummyInstanceRef = sample(instancesWithEbs);
+                    const dummyInstanceId = dummyInstanceRef.ec2InstanceId;
+                    dummyInstanceDetails.InstanceId = dummyInstanceId;
+                    dummyInstanceDetails.InstanceType = dummyInstanceRef?.ec2InstanceType;
+                    instancesWithEbs = instancesWithEbs.filter(instance => instance.ec2InstanceId !== dummyInstanceId);
+                    instances?.push(dummyInstanceDetails);
+                    dummyResevation.Instances = instances;
+                    reservations?.push(dummyResevation);
+                }
             }
         });
 
         return { Reservations: reservations };
+    }
+
+    // Handle InstanceIds queries for AOAG demo hosts specifically
+    // This ensures getNodeTopology returns correct EC2 IDs for AOAG cluster nodes
+    if (command.InstanceIds && command.InstanceIds.length > 0) {
+        const { items } = inventoryDemoData('fsx', 'ebsTest');
+
+        // Build EC2 ID → host details map ONLY for AOAG hosts
+        const aoagEc2IdToHost = new Map<string, any>();
+        items.forEach(host => {
+            const hasAoagInstance = host.sqlServerInstances?.some((sql: any) => sql.sqlServerDeploymentType === 'AOAG');
+            if (hasAoagInstance) {
+                aoagEc2IdToHost.set(host.ec2InstanceId, host);
+            }
+        });
+
+        // Check if ANY requested InstanceId is an AOAG host
+        const hasAoagInstanceId = command.InstanceIds.some(id => aoagEc2IdToHost.has(id));
+
+        // Only process if at least one AOAG host is being queried
+        if (hasAoagInstanceId) {
+            const reservations = command.InstanceIds.map(instanceId => {
+                const matchingHost = aoagEc2IdToHost.get(instanceId);
+                if (matchingHost) {
+                    // Return correct AOAG host EC2 details
+                    const instance = cloneDeep(describeInstanceResponse.Reservations[0].Instances[0]);
+                    instance.InstanceId = matchingHost.ec2InstanceId;
+                    instance.InstanceType = matchingHost.ec2InstanceType || 'm5.xlarge';
+                    instance.Tags = [{ Key: 'Name', Value: matchingHost.ec2InstanceName }];
+                    // Set private IP from demo data if available
+                    const aoagInstance = matchingHost.sqlServerInstances?.find(
+                        (sql: any) => sql.sqlServerDeploymentType === 'AOAG'
+                    );
+                    if (aoagInstance?.nodeIps?.length > 0) {
+                        const [firstNodeIp] = aoagInstance.nodeIps;
+                        instance.PrivateIpAddress = firstNodeIp;
+                    }
+                    return { Instances: [instance] };
+                }
+                // For non-AOAG instance IDs in the same request, use default
+                return cloneDeep(describeInstanceResponse.Reservations[0]);
+            });
+
+            return { Reservations: reservations };
+        }
     }
 
     if (command.InstanceIds?.[0] === TEST_STOPPED_EC2_INSTANCE_ID) {

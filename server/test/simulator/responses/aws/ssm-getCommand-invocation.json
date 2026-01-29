@@ -4006,9 +4006,7 @@
                     {
                         "server": "fsxnfsv4",
                         "paths": ["172.31.255.231"],
-                        "exports": [
-                            { "export": "/oracleredo2", "mount": "/mnt/oraredoctl" }
-                        ],
+                        "exports": [{ "export": "/oracleredo2", "mount": "/mnt/oraredoctl" }],
                         "nfs_version": "NFSv4",
                         "options": {
                             "rsize": "65536",
@@ -4186,7 +4184,51 @@
                 "baseDeploymentType": "Standalone",
                 "availabilityGroups": [
                     {
-                        "agName": "DemoAOAG",
+                        "agName": "ProdAOAG",
+                        "primaryReplica": "PRD-SQL-CRM-AG1",
+                        "replicas": [
+                            {
+                                "replica": "PRD-SQL-CRM-AG1",
+                                "role": "PRIMARY",
+                                "availabilityMode": "SYNCHRONOUS_COMMIT",
+                                "failoverMode": "AUTOMATIC",
+                                "syncHealth": "HEALTHY",
+                                "connectedState": "CONNECTED",
+                                "isLocalReplica": true,
+                                "secondaryConnections": "ALL",
+                                "primaryConnections": "ALLOW_ALL_CONNECTIONS",
+                                "isReadReplica": 0,
+                                "isRoutableReadReplica": 0
+                            },
+                            {
+                                "replica": "PRD-SQL-CRM-AG2",
+                                "role": "SECONDARY",
+                                "availabilityMode": "SYNCHRONOUS_COMMIT",
+                                "failoverMode": "AUTOMATIC",
+                                "syncHealth": "HEALTHY",
+                                "connectedState": "CONNECTED",
+                                "isLocalReplica": false,
+                                "secondaryConnections": "ALL",
+                                "primaryConnections": "ALLOW_ALL_CONNECTIONS",
+                                "isReadReplica": 1,
+                                "isRoutableReadReplica": 1
+                            }
+                        ]
+                    }
+                ]
+            },
+            "windowsClusterNodes": [
+                { "Node": "PRD-SQL-CRM-AG1", "Address": "10.0.6.201" },
+                { "Node": "PRD-SQL-CRM-AG2", "Address": "10.0.28.201" }
+            ]
+        },
+        "mssqlserver": {
+            "aoagDetails": {
+                "serverInfo": { "serverName": "PRD-SQL-CRM-AG1", "isHadrEnabled": 1 },
+                "baseDeploymentType": "Standalone",
+                "availabilityGroups": [
+                    {
+                        "agName": "ProdAOAG",
                         "primaryReplica": "PRD-SQL-CRM-AG1",
                         "replicas": [
                             {
@@ -4225,20 +4267,204 @@
             ]
         }
     },
-    "aoagDatabaseAgCheckResponse": {
-        "databasesInAgCount": 2,
-        "participatingAgs": [{ "agName": "DemoAOAG" }]
-    },
     "dbSummaryWithAoagDatabases": {
         "MSSQLSERVER": [
-            { "databaseId": 177, "databaseName": "RetailBanking", "creationDate": "2023-04-11T17:49:40.963", "databaseStatus": "ONLINE", "databaseSize": 566935683072, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "SalesAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
-            { "databaseId": 34, "databaseName": "MFGSales", "creationDate": "2023-04-11T17:23:39.663", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "SalesAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
-            { "databaseId": 203, "databaseName": "AssetManagement", "creationDate": "2023-04-11T17:49:48.887", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "FinanceAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
-            { "databaseId": 58, "databaseName": "HRAudit", "creationDate": "2023-04-11T17:43:09.220", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "FinanceAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
-            { "databaseId": 234, "databaseName": "PrivateBanking", "creationDate": "2023-04-11T17:49:58.353", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "FinanceAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
-            { "databaseId": 30, "databaseName": "SalesData", "creationDate": "2023-04-11T17:23:38.587", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": "SalesAG", "replicaRole": "PRIMARY", "synchronizationState": "SYNCHRONIZED", "isReadableSecondary": 0 },
-            { "databaseId": 24, "databaseName": "ExpenseTracker", "creationDate": "2023-04-11T17:23:36.840", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": null, "replicaRole": null, "synchronizationState": null, "isReadableSecondary": null },
-            { "databaseId": 250, "databaseName": "TimeSheet", "creationDate": "2023-04-11T17:50:03.333", "databaseStatus": "ONLINE", "databaseSize": 17179869184, "collationName": "SQL_Latin1_General_CP1_CI_AS", "availabilityGroup": null, "replicaRole": null, "synchronizationState": null, "isReadableSecondary": null }
+            {
+                "databaseId": 177,
+                "databaseName": "RetailBanking",
+                "creationDate": "2023-04-11T17:49:40.963",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 566935683072,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "PRIMARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 0
+            },
+            {
+                "databaseId": 34,
+                "databaseName": "MFGSales",
+                "creationDate": "2023-04-11T17:23:39.663",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "PRIMARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 0
+            },
+            {
+                "databaseId": 203,
+                "databaseName": "AssetManagement",
+                "creationDate": "2023-04-11T17:49:48.887",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "PRIMARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 0
+            },
+            {
+                "databaseId": 58,
+                "databaseName": "HRAudit",
+                "creationDate": "2023-04-11T17:43:09.220",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "PRIMARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 0
+            },
+            {
+                "databaseId": 234,
+                "databaseName": "PrivateBanking",
+                "creationDate": "2023-04-11T17:49:58.353",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "PRIMARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 0
+            },
+            {
+                "databaseId": 30,
+                "databaseName": "SalesData",
+                "creationDate": "2023-04-11T17:23:38.587",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "PRIMARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 0
+            },
+            {
+                "databaseId": 24,
+                "databaseName": "ExpenseTracker",
+                "creationDate": "2023-04-11T17:23:36.840",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": null,
+                "replicaRole": null,
+                "synchronizationState": null,
+                "isReadableSecondary": null
+            },
+            {
+                "databaseId": 250,
+                "databaseName": "TimeSheet",
+                "creationDate": "2023-04-11T17:50:03.333",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": null,
+                "replicaRole": null,
+                "synchronizationState": null,
+                "isReadableSecondary": null
+            }
+        ]
+    },
+    "dbSummaryWithAoagDatabasesSecondary": {
+        "MSSQLSERVER": [
+            {
+                "databaseId": 177,
+                "databaseName": "RetailBanking",
+                "creationDate": "2023-04-11T17:49:40.963",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 566935683072,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "SECONDARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 1
+            },
+            {
+                "databaseId": 34,
+                "databaseName": "MFGSales",
+                "creationDate": "2023-04-11T17:23:39.663",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "SECONDARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 1
+            },
+            {
+                "databaseId": 203,
+                "databaseName": "AssetManagement",
+                "creationDate": "2023-04-11T17:49:48.887",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "SECONDARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 1
+            },
+            {
+                "databaseId": 58,
+                "databaseName": "HRAudit",
+                "creationDate": "2023-04-11T17:43:09.220",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "SECONDARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 1
+            },
+            {
+                "databaseId": 234,
+                "databaseName": "PrivateBanking",
+                "creationDate": "2023-04-11T17:49:58.353",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "SECONDARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 1
+            },
+            {
+                "databaseId": 30,
+                "databaseName": "SalesData",
+                "creationDate": "2023-04-11T17:23:38.587",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": "ProdAOAG",
+                "replicaRole": "SECONDARY",
+                "synchronizationState": "SYNCHRONIZED",
+                "isReadableSecondary": 1
+            },
+            {
+                "databaseId": 24,
+                "databaseName": "ExpenseTracker",
+                "creationDate": "2023-04-11T17:23:36.840",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": null,
+                "replicaRole": null,
+                "synchronizationState": null,
+                "isReadableSecondary": null
+            },
+            {
+                "databaseId": 250,
+                "databaseName": "TimeSheet",
+                "creationDate": "2023-04-11T17:50:03.333",
+                "databaseStatus": "ONLINE",
+                "databaseSize": 17179869184,
+                "collationName": "SQL_Latin1_General_CP1_CI_AS",
+                "availabilityGroup": null,
+                "replicaRole": null,
+                "synchronizationState": null,
+                "isReadableSecondary": null
+            }
         ]
     }
 }
