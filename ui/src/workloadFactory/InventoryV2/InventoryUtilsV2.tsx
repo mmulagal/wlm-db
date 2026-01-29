@@ -4621,23 +4621,36 @@ export const getFsxList = (data: any) => {
 };
 
 /**
- * Groups MSSQL AOAG (Always On Availability Group) databases by cluster and AG name
- * Groups databases from AOAG configurations by their cluster EC2 instances and availability group name
+ * Groups MSSQL AOAG (Always On Availability Group) databases by cluster, AG name, and database name
+ * Groups databases from AOAG configurations by their cluster EC2 instances, availability group name,
+ * and database name - matching primary and secondary replicas of the SAME database
  *
  * @param inventoryTableData - The inventory table data object
  * @param allDatabaseTableRows - Database table rows to search for AOAG databases
- * @returns Array of AOAG configurations grouped by cluster and AG name
+ * @returns Array of AOAG configurations grouped by cluster, AG name, and database name
  *
  * Example output:
  * [
  *   {
- *     configKey: "sathishaoag_i-xxx1_i-xxx2_credid_regionid",
- *     agName: "sathishaoag",
+ *     configKey: "ProdAOAG_RetailBanking_i-xxx1_i-xxx2_credid_regionid",
+ *     agName: "ProdAOAG",
+ *     dbName: "RetailBanking",
  *     ec2InstanceCluster: ["i-xxx1", "i-xxx2"],
- *     primary: { name: "11RetailBanking", replicaRole: "PRIMARY", ... },
+ *     primary: { name: "RetailBanking", replicaRole: "PRIMARY", hostName: "prd-sql-crm-ag1", ... },
  *     standby: [
- *       { name: "12MFGSales", replicaRole: "SECONDARY", ... },
- *       { name: "21RetailBanking", replicaRole: "SECONDARY", ... }
+ *       { name: "RetailBanking", replicaRole: "SECONDARY", hostName: "prd-sql-crm-ag2", ... }
+ *     ],
+ *     credentialId: "...",
+ *     regionId: "..."
+ *   },
+ *   {
+ *     configKey: "ProdAOAG_MFGSales_i-xxx1_i-xxx2_credid_regionid",
+ *     agName: "ProdAOAG",
+ *     dbName: "MFGSales",
+ *     ec2InstanceCluster: ["i-xxx1", "i-xxx2"],
+ *     primary: { name: "MFGSales", replicaRole: "PRIMARY", hostName: "prd-sql-crm-ag1", ... },
+ *     standby: [
+ *       { name: "MFGSales", replicaRole: "SECONDARY", hostName: "prd-sql-crm-ag2", ... }
  *     ],
  *     credentialId: "...",
  *     regionId: "..."
@@ -4754,20 +4767,48 @@ export const groupAOAGConfigurations = (inventoryTableData: any, allDatabaseTabl
                     });
                 });
 
-                // Find primary and standby databases
-                const primaryDatabase = agDatabases.find((db: any) => db?.replicaRole === REPLICA_ROLES.PRIMARY);
-                const standbyDatabases = agDatabases.filter((db: any) => db?.replicaRole === REPLICA_ROLES.SECONDARY);
+                // Group databases by name to match primary/secondary pairs for the same database
+                const databasesByName: { [dbName: string]: any[] } = {};
+                agDatabases.forEach((db: any) => {
+                    const dbName = db?.name;
+                    if (dbName) {
+                        if (!databasesByName[dbName]) {
+                            databasesByName[dbName] = [];
+                        }
+                        databasesByName[dbName].push(db);
+                    }
+                });
 
-                // Store the AOAG configuration
-                aoagConfigMap[configKey] = {
-                    configKey,
-                    agName,
-                    ec2InstanceCluster: ec2InstanceIds,
-                    primary: primaryDatabase || null,
-                    standby: standbyDatabases,
-                    credentialId: hostData.credentialId,
-                    regionId: hostData.regionId
-                };
+                // Create a config entry for each unique database name in the AG
+                Object.keys(databasesByName).forEach((dbName: string) => {
+                    const dbsForName = databasesByName[dbName];
+                    const primaryDatabase = dbsForName.find((db: any) => db?.replicaRole === REPLICA_ROLES.PRIMARY);
+                    const standbyDatabases = dbsForName.filter(
+                        (db: any) => db?.replicaRole === REPLICA_ROLES.SECONDARY
+                    );
+
+                    // Create unique key including database name
+                    const dbConfigKey = `${agName}_${dbName}_${ec2InstanceIds.join('_')}_${hostData.credentialId}_${
+                        hostData.regionId
+                    }`;
+
+                    // Skip if already processed
+                    if (aoagConfigMap[dbConfigKey]) {
+                        return;
+                    }
+
+                    // Store the AOAG configuration for this database
+                    aoagConfigMap[dbConfigKey] = {
+                        configKey: dbConfigKey,
+                        agName,
+                        dbName,
+                        ec2InstanceCluster: ec2InstanceIds,
+                        primary: primaryDatabase || null,
+                        standby: standbyDatabases,
+                        credentialId: hostData.credentialId,
+                        regionId: hostData.regionId
+                    };
+                });
             });
         });
     });
