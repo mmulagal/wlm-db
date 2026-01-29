@@ -1396,7 +1396,7 @@ async function discoverDemoDataOracle(
                         isDataGuardDeployed: true,
                         dataguardDetails: {
                             dbUniqueName: 'dataguard-primary',
-                            dbName: 'dg1',
+                            dbName: 'DataguardDomain-1',
                             associatedHosts: [
                                 {
                                     serviceName: 'dataguard-primary',
@@ -1406,7 +1406,7 @@ async function discoverDemoDataOracle(
                                     sidName: 'dataguard-primary'
                                 },
                                 {
-                                    serviceName: 'dataguard-secondary',
+                                    serviceName: 'dataguard-standby',
                                     hostIp: '127.0.0.2',
                                     ec2InstanceId: 'i-0123456789abcdef1',
                                     listenerPort: '1532',
@@ -1448,8 +1448,8 @@ async function discoverDemoDataOracle(
                 oracleServerDeploymentType: 'Standalone',
                 databaseInstanceDetails: [
                     {
-                        instanceName: 'dataguard-secondary',
-                        instanceId: 'dataguard-secondary',
+                        instanceName: 'dataguard-standby',
+                        instanceId: 'dataguard-standby',
                         instanceState: 'OPEN',
                         version: '19.0.0.0.0',
                         instanceType: 'SINGLE_TENANT',
@@ -1492,8 +1492,8 @@ async function discoverDemoDataOracle(
                         },
                         isDataGuardDeployed: true,
                         dataguardDetails: {
-                            dbUniqueName: 'dataguard-secondary',
-                            dbName: 'dg1',
+                            dbUniqueName: 'dataguard-standby',
+                            dbName: 'DataguardDomain-1',
                             associatedHosts: [
                                 {
                                     serviceName: 'dataguard-primary',
@@ -1503,11 +1503,11 @@ async function discoverDemoDataOracle(
                                     sidName: ''
                                 },
                                 {
-                                    serviceName: 'dataguard-secondary',
+                                    serviceName: 'dataguard-standby',
                                     hostIp: '127.0.0.2',
                                     ec2InstanceId: 'i-0123456789abcdef1',
                                     listenerPort: '1532',
-                                    sidName: 'dataguard-secondary'
+                                    sidName: 'dataguard-standby'
                                 }
                             ],
                             isPrimaryNode: false
