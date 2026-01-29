@@ -2204,15 +2204,21 @@ async function cleanUpdatedParams(
 
     return Promise.all(
         instanceIds.map(async instanceId => {
-            const { domain, sql } = await getEc2SqlParameters(credentialsId, region, instanceId);
+            const { domain, sql, oracle, asm } = await getEc2SqlParameters(credentialsId, region, instanceId);
             domain?.forEach((item: SqlCredential) => {
                 item.sqlinstancename = item.sqlinstancename.replace(TEMP, '');
             });
             sql?.forEach((item: SqlCredential) => {
                 item.sqlinstancename = item.sqlinstancename.replace(TEMP, '');
             });
+            oracle?.forEach((item: OracleCredential) => {
+                item.oracleinstancename = item.oracleinstancename.replace(TEMP, '');
+            });
+            asm?.forEach((item: OracleCredential) => {
+                item.oracleinstancename = item.oracleinstancename.replace(TEMP, '');
+            });
 
-            if (isEmpty(domain) && isEmpty(sql)) {
+            if (isEmpty(domain) && isEmpty(sql) && isEmpty(oracle) && isEmpty(asm)) {
                 return;
             }
 
@@ -2220,7 +2226,9 @@ async function cleanUpdatedParams(
                 path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
                 value: {
                     ...(!isEmpty(domain) && { domain }),
-                    ...(!isEmpty(sql) && { sql })
+                    ...(!isEmpty(sql) && { sql }),
+                    ...(!isEmpty(oracle) && { oracle }),
+                    ...(!isEmpty(asm) && { asm })
                 }
             } as SSMParameterObject;
         })
@@ -2391,10 +2399,17 @@ async function validateCredentials(
             paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
         }
 
-        if (sqlCredentials.length || windowsUserCredentials.length) {
+        if (
+            sqlCredentials.length ||
+            windowsUserCredentials.length ||
+            oracleCredentials.length ||
+            oracleAsmCredentials.length
+        ) {
             instancesToBeDeleted.push(
                 ...(sqlCredentials ?? []).map(e => e.resourceId),
-                ...(windowsUserCredentials ?? []).map(e => e.resourceId)
+                ...(windowsUserCredentials ?? []).map(e => e.resourceId),
+                ...(oracleCredentials ?? []).map(e => `${e.resourceId}${TEMP}`),
+                ...(oracleAsmCredentials ?? []).map(e => `${e.resourceId}${TEMP}`)
             );
         }
 
