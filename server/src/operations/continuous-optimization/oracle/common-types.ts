@@ -154,6 +154,10 @@ interface NFSOSAssessment {
         dns_resolution?: Record<string, string[]>;
         error?: string | null;
     };
+    'nfs-exports'?: {
+        'nfs-exports'?: Record<string, string[]>;
+        error?: string | null;
+    };
 }
 
 interface StorageAssessment {

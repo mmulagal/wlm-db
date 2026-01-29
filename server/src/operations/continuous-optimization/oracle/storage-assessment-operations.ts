@@ -541,6 +541,19 @@ function getOSConfigDrift(
     return osDrift;
 }
 
+function getBaseVolume(
+    path: string,
+    server: string,
+    allRemotePaths: string[],
+    exportsByServer: Record<string, string[]>
+): string {
+    return (
+        allRemotePaths.find(
+            p => p !== path && path.startsWith(`${p}/`) && !(exportsByServer[server] || []).includes(path)
+        ) || path
+    );
+}
+
 function getNfsOSConfigDrift(
     ec2InstanceId: string,
     databaseInstanceName: string,
@@ -859,7 +872,6 @@ function getNfsOSConfigDrift(
                     break;
                 }
 
-                // Check server, path, export, and nfs version matching for volumes mounted for the database
                 const oranfstabData = os?.['dnfs-oranfstab'];
                 const nfsMountData = os?.['nfs-mount-options'];
 
@@ -887,78 +899,119 @@ function getNfsOSConfigDrift(
                     break;
                 }
 
-                // Filter exports to only those used by this database (matching volume names)
+                // Filter fstab mounts to only those used by this database (exact volume match, not subdirectories)
+                const dbMounts = mountOptions.filter(mount => {
+                    const remotePath = mount?.['remote-path'] || '';
+                    return volumeNames.some(volName => remotePath === `/${volName}`);
+                });
+
+                // Build oranfstab lookup: map of exportPath -> oranfstab entry
                 const oranfstabExportsFlattened = oranfstabServers.flatMap(entry =>
-                    (entry.exports || [])
-                        .filter(exportEntry => volumeNames.some(volName => exportEntry.export?.includes(volName)))
-                        .map(exportEntry => ({
-                            server: entry.server,
-                            paths: entry.paths || [],
-                            nfsVersion: entry.nfs_version,
-                            options: entry.options || {},
-                            exportPath: exportEntry.export,
-                            mountPath: exportEntry.mount
-                        }))
+                    (entry.exports || []).map(exportEntry => ({
+                        server: entry.server,
+                        paths: entry.paths || [],
+                        nfsVersion: entry.nfs_version,
+                        options: entry.options || {},
+                        exportPath: exportEntry.export,
+                        mountPath: exportEntry.mount
+                    }))
                 );
 
-                // Compare each oranfstab export with fstab mounts
-                oranfstabExportsFlattened.forEach(oranfstabExport => {
+                // Check each fstab mount has a matching oranfstab entry with correct configuration
+                dbMounts.forEach(fstabMount => {
+                    const fstabMountPoint = fstabMount?.['mount-point'] || '';
+                    const fstabRemotePath = fstabMount?.['remote-path'] || '';
+                    const fstabServer = fstabMount?.server || '';
+                    const fstabVersion = fstabMount?.options?.vers?.toString() || '';
+
+                    // Find matching oranfstab entry by export path or mount point
+                    const matchingOranfstab = oranfstabExportsFlattened.find(
+                        ora => ora.exportPath === fstabRemotePath || ora.mountPath === fstabMountPoint
+                    );
+
+                    if (!matchingOranfstab) {
+                        // Missing oranfstab entry for this fstab mount
+                        violationDetails.push(
+                            createViolationDetail(
+                                fstabMountPoint,
+                                'oranfstab entry',
+                                'missing',
+                                `export: ${fstabRemotePath}, mount: ${fstabMountPoint}`
+                            )
+                        );
+                        return;
+                    }
+
                     const {
                         server: oranfstabServer,
                         paths: oranfstabPaths,
                         nfsVersion: oranfstabNfsVersion,
                         options: oranfstabOptions,
-                        exportPath,
-                        mountPath
-                    } = oranfstabExport;
+                        exportPath: oranfstabExport,
+                        mountPath: oranfstabMount
+                    } = matchingOranfstab;
 
-                    const matchingMount = mountOptions.find(
-                        mount => mount?.['mount-point'] === mountPath || mount?.['remote-path'] === exportPath
-                    );
-                    if (!matchingMount) {
-                        return;
+                    const mismatches: { field: string; current: string; recommended: string }[] = [];
+
+                    // Check export path matches
+                    if (oranfstabExport !== fstabRemotePath) {
+                        mismatches.push({
+                            field: 'export',
+                            current: oranfstabExport || 'not set',
+                            recommended: fstabRemotePath
+                        });
                     }
 
-                    const fstabServer = matchingMount.server || '';
-                    const fstabRemotePath = matchingMount?.['remote-path'] || '';
-                    const fstabVersion = matchingMount?.options?.vers?.toString() || '';
-                    const mismatches: { field: string; fstab: string; oranfstab: string }[] = [];
-
-                    const addMismatch = (field: string, fstab: string, oranfstab: string, condition: boolean) => {
-                        if (fstab && oranfstab && condition) {
-                            mismatches.push({ field, fstab, oranfstab });
-                        }
-                    };
+                    // Check mount path matches
+                    if (oranfstabMount !== fstabMountPoint) {
+                        mismatches.push({
+                            field: 'mount',
+                            current: oranfstabMount || 'not set',
+                            recommended: fstabMountPoint
+                        });
+                    }
 
                     // Server: oranfstab.paths contains IP addresses while server is a logical name
                     const serverMatches = fstabServer === oranfstabServer || oranfstabPaths.includes(fstabServer);
-                    addMismatch('server', fstabServer, oranfstabServer, !serverMatches);
-                    addMismatch('export', fstabRemotePath, exportPath, fstabRemotePath !== exportPath);
+                    if (!serverMatches && fstabServer && oranfstabServer) {
+                        mismatches.push({
+                            field: 'server',
+                            current: oranfstabServer,
+                            recommended: fstabServer
+                        });
+                    }
 
                     // NFS version comparison with normalization
                     const normalizedFstabVersion = normalizeNfsVersion(fstabVersion);
                     const normalizedOranfstabVersion = normalizeNfsVersion(oranfstabNfsVersion);
-                    addMismatch(
-                        'nfs_version:',
-                        `NFSv${fstabVersion}`,
-                        oranfstabNfsVersion || '',
-                        normalizedFstabVersion !== normalizedOranfstabVersion
-                    );
+                    if (fstabVersion && oranfstabNfsVersion && normalizedFstabVersion !== normalizedOranfstabVersion) {
+                        mismatches.push({
+                            field: 'nfs_version',
+                            current: oranfstabNfsVersion,
+                            recommended: `NFSv${fstabVersion}`
+                        });
+                    }
 
                     // Compare rsize and wsize
                     ['rsize', 'wsize'].forEach(option => {
-                        const fstabValue = matchingMount?.options?.[option]?.toString() || '';
+                        const fstabValue = fstabMount?.options?.[option]?.toString() || '';
                         const oranfstabValue = oranfstabOptions?.[option]?.toString() || '';
-                        addMismatch(option, fstabValue, oranfstabValue, fstabValue !== oranfstabValue);
+                        if (fstabValue && oranfstabValue && fstabValue !== oranfstabValue) {
+                            mismatches.push({
+                                field: option,
+                                current: oranfstabValue,
+                                recommended: fstabValue
+                            });
+                        }
                     });
 
                     if (mismatches.length > 0) {
                         violationDetails.push(
                             createViolationDetail(
-                                mountPath || exportPath,
-                                'NFS configuration',
-                                mismatches.map(m => `${m.field}: ${m.oranfstab}`).join('; '),
-                                mismatches.map(m => `${m.field}: ${m.fstab}`).join('; ')
+                                fstabMountPoint,
+                                'oranfstab configuration',
+                                mismatches.map(m => `${m.field}: ${m.current}`).join('; '),
+                                mismatches.map(m => `${m.field}: ${m.recommended}`).join('; ')
                             )
                         );
                     }
@@ -970,11 +1023,8 @@ function getNfsOSConfigDrift(
                 break;
             }
             case 'dnfs-no-shared-cache': {
-                // nosharecache mount option is required when:
-                // (a) dNFS is enabled AND
-                // (b) a source volume (same remote path) is mounted more than once
-                // (c) nested mounts are considered separate mounts
                 const nfsMountData = os?.['nfs-mount-options'];
+                const nfsExportsData = os?.['nfs-exports'];
 
                 if (!isDnfsEnabled) {
                     logger.info('Skipping nosharecache check - dNFS is not enabled', {
@@ -993,40 +1043,37 @@ function getNfsOSConfigDrift(
                 }
 
                 const mountOptions = nfsMountData?.['nfs-mount-options'] || [];
+                const exportsByServer = nfsExportsData?.['nfs-exports'] || {};
+                const allRemotePaths = mountOptions.map(mount => mount?.['remote-path']).filter(Boolean) as string[];
 
-                // Group mounts by source volume
-                const mountsByVolume = mountOptions.reduce((acc, mount) => {
+                const mountsByVolume: Record<string, typeof mountOptions> = {};
+                for (const mount of mountOptions) {
                     const remotePath = mount?.['remote-path'] || '';
-                    if (remotePath) {
-                        (acc[remotePath] ||= []).push(mount);
-                    }
-                    return acc;
-                }, {} as Record<string, typeof mountOptions>);
+                    const server = mount?.server || '';
+                    const baseVolume = getBaseVolume(remotePath, server, allRemotePaths, exportsByServer);
+                    (mountsByVolume[baseVolume] ||= []).push(mount);
+                }
 
-                // Check each volume - only require nosharecache if same volume is mounted multiple times
-                Object.entries(mountsByVolume).forEach(([remotePath, mounts]) => {
-                    const hasMultipleMounts = mounts.length > 1;
+                Object.values(mountsByVolume)
+                    .filter(mounts => mounts.length > 1)
+                    .flat()
+                    .forEach(mount => {
+                        const options = mount?.options || {};
+                        if (options.nosharecache !== true && options.nosharecache !== 'true') {
+                            const currentOpts = Object.entries(options)
+                                .map(([k, v]) => (v === true ? k : `${k}=${v}`))
+                                .join(',');
 
-                    if (hasMultipleMounts) {
-                        // nosharecache is required for all mounts of this volume
-                        mounts.forEach(mount => {
-                            const mountPoint = mount?.['mount-point'] || '';
-                            const options = mount?.options || {};
-                            const hasNosharecache = options.nosharecache === true || options.nosharecache === 'true';
-
-                            if (!hasNosharecache) {
-                                violationDetails.push(
-                                    createViolationDetail(
-                                        `${remotePath}:${mountPoint}`,
-                                        'NFS mount option',
-                                        'nosharecache=not set',
-                                        'nosharecache=enabled'
-                                    )
-                                );
-                            }
-                        });
-                    }
-                });
+                            violationDetails.push(
+                                createViolationDetail(
+                                    `${mount?.['remote-path']}:${mount?.['mount-point']}`,
+                                    'NFS mount option',
+                                    currentOpts || 'no options',
+                                    currentOpts ? `${currentOpts},nosharecache` : 'nosharecache'
+                                )
+                            );
+                        }
+                    });
 
                 osDrift.push(
                     createAssessment(config, 1, violationDetails.length > 0 ? [ec2InstanceId] : [], violationDetails)

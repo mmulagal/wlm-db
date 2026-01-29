@@ -555,6 +555,42 @@ def get_dns_resolution():
         }
 `;
 
+const GET_NFS_EXPORTS = `
+def get_nfs_exports():
+    """Get NFS exports from all mounted NFS servers using showmount -e"""
+    log('Collecting NFS exports from mounted servers')
+    
+    try:
+        mounts = get_nfs_mount_options().get('nfs-mount-options') or []
+        servers = {m.get('server') for m in mounts if m.get('server')}
+        
+        exports_by_server = {}
+        for server in servers:
+            try:
+                result = subprocess.run(
+                    ['showmount', '-e', server, '--no-headers'],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    universal_newlines=True, timeout=30
+                )
+                if result.returncode == 0:
+                    exports_by_server[server] = [
+                        line.split()[0] for line in result.stdout.strip().split('\\n')
+                        if line.strip() and line.split()
+                    ]
+                    log(f"showmount -e {server}: found {len(exports_by_server[server])} exports")
+                else:
+                    log(f"showmount -e {server} failed: {result.stderr.strip()}")
+                    exports_by_server[server] = []
+            except (subprocess.TimeoutExpired, Exception) as e:
+                log(f"showmount -e {server} error: {str(e)}")
+                exports_by_server[server] = []
+        
+        return {'nfs-exports': exports_by_server, 'error': None}
+    except Exception as e:
+        log(f"Exception collecting NFS exports: {str(e)}")
+        return {'nfs-exports': {}, 'error': str(e)}
+`;
+
 const NFS_OS_ASSESSMENT = (ec2InstanceId: string, dbSid: string) => `
 
 ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
@@ -597,6 +633,8 @@ ${GET_ORANFSTAB_DATA}
 
 ${GET_DNS_RESOLUTION}
 
+${GET_NFS_EXPORTS}
+
 # Run all checks and compile results
 log('Starting comprehensive system assessment')
 
@@ -609,6 +647,9 @@ def run_all_checks():
     
     log('Running NFS mount options checks')
     results["os"]["nfs-mount-options"] = get_nfs_mount_options()
+    
+    log('Running NFS exports collection')
+    results["os"]["nfs-exports"] = get_nfs_exports()
 
     log('Running idmapd domain configuration checks')
     results["os"]["idmapd-domain-config"] = get_idmapd_domain_config()
