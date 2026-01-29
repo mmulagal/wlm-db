@@ -1064,10 +1064,27 @@ export const formatViewCalcData = (
 };
 
 export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculationsInterface) => {
-    let ebsSnapshotCalculation = {
+    let ebsSnapshotCalculation: {
+        amountChangedPerSnapshot: number;
+        storageAmount: number;
+        storageAmountPerMonth: number;
+        storageAmountPerMonthList: string[];
+        monthlyCostOfSnapshots: number;
+        ebsInstanceMonth: number;
+        totalSnapshots: number;
+        initialSnapshotCost: number;
+        monthlyCostPerSnapshot: number;
+        discountForPartialStorageMonth: number;
+        incrementalSnapshotCost: number;
+        totalSnapshotCost: number;
+        totalEbsSnapshotCost: number;
+        ebsSnapshotCost: number;
+        ebsSnapshotPrice: number;
+    } = {
         amountChangedPerSnapshot: 0,
         storageAmount: 0,
         storageAmountPerMonth: 0,
+        storageAmountPerMonthList: [],
         monthlyCostOfSnapshots: 0,
         ebsInstanceMonth: 0,
         totalSnapshots: 0,
@@ -1088,14 +1105,18 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
         totalCloneMonthlyCost: 0
     };
     Object.keys(viewCalculationsResponse?.ebsSnapshotCalculation || {}).map((key: string) => {
+        const volumeStorageAmount =
+            (viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.storageAmount || 0) /
+            (viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsInstanceMonth || 0);
         ebsSnapshotCalculation = {
             amountChangedPerSnapshot:
                 ebsSnapshotCalculation.amountChangedPerSnapshot +
                 viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.amountChangedPerSnapshot,
-            storageAmountPerMonth:
-                ebsSnapshotCalculation.storageAmountPerMonth +
-                (viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.storageAmount || 0) /
-                    (viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsInstanceMonth || 0),
+            storageAmountPerMonth: ebsSnapshotCalculation.storageAmountPerMonth + volumeStorageAmount,
+            storageAmountPerMonthList: [
+                ...ebsSnapshotCalculation.storageAmountPerMonthList,
+                formatCalcSize(volumeStorageAmount)
+            ],
             storageAmount:
                 ebsSnapshotCalculation.storageAmount +
                 viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.storageAmount,
@@ -1105,9 +1126,7 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
             ebsInstanceMonth:
                 ebsSnapshotCalculation.ebsInstanceMonth +
                     viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsInstanceMonth || 0,
-            totalSnapshots:
-                ebsSnapshotCalculation.totalSnapshots +
-                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.totalSnapshots || 0,
+            totalSnapshots: viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.totalSnapshots || 0,
             initialSnapshotCost:
                 ebsSnapshotCalculation.initialSnapshotCost +
                     viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.initialSnapshotCost || 0,
@@ -1129,9 +1148,7 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
             ebsSnapshotCost:
                 ebsSnapshotCalculation.ebsSnapshotCost +
                     viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsSnapshotCost || 0,
-            ebsSnapshotPrice:
-                ebsSnapshotCalculation.ebsSnapshotPrice +
-                    viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsSnapshotPrice?.price || 0
+            ebsSnapshotPrice: viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsSnapshotPrice?.price || 0
         };
     });
 
@@ -1153,6 +1170,7 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
         ebsSnapshotCalculation: {
             amountChangedPerSnapshot: formatCalcSize(ebsSnapshotCalculation?.amountChangedPerSnapshot),
             storageAmountPerMonth: formatCalcSize(ebsSnapshotCalculation?.storageAmountPerMonth),
+            storageAmountPerMonthList: ebsSnapshotCalculation?.storageAmountPerMonthList,
             storageAmount: formatCalcSize(ebsSnapshotCalculation?.storageAmount),
             monthlyCostOfSnapshots: formatNumbers(ebsSnapshotCalculation?.monthlyCostOfSnapshots),
             ebsInstanceMonth: formatNumbers(ebsSnapshotCalculation?.ebsInstanceMonth),
