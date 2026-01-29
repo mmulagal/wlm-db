@@ -34,7 +34,9 @@ import {
     safeParseJson,
     hoursAgoTimestamp,
     toMB,
-    getHoursInMilliseconds
+    getHoursInMilliseconds,
+    runSqlPlusScript,
+    getSqlPlusScript
 } from './utils/utils';
 import logger from './utils/logging';
 import { ToolUse, ToolSpec, MessageObj, AgentArgs, ErrorLogWithScriptAndDetails, ErrorLog } from './utils/interfaces';
@@ -580,22 +582,33 @@ async function checkAndExecuteAdditionalScript(
         Array.from(uniqueQueryMap.values()).map(value =>
             LIMIT_3(async () => {
                 const [{ sql }] = value;
-                if (!isEmpty(sql)) {
-                    const response =
-                        databaseType === DATABASE_TYPE.MSSQL
-                            ? await runPowerShellScript(getPowershellScript(sql, databaseInstanceName!, sqlAuthEnabled))
-                            : databaseType === DATABASE_TYPE.ORACLE
-                                ? 'test' // await runSqlPlusScript(getSqlPlusScript(sql, databaseInstanceName, INSTANCE_ID))
+                try {
+                    if (!isEmpty(sql)) {
+                        const response =
+                            databaseType === DATABASE_TYPE.MSSQL
+                                ? await runPowerShellScript(
+                                      getPowershellScript(sql, databaseInstanceName!, sqlAuthEnabled)
+                                  )
+                                : databaseType === DATABASE_TYPE.ORACLE
+                                ? await runSqlPlusScript(getSqlPlusScript(sql, databaseInstanceName, INSTANCE_ID))
                                 : await runBashScript(getBashScript(sql));
+                        const errorAndCauseWithAdditionalInfo = value.map((val: ErrorLogWithScriptAndDetails) => ({
+                            ...val,
+                            additionalInfo: response
+                        }));
+                        result.push(...errorAndCauseWithAdditionalInfo);
+                    } else {
+                        const errorAndCauseWithAdditionalInfo = value.map((val: ErrorLogWithScriptAndDetails) => ({
+                            ...val,
+                            additionalInfo: 'No additional script executed.'
+                        }));
+                        result.push(...errorAndCauseWithAdditionalInfo);
+                    }
+                } catch (err) {
+                    logger.error('Failed to execute additional script:', { err, sql });
                     const errorAndCauseWithAdditionalInfo = value.map((val: ErrorLogWithScriptAndDetails) => ({
                         ...val,
-                        additionalInfo: response
-                    }));
-                    result.push(...errorAndCauseWithAdditionalInfo);
-                } else {
-                    const errorAndCauseWithAdditionalInfo = value.map((val: ErrorLogWithScriptAndDetails) => ({
-                        ...val,
-                        additionalInfo: 'No additional script executed.'
+                        additionalInfo: `Failed to execute additional script: ${err}`
                     }));
                     result.push(...errorAndCauseWithAdditionalInfo);
                 }
@@ -740,27 +753,20 @@ async function getDatabaseDetails(logsFolderPath: string) {
     for (const logFile of logFiles) {
         const filePath = join(logsFolderPath, logFile);
         const fileContent = readFileSync(filePath, 'utf-8').replace(/[^\x20-\x7E]/g, '');
-        let databaseType = 'Unknown';
+        let databaseType = DATABASE_TYPE_ARG || 'Unknown';
         let databaseVersion = 'Unknown';
 
-        if (fileContent.includes('Microsoft SQL Server')) {
-            databaseType = DATABASE_TYPE.MSSQL;
+        if (databaseType === DATABASE_TYPE.MSSQL) {
             const versionMatch = fileContent.match(/Microsoft SQL Server\s+([\d.]+)/);
             if (versionMatch) {
                 [, databaseVersion] = versionMatch;
             }
-        } else if (fileContent.includes('PostgreSQL')) {
-            databaseType = DATABASE_TYPE.POSTGRESQL;
+        } else if (databaseType === DATABASE_TYPE.POSTGRESQL) {
             const versionMatch = fileContent.match(/PostgreSQL\s+([\d.]+)/);
             if (versionMatch) {
                 [, databaseVersion] = versionMatch;
             }
-        } else if (
-            fileContent.includes('Oracle Database') ||
-            fileContent.includes('ORACLE') ||
-            logFile.startsWith('alert_')
-        ) {
-            databaseType = DATABASE_TYPE.ORACLE;
+        } else if (databaseType === DATABASE_TYPE.ORACLE) {
             const versionMatch = fileContent.match(/Oracle Database\s+([\d.]+)/);
             if (versionMatch) {
                 [, databaseVersion] = versionMatch;

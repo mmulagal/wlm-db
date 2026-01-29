@@ -402,14 +402,15 @@ function getSqlPlusScript(sql: string[], oracleInstanceName: string = 'ORACLE_SI
 
         # Define the Oracle connection string
         ORACLE_SID="${oracleInstanceName}"
-        export ORACLE_SID
         ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, oracleInstanceName)}
 
         # Define the list of queries
         queries=(
             ${
                 // eslint-disable-next-line quotes
-                sql.map(sqlQuery => `'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''")}'`).join(',\n  ')
+                sql
+                    .map(sqlQuery => `'${sqlQuery.replace(/\\/g, '\\\\').replace(/'/g, "''").replace(/\$/g, '\\$')}'`)
+                    .join('\n  ')
             }
         )
 
