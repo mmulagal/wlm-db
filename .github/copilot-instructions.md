@@ -9,6 +9,9 @@ Before working on any code changes in this repository, you **MUST** read and fol
 - **Server**: Follow `.github/instructions/copilot-server.instructions.md` for Node.js/TypeScript patterns  
 - **Logs Analyzer**: Follow `.github/instructions/copilot-logs-analyzer.instructions.md` for CLI patterns
 
+**Custom Agents:** Specialized agents are available in `.github/agents/`:
+- **Oracle SSM Debug**: Use `.github/agents/oracle-ssm-debug.agent.md` to debug Oracle SSM script issues on EC2 instances
+
 ## Complete Instructions
 
 For all workflows, patterns, validation requirements, and development standards, refer to [`AGENTS.md`](../AGENTS.md) - the authoritative source for this repository.
