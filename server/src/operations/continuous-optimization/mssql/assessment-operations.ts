@@ -1,7 +1,7 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import moment from 'moment';
 import throat from 'throat';
-import { compact, isEmpty } from 'lodash-es';
+import { compact, isEmpty, omit } from 'lodash-es';
 import createError from 'http-errors';
 import getLogger from '../../../utils/logger';
 import { extractSqlInstanceName, IS_DEMO_FLOW, sleep } from '../../../utils/utils';
@@ -88,6 +88,64 @@ import { handleGetMssqlAssessmentForDemo } from '../../demo-operations';
 import { listJobs } from '../../../lib/database/job';
 
 const logger = getLogger();
+
+// Categories to exclude from assessment response for AOAG deployment type
+const AOAG_EXCLUDED_CATEGORIES = [
+    AssessmentCategories.COMPUTE,
+    AssessmentCategories.LICENSE,
+    AssessmentCategories.MSSQL_PATCH,
+    AssessmentCategories.MAXDOP,
+    AssessmentCategories.SNAPSHOT_POLICY,
+    AssessmentCategories.CRR,
+    AssessmentCategories.CLONE
+];
+
+// High availability items to exclude for AOAG (keep shared-storage and drive-letter)
+const AOAG_EXCLUDED_HA_ITEMS = ['cluster-quorum', 'heartbeat-settings', 'sqlServer-service'];
+
+// Storage items to exclude for AOAG
+const AOAG_EXCLUDED_STORAGE_SIZING = ['log-drive-size'];
+const AOAG_EXCLUDED_STORAGE_VOLUME_CONFIG = ['snapshot-copy-reserve'];
+
+/**
+ * Filter assessment data for AOAG deployments
+ * Removes categories and items not applicable to AOAG
+ */
+function filterAssessmentForAoag(
+    assessmentData: MSSQLDriftAssessmentResponseType,
+    hostLevelData?: Record<string, unknown>
+): { filteredAssessment: MSSQLDriftAssessmentResponseType; filteredHostData: Record<string, unknown> } {
+    const filteredAssessment = { ...assessmentData };
+
+    // Filter storage.sizing (remove log-drive-size)
+    if (filteredAssessment.storage && 'sizing' in filteredAssessment.storage) {
+        const storageData = filteredAssessment.storage as StorageParameterDriftResponseType;
+        storageData.sizing = storageData.sizing.filter(
+            (item: { name?: string }) => !AOAG_EXCLUDED_STORAGE_SIZING.includes(item.name || '')
+        );
+        // Filter storage.configuration.volumes (remove snapshot-copy-reserve)
+        if (storageData.configuration?.volumes) {
+            storageData.configuration.volumes = storageData.configuration.volumes.filter(
+                (item: { name?: string }) => !AOAG_EXCLUDED_STORAGE_VOLUME_CONFIG.includes(item.name || '')
+            );
+        }
+    }
+
+    // Filter highAvailability (keep only shared-storage and drive-letter)
+    if (filteredAssessment.highAvailability && Array.isArray(filteredAssessment.highAvailability)) {
+        const filteredHA = filteredAssessment.highAvailability.filter(
+            (item: { name?: string }) => !AOAG_EXCLUDED_HA_ITEMS.includes(item.name || '')
+        );
+        filteredAssessment.highAvailability = filteredHA.length > 0 ? filteredHA : undefined;
+    }
+
+    // Filter host-level data (remove compute, license, mssqlPatch)
+    const filteredHostData: Record<string, unknown> = hostLevelData
+        ? omit(hostLevelData, ['compute', 'license', 'mssqlPatch'])
+        : {};
+
+    return { filteredAssessment, filteredHostData };
+}
 
 function hostLevelDriftData(
     accountId: string,
@@ -236,6 +294,8 @@ async function fetchMssqlDriftAssessment(
 
     const dismissedConfigurations = mergeDismissConfigurations(instanceDismissedConfigs, hostDismissedConfigs);
 
+    const isAoagDeployment = databaseDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT;
+
     let fieldsValues = (
         fields?.toLowerCase().replace(/\s+/g, '').split(',') ||
         Object.values(AssessmentCategories).map(category => category.toLowerCase())
@@ -244,7 +304,7 @@ async function fetchMssqlDriftAssessment(
             !(
                 databaseDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
                 field === AssessmentCategories.HIGH_AVAILABILITY.toLowerCase()
-            )
+            ) && !(isAoagDeployment && AOAG_EXCLUDED_CATEGORIES.map(cat => cat.toLowerCase()).includes(field))
     );
 
     if (!isEmpty(dismissedConfigurations)) {
@@ -382,6 +442,12 @@ async function fetchMssqlDriftAssessment(
         databaseHostName: resourceName || ''
     };
 
+    // Apply AOAG-specific filtering
+    if (isAoagDeployment) {
+        const { filteredAssessment } = filterAssessmentForAoag(driftAssessmentData);
+        driftAssessmentData = filteredAssessment;
+    }
+
     if (IS_DEMO_FLOW) {
         driftAssessmentData = handleGetMssqlAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
     }
@@ -469,8 +535,15 @@ async function fetchMssqlDriftAssessmentPerHost(
     const driftAssessments = await Promise.all(
         instancesManaged.map(
             throat(3, async instance => {
-                const { database_instance_id: databaseInstanceId, database_instance_name: databaseInstanceName } =
-                    instance;
+                const {
+                    database_instance_id: databaseInstanceId,
+                    database_instance_name: databaseInstanceName,
+                    database_deployment_type: deploymentType
+                } = instance as {
+                    database_instance_id: string;
+                    database_instance_name: string;
+                    database_deployment_type?: string;
+                };
 
                 try {
                     const instanceFieldsToQuery = [
@@ -491,10 +564,20 @@ async function fetchMssqlDriftAssessmentPerHost(
                         instanceFieldsToQuery.join(','),
                         { ...instance, resource: resourceDetail } as DatabaseInstancesIncludingResource
                     );
+
+                    // Apply AOAG-specific filtering
+                    let filteredHostLevelData: Record<string, unknown> = hostLevelData;
+                    let filteredDriftAssessment: MSSQLDriftAssessmentResponseType = driftAssessment;
+                    if (deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+                        const result = filterAssessmentForAoag(driftAssessment, hostLevelData);
+                        filteredDriftAssessment = result.filteredAssessment;
+                        filteredHostLevelData = result.filteredHostData;
+                    }
+
                     return {
                         databaseInstanceId,
                         databaseInstanceName,
-                        assessments: { ...driftAssessment, ...hostLevelData }
+                        assessments: { ...filteredDriftAssessment, ...filteredHostLevelData }
                     };
                 } catch (error: any) {
                     logger.error(`Error while fetching drift assessment for ${databaseInstanceId}: ${error.message}`);
