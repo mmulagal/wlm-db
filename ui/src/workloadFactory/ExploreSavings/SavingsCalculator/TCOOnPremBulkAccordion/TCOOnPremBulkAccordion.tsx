@@ -60,7 +60,7 @@ const TCOOnPremBulkAccordion = () => {
 
             if (totalEbsCapacity !== null && totalEbsCapacity !== undefined) {
                 // Remove commas and extract the number part
-                const numericValue = parseFloat(String(totalEbsCapacity));
+                const numericValue = parseFloat(String(totalEbsCapacity).replace(/,/g, '').split(' ')[0]);
 
                 // Show card if less than 800 GiB and if the selected hosts are less than 5
                 setShowSsdTierCard(numericValue < 800 && selectedRowsForExploreSavingsOnPremBulk.length < 5);

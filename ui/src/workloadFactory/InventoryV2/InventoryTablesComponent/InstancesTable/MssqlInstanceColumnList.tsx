@@ -209,7 +209,7 @@ export function getMssqlInstanceTableColumns({
         {
             Header: t('databases.instance-table.headers.availability-group'),
             accessor: 'availabilityGroupList',
-            id: '14',
+            id: '15',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'availabilityGroupList'),
             renderCell: (cellData: string, rowData: any) => {

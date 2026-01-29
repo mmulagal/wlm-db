@@ -760,12 +760,6 @@ const InstancesTable = () => {
     // For Oracle: Tooltip content when Register button is disabled
     const getPopoverContent = () => t('databases.register-flow.register-bulk-disable-tooltip-oracle');
 
-    // Track selected IDs for max limit - use state that only updates when crossing threshold
-    const [maxLimitState, setMaxLimitState] = useState<{
-        isMaxReached: boolean;
-        selectedIds: Set<string>;
-    }>({ isMaxReached: false, selectedIds: new Set() });
-
     const updatedTableData = useMemo(
         () =>
             instanceTableRows?.map((row: any) => {
@@ -774,8 +768,12 @@ const InstancesTable = () => {
                 let tooltipMsg = !isSelectable ? getDisabledSelectionTooltip(processedRow, selectedHostType, t) : '';
 
                 // Check if this row is disabled due to max selection limit
-                const isRowSelected = maxLimitState.selectedIds.has(String(processedRow.id));
-                const isDisabledByMaxLimit = maxLimitState.isMaxReached && !isRowSelected && isSelectable;
+                // Use selectedRowsForBulkRegister directly (like ExploreSavingsTableV2)
+                const isRowSelected = selectedRowsForBulkRegister.some(
+                    (selectedRow: any) => String(selectedRow.id) === String(processedRow.id)
+                );
+                const limitReached = selectedRowsForBulkRegister.length >= MAX_BULK_REGISTER_SELECTION;
+                const isDisabledByMaxLimit = limitReached && !isRowSelected && isSelectable;
 
                 if (isDisabledByMaxLimit) {
                     tooltipMsg = t('databases.bulk-register.max-selection-reached', {
@@ -783,19 +781,30 @@ const InstancesTable = () => {
                     });
                 }
 
+                const isDisabled = !isSelectable || isDisabledByMaxLimit;
+
+                // Only create new object if cellProps actually changed - prevents useTable reset
+                const currentIsDisabled = processedRow.cellProps?.isDisabled;
+                const currentTooltip = processedRow.cellProps?.selectionProps?.title;
+
+                if (currentIsDisabled === isDisabled && currentTooltip === tooltipMsg) {
+                    // Return same object reference if nothing changed
+                    return processedRow;
+                }
+
                 // Add cellProps for selection control
                 return {
                     ...processedRow,
                     cellProps: {
                         ...processedRow.cellProps,
-                        isDisabled: !isSelectable || isDisabledByMaxLimit,
+                        isDisabled,
                         selectionProps: {
                             title: tooltipMsg
                         }
                     }
                 };
             }),
-        [instanceTableRows, instanceProtection, isDemoMode, selectedHostType, maxLimitState, t]
+        [instanceTableRows, instanceProtection, isDemoMode, selectedHostType, selectedRowsForBulkRegister]
     );
 
     // Check if bulk action is visible (used for disabling row actions)
@@ -896,10 +905,6 @@ const InstancesTable = () => {
                     rowData.statusColText === INVENTORY_STATUS.UNDETECTED ||
                     rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS ||
                     disableResult.isDisabled;
-                // Show bulk selection message when bulk is active, otherwise show the disable reason
-                const menuDisableMsg = isBulkActionVisible
-                    ? t('databases.bulk-register.action-disabled-during-bulk-selection')
-                    : disableResult.disableMsg;
                 const width = disableResult.tooltipWidth || '';
                 const height = disableResult.tooltipHeight || '';
 
@@ -909,7 +914,7 @@ const InstancesTable = () => {
                             {shouldDisableMenu ? (
                                 <TooltipComponent
                                     placement="bottom"
-                                    title={menuDisableMsg}
+                                    title={disableResult.disableMsg}
                                     width={width}
                                     height={height}
                                 >
@@ -1031,8 +1036,6 @@ const InstancesTable = () => {
             if (selectedRowsForBulkRegister.length > 0) {
                 dispatch(setSelectedRowsForBulkRegister([]));
             }
-            // Reset max limit state
-            setMaxLimitState({ isMaxReached: false, selectedIds: new Set() });
             return;
         }
 
@@ -1043,30 +1046,15 @@ const InstancesTable = () => {
         // Limit selection to MAX_BULK_REGISTER_SELECTION
         const limitedSelectedIds = selectedRowIds.slice(0, MAX_BULK_REGISTER_SELECTION);
 
-        // Update max limit state for disabling checkboxes
-        const newIsMaxReached = limitedSelectedIds.length >= MAX_BULK_REGISTER_SELECTION;
-        const newSelectedIds = new Set(limitedSelectedIds);
-
-        // Only update if max state changed or selected IDs changed
-        setMaxLimitState(prev => {
-            const idsChanged =
-                prev.selectedIds.size !== newSelectedIds.size ||
-                [...newSelectedIds].some(id => !prev.selectedIds.has(id));
-
-            if (prev.isMaxReached !== newIsMaxReached || idsChanged) {
-                return { isMaxReached: newIsMaxReached, selectedIds: newSelectedIds };
-            }
-            return prev;
-        });
-
         if (limitedSelectedIds.length > 0) {
-            const selectedRows = updatedTableData?.filter((row: any) => limitedSelectedIds.includes(String(row.id)));
+            // Use instanceTableRows directly to avoid circular dependency with updatedTableData
+            const selectedRows = instanceTableRows?.filter((row: any) => limitedSelectedIds.includes(String(row.id)));
             dispatch(setSelectedRowsForBulkRegister(selectedRows || []));
         } else {
             dispatch(setSelectedRowsForBulkRegister([]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tableProps.selectionState, updatedTableData, selectedHostType]);
+    }, [tableProps.selectionState, selectedHostType, instanceTableRows]);
 
     // Clear selection when host type changes
     useEffect(() => {
