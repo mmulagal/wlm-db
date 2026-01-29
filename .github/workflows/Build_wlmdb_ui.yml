@@ -48,16 +48,15 @@ jobs:
           version: 2
           verbose: false
           arch: amd64
-      - name: Ensure .aws config dir exists
+      - name: Set AWS credentials as environment variables
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.WLMDB_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.WLMDB_SECRET_KEY }}
+          AWS_DEFAULT_REGION:    ${{env.REGION}}         # ← change to your region
         run: |
-            mkdir -p ~/.aws
-            touch ~/.aws/config
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.WLMDB_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.WLMDB_SECRET_KEY }}
-          aws-region: ${{env.REGION}}
+          echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"     >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> $GITHUB_ENV
+          echo "AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION"   >> $GITHUB_ENV
 
       - name: Setup node
         uses: actions/setup-node@v4
