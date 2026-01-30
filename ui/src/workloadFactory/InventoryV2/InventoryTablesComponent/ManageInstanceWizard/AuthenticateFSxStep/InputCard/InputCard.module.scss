@@ -40,7 +40,7 @@
             gap: 24px;
             align-items: center;
             width: 100%;
-            padding: 80px 0;
+            padding: 40px 0;
 
             &:first-child {
                 padding-top: 0;
@@ -58,7 +58,9 @@
         .firstCol {
             display: flex;
             flex-direction: column;
-            min-width: 208px;
+            width: 14.5%;
+            min-width: 180px;
+            flex-shrink: 0;
             padding-top: 24px; // Offset to align with input fields
             font-weight: 500;
         }
@@ -79,10 +81,11 @@
     .textFieldContainer {
         display: flex;
         gap: 24px;
-        width: 100%;
+        flex: 1;
 
         .textFieldStyle {
-            width: 100%;
+            flex: 1;
+            min-width: 300px;
             margin-bottom: 0 !important;
         }
     }
@@ -97,8 +100,10 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        min-width: 200px;
+        min-width: 180px;
+        flex-shrink: 0;
         position: relative;
         top: 8px;
+        padding-top: 12px; // Offset to align with input fields
     }
 }

@@ -27,7 +27,11 @@ import { isAuthRequiredForInstance } from './DetectInstanceStep/DetectContent/De
 import ReplicaInfoDialog from './ReplicaInfoDialog/ReplicaInfoDialog';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { updateInstanceStatus } from '../../InventoryUtilsV2';
-import { areAllInstancesAuthenticated, createBulkAuthPayload } from './SelectInstancesStep/AuthenticateBulkUtils';
+import {
+    areAllInstancesAuthenticated,
+    createBulkAuthPayload,
+    generateInstanceUniqueKey
+} from './SelectInstancesStep/AuthenticateBulkUtils';
 import { setIsDetectReplicaHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import { InstanceAuthStatusMap } from '../../../../utils/types/inventoryV2Types';
 import { isAlreadyDetectedCheckBulkSelection } from './ManageInstanceUtils';
@@ -60,56 +64,147 @@ export const wrapInstanceForBulk = (instance: any) => {
 
 /**
  * Validates database authentication credentials (SQL Server/Windows/Oracle) without FSx registration.
- * @param entryData - Instance with authentication flags
+ * Works for both single instance mode and bulk mode.
+ * Supports both SAME_FOR_ALL and MANUAL credential modes in bulk.
+ * @param entryData - Instance with authentication flags (for single mode)
  * @param engineType - Database type ('oracle', 'mssql')
- * @returns True if credentials are valid
+ * @param isBulkMode - Optional flag to indicate bulk mode
+ * @param selectedInstances - Optional array of selected instances for bulk mode
+ * @returns True if credentials are valid for all instances requiring authentication
  */
-export const detectAuthFieldsValidation = (entryData: any, engineType: string) => {
+export const detectAuthFieldsValidation = (
+    entryData: any,
+    engineType: string,
+    isBulkMode?: boolean,
+    selectedInstances?: any[]
+) => {
     const state = store.getState();
-    const { detectManageUserName, detectManagePassword, detectWindowsAuthentication, authenticationType } =
-        state.inventoryV2;
+    const {
+        detectManageUserName,
+        detectManagePassword,
+        detectWindowsAuthentication,
+        authenticationType,
+        oracleBulkDatabaseCredentials,
+        bulkInstanceCredentials,
+        credentialOption,
+        instanceCredentials
+    } = state.inventoryV2;
 
-    // Checks if the respective authentication fields are present
-    const isAuthValid = () => !!(detectManageUserName && detectManagePassword);
-    const isWindowsAuthValid = () => !!(detectWindowsAuthentication?.username && detectWindowsAuthentication?.password);
-    switch (engineType) {
-        case DBType.ORACLE: {
-            const isDefault = entryData?.isDefaultAuthentication;
-            const isOracleAuth = entryData?.oracleServerAuthentication;
+    /**
+     * Checks if shared credentials are valid (SAME_FOR_ALL mode)
+     */
+    const isSharedAuthValid = () => {
+        if (engineType === DBType.ORACLE) {
+            return !!(oracleBulkDatabaseCredentials?.oracleUsername && oracleBulkDatabaseCredentials?.oraclePassword);
+        }
+        // For MSSQL bulk mode
+        return !!(bulkInstanceCredentials?.username && bulkInstanceCredentials?.password);
+    };
 
-            // In Oracle if isDefaultAuthentication is true then no need to check for Oracle auth
-            if (isDefault === true) {
+    /**
+     * Checks if per-instance credentials are valid (MANUAL mode)
+     * Both Oracle and MSSQL use uniqueKey (ec2InstanceId::databaseInstanceName) for consistency
+     * @param instanceData - The instance data to check credentials for
+     */
+    const isManualAuthValid = (instanceData: any) => {
+        const ec2InstanceId = instanceData?.ec2InstanceId || '';
+        const instanceId = instanceData?.databaseInstanceName || '';
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
+        const creds = instanceCredentials?.[uniqueKey];
+        return !!(creds?.username && creds?.password);
+    };
+
+    /**
+     * Checks if single mode credentials are valid
+     */
+    const isSingleModeAuthValid = () => !!(detectManageUserName && detectManagePassword);
+
+    const isWindowsAuthValid = () => {
+        if (isBulkMode) {
+            // For MSSQL bulk mode with Windows auth (SAME_FOR_ALL mode)
+            return !!(bulkInstanceCredentials?.username && bulkInstanceCredentials?.password);
+        }
+        // For single mode
+        return !!(detectWindowsAuthentication?.username && detectWindowsAuthentication?.password);
+    };
+
+    /**
+     * Validates a single instance's authentication fields
+     * @param instanceData - Instance data to validate
+     * @returns True if instance is already authenticated or credentials are valid
+     */
+    const validateSingleInstance = (instanceData: any): boolean => {
+        switch (engineType) {
+            case DBType.ORACLE: {
+                const isDefault = instanceData?.isDefaultAuthentication;
+                const isOracleAuth = instanceData?.oracleServerAuthentication;
+
+                // In Oracle if isDefaultAuthentication is true then no need to check for Oracle auth
+                if (isDefault === true) {
+                    return true;
+                }
+                if (isDefault === false) {
+                    // Need Oracle Auth - check based on credential mode
+                    if (!isOracleAuth) {
+                        if (isBulkMode) {
+                            if (credentialOption === CREDENTIAL_OPTIONS.MANUAL) {
+                                return isManualAuthValid(instanceData);
+                            }
+                            return isSharedAuthValid();
+                        }
+                        return isSingleModeAuthValid();
+                    }
+                    return true;
+                }
+                return false; // If isDefault is undefined or null, return false
+            }
+            case DBType.MSSQL:
+            default: {
+                // Check when neither SQL Server nor Windows Domain User is authenticated
+                if (
+                    !instanceData?.sqlServerAuthentication &&
+                    !instanceData?.windowsAuthentication &&
+                    !instanceData?.windowsDomainUserAuthentication
+                ) {
+                    // Based on authentication type is SQL Server or Windows, check if the respective fields are valid
+                    if (authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) {
+                        if (isBulkMode) {
+                            if (credentialOption === CREDENTIAL_OPTIONS.MANUAL) {
+                                return isManualAuthValid(instanceData);
+                            }
+                            return isSharedAuthValid();
+                        }
+                        return isSingleModeAuthValid();
+                    }
+                    if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
+                        if (isBulkMode && credentialOption === CREDENTIAL_OPTIONS.MANUAL) {
+                            return isManualAuthValid(instanceData);
+                        }
+                        return isWindowsAuthValid();
+                    }
+                    return false;
+                }
                 return true;
             }
-            if (isDefault === false) {
-                // Need both Oracle Auth
-                if (!isOracleAuth) {
-                    return isAuthValid();
-                }
-                return true;
-            }
-            return false; // If isDefault is undefined or null, return false
         }
-        case DBType.MSSQL:
-        default: {
-            // Check when neither SQL Server nor Windows Domain User is authenticated
-            if (
-                !entryData?.sqlServerAuthentication &&
-                !entryData?.windowsAuthentication &&
-                !entryData?.windowsDomainUserAuthentication
-            ) {
-                // Based on authentication type is SQL Server or Windows, check if the respective fields are valid
-                if (authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) {
-                    return isAuthValid();
-                }
-                if (authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION) {
-                    return isWindowsAuthValid();
-                }
-                return false;
-            }
-            return true;
+    };
+
+    // Bulk mode: validate all selected instances
+    if (isBulkMode && selectedInstances && Array.isArray(selectedInstances)) {
+        // If no instances selected, return false
+        if (selectedInstances.length === 0) {
+            return false;
         }
+
+        // Validate each instance - all must pass
+        return selectedInstances.every(instance => {
+            const instanceData = instance.data || instance;
+            return validateSingleInstance(instanceData);
+        });
     }
+
+    // Single mode: validate the single entry
+    return validateSingleInstance(entryData);
 };
 
 /**

@@ -24,7 +24,9 @@ import {
     setSelectedFSxForOntapCredentials,
     setSelectedMultiDetectInstances,
     setFsxAuthStatus,
-    setInstanceAuthStatus
+    setInstanceAuthStatus,
+    setDetectCredentialErrors,
+    clearDetectCredentialErrors
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { handleMultiInstanceManage, handleSingleInstanceManage } from './ManageInstanceUtils';
 import {
@@ -147,14 +149,19 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
         // Group FSx by the first instance that contains them (for credential/region info)
         // We need ec2InstanceId, region, and credentialsId from one of the instances
+        // Check both storage array AND direct fsxId field since FSx can come from either source
         const getInstanceForFsx = (fsxId: string): BulkDetectedInstance | undefined =>
             selectedMultiDetectInstances.find((instance: BulkDetectedInstance) => {
                 const storage = instance.data?.storage || instance.storage;
-                return storage?.some((item: any) => item.id === fsxId && item.type === DETECT_HOST_VAR.FSXN);
+                // Check if FSx is in storage array
+                const inStorage = storage?.some((item: any) => item.id === fsxId && item.type === DETECT_HOST_VAR.FSXN);
+                // Also check direct fsxId field on instance
+                const directFsxId = instance.data?.fsxId || (instance as any).fsxId;
+                return inStorage || directFsxId === fsxId;
             }) as BulkDetectedInstance | undefined;
 
-        // Create payload items - one per unique FSx, using instance info for API call context
-        const payloadItems: any[] = [];
+        // Group FSx credentials by ec2InstanceId for efficient API calls
+        const payloadMap: Record<string, any> = {};
         const processedFsxIds = new Set<string>();
 
         fsxIds.forEach(fsxId => {
@@ -164,18 +171,40 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             if (!instance) return;
 
             const instanceData = instance.data || instance;
+            const ec2InstanceId = instanceData?.ec2InstanceId || '';
+
+            if (!ec2InstanceId) return;
+
             const credList = createFsxOnlyPayload([fsxId], instanceData);
 
             if (credList.credentials && credList.credentials.length > 0) {
-                payloadItems.push({
-                    ...credList,
-                    ec2InstanceId: instanceData?.ec2InstanceId,
-                    region: instanceData?.regionId,
-                    credentialsId: instanceData?.credentialId
-                });
+                if (payloadMap[ec2InstanceId]) {
+                    // Merge FSx credentials into existing payload item
+                    const existingCreds = payloadMap[ec2InstanceId].credentials;
+                    credList.credentials.forEach((cred: any) => {
+                        // Avoid duplicate resourceId/resourceType combos
+                        if (
+                            !existingCreds.some(
+                                (e: any) => e.resourceId === cred.resourceId && e.resourceType === cred.resourceType
+                            )
+                        ) {
+                            existingCreds.push(cred);
+                        }
+                    });
+                } else {
+                    // Create new payload item for this ec2InstanceId
+                    payloadMap[ec2InstanceId] = {
+                        ...credList,
+                        ec2InstanceId,
+                        region: instanceData?.regionId || '',
+                        credentialsId: instanceData?.credentialId || ''
+                    };
+                }
                 processedFsxIds.add(fsxId);
             }
         });
+
+        const payloadItems = Object.values(payloadMap);
 
         // If no credentials to send, proceed to next step
         if (payloadItems.length === 0) {
@@ -290,6 +319,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const handleRegisterResourceCred = async (engineType: any) => {
         dispatch(setIsDetectHostLoading(true));
         dispatch(setManageSingleInstanceReadiness(null));
+        dispatch(clearDetectCredentialErrors()); // Clear previous errors
         const sqlServerInstance =
             manageSingleInstanceData?.sqlServerInstance || manageSingleInstanceData?.databaseInstanceName || '';
         try {
@@ -320,14 +350,17 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         if (detail?.databaseServerError) {
                             errors.push(detail.databaseServerError);
                             hasErrors = true;
+                            dispatch(setDetectCredentialErrors({ databaseServerError: detail.databaseServerError }));
                         }
                         if (detail?.fsxnError) {
                             errors.push(detail.fsxnError);
                             hasErrors = true;
+                            dispatch(setDetectCredentialErrors({ fsxnError: detail.fsxnError }));
                         }
                         if (detail?.oracleAsmError) {
                             errors.push(detail.oracleAsmError);
                             hasErrors = true;
+                            dispatch(setDetectCredentialErrors({ oracleAsmError: detail.oracleAsmError }));
                         }
                     });
 
@@ -339,6 +372,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             })
                         );
                     } else {
+                        // Clear errors on success
+                        dispatch(clearDetectCredentialErrors());
                         // store fsx cred in register obj if payload has fsx register
                         saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
                         const updatedInventoryTableData = updateInstanceStatus(
@@ -386,6 +421,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
      */
     const handleRegisterAuthCredentials = async () => {
         dispatch(setIsDetectHostLoading(true));
+        dispatch(clearDetectCredentialErrors()); // Clear previous errors
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
@@ -421,10 +457,12 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         if (detail?.databaseServerError) {
                             errors.push(detail.databaseServerError);
                             hasErrors = true;
+                            dispatch(setDetectCredentialErrors({ databaseServerError: detail.databaseServerError }));
                         }
                         if (detail?.oracleAsmError) {
                             errors.push(detail.oracleAsmError);
                             hasErrors = true;
+                            dispatch(setDetectCredentialErrors({ oracleAsmError: detail.oracleAsmError }));
                         }
                     });
 
@@ -436,6 +474,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             })
                         );
                     } else {
+                        // Clear errors on success
+                        dispatch(clearDetectCredentialErrors());
                         // Update inventory table data
                         const updatedInventoryTableData = updateInstanceStatus(
                             'detect',
@@ -1152,30 +1192,17 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     // Handles bulk registration flow for both MSSQL and Oracle
     const bulkGoForward = (currentStepIndexVal: number) => {
-        // Detect if this is the new bulk register flow for MSSQL or Oracle
-        const isMssqlNewBulkFlow = registerHostType === DBType.MSSQL && currentStep === 'authenticate-instance';
-        const isOracleNewBulkFlow = registerHostType === DBType.ORACLE && currentStep === 'authenticate-database';
-        const isNewBulkFlow = isMssqlNewBulkFlow || isOracleNewBulkFlow;
-
         if (currentStepIndexVal === 0) {
-            if (isNewBulkFlow) {
+            // @ts-ignore
+            const engineType = selectedMultiDetectInstances[0]?.data?.hostType || DBType.MSSQL;
+            // Pass bulk mode flag and selected instances for proper FSx validation
+            const fieldsCorrect = detectAuthFieldsValidation(null, engineType, true, selectedMultiDetectInstances);
+            if (fieldsCorrect) {
                 // New flow: Step 0 is authentication - call appropriate bulk auth handler
                 if (registerHostType === DBType.ORACLE) {
                     handleBulkOracleInstanceAuthenticate();
                 } else {
                     handleBulkInstanceAuthenticate();
-                }
-            } else {
-                // Old flow: Step 0 is SelectInstancesStep - just check if instances are selected
-                if (selectedMultiDetectInstances.length > 0) {
-                    goToNextStep();
-                } else {
-                    dispatch(
-                        addNotification({
-                            notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: t('databases.register-flow.bulk-instance-select-text')
-                        })
-                    );
                 }
             }
         } else if (currentStepIndexVal === 1) {

@@ -47,7 +47,8 @@ const DetectContent = () => {
         detectManagePassword,
         detectWindowsAuthentication,
         detectOntapUsername,
-        detectOntapPassword
+        detectOntapPassword,
+        detectCredentialErrors
     } = useAppSelector(state => state.inventoryV2);
 
     // Get loading state from msSqlAction slice to disable inputs during API calls
@@ -191,7 +192,10 @@ const DetectContent = () => {
                             setState({ mssqlUserNameFromWizard: e.target.value });
                         }}
                         className={styles.textFieldStyle}
-                        error={!detectManageUserName && hitNext ? t('databases.general.action-required') : ''}
+                        error={
+                            detectCredentialErrors?.databaseServerError ||
+                            (!detectManageUserName && hitNext ? t('databases.general.action-required') : '')
+                        }
                         placeholder={`${t('databases.general.enter')} ${t(config.usernameLabel)}`}
                         isDisabled={isDetectHostLoading}
                     />
@@ -204,7 +208,10 @@ const DetectContent = () => {
                             setState({ mssqlPasswordFromWizard: e.target.value });
                         }}
                         className={styles.textFieldStyle}
-                        error={!detectManagePassword && hitNext ? t('databases.general.action-required') : ''}
+                        error={
+                            detectCredentialErrors?.databaseServerError ||
+                            (!detectManagePassword && hitNext ? t('databases.general.action-required') : '')
+                        }
                         placeholder={t('databases.general.enter-password')}
                         isDisabled={isDetectHostLoading}
                     />
@@ -226,11 +233,12 @@ const DetectContent = () => {
                     }}
                     className={styles.textFieldStyle}
                     error={
-                        authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
+                        detectCredentialErrors?.databaseServerError ||
+                        (authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
                         !detectWindowsAuthentication?.username &&
                         hitNext
                             ? t('databases.general.action-required')
-                            : ''
+                            : '')
                     }
                     placeholder={`Enter ${t('databases.register-flow.detect-windows-username')}`}
                     isDisabled={isDetectHostLoading}
@@ -245,11 +253,12 @@ const DetectContent = () => {
                     }}
                     className={styles.textFieldStyle}
                     error={
-                        authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
+                        detectCredentialErrors?.databaseServerError ||
+                        (authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
                         !detectWindowsAuthentication?.password &&
                         hitNext
                             ? t('databases.general.action-required')
-                            : ''
+                            : '')
                     }
                     placeholder={t('databases.general.enter-password')}
                     isDisabled={isDetectHostLoading}
@@ -270,7 +279,10 @@ const DetectContent = () => {
                         setState({ ontapUserNameFromWizard: e.target.value });
                     }}
                     className={styles.textFieldStyle}
-                    error={!detectOntapUsername && hitNext ? t('databases.general.action-required') : ''}
+                    error={
+                        detectCredentialErrors?.fsxnError ||
+                        (!detectOntapUsername && hitNext ? t('databases.general.action-required') : '')
+                    }
                     placeholder={`${t('databases.general.enter')} ${t('databases.register-flow.detect-fsx-username')}`}
                     isDisabled={isDetectHostLoading}
                 />
@@ -283,7 +295,10 @@ const DetectContent = () => {
                         setState({ ontapPasswordFromWizard: e.target.value });
                     }}
                     className={styles.textFieldStyle}
-                    error={!detectOntapPassword && hitNext ? t('databases.general.action-required') : ''}
+                    error={
+                        detectCredentialErrors?.fsxnError ||
+                        (!detectOntapPassword && hitNext ? t('databases.general.action-required') : '')
+                    }
                     placeholder={t('databases.general.enter-password')}
                     isDisabled={isDetectHostLoading}
                 />
@@ -319,6 +334,7 @@ const DetectContent = () => {
                             setState({ asmUserNameFromWizard: e.target.value });
                         }}
                         className={styles.textFieldStyle}
+                        error={detectCredentialErrors?.oracleAsmError || ''}
                         placeholder={`${t('databases.general.enter')} ${t(config.usernameLabel)}`}
                         isDisabled={isDetectHostLoading}
                     />
@@ -331,6 +347,7 @@ const DetectContent = () => {
                             setState({ asmPasswordFromWizard: e.target.value });
                         }}
                         className={styles.textFieldStyle}
+                        error={detectCredentialErrors?.oracleAsmError || ''}
                         placeholder={`${t('databases.general.enter')} ${t(config.passwordLabel)}`}
                         isDisabled={isDetectHostLoading}
                     />

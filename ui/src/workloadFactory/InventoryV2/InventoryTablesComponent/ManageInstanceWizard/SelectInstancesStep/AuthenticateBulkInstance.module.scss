@@ -3,6 +3,7 @@
     flex-direction: column;
     gap: 40px;
     width: 79%;
+    min-width: 1064px;
     margin-top: 40px;
     margin-bottom: 40px;
 
@@ -115,15 +116,16 @@
                 display: flex;
                 gap: 24px;
                 align-items: flex-start;
-                width: 50%;
+                flex: 1;
 
                 .textField {
-                    width: 50%;
-                    max-width: 400px;
+                    flex: 1;
+                    min-width: 280px;
                 }
 
                 .passwordField {
-                    width: 50%;
+                    flex: 1;
+                    min-width: 280px;
                 }
             }
         }
@@ -134,18 +136,18 @@
             align-items: flex-start;
 
             .selectField {
-                min-width: 112px;
-                flex: 0 0 25%;
-                max-width: 402px;
+                flex: 1;
+                min-width: 280px;
             }
 
             .textField {
-                flex: 0 0 24.9%;
-                max-width: 400px;
+                flex: 1;
+                min-width: 280px;
             }
 
             .passwordField {
-                flex: 0 0 24.9%;
+                flex: 1;
+                min-width: 280px;
             }
         }
     }
@@ -169,8 +171,8 @@
                 display: flex;
                 flex-direction: column;
                 gap: 4px;
-                width: 15%;
-                max-width: 234px;
+                width: 11.5%;
+                min-width: 135px;
                 flex-shrink: 0;
                 padding-top: 24px; // Offset to align with input fields (below labels)
 
@@ -198,38 +200,41 @@
                 gap: 24px;
                 align-items: center;
                 flex: 1;
-                width: 100%;
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
 
                 .instanceSelectField {
-                    width: 30%;
+                    flex: 1;
+                    min-width: 250px;
                 }
 
                 .instanceTextField {
-                    width: 30%;
+                    flex: 1;
+                    min-width: 250px;
                 }
 
                 .instancePasswordField {
-                    width: 30%;
+                    flex: 1;
+                    min-width: 250px;
                 }
 
                 .oracleInstanceTextField {
-                    width: 22%;
-                    min-width: 180px;
+                    flex: 1;
+                    min-width: 220px;
                 }
 
                 .oracleInstancePasswordField {
-                    width: 22%;
-                    min-width: 180px;
+                    flex: 1;
+                    min-width: 220px;
                 }
 
                 .closeButtonContainer {
                     display: flex;
                     align-items: center;
-                    justify-content: flex-end;
+                    justify-content: center;
                     flex-shrink: 0;
                     position: relative;
                     top: 8px;
+                    width: 24px;
 
                     .closeButton {
                         width: 24px;
@@ -256,12 +261,16 @@
             }
 
             // Auth status on the right side (similar to FSx)
+            // Always reserve space to prevent layout shift
             .authStatusRight {
                 display: flex;
                 align-items: center;
                 gap: 8px;
                 flex-shrink: 0;
-                min-width: 150px;
+                width: 180px;
+                position: relative;
+                top: 8px;
+                margin-top: 12px; // Offset to align with input fields
 
                 .successIcon {
                     width: 16px;

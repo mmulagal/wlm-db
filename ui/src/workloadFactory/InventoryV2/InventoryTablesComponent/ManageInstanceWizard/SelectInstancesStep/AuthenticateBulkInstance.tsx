@@ -13,6 +13,7 @@ import { ReactComponent as Success } from '../../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg';
 import ManageWizardFooter from '../ManageWizardFooter';
 import DialogComponent from '../../../../../common/Dialog/DialogComponent';
+import DotComponent from '../../../../../common/DotComponent/DotComponent';
 import {
     setCredentialOption,
     setBulkInstanceCredentials,
@@ -21,6 +22,7 @@ import {
     setSelectedMultiDetectInstances
 } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { AUTHENTICATION_TYPE, CREDENTIAL_OPTIONS, DBType } from '../../../../../utils/consts';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../../store/notificationSlice';
 import styles from './AuthenticateBulkInstance.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
@@ -147,6 +149,39 @@ export const Content = () => {
         () => haveAllInstancesFailed(selectedMultiDetectInstances, instanceAuthStatus, hostType),
         [selectedMultiDetectInstances, instanceAuthStatus, hostType]
     );
+
+    // Calculate number of authenticated instances for notification
+    const authenticatedCount = useMemo(
+        () =>
+            instances.filter(instance => {
+                const originalInstance = (selectedMultiDetectInstances as any[]).find((inst: any) => {
+                    const ec2Id = inst.data?.ec2InstanceId || inst.ec2InstanceId || '';
+                    const dbInstanceName = inst.data?.databaseInstanceName || inst.databaseInstanceName || '';
+                    return generateInstanceUniqueKey(ec2Id, dbInstanceName) === instance.uniqueKey;
+                });
+                const instanceData = originalInstance?.data || originalInstance;
+                return isInstanceAuthenticated(instance.instanceId, instanceData, instanceAuthStatus, hostType);
+            }).length,
+        [instances, selectedMultiDetectInstances, instanceAuthStatus, hostType]
+    );
+
+    // Show notification only when there's partial authentication
+    const showPartialAuthNotification = authenticatedCount > 0 && authenticatedCount < instances.length;
+
+    // Dispatch notification on first load when there's partial authentication
+    useEffect(() => {
+        if (showPartialAuthNotification) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: t('databases.register-flow.partial-instances-authenticated', {
+                        authenticated: authenticatedCount,
+                        total: instances.length
+                    })
+                })
+            );
+        }
+    }, []);
 
     // Auto-switch to manual mode when partial success occurs
     // This allows users to fix failed instances individually
@@ -402,16 +437,47 @@ export const Content = () => {
                             container={<InfoIcon className={CommonStyles.infoIcon} />}
                         >
                             <div className={CommonStyles.tooltipContent}>
-                                {instances.map((instance, index) => (
-                                    <div
-                                        key={instance.uniqueKey}
-                                        className={`${CommonStyles.tooltipRow} ${
-                                            index !== instances.length - 1 ? CommonStyles.tooltipRowWithBorder : ''
-                                        }`}
-                                    >
-                                        <DsTypography variant="Semibold_13">{instance.instanceName}</DsTypography>
-                                    </div>
-                                ))}
+                                {instances.map((instance, index) => {
+                                    const originalInstance = (selectedMultiDetectInstances as any[]).find(
+                                        (inst: any) => {
+                                            const ec2Id = inst.data?.ec2InstanceId || inst.ec2InstanceId || '';
+                                            const dbInstanceName =
+                                                inst.data?.databaseInstanceName || inst.databaseInstanceName || '';
+                                            return (
+                                                generateInstanceUniqueKey(ec2Id, dbInstanceName) === instance.uniqueKey
+                                            );
+                                        }
+                                    );
+                                    const instanceData = originalInstance?.data || originalInstance;
+                                    const authenticated = isInstanceAuthenticated(
+                                        instance.instanceId,
+                                        instanceData,
+                                        instanceAuthStatus,
+                                        hostType
+                                    );
+                                    return (
+                                        <div
+                                            key={instance.uniqueKey}
+                                            className={`${CommonStyles.tooltipRow} ${
+                                                index !== instances.length - 1 ? CommonStyles.tooltipRowWithBorder : ''
+                                            }`}
+                                        >
+                                            <div className={styles.instanceStatusRow}>
+                                                <DsTypography variant="Semibold_13">
+                                                    {instance.instanceName}
+                                                </DsTypography>
+                                                <DotComponent
+                                                    color={authenticated ? 'var(--success)' : 'var(--toggle-off-bg)'}
+                                                    value={
+                                                        authenticated
+                                                            ? t('databases.register-flow.authenticated')
+                                                            : t('databases.register-flow.not-authenticated')
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </Popover>
                     </div>
@@ -551,8 +617,9 @@ export const Content = () => {
                                         error={failed ? t('databases.register-flow.authentication-failed') : ''}
                                     />
 
-                                    {!authenticated && !isDetectHostLoading && (
-                                        <div className={styles.closeButtonContainer}>
+                                    {/* Reserve space for close button to prevent layout shift */}
+                                    <div className={styles.closeButtonContainer}>
+                                        {!authenticated && !isDetectHostLoading && (
                                             <button
                                                 className={styles.closeButton}
                                                 onClick={() => handleRemoveInstance(instance.uniqueKey)}
@@ -561,30 +628,29 @@ export const Content = () => {
                                             >
                                                 <CloseIcon />
                                             </button>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Auth Status - Right side like FSx */}
-                                {(authenticated || failed) && (
-                                    <div className={styles.authStatusRight}>
-                                        {authenticated ? (
-                                            <>
-                                                <Success className={styles.successIcon} />
-                                                <DsTypography variant="Regular_13">
-                                                    {t('databases.register-flow.authenticated')}
-                                                </DsTypography>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Failure className={styles.failedIcon} />
-                                                <DsTypography variant="Regular_13">
-                                                    {t('databases.register-flow.authentication-failed')}
-                                                </DsTypography>
-                                            </>
                                         )}
                                     </div>
-                                )}
+                                </div>
+
+                                {/* Reserve space for auth status */}
+                                <div className={styles.authStatusRight}>
+                                    {authenticated && (
+                                        <>
+                                            <Success className={styles.successIcon} />
+                                            <DsTypography variant="Regular_13">
+                                                {t('databases.register-flow.authenticated')}
+                                            </DsTypography>
+                                        </>
+                                    )}
+                                    {failed && (
+                                        <>
+                                            <Failure className={styles.failedIcon} />
+                                            <DsTypography variant="Regular_13">
+                                                {t('databases.register-flow.authentication-failed')}
+                                            </DsTypography>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         );
                     })}

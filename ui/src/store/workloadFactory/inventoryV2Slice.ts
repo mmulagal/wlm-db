@@ -82,6 +82,11 @@ const initialInventoryV2State: InventorySliceData = {
         username: '',
         password: ''
     },
+    detectCredentialErrors: {
+        databaseServerError: '',
+        fsxnError: '',
+        oracleAsmError: ''
+    },
     resetManagedData: false,
     removeSecNodeDiscoveredList: [],
     unManagedPerfInstanceIdsList: [],
@@ -454,6 +459,19 @@ const inventoryV2Slice = createSlice({
                 ...action.payload
             };
         },
+        setDetectCredentialErrors: (state, action: PayloadAction<Partial<typeof state.detectCredentialErrors>>) => {
+            state.detectCredentialErrors = {
+                ...state.detectCredentialErrors,
+                ...action.payload
+            };
+        },
+        clearDetectCredentialErrors: state => {
+            state.detectCredentialErrors = {
+                databaseServerError: '',
+                fsxnError: '',
+                oracleAsmError: ''
+            };
+        },
         setResetManagedData: (state, action: PayloadAction<any>) => {
             state.resetManagedData = action.payload;
         },
@@ -706,6 +724,8 @@ export const {
     setOracleInstancesData,
     setDetectWindowsAuthentication,
     setDetectAsmAuthentication,
+    setDetectCredentialErrors,
+    clearDetectCredentialErrors,
     setPerfMssqlInstancesData,
     setInProgressInstances,
     setDetectManageUserName,

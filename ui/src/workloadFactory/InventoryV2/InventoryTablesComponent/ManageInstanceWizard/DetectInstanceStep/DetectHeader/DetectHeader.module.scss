@@ -185,7 +185,8 @@
 
 .instanceReadinessTable {
     margin-top: 40px;
-    width: 55.9%;
+    width: 55.41%;
+    min-width: 1064px;
 
     // Override table header sticky position to prevent overflow on scroll
     [class*='Table-module_header-cell'] {

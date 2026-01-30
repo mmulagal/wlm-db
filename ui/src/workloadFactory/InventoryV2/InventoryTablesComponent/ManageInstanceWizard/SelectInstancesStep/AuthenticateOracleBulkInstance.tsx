@@ -11,6 +11,7 @@ import { ReactComponent as SingleAuth } from '../../../../../assets/SingleAuth.s
 import { ReactComponent as Success } from '../../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../../assets/error-icon.svg';
 import ManageWizardFooter from '../ManageWizardFooter';
+import DotComponent from '../../../../../common/DotComponent/DotComponent';
 import {
     setCredentialOption,
     setInstanceCredentials,
@@ -19,6 +20,7 @@ import {
     setOracleBulkDatabaseCredentials
 } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { CREDENTIAL_OPTIONS, DBType } from '../../../../../utils/consts';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../../store/notificationSlice';
 import styles from './AuthenticateBulkInstance.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
@@ -73,6 +75,37 @@ export const Content = () => {
         [selectedMultiDetectInstances, instanceAuthStatus, hostType]
     );
 
+    // Calculate number of authenticated instances for notification
+    const authenticatedCount = useMemo(
+        () =>
+            instances.filter(instance => {
+                const originalInstance = (selectedMultiDetectInstances as any[]).find(
+                    (inst: any) =>
+                        (inst.data?.databaseInstanceName || inst.databaseInstanceName) === instance.instanceId
+                );
+                const instanceData = originalInstance?.data || originalInstance;
+                return isInstanceAuthenticated(instance.instanceId, instanceData, instanceAuthStatus, hostType);
+            }).length,
+        [instances, selectedMultiDetectInstances, instanceAuthStatus, hostType]
+    );
+
+    // Show notification only when there's partial authentication (not all, not none)
+    const showPartialAuthNotification = authenticatedCount > 0 && authenticatedCount < instances.length;
+
+    // Dispatch notification on first load when there's partial authentication
+    useEffect(() => {
+        if (showPartialAuthNotification) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: t('databases.register-flow.partial-instances-authenticated', {
+                        authenticated: authenticatedCount,
+                        total: instances.length
+                    })
+                })
+            );
+        }
+    }, []);
     // Auto-switch to manual mode when partial success occurs
     // This allows users to fix failed instances individually
     useEffect(() => {
@@ -81,28 +114,32 @@ export const Content = () => {
         }
     }, [hasPartialSuccess, dispatch]);
 
-    // Handle updating individual instance credentials
+    // Handle updating individual instance credentials using uniqueKey (ec2InstanceId::databaseInstanceName)
     const handleInstanceUpdate = (
-        instanceId: string,
+        uniqueKey: string,
         field: 'authMode' | 'username' | 'password' | 'oracleASM' | 'asmPassword',
         value: any
     ) => {
-        dispatch(setInstanceCredentials({ instanceId, credentials: { [field]: value } }));
+        dispatch(setInstanceCredentials({ instanceId: uniqueKey, credentials: { [field]: value } }));
     };
 
-    // Handle removing an instance from the selection
-    const handleRemoveInstance = (instanceId: string) => {
-        dispatch(removeInstanceCredentials(instanceId));
-        // Also update selectedMultiDetectInstances
-        const updatedInstances = selectedMultiDetectInstances.filter(
-            (inst: any) => (inst.data?.databaseInstanceName || inst.databaseInstanceName) !== instanceId
-        );
+    // Handle removing an instance from the selection using uniqueKey (ec2InstanceId::databaseInstanceName)
+    // to ensure only the specific instance is removed even if multiple instances share the same name
+    const handleRemoveInstance = (uniqueKey: string) => {
+        dispatch(removeInstanceCredentials(uniqueKey));
+        // Also update selectedMultiDetectInstances - filter by matching uniqueKey
+        const updatedInstances = selectedMultiDetectInstances.filter((inst: any) => {
+            const ec2Id = inst.data?.ec2InstanceId || inst.ec2InstanceId || '';
+            const dbInstanceName = inst.data?.databaseInstanceName || inst.databaseInstanceName || '';
+            const instUniqueKey = `${ec2Id}::${dbInstanceName}`;
+            return instUniqueKey !== uniqueKey;
+        });
         dispatch(setSelectedMultiDetectInstances(updatedInstances));
     };
 
-    // Get credentials for an instance (from Redux or defaults)
-    const getInstanceCredentials = (instanceId: string) =>
-        instanceCredentials[instanceId] || {
+    // Get credentials for an instance using uniqueKey (from Redux or defaults)
+    const getInstanceCredentials = (uniqueKey: string) =>
+        instanceCredentials[uniqueKey] || {
             username: '',
             password: '',
             oracleASM: '',
@@ -206,16 +243,42 @@ export const Content = () => {
                             container={<InfoIcon className={CommonStyles.infoIcon} />}
                         >
                             <div className={CommonStyles.tooltipContent}>
-                                {instances.map((instance, index) => (
-                                    <div
-                                        key={instance.instanceId}
-                                        className={`${CommonStyles.tooltipRow} ${
-                                            index !== instances.length - 1 ? CommonStyles.tooltipRowWithBorder : ''
-                                        }`}
-                                    >
-                                        <DsTypography variant="Semibold_13">{instance.instanceName}</DsTypography>
-                                    </div>
-                                ))}
+                                {instances.map((instance, index) => {
+                                    const originalInstance = (selectedMultiDetectInstances as any[]).find(
+                                        (inst: any) =>
+                                            (inst.data?.databaseInstanceName || inst.databaseInstanceName) ===
+                                            instance.instanceId
+                                    );
+                                    const instanceData = originalInstance?.data || originalInstance;
+                                    const authenticated = isInstanceAuthenticated(
+                                        instance.instanceId,
+                                        instanceData,
+                                        instanceAuthStatus,
+                                        hostType
+                                    );
+                                    return (
+                                        <div
+                                            key={instance.instanceId}
+                                            className={`${CommonStyles.tooltipRow} ${
+                                                index !== instances.length - 1 ? CommonStyles.tooltipRowWithBorder : ''
+                                            }`}
+                                        >
+                                            <div className={styles.instanceStatusRow}>
+                                                <DsTypography variant="Semibold_13">
+                                                    {instance.instanceName}
+                                                </DsTypography>
+                                                <DotComponent
+                                                    color={authenticated ? 'var(--success)' : 'var(--toggle-off-bg)'}
+                                                    value={
+                                                        authenticated
+                                                            ? t('databases.register-flow.authenticated')
+                                                            : t('databases.register-flow.not-authenticated')
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </Popover>
                     </div>
@@ -299,12 +362,13 @@ export const Content = () => {
             {credentialOption === CREDENTIAL_OPTIONS.MANUAL && (
                 <div className={styles.manualCredentialsSection}>
                     {instances.map((instance, index) => {
-                        const creds = getInstanceCredentials(instance.instanceId);
+                        const creds = getInstanceCredentials(instance.uniqueKey);
                         // Find the original instance data to check authentication status properly
-                        const originalInstance = (selectedMultiDetectInstances as any[]).find(
-                            (inst: any) =>
-                                (inst.data?.databaseInstanceName || inst.databaseInstanceName) === instance.instanceId
-                        );
+                        const originalInstance = (selectedMultiDetectInstances as any[]).find((inst: any) => {
+                            const ec2Id = inst.data?.ec2InstanceId || inst.ec2InstanceId || '';
+                            const dbInstanceName = inst.data?.databaseInstanceName || inst.databaseInstanceName || '';
+                            return `${ec2Id}::${dbInstanceName}` === instance.uniqueKey;
+                        });
                         const instanceData = originalInstance?.data || originalInstance;
                         const authenticated = isInstanceAuthenticated(
                             instance.instanceId,
@@ -334,7 +398,7 @@ export const Content = () => {
                                         value={creds.username}
                                         onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
                                             handleInstanceUpdate(
-                                                instance.instanceId,
+                                                instance.uniqueKey,
                                                 'username',
                                                 event?.target?.value || ''
                                             )
@@ -358,7 +422,7 @@ export const Content = () => {
                                         label={t('databases.register-flow.detect-oracle-password')}
                                         value={creds.password}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                            handleInstanceUpdate(instance.instanceId, 'password', e.target.value)
+                                            handleInstanceUpdate(instance.uniqueKey, 'password', e.target.value)
                                         }
                                         placeholder={t('databases.general.enter-password')}
                                         className={styles.oracleInstancePasswordField}
@@ -372,7 +436,7 @@ export const Content = () => {
                                         isOptional
                                         onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
                                             handleInstanceUpdate(
-                                                instance.instanceId,
+                                                instance.uniqueKey,
                                                 'oracleASM',
                                                 event?.target?.value || ''
                                             )
@@ -396,7 +460,7 @@ export const Content = () => {
                                         label={t('databases.register-flow.detect-oracle-asm-password')}
                                         value={creds.asmPassword || ''}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                            handleInstanceUpdate(instance.instanceId, 'asmPassword', e.target.value)
+                                            handleInstanceUpdate(instance.uniqueKey, 'asmPassword', e.target.value)
                                         }
                                         placeholder={t('databases.general.enter-password')}
                                         className={styles.oracleInstancePasswordField}
@@ -404,39 +468,39 @@ export const Content = () => {
                                         error={failed ? t('databases.register-flow.authentication-failed') : ''}
                                     />
 
-                                    {!authenticated && (
-                                        <div className={styles.closeButtonContainer}>
+                                    {/* Reserve space for close button */}
+                                    <div className={styles.closeButtonContainer}>
+                                        {!authenticated && (
                                             <button
                                                 className={styles.closeButton}
-                                                onClick={() => handleRemoveInstance(instance.instanceId)}
+                                                onClick={() => handleRemoveInstance(instance.uniqueKey)}
                                                 aria-label={t('databases.register-flow.remove-instance')}
                                             >
                                                 <CloseIcon />
                                             </button>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Auth Status - Right side like FSx */}
-                                {(authenticated || failed) && (
-                                    <div className={styles.authStatusRight}>
-                                        {authenticated ? (
-                                            <>
-                                                <Success className={styles.successIcon} />
-                                                <DsTypography variant="Regular_13">
-                                                    {t('databases.register-flow.authenticated')}
-                                                </DsTypography>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Failure className={styles.failedIcon} />
-                                                <DsTypography variant="Regular_13">
-                                                    {t('databases.register-flow.authentication-failed')}
-                                                </DsTypography>
-                                            </>
                                         )}
                                     </div>
-                                )}
+                                </div>
+
+                                {/* Reserve space for auth status */}
+                                <div className={styles.authStatusRight}>
+                                    {authenticated && (
+                                        <>
+                                            <Success className={styles.successIcon} />
+                                            <DsTypography variant="Regular_13">
+                                                {t('databases.register-flow.authenticated')}
+                                            </DsTypography>
+                                        </>
+                                    )}
+                                    {failed && (
+                                        <>
+                                            <Failure className={styles.failedIcon} />
+                                            <DsTypography variant="Regular_13">
+                                                {t('databases.register-flow.authentication-failed')}
+                                            </DsTypography>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         );
                     })}

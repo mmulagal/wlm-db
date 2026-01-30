@@ -289,25 +289,25 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                                     />
                                 </div>
 
-                                {(isAuthenticated || isFailed) && (
-                                    <div className={styles.authStatusRight}>
-                                        {isAuthenticated ? (
-                                            <>
-                                                <Success className={styles.successIcon} />
-                                                <DsTypography variant="Regular_13">
-                                                    {t('databases.register-flow.fsx-authenticated')}
-                                                </DsTypography>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Failure className={styles.failedIcon} />
-                                                <DsTypography variant="Regular_13">
-                                                    {t('databases.register-flow.fsx-authentication-failed')}
-                                                </DsTypography>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
+                                {/* Always reserve space for auth status */}
+                                <div className={styles.authStatusRight}>
+                                    {isAuthenticated && (
+                                        <>
+                                            <Success className={styles.successIcon} />
+                                            <DsTypography variant="Regular_13">
+                                                {t('databases.register-flow.fsx-authenticated')}
+                                            </DsTypography>
+                                        </>
+                                    )}
+                                    {isFailed && (
+                                        <>
+                                            <Failure className={styles.failedIcon} />
+                                            <DsTypography variant="Regular_13">
+                                                {t('databases.register-flow.fsx-authentication-failed')}
+                                            </DsTypography>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         );
                     })}

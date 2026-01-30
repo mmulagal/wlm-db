@@ -13,8 +13,8 @@ import {
     areAllFsxAuthenticated,
     hasPartialAuthSuccess,
     useFsxDiscoverContext,
-    getAllFsxFromStorage,
-    getAllFsxFromBulkStorage
+    getFsxNeedingAuth,
+    getFsxNeedingAuthFromBulk
 } from './AuthenticateFsxUtils';
 import { setSelectedFSxForOntapCredentials } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { FSX_FOR_ONTAP_CRED_OPTION } from '../../../../../utils/consts';
@@ -29,32 +29,38 @@ export const Content = () => {
 
     const { discoverContext, instanceIdentifiers, isBulkMode } = useFsxDiscoverContext();
 
-    // Memoized: Get all FSx list (data is fixed when wizard opens)
-    const allFsxList = useMemo(
+    // Memoized: Get FSx list that require authentication (filters out already authenticated ones)
+    const fsxNeedingAuthList = useMemo(
         () =>
             isBulkMode
-                ? getAllFsxFromBulkStorage(selectedMultiDetectInstances, discoverContext)
-                : getAllFsxFromStorage(manageSingleInstanceData?.storage, instanceIdentifiers, discoverContext),
+                ? getFsxNeedingAuthFromBulk(selectedMultiDetectInstances, fsxCredentialStatusObj, discoverContext)
+                : getFsxNeedingAuth(
+                      manageSingleInstanceData?.storage,
+                      fsxCredentialStatusObj,
+                      instanceIdentifiers,
+                      discoverContext
+                  ),
         [
             isBulkMode,
             selectedMultiDetectInstances,
+            fsxCredentialStatusObj,
             discoverContext,
             manageSingleInstanceData?.storage,
             instanceIdentifiers
         ]
     );
-    const hasSingleFsx = allFsxList.length === 1;
+    const hasSingleFsxNeedingAuth = fsxNeedingAuthList.length === 1;
 
     // Track if we've already set the mode to avoid re-running
     const hasSetModeRef = useRef(false);
 
-    // Auto-select MANAGE_CRED_MANUALLY when there's only 1 FSx (run once on mount)
+    // Auto-select MANAGE_CRED_MANUALLY when there's only 1 FSx needing auth
     useEffect(() => {
-        if (hasSingleFsx && !hasSetModeRef.current) {
+        if (hasSingleFsxNeedingAuth && !hasSetModeRef.current) {
             hasSetModeRef.current = true;
             dispatch(setSelectedFSxForOntapCredentials(FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY));
         }
-    }, [hasSingleFsx, dispatch]);
+    }, [hasSingleFsxNeedingAuth, dispatch]);
 
     // Memoized: Check if all FSx are authenticated (reacts to credential status changes)
     const isFsxAuthenticated = useMemo(
@@ -100,8 +106,8 @@ export const Content = () => {
         ]
     );
 
-    // Disable radio when: partial success OR only 1 FSx
-    const isRadioDisabled = hasPartialSuccess || hasSingleFsx;
+    // Disable radio when: partial success OR only 1 FSx needing auth
+    const isRadioDisabled = hasPartialSuccess || hasSingleFsxNeedingAuth;
 
     const renderContent = () => {
         if (isFsxAuthenticated) {

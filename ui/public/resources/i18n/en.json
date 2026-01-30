@@ -155,6 +155,8 @@
             "prepare-none-ready": "Incomplete (All instances)",
             "prepare-partial-ready": "{{readyCount}} out of {{totalCount}} complete",
             "all-instances-count": "{{count}} instances",
+            "partial-instances-authenticated": "{{authenticated}} out of the {{total}} selected instances are already authenticated.",
+            "not-authenticated": "Unauthenticated",
             "smb-protocol-disabled": "Action not supported on SQL server using SMB protocol",
             "no-bulk-cta": "Bulk manage is not supported for PostgreSQL.",
             "already-managed-instance": "The instance is already managed by Workload Factory.",

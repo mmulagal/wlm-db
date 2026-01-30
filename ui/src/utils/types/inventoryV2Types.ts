@@ -114,6 +114,11 @@ export interface InventorySliceData {
         username: string;
         password: string;
     };
+    detectCredentialErrors: {
+        databaseServerError: string;
+        fsxnError: string;
+        oracleAsmError: string;
+    };
     resetManagedData: boolean;
     removeSecNodeDiscoveredList: Array<string>;
     unManagedPerfInstanceIdsList: Array<string>;
