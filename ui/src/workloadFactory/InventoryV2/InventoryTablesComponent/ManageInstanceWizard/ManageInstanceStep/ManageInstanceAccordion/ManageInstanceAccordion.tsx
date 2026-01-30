@@ -163,6 +163,23 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
 
                                         if (!counts) return null;
 
+                                        // Show loading indicator for errorInvestigation while API call is in progress
+                                        const isErrorInvestigationLoading =
+                                            errorInvestigationLoading && item?.id === '5';
+
+                                        if (isErrorInvestigationLoading) {
+                                            return (
+                                                <div className={styles.readinessSectionBulk}>
+                                                    <div className={styles.statusRow}>
+                                                        <DsFlashingDotsLoader />
+                                                    </div>
+                                                    <DsTypography variant="Regular_14">
+                                                        {t('databases.register-flow.readiness')}
+                                                    </DsTypography>
+                                                </div>
+                                            );
+                                        }
+
                                         const allReady = counts.ready === counts.total && counts.total > 0;
                                         const noneReady = counts.ready === 0;
                                         const partialReady = counts.ready > 0 && counts.ready < counts.total;

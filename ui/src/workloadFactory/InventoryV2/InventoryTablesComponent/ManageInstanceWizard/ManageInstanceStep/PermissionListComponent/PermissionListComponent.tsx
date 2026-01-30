@@ -6,6 +6,7 @@ import styles from './PermissionListComponent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { PermissionListComponentItems } from './PermissionListComponentItems';
 import { MANAGE_STATES, ACTION_TYPE, DBType } from '../../../../../../utils/consts';
+import { getPermissionState } from '../../ManageInstanceUtils';
 
 const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any) => {
     const { t } = useTranslation();
@@ -15,6 +16,7 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
     const { loading } = useAppSelector(state => state.agenticAI.agenticRegisterFlowChecks);
 
     // Calculate readiness counts for bulk MSSQL/Oracle mode
+    // Uses getPermissionState to read from manageReadiness data which gets updated when API responses arrive
     const readinessCounts = useMemo(() => {
         if (
             wizardOperationType === ACTION_TYPE.BULK &&
@@ -35,8 +37,9 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
                 let readyCount = 0;
 
                 bulkDetectedInstanceList.forEach((instance: any) => {
-                    // Get the status for this capability directly from manageStates
-                    const status = instance?.manageStates?.[cap];
+                    const manageReadinessData = instance?.manageReadiness || instance?.data?.manageReadiness || {};
+                    // Use getPermissionState to compute status from manageReadiness
+                    const status = getPermissionState(cap, manageReadinessData);
                     if (status === MANAGE_STATES.READY) {
                         readyCount++;
                     } else {
