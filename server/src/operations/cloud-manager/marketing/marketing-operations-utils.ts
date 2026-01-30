@@ -309,7 +309,7 @@ function formatEbsCalculationObject(
         billableThroughputGBps: billableThroughputGbps,
         EBSThroughputCost: ebsThroughputCost,
         totalSnapshot: totalSnapshots,
-        initialSnapshotCost,
+        // initialSnapshotCost,
         monthlyCostPerSnapshot,
         discountForPartialStorageMonth,
         incrementalSnapshotCost,
@@ -355,9 +355,12 @@ function formatEbsCalculationObject(
     };
 
     const amountChangedPerSnapshot = convertToBytes(amountChangedPerSnapshotSize, amountChangedPerSnapshotUnit) || 0;
+    // The marketing API sends the initial snapshot cost for a single volume, so calculating to get the total initial snapshot cost for all volumes
+    // Although this will not warrant any future changes even after the marketing fix, but it has to be corrected in the marketing API itself in future
+    const initialSnapshotCostForAllVolumes = ebsStorageAmountSize * ebsSnapshotPrice;
 
     const ebsSnapshotCalculation = {
-        storageAmount: ebsStorageAmountSize * ebsNumberOfVolumes,
+        storageAmount: ebsStorageAmountSize,
         numberOfVolumes: ebsNumberOfVolumes,
         ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: ebsSnapshotPriceUnit },
         amountChangedPerSnapshot,
@@ -365,7 +368,7 @@ function formatEbsCalculationObject(
         monthlyChangeRatePercentage,
         ebsInstanceMonth,
         totalSnapshots,
-        initialSnapshotCost,
+        initialSnapshotCost: initialSnapshotCostForAllVolumes,
         monthlyCostPerSnapshot,
         discountForPartialStorageMonth,
         incrementalSnapshotCost,
