@@ -1,8 +1,9 @@
 import { isEmpty } from 'lodash-es';
 import { faker } from '@faker-js/faker';
 import { Instance } from '@aws-sdk/client-ec2';
+import { SendCommandCommandInput } from '@aws-sdk/client-ssm';
 import { createSecrets } from '../../src/operations/aws/secrets-manager-operations';
-import { DatabaseTypes, DEFAULT_AWS_REGION, FCI } from '../../src/utils/consts';
+import { DatabaseTypes, DEFAULT_AWS_REGION, FCI, SSM_COMMAND_COMPRESSION_THRESHOLD } from '../../src/utils/consts';
 import secretManagerResponse from '../simulator/responses/aws/secrets-manager-create.json';
 import {
     checkAndRetrieveJsonObject,
@@ -25,9 +26,12 @@ import {
     isCidrContained,
     summarizeFirstLevel,
     camelCaseToHyphenated,
-    hyphenatedToPascalCaseWithSpace
+    hyphenatedToPascalCaseWithSpace,
+    compressSsmCommand
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
+import { SSM_RUN_SHELL_SCRIPT_DOC } from '../../src/operations/workloads/oracle/consts';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from '../../src/operations/workloads/mssql/const';
 
 const CREDENTIALS_ID = `${faker.string.alpha(20)}`;
 const networkConfiguration = {
@@ -546,6 +550,78 @@ ervisor)\n`;
                 // Verify display format has proper capitalization
                 expect(display).toMatch(/^[A-Z][a-z0-9]*(\s[A-Z][a-z0-9]*)*$/);
             });
+        });
+    });
+
+    describe.sequential('Test ssm compression', () => {
+        let compressSsmCommandFn: typeof compressSsmCommand;
+        const originalEnv = process.env.NODE_ENV;
+
+        beforeAll(async () => {
+            process.env.NODE_ENV = 'development';
+            vi.resetModules();
+            const utils = await import('../../src/utils/utils');
+            compressSsmCommandFn = utils.compressSsmCommand;
+        });
+
+        afterAll(async () => {
+            process.env.NODE_ENV = originalEnv;
+            vi.resetModules();
+        });
+
+        it.sequential('sendSSMCommand with large bash script should compress commands', async () => {
+            // Generate a large command that exceeds compression threshold
+            const largeScript = `#!/bin/bash
+# Large discovery script for testing compression
+echo "Starting large script execution"
+${'echo "Processing data chunk"; sleep 0.1; '.repeat(3000)}
+echo "Script completed successfully"
+`;
+            const largeParams: SendCommandCommandInput = {
+                DocumentName: SSM_RUN_SHELL_SCRIPT_DOC,
+                Parameters: {
+                    commands: [largeScript]
+                },
+                InstanceIds: ['i-07e76a4b916548dc0']
+            };
+
+            // Verify the input exceeds threshold
+            const commandsSize = Buffer.byteLength(JSON.stringify(largeParams.Parameters?.commands), 'utf8');
+            expect(commandsSize).toBeGreaterThan(SSM_COMMAND_COMPRESSION_THRESHOLD);
+
+            // Should succeed with compression
+            const resp = compressSsmCommandFn(largeParams);
+
+            // Verify the commands were compressed (replaced with decompression wrapper)
+            expect(resp.Parameters?.commands?.[0]).toContain('base64 -d | gunzip | bash');
+        });
+
+        it.sequential('sendSSMCommand with large PowerShell script should compress commands', async () => {
+            // Generate a large command that exceeds compression threshold
+            const largeScript = `# Large PowerShell script for testing compression
+Write-Host "Starting large script execution"
+${'Write-Host "Processing data chunk"; Start-Sleep -Milliseconds 100; '.repeat(1500)}
+Write-Host "Script completed successfully"
+`;
+            const largeParams: SendCommandCommandInput = {
+                DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
+                Parameters: {
+                    commands: [largeScript]
+                },
+                InstanceIds: ['i-07e76a4b916548dc0']
+            };
+
+            // Verify the input exceeds threshold
+            const commandsSize = Buffer.byteLength(JSON.stringify(largeParams.Parameters?.commands), 'utf8');
+            expect(commandsSize).toBeGreaterThan(SSM_COMMAND_COMPRESSION_THRESHOLD);
+
+            // Should succeed with compression
+            const resp = compressSsmCommandFn(largeParams);
+
+            // Verify the commands were compressed (replaced with decompression wrapper)
+            expect(resp.Parameters?.commands?.length).toBe(1);
+            expect(resp.Parameters?.commands?.[0]).toContain('IO.Compression.GzipStream');
+            expect(resp.Parameters?.commands?.[0]).toContain('Invoke-Expression $s');
         });
     });
 });

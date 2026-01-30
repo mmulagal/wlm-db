@@ -35,7 +35,8 @@ import {
     getRedisConnection,
     generateHash,
     isRedisConnected,
-    summarizeFirstLevel
+    summarizeFirstLevel,
+    compressSsmCommand
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -82,7 +83,8 @@ import {
     REQUIRED_PS_MODULES_FOR_MANAGEMENT,
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
     AOAG_ROLE_PRIMARY,
-    AOAG_ROLE_SECONDARY
+    AOAG_ROLE_SECONDARY,
+    SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
 } from './workloads/mssql/const';
 import { NodeDetails, ResourceDetails, MultipleCommandSsmResponse } from '../utils/common-types';
 import {
@@ -889,9 +891,9 @@ async function makeSsmCall(
 ): Promise<string | undefined> {
     logger.info('Discovery makeSsmCall():', credentialsId, region, targets, accountId);
 
-    const params = {
+    let params: SendCommandCommandInput = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
-        Documentversion: '1',
+        DocumentVersion: SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION,
         Targets: [
             {
                 Key: 'InstanceIds',
@@ -908,6 +910,8 @@ async function makeSsmCall(
             CloudWatchOutputEnabled: true
         }
     };
+
+    params = compressSsmCommand(params);
 
     let commandId;
     try {

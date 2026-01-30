@@ -316,6 +316,21 @@ const invokeCommandWithCredSSP = `
     }
 `;
 
+// PowerShell decompression script template - decompresses gzipped base64 payload and executes
+const POWERSHELL_DECOMPRESS_TEMPLATE = (base64Data: string) => `$ErrorActionPreference="Stop"
+$d=@"
+${base64Data}
+"@
+$b=[Convert]::FromBase64String($d)
+$m=New-Object IO.MemoryStream
+$m.Write($b,0,$b.Length)
+$m.Position=0
+$g=New-Object IO.Compression.GzipStream($m,[IO.Compression.CompressionMode]::Decompress)
+$r=New-Object IO.StreamReader($g)
+$s=$r.ReadToEnd()
+$r.Close();$g.Close();$m.Close()
+Invoke-Expression $s`;
+
 export {
     ontapRestRequest,
     ontapJobStatusTemplate,
@@ -324,5 +339,6 @@ export {
     invokeOntapRequestTemplate,
     enableCredSSP,
     disableCredSSP,
-    invokeCommandWithCredSSP
+    invokeCommandWithCredSSP,
+    POWERSHELL_DECOMPRESS_TEMPLATE
 };

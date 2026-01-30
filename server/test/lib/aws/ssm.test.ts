@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { CommandFilterKey, PutParameterCommandInput, SendCommandCommandInput } from '@aws-sdk/client-ssm';
+import { CommandFilterKey, PutParameterCommandInput } from '@aws-sdk/client-ssm';
 import {
     sendSSMCommand,
     getCommandInvocation,
@@ -11,8 +11,7 @@ import {
     describeInstancePatchStates,
     describeInstancePatches,
     listSsmCommands,
-    describeInstanceInformation,
-    SSM_COMMAND_COMPRESSION_THRESHOLD
+    describeInstanceInformation
 } from '../../../src/lib/aws/ssm';
 import { SSM_PARAMS } from '../../utils/consts';
 import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
@@ -24,8 +23,6 @@ import getParameterResponse from '../../simulator/responses/aws/ssm-get-paramete
 import describePatchStatesResponse from '../../simulator/responses/aws/ssm-describe-patch-states.json';
 
 import { AL2023_AMI_NAME } from '../../../src/utils/consts';
-import { SSM_RUN_SHELL_SCRIPT_DOC } from '../../../src/operations/workloads/oracle/consts';
-import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from '../../../src/operations/workloads/mssql/const';
 
 const credentialsId = `${faker.string.alpha(20)}`;
 
@@ -33,64 +30,6 @@ describe('sendSSMCommand', () => {
     it('sendSSMCommand', async () => {
         const resp = await sendSSMCommand(credentialsId, 'ap-southeast-1', SSM_PARAMS);
         expect(resp).toEqual(ssmCommandOutput.resourceCommandResponse.Command.CommandId);
-    });
-
-    it('sendSSMCommand with large bash script should compress commands', async () => {
-        // Generate a large command that exceeds compression threshold
-        const largeScript = `#!/bin/bash
-# Large discovery script for testing compression
-echo "Starting large script execution"
-${'echo "Processing data chunk"; sleep 0.1; '.repeat(3000)}
-echo "Script completed successfully"
-`;
-        const largeParams: SendCommandCommandInput = {
-            DocumentName: SSM_RUN_SHELL_SCRIPT_DOC,
-            Parameters: {
-                commands: [largeScript]
-            },
-            InstanceIds: ['i-07e76a4b916548dc0']
-        };
-
-        // Verify the input exceeds threshold
-        const commandsSize = Buffer.byteLength(JSON.stringify(largeParams.Parameters?.commands), 'utf8');
-        expect(commandsSize).toBeGreaterThan(SSM_COMMAND_COMPRESSION_THRESHOLD);
-
-        // Should succeed with compression
-        const resp = await sendSSMCommand(credentialsId, 'ap-southeast-1', largeParams);
-        expect(resp).toEqual(ssmCommandOutput.resourceCommandResponse.Command.CommandId);
-
-        // Verify the commands were compressed (replaced with decompression wrapper)
-        expect(largeParams.Parameters?.commands?.length).toBe(1);
-        expect(largeParams.Parameters?.commands?.[0]).toContain('base64 -d | gunzip | bash');
-    });
-
-    it('sendSSMCommand with large PowerShell script should compress commands', async () => {
-        // Generate a large command that exceeds compression threshold
-        const largeScript = `# Large PowerShell script for testing compression
-Write-Host "Starting large script execution"
-${'Write-Host "Processing data chunk"; Start-Sleep -Milliseconds 100; '.repeat(1500)}
-Write-Host "Script completed successfully"
-`;
-        const largeParams: SendCommandCommandInput = {
-            DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
-            Parameters: {
-                commands: [largeScript]
-            },
-            InstanceIds: ['i-07e76a4b916548dc0']
-        };
-
-        // Verify the input exceeds threshold
-        const commandsSize = Buffer.byteLength(JSON.stringify(largeParams.Parameters?.commands), 'utf8');
-        expect(commandsSize).toBeGreaterThan(SSM_COMMAND_COMPRESSION_THRESHOLD);
-
-        // Should succeed with compression
-        const resp = await sendSSMCommand(credentialsId, 'ap-southeast-1', largeParams);
-        expect(resp).toEqual(ssmCommandOutput.resourceCommandResponse.Command.CommandId);
-
-        // Verify the commands were compressed (replaced with decompression wrapper)
-        expect(largeParams.Parameters?.commands?.length).toBe(1);
-        expect(largeParams.Parameters?.commands?.[0]).toContain('IO.Compression.GzipStream');
-        expect(largeParams.Parameters?.commands?.[0]).toContain('Invoke-Expression $s');
     });
 
     it('getCommandInvocation', async () => {

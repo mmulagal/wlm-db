@@ -15,6 +15,11 @@ type ontapRequestParams = {
     }[];
 };
 
+// Bash decompression script template - decompresses gzipped base64 payload and executes
+const BASH_DECOMPRESS_TEMPLATE = (compressedBase64: string) => `#!/bin/bash
+d='${compressedBase64}'
+echo "$d" | base64 -d | gunzip | bash`;
+
 const sqlplusOutputFormatSettings = `
 SET HEADING OFF;
 SET LINESIZE 500;
@@ -2180,5 +2185,6 @@ export {
     sqlplusOutputFormatSettings,
     parseSpfileProperties,
     dataguardDeploymentUtilities,
-    defaultAuthDetectModule
+    defaultAuthDetectModule,
+    BASH_DECOMPRESS_TEMPLATE
 };

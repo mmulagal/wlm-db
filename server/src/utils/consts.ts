@@ -1860,6 +1860,9 @@ const NOTIFICATION_SERVICE_NAME = 'Workload Factory for Databases';
 // Temp directory for file operations (writable in read-only pods)
 const TEMP_DIRECTORY = '/tmp';
 
+// Limit is 64KB, use a slightly smaller threshold to account for parameter and document overhead
+const SSM_COMMAND_COMPRESSION_THRESHOLD = 62 * 1024;
+
 export {
     TEMP_DIRECTORY,
     WLMDB,
@@ -2236,5 +2239,6 @@ export {
     SSM_COMMAND_RUNTIMES,
     CLOUDFLARE_DNS_IP,
     LINUX_HOST_UTILITIES_RELATIVE_PATH,
-    NOTIFICATION_SERVICE_NAME
+    NOTIFICATION_SERVICE_NAME,
+    SSM_COMMAND_COMPRESSION_THRESHOLD
 };

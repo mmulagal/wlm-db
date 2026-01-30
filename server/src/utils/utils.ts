@@ -10,13 +10,14 @@ import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import numeral from 'numeral';
 import isBase64 from 'is-base64';
-import { inflateRaw } from 'node:zlib';
+import { gzipSync, inflateRaw } from 'node:zlib';
 import { promisify } from 'util';
 import randomize from 'randomatic';
 import { StringValue } from 'ms';
 import IORedis from 'ioredis';
 import { StandardUnit } from '@aws-sdk/client-cloudwatch';
 import { STORAGE_TYPE } from '@prisma/client';
+import { SendCommandCommandInput } from '@aws-sdk/client-ssm';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { RegionDetailsType } from '../routes/types/generic.types';
 
@@ -50,7 +51,8 @@ import {
     FCI,
     CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES,
     CLOUD_WATCH_METRICS_PERFORMANCE_NAMESPACE,
-    NOT_AVAILABLE
+    NOT_AVAILABLE,
+    SSM_COMMAND_COMPRESSION_THRESHOLD
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -59,6 +61,10 @@ import { MS_SQL_2016, MS_SQL_2017, MS_SQL_2022 } from '../operations/workloads/m
 import { MIN_OPTIMIZED_HEADROOM_PERCENTAGE, REDIS_SCHEMA, REDIS_URL } from './continous-optimization-consts';
 import { readFromCacheByKey, writeToCache } from './cache';
 import { DatabaseInstance, DatabaseInstances, DatabaseInstancesIncludingResource, Resource } from './common-types';
+import { SSM_RUN_SHELL_SCRIPT_DOC } from '../operations/workloads/oracle/consts';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from '../operations/workloads/mssql/const';
+import { BASH_DECOMPRESS_TEMPLATE } from '../operations/workloads/oracle/oracle-ssm-script-utils';
+import { POWERSHELL_DECOMPRESS_TEMPLATE } from '../operations/workloads/mssql/common-templates';
 
 const logger = getLogger();
 
@@ -1438,6 +1444,62 @@ function hyphenatedToPascalCaseWithSpace(str: string): string {
         .join(' ');
 }
 
+function compressSsmCommand(params: SendCommandCommandInput) {
+    // Compress commands if they exceed size threshold
+    if (IS_DEMO_FLOW) {
+        logger.debug('Skipping SSM command compression in demo flow');
+        return params;
+    }
+    const isBashScript = params.DocumentName === SSM_RUN_SHELL_SCRIPT_DOC;
+    const isPowerShellScript = params.DocumentName === SSM_RUN_POWERSHELL_SCRIPT_DOC;
+
+    if ((isBashScript || isPowerShellScript) && params.Parameters?.commands) {
+        const commandsStr = JSON.stringify(params.Parameters.commands);
+        const commandsSize = Buffer.byteLength(commandsStr, 'utf8');
+
+        logger.info(`SSM command size: ${commandsSize} bytes`);
+
+        if (commandsSize > SSM_COMMAND_COMPRESSION_THRESHOLD) {
+            logger.info('Compressing large SSM command...');
+
+            // Join commands array into single script
+            const scriptContent = Array.isArray(params.Parameters.commands)
+                ? params.Parameters.commands.join('\n')
+                : params.Parameters.commands;
+
+            // Compress the script with level=6, default level
+            const compressed = gzipSync(scriptContent, { level: 6 });
+            const compressedBase64 = compressed.toString('base64');
+
+            logger.info(
+                `Compressed size: ${compressedBase64.length} bytes (${Math.round(
+                    (compressedBase64.length / commandsSize) * 100
+                )}% of original)`
+            );
+
+            // Replace commands with appropriate decompression wrapper
+            if (isBashScript) {
+                params.Parameters.commands = [BASH_DECOMPRESS_TEMPLATE(compressedBase64)];
+            } else {
+                // Split base64 into chunks for PowerShell here-string readability (80 char lines)
+                const chunks = compressedBase64.match(/.{1,80}/g) || [compressedBase64];
+                const base64Data = chunks.join('\n');
+                params.Parameters.commands = [POWERSHELL_DECOMPRESS_TEMPLATE(base64Data)];
+            }
+
+            const finalSize = Buffer.byteLength(JSON.stringify(params), 'utf8');
+            logger.info(`Final SSM request size: ${finalSize} bytes`);
+
+            if (finalSize > SSM_COMMAND_COMPRESSION_THRESHOLD) {
+                throw new Error(
+                    `Compressed payload still exceeds SSM limit: ${finalSize} bytes. Original: ${commandsSize} bytes`
+                );
+            }
+        }
+    }
+    return params;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1521,5 +1583,6 @@ export {
     isRedisConnected,
     summarizeFirstLevel,
     camelCaseToHyphenated,
-    hyphenatedToPascalCaseWithSpace
+    hyphenatedToPascalCaseWithSpace,
+    compressSsmCommand
 };

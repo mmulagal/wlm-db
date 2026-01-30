@@ -23,7 +23,7 @@ import {
     getParameter,
     describeInstanceInformation
 } from '../../lib/aws/ssm';
-import { decompressSSMResponse, generateHash, IS_DEMO_FLOW, sleep } from '../../utils/utils';
+import { compressSsmCommand, decompressSSMResponse, generateHash, IS_DEMO_FLOW, sleep } from '../../utils/utils';
 import {
     AWS_REGION_KEYS,
     AWS_REGIONS,
@@ -183,6 +183,7 @@ async function executeSSMDocumentMultipleInstances(
             return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as MultipleCommandSsmResponse[];
         }
 
+        params = compressSsmCommand(params);
         const commandId = await sendSSMCommand(credentialsId, region, params, accountId);
 
         // Sleep for 1 second in non-demo flow to avoid immediate polling
@@ -227,6 +228,7 @@ async function executeSSMDocument(
 ) {
     logger.info('Execute SSM document', { credentialsId, region, params: params?.Comment, accountId, pollDuration });
 
+    params = compressSsmCommand(params);
     const commandId = await sendSSMCommand(credentialsId, region, params, accountId);
     const [instanceIds] = params?.InstanceIds ?? [];
     const pollParams = {
