@@ -1105,9 +1105,7 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
         totalCloneMonthlyCost: 0
     };
     Object.keys(viewCalculationsResponse?.ebsSnapshotCalculation || {}).map((key: string) => {
-        const volumeStorageAmount =
-            (viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.storageAmount || 0) /
-            (viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.ebsInstanceMonth || 0);
+        const volumeStorageAmount = viewCalculationsResponse?.ebsSnapshotCalculation?.[key]?.storageAmount || 0;
         ebsSnapshotCalculation = {
             amountChangedPerSnapshot:
                 ebsSnapshotCalculation.amountChangedPerSnapshot +

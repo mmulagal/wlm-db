@@ -333,11 +333,16 @@ export const hasPartialAuthSuccess = (
     // First landing - no attempts yet (no failures), Enable radio buttons
     if (failedCount === 0) return false;
 
-    // ALL FSx that need authentication have failed, Enable radio buttons
+    // Count successful authentications in this session
+    const successCount = allFsxIds.filter(id => fsxAuthStatus?.[id] === 'success').length;
+
+    // Partial success - some FSx authenticated and some FSx failed
+    // This is the case where we disable radio buttons
+    if (successCount > 0 && failedCount > 0) return true;
+
+    // ALL FSx that need authentication have failed (and none succeeded in this session)
+    // Enable radio buttons so user can retry with different credentials
     if (failedCount === needAuthFsxIds.length) return false;
 
-    // Partial success - some FSx authenticated (needAuth < total), some still need auth and have failed
-    // This is the ONLY case where we disable radio buttons
-    const authenticatedCount = allFsxIds.length - needAuthFsxIds.length;
-    return authenticatedCount > 0 && failedCount > 0;
+    return false;
 };

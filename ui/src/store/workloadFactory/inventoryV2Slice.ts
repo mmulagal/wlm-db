@@ -245,7 +245,13 @@ const inventoryV2Slice = createSlice({
             state,
             action: PayloadAction<{
                 instanceId: string;
-                credentials: Partial<{ authMode: any; username: string; password: string }>;
+                credentials: Partial<{
+                    authMode: any;
+                    username: string;
+                    password: string;
+                    oracleASM: string;
+                    asmPassword: string;
+                }>;
             }>
         ) => {
             const { instanceId, credentials } = action.payload;

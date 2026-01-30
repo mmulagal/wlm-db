@@ -242,7 +242,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             if (detail?.fsxnError) {
                                 failedFsxIds.push(resourceId);
                                 authStatusUpdates[resourceId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
-                            } else if (detail?.resourceType === 'FSX') {
+                            } else {
                                 successFsxIds.push(resourceId);
                                 authStatusUpdates[resourceId] = RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success';
                             }

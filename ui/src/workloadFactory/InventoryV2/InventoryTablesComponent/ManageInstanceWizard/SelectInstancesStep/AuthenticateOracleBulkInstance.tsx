@@ -3,7 +3,7 @@ import { DsRadioButton, DsTextField, DsTypography } from '@tlveng/wlm-ds';
 
 import { ReactComponent as CloseIcon } from '@netapp/icons/ic_close.svg';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info_tooltip.svg';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as InstancesImage } from '../../../../../assets/Instances_Img.svg';
@@ -31,6 +31,7 @@ import {
     isInstanceAuthenticated,
     hasInstanceFailed,
     haveAllInstancesFailed,
+    generateInstanceUniqueKey,
     BulkInstanceItem
 } from './AuthenticateBulkUtils';
 
@@ -113,6 +114,64 @@ export const Content = () => {
             dispatch(setCredentialOption(CREDENTIAL_OPTIONS.MANUAL));
         }
     }, [hasPartialSuccess, dispatch]);
+
+    // Track the previous credential option to detect switches
+    const prevCredentialOptionRef = useRef(credentialOption);
+
+    // Populate credentials for authenticated instances when switching to MANUAL mode
+    // This mirrors the FSx InputCard behavior
+    useEffect(() => {
+        const wasUseTheSameCred = prevCredentialOptionRef.current === CREDENTIAL_OPTIONS.SAME_FOR_ALL;
+        const isNowManual = credentialOption === CREDENTIAL_OPTIONS.MANUAL;
+
+        if (wasUseTheSameCred && isNowManual) {
+            // Find all authenticated instances and populate their credentials
+            instances.forEach((instance: BulkInstanceItem) => {
+                const originalInstance = (selectedMultiDetectInstances as any[]).find((inst: any) => {
+                    const ec2Id = inst.data?.ec2InstanceId || inst.ec2InstanceId || '';
+                    const dbInstanceName = inst.data?.databaseInstanceName || inst.databaseInstanceName || '';
+                    return generateInstanceUniqueKey(ec2Id, dbInstanceName) === instance.uniqueKey;
+                });
+                const instanceData = originalInstance?.data || originalInstance;
+                const authenticated = isInstanceAuthenticated(
+                    instance.instanceId,
+                    instanceData,
+                    instanceAuthStatus,
+                    hostType
+                );
+
+                if (authenticated && oracleUsername && oraclePassword) {
+                    // Only populate if not already set - use uniqueKey for credentials map
+                    if (!instanceCredentials[instance.uniqueKey]?.username) {
+                        dispatch(
+                            setInstanceCredentials({
+                                instanceId: instance.uniqueKey,
+                                credentials: {
+                                    username: oracleUsername,
+                                    password: oraclePassword,
+                                    oracleASM: oracleASM || '',
+                                    asmPassword: asmPassword || ''
+                                }
+                            })
+                        );
+                    }
+                }
+            });
+        }
+
+        prevCredentialOptionRef.current = credentialOption;
+    }, [
+        credentialOption,
+        instances,
+        selectedMultiDetectInstances,
+        instanceAuthStatus,
+        hostType,
+        oracleUsername,
+        oraclePassword,
+        oracleASM,
+        asmPassword,
+        instanceCredentials
+    ]);
 
     // Handle updating individual instance credentials using uniqueKey (ec2InstanceId::databaseInstanceName)
     const handleInstanceUpdate = (

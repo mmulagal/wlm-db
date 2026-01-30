@@ -1194,7 +1194,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Amount changed in GiB per snapshot',
                 value: `${viewCalculation.ebsSnapshotCalculation.amountChangedPerSnapshot}`,
-                text: `(Monthly change rate % / total snapshots) x Storage amount of EBS primary dbs volumes= ${
+                text: `Σ[(Monthly change rate % / total snapshots) x Total storage of each EBS volume type]= ${
                     viewCalculation.ebsSnapshotCalculation.storageAmountPerMonthList
                         ?.map(
                             (storageAmount: string) =>
@@ -1206,7 +1206,14 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Initial snapshot cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}`,
-                text: `Storage amount of EBS primary dbs volumes (${viewCalculation.ebsSnapshotCalculation.storageAmountPerMonth}) x EBS snapshots price ($${viewCalculation.ebsSnapshotCalculation.ebsSnapshotPrice})`
+                text: `Σ[Total size of each EBS volume type x EBS snapshots price per GiB]= ${
+                    viewCalculation.ebsSnapshotCalculation.storageAmountPerMonthList
+                        ?.map(
+                            (storageAmount: string) =>
+                                `${storageAmount} x $${viewCalculation.ebsSnapshotCalculation.ebsSnapshotPrice}`
+                        )
+                        .join(' + ') || ''
+                }`
             },
             {
                 label: 'Monthly cost of each snapshot',
@@ -1225,7 +1232,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             },
             {
                 label: 'Total snapshots cost',
-                value: `$${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}`,
+                value: `$${viewCalculation.ebsSnapshotCalculation.totalEbsSnapshotCost}`,
                 text: `Initial snapshots cost ($${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}) + Incremental snapshots cost ($${viewCalculation.ebsSnapshotCalculation.incrementalSnapshotCost})`
             }
         ],
@@ -1279,7 +1286,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             },
             {
                 label: 'Total monthly snapshots cost',
-                value: `$${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}`,
+                value: `$${viewCalculation.ebsSnapshotCalculation.totalEbsSnapshotCost}`,
                 text: ''
             },
             {
@@ -1290,7 +1297,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Total monthly cost',
                 value: `$${viewCalculation.ebsTotalCost}`,
-                text: `Total EC2 cost ($${viewCalculation.totalEBSEc2MachineCost}) + Total storage cost ($${viewCalculation.ebsCalculation.totalEbsStorageCost}) + Total throughput cost ($${viewCalculation.ebsCalculation.totalEbsThroughputCost}) + Total IOPS cost ($${viewCalculation.ebsCalculation.totalEbsIopsCost}) + Total snapshots cost ($${viewCalculation.ebsSnapshotCalculation.totalSnapshotCost}) + Total Clone cost ($${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost})`
+                text: `Total EC2 cost ($${viewCalculation.totalEBSEc2MachineCost}) + Total storage cost ($${viewCalculation.ebsCalculation.totalEbsStorageCost}) + Total throughput cost ($${viewCalculation.ebsCalculation.totalEbsThroughputCost}) + Total IOPS cost ($${viewCalculation.ebsCalculation.totalEbsIopsCost}) + Total snapshots cost ($${viewCalculation.ebsSnapshotCalculation.totalEbsSnapshotCost}) + Total Clone cost ($${viewCalculation.ebsCloneCalculation.totalCloneMonthlyCost})`
             }
         ],
         gp3VolumeType: viewCalculation?.ebsCalculation?.gp3
