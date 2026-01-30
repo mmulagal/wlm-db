@@ -111,11 +111,13 @@ export function MssqlPgsqlDatabaseTableColDefs({
                                       <DsTypography variant="Regular_13" className={styles.colText}>
                                           {cellData || t('databases.general.not-available-table-columns')}
                                       </DsTypography>
-                                      {rowData.replicasCount > 0 && rowData?.isPrimary && (
+                                      {rowData?.isPrimary && (
                                           <div className={styles.firstColText}>
                                               <DsTypography variant="Regular_13" className={styles.colText}>
-                                                  {`${t('databases.general.primary')} | ${rowData.replicasCount || 0} ${
-                                                      rowData.replicasCount <= 1
+                                                  {`${t('databases.general.primary')} | ${
+                                                      rowData.totalReplicaCount || 0
+                                                  } ${
+                                                      rowData.totalReplicaCount <= 1
                                                           ? t('databases.general.replica')
                                                           : t('databases.general.replicas')
                                                   }`}

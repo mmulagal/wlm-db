@@ -30,7 +30,8 @@ import {
     sortInventoryTableData,
     uniqueHostRow,
     getDiscoveredHostDeploymentAtHostLevel,
-    getAvailabilityGroupListForAoag
+    getAvailabilityGroupListForAoag,
+    getAoagTotalReplicaCountPerDatabase
 } from './InventoryUtilsV2';
 import { setFullInventoryTablesRows, setInventoryTablesRows } from '../../store/workloadFactory/inventoryV2Slice';
 import store from '../../store/store';
@@ -361,6 +362,7 @@ const InventoryV2 = () => {
                             } else {
                                 protectionVal = GENERAL.NOT_AVAILABLE;
                             }
+                            const totalReplicaCount = getAoagTotalReplicaCountPerDatabase(perRow, perDatabase);
                             const perRowData = {
                                 ...perDatabase,
                                 isProtected: protectionVal,
@@ -379,7 +381,8 @@ const InventoryV2 = () => {
                                 'Database size': formatSize(perDatabase?.size),
                                 resourceId: perHost?.resourceId,
                                 ec2InstanceId: perHost?.ec2InstanceId,
-                                serverInstallationMode
+                                serverInstallationMode,
+                                totalReplicaCount
                             };
                             // Only add Oracle PDB databases or all non-Oracle databases
                             if (

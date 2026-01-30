@@ -5183,3 +5183,42 @@ export const getAvailabilityGroupListForAoag = (perRow: any): string[] => {
 
     return perRow?.aoagDetails?.availabilityGroups.map((ag: any) => ag.agName);
 };
+
+/**
+ * Calculates the total replica count per database for AOAG setups
+ * @param perRow - Row data containing aoagDetails and deployment type
+ * @param perDatabase - Database object containing availabilityGroup and replicaRole
+ * @returns Number of replicas (replicas.length - 1) for PRIMARY databases in AOAG, or 0 otherwise
+ */
+export const getAoagTotalReplicaCountPerDatabase = (perRow: any, perDatabase: any): number => {
+    // Check if it is AOAG setup - if not, return 0
+    if (perRow?.sqlServerDeploymentType?.toLowerCase() !== SQL_DEPLOYMENT_MODE.AOAG) {
+        return 0;
+    }
+
+    const availabilityGroup = perDatabase?.availabilityGroup;
+
+    // If no availabilityGroup and replicaRole is not PRIMARY, return 0
+    if (!availabilityGroup && perDatabase?.replicaRole !== REPLICA_ROLES.PRIMARY) {
+        return 0;
+    }
+
+    // If availabilityGroup exists and replicaRole is PRIMARY
+    if (availabilityGroup && perDatabase?.replicaRole === REPLICA_ROLES.PRIMARY) {
+        const availabilityGroups = perRow?.aoagDetails?.availabilityGroups || [];
+
+        // Find the AG object with matching agName
+        const matchingAg = availabilityGroups.find((ag: any) => ag?.agName === availabilityGroup);
+
+        if (!matchingAg) {
+            return 0;
+        }
+
+        const replicasLength = matchingAg?.replicas?.length || 0;
+
+        // If replicas list is 0, return 0, else return replicas.length - 1
+        return replicasLength === 0 ? 0 : replicasLength - 1;
+    }
+
+    return 0;
+};
