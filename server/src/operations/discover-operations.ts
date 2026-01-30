@@ -222,14 +222,15 @@ async function getHostAndSqlServerInfo(
             // TODO: Handle partial cache hits, currently if any miss, we go for full discovery, which is not optimal.
         }
 
-        const commandId = await makeSsmCall(
-            credentialsId,
-            region,
-            HOST_AND_SQL_INFO_PS1,
-            ssmConnectedNodes.map((target: SsmTargetsInfo) => target.ec2InstanceId),
-            accountId
-        );
-        const [fsxList, svmList, subnetList, ebsVolumeList] = await Promise.all([
+        // Start SSM command and AWS API calls in parallel for better performance
+        const [commandId, fsxList, svmList, subnetList, ebsVolumeList] = await Promise.all([
+            makeSsmCall(
+                credentialsId,
+                region,
+                HOST_AND_SQL_INFO_PS1,
+                ssmConnectedNodes.map((target: SsmTargetsInfo) => target.ec2InstanceId),
+                accountId
+            ),
             describeFSxFileSystems(credentialsId, region, { useCache: true }),
             describeFSxStorageVirtualMachines(credentialsId, region, undefined, { useCache: true }),
             paginatedDescribeSubnets(credentialsId, region, {}, { useCache: true }),
@@ -327,7 +328,7 @@ async function getHostAndSqlServerInfo(
 
         await Promise.all(
             ssmConnectedNodes.map(
-                throat(pageSize || 5, async (target: SsmTargetsInfo) => {
+                throat(pageSize || 10, async (target: SsmTargetsInfo) => {
                     let dbInfo: SqlServerInstanceInfoType[] = [];
                     dbInfo = await getHostAndSqlInfoFromPsOutput(
                         credentialsId,
@@ -408,7 +409,7 @@ async function getHostAndSqlInfoFromPsOutput(
     api1StartTime = performance.now();
 
     const [ssmResponse, ec2SqlParametersInfo] = await Promise.all([
-        pollCommandStatus(credentialsId, region, commandInvocationParam, 5000).catch(error => {
+        pollCommandStatus(credentialsId, region, commandInvocationParam).catch(error => {
             const errorMessage = `Error fetching command status: ${error} on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
             logger.error(errorMessage);
             throw createError(errorMessage);
