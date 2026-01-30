@@ -36,7 +36,11 @@ const MSSQLBanner = ({ loading }: { loading: boolean }) => {
             {activeSlide === 0 && (
                 <div className={styles.rightSection}>
                     <div className={styles.imageTextSection}>
-                        <div onClick={() => setActiveSlide(1)} style={{ cursor: 'pointer' }}>
+                        <div
+                            onClick={() => setActiveSlide(1)}
+                            className={styles.carousalClass}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <CarousalLeft />
                         </div>
                         <div className={styles.topSection}>
@@ -93,7 +97,11 @@ const MSSQLBanner = ({ loading }: { loading: boolean }) => {
             {activeSlide === 1 && (
                 <div className={styles.rightSection}>
                     <div className={styles.imageTextSection}>
-                        <div onClick={() => setActiveSlide(0)} style={{ cursor: 'pointer' }}>
+                        <div
+                            onClick={() => setActiveSlide(0)}
+                            className={styles.carousalClass}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <CarousalLeft />
                         </div>
                         <div className={styles.topSection}>

@@ -48,7 +48,7 @@ const OracleBanner = ({ loading }: { loading: boolean }) => {
                 </div> */}
 
                     <div className={styles.imageTextSection}>
-                        <div onClick={() => setActiveSlide(1)} style={{ cursor: 'pointer' }}>
+                        <div onClick={() => setActiveSlide(1)} className={styles.carousalClass} >
                             <CarousalLeft />
                         </div>
                         <div className={styles.topSection}>
@@ -115,8 +115,8 @@ const OracleBanner = ({ loading }: { loading: boolean }) => {
                     <DsTypography variant="Regular_14">{t('databases.banner.oracle-server-content')}</DsTypography>
                 </div> */}
 
-                    <div className={styles.imageTextSection}>
-                        <div onClick={() => setActiveSlide(0)} style={{ cursor: 'pointer' }}>
+                    <div className={styles.imageTextSection} >
+                        <div onClick={() => setActiveSlide(0)} className={styles.carousalClass} >
                             <CarousalLeft />
                         </div>
                         <div className={styles.topSection}>

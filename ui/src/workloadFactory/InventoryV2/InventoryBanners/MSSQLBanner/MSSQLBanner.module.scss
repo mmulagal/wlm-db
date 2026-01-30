@@ -20,6 +20,15 @@
         height: auto;
         background: var(--hover-background);
         width: 32.39%;
+
+        .carousalClass {
+            cursor: pointer;
+            svg {
+                path {
+                    fill: var(--text-primary) !important;
+                }
+            }
+        }
     }
 
     .topSection {
