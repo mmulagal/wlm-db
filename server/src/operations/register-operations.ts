@@ -2427,7 +2427,7 @@ async function validateCredentials(
         );
 
         throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            HttpErrorCodes.VALIDATION_ERROR,
             `Unable to validate the credentials . Reason: ${error?.message}.`
         );
     }
