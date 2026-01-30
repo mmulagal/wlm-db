@@ -5830,6 +5830,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
             {
                 name: 'oracleredo2',
                 uuid: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                junctionPath: '/oracleredo2',
                 svmName: 'wlmdb_sqlsvm_1735809893269',
                 autosize: 'off',
                 compaction: 'inline',
@@ -5852,6 +5853,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
             {
                 name: 'oraclearch2',
                 uuid: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
+                junctionPath: '/oraclearch2',
                 svmName: 'wlmdb_sqlsvm_1735809893269',
                 autosize: 'off',
                 compaction: 'inline',
@@ -5874,6 +5876,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
             {
                 name: 'oracledata2',
                 uuid: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                junctionPath: '/oracledata2',
                 svmName: 'wlmdb_sqlsvm_1735809893269',
                 autosize: 'off',
                 compaction: 'inline',

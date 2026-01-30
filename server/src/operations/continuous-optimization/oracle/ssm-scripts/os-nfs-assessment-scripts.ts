@@ -482,27 +482,25 @@ def resolve_hostnames(hostnames):
     res = {}
     for h in hostnames:
         try:
-            # Check if hostname is already an IP address (IPv4 or IPv6)
-            # Using ipaddress module for Python 3.6+ compatibility
-            is_ip = False
-            try:
-                ipaddress.ip_address(h)
-                is_ip = True
-            except ValueError:
-                pass
-            
-            if is_ip:
-                # Already an IP address, no need for DNS resolution
-                res[h] = [h]
-            else:
-                # Domain name - resolve to IP addresses
-                ips = set()
-                for ai in socket.getaddrinfo(h, None):
-                    ips.add(ai[4][0])
-                res[h] = list(ips)
+            ips = {ai[4][0] for ai in socket.getaddrinfo(h, None)}
+            res[h] = list(ips)
         except Exception as e:
             res[h] = ["Error: {}".format(e)]
     return res
+`;
+
+const IS_IP_ADDRESS = `
+def is_ip_address(value):
+    """Check if value is an IPv4 or IPv6 address"""
+    if not value:
+        return False
+    # IPv4: digits and dots only, 4 octets
+    if re.match(r'^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$', value):
+        return True
+    # IPv6: contains colon and only hex digits, colons, and optional dots (for mapped IPv4)
+    if ':' in value and re.match(r'^[0-9a-fA-F:.]+$', value):
+        return True
+    return False
 `;
 
 const GET_ORANFSTAB_DATA = `
@@ -514,29 +512,23 @@ ${PARSE_ORANFSTAB}
 
 ${RESOLVE_HOSTNAMES}
 
+${IS_IP_ADDRESS}
+
 def get_dns_resolution():
     log('Collecting DNS resolution data from oranfstab')
     
     try:
         hostnames = set()
         
-        # Collect hostnames from oranfstab
+        # Collect hostnames from oranfstab paths (excluding IP addresses)
         oranfstab_result = parse_oranfstab()
         oranfstab_servers = oranfstab_result.get('oranfstab_servers', [])
         for s in oranfstab_servers:
-            # Add 'server' field if it looks like a hostname or IP
-            server = s.get('server', '').strip()
-            if server and not server.startswith('/'):
-                # Valid if it's an IP pattern or contains a dot (FQDN/IP)
-                if re.match(r'^[\\d\\.]+$', server) or '.' in server or ':' in server:
-                    hostnames.add(server)
-            
-            # Add 'paths' field entries if they look like hostnames or IPs
+            # Add 'paths' field entries if they're hostnames (not IPs)
             for p in s.get('paths', []):
                 p = p.strip() if p else ''
-                if p and not p.startswith('/'):
-                    if re.match(r'^[\\d\\.]+$', p) or '.' in p or ':' in p:
-                        hostnames.add(p)
+                if p and not p.startswith('/') and not is_ip_address(p):
+                    hostnames.add(p)
         
         dns_resolution = resolve_hostnames(hostnames)
         log(f"DNS resolution collected for {len(hostnames)} hostnames")

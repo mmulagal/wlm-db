@@ -160,7 +160,7 @@ if [ -z "\${mappedOntapVolumeUuids[*]}" ]; then
     exit 1
 fi
 
-volumeEndpoint="storage/volumes?uuid=$(IFS='|'; echo "\${mappedOntapVolumeUuids[*]}")&fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,space.snapshot.autodelete.delete_order,snapshot_policy,tiering,guarantee,efficiency"
+volumeEndpoint="storage/volumes?uuid=$(IFS='|'; echo "\${mappedOntapVolumeUuids[*]}")&fields=svm,nas.path,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,space.snapshot.autodelete.delete_order,snapshot_policy,tiering,guarantee,efficiency"
 log "Calling ONTAP API endpoint: $volumeEndpoint"
 
 response=$(ontap_request 'GET' $volumeEndpoint)
@@ -219,6 +219,7 @@ log "Successfully retrieved volume data, processing $(echo "$response" | jq '.re
 volumesData=$(echo "$response" | jq '[.records[] | {
     name: .name,
     uuid: .uuid,
+    junctionPath: .nas.path,
     thinProvision: .guarantee.honored,
     spaceGuarantee: .guarantee.type,
     autosizeMode: .autosize.mode,

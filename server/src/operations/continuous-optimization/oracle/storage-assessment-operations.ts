@@ -48,6 +48,40 @@ import { normalizeNfsVersion } from '../assessment-utils';
 
 const logger = getLogger();
 
+type NfsMountEntry = NonNullable<
+    NonNullable<StorageNfsAssessment['os']>['nfs-mount-options']
+>['nfs-mount-options'] extends Array<infer T> | undefined
+    ? T
+    : never;
+
+function addNosharecacheViolationIfNeeded(
+    mount: NfsMountEntry,
+    flaggedMounts: Set<string>,
+    violationDetails: GenericViolationResponseType[]
+): void {
+    const key = `${mount?.['remote-path']}:${mount?.['mount-point']}`;
+    if (flaggedMounts.has(key)) {
+        return;
+    }
+    flaggedMounts.add(key);
+
+    const options = mount?.options || {};
+    if (options.nosharecache !== true && options.nosharecache !== 'true') {
+        const currentOpts = Object.entries(options)
+            .map(([k, v]) => (v === true ? k : `${k}=${v}`))
+            .join(',');
+
+        violationDetails.push(
+            createViolationDetail(
+                key,
+                'NFS mount option',
+                currentOpts || 'no options',
+                currentOpts ? `${currentOpts},nosharecache` : 'nosharecache'
+            )
+        );
+    }
+}
+
 const volumeConfigData = storageGoldenConfigData.configuration.volume;
 const volumeNfsConfigData = storageGoldenConfigData.configuration.volume_nfs;
 const lunConfigData = storageGoldenConfigData.configuration.lun;
@@ -541,17 +575,12 @@ function getOSConfigDrift(
     return osDrift;
 }
 
-function getBaseVolume(
-    path: string,
-    server: string,
-    allRemotePaths: string[],
-    exportsByServer: Record<string, string[]>
-): string {
-    return (
-        allRemotePaths.find(
-            p => p !== path && path.startsWith(`${p}/`) && !(exportsByServer[server] || []).includes(path)
-        ) || path
-    );
+function getBaseVolume(path: string, server: string, exportsByServer: Record<string, string[]>): string {
+    const serverExports = exportsByServer[server] || [];
+
+    const matches = serverExports.filter(exp => path === exp || (path.startsWith(exp) && path[exp.length] === '/'));
+
+    return matches.reduce((longest, exp) => (exp.length > longest.length ? exp : longest), '') || path;
 }
 
 function getNfsOSConfigDrift(
@@ -568,6 +597,8 @@ function getNfsOSConfigDrift(
         osDrift.push({ errorMessage: 'No OS assessment data found.' });
         return osDrift;
     }
+
+    const oracleJunctionPaths = new Set(volumes?.data?.map(vol => vol.junctionPath) || []);
 
     const recommendedNFSMountOptions = Object.entries(nfsMountOptionExpected)
         .map(([key, expectedValue]) => {
@@ -759,8 +790,7 @@ function getNfsOSConfigDrift(
                     return (
                         versValue.startsWith('4') &&
                         volumes?.data?.some(
-                            volume =>
-                                volume.name && remotePath && volume.name.includes(remotePath.split('/').pop() || '')
+                            volume => volume.junctionPath && remotePath && remotePath.startsWith(volume.junctionPath)
                         )
                     );
                 });
@@ -835,7 +865,7 @@ function getNfsOSConfigDrift(
 
                 const dnfsIpData = os?.['dnfs-ip-resolution'];
                 if (!dnfsIpData) {
-                    logger.info('Skipping dNFS consistent IP resolution check - no dNFS IP resolution data', {
+                    logger.info('Skipping dNFS consistent IP resolution check - no dNFS hostname found', {
                         ec2InstanceId,
                         databaseInstanceName
                     });
@@ -889,7 +919,6 @@ function getNfsOSConfigDrift(
 
                 const oranfstabServers = oranfstabData?.oranfstab_servers || [];
                 const mountOptions = nfsMountData?.['nfs-mount-options'] || [];
-                const volumeNames = volumes?.data?.map(vol => vol.name) || [];
 
                 if (oranfstabServers.length === 0 || mountOptions.length === 0) {
                     logger.info('Skipping dNFS configuration file check - no oranfstab or NFS mount data', {
@@ -902,7 +931,7 @@ function getNfsOSConfigDrift(
                 // Filter fstab mounts to only those used by this database (exact volume match, not subdirectories)
                 const dbMounts = mountOptions.filter(mount => {
                     const remotePath = mount?.['remote-path'] || '';
-                    return volumeNames.some(volName => remotePath === `/${volName}`);
+                    return oracleJunctionPaths.has(remotePath);
                 });
 
                 // Build oranfstab lookup: map of exportPath -> oranfstab entry
@@ -1044,36 +1073,48 @@ function getNfsOSConfigDrift(
 
                 const mountOptions = nfsMountData?.['nfs-mount-options'] || [];
                 const exportsByServer = nfsExportsData?.['nfs-exports'] || {};
-                const allRemotePaths = mountOptions.map(mount => mount?.['remote-path']).filter(Boolean) as string[];
 
                 const mountsByVolume: Record<string, typeof mountOptions> = {};
                 for (const mount of mountOptions) {
                     const remotePath = mount?.['remote-path'] || '';
                     const server = mount?.server || '';
-                    const baseVolume = getBaseVolume(remotePath, server, allRemotePaths, exportsByServer);
+                    const baseVolume = getBaseVolume(remotePath, server, exportsByServer);
                     (mountsByVolume[baseVolume] ||= []).push(mount);
                 }
 
-                Object.values(mountsByVolume)
-                    .filter(mounts => mounts.length > 1)
-                    .flat()
-                    .forEach(mount => {
-                        const options = mount?.options || {};
-                        if (options.nosharecache !== true && options.nosharecache !== 'true') {
-                            const currentOpts = Object.entries(options)
-                                .map(([k, v]) => (v === true ? k : `${k}=${v}`))
-                                .join(',');
+                const flaggedMounts = new Set<string>();
 
-                            violationDetails.push(
-                                createViolationDetail(
-                                    `${mount?.['remote-path']}:${mount?.['mount-point']}`,
-                                    'NFS mount option',
-                                    currentOpts || 'no options',
-                                    currentOpts ? `${currentOpts},nosharecache` : 'nosharecache'
-                                )
-                            );
-                        }
-                    });
+                // Check 1: Multiple mounts from same base volume (same server export)
+                Object.entries(mountsByVolume)
+                    .filter(
+                        ([, mounts]) =>
+                            mounts.length > 1 && mounts.some(m => oracleJunctionPaths.has(m?.['remote-path'] || ''))
+                    )
+                    .flatMap(([, mounts]) => mounts)
+                    .forEach(mount => addNosharecacheViolationIfNeeded(mount, flaggedMounts, violationDetails));
+
+                // Check 2: Nested mount points (one mount-point is subdirectory of another)
+                const oracleMounts = mountOptions.filter(m => oracleJunctionPaths.has(m?.['remote-path'] || ''));
+                const allMountPoints = mountOptions.map(m => m?.['mount-point'] || '').filter(Boolean);
+
+                for (const mount of oracleMounts) {
+                    const mountPoint = mount?.['mount-point'] || '';
+                    if (!mountPoint) {
+                        // eslint-disable-next-line no-continue
+                        continue;
+                    }
+
+                    // Check if this mount-point is nested within another mount-point
+                    const isNested = allMountPoints.some(
+                        other =>
+                            other !== mountPoint &&
+                            (mountPoint.startsWith(`${other}/`) || other.startsWith(`${mountPoint}/`))
+                    );
+
+                    if (isNested) {
+                        addNosharecacheViolationIfNeeded(mount, flaggedMounts, violationDetails);
+                    }
+                }
 
                 osDrift.push(
                     createAssessment(config, 1, violationDetails.length > 0 ? [ec2InstanceId] : [], violationDetails)
@@ -2194,4 +2235,10 @@ async function initiateStorageAssessmentCollection(
     }
 }
 
-export { initiateStorageAssessmentCollection, calculateStorageDrift, getVolumeConfigDrift, mapVolumeTypesToIdName };
+export {
+    initiateStorageAssessmentCollection,
+    calculateStorageDrift,
+    getVolumeConfigDrift,
+    mapVolumeTypesToIdName,
+    getBaseVolume
+};
