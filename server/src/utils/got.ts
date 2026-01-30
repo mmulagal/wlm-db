@@ -168,25 +168,10 @@ const gotInstanceForTextResponse = got.extend({
     hooks
 });
 
-const gotInstanceForBatchRequest = got.extend({
-    retry: {
-        limit: config.get<number>('got.batch.retry-count')
-    },
-    timeout: {
-        lookup: ms(config.get<StringValue>('got.batch.lookup-timeout')),
-        connect: ms(config.get<StringValue>('got.batch.connect-timeout')),
-        response: ms(config.get<StringValue>('got.batch.response-timeout'))
-    },
-    resolveBodyOnly: true,
-    responseType: 'json',
-    hooks
-});
-
 export {
     isHTTPError,
     isTimeoutError,
     gotInstanceForInternalRequest,
     gotInstanceForExternalRequest,
-    gotInstanceForBatchRequest,
     gotInstanceForTextResponse
 };

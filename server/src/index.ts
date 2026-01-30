@@ -40,7 +40,6 @@ import awsRoutes from './routes/aws';
 import formConfigRoutes from './routes/form-config';
 import workingEnvironmentRoutes from './routes/working-environment';
 import msSqlServerRoutes from './routes/mssql';
-import batchRoutes from './routes/batch';
 import pricingRoutes from './routes/pricing';
 import databaseHostsRoutes from './routes/database-hosts';
 import deploymentJobsRoutes from './routes/jobs';
@@ -236,7 +235,6 @@ const app = fastify({
             formConfigRoutes(instance);
             workingEnvironmentRoutes(instance);
             msSqlServerRoutes(instance);
-            batchRoutes(instance);
             pricingRoutes(instance);
             databaseHostsRoutes(instance);
             deploymentJobsRoutes(instance);

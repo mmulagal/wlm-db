@@ -38,7 +38,6 @@ import './simulator/scopes/cloud-manager/cloud-manager-notification-scope';
 // Other Scopes
 import './simulator/scopes/opentelemetry-scope';
 import './simulator/scopes/jwt-scope';
-import './simulator/scopes/batch-scope';
 
 import { initializeDatabase } from '../src/utils/prisma-utils';
 

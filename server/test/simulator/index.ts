@@ -26,7 +26,6 @@ async function initiateSimulator() {
     await import('./scopes/aws/ssm-scope');
     await import('./scopes/aws/sns-scope');
     await import('./scopes/aws/sqs-scope');
-    await import('./scopes/batch-scope');
     await import('./scopes/cloud-manager/cloud-manager-notification-scope');
     await import('./scopes/cloud-manager/workload-factory-credentials-scope');
     await import('./scopes/cloud-manager/wlmdb-scope');

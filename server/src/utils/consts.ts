@@ -80,7 +80,6 @@ const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
 const AUDIT_EXCLUDE_LIST = [
-    '/batch',
     '/prompt',
     '/pricing',
     '/cloudformation/template',
@@ -1291,7 +1290,6 @@ const CF_NOTIFICATION = 'AWS CloudFormation Notification';
 const ERROR_CODE_SQS_NON_EXISTENT_QUEUE = 'AWS.SimpleQueueService.NonExistentQueue';
 const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
 const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
-const BATCH_API_CONCURRENCY_LIMIT = 10;
 const API_PAGE_SIZE = 100;
 const V2_API_PAGE_SIZE = 25;
 const SANDBOX_API_SIZE = 25;
@@ -1988,7 +1986,6 @@ export {
     SERVICE_TOKEN,
     TOKEN_EXPIRATION_TIME,
     WORKLOAD_FACTORY_ENDPOINT,
-    BATCH_API_CONCURRENCY_LIMIT,
     API_PAGE_SIZE,
     SANDBOX_API_SIZE,
     FCI_STACKNAME,
