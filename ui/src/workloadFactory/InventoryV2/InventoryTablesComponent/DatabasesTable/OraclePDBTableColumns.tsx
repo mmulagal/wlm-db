@@ -31,21 +31,23 @@ export function OraclePDBTableColDefs({
                 const name = rowData?.name;
                 return (
                     <div>
-                        <DsTypography variant="Semibold_14">{name || GENERAL.NOT_AVAILABLE}</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {name || t('databases.general.not-available-table-columns')}
+                        </DsTypography>
                         <div className={styles.firstColText}>
-                            {rowData?.status === 'ONLINE' && (
+                            {rowData?.status?.toLowerCase() === 'online' && (
                                 <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
                             )}
-                            {rowData?.status === 'OFFLINE' && (
+                            {rowData?.status?.toLowerCase() === 'offline' && (
                                 <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
                             )}
                             {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
                                 <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
                             )}
                             <DsTypography variant="Regular_13">
-                                {rowData?.status === 'ONLINE'
+                                {rowData?.status?.toLowerCase() === 'online'
                                     ? INVENTORY_STATUS.ONLINE
-                                    : rowData?.status === 'OFFLINE'
+                                    : rowData?.status?.toLowerCase() === 'offline'
                                     ? INVENTORY_STATUS.OFFLINE
                                     : rowData?.status}
                                 {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}

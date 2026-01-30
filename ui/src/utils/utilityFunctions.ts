@@ -488,6 +488,83 @@ export const getFilterOptions = (data: any[], propName: string, renderLabel?: (v
               'value'
           );
 
+/**
+ * Generates filter options with N/A option for empty values
+ * Auto-detects if field is string or array and handles accordingly
+ * @param data - Array of row data
+ * @param propName - Property name to extract values from
+ * @param naLabel - Label to display for N/A option
+ */
+export const getFilterOptionsWithNA = (data: any[], propName: string, naLabel: string) => {
+    // Check if the field is an array by looking at the first non-null value
+    const firstValue = data?.find(row => get(row, propName, null) != null)?.[propName.split('.')[0]];
+    const isArrayField = Array.isArray(get(data?.[0], propName, null)) || Array.isArray(firstValue);
+
+    if (isArrayField) {
+        // Handle array field: flatten all arrays and get unique non-empty values
+        const allValues = data?.flatMap(row => get(row, propName, []) || []) || [];
+        const uniqueValues = [...new Set(allValues)].filter(
+            (val): val is string => typeof val === 'string' && val.trim() !== ''
+        );
+        const options = uniqueValues.sort().map(val => ({ label: val, value: val }));
+        // Add N/A option if any row has empty array
+        const hasEmptyList = data?.some(row => {
+            const arr = get(row, propName, null);
+            return !arr || arr.length === 0;
+        });
+        if (hasEmptyList) {
+            options.push({ label: naLabel, value: '' });
+        }
+        return options;
+    }
+
+    // Handle string field: filter out empty/null values from options
+    const options = getFilterOptions(data, propName).filter(
+        (opt: { value: string; label: string }) => opt.value && opt.value.trim() !== ''
+    );
+    // Add N/A option if any row has empty/null value
+    const hasEmptyValue = data?.some(row => {
+        const value = get(row, propName, null);
+        return !value || (typeof value === 'string' && value.trim() === '');
+    });
+    if (hasEmptyValue) {
+        options.push({ label: naLabel, value: '' });
+    }
+    return options;
+};
+
+/**
+ * Custom filter function that handles N/A filtering for both string and array fields
+ * Auto-detects if cellValue is string or array and handles accordingly
+ */
+export const createNACustomFilter = ({
+    cellValue,
+    filterState
+}: {
+    cellValue: string | string[];
+    filterState: { values: Record<string, boolean> };
+}) => {
+    // Handle array field
+    if (Array.isArray(cellValue)) {
+        const arrayValue = cellValue || [];
+        // If row has empty list and N/A filter is selected, it's a match
+        if (arrayValue.length === 0 && filterState.values['']) {
+            return true;
+        }
+        // Check if any of the array values match selected filters
+        return arrayValue.some((val: string) => filterState.values[val]);
+    }
+
+    // Handle string field
+    const value = cellValue || '';
+    // If N/A filter is selected and value is empty, it's a match
+    if ((!value || value.trim() === '') && filterState.values['']) {
+        return true;
+    }
+    // Check if the value matches any selected filter
+    return filterState.values[value] || false;
+};
+
 export const formatSize = (value: number, passedformat?: string) =>
     numeral(getByteVal(value, passedformat)).format('0.[00] ib');
 

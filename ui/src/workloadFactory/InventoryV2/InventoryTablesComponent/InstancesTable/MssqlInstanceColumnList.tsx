@@ -17,7 +17,7 @@ import {
 } from '../../../../utils/consts';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
-import { getFilterOptions } from '../../../../utils/utilityFunctions';
+import { createNACustomFilter, getFilterOptions, getFilterOptionsWithNA } from '../../../../utils/utilityFunctions';
 import { instanceNameHyperLink, optimizeAction, protectionTooltipText } from './InstanceTableColumnsHelper';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
@@ -213,7 +213,12 @@ export function getMssqlInstanceTableColumns({
             accessor: 'availabilityGroupList',
             id: '15',
             width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'availabilityGroupList'),
+            filterOptions: getFilterOptionsWithNA(
+                updatedTableData,
+                'availabilityGroupList',
+                t('databases.general.not-available-table-columns')
+            ),
+            customFilter: createNACustomFilter,
             renderCell: (cellData: string, rowData: any) => {
                 const availabilityGroupList = rowData?.availabilityGroupList || [];
                 const hasMultipleGroups = availabilityGroupList.length > 1;

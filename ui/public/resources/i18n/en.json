@@ -734,6 +734,8 @@
             "analysis-state": "Analysis state",
             "instances": "Instances",
             "databases": "Databases",
+            "pdbs": "PDBs",
+            "pdb": "PDB",
             "dashboard-table-headers": {
                 "sql-server-instance-name": "SQL Server instance name",
                 "oracle-database-name": "Oracle database name",

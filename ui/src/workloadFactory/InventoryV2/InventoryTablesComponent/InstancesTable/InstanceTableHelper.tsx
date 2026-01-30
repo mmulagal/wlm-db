@@ -338,6 +338,17 @@ export const getInstableTableTopMenuOptions = (
                 buttonText: t('databases.register-flow.register-multiple-instances')
             };
         case DBType.ORACLE:
+            return {
+                title: 'Databases',
+                exportToCsvFileName: `DatabaseTable-${new Date(Date.now()).toLocaleString()}.csv`,
+                buttonText: t('databases.register-flow.register-multiple-databases')
+            };
+        case DBType.POSTGRESQL:
+            return {
+                title: 'Instances',
+                exportToCsvFileName: `InstanceTable-${new Date(Date.now()).toLocaleString()}.csv`,
+                buttonText: t('databases.register-flow.register-multiple-instances')
+            };
         default:
             return {
                 title: 'Databases',

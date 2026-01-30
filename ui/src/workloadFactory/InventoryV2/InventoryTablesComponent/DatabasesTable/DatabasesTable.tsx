@@ -724,8 +724,16 @@ const DatabasesTable = () => {
                     // @ts-ignore
                     tableProps={tableProps}
                     tableRowsLength={databaseTableRows?.length}
-                    pluralTitle={t('databases.well-architect.databases')}
-                    singularTitle={t('databases.well-architect.database')}
+                    pluralTitle={
+                        selectedHostType === DBType.ORACLE
+                            ? t('databases.well-architect.pdbs')
+                            : t('databases.well-architect.databases')
+                    }
+                    singularTitle={
+                        selectedHostType === DBType.ORACLE
+                            ? t('databases.well-architect.pdb')
+                            : t('databases.well-architect.database')
+                    }
                     exportToCsvOptions={{ fileName: `DatabaseTable-${new Date(Date.now()).toLocaleString()}.csv` }}
                     subTitle={t('databases.inventory.database-table-upper-text')}
                 />

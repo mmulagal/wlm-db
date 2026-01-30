@@ -4,7 +4,12 @@ import { Popover, TooltipInfo } from '@netapp/design-system';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
 import { DBType, INVENTORY_STATUS, REPLICA_ROLES } from '../../../../utils/consts';
-import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
+import {
+    createNACustomFilter,
+    formatSize,
+    getFilterOptions,
+    getFilterOptionsWithNA
+} from '../../../../utils/utilityFunctions';
 import ProtectionIcons from '../../../../common/ProtectionIcons/ProtectionIcons';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
@@ -93,7 +98,12 @@ export function MssqlPgsqlDatabaseTableColDefs({
                       accessor: 'availabilityGroup',
                       id: '12',
                       width: '200px',
-                      filterOptions: getFilterOptions(databaseTableRows, 'availabilityGroup'),
+                      filterOptions: getFilterOptionsWithNA(
+                          databaseTableRows,
+                          'availabilityGroup',
+                          t('databases.general.not-available-table-columns')
+                      ),
+                      customFilter: createNACustomFilter,
                       renderCell: (cellData: string, rowData: any) => {
                           if (cellData) {
                               return (
