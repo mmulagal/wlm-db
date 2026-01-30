@@ -21,7 +21,8 @@ import {
     DETECT_HOST_VAR,
     CREDENTIAL_OPTIONS,
     DETECT_PAYLOAD_SIZE,
-    RESPONSE_STATUS
+    RESPONSE_STATUS,
+    DATABASE_DEPLOYMENT_MODE
 } from '../../../../utils/consts';
 import { isAuthRequiredForInstance } from './DetectInstanceStep/DetectContent/DetectContentHelper';
 import ReplicaInfoDialog from './ReplicaInfoDialog/ReplicaInfoDialog';
@@ -461,28 +462,44 @@ export const getReplicaInstanceListForAuthenticatedRow = (manageSingleInstanceDa
     }
 
     // Filter instanceTableRows by matching credentialsId and region
-    const filteredInstances = instanceTableRows.filter(
+    const filteredInstances = instanceTableRows?.filter(
         (row: any) => row?.credentialId === credentialsId && row?.regionId === region
     );
 
+    // Get primary instance's availability group list for matching
+    const primaryAgList = manageSingleInstanceData?.availabilityGroupList || [];
+
     // Map replicaInfo to matching instances from instanceTableRows
-    replicaInfo.forEach((replica: any) => {
-        const matchingInstance = filteredInstances.find(
-            (instance: any) =>
+    replicaInfo?.forEach((replica: any) => {
+        const matchingInstances = filteredInstances?.filter((instance: any) => {
+            // Check if instance has AOAG deployment type
+            const isAoagDeployment = instance?.sqlServerDeploymentType?.includes(DATABASE_DEPLOYMENT_MODE.AOAG_CAPS);
+
+            // Check if instance's availabilityGroupList has any matching with primary instance
+            const instanceAgList = instance?.availabilityGroupList || [];
+            const hasMatchingAg =
+                primaryAgList.length > 0 &&
+                instanceAgList.length > 0 &&
+                instanceAgList.some((ag: string) => primaryAgList.includes(ag));
+
+            return (
                 instance?.ec2InstanceId === replica?.ec2InstanceId &&
                 instance?.statusColText !== INVENTORY_STATUS.MANAGED &&
                 instance?.sqlServerName?.toLowerCase() === replica?.node?.toLowerCase() &&
+                isAoagDeployment &&
+                hasMatchingAg &&
                 // Exclude the primary instance itself
                 !(
                     instance?.ec2InstanceId === manageSingleInstanceData?.ec2InstanceId &&
                     instance?.databaseInstanceName === manageSingleInstanceData?.databaseInstanceName
                 )
-        );
+            );
+        });
 
-        if (matchingInstance) {
-            // Wrap instance in bulk format for consistency with SelectInstances dropdown
+        // Wrap all matching instances in bulk format for consistency with SelectInstances dropdown
+        matchingInstances?.forEach((matchingInstance: any) => {
             replicaInstanceList.push(wrapInstanceForBulk(matchingInstance));
-        }
+        });
     });
 
     return replicaInstanceList;
