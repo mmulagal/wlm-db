@@ -1970,8 +1970,14 @@ async function getDatabaseInstancesSummary(
                         {
                             node: replicaName
                         };
-                    // First, try to find IP from Windows Cluster nodes
-                    const nodeIp = aoagNodeToIp.get(replicaName.toLowerCase());
+                    // For named instances, replica name format is "HOSTNAME\INSTANCENAME" or "FCINAME\INSTANCENAME"
+                    // Extract just the hostname/FCI name for Windows Cluster node lookup
+                    const hostnameForLookup = replicaName.includes('\\')
+                        ? replicaName.split('\\')[0].toLowerCase()
+                        : replicaName.toLowerCase();
+
+                    // First, try to find IP from Windows Cluster nodes using hostname
+                    const nodeIp = aoagNodeToIp.get(hostnameForLookup);
                     if (nodeIp) {
                         nodeDetail.ip = nodeIp;
                         // Use IP to look up EC2 details
@@ -1984,11 +1990,11 @@ async function getDatabaseInstancesSummary(
                             nodeDetail.ec2InstanceName = ec2InstanceName;
                         }
                     } else if (nodeTopologyData?.ec2Details) {
-                        // Fallback: Try to match from nodeTopology
+                        // Fallback: Try to match from nodeTopology using hostname
                         const matchingEc2 = nodeTopologyData.ec2Details.find(
                             (ec2: any) =>
-                                ec2.name?.toLowerCase()?.includes(replicaName.toLowerCase()) ||
-                                replicaName.toLowerCase()?.includes(ec2.name?.toLowerCase())
+                                ec2.name?.toLowerCase()?.includes(hostnameForLookup) ||
+                                hostnameForLookup?.includes(ec2.name?.toLowerCase())
                         );
                         if (matchingEc2) {
                             nodeDetail.ec2InstanceId = matchingEc2.id;

@@ -2651,27 +2651,81 @@ async function validateWindowsCredentials(
                     }
                 }
 
+                // Get current instance name from aoagIpToEc2Details for FCI mapping
+                let currentInstanceName = '';
+                for (const [, ec2] of aoagIpToEc2Details.entries()) {
+                    if (ec2.instanceId === instanceId) {
+                        currentInstanceName = ec2.instanceName;
+                        break;
+                    }
+                }
+
                 for (const inst of instancesWithAoag) {
                     const { aoagDetails } = inst;
-                    const { availabilityGroups } = aoagDetails || {};
+                    const { availabilityGroups, baseDeploymentType } = aoagDetails || {};
 
                     if (availabilityGroups && isArray(availabilityGroups)) {
                         for (const { primaryReplica, replicas } of availabilityGroups) {
                             if (replicas && isArray(replicas)) {
-                                for (const { role: replicaRole, replica: replicaName } of replicas) {
+                                for (const { role: replicaRole, replica: replicaName, isLocalReplica } of replicas) {
                                     // Determine role: use role field or derive from primaryReplica
                                     const role =
                                         replicaRole ||
                                         (replicaName === primaryReplica ? AOAG_ROLE_PRIMARY : AOAG_ROLE_SECONDARY);
 
-                                    // Map replica name to EC2 instance via cluster node IPs
-                                    const nodeIp = nodeToIpMap.get(replicaName?.toLowerCase() || '');
-                                    if (nodeIp) {
-                                        const ec2Details = aoagIpToEc2Details.get(nodeIp);
-                                        if (ec2Details) {
+                                    let ec2InstanceId: string | undefined;
+                                    let ec2HostName: string | undefined;
+
+                                    if (baseDeploymentType === 'FCI') {
+                                        // FCI AOAG: Use isLocalReplica to determine EC2 mapping
+                                        if (isLocalReplica === true) {
+                                            // Local replica runs on current EC2 instance
+                                            ec2InstanceId = instanceId;
+                                            ec2HostName = currentInstanceName;
+                                        } else {
+                                            // Remote replica: find EC2 from other cluster nodes
+                                            // For FCI+AOAG, the other FCI is on different physical nodes
+                                            // Get all EC2s that are NOT the current instance
+                                            const otherEc2s: Array<{ instanceId: string; instanceName: string }> = [];
+                                            for (const [, ec2] of aoagIpToEc2Details.entries()) {
+                                                if (ec2.instanceId !== instanceId) {
+                                                    // Avoid duplicates (same EC2 might have multiple IPs)
+                                                    if (!otherEc2s.some(e => e.instanceId === ec2.instanceId)) {
+                                                        otherEc2s.push(ec2);
+                                                    }
+                                                }
+                                            }
+                                            // For the remote FCI replica, pick the first available EC2
+                                            if (otherEc2s.length > 0) {
+                                                ec2InstanceId = otherEc2s[0].instanceId;
+                                                ec2HostName = otherEc2s[0].instanceName;
+                                            }
+                                        }
+                                    } else {
+                                        // Standalone AOAG: Use nodeToIpMap logic
+                                        // For named instances, replica name format is "HOSTNAME\INSTANCENAME"
+                                        // Extract just the hostname for Windows Cluster node lookup
+                                        const hostnameForLookup = replicaName?.includes('\\')
+                                            ? replicaName.split('\\')[0].toLowerCase()
+                                            : replicaName?.toLowerCase() || '';
+                                        const nodeIp = nodeToIpMap.get(hostnameForLookup);
+                                        if (nodeIp) {
+                                            const ec2Details = aoagIpToEc2Details.get(nodeIp);
+                                            if (ec2Details) {
+                                                ec2InstanceId = ec2Details.instanceId;
+                                                ec2HostName = ec2Details.instanceName;
+                                            }
+                                        }
+                                    }
+
+                                    if (ec2InstanceId) {
+                                        const isDuplicate = replicaInfoObject.some(
+                                            r => r.sqlServerName === replicaName && r.ec2InstanceId === ec2InstanceId
+                                        );
+                                        if (!isDuplicate) {
                                             replicaInfoObject.push({
-                                                ec2InstanceId: ec2Details.instanceId,
-                                                ec2HostName: ec2Details.instanceName,
+                                                ec2InstanceId,
+                                                ec2HostName: ec2HostName || '',
                                                 sqlServerName: replicaName,
                                                 role
                                             });
@@ -2685,7 +2739,9 @@ async function validateWindowsCredentials(
 
                 logger.debug('AOAG replica info collected from validation response', {
                     replicaCount: replicaInfoObject.length,
-                    aoagInstancesCount: instancesWithAoag.length
+                    aoagInstancesCount: instancesWithAoag.length,
+                    replicaInfo: replicaInfoObject,
+                    currentInstanceId: instanceId
                 });
             }
         } catch (error) {

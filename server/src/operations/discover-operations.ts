@@ -720,9 +720,9 @@ async function getHostAndSqlInfoFromPsOutput(
                                 aoagDetailsForMapping =
                                     aoagDetails.find((item: any) => item && typeof item === 'object') || {};
                             }
-                            if (baseDeploymentType === 'FCI' && aoagDetailsForMapping?.availabilityGroups) {
-                                // Extract unique replica names from all availability groups
-                                const replicaNames = new Set<string>();
+                            // Extract unique replica names from all availability groups
+                            const replicaNames = new Set<string>();
+                            if (aoagDetailsForMapping?.availabilityGroups) {
                                 aoagDetailsForMapping.availabilityGroups.forEach((ag: any) => {
                                     ag.replicas?.forEach((replica: any) => {
                                         if (replica.replica) {
@@ -730,36 +730,61 @@ async function getHostAndSqlInfoFromPsOutput(
                                         }
                                     });
                                 });
+                            }
 
-                                // Build mapping: replica name -> IP -> EC2 details
-                                // For FCI, we match replica names to Windows cluster nodes by checking
-                                // if the replica (FCI virtual name) matches any cluster node's SQL Server resource
-                                aoagClusterNodeDetails = [];
-                                replicaNames.forEach(replicaName => {
-                                    // Find a cluster node IP that has this FCI instance
-                                    // For FCI, multiple physical nodes can host the same FCI, so we pick the first matching IP
-                                    const matchingClusterNode = clusterNodes.find(
+                            // Build aoagClusterNodeDetails from replica names
+                            // For both FCI and Standalone AOAG with named instances,
+                            // replica name format can be "HOSTNAME\INSTANCENAME" or just "HOSTNAME"
+                            aoagClusterNodeDetails = [];
+
+                            // Build a map of hostname (lowercase) -> cluster node for efficient lookup
+                            const hostnameToClusterNode = new Map<string, any>();
+                            clusterNodes.forEach((cn: any) => {
+                                if (cn?.Node) {
+                                    hostnameToClusterNode.set(cn.Node.toLowerCase(), cn);
+                                }
+                            });
+
+                            replicaNames.forEach(replicaName => {
+                                // For named instances, replica name format is "HOSTNAME\INSTANCENAME" or "FCINAME\INSTANCENAME"
+                                // Extract just the hostname/FCI name for Windows Cluster node lookup
+                                const hostnameForLookup = replicaName.includes('\\')
+                                    ? replicaName.split('\\')[0].toLowerCase()
+                                    : replicaName.toLowerCase();
+
+                                // Find matching cluster node by hostname
+                                let matchingClusterNode = hostnameToClusterNode.get(hostnameForLookup);
+
+                                // For FCI AOAG: replica names are FCI virtual names (e.g., XFCI012)
+                                // which won't match physical cluster node names (e.g., XFCI1, XFCI2)
+                                // In this case, try to find any cluster node with a valid IP
+                                if (!matchingClusterNode && baseDeploymentType === 'FCI') {
+                                    matchingClusterNode = clusterNodes.find(
                                         (cn: any) => cn?.Address && aoagIpToInstanceId.has(cn.Address)
                                     );
-                                    if (matchingClusterNode) {
-                                        // Find the EC2 instance that corresponds to this replica
-                                        // We use the IP mapping to get EC2 details
-                                        const nodeIp = matchingClusterNode.Address;
-                                        aoagClusterNodeDetails!.push({
-                                            node: replicaName, // FCI virtual name
-                                            ip: nodeIp,
-                                            ec2InstanceId: aoagIpToInstanceId.get(nodeIp),
-                                            ec2InstanceName: aoagIpToInstanceName.get(nodeIp)
-                                        });
-                                    } else {
-                                        // Fallback: add replica without EC2 mapping
-                                        aoagClusterNodeDetails!.push({
-                                            node: replicaName // FCI virtual name
-                                        });
-                                    }
-                                });
-                            } else {
-                                // Standalone AOAG: Windows hostname = SQL Server name, use windowsClusterNodes directly
+                                }
+
+                                if (
+                                    matchingClusterNode?.Address &&
+                                    aoagIpToInstanceId.has(matchingClusterNode.Address)
+                                ) {
+                                    const nodeIp = matchingClusterNode.Address;
+                                    aoagClusterNodeDetails!.push({
+                                        node: replicaName,
+                                        ip: nodeIp,
+                                        ec2InstanceId: aoagIpToInstanceId.get(nodeIp),
+                                        ec2InstanceName: aoagIpToInstanceName.get(nodeIp)
+                                    });
+                                } else {
+                                    // Fallback: add replica without EC2 mapping
+                                    aoagClusterNodeDetails!.push({
+                                        node: replicaName
+                                    });
+                                }
+                            });
+
+                            // If no replicas found but we have cluster nodes, use them as fallback
+                            if (aoagClusterNodeDetails.length === 0 && clusterNodes.length > 0) {
                                 aoagClusterNodeDetails = clusterNodes.map((node: any) => ({
                                     node: node?.Node,
                                     ip: node?.Address,
