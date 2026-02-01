@@ -106,20 +106,13 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
 
                                 <div className={styles.readinessSection}>
                                     <div className={styles.valueSection}>
-                                        {loading || (errorInvestigationLoading && item?.id === '5') ? (
-                                            <div className={styles.loadingSection}>
-                                                <DsFlashingDotsLoader />
-                                            </div>
-                                        ) : (
-                                            <div className={styles.statusSection}>
-                                                {!item?.missingPermission && <Success />}
-                                                {item?.missingPermission && <Cross />}
-                                                <DsTypography variant="Semibold_14">
-                                                    {readinessString(item.readinessStatus)}
-                                                </DsTypography>
-                                            </div>
-                                        )}
-
+                                        <div className={styles.statusSection}>
+                                            {!item?.missingPermission && <Success />}
+                                            {item?.missingPermission && <Cross />}
+                                            <DsTypography variant="Semibold_14">
+                                                {readinessString(item.readinessStatus)}
+                                            </DsTypography>
+                                        </div>
                                         <DsTypography variant="Regular_14">
                                             {t('databases.register-flow.readiness')}
                                         </DsTypography>

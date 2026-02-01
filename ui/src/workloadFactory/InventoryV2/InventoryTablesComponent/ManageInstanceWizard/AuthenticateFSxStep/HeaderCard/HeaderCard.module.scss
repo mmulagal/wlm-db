@@ -21,10 +21,23 @@
         display: flex;
         flex-direction: column;
         gap: 16px;
+        width: 41.3%;
+        min-width: 552px;
+
+        .sectionTitle {
+            width: 13.6%;
+            min-width: 182px;
+        }
 
         .radioGroup {
             display: flex;
-            gap: 32px;
+            gap: 34px;
+            width: 100%;
+
+            [class*='RadioButton'] {
+                flex-shrink: 0;
+                white-space: nowrap;
+            }
         }
     }
 }

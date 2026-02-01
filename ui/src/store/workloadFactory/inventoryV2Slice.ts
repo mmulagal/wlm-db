@@ -449,6 +449,12 @@ const inventoryV2Slice = createSlice({
                 password: ''
             };
             state.instanceCredentials = {};
+            state.oracleBulkDatabaseCredentials = {
+                oracleUsername: '',
+                oraclePassword: '',
+                oracleASM: '',
+                asmPassword: ''
+            };
         },
         setDetectWindowsAuthentication: (
             state,

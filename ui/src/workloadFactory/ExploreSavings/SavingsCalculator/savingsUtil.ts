@@ -1206,13 +1206,13 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Initial snapshot cost',
                 value: `$${viewCalculation.ebsSnapshotCalculation.initialSnapshotCost}`,
-                text: `Σ[Total size of each EBS volume type x EBS snapshots price per GiB]= ${
+                text: `Σ[Total size of each EBS volume type x EBS snapshots price per GiB]= (${
                     viewCalculation.ebsSnapshotCalculation.storageAmountPerMonthList
                         ?.map(
                             (storageAmount: string) =>
                                 `${storageAmount} x $${viewCalculation.ebsSnapshotCalculation.ebsSnapshotPrice}`
                         )
-                        .join(' + ') || ''
+                        .join(') + ') || ''
                 }`
             },
             {
