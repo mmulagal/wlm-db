@@ -1343,7 +1343,7 @@ async function discoverDemoDataOracle(
                 ],
                 vpc: {
                     id: 'vpc-075ecf35aaafc2a4f',
-                    name: 'aoag2',
+                    name: 'VPC-5',
                     cidrBlock: '10.0.0.0/16'
                 },
                 error: undefined,
@@ -1395,22 +1395,22 @@ async function discoverDemoDataOracle(
                         },
                         isDataGuardDeployed: true,
                         dataguardDetails: {
-                            dbUniqueName: 'dataguard-primary',
+                            dbUniqueName: 'Dataguard-primary',
                             dbName: 'DataguardDomain-1',
                             associatedHosts: [
                                 {
-                                    serviceName: 'dataguard-primary',
+                                    serviceName: 'Dataguard-primary',
                                     hostIp: '127.0.0.1',
                                     ec2InstanceId: 'i-0123456789abcdef0',
                                     listenerPort: '1532',
-                                    sidName: 'dataguard-primary'
+                                    sidName: 'Dataguard-primary'
                                 },
                                 {
-                                    serviceName: 'dataguard-standby',
+                                    serviceName: 'Dataguard-standby',
                                     hostIp: '127.0.0.2',
                                     ec2InstanceId: 'i-0123456789abcdef1',
                                     listenerPort: '1532',
-                                    sidName: ''
+                                    sidName: 'Dataguard-standby'
                                 }
                             ],
                             isPrimaryNode: true
@@ -1440,7 +1440,7 @@ async function discoverDemoDataOracle(
                 ],
                 vpc: {
                     id: 'vpc-075ecf35aaafc2a4f',
-                    name: 'aoag2',
+                    name: 'VPC-5',
                     cidrBlock: '10.0.0.0/16'
                 },
                 error: undefined,
@@ -1448,8 +1448,8 @@ async function discoverDemoDataOracle(
                 oracleServerDeploymentType: 'Standalone',
                 databaseInstanceDetails: [
                     {
-                        instanceName: 'dataguard-standby',
-                        instanceId: 'dataguard-standby',
+                        instanceName: 'Dataguard-standby',
+                        instanceId: 'Dataguard-standby',
                         instanceState: 'OPEN',
                         version: '19.0.0.0.0',
                         instanceType: 'SINGLE_TENANT',
@@ -1492,22 +1492,22 @@ async function discoverDemoDataOracle(
                         },
                         isDataGuardDeployed: true,
                         dataguardDetails: {
-                            dbUniqueName: 'dataguard-standby',
+                            dbUniqueName: 'Dataguard-standby',
                             dbName: 'DataguardDomain-1',
                             associatedHosts: [
                                 {
-                                    serviceName: 'dataguard-primary',
+                                    serviceName: 'Dataguard-primary',
                                     hostIp: '127.0.0.1',
                                     ec2InstanceId: 'i-0123456789abcdef0',
                                     listenerPort: '1532',
-                                    sidName: ''
+                                    sidName: 'Dataguard-primary'
                                 },
                                 {
-                                    serviceName: 'dataguard-standby',
+                                    serviceName: 'Dataguard-standby',
                                     hostIp: '127.0.0.2',
                                     ec2InstanceId: 'i-0123456789abcdef1',
                                     listenerPort: '1532',
-                                    sidName: 'dataguard-standby'
+                                    sidName: 'Dataguard-standby'
                                 }
                             ],
                             isPrimaryNode: false
