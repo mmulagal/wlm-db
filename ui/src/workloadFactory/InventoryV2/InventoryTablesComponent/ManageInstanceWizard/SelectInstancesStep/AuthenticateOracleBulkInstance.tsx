@@ -34,6 +34,7 @@ import {
     generateInstanceUniqueKey,
     BulkInstanceItem
 } from './AuthenticateBulkUtils';
+import { isAsmAuthRequired } from '../DetectInstanceStep/DetectContent/DetectContentHelper';
 
 export const Content = () => {
     const dispatch = useDispatch();
@@ -92,6 +93,15 @@ export const Content = () => {
 
     // Show notification only when there's partial authentication (not all, not none)
     const showPartialAuthNotification = authenticatedCount > 0 && authenticatedCount < instances.length;
+
+    // Check if ANY instance requires ASM auth (for "same for all" mode)
+    const anyInstanceRequiresAsmAuth = useMemo(() => {
+        if (!selectedMultiDetectInstances || !Array.isArray(selectedMultiDetectInstances)) return false;
+        return (selectedMultiDetectInstances as any[]).some((inst: any) => {
+            const instanceData = inst.data || inst;
+            return isAsmAuthRequired(instanceData, hostType);
+        });
+    }, [selectedMultiDetectInstances, hostType]);
 
     // Dispatch notification on first load when there's partial authentication
     useEffect(() => {
@@ -378,41 +388,43 @@ export const Content = () => {
                             />
                         </div>
 
-                        <div className={styles.oracleFormFields}>
-                            <DsTextField
-                                title={t('databases.register-flow.detect-oracle-asm-username')}
-                                value={oracleASM}
-                                isOptional
-                                onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
-                                    dispatch(
-                                        setOracleBulkDatabaseCredentials({ oracleASM: event?.target?.value || '' })
-                                    )
-                                }
-                                placeholder={`${t('databases.general.enter')} ${t(
-                                    'databases.register-flow.detect-oracle-asm-username'
-                                )}`}
-                                className={styles.textField}
-                                {...(allFailed
-                                    ? {
-                                          message: {
-                                              type: 'error',
-                                              value: t('databases.register-flow.authentication-failed') || ''
+                        {anyInstanceRequiresAsmAuth && (
+                            <div className={styles.oracleFormFields}>
+                                <DsTextField
+                                    title={t('databases.register-flow.detect-oracle-asm-username')}
+                                    value={oracleASM}
+                                    isOptional
+                                    onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
+                                        dispatch(
+                                            setOracleBulkDatabaseCredentials({ oracleASM: event?.target?.value || '' })
+                                        )
+                                    }
+                                    placeholder={`${t('databases.general.enter')} ${t(
+                                        'databases.register-flow.detect-oracle-asm-username'
+                                    )}`}
+                                    className={styles.textField}
+                                    {...(allFailed
+                                        ? {
+                                              message: {
+                                                  type: 'error',
+                                                  value: t('databases.register-flow.authentication-failed') || ''
+                                              }
                                           }
-                                      }
-                                    : {})}
-                            />
+                                        : {})}
+                                />
 
-                            <PasswordField
-                                label={t('databases.register-flow.detect-oracle-asm-password')}
-                                value={asmPassword}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                    dispatch(setOracleBulkDatabaseCredentials({ asmPassword: e.target.value }))
-                                }
-                                placeholder={t('databases.general.enter-password')}
-                                className={styles.passwordField}
-                                error={allFailed ? t('databases.register-flow.authentication-failed') : ''}
-                            />
-                        </div>
+                                <PasswordField
+                                    label={t('databases.register-flow.detect-oracle-asm-password')}
+                                    value={asmPassword}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                        dispatch(setOracleBulkDatabaseCredentials({ asmPassword: e.target.value }))
+                                    }
+                                    placeholder={t('databases.general.enter-password')}
+                                    className={styles.passwordField}
+                                    error={allFailed ? t('databases.register-flow.authentication-failed') : ''}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -436,6 +448,8 @@ export const Content = () => {
                             hostType
                         );
                         const failed = hasInstanceFailed(instance.instanceId, instanceAuthStatus);
+                        // Check if this specific instance requires ASM auth
+                        const instanceRequiresAsmAuth = isAsmAuthRequired(instanceData, hostType);
 
                         return (
                             <div
@@ -489,43 +503,53 @@ export const Content = () => {
                                         error={failed ? t('databases.register-flow.authentication-failed') : ''}
                                     />
 
-                                    <DsTextField
-                                        title={t('databases.register-flow.detect-oracle-asm-username')}
-                                        value={creds.oracleASM || ''}
-                                        isOptional
-                                        onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
-                                            handleInstanceUpdate(
-                                                instance.uniqueKey,
-                                                'oracleASM',
-                                                event?.target?.value || ''
-                                            )
-                                        }
-                                        placeholder={`${t('databases.general.enter')} ${t(
-                                            'databases.register-flow.detect-oracle-asm-username'
-                                        )}`}
-                                        className={styles.oracleInstanceTextField}
-                                        isDisabled={authenticated}
-                                        {...(failed
-                                            ? {
-                                                  message: {
-                                                      type: 'error',
-                                                      value: t('databases.register-flow.authentication-failed') || ''
-                                                  }
-                                              }
-                                            : {})}
-                                    />
+                                    {instanceRequiresAsmAuth && (
+                                        <>
+                                            <DsTextField
+                                                title={t('databases.register-flow.detect-oracle-asm-username')}
+                                                value={creds.oracleASM || ''}
+                                                isOptional
+                                                onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
+                                                    handleInstanceUpdate(
+                                                        instance.uniqueKey,
+                                                        'oracleASM',
+                                                        event?.target?.value || ''
+                                                    )
+                                                }
+                                                placeholder={`${t('databases.general.enter')} ${t(
+                                                    'databases.register-flow.detect-oracle-asm-username'
+                                                )}`}
+                                                className={styles.oracleInstanceTextField}
+                                                isDisabled={authenticated}
+                                                {...(failed
+                                                    ? {
+                                                          message: {
+                                                              type: 'error',
+                                                              value:
+                                                                  t('databases.register-flow.authentication-failed') ||
+                                                                  ''
+                                                          }
+                                                      }
+                                                    : {})}
+                                            />
 
-                                    <PasswordField
-                                        label={t('databases.register-flow.detect-oracle-asm-password')}
-                                        value={creds.asmPassword || ''}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                            handleInstanceUpdate(instance.uniqueKey, 'asmPassword', e.target.value)
-                                        }
-                                        placeholder={t('databases.general.enter-password')}
-                                        className={styles.oracleInstancePasswordField}
-                                        isDisabled={authenticated}
-                                        error={failed ? t('databases.register-flow.authentication-failed') : ''}
-                                    />
+                                            <PasswordField
+                                                label={t('databases.register-flow.detect-oracle-asm-password')}
+                                                value={creds.asmPassword || ''}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                    handleInstanceUpdate(
+                                                        instance.uniqueKey,
+                                                        'asmPassword',
+                                                        e.target.value
+                                                    )
+                                                }
+                                                placeholder={t('databases.general.enter-password')}
+                                                className={styles.oracleInstancePasswordField}
+                                                isDisabled={authenticated}
+                                                error={failed ? t('databases.register-flow.authentication-failed') : ''}
+                                            />
+                                        </>
+                                    )}
 
                                     {/* Reserve space for close button */}
                                     <div className={styles.closeButtonContainer}>

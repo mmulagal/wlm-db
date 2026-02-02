@@ -1057,18 +1057,20 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
 
                     if (instanceId && manageReadinessUpdates[instanceId]) {
+                        const manageReadiness = manageReadinessUpdates[instanceId];
                         if (instance.data) {
                             return {
                                 ...instance,
+                                manageReadiness,
                                 data: {
                                     ...instance.data,
-                                    manageReadiness: manageReadinessUpdates[instanceId]
+                                    manageReadiness
                                 }
                             };
                         }
                         return {
                             ...instance,
-                            manageReadiness: manageReadinessUpdates[instanceId]
+                            manageReadiness
                         };
                     }
                     return instance;
