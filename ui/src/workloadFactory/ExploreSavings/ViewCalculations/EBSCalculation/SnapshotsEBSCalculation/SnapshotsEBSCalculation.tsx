@@ -25,7 +25,7 @@ const SnapshotsEBSCalculation = () => {
         }
         return (
             <DsTypography variant="Regular_14">
-                ${viewCalculationsResponse?.ebsSnapshotCalculation?.totalSnapshotCost}
+                ${viewCalculationsResponse?.ebsSnapshotCalculation?.totalEbsSnapshotCost}
             </DsTypography>
         );
     };

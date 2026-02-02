@@ -106,13 +106,19 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
 
                                 <div className={styles.readinessSection}>
                                     <div className={styles.valueSection}>
-                                        <div className={styles.statusSection}>
-                                            {!item?.missingPermission && <Success />}
-                                            {item?.missingPermission && <Cross />}
-                                            <DsTypography variant="Semibold_14">
-                                                {readinessString(item.readinessStatus)}
-                                            </DsTypography>
-                                        </div>
+                                        {loading || (errorInvestigationLoading && item?.id === '5') ? (
+                                            <div className={styles.loadingSection}>
+                                                <DsFlashingDotsLoader />
+                                            </div>
+                                        ) : (
+                                            <div className={styles.statusSection}>
+                                                {!item?.missingPermission && <Success />}
+                                                {item?.missingPermission && <Cross />}
+                                                <DsTypography variant="Semibold_14">
+                                                    {readinessString(item.readinessStatus)}
+                                                </DsTypography>
+                                            </div>
+                                        )}
                                         <DsTypography variant="Regular_14">
                                             {t('databases.register-flow.readiness')}
                                         </DsTypography>
@@ -141,7 +147,6 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                                     <div className={styles.valueSection}>
                                         <div className={styles.nameSection}>
                                             <DsTypography variant="Semibold_14">{item.title}</DsTypography>
-                                            {errorInvestigationLoading && item?.id === '5' && <DsFlashingDotsLoader />}
                                         </div>
                                         <DsTypography variant="Regular_14">{item.subtitle}</DsTypography>
                                     </div>
