@@ -596,7 +596,7 @@ const StorageCardComponent = ({
         ) {
             apiCall = optimizeStorageSizing;
             payload = {
-                configurationName: [cardData?.id]
+                configurationName: cardData?.id
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
             apiCall = optimizeStorageTier;
