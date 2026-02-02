@@ -630,7 +630,7 @@ SELECT
 FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
 "@
         try {
-          $dbAgOut = Call-SqlCmd -SqlCredential $sqlCredential -Query $databaseAgQuery -InstanceName $serverInstance
+          $dbAgOut = Call-SqlCmd -SqlCredential $sqlCredential -Query $databaseAgQuery -InstanceName $serverInstance -SuppressStderr $True
           if ($dbAgOut) {
             $dbAgParsed = $dbAgOut | ConvertFrom-Json
             $result['databasesInAgCount'] = $dbAgParsed.databasesInAgCount
@@ -655,7 +655,7 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
         }
       }
       
-      $lines = Call-SqlCmd -SqlCredential $sqlCredential -Query $aoagQuery -InstanceName $serverInstance
+      $lines = Call-SqlCmd -SqlCredential $sqlCredential -Query $aoagQuery -InstanceName $serverInstance -SuppressStderr $True
       $aoagOut = $lines
       if ($sqlCredential['useDomainAuth'] -eq $True) { $result['aoagQueryAuthSucceeded'] = 'domain' }
       elseif ($sqlCredential['useSqlAuth'] -eq $True) { $result['aoagQueryAuthSucceeded'] = 'sql' }
@@ -849,7 +849,7 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
           try {
             $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';"  2> $null
             $responseObject['windowsAuthentication'] = $?
-            $existingPermissions = sqlcmd -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
+            $existingPermissions = sqlcmd -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0 2> $null
             $deploymentTypeCheck = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q $deploymentTypeCheckQuery 2> $null
             $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance
             $deploymentTypeCheckParsed = $deploymentTypeCheck | ConvertFrom-Json
@@ -868,7 +868,7 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
                 if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
                     $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" 2> $null
                     $deploymentTypeCheck = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q $deploymentTypeCheckQuery  2> $null
-                    $existingPermissions = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0
+                    $existingPermissions = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0 2> $null
                     $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
                     }
                   }

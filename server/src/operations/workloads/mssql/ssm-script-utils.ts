@@ -1629,7 +1629,14 @@ Function Call-SqlCmd {
         [string]$ExtraArguments,
 
         [Parameter(Mandatory = $false)]
-        [boolean]$IsMultiQuery = $False
+        [boolean]$IsMultiQuery = $False,
+
+        # SuppressStderr: When $True, redirects stderr to $null (2> $null) to prevent sqlcmd errors
+        # from being captured in SSM StandardErrorContent. Use this when you want SQL query failures
+        # to be handled gracefully without blocking the entire SSM script execution.
+        # Default is $False to preserve existing behavior for scripts that need error output.
+        [Parameter(Mandatory = $false)]
+        [boolean]$SuppressStderr = $False
 
     )
     $sqlresponse = $null
@@ -1641,19 +1648,35 @@ Function Call-SqlCmd {
         # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
     } elseif ($sqlCredential.useSqlAuth -eq $True) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
-            $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0;
+            if ($SuppressStderr) {
+                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 2> $null;
+            } else {
+                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0;
+            }
         }
         else {
-            $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
+            if ($SuppressStderr) {
+                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments 2> $null;
+            } else {
+                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
+            }
         }
     }
 
     if ($($LASTEXITCODE -and $LASTEXITCODE -ne 0) -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
-            $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0;
+            if ($SuppressStderr) {
+                $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0 2> $null;
+            } else {
+                $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0;
+            }
         }
         else {
-            $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
+            if ($SuppressStderr) {
+                $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments 2> $null;
+            } else {
+                $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
+            }
         }
     }
     return $sqlresponse
