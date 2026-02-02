@@ -78,7 +78,10 @@ const OSOracleTable = ({ type, data, lastColDetails, handleBulkAction }: OSOracl
         },
         // Only NFS Mount Options column
         {
-            Header: t('databases.well-architect.current-mount-options'),
+            Header:
+                type === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE
+                    ? t('databases.oracle-inner-page.current-dnfs-configurations')
+                    : t('databases.well-architect.current-mount-options'),
             accessor: 'value',
             id: '2',
             isSortable: false,
@@ -89,10 +92,9 @@ const OSOracleTable = ({ type, data, lastColDetails, handleBulkAction }: OSOracl
         },
         {
             Header:
-                type === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
-                type === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE
-                    ? t('databases.oracle-inner-page.recommended-mount-options')
-                    : t('databases.oracle-inner-page.recommended-value'),
+                type === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE
+                    ? t('databases.oracle-inner-page.recommended-dnfs-configurations')
+                    : t('databases.oracle-inner-page.recommended-mount-options'),
             accessor: 'recommended',
             id: '3',
             width: 'auto',

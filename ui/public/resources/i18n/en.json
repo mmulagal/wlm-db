@@ -416,7 +416,9 @@
             "disk-group": "Disk group",
             "redundancy": "Redundancy",
             "recommended-value": "Recommended value",
-            "recommended-mount-options": "Recommended mount options"
+            "recommended-mount-options": "Recommended mount options",
+            "current-dnfs-configurations": "Current dNFS configuration",
+            "recommended-dnfs-configurations": "Recommended dNFS configuration"
         },
         "dismiss": {
             "bulk-actions": "Bulk actions:",
