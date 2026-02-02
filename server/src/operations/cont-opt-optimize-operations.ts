@@ -3222,6 +3222,27 @@ async function handleUpdateAwsBackup(
         jobstatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
         errMsg.join(', ')
     );
+
+    // Trigger on-demand assessment after successful fix
+    if (jobstatus === JOBSTATUS.COMPLETED) {
+        const [
+            {
+                id: databaseHostId,
+                sqlServerInstances: [databaseInstanceId]
+            }
+        ] = databaseHosts;
+
+        await triggerMssqlAssessmentAfterOptimization(
+            credentialsId,
+            region,
+            accountId,
+            databaseHostId,
+            accountId,
+            masterOptimizeParentId,
+            { id: databaseInstanceId },
+            AssessmentCategories.AWS_BACKUP
+        );
+    }
 }
 
 function isDatabaseInstanceMetadata(value: any): value is DatabaseInstanceMetadata {
