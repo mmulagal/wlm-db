@@ -1,5 +1,5 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { isEmpty, uniqBy } from 'lodash-es';
+import { compact, isEmpty, uniqBy } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { WorkloadInstance } from '../../../utils/common-types';
@@ -946,11 +946,24 @@ function getNfsOSConfigDrift(
                     }))
                 );
 
+                const allOranfstabPaths = new Set(compact(oranfstabServers.flatMap(entry => entry.paths)));
+                const allFstabServers = new Set(compact(dbMounts.map(mount => mount?.server)));
+                const unmatchedPaths = [...allOranfstabPaths].filter(path => !allFstabServers.has(path));
+                if (unmatchedPaths.length > 0) {
+                    violationDetails.push(
+                        createViolationDetail(
+                            'path',
+                            'oranfstab path',
+                            unmatchedPaths.join(', '),
+                            [...allFstabServers].join(', ') || 'not set'
+                        )
+                    );
+                }
+
                 // Check each fstab mount has a matching oranfstab entry with correct configuration
                 dbMounts.forEach(fstabMount => {
                     const fstabMountPoint = fstabMount?.['mount-point'] || '';
                     const fstabRemotePath = fstabMount?.['remote-path'] || '';
-                    const fstabServer = fstabMount?.server || '';
                     const fstabVersion = fstabMount?.options?.vers?.toString() || '';
 
                     // Find matching oranfstab entry by export path or mount point
@@ -972,8 +985,6 @@ function getNfsOSConfigDrift(
                     }
 
                     const {
-                        server: oranfstabServer,
-                        paths: oranfstabPaths,
                         nfsVersion: oranfstabNfsVersion,
                         options: oranfstabOptions,
                         exportPath: oranfstabExport,
@@ -997,16 +1008,6 @@ function getNfsOSConfigDrift(
                             field: 'mount',
                             current: oranfstabMount || 'not set',
                             recommended: fstabMountPoint
-                        });
-                    }
-
-                    // Server: oranfstab.paths contains IP addresses while server is a logical name
-                    const serverMatches = fstabServer === oranfstabServer || oranfstabPaths.includes(fstabServer);
-                    if (!serverMatches && fstabServer && oranfstabServer) {
-                        mismatches.push({
-                            field: 'server',
-                            current: oranfstabServer,
-                            recommended: fstabServer
                         });
                     }
 
