@@ -1908,52 +1908,57 @@ async function registerResourceCredentials(
         items: []
     };
 
-    await Promise.all(
-        credentialsTobeValidated.map(
-            throat(3, async resource => {
-                const {
-                    credentialsId,
-                    region,
-                    ec2InstanceId,
-                    credentials,
-                    checkManageReadiness,
-                    isReplicaInfoRequired
-                } = resource;
-                const { response: registerResponse, replicaInfoObject } = await validateAndStoreDiscoveredParameters(
-                    accountId,
-                    credentialsId,
-                    region,
-                    ec2InstanceId,
-                    credentials,
-                    undefined,
-                    checkManageReadiness,
-                    false,
-                    isReplicaInfoRequired
-                );
+    try {
+        await Promise.all(
+            credentialsTobeValidated.map(
+                throat(3, async resource => {
+                    const {
+                        credentialsId,
+                        region,
+                        ec2InstanceId,
+                        credentials,
+                        checkManageReadiness,
+                        isReplicaInfoRequired
+                    } = resource;
+                    const { response: registerResponse, replicaInfoObject } =
+                        await validateAndStoreDiscoveredParameters(
+                            accountId,
+                            credentialsId,
+                            region,
+                            ec2InstanceId,
+                            credentials,
+                            undefined,
+                            checkManageReadiness,
+                            false,
+                            isReplicaInfoRequired
+                        );
 
-                response.items.push({
-                    ec2InstanceId,
-                    credentialsId,
-                    region,
-                    registerDetails: Array.isArray(registerResponse) ? registerResponse : [registerResponse],
-                    ...(isReplicaInfoRequired === true ? { replicaInfo: replicaInfoObject } : {})
-                });
-            })
-        )
-    );
-
-    // Reset the redis cache with cache key instanceid, region and credentialsId
-    const redisClient = getRedisConnection();
-    if (isRedisConnected(redisClient)) {
-        const cacheKeys = compact(
-            response.items.map(({ ec2InstanceId, region, credentialsId }) => {
-                if (ec2InstanceId && region && credentialsId) {
-                    return generateHash(stringify({ instance: ec2InstanceId, region, credentialsId }));
-                }
-                return undefined;
-            })
+                    response.items.push({
+                        ec2InstanceId,
+                        credentialsId,
+                        region,
+                        registerDetails: Array.isArray(registerResponse) ? registerResponse : [registerResponse],
+                        ...(isReplicaInfoRequired === true ? { replicaInfo: replicaInfoObject } : {})
+                    });
+                })
+            )
         );
-        await redisClient.del(...cacheKeys);
+
+        // Reset the redis cache with cache key instanceid, region and credentialsId
+        const redisClient = getRedisConnection();
+        if (isRedisConnected(redisClient)) {
+            const cacheKeys = compact(
+                response.items.map(({ ec2InstanceId, region, credentialsId }) => {
+                    if (ec2InstanceId && region && credentialsId) {
+                        return generateHash(stringify({ instance: ec2InstanceId, region, credentialsId }));
+                    }
+                    return undefined;
+                })
+            );
+            await redisClient.del(...cacheKeys);
+        }
+    } catch (error: any) {
+        logger.error('Error while registering resource credentials', { accountId, error: error.message });
     }
 
     return response;
@@ -2902,8 +2907,6 @@ async function validateOracleCredentials(
             }
         }
     }
-    let shouldThrowError = false;
-    let errorMessage = '';
     if (fsxCredentials) {
         parsedResponse.fsxResults.map(async (fsxResult: FSxCredsRegistration) => {
             if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
@@ -2913,8 +2916,6 @@ async function validateOracleCredentials(
                     fsxnError: fsxResult.ontaperror
                 });
                 paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
-                shouldThrowError = true;
-                errorMessage += `FSx ONTAP connectivity failed: ${fsxResult.ontaperror}. `;
             } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
                 response.push({
                     resourceId: fsxCredentials.resourceId,
@@ -2937,7 +2938,7 @@ async function validateOracleCredentials(
                 if (instance.oracleInstanceConnectivity === false) {
                     instancesToBeDeleted.push(instance.oracleInstanceName);
                     response.push({
-                        resourceId: instance.oracleInstanceName,
+                        resourceId: instance.oracleInstanceName.replace(TEMP, ''),
                         resourceType: RESOURCESTYPE.ORACLE,
                         databaseServerError: instance.oracleError,
                         manageReadiness: {
@@ -2947,8 +2948,6 @@ async function validateOracleCredentials(
                             }
                         }
                     });
-                    shouldThrowError = true;
-                    errorMessage += `Oracle connectivity failed for instance ${instance.oracleInstanceName}: ${instance.oracleError}. `;
                 } else if (instance.oracleInstanceConnectivity === true) {
                     const { oracleInstanceName, oracleEdition, isDataGuardConfigured, dataGuardDetails } = instance;
                     if (isDataGuardConfigured) {
@@ -3027,11 +3026,6 @@ async function validateOracleCredentials(
         oracleAsmCredentials,
         allOracleAsmCredentials
     );
-
-    if (shouldThrowError) {
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, `One or more instances failed validation: ${errorMessage}`);
-    }
-
     return { response, replicaInfoObject };
 }
 
