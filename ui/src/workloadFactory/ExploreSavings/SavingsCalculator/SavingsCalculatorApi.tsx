@@ -157,7 +157,6 @@ const SavingsCalculatorApi = () => {
                 }
             }
             setESInstanceData(selectedRow[0], dispatch);
-            dispatch(setSelectedHostDetails(selectedRow[0]));
         } else {
             dispatch(setSelectedHostDetails({}));
         }
@@ -790,7 +789,6 @@ const SavingsCalculatorApi = () => {
             // If we found the row, update selectedHostDetails and reset the trigger
             if (selectedRow) {
                 setESInstanceData(selectedRow, dispatch);
-                dispatch(setSelectedHostDetails(selectedRow));
                 // Reset the trigger after successful update
                 dispatch(setInstanceDataUpdatedTrigger(null));
             }

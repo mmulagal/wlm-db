@@ -28,7 +28,7 @@ export const TableLayout = ({ data }: any) => {
         ) {
             return {
                 backgroundColor: 'var(--table-header-background)',
-                height: 112,
+                height: 130,
                 fontWeight: 490,
                 marginBottom: 3,
                 marginTop: 14,
