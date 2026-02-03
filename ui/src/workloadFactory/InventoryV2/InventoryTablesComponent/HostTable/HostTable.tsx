@@ -92,16 +92,29 @@ const HostTable = () => {
 
     const getTableColDefsPerEngineType = () => getHostTableColumns({ t, hostTableRows, selectedHostType });
 
-    const getMenuItems = (disableOptionDatabase: boolean, disableMessageDatabase: any) => {
+    const getMenuItems = (disableOptionDatabase: boolean, disableMessageDatabase: string, rowData: any) => {
         if (selectedHostType === DBType.ORACLE) {
+            const hasNoDatabases = !rowData?.sqlServerInstances || rowData?.sqlServerInstances?.length === 0;
+            const disableOracle = disableOptionDatabase || hasNoDatabases;
+
+            const disableMessageOracle = hasNoDatabases
+                ? t('databases.general.no-databases-online-msg')
+                : disableOptionDatabase
+                ? disableMessageDatabase
+                : '';
+
             return [
                 {
                     id: 'viewDatabases',
-                    displayName: 'View PDBs'
+                    displayName: 'View PDBs',
+                    disabled: disableOracle,
+                    infoText: disableMessageOracle
                 },
                 {
                     id: 'viewInstances',
-                    displayName: 'View databases'
+                    displayName: 'View databases',
+                    disabled: disableOracle,
+                    infoText: disableMessageOracle
                 }
             ];
         }
@@ -134,7 +147,7 @@ const HostTable = () => {
         manageColumnsProps: {
             renderCell: (cellData: any, rowData: any) => {
                 const { disableOptionDatabase, disableMessageDatabase } = findDatabaseOption(rowData);
-                const menu = getMenuItems(disableOptionDatabase, disableMessageDatabase);
+                const menu = getMenuItems(disableOptionDatabase, disableMessageDatabase, rowData);
 
                 return (
                     <div className={styles.jobMenuPopover}>

@@ -73,6 +73,7 @@
             "manage-analysis-state": "Manage Analysis State",
             "not-available": "n/a",
             "not-available-table-columns": "n/a",
+            "no-databases-online-msg": "No databases are online on the host.",
             "mssql-high-availability": "Microsoft SQL Server High Availability",
             "mtu": "MTU alignment",
             "no-analysis-performed": "No analysis performed",
