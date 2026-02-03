@@ -1,9 +1,9 @@
-# Major Package Updater
+---
+name: major-update
+description: AI that upgrades packages to major versions
+---
 
-**Name:** Major Package Updater  
-**Description:** AI that upgrades packages to major versions
-
-## Major version package update Agent
+# Major version package update Agent
 
 You should update packages to latest major versions with "npx npm-check-updates --target latest"
 
