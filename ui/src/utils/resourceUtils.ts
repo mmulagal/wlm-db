@@ -189,9 +189,8 @@ export const handleFSXAdminApply = async (
         if (value === RESET_PASSWORD_TYPE.FSXADMIN) {
             credList = createPayload(resourceDetails, innerPageDetails);
         }
-        const getPasswordTypeLabel = (type: string) => {
-            return type === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Oracle Server';
-        };
+        const getPasswordTypeLabel = (type: string) =>
+            type === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Oracle Server';
         const payload = {
             items: [
                 {

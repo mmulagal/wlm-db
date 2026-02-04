@@ -97,7 +97,7 @@ export const Content = () => {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.INFO,
-                    message: t('databases.register-flow.partial-instances-authenticated', {
+                    message: t('databases.register-flow.partial-databases-authenticated', {
                         authenticated: authenticatedCount,
                         total: instances.length
                     })
@@ -216,7 +216,7 @@ export const Content = () => {
                     <SingleAuth />
                     <div className={styles.authenticatedTextContainer}>
                         <DsTypography variant="Semibold_14">
-                            {t('databases.register-flow.instances-authenticated')}
+                            {t('databases.register-flow.databases-authenticated')}
                         </DsTypography>
                         <div className={styles.instancesInfo}>
                             <Popover
@@ -231,7 +231,7 @@ export const Content = () => {
                                 {authenticatedTooltipContent}
                             </Popover>
                             <DsTypography variant="Regular_14">
-                                {t('databases.register-flow.all-instances-count', { count: instances.length })}
+                                {t('databases.register-flow.all-databases-count', { count: instances.length })}
                             </DsTypography>
                         </div>
                     </div>
@@ -250,7 +250,7 @@ export const Content = () => {
 
                 <div className={styles.credentialsSection}>
                     <DsTypography variant="Semibold_14" className={styles.sectionTitle}>
-                        {t('databases.register-flow.instances-credentials')}
+                        {t('databases.register-flow.databases-credentials')}
                     </DsTypography>
                     <div className={styles.radioGroup}>
                         <DsRadioButton
@@ -278,7 +278,7 @@ export const Content = () => {
                 <div className={styles.formSection}>
                     <div className={styles.formHeader}>
                         <DsTypography variant="Semibold_14" className={styles.formTitle}>
-                            {t('databases.register-flow.all-selected-instances')} ({instances.length})
+                            {t('databases.register-flow.all-selected-databases')} ({instances.length})
                         </DsTypography>
                         <Popover
                             popoverClass={CommonStyles.scrollablePopover}

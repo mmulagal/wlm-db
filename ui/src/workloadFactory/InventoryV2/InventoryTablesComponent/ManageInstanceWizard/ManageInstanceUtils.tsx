@@ -42,14 +42,20 @@ import {
 import { saveFsxInCredRegisteredObj } from './ManageWizardUtils';
 
 // Helper function to get engine type display name based on engine type
-const getEngineTypeDisplayName = (engineType: string, messageType: 'single' | 'multi'): string => {
+const getEngineTypeDisplayName = (engineType: string, messageType: 'single' | 'multi', t: TFunction): string => {
     switch (engineType) {
         case DBType.MSSQL:
-            return messageType === 'single' ? REGISTER_INSTANCE_STATE.MSSQL : `${REGISTER_INSTANCE_STATE.MSSQL}s`;
+            return messageType === 'single'
+                ? REGISTER_INSTANCE_STATE.MSSQL
+                : `${t('databases.register-flow.instances')}`;
         case DBType.ORACLE:
-            return messageType === 'single' ? REGISTER_INSTANCE_STATE.ORACLE : `${REGISTER_INSTANCE_STATE.ORACLE}s`;
+            return messageType === 'single'
+                ? REGISTER_INSTANCE_STATE.ORACLE
+                : `${t('databases.register-flow.databases')}`;
         default:
-            return messageType === 'single' ? REGISTER_INSTANCE_STATE.MSSQL : `${REGISTER_INSTANCE_STATE.MSSQL}s`;
+            return messageType === 'single'
+                ? REGISTER_INSTANCE_STATE.MSSQL
+                : `${t('databases.register-flow.instances')}`;
     }
 };
 
@@ -57,14 +63,15 @@ const getEngineTypeDisplayName = (engineType: string, messageType: 'single' | 'm
 const createManageInstanceMessageText = (
     engineType: string,
     instanceIdentifier: string | number,
-    messageType: 'single' | 'multi'
+    messageType: 'single' | 'multi',
+    t: TFunction
 ): string => {
-    const engineDisplayName = getEngineTypeDisplayName(engineType, messageType);
+    const engineDisplayName = getEngineTypeDisplayName(engineType, messageType, t);
 
     if (messageType === 'single') {
         return `${GENERAL.INSTANCE_MANAGE_REQUEST[0]} ${engineDisplayName} ${instanceIdentifier} ${GENERAL.INSTANCE_MANAGE_REQUEST[1]}`;
     }
-    return `${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[0]}  ${instanceIdentifier}  ${engineDisplayName} ${GENERAL.MULTI_INSTANCE_MANAGE_REQUEST[1]}`;
+    return `${t('databases.register-flow.registering')}  ${instanceIdentifier} ${engineDisplayName}.`;
 };
 
 // Checks if the manage readiness data allows for management actions based on missing permissions and modules
@@ -160,7 +167,8 @@ export const callManageSingleInstanceApi = async (
     manageBulkV2InstanceApi: any,
     getJobDetailApi: any,
     navigate: ReturnType<typeof useNavigate>,
-    engineType: string
+    engineType: string,
+    t: TFunction
 ) => {
     const state = store.getState();
     const { installMissingAWS, installMissingPowershell, installMissingJQ, installMissingPython } =
@@ -205,7 +213,8 @@ export const callManageSingleInstanceApi = async (
                     {createManageInstanceMessageText(
                         engineType,
                         manageSingleInstanceChecks?.databaseInstanceName,
-                        'single'
+                        'single',
+                        t
                     )}
                     <Button
                         Component="button"
@@ -328,7 +337,8 @@ export const handleSingleInstanceManage = (
             manageBulkV2InstanceApi,
             getJobDetailApi,
             navigate,
-            engineType
+            engineType,
+            t
         );
     }
 };
@@ -462,7 +472,8 @@ export const callManageMultiInstanceApi = async (
     manageBulkV2InstanceApi: any,
     getJobDetailApi: any,
     navigate: ReturnType<typeof useNavigate>,
-    engineType: string
+    engineType: string,
+    t: TFunction
 ) => {
     const state = store.getState();
     const { installMissingAWS, installMissingPowershell, installMissingJQ, installMissingPython } =
@@ -538,7 +549,7 @@ export const callManageMultiInstanceApi = async (
 
             const manageInstanceMsg = (
                 <DsTypography variant="Regular_14">
-                    {createManageInstanceMessageText(engineType, inProgressIDList?.length, 'multi')}
+                    {createManageInstanceMessageText(engineType, inProgressIDList?.length, 'multi', t)}
                     <Button
                         Component="button"
                         variant="text"
@@ -602,7 +613,8 @@ export const handleMultiInstanceManage = (
     manageBulkV2InstanceApi: any,
     getJobDetailApi: any,
     navigate: ReturnType<typeof useNavigate>,
-    engineType: string
+    engineType: string,
+    t: TFunction
 ) => {
     // Check if any instance is fully ready
     const anyInstanceReady =
@@ -622,7 +634,8 @@ export const handleMultiInstanceManage = (
             manageBulkV2InstanceApi,
             getJobDetailApi,
             navigate,
-            engineType
+            engineType,
+            t
         );
     } else {
         dispatch(

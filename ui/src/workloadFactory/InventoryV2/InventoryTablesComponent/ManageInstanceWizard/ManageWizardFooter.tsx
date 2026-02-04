@@ -54,7 +54,6 @@ import { BulkDetectedInstance, UseWizardReturn } from '../../../../utils/types/r
 import { FsxAuthStatusMap, InstanceAuthStatusMap } from '../../../../utils/types/inventoryV2Types';
 import {
     detectAuthFieldsValidation,
-    detectFieldsValidation,
     detectFsxFieldsValidation,
     saveFsxInCredRegisteredObj,
     handleReplicaAuthenticationDialog,
@@ -303,104 +302,6 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         })
                     );
                 }
-            }
-        } catch (error) {
-            dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: t('databases.register-flow.manage-detect-fail-message')
-                })
-            );
-        } finally {
-            dispatch(setIsDetectHostLoading(false));
-        }
-    };
-
-    const handleRegisterResourceCred = async (engineType: any) => {
-        dispatch(setIsDetectHostLoading(true));
-        dispatch(setManageSingleInstanceReadiness(null));
-        dispatch(clearDetectCredentialErrors()); // Clear previous errors
-        const sqlServerInstance =
-            manageSingleInstanceData?.sqlServerInstance || manageSingleInstanceData?.databaseInstanceName || '';
-        try {
-            const credList = createDetectHostPayload(
-                sqlServerInstance,
-                manageSingleInstanceData?.fsxId,
-                manageSingleInstanceData
-            );
-            const payload = {
-                items: [
-                    {
-                        ...credList,
-                        ec2InstanceId: manageSingleInstanceData?.ec2InstanceId,
-                        region: manageSingleInstanceData?.regionId,
-                        credentialsId: manageSingleInstanceData?.credentialId
-                    }
-                ]
-            };
-            if (payload?.items?.some(item => item?.credentials?.length > 0)) {
-                const result = await registerResourceCredBulk({ payload });
-                if (result && !result?.error && result?.data) {
-                    const registerDetails = result?.data?.items?.[0]?.registerDetails || [];
-                    const errors: string[] = [];
-                    let hasErrors = false;
-
-                    // If we are giving multiple credentials like msql/oracle cred and also fsx credentials then the error can be present at any position
-                    registerDetails.forEach((detail: any) => {
-                        if (detail?.databaseServerError) {
-                            errors.push(detail.databaseServerError);
-                            hasErrors = true;
-                            dispatch(setDetectCredentialErrors({ databaseServerError: detail.databaseServerError }));
-                        }
-                        if (detail?.fsxnError) {
-                            errors.push(detail.fsxnError);
-                            hasErrors = true;
-                            dispatch(setDetectCredentialErrors({ fsxnError: detail.fsxnError }));
-                        }
-                        if (detail?.oracleAsmError) {
-                            errors.push(detail.oracleAsmError);
-                            hasErrors = true;
-                            dispatch(setDetectCredentialErrors({ oracleAsmError: detail.oracleAsmError }));
-                        }
-                    });
-
-                    if (hasErrors) {
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.ERROR,
-                                message: errors.join(' ') || t('databases.register-flow.manage-detect-fail-message')
-                            })
-                        );
-                    } else {
-                        // Clear errors on success
-                        dispatch(clearDetectCredentialErrors());
-                        // store fsx cred in register obj if payload has fsx register
-                        saveFsxInCredRegisteredObj(manageSingleInstanceData?.fsxId, dispatch);
-                        const updatedInventoryTableData = updateInstanceStatus(
-                            'detect',
-                            manageSingleInstanceData,
-                            manageSingleInstanceData
-                        );
-                        dispatch(setInventoryTableData(updatedInventoryTableData));
-                        if (result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness) {
-                            dispatch(
-                                setManageSingleInstanceReadiness(
-                                    result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness
-                                )
-                            );
-                        }
-                        goToNextStep();
-                    }
-                } else {
-                    dispatch(
-                        addNotification({
-                            notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: t('databases.register-flow.manage-detect-fail-message')
-                        })
-                    );
-                }
-            } else {
-                goToNextStep();
             }
         } catch (error) {
             dispatch(
@@ -1123,16 +1024,6 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         }
     };
 
-    const goForward = () => {
-        if (wizardOperationType === ACTION_TYPE.SINGLE) {
-            setState({ hitNext: true });
-            const fieldsCorrect = detectFieldsValidation(manageSingleInstanceData, engineType);
-            if (fieldsCorrect) {
-                handleRegisterResourceCred(engineType);
-            }
-        }
-    };
-
     const goAuthForwardForSingleRegister = () => {
         if (wizardOperationType === ACTION_TYPE.SINGLE) {
             // Check if instance is already authenticated
@@ -1245,7 +1136,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 manageApi,
                 getJobDetailApi,
                 navigate,
-                engineType
+                engineType,
+                t
             );
         } else {
             const manageApi = engineType === DBType.ORACLE ? manageBulkV2OracleInstanceApi : manageBulkV2InstanceApi;

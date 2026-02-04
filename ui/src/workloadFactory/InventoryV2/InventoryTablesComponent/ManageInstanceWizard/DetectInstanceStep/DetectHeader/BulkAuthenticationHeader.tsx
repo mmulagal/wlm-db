@@ -110,7 +110,7 @@ const BulkAuthenticationHeader = ({ engineType }: { engineType: string }) => {
                             {countSummary.readyForManagement}
                         </DsTypography>
                         <DsTypography variant="Regular_14" style={{ lineHeight: 'unset' }}>
-                            Out of
+                            {t('databases.register-flow.out-of')}
                         </DsTypography>
                         <DsTypography variant="Semibold_24" style={{ lineHeight: 'unset' }}>
                             {countSummary.total}
