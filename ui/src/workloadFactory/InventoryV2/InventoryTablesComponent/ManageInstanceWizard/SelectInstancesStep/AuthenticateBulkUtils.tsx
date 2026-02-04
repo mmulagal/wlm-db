@@ -462,8 +462,6 @@ export const validateBulkInstanceCredentials = (
 export interface OracleBulkCredentials {
     oracleUsername: string;
     oraclePassword: string;
-    oracleASM: string;
-    asmPassword: string;
 }
 
 /**
@@ -472,14 +470,11 @@ export interface OracleBulkCredentials {
 export interface OracleInstanceCredentials {
     username: string;
     password: string;
-    oracleASM?: string;
-    asmPassword?: string;
 }
 
 /**
  * Create bulk authentication payload for Oracle databases
  * Groups credentials by ec2InstanceId for efficient API calls
- * Handles both Oracle DB credentials and ASM credentials if required
  * @param selectedInstances - Array of selected instances
  * @param credentialOption - SAME_FOR_ALL or MANUAL
  * @param oracleBulkDatabaseCredentials - Credentials for SAME_FOR_ALL mode
@@ -518,21 +513,15 @@ export const createOracleBulkAuthPayload = (
         // Get credentials based on credential option
         let username: string;
         let password: string;
-        let oracleASM: string;
-        let asmPassword: string;
 
         if (credentialOption === CREDENTIAL_OPTIONS.SAME_FOR_ALL) {
             username = oracleBulkDatabaseCredentials.oracleUsername || '';
             password = oracleBulkDatabaseCredentials.oraclePassword || '';
-            oracleASM = oracleBulkDatabaseCredentials.oracleASM || '';
-            asmPassword = oracleBulkDatabaseCredentials.asmPassword || '';
         } else {
             // MANUAL mode - get per-instance credentials using uniqueKey
             const creds = instanceCredentials[uniqueKey];
             username = creds?.username || '';
             password = creds?.password || '';
-            oracleASM = creds?.oracleASM || '';
-            asmPassword = creds?.asmPassword || '';
         }
 
         // Skip if required credentials are empty
@@ -547,18 +536,6 @@ export const createOracleBulkAuthPayload = (
         };
 
         const credentials: BulkCredentialItem[] = [oracleCredential];
-
-        // Add ASM credential if instance requires ASM and credentials are provided
-        const isAsmRequired = instanceData?.isInstanceStorageAsmManaged === true;
-        if (isAsmRequired && oracleASM && asmPassword) {
-            const asmCredential: BulkCredentialItem = {
-                resourceId: instanceId,
-                resourceType: DETECT_HOST_VAR.ORACLE_ASM,
-                username: oracleASM,
-                password: asmPassword
-            };
-            credentials.push(asmCredential);
-        }
 
         // If already present, merge credentials arrays
         if (instanceMap[ec2InstanceId]) {
@@ -620,24 +597,10 @@ export const validateOracleBulkInstanceCredentials = (
         return { isValid: true, errorMessage: '' };
     }
 
-    // Check if any instance requires ASM
-    const anyInstanceRequiresAsm = instancesNeedingAuth.some(instance => {
-        const instanceData = instance.data || instance;
-        return instanceData?.isInstanceStorageAsmManaged === true;
-    });
-
     if (credentialOption === CREDENTIAL_OPTIONS.SAME_FOR_ALL) {
         // Validate Oracle bulk credentials
         if (!oracleBulkDatabaseCredentials.oracleUsername || !oracleBulkDatabaseCredentials.oraclePassword) {
             return { isValid: false, errorMessage: 'Please enter Oracle username and password' };
-        }
-        // ASM credentials are optional but if ASM is required and one is provided, both must be provided
-        if (anyInstanceRequiresAsm) {
-            const hasAsmUser = !!oracleBulkDatabaseCredentials.oracleASM;
-            const hasAsmPass = !!oracleBulkDatabaseCredentials.asmPassword;
-            if (hasAsmUser !== hasAsmPass) {
-                return { isValid: false, errorMessage: 'Please enter both ASM username and password' };
-            }
         }
     } else {
         // Validate per-instance credentials
@@ -650,16 +613,6 @@ export const validateOracleBulkInstanceCredentials = (
 
             if (!creds?.username || !creds?.password) {
                 return { isValid: false, errorMessage: `Please enter Oracle credentials for ${instanceId}` };
-            }
-
-            // Validate ASM credentials if instance requires ASM
-            const isAsmRequired = instanceData?.isInstanceStorageAsmManaged === true;
-            if (isAsmRequired) {
-                const hasAsmUser = !!creds?.oracleASM;
-                const hasAsmPass = !!creds?.asmPassword;
-                if (hasAsmUser !== hasAsmPass) {
-                    return { isValid: false, errorMessage: `Please enter both ASM credentials for ${instanceId}` };
-                }
             }
         }
     }

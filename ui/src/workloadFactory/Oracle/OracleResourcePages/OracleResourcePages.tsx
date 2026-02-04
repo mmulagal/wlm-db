@@ -67,11 +67,7 @@ const OracleResourcePages = () => {
         if (type === RESET_PASSWORD_TYPE.ORACLESERVER) {
             header = GENERAL.UPDATE_ORACLE_SERVER_PASSWORD;
             content = <OracleServerPasswordContent type={RESET_PASSWORD_TYPE.ORACLESERVER} />;
-        } else if (type === RESET_PASSWORD_TYPE.ORACLEASM) {
-            header = GENERAL.UPDATE_ORACLE_ASM_PASSWORD;
-            content = <OracleServerPasswordContent type={GENERAL.ORACLE_ASM_TYPE} />;
         }
-
         setDialog(
             <DialogComponent
                 header={header}
@@ -190,19 +186,7 @@ const OracleResourcePages = () => {
                                         onClick: () => {
                                             handleUpdatePassword(RESET_PASSWORD_TYPE.FSXADMIN);
                                         }
-                                    },
-                                    ...(innerPageDetails.isInstanceStorageAsmManaged
-                                        ? [
-                                              {
-                                                  id: 'updateOracleASMPassword',
-                                                  children: GENERAL.UPDATE_ORACLE_ASM_PASSWORD,
-
-                                                  onClick: () => {
-                                                      handleUpdatePassword(RESET_PASSWORD_TYPE.ORACLEASM);
-                                                  }
-                                              }
-                                          ]
-                                        : [])
+                                    }
                                 ]}
                             >
                                 <MenuIcon />

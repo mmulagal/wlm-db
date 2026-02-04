@@ -28,14 +28,6 @@ export const isAuthRequiredForInstance = (instanceData: any, hostType: string) =
     );
 };
 
-// Utility function to check if ASM authentication is required
-export const isAsmAuthRequired = (instanceData: any, hostType: string) => {
-    if (hostType === DBType.ORACLE) {
-        return instanceData?.isInstanceStorageAsmManaged === true && instanceData?.asmAuthentication === false;
-    }
-    return false;
-};
-
 export const getBulkDetectChecksHelper = (instances: any[], hostType: string) => {
     let fsxId = false;
     let isFsxRegistered = true;

@@ -12,14 +12,13 @@ import {
     setDetectManageUserName,
     setDetectONTAPPassword,
     setDetectONTAPUserName,
-    setDetectWindowsAuthentication,
-    setDetectAsmAuthentication
+    setDetectWindowsAuthentication
 } from '../../../../../../store/workloadFactory/inventoryV2Slice';
 import { useSearchDebounce } from '../../../../../../common/hooks/useSearchDebounce';
 import { getBulkDetectChecks } from '../../ManageInstanceUtils';
 import { UseWizardReturn } from '../../../../../../utils/types/registerTypes';
 import { authenticationFieldsTexts } from '../DetectInstanceHelper';
-import { isAuthRequiredForInstance, isAsmAuthRequired } from './DetectContentHelper';
+import { isAuthRequiredForInstance } from './DetectContentHelper';
 
 const DetectContent = () => {
     const { t } = useTranslation();
@@ -33,8 +32,6 @@ const DetectContent = () => {
         mssqlPasswordFromWizard,
         windowsAuthenticationUsernameFromWizard,
         windowsAuthenticationPasswordFromWizard,
-        asmUserNameFromWizard,
-        asmPasswordFromWizard,
         authenticationTypeSelected,
         hitNext
     } = state;
@@ -65,15 +62,11 @@ const DetectContent = () => {
     const [ontapPasswordSearch, setOntapPasswordSearch] = useSearchDebounce(100);
     const [detectUserNameSearch, setDetectUserNameSearch] = useSearchDebounce(100);
     const [detectPasswordSearch, setDetectPasswordSearch] = useSearchDebounce(100);
-    const [asmUserNameSearch, setAsmUserNameSearch] = useState('');
-    const [asmPasswordSearch, setAsmPasswordSearch] = useState('');
 
     const [ontapUserName, setOntapUserName] = useState(ontapUserNameFromWizard || '');
     const [ontapPassword, setOntapPassword] = useState(ontapPasswordFromWizard || '');
     const [detectUserName, setDetectUserName] = useState(mssqlUserNameFromWizard || '');
     const [detectPassword, setDetectPassword] = useState(mssqlPasswordFromWizard || '');
-    const [asmUserName, setAsmUserName] = useState(asmUserNameFromWizard || '');
-    const [asmPassword, setAsmPassword] = useState(asmPasswordFromWizard || '');
     const [windowsAuthenticationUsername, setWindowsAuthenticationUsername] = useState(
         windowsAuthenticationUsernameFromWizard || ''
     );
@@ -131,22 +124,6 @@ const DetectContent = () => {
     useEffect(() => {
         dispatch(setDetectWindowsAuthentication({ password: windowsAuthenticationPassword }));
     }, [windowsAuthenticationPassword]);
-
-    useEffect(() => {
-        setAsmUserNameSearch(asmUserName);
-    }, [asmUserName]);
-
-    useEffect(() => {
-        dispatch(setDetectAsmAuthentication({ username: asmUserNameSearch }));
-    }, [asmUserNameSearch]);
-
-    useEffect(() => {
-        setAsmPasswordSearch(asmPassword);
-    }, [asmPassword]);
-
-    useEffect(() => {
-        dispatch(setDetectAsmAuthentication({ password: asmPasswordSearch }));
-    }, [asmPasswordSearch]);
 
     const authModeRadio = () => (
         <div className={classNames(styles['radio-container'], { [styles.disabled]: isDetectHostLoading })}>
@@ -306,56 +283,6 @@ const DetectContent = () => {
         </div>
     );
 
-    const oracleASM = () => {
-        const config = authenticationFieldsTexts[DETECT_HOST_VAR.ORACLE_ASM];
-        return (
-            <div className={styles.secondSection}>
-                <div className={styles.optionalSectionContainer}>
-                    <DsTypography variant="Semibold_14">{t(config.heading)}</DsTypography>
-                    <div className={styles.optionalSection}>
-                        <DsTypography variant="Semibold_14" className={styles.optionalText}>
-                            {t('databases.register-flow.optional-credentials')}
-                        </DsTypography>
-                        <TooltipInfo trigger="hover">
-                            <div>
-                                <DsTypography variant="Regular_13">
-                                    {t('databases.register-flow.detect-oracle-asm-optionalCredentialTooltipText')}
-                                </DsTypography>
-                            </div>
-                        </TooltipInfo>
-                    </div>
-                </div>
-                <div className={styles.textFieldContainer}>
-                    <TextField
-                        label={t(config.usernameLabel)}
-                        value={asmUserName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setAsmUserName(e.target.value);
-                            setState({ asmUserNameFromWizard: e.target.value });
-                        }}
-                        className={styles.textFieldStyle}
-                        error={detectCredentialErrors?.oracleAsmError || ''}
-                        placeholder={`${t('databases.general.enter')} ${t(config.usernameLabel)}`}
-                        isDisabled={isDetectHostLoading}
-                    />
-
-                    <PasswordField
-                        label={t(config.passwordLabel)}
-                        value={asmPassword}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setAsmPassword(e.target.value);
-                            setState({ asmPasswordFromWizard: e.target.value });
-                        }}
-                        className={styles.textFieldStyle}
-                        error={detectCredentialErrors?.oracleAsmError || ''}
-                        placeholder={`${t('databases.general.enter')} ${t(config.passwordLabel)}`}
-                        isDisabled={isDetectHostLoading}
-                    />
-                </div>
-            </div>
-        );
-    };
-
     return (
         <div className={styles.detectContent}>
             {wizardOperationType === ACTION_TYPE.SINGLE && (
@@ -375,8 +302,6 @@ const DetectContent = () => {
                         manageSingleInstanceData?.hostType === DBType.MSSQL &&
                         authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION &&
                         windowsAuthInputFields()}
-
-                    {isAsmAuthRequired(manageSingleInstanceData, manageSingleInstanceData?.hostType) && oracleASM()}
                 </>
             )}
 
@@ -396,8 +321,6 @@ const DetectContent = () => {
                         windowsAuthInputFields()}
 
                     {bulkInstanceData?.fsxId && !bulkInstanceData?.isFsxRegistered && fsxInputFields()}
-
-                    {isAsmAuthRequired(bulkInstanceData, bulkInstanceData?.hostType) && oracleASM()}
                 </>
             )}
         </div>

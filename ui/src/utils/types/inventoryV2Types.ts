@@ -38,16 +38,12 @@ export interface InventorySliceData {
     oracleBulkDatabaseCredentials: {
         oracleUsername: string;
         oraclePassword: string;
-        oracleASM: string;
-        asmPassword: string;
     };
     instanceCredentials: {
         [key: string]: {
             authMode: any;
             username: string;
             password: string;
-            oracleASM?: string;
-            asmPassword?: string;
         };
     };
     tableManageColumnState: any;
@@ -107,10 +103,6 @@ export interface InventorySliceData {
     detectOntapPassword: string;
     detectOntapCredentialsByFsx: Record<string, { username: string; password: string }>;
     detectWindowsAuthentication: {
-        username: string;
-        password: string;
-    };
-    detectAsmAuthentication: {
         username: string;
         password: string;
     };

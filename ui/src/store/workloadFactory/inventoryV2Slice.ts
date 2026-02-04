@@ -78,10 +78,6 @@ const initialInventoryV2State: InventorySliceData = {
         username: '',
         password: ''
     },
-    detectAsmAuthentication: {
-        username: '',
-        password: ''
-    },
     detectCredentialErrors: {
         databaseServerError: '',
         fsxnError: '',
@@ -152,9 +148,7 @@ const initialInventoryV2State: InventorySliceData = {
     },
     oracleBulkDatabaseCredentials: {
         oracleUsername: '',
-        oraclePassword: '',
-        oracleASM: '',
-        asmPassword: ''
+        oraclePassword: ''
     },
     instanceCredentials: {},
     manageInstanceInstallAction: {
@@ -253,8 +247,6 @@ const inventoryV2Slice = createSlice({
                     authMode: any;
                     username: string;
                     password: string;
-                    oracleASM: string;
-                    asmPassword: string;
                 }>;
             }>
         ) => {
@@ -455,9 +447,7 @@ const inventoryV2Slice = createSlice({
             state.instanceCredentials = {};
             state.oracleBulkDatabaseCredentials = {
                 oracleUsername: '',
-                oraclePassword: '',
-                oracleASM: '',
-                asmPassword: ''
+                oraclePassword: ''
             };
         },
         setDetectWindowsAuthentication: (
@@ -466,12 +456,6 @@ const inventoryV2Slice = createSlice({
         ) => {
             state.detectWindowsAuthentication = {
                 ...state.detectWindowsAuthentication,
-                ...action.payload
-            };
-        },
-        setDetectAsmAuthentication: (state, action: PayloadAction<Partial<typeof state.detectAsmAuthentication>>) => {
-            state.detectAsmAuthentication = {
-                ...state.detectAsmAuthentication,
                 ...action.payload
             };
         },
@@ -739,7 +723,6 @@ export const {
     setPgsqlInstancesData,
     setOracleInstancesData,
     setDetectWindowsAuthentication,
-    setDetectAsmAuthentication,
     setDetectCredentialErrors,
     clearDetectCredentialErrors,
     setPerfMssqlInstancesData,

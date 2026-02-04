@@ -53,7 +53,6 @@ import OntapTableWithData from './InnerTables/OntapTableWithData';
 import OSOracleTable from './InnerTables/OSOracleTable';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
 import MSSQLHighAvailabilityTableWithData from './InnerTables/MSSQLHighAvailabilityTableWithData';
-import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 
 const OptimizeOntapInnerPage = () => {
     const dispatch = useDispatch();

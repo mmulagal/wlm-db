@@ -149,7 +149,7 @@ export const createOraclePayLoad = (value: string, selectedDatabaseInstanceName:
     const credList = [];
     credList.push({
         resourceId: selectedDatabaseInstanceName,
-        resourceType: value === RESET_PASSWORD_TYPE.ORACLESERVER ? DETECT_HOST_VAR.ORACLE : DETECT_HOST_VAR.ORACLE_ASM,
+        resourceType: DETECT_HOST_VAR.ORACLE,
         username: sqlServerUserName,
         password
     });
@@ -185,17 +185,12 @@ export const handleFSXAdminApply = async (
 ) => {
     dispatch(setPasswordResetLoading(true));
     try {
-        let credList =
-            value === RESET_PASSWORD_TYPE.ORACLESERVER
-                ? createOraclePayLoad(RESET_PASSWORD_TYPE.ORACLESERVER, selectedDatabaseInstanceName)
-                : createOraclePayLoad(RESET_PASSWORD_TYPE.ORACLEASM, selectedDatabaseInstanceName);
+        let credList = createOraclePayLoad(RESET_PASSWORD_TYPE.ORACLESERVER, selectedDatabaseInstanceName);
         if (value === RESET_PASSWORD_TYPE.FSXADMIN) {
             credList = createPayload(resourceDetails, innerPageDetails);
         }
         const getPasswordTypeLabel = (type: string) => {
-            if (type === RESET_PASSWORD_TYPE.FSXADMIN) return 'fsxadmin';
-            if (type === RESET_PASSWORD_TYPE.ORACLESERVER) return 'Oracle Server';
-            return 'Oracle ASM';
+            return type === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Oracle Server';
         };
         const payload = {
             items: [

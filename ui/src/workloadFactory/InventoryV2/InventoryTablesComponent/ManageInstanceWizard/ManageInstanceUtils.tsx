@@ -799,7 +799,6 @@ const addCredentialsBasedOnEngineType = (
     detectWindowsAuthentication: any,
     detectOntapUsername: string,
     detectOntapPassword: string,
-    detectAsmAuthentication: any,
     authenticationType: string,
     engineType: string,
     checkManageReadiness: boolean
@@ -877,17 +876,6 @@ const addCredentialsBasedOnEngineType = (
         });
     }
 
-    // Add Oracle ASM credentials to the credential list (optional)
-    if (engineType === DBType.ORACLE && detectAsmAuthentication?.username && detectAsmAuthentication?.password) {
-        credentials.push({
-            resourceId: sqlServerInstance,
-            resourceType: DETECT_HOST_VAR.ORACLE_ASM,
-            username: detectAsmAuthentication.username,
-            password: detectAsmAuthentication.password
-        });
-        checkManageReadiness = true;
-    }
-
     return checkManageReadiness;
 };
 
@@ -902,7 +890,6 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
         detectWindowsAuthentication,
         detectOntapUsername,
         detectOntapPassword,
-        detectAsmAuthentication,
         authenticationType
     } = state?.inventoryV2 || {};
 
@@ -923,7 +910,6 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
             detectWindowsAuthentication,
             detectOntapUsername,
             detectOntapPassword,
-            detectAsmAuthentication,
             authenticationType,
             instance?.data?.hostType,
             checkManageReadiness

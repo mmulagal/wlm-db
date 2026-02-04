@@ -1913,7 +1913,6 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
         detectWindowsAuthentication,
         detectOntapUsername,
         detectOntapPassword,
-        detectAsmAuthentication,
         authenticationType
     } = state?.inventoryV2;
     const credList = [];
@@ -1956,16 +1955,6 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
         });
     }
 
-    // Add Oracle ASM credentials to the credential list (optional)
-    if (rowData?.hostType === DBType.ORACLE && detectAsmAuthentication?.username && detectAsmAuthentication?.password) {
-        credList.push({
-            resourceId: sqlServerInstance,
-            resourceType: DETECT_HOST_VAR.ORACLE_ASM,
-            username: detectAsmAuthentication.username,
-            password: detectAsmAuthentication.password
-        });
-    }
-
     // Logic to add clusterNodesIpAddress for FCI only. This is for resourec-credentials API.
     if (rowData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
         const addresses = rowData?.windowsClusterNodes?.map((obj: { Address: string; Node: string }) => obj?.Address);
@@ -1983,13 +1972,8 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
  */
 export const createAuthOnlyPayload = (sqlServerInstance: string, rowData: any) => {
     const state = store.getState();
-    const {
-        detectManageUserName,
-        detectManagePassword,
-        detectWindowsAuthentication,
-        detectAsmAuthentication,
-        authenticationType
-    } = state?.inventoryV2;
+    const { detectManageUserName, detectManagePassword, detectWindowsAuthentication, authenticationType } =
+        state?.inventoryV2;
 
     const credList = [];
     let checkManageReadiness = false;
@@ -2021,16 +2005,6 @@ export const createAuthOnlyPayload = (sqlServerInstance: string, rowData: any) =
             password: detectWindowsAuthentication.password
         });
         checkManageReadiness = true;
-    }
-
-    // Oracle ASM (optional)
-    if (rowData?.hostType === DBType.ORACLE && detectAsmAuthentication?.username && detectAsmAuthentication?.password) {
-        credList.push({
-            resourceId: sqlServerInstance,
-            resourceType: DETECT_HOST_VAR.ORACLE_ASM,
-            username: detectAsmAuthentication.username,
-            password: detectAsmAuthentication.password
-        });
     }
 
     // Cluster node addresses for FCI

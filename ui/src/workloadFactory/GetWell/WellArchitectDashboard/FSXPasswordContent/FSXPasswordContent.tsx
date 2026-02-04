@@ -145,11 +145,7 @@ const OracleServerPasswordContent = ({ type }: ORACLEPasswordContentProps) => {
             confirmPassword={sqlConfirmPassword}
             setPassword={(value: string) => dispatch(setSqlServerPassword(value))}
             setConfirmPassword={(value: string) => dispatch(setSqlServerConfirmPassword(value))}
-            description={
-                type === RESET_PASSWORD_TYPE.ORACLESERVER
-                    ? GENERAL.ORACLE_PASSWORD_CONTENT
-                    : GENERAL.ORACLE_ASM_PASSWORD_CONTENT
-            }
+            description={GENERAL.ORACLE_PASSWORD_CONTENT}
             username={sqlServerUserName}
         />
     );
