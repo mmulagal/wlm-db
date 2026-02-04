@@ -174,7 +174,8 @@ const initialInventoryV2State: InventorySliceData = {
     bulkDetectedInstanceList: [],
     landingFromWizard: false,
     selectedFSxForOntapCredentials: FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED,
-    selectedRowsForBulkRegister: [] as any[]
+    selectedRowsForBulkRegister: [] as any[],
+    mssqlInstancesTabVisitCount: 0
 };
 
 const inventoryV2Slice = createSlice({
@@ -198,6 +199,9 @@ const inventoryV2Slice = createSlice({
         },
         setSelectedRowsForBulkRegister: (state, action: PayloadAction<any[]>) => {
             state.selectedRowsForBulkRegister = action.payload;
+        },
+        incrementMssqlInstancesTabVisitCount: state => {
+            state.mssqlInstancesTabVisitCount += 1;
         },
         setInstallType: (state, action: PayloadAction<Partial<typeof state.manageInstanceInstallAction>>) => {
             state.manageInstanceInstallAction = {
@@ -792,7 +796,8 @@ export const {
     setManageSingleInstanceData,
     setReplicaSelectedRowsForManage,
     setBulkDetectedInstanceList,
-    setSelectedRowsForBulkRegister
+    setSelectedRowsForBulkRegister,
+    incrementMssqlInstancesTabVisitCount
 } = inventoryV2Slice.actions;
 
 export default inventoryV2Slice;

@@ -1,4 +1,5 @@
 import { DsTypography } from '@tlveng/wlm-ds';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import styles from './TableTooltip.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -6,24 +7,29 @@ import { DBType } from '../../../../utils/consts';
 
 const TableTooltip = () => {
     const { selectedTCOHostType } = useAppSelector(state => state.exploreSavings);
+    const { t } = useTranslation();
     return (
         <div className={styles.infoContainer}>
-             <div className={styles.item}>
+            <div className={styles.item}>
                 {selectedTCOHostType === DBType.MSSQL && <Bullet />}
-                <DsTypography variant="Regular_14">The table includes results from uploaded scripts.</DsTypography>
+                <DsTypography variant="Regular_14">{t('databases.explore-savings.table-tooltip-content')}</DsTypography>
             </div>
-            {selectedTCOHostType === DBType.MSSQL &&<div className={styles.item}>
-                <Bullet />
-                <DsTypography variant="Regular_14">
-                    Select up to five hosts from the table below, then proceed to explore potential savings.
-                </DsTypography>
-            </div>}
-            {selectedTCOHostType === DBType.MSSQL &&<div className={styles.item}>
-                <Bullet />
-                <DsTypography variant="Regular_14">
-                    After five selections are made, the remaining checkboxes will be disabled.
-                </DsTypography>
-            </div>}
+            {selectedTCOHostType === DBType.MSSQL && (
+                <div className={styles.item}>
+                    <Bullet />
+                    <DsTypography variant="Regular_14">
+                        {t('databases.explore-savings.table-tooltip-content-two')}
+                    </DsTypography>
+                </div>
+            )}
+            {selectedTCOHostType === DBType.MSSQL && (
+                <div className={styles.item}>
+                    <Bullet />
+                    <DsTypography variant="Regular_14">
+                        {t('databases.explore-savings.table-tooltip-content-three')}
+                    </DsTypography>
+                </div>
+            )}
         </div>
     );
 };

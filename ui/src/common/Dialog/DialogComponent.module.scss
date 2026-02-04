@@ -68,6 +68,12 @@
     height: 73vh !important;
 }
 
+.oneTimeWADDialog {
+    [class*='DialogLayout-module_dialog-content'] {
+        overflow-x: hidden !important;
+    }
+}
+
 [class*='DialogLayout-module_header'] {
     color: var(--text-primary) !important;
 }

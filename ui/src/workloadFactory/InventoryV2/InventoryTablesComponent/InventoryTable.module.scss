@@ -115,6 +115,11 @@
         top: 56px !important;
     }
 
+    .topBarInstanceStyle {
+        z-index: 4 !important;
+        top: -10px !important;
+    }
+
     .jobMenuPopover {
         width: fit-content;
     }
@@ -411,5 +416,5 @@
 }
 
 [class*='Popover-module_base'] {
-    max-width: fit-content;
+    max-width: 700px;
 }

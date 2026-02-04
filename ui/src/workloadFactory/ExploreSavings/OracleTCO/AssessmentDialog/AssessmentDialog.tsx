@@ -1,7 +1,7 @@
 import { DsTypography } from '@tlveng/wlm-ds';
-import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { AccordionCard, AccordionCardContent, AccordionController, Typography } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import styles from './AssessmentDialog.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { DBType } from '../../../../utils/consts';

@@ -1,0 +1,30 @@
+.intro-card {
+    position: absolute;
+    z-index: 10;
+    width: 528px;
+    box-shadow: 2px 2px 6px 0 var(--drop-shadow);
+    background-color: var(--content-background);
+    scrollbar-color: var(--scroller) var(--scroller-track);
+    scrollbar-width: thin;
+
+    .content {
+        padding: 40px;
+
+        .heading {
+            font-weight: 590 !important;
+        }
+
+        .text {
+            margin-top: 15px;
+            width: 425px;
+        }
+    }
+
+    .buttonContainer {
+        margin: -8px 40px 40px 40px;
+        justify-content: end;
+        align-items: center;
+        display: flex;
+        gap: 16px;
+    }
+}

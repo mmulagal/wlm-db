@@ -644,49 +644,47 @@ const ExploreSavingsOnPremiseTable = () => {
                 className={styles.topBarInstanceStyle}
                 info={<TableTooltip />}
                 actionsRight={
-                    <>
-                        <div>
-                            <DsButton
-                                ref={buttonRef}
-                                children="Assessment script"
-                                variant="Default"
-                                isThin
-                                dropDown={{
-                                    trigger: 'click',
-                                    autoPosition: true,
-                                    placement: 'alignRight',
-                                    items: [
-                                        {
-                                            id: 'wlm-db-learn-assessment-mssql',
-                                            label: 'Assessment script information',
-                                            onClick: () => {
-                                                openAssessmentDialog();
-                                            }
-                                        },
-                                        {
-                                            id: 'wlm-db-download-script-mssql',
-                                            label: 'Download assessment script',
-                                            onClick: () => {
-                                                handleDownload();
-                                            }
-                                        },
-                                        {
-                                            id: 'wlm-db-upload-script-mssql',
-                                            label: 'Upload script results',
-                                            onClick: handleFileInputClick
+                    <div>
+                        <DsButton
+                            ref={buttonRef}
+                            children="Assessment script"
+                            variant="Default"
+                            isThin
+                            dropDown={{
+                                trigger: 'click',
+                                autoPosition: true,
+                                placement: 'alignRight',
+                                items: [
+                                    {
+                                        id: 'wlm-db-learn-assessment-mssql',
+                                        label: 'Assessment script information',
+                                        onClick: () => {
+                                            openAssessmentDialog();
                                         }
-                                    ]
-                                }}
-                            />
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                accept=".json"
-                                style={{ display: 'none' }}
-                                onChange={handleFileChange}
-                            />
-                        </div>
-                    </>
+                                    },
+                                    {
+                                        id: 'wlm-db-download-script-mssql',
+                                        label: 'Download assessment script',
+                                        onClick: () => {
+                                            handleDownload();
+                                        }
+                                    },
+                                    {
+                                        id: 'wlm-db-upload-script-mssql',
+                                        label: 'Upload script results',
+                                        onClick: handleFileInputClick
+                                    }
+                                ]
+                            }}
+                        />
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            accept=".json"
+                            style={{ display: 'none' }}
+                            onChange={handleFileChange}
+                        />
+                    </div>
                 }
             />
             {selectedRowsForExploreSavingsOnPremBulk.length > 0 && (

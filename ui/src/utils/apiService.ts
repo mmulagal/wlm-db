@@ -841,6 +841,18 @@ export const inventoryApiV2 = createApi({
     baseQuery: dynamicBaseQuery,
     refetchOnMountOrArgChange: true,
     endpoints: builder => ({
+        getOneTimeWADUploadScript: builder.mutation({
+            query: ({ payload }) => ({
+                url: 'v1/mssql/offline-assessment/upload',
+                method: 'POST',
+                body: payload
+            })
+        }),
+        getOneTimeWADDownloadScript: builder.mutation({
+            query: () => ({
+                url: 'v1/mssql/offline-assessment/collector'
+            })
+        }),
         getDatabaseHostsFullDataV2: builder.query({
             query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
                 if (isDemoMode) {
@@ -1612,7 +1624,9 @@ export const {
     useLazyGetAllMssqlHostsAssessmentDataQuery,
     useLazyGetAllOracleHostsAssessmentDataQuery,
     useManageBulkV2MssqlInstanceMutation,
-    useManageBulkV2OracleInstanceMutation
+    useManageBulkV2OracleInstanceMutation,
+    useGetOneTimeWADUploadScriptMutation,
+    useGetOneTimeWADDownloadScriptMutation
 } = inventoryApiV2;
 
 export const {

@@ -267,6 +267,9 @@ const DialogComponent = ({
         if (customClass?.includes('protectionDialog')) {
             return styles.protectionDialog;
         }
+        if (customClass?.includes('oneTimeWADDialog')) {
+            return styles.oneTimeWADDialog;
+        }
         return customClass;
     };
 

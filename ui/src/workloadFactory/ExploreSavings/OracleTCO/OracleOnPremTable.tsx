@@ -1,15 +1,16 @@
 import React, { useRef } from 'react';
-import { ColumnProps, Table } from '../../../common/Lib/Table/Table';
-import { useTable } from '../../../common/Lib/Table/useTable';
-import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
 import { DsButton } from '@tlveng/wlm-ds';
 import { compressSync } from 'fflate';
 import { useDialog } from '@netapp/design-system/dist/components/Dialog';
+import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import { ColumnProps, Table } from '../../../common/Lib/Table/Table';
+import { useTable } from '../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './OracleTCOTables.module.scss';
 import AssessmentDialog from './AssessmentDialog/AssessmentDialog';
-import { useDispatch } from 'react-redux';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useGetUploadScriptMutation, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
@@ -18,6 +19,7 @@ import TableTooltip from './TableTooltip/TableTooltip';
 
 const OracleOnPremTable = () => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const buttonRef: any = useRef(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { setDialog } = useDialog();
@@ -154,7 +156,9 @@ const OracleOnPremTable = () => {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: `File size exceeds ${maxSizeInMB} MB. Please upload a smaller file.`
+                    message:
+                        t('databases.inventory.file-size-exceeds', { max: maxSizeInMB }) +
+                        t('databases.inventory.please-upload-smaller-file')
                 })
             );
             event.target.value = ''; // Clear the file input
@@ -195,7 +199,9 @@ const OracleOnPremTable = () => {
                                     dispatch(
                                         addNotification({
                                             notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                            message: 'Assessment script uploaded successfully.'
+                                            message: t(
+                                                'databases.explore-savings.assessment-script-uploaded-successfully'
+                                            )
                                         })
                                     );
                                     clearInterval(jobInterval);
@@ -231,15 +237,15 @@ const OracleOnPremTable = () => {
             <TableTopBar
                 // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={'Oracle Server on-premises'}
-                singularTitle={'Oracle Server on-premises'}
+                pluralTitle="Oracle Server on-premises"
+                singularTitle="Oracle Server on-premises"
                 className={styles.topBarInstanceStyle}
                 info={<TableTooltip />}
                 actionsRight={
                     <div>
                         <DsButton
                             ref={buttonRef}
-                            children="Assessment script"
+                            children={t('databases.explore-savings.assessment-script')}
                             variant="Default"
                             isThin
                             dropDown={{
@@ -249,14 +255,14 @@ const OracleOnPremTable = () => {
                                 items: [
                                     {
                                         id: 'wlm-db-learn-assessment-mssql',
-                                        label: 'Assessment script information',
+                                        label: t('databases.explore-savings.assessment-script-information'),
                                         onClick: () => {
                                             openAssessmentDialog();
                                         }
                                     },
                                     {
                                         id: 'wlm-db-download-script-mssql',
-                                        label: 'Download assessment script',
+                                        label: t('databases.explore-savings.download-assessment-script'),
                                         isDisabled: true,
                                         onClick: () => {
                                             handleDownload();
@@ -265,7 +271,7 @@ const OracleOnPremTable = () => {
                                     {
                                         id: 'wlm-db-upload-script-mssql',
                                         isDisabled: true,
-                                        label: 'Upload script results',
+                                        label: t('databases.explore-savings.upload-script-results'),
                                         onClick: handleFileInputClick
                                     }
                                 ]

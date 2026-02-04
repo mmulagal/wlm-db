@@ -3,6 +3,7 @@ import DatabaseHostsV2 from '../data/databaseHostsV2.json';
 import PgSqlDatabaseHosts from '../data/pgsqlDatabaseHosts.json';
 import OracleDatabaseHosts from '../data/oracleDatabaseHosts.json';
 import MssqlInstancesV2 from '../data/mssqlInstancesV2.json';
+import UploadScript from '../data/uploadScript.json';
 import PgsqlInstancesV2 from '../data/pgsqlInstances.json';
 import OracleInstancesV2 from '../data/oracleInstances.json';
 
@@ -16,6 +17,20 @@ router.get(
         }, 100);
     }
 );
+
+router.post(`${BASE_URL}/v1/mssql/offline-assessment/upload`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, UploadScript);
+    }, 50);
+});
+
+router.get(`${BASE_URL}/v1/mssql/offline-assessment/collector`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            message: 'Success'
+        });
+    }, 50);
+});
 
 router.get(
     `${BASE_URL}/v1/pgsql/credentials/:credentialsId/regions/:region/database-hosts`,

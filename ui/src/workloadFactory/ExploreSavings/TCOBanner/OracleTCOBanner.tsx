@@ -46,12 +46,15 @@ const OracleTCOBanner = () => {
                     <div className={styles.mainSection}>
                         <div className={styles.leftSection}>
                             <DsTypography variant="Semibold_16">
-                                {selectedTCOHostType === DBType.ORACLE ? t('databases.explore-savings.tco-oracle-banner-slide-one-heading') : t('databases.explore-savings.tco-mssql-banner-slide-one-heading')}
-                             
+                                {selectedTCOHostType === DBType.ORACLE
+                                    ? t('databases.explore-savings.tco-oracle-banner-slide-one-heading')
+                                    : t('databases.explore-savings.tco-mssql-banner-slide-one-heading')}
                             </DsTypography>
 
                             <DsTypography variant="Regular_16">
-                               {selectedTCOHostType === DBType.ORACLE ? t('databases.explore-savings.tco-oracle-banner-slide-one-content') : t('databases.explore-savings.tco-mssql-banner-slide-one-content')}
+                                {selectedTCOHostType === DBType.ORACLE
+                                    ? t('databases.explore-savings.tco-oracle-banner-slide-one-content')
+                                    : t('databases.explore-savings.tco-mssql-banner-slide-one-content')}
                             </DsTypography>
                         </div>
 
@@ -70,7 +73,9 @@ const OracleTCOBanner = () => {
                         </div>
                         <div className={styles.textSection}>
                             <DsTypography variant="Semibold_16">
-                               {selectedTCOHostType === DBType.ORACLE ? t('databases.explore-savings.tco-oracle-banner-slide-two-heading') : t('databases.explore-savings.tco-mssql-banner-slide-two-heading')}
+                                {selectedTCOHostType === DBType.ORACLE
+                                    ? t('databases.explore-savings.tco-oracle-banner-slide-two-heading')
+                                    : t('databases.explore-savings.tco-mssql-banner-slide-two-heading')}
                             </DsTypography>
 
                             <div className={styles.stepSection}>
@@ -80,7 +85,9 @@ const OracleTCOBanner = () => {
                                         <div className={styles.itemText}>
                                             <DsTypography variant="Semibold_14">Step 1</DsTypography>
                                             <DsTypography variant="Regular_14">
-                                               {t('databases.explore-savings.tco-oracle-banner-slide-two-content-step-1')}
+                                                {t(
+                                                    'databases.explore-savings.tco-oracle-banner-slide-two-content-step-1'
+                                                )}
                                             </DsTypography>
                                         </div>
                                     </div>
@@ -90,10 +97,14 @@ const OracleTCOBanner = () => {
                                         <div className={styles.itemText}>
                                             <DsTypography variant="Semibold_14">Step 2</DsTypography>
                                             <DsTypography variant="Regular_14">
-                                               {selectedTCOHostType === DBType.ORACLE ? t('databases.explore-savings.tco-oracle-banner-slide-two-content-step-2') : t('databases.explore-savings.tco-mssql-banner-slide-two-content-step-2')}
-                                               
+                                                {selectedTCOHostType === DBType.ORACLE
+                                                    ? t(
+                                                          'databases.explore-savings.tco-oracle-banner-slide-two-content-step-2'
+                                                      )
+                                                    : t(
+                                                          'databases.explore-savings.tco-mssql-banner-slide-two-content-step-2'
+                                                      )}
                                             </DsTypography>
-                                          
                                         </div>
                                     </div>
                                 </div>
@@ -104,7 +115,9 @@ const OracleTCOBanner = () => {
                                         <div className={styles.itemText}>
                                             <DsTypography variant="Semibold_14">Step 3</DsTypography>
                                             <DsTypography variant="Regular_14">
-                                               {t('databases.explore-savings.tco-oracle-banner-slide-two-content-step-4')}
+                                                {t(
+                                                    'databases.explore-savings.tco-oracle-banner-slide-two-content-step-4'
+                                                )}
                                             </DsTypography>
                                         </div>
                                     </div>
@@ -113,7 +126,13 @@ const OracleTCOBanner = () => {
                                         <div className={styles.itemText}>
                                             <DsTypography variant="Semibold_14">Step 4</DsTypography>
                                             <DsTypography variant="Regular_14">
-                                               {selectedTCOHostType === DBType.ORACLE ? t('databases.explore-savings.tco-oracle-banner-slide-two-content-step-5') : t('databases.explore-savings.tco-mssql-banner-slide-two-content-step-5')}
+                                                {selectedTCOHostType === DBType.ORACLE
+                                                    ? t(
+                                                          'databases.explore-savings.tco-oracle-banner-slide-two-content-step-5'
+                                                      )
+                                                    : t(
+                                                          'databases.explore-savings.tco-mssql-banner-slide-two-content-step-5'
+                                                      )}
                                             </DsTypography>
                                         </div>
                                     </div>

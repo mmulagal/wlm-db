@@ -1,6 +1,7 @@
 import { DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { compressSync } from 'fflate';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -18,10 +19,13 @@ import {
     useGetDiscoverHostResultMutation,
     useGetDiscoverInstanceResultMutation,
     useGetFsxDetailsMutation,
+    useGetOneTimeWADDownloadScriptMutation,
+    useGetOneTimeWADUploadScriptMutation,
     useGetOrganizationIdsMutation,
     useGetRBACPrivilegesMutation,
     useGetSCCrendentialsMutation,
     useGetWorkSpaceIDMutation,
+    useLazyGetSubTaskListQuery,
     useListAllDirectoriesMutation,
     useListExistingHostsMutation,
     useRegisterResourceCredentialsBulkMutation,
@@ -38,7 +42,14 @@ import {
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
 import { bxpRedirect, collapseAllRows, isSmbProtocol } from '../../../../utils/utilityFunctions';
-import { ACTION_CTA, DBType, FROM_DIALOG, INVENTORY_STATUS, WLF_TABS } from '../../../../utils/consts';
+import {
+    ACTION_CTA,
+    DBType,
+    FROM_DIALOG,
+    INVENTORY_STATUS,
+    JOB_MONITORING_STATUS,
+    WLF_TABS
+} from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
@@ -49,7 +60,8 @@ import {
     setSelectedMultiDetectInstances,
     setSelectedRowsForBulkRegister,
     setTableManageColumnState,
-    setWizardOperationType
+    setWizardOperationType,
+    incrementMssqlInstancesTabVisitCount
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { updateOrgId } from '../../../../store/authSlice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
@@ -109,12 +121,20 @@ import {
     MAX_BULK_REGISTER_SELECTION
 } from './InstanceTableHelper';
 
+import IntroductionWADCard from './IntroductionWADCard/IntroductionWADCard';
+import OneTimeWADDialogContent from './OneTimeWADDialogContent/OneTimeWADDialogContent';
+
 const InstancesTable = () => {
     const { t } = useTranslation();
 
-    const { instanceTableRows, tableManageColumnState, selectedRowsForBulkRegister } = useAppSelector(
-        state => state.inventoryV2
-    );
+    const { instanceTableRows, tableManageColumnState, selectedRowsForBulkRegister, mssqlInstancesTabVisitCount } =
+        useAppSelector(state => state.inventoryV2);
+
+    const buttonRef: any = useRef(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const MAX_WAD_CARD_VISITS = 3;
+    // Card should only be shown for the first 3 visits to MSSQL instances tab
+    const [isCardOpen, setIsCardOpen] = useState(mssqlInstancesTabVisitCount < MAX_WAD_CARD_VISITS);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -145,7 +165,6 @@ const InstancesTable = () => {
     const [menuOpenedRow, setOpenedRow] = useState(null);
 
     const [loading, setLoading] = useState(false);
-    const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined);
 
     const menuOpenedRowDetail: any = useRef(null);
     const inventoryTableRef = useRef<HTMLDivElement>(null);
@@ -177,8 +196,29 @@ const InstancesTable = () => {
     const [getSCCrendentials] = useGetSCCrendentialsMutation();
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const [getOrganizationIds] = useGetOrganizationIdsMutation();
+    const [getOneTimeWADDownloadScript] = useGetOneTimeWADDownloadScriptMutation();
+    const [getOneTimeWADUploadScript] = useGetOneTimeWADUploadScriptMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const { title, exportToCsvFileName, buttonText } = getInstableTableTopMenuOptions(selectedHostType, t);
+
+    // Track visits to MSSQL instances tab and control WAD card visibility
+    const hasIncrementedVisit = useRef(false);
+    useEffect(() => {
+        if (selectedHostType === DBType.MSSQL && !hasIncrementedVisit.current) {
+            hasIncrementedVisit.current = true;
+            dispatch(incrementMssqlInstancesTabVisitCount());
+            // Update card visibility based on the NEW count (after increment)
+            setIsCardOpen(mssqlInstancesTabVisitCount < MAX_WAD_CARD_VISITS);
+        }
+    }, [selectedHostType, dispatch, mssqlInstancesTabVisitCount]);
+
+    // Reset increment tracking when switching away from MSSQL
+    useEffect(() => {
+        if (selectedHostType !== DBType.MSSQL) {
+            hasIncrementedVisit.current = false;
+        }
+    }, [selectedHostType]);
 
     // Prefetch SnapCenter hosts and instances to decide Protect/Edit Protection
     const protectionPrefetchRun = useRef(false);
@@ -1101,6 +1141,137 @@ const InstancesTable = () => {
         }
     };
 
+    const openWADDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={t('databases.inventory.one-time-wad-dialog-heading-final')}
+                content={<OneTimeWADDialogContent />}
+                secondaryButton={GENERAL.CLOSE}
+                closeCallback={() => {}}
+                hidePrimaryButton
+                customClass="oneTimeWADDialog"
+            />
+        );
+    };
+
+    const downloadWADScript = async () => {
+        try {
+            const response: any = await getOneTimeWADDownloadScript({});
+
+            if (response && response.data && response.data.message === 'Success') {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.INFO,
+                        message: t('databases.inventory.one-time-wad-download-success')
+                    })
+                );
+            }
+        } catch (error) {
+            console.error('Error downloading WAD script:', error);
+        }
+    };
+
+    const handleFileInputClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const uploadWADScript = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = event.target.files?.[0];
+        if (!selectedFile) return;
+
+        // Validate the file type (ensure it's JSON)
+        if (selectedFile.type !== 'application/json' && !selectedFile.name.endsWith('.json') && !isDemoMode) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: t('databases.inventory.invalid-file-type')
+                })
+            );
+            event.target.value = ''; // Clear the file input
+            return;
+        }
+
+        // Validate the file size (should be <= 2 MB)
+        const maxSizeInMB = 2;
+        const maxSizeInBytes = maxSizeInMB * 1024 * 1024; // 2 MB in bytes
+        if (selectedFile.size > maxSizeInBytes && !isDemoMode) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message:
+                        t('databases.inventory.file-size-exceeds', { max: maxSizeInMB }) +
+                        t('databases.inventory.please-upload-smaller-file')
+                })
+            );
+            event.target.value = ''; // Clear the file input
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = async e => {
+            try {
+                // Parse the JSON data
+                const jsonString = e.target?.result as string;
+
+                // Encode JSON to Base64
+                const base64Encoded = btoa(jsonString);
+
+                // Convert Base64 string to Uint8Array
+                const base64Bytes = new TextEncoder().encode(base64Encoded);
+
+                // Compress the Base64 data using fflate
+                const compressedData = compressSync(base64Bytes);
+
+                // Convert the compressed data to Base64
+                const compressedBase64 = btoa(String.fromCharCode(...compressedData));
+
+                if (compressedBase64) {
+                    const result = await getOneTimeWADUploadScript({
+                        payload: {
+                            fileContent: compressedBase64,
+                            fileName: selectedFile.name
+                        }
+                    });
+
+                    if (result && !result?.error) {
+                        const jobInterval = setInterval(() => {
+                            getJobDetailApi({ id: result.data.jobId }).then((jobRes: any) => {
+                                const status = jobRes?.data?.status;
+
+                                if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                    dispatch(
+                                        addNotification({
+                                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                            message: t('databases.inventory.one-time-wad-upload-success')
+                                        })
+                                    );
+                                    clearInterval(jobInterval);
+                                } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                    dispatch(
+                                        addNotification({
+                                            notificationType: NOTIFICATION_TYPES.ERROR,
+                                            message: jobRes?.data?.error || 'Error uploading file.'
+                                        })
+                                    );
+                                    clearInterval(jobInterval);
+                                }
+                            });
+                        }, 5000);
+                    }
+                }
+            } catch (error) {
+                console.error('Error uploading WAD script:', error);
+            }
+        };
+
+        // Start reading the file - this triggers the onload callback
+        reader.readAsText(selectedFile);
+
+        // Reset the input immediately so the same file can be selected again
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     return (
         <div className={styles.inventoryTable} ref={inventoryTableRef}>
             <div
@@ -1125,8 +1296,62 @@ const InstancesTable = () => {
                     tableProps={tableProps}
                     pluralTitle={title}
                     singularTitle={title}
-                    exportToCsvOptions={{ fileName: exportToCsvFileName }}
+                    className={styles.topBarInstanceStyle}
+                    {...(selectedHostType !== DBType.MSSQL && {
+                        exportToCsvOptions: { fileName: exportToCsvFileName }
+                    })}
                     subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
+                    actionsRight={
+                        <>
+                            {selectedHostType === DBType.MSSQL && (
+                                <div>
+                                    <DsButton
+                                        ref={buttonRef}
+                                        children={t('databases.inventory.one-time-assessment')}
+                                        variant="Default"
+                                        dropDown={{
+                                            trigger: 'click',
+                                            autoPosition: true,
+                                            items: [
+                                                {
+                                                    id: 'wlm-db-learn-assessment-mssql',
+                                                    label: t('databases.inventory.learn-about-assessment'),
+                                                    onClick: () => {
+                                                        openWADDialog();
+                                                    }
+                                                },
+                                                {
+                                                    id: 'wlm-db-download-script-mssql',
+                                                    label: t('databases.inventory.download-script'),
+                                                    isDisabled: true,
+                                                    onClick: () => {
+                                                        downloadWADScript();
+                                                    }
+                                                },
+                                                {
+                                                    id: 'wlm-db-upload-results-mssql',
+                                                    label: t('databases.inventory.upload-results'),
+                                                    isDisabled: true,
+                                                    onClick: handleFileInputClick
+                                                }
+                                            ]
+                                        }}
+                                    />
+
+                                    {isCardOpen && (
+                                        <IntroductionWADCard buttonRef={buttonRef} setIsCardOpen={setIsCardOpen} />
+                                    )}
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        accept=".json"
+                                        style={{ display: 'none' }}
+                                        onChange={uploadWADScript}
+                                    />
+                                </div>
+                            )}
+                        </>
+                    }
                 />
                 <Table
                     // @ts-ignore
