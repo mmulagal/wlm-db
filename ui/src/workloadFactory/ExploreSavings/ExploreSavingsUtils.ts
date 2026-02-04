@@ -498,23 +498,24 @@ export const formatViewCalcData = (
             (item: any) => item.hostname === hostName || item.resourceName === hostName
         );
 
-        // Get the raw machine data from formatViewCalcInstance
+        const hostDeploymentType = recommendedCompute?.deploymentType || existingCompute?.deploymentType;
+
         const fsxMachineData = formatViewCalcInstance(
-            selectedDeploymentModel,
+            hostDeploymentType,
             {},
             recommendedCompute?.machineDetails,
             recommendedLicense
         );
 
         const ebsMachineData = formatViewCalcInstance(
-            selectedDeploymentModel,
+            hostDeploymentType,
             {},
             existingCompute?.machineDetails,
             existingLicense
         );
 
         // Create formatted calculation arrays similar to what viewCalculation functions produce
-        const createFormattedCalculation = (machineData: any[], licenseData: any, computeData: any) => {
+        const createFormattedCalculation = (machineData: any[]) => {
             const machineDetailsList: any[] = [];
 
             machineData?.forEach((calculation: any, index: number) => {
@@ -571,8 +572,9 @@ export const formatViewCalcData = (
 
         return {
             hostName,
-            fsxInstanceCalculation: createFormattedCalculation(fsxMachineData, recommendedLicense, recommendedCompute),
-            ebsInstanceCalculation: createFormattedCalculation(ebsMachineData, existingLicense, existingCompute),
+            deploymentType: hostDeploymentType,
+            fsxInstanceCalculation: createFormattedCalculation(fsxMachineData),
+            ebsInstanceCalculation: createFormattedCalculation(ebsMachineData),
             recommendedCompute,
             recommendedLicense,
             existingCompute,
@@ -1059,6 +1061,10 @@ export const formatViewCalcData = (
             ebsOnlyCost: onlyEbsCost(ebsViewCalculationData)
         };
     }
+
+    // Add bulk calculation data to result for savingsUtil file
+    result.isBulkCalculation = isBulkCalculation;
+    result.hostCalculationData = hostCalculationData;
 
     return result;
 };
