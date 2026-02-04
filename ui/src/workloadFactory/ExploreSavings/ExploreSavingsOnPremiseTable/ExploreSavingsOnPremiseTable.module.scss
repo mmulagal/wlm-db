@@ -3,6 +3,10 @@
 
     margin-top: 24px;
 
+    .topBarInstanceStyle {
+        z-index: 4 !important;
+    }
+
     [class*='TableTopBar-module_base'] {
         [class*='TableTopBar-module_title'] {
             > [class*='Typography-module_Regular_14'] {

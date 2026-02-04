@@ -429,6 +429,9 @@ export const WLF_TABS = {
     MSSQL_ELASTIC_BLOCK_STORE: 'SQL Server on Elastic Block Store (EBS)',
     MSSQL_FSX_FOR_WINDOWS: 'SQL Server on FSx for Windows',
     MSSQL_ON_PREMISES: 'SQL Server On-Premises',
+    ORACLE_SERVER_ON_PREMISES: 'Oracle Server on-premises',
+    ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE: 'Oracle Server on Elastic Block Store (EBS)',
+    REGISTER_RESOURCE: 'Register Resource',
     REGISTER_COMPONENT: 'Register Component',
     // This is added for the left nav to work
     OPTIMIZE_FROM_WELL_ARCHITECTED_TAB: 'Optimize from Well-architected tab',

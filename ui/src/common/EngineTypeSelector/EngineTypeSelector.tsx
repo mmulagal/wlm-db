@@ -1,8 +1,8 @@
 import { DsRadioButton, DsTypography } from '@tlveng/wlm-ds';
 import { t } from 'i18next';
-import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
-import { DBType } from '../../../utils/consts';
-import { setSelectedHostType } from '../../../store/workloadFactory/inventoryV2Slice';
+import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
+import { DBType } from '../../utils/consts';
+import { setSelectedHostType } from '../../store/workloadFactory/inventoryV2Slice';
 import styles from './EngineTypeSelector.module.scss';
 
 const EngineTypeSelector = () => {

@@ -1,0 +1,73 @@
+.assessmentDialog {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 964px;
+
+    .partOne {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-width: 984px;
+
+        .list {
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+
+            .listItem {
+                display: flex;
+                gap: 16px;
+
+                .secondLevelList {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    margin-top: 8px;
+
+                    .item {
+                        display: flex;
+                        gap: 16px;
+                    }
+                }
+            }
+        }
+    }
+
+    .accordionSectionEC {
+        .titleMainContent {
+            font-weight: 400;
+            margin-left: 12px;
+        }
+        [class*='AccordionCard-module_base'] {
+            background: var(--background-main, #f5f5f5) !important;
+            box-shadow: none !important;
+            border-bottom: none !important;
+            min-width: 984px;
+        }
+
+        .secondAccordion {
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+
+        [class*='AccordionCard-module_header'] {
+            height: 56px !important;
+
+            grid-template-columns: max-content 1fr max-content max-content max-content !important;
+        }
+
+        [class*='AccordionCard-module_header']:hover {
+            background-color: unset !important;
+        }
+
+        [class*='AccordionCard-module_title'] {
+            padding-right: 0 !important;
+        }
+
+        [class*='AccordionCard-module_animation'] {
+            box-shadow: none !important;
+            background: var(--background-main, #f5f5f5) !important;
+        }
+    }
+}

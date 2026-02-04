@@ -6,7 +6,8 @@ import {
     DsTypography,
     Popover,
     DsSpinner,
-    TooltipInfo
+    DsButton,
+    useDialog
 } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
@@ -19,10 +20,8 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem, onClickESHostOnPremBulk } from '../ExploreSavingsUtils';
 import { formatDateWithTime, getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
-import { ReactComponent as Download } from '../../../assets/download.svg';
 import tcoScript from '../../../script/SQLServerDataCollector.ps1?raw';
 
-import FileUpload from './FileUpload';
 import {
     useDeleteOnPremTcoMutation,
     useGetUploadScriptMutation,
@@ -42,12 +41,18 @@ import {
     setOnPremTCOAction
 } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import { setOnPremiseData } from '../../../store/workloadFactory/exploreSavingsSlice';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import AssessmentDialog from '../OracleTCO/AssessmentDialog/AssessmentDialog';
+import TableTooltip from '../OracleTCO/TableTooltip/TableTooltip';
 
 const ExploreSavingsOnPremiseTable = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { fetchOnPremData, error } = useOnPremData();
+    const { setDialog } = useDialog();
+    const buttonRef: any = useRef(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const windowSize = useResize();
     const [isUploadLoading, setIsUploadLoading] = useState(false);
     const { onPremiseData, onPremiseDataLoading } = useAppSelector(state => state.exploreSavings);
@@ -114,6 +119,10 @@ const ExploreSavingsOnPremiseTable = () => {
         fetchOnPremData();
     }, []);
 
+    const handleFileInputClick = () => {
+        fileInputRef.current?.click();
+    };
+
     const handleFileChange = (event: any) => {
         const selectedFile = event.target.files[0];
         if (!selectedFile) return;
@@ -166,7 +175,7 @@ const ExploreSavingsOnPremiseTable = () => {
                             setIsUploadLoading(false);
                             dispatch(
                                 addNotification({
-                                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                    notificationType: NOTIFICATION_TYPES.INFO,
                                     message: 'File is already uploaded.'
                                 })
                             );
@@ -206,8 +215,8 @@ const ExploreSavingsOnPremiseTable = () => {
                                             setIsUploadLoading(false);
                                             dispatch(
                                                 addNotification({
-                                                    notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                                    message: 'File is uploaded successfully.'
+                                                    notificationType: NOTIFICATION_TYPES.INFO,
+                                                    message: 'Assessment script uploaded successfully.'
                                                 })
                                             );
                                             event.target.value = ''; // Clear the file input
@@ -293,6 +302,18 @@ const ExploreSavingsOnPremiseTable = () => {
                     })
                 );
             });
+    };
+
+    const openAssessmentDialog = () => {
+        setDialog(
+            <DialogComponent
+                header="Assessment script information"
+                content={<AssessmentDialog />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+                customClass="oneTimeWADDialog"
+            />
+        );
     };
 
     const lastColDetails = () => ({
@@ -604,6 +625,13 @@ const ExploreSavingsOnPremiseTable = () => {
         link.remove();
 
         window.URL.revokeObjectURL(url);
+
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: 'Assessment script downloaded successfully.'
+            })
+        );
     };
 
     return (
@@ -613,20 +641,52 @@ const ExploreSavingsOnPremiseTable = () => {
                 tableProps={tableProps}
                 pluralTitle="Microsoft SQL Server hosts on-premises"
                 singularTitle="Microsoft SQL Server host on-premises"
-                subTitle={`Includes results from uploaded scripts. ${t('databases.explore-savings.select-upto-five')}`}
+                className={styles.topBarInstanceStyle}
+                info={<TableTooltip />}
                 actionsRight={
-                    <div className={styles.actions}>
-                        <FileUpload handleFileChange={handleFileChange} />
-                        <div className={styles.commonAction}>
-                            <Download />
-                            <DsTypography onClick={handleDownload} variant="Semibold_14" className={styles.text}>
-                                Download assessment script
-                            </DsTypography>
-                            <TooltipInfo placement="bottom" isAppendedToBody>
-                                {GENERAL.ONPREM_TOOLTIP}
-                            </TooltipInfo>
+                    <>
+                        <div>
+                            <DsButton
+                                ref={buttonRef}
+                                children="Assessment script"
+                                variant="Default"
+                                isThin
+                                dropDown={{
+                                    trigger: 'click',
+                                    autoPosition: true,
+                                    placement: 'alignRight',
+                                    items: [
+                                        {
+                                            id: 'wlm-db-learn-assessment-mssql',
+                                            label: 'Assessment script information',
+                                            onClick: () => {
+                                                openAssessmentDialog();
+                                            }
+                                        },
+                                        {
+                                            id: 'wlm-db-download-script-mssql',
+                                            label: 'Download assessment script',
+                                            onClick: () => {
+                                                handleDownload();
+                                            }
+                                        },
+                                        {
+                                            id: 'wlm-db-upload-script-mssql',
+                                            label: 'Upload script results',
+                                            onClick: handleFileInputClick
+                                        }
+                                    ]
+                                }}
+                            />
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                accept=".json"
+                                style={{ display: 'none' }}
+                                onChange={handleFileChange}
+                            />
                         </div>
-                    </div>
+                    </>
                 }
             />
             {selectedRowsForExploreSavingsOnPremBulk.length > 0 && (

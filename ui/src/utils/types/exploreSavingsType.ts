@@ -9,6 +9,7 @@ export interface InstanceType {
 export interface ManualTCOVolTypes {}
 
 export interface ExploreSavingsSliceEntities {
+    selectedTCOHostType: string;
     showOptimizeMode: {
         optimizeLoading: boolean;
         showCalcMode: boolean;
@@ -26,6 +27,7 @@ export interface ExploreSavingsSliceEntities {
     regionChangeInstanceLoading: boolean;
     onPremiseData: any;
     onPremiseDataLoading: boolean;
+    selectedOracleExploreSavingsTab: string;
     selectedExploreSavingsTab: string;
     selectedManualFSXThroughput: number;
     selectedManualFSXIOPS: number;

@@ -35,11 +35,11 @@ import {
 } from './InventoryUtilsV2';
 import { setFullInventoryTablesRows, setInventoryTablesRows } from '../../store/workloadFactory/inventoryV2Slice';
 import store from '../../store/store';
-import EngineTypeSelector from './EngineTypeSelector/EngineTypeSelector';
 
 import MSSQLBanner from './InventoryBanners/MSSQLBanner/MSSQLBanner';
 import PGSQLBanner from './InventoryBanners/PGSQLBanner/PGSQLBanner';
 import OracleBanner from './InventoryBanners/MSSQLBanner/OracleBanner';
+import EngineTypeSelector from '../../common/EngineTypeSelector/EngineTypeSelector';
 
 const InventoryV2 = () => {
     const { t } = useTranslation();

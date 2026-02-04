@@ -28,11 +28,23 @@
         width: 259px;
     }
 
+    .headerOracleTab {
+        width: 460px;
+
+        .comingSoonStyle {
+            position: relative;
+            top: 4px;
+        }
+    }
+
     .headerPart1 {
         color: var(--text-primary);
         display: flex;
         justify-content: center;
         cursor: pointer;
+
+        gap: 16px;
+        align-items: center;
     }
 
     .headerDisabled {

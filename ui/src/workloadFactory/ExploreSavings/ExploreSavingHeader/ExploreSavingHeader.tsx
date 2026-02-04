@@ -18,6 +18,7 @@ import { WLF_TABS } from '../../../utils/consts';
 import ExploreSavingsOnPremiseTable from '../ExploreSavingsOnPremiseTable/ExploreSavingsOnPremiseTable';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import ExploreSavingsFsxTable from '../ExploreSavingsTableV2/ExploreSavingsFsxTable';
+import OracleTCOBanner from '../TCOBanner/OracleTCOBanner';
 
 const ExploreSavingHeader = () => {
     const dispatch = useDispatch();
@@ -40,99 +41,7 @@ const ExploreSavingHeader = () => {
                     {/* For on-premise */}
                     {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                         <div className={`${styles.exploreSavingsHeader} ${styles.exploreSavingsHeaderOnPrem}`}>
-                            <div className={styles.topPart}>
-                                <div className={`${styles.svgContainer} ${styles.svgContainerOnPrem}`}>
-                                    <ExploreSavingOnPrem />
-                                </div>
-                                <div className={styles.contentSection}>
-                                    <div className={styles.leftSide}>
-                                        <div className={styles.headingPart}>
-                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                                {GENERAL.ES_HEADING_ONPREM_LEFT_SIDE}
-                                            </DsTypography>
-                                        </div>
-
-                                        <DsTypography variant="Regular_16" className={styles.subText}>
-                                            {GENERAL.ES_MIGRATE_SERVER_ENV}
-                                        </DsTypography>
-                                    </div>
-
-                                    <div className={styles.rightSide}>
-                                        <div className={styles.headingPart}>
-                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                                {GENERAL.ES_HEADING_ONPREM_RIGHT_SIDE}
-                                            </DsTypography>
-                                        </div>
-
-                                        <div className={`${styles.subText} ${styles.subTextOnPrem}`}>
-                                            <DsTypography variant="Regular_16">
-                                                Follow these steps to assess your on-premises SQL Server:
-                                            </DsTypography>
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">1</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Download the assessment script.
-                                                </DsTypography>
-                                            </div>
-
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">2</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Run the script on the SQL Server host with a user who has admin
-                                                    rights on both the system and SQL Server. Refer to the script's
-                                                    documentation (DocString) for more details.
-                                                </DsTypography>
-                                            </div>
-
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">3</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Upload the script results in Workload Factory.
-                                                </DsTypography>
-                                            </div>
-
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">4</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Select the on-premises SQL Server host to explore savings.
-                                                </DsTypography>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <OracleTCOBanner />
                             {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                                 <ExploreSavingsOnPremiseTable />
                             )}
@@ -207,99 +116,7 @@ const ExploreSavingHeader = () => {
                 <>
                     {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                         <div className={`${styles.exploreSavingsHeader} ${styles.exploreSavingsHeaderOnPrem}`}>
-                            <div className={styles.topPart}>
-                                <div className={styles.svgContainer1600}>
-                                    <ExploreSavingCommon />
-                                </div>
-                                <div className={styles.contentSection}>
-                                    <div className={styles.leftSide}>
-                                        <div className={styles.headingPart}>
-                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                                {GENERAL.ES_HEADING_ONPREM_LEFT_SIDE}
-                                            </DsTypography>
-                                        </div>
-
-                                        <DsTypography variant="Regular_16" className={styles.subText}>
-                                            {GENERAL.ES_MIGRATE_SERVER_ENV}
-                                        </DsTypography>
-                                    </div>
-
-                                    <div className={styles.rightSide}>
-                                        <div className={styles.headingPart}>
-                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                                {GENERAL.ES_HEADING_ONPREM_RIGHT_SIDE}
-                                            </DsTypography>
-                                        </div>
-
-                                        <div className={`${styles.subText} ${styles.subTextOnPrem}`}>
-                                            <DsTypography variant="Regular_16">
-                                                Follow these steps to assess your on-premises SQL Server:
-                                            </DsTypography>
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">1</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Download the assessment script.
-                                                </DsTypography>
-                                            </div>
-
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">2</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Run the script on the SQL Server host with a user who has admin
-                                                    rights on both the system and SQL Server. Refer to the script's
-                                                    documentation (DocString) for more details.
-                                                </DsTypography>
-                                            </div>
-
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">3</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Upload the script results in Workload Factory.
-                                                </DsTypography>
-                                            </div>
-
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">4</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Select the on-premises SQL Server host to explore savings.
-                                                </DsTypography>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <OracleTCOBanner />
                             {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                                 <ExploreSavingsOnPremiseTable />
                             )}
@@ -381,99 +198,7 @@ const ExploreSavingHeader = () => {
                 <>
                     {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                         <div className={`${styles.exploreSavingsHeader} ${styles.exploreSavingsHeaderOnPrem}`}>
-                            <div className={styles.topPart}>
-                                <div className={styles.svgContainer1600}>
-                                    <ExploreSavingCommon />
-                                </div>
-                                <div className={styles.contentSection}>
-                                    <div className={styles.leftSide}>
-                                        <div className={styles.headingPart}>
-                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                                {GENERAL.ES_HEADING_ONPREM_LEFT_SIDE}
-                                            </DsTypography>
-                                        </div>
-
-                                        <DsTypography variant="Regular_16" className={styles.subText}>
-                                            {GENERAL.ES_MIGRATE_SERVER_ENV}
-                                        </DsTypography>
-                                    </div>
-
-                                    <div className={styles.rightSide}>
-                                        <div className={styles.headingPart}>
-                                            <DsTypography variant="Semibold_16" style={{ lineHeight: '32px' }}>
-                                                {GENERAL.ES_HEADING_ONPREM_RIGHT_SIDE}
-                                            </DsTypography>
-                                        </div>
-
-                                        <div className={`${styles.subText} ${styles.subTextOnPrem}`}>
-                                            <DsTypography variant="Regular_16">
-                                                Follow these steps to assess your on-premises SQL Server:
-                                            </DsTypography>
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">1</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Download the assessment script.
-                                                </DsTypography>
-                                            </div>
-
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">2</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Run the script on the SQL Server host with a user who has admin
-                                                    rights on both the system and SQL Server. Refer to the script's
-                                                    documentation (DocString) for more details.
-                                                </DsTypography>
-                                            </div>
-
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">3</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Upload the script results in Workload Factory.
-                                                </DsTypography>
-                                            </div>
-
-                                            <div className={styles.level}>
-                                                <div className={styles.subLevel}>
-                                                    <DsTypography variant="Semibold_16">4</DsTypography>
-                                                    <DsTypography
-                                                        variant="Semibold_16"
-                                                        style={{ position: 'relative', top: '-1px' }}
-                                                    >
-                                                        |
-                                                    </DsTypography>
-                                                </div>
-                                                <DsTypography variant="Regular_16">
-                                                    Select the on-premises SQL Server host to explore savings.
-                                                </DsTypography>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <OracleTCOBanner />
                             {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                                 <ExploreSavingsOnPremiseTable />
                             )}

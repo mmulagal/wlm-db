@@ -1,8 +1,9 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { ExploreSavingsSliceEntities } from '../../utils/types/exploreSavingsType';
-import { SAVINGS_CALC_MODE, TCO_CALCULATOR_MODE, WLF_TABS } from '../../utils/consts';
+import { DBType, SAVINGS_CALC_MODE, TCO_CALCULATOR_MODE, WLF_TABS } from '../../utils/consts';
 
 export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
+    selectedTCOHostType: DBType.MSSQL,
     showOptimizeMode: {
         optimizeLoading: false,
         showCalcMode: false
@@ -146,6 +147,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedManualFSXThroughput: 128,
     snapshotLoading: false,
     selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE,
+    selectedOracleExploreSavingsTab: WLF_TABS.ORACLE_SERVER_ON_PREMISES,
     onPremStorageAndComputeInfo: {},
     onPremNetworkPerformance: null,
     storageSavingsOnPremResponse: {},
@@ -165,6 +167,12 @@ const exploreSavingsSlice = createSlice({
     name: 'exploreSavings',
     initialState: initialExploreSavingsState,
     reducers: {
+        setSelectedOracleExploreSavingsTab: (state, action: PayloadAction<string>) => {
+            state.selectedOracleExploreSavingsTab = action.payload;
+        },
+        setSelectedTCOHostType(state, action: PayloadAction<string>) {
+            state.selectedTCOHostType = action.payload;
+        },
         setShowOptimizeMode(state, action: PayloadAction<{ optimizeLoading: boolean; showCalcMode: boolean }>) {
             state.showOptimizeMode = action.payload;
         },
@@ -610,6 +618,8 @@ const exploreSavingsSlice = createSlice({
 });
 
 export const {
+    setSelectedOracleExploreSavingsTab,
+    setSelectedTCOHostType,
     setShowOptimizeMode,
     setSelectedCalculatorMode,
     setShowOptimizeModal,
