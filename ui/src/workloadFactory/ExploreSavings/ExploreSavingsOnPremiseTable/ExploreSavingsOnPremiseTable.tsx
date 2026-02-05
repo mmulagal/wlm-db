@@ -216,7 +216,7 @@ const ExploreSavingsOnPremiseTable = () => {
                                             dispatch(
                                                 addNotification({
                                                     notificationType: NOTIFICATION_TYPES.INFO,
-                                                    message: 'Assessment script uploaded successfully.'
+                                                    message: t('databases.explore-savings.uploaded-assessment-script')
                                                 })
                                             );
                                             event.target.value = ''; // Clear the file input
@@ -629,7 +629,7 @@ const ExploreSavingsOnPremiseTable = () => {
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
-                message: 'Assessment script downloaded successfully.'
+                    message: t('databases.explore-savings.downloaded-assessment-script')
             })
         );
     };

@@ -22,14 +22,7 @@ const TableTooltip = () => {
                     </DsTypography>
                 </div>
             )}
-            {selectedTCOHostType === DBType.MSSQL && (
-                <div className={styles.item}>
-                    <Bullet />
-                    <DsTypography variant="Regular_14">
-                        {t('databases.explore-savings.table-tooltip-content-three')}
-                    </DsTypography>
-                </div>
-            )}
+            
         </div>
     );
 };

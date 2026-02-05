@@ -69,7 +69,7 @@ const OracleOnPremTable = () => {
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
-                message: 'Assessment script downloaded successfully.'
+                message: t('databases.explore-savings.downloaded-assessment-script-and-readme')
             })
         );
     };
@@ -198,9 +198,9 @@ const OracleOnPremTable = () => {
                                 if (status === JOB_MONITORING_STATUS.COMPLETED) {
                                     dispatch(
                                         addNotification({
-                                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                                            notificationType: NOTIFICATION_TYPES.INFO,
                                             message: t(
-                                                'databases.explore-savings.assessment-script-uploaded-successfully'
+                                                'databases.explore-savings.uploaded-assessment-script'
                                             )
                                         })
                                     );
