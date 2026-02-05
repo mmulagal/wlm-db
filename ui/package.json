@@ -6,6 +6,7 @@
     "type": "module",
     "dependencies": {
         "@emotion/css": "^11.11.2",
+        "fsxpert-widget": "https://github.com/TLVeng/fsxpert-widget.git#v1.0.6",
         "@netapp/design-system": "file:netapp-design-system-1.5.40.tgz",
         "@netapp/icons": "file:netapp-icons-1.0.8.tgz",
         "@reduxjs/toolkit": "2.11.2",
