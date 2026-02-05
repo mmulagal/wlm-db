@@ -48,7 +48,6 @@ export function getMssqlInstanceTableColumns({
 }): ColumnProps[] {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const aoagRegisterFlag = localStorage.getItem('aoagRegisterEnabled');
 
     const allColumns: ColumnProps[] = [
         {
@@ -491,16 +490,12 @@ export function getMssqlInstanceTableColumns({
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
                 const { colText, disableMsg } = manageActionCol(t, DBType.MSSQL, rowData);
-                // Check if this is a AOAG deployment (coming soon)
-                const isAoag = rowData?.serverInstallationMode.includes(DATABASE_DEPLOYMENT_MODE.AOAG_CAPS);
-                const aoagDisableMsg =
-                    isAoag && aoagRegisterFlag !== 'true' ? t('databases.bulk-register.aoag-coming-soon') : '';
 
                 // Disable action button when bulk selection is active
                 const isDisabledByBulkSelection = isBulkSelectionActive;
                 const effectiveDisableMsg = isDisabledByBulkSelection
                     ? t('databases.bulk-register.action-disabled-during-bulk-selection')
-                    : aoagDisableMsg || disableMsg;
+                    : disableMsg;
                 return (
                     <>
                         {effectiveDisableMsg ? (

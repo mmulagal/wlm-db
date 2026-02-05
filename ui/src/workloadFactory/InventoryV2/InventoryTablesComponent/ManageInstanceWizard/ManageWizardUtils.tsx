@@ -444,6 +444,69 @@ export const getReplicaInstanceList = (result: any, manageSingleInstanceData: an
 };
 
 /**
+ * Retrieves Oracle Data Guard replica instances from detection results by matching replicaInfo with inventory table.
+ * Uses dbUniqueName from dataguardDetails to match with databaseName from replica info.
+ * @param result - Detection result with replicaInfo, credentialsId, region
+ * @param manageSingleInstanceData - Current instance data
+ * @returns Array of matching replica instances in same DataGuard configuration
+ */
+export const getReplicaInstanceListOracle = (result: any, manageSingleInstanceData: any) => {
+    const replicaInfo = result?.replicaInfo;
+    const credentialsId = result?.credentialsId;
+    const region = result?.region;
+    const updatedState = store.getState();
+    const { instanceTableRows }: any = updatedState?.inventoryV2;
+    const replicaInstanceList: Array<any> = [];
+
+    // Return early if no replica info
+    if (!replicaInfo || !Array.isArray(replicaInfo) || replicaInfo.length === 0) {
+        return replicaInstanceList;
+    }
+
+    // Filter instanceTableRows by matching credentialsId and region
+    const filteredInstances = instanceTableRows.filter(
+        (row: any) => row?.credentialId === credentialsId && row?.regionId === region
+    );
+
+    // Map replicaInfo to matching instances from instanceTableRows
+    // Match by dbUniqueName from dataguardDetails with databaseName from replica
+    replicaInfo.forEach((replica: any) => {
+        const matchingInstance = filteredInstances.find((instance: any) => {
+            const instanceDataguardDetails = instance?.dataguardDetails;
+
+            // Match dbUniqueName from instance's dataguardDetails with databaseName from replica
+            const hasMatchingDbUniqueName = instanceDataguardDetails?.dbUniqueName === replica?.databaseName;
+
+            // Check if instance's EC2 instance matches replica's EC2 instance
+            const hasMatchingEc2 = instance?.ec2InstanceId === replica?.ec2InstanceId;
+
+            // Check if instance has DataGuard deployment type
+            const isDataGuardDeployment =
+                instance?.serverInstallationMode?.toLowerCase() === DATABASE_DEPLOYMENT_MODE.DATAGUARD.toLowerCase();
+
+            return (
+                hasMatchingDbUniqueName &&
+                hasMatchingEc2 &&
+                isDataGuardDeployment &&
+                instance?.statusColText !== INVENTORY_STATUS.MANAGED &&
+                // Exclude the primary instance itself
+                !(
+                    instance?.ec2InstanceId === manageSingleInstanceData?.ec2InstanceId &&
+                    instance?.databaseInstanceName === manageSingleInstanceData?.databaseInstanceName
+                )
+            );
+        });
+
+        if (matchingInstance) {
+            // Wrap instance in bulk format for consistency with SelectInstances dropdown
+            replicaInstanceList.push(wrapInstanceForBulk(matchingInstance));
+        }
+    });
+
+    return replicaInstanceList;
+};
+
+/**
  * Retrieves replica instances for authenticated database using aoagClusterNodeDetails.
  * @param manageSingleInstanceData - Instance with aoagClusterNodeDetails, credentialId, regionId
  * @returns Array of unmanaged replica instances in same credentials/region
@@ -503,6 +566,87 @@ export const getReplicaInstanceListForAuthenticatedRow = (manageSingleInstanceDa
     });
 
     return replicaInstanceList;
+};
+
+/**
+ * Retrieves connected Oracle Data Guard database instances for an authenticated database.
+ * Uses dataguardDetails to find all instances in the same DataGuard configuration.
+ * Groups databases by matching dbName and associatedHosts EC2 instances.
+ * @param manageSingleInstanceData - Instance with dataguardDetails, credentialId, regionId
+ * @returns Array of unmanaged connected database instances in same DataGuard configuration
+ */
+export const getReplicaInstanceListForAuthenticatedRowOracle = (manageSingleInstanceData: any) => {
+    const dataguardDetails = manageSingleInstanceData?.dataguardDetails;
+    const credentialsId = manageSingleInstanceData?.credentialId;
+    const region = manageSingleInstanceData?.regionId;
+    const updatedState = store.getState();
+    const { instanceTableRows }: any = updatedState?.inventoryV2;
+    const replicaDatabaseList: Array<any> = [];
+
+    // Return early if no DataGuard details or no associated hosts
+    if (
+        !dataguardDetails ||
+        !dataguardDetails?.associatedHosts ||
+        !Array.isArray(dataguardDetails.associatedHosts) ||
+        dataguardDetails.associatedHosts.length === 0
+    ) {
+        return replicaDatabaseList;
+    }
+
+    const { dbName, associatedHosts } = dataguardDetails;
+
+    // Skip if essential data is missing
+    if (!dbName) {
+        return replicaDatabaseList;
+    }
+
+    // Extract EC2 instance IDs from associatedHosts for matching
+    const associatedEc2InstanceIds = new Set(
+        associatedHosts.map((host: any) => host?.ec2InstanceId).filter((id: string) => id)
+    );
+
+    // Filter instanceTableRows by matching credentialsId and region
+    const filteredInstances = instanceTableRows?.filter(
+        (row: any) => row?.credentialId === credentialsId && row?.regionId === region
+    );
+
+    // Find all instances that belong to the same DataGuard configuration
+    filteredInstances?.forEach((instance: any) => {
+        const instanceDataguardDetails = instance?.dataguardDetails;
+
+        // Check if instance has DataGuard deployment with matching dbName
+        const hasMatchingDbName = instanceDataguardDetails?.dbName === dbName;
+
+        // Check if instance's EC2 instance is part of the associated hosts
+        const isInAssociatedHosts = associatedEc2InstanceIds.has(instance?.ec2InstanceId);
+
+        // Check if instance has DataGuard deployment type
+        const isDataGuardDeployment =
+            instance?.serverInstallationMode?.toLowerCase() === DATABASE_DEPLOYMENT_MODE.DATAGUARD.toLowerCase();
+
+        // Only include instances that:
+        // 1. Have matching DataGuard dbName
+        // 2. Are in the associated hosts list
+        // 3. Are DataGuard deployments
+        // 4. Are not already MANAGED
+        // 5. Are not the selected instance itself
+        if (
+            hasMatchingDbName &&
+            isInAssociatedHosts &&
+            isDataGuardDeployment &&
+            instance?.statusColText !== INVENTORY_STATUS.MANAGED &&
+            // Exclude the primary instance itself
+            !(
+                instance?.ec2InstanceId === manageSingleInstanceData?.ec2InstanceId &&
+                instance?.databaseInstanceName === manageSingleInstanceData?.databaseInstanceName
+            )
+        ) {
+            // Wrap instance in bulk format for consistency with SelectInstances dropdown
+            replicaDatabaseList.push(wrapInstanceForBulk(instance));
+        }
+    });
+
+    return replicaDatabaseList;
 };
 
 /**
@@ -572,12 +716,25 @@ export const handleReplicaAuthenticationDialog = (
     registerHostType: string,
     styles: any
 ) => {
-    const replicaList = getReplicaInstanceListForAuthenticatedRow(manageSingleInstanceData);
+    const replicaList =
+        registerHostType === DBType.ORACLE
+            ? getReplicaInstanceListForAuthenticatedRowOracle(manageSingleInstanceData)
+            : getReplicaInstanceListForAuthenticatedRow(manageSingleInstanceData);
     if (replicaList?.length > 0) {
         setDialog(
             <DialogComponent
-                header={t('databases.register-flow.authenticate-instances')}
-                content={<ReplicaInfoDialog instance={manageSingleInstanceData} replicaList={replicaList} />}
+                header={
+                    registerHostType === DBType.ORACLE
+                        ? t('databases.register-flow.authenticate-databases')
+                        : t('databases.register-flow.authenticate-instances')
+                }
+                content={
+                    <ReplicaInfoDialog
+                        instance={manageSingleInstanceData}
+                        replicaList={replicaList}
+                        databaseType={registerHostType}
+                    />
+                }
                 primaryButton={t('databases.general.continue')}
                 callback={() => {
                     // Use Redux state instead of local state to avoid closure issues
@@ -609,7 +766,10 @@ export const handleReplicaAuthenticationDialog = (
                                 dispatch(
                                     addNotification({
                                         notificationType: NOTIFICATION_TYPES.INFO,
-                                        message: t('databases.register-flow.instances-authenticated')
+                                        message:
+                                            registerHostType === DBType.ORACLE
+                                                ? t('databases.register-flow.databases-authenticated')
+                                                : t('databases.register-flow.instances-authenticated')
                                     })
                                 );
                                 dispatch(setBulkWizardStartAtFsxStep(true));
@@ -620,7 +780,12 @@ export const handleReplicaAuthenticationDialog = (
                             dispatch(
                                 addNotification({
                                     notificationType: NOTIFICATION_TYPES.ERROR,
-                                    message: t('databases.register-flow.selection-required-to-proceed')
+                                    message: t('databases.register-flow.selection-required-to-proceed', {
+                                        type:
+                                            registerHostType === DBType.ORACLE
+                                                ? t('databases.register-flow.replica-info-dialog.database')
+                                                : t('databases.register-flow.replica-info-dialog.instance')
+                                    })
                                 })
                             );
                         }
@@ -672,7 +837,10 @@ export const handleReplicaAuthenticationAndDialog = async (
     registerHostType: string,
     styles: any
 ) => {
-    const replicaList = getReplicaInstanceList(result, manageSingleInstanceData);
+    const replicaList =
+        registerHostType === DBType.ORACLE
+            ? getReplicaInstanceListOracle(result, manageSingleInstanceData)
+            : getReplicaInstanceList(result, manageSingleInstanceData);
 
     /**
      * Handles authentication of replica instances using provided credentials.
@@ -838,6 +1006,7 @@ export const handleReplicaAuthenticationAndDialog = async (
 
                 // Check if all instances are now authenticated
                 const updatedAuthStatus = { ...instanceAuthStatus, ...authStatusUpdates };
+
                 if (areAllInstancesAuthenticated(replicaSelectedRowsForManage, updatedAuthStatus, hostType)) {
                     // All authenticated successfully. Store data in multi select and switch to bulk flow
                     // Combine original instance + authenticated replicas
@@ -848,6 +1017,16 @@ export const handleReplicaAuthenticationAndDialog = async (
                         wrapInstanceForBulk(manageSingleInstanceData),
                         ...latestSelectedMultiDetectInstances
                     ];
+
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.INFO,
+                            message:
+                                registerHostType === DBType.ORACLE
+                                    ? t('databases.register-flow.all-databases-authenticated')
+                                    : t('databases.register-flow.all-instances-authenticated')
+                        })
+                    );
 
                     // Update to bulk operation mode and flag to start at FSx authentication step
                     dispatch(setSelectedMultiDetectInstances(bulkInstances));
@@ -869,13 +1048,18 @@ export const handleReplicaAuthenticationAndDialog = async (
                         // Show dialog with failed state
                         setDialog(
                             <DialogComponent
-                                header={t('databases.register-flow.authenticate-instances')}
+                                header={
+                                    registerHostType === DBType.ORACLE
+                                        ? t('databases.register-flow.authenticate-databases')
+                                        : t('databases.register-flow.authenticate-instances')
+                                }
                                 content={
                                     <ReplicaInfoDialog
                                         instance={manageSingleInstanceData}
                                         replicaList={replicaSelectedRowsForManage}
                                         authStatusMap={updatedAuthStatus}
                                         showFailedState
+                                        databaseType={registerHostType}
                                     />
                                 }
                                 primaryButton={t('databases.general.continue')}
@@ -954,7 +1138,12 @@ export const handleReplicaAuthenticationAndDialog = async (
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: t('databases.register-flow.selection-required-to-proceed')
+                    message: t('databases.register-flow.selection-required-to-proceed', {
+                        type:
+                            registerHostType === DBType.ORACLE
+                                ? t('databases.register-flow.replica-info-dialog.database')
+                                : t('databases.register-flow.replica-info-dialog.instance')
+                    })
                 })
             );
         }
@@ -963,8 +1152,18 @@ export const handleReplicaAuthenticationAndDialog = async (
     // Show initial dialog
     setDialog(
         <DialogComponent
-            header={t('databases.register-flow.authenticate-instances')}
-            content={<ReplicaInfoDialog instance={manageSingleInstanceData} replicaList={replicaList} />}
+            header={
+                registerHostType === DBType.ORACLE
+                    ? t('databases.register-flow.authenticate-databases')
+                    : t('databases.register-flow.authenticate-instances')
+            }
+            content={
+                <ReplicaInfoDialog
+                    instance={manageSingleInstanceData}
+                    replicaList={replicaList}
+                    databaseType={registerHostType}
+                />
+            }
             primaryButton={t('databases.general.continue')}
             callback={() => {
                 const currentState = store.getState();

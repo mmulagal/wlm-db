@@ -118,7 +118,8 @@ import {
     isRowSelectableForBulkRegister,
     getDisabledSelectionTooltip,
     shouldEnableHeaderCheckbox,
-    MAX_BULK_REGISTER_SELECTION
+    MAX_BULK_REGISTER_SELECTION,
+    isOracleDataGuard
 } from './InstanceTableHelper';
 
 import IntroductionWADCard from './IntroductionWADCard/IntroductionWADCard';
@@ -168,6 +169,7 @@ const InstancesTable = () => {
 
     const menuOpenedRowDetail: any = useRef(null);
     const inventoryTableRef = useRef<HTMLDivElement>(null);
+    const hasShownDataGuardNotification = useRef(false);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
 
@@ -804,8 +806,16 @@ const InstancesTable = () => {
         () =>
             instanceTableRows?.map((row: any) => {
                 const processedRow = instanceExtraDataUpdate(row, t, instanceProtection, isDemoMode);
-                const isSelectable = isRowSelectableForBulkRegister(processedRow, selectedHostType, t);
-                let tooltipMsg = !isSelectable ? getDisabledSelectionTooltip(processedRow, selectedHostType, t) : '';
+                // Pass selectedRowsForBulkRegister to enable Oracle Standalone/Data Guard selection logic
+                const isSelectable = isRowSelectableForBulkRegister(
+                    processedRow,
+                    selectedHostType,
+                    t,
+                    selectedRowsForBulkRegister
+                );
+                let tooltipMsg = !isSelectable
+                    ? getDisabledSelectionTooltip(processedRow, selectedHostType, t, selectedRowsForBulkRegister)
+                    : '';
 
                 // Check if this row is disabled due to max selection limit
                 // Use selectedRowsForBulkRegister directly (like ExploreSavingsTableV2)
@@ -1020,7 +1030,8 @@ const InstancesTable = () => {
 
         // Compute header state based on visible/filtered rows
         const visibleRows = tableProps.organizedRows || [];
-        const newState = shouldEnableHeaderCheckbox(visibleRows, selectedHostType, t);
+        // Pass selectedRowsForBulkRegister for Oracle Standalone/Data Guard selection rules
+        const newState = shouldEnableHeaderCheckbox(visibleRows, selectedHostType, t, selectedRowsForBulkRegister);
 
         // Update enabled state
         setHeaderCheckboxEnabled(newState.isEnabled);
@@ -1076,6 +1087,8 @@ const InstancesTable = () => {
             if (selectedRowsForBulkRegister.length > 0) {
                 dispatch(setSelectedRowsForBulkRegister([]));
             }
+            // Reset the notification flag when switching away from Oracle
+            hasShownDataGuardNotification.current = false;
             return;
         }
 
@@ -1089,9 +1102,29 @@ const InstancesTable = () => {
         if (limitedSelectedIds.length > 0) {
             // Use instanceTableRows directly to avoid circular dependency with updatedTableData
             const selectedRows = instanceTableRows?.filter((row: any) => limitedSelectedIds.includes(String(row.id)));
+
+            // Check if this is the first Data Guard selection for Oracle
+            if (selectedHostType === DBType.ORACLE && selectedRows && selectedRows.length > 0) {
+                const hadDataGuardBefore = selectedRowsForBulkRegister.some(row => isOracleDataGuard(row));
+                const hasDataGuardNow = selectedRows.some((row: any) => isOracleDataGuard(row));
+
+                // Show notification only on first Data Guard selection (transition from no Data Guard to having Data Guard)
+                if (!hadDataGuardBefore && hasDataGuardNow && !hasShownDataGuardNotification.current) {
+                    hasShownDataGuardNotification.current = true;
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.INFO,
+                            message: t('databases.bulk-register.dataguard-selection-info')
+                        })
+                    );
+                }
+            }
+
             dispatch(setSelectedRowsForBulkRegister(selectedRows || []));
         } else {
             dispatch(setSelectedRowsForBulkRegister([]));
+            // Reset the notification flag when selection is cleared
+            hasShownDataGuardNotification.current = false;
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tableProps.selectionState, selectedHostType, instanceTableRows]);
@@ -1101,6 +1134,8 @@ const InstancesTable = () => {
         if (selectedRowsForBulkRegister.length > 0) {
             dispatch(setSelectedRowsForBulkRegister([]));
         }
+        // Reset Data Guard notification flag when host type changes
+        hasShownDataGuardNotification.current = false;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedHostType]);
 

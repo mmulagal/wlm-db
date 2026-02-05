@@ -43,6 +43,7 @@ import {
 } from './AuthenticateFSxStep/AuthenticateFsxUtils';
 import {
     ACTION_TYPE,
+    DATABASE_DEPLOYMENT_MODE,
     DBType,
     DETECT_HOST_VAR,
     DETECT_PAYLOAD_SIZE,
@@ -335,7 +336,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         try {
             const credList = createAuthOnlyPayload(sqlServerInstance, manageSingleInstanceData);
             const isReplicaInfoRequired =
-                manageSingleInstanceData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG;
+                manageSingleInstanceData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG ||
+                manageSingleInstanceData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.DATAGUARD;
             const payload = {
                 items: [
                     {
@@ -1038,6 +1040,25 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     manageSingleInstanceData?.aoagClusterNodeDetails?.length > 0
                 ) {
                     // Handle replica authentication dialog if AOAG with replicas
+                    handleReplicaAuthenticationDialog(
+                        manageSingleInstanceData,
+                        t,
+                        setDialog,
+                        closeDialog,
+                        goToNextStep,
+                        dispatch,
+                        registerHostType,
+                        styles
+                    );
+                    return;
+                }
+                // Data guard replica dialog is Oracle-specific
+                if (
+                    engineType === DBType.ORACLE &&
+                    manageSingleInstanceData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.DATAGUARD &&
+                    manageSingleInstanceData?.dataguardDetails?.associatedHosts?.length > 0
+                ) {
+                    // Handle replica authentication dialog if Data Guard with replicas
                     handleReplicaAuthenticationDialog(
                         manageSingleInstanceData,
                         t,

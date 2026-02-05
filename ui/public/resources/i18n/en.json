@@ -23,6 +23,7 @@
             "availability-groups": "Availability Groups",
             "failover-cluster-instances": "Failover Cluster Instances",
             "aoag": "AOAG",
+            "dataguard": "Data Guard",
             "always-on-availability-group": "Always on availability group",
             "standalone": "Standalone",
             "high-availability": "High availability",
@@ -138,6 +139,7 @@
         },
         "register-flow": {
             "authenticate-instances": "Authenticate instances",
+            "authenticate-databases": "Authenticate databases",
             "instance-readiness-view": "Instance readiness view",
             "prerequisite-check-view": "Prerequisite check view",
             "registering": "Registering",
@@ -156,6 +158,8 @@
             "authenticated": "Authenticated",
             "instances-authenticated": "The selected instances are already authenticated.",
             "databases-authenticated": "The selected databases are already authenticated.",
+            "all-instances-authenticated": "Authenticated all instances",
+            "all-databases-authenticated": "Authenticated all databases",
             "prepare-all-ready": "Complete (All instances)",
             "prepare-none-ready": "Incomplete (All instances)",
             "prepare-partial-ready": "{{readyCount}} out of {{totalCount}} complete",
@@ -230,7 +234,7 @@
             "readiness-status-complete": "Complete",
             "readiness-status-incomplete": "Incomplete",
             "register": "Register",
-            "selection-required-to-proceed": "Select any related instance to proceed.",
+            "selection-required-to-proceed": "Select any related {{type}} to proceed.",
             "manage-detect-fail-message": "Workload Factory was unable to authenticate. Please check your network connection, ensure the instance is running, and verify your credentials. Try again after addressing these issues.",
             "fsx-all-auth-fail-message": "Authentication failed for all {{count}} FSx for ONTAP resources.",
             "fsx-partial-auth-fail-message": "Authentication failed for {{failedCount}} FSx for ONTAP resources.",
@@ -359,12 +363,25 @@
                 "no-continue-next-step": "No, I want to continue to the next step.",
                 "related-instances": "Related instances",
                 "related-instance": "Related instance",
+                "related-databases": "Related databases",
+                "related-database": "Related database",
                 "availability-group": "Availability group",
                 "availability-groups-count": "{{count}} Availability groups",
-                "all-authentication-failed-message": "Authentication failed for {{failedCount}} instances.",
-                "authentication-failed-message": "{{failedCount}}/{{totalCount}} instances you selected, were unable to authenticate.",
-                "authenticate-different-credentials": "I would like to authenticate the related instances using different credentials.",
-                "proceed-without-authenticating": "I would like to proceed to the next step without authenticating these instances."
+                "database": "database",
+                "databases": "databases",
+                "instance": "instance",
+                "instances": "instances",
+                "database-name": "Database name",
+                "sid": "SID",
+                "deployment-model": "Deployment model",
+                "authenticated-successfully-generic": "Authenticated {{type}} {{name}}",
+                "identified-message-generic": "We have identified {{count}} {{type}} from the same {{deploymentModel}} deployment model.",
+                "proceed-authenticate-message-generic": "Would you like to proceed and authenticate these related {{type}} as well?",
+                "yes-authenticate-related-generic": "Yes, I would like to authenticate the related {{type}}.",
+                "all-authentication-failed-message-generic": "Authentication failed for {{failedCount}} {{type}}.",
+                "authentication-failed-message-generic": "{{failedCount}}/{{totalCount}} {{type}} you selected, were unable to authenticate.",
+                "authenticate-different-credentials-generic": "I would like to authenticate the related {{type}} using different credentials.",
+                "proceed-without-authenticating-generic": "I would like to proceed to the next step without authenticating these {{type}}."
             }
         },
         "deregister-flow": {
@@ -374,6 +391,7 @@
             "oracle": "Oracle instance"
         },
         "bulk-register": {
+            "dataguard-selection-info": "A database from the Data Guard deployment model is selected, only databases within the same group (sharing the same database name) are available for selection, while other databases are disabled. You can select all by using the header checkbox, or you can filter and search by database name.",
             "aoag-not-supported": "Bulk registration is not supported for Always on Availability Group instances.",
             "aoag-tooltip-title": "We do not support bulk actions for AOAG instances.",
             "aoag-tooltip-bullet1": "We support only single instance registration for AOAG instances. You can register each AOAG instance individually through the main table CTA.",
@@ -392,7 +410,10 @@
             "action-disabled-during-bulk-selection": "Row actions are disabled while instances are selected for bulk registration.",
             "dataguard-coming-soon": "Registration for Data Guard databases is coming soon.",
             "aoag-coming-soon": "Registration for AOAG instances is coming soon.",
-            "not-supported-for-engine": "Bulk registration is not supported for this database type."
+            "not-supported-for-engine": "Bulk registration is not supported for this database type.",
+            "dataguard-disabled-standalone-selected": "Data Guard databases cannot be selected when Standalone databases are already selected.",
+            "standalone-disabled-dataguard-selected": "Standalone databases cannot be selected when Data Guard databases are already selected.",
+            "dataguard-not-connected": "This Data Guard database is not connected to the selected Data Guard configuration."
         },
         "oracle-inner-page": {
             "overview": "Overview",

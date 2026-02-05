@@ -4405,6 +4405,7 @@ export const enrichInstancesWithDataGuardFlags = (allInstanceTableRows: any[], d
         let hasReplicas = false;
         let replicasCount = 0;
         let replicasList: any[] = [];
+        let connectedInstances: any[] = [];
 
         // Check all DataGuard configurations
         dataguardRows.forEach((dgConfig: any) => {
@@ -4419,6 +4420,23 @@ export const enrichInstancesWithDataGuardFlags = (allInstanceTableRows: any[], d
                 );
                 if (isStandby) {
                     isReplica = true;
+                    // Build connectedInstances list: primary + all other standbys (excluding self)
+                    if (dgConfig.primary) {
+                        connectedInstances.push(dgConfig.primary);
+                    }
+                    dgConfig.standby.forEach((standby: any) => {
+                        // Exclude self from connected instances
+                        if (
+                            !(
+                                standby.databaseInstanceName === instance.databaseInstanceName &&
+                                standby.credentialId === instance.credentialId &&
+                                standby.regionId === instance.regionId &&
+                                standby.ec2InstanceId === instance.ec2InstanceId
+                            )
+                        ) {
+                            connectedInstances.push(standby);
+                        }
+                    });
                 }
             }
 
@@ -4435,6 +4453,8 @@ export const enrichInstancesWithDataGuardFlags = (allInstanceTableRows: any[], d
                 hasReplicas = true;
                 replicasCount = dgConfig.standby.length;
                 replicasList = dgConfig.standby;
+                // For primary, connectedInstances is the same as replicasList (all standbys)
+                connectedInstances = [...dgConfig.standby];
             }
         });
 
@@ -4443,7 +4463,8 @@ export const enrichInstancesWithDataGuardFlags = (allInstanceTableRows: any[], d
             isReplica,
             hasReplicas,
             replicasCount,
-            replicasList
+            replicasList,
+            connectedInstances
         };
     });
 };
