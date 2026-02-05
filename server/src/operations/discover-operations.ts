@@ -1989,6 +1989,7 @@ async function discoverOracleResources(
                         // Parsed Response : an array of objects for each database Instance
                         for (const dbInstance of dbInstances) {
                             const {
+                                error: dbInstanceError,
                                 instance_details: {
                                     instance_id: instanceId,
                                     instance_name: instanceName,
@@ -2005,6 +2006,13 @@ async function discoverOracleResources(
                                 dataguard_details: dataguardDetails
                             } = dbInstance;
 
+                            if (dbInstanceError) {
+                                logger.error('Error in discovering database instance', {
+                                    ec2InstanceId: ec2Instance.ec2InstanceId,
+                                    instanceId,
+                                    dbInstanceError
+                                });
+                            }
                             const { isAwsCliInstalled, isJqInstalled, isPythonInstalled } = modulesAvailability || {};
 
                             const isOracleAuth =
@@ -2127,7 +2135,8 @@ async function discoverOracleResources(
                                     }
                                 },
                                 isDataGuardDeployed,
-                                dataguardDetails: isDataGuardDeployed ? dataguardDetails : undefined
+                                dataguardDetails: isDataGuardDeployed ? dataguardDetails : undefined,
+                                error: dbInstanceError
                             });
                         }
 

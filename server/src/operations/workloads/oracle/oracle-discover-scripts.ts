@@ -1396,6 +1396,7 @@ const discoverOracleHosts = `
     RESULTS="{\\"hostname\\":\\"$hostname\\", \\"dbInstances\\":["
 
     while IFS=: read -r sid oracle_home; do
+        InstanceDiscoverErrorMsg=""
         # Check if the instance is running by checking for its PMON process.
         # Skip if the instance process is not running.
         if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
@@ -1403,6 +1404,9 @@ const discoverOracleHosts = `
         fi
 
         isDefaultAuth=$(is_default_auth "$sid")
+        if [ $? -ne 0 ]; then
+            InstanceDiscoverErrorMsg="failed to retrieve authentication details for instance '$sid'"
+        fi
         modulesAvailability=$(check_oracle_module_availability)
 
         {
@@ -1418,7 +1422,7 @@ const discoverOracleHosts = `
                     PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
                     pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
                 else
-                    PDB_DATABASE_DETAILS="null"
+                    PDB_DATABASE_DETAILS="[]"
                 fi
 
                 ${getInstanceStorageDetails}
@@ -1426,7 +1430,7 @@ const discoverOracleHosts = `
                 missingPermissions="[]"
                 remediationMissingPermissions="[]"
             else
-                PDB_DATABASE_DETAILS="null"
+                PDB_DATABASE_DETAILS="[]"
                 is_cdb="NO"
                 ${getStorageWithoutCreds}
                 ${checkOraclePermissionsInDiscovery}
@@ -1440,8 +1444,7 @@ const discoverOracleHosts = `
                 fi
             fi
         } || {
-            echo "Failed to retrieve details for instance $ORACLE_SID. Skipping."
-            continue
+            InstanceDiscoverErrorMsg="Failed to retrieve details for instance $sid. Skipping."
         }
         isDataguardDeployed=false
         dataguardDetails="{}"    
@@ -1456,7 +1459,12 @@ const discoverOracleHosts = `
             fi
         fi
 
-        JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions, \\"remediation_missing_permissions\\": $remediationMissingPermissions, \\"isDataguardDeployed\\": $isDataguardDeployed, \\"dataguard_details\\": $dataguardDetails }"
+        if [ -n "$InstanceDiscoverErrorMsg" ]; then
+            JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"error\\":\\"$InstanceDiscoverErrorMsg\\" }"
+        else
+            JSON_OBJ="{\\"sid\\":\\"$sid\\", \\"instance_details\\": $INSTANCE_DETAILS, \\"database_details\\": $DATABASE_DETAILS, \\"pdb_database_details\\": $PDB_DATABASE_DETAILS, \\"storage_details\\": $storageDetails, \\"is_default_auth\\": $isDefaultAuth, \\"modules_availability\\": $modulesAvailability, \\"missing_permissions\\": $missingPermissions, \\"remediation_missing_permissions\\": $remediationMissingPermissions, \\"isDataguardDeployed\\": $isDataguardDeployed, \\"dataguard_details\\": $dataguardDetails }"
+        fi
+
 
         # If not the first object, prepend a comma in the JSON array.
         if [ $FIRST -eq 1 ]; then
@@ -1982,6 +1990,7 @@ const getMappedOntapDataVolumeForInstance = (
     echo "$result" | tr -d '\n' | tr -d ' '
 
 `;
+
 export {
     discoverOracleHosts,
     getStorageDetailsForRegisteredInstances,

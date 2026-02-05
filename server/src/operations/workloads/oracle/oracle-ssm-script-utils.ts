@@ -614,12 +614,14 @@ EOF
     }
 `;
 const defaultAuthDetectModule = `
+    ${parseSqlplusOutput}
     is_default_auth() {
         local ORACLE_SID="$1"
         local result
-        result=$(sudo -i -u oracle bash <<EOF
-                export ORACLE_SID="$ORACLE_SID"
-                sqlplus -S / as sysdba 2>/dev/null <<EOSQL
+        local authErrorMsg="false"
+        result=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
+                export ORACLE_SID="$1"
+                sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET HEADING OFF
                 SET FEEDBACK OFF
@@ -630,11 +632,16 @@ const defaultAuthDetectModule = `
 EOSQL
 EOF
 )
-        if echo "$result" | grep -q "^OK"; then
+        parsed_result=$(parse_sqlplus_output "$result")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            authErrorMsg="true";
+        fi
+        if echo "$parsed_result" | grep -q "^OK"; then
             local open_mode
-            open_mode=$(sudo -i -u oracle bash <<'EOF'
-                    export ORACLE_SID="$ORACLE_SID"
-                    sqlplus -S / as sysdba 2>/dev/null <<EOSQL
+            open_mode=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
+                    export ORACLE_SID="$1"
+                    sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
                     WHENEVER SQLERROR EXIT SQL.SQLCODE
                     SET HEADING OFF
                     SET FEEDBACK OFF
@@ -645,7 +652,18 @@ EOF
 EOSQL
 EOF
 )
-            if echo "$open_mode" | grep -iq "MOUNTED"; then
+            parsed_open_mode=$(parse_sqlplus_output "$open_mode")
+            sqlplus_exit_code=$?
+            if [ $sqlplus_exit_code -ne 0 ]; then
+                authErrorMsg="true";
+            fi
+
+            if [ "$authErrorMsg" == "true" ]; then
+                echo "false"
+                return
+            fi
+
+            if echo "$parsed_open_mode" | grep -iq "MOUNTED"; then
                 echo "false"
                 return
             fi

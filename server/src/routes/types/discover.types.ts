@@ -435,7 +435,8 @@ const OracleDatabaseInstance = Type.Object({
             description: 'Is Data Guard deployed for Oracle instance?'
         })
     ),
-    dataguardDetails: Type.Optional(OracleDataguardDiscoveryDetails)
+    dataguardDetails: Type.Optional(OracleDataguardDiscoveryDetails),
+    error: Type.Optional(Type.String({ description: 'Error details' }))
 });
 
 const DiscoverOracleResponseInfo = Type.Intersect([
