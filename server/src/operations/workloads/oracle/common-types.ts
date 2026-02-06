@@ -82,7 +82,13 @@ const DataguardDetailsResponse = Type.Intersect([
     Type.Object({
         role: Type.Optional(Type.String({ description: 'DataGuard role (PRIMARY, PHYSICAL STANDBY, etc.)' })),
         status: Type.Optional(DataguardStatusResponse),
-        error: Type.Optional(Type.String({ description: 'Error message if DataGuard details retrieval failed' }))
+        error: Type.Optional(Type.String({ description: 'Error message if DataGuard details retrieval failed' })),
+        isActiveDataguard: Type.Optional(
+            Type.Boolean({
+                description:
+                    'Indicates if Active Data Guard is enabled. True when a Physical Standby database is open in READ ONLY WITH APPLY mode.'
+            })
+        )
     }),
     OracleDataguardDiscoveryDetails
 ]);

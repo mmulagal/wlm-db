@@ -179,7 +179,13 @@ EOF
         if [ $? -ne 0 ]; then
             syncStatus="{\\"instanceSyncStatus\\":\\"UNKNOWN\\"}"
         fi
-        echo "{\\"dbUniqueName\\":\\"$dbUniqueName\\",\\"dbName\\":\\"$dbName\\",\\"associatedHosts\\":$associatedHosts,\\"isPrimaryNode\\":$isPrimaryNode,\\"role\\":\\"$role\\",\\"status\\":$syncStatus}" | tr -d '\n'
+
+        # Check if Active Data Guard is enabled (only possible for Physical Standby with READ ONLY WITH APPLY mode)
+        local isActiveDataguard="false"
+        if [ "$isPrimaryNode" == "false" ]; then
+            isActiveDataguard=$(is_active_dataguard "$ORACLE_SID")
+        fi
+        echo "{\\"dbUniqueName\\":\\"$dbUniqueName\\",\\"dbName\\":\\"$dbName\\",\\"associatedHosts\\":$associatedHosts,\\"isPrimaryNode\\":$isPrimaryNode,\\"role\\":\\"$role\\",\\"status\\":$syncStatus,\\"isActiveDataguard\\":$isActiveDataguard}" | tr -d '\n'
     }
 
 `;

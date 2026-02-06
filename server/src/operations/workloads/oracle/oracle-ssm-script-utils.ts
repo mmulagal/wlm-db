@@ -396,6 +396,37 @@ EOF
         fi
     }
 
+    # Check if Active Data Guard is enabled
+    # Active Data Guard is only possible for Physical Standby databases
+    # when the database is open in READ ONLY WITH APPLY mode
+    is_active_dataguard() {
+        local ORACLE_SID="$1"
+        local open_mode=""
+        open_mode=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
+            export ORACLE_SID="$1"
+            sqlplus_cmd="$2"
+            sqlplus_output=$($sqlplus_cmd <<'EOSQL'
+                ${sqlplusOutputFormatSettings}
+                SELECT open_mode FROM v$database;
+EOSQL
+)
+        echo "$sqlplus_output"
+EOF
+)
+        open_mode=$(parse_sqlplus_output "$open_mode")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            echo "false"
+            return
+        fi
+        # Active Data Guard is enabled when open_mode is READ ONLY WITH APPLY
+        if [[ "$open_mode" == *"READ ONLY WITH APPLY"* ]]; then
+            echo "true"
+        else
+            echo "false"
+        fi
+    }
+
     get_dataguard_db_name_and_db_unique_name() {
         local ORACLE_SID="$1"
         local db_name_and_db_unique_name=""
