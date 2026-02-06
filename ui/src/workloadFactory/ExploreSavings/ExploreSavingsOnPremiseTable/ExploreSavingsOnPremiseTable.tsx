@@ -1,14 +1,4 @@
-import {
-    Table,
-    useTable,
-    Typography,
-    TableTopBar,
-    DsTypography,
-    Popover,
-    DsSpinner,
-    DsButton,
-    useDialog
-} from '@netapp/design-system';
+import { Typography, DsTypography, Popover, DsSpinner, DsButton, useDialog } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -44,6 +34,9 @@ import { setOnPremiseData } from '../../../store/workloadFactory/exploreSavingsS
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import AssessmentDialog from '../OracleTCO/AssessmentDialog/AssessmentDialog';
 import TableTooltip from '../OracleTCO/TableTooltip/TableTooltip';
+import { Table } from '../../../common/Lib/Table/Table';
+import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
+import { useTable } from '../../../common/Lib/Table/useTable';
 
 const ExploreSavingsOnPremiseTable = () => {
     const { t } = useTranslation();
@@ -629,7 +622,7 @@ const ExploreSavingsOnPremiseTable = () => {
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
-                    message: t('databases.explore-savings.downloaded-assessment-script')
+                message: t('databases.explore-savings.downloaded-assessment-script')
             })
         );
     };

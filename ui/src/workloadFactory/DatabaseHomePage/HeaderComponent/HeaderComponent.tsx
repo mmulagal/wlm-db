@@ -967,10 +967,14 @@ const HeaderComponent = ({ tab }: Tab) => {
         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM;
 
     const isOnPremMSSQL =
-        isExploreSavingsTab && selectedTCOHostType === DBType.MSSQL && selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES;
+        isExploreSavingsTab &&
+        selectedTCOHostType === DBType.MSSQL &&
+        selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES;
 
     const isOnPremOracle =
-        isExploreSavingsTab && selectedTCOHostType === DBType.ORACLE && selectedOracleExploreSavingsTab === WLF_TABS.ORACLE_SERVER_ON_PREMISES;
+        isExploreSavingsTab &&
+        selectedTCOHostType === DBType.ORACLE &&
+        selectedOracleExploreSavingsTab === WLF_TABS.ORACLE_SERVER_ON_PREMISES;
 
     const disableCredDropdown = () => {
         if (!credentialData || credentialData.length === 0 || isOnPremMSSQL || isOnPremOracle) {

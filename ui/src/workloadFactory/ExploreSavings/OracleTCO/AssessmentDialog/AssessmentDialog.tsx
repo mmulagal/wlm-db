@@ -99,8 +99,6 @@ const AssessmentDialog = () => {
                                                             )}
                                                         </DsTypography>
                                                     </div>
-
-                                                   
                                                 </div>
                                             </div>
                                         )}

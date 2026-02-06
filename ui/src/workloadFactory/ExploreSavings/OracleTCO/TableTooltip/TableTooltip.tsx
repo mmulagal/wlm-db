@@ -22,7 +22,6 @@ const TableTooltip = () => {
                     </DsTypography>
                 </div>
             )}
-            
         </div>
     );
 };

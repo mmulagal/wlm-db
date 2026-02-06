@@ -48,6 +48,14 @@ router.post(`${BASE_URL}/v1/mssql/regions/:region/manual-storage-savings/ebs`, a
     }, 50);
 });
 
+router.get(`${BASE_URL}/v1/oracle/onprem-tco/collector`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, {
+            downloadLink: ''
+        });
+    }, 50);
+});
+
 router.post(`${BASE_URL}/v1/mssql/onprem/upload`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, UploadScript);

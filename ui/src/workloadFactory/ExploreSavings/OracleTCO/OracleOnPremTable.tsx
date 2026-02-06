@@ -13,7 +13,11 @@ import styles from './OracleTCOTables.module.scss';
 import AssessmentDialog from './AssessmentDialog/AssessmentDialog';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { useAppSelector } from '../../../store/storeHooks';
-import { useGetUploadScriptMutation, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
+import {
+    useGetOracleOnPremTCODownloadScriptMutation,
+    useGetUploadScriptMutation,
+    useLazyGetSubTaskListQuery
+} from '../../../utils/apiService';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import TableTooltip from './TableTooltip/TableTooltip';
 
@@ -26,6 +30,7 @@ const OracleOnPremTable = () => {
     const { isDemoMode } = useAppSelector(state => state.auth);
     const [getUploadScript] = useGetUploadScriptMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const [getOracleOnPremTCODownloadScript] = useGetOracleOnPremTCODownloadScriptMutation();
     const mockData: any = [
         // {
         //     id: '1',
@@ -65,13 +70,39 @@ const OracleOnPremTable = () => {
         );
     };
 
-    const handleDownload = () => {
-        dispatch(
-            addNotification({
-                notificationType: NOTIFICATION_TYPES.INFO,
-                message: t('databases.explore-savings.downloaded-assessment-script-and-readme')
-            })
-        );
+    const handleDownload = async () => {
+        try {
+            const result: any = await getOracleOnPremTCODownloadScript({});
+            if (result?.data?.downloadLink) {
+                const link = document.createElement('a');
+                link.href = result.data.downloadLink;
+                link.setAttribute('download', '');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.INFO,
+                        message: t('databases.explore-savings.downloaded-assessment-script-and-readme')
+                    })
+                );
+            } else {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: result?.error?.data?.message || t('databases.explore-savings.download-failed')
+                    })
+                );
+            }
+        } catch (error) {
+            console.error('Error downloading assessment script:', error);
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: t('databases.explore-savings.download-failed')
+                })
+            );
+        }
     };
     const OracleOnPremColDefs: ColumnProps[] = [
         {
@@ -199,9 +230,7 @@ const OracleOnPremTable = () => {
                                     dispatch(
                                         addNotification({
                                             notificationType: NOTIFICATION_TYPES.INFO,
-                                            message: t(
-                                                'databases.explore-savings.uploaded-assessment-script'
-                                            )
+                                            message: t('databases.explore-savings.uploaded-assessment-script')
                                         })
                                     );
                                     clearInterval(jobInterval);

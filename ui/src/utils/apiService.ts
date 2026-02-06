@@ -1192,6 +1192,11 @@ export const exploreSavingsApi = createApi({
     baseQuery: dynamicBaseQuery,
     refetchOnMountOrArgChange: true,
     endpoints: builder => ({
+        getOracleOnPremTCODownloadScript: builder.mutation({
+            query: () => ({
+                url: 'v1/oracle/onprem-tco/collector'
+            })
+        }),
         getUploadScript: builder.mutation({
             query: ({ payload }) => ({
                 url: 'v1/mssql/onprem-tco/upload',
@@ -1649,6 +1654,7 @@ export const {
 
 export const {
     useGetSendEmailMutation,
+    useGetOracleOnPremTCODownloadScriptMutation,
     useGetUploadScriptMutation,
     useDeleteOnPremTcoMutation,
     useGetOnPremSavingsMutation,
