@@ -9,7 +9,10 @@ const TableTooltip = () => {
     const { selectedTCOHostType } = useAppSelector(state => state.exploreSavings);
     const { t } = useTranslation();
     return (
-        <div className={styles.infoContainer}>
+        <div
+            className={styles.infoContainer}
+            style={{ width: selectedTCOHostType === DBType.MSSQL ? '690px' : 'auto' }}
+        >
             <div className={styles.item}>
                 {selectedTCOHostType === DBType.MSSQL && <Bullet />}
                 <DsTypography variant="Regular_14">{t('databases.explore-savings.table-tooltip-content')}</DsTypography>
@@ -17,9 +20,14 @@ const TableTooltip = () => {
             {selectedTCOHostType === DBType.MSSQL && (
                 <div className={styles.item}>
                     <Bullet />
-                    <DsTypography variant="Regular_14">
-                        {t('databases.explore-savings.table-tooltip-content-two')}
-                    </DsTypography>
+                    <div className={styles.subItem}>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.explore-savings.table-tooltip-content-two')}
+                        </DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.explore-savings.table-tooltip-content-three')}
+                        </DsTypography>
+                    </div>
                 </div>
             )}
         </div>

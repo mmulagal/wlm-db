@@ -124,11 +124,7 @@ export const TableTopBar = ({
                 <div className={styles.tableMainTitleContainer}>
                     <span>{itemCount === 1 ? singularTitle : pluralTitle}</span>
                     {!hideCount && <span>({showFilteredCount ? `${filteredItemCount}/${itemCount}` : itemCount})</span>}
-                    {info && (
-                        <TooltipInfo trigger="click" isAppendedToBody>
-                            {info}
-                        </TooltipInfo>
-                    )}
+                    {info && <TooltipInfo isAppendedToBody>{info}</TooltipInfo>}
                     {showFilterText && (
                         <span>{`| Filtered by${textFilter ? ' search' : ''}${
                             textFilter && filterState?.count > 0 ? ' & ' : ''
