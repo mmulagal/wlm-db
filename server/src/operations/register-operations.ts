@@ -1284,10 +1284,11 @@ async function registerDatabaseServerInstances(
     });
 
     const dbOrInstances = databaseType === DatabaseTypes.ORACLE ? 'databases' : 'instances';
+    const serverPrefix = databaseType === DatabaseTypes.ORACLE ? '' : 'server ';
     if (!resourcesToBeManaged?.length) {
-        throw new Error(`No ${databaseType} server ${dbOrInstances} to be registered`);
+        throw new Error(`No ${databaseType} ${serverPrefix}${dbOrInstances} to be registered`);
     }
-    const jobName = `Register ${databaseType} server ${dbOrInstances} for account ${accountId}`;
+    const jobName = `Register ${databaseType} ${serverPrefix}${dbOrInstances} for account ${accountId}`;
     const { id: jobId } = await registerJob(accountId, '', '', {
         type: JOBTYPE.REGISTER_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,

@@ -209,7 +209,7 @@ describe('Manage operations', () => {
 
     it('should throw error if no oracle resources to be registered', async () => {
         await expect(registerDatabaseServerInstances(ACCOUNT_ID, [], DatabaseTypes.ORACLE)).rejects.toThrow(
-            'No ORACLE server databases to be registered'
+            'No ORACLE databases to be registered'
         );
     });
 
