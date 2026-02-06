@@ -63,7 +63,7 @@ import {
     setToTime
 } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { setSelectedCredentials, setSelectedRegionData } from '../../../store/mssql/mssqlFormSlice';
-import { LOCAL, SAVINGS_CALC_MODE, STAGING, WLF_TABS } from '../../../utils/consts';
+import { DBType, LOCAL, SAVINGS_CALC_MODE, STAGING, WLF_TABS } from '../../../utils/consts';
 import ComponentLoader from '../../../common/ComponentLoader/ComponentLoader';
 import Sandbox from '../../Sandbox/Sandbox';
 import DatabaseHomeApis from '../DatabaseHomeApis';
@@ -187,7 +187,9 @@ const HeaderComponent = ({ tab }: Tab) => {
     const { refreshTime, refreshTimeSandbox, secondaryCTAFlow } = useAppSelector(state => state.headers);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const { isDemoMode, accountId, userMetadata } = useAppSelector(state => state.auth);
-    const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
+    const { selectedExploreSavingsTab, selectedTCOHostType, selectedOracleExploreSavingsTab } = useAppSelector(
+        state => state.exploreSavings
+    );
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
@@ -959,29 +961,26 @@ const HeaderComponent = ({ tab }: Tab) => {
         return GENERAL.NO_REGIONS_SELECTED;
     };
 
+    const isExploreSavingsTab =
+        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
+        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
+        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM;
+
+    const isOnPremMSSQL =
+        isExploreSavingsTab && selectedTCOHostType === DBType.MSSQL && selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES;
+
+    const isOnPremOracle =
+        isExploreSavingsTab && selectedTCOHostType === DBType.ORACLE && selectedOracleExploreSavingsTab === WLF_TABS.ORACLE_SERVER_ON_PREMISES;
+
     const disableCredDropdown = () => {
-        if (
-            !credentialData ||
-            credentialData.length === 0 ||
-            ((selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS) &&
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-        ) {
+        if (!credentialData || credentialData.length === 0 || isOnPremMSSQL || isOnPremOracle) {
             return true;
         }
         return false;
     };
 
     const disableRegionDropDown = () => {
-        if (
-            !credentialData ||
-            credentialData.length === 0 ||
-            ((selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS) &&
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) ||
-            (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM &&
-                selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES)
-        ) {
+        if (!credentialData || credentialData.length === 0 || isOnPremMSSQL || isOnPremOracle) {
             return true;
         }
         return false;
