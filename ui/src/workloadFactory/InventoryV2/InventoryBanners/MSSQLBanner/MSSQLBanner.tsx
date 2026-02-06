@@ -9,6 +9,7 @@ import { ReactComponent as InstanceLogAnalyzer } from '../../../../assets/instan
 import { ReactComponent as CarousalLeft } from '../../../../assets/Carousel Arrow left.svg';
 import { ReactComponent as CarousalRight } from '../../../../assets/Carousel Arrow right.svg';
 import styles from './MSSQLBanner.module.scss';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 
 import BannerCard from '../BannerCard/BannerCard';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -36,11 +37,7 @@ const MSSQLBanner = ({ loading }: { loading: boolean }) => {
             {activeSlide === 0 && (
                 <div className={styles.rightSection}>
                     <div className={styles.imageTextSection}>
-                        <div
-                            onClick={() => setActiveSlide(1)}
-                            className={styles.carousalClass}
-                            style={{ cursor: 'pointer' }}
-                        >
+                        <div onClick={() => setActiveSlide(1)} className={CommonStyles.carousalClass}>
                             <CarousalLeft />
                         </div>
                         <div className={styles.topSection}>
@@ -87,7 +84,7 @@ const MSSQLBanner = ({ loading }: { loading: boolean }) => {
                             />
                         </div>
 
-                        <div onClick={() => setActiveSlide(1)} style={{ cursor: 'pointer' }}>
+                        <div onClick={() => setActiveSlide(1)} className={CommonStyles.carousalClass}>
                             <CarousalRight />
                         </div>
                     </div>
@@ -97,11 +94,7 @@ const MSSQLBanner = ({ loading }: { loading: boolean }) => {
             {activeSlide === 1 && (
                 <div className={styles.rightSection}>
                     <div className={styles.imageTextSection}>
-                        <div
-                            onClick={() => setActiveSlide(0)}
-                            className={styles.carousalClass}
-                            style={{ cursor: 'pointer' }}
-                        >
+                        <div onClick={() => setActiveSlide(0)} className={CommonStyles.carousalClass}>
                             <CarousalLeft />
                         </div>
                         <div className={styles.topSection}>
@@ -148,7 +141,7 @@ const MSSQLBanner = ({ loading }: { loading: boolean }) => {
                             />
                         </div>
 
-                        <div onClick={() => setActiveSlide(0)} style={{ cursor: 'pointer' }}>
+                        <div onClick={() => setActiveSlide(0)} className={CommonStyles.carousalClass}>
                             <CarousalRight />
                         </div>
                     </div>

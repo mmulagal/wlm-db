@@ -9,7 +9,7 @@ import { ReactComponent as Onprem } from '../../../assets/Onprem.svg';
 
 import { ReactComponent as CarousalLeft } from '../../../assets/Carousel Arrow left.svg';
 import { ReactComponent as CarousalRight } from '../../../assets/Carousel Arrow right.svg';
-
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './OracleTCOBanner.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DBType } from '../../../utils/consts';
@@ -33,7 +33,7 @@ const OracleTCOBanner = () => {
             {activeSlide === 0 && (
                 <div className={styles.rightSection}>
                     <div className={styles.imageTextSection}>
-                        <div onClick={() => setActiveSlide(1)} style={{ cursor: 'pointer' }}>
+                        <div onClick={() => setActiveSlide(1)} className={CommonStyles.carousalClass}>
                             <CarousalLeft />
                         </div>
                         <div className={styles.topImageSection}>
@@ -58,7 +58,7 @@ const OracleTCOBanner = () => {
                             </DsTypography>
                         </div>
 
-                        <div onClick={() => setActiveSlide(1)} style={{ cursor: 'pointer' }}>
+                        <div onClick={() => setActiveSlide(1)} className={CommonStyles.carousalClass}>
                             <CarousalRight />
                         </div>
                     </div>
@@ -68,7 +68,7 @@ const OracleTCOBanner = () => {
             {activeSlide === 1 && (
                 <div className={styles.rightSection}>
                     <div className={styles.mainRightSection}>
-                        <div onClick={() => setActiveSlide(0)} style={{ cursor: 'pointer' }}>
+                        <div onClick={() => setActiveSlide(0)} className={CommonStyles.carousalClass}>
                             <CarousalLeft />
                         </div>
                         <div className={styles.textSection}>
@@ -140,7 +140,7 @@ const OracleTCOBanner = () => {
                             </div>
                         </div>
 
-                        <div onClick={() => setActiveSlide(0)} style={{ cursor: 'pointer' }}>
+                        <div onClick={() => setActiveSlide(0)} className={CommonStyles.carousalClass}>
                             <CarousalRight />
                         </div>
                     </div>

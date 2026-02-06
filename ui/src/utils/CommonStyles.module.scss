@@ -8,6 +8,15 @@
     width: 196px;
 }
 
+.carousalClass {
+    cursor: pointer;
+    svg {
+        path {
+            fill: var(--text-primary) !important;
+        }
+    }
+}
+
 .accordion-group {
     // width: 1063px;
     margin-top: 32px;
