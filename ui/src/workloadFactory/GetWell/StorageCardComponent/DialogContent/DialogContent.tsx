@@ -38,6 +38,7 @@ import StorageLayoutOracleDialog from './StorageLayoutOracleDialog';
 import StorageConfigOracleDialog from './StorageConfigOracleDialog';
 import StorageConfigOSOracleDialog from './StorageConfigOSOracleDialog';
 import StorageSizingOracleDialog from './StorageSizingOracleDialog';
+import ComputeOracleDialog from './ComputeOracleDialog';
 
 interface SavingsOpportunity {
     savingsOpportunityPercentage?: number;
@@ -211,6 +212,10 @@ const DialogContent = ({
                     );
                 case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
                     return <StorageSizingOracleDialog type={type} />;
+
+                //oracle compute cards
+                case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
+                    return <ComputeOracleDialog missingPatchList={missingPatchList} />;
             }
         }
         switch (type) {

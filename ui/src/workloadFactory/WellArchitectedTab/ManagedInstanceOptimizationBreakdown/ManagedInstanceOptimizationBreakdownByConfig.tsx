@@ -56,8 +56,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     // Maintain separate category selections/applied filters for MSSQL and Oracle
     const [selectedCategoriesMssql, setSelectedCategoriesMssql] = useState<string[]>(categoryOptions);
     const [appliedCategoriesMssql, setAppliedCategoriesMssql] = useState<string[]>(categoryOptions);
-    // For Oracle: Storage should be checked and disabled; others unchecked and disabled
-    const ORACLE_DEFAULT_SELECTED = ['Storage'];
+    // For Oracle: Only Storage and Compute should be selectable
+    const ORACLE_DEFAULT_SELECTED = ['Storage', 'Compute'];
     const [selectedCategoriesOracle, setSelectedCategoriesOracle] = useState<string[]>(ORACLE_DEFAULT_SELECTED);
     const [appliedCategoriesOracle, setAppliedCategoriesOracle] = useState<string[]>(ORACLE_DEFAULT_SELECTED);
     // Separate severity selections per engine so severity filtering affects only that engine
@@ -134,9 +134,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     }, []);
 
     const toggleCategory = (item: string) => {
-        // For Oracle the category checkboxes are disabled, prevent toggling
-        if (configEngineType === DBType.ORACLE) return;
-        setSelectedCategoriesMssql(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
+        if (configEngineType === DBType.ORACLE) {
+            // For Oracle: Don't allow toggling disabled categories (Application and Resiliency)
+            if (item === 'Application' || item === 'Resiliency') return;
+            setSelectedCategoriesOracle(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
+        } else {
+            setSelectedCategoriesMssql(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
+        }
     };
 
     const toggleSeverity = (item: string) => {
@@ -576,11 +580,10 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     <div className={styles.column}>
                                         {currentCategoryOptions.map(option => {
                                             const isOracle = configEngineType === DBType.ORACLE;
-                                            // For Oracle: Storage should be selected and all options disabled
-                                            const isDisabled = isOracle;
-                                            const isSelected = isOracle
-                                                ? ORACLE_DEFAULT_SELECTED.includes(option)
-                                                : currentSelectedCategories.includes(option);
+                                            // For Oracle: Disable Application and Resiliency
+                                            const isDisabled =
+                                                isOracle && (option === 'Application' || option === 'Resiliency');
+                                            const isSelected = currentSelectedCategories.includes(option);
                                             return (
                                                 <div className={styles.itemWrapper} key={option}>
                                                     <DsCheckbox
@@ -1400,6 +1403,16 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         'wlm-db-optimize-oracle-operating-system',
                         'Operating system',
                         ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
+                        false
+                    )}
+
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+                        'oracleOperatingSystemPatch',
+                        'wlm-db-optimize-oracle-operating-system-patch',
+                        'Operating system patch',
+                        ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
                         false
                     )}
             </div>

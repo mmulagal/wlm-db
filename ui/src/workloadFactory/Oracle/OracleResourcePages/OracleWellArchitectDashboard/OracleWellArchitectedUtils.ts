@@ -491,6 +491,44 @@ export const oracleCardData: any = {
 
         tags: ['Reliability', 'Operational excellence', 'Performance efficiency', 'Security']
     },
+    host_os_patch: {
+        id: 'host-os-patch',
+        category: 'compute',
+        mapName: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+        block_one: {
+            value: 'Operating system patch',
+            type: 'Compute'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Missing patches',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: 'Critical'
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Finding reasons',
+            value: '',
+            list: null,
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Operating system patch recommendation',
+            description:
+                'Whenever possible, apply the latest patches to ensure security and stability. Applying the latest patch helps protect your Oracle database servers from vulnerabilities and significantly improves overall system reliability.'
+        },
+        tags: ['Security', 'Reliability']
+    },
     isASMManaged: false,
     storageProtocol: '',
     isStorageLayoutFra: false
@@ -577,6 +615,78 @@ const formatCardItem = (
         recommendationText: item?.recommendation,
         dismissedObj: mapDismissedValues(data?.dismissedConfigurations?.storage, item?.name),
         recommendedValue: item?.recommended
+    };
+};
+
+// Function to format host OS patch configuration
+export const formatOracleHostOsPatchConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>
+): any => {
+    const hostOsPatchItem = data?.hostOsPatch;
+
+    const originalName = hostOsPatchItem?.name || 'host-os-patch';
+    const status = optimizingData?.[originalName] || hostOsPatchItem?.status || '';
+    const severity = hostOsPatchItem?.severity || '';
+    let totalViolations = 0;
+    let criticalViolations = 0;
+    let securityViolations = 0;
+    let otherViolations = 0;
+    let missingPatchList: any = [];
+
+    hostOsPatchItem?.ec2InstancesToPatch?.forEach((instance: any) => {
+        totalViolations += instance?.criticalNonCompliantCount || 0;
+        totalViolations += instance?.securityNonCompliantCount || 0;
+        totalViolations += instance?.otherNonCompliantCount || 0;
+
+        criticalViolations += instance?.criticalNonCompliantCount || 0;
+        securityViolations += instance?.securityNonCompliantCount || 0;
+        otherViolations += instance?.otherNonCompliantCount || 0;
+
+        missingPatchList = [
+            ...missingPatchList,
+            ...(instance?.missingPatchDetails || []).map((patch: any) => ({
+                ...patch,
+                instanceName: instance.ec2InstanceName
+            }))
+        ];
+    });
+
+    return {
+        ...oracleCardData.host_os_patch,
+        block_two: {
+            ...oracleCardData.host_os_patch?.block_two,
+            value: formatValue(status)
+        },
+        block_three: {
+            ...oracleCardData.host_os_patch?.block_three,
+            value: String(totalViolations)
+        },
+        block_four: {
+            ...oracleCardData.host_os_patch?.block_four,
+            value: formatValue(severity)
+        },
+        block_five: {
+            ...oracleCardData.host_os_patch?.block_five,
+            value: hostOsPatchItem?.resourceType
+        },
+        block_six: {
+            ...oracleCardData.host_os_patch?.block_six,
+            value: String(totalViolations)
+        },
+        tags: hostOsPatchItem?.tags || ['Security', 'Reliability'],
+        id: hostOsPatchItem?.name || 'host-os-patch',
+        category: 'compute',
+        errorMessage: hostOsPatchItem?.errorMessage,
+        osPatchMissingPatches: {
+            critical: criticalViolations,
+            security: securityViolations,
+            other: otherViolations
+        },
+        recommendationText: hostOsPatchItem?.recommendation,
+        missingPatchList,
+        objectsInViolation: hostOsPatchItem?.ec2InstancesToPatch?.map((instance: any) => instance.ec2InstanceId),
+        dismissedObj: data?.dismissedConfigurations?.hostOsPatch
     };
 };
 
@@ -992,7 +1102,8 @@ export const getOracleCardsData = (
             highestOsSeverity,
             osTagsList,
             osDismissedObj
-        )
+        ),
+        host_os_patch: formatOracleHostOsPatchConfig(data, optimizingData)
     };
 
     return {
@@ -1038,6 +1149,18 @@ export const formatOracleOptimizationBreakDown = (
         percent: 0
     };
 
+    const computeCount = {
+        hasDismissedOrPostponed: false,
+        total: 0,
+        critical: 0,
+        warning: 0,
+        optimized: 0,
+        notOptimized: 0,
+        dismissedOrPostponed: 0,
+        dismissedIds: [] as string[],
+        percent: 0
+    };
+
     Object.values(cardsData).forEach((cardItem: any) => {
         if (
             cardItem === 'isASMManaged' ||
@@ -1047,52 +1170,79 @@ export const formatOracleOptimizationBreakDown = (
         ) {
             return; // Skip isASMManaged, deploymentType and isStorageLayoutFra as they are not cards
         }
-        if (cardItem?.category !== 'storage') return;
 
-        if (
-            (!cardsData?.isASMManaged || cardsData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) &&
-            (cardItem?.id === 'data-dg-lun-layout' ||
-                cardItem?.id === 'redolog-dg-lun-layout' ||
-                cardItem?.id === 'fra-dg-lun-layout' ||
-                cardItem?.id === 'archivelog-dg-lun-layout')
-        ) {
-            return;
-        }
-
-        if (!cardsData?.isStorageLayoutFra && cardItem?.id === 'fra-dg-lun-layout') {
-            return;
-        }
-
-        if (cardsData?.isStorageLayoutFra && cardItem?.id === 'archivelog-dg-lun-layout') {
-            return;
-        }
-
-        const { isDismissed, isPostponed, isOptimizedViaDismissal, isOptimized, isCritical, isWarning } =
-            processStorageCardItem(cardItem);
-
-        if (isDismissed || isPostponed) {
-            storageCount.dismissedOrPostponed++;
-            storageCount.hasDismissedOrPostponed = true;
-            // Use proper display names for parent cards
-            if (cardItem?.id === 'ontap_configuration' || cardItem?.id === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
-                storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
-            } else if (
-                cardItem?.id === 'os_configuration' ||
-                cardItem?.id === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
+        if (cardItem?.category === 'storage') {
+            if (
+                (!cardsData?.isASMManaged || cardsData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) &&
+                (cardItem?.id === 'data-dg-lun-layout' ||
+                    cardItem?.id === 'redolog-dg-lun-layout' ||
+                    cardItem?.id === 'fra-dg-lun-layout' ||
+                    cardItem?.id === 'archivelog-dg-lun-layout')
             ) {
-                storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
-            } else {
-                storageCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+                return;
             }
-        } else if (isOptimized) {
-            storageCount.optimized++;
-            if (isOptimizedViaDismissal) {
+
+            if (!cardsData?.isStorageLayoutFra && cardItem?.id === 'fra-dg-lun-layout') {
+                return;
+            }
+
+            if (cardsData?.isStorageLayoutFra && cardItem?.id === 'archivelog-dg-lun-layout') {
+                return;
+            }
+
+            const { isDismissed, isPostponed, isOptimizedViaDismissal, isOptimized, isCritical, isWarning } =
+                processStorageCardItem(cardItem);
+
+            if (isDismissed || isPostponed) {
+                storageCount.dismissedOrPostponed++;
                 storageCount.hasDismissedOrPostponed = true;
+                // Use proper display names for parent cards
+                if (cardItem?.id === 'ontap_configuration' || cardItem?.id === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
+                    storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
+                } else if (
+                    cardItem?.id === 'os_configuration' ||
+                    cardItem?.id === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
+                ) {
+                    storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
+                } else {
+                    storageCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+                }
+            } else if (isOptimized) {
+                storageCount.optimized++;
+                if (isOptimizedViaDismissal) {
+                    storageCount.hasDismissedOrPostponed = true;
+                }
+            } else {
+                storageCount.notOptimized++;
+                if (isCritical) storageCount.critical++;
+                else if (isWarning) storageCount.warning++;
             }
-        } else {
-            storageCount.notOptimized++;
-            if (isCritical) storageCount.critical++;
-            else if (isWarning) storageCount.warning++;
+        }
+
+        if (cardItem?.category === 'compute') {
+            // If the card has no assessment data, count it as not optimized
+            if (!cardItem?.block_two?.value) {
+                computeCount.notOptimized++;
+                return;
+            }
+
+            const { isDismissed, isPostponed, isOptimizedViaDismissal, isOptimized, isCritical, isWarning } =
+                processStorageCardItem(cardItem);
+
+            if (isDismissed || isPostponed) {
+                computeCount.dismissedOrPostponed++;
+                computeCount.hasDismissedOrPostponed = true;
+                computeCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+            } else if (isOptimized) {
+                computeCount.optimized++;
+                if (isOptimizedViaDismissal) {
+                    computeCount.hasDismissedOrPostponed = true;
+                }
+            } else {
+                computeCount.notOptimized++;
+                if (isCritical) computeCount.critical++;
+                else if (isWarning) computeCount.warning++;
+            }
         }
     });
 
@@ -1152,12 +1302,32 @@ export const formatOracleOptimizationBreakDown = (
             ? formatNumberWithCustomComma((storageCount.optimized / storageCount.total) * 100)
             : 0;
 
+    computeCount.total = computeCount.optimized + computeCount.notOptimized;
+    computeCount.percent =
+        computeCount.optimized && computeCount.total > 0
+            ? formatNumberWithCustomComma((computeCount.optimized / computeCount.total) * 100)
+            : 0;
+
     return {
         storage: storageCount,
+        compute: computeCount,
         total: {
-            ...storageCount,
-            dismissedOrPostponed: storageCount.dismissedOrPostponed,
-            dismissedIds: storageCount.dismissedIds
+            hasDismissedOrPostponed: storageCount.hasDismissedOrPostponed || computeCount.hasDismissedOrPostponed,
+            total: storageCount.total + computeCount.total,
+            critical: storageCount.critical + computeCount.critical,
+            warning: storageCount.warning + computeCount.warning,
+            optimized: storageCount.optimized + computeCount.optimized,
+            notOptimized: storageCount.notOptimized + computeCount.notOptimized,
+            dismissedOrPostponed: storageCount.dismissedOrPostponed + computeCount.dismissedOrPostponed,
+            dismissedIds: [...storageCount.dismissedIds, ...computeCount.dismissedIds],
+            percent:
+                storageCount.total + computeCount.total > 0
+                    ? Math.round(
+                          ((storageCount.optimized + computeCount.optimized) /
+                              (storageCount.total + computeCount.total)) *
+                              100
+                      )
+                    : 0
         }
     };
 };
@@ -1336,7 +1506,9 @@ export const getOracleCategoryData = () => ({
     archivelog_dg_lun_layout: { category: 'Storage', subCategory: 'Storage layout' },
     // Storage Configuration cards
     ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
-    os_configuration: { category: 'Storage', subCategory: 'Storage configuration' }
+    os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
+    // Compute Configuration cards
+    host_os_patch: { category: 'Compute', subCategory: 'Compute' }
 });
 
 // Helper function to convert assessment configuration names to technical keys
@@ -1359,6 +1531,11 @@ export const getDynamicOracleCategoryData = (assessmentData?: any) => {
     // Always include ONTAP and OS configurations as they're core storage configurations
     categoryMapping.ontap_configuration = { category: 'Storage', subCategory: 'Storage configuration' };
     categoryMapping.os_configuration = { category: 'Storage', subCategory: 'Storage configuration' };
+
+    // Always include host OS patch if assessment data contains it
+    if (assessmentData?.hostOsPatch) {
+        categoryMapping.host_os_patch = { category: 'Compute', subCategory: 'Compute' };
+    }
 
     if (!assessmentData?.storage) {
         // If no assessment data, return static mapping as fallback
@@ -1437,7 +1614,6 @@ export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploy
         const config = cardData[key];
         const categoryInfo = categoryData[key as keyof typeof categoryData];
 
-        // Only process cards that have actual assessment data (block_two.value exists)
         if (!config?.block_two?.value) {
             return;
         }
@@ -1628,6 +1804,7 @@ export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, actio
                         const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.ORACLE_STORAGE_LAYOUT_MAP;
                         const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
                         const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
+                        const otherConfigMap: any = CONFIG_NAME_TO_ID_MAPPING.NON_STORAGE_CONFIG_MAP;
 
                         // Check if it's a storage layout configuration
                         if (storageLayoutMap[rowData?.name]) {
@@ -1729,6 +1906,31 @@ export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, actio
                                 }
                             };
                         }
+                        if (otherConfigMap[rowData?.name]) {
+                            const name = otherConfigMap[rowData?.name];
+                            return {
+                                ...instance,
+                                assessments: {
+                                    ...instance?.assessments,
+                                    dismissedConfigurations: {
+                                        ...instance?.assessments?.dismissedConfigurations,
+                                        [name]: instance?.assessments?.dismissedConfigurations?.[name]
+                                            ? {
+                                                  ...instance?.assessments?.dismissedConfigurations?.[name],
+                                                  configState: setAction,
+                                                  endTime: rowData?.endTime,
+                                                  startTime: rowData?.startTime
+                                              }
+                                            : {
+                                                  configurationName: rowData?.id,
+                                                  configState: setAction,
+                                                  endTime: rowData?.endTime,
+                                                  startTime: rowData?.startTime
+                                              }
+                                    }
+                                }
+                            };
+                        }
                         return instance;
                     }
                     return instance;
@@ -1815,6 +2017,18 @@ export const checkAllOracleConfigurationsDismissed = (cardData: any, assessmentD
                 dismissedConfigs++;
             }
         });
+
+        // Check compute configurations (host OS patch)
+        const hostOsPatchConfig = dismissedConfigurationsData.hostOsPatch;
+        if (hostOsPatchConfig) {
+            totalConfigs++;
+            if (
+                hostOsPatchConfig.configState === CONFIG_STATES.DISMISSED ||
+                hostOsPatchConfig.configState === CONFIG_STATES.POSTPONED
+            ) {
+                dismissedConfigs++;
+            }
+        }
     }
 
     // Return true only if there are configurations and ALL of them are dismissed

@@ -101,6 +101,7 @@ export const handleSelectForFilter = (
 
 /** Function to map the dismissed values */
 export const mapDismissedValues = (data: any, itemName: string | any) => {
+    // Then check arrays and nested structures (for storage configurations)
     for (const key in data) {
         const section = data[key];
 

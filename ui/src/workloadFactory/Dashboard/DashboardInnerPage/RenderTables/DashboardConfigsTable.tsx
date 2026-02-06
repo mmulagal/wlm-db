@@ -611,11 +611,39 @@ const oracleFileSystemHeadroomConfig = createOracleStorageSizingConfig(
     true // Enable fix support for Oracle file system headroom
 );
 
+// Helper function to create Oracle host OS patch configuration
+const createOracleHostOsPatchConfig = () => ({
+    assessmentPath: [],
+    configName: 'hostOsPatch',
+    dismissConfigName: 'hostOsPatch',
+    isFixSupported: false, // Fix is not supported for Oracle OS patch configurations
+    dataMapping: (obj: any) => ({
+        current: `${obj?.objectsInViolation?.length || 0}`,
+        missingPatchList: obj?.missingPatchesInEc2Instances || []
+    }),
+    customColumns: [
+        {
+            Header: 'databases.well-architect.dashboard-table-headers.missing-patches',
+            accessor: 'current',
+            id: '4',
+            width: '200px',
+            renderCell: (cellData: string, rowData: any, t: any) =>
+                cellData || t('databases.general.not-available-table-columns')
+        }
+    ]
+});
+
+// Oracle COMPUTE configurations mapping
+const oracleComputeConfigs = {
+    [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: createOracleHostOsPatchConfig()
+};
+
 // Merge all configurations
 const FULL_CONFIG_MAPPING = {
     ...CONFIG_MAPPING,
     ...oraclePlacementConfigs,
-    ...oracleStorageSizingConfigs
+    ...oracleStorageSizingConfigs,
+    ...oracleComputeConfigs
     // Add more configurations as needed
 };
 

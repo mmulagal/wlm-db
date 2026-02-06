@@ -1,3 +1,6 @@
+// Import shared Well Architect card mixins
+@use '../../../utils/wellArchitectedMixins.scss' as wa;
+
 .colorSet {
     div {
         color: var(--text-primary);
@@ -23,93 +26,32 @@
     }
 
     .buttonSection {
-        width: auto;
-        display: flex;
-        justify-content: flex-end;
-        flex-shrink: 0;
-        [class*='dsButtons'] {
-            height: 32px !important;
-            min-width: 140px !important;
-        }
-
-        .disabled {
-            background-color: var(--grey-15);
-            color: var(--text-primary);
-        }
-
-        /* Responsive behavior for button sizing */
-        @media (max-width: 1200px) {
-            [class*='dsButtons'] {
-                min-width: 120px !important;
-            }
-        }
+        @include wa.button-section;
+        @include wa.button-section-responsive;
     }
 
-    /* Button container that holds both dismiss and main action buttons */
     .buttonContainer {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
-        width: 100%;
-        align-items: center;
+        @include wa.button-container;
     }
 
-    /* Wrapper for button group containing dismiss and View/View and Fix */
     .buttonGroup {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
+        @include wa.button-group;
     }
 
-    /* Last column alignment for (ONTAP, Operating system, MSSQL HA) cards*/
     .lastColumnAlignment {
-        display: flex;
-        justify-content: flex-end;
-        align-items: flex-start;
+        @include wa.last-column-alignment;
     }
 
     .dismissSection {
-        width: 274px;
-        min-width: 170px;
-        .dismissContainer {
-            display: flex;
-            gap: 8px;
-            svg {
-                position: relative;
-                top: 2px;
-            }
-        }
+        @include wa.dismiss-section;
     }
 
     .tooltipContainer {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-
-        .tooltip {
-            max-width: 296px;
-        }
-
-        .tooltip:hover {
-            svg {
-                path {
-                    fill: var(--tooltip-icon-hover);
-                }
-            }
-        }
-
-        svg {
-            position: relative;
-            top: 2px;
-        }
+        @include wa.tooltip-container;
     }
 
     .buttonSectionDarkMode {
-        [class*='buttonContent'] {
-            div {
-                color: var(--grey-30) !important;
-            }
-        }
+        @include wa.button-section-dark-mode;
     }
 
     .cardContent {
@@ -127,9 +69,7 @@
     }
 
     .column {
-        min-width: 0;
-        overflow: hidden;
-        border-right: 1px solid var(--border);
+        @include wa.column;
     }
 
     /* Remove border from the last column */
@@ -139,149 +79,34 @@
     }
 
     .titleText {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        padding-right: 16px;
+        @include wa.title-text;
 
         .warningMsg {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-
-            .centerText {
-                position: relative;
-                top: 4.5px;
-            }
-        }
-
-        .svgSection {
-            position: relative;
-            left: -1px;
-            top: 8px;
-        }
-
-        .valueSection {
-            margin-left: 8px;
+            @include wa.title-text-warning-msg;
         }
     }
 
     .overProvisioned {
-        display: flex;
-        align-items: center;
-        overflow: unset;
-
-        [class*='svgSection'] {
-            top: 0px;
-        }
-
-        .tooltipLevel {
-            margin-top: 6px;
-        }
+        @include wa.over-provisioned;
     }
 
     .centerTextContainer {
-        display: flex;
-        gap: 8px;
-
-        .centerText {
-            position: relative;
-            top: 4.5px;
-        }
+        @include wa.center-text-container;
     }
 
     .label {
-        margin-top: 4px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        @include wa.label;
     }
 
     .tooltipLevel {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        max-width: 584px;
-        // padding: 8px 0px;
-
-        .tooltipSeparator {
-            border-bottom: 1px solid var(--border);
-        }
-
-        .row {
-            display: flex;
-            gap: 24px;
-            justify-content: space-between;
-            margin-bottom: 6px;
-
-            .firstPart {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .secondPart {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-
-                .seperator {
-                    height: 20px;
-                    border-right: 1px solid var(--border);
-                    position: relative;
-                }
-            }
-        }
-
-        .rowrss {
-            display: flex;
-            gap: 24px;
-            margin-bottom: 6px;
-
-            .firstPart {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                width: 300px;
-            }
-
-            .secondPart {
-                display: flex;
-                width: 280px;
-                gap: 8px;
-                flex-direction: row;
-
-                .secSubPart {
-                    display: flex;
-                    width: 100px;
-                    gap: 8px;
-                    flex-direction: row;
-                }
-
-                .seperator {
-                    height: 20px;
-                    border-right: 1px solid var(--border);
-                    position: relative;
-                }
-            }
-        }
+        @include wa.tooltip-level;
     }
 
     .warningMsg {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        color: var(--warning);
-        .centerText {
-            position: relative;
-            top: 4.5px;
-        }
+        @include wa.warning-msg;
     }
 
     .tooltipTable {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-        align-self: stretch;
+        @include wa.tooltip-table;
     }
 }

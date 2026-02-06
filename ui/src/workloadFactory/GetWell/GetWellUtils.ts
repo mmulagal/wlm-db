@@ -5629,7 +5629,7 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             configKey = 'computeRightsizing';
             break;
         case GENERAL.OPERATING_SYSTEM_PATCH:
-            configKey = 'operatingSystemPatch';
+            configKey = dbType === DBType.ORACLE ? 'oracleOperatingSystemPatch' : 'operatingSystemPatch';
             break;
         case GENERAL.RSS_CONFIGURATION:
             configKey = 'rssConfiguration';

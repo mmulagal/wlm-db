@@ -481,6 +481,7 @@ const RecommendationTable = ({
                 name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME ||
                 name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
                 name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+                name === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
                 name === ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION ||
                 name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT)
         ) {
@@ -522,7 +523,8 @@ const RecommendationTable = ({
             name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
             name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT ||
             name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE ||
-            (name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && engineType === DBType.ORACLE)
+            (engineType === DBType.ORACLE && name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) ||
+            (engineType === DBType.ORACLE && name === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH)
         ) {
             return t('databases.well-architect.view');
         }
@@ -545,6 +547,7 @@ const RecommendationTable = ({
             rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
+            rowData?.name === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
             rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE;

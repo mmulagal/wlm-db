@@ -1,0 +1,284 @@
+// ============================================
+// Well Architect Card - Shared SCSS Mixins
+// Used by StorageCardComponent (MSSQL) and OracleCardComponent (Oracle)
+// ============================================
+
+// Button section styles for View/View and Fix buttons
+@mixin button-section {
+    width: auto;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+
+    [class*='dsButtons'] {
+        height: 32px !important;
+        min-width: 140px !important;
+    }
+
+    .disabled {
+        background-color: var(--grey-15);
+        color: var(--text-primary);
+    }
+}
+
+// Responsive button section for smaller screens
+@mixin button-section-responsive {
+    @media (max-width: 1200px) {
+        [class*='dsButtons'] {
+            min-width: 120px !important;
+        }
+    }
+}
+
+// Button container for dismiss and action buttons
+@mixin button-container {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    width: 100%;
+    align-items: center;
+}
+
+// Button group wrapper
+@mixin button-group {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+// Last column alignment for ONTAP, OS, HA cards
+@mixin last-column-alignment {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+}
+
+// Dismiss section styles
+@mixin dismiss-section {
+    width: 274px;
+    min-width: 170px;
+
+    .dismissContainer {
+        display: flex;
+        gap: 8px;
+
+        svg {
+            position: relative;
+            top: 2px;
+        }
+    }
+}
+
+// Tooltip container styles
+@mixin tooltip-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    .tooltip {
+        max-width: 296px;
+    }
+
+    .tooltip:hover {
+        svg {
+            path {
+                fill: var(--tooltip-icon-hover);
+            }
+        }
+    }
+
+    svg {
+        position: relative;
+        top: 2px;
+    }
+}
+
+// Column styles
+@mixin column {
+    min-width: 0;
+    overflow: hidden;
+    border-right: 1px solid var(--border);
+}
+
+// Title text styles with text overflow handling
+@mixin title-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 16px;
+
+    .svgSection {
+        position: relative;
+        left: -1px;
+        top: 8px;
+    }
+
+    .valueSection {
+        margin-left: 8px;
+    }
+}
+
+// Warning message inside title text (without color)
+@mixin title-text-warning-msg {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    .centerText {
+        position: relative;
+        top: 4.5px;
+    }
+}
+
+// Warning message with error styling and wrapping
+@mixin warning-msg {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: var(--warning);
+    white-space: normal;
+    max-width: 350px;
+
+    .centerText {
+        position: relative;
+        top: 4.5px;
+    }
+}
+
+// Over-provisioned state styles
+@mixin over-provisioned {
+    display: flex;
+    align-items: center;
+    overflow: unset;
+
+    [class*='svgSection'] {
+        top: 0px;
+    }
+
+    .tooltipLevel {
+        margin-top: 6px;
+    }
+}
+
+// Center text container
+@mixin center-text-container {
+    display: flex;
+    gap: 8px;
+
+    .centerText {
+        position: relative;
+        top: 4.5px;
+    }
+}
+
+// Label styles
+@mixin label {
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// Loading section
+@mixin loading-section {
+    height: 24px;
+    display: flex;
+    align-items: center;
+}
+
+// Tooltip level container
+@mixin tooltip-level {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 584px;
+
+    .tooltipSeparator {
+        border-bottom: 1px solid var(--border);
+    }
+
+    .row {
+        display: flex;
+        gap: 24px;
+        justify-content: space-between;
+        margin-bottom: 6px;
+
+        .firstPart {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .secondPart {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .seperator {
+                height: 20px;
+                border-right: 1px solid var(--border);
+                position: relative;
+            }
+        }
+    }
+
+    .rowrss {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 6px;
+
+        .firstPart {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 300px;
+        }
+
+        .secondPart {
+            display: flex;
+            width: 280px;
+            gap: 8px;
+            flex-direction: row;
+
+            .secSubPart {
+                display: flex;
+                width: 100px;
+                gap: 8px;
+                flex-direction: row;
+            }
+
+            .seperator {
+                height: 20px;
+                border-right: 1px solid var(--border);
+                position: relative;
+            }
+        }
+    }
+}
+
+// Tooltip table
+@mixin tooltip-table {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    align-self: stretch;
+}
+
+// Button section dark mode
+@mixin button-section-dark-mode {
+    [class*='buttonContent'] {
+        div {
+            color: var(--grey-30) !important;
+        }
+    }
+}
+
+// Last button alignment (Oracle specific)
+@mixin last-button {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    gap: 32px;
+}

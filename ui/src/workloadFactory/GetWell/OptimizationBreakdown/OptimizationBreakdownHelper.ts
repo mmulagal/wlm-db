@@ -45,6 +45,10 @@ export const getOracleDisplayNameToTechnicalKeyMapping = () => ({
     // Storage Sizing configurations
     [ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]: 'file_system_headroom',
     [ASSESSMENT_CONFIG_NAMES.SWAP_SPACE]: 'swap_space',
+    // compute configurations
+    [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'host_os_patch',
+    // Placement configurations
+    [ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]: 'storage_tier',
     // Storage Layout configurations
     [ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT]: 'oracle_binary_placement',
     [ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT]: 'datafiles_placement',

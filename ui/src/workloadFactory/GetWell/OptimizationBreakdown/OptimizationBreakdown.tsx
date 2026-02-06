@@ -215,16 +215,12 @@ const OptimizationBreakdown = ({
                         allConfigurationsDismissed={allConfigurationsDismissed}
                     />
                     <OptimizeComponent
-                        value={
-                            engineType === DBType.ORACLE ? <ComingSoon /> : optimizationBreakDown?.compute?.percent || 0
-                        }
-                        data={engineType === DBType.ORACLE ? undefined : optimizationBreakDown?.compute}
+                        value={optimizationBreakDown?.compute?.percent || 0}
+                        data={optimizationBreakDown?.compute}
                         text="Compute"
                         image={<Compute />}
-                        isComingSoon={engineType === DBType.ORACLE}
-                        allConfigurationsDismissed={
-                            engineType === DBType.ORACLE ? undefined : allConfigurationsDismissed
-                        }
+                        isComingSoon={false}
+                        allConfigurationsDismissed={allConfigurationsDismissed}
                     />
                     <OptimizeComponent
                         value={

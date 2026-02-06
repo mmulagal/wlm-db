@@ -1092,6 +1092,44 @@
             }
         ]
     },
+    "hostOsPatch": {
+        "name": "host-os-patch",
+        "status": "not-optimized",
+        "recommended": "optimized",
+        "severity": "critical",
+        "recommendation": "Critical security patches are missing. We recommend applying the latest patches to ensure your Oracle database infrastructure is secure and up-to-date.",
+        "tags": ["Security", "Reliability"],
+        "objectsInViolation": ["i-0f73ec408b54d3824"],
+        "resourceType": "EC2 Instance",
+        "ec2InstancesToPatch": [
+            {
+                "baselineId": "pb-05b6196cbb3be9d2c",
+                "criticalNonCompliantCount": 0,
+                "ec2InstanceId": "i-0f73ec408b54d3824",
+                "ec2InstanceName": "ip-171-30-40-16.ap-southeast-1.compute.internal",
+                "operationStartTime": 1768928500000,
+                "operationEndTime": 1768928603000,
+                "securityNonCompliantCount": 56,
+                "otherNonCompliantCount": 227,
+                "missingPatchDetails": [
+                    {
+                        "classification": "Security",
+                        "cveIds": "CEV-2024-42472",
+                        "severity": "Important",
+                        "state": "Missing",
+                        "title": "bind-export-libs.x86_64:32:9.11.36-16.el8_10.6"
+                    },
+                    {
+                        "classification": "Security",
+                        "cveIds": "CEV-2024-42473",
+                        "severity": "Important",
+                        "state": "Missing",
+                        "title": "bubblewrap.x86_64:0:0.4.0-2.el8_10"
+                    }
+                ]
+            }
+        ]
+    },
     "lastAssessmentTimestamp": 1755629404593,
     "fileSystemId": "fs-0d5efc3057c4f12cb",
     "ec2InstanceId": "i-05fbc9747d558cf12",

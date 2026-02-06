@@ -1165,6 +1165,7 @@ const DashboardInnerPage = () => {
                     customClass={type !== ASSESSMENT_CONFIG_NAMES.MAXDOP ? 'innerPage' : ''}
                     hidePrimaryButton={
                         (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
+                            type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
                             type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
                             type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
                             type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE) &&
@@ -1356,7 +1357,10 @@ const DashboardInnerPage = () => {
                     tagHeight: prev.tagHeight || '233px',
                     data: {
                         title: 'Recommendations',
-                        description: cardDataDefault?.host_os_patch?.recommendation?.description
+                        description:
+                            configEngineType === DBType.ORACLE
+                                ? oracleCardData?.host_os_patch?.recommendation?.description
+                                : cardDataDefault?.host_os_patch?.recommendation?.description
                     }
                 }));
                 break;

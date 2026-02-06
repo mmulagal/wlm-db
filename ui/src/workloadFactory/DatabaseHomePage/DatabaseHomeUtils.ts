@@ -1010,10 +1010,27 @@ const processMSSQLAssessmentData = (assessmentData: any, headerFilters: any, uni
 const checkOracleConfigurationSeverities = (
     instanceAssessmentData: any,
     isOracleStorageLayoutOptimized: boolean,
-    isOracleStorageConfigOptimized: boolean
+    isOracleStorageConfigOptimized: boolean,
+    isOracleComputeConfigOptimized: boolean
 ) => {
     let hasCriticalIssue = false;
     let hasWarningIssue = false;
+
+    // Check Oracle Compute Configuration severity
+    if (!isOracleComputeConfigOptimized) {
+        const hostOsPatchItem = instanceAssessmentData?.hostOsPatch;
+        if (hostOsPatchItem) {
+            const configState = instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState;
+
+            if (!isOptimized(hostOsPatchItem?.status, configState)) {
+                if (hostOsPatchItem?.severity?.toLowerCase() === 'critical') {
+                    hasCriticalIssue = true;
+                } else {
+                    hasWarningIssue = true;
+                }
+            }
+        }
+    }
 
     // Check Oracle storage layout severities
     if (!isOracleStorageLayoutOptimized) {
@@ -1124,8 +1141,15 @@ const processOracleAssessmentData = (
                         });
                     });
 
+                // Check if Oracle Compute Configuration is optimized
+                const isOracleComputeConfigOptimized = isOptimized(
+                    instanceAssessmentData?.hostOsPatch?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
+                );
+
                 // Check if Oracle instance is fully optimized
-                const isOracleInstanceOptimized = isOracleStorageLayoutOptimized && isOracleStorageConfigOptimized;
+                const isOracleInstanceOptimized =
+                    isOracleStorageLayoutOptimized && isOracleStorageConfigOptimized && isOracleComputeConfigOptimized;
 
                 if (isOracleInstanceOptimized) {
                     optimizedInstances += 1;
@@ -1134,7 +1158,8 @@ const processOracleAssessmentData = (
                     const { hasCriticalIssue, hasWarningIssue } = checkOracleConfigurationSeverities(
                         instanceAssessmentData,
                         isOracleStorageLayoutOptimized,
-                        isOracleStorageConfigOptimized
+                        isOracleStorageConfigOptimized,
+                        isOracleComputeConfigOptimized
                     );
 
                     // Prioritize critical over warning
@@ -1291,7 +1316,8 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
     const assessmentGroupedByCategory: any = {
         mssqlStorage: 0,
         oracleStorage: 0,
-        compute: 0,
+        mssqlCompute: 0,
+        oracleCompute: 0,
         application: 0,
         resiliency: 0,
         cloning: 0,
@@ -1420,7 +1446,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
                     isRssConfigurationOptimized &&
                     isMTUConfigurationOptimized
                 ) {
-                    assessmentGroupedByCategory.compute++;
+                    assessmentGroupedByCategory.mssqlCompute++;
                 }
                 if (
                     isStorageLayoutOptimized &&
@@ -1464,6 +1490,16 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
                 assessmentGroupedByCategory.oracleTotal++;
                 const instanceAssessmentData = instance?.assessments;
+
+                // Check Oracle Compute Configuration for compute category
+                const isOracleComputeOptimized = isOptimized(
+                    instanceAssessmentData?.hostOsPatch?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
+                );
+
+                if (isOracleComputeOptimized) {
+                    assessmentGroupedByCategory.oracleCompute++;
+                }
 
                 const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) => {
                     const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
@@ -1692,6 +1728,30 @@ const processOracleConfigurationData = (
                 getAssessmentGroupedByConfigurations.severityObj.oracleSwapSpace =
                     GETWELL_VALUES[swapSpaceObj?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.oracleSwapSpace;
+
+                // Process Oracle Compute configurations
+                const operatingSystemPatchObj = instanceAssessmentData?.hostOsPatch;
+                const operatingSystemPatchStateObj = instanceAssessmentData?.dismissedConfigurations?.hostOsPatch;
+                const isOperatingSystemPatchOptimized = isOptimizedDashInner(
+                    operatingSystemPatchObj?.status,
+                    operatingSystemPatchStateObj?.configState
+                );
+                setConfigState(configState, 'oracleOperatingSystemPatch', operatingSystemPatchStateObj?.configState);
+                getAssessmentGroupedByConfigurations.oracleOperatingSystemPatch.optimized +=
+                    isOperatingSystemPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.oracleOperatingSystemPatch.dismissed += isDismissed(
+                    operatingSystemPatchStateObj?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleOperatingSystemPatch.activating += isActivating(
+                    operatingSystemPatchStateObj?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleOperatingSystemPatch =
+                    GETWELL_VALUES[operatingSystemPatchObj?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.oracleOperatingSystemPatch;
 
                 const isOntapConfigurationOptimized =
                     instanceAssessmentData?.storage &&
@@ -2045,6 +2105,11 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             dismissed: 0,
             activating: 0
         },
+        oracleOperatingSystemPatch: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
         oracleSwapSpace: {
             optimized: 0,
             dismissed: 0,
@@ -2094,6 +2159,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         oracleOntapConfiguration: [],
         oracleOperatingSystem: [],
         oracleFileSystemHeadroom: [],
+        oracleOperatingSystemPatch: [],
         oracleSwapSpace: []
     };
 

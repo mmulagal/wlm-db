@@ -60,6 +60,15 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                         }
                     ]);
                     break;
+                case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
+                        {
+                            label: t('databases.well-architect.tags.security'),
+                            value: 'security'
+                        }
+                    ]);
+                    break;
                 case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
                     setTagData([
                         { label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' },
@@ -300,6 +309,16 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                             label: t('databases.well-architect.tags.performanceEfficiency'),
                             value: 'performanceEfficiency'
                         }
+                    ]);
+                    break;
+
+                case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
+                    setTagData([
+                        {
+                            label: t('databases.well-architect.tags.reliability'),
+                            value: 'reliability'
+                        },
+                        { label: t('databases.well-architect.tags.security'), value: 'security' }
                     ]);
                     break;
                 case ASSESSMENT_CONFIG_NAMES.SELINUX:

@@ -851,7 +851,8 @@ const StorageCardComponent = ({
             type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
             type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
             (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
-                cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED)
+                cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) ||
+            type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH
         ) {
             return t('databases.well-architect.view');
         }

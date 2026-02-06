@@ -8,6 +8,7 @@ import styles from './OracleWellArchitectDashboard.module.scss';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import StorageLayoutSection from './Categories/StorageLayoutSection';
 import StorageSizingSection from './Categories/StorageSizingSection';
+import ComputeSection from './Categories/ComputeSection';
 import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
@@ -318,6 +319,26 @@ const OracleWellArchitectDashboard = () => {
                             <div className={styles.sectionTwo}>
                                 <div className={styles.sectionClass}>
                                     <StorageConfigurationSection
+                                        styles={styles}
+                                        isAccordionExpanded={isAccordionExpanded}
+                                        setClickedAccordionId={setClickedAccordionId}
+                                        loading={loading}
+                                        handleAccordionExpanded={handleAccordionExpanded}
+                                        isDarkTheme={isDarkTheme}
+                                        optimizePrintState={optimizePrintState}
+                                        oracleCardData={filteredCardData}
+                                        showDismissedConfigurations={showDismissedConfigurations}
+                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
+                                        driftAssessmentData={driftAssessmentData}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {filteredCardData?.host_os_patch && (
+                            <div className={styles.sectionTwo}>
+                                <div className={styles.sectionClass}>
+                                    <ComputeSection
                                         styles={styles}
                                         isAccordionExpanded={isAccordionExpanded}
                                         setClickedAccordionId={setClickedAccordionId}

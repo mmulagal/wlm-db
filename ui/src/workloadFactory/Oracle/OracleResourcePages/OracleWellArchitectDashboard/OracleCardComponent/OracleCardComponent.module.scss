@@ -1,3 +1,6 @@
+// Import shared Well Architect card mixins
+@use '../../../../../utils/wellArchitectedMixins.scss' as wa;
+
 .oracle-card {
     box-shadow: 2px 2px 6px 0 var(--drop-shadow);
     background-color: var(--content-background);
@@ -15,63 +18,27 @@
     }
 
     .buttonSection {
-        width: auto;
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 8px;
-        flex-shrink: 0;
-        [class*='dsButtons'] {
-            height: 32px !important;
-            min-width: 140px !important;
-        }
-
-        .disabled {
-            background-color: var(--grey-15);
-            color: var(--text-primary);
-        }
+        @include wa.button-section;
     }
 
-    /* Button container that holds both dismiss and main action buttons */
     .buttonContainer {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
-        width: 100%;
-        align-items: center;
+        @include wa.button-container;
     }
 
-    /* Wrapper for button group containing dismiss and View/View and Fix */
     .buttonGroup {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
+        @include wa.button-group;
     }
 
-    /* Last column alignment for (ONTAP, Operating system, MSSQL HA) cards*/
     .lastColumnAlignment {
-        display: flex;
-        justify-content: flex-end;
-        align-items: flex-start;
+        @include wa.last-column-alignment;
     }
 
     .dismissSection {
-        width: 274px;
-        min-width: 170px;
-        .dismissContainer {
-            display: flex;
-            gap: 8px;
-            svg {
-                position: relative;
-                top: 2px;
-            }
-        }
+        @include wa.dismiss-section;
     }
 
     .loadingSection {
-        height: 24px;
-        display: flex;
-        align-items: center;
+        @include wa.loading-section;
     }
 
     .cardContainer {
@@ -114,27 +81,16 @@
         }
 
         .lastButton {
-            display: flex;
-            align-items: center;
-            justify-content: end;
-            gap: 32px;
+            @include wa.last-button;
         }
     }
 
     .centerTextContainer {
-        display: flex;
-        gap: 8px;
-
-        .centerText {
-            position: relative;
-            top: 4.5px;
-        }
+        @include wa.center-text-container;
     }
 
     .column {
-        min-width: 0;
-        overflow: hidden;
-        border-right: 1px solid var(--border);
+        @include wa.column;
     }
 
     /* Remove border from the last column */
@@ -144,61 +100,34 @@
     }
 
     .titleText {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        padding-right: 16px;
+        @include wa.title-text;
 
         .warningMsg {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-
-            .centerText {
-                position: relative;
-                top: 4.5px;
-            }
-        }
-
-        .svgSection {
-            position: relative;
-            left: -1px;
-            top: 8px;
-        }
-
-        .valueSection {
-            margin-left: 8px;
+            @include wa.title-text-warning-msg;
+            // Oracle-specific: allow wrapping for error messages
+            white-space: normal;
+            max-width: 350px;
         }
     }
 
     .overProvisioned {
-        display: flex;
-        align-items: center;
-        overflow: unset;
-
-        [class*='svgSection'] {
-            top: 0px;
-        }
-
-        .tooltipLevel {
-            margin-top: 6px;
-        }
+        @include wa.over-provisioned;
     }
 
     .warningMsg {
-        display: flex;
-        gap: 8px;
-        align-items: center;
+        @include wa.warning-msg;
+    }
 
-        svg {
-            width: 24px !important;
-            height: 24px !important;
-        }
+    .tooltipTable {
+        @include wa.tooltip-table;
+    }
 
-        .centerText {
-            position: relative;
-            top: 4.5px;
-        }
+    .tooltipContainer {
+        @include wa.tooltip-container;
+    }
+
+    .tooltipLevel {
+        @include wa.tooltip-level;
     }
 
     /* Postpone info container for dismissed configurations */
@@ -228,9 +157,7 @@
 @media (max-width: 1200px) {
     .oracle-card {
         .buttonSection {
-            [class*='dsButtons'] {
-                min-width: 120px !important;
-            }
+            @include wa.button-section-responsive;
         }
     }
 }
