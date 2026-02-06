@@ -1,9 +1,11 @@
-import React, { useRef } from 'react';
-import { DsButton } from '@tlveng/wlm-ds';
+import React, { useEffect, useRef, useState } from 'react';
+import { DsButton, DsTypography } from '@tlveng/wlm-ds';
 import { compressSync } from 'fflate';
 import { useDialog } from '@netapp/design-system/dist/components/Dialog';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { Popover } from '@netapp/design-system/dist/components/Popover';
+
 import { ColumnProps, Table } from '../../../common/Lib/Table/Table';
 import { useTable } from '../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
@@ -20,10 +22,15 @@ import {
 } from '../../../utils/apiService';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import TableTooltip from './TableTooltip/TableTooltip';
+import { useOnPremData } from '../ExploreSavingsOnPremiseTable/useOnPremData';
+import { formatDateWithTime, getTruncatedItems } from '../../../utils/utilityFunctions';
 
 const OracleOnPremTable = () => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
+    const [isUploadLoading, setIsUploadLoading] = useState(false);
+    const {  fetchOracleOnPremData } = useOnPremData();
+    const { onPremiseOracleData, onPremiseOracleDataLoading } = useAppSelector(state => state.exploreSavings);
     const buttonRef: any = useRef(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { setDialog } = useDialog();
@@ -31,32 +38,9 @@ const OracleOnPremTable = () => {
     const [getUploadScript] = useGetUploadScriptMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [getOracleOnPremTCODownloadScript] = useGetOracleOnPremTCODownloadScriptMutation();
-    const mockData: any = [
-        // {
-        //     id: '1',
-        //     hostName: 'Oracle On-Prem host 1',
-        //     databaseName: 'DB name 1',
-        //     deploymentModel: 'Data Guard',
-        //     onPremModes: 'Node 1',
-        //     dataCOllectionDate: '2024-01-01'
-        // },
-        // {
-        //     id: '2',
-        //     hostName: 'Oracle On-Prem host 2',
-        //     databaseName: 'DB name 2',
-        //     deploymentModel: 'Data Guard',
-        //     onPremModes: 'Node 2',
-        //     dataCOllectionDate: '2024-01-02'
-        // },
-        // {
-        //     id: '3',
-        //     hostName: 'Oracle On-Prem host 3',
-        //     databaseName: 'DB name 3',
-        //     deploymentModel: 'Single Instance',
-        //     onPremModes: 'Node 3',
-        //     dataCOllectionDate: '2024-01-03'
-        // }
-    ];
+    useEffect(() => {
+        fetchOracleOnPremData();
+    }, []);
 
     const openAssessmentDialog = () => {
         setDialog(
@@ -90,7 +74,7 @@ const OracleOnPremTable = () => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: result?.error?.data?.message || t('databases.explore-savings.download-failed')
+                        message: result?.error?.data?.message 
                     })
                 );
             }
@@ -99,7 +83,7 @@ const OracleOnPremTable = () => {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: t('databases.explore-savings.download-failed')
+                    message: 'Error downloading assessment script.'
                 })
             );
         }
@@ -110,14 +94,60 @@ const OracleOnPremTable = () => {
             accessor: 'hostName',
             id: '1',
             isSortable: true,
-            width: '16.66%'
+            isSticky: true,
+            width: '16.66%',
+            renderCell: (_: any, rowData: any) => {
+                const name = rowData?.resourceName;
+                return (
+                    <div>
+                        <DsTypography variant="Semibold_14">{name}</DsTypography>
+                    </div>
+                );
+            }
         },
         {
             Header: 'Database name',
-            accessor: 'databaseName',
+            accessor: 'databaseNameList',
             id: '2',
             width: '16.66%',
-            isSortable: true
+            isSortable: true,
+            renderCell: (cellData: any, rowData: any) => {
+                const truncatedItems = getTruncatedItems(cellData);
+                return (
+                    <div>
+                        {cellData && Number(cellData) !== 0 ? (
+                            <div className={styles.container}>
+                                <DsTypography
+                                    title={truncatedItems?.maxItemsToShow.join(', ')}
+                                    variant="Regular_14"
+                                    className={styles.sqlServerInstance}
+                                >
+                                    {truncatedItems?.maxItemsToShow.join(', ')}
+                                </DsTypography>
+                                {truncatedItems?.remaining.length > 0 && (
+                                    <Popover
+                                        popoverClass={styles.popover}
+                                        children={truncatedItems?.remaining.map((item: any) => (
+                                            <DsTypography variant="Regular_14">{item}</DsTypography>
+                                        ))}
+                                        trigger="hover"
+                                        interactive
+                                        delayHide={200}
+                                        container={
+                                            <DsTypography variant="Regular_14" className={styles.colorText}>
+                                                {`+ ${truncatedItems?.remaining.length}`}
+                                            </DsTypography>
+                                        }
+                                    />
+                                )}
+                            </div>
+                        ) : (
+                            ''
+                        )}
+                        {!cellData ? GENERAL.NOT_AVAILABLE : ''}
+                    </div>
+                );
+            }
         },
         {
             Header: 'Deployment model',
@@ -128,17 +158,59 @@ const OracleOnPremTable = () => {
         },
         {
             Header: 'On-premises nodes',
-            accessor: 'onPremModes',
+            accessor: 'onPremisesNodes',
             id: '4',
             width: '16.66%',
-            filterOptions: 'auto'
+            isSortable: true,
+            accessorForTextFilter: 'onPremNode',
+            renderCell: (cellData: any, rowData: any) => {
+                const truncatedItems = getTruncatedItems(cellData);
+
+                return (
+                    <div>
+                        {cellData && Number(cellData) !== 0 ? (
+                            <div className={styles.container}>
+                                <DsTypography
+                                    title={truncatedItems?.maxItemsToShow.join(', ')}
+                                    variant="Regular_14"
+                                    className={styles.sqlServerInstance}
+                                >
+                                    {truncatedItems?.maxItemsToShow.join(', ')}
+                                </DsTypography>
+                                {truncatedItems?.remaining.length > 0 && (
+                                    <Popover
+                                        popoverClass={styles.popover}
+                                        children={truncatedItems?.remaining.map((item: any) => (
+                                            <DsTypography variant="Regular_14">{item}</DsTypography>
+                                        ))}
+                                        trigger="hover"
+                                        interactive
+                                        delayHide={200}
+                                        container={
+                                            <DsTypography variant="Regular_14" className={styles.colorText}>
+                                                {`+ ${truncatedItems?.remaining.length}`}
+                                            </DsTypography>
+                                        }
+                                    />
+                                )}
+                            </div>
+                        ) : (
+                            ''
+                        )}
+                        {!cellData ? GENERAL.NOT_AVAILABLE : ''}
+                    </div>
+                );
+            }
         },
         {
             Header: 'Data collection time',
-            accessor: 'dataCOllectionDate',
+            accessor: 'creationTime',
             id: '5',
             width: '16.66%',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => (
+                <div>{cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE}</div>
+            )
         },
         {
             Header: '',
@@ -156,8 +228,9 @@ const OracleOnPremTable = () => {
         isSorting: false,
         selectionType: 'none',
         columns: OracleOnPremColDefs,
-        rows: mockData,
-        pageSize: 50
+        rows: onPremiseOracleData || [],
+        pageSize: 50,
+        isLoading: onPremiseOracleDataLoading || isUploadLoading
     });
 
     const handleFileInputClick = () => {
@@ -195,60 +268,80 @@ const OracleOnPremTable = () => {
             event.target.value = ''; // Clear the file input
             return;
         }
+        setIsUploadLoading(true);
         const reader = new FileReader();
         reader.onload = async e => {
             try {
-                // Parse the JSON data
-                const jsonString = e.target?.result as string;
+                if (isDemoMode) {
+                    setTimeout(() => {
+                        setIsUploadLoading(false);
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.INFO,
+                                message: 'File is already uploaded.'
+                            })
+                        );
+                        event.target.value = ''; // Clear the file input
+                    }, 3000);
+                } else {
+                    // Parse the JSON data
+                    const jsonString = e.target?.result as string;
 
-                // Encode JSON to Base64
-                const base64Encoded = btoa(jsonString);
+                    // Encode JSON to Base64
+                    const base64Encoded = btoa(jsonString);
 
-                // Convert Base64 string to Uint8Array
-                const base64Bytes = new TextEncoder().encode(base64Encoded);
+                    // Convert Base64 string to Uint8Array
+                    const base64Bytes = new TextEncoder().encode(base64Encoded);
 
-                // Compress the Base64 data using fflate
-                const compressedData = compressSync(base64Bytes);
+                    // Compress the Base64 data using fflate
+                    const compressedData = compressSync(base64Bytes);
 
-                // Convert the compressed data to Base64
-                const compressedBase64 = btoa(String.fromCharCode(...compressedData));
+                    // Convert the compressed data to Base64
+                    const compressedBase64 = btoa(String.fromCharCode(...compressedData));
 
-                if (compressedBase64) {
-                    const result = await getUploadScript({
-                        payload: {
-                            fileContent: compressedBase64,
-                            fileName: selectedFile.name
+                    if (compressedBase64) {
+                        const result = await getUploadScript({
+                            payload: {
+                                fileContent: compressedBase64,
+                                fileName: selectedFile.name
+                            }
+                        });
+
+                        if (result && !result?.error) {
+                            const jobInterval = setInterval(() => {
+                                getJobDetailApi({ id: result.data.jobId }).then((jobRes: any) => {
+                                    const status = jobRes?.data?.status;
+
+                                    if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                        fetchOracleOnPremData(true);
+                                        setIsUploadLoading(false);
+                                        dispatch(
+                                            addNotification({
+                                                notificationType: NOTIFICATION_TYPES.INFO,
+                                                message: t('databases.explore-savings.uploaded-assessment-script')
+                                            })
+                                        );
+                                        clearInterval(jobInterval);
+                                    } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                        setIsUploadLoading(false);
+                                        dispatch(
+                                            addNotification({
+                                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                                message: jobRes?.data?.error || 'Error uploading file.'
+                                            })
+                                        );
+                                        clearInterval(jobInterval);
+                                    }
+                                });
+                            }, 5000);
+                        } else {
+                            setIsUploadLoading(false);
+                            event.target.value = ''; //
                         }
-                    });
-
-                    if (result && !result?.error) {
-                        const jobInterval = setInterval(() => {
-                            getJobDetailApi({ id: result.data.jobId }).then((jobRes: any) => {
-                                const status = jobRes?.data?.status;
-
-                                if (status === JOB_MONITORING_STATUS.COMPLETED) {
-                                    dispatch(
-                                        addNotification({
-                                            notificationType: NOTIFICATION_TYPES.INFO,
-                                            message: t('databases.explore-savings.uploaded-assessment-script')
-                                        })
-                                    );
-                                    clearInterval(jobInterval);
-                                } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                                    dispatch(
-                                        addNotification({
-                                            notificationType: NOTIFICATION_TYPES.ERROR,
-                                            message: jobRes?.data?.error || 'Error uploading file.'
-                                        })
-                                    );
-                                    clearInterval(jobInterval);
-                                }
-                            });
-                        }, 5000);
                     }
                 }
             } catch (error) {
-                console.error('Error uploading WAD script:', error);
+                event.target.value = ''; // Clear the file input
             }
         };
 

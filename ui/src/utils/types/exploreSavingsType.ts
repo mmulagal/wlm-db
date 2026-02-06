@@ -27,6 +27,8 @@ export interface ExploreSavingsSliceEntities {
     regionChangeInstanceLoading: boolean;
     onPremiseData: any;
     onPremiseDataLoading: boolean;
+    onPremiseOracleData: any;
+    onPremiseOracleDataLoading: boolean;
     selectedOracleExploreSavingsTab: string;
     selectedExploreSavingsTab: string;
     selectedManualFSXThroughput: number;

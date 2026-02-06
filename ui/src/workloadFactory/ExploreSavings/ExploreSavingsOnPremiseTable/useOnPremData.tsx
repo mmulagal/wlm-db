@@ -1,7 +1,12 @@
 import { useState, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useGetOnPremSavingsMutation } from '../../../utils/apiService';
-import { setOnPremiseData, setOnPremiseDataLoading } from '../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    setOnPremiseData,
+    setOnPremiseDataLoading,
+    setOnPremiseOracleData,
+    setOnPremiseOracleDataLoading
+} from '../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
@@ -10,12 +15,14 @@ import { GENERAL } from '../../../utils/appConstants';
 export const useOnPremData = () => {
     const dispatch = useDispatch();
     const onPremiseData = useAppSelector(state => state.exploreSavings.onPremiseData);
+    const onPremiseOracleData = useAppSelector(state => state.exploreSavings.onPremiseOracleData);
     const [getOnPremSavings] = useGetOnPremSavingsMutation();
 
     const [error, setError] = useState<string | null>(null);
 
     // Ref to handle conditional refresh
     const isUploadRef = useRef(false);
+    const isOracleUploadRef = useRef(false);
 
     const fetchOnPremData = async (forceRefresh = false) => {
         if (!forceRefresh && onPremiseData && !isUploadRef.current) return;
@@ -25,7 +32,7 @@ export const useOnPremData = () => {
         dispatch(setOnPremiseDataLoading(true));
 
         try {
-            const apiResult = await getOnPremSavings({}); // Unwrap the API result for cleaner error handling
+            const apiResult = await getOnPremSavings({ type: 'mssql' }); // Unwrap the API result for cleaner error handling
             const result: any = [];
             apiResult?.data?.items?.map((perRow: any) => {
                 let perInstallationMode: string = '';
@@ -71,5 +78,47 @@ export const useOnPremData = () => {
         }
     };
 
-    return { onPremiseData, fetchOnPremData, error };
+    const fetchOracleOnPremData = async (forceRefresh = false) => {
+        if (!forceRefresh && onPremiseOracleData && !isOracleUploadRef.current) return;
+
+        setError(null); // Reset error state
+        dispatch(setOnPremiseOracleData(null));
+        dispatch(setOnPremiseOracleDataLoading(true));
+
+        try {
+            const apiResult = await getOnPremSavings({ type: 'oracle' });
+            const result: any = [];
+            apiResult?.data?.items?.map((perRow: any) => {
+                const uniqueId = `id${Math.random().toString(16).slice(2)}`;
+                const rowData = {
+                    ...perRow,
+                    id: uniqueId,
+                    nameForSorting: perRow?.resourceName?.toLowerCase(),
+                    databaseNameList:
+                        perRow?.oracleDatabases?.map((detail: { databaseName: string }) => detail?.databaseName) || [],
+                    deploymentModel:
+                        perRow?.oracleDatabases?.length > 0 ? perRow?.oracleDatabases[0]?.deploymentModel : '',
+                    onPremNode: perRow?.onPremisesNodes[0],
+                    uniqueId
+                };
+                result.push(rowData);
+            });
+
+            dispatch(setOnPremiseOracleData(result));
+            dispatch(setOnPremiseOracleDataLoading(false));
+        } catch (err) {
+            dispatch(setOnPremiseOracleData([]));
+            dispatch(setOnPremiseOracleDataLoading(false));
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: 'Error fetching data'
+                })
+            );
+        } finally {
+            isOracleUploadRef.current = false;
+        }
+    };
+
+    return { onPremiseData, fetchOnPremData, onPremiseOracleData, fetchOracleOnPremData, error };
 };

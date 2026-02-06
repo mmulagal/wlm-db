@@ -1218,8 +1218,8 @@ export const exploreSavingsApi = createApi({
             })
         }),
         getOnPremSavings: builder.mutation({
-            query: () => ({
-                url: 'v1/mssql/onprem-tco/resources'
+            query: ({ type }) => ({
+                url: `v1/${type}/onprem-tco/resources`
             })
         }),
         getOnPremCalculations: builder.mutation({

@@ -68,6 +68,8 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     },
     onPremiseData: null,
     onPremiseDataLoading: false,
+    onPremiseOracleData: null,
+    onPremiseOracleDataLoading: false,
     volumeFilledStatus: false,
     secondaryVolumeFilledStatus: false,
     manualTCOVolumeTypes: {
@@ -233,6 +235,12 @@ const exploreSavingsSlice = createSlice({
         },
         setOnPremiseDataLoading(state, action: PayloadAction<any>) {
             state.onPremiseDataLoading = action.payload;
+        },
+        setOnPremiseOracleData(state, action: PayloadAction<any>) {
+            state.onPremiseOracleData = action.payload;
+        },
+        setOnPremiseOracleDataLoading(state, action: PayloadAction<any>) {
+            state.onPremiseOracleDataLoading = action.payload;
         },
         setOnPremStorageAndComputeInfo(state, action: PayloadAction<any>) {
             if (!state.onPremStorageAndComputeInfo[action.payload.type]) {
@@ -633,6 +641,8 @@ export const {
     setOnPremiseData,
     setRegionChangeInstanceLoading,
     setOnPremiseDataLoading,
+    setOnPremiseOracleData,
+    setOnPremiseOracleDataLoading,
     setOnPremNetworkPerformance,
     setSelectedExploreSavingsTab,
     setRequestedRegion,

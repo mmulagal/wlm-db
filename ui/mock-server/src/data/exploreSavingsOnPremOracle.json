@@ -1,0 +1,95 @@
+{
+    "count": 5,
+    "items": [
+        {
+            "resourceId": "oracle_myaccount_scs001009529-2",
+            "resourceName": "scs001009529-1",
+            "creationTime": 1738735712000,
+            "oracleDatabases": [
+                {
+                    "databaseId": "1171943441",
+                    "databaseName": "PDBNAS1",
+                    "sid": "pdbnas1",
+                    "oracleVersion": "19.0.0.0.0",
+                    "oracleEdition": "Enterprise Edition",
+                    "deploymentModel": "Standalone",
+                    "isRacEnabled": false,
+                    "isDataGuardEnabled": false,
+                    "databaseRole": "PRIMARY",
+                    "isCDB": false,
+                    "vCPUs": 4,
+                    "pdbCount": 0,
+                    "errorMessage": null
+                }
+            ],
+            "hostInfo": {
+                "hostname": "scs001009529-2",
+                "cpuCount": 4,
+                "totalRamGB": 15.39,
+                "storageProtocol": "NFS"
+            },
+            "totalAllocatedCapacityGB": 2.67,
+            "onPremisesNodes": ["AOAG-Node1", "AOAG-Node2"]
+        },
+        {
+            "resourceId": "oracle_myaccount_scs001009529-2",
+            "resourceName": "scs001009529-2",
+            "creationTime": 1738735712000,
+            "oracleDatabases": [
+                {
+                    "databaseId": "1171943441",
+                    "databaseName": "PDBNAS1",
+                    "sid": "pdbnas1",
+                    "oracleVersion": "19.0.0.0.0",
+                    "oracleEdition": "Enterprise Edition",
+                    "deploymentModel": "Standalone",
+                    "isRacEnabled": false,
+                    "isDataGuardEnabled": false,
+                    "databaseRole": "PRIMARY",
+                    "isCDB": false,
+                    "vCPUs": 4,
+                    "pdbCount": 0,
+                    "errorMessage": null
+                }
+            ],
+            "hostInfo": {
+                "hostname": "scs001009529-2",
+                "cpuCount": 4,
+                "totalRamGB": 15.39,
+                "storageProtocol": "NFS"
+            },
+            "totalAllocatedCapacityGB": 2.67,
+            "onPremisesNodes": ["AOAG-Node1", "AOAG-Node2"]
+        },
+        {
+            "resourceId": "oracle_myaccount_scs001009529-2",
+            "resourceName": "scs001009529-3",
+            "creationTime": 1738735712000,
+            "oracleDatabases": [
+                {
+                    "databaseId": "1171943441",
+                    "databaseName": "PDBNAS1",
+                    "sid": "pdbnas1",
+                    "oracleVersion": "19.0.0.0.0",
+                    "oracleEdition": "Enterprise Edition",
+                    "deploymentModel": "Data Guard",
+                    "isRacEnabled": false,
+                    "isDataGuardEnabled": false,
+                    "databaseRole": "PRIMARY",
+                    "isCDB": false,
+                    "vCPUs": 4,
+                    "pdbCount": 0,
+                    "errorMessage": null
+                }
+            ],
+            "hostInfo": {
+                "hostname": "scs001009529-2",
+                "cpuCount": 4,
+                "totalRamGB": 15.39,
+                "storageProtocol": "NFS"
+            },
+            "totalAllocatedCapacityGB": 2.67,
+            "onPremisesNodes": ["AOAG-Node1", "AOAG-Node2"]
+        }
+    ]
+}
