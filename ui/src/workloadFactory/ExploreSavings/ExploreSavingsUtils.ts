@@ -1062,10 +1062,6 @@ export const formatViewCalcData = (
         };
     }
 
-    // Add bulk calculation data to result for savingsUtil file
-    result.isBulkCalculation = isBulkCalculation;
-    result.hostCalculationData = hostCalculationData;
-
     return result;
 };
 
@@ -1169,6 +1165,31 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
         };
     });
 
+    // Build per-volume snapshot data
+    const perVolumeSnapshotData: any = {};
+    Object.keys(viewCalculationsResponse?.ebsSnapshotCalculation || {}).forEach((key: string) => {
+        const volumeData = viewCalculationsResponse?.ebsSnapshotCalculation?.[key];
+        if (volumeData?.totalEbsSnapshotCost) {
+            perVolumeSnapshotData[key] = {
+                storageAmount: formatCalcSize(volumeData?.storageAmount),
+                numberOfVolumes: formatNumbers(volumeData?.numberOfVolumes),
+                ebsSnapshotPrice: volumeData?.ebsSnapshotPrice,
+                amountChangedPerSnapshot: formatCalcSize(volumeData?.amountChangedPerSnapshot),
+                monthlyCostOfSnapshots: formatNumbers(volumeData?.monthlyCostOfSnapshots),
+                monthlyChangeRatePercentage: volumeData?.monthlyChangeRatePercentage,
+                ebsInstanceMonth: formatNumbers(volumeData?.ebsInstanceMonth),
+                totalSnapshots: formatNumbers(volumeData?.totalSnapshots),
+                initialSnapshotCost: formatNumbers(volumeData?.initialSnapshotCost),
+                monthlyCostPerSnapshot: formatNumbers(volumeData?.monthlyCostPerSnapshot),
+                discountForPartialStorageMonth: formatNumbers(volumeData?.discountForPartialStorageMonth),
+                incrementalSnapshotCost: formatNumbers(volumeData?.incrementalSnapshotCost),
+                totalSnapshotCost: formatNumbers(volumeData?.totalSnapshotCost),
+                totalEbsSnapshotCost: formatNumbers(volumeData?.totalEbsSnapshotCost),
+                ebsSnapshotCost: formatNumbers(volumeData?.ebsSnapshotCost)
+            };
+        }
+    });
+
     return {
         ebsCalculation: EbsCalculationUpdates(viewCalculationsResponse?.ebsCalculation || {}),
         ebsSnapshotCalculation: {
@@ -1187,7 +1208,9 @@ export const getEbsViewCalculationData = (viewCalculationsResponse: ViewCalculat
             totalEbsSnapshotCost: formatNumbers(ebsSnapshotCalculation?.totalEbsSnapshotCost),
             ebsSnapshotCost: formatNumberWithCustomComma(ebsSnapshotCalculation?.ebsSnapshotCost),
             ebsSnapshotPrice: formatNumbers(ebsSnapshotCalculation?.ebsSnapshotPrice),
-            totalEbsSnapshotCostValue: ebsSnapshotCalculation?.ebsSnapshotCost
+            totalEbsSnapshotCostValue: ebsSnapshotCalculation?.ebsSnapshotCost,
+            // Per-volume snapshot data
+            ...perVolumeSnapshotData
         },
         ebsCloneCalculation: {
             clonedCopiesCount: formatNumbers(ebsCloneCalculation?.clonedCopiesCount),

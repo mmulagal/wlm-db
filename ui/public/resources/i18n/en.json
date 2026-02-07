@@ -1662,7 +1662,9 @@
                     "investigate-errors": "Analyze errors",
                     "deregister": "Deregister"
                 },
-                "credentials-not-available": "Credentials are required to access this information"
+                "unlock-database-size": "Register this database to unlock actual database size",
+                "unlock-protection-status": "Register this database to unlock protection status",
+                "unlock-performance-metrics": "Register this database to unlock performance metrics"
             }
         },
         "host-table": {

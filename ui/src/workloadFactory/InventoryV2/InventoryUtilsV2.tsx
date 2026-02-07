@@ -518,6 +518,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     : statusObj?.[0]?.status || INVENTORY_STATUS.UNDETECTED,
                 isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
                 fsxId: statusObj?.[0]?.fsxId,
+                fileSystemName: statusObj?.[0]?.fileSystemName,
                 ...authAndDetectFields
             };
         });
@@ -1477,6 +1478,7 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                         status: INVENTORY_STATUS.UNDETECTED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
+                        fileSystemName: fsxIdObject?.fileSystemName,
                         isFsxRegistered: !fsxCredentialValidationFailed,
                         manageReadiness: perRow?.manageReadiness,
                         windowsAuthentication: isWindowAuthentication,
@@ -1490,6 +1492,7 @@ export const getDiscoveredPerInstanceStatus = (row: DiscoverHostInterface, ssmSt
                         status: INVENTORY_STATUS.UNMANAGED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
+                        fileSystemName: fsxIdObject?.fileSystemName,
                         isFsxRegistered: !fsxCredentialValidationFailed,
                         manageReadiness: perRow?.manageReadiness,
                         windowsAuthentication: isWindowAuthentication,
@@ -1553,6 +1556,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                         status: INVENTORY_STATUS.UNDETECTED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
+                        fileSystemName: fsxIdObject?.fileSystemName,
                         isFsxRegistered: !fsxCredentialValidationFailed,
                         isDefaultAuthentication,
                         oracleServerAuthentication,
@@ -1565,6 +1569,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                         status: INVENTORY_STATUS.UNMANAGED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
+                        fileSystemName: fsxIdObject?.fileSystemName,
                         isFsxRegistered: !fsxCredentialValidationFailed,
                         isDefaultAuthentication,
                         oracleServerAuthentication,
@@ -1625,6 +1630,7 @@ export const getPgsqlPerInstanceStatus = (row: DiscoverPgsqlHostInterface, ssmSt
                         status: INVENTORY_STATUS.UNDETECTED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
+                        fileSystemName: fsxIdObject?.fileSystemName,
                         isFsxRegistered: !fsxCredentialValidationFailed
                     };
                 } else {
@@ -1633,6 +1639,7 @@ export const getPgsqlPerInstanceStatus = (row: DiscoverPgsqlHostInterface, ssmSt
                         status: INVENTORY_STATUS.UNMANAGED,
                         storageType: perRow?.storage,
                         fsxId: fsxIdObject?.id,
+                        fileSystemName: fsxIdObject?.fileSystemName,
                         isFsxRegistered: !fsxCredentialValidationFailed
                     };
                 }
@@ -1791,6 +1798,7 @@ export const formatDiscoverInstanceData = (
             fileSystemType: getDiscoverFileSystemType(perRow),
             storage: perRow?.storage,
             fsxId: statusObj?.[0]?.fsxId,
+            fileSystemName: statusObj?.[0]?.fileSystemName,
             isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
             sqlServerAuthentication: perRow?.sqlServerAuthentication,
             windowsAuthentication: perRow?.windowsAuthentication,
@@ -1830,6 +1838,7 @@ export const formatPgsqlDiscoverInstanceData = (
             fileSystemType: getDiscoverFileSystemType(perRow),
             storage: perRow?.storage,
             fsxId: statusObj?.[0]?.fsxId,
+            fileSystemName: statusObj?.[0]?.fileSystemName,
             isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
             isDefaultAuth: perRow?.defaultAuth,
             detectOption: statusObj?.[0]?.detectOption,
@@ -1872,6 +1881,7 @@ export const formatOracleDiscoverInstanceData = (
             fileSystemType: getDiscoverFileSystemType(perRow),
             storage: perRow?.storage,
             fsxId: statusObj?.[0]?.fsxId,
+            fileSystemName: statusObj?.[0]?.fileSystemName,
             isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
             oracleServerAuthentication: perRow?.oracleServerAuthentication,
             isDefaultAuthentication: perRow?.isDefaultAuthentication,
@@ -2597,6 +2607,7 @@ export const updateSqlServerInstancesForBothNodes = (
                 loading: perfData?.loading,
                 fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
                 fsxId: perRow?.databaseInstanceTopology?.fileSystemId || instRow?.fsxId,
+                fileSystemName: perRow?.databaseInstanceTopology?.fileSystemName || instRow?.fileSystemName,
                 protection: perfData?.protection || instRow?.protection || perRow?.protection,
                 performance: perfData?.performance || instRow?.performance || perRow?.performance,
                 storage: instRow?.storage || perRow?.storage,
@@ -2682,6 +2693,7 @@ export const updateSqlServerInstancesForUnmanaged = (
                     databaseCount: perRow?.databaseCount,
                     fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
                     fsxId: perRow?.databaseInstanceTopology?.fileSystemId || instRow?.fsxId,
+                    fileSystemName: perRow?.databaseInstanceTopology?.fileSystemName || instRow?.fileSystemName,
                     loading: perfData?.loading,
                     protection: instRow?.protection || perfData?.protection,
                     performance: instRow?.performance || perfData?.performance,
@@ -2780,6 +2792,7 @@ export const updateSqlServerInstancesForUnmanaged = (
                                     ? statusObj?.[0]?.status
                                     : instRow?.statusColText,
                             fsxId: statusObj?.[0]?.fsxId || instRow?.fsxId,
+                            fileSystemName: statusObj?.[0]?.fileSystemName || instRow?.fileSystemName,
                             isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
                             ...authFields
                         };

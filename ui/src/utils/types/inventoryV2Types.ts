@@ -209,6 +209,7 @@ export interface InventoryTableInstanceDatInterface {
     fileSystemDeploymentMode?: string;
     fileSystemType?: string;
     fsxId?: string;
+    fileSystemName?: string;
     statusColText?: string;
     storageSavingsText?: string;
     protection?: {
@@ -608,6 +609,7 @@ export interface OracleInstancesDiscovered {
         svmId?: string;
         protocol?: string;
         fileSystemStorageType?: string;
+        fileSystemName?: string;
         deploymentType?: string;
         zones?: Array<string>;
         nfsMountPoint?: string;
@@ -692,6 +694,7 @@ export interface DiscoveredStorageObj {
     svmId?: string;
     protocol?: string;
     fileSystemStorageType?: string;
+    fileSystemName?: string;
 }
 
 export interface StatusObjInterface {
@@ -699,6 +702,7 @@ export interface StatusObjInterface {
     name?: string;
     storageType?: any;
     fsxId?: string;
+    fileSystemName?: string;
     isFsxRegistered?: boolean;
     detectOption?: string;
     detectOptionDisableMsg?: string;

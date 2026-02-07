@@ -41,13 +41,92 @@ const SnapshotsEBSCalculation = () => {
             >
                 {viewCalculationsResponse && (
                     <AccordionCardContent>
-                        <DsTypography variant="Regular_14">{GENERAL.ES_SNAPSHOTS_DESC}</DsTypography>
+                        <DsTypography variant="Regular_14" style={{ marginBottom: '40px' }}>
+                            {GENERAL.ES_SNAPSHOTS_DESC}
+                        </DsTypography>
                         <DsTypography className={CommonStyles.accordionContentSet}>
-                            <div style={{ marginTop: '16px' }}>
+                            {viewCalculationsResponse?.ebsSnapshotCalculation?.gp3?.totalEbsSnapshotCost && (
+                                <>
+                                    <DsTypography variant="Semibold_14">{GENERAL.ES_GP3_VOLUME_TYPE}</DsTypography>
+                                    <div style={{ marginTop: '16px', marginBottom: '32px' }}>
+                                        {viewCalculationForEBS(
+                                            viewCalculationsResponse,
+                                            selectedDeploymentModel
+                                        )?.gp3SnapshotType?.map(
+                                            (data: { label: string; text?: string; value?: string }, index: number) => (
+                                                <TableLayout key={index} data={data} />
+                                            )
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                            {viewCalculationsResponse?.ebsSnapshotCalculation?.io2?.totalEbsSnapshotCost && (
+                                <>
+                                    <DsTypography variant="Semibold_14">{GENERAL.ES_IO2_VOLUME_TYPE}</DsTypography>
+                                    <div style={{ marginTop: '16px', marginBottom: '32px' }}>
+                                        {viewCalculationForEBS(
+                                            viewCalculationsResponse,
+                                            selectedDeploymentModel
+                                        )?.io2SnapshotType?.map(
+                                            (data: { label: string; text?: string; value?: string }, index: number) => (
+                                                <TableLayout key={index} data={data} />
+                                            )
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                            {viewCalculationsResponse?.ebsSnapshotCalculation?.io1?.totalEbsSnapshotCost && (
+                                <>
+                                    <DsTypography variant="Semibold_14">{GENERAL.ES_IO1_VOLUME_TYPE}</DsTypography>
+                                    <div style={{ marginTop: '16px', marginBottom: '32px' }}>
+                                        {viewCalculationForEBS(
+                                            viewCalculationsResponse,
+                                            selectedDeploymentModel
+                                        )?.io1SnapshotType?.map(
+                                            (data: { label: string; text?: string; value?: string }, index: number) => (
+                                                <TableLayout key={index} data={data} />
+                                            )
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                            {viewCalculationsResponse?.ebsSnapshotCalculation?.gp2?.totalEbsSnapshotCost && (
+                                <>
+                                    <DsTypography variant="Semibold_14">{GENERAL.ES_GP2_VOLUME_TYPE}</DsTypography>
+                                    <div style={{ marginTop: '16px', marginBottom: '32px' }}>
+                                        {viewCalculationForEBS(
+                                            viewCalculationsResponse,
+                                            selectedDeploymentModel
+                                        )?.gp2SnapshotType?.map(
+                                            (data: { label: string; text?: string; value?: string }, index: number) => (
+                                                <TableLayout key={index} data={data} />
+                                            )
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                            {viewCalculationsResponse?.ebsSnapshotCalculation?.st1?.totalEbsSnapshotCost && (
+                                <>
+                                    <DsTypography variant="Semibold_14">{GENERAL.ES_ST1_VOLUME_TYPE}</DsTypography>
+                                    <div style={{ marginTop: '16px', marginBottom: '32px' }}>
+                                        {viewCalculationForEBS(
+                                            viewCalculationsResponse,
+                                            selectedDeploymentModel
+                                        )?.st1SnapshotType?.map(
+                                            (data: { label: string; text?: string; value?: string }, index: number) => (
+                                                <TableLayout key={index} data={data} />
+                                            )
+                                        )}
+                                    </div>
+                                </>
+                            )}
+
+                            <DsTypography variant="Semibold_14">{GENERAL.ES_SNAPSHOTS} total cost</DsTypography>
+                            <div style={{ marginTop: '16px', marginBottom: '32px' }}>
                                 {viewCalculationForEBS(
                                     viewCalculationsResponse,
                                     selectedDeploymentModel
-                                )?.SnapshotCalculation?.map(
+                                )?.snapshotsTotalCost?.map(
                                     (data: { label: string; text?: string; value?: string }, index: number) => (
                                         <TableLayout key={index} data={data} />
                                     )

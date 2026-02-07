@@ -335,9 +335,20 @@ export function getOracleDatabaseColumnsList({
                         )}
                         {!cellData && loading && <DsFlashingDotsLoader />}
                         {!cellData && !loading && (
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {t('databases.general.not-available-table-columns')}
-                            </DsTypography>
+                            <div className={styles.naWithTooltip}>
+                                <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                    <div>
+                                        <DsTypography variant="Regular_13">
+                                            {t('databases.databases-table.oracle.unlock-protection-status')}
+                                        </DsTypography>
+                                    </div>
+                                </TooltipInfo>
+                                <div className={styles.colText}>
+                                    <DsTypography variant="Regular_13">
+                                        t('databases.general.not-available-table-columns')
+                                    </DsTypography>
+                                </div>
+                            </div>
                         )}
                     </>
                 );
@@ -385,9 +396,20 @@ export function getOracleDatabaseColumnsList({
                         )}
                         {!cellData && loadingPA && <DsFlashingDotsLoader />}
                         {!cellData && !loadingPA && (
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {t('databases.general.not-available-table-columns')}
-                            </DsTypography>
+                            <div className={styles.naWithTooltip}>
+                                <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                                    <div>
+                                        <DsTypography variant="Regular_13">
+                                            {t('databases.databases-table.oracle.unlock-performance-metrics')}
+                                        </DsTypography>
+                                    </div>
+                                </TooltipInfo>
+                                <div className={styles.colText}>
+                                    <DsTypography variant="Regular_13">
+                                        t('databases.general.not-available-table-columns')
+                                    </DsTypography>
+                                </div>
+                            </div>
                         )}
                     </>
                 );
@@ -432,20 +454,17 @@ export function getOracleDatabaseColumnsList({
                     <>
                         {loading && <DsFlashingDotsLoader />}
                         {!loading && !rowData?.size && (
-                            <div className={styles.databaseSize}>
-                                <TooltipInfo
-                                    className={`${styles.databaseSizeTooltipContainer} ${styles['tooltip-icon']}`}
-                                    trigger="hover"
-                                >
+                            <div className={styles.naWithTooltip}>
+                                <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
                                     <div>
                                         <DsTypography variant="Regular_13">
-                                            {t('databases.databases-table.oracle.credentials-not-available')}
+                                            {t('databases.databases-table.oracle.unlock-database-size')}
                                         </DsTypography>
                                     </div>
                                 </TooltipInfo>
                                 <div className={styles.colText}>
                                     <DsTypography variant="Regular_13">
-                                        {REGISTER_INSTANCE_STATE.NOT_AVAILABLE}
+                                        t('databases.general.not-available-table-columns')
                                     </DsTypography>
                                 </div>
                             </div>
