@@ -12,6 +12,7 @@ import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './OracleTCOTables.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import AssessmentDialog from './AssessmentDialog/AssessmentDialog';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -29,7 +30,7 @@ const OracleOnPremTable = () => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const [isUploadLoading, setIsUploadLoading] = useState(false);
-    const {  fetchOracleOnPremData } = useOnPremData();
+    const { fetchOracleOnPremData } = useOnPremData();
     const { onPremiseOracleData, onPremiseOracleDataLoading } = useAppSelector(state => state.exploreSavings);
     const buttonRef: any = useRef(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -74,7 +75,7 @@ const OracleOnPremTable = () => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: result?.error?.data?.message 
+                        message: result?.error?.data?.message
                     })
                 );
             }
@@ -144,7 +145,7 @@ const OracleOnPremTable = () => {
                         ) : (
                             ''
                         )}
-                        {!cellData ? GENERAL.NOT_AVAILABLE : ''}
+                        {!cellData ? t('databases.general.not-available') : ''}
                     </div>
                 );
             }
@@ -197,7 +198,7 @@ const OracleOnPremTable = () => {
                         ) : (
                             ''
                         )}
-                        {!cellData ? GENERAL.NOT_AVAILABLE : ''}
+                        {!cellData ? t('databases.general.not-available') : ''}
                     </div>
                 );
             }
@@ -209,14 +210,28 @@ const OracleOnPremTable = () => {
             width: '16.66%',
             filterOptions: 'auto',
             renderCell: (cellData: string) => (
-                <div>{cellData ? formatDateWithTime(cellData) : GENERAL.NOT_AVAILABLE}</div>
+                <div>{cellData ? formatDateWithTime(cellData) : t('databases.general.not-available')}</div>
             )
         },
         {
             Header: '',
             accessor: '',
             id: '6',
-            width: '16.66%'
+            width: '16.66%',
+            isSticky: true,
+            renderCell: (cellData: any, rowData: any) => (
+                <div className={styles.lasColContainer}>
+                    <div
+                        className={CommonStyles.detectManage}
+                        onClick={() => {}}
+                        id="wlm-db-onprem-oracle-explore-savings-table-button"
+                    >
+                        <DsTypography variant="Regular_14" className={CommonStyles.textStyle}>
+                            {t('databases.explore-savings.table-tooltip-content-three')}
+                        </DsTypography>
+                    </div>
+                </div>
+            )
         }
     ];
 

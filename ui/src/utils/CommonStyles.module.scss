@@ -8,6 +8,30 @@
     width: 196px;
 }
 
+@mixin detectManageBase($color) {
+    width: 134px;
+    height: 32px;
+    border-radius: 32px;
+    border: 1px solid var(--text-button-#{$color});
+
+    .textStyle {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2px;
+        color: var(--text-button-#{$color});
+    }
+}
+
+.detectManage {
+    @include detectManageBase(primary);
+    cursor: pointer;
+}
+
+.detectManageDisable {
+    @include detectManageBase(disabled);
+}
+
 .carousalClass {
     cursor: pointer;
     svg {

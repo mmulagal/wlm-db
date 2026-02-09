@@ -10,11 +10,11 @@ import { ReactComponent as Onprem } from '../../../assets/Onprem.svg';
 import { ReactComponent as CarousalLeft } from '../../../assets/Carousel Arrow left.svg';
 import { ReactComponent as CarousalRight } from '../../../assets/Carousel Arrow right.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import styles from './OracleTCOBanner.module.scss';
+import styles from './TCOBanner.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DBType } from '../../../utils/consts';
 
-const OracleTCOBanner = () => {
+const TCOBanner = () => {
     const { t } = useTranslation();
     const { selectedTCOHostType } = useAppSelector(state => state.exploreSavings);
     const [activeSlide, setActiveSlide] = useState(0); // 0 for first, 1 for second
@@ -174,4 +174,4 @@ const OracleTCOBanner = () => {
     );
 };
 
-export default OracleTCOBanner;
+export default TCOBanner;

@@ -18,7 +18,7 @@ import { WLF_TABS } from '../../../utils/consts';
 import ExploreSavingsOnPremiseTable from '../ExploreSavingsOnPremiseTable/ExploreSavingsOnPremiseTable';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import ExploreSavingsFsxTable from '../ExploreSavingsTableV2/ExploreSavingsFsxTable';
-import OracleTCOBanner from '../TCOBanner/OracleTCOBanner';
+import TCOBanner from '../TCOBanner/TCOBanner';
 
 const ExploreSavingHeader = () => {
     const dispatch = useDispatch();
@@ -41,7 +41,7 @@ const ExploreSavingHeader = () => {
                     {/* For on-premise */}
                     {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                         <div className={`${styles.exploreSavingsHeader} ${styles.exploreSavingsHeaderOnPrem}`}>
-                            <OracleTCOBanner />
+                            <TCOBanner />
                             {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                                 <ExploreSavingsOnPremiseTable />
                             )}
@@ -116,7 +116,7 @@ const ExploreSavingHeader = () => {
                 <>
                     {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                         <div className={`${styles.exploreSavingsHeader} ${styles.exploreSavingsHeaderOnPrem}`}>
-                            <OracleTCOBanner />
+                            <TCOBanner />
                             {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                                 <ExploreSavingsOnPremiseTable />
                             )}
@@ -198,7 +198,7 @@ const ExploreSavingHeader = () => {
                 <>
                     {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                         <div className={`${styles.exploreSavingsHeader} ${styles.exploreSavingsHeaderOnPrem}`}>
-                            <OracleTCOBanner />
+                            <TCOBanner />
                             {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
                                 <ExploreSavingsOnPremiseTable />
                             )}

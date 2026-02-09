@@ -213,7 +213,7 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
                     return <StorageSizingOracleDialog type={type} />;
 
-                //oracle compute cards
+                // oracle compute cards
                 case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
                     return <ComputeOracleDialog missingPatchList={missingPatchList} />;
             }

@@ -6,7 +6,7 @@ import styles from './ExploreSavings.module.scss';
 import ExploreSavingsOracleTab from './ExploreSavingsTab/ExploreSavingsOracleTab';
 import ExploreSavingsTab from './ExploreSavingsTab/ExploreSavingsTab';
 import OracleTCOTables from './OracleTCO/OracleTCOTables';
-import OracleTCOBanner from './TCOBanner/OracleTCOBanner';
+import TCOBanner from './TCOBanner/TCOBanner';
 
 const ExploreSavings = () => {
     const { selectedTCOHostType } = useAppSelector(state => state.exploreSavings);
@@ -24,7 +24,7 @@ const ExploreSavings = () => {
             {selectedTCOHostType === DBType.ORACLE && (
                 <>
                     <ExploreSavingsOracleTab />
-                    <OracleTCOBanner />
+                    <TCOBanner />
                     <OracleTCOTables />
                 </>
             )}
