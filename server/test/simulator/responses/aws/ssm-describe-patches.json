@@ -10,6 +10,7 @@
             "Classification": "SecurityUpdates",
             "InstalledTime": "1970-01-01T00:00:00.000Z",
             "KBId": "KB5044099",
+            "CVEIds": "CVE-2024-43498,CVE-2024-43499",
             "Severity": "Important",
             "State": "Missing",
             "Title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)"

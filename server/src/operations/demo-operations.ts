@@ -60,6 +60,7 @@ import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from 
 import {
     mockResourceAssessmentData,
     mockResourceAssessmentDataAllOptimized,
+    mockOracleHostOsPatchAssessmentData,
     optimizedResourceName
 } from '../utils/demo-utils/hostAssementsData';
 import {
@@ -842,7 +843,8 @@ async function createDeploymentMockDataInDBForOracle(
         resourceType: RESOURCESTYPE.ORACLE,
         coRelationId: fsxId,
         region,
-        metadata
+        metadata,
+        assessmentData: mockOracleHostOsPatchAssessmentData as ResourceAssessmentData
     });
 
     const instanceRecord = {

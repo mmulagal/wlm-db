@@ -34,6 +34,7 @@ interface HostOsPatchAssessmentObject {
     criticalNonCompliantCount: number;
     otherNonCompliantCount: number;
     ec2InstanceId: string;
+    ec2InstanceName?: string;
     operationStartTime: number;
     operationEndTime: number;
     securityNonCompliantCount: number;

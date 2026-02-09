@@ -718,6 +718,89 @@ const mockResourceAssessmentDataAllOptimized = {
     }
 };
 
+const mockOracleHostOsPatchAssessmentData = {
+    hostOsPatch: [
+        {
+            baselineId: 'pb-0da914616003c89f1',
+            ec2InstanceId: 'i-5520fe41798c75632',
+            ec2InstanceName: 'OracleDB-Prod-01',
+            operationEndTime: new Date('2025-06-15T10:45:00Z').getTime(),
+            operationStartTime: new Date('2025-06-15T10:30:00Z').getTime(),
+            missingPatchDetails: [
+                {
+                    classification: 'Security',
+                    cveIds: 'CVE-2025-21785,CVE-2025-21760',
+                    severity: 'Critical',
+                    state: 'Missing',
+                    title: 'kernel-5.14.0-503.40.1.el9_5.x86_64 - Security update for Linux kernel'
+                },
+                {
+                    classification: 'Security',
+                    cveIds: 'CVE-2024-50302,CVE-2024-53197',
+                    severity: 'Critical',
+                    state: 'Missing',
+                    title: 'kernel-headers-5.14.0-503.40.1.el9_5.x86_64 - Security update for kernel headers'
+                },
+                {
+                    classification: 'Security',
+                    cveIds: 'CVE-2025-0624',
+                    severity: 'Important',
+                    state: 'Missing',
+                    title: 'grub2-common-2.06-94.el9_5.3.noarch - Security update for GRUB2 bootloader'
+                },
+                {
+                    classification: 'Security',
+                    cveIds: 'CVE-2024-12243',
+                    severity: 'Important',
+                    state: 'Missing',
+                    title: 'gnutls-3.8.3-4.el9_5.5.x86_64 - Security update for GnuTLS'
+                },
+                {
+                    classification: 'Security',
+                    cveIds: 'CVE-2024-11187,CVE-2024-12705',
+                    severity: 'Important',
+                    state: 'Missing',
+                    title: 'bind-utils-9.16.23-24.el9_5.3.x86_64 - Security update for BIND DNS utilities'
+                },
+                {
+                    classification: 'Security',
+                    cveIds: 'CVE-2024-11168',
+                    severity: 'Important',
+                    state: 'Missing',
+                    title: 'python3-urllib3-1.26.5-5.el9_5.1.noarch - Security update for Python urllib3'
+                }
+            ],
+            otherNonCompliantCount: 0,
+            criticalNonCompliantCount: 2,
+            securityNonCompliantCount: 4
+        }
+    ],
+    lastAssessedDate: new Date().getTime().toString()
+};
+
+const mockOracleHostOsPatchAssessmentDataAllOptimized = {
+    hostOsPatch: [
+        {
+            baselineId: 'pb-0da914616003c89f1',
+            ec2InstanceId: 'i-5520fe41798c75632',
+            ec2InstanceName: 'OracleDB-Prod-01',
+            operationEndTime: new Date('2025-06-15T10:45:00Z').getTime(),
+            operationStartTime: new Date('2025-06-15T10:30:00Z').getTime(),
+            missingPatchDetails: [],
+            otherNonCompliantCount: 0,
+            criticalNonCompliantCount: 0,
+            securityNonCompliantCount: 0
+        }
+    ],
+    lastAssessedDate: new Date().getTime().toString()
+};
+
 const optimizedResourceName = ['SQL-Managed-Host-DEV'];
 
-export { mockResourceAssessmentData, mockResourceAssessmentDataAllOptimized, optimizedResourceName };
+export {
+    mockResourceAssessmentData,
+    mockResourceAssessmentDataAllOptimized,
+    mockOracleHostOsPatchAssessmentData,
+    mockOracleHostOsPatchAssessmentDataAllOptimized,
+    optimizedResourceName
+};

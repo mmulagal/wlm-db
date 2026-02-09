@@ -20,11 +20,7 @@ import {
 } from '../../../utils/common-types';
 import { AuditStatus, HttpErrorCodes, RESOURCESTYPE, DatabaseTypes, STORAGE_PROTOCOLS } from '../../../utils/consts';
 import { IS_DEMO_FLOW, IS_PROD, sleep } from '../../../utils/utils';
-import {
-    AssessmentCategories,
-    AssessmentCategoriesOracle,
-    AssessmentTriggeredBy
-} from '../../../utils/continous-optimization-consts';
+import { AssessmentCategoriesOracle, AssessmentTriggeredBy } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getOracleDatabaseMappedVolumes } from '../../workloads/oracle/oracle-operations';
@@ -850,6 +846,8 @@ async function fetchOracleDriftAssessmentPerHost(
         );
     }
 
+    const assessmentFields = [AssessmentCategoriesOracle.STORAGE, AssessmentCategoriesOracle.HOST_OS_PATCH].join(',');
+
     const driftAssessments = await Promise.all(
         instancesManaged.map(
             throat(3, async instance => {
@@ -862,7 +860,7 @@ async function fetchOracleDriftAssessmentPerHost(
                         region,
                         databaseHostId,
                         databaseInstanceId,
-                        AssessmentCategories.STORAGE,
+                        assessmentFields,
                         { ...instance, resource: resourceDetail } as DatabaseInstancesIncludingResource
                     );
                     return { databaseInstanceId, databaseInstanceName, assessments: driftAssessment };
@@ -906,7 +904,8 @@ async function fetchOracleDriftAssessmentPerAccount(
         resourceType: RESOURCESTYPE.ORACLE,
         pageSize: pageSize || 50,
         nextToken: clientNextToken,
-        includeDatabaseInstances: true
+        includeDatabaseInstances: true,
+        assessmentData: true
     });
     if (isEmpty(resourceDetails)) {
         logger.info(`No successfully deployed database hosts found for account ${accountId} in region ${region}.`);
