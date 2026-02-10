@@ -1193,7 +1193,17 @@ const InstancesTable = () => {
         try {
             const response: any = await getOneTimeWADDownloadScript({});
 
-            if (response && response.data && response.data.message === 'Success') {
+            if (response?.data?.blob) {
+                const { blob, fileName } = response.data;
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.INFO,
@@ -1353,7 +1363,7 @@ const InstancesTable = () => {
                                                 {
                                                     id: 'wlm-db-download-script-mssql',
                                                     label: t('databases.inventory.download-script'),
-                                                    isDisabled: true,
+                                                    isDisabled: false,
                                                     onClick: () => {
                                                         downloadWADScript();
                                                     }
@@ -1361,7 +1371,7 @@ const InstancesTable = () => {
                                                 {
                                                     id: 'wlm-db-upload-results-mssql',
                                                     label: t('databases.inventory.upload-results'),
-                                                    isDisabled: true,
+                                                    isDisabled: false,
                                                     onClick: handleFileInputClick
                                                 }
                                             ]

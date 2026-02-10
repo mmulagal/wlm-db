@@ -850,7 +850,15 @@ export const inventoryApiV2 = createApi({
         }),
         getOneTimeWADDownloadScript: builder.mutation({
             query: () => ({
-                url: 'v1/mssql/offline-assessment/collector'
+                url: 'v1/mssql/offline-assessment/collector',
+                responseHandler: async (response: Response) => {
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    const fileName =
+                        contentDisposition?.match(/filename="?([^";\n]+)"?/)?.[1] ||
+                        'NetApp_WF_MSSQL_Assessment.zip';
+                    const blob = await response.blob();
+                    return { blob, fileName };
+                }
             })
         }),
         getDatabaseHostsFullDataV2: builder.query({
