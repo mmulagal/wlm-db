@@ -24,10 +24,19 @@ enum OracleSysFileTypes {
 }
 
 enum OracleDataguardProtectionLevel {
-    MAXIMUM_PROTECTION = 'MAXIMUM_PROTECTION',
-    MAXIMUM_AVAILABILITY = 'MAXIMUM_AVAILABILITY',
-    MAXIMUM_PERFORMANCE = 'MAXIMUM_PERFORMANCE',
-    UNKNOWN = 'UNKNOWN' // NOT a VALID state in Oracle, introduced in script when error occurs while fetching protection level
+    MAXIMUM_PROTECTION = 'MAXIMUM PROTECTION',
+    MAXIMUM_AVAILABILITY = 'MAXIMUM AVAILABILITY',
+    MAXIMUM_PERFORMANCE = 'MAXIMUM PERFORMANCE',
+    UNKNOWN = 'UNKNOWN' // Added UNKNOWN to handle cases where protection level cannot be determined
+}
+
+enum OracleOpenModes {
+    READ_WRITE = 'READ WRITE',
+    READ_ONLY = 'READ ONLY',
+    MOUNTED = 'MOUNTED',
+    NOMOUNT = 'NOMOUNT',
+    READ_ONLY_WITH_APPLY = 'READ ONLY WITH APPLY',
+    UNKNOWN = 'UNKNOWN' // Added UNKNOWN to handle cases where open mode cannot be determined
 }
 
 interface OracleVolumeRecord {
@@ -105,6 +114,12 @@ const DataguardDetailsResponse = Type.Intersect([
             Type.Enum(OracleDataguardProtectionLevel, {
                 description:
                     'Data Guard protection mode: MAXIMUM PROTECTION, MAXIMUM AVAILABILITY, or MAXIMUM PERFORMANCE'
+            })
+        ),
+        openMode: Type.Optional(
+            Type.Enum(OracleOpenModes, {
+                description:
+                    'Oracle instance open mode: READ WRITE, READ ONLY, MOUNTED, NOMOUNT, or READ ONLY WITH APPLY'
             })
         )
     }),

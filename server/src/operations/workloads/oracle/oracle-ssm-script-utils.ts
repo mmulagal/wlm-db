@@ -57,6 +57,30 @@ parse_sqlplus_output() {
 }
 `;
 
+const getOracleInstanceOpenMode = `
+    get_open_mode() {
+        local ORACLE_SID="$1"
+        local open_mode=""
+        open_mode=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
+            export ORACLE_SID="$1"
+            sqlplus_cmd="$2"
+            sqlplus_output=$($sqlplus_cmd <<'EOSQL'
+                ${sqlplusOutputFormatSettings}
+                SELECT open_mode FROM v$database;
+EOSQL
+)
+        echo "$sqlplus_output"
+EOF
+)
+        open_mode=$(parse_sqlplus_output "$open_mode")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            open_mode="UNKNOWN"
+        fi
+        echo "$open_mode" | tr -d '\n'
+    }
+`;
+
 const parseSpfileProperties = (propertyValue: string, spFilePath: string) =>
     `$(strings "${spFilePath}" | grep -i "\\.${propertyValue}" | sed "s/.*=//;s/'//g" | tr ',' '\n' | sed '/^$/d' | head -n1)`;
 const checkCommandStatus = `
@@ -321,6 +345,7 @@ EOF
 
 const dataguardDeploymentUtilities = `
     ${parseSqlplusOutput}
+    ${getOracleInstanceOpenMode}
     check_dataguard_deployment() {
         local ORACLE_SID="$1"
         # if dataguard is configured, FAL_CLIENT and FAL_SERVER will be configured and have different values in spfile for DB
@@ -402,23 +427,7 @@ EOF
     is_active_dataguard() {
         local ORACLE_SID="$1"
         local open_mode=""
-        open_mode=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
-            export ORACLE_SID="$1"
-            sqlplus_cmd="$2"
-            sqlplus_output=$($sqlplus_cmd <<'EOSQL'
-                ${sqlplusOutputFormatSettings}
-                SELECT open_mode FROM v$database;
-EOSQL
-)
-        echo "$sqlplus_output"
-EOF
-)
-        open_mode=$(parse_sqlplus_output "$open_mode")
-        sqlplus_exit_code=$?
-        if [ $sqlplus_exit_code -ne 0 ]; then
-            echo "false"
-            return
-        fi
+        open_mode=$(get_open_mode "$ORACLE_SID")
         # Active Data Guard is enabled when open_mode is READ ONLY WITH APPLY
         if [[ "$open_mode" == *"READ ONLY WITH APPLY"* ]]; then
             echo "true"

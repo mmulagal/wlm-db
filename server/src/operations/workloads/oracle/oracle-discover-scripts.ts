@@ -191,7 +191,10 @@ EOF
             protectionLevel="UNKNOWN"
         fi
 
-        echo "{\\"dbUniqueName\\":\\"$dbUniqueName\\",\\"dbName\\":\\"$dbName\\",\\"associatedHosts\\":$associatedHosts,\\"isPrimaryNode\\":$isPrimaryNode,\\"role\\":\\"$role\\",\\"status\\":$syncStatus,\\"isActiveDataguard\\":$isActiveDataguard,\\"protectionLevel\\":\\"$protectionLevel\\"}" | tr -d '\n'
+        local openMode=""
+        openMode=$(get_open_mode "$ORACLE_SID")
+
+        echo "{\\"dbUniqueName\\":\\"$dbUniqueName\\",\\"dbName\\":\\"$dbName\\",\\"associatedHosts\\":$associatedHosts,\\"isPrimaryNode\\":$isPrimaryNode,\\"role\\":\\"$role\\",\\"status\\":$syncStatus,\\"isActiveDataguard\\":$isActiveDataguard,\\"protectionLevel\\":\\"$protectionLevel\\",\\"openMode\\":\\"$openMode\\"}" | tr -d '\n'
     }
 
 `;
