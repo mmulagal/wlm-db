@@ -229,7 +229,9 @@ const SERVER_DETAILS = `
         WHERE host_process_id is NOT NULL
         ) AS numberOfConnections,
         SERVERPROPERTY('Edition') AS ServerEdition,
+        SERVERPROPERTY('EngineEdition') AS sqlEngineEdition,
         SERVERPROPERTY('IsClustered') AS isClustered,
+        SERVERPROPERTY('IsHadrEnabled') AS isHadrEnabled,
         SERVERPROPERTY('ComputerNamePhysicalNetBIOS') AS activeNode,
         @@version AS serverDetails,
         @@SERVERNAME AS clusterName,

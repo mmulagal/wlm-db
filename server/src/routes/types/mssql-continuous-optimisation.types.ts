@@ -111,12 +111,13 @@ const RssConfigDriftResponse = Type.Intersect([
         ),
         recommendedAdapterSettings: Type.Optional(
             Type.Object({
-                recommendedRssProfile: Type.String(),
-                recommendedBaseProcessorNumber: Type.Number(),
-                recommendedReceiveQueues: Type.Number()
+                recommendedRssProfile: Type.Optional(Type.String()),
+                recommendedBaseProcessorNumber: Type.Optional(Type.Number()),
+                recommendedReceiveQueues: Type.Optional(Type.Number())
             })
         ),
-        tcpOffloadState: Type.Optional(Type.String())
+        tcpOffloadState: Type.Optional(Type.String()),
+        rssConfigFinding: Type.Optional(Type.String())
     })
 ]);
 
@@ -272,6 +273,7 @@ const MSSQLDriftAssessmentResponse = Type.Object({
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
     dismissedConfigurations: Type.Optional(DismissedConfigurationsResponse),
     fileSystemId: Type.Optional(Type.String()),
+    storageEndpoint: Type.Optional(Type.String()),
     ec2InstanceId: Type.Optional(Type.String()),
     databaseInstanceName: Type.Optional(Type.String()),
     deploymentType: Type.Optional(Type.String()),

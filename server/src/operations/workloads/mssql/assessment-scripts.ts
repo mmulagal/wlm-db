@@ -294,6 +294,7 @@ const GET_RSS_CONFIG_DETAILS = () => `
 
     $jsonResult = $result | ConvertTo-Json -Compress
     Write-Output $jsonResult
+    $rssConfigData = $jsonResult
 `;
 
 const GET_RUNNING_SQL_SERVERS = () => `

@@ -19,6 +19,7 @@ const RESILIENCY_OPTIMIZE_LOG_PATH = 'C:\\cfn\\log\\resiliency-optimize.log.txt'
 const RSS_OPTIMIZE_LOG_PATH = 'C:\\cfn\\log\\rss-optimize.log.txt';
 const CRR_ASSESSMENT_LOG_PATH = 'C:\\cfn\\log\\crr-assessment.log.txt';
 const HIGH_AVAILABILITY_LOG_PATH = 'C:\\cfn\\log\\high-availability.log.txt';
+const OFFLINE_ASSESSMENT_LOG_PATH = 'C:\\ProgramData\\NetApp\\WorkloadFactory\\Logs\\offline-assessment.log.txt';
 
 const REQUIRED_PS_MODULES_FOR_MANAGEMENT: string = `
   'AWS.Tools.EC2',
@@ -57,5 +58,6 @@ export {
     HIGH_AVAILABILITY_LOG_PATH,
     REQUIRED_PS_MODULES_FOR_MANAGEMENT,
     AOAG_ROLE_PRIMARY,
-    AOAG_ROLE_SECONDARY
+    AOAG_ROLE_SECONDARY,
+    OFFLINE_ASSESSMENT_LOG_PATH
 };

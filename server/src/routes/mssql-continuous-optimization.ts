@@ -68,6 +68,17 @@ import {
     SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
 } from '../operations/workloads/mssql/const';
 import { SSMDocument } from '../utils/common-types';
+import {
+    fetchMssqlOfflineAssessmentPerAccount,
+    fetchMssqlOfflineAssessment
+} from '../operations/continuous-optimization/mssql/offline-assessment-operations';
+import { uploadOfflineAssessment, downloadOfflineAssessmentScript } from '../operations/offline-assessment-operations';
+import {
+    OfflineAssessmentListSchema,
+    OfflineAssessmentUploadSchema,
+    OfflineAssessmentGetByIdSchema,
+    OfflineAssessmentDownloadSchema
+} from './schemas/offline-assessment-schema';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/mssql';
@@ -499,6 +510,90 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                     hostsToOptimize
                 );
                 return reply.send(response);
+            }
+        )
+        .get(
+            '/v1/mssql/offline-assessment',
+            { schema: OfflineAssessmentListSchema(DatabaseTypes.MS_SQL_SERVER) },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    query: { pageSize, nextToken, credentialsId, region }
+                } = castRequest(request);
+
+                const response = await fetchMssqlOfflineAssessmentPerAccount(
+                    accountId,
+                    pageSize,
+                    nextToken,
+                    credentialsId,
+                    region
+                );
+                return reply.send(response);
+            }
+        )
+        // Upload offline assessment data from JSON file (supports multiple database instances)
+        .post(
+            '/v1/mssql/offline-assessment/upload',
+            { schema: OfflineAssessmentUploadSchema(DatabaseTypes.MS_SQL_SERVER) },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    query: { credentialsId, region },
+                    body: { fileName, fileContent }
+                } = castRequest(request);
+
+                // Validate file extension
+                if (!fileName.toLowerCase().endsWith('.json')) {
+                    return reply.status(400).send({ message: 'Only JSON files are accepted' });
+                }
+
+                const response = await uploadOfflineAssessment(
+                    accountId,
+                    fileContent,
+                    fileName,
+                    'mssql',
+                    credentialsId,
+                    region
+                );
+                return reply.send(response);
+            }
+        )
+        // Get specific offline assessment by resource ID and database instance ID
+        .get(
+            '/v1/mssql/database-hosts/:resourceId/database-instances/:databaseInstanceId/offline-assessment',
+            { schema: OfflineAssessmentGetByIdSchema(DatabaseTypes.MS_SQL_SERVER) },
+            async (request, reply) => {
+                const {
+                    params: { accountId, resourceId, databaseInstanceId },
+                    query: { fields, credentialsId, region }
+                } = castRequest(request);
+
+                const response = await fetchMssqlOfflineAssessment(
+                    accountId,
+                    resourceId,
+                    databaseInstanceId,
+                    credentialsId,
+                    region,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+        // Download offline assessment script as zip
+        .get(
+            '/v1/mssql/offline-assessment/collector',
+            { schema: OfflineAssessmentDownloadSchema(DatabaseTypes.MS_SQL_SERVER) },
+            async (request, reply) => {
+                const {
+                    params: { accountId }
+                } = castRequest(request);
+
+                const { zipBuffer, filename } = await downloadOfflineAssessmentScript(accountId, 'mssql');
+
+                return reply
+                    .header('Content-Type', 'application/zip')
+                    .header('Content-Disposition', `attachment; filename="${filename}"`)
+                    .send(zipBuffer);
             }
         );
 }

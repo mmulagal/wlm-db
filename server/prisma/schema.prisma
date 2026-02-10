@@ -231,6 +231,29 @@ model logs_analysis_reports {
   @@index([creation_time], map: "k_wlmdb_logs_analysis_reports_creation_time")
 }
 
+model offline_assessment {
+  id                   String        @id @default(uuid()) @db.VarChar(40)
+  account_id           String        @db.VarChar(64)
+  credentials_id       String?       @db.VarChar(80)
+  region               String?       @db.VarChar(30)
+  resource_id          String        @db.VarChar(255)
+  database_instance_id String        @db.VarChar(36)
+  database_type        DATABASE_TYPE
+  rawdata              Json
+  mapped_ontap_volumes Json?
+  assessment_results   Json?         @default("{}")
+  metadata             Json?         @default("{}")
+  created_time         DateTime      @default(now()) @db.DateTime(3)
+  updated_time         DateTime      @default(now()) @updatedAt @db.DateTime(3)
+
+  @@unique([account_id, resource_id, database_instance_id], name: "uk_wlmdb_offline_assessment", map: "uk_wlmdb_offline_assessment")
+  @@index([account_id], map: "k_wlmdb_offline_assessment_account_id")
+  @@index([credentials_id], map: "k_wlmdb_offline_assessment_credentials_id")
+  @@index([resource_id], map: "k_wlmdb_offline_assessment_resource_id")
+  @@index([database_instance_id], map: "k_wlmdb_offline_assessment_database_instance_id")
+  @@index([created_time], map: "k_wlmdb_offline_assessment_created_time")
+}
+
 enum JOBSTATUS {
   IN_PROGRESS
   COMPLETED

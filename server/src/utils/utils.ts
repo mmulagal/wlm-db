@@ -6,6 +6,7 @@ import { attempt, trimEnd, trimStart, camelCase, isEmpty, isObject } from 'lodas
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import CIDR from 'ip-cidr';
+import archiver from 'archiver';
 import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import numeral from 'numeral';
@@ -1444,6 +1445,46 @@ function hyphenatedToPascalCaseWithSpace(str: string): string {
         .join(' ');
 }
 
+async function createInMemoryZip(options: {
+    scriptContent: string;
+    databaseType: string;
+    filename?: string;
+    version?: string;
+}): Promise<{ zipBuffer: Buffer; filename: string }> {
+    const { scriptContent, databaseType, filename, version } = options;
+    const baseFilename = filename ?? ASSESSMENT_SCRIPT_FILENAMES[databaseType];
+
+    if (!baseFilename) {
+        throw new Error(`No default filename found for database type: ${databaseType}`);
+    }
+
+    // Insert version into filename (e.g., NetApp_WF_MSSQL_Assessment_v1.0.0.ps1)
+    const scriptFilename = version ? baseFilename.replace(/(\.[^.]+)$/, `_v${version}$1`) : baseFilename;
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.append(scriptContent, { name: scriptFilename });
+    archive.finalize();
+
+    const chunks: Buffer[] = [];
+    for await (const chunk of archive) {
+        chunks.push(chunk as Buffer);
+    }
+
+    return {
+        zipBuffer: Buffer.concat(chunks),
+        filename: scriptFilename.replace(/\.[^.]+$/, '.zip')
+    };
+}
+
+/**
+ * Map of database types to their default assessment script filenames
+ */
+const ASSESSMENT_SCRIPT_FILENAMES: Record<string, string> = {
+    mssql: 'NetApp_WF_MSSQL_Assessment.ps1',
+    oracle: 'NetApp_WF_Oracle_Assessment.sh',
+    pgsql: 'NetApp_WF_PostgreSQL_Assessment.sh'
+};
+
 function compressSsmCommand(params: SendCommandCommandInput) {
     // Compress commands if they exceed size threshold
     if (IS_DEMO_FLOW) {
@@ -1584,5 +1625,7 @@ export {
     summarizeFirstLevel,
     camelCaseToHyphenated,
     hyphenatedToPascalCaseWithSpace,
+    createInMemoryZip,
+    ASSESSMENT_SCRIPT_FILENAMES,
     compressSsmCommand
 };
