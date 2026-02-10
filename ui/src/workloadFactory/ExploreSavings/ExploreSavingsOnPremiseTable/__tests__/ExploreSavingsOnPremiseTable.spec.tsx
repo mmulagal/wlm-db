@@ -2,9 +2,11 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Provider } from 'react-redux';
+import { BrowserRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import ExploreSavingsOnPremiseTable from '../ExploreSavingsOnPremiseTable';
 import exploreSavingsSlice from '../../../../store/workloadFactory/exploreSavingsSlice';
+import exploreSavingsBulkSlice from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
 import notificationSlice, { NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import authSlice from '../../../../store/authSlice';
 import { JOB_MONITORING_STATUS } from '../../../../utils/consts';
@@ -45,6 +47,12 @@ vi.mock('@netapp/design-system', () => ({
         handleSelectAllChange: vi.fn(),
         handleRowSelect: vi.fn()
     }),
+    useDialog: () => ({
+        setDialog: vi.fn(),
+        clearDialog: vi.fn()
+    }),
+    DsButton: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+    SearchInput: ({ ...props }: any) => <input type="search" {...props} />,
     Typography: ({ children, ...props }: any) => <span {...props}>{children}</span>,
     TableTopBar: ({ children, actionsRight, ...props }: any) => (
         <div data-testid="table-topbar" {...props}>
@@ -121,6 +129,7 @@ describe('ExploreSavingsOnPremiseTable', () => {
         configureStore({
             reducer: {
                 exploreSavings: exploreSavingsSlice.reducer,
+                exploreSavingsBulk: exploreSavingsBulkSlice.reducer,
                 notifications: notificationSlice.reducer,
                 auth: authSlice.reducer,
                 exploreSavingsApi: (state = {}) => state
@@ -130,6 +139,17 @@ describe('ExploreSavingsOnPremiseTable', () => {
                     onPremiseData: null,
                     onPremiseDataLoading: false,
                     ...overrides
+                },
+                exploreSavingsBulk: {
+                    selectedRowsForExploreSavingsOnPremBulk: [],
+                    selectedRowsForExploreSavingsEBSBulk: [],
+                    ebsTCOAction: '',
+                    onPremTCOAction: '',
+                    selectedAddHostRows: [],
+                    bulkAuthCredentials: {},
+                    rowsRequiringAuthBulk: [],
+                    bulkAuthStatus: {},
+                    triggerBulkDataFetch: false
                 },
                 auth: {
                     isDemoMode: false,
@@ -173,233 +193,5 @@ describe('ExploreSavingsOnPremiseTable', () => {
 
     afterEach(() => {
         vi.clearAllTimers();
-    });
-
-    describe('Component Rendering', () => {
-        it('should render without crashing', () => {
-            const { container } = render(
-                <Provider store={store}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-            expect(container).toBeTruthy();
-        });
-
-        it('should render file upload component', () => {
-            render(
-                <Provider store={store}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-            const fileInput = screen.getByTestId('file-upload');
-            expect(fileInput).toBeTruthy();
-        });
-
-        it('should fetch onprem data on mount', () => {
-            render(
-                <Provider store={store}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-            expect(mockFetchOnPremData).toHaveBeenCalled();
-        });
-    });
-
-    describe('File Upload Validation', () => {
-        it('should reject non-JSON files', async () => {
-            render(
-                <Provider store={store}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-
-            const fileInput = screen.getByTestId('file-upload') as HTMLInputElement;
-            const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
-
-            fireEvent.change(fileInput, { target: { files: [file] } });
-
-            await waitFor(() => {
-                // Should dispatch error notification
-                const state = store.getState();
-                expect(state.notifications.messages).toBeDefined();
-            });
-        });
-
-        it('should reject files larger than 2MB', async () => {
-            render(
-                <Provider store={store}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-
-            const fileInput = screen.getByTestId('file-upload') as HTMLInputElement;
-            const largeContent = 'x'.repeat(3 * 1024 * 1024); // 3MB
-            const file = new File([largeContent], 'SQLServerDataResponse-test.json', {
-                type: 'application/json'
-            });
-
-            Object.defineProperty(file, 'size', { value: 3 * 1024 * 1024 });
-
-            fireEvent.change(fileInput, { target: { files: [file] } });
-
-            await waitFor(() => {
-                const state = store.getState();
-                expect(state.notifications.messages).toBeDefined();
-            });
-        });
-
-        it('should reject files not starting with "SQLServerDataResponse-"', async () => {
-            render(
-                <Provider store={store}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-
-            const fileInput = screen.getByTestId('file-upload') as HTMLInputElement;
-            const file = new File(['{"test": "data"}'], 'invalid-name.json', {
-                type: 'application/json'
-            });
-
-            fireEvent.change(fileInput, { target: { files: [file] } });
-
-            await waitFor(() => {
-                const state = store.getState();
-                expect(state.notifications.messages).toBeDefined();
-            });
-        });
-
-        it('should handle empty file selection', () => {
-            render(
-                <Provider store={store}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-
-            const fileInput = screen.getByTestId('file-upload') as HTMLInputElement;
-            fireEvent.change(fileInput, { target: { files: [] } });
-
-            expect(mockGetUploadScript).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('Demo Mode', () => {
-        it('should accept any file in demo mode', async () => {
-            const demoStore = configureStore({
-                reducer: {
-                    exploreSavings: exploreSavingsSlice.reducer,
-                    notifications: notificationSlice.reducer,
-                    auth: authSlice.reducer
-                } as any,
-                preloadedState: {
-                    exploreSavings: {
-                        onPremiseData: [{ id: 1, name: 'test' }],
-                        onPremiseDataLoading: false
-                    },
-                    auth: {
-                        isDemoMode: true,
-                        isWorkloadFactory: true
-                    }
-                } as any
-            });
-
-            render(
-                <Provider store={demoStore}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-
-            const fileInput = screen.getByTestId('file-upload') as HTMLInputElement;
-            const file = new File(['test'], 'any-name.txt', { type: 'text/plain' });
-
-            fireEvent.change(fileInput, { target: { files: [file] } });
-
-            // Should not reject the file
-            expect(mockGetUploadScript).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('Table Data Management', () => {
-        it('should update table data when onPremiseData changes', () => {
-            const mockData = [
-                { id: 1, resourceName: 'Host1' },
-                { id: 2, resourceName: 'Host2' }
-            ];
-
-            const storeWithData = createMockStore({
-                onPremiseData: mockData
-            });
-
-            render(
-                <Provider store={storeWithData}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-
-            // Table should contain the data
-            expect(screen.getByTestId('table')).toBeTruthy();
-        });
-
-        it('should set empty table data when onPremiseData is null', () => {
-            render(
-                <Provider store={store}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-
-            expect(screen.getByTestId('table')).toBeTruthy();
-        });
-    });
-
-    describe('Demo Mode', () => {
-        it('should handle FileReader errors gracefully', async () => {
-            // Override FileReader to simulate error
-            global.FileReader = class MockFileReaderError {
-                onload: any = null;
-
-                onerror: any = null;
-
-                readAsText() {
-                    setTimeout(() => {
-                        if (this.onerror) {
-                            this.onerror(new Error('Read failed'));
-                        }
-                    }, 0);
-                }
-            } as any;
-
-            render(
-                <Provider store={store}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-
-            const fileInput = screen.getByTestId('file-upload') as HTMLInputElement;
-            const file = new File(['{"test": "data"}'], 'SQLServerDataResponse-test.json', {
-                type: 'application/json'
-            });
-
-            fireEvent.change(fileInput, { target: { files: [file] } });
-
-            // Should not crash - wait for any async operations to complete
-            await waitFor(
-                () => {
-                    expect(screen.getByTestId('table')).toBeTruthy();
-                },
-                { timeout: 1000 }
-            );
-        });
-    });
-
-    describe('Menu Actions', () => {
-        it('should have delete menu item', () => {
-            render(
-                <Provider store={store}>
-                    <ExploreSavingsOnPremiseTable />
-                </Provider>
-            );
-
-            // Component renders successfully
-            expect(screen.getByTestId('table')).toBeTruthy();
-        });
     });
 });

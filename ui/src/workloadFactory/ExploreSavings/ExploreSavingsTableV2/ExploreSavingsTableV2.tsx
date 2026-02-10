@@ -415,6 +415,7 @@ const ExploreSavingsTableV2 = () => {
         isSorting: false,
         columns: ExploreSavingsColDefs,
         selectionType: 'multiple',
+
         rows: selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? updatedTableData : fsxWTableData || [],
         pageSize: 50,
         defaultSelectedRows: [],
@@ -466,6 +467,7 @@ const ExploreSavingsTableV2 = () => {
         dispatch(resetOptimizedStorage());
 
         // Check if any of the selected hosts need authentication
+
         const rowsNeedingAuth = shouldAuthDialogOpenBulk(selectedRowsForExploreSavingsEBSBulk || []);
 
         dispatch(setRowsRequiringAuthBulk(rowsNeedingAuth));

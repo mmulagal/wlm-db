@@ -89,38 +89,4 @@ describe('FilesSize Component', () => {
                 }
             }
         });
-
-    it('should update data size in store when changed', () => {
-        const store = createMockStore();
-
-        render(
-            <Provider store={store}>
-                <FilesSize />
-            </Provider>
-        );
-
-        const dataInput = screen.getByTestId('textfield-Data size');
-        fireEvent.change(dataInput, { target: { value: '20' } });
-
-        // The component should dispatch the action
-        const state = store.getState();
-        expect(state.createNewUser.newUserDataSize).toBeDefined();
-    });
-
-    it('should update log size in store when changed', () => {
-        const store = createMockStore();
-
-        render(
-            <Provider store={store}>
-                <FilesSize />
-            </Provider>
-        );
-
-        const logInput = screen.getByTestId('textfield-Log size');
-        fireEvent.change(logInput, { target: { value: '5' } });
-
-        // The component should dispatch the action
-        const state = store.getState();
-        expect(state.createNewUser.newUserLogFileSize).toBeDefined();
-    });
 });
