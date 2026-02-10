@@ -23,6 +23,13 @@ enum OracleSysFileTypes {
     FRA = 'FRA'
 }
 
+enum OracleDataguardProtectionLevel {
+    MAXIMUM_PROTECTION = 'MAXIMUM_PROTECTION',
+    MAXIMUM_AVAILABILITY = 'MAXIMUM_AVAILABILITY',
+    MAXIMUM_PERFORMANCE = 'MAXIMUM_PERFORMANCE',
+    UNKNOWN = 'UNKNOWN' // NOT a VALID state in Oracle, introduced in script when error occurs while fetching protection level
+}
+
 interface OracleVolumeRecord {
     volumeId: string;
     volumeName: string;
@@ -66,7 +73,12 @@ const OracleDataguardDiscoveryDetails = Type.Object({
                 ec2InstanceId: Type.Optional(Type.String({ description: 'Data Guard host EC2 instance ID' })),
                 listenerPort: Type.Optional(Type.String({ description: 'Data Guard listen port' })),
                 sidName: Type.Optional(Type.String({ description: 'Data Guard SID name' })),
-                role: Type.Optional(Type.String({ description: 'Data Guard role (PRIMARY, PHYSICAL STANDBY, etc.)' }))
+                role: Type.Optional(Type.String({ description: 'Data Guard role (PRIMARY, PHYSICAL STANDBY, etc.)' })),
+                hostName: Type.Optional(Type.String({ description: 'Data Guard host EC2 instance private DNS name' })),
+                databaseHostId: Type.Optional(Type.String({ description: 'Data Guard database host WLM database ID' })),
+                databaseInstanceId: Type.Optional(
+                    Type.String({ description: 'Data Guard database instance WLM database ID' })
+                )
             })
         )
     ),
@@ -87,6 +99,12 @@ const DataguardDetailsResponse = Type.Intersect([
             Type.Boolean({
                 description:
                     'Indicates if Active Data Guard is enabled. True when a Physical Standby database is open in READ ONLY WITH APPLY mode.'
+            })
+        ),
+        protectionLevel: Type.Optional(
+            Type.Enum(OracleDataguardProtectionLevel, {
+                description:
+                    'Data Guard protection mode: MAXIMUM PROTECTION, MAXIMUM AVAILABILITY, or MAXIMUM PERFORMANCE'
             })
         )
     }),

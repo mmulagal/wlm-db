@@ -30,7 +30,7 @@ SET TRIMSPOOL ON;
 WHENEVER SQLERROR EXIT SQL.SQLCODE;
 `;
 const parseSqlplusOutput = `
-# capture the first line of sqlplus output or the first ORA- error encountered
+# capture all non-empty lines of sqlplus output or the first ORA- error encountered
 # exit code 0 if no error, 1 if error
 parse_sqlplus_output() {
     local sqlplus_out
@@ -51,7 +51,7 @@ parse_sqlplus_output() {
         return 1
     fi
     local output
-    output=$(printf '%s' "$sqlplus_out" | sed -n '/[^[:space:]]/ { s/^[[:space:]]*//; s/[[:space:]]*$//; p; q }')
+    output=$(printf '%s' "$sqlplus_out" | sed -n '/[^[:space:]]/ { s/^[[:space:]]*//; s/[[:space:]]*$//; p }')
     printf '%s' "$output"
     return 0
 }
@@ -425,6 +425,33 @@ EOF
         else
             echo "false"
         fi
+    }
+
+    # Get Data Guard protection mode from v$database
+    # Returns: MAXIMUM PROTECTION, MAXIMUM AVAILABILITY, or MAXIMUM PERFORMANCE
+    # On error, returns empty string (contained error - doesn't affect other fields)
+    get_dataguard_protection_and_performance_details() {
+        local ORACLE_SID="$1"
+        local protection_mode=""
+        protection_mode=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
+            export ORACLE_SID="$1"
+            sqlplus_cmd="$2"
+            sqlplus_output=$($sqlplus_cmd <<'EOSQL'
+                ${sqlplusOutputFormatSettings}
+                SELECT protection_mode FROM v$database;
+EOSQL
+)
+        echo "$sqlplus_output"
+EOF
+)
+        protection_mode=$(parse_sqlplus_output "$protection_mode")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            # Contained error - return empty string, don't exit or set global error
+            echo ""
+            return
+        fi
+        echo "$protection_mode" | tr -d '\n'
     }
 
     get_dataguard_db_name_and_db_unique_name() {

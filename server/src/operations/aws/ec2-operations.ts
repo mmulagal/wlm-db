@@ -1049,14 +1049,15 @@ async function getInstanceDetailsByPrivateIp(
     );
     ec2InstanceList.forEach(instance => {
         if (instance) {
-            const { InstanceId, PrivateIpAddress, InstanceType, Tags, UsageOperation } = instance;
+            const { InstanceId, PrivateIpAddress, InstanceType, Tags, UsageOperation, PrivateDnsName } = instance;
             if (InstanceId && PrivateIpAddress && InstanceType) {
                 instanceDetails.push({
                     ec2InstanceId: InstanceId,
                     ec2InstancePrivateIpAddress: PrivateIpAddress,
                     ec2InstanceType: InstanceType,
                     ec2InstanceName: getResourceNameFromTags(Tags),
-                    ec2UsageOperation: UsageOperation
+                    ec2UsageOperation: UsageOperation,
+                    ec2InstancePrivateDnsName: PrivateDnsName
                 });
             }
         }

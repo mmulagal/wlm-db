@@ -185,7 +185,13 @@ EOF
         if [ "$isPrimaryNode" == "false" ]; then
             isActiveDataguard=$(is_active_dataguard "$ORACLE_SID")
         fi
-        echo "{\\"dbUniqueName\\":\\"$dbUniqueName\\",\\"dbName\\":\\"$dbName\\",\\"associatedHosts\\":$associatedHosts,\\"isPrimaryNode\\":$isPrimaryNode,\\"role\\":\\"$role\\",\\"status\\":$syncStatus,\\"isActiveDataguard\\":$isActiveDataguard}" | tr -d '\n'
+        local protectionLevel=""
+        protectionLevel=$(get_dataguard_protection_and_performance_details "$ORACLE_SID")
+        if [ $? -ne 0 ]; then
+            protectionLevel="UNKNOWN"
+        fi
+
+        echo "{\\"dbUniqueName\\":\\"$dbUniqueName\\",\\"dbName\\":\\"$dbName\\",\\"associatedHosts\\":$associatedHosts,\\"isPrimaryNode\\":$isPrimaryNode,\\"role\\":\\"$role\\",\\"status\\":$syncStatus,\\"isActiveDataguard\\":$isActiveDataguard,\\"protectionLevel\\":\\"$protectionLevel\\"}" | tr -d '\n'
     }
 
 `;

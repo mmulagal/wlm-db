@@ -365,6 +365,7 @@ interface NodeDetails {
     ec2InstanceName?: string;
     ec2InstanceType: string;
     ec2UsageOperation?: string;
+    ec2InstancePrivateDnsName?: string;
 }
 interface ResourceDetails {
     id: string | null; // the value is null when the resource is not found in the database; in case of unmanaged hosts the DB record is not created.

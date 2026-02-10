@@ -579,7 +579,8 @@ async function getOracleDatabaseInstancesSummary(
     fields?: string,
     resourceDetails?: ResourceDetails,
     standbyNodeInstanceId?: string,
-    getOracleHostSummary?: boolean
+    getOracleHostSummary?: boolean,
+    getRegisteredDataguardInstances?: boolean
 ) {
     logger.info('Fetching summary of Oracle database instances', {
         accountId,
@@ -590,7 +591,8 @@ async function getOracleDatabaseInstancesSummary(
         fields,
         resourceDetails,
         standbyNodeInstanceId,
-        getOracleHostSummary
+        getOracleHostSummary,
+        getRegisteredDataguardInstances
     });
 
     let fieldsValues: Array<string> = [];
@@ -626,7 +628,8 @@ async function getOracleDatabaseInstancesSummary(
             credentialsId,
             region,
             activeNodeInstanceId,
-            databaseInstances.map(db => db.database_instance_name)
+            databaseInstances.map(db => db.database_instance_name),
+            getRegisteredDataguardInstances ?? false
         ),
         Promise.all(
             databaseInstances.map(async databaseInstance => {
@@ -937,54 +940,12 @@ async function getOracleDatabaseInstancesSummary(
         });
     }
 
-    // Distribute DataGuard details to each result
+    // Distribute DataGuard details to each result (associatedHosts are already enriched by getDataguardDetailsForAllInstances)
     if (dataguardInfo && !isEmpty(dataguardInfo)) {
-        // Collect all host IPs from dataguardInfo for EC2 lookup
-        const allHostIps: string[] = [];
-        Object.values(dataguardInfo).forEach((dgDetails: any) => {
-            if (dgDetails?.associatedHosts && Array.isArray(dgDetails.associatedHosts)) {
-                dgDetails.associatedHosts.forEach((host: { hostIp?: string }) => {
-                    if (host.hostIp) {
-                        allHostIps.push(host.hostIp);
-                    }
-                });
-            }
-        });
-
-        // Lookup EC2 instance details by private IPs
-        let hostEc2Details: { ec2InstanceId: string; ec2InstancePrivateIpAddress: string }[] = [];
-        if (allHostIps.length > 0) {
-            try {
-                hostEc2Details = await getInstanceDetailsByPrivateIp(credentialsId, region, uniq(allHostIps), {
-                    useCache: true
-                });
-            } catch (error) {
-                logger.warn('Failed to fetch EC2 details for DataGuard hosts', { error });
-            }
-        }
-
         results?.forEach(result => {
-            if (result.databaseInstanceName && dataguardInfo[result.databaseInstanceName]) {
-                const dgInfo = dataguardInfo[result.databaseInstanceName];
-                // Transform associatedHosts to include EC2 instance IDs
-                const transformedAssociatedHosts = dgInfo.associatedHosts?.map(
-                    (host: { sidName?: string; serviceName?: string; role?: string; hostIp?: string }) => {
-                        const matchedEc2 = hostEc2Details.find(
-                            ec2detail => ec2detail.ec2InstancePrivateIpAddress === host.hostIp
-                        );
-                        return {
-                            sidName: host.sidName,
-                            serviceName: host.serviceName || host.sidName,
-                            role: host.role,
-                            ec2InstanceId: matchedEc2?.ec2InstanceId,
-                            hostIp: host.hostIp
-                        };
-                    }
-                );
-                result.dataguardDetails = {
-                    ...dgInfo,
-                    associatedHosts: transformedAssociatedHosts
-                };
+            const dgInfo = result.databaseInstanceName ? dataguardInfo[result.databaseInstanceName] : undefined;
+            if (dgInfo && !isEmpty(dgInfo)) {
+                result.dataguardDetails = dgInfo;
             }
             result.isDataGuardDeployed = !isEmpty(result.dataguardDetails);
         });
@@ -1036,6 +997,7 @@ async function getOracleDatabaseHostInstanceSummary(
             fields,
             resourceDetails,
             undefined,
+            true,
             true
         );
         let tenancy = (databaseInstance?.metadata as DatabaseInstanceMetadata)?.oracleDeploymentType;
@@ -1293,7 +1255,8 @@ async function getDataguardDetailsForAllInstances(
     credentialsId: string,
     region: string,
     ec2InstanceId: string,
-    oracleSids: string[]
+    oracleSids: string[],
+    getRegisteredDataguardInstances: boolean = false
 ) {
     logger.info('Fetching DataGuard details for all Oracle instances', {
         accountId,
@@ -1317,11 +1280,112 @@ async function getDataguardDetailsForAllInstances(
             documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         });
 
-        if (response) {
-            const parsedResponse = sqlResponseParsing(response);
+        if (!response) {
+            return {};
+        }
+
+        const parsedResponse = sqlResponseParsing(response);
+        if (isEmpty(parsedResponse)) {
+            return {};
+        }
+
+        // Collect all host IPs from parsed DataGuard response for EC2 lookup
+        const allHostIps: string[] = [];
+        Object.values(parsedResponse).forEach((dgDetails: any) => {
+            if (dgDetails?.associatedHosts && Array.isArray(dgDetails.associatedHosts)) {
+                dgDetails.associatedHosts.forEach((host: { hostIp?: string }) => {
+                    if (host.hostIp) {
+                        allHostIps.push(host.hostIp);
+                    }
+                });
+            }
+        });
+
+        if (allHostIps.length === 0) {
             return parsedResponse;
         }
-        return {};
+
+        // update associatedHosts with EC2 details and database identifiers
+        try {
+            const ec2DetailsByIp = new Map<
+                string,
+                { ec2InstanceId: string; ec2InstancePrivateIpAddress: string; ec2InstancePrivateDnsName?: string }
+            >();
+            const dbInstanceLookupMap = new Map<string, { databaseHostId: string; databaseInstanceId: string }>();
+
+            // Fetch EC2 instance details and Oracle resources in parallel
+            const [ec2DetailsResult, oracleResourcesResult] = await Promise.allSettled([
+                getInstanceDetailsByPrivateIp(credentialsId, region, uniq(allHostIps), { useCache: true }),
+                ...(getRegisteredDataguardInstances
+                    ? [
+                          listResources({
+                              accountId,
+                              credentialIds: credentialsId,
+                              region,
+                              resourceType: DatabaseTypes.ORACLE,
+                              includeDatabaseInstances: true
+                          })
+                      ]
+                    : [Promise.resolve([])])
+            ]);
+
+            if (ec2DetailsResult.status === 'fulfilled') {
+                ec2DetailsResult.value.forEach(ec2 => ec2DetailsByIp.set(ec2.ec2InstancePrivateIpAddress, ec2));
+            }
+
+            if (
+                oracleResourcesResult.status === 'fulfilled' &&
+                Array.isArray(oracleResourcesResult.value) &&
+                oracleResourcesResult.value.length > 0
+            ) {
+                oracleResourcesResult.value.forEach((resource: ResourceDetails) => {
+                    const nodeInstanceId = (resource.metadata as Metadata)?.node1InstanceId;
+                    if (nodeInstanceId && resource.database_instances) {
+                        resource.database_instances.forEach((dbInstance: DatabaseInstance) => {
+                            const key = `${nodeInstanceId}::${dbInstance.database_instance_name}`;
+                            dbInstanceLookupMap.set(key, {
+                                databaseHostId: resource.resource_id,
+                                databaseInstanceId: dbInstance.database_instance_id
+                            });
+                        });
+                    }
+                });
+            }
+
+            // Update associatedHosts with EC2 details and database identifiers
+            Object.values(parsedResponse).forEach((dgDetails: any) => {
+                if (dgDetails?.associatedHosts && Array.isArray(dgDetails.associatedHosts)) {
+                    dgDetails.associatedHosts = dgDetails.associatedHosts.map(
+                        (host: { sidName?: string; serviceName?: string; role?: string; hostIp?: string }) => {
+                            const matchedEc2 = host.hostIp ? ec2DetailsByIp.get(host.hostIp) : undefined;
+                            const lookupKey = `${matchedEc2?.ec2InstanceId}::${host.sidName}`;
+                            const dbDetails = matchedEc2 ? dbInstanceLookupMap.get(lookupKey) : undefined;
+
+                            return {
+                                sidName: host.sidName,
+                                serviceName: host.serviceName || host.sidName,
+                                role: host.role,
+                                hostIp: host.hostIp,
+                                ...(matchedEc2 && {
+                                    ec2InstanceId: matchedEc2.ec2InstanceId,
+                                    hostName: matchedEc2.ec2InstancePrivateDnsName
+                                }),
+                                ...(dbDetails && {
+                                    databaseHostId: dbDetails.databaseHostId,
+                                    databaseInstanceId: dbDetails.databaseInstanceId
+                                })
+                            };
+                        }
+                    );
+                }
+            });
+        } catch (error) {
+            logger.warn('Failed to add DataGuard associatedHosts with EC2 and database details', {
+                error
+            });
+        }
+
+        return parsedResponse;
     } catch (error) {
         logger.error('Error fetching DataGuard details for Oracle instances', { error });
         return {};
