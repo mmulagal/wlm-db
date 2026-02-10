@@ -345,7 +345,7 @@ export function getOracleDatabaseColumnsList({
                                 </TooltipInfo>
                                 <div className={styles.colText}>
                                     <DsTypography variant="Regular_13">
-                                        t('databases.general.not-available-table-columns')
+                                        {t('databases.general.not-available-table-columns')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -406,7 +406,7 @@ export function getOracleDatabaseColumnsList({
                                 </TooltipInfo>
                                 <div className={styles.colText}>
                                     <DsTypography variant="Regular_13">
-                                        t('databases.general.not-available-table-columns')
+                                        {t('databases.general.not-available-table-columns')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -464,7 +464,7 @@ export function getOracleDatabaseColumnsList({
                                 </TooltipInfo>
                                 <div className={styles.colText}>
                                     <DsTypography variant="Regular_13">
-                                        t('databases.general.not-available-table-columns')
+                                        {t('databases.general.not-available-table-columns')}
                                     </DsTypography>
                                 </div>
                             </div>
