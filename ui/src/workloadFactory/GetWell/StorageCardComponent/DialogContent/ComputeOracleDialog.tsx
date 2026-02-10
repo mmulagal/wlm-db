@@ -21,7 +21,7 @@ function ComputeOracleDialog({ missingPatchList = [] }: ComputeOracleDialogProps
 
     const EncryptionColDefs: ColumnProps[] = [
         {
-            Header: t('databases.well-architect.host-name'),
+            Header: t('databases.well-architect.ec2instance-name'),
             accessor: 'instanceName',
             id: '1',
             isSortable: true,

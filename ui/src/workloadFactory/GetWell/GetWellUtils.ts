@@ -1065,6 +1065,8 @@ export const formatMicrosoftSqlPatchCardConfig = (
     let criticalPatches = 0;
     let importantPatches = 0;
     let missingPatchList: any = [];
+    const databaseHostName = data?.databaseHostName;
+    const databaseInstanceName = data?.databaseInstanceName;
     data?.mssqlPatch?.missingPatchesInEc2Instances?.map(perInstance => {
         totalPatches += perInstance?.criticalMissingPatchesCount || 0;
         totalPatches += perInstance?.importantMissingPatchesCount || 0;
@@ -1074,7 +1076,9 @@ export const formatMicrosoftSqlPatchCardConfig = (
             ...missingPatchList,
             ...(perInstance?.missingPatchDetails || []).map(patch => ({
                 ...patch,
-                instanceName: perInstance.ec2InstanceName
+                instanceName: perInstance.ec2InstanceName,
+                // Format as hostname\instanceName
+                hostInstanceName: `${databaseHostName}\\${databaseInstanceName}`
             }))
         ];
     });

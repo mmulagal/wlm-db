@@ -1,6 +1,7 @@
 import { DsTypography, Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 
@@ -10,6 +11,7 @@ type MSSQLPatchDialogProps = {
 };
 
 function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps) {
+    const { t } = useTranslation();
     const tableData = useMemo(
         () =>
             missingPatchList?.map((item, index) => ({
@@ -21,35 +23,38 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
 
     const EncryptionColDefs: ColumnProps[] = [
         {
-            Header: 'Instance Name',
-            accessor: 'instanceName',
+            Header:
+                type === 'osPatch'
+                    ? t('databases.well-architect.ec2instance-name')
+                    : t('databases.well-architect.instance-name'),
+            accessor: type === 'osPatch' ? 'instanceName' : 'hostInstanceName',
             id: '1',
             isSortable: true,
             width: '180px'
         },
         {
-            Header: 'KB',
+            Header: t('databases.well-architect.kb-id'),
             accessor: 'kbId',
             id: '2',
             isSortable: true,
             width: '137px'
         },
         {
-            Header: 'Name',
+            Header: t('databases.well-architect.name'),
             accessor: 'title',
             id: '3',
             isSortable: true,
             width: '262px'
         },
         {
-            Header: 'Classification',
+            Header: t('databases.well-architect.classification'),
             accessor: 'classification',
             id: '4',
             isSortable: true,
             width: '164px'
         },
         {
-            Header: 'Severity',
+            Header: t('databases.well-architect.severity'),
             accessor: 'severity',
             id: '5',
             isSortable: true,
@@ -58,11 +63,7 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
     ];
 
     const tableProps = useTable({
-        // @ts-ignore
-        selectAllProps: false,
-        // @ts-ignore
-        manageColumnsProps: false,
-
+        manageColumnsProps: {},
         isSorting: false,
         selectionType: 'none',
         columns: EncryptionColDefs,
@@ -72,17 +73,17 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
     return (
         <div className={styles['storage-tier-block']}>
             <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14">Action summary</DsTypography>
+                <DsTypography variant="Semibold_14">{t('databases.well-architect.action-summary')}</DsTypography>
                 <DsTypography variant="Regular_14">
                     {type === 'mssqlPatch'
-                        ? "Workload Factory has identified missing MSSQL patches that must be installed to ensure your system's security and performance. Installation should be done manually according to the organization's policies using tools such as AWS Systems Manager or SQL Server Management Studio (SSMS)."
-                        : "Workload Factory has identified missing MSSQL patches that must be installed to ensure your system's security and performance. Installation should be done manually according to the organization's policies using tools such as AWS Systems Manager or SQL Server Management Studio (SSMS)."}
+                        ? t('databases.well-architect.mssql-os-patch-action-summary')
+                        : t('databases.well-architect.mssql-os-patch-action-summary')}
                 </DsTypography>
             </div>
 
             <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                    Missing patches
+                <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
+                    {t('databases.well-architect.mssql-os-patch-missing-patches')}
                 </DsTypography>
                 <div className={styles.table}>
                     <Table
@@ -94,13 +95,13 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
             </div>
 
             <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                    Action required
+                <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
+                    {t('databases.well-architect.mssql-os-patch-action-required')}
                 </DsTypography>
                 <div className={styles.content}>
                     <div className={styles.row}>
                         <DsTypography variant="Regular_14">
-                            Please follow the steps below to install the missing patches:
+                            {t('databases.well-architect.mssql-os-patch-line1')}
                         </DsTypography>
                     </div>
                 </div>
@@ -109,27 +110,31 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
             {type === 'osPatch' && (
                 <>
                     <div className={styles['first-section']}>
-                        <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                            Option 1: Using AWS Patch Manager
+                        <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
+                            {t('databases.well-architect.mssql-os-patch-option1')}
                         </DsTypography>
                         <div className={styles['action-section']}>
                             <div className={styles.row}>
                                 <DsTypography variant="Semibold_14">1</DsTypography>
                                 <DsTypography variant="Regular_14">|</DsTypography>
-                                <DsTypography variant="Regular_14">Sign in to the AWS Management Console.</DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architect.mssql-os-patch-option1-content1')}
+                                </DsTypography>
                             </div>
 
                             <div className={styles.row}>
                                 <DsTypography variant="Semibold_14">2</DsTypography>
                                 <DsTypography variant="Regular_14">|</DsTypography>
-                                <DsTypography variant="Regular_14">Open the AWS Systems Manager console.</DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architect.mssql-os-patch-option1-content2')}
+                                </DsTypography>
                             </div>
 
                             <div className={styles.row}>
                                 <DsTypography variant="Semibold_14">3</DsTypography>
                                 <DsTypography variant="Regular_14">|</DsTypography>
                                 <DsTypography variant="Regular_14">
-                                    In the navigation pane, choose Patch Manager.
+                                    {t('databases.well-architect.mssql-os-patch-option1-content3')}
                                 </DsTypography>
                             </div>
 
@@ -137,7 +142,7 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                                 <DsTypography variant="Semibold_14">4</DsTypography>
                                 <DsTypography variant="Regular_14">|</DsTypography>
                                 <DsTypography variant="Regular_14">
-                                    Select the instances you want to patch.
+                                    {t('databases.well-architect.mssql-os-patch-option1-content4')}
                                 </DsTypography>
                             </div>
 
@@ -145,22 +150,22 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                                 <DsTypography variant="Semibold_14">5</DsTypography>
                                 <DsTypography variant="Regular_14">|</DsTypography>
                                 <DsTypography variant="Regular_14">
-                                    Apply the missing patches according to your organization’s policies.
+                                    {t('databases.well-architect.mssql-os-patch-option1-content5')}
                                 </DsTypography>
                             </div>
                         </div>
                     </div>
 
                     <div className={styles['first-section']}>
-                        <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                            Option 2: Using Windows Server Update Services (WSUS)
+                        <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
+                            {t('databases.well-architect.mssql-os-patch-option2')}
                         </DsTypography>
                         <div className={styles['action-section']}>
                             <div className={styles.row}>
                                 <DsTypography variant="Semibold_14">1</DsTypography>
                                 <DsTypography variant="Regular_14">|</DsTypography>
                                 <DsTypography variant="Regular_14">
-                                    Open the WSUS Administration Console on your server.
+                                    {t('databases.well-architect.mssql-os-patch-option2-content1')}
                                 </DsTypography>
                             </div>
 
@@ -168,21 +173,23 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                                 <DsTypography variant="Semibold_14">2</DsTypography>
                                 <DsTypography variant="Regular_14">|</DsTypography>
                                 <DsTypography variant="Regular_14">
-                                    In the navigation pane, expand Update Services and select your WSUS server.
+                                    {t('databases.well-architect.mssql-os-patch-option2-content2')}
                                 </DsTypography>
                             </div>
 
                             <div className={styles.row}>
                                 <DsTypography variant="Semibold_14">3</DsTypography>
                                 <DsTypography variant="Regular_14">|</DsTypography>
-                                <DsTypography variant="Regular_14">Click on Updates.</DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architect.mssql-os-patch-option2-content3')}
+                                </DsTypography>
                             </div>
 
                             <div className={styles.row}>
                                 <DsTypography variant="Semibold_14">4</DsTypography>
                                 <DsTypography variant="Regular_14">|</DsTypography>
                                 <DsTypography variant="Regular_14">
-                                    Search for the missing patches listed above.
+                                    {t('databases.well-architect.mssql-os-patch-option2-content4')}
                                 </DsTypography>
                             </div>
 
@@ -190,7 +197,7 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                                 <DsTypography variant="Semibold_14">5</DsTypography>
                                 <DsTypography variant="Regular_14">|</DsTypography>
                                 <DsTypography variant="Regular_14">
-                                    Approve the patches for installation according to your organization’s policies.
+                                    {t('databases.well-architect.mssql-os-patch-option2-content5')}
                                 </DsTypography>
                             </div>
 
@@ -198,7 +205,7 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                                 <DsTypography variant="Semibold_14">6</DsTypography>
                                 <DsTypography variant="Regular_14">|</DsTypography>
                                 <DsTypography variant="Regular_14">
-                                    Verify that all patches are successfully installed.
+                                    {t('databases.well-architect.mssql-os-patch-option2-content6')}
                                 </DsTypography>
                             </div>
                         </div>
@@ -212,21 +219,23 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                         <DsTypography variant="Semibold_14">1</DsTypography>
                         <DsTypography variant="Regular_14">|</DsTypography>
                         <DsTypography variant="Regular_14">
-                            Open SQL Server Management Studio on your server.
+                            {t('databases.well-architect.mssql-os-patch-mssql-patch-content1')}
                         </DsTypography>
                     </div>
 
                     <div className={styles.row}>
                         <DsTypography variant="Semibold_14">2</DsTypography>
                         <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">Connect to your MSSQL instance.</DsTypography>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.well-architect.mssql-os-patch-mssql-patch-content2')}
+                        </DsTypography>
                     </div>
 
                     <div className={styles.row}>
                         <DsTypography variant="Semibold_14">3</DsTypography>
                         <DsTypography variant="Regular_14">|</DsTypography>
                         <DsTypography variant="Regular_14">
-                            Navigate to the "Management" node and select "Maintenance Plans".
+                            {t('databases.well-architect.mssql-os-patch-mssql-patch-content3')}
                         </DsTypography>
                     </div>
 
@@ -234,7 +243,7 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                         <DsTypography variant="Semibold_14">4</DsTypography>
                         <DsTypography variant="Regular_14">|</DsTypography>
                         <DsTypography variant="Regular_14">
-                            Create a new maintenance plan for applying patches.
+                            {t('databases.well-architect.mssql-os-patch-mssql-patch-content4')}
                         </DsTypography>
                     </div>
 
@@ -242,8 +251,7 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                         <DsTypography variant="Semibold_14">5</DsTypography>
                         <DsTypography variant="Regular_14">|</DsTypography>
                         <DsTypography variant="Regular_14">
-                            Follow the steps to apply the missing patches listed above according to your organization’s
-                            policies.
+                            {t('databases.well-architect.mssql-os-patch-mssql-patch-content5')}
                         </DsTypography>
                     </div>
 
@@ -251,22 +259,22 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                         <DsTypography variant="Semibold_14">6</DsTypography>
                         <DsTypography variant="Regular_14">|</DsTypography>
                         <DsTypography variant="Regular_14">
-                            Ensure that all patches are successfully installed.
+                            {t('databases.well-architect.mssql-os-patch-mssql-patch-content6')}
                         </DsTypography>
                     </div>
                 </div>
             )}
 
             <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
+                <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
                     {GENERAL.NOTE}
                 </DsTypography>
                 <div className={styles.content}>
                     <div className={styles.row}>
                         <DsTypography variant="Regular_14">
                             {type === 'mssqlPatch'
-                                ? 'It is recommended that these updates are performed during a maintenance window to minimize any potential disruption to your services.'
-                                : 'It is recommended to perform these updates during a maintenance window to minimize any potential disruption to your services.'}
+                                ? t('databases.well-architect.mssql-os-patch-note1')
+                                : t('databases.well-architect.mssql-os-patch-note2')}
                         </DsTypography>
                     </div>
                 </div>

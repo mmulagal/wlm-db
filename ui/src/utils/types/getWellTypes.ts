@@ -100,6 +100,7 @@ export interface AssessmentResponseInterface {
     dismissedConfigurations?: any;
     fileSystemId: string;
     ec2InstanceId: string;
+    databaseHostName: string;
     databaseInstanceName: string;
     lastAssessmentTimestamp?: string;
     deploymentType?: string;
