@@ -1342,7 +1342,9 @@ async function getDataguardDetailsForAllInstances(
                     const nodeInstanceId = (resource.metadata as Metadata)?.node1InstanceId;
                     if (nodeInstanceId && resource.database_instances) {
                         resource.database_instances.forEach((dbInstance: DatabaseInstance) => {
-                            const key = `${nodeInstanceId}::${dbInstance.database_instance_name}`;
+                            const key = IS_DEMO_FLOW
+                                ? dbInstance.database_instance_name
+                                : `${nodeInstanceId}::${dbInstance.database_instance_name}`;
                             dbInstanceLookupMap.set(key, {
                                 databaseHostId: resource.resource_id,
                                 databaseInstanceId: dbInstance.database_instance_id
@@ -1358,7 +1360,9 @@ async function getDataguardDetailsForAllInstances(
                     dgDetails.associatedHosts = dgDetails.associatedHosts.map(
                         (host: { sidName?: string; serviceName?: string; role?: string; hostIp?: string }) => {
                             const matchedEc2 = host.hostIp ? ec2DetailsByIp.get(host.hostIp) : undefined;
-                            const lookupKey = `${matchedEc2?.ec2InstanceId}::${host.sidName}`;
+                            const lookupKey = IS_DEMO_FLOW
+                                ? `${host.sidName}`
+                                : `${matchedEc2?.ec2InstanceId}::${host.sidName}`;
                             const dbDetails = matchedEc2 ? dbInstanceLookupMap.get(lookupKey) : undefined;
 
                             return {
@@ -1399,5 +1403,6 @@ export {
     getOraclePerformanceMetrics,
     getOracleProtectionStatus,
     getOracleDatabaseMappedVolumes,
-    getOracleDatabaseHostInstanceSummary
+    getOracleDatabaseHostInstanceSummary,
+    getDataguardDetailsForAllInstances
 };

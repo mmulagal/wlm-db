@@ -1,5 +1,6 @@
 import { isEmpty } from 'lodash-es';
 import {
+    getDataguardDetailsForAllInstances,
     getOracleDatabaseHostInstanceSummary,
     getOracleDatabaseMappedVolumes,
     getOraclePerformanceMetrics,
@@ -41,6 +42,19 @@ beforeAll(async () => {
         resourceId: '6cbdabbfe3fb147e',
         databaseInstanceId: dbInstanceSid,
         databaseInstanceName: 'MSSQLSERVER',
+        isDefault: true,
+        source: 'deployment',
+        sqlDeploymentType: 'FCI',
+        fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
+        fsxnIds: 'fs-0f53fbecdd3d85fb2',
+        databaseType: '' // Add the missing property 'databaseType'
+    });
+    await upsertDatabaseInstance(ACCOUNT_ID, {
+        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+        region: DEFAULT_AWS_REGION,
+        resourceId: '6cbdabbfe3fb147e',
+        databaseInstanceId: 'dataguard-primary',
+        databaseInstanceName: 'dataguard-primary',
         isDefault: true,
         source: 'deployment',
         sqlDeploymentType: 'FCI',
@@ -148,5 +162,19 @@ describe('Oracle Database Operations', () => {
             dbInstanceSid
         );
         expect(!isEmpty(result)).toBeTruthy();
+    });
+
+    it('should return dataguard details', async () => {
+        const result = await getDataguardDetailsForAllInstances(
+            accountId,
+            credentialsId,
+            region,
+            'i-07e76a4b916548dc0',
+            ['dataguard-primary'],
+            true
+        );
+        expect(!isEmpty(result)).toBeTruthy();
+        expect(result['dataguard-primary']).toBeDefined();
+        expect(result['dataguard-primary'].associatedHosts.length).toBe(2);
     });
 });

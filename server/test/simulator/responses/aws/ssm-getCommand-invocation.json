@@ -4466,5 +4466,61 @@
                 "isReadableSecondary": null
             }
         ]
+    },
+    "dataguardDetailsResponse": {
+        "dataguard-primary": {
+            "dbUniqueName": "dataguard-primary",
+            "dbName": "dataguardDomain-1",
+            "associatedHosts": [
+            {
+                "sidName": "dataguard-primary",
+                "serviceName": "dataguard-primary",
+                "role": "PRIMARY DATABASE",
+                "hostIp": "127.0.0.1"
+            },
+            {
+                "sidName": "dataguard-standby",
+                "serviceName": "dataguard-standby",
+                "role": "PHYSICAL STANDBY",
+                "hostIp": "127.0.0.2"
+            }
+            ],
+            "isPrimaryNode": true,
+            "role": "PRIMARY",
+            "status": {
+            "status": "WRITING"
+            },
+            "isActiveDataguard": false,
+            "protectionLevel": "MAXIMUM PERFORMANCE",
+            "openMode": "READ WRITE"
+        },
+        "dataguard-standby": {
+            "dbUniqueName": "dataguard-standby",
+            "dbName": "dataguardDomain-1",
+            "associatedHosts": [
+            {
+                "sidName": "dataguard-primary",
+                "serviceName": "dataguard-primary",
+                "role": "PRIMARY DATABASE",
+                "hostIp": "127.0.0.1"
+            },
+            {
+                "sidName": "dataguard-standby",
+                "serviceName": "dataguard-standby",
+                "role": "PHYSICAL STANDBY",
+                "hostIp": "127.0.0.2"
+            }
+            ],
+            "isPrimaryNode": false,
+            "role": "PHYSICAL STANDBY",
+            "status": {
+                "status": "APPLYING_LOG",
+                "transportLag": "+00 00:00:00",
+                "applyLag": "+00 00:00:00"
+            },
+            "isActiveDataguard": true,
+            "protectionLevel": "MAXIMUM PERFORMANCE",
+            "openMode": "READ ONLY WITH APPLY"
+        }
     }
 }

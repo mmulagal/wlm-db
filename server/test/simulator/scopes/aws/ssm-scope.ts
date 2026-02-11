@@ -1042,7 +1042,9 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'Check if Linux package repositories are reachable')
     .resolves(getSampleCommandResponse('checkLinuxRepoConnectivity'))
     .on(SendCommandCommand, params => params.Comment === 'Get AOAG details for MSSQL instance')
-    .resolves(getSampleCommandResponse('getAoagDetails'));
+    .resolves(getSampleCommandResponse('getAoagDetails'))
+    .on(SendCommandCommand, params => params.Comment === 'Get DataGuard details for all Oracle SIDs')
+    .resolves(getSampleCommandResponse('getDataguardDetails'));
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -1759,6 +1761,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'getAoagDetails',
             JSON.stringify(getCommandInvocationResponse.aoagDetailsResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getDataguardDetails'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getDataguardDetails',
+            JSON.stringify(getCommandInvocationResponse.dataguardDetailsResponse)
         )
     );
 
