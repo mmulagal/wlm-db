@@ -20,6 +20,18 @@ interface Dispatch {
     (action: any): void;
 }
 
+/**
+ * Converts a string to sentence case (first character uppercase, rest lowercase).
+ * @param str - Input string (e.g. "PHYSICAL STANDBY")
+ * @returns Sentence-cased string (e.g. "Physical standby"), or the original value if not a string
+ */
+export const toSentenceCase = (str: string): string => {
+    if (!str || typeof str !== 'string') return str;
+    const trimmed = str.trim();
+    if (!trimmed) return str;
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+};
+
 export const getUniqueEntries = (arrays: any) => {
     const combinedArray = [].concat(...arrays);
     const seen = new Set();

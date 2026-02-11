@@ -187,6 +187,9 @@ export const REPLICA_ROLES = {
     PRIMARY: 'PRIMARY',
     SECONDARY: 'SECONDARY'
 };
+export const OVERVIEW_CARDS_HEADINGS = {
+    DATA_GUARD_CONFIGURATIONS: 'Data Guard configurations'
+};
 
 export const TENANCY = {
     SINGLE_TENANT: 'SINGLE_TENANT'

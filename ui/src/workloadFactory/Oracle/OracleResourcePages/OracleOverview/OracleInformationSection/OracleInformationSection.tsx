@@ -8,6 +8,7 @@ import styles from './OracleInformationSection.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
 import OracleServer from '../../../../ResourcePage/InformationSection/SQLServer/OracleServer';
 import { DBType } from '../../../../../utils/consts';
+import DataGuard from '../../../../ResourcePage/InformationSection/DataGuard/DataGuard';
 
 const OracleInformationSection = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.oracleSlice);
@@ -49,6 +50,14 @@ const OracleInformationSection = () => {
                     resourceDetails={resourceDetails}
                     resourceLoading={resourceLoading}
                 />
+                {resourceDetails?.isDataGuardDeployed === true && (
+                    <DataGuard
+                        handleToggle={handleToggle}
+                        openKey={openKey}
+                        resourceDetails={resourceDetails}
+                        resourceLoading={resourceLoading}
+                    />
+                )}
             </div>
         </div>
     );

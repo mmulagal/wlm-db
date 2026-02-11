@@ -1,4 +1,51 @@
 {
+    "tenancy": "SINGLE_TENANT",
+    "isInstanceStorageAsmManaged": false,
+    "isDataGuardDeployed": true,
+    "dataguardDetails": {
+        "role": "PHYSICAL STANDBY",
+        "status": {
+            "status": "WRITING",
+            "transportLag": "+00 00:03:00",
+            "applyLag": "+00 00:01:00"
+        },
+        "isActiveDataguard": true,
+        "protectionLevel": "MAXIMUM PERFORMANCE",
+        "openMode": "READ WRITE",
+        "dbUniqueName": "pdbnas1",
+        "dbName": "pdbnas1",
+        "associatedHosts": [
+            {
+                "serviceName": "pdbnas1",
+                "hostIp": "172.31.48.89",
+                "ec2InstanceId": "i-0ccd412b80e0ebeab",
+                "sidName": "pdbnas1",
+                "role": "PRIMARY DATABASE",
+                "hostName": "ip-172-31-48-89.ap-southeast-1.compute.internal",
+                "databaseHostId": "cbca90072adb0b70",
+                "databaseInstanceId": "pdbnas1"
+            },
+            {
+                "serviceName": "pdbnas1s",
+                "hostIp": "172.31.48.19",
+                "ec2InstanceId": "i-075820514d8bf3804",
+                "sidName": "pdbnas1s",
+                "role": "PHYSICAL STANDBY",
+                "hostName": "ip-172-31-48-19.ap-southeast-1.compute.internal",
+                "databaseHostId": "72d9c913b0efb174",
+                "databaseInstanceId": "pdbnas1s"
+            },
+            {
+                "serviceName": "pdbnas1ls",
+                "hostIp": "172.31.48.79",
+                "ec2InstanceId": "i-075820514d8bf3804",
+                "sidName": "pdbnas1ls",
+                "role": "LOGICAL STANDBY",
+                "hostName": "ip-172-31-48-79.ap-southeast-1.compute.internal"
+            }
+        ],
+        "isPrimaryNode": false
+    },
     "databaseInstanceId": "7df2c4ed-0a7b-4ceb-b250-daa3ea8ef23c",
     "databaseInstanceName": "OracleServer",
     "status": "Up",
@@ -40,7 +87,9 @@
                 "availabilityZone": "availability-zone-3",
                 "subnetId": "subnet-adda86eb"
             }
-        ]
+        ],
+        "fqdn": "ip-172-31-48-25.ap-southeast-1.compute.internal",
+        "nodeIpAddress": "18.142.118.58"
     },
     "databaseInstanceTopology": {
         "serverType": "ORACLE",
@@ -294,6 +343,5 @@
             "service": "ip-172-31-48-50.ap-southeast-1.compute.internal:1521"
         }
     ],
-
     "sqlServerDeploymentType": "FCI"
 }

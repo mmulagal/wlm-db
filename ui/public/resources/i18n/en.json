@@ -1175,6 +1175,22 @@
             "ssd-capacity": "SSD capacity",
             "capacity": "Capacity"
         },
+        "data-guard": {
+            "heading": "Data Guard configurations",
+            "protection-mode": "Protection mode:",
+            "open-mode": "Open Mode:",
+            "active-data-guard": "Active Data Guard:",
+            "transport-lag": "Transport lag:",
+            "apply-lag": "Apply lag:",
+            "host-name": "Host name",
+            "database-name": "Database name",
+            "role": "Role",
+            "replica-details": "Database details",
+            "view-replica-details": "View details",
+            "database-not-registered": "Database not registered",
+            "enabled": "Enabled",
+            "disabled": "Disabled"
+        },
         "inventory": {
             "one-time-wad-dialog-heading-final": "Learn about one-time assessment for SQL Server instances",
             "one-time-wad-upload-success": "Uploaded one-time assessment results.",
