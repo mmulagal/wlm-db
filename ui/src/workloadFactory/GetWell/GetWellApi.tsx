@@ -9,13 +9,13 @@ import {
     setLandingFromInnerPage,
     setGwSelectedRowFsxId
 } from '../../store/workloadFactory/getWellOptimizeSlice';
-import { useGetMssqlAssessmentDataMutation } from '../../utils/apiService';
+import { useGetMssqlAssessmentDataMutation, useLazyGetOfflineMssqlAssessmentDataQuery } from '../../utils/apiService';
 import { formatGetWellData, resetGwValuesOnRefresh, storageMockData } from './GetWellUtils';
 import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
     const dispatch = useDispatch();
-    const { credIdFromJM, regionFromJM, landingFrom, landingFromInnerPage } = useAppSelector(
+    const { credIdFromJM, regionFromJM, landingFrom, landingFromInnerPage, isWad } = useAppSelector(
         state => state.getWellOptimize
     );
 
@@ -29,22 +29,61 @@ const GetWellApi = () => {
     } = useAppSelector(state => state.getWellOptimize);
 
     const [assessmentDetailsApi] = useGetMssqlAssessmentDataMutation();
+    const [getOfflineMssqlAssessmentData] = useLazyGetOfflineMssqlAssessmentDataQuery();
 
     useEffect(() => {
-        // On page load, call the API to get the assessment details
+        // On page load, call the appropriate API based on isWad
         if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
-            viewOptimizeAction(false); // isRefresh = false for initial load
+            if (isWad) {
+                viewWadOptimizeAction(false); // WAD: Call offline assessment API
+            } else {
+                viewOptimizeAction(false); // Normal: Call regular assessment API
+            }
         } else {
             dispatch(setLandingFromInnerPage(false));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isWad]);
 
-        // if (!visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
-        //     viewOptimizeAction();
-        // }
-    }, []);
+    /**
+     * Call the offline assessment API for WAD instances
+     */
+    const runOfflineAssessmentApi = async (isRefresh: boolean = false) => {
+        try {
+            dispatch(setOptimizePageLoading(true));
+            const result: { data?: any; error?: any } = await getOfflineMssqlAssessmentData({
+                databaseHostId: selectedResourceId,
+                instanceId: selectedDatabaseInstance,
+                credentialId: selectedGwInstanceCredId || null,
+                regionId: selectedGwInstanceRegionId || null
+            });
+            if (result && !result?.error && result?.data) {
+                let assessmentData = {
+                    ...result.data,
+                    isWad: true
+                };
+                if (!assessmentData.storage) {
+                    assessmentData = { ...assessmentData, ...storageMockData };
+                }
+                dispatch(setDriftAssessmentData(assessmentData));
+                formatGetWellData(dispatch, assessmentData, false, isRefresh);
+                dispatch(setOptimizePageLoading(false));
+                dispatch(setIsAssessmentAvailable(true));
+                dispatch(setGwSelectedRowFsxId(assessmentData?.fileSystemId));
+            } else {
+                dispatch(setIsAssessmentAvailable(false));
+                dispatch(setOptimizePageLoading(false));
+            }
+        } catch (error) {
+            dispatch(setIsAssessmentAvailable(false));
+            dispatch(setOptimizePageLoading(false));
+        }
+    };
 
+    /**
+     * Call the regular assessment API for registered instances
+     */
     const runAssessmentDetailsApi = async (isRefresh: boolean = false) => {
-        // Call the API to get the assessment details
         try {
             dispatch(setOptimizePageLoading(true));
             const result: { data?: any; error?: any } = await assessmentDetailsApi({
@@ -72,23 +111,40 @@ const GetWellApi = () => {
         }
     };
 
+    /**
+     * Trigger WAD (offline) assessment action
+     */
+    const viewWadOptimizeAction = (isRefresh: boolean = false) => {
+        resetGwValuesOnRefresh(dispatch);
+        setTimeout(() => {
+            dispatch(setOptimizePageLoading(true));
+            runOfflineAssessmentApi(isRefresh);
+        }, 10);
+    };
+
+    /**
+     * Trigger regular assessment action
+     */
     const viewOptimizeAction = (isRefresh: boolean = false) => {
         resetGwValuesOnRefresh(dispatch);
         setTimeout(() => {
-            // Set the loading state to true
             dispatch(setOptimizePageLoading(true));
-            // Call the API to get the assessment details
             runAssessmentDetailsApi(isRefresh);
         }, 10);
     };
 
     useEffect(() => {
-        // On page refresh, call the API to get the assessment details
+        // On page refresh, call the appropriate API
         if (gwRefreshPage) {
-            viewOptimizeAction(true); // isRefresh = true
+            if (isWad) {
+                viewWadOptimizeAction(true); // WAD: Call offline assessment API
+            } else {
+                viewOptimizeAction(true); // Normal: Call regular assessment API
+            }
             dispatch(setGwRefreshPage(false));
         }
-    }, [gwRefreshPage]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [gwRefreshPage, isWad]);
 };
 
 export default GetWellApi;

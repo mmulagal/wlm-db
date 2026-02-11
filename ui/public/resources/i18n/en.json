@@ -102,7 +102,12 @@
             "managed-service-account-info": "When enabled, a password is not required for the service account.",
             "managed-service-account-tooltip": "Enable for Group Managed Service Accounts (gMSA) to simplify credential rotation.",
             "database-credential-text": "Enter a user name and password for a new service account or use existing service account credentials in the Active Directory.",
-            "invalid-ou-path-format": "Invalid format. Proper format: (example: OU=Sales,OU=Users,DC=example,DC=com)"
+            "invalid-ou-path-format": "Invalid format. Proper format: (example: OU=Sales,OU=Users,DC=example,DC=com)",
+            "view": "View",
+            "overview": "Overview",
+            "well-architected-status": "Well-architected status",
+            "databases": "Databases",
+            "sandboxes": "Sandboxes"
         },
         "banner": {
             "pgsql-deployment": "Deployment",
@@ -1739,6 +1744,10 @@
             "jm-type-assessment": "Assessment",
             "jm-type-optimize": "Well-architected",
             "jm-type-register-resource": "Register resource"
+        },
+        "wad": {
+            "tab-disabled-message": "This feature will be available for registered instances",
+            "register-disabled-no-credentials": "Registration requires AWS credentials. Add credentials to register this instance."
         }
     }
 }

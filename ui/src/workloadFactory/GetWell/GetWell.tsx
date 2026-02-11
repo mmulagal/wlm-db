@@ -478,6 +478,7 @@ const GetWell = () => {
                     gwTimestamp={gwTimestamp || ''}
                     gwAdhocError={gwAdhocError || ''}
                     optimizePageLoading={loading || false}
+                    isWad={cardData?.isWad || false}
                 />
                 {showChartArea && (
                     <>

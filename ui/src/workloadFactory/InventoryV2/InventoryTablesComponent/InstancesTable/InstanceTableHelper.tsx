@@ -16,15 +16,30 @@ import {
     WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../../utils/consts';
-import { setFSXId, setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import {
+    setFSXId,
+    setGwPageLoadInstanceData,
+    setLandingFrom,
+    setSelectedWellArchitectTab
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    resetWorkloadFactoryResourceData,
+    setSelectedHostname,
+    setSelectedResourcePageHostData
+} from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
+import {
+    addOfflineMssqlHostAssessmentData,
     setBreadCrumbSelectedFrom,
+    setInventoryTableData,
+    setOfflineMssqlHostAssessmentLoading,
     setRegisterHostType,
     setSelectedFilterValue,
     setSelectedHeaderTab,
     setSelectedInventoryTab,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { formatOfflineAssessmentToInventoryData } from '../../InventoryUtilsV2';
+import store from '../../../../store/store';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { updateResourceId } from '../../../../store/authSlice';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
@@ -46,6 +61,7 @@ import { createSandboxNavigation, formatDateWithTime } from '../../../../utils/u
 import { ReactComponent as NotActiveNotificationIcon } from '../../../../assets/NotActiveNotificationIcon.svg';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import tooltipStyles from './InstanceTableHelper.module.scss';
+import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
 
 export interface InstanceMenuSelectionParams {
     menuId: string;
@@ -675,6 +691,16 @@ export const isInstanceActionDisabled = (
         };
     }
 
+    // Check WAD (offline assessment) rows without credentials - cannot register without credentials
+    if (rowData?.isWad && (!rowData?.credentialId || !rowData?.regionId)) {
+        return {
+            isDisabled: true,
+            disableMsg: t('databases.wad.register-disabled-no-credentials'),
+            tooltipWidth: '280px',
+            tooltipHeight: '50px'
+        };
+    }
+
     return {
         isDisabled: false,
         disableMsg: ''
@@ -1069,4 +1095,138 @@ export const shouldEnableHeaderCheckbox = (
     }
 
     return { isEnabled: true, disableReason: '' };
+};
+
+/**
+ * Refreshes the offline WAD assessment data after upload completes.
+ * This function fetches all offline assessment data with pagination
+ * and updates the inventory table data same as WADApis.tsx.
+ *
+ * @param getAllOfflineAssessmentAPI - The lazy query function from useLazyGetAllOfflineMssqlHostsAssessmentDataQuery
+ * @param dispatch - Redux dispatch function
+ * @param assessmentData - Accumulated assessment data from previous calls (for pagination)
+ * @param nextToken - Pagination token for next batch of data
+ */
+export const refreshOfflineAssessmentData = async (
+    getAllOfflineAssessmentAPI: any,
+    dispatch: Dispatch,
+    assessmentData: any[],
+    nextToken: string | null
+) => {
+    try {
+        dispatch(setOfflineMssqlHostAssessmentLoading(true));
+
+        const result: any = await getAllOfflineAssessmentAPI({
+            credentialId: null,
+            regionId: null,
+            nextToken
+        });
+
+        if (result && !result?.error && result?.data) {
+            const newAssessmentData = [
+                ...assessmentData,
+                ...(Array.isArray(result?.data?.assessmentsPerAccount)
+                    ? result.data.assessmentsPerAccount.map((assessment: any) => ({
+                          ...assessment,
+                          isWad: true // Mark as WAD (offline) data
+                      }))
+                    : [])
+            ];
+
+            if (result?.data?.nextToken) {
+                // Continue fetching with pagination
+                refreshOfflineAssessmentData(
+                    getAllOfflineAssessmentAPI,
+                    dispatch,
+                    newAssessmentData,
+                    result?.data?.nextToken
+                );
+            } else {
+                // All data fetched, update store
+                dispatch(setOfflineMssqlHostAssessmentLoading(false));
+                dispatch(addOfflineMssqlHostAssessmentData(newAssessmentData));
+
+                // Format and merge with existing inventory data
+                const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
+                const formattedOfflineData = formatOfflineAssessmentToInventoryData(newAssessmentData);
+                const mergedInventoryData = {
+                    ...currentInventoryTableData,
+                    ...formattedOfflineData
+                };
+                dispatch(setInventoryTableData(mergedInventoryData));
+            }
+        } else {
+            dispatch(setOfflineMssqlHostAssessmentLoading(false));
+            if (assessmentData.length > 0) {
+                dispatch(addOfflineMssqlHostAssessmentData(assessmentData));
+
+                // Format and merge with existing inventory data
+                const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
+                const formattedOfflineData = formatOfflineAssessmentToInventoryData(assessmentData);
+                const mergedInventoryData = {
+                    ...currentInventoryTableData,
+                    ...formattedOfflineData
+                };
+                dispatch(setInventoryTableData(mergedInventoryData));
+            }
+        }
+    } catch (error) {
+        dispatch(setOfflineMssqlHostAssessmentLoading(false));
+        if (assessmentData.length > 0) {
+            dispatch(addOfflineMssqlHostAssessmentData(assessmentData));
+        }
+    }
+};
+
+/**
+ * Handler for WAD (offline assessment) optimize action.
+ * Sets isWad flag and navigates to the Well-Architected page.
+ * The offline assessment API is called in GetWellApi.tsx based on isWad flag.
+ *
+ * @param rowData - The instance row data
+ * @param dispatch - Redux dispatch function
+ */
+export const handleWadOptimizeAction = (rowData: any, dispatch: Dispatch) => {
+    // Get databaseHostId and instanceId from rowData
+    const databaseHostId = rowData?.databaseHostId || rowData?.hostRow?.id || rowData?.hostRow?.resourceId;
+    const instanceId = rowData?.databaseInstanceId;
+    const credentialId = rowData?.credentialId || rowData?.hostRow?.credentialId;
+    const regionId = rowData?.regionId || rowData?.hostRow?.regionId;
+
+    // Navigate to Well-Architected page (same as mssql-optimize)
+    dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+    dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+    dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+    dispatch(setFSXId({ fsxId: rowData?.fsxId, ec2InstanceId: rowData?.ec2InstanceId }));
+    dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+    dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+
+    // Set page load instance data with isWad: true
+    // GetWellApi.tsx will call the offline assessment API based on this flag
+    dispatch(
+        setGwPageLoadInstanceData({
+            hostname: rowData?.name || rowData?.hostRow?.name,
+            resourceId: databaseHostId,
+            instanceId,
+            instanceName: rowData?.databaseInstanceName,
+            credId: credentialId,
+            regionId,
+            storageType: rowData?.sqlServerDeploymentType,
+            isWad: true
+        })
+    );
+
+    // For overview and database
+    dispatch(resetWorkloadFactoryResourceData());
+    dispatch(setSelectedHostname(rowData?.name || rowData?.hostRow?.name));
+    dispatch(
+        setSelectedResourcePageHostData({
+            resourceId: databaseHostId,
+            databaseInstanceId: instanceId,
+            databaseInstanceName: rowData?.databaseInstanceName,
+            credentialId,
+            regionId
+        })
+    );
+    dispatch(resetEiData({}));
 };

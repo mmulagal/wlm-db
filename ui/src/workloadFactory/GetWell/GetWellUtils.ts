@@ -98,7 +98,7 @@ export const generateDynamicFilterOptions = (cardData: any, deploymentType?: str
     const availableStatuses = new Set();
 
     Object.keys(cardData).forEach((key: any) => {
-        if (key === 'deploymentType') {
+        if (key === 'deploymentType' || key === 'isWad') {
             return; // Skip deploymentType as it is not a card
         }
 
@@ -191,6 +191,7 @@ const getCategoryForSubCategory = (subCategory: string) => {
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
 export const cardDataDefault: any = {
     deploymentType: '',
+    isWad: false,
     storage_tier: {
         id: 'performance-tier',
         mapName: ASSESSMENT_CONFIG_NAMES.STORAGE_TIER,
@@ -3309,7 +3310,8 @@ export const getCardsData = (
 
     cardsData = {
         ...cardsData,
-        deploymentType: data?.deploymentType || ''
+        deploymentType: data?.deploymentType || '',
+        isWad: data?.isWad || false
     };
 
     cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
@@ -3632,7 +3634,7 @@ export const applyFilter = (
     const categoryData = getCategoryData();
 
     Object.keys(cardData).map((key: any) => {
-        if (key === 'deploymentType') {
+        if (key === 'deploymentType' || key === 'isWad') {
             return; // Skip deploymentType as it is not a card
         }
         // Skip MSSQL High Availability for non-FCI instances (same logic as in formatOptimizationBreakDown)

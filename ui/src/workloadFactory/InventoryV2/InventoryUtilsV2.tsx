@@ -99,6 +99,104 @@ export const formatInventoryTableData = (managedData: { [key: string]: ManagedHo
     return result;
 };
 
+/**
+ * Formats offline assessment data (WAD data) to match the InventoryTableData structure.
+ * This data comes from the getAllOfflineMssqlHostsAssessmentData API.
+ * All data is marked with isWad: true to indicate it's offline assessment data.
+ */
+export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [key: string]: InventoryTableData } => {
+    const result: { [key: string]: InventoryTableData } = {};
+
+    if (!offlineData || offlineData.length === 0) {
+        return result;
+    }
+
+    offlineData.forEach((hostData: any) => {
+        const hostId = hostData?.databaseHostId || `wad-${hostData?.vmInstanceId}`;
+        const credId = hostData?.credentialId || hostData?.credentialsId || 'wad';
+        const regionId = hostData?.regionId || hostData?.region || 'wad';
+
+        // Create a unique key for this host entry
+        const uniqueKey = `${hostId}_${credId}_${regionId}`;
+
+        // Format instances from instancesAssessment
+        const formattedInstances: InventoryTableInstanceDatInterface[] = [];
+
+        if (hostData?.instancesAssessment && Array.isArray(hostData.instancesAssessment)) {
+            hostData.instancesAssessment.forEach((instance: any) => {
+                const assessments = instance?.assessments;
+                const storageConfig = assessments?.storage;
+
+                formattedInstances.push({
+                    databaseInstanceId: instance?.databaseInstanceId,
+                    databaseInstanceName: instance?.databaseInstanceName,
+                    databaseHostId: hostId, // Added for WAD API calls
+                    status: INVENTORY_STATUS.CASE_SENSITIVE_UP, // Hardcoded until status is available from API
+                    statusColText: INVENTORY_STATUS.UNMANAGED,
+                    sqlServerDeploymentType: instance?.deploymentType || assessments?.deploymentType,
+                    fsxId: instance?.storageEndpoint || assessments?.fileSystemId,
+                    isDetected: false,
+                    isManaged: false,
+                    isWad: true,
+                    wadAssessmentData: instance?.assessments,
+                    storage: storageConfig
+                        ? {
+                              fsxn: {
+                                  size: storageConfig?.optimisedCount?.total,
+                                  used: storageConfig?.optimisedCount?.optimised
+                              }
+                          }
+                        : undefined
+                });
+            });
+        }
+
+        // Get VM details from vmNodes if available
+        const ec2Details: EC2DetailsInterface[] = [];
+        if (hostData?.vmNodes && Array.isArray(hostData.vmNodes)) {
+            hostData.vmNodes.forEach((node: any) => {
+                ec2Details.push({
+                    id: node?.vmInstanceId,
+                    name: node?.nodeName
+                });
+            });
+        }
+
+        // Create the inventory table data entry
+        const inventoryEntry: InventoryTableData = {
+            id: hostId,
+            resourceId: hostId,
+            name: hostData?.databaseHostName || hostData?.hostname || `WAD Host ${hostId}`,
+            hostType: DBType.MSSQL, // WAD data is for MSSQL
+            ec2InstanceId: hostData?.vmInstanceId,
+            ec2InstanceName: hostData?.vmName || hostData?.hostname,
+            status: INVENTORY_STATUS.ONLINE, // Hardcoded until status is available from API
+            ssmState: INVENTORY_STATUS.ONLINE, // Hardcoded until status is available from API
+            totalInstance: formattedInstances.length,
+            managedInstance: 0,
+            vpcId: hostData?.virtualNetworkId,
+            vpcName: hostData?.virtualNetworkName,
+            action: '', // No actions available for WAD data
+            actionDisable: true,
+            isManagedHost: false,
+            loading: false,
+            isDetected: false,
+            storageType: GENERAL.FSX_FOR_ONTAP,
+            sqlServerInstances: formattedInstances,
+            hasInstanceData: formattedInstances.length > 0,
+            credentialId: credId !== 'wad' ? credId : undefined,
+            regionId: regionId !== 'wad' ? regionId : undefined,
+            isWad: true, // Mark as WAD (offline assessment) data
+            ec2Details: ec2Details.length > 0 ? ec2Details : undefined,
+            statusColText: INVENTORY_STATUS.UNMANAGED // Hardcoded until status is available from API
+        };
+
+        result[uniqueKey] = inventoryEntry;
+    });
+
+    return result;
+};
+
 export const getInventoryDataCount = (data: { [key: string]: InventoryTableData } | null) => {
     let result;
     if (!data) {
@@ -3365,6 +3463,34 @@ export const getProtectionText = (data: any) => {
     return protectionText;
 };
 
+/**
+ * Determines the optimization status for WAD (offline assessment) data.
+ * Calculates the number of optimization issues from the assessment cards data.
+ *
+ * @param wadAssessmentData - The WAD assessment data object containing lastAssessmentTimestamp and other assessment info
+ * @returns A string indicating the optimization status:
+ *          - "X issue(s)" if there are optimization issues
+ *          - "Well-Architected" if fully optimized
+ *          - "In Progress" if assessment is still running
+ *          - Empty string if no assessment data available
+ */
+export const getWadOptimizationStatus = (wadAssessmentData: any) => {
+    let optimizationStatus = '';
+    if (wadAssessmentData && wadAssessmentData?.lastAssessmentTimestamp) {
+        const { cardsData } = getCardsData(wadAssessmentData, {});
+        const optBreakDown = formatOptimizationBreakDown(cardsData, wadAssessmentData);
+        optimizationStatus =
+            optBreakDown?.total?.notOptimized !== 0
+                ? optBreakDown?.total?.notOptimized === 1
+                    ? `${optBreakDown?.total?.notOptimized} issue`
+                    : `${optBreakDown?.total?.notOptimized} issues`
+                : ACTION_CTA.WELL_ARCHITECTED;
+    } else if (wadAssessmentData && !wadAssessmentData?.lastAssessmentTimestamp) {
+        optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
+    }
+    return optimizationStatus;
+};
+
 export const getOptimizationStatus = (
     databaseInstanceId: string,
     optimizationStatusList: Array<HostAssessmentResponseInterface>,
@@ -3816,6 +3942,9 @@ export const manageActionCol = (translation: TFunction, engineType: string, rowD
         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED
     ) {
         disableMsg = GENERAL.AOAG_MANAGE_DISABLE;
+    } else if (rowData?.isWad && (!rowData?.credentialId || !rowData?.regionId)) {
+        // WAD (offline assessment) rows without credentials cannot be registered
+        disableMsg = translation('databases.wad.register-disabled-no-credentials');
     }
 
     if (colText === ACTION_CTA.FIX_ISSUES || colText === ACTION_CTA.WELL_ARCHITECTED) {
@@ -4285,6 +4414,11 @@ export const addHostHandlerSc = async (
 export const getOptimizationStatusData = (rowData: any, t: any) => {
     let disableMsg = '';
     const cellData = rowData.optimizationStatus;
+
+    // For WAD (offline assessment) data, return the optimizationStatus directly if it has a value
+    if (rowData?.isWad && cellData) {
+        return { displayValue: cellData, disableMsg: '', isDisabled: false };
+    }
 
     const getDisableMessage = () => {
         if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {

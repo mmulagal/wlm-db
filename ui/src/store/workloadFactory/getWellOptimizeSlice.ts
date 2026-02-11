@@ -57,7 +57,8 @@ const initialState: GetWellSliceInterface = {
         ec2InstanceId: '',
         isInstanceStorageAsmManaged: false
     },
-    configEngineType: DBType.MSSQL
+    configEngineType: DBType.MSSQL,
+    isWad: false
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -220,6 +221,7 @@ const getWellOptimizeSlice = createSlice({
             state.selectedGwInstanceCredId = action.payload.credId;
             state.selectedGwInstanceRegionId = action.payload.regionId;
             state.selectedDatabaseStorageType = action.payload.storageType;
+            state.isWad = action.payload.isWad || false;
         },
         setLandingFromInnerPage: (state, action: PayloadAction<any>) => {
             state.landingFromInnerPage = action.payload;

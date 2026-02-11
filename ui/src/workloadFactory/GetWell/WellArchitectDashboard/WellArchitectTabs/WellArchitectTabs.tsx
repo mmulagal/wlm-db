@@ -15,11 +15,14 @@ const WellArchitectTabs = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [selectedTab, setSelectedTab] = useState<any>();
-    const { selectedWellArchitectTab } = useAppSelector(state => state.getWellOptimize);
+    const { selectedWellArchitectTab, isWad } = useAppSelector(state => state.getWellOptimize);
     const { regionMapping } = useAppSelector(state => state.headers);
     const { selectedGwInstanceRegionId, selectedGwInstanceCredId, selectedResourceId, selectedDatabaseInstance } =
         useAppSelector(state => state.getWellOptimize);
     const { allLogAnalysisData } = useAppSelector(state => state.inventoryV2);
+
+    // WAD tooltip message for disabled tabs
+    const wadDisabledMessage = t('databases.wad.tab-disabled-message');
 
     const isBedrockSupportedForRegion = useMemo(() => {
         let isBedRockAvailable = true;
@@ -56,26 +59,37 @@ const WellArchitectTabs = () => {
 
     return (
         <div className={styles['well-architect-tabs']}>
-            <div
-                className={
-                    selectedTab === 'Overview'
-                        ? `${styles.headers} ${styles.headerWidthFirst} ${styles.active}`
-                        : `${styles.headers} ${styles.headerWidthFirst}`
-                }
-            >
-                <DsTypography
-                    variant="Semibold_14"
+            {/* Overview Tab - disabled for WAD */}
+            {isWad ? (
+                <TooltipComponent placement="bottom" title={wadDisabledMessage} width={300}>
+                    <div className={`${styles.headers} ${styles.headerWidthFirst}`}>
+                        <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
+                            {t('databases.general.overview')}
+                        </DsTypography>
+                    </div>
+                </TooltipComponent>
+            ) : (
+                <div
                     className={
                         selectedTab === 'Overview'
-                            ? `${styles.headerPart1} ${styles.activeText}`
-                            : `${styles.headerPart1}`
+                            ? `${styles.headers} ${styles.headerWidthFirst} ${styles.active}`
+                            : `${styles.headers} ${styles.headerWidthFirst}`
                     }
-                    onClick={() => handleClick('Overview')}
-                    data-testid="wlm-db-mssql-overview-tab"
                 >
-                    {GENERAL.OVERVIEW}
-                </DsTypography>
-            </div>
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={
+                            selectedTab === 'Overview'
+                                ? `${styles.headerPart1} ${styles.activeText}`
+                                : `${styles.headerPart1}`
+                        }
+                        onClick={() => handleClick('Overview')}
+                        data-testid="wlm-db-mssql-overview-tab"
+                    >
+                        {t('databases.general.overview')}
+                    </DsTypography>
+                </div>
+            )}
             <div
                 className={
                     selectedTab === 'Well-architected status'
@@ -93,14 +107,15 @@ const WellArchitectTabs = () => {
                     onClick={() => handleClick('Well-architected status')}
                     data-testid="wlm-db-mssql-well-architected-status-tab"
                 >
-                    {GENERAL.WELL_ARCHITECTED_STATUS}
+                    {t('databases.general.well-architected-status')}
                 </DsTypography>
             </div>
 
-            {!isBedrockSupportedForRegion && (
+            {/* Error Investigation Tab - disabled for WAD or when Bedrock not supported */}
+            {(isWad || !isBedrockSupportedForRegion) && (
                 <TooltipComponent
                     placement="bottom"
-                    title={t('databases.log-analyzer.bedrock-in-region-not-supported')}
+                    title={isWad ? wadDisabledMessage : t('databases.log-analyzer.bedrock-in-region-not-supported')}
                     width={300}
                 >
                     <div className={`${styles.headers} ${styles.headerWidthSecond}`}>
@@ -113,7 +128,7 @@ const WellArchitectTabs = () => {
                     </div>
                 </TooltipComponent>
             )}
-            {isBedrockSupportedForRegion && (
+            {!isWad && isBedrockSupportedForRegion && (
                 <div
                     className={
                         selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION
@@ -142,47 +157,69 @@ const WellArchitectTabs = () => {
                 </div>
             )}
 
-            <div
-                className={
-                    selectedTab === 'Databases'
-                        ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
-                        : `${styles.headers} ${styles.headerWidthThird}`
-                }
-            >
-                <DsTypography
-                    variant="Semibold_14"
+            {/* Databases Tab - disabled for WAD */}
+            {isWad ? (
+                <TooltipComponent placement="bottom" title={wadDisabledMessage} width={300}>
+                    <div className={`${styles.headers} ${styles.headerWidthThird}`}>
+                        <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
+                            {t('databases.general.databases')}
+                        </DsTypography>
+                    </div>
+                </TooltipComponent>
+            ) : (
+                <div
                     className={
                         selectedTab === 'Databases'
-                            ? `${styles.headerPart1} ${styles.activeText}`
-                            : `${styles.headerPart1}`
+                            ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
+                            : `${styles.headers} ${styles.headerWidthThird}`
                     }
-                    onClick={() => handleClick('Databases')}
-                    data-testid="wlm-db-mssql-databases-tab"
                 >
-                    {GENERAL.DATABASES}
-                </DsTypography>
-            </div>
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={
+                            selectedTab === 'Databases'
+                                ? `${styles.headerPart1} ${styles.activeText}`
+                                : `${styles.headerPart1}`
+                        }
+                        onClick={() => handleClick('Databases')}
+                        data-testid="wlm-db-mssql-databases-tab"
+                    >
+                        {t('databases.general.databases')}
+                    </DsTypography>
+                </div>
+            )}
 
-            <div
-                className={
-                    selectedTab === 'Sandboxes'
-                        ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
-                        : `${styles.headers} ${styles.headerWidthThird}`
-                }
-            >
-                <DsTypography
-                    variant="Semibold_14"
+            {/* Sandboxes Tab - disabled for WAD */}
+            {isWad ? (
+                <TooltipComponent placement="bottom" title={wadDisabledMessage} width={300}>
+                    <div className={`${styles.headers} ${styles.headerWidthThird}`}>
+                        <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
+                            {t('databases.general.sandboxes')}
+                        </DsTypography>
+                    </div>
+                </TooltipComponent>
+            ) : (
+                <div
                     className={
                         selectedTab === 'Sandboxes'
-                            ? `${styles.headerPart1} ${styles.activeText}`
-                            : `${styles.headerPart1}`
+                            ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
+                            : `${styles.headers} ${styles.headerWidthThird}`
                     }
-                    onClick={() => handleClick('Sandboxes')}
-                    data-testid="wlm-db-mssql-sandboxes-tab"
                 >
-                    {GENERAL.SANDBOXES}
-                </DsTypography>
-            </div>
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={
+                            selectedTab === 'Sandboxes'
+                                ? `${styles.headerPart1} ${styles.activeText}`
+                                : `${styles.headerPart1}`
+                        }
+                        onClick={() => handleClick('Sandboxes')}
+                        data-testid="wlm-db-mssql-sandboxes-tab"
+                    >
+                        {t('databases.general.sandboxes')}
+                    </DsTypography>
+                </div>
+            )}
         </div>
     );
 };

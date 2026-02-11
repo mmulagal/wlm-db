@@ -133,6 +133,7 @@ export interface AssessmentResponseInterface {
     highAvailability?: Array<{ [Key: string]: PerConfigInterface }>;
     crr?: PerConfigInterface;
     clone?: PerConfigInterface;
+    isWad?: boolean;
 }
 
 export interface HostAssessmentResponseInterface {
@@ -259,4 +260,5 @@ export interface GetWellSliceInterface {
     cloneDashboardData: any;
     cloneIsOptimizedRows: any;
     inProgressStateData: any;
+    isWad?: boolean; // Flag to indicate if the instance is from WAD (offline assessment)
 }

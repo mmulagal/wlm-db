@@ -17,7 +17,12 @@ import {
 } from '../../../../utils/consts';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
-import { createNACustomFilter, getFilterOptions, getFilterOptionsWithNA } from '../../../../utils/utilityFunctions';
+import {
+    createNACustomFilter,
+    getFilterOptions,
+    getFilterOptionsWithNA,
+    formatDateWithTime
+} from '../../../../utils/utilityFunctions';
 import { instanceNameHyperLink, optimizeAction, protectionTooltipText } from './InstanceTableColumnsHelper';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
@@ -35,7 +40,7 @@ import { selectedTabSelection } from '../../../../store/workloadFactory/database
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { manageActionCol } from '../../InventoryUtilsV2';
 import { resetAgenticPreCheckData } from '../../../../store/workloadFactory/agenticAISlice';
-import { logAnalyzerStatusCol } from './InstanceTableHelper';
+import { logAnalyzerStatusCol, handleWadOptimizeAction } from './InstanceTableHelper';
 
 export function getMssqlInstanceTableColumns({
     t,
@@ -163,6 +168,37 @@ export function getMssqlInstanceTableColumns({
                 if (rowData?.optimizationStatusLoading) {
                     return <DsFlashingDotsLoader />;
                 }
+
+                // For WAD (offline assessment) rows with valid optimization status, show tooltip and View link
+                if (rowData?.isWad && cellData) {
+                    return (
+                        <div className={styles.naContainer}>
+                            <Popover
+                                popoverClass=""
+                                trigger="hover"
+                                isAppendedToBody
+                                placement="bottom"
+                                container={<TooltipIcon />}
+                            >
+                                <div>
+                                    <DsTypography variant="Regular_13">
+                                        {t('databases.inventory.one-time-assessment')}
+                                    </DsTypography>
+                                    {rowData?.optimizationLastTimestamp && (
+                                        <DsTypography variant="Semibold_13">
+                                            {formatDateWithTime(rowData.optimizationLastTimestamp)}
+                                        </DsTypography>
+                                    )}
+                                </div>
+                            </Popover>
+                            <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                            <DsButton type="text" onClick={() => handleWadOptimizeAction(rowData, dispatch)}>
+                                {t('databases.general.view')}
+                            </DsButton>
+                        </div>
+                    );
+                }
+
                 return (
                     <div className={styles.statusCol}>
                         <DsTypography variant="Regular_14">{cellData}</DsTypography>

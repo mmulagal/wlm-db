@@ -126,6 +126,8 @@ export interface InventorySliceData {
     allLogAnalysisData: Array<ErrorInvestigationInstance>;
     allLogAnalysisLoading: boolean;
     allLogAnalysisOracleLoading: boolean;
+    offlineMssqlHostAssessmentData: any;
+    offlineMssqlHostAssessmentLoading: boolean;
     potentialSavingsHostData: {
         [key: string]: any;
     };
@@ -195,11 +197,13 @@ export interface InventoryTableData {
     statusColText?: string;
     platform?: string;
     protocol?: string;
+    isWad?: boolean;
 }
 
 export interface InventoryTableInstanceDatInterface {
     databaseInstanceId?: string;
     databaseInstanceName?: string;
+    databaseHostId?: string;
     status?: string;
     instanceType?: string; // Oracle tenancy type: SINGLE_TENANT or MULTI_TENANT
     protocol?: string; // Storage protocol used by the Oracle instance
@@ -260,6 +264,8 @@ export interface InventoryTableInstanceDatInterface {
     windowsAuthentication?: boolean;
     sqlServerAuthentication?: boolean;
     windowsDomainUserAuthentication?: boolean;
+    isWad?: boolean;
+    wadAssessmentData?: any;
 }
 
 export interface StorageInterface {

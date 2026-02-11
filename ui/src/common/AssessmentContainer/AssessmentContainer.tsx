@@ -6,6 +6,7 @@ import styles from './AssessmentContainer.module.scss';
 import { useAppSelector } from '../../store/storeHooks';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
 import SeparatorComponent from '../SeparatorComponent/SeparatorComponent';
+import TooltipComponent from '../TooltipComponent/TooltipComponent';
 
 interface AssessmentContainerProps {
     onClick: () => void;
@@ -13,6 +14,7 @@ interface AssessmentContainerProps {
     gwTimestamp: string;
     gwAdhocError: string;
     optimizePageLoading: boolean;
+    isWad?: boolean;
 }
 
 const AssessmentContainer = ({
@@ -20,7 +22,8 @@ const AssessmentContainer = ({
     isLoading,
     gwTimestamp,
     gwAdhocError,
-    optimizePageLoading
+    optimizePageLoading,
+    isWad = false
 }: AssessmentContainerProps) => {
     const { t } = useTranslation();
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
@@ -61,15 +64,23 @@ const AssessmentContainer = ({
                 </div>
             </div>
             <div className={styles.rightSide}>
-                <Button
-                    variant="secondary"
-                    data-testid="wlm-db-analyze-now"
-                    isThin
-                    onClick={onClick}
-                    isLoading={isLoading}
-                >
-                    {t('databases.general.assess-now')}
-                </Button>
+                {isWad ? (
+                    <TooltipComponent placement="bottom" title={t('databases.wad.tab-disabled-message')} width={300}>
+                        <Button variant="secondary" data-testid="wlm-db-analyze-now" isThin isDisabled>
+                            {t('databases.general.assess-now')}
+                        </Button>
+                    </TooltipComponent>
+                ) : (
+                    <Button
+                        variant="secondary"
+                        data-testid="wlm-db-analyze-now"
+                        isThin
+                        onClick={onClick}
+                        isLoading={isLoading}
+                    >
+                        {t('databases.general.assess-now')}
+                    </Button>
+                )}
             </div>
         </div>
     );

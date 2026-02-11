@@ -861,6 +861,16 @@ export const inventoryApiV2 = createApi({
                 }
             })
         }),
+        getAllOfflineMssqlHostsAssessmentData: builder.query({
+            query: ({ credentialId = null, regionId = null, nextToken = null }) => {
+                const params = new URLSearchParams();
+                if (credentialId) params.append('credentialsId', credentialId);
+                if (regionId) params.append('region', regionId);
+                if (nextToken) params.append('nextToken', nextToken);
+                const queryString = params.toString();
+                return queryString ? `v1/mssql/offline-assessment?${queryString}` : 'v1/mssql/offline-assessment';
+            }
+        }),
         getDatabaseHostsFullDataV2: builder.query({
             query: ({ credentialId, regionId, nextToken = null, isDemoMode = false }) => {
                 if (isDemoMode) {
@@ -1292,6 +1302,17 @@ export const getWellApi = createApi({
                 url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
             })
         }),
+        getOfflineMssqlAssessmentData: builder.query({
+            query: ({ databaseHostId, instanceId, credentialId = null, regionId = null }) => {
+                const params = new URLSearchParams();
+                if (credentialId) params.append('credentialsId', credentialId);
+                if (regionId) params.append('region', regionId);
+                const queryString = params.toString();
+                return queryString
+                    ? `v1/mssql/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment?${queryString}`
+                    : `v1/mssql/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment`;
+            }
+        }),
         getOracleAssessmentData: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
                 url: `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
@@ -1636,6 +1657,7 @@ export const {
     useCreateDemoResourcesMutation,
     useLazyGetAllMssqlHostsAssessmentDataQuery,
     useLazyGetAllOracleHostsAssessmentDataQuery,
+    useLazyGetAllOfflineMssqlHostsAssessmentDataQuery,
     useManageBulkV2MssqlInstanceMutation,
     useManageBulkV2OracleInstanceMutation,
     useGetOneTimeWADUploadScriptMutation,
@@ -1695,6 +1717,7 @@ export const {
     useOptimizeMTUConfigForBulkMutation,
     useOptimizeMaxdopConfigForBulkMutation,
     useLazyGetSnapshotPoliciesQuery,
+    useLazyGetOfflineMssqlAssessmentDataQuery,
     useOptimizeResiliencyMutation,
     useOptimizeAwsBackupMutation,
     useOptimizeCloneCleanupMutation,

@@ -25,6 +25,7 @@ import {
     useGetRBACPrivilegesMutation,
     useGetSCCrendentialsMutation,
     useGetWorkSpaceIDMutation,
+    useLazyGetAllOfflineMssqlHostsAssessmentDataQuery,
     useLazyGetSubTaskListQuery,
     useListAllDirectoriesMutation,
     useListExistingHostsMutation,
@@ -48,21 +49,25 @@ import {
     FROM_DIALOG,
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
+    WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
+    setBreadCrumbSelectedFrom,
     setInProgressInstances,
     setInventoryTableData,
     setRegisterHostType,
     setSelectedFilterValue,
+    setSelectedHeaderTab,
     setSelectedMultiDetectInstances,
     setSelectedRowsForBulkRegister,
     setTableManageColumnState,
     setWizardOperationType,
     incrementMssqlInstancesTabVisitCount
 } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { updateOrgId } from '../../../../store/authSlice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -72,9 +77,11 @@ import {
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import {
+    setFSXId,
     setGwPageLoadInstanceData,
     setLandingFrom,
-    setOptimizingData
+    setOptimizingData,
+    setSelectedWellArchitectTab
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
@@ -119,7 +126,9 @@ import {
     getDisabledSelectionTooltip,
     shouldEnableHeaderCheckbox,
     MAX_BULK_REGISTER_SELECTION,
-    isOracleDataGuard
+    isOracleDataGuard,
+    refreshOfflineAssessmentData,
+    handleWadOptimizeAction
 } from './InstanceTableHelper';
 
 import IntroductionWADCard from './IntroductionWADCard/IntroductionWADCard';
@@ -201,6 +210,7 @@ const InstancesTable = () => {
     const [getOneTimeWADDownloadScript] = useGetOneTimeWADDownloadScriptMutation();
     const [getOneTimeWADUploadScript] = useGetOneTimeWADUploadScriptMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+    const [getAllOfflineAssessmentAPI] = useLazyGetAllOfflineMssqlHostsAssessmentDataQuery();
 
     const { title, exportToCsvFileName, buttonText } = getInstableTableTopMenuOptions(selectedHostType, t);
 
@@ -946,15 +956,26 @@ const InstancesTable = () => {
                     );
                 }
 
+                // For WAD (offline assessment) MSSQL rows, add Well-Architected option only
+                const isWadMssqlRow = rowData?.isWad && selectedHostType === DBType.MSSQL;
+                if (isWadMssqlRow) {
+                    menu.push({
+                        id: 'mssql-optimize-wad',
+                        displayName: t('databases.instance-table.menu-options.well-architected')
+                    });
+                }
+
                 // Use shared utility for disabling logic
                 const disableResult = isInstanceActionDisabled(rowData, selectedHostType, t);
                 // For menu, also disable if status is unmanaged/undetected/in-progress or bulk selection is active
+                // Exception: WAD MSSQL rows should have the menu enabled
                 const shouldDisableMenu =
-                    isBulkActionVisible ||
-                    rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                    rowData.statusColText === INVENTORY_STATUS.UNDETECTED ||
-                    rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS ||
-                    disableResult.isDisabled;
+                    !isWadMssqlRow &&
+                    (isBulkActionVisible ||
+                        rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                        rowData.statusColText === INVENTORY_STATUS.UNDETECTED ||
+                        rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS ||
+                        disableResult.isDisabled);
                 const width = disableResult.tooltipWidth || '';
                 const height = disableResult.tooltipHeight || '';
 
@@ -989,16 +1010,21 @@ const InstancesTable = () => {
                                         } else if (toggleType === 'selectedOption') {
                                             menuOpenedRowDetail.current = null;
                                             setOpenedRow(null);
-                                            handleInstanceMenuSelection({
-                                                menuId,
-                                                rowData,
-                                                dispatch,
-                                                navigate,
-                                                handleProtection,
-                                                handleDialog,
-                                                optimizeAction,
-                                                handleEditProtection
-                                            });
+                                            // Handle WAD optimize action separately
+                                            if (menuId === 'mssql-optimize-wad') {
+                                                handleWadOptimizeAction(rowData, dispatch);
+                                            } else {
+                                                handleInstanceMenuSelection({
+                                                    menuId,
+                                                    rowData,
+                                                    dispatch,
+                                                    navigate,
+                                                    handleProtection,
+                                                    handleDialog,
+                                                    optimizeAction,
+                                                    handleEditProtection
+                                                });
+                                            }
                                         }
                                     }}
                                     CustomMenu={undefined}
@@ -1290,6 +1316,8 @@ const InstancesTable = () => {
                                         })
                                     );
                                     clearInterval(jobInterval);
+                                    // Refresh offline assessment data after successful upload
+                                    refreshOfflineAssessmentData(getAllOfflineAssessmentAPI, dispatch, [], null);
                                 } else if (status === JOB_MONITORING_STATUS.FAILED) {
                                     dispatch(
                                         addNotification({

@@ -22,6 +22,7 @@ import {
     getFileSystemName,
     getFsxList,
     getOptimizationStatus,
+    getWadOptimizationStatus,
     getProtectionText,
     groupDataGuardConfigurations,
     groupAOAGConfigurations,
@@ -118,8 +119,9 @@ const InventoryV2 = () => {
                     return;
                 }
                 if (
-                    !headerSelectedMultiCredIdsList.includes(inventoryTableData[key]?.credentialId) ||
-                    !headerSelectedMultiRegionIdsList.includes(inventoryTableData[key]?.regionId)
+                    (!headerSelectedMultiCredIdsList.includes(inventoryTableData[key]?.credentialId) ||
+                        !headerSelectedMultiRegionIdsList.includes(inventoryTableData[key]?.regionId)) &&
+                    !inventoryTableData[key]?.isWad
                 ) {
                     return;
                 }
@@ -205,18 +207,28 @@ const InventoryV2 = () => {
                         }
                         const protectionText = getProtectionText(perRow);
                         let optimizationStatus = '';
-                        optimizationStatus = getOptimizationStatus(
-                            perRow?.databaseInstanceId,
-                            optimizationStatusList,
-                            inventoryTableData?.[key]?.hostType || ''
-                        );
+                        let optimizationLastTimestamp = '';
+                        // For WAD (offline assessment) data, use getWadOptimizationStatus
+                        if (perRow?.isWad) {
+                            optimizationStatus = getWadOptimizationStatus(perRow?.wadAssessmentData);
+                            optimizationLastTimestamp = perRow?.wadAssessmentData?.lastAssessmentTimestamp;
+                        } else {
+                            optimizationStatus = getOptimizationStatus(
+                                perRow?.databaseInstanceId,
+                                optimizationStatusList,
+                                inventoryTableData?.[key]?.hostType || ''
+                            );
+                        }
 
                         const fileSystemName = getFileSystemName(perRow);
 
                         const fsxList = getFsxList(perRow);
 
                         // assessment loading for mssql and oracle
-                        if (
+                        // For WAD (offline assessment) data, loading should always be false
+                        if (perRow?.isWad) {
+                            optimizationStatusLoading = false;
+                        } else if (
                             perRow?.statusColText === INVENTORY_STATUS.MANAGED &&
                             inventoryTableData?.[key]?.hostType === DBType.MSSQL
                         ) {
@@ -290,6 +302,7 @@ const InventoryV2 = () => {
                             subLoading: perRow?.loading,
                             optimizationStatusLoading,
                             optimizationStatus,
+                            optimizationLastTimestamp,
                             protectionText:
                                 protectionText === PROTECTION_TEXT_STATUS.YES
                                     ? GENERAL.PROTECTED

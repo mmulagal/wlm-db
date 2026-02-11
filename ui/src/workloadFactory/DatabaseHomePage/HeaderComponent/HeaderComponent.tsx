@@ -36,6 +36,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as BlueXPDatabase } from '../../../assets/blueXPDatabase.svg';
 import { ReactComponent as Close } from '../../../assets/ic_close.svg';
 import HeaderComponentApi from './HeaderComponentApis';
+import WADApis from './WADApis';
 import {
     setDashboardRefresh,
     setHeaderSelectedCredSandbox,
@@ -203,6 +204,7 @@ const HeaderComponent = ({ tab }: Tab) => {
     }, [multiDataStatus]);
 
     HeaderComponentApi();
+    WADApis();
     InventoryApisV3();
     DatabaseHomeApis();
     SavingsCalculatorApi();
