@@ -7,6 +7,14 @@
     scrollbar-color: var(--scroller) var(--scroller-track);
     scrollbar-width: thin;
 
+    .darkSvgContainer {
+        svg {
+            rect:first-child {
+                fill: #4d5765;
+            }
+        }
+    }
+
     .content {
         padding: 40px;
 

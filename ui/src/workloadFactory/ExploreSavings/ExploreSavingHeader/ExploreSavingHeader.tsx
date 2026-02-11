@@ -16,7 +16,6 @@ import useResize from '../../../common/hooks/useResize';
 import { useAppSelector } from '../../../store/storeHooks';
 import { WLF_TABS } from '../../../utils/consts';
 import ExploreSavingsOnPremiseTable from '../ExploreSavingsOnPremiseTable/ExploreSavingsOnPremiseTable';
-import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import ExploreSavingsFsxTable from '../ExploreSavingsTableV2/ExploreSavingsFsxTable';
 import TCOBanner from '../TCOBanner/TCOBanner';
 
@@ -130,7 +129,7 @@ const ExploreSavingHeader = () => {
                                         <ExploreSavingCommon />
                                     </div>
                                 ) : (
-                                    <div>
+                                    <div className={styles.svgContainer}>
                                         <ExploreSaving1600 />
                                         {/* <ExploreSavingCommon /> */}
                                     </div>

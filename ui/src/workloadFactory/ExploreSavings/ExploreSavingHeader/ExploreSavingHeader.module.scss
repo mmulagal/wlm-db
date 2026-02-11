@@ -11,6 +11,14 @@
         display: flex;
         height: 252px;
 
+        .svgContainer {
+            svg {
+                rect:first-child {
+                    fill: var(--hover-background);
+                }
+            }
+        }
+
         .contentSection {
             padding: 40px 64px 0 64px;
             display: flex;
@@ -114,7 +122,7 @@
             .svgContainer1600 {
                 width: 535px;
                 height: inherit !important;
-                background-color: #e8eefd;
+                background-color: var(--hover-background);
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -132,7 +140,7 @@
             .svgContainer1600 {
                 width: 535px;
                 height: 380px;
-                background-color: #e8eefd;
+                background-color: var(--hover-background);
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -159,7 +167,7 @@
             .svgContainer1600 {
                 width: 535px;
                 height: inherit;
-                background-color: #e8eefd;
+                background-color: var(--hover-background);
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -200,7 +208,7 @@
             .svgContainer1600 {
                 width: 535px;
                 height: inherit;
-                background-color: #e8eefd;
+                background-color: var(--hover-background);
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -239,7 +247,7 @@
             .svgContainer1600 {
                 width: 535px;
                 height: 292px;
-                background-color: #e8eefd;
+                background-color: var(--hover-background);
                 display: flex;
                 justify-content: center;
                 align-items: center;

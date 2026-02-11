@@ -23,7 +23,7 @@ const TCOBanner = () => {
     useEffect(() => {
         const interval = setInterval(() => {
             setActiveSlide(prev => (prev === 0 ? 1 : 0));
-        }, 8000);
+        }, 20000);
 
         return () => clearInterval(interval);
     }, []);
