@@ -1,19 +1,22 @@
 import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './InnerTable.module.scss';
 
 import { GENERAL } from '../../../../utils/appConstants';
+import { getWadCellProps } from '../../GetWellUtils';
 
-const DataFilesOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+const DataFilesOptimizeTable = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: any) => {
+    const { t } = useTranslation();
     const tableData = useMemo(() => {
         let id = 0;
         return data?.objectsInViolation?.map((row: any) => ({
             databaseName: row,
             id: String(id++),
-            cellProps: { ...row.cellProps, isDisabled: true }
+            cellProps: getWadCellProps(isWad, t, { ...row.cellProps, isDisabled: true })
         }));
-    }, [data]);
+    }, [data, isWad, t]);
 
     const TableColDefs: ColumnProps[] = [
         {

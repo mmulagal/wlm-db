@@ -43,6 +43,7 @@ import {
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
     STATUS_CONST,
+    WAD_EXCLUDED_CONFIGS_MSSQL,
     WA_FLAG_SKIP,
     WLF_TABS
 } from '../../utils/consts';
@@ -87,6 +88,19 @@ export const getCategoryData = () => ({
     clone_management: { category: 'Cloning', subCategory: 'Cloning' },
     mssql_high_availability: { category: 'Resiliency', subCategory: 'Protection' }
 });
+
+/**
+ * Checks if a configuration is excluded for WAD (offline assessment) MSSQL instances.
+ * These configurations require online connectivity and are not available for WAD instances.
+ * If a config is removed from WAD_EXCLUDED_CONFIGS_MSSQL, it will be shown normally.
+ * @param configMapName - The configuration map name (display name)
+ * @param isWad - Whether the instance is a WAD (offline assessment) instance
+ * @returns true if the config should be excluded for WAD MSSQL instances
+ */
+export const isWadExcludedConfig = (configMapName: string | undefined, isWad: boolean): boolean => {
+    if (!isWad || !configMapName) return false;
+    return WAD_EXCLUDED_CONFIGS_MSSQL.includes(configMapName);
+};
 
 // Generate dynamic filter options based on actual card data
 export const generateDynamicFilterOptions = (cardData: any, deploymentType?: string) => {
@@ -2923,8 +2937,17 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
     let hasDismissedOrPostponedResiliency = false;
     let hasDismissedOrPostponedCloning = false;
 
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = cardsData?.isWad || false;
+
     Object.keys(cardsData).forEach(key => {
         const nestedObject = cardsData[key];
+
+        // Skip WAD excluded configurations - they should not be counted in optimization breakdown
+        if (isWadExcludedConfig(nestedObject?.mapName, isWad)) {
+            return;
+        }
+
         const dismissedState = nestedObject?.dismissedObj?.configState;
         const isDismissed = dismissedState === CONFIG_STATES.DISMISSED;
         const isPostponed = dismissedState === CONFIG_STATES.POSTPONED;
@@ -3634,6 +3657,9 @@ export const applyFilter = (
 
     const categoryData = getCategoryData();
 
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = cardData?.isWad || false;
+
     Object.keys(cardData).map((key: any) => {
         if (WA_FLAG_SKIP.includes(key)) {
             return; // Skip deploymentType as it is not a card
@@ -3642,6 +3668,21 @@ export const applyFilter = (
         const isMSSQLHighAvailability = key === 'mssql_high_availability';
         if (isMSSQLHighAvailability && cardData?.deploymentType !== GENERAL.FCI) {
             return; // Skip this card for non-FCI instances
+        }
+
+        // Check if this config is excluded for WAD instances
+        const isWadExcluded = isWadExcludedConfig(cardData[key]?.mapName, isWad);
+
+        // WAD excluded configs should not be shown in dismissed view as they have no dismiss functionality
+        if (isWadExcluded && showDismissedConfigurations) {
+            return;
+        }
+
+        // For WAD excluded configs, include them with isWadExcluded flag but skip filter checks
+        if (isWadExcluded) {
+            filteredCardData[key] = { ...cardData[key], isWadExcluded: true };
+            // Do NOT count WAD excluded configs as they are not part of the assessment
+            return;
         }
 
         const checkCategory =
@@ -6085,4 +6126,42 @@ export const selectHeaderTabFromBreadCrumb = (breadCrumbSelectedFrom: string, di
         dashboardRedirection('dashboard');
         dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
     }
+};
+
+/**
+ * Creates cellProps for table rows with WAD (offline assessment) support.
+ * When isWad is true, returns disabled props with WAD tooltip message.
+ * When isWad is false, returns the provided fallback props.
+ *
+ * @param isWad - Whether the instance is a WAD (offline assessment) instance
+ * @param t - The translation function from useTranslation hook
+ * @param fallbackCellProps - The cellProps to use when not in WAD mode (optional, defaults to undefined)
+ * @returns Cell props object for table row selection handling
+ *
+ * @example
+ * // Pattern 1: With undefined fallback
+ * cellProps: getWadCellProps(isWad, t)
+ *
+ * @example
+ * // Pattern 2: With row.cellProps spread and isDisabled: true
+ * cellProps: getWadCellProps(isWad, t, { ...row.cellProps, isDisabled: true })
+ *
+ * @example
+ * // Pattern 3: With row.cellProps spread and isDisabled: false
+ * cellProps: getWadCellProps(isWad, t, { ...row.cellProps, isDisabled: false })
+ */
+export const getWadCellProps = (
+    isWad: boolean,
+    t: TFunction,
+    fallbackCellProps?: Record<string, unknown>
+): Record<string, unknown> | undefined => {
+    if (isWad) {
+        return {
+            isDisabled: true,
+            selectionProps: {
+                title: t('databases.wad.tab-disabled-message')
+            }
+        };
+    }
+    return fallbackCellProps;
 };

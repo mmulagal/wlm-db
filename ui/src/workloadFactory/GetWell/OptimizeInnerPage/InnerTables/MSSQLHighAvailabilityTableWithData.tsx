@@ -2,6 +2,7 @@ import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
@@ -9,8 +10,10 @@ import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadF
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import { getWadCellProps } from '../../GetWellUtils';
 
-const MSSQLHighAvailabilityTableWithData = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+const MSSQLHighAvailabilityTableWithData = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
@@ -50,10 +53,11 @@ const MSSQLHighAvailabilityTableWithData = ({ type, data, lastColDetails, handle
                 name: violationItem,
                 status: 'In Violation',
                 configurationType: data?.name || type,
-                severity: data?.severity || 'critical'
+                severity: data?.severity || 'critical',
+                cellProps: getWadCellProps(isWad, t)
             })) || []
         );
-    }, [data, type]);
+    }, [data, type, isWad, t]);
 
     const TableColDefs: ColumnProps[] = [
         {

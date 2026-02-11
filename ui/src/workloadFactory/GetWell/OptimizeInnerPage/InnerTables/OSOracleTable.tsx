@@ -9,6 +9,7 @@ import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadF
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import { getWadCellProps } from '../../GetWellUtils';
 
 // Interface for violation detail items
 interface ViolationDetail {
@@ -28,10 +29,11 @@ interface OSOracleTableProps {
     data: OSConfigData;
     lastColDetails: (type: string, options: Record<string, null>, width?: string) => ColumnProps;
     handleBulkAction: () => void;
+    isWad?: boolean;
 }
 
 // This component is used in GetWell -> Optimize page -> Inner drawer -> OS Configuration section for Oracle workloads
-const OSOracleTable = ({ type, data, lastColDetails, handleBulkAction }: OSOracleTableProps) => {
+const OSOracleTable = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: OSOracleTableProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
@@ -60,10 +62,11 @@ const OSOracleTable = ({ type, data, lastColDetails, handleBulkAction }: OSOracl
             return {
                 ...row,
                 id: String(currentId),
-                name: row?.objectName
+                name: row?.objectName,
+                cellProps: getWadCellProps(isWad, t)
             };
         });
-    }, [data]);
+    }, [data, isWad, t]);
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -104,6 +107,16 @@ const OSOracleTable = ({ type, data, lastColDetails, handleBulkAction }: OSOracl
         lastColDetails(type, {})
     ];
 
+    const getSelectionType = () => {
+        if (
+            type === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
+            type === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE
+        ) {
+            return 'none';
+        }
+        return 'multiple';
+    };
+
     const tableProps = useTable({
         // @ts-expect-error
         manageColumnsProps: false,
@@ -112,11 +125,7 @@ const OSOracleTable = ({ type, data, lastColDetails, handleBulkAction }: OSOracl
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        selectionType:
-            type === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
-            type === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE
-                ? 'none'
-                : 'multiple',
+        selectionType: getSelectionType(),
         defaultSelectedRows: []
     });
 

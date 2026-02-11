@@ -11,7 +11,7 @@ import {
 import { GENERAL } from '../../utils/appConstants';
 import { ReactComponent as Postpone } from '../../assets/Schedule.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
-import { getConfigurationTechnicalName } from './GetWellUtils';
+import { getConfigurationTechnicalName, isWadExcludedConfig } from './GetWellUtils';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
 
 // Helper component for postpone information
@@ -102,9 +102,17 @@ export const checkHasDismissedConfigurations = (cardData: any, assessmentData?: 
         return false;
     }
 
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = cardData?.isWad || false;
+
     // Check standard dismissed configurations (using dismissedObj)
     const hasStandardDismissed = Object.keys(cardData).some((key: string) => {
         if (WA_FLAG_SKIP.includes(key)) return false;
+
+        // Skip WAD excluded configurations
+        if (isWadExcludedConfig(cardData[key]?.mapName, isWad)) {
+            return false;
+        }
 
         const configState = cardData[key]?.dismissedObj?.configState;
         const isDismissed = configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED;
@@ -208,6 +216,9 @@ export const calculateTotalConfigCount = (
 ): number => {
     if (!cardData) return 0;
 
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = cardData?.isWad || false;
+
     let count = 0;
     Object.keys(cardData).forEach((key: string) => {
         if (WA_FLAG_SKIP.includes(key)) return;
@@ -219,6 +230,11 @@ export const calculateTotalConfigCount = (
         }
 
         if (key === 'isStorageLayoutFra' || key === 'isASMManaged' || key === 'storageProtocol') {
+            return;
+        }
+
+        // Skip WAD excluded configurations from count
+        if (isWadExcludedConfig(cardData[key]?.mapName, isWad)) {
             return;
         }
 
@@ -442,6 +458,9 @@ export const checkAllConfigurationsDismissed = (cardData: any, assessmentData?: 
         return false;
     }
 
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = cardData?.isWad || false;
+
     let totalConfigs = 0;
     let dismissedConfigs = 0;
 
@@ -452,6 +471,11 @@ export const checkAllConfigurationsDismissed = (cardData: any, assessmentData?: 
         // Skip MSSQL High Availability for non-FCI instances
         const isMSSQLHighAvailability = key === GETWELL_CONFIG.mssqlhighavailability;
         if (isMSSQLHighAvailability && cardData?.deploymentType !== GENERAL.FCI) {
+            return;
+        }
+
+        // Skip WAD excluded configurations
+        if (isWadExcludedConfig(cardData[key]?.mapName, isWad)) {
             return;
         }
 

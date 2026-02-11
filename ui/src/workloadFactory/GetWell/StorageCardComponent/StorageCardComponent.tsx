@@ -1,4 +1,12 @@
-import { Button, DsButton, DsFlashingDotsLoader, DsTypography, Popover, useDialog } from '@netapp/design-system';
+import {
+    Button,
+    DsButton,
+    DsFlashingDotsLoader,
+    DsPopover,
+    DsTypography,
+    Popover,
+    useDialog
+} from '@netapp/design-system';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -97,6 +105,11 @@ const StorageCardComponent = ({
 
     // Function to determine if dismissed style should be applied
     const shouldApplyDismissedStyle = () => {
+        // WAD excluded configs should have disabled/dismissed style
+        if (cardData?.isWadExcluded) {
+            return true;
+        }
+
         // For ONTAP, OS, and HA cards: apply dismissed style if all sub-configs are activating
         if (
             cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
@@ -110,8 +123,13 @@ const StorageCardComponent = ({
         return showDismissedConfigurations || cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING;
     };
 
-    // Function to determine if dismissed style should be applied
+    // Function to determine if pointer should be removed (non-clickable)
     const shouldRemoveActivatingPointer = () => {
+        // WAD excluded configs should not be clickable
+        if (cardData?.isWadExcluded) {
+            return true;
+        }
+
         // For ONTAP, OS, and HA cards: apply dismissed style if all sub-configs are activating
         if (
             cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
@@ -251,6 +269,23 @@ const StorageCardComponent = ({
                 </div>
             );
         }
+        // WAD excluded configurations show Unavailable with tooltip
+        if (cardData?.isWadExcluded) {
+            return (
+                <span className={styles.overProvisioned}>
+                    <span className={styles.tooltipLevel}>
+                        <DsPopover title={t('databases.wad.tab-disabled-message')} trigger="hover" placement="bottom">
+                            <TooltipIcon />
+                        </DsPopover>
+                    </span>
+                    <span style={{ marginLeft: '8px' }}>
+                        <DsTypography variant="Semibold_14" isDisabled>
+                            {t('databases.well-architect.unavailable')}
+                        </DsTypography>
+                    </span>
+                </span>
+            );
+        }
         if (cardData?.dismissedObj?.configState && cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVE) {
             // Condition to show n/a if state is not active
             return (
@@ -364,6 +399,14 @@ const StorageCardComponent = ({
                 <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
                     <DsFlashingDotsLoader />
                 </div>
+            );
+        }
+        // WAD excluded configurations show n/a
+        if (cardData?.isWadExcluded) {
+            return (
+                <DsTypography variant="Semibold_14" isDisabled>
+                    {t('databases.general.not-available-table-columns')}
+                </DsTypography>
             );
         }
         // For ONTAP and OS cards: show N/A if sub-configurations are not active
@@ -797,9 +840,12 @@ const StorageCardComponent = ({
         dispatch(setSelectedOptimizeConfig({ type, data: cardData, engineType: DBType.MSSQL }));
     };
 
-    // This is for inner page navigation
-    const handleDifferentNavigation = () => {
-        if (
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = fullCardData?.isWad || false;
+
+    // Check if button would call handleDialog (vs navigation to optimize page)
+    const wouldCallHandleDialog = () =>
+        !(
             type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
             type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF ||
@@ -809,16 +855,15 @@ const StorageCardComponent = ({
             type === GENERAL.CRR ||
             type === GENERAL.CLONE_MANAGEMENT ||
             type === ASSESSMENT_CONFIG_NAMES.MTU
-        ) {
+        );
+
+    // This is for inner page navigation
+    const handleDifferentNavigation = () => {
+        if (!wouldCallHandleDialog()) {
             handleNavigateToOptimizePage(type);
         } else {
             handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
         }
-    };
-
-    // This will be removed
-    const handleTemporaryDialog = () => {
-        handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
     };
 
     const setButtonText = () => {
@@ -923,6 +968,10 @@ const StorageCardComponent = ({
     };
 
     const dismissDisableButton = () => {
+        // Disable dismiss for WAD excluded configurations
+        if (cardData?.isWadExcluded) {
+            return true;
+        }
         if (
             cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
             cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||
@@ -950,6 +999,8 @@ const StorageCardComponent = ({
 
     // Dismiss button component
     const renderDismissButton = () => {
+        // Do not show dismiss button for WAD excluded configs
+        if (cardData?.isWadExcluded) return null;
         if (!showDismissButton || !cardData?.block_two?.value) return null;
 
         return (
@@ -1054,8 +1105,36 @@ const StorageCardComponent = ({
                     </div>
                 ) : null}
 
+                {/* Disabled button with tooltip for WAD excluded configs */}
+                {cardData?.isWadExcluded && !optimizePrintState && !showDismissedConfigurations && (
+                    <div className={styles.buttonGroup}>
+                        <DsPopover
+                            title={
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.wad.tab-disabled-message')}
+                                </DsTypography>
+                            }
+                            trigger="hover"
+                            placement="left"
+                        >
+                            <div
+                                className={
+                                    isDarkTheme
+                                        ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                        : styles.buttonSection
+                                }
+                            >
+                                <DsButton variant="secondary" isDisabled>
+                                    {setButtonText()}
+                                </DsButton>
+                            </div>
+                        </DsPopover>
+                    </div>
+                )}
+
                 {/* Buttons for regular cards */}
                 {!showDismissedConfigurations &&
+                    !cardData?.isWadExcluded &&
                     !(
                         cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
                         cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
@@ -1141,23 +1220,47 @@ const StorageCardComponent = ({
                         <div className={styles.buttonGroup}>
                             {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
                             {loading || dismissDisableButton() ? '' : renderDismissButton()}
-                            {/* View and Fix Action Button */}
-                            <div
-                                className={
-                                    isDarkTheme && (loading || disableOptimizeButton)
-                                        ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
-                                        : styles.buttonSection
-                                }
-                                id={`${cardData?.id}-optimize`}
-                            >
-                                <DsButton
-                                    variant="secondary"
-                                    onClick={() => handleDifferentNavigation()}
-                                    isDisabled={loading || disableOptimizeButton || dismissDisableButton()}
+                            {/* View and Fix Action Button - disabled with Popover for WAD when it would call handleDialog */}
+                            {isWad && wouldCallHandleDialog() ? (
+                                <DsPopover
+                                    title={
+                                        <DsTypography variant="Regular_14">
+                                            {t('databases.wad.tab-disabled-message')}
+                                        </DsTypography>
+                                    }
+                                    trigger="hover"
+                                    placement="left"
                                 >
-                                    {setButtonText()}
-                                </DsButton>
-                            </div>
+                                    <div
+                                        className={
+                                            isDarkTheme
+                                                ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                                : styles.buttonSection
+                                        }
+                                    >
+                                        <DsButton variant="secondary" isDisabled>
+                                            {setButtonText()}
+                                        </DsButton>
+                                    </div>
+                                </DsPopover>
+                            ) : (
+                                <div
+                                    className={
+                                        isDarkTheme && (loading || disableOptimizeButton)
+                                            ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                            : styles.buttonSection
+                                    }
+                                    id={`${cardData?.id}-optimize`}
+                                >
+                                    <DsButton
+                                        variant="secondary"
+                                        onClick={() => handleDifferentNavigation()}
+                                        isDisabled={loading || disableOptimizeButton || dismissDisableButton()}
+                                    >
+                                        {setButtonText()}
+                                    </DsButton>
+                                </div>
+                            )}
                         </div>
                     ))}
 

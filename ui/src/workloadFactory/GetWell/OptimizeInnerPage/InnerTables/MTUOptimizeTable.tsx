@@ -8,8 +8,9 @@ import { getSelectedFromSelectionState } from '../../../../utils/utilityFunction
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { getWadCellProps } from '../../GetWellUtils';
 
-const MTUOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+const MTUOptimizeTable = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: any) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
@@ -18,12 +19,12 @@ const MTUOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any)
         const mtuData = data?.ec2InterfacesToFix || [];
         const processedData = mtuData.map((row: any) => ({
             ...row,
-            cellProps: { ...row.cellProps, isDisabled: false },
+            cellProps: getWadCellProps(isWad, t, { ...row.cellProps, isDisabled: false }),
             id: String(id++),
             interfaceName: row.name
         }));
         return processedData;
-    }, [data]);
+    }, [data, isWad, t]);
 
     const TableColDefs: ColumnProps[] = [
         {

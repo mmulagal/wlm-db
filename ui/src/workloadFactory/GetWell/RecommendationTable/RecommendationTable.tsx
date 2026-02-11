@@ -113,6 +113,7 @@ const RecommendationTable = ({
     const { selectedHeaderTab } = useAppSelector(state => state.inventoryV2);
     // Get the full card data to check dismissed configurations count
     const fullCardData = useAppSelector(state => state.getWellOptimize.cardData);
+    const isWad = fullCardData?.isWad || false;
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOracleStorageConfig] = useOptimizeOracleStorageConfigMutation();
@@ -604,6 +605,14 @@ const RecommendationTable = ({
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE));
         dispatch(setSelectedOptimizeConfig({ type: rowData?.name, data: rowData, hostId, instanceId, engineType }));
     };
+
+    // Helper to check if clicking would open OntapDialog
+    const wouldOpenOntapDialog = (rowData: any) =>
+        !(
+            (selectedHeaderTab === WLF_TABS.OPTIMIZE || selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED) &&
+            innerPageOracleCheck(rowData?.name) &&
+            innerPageCheck(rowData?.name)
+        );
 
     // This is for inner page
     const handleDifferentNavigation = (rowData: any) => {
@@ -1211,6 +1220,23 @@ const RecommendationTable = ({
                                             height="50px"
                                         >
                                             <div>
+                                                <DsButton variant="secondary" isDisabled>
+                                                    {innerPageText(rowData?.name)}
+                                                </DsButton>
+                                            </div>
+                                        </TooltipComponent>
+                                    ) : isWad && wouldOpenOntapDialog(rowData) ? (
+                                        <TooltipComponent
+                                            title={
+                                                <DsTypography variant="Regular_13">
+                                                    {t('databases.wad.tab-disabled-message')}
+                                                </DsTypography>
+                                            }
+                                            placement="bottom"
+                                            width="350px"
+                                            height="110px"
+                                        >
+                                            <div id={`${engineType}-${rowData?.id}-optimize`}>
                                                 <DsButton variant="secondary" isDisabled>
                                                     {innerPageText(rowData?.name)}
                                                 </DsButton>

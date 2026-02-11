@@ -1,4 +1,4 @@
-import { Table, useTable, TableTopBar, DsButton } from '@netapp/design-system';
+import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -10,6 +10,7 @@ import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadF
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES, DBType } from '../../../../utils/consts';
+import { getWadCellProps } from '../../GetWellUtils';
 
 const OntapTableWithData = ({
     type,
@@ -17,7 +18,8 @@ const OntapTableWithData = ({
     lastColDetails,
     handleBulkAction,
     engineType = DBType.ORACLE,
-    isRecommendation = false
+    isRecommendation = false,
+    isWad = false
 }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -40,9 +42,10 @@ const OntapTableWithData = ({
             ...row,
             id: String(id++),
             name: row?.objectName,
-            value: row?.value
+            value: row?.value,
+            cellProps: getWadCellProps(isWad, t)
         }));
-    }, [data]);
+    }, [data, isWad, t]);
 
     const TableColDefs: ColumnProps[] = [
         {

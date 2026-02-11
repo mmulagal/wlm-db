@@ -2,6 +2,7 @@ import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/desi
 import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useState } from 'react';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
+import { useTranslation } from 'react-i18next';
 import styles from './OptimizeInnerPage.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -57,9 +58,9 @@ import CloneTabs from './CloneTabs';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
 import MTUOptimizeTable from './InnerTables/MTUOptimizeTable';
 import StorageLayoutOracleTable from './InnerTables/StorageLayoutOracleTable';
-import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 
 const OptimizeInnerPage = () => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
     const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -83,6 +84,8 @@ const OptimizeInnerPage = () => {
         selectedGwInstanceRegionId,
         cloneIsOptimizedRows
     } = useAppSelector(state => state.getWellOptimize);
+    const fullCardData = useAppSelector(state => state.getWellOptimize.cardData);
+    const isWad = fullCardData?.isWad || false;
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
@@ -226,6 +229,22 @@ const OptimizeInnerPage = () => {
     }, [selectedOptimizeConfig]);
 
     const buttonComponent = (rowData: any) => {
+        if (isWad) {
+            return (
+                <Popover
+                    isAppendedToBody
+                    children={t('databases.wad.tab-disabled-message')}
+                    trigger="hover"
+                    delayHide={200}
+                    interactive
+                    container={
+                        <DsButton variant="secondary" isDisabled isThin>
+                            {t('databases.well-architect.fix')}
+                        </DsButton>
+                    }
+                />
+            );
+        }
         if (
             selectedOptimizeConfig?.type === 'Data files' ||
             selectedOptimizeConfig?.type === 'Log files' ||
@@ -768,6 +787,7 @@ const OptimizeInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
 
@@ -779,6 +799,7 @@ const OptimizeInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
             case 'File system headroom':
@@ -787,6 +808,7 @@ const OptimizeInnerPage = () => {
                         type={selectedOptimizeConfig?.type}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
             case 'Log drive size':
@@ -796,6 +818,7 @@ const OptimizeInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
             case 'Data files':
@@ -806,6 +829,7 @@ const OptimizeInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
             case 'Log files':
@@ -816,6 +840,7 @@ const OptimizeInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
             case GENERAL.RSS_CONFIGURATION:
@@ -825,6 +850,7 @@ const OptimizeInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
             case ASSESSMENT_CONFIG_NAMES.MTU:
@@ -834,6 +860,7 @@ const OptimizeInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                         hostname={selectedHostname}
                     />
                 );
@@ -844,6 +871,7 @@ const OptimizeInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
             case GENERAL.CRR:
@@ -853,6 +881,7 @@ const OptimizeInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
             default:

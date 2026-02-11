@@ -2,6 +2,7 @@ import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './InnerTable.module.scss';
 import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnComponent';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -10,8 +11,10 @@ import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadF
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import { getWadCellProps } from '../../GetWellUtils';
 
-const NTFSAllocationTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+const NTFSAllocationTable = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
@@ -20,9 +23,10 @@ const NTFSAllocationTable = ({ type, data, lastColDetails, handleBulkAction }: a
         let id = 0;
         return data?.violationDetails?.map((row: any) => ({
             ...row,
-            id: String(id++)
+            id: String(id++),
+            cellProps: getWadCellProps(isWad, t)
         }));
-    }, [data]);
+    }, [data, isWad, t]);
 
     const TableColDefs: ColumnProps[] = [
         {

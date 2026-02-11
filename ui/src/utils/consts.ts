@@ -1210,6 +1210,23 @@ export const GW_CONFIG_OPTIMIZE_NA = [
     ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION
 ];
 
+/**
+ * List of MSSQL configuration names that are excluded for WAD (offline assessment) instances.
+ * These configurations require online connectivity and are not available for WAD instances.
+ * If a config is removed from this list, it will be shown normally for isWad=true cases.
+ */
+export const WAD_EXCLUDED_CONFIGS_MSSQL = [
+    ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
+    ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+    ASSESSMENT_CONFIG_NAMES.MTU,
+    ASSESSMENT_CONFIG_NAMES.LICENSE,
+    ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+    ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+    ASSESSMENT_CONFIG_NAMES.CRR,
+    ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+    ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
+];
+
 export const categoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];
 export const severityOptions = ['Critical', 'Warning'];
 

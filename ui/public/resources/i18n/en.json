@@ -1766,7 +1766,7 @@
             "jm-type-register-resource": "Register resource"
         },
         "wad": {
-            "tab-disabled-message": "This feature will be available for registered instances",
+            "tab-disabled-message": "The Well-Architected information is accessible through a one-time assessment that determines the status of your Microsoft SQL Server instances. To enable all functionalities, please register the instance first.",
             "register-disabled-no-credentials": "Registration requires AWS credentials. Add credentials to register this instance."
         }
     }

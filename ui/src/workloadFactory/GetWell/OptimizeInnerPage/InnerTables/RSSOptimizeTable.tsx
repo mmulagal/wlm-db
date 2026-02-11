@@ -2,6 +2,7 @@ import { Table, useTable, TableTopBar, DsTypography, Popover } from '@netapp/des
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
@@ -9,18 +10,20 @@ import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadF
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { getWadCellProps } from '../../GetWellUtils';
 
-const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+const RSSOptimizeTable = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const tableData = useMemo(() => {
         let id = 0;
         return data?.notOptimizedAdapters?.map((row: any) => ({
             ...row,
-            cellProps: { ...row.cellProps, isDisabled: false },
+            cellProps: getWadCellProps(isWad, t, { ...row.cellProps, isDisabled: false }),
             id: String(id++)
         }));
-    }, [data]);
+    }, [data, isWad, t]);
 
     const TableColDefs: ColumnProps[] = [
         {

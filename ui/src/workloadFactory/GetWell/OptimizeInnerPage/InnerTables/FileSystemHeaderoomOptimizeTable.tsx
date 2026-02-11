@@ -2,6 +2,7 @@ import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './InnerTable.module.scss';
 import FirstColumnComponent from '../../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnComponent';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -9,8 +10,10 @@ import { getSelectedFromSelectionState } from '../../../../utils/utilityFunction
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
+import { getWadCellProps } from '../../GetWellUtils';
 
-const FileSystemHeadroomOptimizeTable = ({ type, lastColDetails, handleBulkAction }: any) => {
+const FileSystemHeadroomOptimizeTable = ({ type, lastColDetails, handleBulkAction, isWad = false }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const data = [
@@ -35,9 +38,9 @@ const FileSystemHeadroomOptimizeTable = ({ type, lastColDetails, handleBulkActio
         () =>
             data.map((row: any) => ({
                 ...row,
-                cellProps: { ...row.cellProps, isDisabled: true }
+                cellProps: getWadCellProps(isWad, t, { ...row.cellProps, isDisabled: true })
             })),
-        [data]
+        [data, isWad, t]
     );
 
     const TableColDefs: ColumnProps[] = [

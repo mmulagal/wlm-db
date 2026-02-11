@@ -1,4 +1,4 @@
-import { Table, useTable, TableTopBar, DsButton } from '@netapp/design-system';
+import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -10,8 +10,16 @@ import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadF
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES, DBType } from '../../../../utils/consts';
+import { getWadCellProps } from '../../GetWellUtils';
 
-const OntapTable = ({ type, data, lastColDetails, handleBulkAction, engineType = DBType.ORACLE }: any) => {
+const OntapTable = ({
+    type,
+    data,
+    lastColDetails,
+    handleBulkAction,
+    engineType = DBType.ORACLE,
+    isWad = false
+}: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
@@ -32,9 +40,10 @@ const OntapTable = ({ type, data, lastColDetails, handleBulkAction, engineType =
         return data?.violationDetails?.map((row: any) => ({
             ...row,
             id: String(id++),
-            name: row?.objectName
+            name: row?.objectName,
+            cellProps: getWadCellProps(isWad, t)
         }));
-    }, [data]);
+    }, [data, isWad, t]);
 
     const TableColDefs: ColumnProps[] = [
         {

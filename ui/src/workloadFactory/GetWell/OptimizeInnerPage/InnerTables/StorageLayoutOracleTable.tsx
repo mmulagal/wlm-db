@@ -12,7 +12,7 @@ import BulkActionContainer from '../../../../common/BulkAction/BulkActionContain
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 
 // This component is used in GetWell -> Optimize page -> Inner drawer -> Storage Layout section for Oracle workloads
-const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
@@ -47,6 +47,14 @@ const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction
 
     const tableData = useMemo(() => {
         let id = 0;
+        const wadCellProps = isWad
+            ? {
+                  isDisabled: true,
+                  selectionProps: {
+                      title: t('databases.wad.tab-disabled-message')
+                  }
+              }
+            : undefined;
         if (
             type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
@@ -58,14 +66,16 @@ const StorageLayoutOracleTable = ({ type, data, lastColDetails, handleBulkAction
                 objectName: row?.objectName,
                 type: row?.dataCategory,
                 value: row?.value,
-                recommended: row?.recommended
+                recommended: row?.recommended,
+                cellProps: wadCellProps
             }));
         }
         return data?.objectsInViolation?.map((row: any) => ({
             id: String(id++),
-            objectName: row
+            objectName: row,
+            cellProps: wadCellProps
         }));
-    }, [data]);
+    }, [data, isWad]);
 
     const TableColDefs: ColumnProps[] = [
         {

@@ -2,6 +2,7 @@ import { Table, useTable, TableTopBar, Typography, Popover, DsButton, DsTypograp
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { title } from 'process';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -12,7 +13,8 @@ import BulkActionContainer from '../../../../common/BulkAction/BulkActionContain
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 
-const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
@@ -52,19 +54,26 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
         return uniqueViolatedRows?.map((row: any) => ({
             ...row,
             id: String(id++),
-            cellProps: {
-                isDisabled: row?.status === 'Over-provisioned' || row?.status === 'Shared drive',
-                selectionProps: {
-                    title:
-                        row?.status === 'Over-provisioned'
-                            ? GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR
-                            : row?.status === 'Shared drive'
-                            ? GENERAL.NOT_OPTIMIZED_SHARED_DRIVES
-                            : ''
-                }
-            }
+            cellProps: isWad
+                ? {
+                      isDisabled: true,
+                      selectionProps: {
+                          title: t('databases.wad.tab-disabled-message')
+                      }
+                  }
+                : {
+                      isDisabled: row?.status === 'Over-provisioned' || row?.status === 'Shared drive',
+                      selectionProps: {
+                          title:
+                              row?.status === 'Over-provisioned'
+                                  ? GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR
+                                  : row?.status === 'Shared drive'
+                                  ? GENERAL.NOT_OPTIMIZED_SHARED_DRIVES
+                                  : ''
+                      }
+                  }
         }));
-    }, [data]);
+    }, [data, isWad]);
 
     const disableOptimizeButtonTooltip = useMemo(() => {
         if (

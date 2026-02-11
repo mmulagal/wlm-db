@@ -71,6 +71,8 @@ const OptimizeOntapInnerPage = () => {
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
+    const fullCardData = useAppSelector(state => state.getWellOptimize.cardData);
+    const isWad = fullCardData?.isWad || false;
     const { credIdFromJM, regionFromJM, landingFrom } = useAppSelector(state => state.getWellOptimize);
     const {
         selectedResourceId,
@@ -219,6 +221,22 @@ const OptimizeOntapInnerPage = () => {
                 <Popover
                     isAppendedToBody
                     children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
+                    trigger="hover"
+                    delayHide={200}
+                    interactive
+                    container={
+                        <DsButton variant="secondary" isDisabled isThin>
+                            {buttonText}
+                        </DsButton>
+                    }
+                />
+            );
+        }
+        if (isWad) {
+            return (
+                <Popover
+                    isAppendedToBody
+                    children={t('databases.wad.tab-disabled-message')}
                     trigger="hover"
                     delayHide={200}
                     interactive
@@ -552,6 +570,7 @@ const OptimizeOntapInnerPage = () => {
                             handleBulkAction={handleBulkAction}
                             engineType={selectedOptimizeConfig?.engineType}
                             isRecommendation={false}
+                            isWad={isWad}
                         />
                     );
                 case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
@@ -563,6 +582,7 @@ const OptimizeOntapInnerPage = () => {
                             data={selectedOptimizeConfig?.data}
                             lastColDetails={lastColDetails}
                             handleBulkAction={handleBulkAction}
+                            isWad={isWad}
                         />
                     );
                 case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
@@ -572,6 +592,7 @@ const OptimizeOntapInnerPage = () => {
                             data={selectedOptimizeConfig?.data}
                             lastColDetails={lastColDetails}
                             handleBulkAction={handleBulkAction}
+                            isWad={isWad}
                         />
                     );
                 default:
@@ -583,6 +604,7 @@ const OptimizeOntapInnerPage = () => {
                             handleBulkAction={handleBulkAction}
                             engineType={selectedOptimizeConfig?.engineType}
                             isRecommendation
+                            isWad={isWad}
                         />
                     );
             }
@@ -595,6 +617,7 @@ const OptimizeOntapInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
 
@@ -605,6 +628,7 @@ const OptimizeOntapInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
             case 'Autosize-mode':
@@ -620,6 +644,7 @@ const OptimizeOntapInnerPage = () => {
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                         engineType={selectedOptimizeConfig?.engineType}
+                        isWad={isWad}
                     />
                 );
             case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
@@ -634,6 +659,7 @@ const OptimizeOntapInnerPage = () => {
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
+                        isWad={isWad}
                     />
                 );
             default:
@@ -644,6 +670,7 @@ const OptimizeOntapInnerPage = () => {
                         lastColDetails={lastColDetails}
                         handleBulkAction={handleBulkAction}
                         engineType={selectedOptimizeConfig?.engineType}
+                        isWad={isWad}
                     />
                 );
         }

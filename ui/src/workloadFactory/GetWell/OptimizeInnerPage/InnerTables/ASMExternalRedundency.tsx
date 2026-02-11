@@ -9,8 +9,9 @@ import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadF
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import { getWadCellProps } from '../../GetWellUtils';
 
-const ASMExternalRedundency = ({ type, data, lastColDetails, handleBulkAction }: any) => {
+const ASMExternalRedundency = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: any) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
@@ -23,9 +24,10 @@ const ASMExternalRedundency = ({ type, data, lastColDetails, handleBulkAction }:
             id: String(id++),
             name: row?.objectName,
             value: row?.value,
-            recommendedValue: row?.recommendedValue || row?.recommendation
+            recommendedValue: row?.recommendedValue || row?.recommendation,
+            cellProps: getWadCellProps(isWad, t)
         }));
-    }, [data]);
+    }, [data, isWad, t]);
 
     const TableColDefs: ColumnProps[] = [
         {
