@@ -27,20 +27,20 @@ const IntroductionWADCard = ({ buttonRef, setIsCardOpen }: any) => {
 
             <div className={styles.content}>
                 <DsTypography className={styles.heading} variant="Semibold_14">
-                    {t('databases.inventory.one-time-assessment')}
+                    {t('databases.banner.one-time-assessment')}
                 </DsTypography>
 
                 <DsTypography variant="Regular_14" className={styles.text}>
-                    {t('databases.inventory.one-time-assessment-content')}
+                    {t('databases.banner.one-time-assessment-content')}
                 </DsTypography>
 
                 <DsTypography variant="Regular_14" className={styles.text}>
-                    {t('databases.inventory.one-time-assessment-content-2')}
+                    {t('databases.banner.one-time-assessment-content-2')}
                 </DsTypography>
             </div>
             <div className={styles.buttonContainer}>
                 <DsButton isThin variant="secondary" className={styles.button} onClick={() => setIsCardOpen(false)}>
-                    {t('databases.inventory.close')}
+                    {t('databases.banner.close')}
                 </DsButton>
             </div>
         </div>

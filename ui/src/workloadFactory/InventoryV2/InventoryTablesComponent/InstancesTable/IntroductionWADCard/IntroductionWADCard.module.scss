@@ -12,6 +12,12 @@
             rect:first-child {
                 fill: #4d5765;
             }
+
+            g {
+                rect {
+                    fill: var(--white);
+                }
+            }
         }
     }
 
