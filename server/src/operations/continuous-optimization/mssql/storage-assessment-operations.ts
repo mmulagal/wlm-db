@@ -934,7 +934,8 @@ async function calculateStorageDrift(
             credentialsId,
             region,
             filesystemId,
-            RESOURCESTYPE.MSSQL
+            RESOURCESTYPE.MSSQL,
+            accountId
         );
 
         driftAssessmentData.sizing.push({

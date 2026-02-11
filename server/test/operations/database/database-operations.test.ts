@@ -18,10 +18,15 @@ import {
     modifyConfig,
     getPaginatedDatabaseInstances
 } from '../../../src/operations/database/database-operations';
+import { initializeDatabase } from '../../../src/utils/prisma-utils';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import { DatabaseInstanceRecord } from '../../../src/lib/database/db-types';
 
 describe('Database operations', () => {
+    beforeAll(async () => {
+        await initializeDatabase();
+    });
+
     it('Get saved config', async () => {
         const response = await saveConfig(ACCOUNT_ID, 'testuser', 'testname', {
             subnetId: 'test-subnet',
@@ -156,6 +161,7 @@ describe('getPaginatedDatabaseInstances', () => {
     let testInstanceIds: string[];
 
     beforeAll(async () => {
+        await initializeDatabase();
         // Create test resources
         testResource1 = await createResource(ACCOUNT_ID, {
             resourceId: 'paginated-test-resource-1',

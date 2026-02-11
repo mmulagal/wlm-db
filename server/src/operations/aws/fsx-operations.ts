@@ -677,9 +677,10 @@ async function getFsxStorageCapacity(
     credentialsId: string,
     region: string,
     fsxId: string,
-    cacheParams = { useCache: true }
+    cacheParams = { useCache: true },
+    accountId?: string
 ) {
-    logger.info('Get FSx Storage capacity');
+    logger.info('Get FSx Storage capacity', { region, fsxId, accountId });
     const cacheKey = `${fsxId}-storage-capacity`;
     if (cacheParams.useCache && hasCache(AWS_FSX_TYPE, cacheKey)) {
         const response = readFromCacheByKey(AWS_FSX_TYPE, cacheKey) as FsxStorage;
@@ -693,7 +694,7 @@ async function getFsxStorageCapacity(
             {
                 FileSystemIds: [fsxId]
             },
-            undefined,
+            accountId,
             cacheParams
         );
 
@@ -717,12 +718,13 @@ async function getFsxStorageDetails(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    cacheParams = { useCache: true }
+    cacheParams = { useCache: true },
+    accountId?: string
 ) {
     logger.info('Getting FSx storage details', { credentialsId, region, fileSystemId });
     const [fsxSSDCapacity, { Volumes: fsxVolumes }] = await Promise.all([
-        getFsxStorageCapacity(credentialsId, region, fileSystemId, cacheParams),
-        describeFSxVolumes(credentialsId, region, [fileSystemId], undefined, cacheParams)
+        getFsxStorageCapacity(credentialsId, region, fileSystemId, cacheParams, accountId),
+        describeFSxVolumes(credentialsId, region, [fileSystemId], accountId, cacheParams)
     ]);
 
     const { storage } = fsxSSDCapacity ?? {};

@@ -1912,7 +1912,8 @@ async function getOracleHeadroomDrift(
             credentialsId,
             region,
             fileSystemId,
-            RESOURCESTYPE.ORACLE
+            RESOURCESTYPE.ORACLE,
+            accountId
         );
 
         return {

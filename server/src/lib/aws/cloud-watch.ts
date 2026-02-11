@@ -16,13 +16,14 @@ const logger = getLogger();
 async function getCloudWatchClient(
     region: string,
     credentialsId: string,
+    accountId?: string,
     cacheParams: AWSSDKCacheParams = { useCache: true } // Default to using cache if not provided
 ) {
-    logger.debug('Getting cloud watch client:', region, credentialsId);
+    logger.debug('Getting cloud watch client', { region, credentialsId, accountId });
     try {
         const {
             credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-        } = await getCredentialsDetails(credentialsId);
+        } = await getCredentialsDetails(credentialsId, accountId);
         const credentials = { accessKeyId, secretAccessKey, sessionToken };
         const client = new CloudWatchClient({ credentials, region });
         return addCacheMiddleware(client, { ...cacheParams, credentialsId });
@@ -39,9 +40,9 @@ async function getCloudWatchMetrics(
     accountId?: string,
     cacheParams?: AWSSDKCacheParams
 ) {
-    logger.info('Get cloud watch metrics:', { region, credentialsId, params, accountId });
+    logger.info('Get cloud watch metrics', { region, credentialsId, params, accountId });
     try {
-        const client = await getCloudWatchClient(region, credentialsId, cacheParams);
+        const client = await getCloudWatchClient(region, credentialsId, accountId, cacheParams);
         const paginator = paginateGetMetricData({ client }, { ...params });
         const response: any[] = [];
         for await (const page of paginator) {
@@ -56,10 +57,15 @@ async function getCloudWatchMetrics(
     }
 }
 
-async function getMetricStatistics(credentialsId: string, region: string, params: GetMetricStatisticsCommandInput) {
-    logger.info('Get metric statistics :', region, credentialsId, params);
+async function getMetricStatistics(
+    credentialsId: string,
+    region: string,
+    params: GetMetricStatisticsCommandInput,
+    accountId?: string
+) {
+    logger.info('Get metric statistics', { region, credentialsId, params, accountId });
     try {
-        const client = await getCloudWatchClient(region, credentialsId);
+        const client = await getCloudWatchClient(region, credentialsId, accountId);
         const command = new GetMetricStatisticsCommand(params);
         const response = await client.send(command);
         return response;

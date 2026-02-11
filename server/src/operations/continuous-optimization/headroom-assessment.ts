@@ -18,14 +18,19 @@ async function getHeadroomDrift(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    resourceType: RESOURCESTYPE.MSSQL | RESOURCESTYPE.ORACLE
+    resourceType: RESOURCESTYPE.MSSQL | RESOURCESTYPE.ORACLE,
+    accountId: string
 ) {
-    logger.info('Getting headroom drift', { credentialsId, region, fileSystemId, resourceType });
+    logger.info('Getting headroom drift', { credentialsId, region, fileSystemId, resourceType, accountId });
 
     try {
-        const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(credentialsId, region, fileSystemId, {
-            useCache: false
-        });
+        const { ssdStorageCapacityInBytes } = await getFsxStorageDetails(
+            credentialsId,
+            region,
+            fileSystemId,
+            { useCache: false },
+            accountId
+        );
 
         const cwMetricsDataCollectionPeriodSeconds = 1 * 60 * 60; // 1 hour
         const cwMetricsDataCollectionPeriod = '1h'; // 1 hour
@@ -53,7 +58,7 @@ async function getHeadroomDrift(
                 }
             ]
         };
-        const storageUsedMetric = await getMetricStatistics(credentialsId, region, storageUsedParams);
+        const storageUsedMetric = await getMetricStatistics(credentialsId, region, storageUsedParams, accountId);
 
         if (storageUsedMetric.Datapoints) {
             [{ Average: totalUsed }] = storageUsedMetric.Datapoints;
@@ -134,14 +139,15 @@ async function headroomOptimization(
             credentialsId,
             region,
             fileSystemId,
-            resourceType
+            resourceType,
+            accountId
         );
 
         const minOptimizedHeadroomPercent = MIN_OPTIMIZED_HEADROOM_PERCENTAGE[resourceType];
         if (headroomPercent < minOptimizedHeadroomPercent) {
             logger.info(`Under provisioned: Headroom is less than ${minOptimizedHeadroomPercent}%`);
 
-            const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, undefined, {
+            const fsxInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, accountId, {
                 useCache: true
             });
             const [fileSystem = {}] = fsxInfo?.FileSystems || []; // first item in the list
