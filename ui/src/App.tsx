@@ -11,9 +11,7 @@ import { DsProvider } from '@tlveng/wlm-ds';
 import { getDomainURL } from './utils/utilityFunctions';
 
 function App() {
-    const { loading, accountId, accessToken, isDemoMode, isWorkloadFactory, userMetadata } = useAppSelector(
-        state => state.auth
-    );
+    const { loading, accountId, accessToken, isDemoMode, userMetadata } = useAppSelector(state => state.auth);
     const readyNotifiedRef = useRef(false);
     // @ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
@@ -57,7 +55,7 @@ function App() {
                 {!loading &&
                     (accountId ? (
                         <>
-                            {!isWorkloadFactory && <FSxpertWidget config={fsxpertConfig} />}
+                            <FSxpertWidget config={fsxpertConfig} />
                             <Home />
                         </>
                     ) : (
