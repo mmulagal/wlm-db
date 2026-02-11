@@ -43,6 +43,7 @@ import {
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
     STATUS_CONST,
+    WA_FLAG_SKIP,
     WLF_TABS
 } from '../../utils/consts';
 import { groupByType, mapDismissedValues } from '../../utils/resourceUtils';
@@ -98,7 +99,7 @@ export const generateDynamicFilterOptions = (cardData: any, deploymentType?: str
     const availableStatuses = new Set();
 
     Object.keys(cardData).forEach((key: any) => {
-        if (key === 'deploymentType' || key === 'isWad') {
+        if (WA_FLAG_SKIP.includes(key)) {
             return; // Skip deploymentType as it is not a card
         }
 
@@ -3634,7 +3635,7 @@ export const applyFilter = (
     const categoryData = getCategoryData();
 
     Object.keys(cardData).map((key: any) => {
-        if (key === 'deploymentType' || key === 'isWad') {
+        if (WA_FLAG_SKIP.includes(key)) {
             return; // Skip deploymentType as it is not a card
         }
         // Skip MSSQL High Availability for non-FCI instances (same logic as in formatOptimizationBreakDown)

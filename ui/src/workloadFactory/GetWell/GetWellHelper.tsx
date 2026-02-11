@@ -1,7 +1,13 @@
 import { TooltipInfo } from '@netapp/design-system';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { TFunction } from 'i18next';
-import { CONFIG_STATES, ASSESSMENT_CONFIG_NAMES, GETWELL_CONFIG, FSXN_STORAGE_PROTOCOLS } from '../../utils/consts';
+import {
+    CONFIG_STATES,
+    ASSESSMENT_CONFIG_NAMES,
+    GETWELL_CONFIG,
+    FSXN_STORAGE_PROTOCOLS,
+    WA_FLAG_SKIP
+} from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
 import { ReactComponent as Postpone } from '../../assets/Schedule.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
@@ -98,7 +104,7 @@ export const checkHasDismissedConfigurations = (cardData: any, assessmentData?: 
 
     // Check standard dismissed configurations (using dismissedObj)
     const hasStandardDismissed = Object.keys(cardData).some((key: string) => {
-        if (key === 'deploymentType') return false;
+        if (WA_FLAG_SKIP.includes(key)) return false;
 
         const configState = cardData[key]?.dismissedObj?.configState;
         const isDismissed = configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED;
@@ -204,7 +210,7 @@ export const calculateTotalConfigCount = (
 
     let count = 0;
     Object.keys(cardData).forEach((key: string) => {
-        if (key === 'deploymentType') return;
+        if (WA_FLAG_SKIP.includes(key)) return;
 
         // Skip MSSQL High Availability for non-FCI instances
         const isMSSQLHighAvailability = key === GETWELL_CONFIG.mssqlhighavailability;
@@ -441,7 +447,7 @@ export const checkAllConfigurationsDismissed = (cardData: any, assessmentData?: 
 
     // Check standard configurations (using dismissedObj)
     Object.keys(cardData).forEach((key: string) => {
-        if (key === 'deploymentType') return;
+        if (WA_FLAG_SKIP.includes(key)) return;
 
         // Skip MSSQL High Availability for non-FCI instances
         const isMSSQLHighAvailability = key === GETWELL_CONFIG.mssqlhighavailability;

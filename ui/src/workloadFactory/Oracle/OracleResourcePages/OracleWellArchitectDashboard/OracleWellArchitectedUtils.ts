@@ -23,7 +23,8 @@ import {
     FSXN_STORAGE_PROTOCOLS,
     GETWELL_CONFIG,
     GETWELL_STATUS,
-    GETWELL_VALUES
+    GETWELL_VALUES,
+    WA_FLAG_SKIP
 } from '../../../../utils/consts';
 import { groupByType, mapDismissedValues } from '../../../../utils/resourceUtils';
 import { AssessmentResponseInterface, PerConfigInterface } from '../../../../utils/types/getWellTypes';
@@ -1162,13 +1163,8 @@ export const formatOracleOptimizationBreakDown = (
     };
 
     Object.values(cardsData).forEach((cardItem: any) => {
-        if (
-            cardItem === 'isASMManaged' ||
-            cardItem === 'deploymentType' ||
-            cardItem === 'isStorageLayoutFra' ||
-            cardItem === 'storageProtocol'
-        ) {
-            return; // Skip isASMManaged, deploymentType and isStorageLayoutFra as they are not cards
+        if (WA_FLAG_SKIP.includes(cardItem)) {
+            return; // Skip WA_FLAG_SKIP as they are not cards
         }
 
         if (cardItem?.category === 'storage') {
@@ -1390,12 +1386,7 @@ export const oracleApplyFilter = (
     const categoryData = getDynamicOracleCategoryData(driftAssessmentData);
 
     Object.keys(cardData)?.forEach((key: any) => {
-        if (
-            key === 'deploymentType' ||
-            key === 'isASMManaged' ||
-            key === 'isStorageLayoutFra' ||
-            key === 'storageProtocol'
-        ) {
+        if (WA_FLAG_SKIP.includes(key)) {
             return; // Skip deploymentType, isASMManaged and isStorageLayoutFra as they are not cards
         }
 
@@ -1607,7 +1598,7 @@ export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploy
 
     Object.keys(cardData).forEach((key: any) => {
         // Skip non-card keys
-        if (['deploymentType', 'isASMManaged', 'isStorageLayoutFra', 'storageProtocol'].includes(key)) {
+        if (WA_FLAG_SKIP.includes(key)) {
             return;
         }
 
@@ -1955,12 +1946,7 @@ export const checkAllOracleConfigurationsDismissed = (cardData: any, assessmentD
     // Check standard configurations (using dismissedObj)
     Object.keys(cardData).forEach((key: string) => {
         // Skip metadata keys
-        if (
-            key === 'deploymentType' ||
-            key === 'isStorageLayoutFra' ||
-            key === 'isASMManaged' ||
-            key === 'storageProtocol'
-        ) {
+        if (WA_FLAG_SKIP.includes(key)) {
             return;
         }
 

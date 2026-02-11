@@ -1473,3 +1473,5 @@ export const ENGINE_TYPES = {
     ORACLE: 'Oracle',
     POSTGRESQL: 'PostgreSQL'
 };
+
+export const WA_FLAG_SKIP = ['isASMManaged', 'deploymentType', 'isStorageLayoutFra', 'storageProtocol', 'isWad'];
