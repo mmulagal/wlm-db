@@ -134,8 +134,17 @@ describe('InstancesOntapCalculation', () => {
         it('should close all accordions when loading', () => {
             renderComponent({ viewCalculationsLoading: true });
             expect(mockSetOpenChildren).toHaveBeenCalledWith({
-                1: false, 2: false, 3: false, 4: false, 5: false,
-                6: false, 7: false, 8: false, 9: false, 10: false, 11: false
+                1: false,
+                2: false,
+                3: false,
+                4: false,
+                5: false,
+                6: false,
+                7: false,
+                8: false,
+                9: false,
+                10: false,
+                11: false
             });
         });
 
@@ -147,7 +156,7 @@ describe('InstancesOntapCalculation', () => {
         it('should not open accordions when not loading and response is null', () => {
             renderComponent({ viewCalculationsResponse: null, viewCalculationsLoading: false });
             // setOpenChildren should NOT have been called with { 1: true }
-            const calls = mockSetOpenChildren.mock.calls;
+            const { calls } = mockSetOpenChildren.mock;
             const openCall = calls.find((c: any) => c[0]?.['1'] === true);
             expect(openCall).toBeUndefined();
         });
@@ -234,9 +243,7 @@ describe('InstancesOntapCalculation', () => {
         it('should show $0 when totalCostEntry is not found in host calculation', () => {
             const bulkNoCost = {
                 ...bulkResponse,
-                fsxInstanceCalculation: [
-                    { hostName: 'H1', fsxInstanceCalculation: [{ label: 'other', value: '$5' }] }
-                ]
+                fsxInstanceCalculation: [{ hostName: 'H1', fsxInstanceCalculation: [{ label: 'other', value: '$5' }] }]
             };
             renderComponent({ viewCalculationsResponse: bulkNoCost });
             expect(screen.getByTestId('accordion-value').textContent).toContain('$0');

@@ -220,11 +220,7 @@ const renderComponent = (overrides: Record<string, any> = {}) => {
 // Helper to render a captured dialog
 const renderCapturedDialog = (callIndex = 0) => {
     const dialogElement = mockSetDialog.mock.calls[callIndex][0];
-    return render(
-        <Provider store={createMockStore()}>
-            {dialogElement}
-        </Provider>
-    );
+    return render(<Provider store={createMockStore()}>{dialogElement}</Provider>);
 };
 
 // ========================
@@ -424,15 +420,13 @@ describe('ExploreSavingsTableV2', () => {
         it('should not dispatch setSelectedRows when data is empty (null host list)', () => {
             mockDispatch.mockClear();
             renderComponent({ unmanagedExploreSavingsHost: null });
-            const setSelectedCalls = mockDispatch.mock.calls.filter(
-                (c: any) => c[0]?.type === 'bulk/setSelectedRows'
-            );
+            const setSelectedCalls = mockDispatch.mock.calls.filter((c: any) => c[0]?.type === 'bulk/setSelectedRows');
             expect(setSelectedCalls).toHaveLength(0);
         });
 
         it('should dispatch setSelectedRows after data becomes available', () => {
             mockGetSelectedFromSelectionState.mockReturnValue([{ id: 'h1' }]);
-            // With valid hosts, useEffect #1 populates ebsTableData, 
+            // With valid hosts, useEffect #1 populates ebsTableData,
             // then updatedTableData changes, which re-triggers the component.
             // useEffect #2 runs on mount with selectionState and selectedExploreSavingsTab deps.
             renderComponent();
@@ -538,9 +532,7 @@ describe('ExploreSavingsTableV2', () => {
 
             fireEvent.click(screen.getByTestId('bulk-action-container'));
 
-            expect(mockDispatch).toHaveBeenCalledWith(
-                expect.objectContaining({ type: 'bulk/setRowsRequiringAuth' })
-            );
+            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'bulk/setRowsRequiringAuth' }));
             expect(mockSetDialog).toHaveBeenCalledTimes(1);
         });
     });

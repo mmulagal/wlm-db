@@ -16,7 +16,9 @@ vi.mock('@netapp/design-system/dist/components/Select', () => ({
             <span>{label}</span>
             {value && <span data-testid="selected-value">{value.label}</span>}
             <span data-testid="options-count">{options?.length || 0}</span>
-            <button data-testid="change-btn" onClick={() => onChange({ label: 'r5.2xlarge', value: 'r5.2xlarge' })}>change</button>
+            <button data-testid="change-btn" onClick={() => onChange({ label: 'r5.2xlarge', value: 'r5.2xlarge' })}>
+                change
+            </button>
         </div>
     )
 }));
@@ -28,7 +30,10 @@ vi.mock('./ManualFSXEC2.module.scss', () => ({
 vi.mock('../../../../utils/utilityFunctions', () => ({
     formatSize: (val: number, unit: string) => `${val} ${unit}`,
     generateOptionType: (label: string, value: string, label2: string, _: boolean, __: string, data: any) => ({
-        label, value, label2, data
+        label,
+        value,
+        label2,
+        data
     }),
     sortListOfDict: (arr: any[], key: string) => arr.sort((a: any, b: any) => a[key]?.localeCompare(b[key]))
 }));
@@ -55,7 +60,7 @@ const makeStore = (overrides: any = {}) => {
             ...overrides
         },
         reducers: {},
-        extraReducers: (builder) => {
+        extraReducers: builder => {
             builder.addCase('test/setSelectedManualInstanceType', (state, action: any) => {
                 state.selectedManualInstanceType = action.payload;
             });
@@ -68,24 +73,40 @@ describe('ManualFSXEC2', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('renders EC2 specifications heading', () => {
-        const { container } = render(<Provider store={makeStore()}><ManualFSXEC2 /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <ManualFSXEC2 />
+            </Provider>
+        );
         expect(container.textContent).toContain('EC2 specifications');
     });
 
     it('renders select field with Instance type label', () => {
-        const { container } = render(<Provider store={makeStore()}><ManualFSXEC2 /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <ManualFSXEC2 />
+            </Provider>
+        );
         expect(container.textContent).toContain('Instance type');
     });
 
     it('generates instance options from data', () => {
-        render(<Provider store={makeStore()}><ManualFSXEC2 /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ManualFSXEC2 />
+            </Provider>
+        );
         expect(screen.getByTestId('options-count').textContent).toBe('3');
     });
 
     it('dispatches setSelectedManualInstanceType for first option when null', () => {
         const store = makeStore();
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ManualFSXEC2 /></Provider>);
+        render(
+            <Provider store={store}>
+                <ManualFSXEC2 />
+            </Provider>
+        );
         expect(dispatchSpy).toHaveBeenCalledWith(
             expect.objectContaining({ type: 'test/setSelectedManualInstanceType' })
         );
@@ -94,7 +115,11 @@ describe('ManualFSXEC2', () => {
     it('does not dispatch when selectedManualInstanceType already set', () => {
         const store = makeStore({ selectedManualInstanceType: { label: 'm5.xlarge', value: 'm5.xlarge' } });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ManualFSXEC2 /></Provider>);
+        render(
+            <Provider store={store}>
+                <ManualFSXEC2 />
+            </Provider>
+        );
         expect(dispatchSpy).not.toHaveBeenCalledWith(
             expect.objectContaining({ type: 'test/setSelectedManualInstanceType' })
         );
@@ -103,7 +128,11 @@ describe('ManualFSXEC2', () => {
     it('dispatches on select change', () => {
         const store = makeStore({ selectedManualInstanceType: { label: 'm5.xlarge', value: 'm5.xlarge' } });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ManualFSXEC2 /></Provider>);
+        render(
+            <Provider store={store}>
+                <ManualFSXEC2 />
+            </Provider>
+        );
         dispatchSpy.mockClear();
         fireEvent.click(screen.getByTestId('change-btn'));
         expect(dispatchSpy).toHaveBeenCalledWith({
@@ -113,23 +142,39 @@ describe('ManualFSXEC2', () => {
     });
 
     it('shows loading state', () => {
-        render(<Provider store={makeStore({
-            getManualInstanceTypeList: { instanceTypeData: {}, instanceTypeLoading: true }
-        })}><ManualFSXEC2 /></Provider>);
+        render(
+            <Provider
+                store={makeStore({
+                    getManualInstanceTypeList: { instanceTypeData: {}, instanceTypeLoading: true }
+                })}
+            >
+                <ManualFSXEC2 />
+            </Provider>
+        );
         expect(screen.getByTestId('select-field')).toHaveAttribute('data-loading', 'true');
     });
 
     it('puts default instance at beginning of options list', () => {
         // The DEAFULT_INSTANCE_VALUE should be first in list (unshifted)
-        render(<Provider store={makeStore()}><ManualFSXEC2 /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ManualFSXEC2 />
+            </Provider>
+        );
         // 3 options: default + 2 sorted others
         expect(screen.getByTestId('options-count').textContent).toBe('3');
     });
 
     it('handles empty instanceTypes', () => {
-        render(<Provider store={makeStore({
-            getManualInstanceTypeList: { instanceTypeData: { instanceTypes: [] }, instanceTypeLoading: false }
-        })}><ManualFSXEC2 /></Provider>);
+        render(
+            <Provider
+                store={makeStore({
+                    getManualInstanceTypeList: { instanceTypeData: { instanceTypes: [] }, instanceTypeLoading: false }
+                })}
+            >
+                <ManualFSXEC2 />
+            </Provider>
+        );
         expect(screen.getByTestId('options-count').textContent).toBe('0');
     });
 });

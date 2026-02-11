@@ -100,32 +100,24 @@ describe('TCOBanner', () => {
     describe('MSSQL Content (Slide 0)', () => {
         it('should render MSSQL heading on slide 0', () => {
             renderComponent(DBType.MSSQL);
-            expect(
-                screen.getByText('databases.explore-savings.tco-mssql-banner-slide-one-heading')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-mssql-banner-slide-one-heading')).toBeTruthy();
         });
 
         it('should render MSSQL content on slide 0', () => {
             renderComponent(DBType.MSSQL);
-            expect(
-                screen.getByText('databases.explore-savings.tco-mssql-banner-slide-one-content')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-mssql-banner-slide-one-content')).toBeTruthy();
         });
     });
 
     describe('Oracle Content (Slide 0)', () => {
         it('should render Oracle heading on slide 0', () => {
             renderComponent(DBType.ORACLE);
-            expect(
-                screen.getByText('databases.explore-savings.tco-oracle-banner-slide-one-heading')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-oracle-banner-slide-one-heading')).toBeTruthy();
         });
 
         it('should render Oracle content on slide 0', () => {
             renderComponent(DBType.ORACLE);
-            expect(
-                screen.getByText('databases.explore-savings.tco-oracle-banner-slide-one-content')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-oracle-banner-slide-one-content')).toBeTruthy();
         });
     });
 
@@ -199,16 +191,12 @@ describe('TCOBanner', () => {
 
         it('should render MSSQL heading on slide 1', () => {
             navigateToSlide1(DBType.MSSQL);
-            expect(
-                screen.getByText('databases.explore-savings.tco-mssql-banner-slide-two-heading')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-mssql-banner-slide-two-heading')).toBeTruthy();
         });
 
         it('should render Oracle heading on slide 1', () => {
             navigateToSlide1(DBType.ORACLE);
-            expect(
-                screen.getByText('databases.explore-savings.tco-oracle-banner-slide-two-heading')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-oracle-banner-slide-two-heading')).toBeTruthy();
         });
 
         it('should render MSSQL step 2 content on slide 1', () => {
@@ -392,21 +380,15 @@ describe('TCOBanner', () => {
             renderComponent(DBType.ORACLE);
 
             // Slide 0 - Oracle headings
-            expect(
-                screen.getByText('databases.explore-savings.tco-oracle-banner-slide-one-heading')
-            ).toBeTruthy();
-            expect(
-                screen.getByText('databases.explore-savings.tco-oracle-banner-slide-one-content')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-oracle-banner-slide-one-heading')).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-oracle-banner-slide-one-content')).toBeTruthy();
 
             // Navigate to slide 1
             const rightArrows = screen.getAllByTestId('carousel-right-svg');
             fireEvent.click(rightArrows[0].parentElement!);
 
             // Slide 1 - Oracle headings
-            expect(
-                screen.getByText('databases.explore-savings.tco-oracle-banner-slide-two-heading')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-oracle-banner-slide-two-heading')).toBeTruthy();
             expect(
                 screen.getByText('databases.explore-savings.tco-oracle-banner-slide-two-content-step-2')
             ).toBeTruthy();
@@ -421,21 +403,15 @@ describe('TCOBanner', () => {
             renderComponent(DBType.MSSQL);
 
             // Slide 0 - MSSQL headings
-            expect(
-                screen.getByText('databases.explore-savings.tco-mssql-banner-slide-one-heading')
-            ).toBeTruthy();
-            expect(
-                screen.getByText('databases.explore-savings.tco-mssql-banner-slide-one-content')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-mssql-banner-slide-one-heading')).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-mssql-banner-slide-one-content')).toBeTruthy();
 
             // Navigate to slide 1
             const rightArrows = screen.getAllByTestId('carousel-right-svg');
             fireEvent.click(rightArrows[0].parentElement!);
 
             // Slide 1 - MSSQL headings
-            expect(
-                screen.getByText('databases.explore-savings.tco-mssql-banner-slide-two-heading')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.tco-mssql-banner-slide-two-heading')).toBeTruthy();
             expect(
                 screen.getByText('databases.explore-savings.tco-mssql-banner-slide-two-content-step-2')
             ).toBeTruthy();

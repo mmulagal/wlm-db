@@ -11,10 +11,14 @@ vi.mock('@netapp/design-system', () => ({
     Table: ({ tableProps, variant }: any) => (
         <div data-testid="table" data-variant={variant}>
             {tableProps?.columns?.map((col: any, i: number) => (
-                <div key={i} data-testid={`col-${col.Header}`}>{col.Header}</div>
+                <div key={i} data-testid={`col-${col.Header}`}>
+                    {col.Header}
+                </div>
             ))}
             {tableProps?.rows?.map((row: any, i: number) => (
-                <div key={i} data-testid={`row-${i}`}>{row.details}</div>
+                <div key={i} data-testid={`row-${i}`}>
+                    {row.details}
+                </div>
             ))}
         </div>
     ),
@@ -79,12 +83,20 @@ describe('SelectedVolumeSummary', () => {
     });
 
     it('renders summary text', () => {
-        const { container } = render(<Provider store={makeStore()}><SelectedVolumeSummary /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <SelectedVolumeSummary />
+            </Provider>
+        );
         expect(container.textContent).toContain('Summary of the selected volumes by volume type:');
     });
 
     it('renders table component', () => {
-        render(<Provider store={makeStore()}><SelectedVolumeSummary /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <SelectedVolumeSummary />
+            </Provider>
+        );
         expect(screen.getByTestId('table')).toBeTruthy();
     });
 
@@ -92,7 +104,11 @@ describe('SelectedVolumeSummary', () => {
         const store = makeStore({
             selectedHostDetails: { loading: true }
         });
-        render(<Provider store={store}><SelectedVolumeSummary /></Provider>);
+        render(
+            <Provider store={store}>
+                <SelectedVolumeSummary />
+            </Provider>
+        );
         expect(screen.getByTestId('row-0').textContent).toBe('Total volumes');
         expect(screen.getByTestId('row-1').textContent).toBe('Total storage amount');
         expect(screen.getByTestId('row-2').textContent).toBe('Total provisioned IOPS');
@@ -103,7 +119,11 @@ describe('SelectedVolumeSummary', () => {
         const store = makeStore({
             getPartnerHostDetailsLoading: true
         });
-        render(<Provider store={store}><SelectedVolumeSummary /></Provider>);
+        render(
+            <Provider store={store}>
+                <SelectedVolumeSummary />
+            </Provider>
+        );
         // Loading state uses getLoadingStateData columns
         expect(screen.getByTestId('col-Details')).toBeTruthy();
     });
@@ -120,9 +140,15 @@ describe('SelectedVolumeSummary', () => {
             ]
         };
         const store = makeStore({ selectedHostDetails: {} });
-        render(<Provider store={store}><SelectedVolumeSummary host={host} /></Provider>);
+        render(
+            <Provider store={store}>
+                <SelectedVolumeSummary host={host} />
+            </Provider>
+        );
 
-        await act(() => { vi.advanceTimersByTime(10); });
+        await act(() => {
+            vi.advanceTimersByTime(10);
+        });
 
         expect(screen.getByTestId('col-gp3')).toBeTruthy();
     });
@@ -137,9 +163,15 @@ describe('SelectedVolumeSummary', () => {
                 ebsResourceInfo: [{ id: 2, volumeType: 'io1', size: 100, iops: 1000, throughput: 500 }]
             }
         });
-        render(<Provider store={store}><SelectedVolumeSummary /></Provider>);
+        render(
+            <Provider store={store}>
+                <SelectedVolumeSummary />
+            </Provider>
+        );
 
-        await act(() => { vi.advanceTimersByTime(10); });
+        await act(() => {
+            vi.advanceTimersByTime(10);
+        });
 
         expect(screen.getByTestId('col-gp2')).toBeTruthy();
         expect(screen.getByTestId('col-io1')).toBeTruthy();
@@ -165,9 +197,15 @@ describe('SelectedVolumeSummary', () => {
                 ]
             }
         });
-        render(<Provider store={store}><SelectedVolumeSummary host={host} /></Provider>);
+        render(
+            <Provider store={store}>
+                <SelectedVolumeSummary host={host} />
+            </Provider>
+        );
 
-        await act(() => { vi.advanceTimersByTime(10); });
+        await act(() => {
+            vi.advanceTimersByTime(10);
+        });
 
         // selectedHostDetails has gp3 + io2 since it's the most up-to-date
         expect(screen.getByTestId('col-gp3')).toBeTruthy();
@@ -181,7 +219,11 @@ describe('SelectedVolumeSummary', () => {
                 ebsResourceInfo: [{ id: 1, volumeType: 'gp2', size: 50, iops: 0, throughput: 0 }]
             }
         });
-        render(<Provider store={store}><SelectedVolumeSummary /></Provider>);
+        render(
+            <Provider store={store}>
+                <SelectedVolumeSummary />
+            </Provider>
+        );
         expect(screen.getByTestId('col-Details')).toBeTruthy();
     });
 
@@ -189,9 +231,15 @@ describe('SelectedVolumeSummary', () => {
         const store = makeStore({
             selectedHostDetails: { loading: false, ebsResourceInfo: [] }
         });
-        render(<Provider store={store}><SelectedVolumeSummary /></Provider>);
+        render(
+            <Provider store={store}>
+                <SelectedVolumeSummary />
+            </Provider>
+        );
 
-        await act(() => { vi.advanceTimersByTime(10); });
+        await act(() => {
+            vi.advanceTimersByTime(10);
+        });
 
         expect(screen.getByTestId('table')).toBeTruthy();
         expect(screen.getByTestId('col-Details')).toBeTruthy();
@@ -202,9 +250,15 @@ describe('SelectedVolumeSummary', () => {
             selectedHostDetails: { loading: false },
             selectedPartnerHostDetails: {}
         });
-        render(<Provider store={store}><SelectedVolumeSummary /></Provider>);
+        render(
+            <Provider store={store}>
+                <SelectedVolumeSummary />
+            </Provider>
+        );
 
-        await act(() => { vi.advanceTimersByTime(10); });
+        await act(() => {
+            vi.advanceTimersByTime(10);
+        });
 
         expect(screen.getByTestId('table')).toBeTruthy();
     });
@@ -222,16 +276,26 @@ describe('SelectedVolumeSummary', () => {
             ]
         };
         const store = makeStore({ selectedHostDetails: {} });
-        render(<Provider store={store}><SelectedVolumeSummary host={host} /></Provider>);
+        render(
+            <Provider store={store}>
+                <SelectedVolumeSummary host={host} />
+            </Provider>
+        );
 
-        await act(() => { vi.advanceTimersByTime(10); });
+        await act(() => {
+            vi.advanceTimersByTime(10);
+        });
 
         expect(screen.getByTestId('col-gp3')).toBeTruthy();
         expect(screen.getByTestId('col-io1')).toBeTruthy();
     });
 
     it('sets table variant to innerTable', () => {
-        render(<Provider store={makeStore()}><SelectedVolumeSummary /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <SelectedVolumeSummary />
+            </Provider>
+        );
         expect(screen.getByTestId('table')).toHaveAttribute('data-variant', 'innerTable');
     });
 });

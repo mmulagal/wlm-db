@@ -62,13 +62,9 @@ describe('AssessmentDialog', () => {
 
         it('should render accordion titles for all three sections', () => {
             renderComponent();
-            expect(
-                screen.getByText('databases.explore-savings.what-data-does-the-script-collect')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.what-data-does-the-script-collect')).toBeTruthy();
             expect(screen.getByText('databases.explore-savings.important-notes')).toBeTruthy();
-            expect(
-                screen.getByText('databases.explore-savings.prerequisites-and-compatibility')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.prerequisites-and-compatibility')).toBeTruthy();
         });
     });
 
@@ -89,12 +85,8 @@ describe('AssessmentDialog', () => {
 
         it('should not render MSSQL headings', () => {
             renderComponent(DBType.ORACLE);
-            expect(
-                screen.queryByText('databases.explore-savings.assessment-dialog-mssql-heading-part-one')
-            ).toBeNull();
-            expect(
-                screen.queryByText('databases.explore-savings.assessment-dialog-mssql-heading-part-two')
-            ).toBeNull();
+            expect(screen.queryByText('databases.explore-savings.assessment-dialog-mssql-heading-part-one')).toBeNull();
+            expect(screen.queryByText('databases.explore-savings.assessment-dialog-mssql-heading-part-two')).toBeNull();
         });
 
         describe('Accordion 1 - What data does the script collect', () => {
@@ -108,68 +100,40 @@ describe('AssessmentDialog', () => {
 
             it('should not render MSSQL accordion one points', () => {
                 renderComponent(DBType.ORACLE);
-                expect(
-                    screen.queryByText('databases.explore-savings.mssql-accordion-one-point-one')
-                ).toBeNull();
-                expect(
-                    screen.queryByText('databases.explore-savings.mssql-accordion-one-point-two')
-                ).toBeNull();
-                expect(
-                    screen.queryByText('databases.explore-savings.mssql-accordion-one-point-three')
-                ).toBeNull();
+                expect(screen.queryByText('databases.explore-savings.mssql-accordion-one-point-one')).toBeNull();
+                expect(screen.queryByText('databases.explore-savings.mssql-accordion-one-point-two')).toBeNull();
+                expect(screen.queryByText('databases.explore-savings.mssql-accordion-one-point-three')).toBeNull();
             });
         });
 
         describe('Accordion 2 - Important notes', () => {
             it('should render Oracle accordion two points', () => {
                 renderComponent(DBType.ORACLE);
-                expect(
-                    screen.getByText('databases.explore-savings.oracle-accordion-two-point-one')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.oracle-accordion-two-point-two')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.oracle-accordion-two-point-three')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.oracle-accordion-two-point-four')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.oracle-accordion-two-point-five')
-                ).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.oracle-accordion-two-point-one')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.oracle-accordion-two-point-two')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.oracle-accordion-two-point-three')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.oracle-accordion-two-point-four')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.oracle-accordion-two-point-five')).toBeTruthy();
             });
 
             it('should not render MSSQL accordion two points', () => {
                 renderComponent(DBType.ORACLE);
-                expect(
-                    screen.queryByText('databases.explore-savings.mssql-accordion-two-point-one')
-                ).toBeNull();
+                expect(screen.queryByText('databases.explore-savings.mssql-accordion-two-point-one')).toBeNull();
             });
         });
 
         describe('Accordion 3 - Prerequisites and compatibility', () => {
             it('should render Oracle accordion three points', () => {
                 renderComponent(DBType.ORACLE);
-                expect(
-                    screen.getByText('databases.explore-savings.oracle-accordion-three-point-one')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.oracle-accordion-three-point-two')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.oracle-accordion-three-point-three')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.oracle-accordion-three-point-four')
-                ).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.oracle-accordion-three-point-one')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.oracle-accordion-three-point-two')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.oracle-accordion-three-point-three')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.oracle-accordion-three-point-four')).toBeTruthy();
             });
 
             it('should not render MSSQL accordion three points', () => {
                 renderComponent(DBType.ORACLE);
-                expect(
-                    screen.queryByText('databases.explore-savings.mssql-accordion-three-point-one')
-                ).toBeNull();
+                expect(screen.queryByText('databases.explore-savings.mssql-accordion-three-point-one')).toBeNull();
             });
         });
     });
@@ -177,16 +141,12 @@ describe('AssessmentDialog', () => {
     describe('MSSQL Host Type', () => {
         it('should render MSSQL heading part one', () => {
             renderComponent(DBType.MSSQL);
-            expect(
-                screen.getByText('databases.explore-savings.assessment-dialog-mssql-heading-part-one')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.assessment-dialog-mssql-heading-part-one')).toBeTruthy();
         });
 
         it('should render MSSQL heading part two', () => {
             renderComponent(DBType.MSSQL);
-            expect(
-                screen.getByText('databases.explore-savings.assessment-dialog-mssql-heading-part-two')
-            ).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.assessment-dialog-mssql-heading-part-two')).toBeTruthy();
         });
 
         it('should not render Oracle headings', () => {
@@ -202,78 +162,50 @@ describe('AssessmentDialog', () => {
         describe('Accordion 1 - What data does the script collect', () => {
             it('should render MSSQL accordion one points', () => {
                 renderComponent(DBType.MSSQL);
-                expect(
-                    screen.getByText('databases.explore-savings.mssql-accordion-one-point-one')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.mssql-accordion-one-point-two')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.mssql-accordion-one-point-three')
-                ).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.mssql-accordion-one-point-one')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.mssql-accordion-one-point-two')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.mssql-accordion-one-point-three')).toBeTruthy();
             });
 
             it('should not render Oracle accordion one points', () => {
                 renderComponent(DBType.MSSQL);
-                expect(
-                    screen.queryByText('databases.explore-savings.accordion-one-point-one')
-                ).toBeNull();
+                expect(screen.queryByText('databases.explore-savings.accordion-one-point-one')).toBeNull();
             });
         });
 
         describe('Accordion 2 - Important notes', () => {
             it('should render MSSQL accordion two points', () => {
                 renderComponent(DBType.MSSQL);
-                expect(
-                    screen.getByText('databases.explore-savings.mssql-accordion-two-point-one')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.mssql-accordion-two-point-two')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.mssql-accordion-two-point-three')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.mssql-accordion-two-point-four')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.mssql-accordion-two-point-five')
-                ).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.mssql-accordion-two-point-one')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.mssql-accordion-two-point-two')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.mssql-accordion-two-point-three')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.mssql-accordion-two-point-four')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.mssql-accordion-two-point-five')).toBeTruthy();
             });
 
             it('should not render Oracle accordion two points', () => {
                 renderComponent(DBType.MSSQL);
-                expect(
-                    screen.queryByText('databases.explore-savings.oracle-accordion-two-point-one')
-                ).toBeNull();
+                expect(screen.queryByText('databases.explore-savings.oracle-accordion-two-point-one')).toBeNull();
             });
         });
 
         describe('Accordion 3 - Prerequisites and compatibility', () => {
             it('should render MSSQL accordion three points with nested sub-list', () => {
                 renderComponent(DBType.MSSQL);
-                expect(
-                    screen.getByText('databases.explore-savings.mssql-accordion-three-point-one')
-                ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.mssql-accordion-three-point-three')
-                ).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.mssql-accordion-three-point-one')).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.mssql-accordion-three-point-three')).toBeTruthy();
                 expect(
                     screen.getByText('databases.explore-savings.mssql-accordion-three-point-three-point-one')
                 ).toBeTruthy();
                 expect(
                     screen.getByText('databases.explore-savings.mssql-accordion-three-point-three-point-two')
                 ).toBeTruthy();
-                expect(
-                    screen.getByText('databases.explore-savings.mssql-accordion-three-point-four')
-                ).toBeTruthy();
+                expect(screen.getByText('databases.explore-savings.mssql-accordion-three-point-four')).toBeTruthy();
             });
 
             it('should not render Oracle accordion three points', () => {
                 renderComponent(DBType.MSSQL);
-                expect(
-                    screen.queryByText('databases.explore-savings.oracle-accordion-three-point-one')
-                ).toBeNull();
+                expect(screen.queryByText('databases.explore-savings.oracle-accordion-three-point-one')).toBeNull();
             });
         });
     });

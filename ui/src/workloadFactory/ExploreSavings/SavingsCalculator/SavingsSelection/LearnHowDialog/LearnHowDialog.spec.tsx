@@ -4,11 +4,25 @@ import { vi, describe, it, expect } from 'vitest';
 import LearnHowDialog from './LearnHowDialog';
 
 vi.mock('@netapp/design-system', () => ({
-    DsTypography: ({ children, variant, className }: any) => <span data-variant={variant} className={className}>{children}</span>,
-    AccordionCard: ({ children, id, title }: any) => <div data-testid={`accordion-${id}`}><div data-testid={`accordion-title-${id}`}>{title}</div>{children}</div>,
+    DsTypography: ({ children, variant, className }: any) => (
+        <span data-variant={variant} className={className}>
+            {children}
+        </span>
+    ),
+    AccordionCard: ({ children, id, title }: any) => (
+        <div data-testid={`accordion-${id}`}>
+            <div data-testid={`accordion-title-${id}`}>{title}</div>
+            {children}
+        </div>
+    ),
     AccordionCardContent: ({ children }: any) => <div>{children}</div>,
     AccordionController: ({ children, isGrouped }: any) => <div data-grouped={String(!!isGrouped)}>{children}</div>,
-    Popover: ({ children, container }: any) => <div data-testid="popover">{container}{children}</div>
+    Popover: ({ children, container }: any) => (
+        <div data-testid="popover">
+            {container}
+            {children}
+        </div>
+    )
 }));
 
 vi.mock('./LearnHowDialog.module.scss', () => ({
@@ -44,11 +58,14 @@ vi.mock('../../../../../utils/appConstants', () => ({
         STEP1: 'Step 1:',
         STEP2: 'Step 2:',
         LEARN_HOW_DIALOG: {
-            HEADER_TEXT: 'For more accurate results based on AWS cloud watch metrics and Compute Optimizer, follow these steps.',
-            ASSESSMENT_HEADER_TEXT: 'For getting recommendations on Compute rightsizing based on AWS cloud watch metrics and Compute Optimizer, follow these steps.',
+            HEADER_TEXT:
+                'For more accurate results based on AWS cloud watch metrics and Compute Optimizer, follow these steps.',
+            ASSESSMENT_HEADER_TEXT:
+                'For getting recommendations on Compute rightsizing based on AWS cloud watch metrics and Compute Optimizer, follow these steps.',
             STEP1_HEADER: 'Grant AWS cloud watch and compute optimizer permissions.',
             STEP1_POINT1: 'Sign in to the AWS Management Console and open the IAM service.',
-            STEP1_POINT2: 'Edit the policy for the IAM role. Copy and add the following AWS CloudWatch and Compute Optimizer permissions.',
+            STEP1_POINT2:
+                'Edit the policy for the IAM role. Copy and add the following AWS CloudWatch and Compute Optimizer permissions.',
             PERMISSIONS: { Version: '2012-10-17', Statement: [] },
             STEP2_HEADER: 'Opt the billable AWS account in to AWS Compute Optimizer.',
             STEP2_TITLE: 'Ensure the payer account opt in to the compute optimizer.',

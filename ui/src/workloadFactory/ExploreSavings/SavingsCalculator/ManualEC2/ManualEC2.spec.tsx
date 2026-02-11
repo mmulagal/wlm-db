@@ -10,7 +10,13 @@ import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, variant }: any) => <span data-variant={variant}>{children}</span>,
     TextField: ({ label, onChange, value, className, isOptional }: any) => (
-        <input data-testid="machine-desc-field" aria-label={label} onChange={onChange} value={value || ''} data-optional={String(isOptional)} />
+        <input
+            data-testid="machine-desc-field"
+            aria-label={label}
+            onChange={onChange}
+            value={value || ''}
+            data-optional={String(isOptional)}
+        />
     )
 }));
 
@@ -19,7 +25,9 @@ vi.mock('@netapp/design-system/dist/components/Select', () => ({
         <div data-testid="select-field" data-label={label} data-loading={String(isLoading)}>
             {value && <span data-testid="selected-value">{value.label}</span>}
             <span data-testid="options-count">{options?.length || 0}</span>
-            <button data-testid="change-btn" onClick={() => onChange({ label: 'r5.xlarge', value: 'r5.xlarge' })}>change</button>
+            <button data-testid="change-btn" onClick={() => onChange({ label: 'r5.xlarge', value: 'r5.xlarge' })}>
+                change
+            </button>
         </div>
     )
 }));
@@ -30,7 +38,12 @@ vi.mock('./ManualEC2.module.scss', () => ({
 
 vi.mock('../../../../utils/utilityFunctions', () => ({
     formatSize: (val: number, unit: string) => `${val}${unit}`,
-    generateOptionType: (label: string, value: string, label2: string, _: boolean, __: string, data: any) => ({ label, value, label2, data }),
+    generateOptionType: (label: string, value: string, label2: string, _: boolean, __: string, data: any) => ({
+        label,
+        value,
+        label2,
+        data
+    }),
     sortListOfDict: (arr: any[], key: string) => arr.sort((a: any, b: any) => a[key]?.localeCompare(b[key]))
 }));
 
@@ -61,7 +74,7 @@ const makeStore = (overrides: any = {}) => {
             ...overrides
         },
         reducers: {},
-        extraReducers: (builder) => {
+        extraReducers: builder => {
             builder.addCase('test/setSelectedManualInstanceType', (state, action: any) => {
                 state.selectedManualInstanceType = action.payload;
             });
@@ -74,58 +87,107 @@ describe('ManualEC2', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('renders EC2 specifications heading', () => {
-        const { container } = render(<Provider store={makeStore()}><ManualEC2 /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <ManualEC2 />
+            </Provider>
+        );
         expect(container.textContent).toContain(GENERAL.EC2_SPECIFICATIONS);
     });
 
     it('renders machine description text field', () => {
-        render(<Provider store={makeStore()}><ManualEC2 /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ManualEC2 />
+            </Provider>
+        );
         expect(screen.getByTestId('machine-desc-field')).toBeTruthy();
     });
 
     it('renders select field with Instance type label', () => {
-        render(<Provider store={makeStore()}><ManualEC2 /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ManualEC2 />
+            </Provider>
+        );
         expect(screen.getByTestId('select-field')).toHaveAttribute('data-label', 'Instance type');
     });
 
     it('auto-selects first instance when selectedManualInstanceType is null', () => {
         const store = makeStore();
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ManualEC2 /></Provider>);
-        expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'test/setSelectedManualInstanceType' }));
+        render(
+            <Provider store={store}>
+                <ManualEC2 />
+            </Provider>
+        );
+        expect(dispatchSpy).toHaveBeenCalledWith(
+            expect.objectContaining({ type: 'test/setSelectedManualInstanceType' })
+        );
     });
 
     it('does not auto-select when selectedManualInstanceType already set and valid', () => {
-        const store = makeStore({ selectedManualInstanceType: { label: DEAFULT_INSTANCE_VALUE, value: DEAFULT_INSTANCE_VALUE } });
+        const store = makeStore({
+            selectedManualInstanceType: { label: DEAFULT_INSTANCE_VALUE, value: DEAFULT_INSTANCE_VALUE }
+        });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ManualEC2 /></Provider>);
-        expect(dispatchSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'test/setSelectedManualInstanceType' }));
+        render(
+            <Provider store={store}>
+                <ManualEC2 />
+            </Provider>
+        );
+        expect(dispatchSpy).not.toHaveBeenCalledWith(
+            expect.objectContaining({ type: 'test/setSelectedManualInstanceType' })
+        );
     });
 
     it('dispatches on select change', () => {
-        const store = makeStore({ selectedManualInstanceType: { label: DEAFULT_INSTANCE_VALUE, value: DEAFULT_INSTANCE_VALUE } });
+        const store = makeStore({
+            selectedManualInstanceType: { label: DEAFULT_INSTANCE_VALUE, value: DEAFULT_INSTANCE_VALUE }
+        });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ManualEC2 /></Provider>);
+        render(
+            <Provider store={store}>
+                <ManualEC2 />
+            </Provider>
+        );
         dispatchSpy.mockClear();
         fireEvent.click(screen.getByTestId('change-btn'));
-        expect(dispatchSpy).toHaveBeenCalledWith({ type: 'test/setSelectedManualInstanceType', payload: { label: 'r5.xlarge', value: 'r5.xlarge' } });
+        expect(dispatchSpy).toHaveBeenCalledWith({
+            type: 'test/setSelectedManualInstanceType',
+            payload: { label: 'r5.xlarge', value: 'r5.xlarge' }
+        });
     });
 
     it('updates machine description on change', () => {
-        render(<Provider store={makeStore()}><ManualEC2 /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ManualEC2 />
+            </Provider>
+        );
         fireEvent.change(screen.getByTestId('machine-desc-field'), { target: { value: 'MyMachine' } });
         expect((screen.getByTestId('machine-desc-field') as HTMLInputElement).value).toBe('MyMachine');
     });
 
     it('shows loading state for select field', () => {
-        render(<Provider store={makeStore({
-            getManualInstanceTypeList: { instanceTypeData: { instanceTypes: [] }, instanceTypeLoading: true }
-        })}><ManualEC2 /></Provider>);
+        render(
+            <Provider
+                store={makeStore({
+                    getManualInstanceTypeList: { instanceTypeData: { instanceTypes: [] }, instanceTypeLoading: true }
+                })}
+            >
+                <ManualEC2 />
+            </Provider>
+        );
         expect(screen.getByTestId('select-field')).toHaveAttribute('data-loading', 'true');
     });
 
     it('generates correct option count', () => {
-        render(<Provider store={makeStore()}><ManualEC2 /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ManualEC2 />
+            </Provider>
+        );
         expect(screen.getByTestId('options-count').textContent).toBe('2');
     });
 });

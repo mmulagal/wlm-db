@@ -7,7 +7,13 @@ import ComputeInputComponent from './ComputeInputComponent';
 
 vi.mock('@netapp/design-system', () => ({
     TextField: ({ onChange, value, placeholder, className }: any) => (
-        <input data-testid="text-field" onChange={onChange} value={value || ''} placeholder={placeholder} className={className} />
+        <input
+            data-testid="text-field"
+            onChange={onChange}
+            value={value || ''}
+            placeholder={placeholder}
+            className={className}
+        />
     )
 }));
 
@@ -16,7 +22,12 @@ vi.mock('@netapp/design-system/dist/components/Select', () => ({
         <div data-testid="select-field" data-disabled={String(!!isDisabled)}>
             {value && <span data-testid="selected-value">{value.label}</span>}
             <span data-testid="options-count">{options?.length || 0}</span>
-            <button data-testid="select-change-btn" onClick={() => onChange({ label: 'Up to 10 Gbps', value: 'Up to 10 Gbps' })}>change</button>
+            <button
+                data-testid="select-change-btn"
+                onClick={() => onChange({ label: 'Up to 10 Gbps', value: 'Up to 10 Gbps' })}
+            >
+                change
+            </button>
         </div>
     )
 }));
@@ -69,20 +80,32 @@ describe('ComputeInputComponent', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('renders text fields for CPU and memory when printState is false', () => {
-        render(<Provider store={makeStore()}><ComputeInputComponent index={0} /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ComputeInputComponent index={0} />
+            </Provider>
+        );
         const fields = screen.getAllByTestId('text-field');
         expect(fields.length).toBe(2);
     });
 
     it('renders select field for network performance', () => {
-        render(<Provider store={makeStore()}><ComputeInputComponent index={0} /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ComputeInputComponent index={0} />
+            </Provider>
+        );
         expect(screen.getByTestId('select-field')).toBeTruthy();
     });
 
     it('renders printState mockInputClone divs when printState is true', () => {
         const { container } = render(
             <Provider store={makeStore()}>
-                <ComputeInputComponent index={0} printState data={{ sqlInstanceName: 'inst1', noOfVcpusInUse: 4, memory: 16 }} />
+                <ComputeInputComponent
+                    index={0}
+                    printState
+                    data={{ sqlInstanceName: 'inst1', noOfVcpusInUse: 4, memory: 16 }}
+                />
             </Provider>
         );
         const mockInputs = container.querySelectorAll('.mockInputClone');
@@ -92,40 +115,67 @@ describe('ComputeInputComponent', () => {
     it('does not render text fields when printState is true', () => {
         render(
             <Provider store={makeStore()}>
-                <ComputeInputComponent index={0} printState data={{ sqlInstanceName: 'inst1', noOfVcpusInUse: 4, memory: 16 }} />
+                <ComputeInputComponent
+                    index={0}
+                    printState
+                    data={{ sqlInstanceName: 'inst1', noOfVcpusInUse: 4, memory: 16 }}
+                />
             </Provider>
         );
         expect(screen.queryAllByTestId('text-field').length).toBe(0);
     });
 
     it('disables select when index is not 0', () => {
-        render(<Provider store={makeStore()}><ComputeInputComponent index={1} /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ComputeInputComponent index={1} />
+            </Provider>
+        );
         expect(screen.getByTestId('select-field')).toHaveAttribute('data-disabled', 'true');
     });
 
     it('enables select when index is 0', () => {
-        render(<Provider store={makeStore()}><ComputeInputComponent index={0} /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ComputeInputComponent index={0} />
+            </Provider>
+        );
         expect(screen.getByTestId('select-field')).toHaveAttribute('data-disabled', 'false');
     });
 
     it('generates 2 network performance options', () => {
-        render(<Provider store={makeStore()}><ComputeInputComponent index={0} /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ComputeInputComponent index={0} />
+            </Provider>
+        );
         expect(screen.getByTestId('options-count').textContent).toBe('2');
     });
 
     it('dispatches setOnPremNetworkPerformance on select change', () => {
         const store = makeStore({ onPremNetworkPerformance: { label: 'Above 10 Gbps', value: 'Above 10 Gbps' } });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ComputeInputComponent index={0} /></Provider>);
+        render(
+            <Provider store={store}>
+                <ComputeInputComponent index={0} />
+            </Provider>
+        );
         dispatchSpy.mockClear();
         fireEvent.click(screen.getByTestId('select-change-btn'));
-        expect(dispatchSpy).toHaveBeenCalledWith({ type: 'test/setOnPremNetworkPerformance', payload: { label: 'Up to 10 Gbps', value: 'Up to 10 Gbps' } });
+        expect(dispatchSpy).toHaveBeenCalledWith({
+            type: 'test/setOnPremNetworkPerformance',
+            payload: { label: 'Up to 10 Gbps', value: 'Up to 10 Gbps' }
+        });
     });
 
     it('dispatches setOnPremStorageAndComputeInfo on select change', () => {
         const store = makeStore({ onPremNetworkPerformance: { label: 'Above 10 Gbps', value: 'Above 10 Gbps' } });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ComputeInputComponent index={0} data={{ sqlInstanceName: 'inst1' }} /></Provider>);
+        render(
+            <Provider store={store}>
+                <ComputeInputComponent index={0} data={{ sqlInstanceName: 'inst1' }} />
+            </Provider>
+        );
         dispatchSpy.mockClear();
         fireEvent.click(screen.getByTestId('select-change-btn'));
         expect(dispatchSpy).toHaveBeenCalledWith({
@@ -135,14 +185,22 @@ describe('ComputeInputComponent', () => {
     });
 
     it('strips non-numeric characters from CPU input', () => {
-        render(<Provider store={makeStore()}><ComputeInputComponent index={0} /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ComputeInputComponent index={0} />
+            </Provider>
+        );
         const fields = screen.getAllByTestId('text-field');
         fireEvent.change(fields[0], { target: { value: '8abc' } });
         expect((fields[0] as HTMLInputElement).value).toBe('8');
     });
 
     it('strips non-numeric characters from memory input', () => {
-        render(<Provider store={makeStore()}><ComputeInputComponent index={0} /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ComputeInputComponent index={0} />
+            </Provider>
+        );
         const fields = screen.getAllByTestId('text-field');
         fireEvent.change(fields[1], { target: { value: '16xyz' } });
         expect((fields[1] as HTMLInputElement).value).toBe('16');
@@ -162,7 +220,11 @@ describe('ComputeInputComponent', () => {
     it('dispatches setOnPremNetworkPerformance on mount when onPremNetworkPerformance is null (upTo10)', () => {
         const store = makeStore();
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ComputeInputComponent index={0} data={{ networkPerformance: 'upTo10' }} /></Provider>);
+        render(
+            <Provider store={store}>
+                <ComputeInputComponent index={0} data={{ networkPerformance: 'upTo10' }} />
+            </Provider>
+        );
         expect(dispatchSpy).toHaveBeenCalledWith({
             type: 'test/setOnPremNetworkPerformance',
             payload: { label: 'Up to 10 Gbps', value: 'Up to 10 Gbps' }
@@ -172,7 +234,11 @@ describe('ComputeInputComponent', () => {
     it('dispatches setOnPremNetworkPerformance on mount with above10 when networkPerformance is not upTo10', () => {
         const store = makeStore();
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ComputeInputComponent index={0} data={{ networkPerformance: 'above10' }} /></Provider>);
+        render(
+            <Provider store={store}>
+                <ComputeInputComponent index={0} data={{ networkPerformance: 'above10' }} />
+            </Provider>
+        );
         expect(dispatchSpy).toHaveBeenCalledWith({
             type: 'test/setOnPremNetworkPerformance',
             payload: { label: 'Above 10 Gbps', value: 'Above 10 Gbps' }
@@ -182,14 +248,24 @@ describe('ComputeInputComponent', () => {
     it('does not dispatch setOnPremNetworkPerformance when already set', () => {
         const store = makeStore({ onPremNetworkPerformance: { label: 'Up to 10 Gbps', value: 'Up to 10 Gbps' } });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ComputeInputComponent index={0} data={{ networkPerformance: 'upTo10' }} /></Provider>);
-        expect(dispatchSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'test/setOnPremNetworkPerformance' }));
+        render(
+            <Provider store={store}>
+                <ComputeInputComponent index={0} data={{ networkPerformance: 'upTo10' }} />
+            </Provider>
+        );
+        expect(dispatchSpy).not.toHaveBeenCalledWith(
+            expect.objectContaining({ type: 'test/setOnPremNetworkPerformance' })
+        );
     });
 
     it('uses uniqueKey as storeKey when provided', () => {
         const store = makeStore({ onPremNetworkPerformance: { label: 'Up to 10 Gbps', value: 'Up to 10 Gbps' } });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ComputeInputComponent index={0} uniqueKey="resource1_inst1" data={{ sqlInstanceName: 'inst1' }} /></Provider>);
+        render(
+            <Provider store={store}>
+                <ComputeInputComponent index={0} uniqueKey="resource1_inst1" data={{ sqlInstanceName: 'inst1' }} />
+            </Provider>
+        );
         dispatchSpy.mockClear();
         fireEvent.click(screen.getByTestId('select-change-btn'));
         expect(dispatchSpy).toHaveBeenCalledWith({
@@ -200,7 +276,11 @@ describe('ComputeInputComponent', () => {
 
     it('shows selected network performance value', () => {
         const store = makeStore({ onPremNetworkPerformance: { label: 'Above 10 Gbps', value: 'Above 10 Gbps' } });
-        render(<Provider store={store}><ComputeInputComponent index={0} /></Provider>);
+        render(
+            <Provider store={store}>
+                <ComputeInputComponent index={0} />
+            </Provider>
+        );
         expect(screen.getByTestId('selected-value').textContent).toBe('Above 10 Gbps');
     });
 });

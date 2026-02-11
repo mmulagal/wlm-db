@@ -13,11 +13,21 @@ vi.mock('@netapp/design-system', () => ({
 
 vi.mock('@netapp/design-system/dist/components/Select', () => ({
     SelectField: ({ label, value, options, isSearchable, isLoading, onChange, className }: any) => (
-        <div data-testid="select-field" data-label={label} data-loading={String(isLoading)} data-searchable={String(isSearchable)}>
+        <div
+            data-testid="select-field"
+            data-label={label}
+            data-loading={String(isLoading)}
+            data-searchable={String(isSearchable)}
+        >
             <span>{label}</span>
             {value && <span data-testid="selected-value">{value.label}</span>}
             <span data-testid="options-count">{options?.length || 0}</span>
-            <button data-testid="change-btn" onClick={() => onChange({ label: 'us-east-1', data: { regionCode: 'us-east-1' } })}>change</button>
+            <button
+                data-testid="change-btn"
+                onClick={() => onChange({ label: 'us-east-1', data: { regionCode: 'us-east-1' } })}
+            >
+                change
+            </button>
         </div>
     )
 }));
@@ -58,7 +68,7 @@ const makeStore = (overrides: any = {}) => {
         name: 'exploreSavings',
         initialState,
         reducers: {},
-        extraReducers: (builder) => {
+        extraReducers: builder => {
             builder.addCase('exploreSavings/setSelectedOnPremRegion', (state, action: any) => {
                 state.selectedOnPremRegion = action.payload;
             });
@@ -85,19 +95,31 @@ describe('OnPremRegion', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('renders the select field with Region label', () => {
-        const { container } = render(<Provider store={makeStore()}><OnPremRegion /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <OnPremRegion />
+            </Provider>
+        );
         expect(container.textContent).toContain(GENERAL.REGION);
     });
 
     it('generates region options from Redux data', () => {
-        render(<Provider store={makeStore()}><OnPremRegion /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <OnPremRegion />
+            </Provider>
+        );
         expect(screen.getByTestId('options-count').textContent).toBe('2');
     });
 
     it('dispatches setSelectedOnPremRegion for first region when no selectedOnPremRegion and no matching header region', () => {
         const store = makeStore();
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><OnPremRegion /></Provider>);
+        render(
+            <Provider store={store}>
+                <OnPremRegion />
+            </Provider>
+        );
         expect(dispatchSpy).toHaveBeenCalledWith(
             expect.objectContaining({ type: 'exploreSavings/setSelectedOnPremRegion' })
         );
@@ -106,7 +128,11 @@ describe('OnPremRegion', () => {
     it('dispatches the matching header region when found', () => {
         const store = makeStore({ headerSelectedRegion: { data: { regionCode: 'us-west-2' } } });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><OnPremRegion /></Provider>);
+        render(
+            <Provider store={store}>
+                <OnPremRegion />
+            </Provider>
+        );
         expect(dispatchSpy).toHaveBeenCalledWith(
             expect.objectContaining({ type: 'exploreSavings/setSelectedOnPremRegion' })
         );
@@ -115,7 +141,11 @@ describe('OnPremRegion', () => {
     it('does not dispatch when selectedOnPremRegion already set', () => {
         const store = makeStore({ selectedOnPremRegion: { label: 'us-east-1', data: { regionCode: 'us-east-1' } } });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><OnPremRegion /></Provider>);
+        render(
+            <Provider store={store}>
+                <OnPremRegion />
+            </Provider>
+        );
         expect(dispatchSpy).not.toHaveBeenCalledWith(
             expect.objectContaining({ type: 'exploreSavings/setSelectedOnPremRegion' })
         );
@@ -123,9 +153,11 @@ describe('OnPremRegion', () => {
 
     it('shows loading state', () => {
         render(
-            <Provider store={makeStore({
-                getOnPremRegionList: { onPremRegionsData: { regions: [] }, onPremRegionsLoading: true }
-            })}>
+            <Provider
+                store={makeStore({
+                    getOnPremRegionList: { onPremRegionsData: { regions: [] }, onPremRegionsLoading: true }
+                })}
+            >
                 <OnPremRegion />
             </Provider>
         );
@@ -135,9 +167,11 @@ describe('OnPremRegion', () => {
     it('enables searchable when more than 5 options', () => {
         const regions = Array.from({ length: 6 }, (_, i) => ({ regionCode: `reg-${i}`, regionName: `Region ${i}` }));
         render(
-            <Provider store={makeStore({
-                getOnPremRegionList: { onPremRegionsData: { regions }, onPremRegionsLoading: false }
-            })}>
+            <Provider
+                store={makeStore({
+                    getOnPremRegionList: { onPremRegionsData: { regions }, onPremRegionsLoading: false }
+                })}
+            >
                 <OnPremRegion />
             </Provider>
         );
@@ -147,7 +181,11 @@ describe('OnPremRegion', () => {
     it('dispatches on change of select', () => {
         const store = makeStore();
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><OnPremRegion /></Provider>);
+        render(
+            <Provider store={store}>
+                <OnPremRegion />
+            </Provider>
+        );
         dispatchSpy.mockClear();
         fireEvent.click(screen.getByTestId('change-btn'));
         expect(dispatchSpy).toHaveBeenCalledWith({
@@ -158,9 +196,11 @@ describe('OnPremRegion', () => {
 
     it('handles empty regions data', () => {
         render(
-            <Provider store={makeStore({
-                getOnPremRegionList: { onPremRegionsData: { regions: [] }, onPremRegionsLoading: false }
-            })}>
+            <Provider
+                store={makeStore({
+                    getOnPremRegionList: { onPremRegionsData: { regions: [] }, onPremRegionsLoading: false }
+                })}
+            >
                 <OnPremRegion />
             </Provider>
         );

@@ -8,7 +8,9 @@ import ManualTCOAccordion from './ManualTCOAccordion';
 vi.mock('@netapp/design-system', () => ({
     DsAccordion: ({ id, title, variant, value, children, onClick }: any) => (
         <div data-testid="ds-accordion" data-id={id}>
-            <div data-testid="accordion-title" onClick={onClick}>{title}</div>
+            <div data-testid="accordion-title" onClick={onClick}>
+                {title}
+            </div>
             <div data-testid="accordion-children">{children}</div>
         </div>
     )
@@ -28,7 +30,10 @@ vi.mock('./ManualTCOAccordion.module.scss', () => ({
 
 vi.mock('../../../../store/workloadFactory/exploreSavingsSlice', () => ({
     setSecondaryVolDetails: (val: any) => ({ type: 'test/setSecondaryVolDetails', payload: val }),
-    setSelectedSecondaryManualInstanceType: (val: any) => ({ type: 'test/setSelectedSecondaryManualInstanceType', payload: val })
+    setSelectedSecondaryManualInstanceType: (val: any) => ({
+        type: 'test/setSelectedSecondaryManualInstanceType',
+        payload: val
+    })
 }));
 
 const volDefaults = {
@@ -61,33 +66,51 @@ describe('ManualTCOAccordion', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('renders the accordion with correct title', () => {
-        const { container } = render(<Provider store={makeStore()}><ManualTCOAccordion /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <ManualTCOAccordion />
+            </Provider>
+        );
         expect(container.textContent).toContain('Secondary EC2 specifications');
     });
 
     it('renders SecondaryManualEC2 component', () => {
-        render(<Provider store={makeStore()}><ManualTCOAccordion /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ManualTCOAccordion />
+            </Provider>
+        );
         expect(screen.getByTestId('secondary-manual-ec2')).toBeTruthy();
     });
 
     it('renders SecondaryManualVolType component', () => {
-        render(<Provider store={makeStore()}><ManualTCOAccordion /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <ManualTCOAccordion />
+            </Provider>
+        );
         expect(screen.getByTestId('secondary-manual-vol-type')).toBeTruthy();
     });
 
     it('dispatches setSecondaryVolDetails on mount', () => {
         const store = makeStore();
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ManualTCOAccordion /></Provider>);
-        expect(dispatchSpy).toHaveBeenCalledWith(
-            expect.objectContaining({ type: 'test/setSecondaryVolDetails' })
+        render(
+            <Provider store={store}>
+                <ManualTCOAccordion />
+            </Provider>
         );
+        expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'test/setSecondaryVolDetails' }));
     });
 
     it('dispatches setSelectedSecondaryManualInstanceType on mount', () => {
         const store = makeStore();
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ManualTCOAccordion /></Provider>);
+        render(
+            <Provider store={store}>
+                <ManualTCOAccordion />
+            </Provider>
+        );
         expect(dispatchSpy).toHaveBeenCalledWith({
             type: 'test/setSelectedSecondaryManualInstanceType',
             payload: { label: 'm5.xlarge', value: 'm5.xlarge' }
@@ -97,11 +120,13 @@ describe('ManualTCOAccordion', () => {
     it('re-dispatches on accordion click (toggle)', () => {
         const store = makeStore();
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><ManualTCOAccordion /></Provider>);
+        render(
+            <Provider store={store}>
+                <ManualTCOAccordion />
+            </Provider>
+        );
         dispatchSpy.mockClear();
         fireEvent.click(screen.getByTestId('accordion-title'));
-        expect(dispatchSpy).toHaveBeenCalledWith(
-            expect.objectContaining({ type: 'test/setSecondaryVolDetails' })
-        );
+        expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'test/setSecondaryVolDetails' }));
     });
 });

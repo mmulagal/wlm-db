@@ -165,9 +165,6 @@ describe('FsxwSazCalculation', () => {
 
     it('should call viewCalculationForFsxw with type Single and correct args', () => {
         renderComponent({ selectedDeploymentModel: 'FCI' });
-        expect(mockViewCalculationForFsxw).toHaveBeenCalledWith(
-            { ...defaultResponse, type: 'Single' },
-            'FCI'
-        );
+        expect(mockViewCalculationForFsxw).toHaveBeenCalledWith({ ...defaultResponse, type: 'Single' }, 'FCI');
     });
 });

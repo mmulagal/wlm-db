@@ -7,7 +7,11 @@ import StoragePerformance from './StoragePerformance';
 
 // Mocks
 vi.mock('@netapp/design-system', () => ({
-    DsTypography: ({ children, variant, style, className }: any) => <span data-variant={variant} style={style} className={className}>{children}</span>
+    DsTypography: ({ children, variant, style, className }: any) => (
+        <span data-variant={variant} style={style} className={className}>
+            {children}
+        </span>
+    )
 }));
 
 vi.mock('./StoragePerfInput/StoragePerfInput', () => ({
@@ -35,8 +39,8 @@ const makeStore = (overrides: any = {}) =>
         reducer: {
             exploreSavings: () => ({
                 onPremStorageAndComputeInfo: {
-                    'host1_inst1': { sqlInstanceName: 'Instance1', totalStorage: 100 },
-                    'host1_inst2': { sqlInstanceName: 'Instance2', totalStorage: 200 }
+                    host1_inst1: { sqlInstanceName: 'Instance1', totalStorage: 100 },
+                    host1_inst2: { sqlInstanceName: 'Instance2', totalStorage: 200 }
                 },
                 ...overrides
             })
@@ -47,25 +51,41 @@ describe('StoragePerformance', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('renders the header text', () => {
-        const { container } = render(<Provider store={makeStore()}><StoragePerformance printState={false} /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <StoragePerformance printState={false} />
+            </Provider>
+        );
         expect(container.textContent).toContain('Storage & performance:');
     });
 
     it('renders column headers', () => {
-        const { container } = render(<Provider store={makeStore()}><StoragePerformance printState={false} /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <StoragePerformance printState={false} />
+            </Provider>
+        );
         expect(container.textContent).toContain('Total Storage amount (GiB)');
         expect(container.textContent).toContain('IOPS');
         expect(container.textContent).toContain('Throughput (MB/s)');
     });
 
     it('renders StoragePerfInput for each data entry in single host mode', () => {
-        render(<Provider store={makeStore()}><StoragePerformance printState={false} /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <StoragePerformance printState={false} />
+            </Provider>
+        );
         expect(screen.getByTestId('storage-perf-input-host1_inst1')).toBeTruthy();
         expect(screen.getByTestId('storage-perf-input-host1_inst2')).toBeTruthy();
     });
 
     it('renders SQL instance names', () => {
-        const { container } = render(<Provider store={makeStore()}><StoragePerformance printState={false} /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <StoragePerformance printState={false} />
+            </Provider>
+        );
         expect(container.textContent).toContain('Instance1');
         expect(container.textContent).toContain('Instance2');
     });
@@ -73,8 +93,8 @@ describe('StoragePerformance', () => {
     it('filters data for specific host in bulk mode', () => {
         const store = makeStore({
             onPremStorageAndComputeInfo: {
-                'hostA_inst1': { sqlInstanceName: 'HostA-Inst1' },
-                'hostB_inst1': { sqlInstanceName: 'HostB-Inst1' }
+                hostA_inst1: { sqlInstanceName: 'HostA-Inst1' },
+                hostB_inst1: { sqlInstanceName: 'HostB-Inst1' }
             }
         });
         render(
@@ -89,8 +109,8 @@ describe('StoragePerformance', () => {
     it('shows all data when no host prop (single mode)', () => {
         const store = makeStore({
             onPremStorageAndComputeInfo: {
-                'hostA_inst1': { sqlInstanceName: 'HostA-Inst1' },
-                'hostB_inst1': { sqlInstanceName: 'HostB-Inst1' }
+                hostA_inst1: { sqlInstanceName: 'HostA-Inst1' },
+                hostB_inst1: { sqlInstanceName: 'HostB-Inst1' }
             }
         });
         render(
@@ -103,7 +123,11 @@ describe('StoragePerformance', () => {
     });
 
     it('passes printState to StoragePerfInput', () => {
-        render(<Provider store={makeStore()}><StoragePerformance printState={true} /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <StoragePerformance printState />
+            </Provider>
+        );
         expect(screen.getByTestId('storage-perf-input-host1_inst1')).toHaveAttribute('data-print', 'true');
     });
 

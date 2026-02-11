@@ -6,7 +6,11 @@ import { configureStore, createSlice } from '@reduxjs/toolkit';
 import CostBreakdown from './CostBreakdown';
 
 vi.mock('@netapp/design-system', () => ({
-    DsTypography: ({ children, variant, className, style }: any) => <span data-variant={variant} className={className} style={style}>{children}</span>,
+    DsTypography: ({ children, variant, className, style }: any) => (
+        <span data-variant={variant} className={className} style={style}>
+            {children}
+        </span>
+    ),
     DsFlashingDotsLoader: () => <span data-testid="loader">loading...</span>,
     TooltipInfo: ({ children }: any) => <span data-testid="tooltip-info">{children}</span>
 }));
@@ -31,12 +35,20 @@ vi.mock('../../../../ui-components/Cards/Card', () => ({
 }));
 
 vi.mock('../../../../ui-components/Typography', () => ({
-    Text: ({ children, color, level, style }: any) => <span data-testid="text" data-color={color} style={style}>{children}</span>
+    Text: ({ children, color, level, style }: any) => (
+        <span data-testid="text" data-color={color} style={style}>
+            {children}
+        </span>
+    )
 }));
 
 vi.mock('../../../../ui-components/Layout/Grid', () => ({
     Grid: ({ children }: any) => <div data-testid="grid">{children}</div>,
-    GridItem: ({ children, lg }: any) => <div data-testid="grid-item" data-lg={lg}>{children}</div>
+    GridItem: ({ children, lg }: any) => (
+        <div data-testid="grid-item" data-lg={lg}>
+            {children}
+        </div>
+    )
 }));
 
 vi.mock('../../../../utils/appConstants', () => ({
@@ -92,12 +104,20 @@ describe('CostBreakdown', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('renders cost breakdown title', () => {
-        const { container } = render(<Provider store={makeStore()}><CostBreakdown disableState={false} /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <CostBreakdown disableState={false} />
+            </Provider>
+        );
         expect(container.textContent).toContain('Cost breakdown - Monthly charge');
     });
 
     it('renders Type header', () => {
-        const { container } = render(<Provider store={makeStore()}><CostBreakdown disableState={false} /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <CostBreakdown disableState={false} />
+            </Provider>
+        );
         expect(container.textContent).toContain('Type');
     });
 
@@ -147,7 +167,11 @@ describe('CostBreakdown', () => {
     });
 
     it('renders FSx for ONTAP header', () => {
-        const { container } = render(<Provider store={makeStore()}><CostBreakdown disableState={false} /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <CostBreakdown disableState={false} />
+            </Provider>
+        );
         expect(container.textContent).toContain('Microsoft SQL Server on FSx for ONTAP');
     });
 
@@ -207,7 +231,7 @@ describe('CostBreakdown', () => {
     it('does not show values when disableState is true', () => {
         const { container } = render(
             <Provider store={makeStore({ storageSavingsResponse: { fsx: {}, ebs: {} }, storageSavingsLoading: false })}>
-                <CostBreakdown disableState={true} />
+                <CostBreakdown disableState />
             </Provider>
         );
         // disableState=true suppresses data display in ComparisonTableLayout
@@ -215,14 +239,18 @@ describe('CostBreakdown', () => {
     });
 
     it('renders card component', () => {
-        render(<Provider store={makeStore()}><CostBreakdown disableState={false} /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <CostBreakdown disableState={false} />
+            </Provider>
+        );
         expect(screen.getByTestId('card')).toBeTruthy();
     });
 
     it('applies disabled text color when disableState is true', () => {
         const { container } = render(
             <Provider store={makeStore()}>
-                <CostBreakdown disableState={true} />
+                <CostBreakdown disableState />
             </Provider>
         );
         // Title should have disabled color
@@ -240,7 +268,11 @@ describe('CostBreakdown', () => {
                 }
             }
         });
-        render(<Provider store={store}><CostBreakdown disableState={false} /></Provider>);
+        render(
+            <Provider store={store}>
+                <CostBreakdown disableState={false} />
+            </Provider>
+        );
         // Tooltip should be rendered for items with isTooltip
         expect(screen.getByTestId('card')).toBeTruthy();
     });
@@ -254,7 +286,11 @@ describe('CostBreakdown', () => {
                 ]
             }
         });
-        render(<Provider store={store}><CostBreakdown disableState={false} /></Provider>);
+        render(
+            <Provider store={store}>
+                <CostBreakdown disableState={false} />
+            </Provider>
+        );
         expect(screen.getByTestId('card')).toBeTruthy();
     });
 
@@ -268,7 +304,11 @@ describe('CostBreakdown', () => {
                 }
             }
         });
-        render(<Provider store={store}><CostBreakdown disableState={false} /></Provider>);
+        render(
+            <Provider store={store}>
+                <CostBreakdown disableState={false} />
+            </Provider>
+        );
         expect(screen.getByTestId('card')).toBeTruthy();
     });
 });

@@ -17,7 +17,9 @@ vi.mock('@netapp/design-system/dist/components/Select', () => ({
         <div data-testid="select-field" data-label={label} data-loading={String(isLoading)}>
             {value && !Array.isArray(value) && <span data-testid="selected-value">{value.label}</span>}
             <span data-testid="options-count">{options?.length || 0}</span>
-            <button data-testid="change-btn" onClick={() => onChange({ label: 'r5.xlarge', value: 'r5.xlarge' })}>change</button>
+            <button data-testid="change-btn" onClick={() => onChange({ label: 'r5.xlarge', value: 'r5.xlarge' })}>
+                change
+            </button>
         </div>
     )
 }));
@@ -28,13 +30,24 @@ vi.mock('./ManualEC2.module.scss', () => ({
 
 vi.mock('../../../../utils/utilityFunctions', () => ({
     formatSize: (val: number, unit: string) => `${val}${unit}`,
-    generateOptionType: (label: string, value: string, label2: string, _: boolean, __: string, data: any) => ({ label, value, label2, data }),
+    generateOptionType: (label: string, value: string, label2: string, _: boolean, __: string, data: any) => ({
+        label,
+        value,
+        label2,
+        data
+    }),
     sortListOfDict: (arr: any[], key: string) => arr.sort((a: any, b: any) => a[key]?.localeCompare(b[key]))
 }));
 
 vi.mock('../../../../store/workloadFactory/exploreSavingsSlice', () => ({
-    setSecondarySelectedMachineDescription: (val: any) => ({ type: 'test/setSecondarySelectedMachineDescription', payload: val }),
-    setSelectedSecondaryManualInstanceType: (val: any) => ({ type: 'test/setSelectedSecondaryManualInstanceType', payload: val })
+    setSecondarySelectedMachineDescription: (val: any) => ({
+        type: 'test/setSecondarySelectedMachineDescription',
+        payload: val
+    }),
+    setSelectedSecondaryManualInstanceType: (val: any) => ({
+        type: 'test/setSelectedSecondaryManualInstanceType',
+        payload: val
+    })
 }));
 
 vi.mock('../../../../common/hooks/useSearchDebounce', () => ({
@@ -61,7 +74,7 @@ const makeStore = (overrides: any = {}) => {
             ...overrides
         },
         reducers: {},
-        extraReducers: (builder) => {
+        extraReducers: builder => {
             builder.addCase('test/setSelectedSecondaryManualInstanceType', (state, action: any) => {
                 state.selectedSecondaryManualInstanceType = action.payload;
             });
@@ -74,19 +87,31 @@ describe('SecondaryManualEC2', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('renders machine description text field', () => {
-        render(<Provider store={makeStore()}><SecondaryManualEC2 /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <SecondaryManualEC2 />
+            </Provider>
+        );
         expect(screen.getByTestId('machine-desc-field')).toBeTruthy();
     });
 
     it('renders select field', () => {
-        render(<Provider store={makeStore()}><SecondaryManualEC2 /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <SecondaryManualEC2 />
+            </Provider>
+        );
         expect(screen.getByTestId('select-field')).toBeTruthy();
     });
 
     it('auto-selects primary instance type when secondary is null and primary exists', () => {
         const store = makeStore({ selectedManualInstanceType: { label: 'r5.xlarge', value: 'r5.xlarge' } });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><SecondaryManualEC2 /></Provider>);
+        render(
+            <Provider store={store}>
+                <SecondaryManualEC2 />
+            </Provider>
+        );
         expect(dispatchSpy).toHaveBeenCalledWith({
             type: 'test/setSelectedSecondaryManualInstanceType',
             payload: { label: 'r5.xlarge', value: 'r5.xlarge' }
@@ -96,35 +121,66 @@ describe('SecondaryManualEC2', () => {
     it('auto-selects first option when secondary and primary are null', () => {
         const store = makeStore();
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><SecondaryManualEC2 /></Provider>);
-        expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'test/setSelectedSecondaryManualInstanceType' }));
+        render(
+            <Provider store={store}>
+                <SecondaryManualEC2 />
+            </Provider>
+        );
+        expect(dispatchSpy).toHaveBeenCalledWith(
+            expect.objectContaining({ type: 'test/setSelectedSecondaryManualInstanceType' })
+        );
     });
 
     it('does not auto-select when secondary is already set', () => {
         const store = makeStore({ selectedSecondaryManualInstanceType: { label: 'r5.xlarge', value: 'r5.xlarge' } });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><SecondaryManualEC2 /></Provider>);
-        expect(dispatchSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'test/setSelectedSecondaryManualInstanceType' }));
+        render(
+            <Provider store={store}>
+                <SecondaryManualEC2 />
+            </Provider>
+        );
+        expect(dispatchSpy).not.toHaveBeenCalledWith(
+            expect.objectContaining({ type: 'test/setSelectedSecondaryManualInstanceType' })
+        );
     });
 
     it('dispatches on select change', () => {
         const store = makeStore({ selectedSecondaryManualInstanceType: { label: 'r5.xlarge', value: 'r5.xlarge' } });
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><SecondaryManualEC2 /></Provider>);
+        render(
+            <Provider store={store}>
+                <SecondaryManualEC2 />
+            </Provider>
+        );
         dispatchSpy.mockClear();
         fireEvent.click(screen.getByTestId('change-btn'));
-        expect(dispatchSpy).toHaveBeenCalledWith({ type: 'test/setSelectedSecondaryManualInstanceType', payload: { label: 'r5.xlarge', value: 'r5.xlarge' } });
+        expect(dispatchSpy).toHaveBeenCalledWith({
+            type: 'test/setSelectedSecondaryManualInstanceType',
+            payload: { label: 'r5.xlarge', value: 'r5.xlarge' }
+        });
     });
 
     it('uses manualMonthlyDescription as value when manualSecondaryMachineDescription is empty', () => {
-        render(<Provider store={makeStore({ manualSecondaryMachineDescription: '', manualMonthlyDescription: 'Primary Desc' })}><SecondaryManualEC2 /></Provider>);
+        render(
+            <Provider
+                store={makeStore({ manualSecondaryMachineDescription: '', manualMonthlyDescription: 'Primary Desc' })}
+            >
+                <SecondaryManualEC2 />
+            </Provider>
+        );
         expect((screen.getByTestId('machine-desc-field') as HTMLInputElement).value).toBe('Primary Desc');
     });
 
     it('shows loading state for select', () => {
-        render(<Provider store={makeStore({
-            getManualInstanceTypeList: { instanceTypeData: { instanceTypes: [] }, instanceTypeLoading: true }
-        })}><SecondaryManualEC2 /></Provider>);
+        render(
+            <Provider
+                store={makeStore({
+                    getManualInstanceTypeList: { instanceTypeData: { instanceTypes: [] }, instanceTypeLoading: true }
+                })}
+            >
+                <SecondaryManualEC2 />
+            </Provider>
+        );
         expect(screen.getByTestId('select-field')).toHaveAttribute('data-loading', 'true');
     });
 });

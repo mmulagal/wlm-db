@@ -10,7 +10,9 @@ import { WLF_TABS } from '../../../../utils/consts';
 // Mocks
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, onClick, className, style, id }: any) => (
-        <span onClick={onClick} className={className} style={style} id={id}>{children}</span>
+        <span onClick={onClick} className={className} style={style} id={id}>
+            {children}
+        </span>
     )
 }));
 
@@ -79,7 +81,12 @@ describe('ExportPDF', () => {
     it('renders Export PDF text', () => {
         const { container } = render(
             <Provider store={makeStore()}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         expect(container.textContent).toContain(GENERAL.EXPORT_PDF);
@@ -88,7 +95,12 @@ describe('ExportPDF', () => {
     it('renders Send by Email text', () => {
         const { container } = render(
             <Provider store={makeStore()}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         expect(container.textContent).toContain('Send by Email');
@@ -97,7 +109,12 @@ describe('ExportPDF', () => {
     it('renders View the calculations text', () => {
         const { container } = render(
             <Provider store={makeStore()}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         expect(container.textContent).toContain(GENERAL.VIEW_THE_CALCULATIONS);
@@ -106,7 +123,12 @@ describe('ExportPDF', () => {
     it('calls printDocument on Export PDF click when enabled', () => {
         render(
             <Provider store={makeStore()}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         fireEvent.click(screen.getByText(GENERAL.EXPORT_PDF));
@@ -116,7 +138,12 @@ describe('ExportPDF', () => {
     it('calls sendEmail on Email click when enabled', () => {
         render(
             <Provider store={makeStore()}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         fireEvent.click(screen.getByText('Send by Email'));
@@ -126,7 +153,12 @@ describe('ExportPDF', () => {
     it('does not call printDocument when disabled', () => {
         render(
             <Provider store={makeStore()}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={true} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         fireEvent.click(screen.getByText(GENERAL.EXPORT_PDF));
@@ -136,7 +168,12 @@ describe('ExportPDF', () => {
     it('does not call sendEmail when disabled', () => {
         render(
             <Provider store={makeStore()}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={true} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         fireEvent.click(screen.getByText('Send by Email'));
@@ -146,7 +183,12 @@ describe('ExportPDF', () => {
     it('applies disabled class when emailStatus is true', () => {
         const { container } = render(
             <Provider store={makeStore()}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={true} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus
+                />
             </Provider>
         );
         // emailStatus only affects CSS class, not the onClick handler
@@ -157,7 +199,12 @@ describe('ExportPDF', () => {
     it('applies OnPrem CSS class when MSSQL_ON_PREMISES tab', () => {
         const { container } = render(
             <Provider store={makeStore({ selectedExploreSavingsTab: WLF_TABS.MSSQL_ON_PREMISES })}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         expect(container.firstChild).toHaveClass('exportPdf');
@@ -167,7 +214,12 @@ describe('ExportPDF', () => {
     it('applies default CSS class when not OnPrem', () => {
         const { container } = render(
             <Provider store={makeStore()}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         expect(container.firstChild).toHaveClass('exportPdf');
@@ -177,7 +229,12 @@ describe('ExportPDF', () => {
     it('shows view calc section for isDemoMode true', () => {
         const { container } = render(
             <Provider store={makeStore({ isDemoMode: true })}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         expect(container.textContent).toContain(GENERAL.VIEW_THE_CALCULATIONS);
@@ -188,12 +245,20 @@ describe('ExportPDF', () => {
         const dispatchSpy = vi.spyOn(store, 'dispatch');
         render(
             <Provider store={store}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         const viewCalcElements = screen.getAllByText(GENERAL.VIEW_THE_CALCULATIONS);
         fireEvent.click(viewCalcElements[0]);
-        expect(dispatchSpy).toHaveBeenCalledWith({ type: 'test/setSelectedHeaderTab', payload: WLF_TABS.VIEW_THE_CALCULATIONS });
+        expect(dispatchSpy).toHaveBeenCalledWith({
+            type: 'test/setSelectedHeaderTab',
+            payload: WLF_TABS.VIEW_THE_CALCULATIONS
+        });
     });
 
     it('does not dispatch on view calculations click when viewLoading is true', () => {
@@ -201,18 +266,31 @@ describe('ExportPDF', () => {
         const dispatchSpy = vi.spyOn(store, 'dispatch');
         render(
             <Provider store={store}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         const viewCalcElements = screen.getAllByText(GENERAL.VIEW_THE_CALCULATIONS);
         fireEvent.click(viewCalcElements[0]);
-        expect(dispatchSpy).not.toHaveBeenCalledWith({ type: 'test/setSelectedHeaderTab', payload: WLF_TABS.VIEW_THE_CALCULATIONS });
+        expect(dispatchSpy).not.toHaveBeenCalledWith({
+            type: 'test/setSelectedHeaderTab',
+            payload: WLF_TABS.VIEW_THE_CALCULATIONS
+        });
     });
 
     it('does not call printDocument when viewCalculationsResponse is null', () => {
         render(
             <Provider store={makeStore({ viewCalculationsResponse: null })}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         fireEvent.click(screen.getByText(GENERAL.EXPORT_PDF));
@@ -222,7 +300,12 @@ describe('ExportPDF', () => {
     it('handles loading from storageSavingsLoading', () => {
         render(
             <Provider store={makeStore({ storageSavingsLoading: true })}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         fireEvent.click(screen.getByText(GENERAL.EXPORT_PDF));
@@ -232,7 +315,12 @@ describe('ExportPDF', () => {
     it('handles loading from selectedHostDetails.loading', () => {
         render(
             <Provider store={makeStore({ selectedHostDetails: { loading: true } })}>
-                <ExportPDF printDocument={mockPrintDocument} disableState={false} sendEmail={mockSendEmail} emailStatus={false} />
+                <ExportPDF
+                    printDocument={mockPrintDocument}
+                    disableState={false}
+                    sendEmail={mockSendEmail}
+                    emailStatus={false}
+                />
             </Provider>
         );
         fireEvent.click(screen.getByText(GENERAL.EXPORT_PDF));

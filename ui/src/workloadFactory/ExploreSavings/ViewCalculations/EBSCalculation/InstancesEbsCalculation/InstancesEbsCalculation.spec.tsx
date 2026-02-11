@@ -206,9 +206,7 @@ describe('InstancesEbsCalculation', () => {
         it('should show $0 when totalCostEntry is not found in host calculation', () => {
             const bulkNoCost = {
                 ...bulkResponse,
-                ebsInstanceCalculation: [
-                    { hostName: 'H1', ebsInstanceCalculation: [{ label: 'other', value: '$5' }] }
-                ]
+                ebsInstanceCalculation: [{ hostName: 'H1', ebsInstanceCalculation: [{ label: 'other', value: '$5' }] }]
             };
             renderComponent({ viewCalculationsResponse: bulkNoCost });
             expect(screen.getByTestId('accordion-value').textContent).toContain('$0');

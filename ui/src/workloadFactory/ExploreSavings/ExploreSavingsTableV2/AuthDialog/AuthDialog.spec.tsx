@@ -1,23 +1,33 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import AuthDialog from './AuthDialog';
 import { AUTHENTICATION_TYPE } from '../../../../utils/consts';
-import * as exploreSavingsSlice from '../../../../store/workloadFactory/exploreSavingsSlice';
 
-// Mock react-i18next
+// Mock react-i18next – `tFn` can be overridden per-test
+let tFn: (key: string) => string | null = (key: string) => key;
+
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({
-        t: (key: string) => key
+        t: (key: string) => tFn(key)
     })
+}));
+
+// Mock SCSS module
+vi.mock('./AuthDialog.module.scss', () => ({
+    default: new Proxy(
+        {},
+        {
+            get: (_target, prop) => String(prop)
+        }
+    )
 }));
 
 // Mock SVG
 vi.mock('../../../../assets/ic_copy.svg', () => ({
-    ReactComponent: () => <div data-testid="copy-icon" />
+    ReactComponent: (props: any) => <svg data-testid="copy-icon" {...props} />
 }));
 
 // Mock CopyToClipboard component
@@ -29,9 +39,65 @@ vi.mock('../../../../common/CopyToClipboard/copyToClipboard', () => ({
     )
 }));
 
-// Helper function to create mock store
+// Mock AccordionCard components to always render children (no collapse)
+vi.mock('../../../../common/AccordionCard/AccordionCard', () => ({
+    AccordionController: ({ children }: any) => <div data-testid="accordion-controller">{children}</div>,
+    AccordionCard: ({ title, children }: any) => (
+        <div data-testid="accordion-card">
+            <div data-testid="accordion-title">{title}</div>
+            {children}
+        </div>
+    ),
+    AccordionCardContent: ({ children }: any) => <div data-testid="accordion-card-content">{children}</div>
+}));
+
+// Mock @netapp/design-system Popover
+vi.mock('@netapp/design-system', () => ({
+    Popover: ({ children, container }: any) => (
+        <div data-testid="popover">
+            <span>{children}</span>
+            <span>{container}</span>
+        </div>
+    )
+}));
+
+// Mock @tlveng/wlm-ds components to ensure events fire properly
+vi.mock('@tlveng/wlm-ds', () => ({
+    DsRadioButton: ({ id, title, isSelected, onClick }: any) => (
+        <button data-testid={id} title={title} aria-pressed={isSelected} onClick={onClick}>
+            {title}
+        </button>
+    ),
+    DsTextField: ({ title, value, onChange, onBlur, isDisabled, isPassword, placeholder, message, className }: any) => (
+        <div data-testid={`text-field-${title}`}>
+            <label>{title}</label>
+            <input
+                type={isPassword ? 'password' : 'text'}
+                value={value ?? ''}
+                onChange={onChange}
+                onBlur={onBlur}
+                disabled={isDisabled}
+                placeholder={placeholder}
+                className={className}
+            />
+            {message && (
+                <span data-testid="field-error" data-type={message.type}>
+                    {message.value}
+                </span>
+            )}
+        </div>
+    ),
+    DsTypography: ({ children, variant, className, ...rest }: any) => (
+        <span data-variant={variant} className={className} {...rest}>
+            {children}
+        </span>
+    )
+}));
+
+// ─── helpers ────────────────────────────────────────────────────────────────────
+
 const createMockStore = (
-    selectedAuthenticationType = AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
+    selectedAuthenticationType: string | null | undefined = AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
     userName = '',
     password = '',
     actionsDisabled = false
@@ -46,74 +112,140 @@ const createMockStore = (
         }
     });
 
-// Helper function to render component
 const renderComponent = (
     databaseHostName = 'test-db-host',
-    selectedAuthenticationType = AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
+    selectedAuthenticationType: string | null | undefined = AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
     userName = '',
     password = '',
     actionsDisabled = false
 ) => {
     const store = createMockStore(selectedAuthenticationType, userName, password, actionsDisabled);
-
-    return render(
-        <Provider store={store}>
-            <AuthDialog databaseHostName={databaseHostName} />
-        </Provider>
-    );
+    return {
+        store,
+        ...render(
+            <Provider store={store}>
+                <AuthDialog databaseHostName={databaseHostName} />
+            </Provider>
+        )
+    };
 };
+
+// ─── tests ──────────────────────────────────────────────────────────────────────
 
 describe('AuthDialog', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        tFn = (key: string) => key; // reset to default
     });
 
-    describe('Component Rendering', () => {
-        it('should render without crashing', () => {
-            const { container } = renderComponent();
-            expect(container.firstChild).toBeTruthy();
+    // ── rendering ───────────────────────────────────────────────────────────
+
+    describe('Rendering', () => {
+        it('should render the auth heading with the database host name', () => {
+            renderComponent('my-db-host');
+            expect(screen.getByText('databases.explore-savings.auth-heading')).toBeTruthy();
+            expect(screen.getByText('my-db-host')).toBeTruthy();
         });
 
-        it('should render database host name', () => {
-            const { container } = renderComponent('my-database-host');
-            expect(container.textContent).toContain('my-database-host');
+        it('should render the select auth mode heading', () => {
+            renderComponent();
+            expect(screen.getByText('databases.explore-savings.select-auth-mode')).toBeTruthy();
         });
 
-        it('should render auth heading', () => {
-            const { container } = renderComponent();
-            expect(container.textContent).toContain('databases.explore-savings.auth-heading');
+        it('should render both authentication radio buttons', () => {
+            renderComponent();
+            expect(screen.getByTestId('select-sql-authentication')).toBeTruthy();
+            expect(screen.getByTestId('select-windows-authentication')).toBeTruthy();
         });
 
-        it('should render select auth mode heading', () => {
-            const { container } = renderComponent();
-            expect(container.textContent).toContain('databases.explore-savings.select-auth-mode');
+        it('should render the permissions accordion', () => {
+            renderComponent();
+            expect(screen.getByTestId('accordion-controller')).toBeTruthy();
+            expect(screen.getByTestId('accordion-card')).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.permissions-required-heading')).toBeTruthy();
+        });
+
+        it('should render permission items inside the accordion', () => {
+            renderComponent();
+            expect(screen.getByText('databases.explore-savings.permissions-required-content')).toBeTruthy();
+            expect(screen.getByText(/databases.explore-savings.view-any-definition/)).toBeTruthy();
+            expect(screen.getByText(/databases.explore-savings.view-server-state/)).toBeTruthy();
+            expect(screen.getByText(/databases.explore-savings.connect-sql/)).toBeTruthy();
+        });
+
+        it('should render Popover with CopyToClipboard and CopyIcon', () => {
+            renderComponent();
+            expect(screen.getByTestId('popover')).toBeTruthy();
+            expect(screen.getByTestId('copy-to-clipboard')).toBeTruthy();
+            expect(screen.getByTestId('copy-icon')).toBeTruthy();
+        });
+
+        it('should pass the correct concatenated permissions to CopyToClipboard', () => {
+            renderComponent();
+            const copyEl = screen.getByTestId('copy-to-clipboard');
+            expect(copyEl.getAttribute('data-value')).toBe(
+                'databases.explore-savings.view-any-definition, databases.explore-savings.view-server-state, databases.explore-savings.connect-sql'
+            );
+        });
+
+        it('should apply the dbName class to the host name span', () => {
+            const { container } = renderComponent('my-host');
+            const hostSpan = container.querySelector('.dbName');
+            expect(hostSpan).toBeTruthy();
+            expect(hostSpan?.textContent).toBe('my-host');
         });
     });
 
-    describe('Authentication Type Radio Buttons', () => {
-        it('should render SQL Server authentication radio button', () => {
-            const { container } = renderComponent();
-            expect(container.textContent).toContain('databases.explore-savings.sql-server-authentication');
+    // ── useEffect – default auth type ───────────────────────────────────────
+
+    describe('useEffect – default auth type', () => {
+        it('should dispatch setSelectedAuthenticationType on mount when not set', () => {
+            const store = createMockStore(null);
+            const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+            render(
+                <Provider store={store}>
+                    <AuthDialog databaseHostName="test-db" />
+                </Provider>
+            );
+
+            expect(dispatchSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    payload: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                })
+            );
         });
 
-        it('should render Windows authentication radio button', () => {
-            const { container } = renderComponent();
-            expect(container.textContent).toContain('databases.explore-savings.windows-authentication');
+        it('should NOT dispatch when selectedAuthenticationType is already set', () => {
+            const store = createMockStore(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
+            const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+            render(
+                <Provider store={store}>
+                    <AuthDialog databaseHostName="test-db" />
+                </Provider>
+            );
+
+            expect(dispatchSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    // ── radio button interactions ───────────────────────────────────────────
+
+    describe('Authentication type radio buttons', () => {
+        it('should mark SQL Server authentication as selected when it is the current type', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
+            const sqlBtn = screen.getByTestId('select-sql-authentication');
+            expect(sqlBtn.getAttribute('aria-pressed')).toBe('true');
         });
 
-        it('should have SQL Server authentication selected by default', () => {
-            const { container } = renderComponent();
-            // Just verify the radio buttons are present
-            expect(container.textContent).toContain('databases.explore-savings.sql-server-authentication');
+        it('should mark Windows authentication as selected when it is the current type', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION);
+            const winBtn = screen.getByTestId('select-windows-authentication');
+            expect(winBtn.getAttribute('aria-pressed')).toBe('true');
         });
 
-        it('should have Windows authentication selected when specified', () => {
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION);
-            // Just verify the component renders with Windows auth
-            expect(container.textContent).toContain('databases.explore-savings.windows-authentication');
-        });
-
-        it('should dispatch setSelectedAuthenticationType when SQL auth is clicked', () => {
+        it('should dispatch auth type change + reset when SQL auth radio is clicked', () => {
             const store = createMockStore(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION);
             const dispatchSpy = vi.spyOn(store, 'dispatch');
 
@@ -123,13 +255,18 @@ describe('AuthDialog', () => {
                 </Provider>
             );
 
-            const sqlAuthRadio = screen.getByTitle('databases.explore-savings.sql-server-authentication');
-            fireEvent.click(sqlAuthRadio);
+            fireEvent.click(screen.getByTestId('select-sql-authentication'));
 
-            expect(dispatchSpy).toHaveBeenCalled();
+            // setSelectedAuthenticationType + resetServerDetailsCredentials
+            expect(dispatchSpy).toHaveBeenCalledTimes(2);
+            expect(dispatchSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    payload: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                })
+            );
         });
 
-        it('should dispatch setSelectedAuthenticationType when Windows auth is clicked', () => {
+        it('should dispatch auth type change + reset when Windows auth radio is clicked', () => {
             const store = createMockStore(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
             const dispatchSpy = vi.spyOn(store, 'dispatch');
 
@@ -139,501 +276,315 @@ describe('AuthDialog', () => {
                 </Provider>
             );
 
-            const windowsAuthRadio = screen.getByTitle('databases.explore-savings.windows-authentication');
-            fireEvent.click(windowsAuthRadio);
+            fireEvent.click(screen.getByTestId('select-windows-authentication'));
 
-            expect(dispatchSpy).toHaveBeenCalled();
+            expect(dispatchSpy).toHaveBeenCalledTimes(2);
+            expect(dispatchSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    payload: AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+                })
+            );
+        });
+    });
+
+    // ── input fields – SQL Server auth ──────────────────────────────────────
+
+    describe('Input fields – SQL Server authentication', () => {
+        it('should render username field with SQL Server label', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
+            expect(screen.getByText('databases.register-flow.detect-mssql-username')).toBeTruthy();
         });
 
-        it('should reset credentials when authentication type changes', () => {
-            const store = createMockStore(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, 'user', 'pass');
+        it('should render password field with SQL Server label', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
+            expect(screen.getByText('databases.register-flow.detect-mssql-password')).toBeTruthy();
+        });
+
+        it('should render SQL Server username placeholder', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
+            expect(
+                screen.getByPlaceholderText('databases.general.enter databases.register-flow.detect-mssql-username')
+            ).toBeTruthy();
+        });
+
+        it('should render enter-password placeholder on password field', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
+            expect(screen.getByPlaceholderText('databases.general.enter-password')).toBeTruthy();
+        });
+
+        it('should display existing username value from store', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, 'admin');
+            const input = screen.getByPlaceholderText(
+                'databases.general.enter databases.register-flow.detect-mssql-username'
+            ) as HTMLInputElement;
+            expect(input.value).toBe('admin');
+        });
+
+        it('should display existing password value from store', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', 'secret');
+            const input = screen.getByPlaceholderText('databases.general.enter-password') as HTMLInputElement;
+            expect(input.value).toBe('secret');
+        });
+
+        it('should dispatch setCredentials with userName on username change', () => {
+            const store = createMockStore(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
             const dispatchSpy = vi.spyOn(store, 'dispatch');
 
             render(
                 <Provider store={store}>
-                    <AuthDialog databaseHostName="test-db" />
+                    <AuthDialog databaseHostName="db" />
                 </Provider>
             );
 
-            const windowsAuthRadio = screen.getByTitle('databases.explore-savings.windows-authentication');
-            fireEvent.click(windowsAuthRadio);
+            const input = screen.getByPlaceholderText(
+                'databases.general.enter databases.register-flow.detect-mssql-username'
+            );
+            fireEvent.change(input, { target: { value: 'newuser' } });
 
-            expect(dispatchSpy).toHaveBeenCalled();
+            expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ payload: { userName: 'newuser' } }));
+        });
+
+        it('should dispatch setCredentials with password on password change', () => {
+            const store = createMockStore(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
+            const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+            render(
+                <Provider store={store}>
+                    <AuthDialog databaseHostName="db" />
+                </Provider>
+            );
+
+            const input = screen.getByPlaceholderText('databases.general.enter-password');
+            fireEvent.change(input, { target: { value: 'newpass' } });
+
+            expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ payload: { password: 'newpass' } }));
+        });
+
+        it('should render password field as type password', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
+            const input = screen.getByPlaceholderText('databases.general.enter-password') as HTMLInputElement;
+            expect(input.type).toBe('password');
         });
     });
 
-    describe('Input Fields - SQL Server Authentication', () => {
-        it('should render username field with correct label for SQL auth', () => {
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
-            expect(container.textContent).toContain('databases.register-flow.detect-mssql-username');
+    // ── input fields – Windows auth ─────────────────────────────────────────
+
+    describe('Input fields – Windows authentication', () => {
+        it('should render username field with Windows label', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION);
+            expect(screen.getByText('databases.register-flow.detect-windows-username')).toBeTruthy();
         });
 
-        it('should render password field with correct label for SQL auth', () => {
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
-            expect(container.textContent).toContain('databases.register-flow.detect-mssql-password');
+        it('should render password field with Windows label', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION);
+            expect(screen.getByText('databases.register-flow.detect-windows-password')).toBeTruthy();
         });
 
-        it('should display username value from store', () => {
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, 'testuser');
-            const inputs = container.querySelectorAll('input[type="text"]');
-            const usernameInput = Array.from(inputs).find(
-                input => (input as HTMLInputElement).value === 'testuser'
-            ) as HTMLInputElement;
-            expect(usernameInput).toBeTruthy();
-            expect(usernameInput?.value).toBe('testuser');
+        it('should render Windows username placeholder', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION);
+            expect(screen.getByPlaceholderText('databases.register-flow.detect-windows-username')).toBeTruthy();
+        });
+    });
+
+    // ── validation – error messages (covers lines 70-75 and 101-106) ────────
+
+    describe('Validation – error messages', () => {
+        it('should NOT show username error before blur', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '');
+            expect(screen.queryAllByTestId('field-error')).toHaveLength(0);
         });
 
-        it('should display password value from store', () => {
-            const { container } = renderComponent(
-                'test-db',
-                AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
-                '',
-                'testpass'
-            );
-            const inputs = container.querySelectorAll('input[type="password"]');
-            const passwordInput = inputs[0] as HTMLInputElement;
-            expect(passwordInput?.value).toBe('testpass');
+        it('should NOT show password error before blur', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', '');
+            expect(screen.queryAllByTestId('field-error')).toHaveLength(0);
         });
 
-        it('should dispatch setCredentials when username changes', () => {
-            // Verify username input field and onChange handler exist
-            const { container } = renderComponent();
+        it('should show username error after blur when username is empty', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', 'pass');
 
-            // Verify the field labels/titles are present
-            expect(container.textContent).toContain('databases.register-flow.detect-mssql-username');
-        });
-
-        it('should dispatch setCredentials when password changes', () => {
-            // Verify password input field and onChange handler exist
-            const { container } = renderComponent();
-
-            // Verify the field labels/titles are present
-            expect(container.textContent).toContain('databases.register-flow.detect-mssql-password');
-        });
-
-        it('should show error when username is blurred and empty', () => {
-            // Verify validation is set up for username
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', '');
-
-            // Verify the username field exists
-            expect(container.textContent).toContain('databases.register-flow.detect-mssql-username');
-        });
-
-        it('should show error when password is blurred and empty', () => {
-            // Verify validation is set up for password
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', '');
-
-            // Verify the password field exists
-            expect(container.textContent).toContain('databases.register-flow.detect-mssql-password');
-        });
-
-        it('should not show error when username has value and is blurred', () => {
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, 'testuser');
             const usernameInput = screen.getByPlaceholderText(
-                /databases.general.enter.*databases.register-flow.detect-mssql-username/
+                'databases.general.enter databases.register-flow.detect-mssql-username'
             );
-
             fireEvent.blur(usernameInput);
 
-            // Count error messages - should not increase after blur with valid value
-            const errorsBefore = (container.textContent?.match(/databases.general.action-required/g) || []).length;
-            expect(errorsBefore).toBe(0);
+            const errors = screen.getAllByTestId('field-error');
+            expect(errors.length).toBeGreaterThanOrEqual(1);
+            expect(errors[0].textContent).toBe('databases.general.action-required');
         });
 
-        it('should have password field as type password', () => {
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
-            const passwordInputs = container.querySelectorAll('input[type="password"]');
-            expect(passwordInputs.length).toBeGreaterThan(0);
+        it('should show password error after blur when password is empty', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, 'user', '');
+
+            const passwordInput = screen.getByPlaceholderText('databases.general.enter-password');
+            fireEvent.blur(passwordInput);
+
+            const errors = screen.getAllByTestId('field-error');
+            expect(errors.length).toBeGreaterThanOrEqual(1);
+            expect(errors[0].textContent).toBe('databases.general.action-required');
         });
 
-        it('should render password field with value from store', () => {
-            const { container } = renderComponent(
-                'test-db',
-                AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
-                'user',
-                'mypassword'
+        it('should show both errors when both fields are blurred while empty', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', '');
+
+            const usernameInput = screen.getByPlaceholderText(
+                'databases.general.enter databases.register-flow.detect-mssql-username'
             );
-            // Password field exists with the value from store
-            const passwordInputs = container.querySelectorAll('input[type="password"]');
-            expect(passwordInputs.length).toBeGreaterThan(0);
+            const passwordInput = screen.getByPlaceholderText('databases.general.enter-password');
+
+            fireEvent.blur(usernameInput);
+            fireEvent.blur(passwordInput);
+
+            const errors = screen.getAllByTestId('field-error');
+            expect(errors).toHaveLength(2);
         });
 
-        it('should show password error when touched and empty', () => {
-            // Render with empty password to ensure passwordTouched can be triggered
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, 'user', '');
-            const passwordInputs = container.querySelectorAll('input[type="password"]');
+        it('should NOT show username error when username has a value', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, 'admin', '');
 
-            // Verify password field exists
-            expect(passwordInputs.length).toBeGreaterThan(0);
+            const usernameInput = screen.getByPlaceholderText(
+                'databases.general.enter databases.register-flow.detect-mssql-username'
+            );
+            fireEvent.blur(usernameInput);
 
-            // Simulate blur to trigger passwordTouched
-            if (passwordInputs[0]) {
-                fireEvent.blur(passwordInputs[0]);
-            }
-
-            // Component handles password validation
-            expect(container.textContent).toContain('databases.register-flow.detect-mssql-password');
+            // Only password should get error (if blurred)
+            expect(screen.queryAllByTestId('field-error')).toHaveLength(0);
         });
 
-        it('should change password value via onChange handler', () => {
-            const { container } = renderComponent();
-            const passwordInputs = container.querySelectorAll('input[type="password"]');
+        it('should NOT show password error when password has a value', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', 'secret');
 
-            // Trigger onChange to cover that code path
-            if (passwordInputs[0]) {
-                fireEvent.change(passwordInputs[0], { target: { value: 'newpass123' } });
-            }
+            const passwordInput = screen.getByPlaceholderText('databases.general.enter-password');
+            fireEvent.blur(passwordInput);
 
-            // onChange handler is executed (even if dispatch doesn't work in test)
-            expect(passwordInputs.length).toBeGreaterThan(0);
+            // No password error since password is non-empty
+            expect(screen.queryAllByTestId('field-error')).toHaveLength(0);
         });
 
-        it('should change username value via onChange handler', () => {
-            const { container } = renderComponent();
-            const textInputs = container.querySelectorAll('input[type="text"]');
+        it('should fall back to empty string for username error when t() returns null', () => {
+            // Make t return null for the action-required key to cover the `|| ""` branch
+            tFn = (key: string) => (key === 'databases.general.action-required' ? null : key) as any;
 
-            // Trigger onChange to cover that code path
-            if (textInputs[0]) {
-                fireEvent.change(textInputs[0], { target: { value: 'newuser123' } });
-            }
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', 'pass');
 
-            // onChange handler is executed
-            expect(textInputs.length).toBeGreaterThan(0);
+            const usernameInput = screen.getByPlaceholderText(
+                'databases.general.enter databases.register-flow.detect-mssql-username'
+            );
+            fireEvent.blur(usernameInput);
+
+            const errors = screen.getAllByTestId('field-error');
+            expect(errors.length).toBeGreaterThanOrEqual(1);
+            // The fallback empty string is used
+            expect(errors[0].textContent).toBe('');
         });
 
-        it('should trigger username error message when blurred while empty', () => {
-            // Render with empty username to test error message display
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', 'pass');
-            const textInputs = container.querySelectorAll('input[type="text"]');
+        it('should fall back to empty string for password error when t() returns null', () => {
+            tFn = (key: string) => (key === 'databases.general.action-required' ? null : key) as any;
 
-            // Blur the username field to set userNameTouched=true
-            if (textInputs[0]) {
-                fireEvent.blur(textInputs[0]);
-            }
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, 'user', '');
 
-            // This triggers the error message code path (lines 70-75)
-            expect(container).toBeTruthy();
+            const passwordInput = screen.getByPlaceholderText('databases.general.enter-password');
+            fireEvent.blur(passwordInput);
+
+            const errors = screen.getAllByTestId('field-error');
+            expect(errors.length).toBeGreaterThanOrEqual(1);
+            expect(errors[0].textContent).toBe('');
         });
 
-        it('should trigger password error message when blurred while empty', () => {
-            // Render with empty password to test error message display
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, 'user', '');
-            const passwordInputs = container.querySelectorAll('input[type="password"]');
+        it('should reset touched states when auth type changes', () => {
+            const store = createMockStore(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', '');
 
-            // Blur the password field to set passwordTouched=true
-            if (passwordInputs[0]) {
-                fireEvent.blur(passwordInputs[0]);
-            }
+            const { rerender } = render(
+                <Provider store={store}>
+                    <AuthDialog databaseHostName="db" />
+                </Provider>
+            );
 
-            // This triggers the error message code path (lines 101-106)
-            expect(container).toBeTruthy();
+            // Blur username to trigger touched state
+            const usernameInput = screen.getByPlaceholderText(
+                'databases.general.enter databases.register-flow.detect-mssql-username'
+            );
+            fireEvent.blur(usernameInput);
+            expect(screen.getAllByTestId('field-error').length).toBeGreaterThanOrEqual(1);
+
+            // Switch auth type → handleAuthTypeChange resets touched flags
+            fireEvent.click(screen.getByTestId('select-windows-authentication'));
+
+            // Re-render with Windows auth
+            const newStore = createMockStore(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION, '', '');
+            rerender(
+                <Provider store={newStore}>
+                    <AuthDialog databaseHostName="db" />
+                </Provider>
+            );
+
+            // Error should be gone because touched flags were reset
+            expect(screen.queryAllByTestId('field-error')).toHaveLength(0);
         });
     });
 
-    describe('Input Fields - Windows Authentication', () => {
-        it('should render username field with correct label for Windows auth', () => {
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION);
-            expect(container.textContent).toContain('databases.register-flow.detect-windows-username');
-        });
+    // ── disabled state ──────────────────────────────────────────────────────
 
-        it('should render password field with correct label for Windows auth', () => {
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION);
-            expect(container.textContent).toContain('databases.register-flow.detect-windows-password');
-        });
+    describe('Disabled state', () => {
+        it('should disable both input fields when actionsDisabled is true', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', '', true);
 
-        it('should dispatch setCredentials when username changes in Windows auth', () => {
-            // Verify Windows auth username field exists
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION);
+            const usernameInput = screen.getByPlaceholderText(
+                'databases.general.enter databases.register-flow.detect-mssql-username'
+            ) as HTMLInputElement;
+            const passwordInput = screen.getByPlaceholderText('databases.general.enter-password') as HTMLInputElement;
 
-            expect(container.textContent).toContain('databases.register-flow.detect-windows-username');
-        });
-
-        it('should dispatch setCredentials when password changes in Windows auth', () => {
-            // Verify Windows auth password field exists
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION);
-
-            expect(container.textContent).toContain('databases.register-flow.detect-windows-password');
-        });
-    });
-
-    describe('Disabled State', () => {
-        it('should disable username field when actionsDisabled is true', () => {
-            const { container } = renderComponent(
-                'test-db',
-                AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
-                '',
-                '',
-                true
-            );
-            const inputs = container.querySelectorAll('input[type="text"]');
-            const usernameInput = inputs[0] as HTMLInputElement;
             expect(usernameInput.disabled).toBe(true);
-        });
-
-        it('should disable password field when actionsDisabled is true', () => {
-            const { container } = renderComponent(
-                'test-db',
-                AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
-                '',
-                '',
-                true
-            );
-            const passwordInput = container.querySelector('input[type="password"]') as HTMLInputElement;
             expect(passwordInput.disabled).toBe(true);
         });
 
-        it('should enable fields when actionsDisabled is false', () => {
-            const { container } = renderComponent(
-                'test-db',
-                AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
-                '',
-                '',
-                false
-            );
-            const textInputs = container.querySelectorAll('input[type="text"]');
-            const passwordInputs = container.querySelectorAll('input[type="password"]');
-            const usernameInput = textInputs[0] as HTMLInputElement;
-            const passwordInput = passwordInputs[0] as HTMLInputElement;
+        it('should enable both input fields when actionsDisabled is false', () => {
+            renderComponent('db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', '', false);
+
+            const usernameInput = screen.getByPlaceholderText(
+                'databases.general.enter databases.register-flow.detect-mssql-username'
+            ) as HTMLInputElement;
+            const passwordInput = screen.getByPlaceholderText('databases.general.enter-password') as HTMLInputElement;
+
             expect(usernameInput.disabled).toBe(false);
             expect(passwordInput.disabled).toBe(false);
         });
     });
 
-    describe('Permissions Accordion', () => {
-        it('should render permissions required heading', () => {
-            const { container } = renderComponent();
-            expect(container.textContent).toContain('databases.explore-savings.permissions-required-heading');
-        });
+    // ── edge cases ──────────────────────────────────────────────────────────
 
-        it('should render permissions required content', () => {
-            // The accordion content is in the DOM but may be collapsed
-            // Just verify the component structure includes the content
-            renderComponent();
-            // Content exists in DOM even if collapsed
-            expect(true).toBe(true); // Component renders successfully
-        });
-
-        it('should render view any definition permission', () => {
-            // The permissions are in the DOM within the accordion
-            renderComponent();
-            expect(true).toBe(true); // Component renders successfully
-        });
-
-        it('should render view server state permission', () => {
-            renderComponent();
-            expect(true).toBe(true); // Component renders successfully
-        });
-
-        it('should render connect SQL permission', () => {
-            renderComponent();
-            expect(true).toBe(true); // Component renders successfully
-        });
-
-        it('should render copy to clipboard component with permissions', () => {
-            const { container } = renderComponent();
-            // The accordion contains copy functionality
-            expect(container.textContent).toContain('databases.explore-savings.permissions-required-heading');
-        });
-
-        it('should render copy icon', () => {
-            const { container } = renderComponent();
-            // The component contains the accordion with copy functionality
-            expect(container.textContent).toContain('databases.explore-savings.permissions-required-heading');
-        });
-    });
-
-    describe('useEffect Hook', () => {
-        it('should dispatch setSelectedAuthenticationType on mount when not set', () => {
-            const store = configureStore({
-                reducer: {
-                    exploreSavings: () => ({
-                        selectedAuthenticationType: null,
-                        serverDetails: { userName: '', password: '' }
-                    }),
-                    dialogComponent: () => ({ actionsDisabled: false })
-                }
-            });
-
-            const dispatchSpy = vi.spyOn(store, 'dispatch');
-
-            render(
-                <Provider store={store}>
-                    <AuthDialog databaseHostName="test-db" />
-                </Provider>
-            );
-
-            expect(dispatchSpy).toHaveBeenCalled();
-        });
-
-        it('should not dispatch when selectedAuthenticationType is already set', () => {
-            const store = createMockStore(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION);
-            const dispatchSpy = vi.spyOn(store, 'dispatch');
-
-            render(
-                <Provider store={store}>
-                    <AuthDialog databaseHostName="test-db" />
-                </Provider>
-            );
-
-            // Only the initial render dispatch, no additional dispatch for setting auth type
-            expect(dispatchSpy).toHaveBeenCalledTimes(0);
-        });
-    });
-
-    describe('Field Validation State', () => {
-        it('should not show username error before blur', () => {
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '');
-            // Before any interaction, no error should be shown
-            const initialErrors = (container.textContent?.match(/databases.general.action-required/g) || []).length;
-            expect(initialErrors).toBe(0);
-        });
-
-        it('should not show password error before blur', () => {
-            const { container } = renderComponent('test-db', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', '');
-            // Before blur, no error should be shown initially
-            const passwordInput = screen.getByPlaceholderText('databases.general.enter-password');
-            // Should not have error before blur
-            expect(container.textContent).not.toContain('databases.general.action-required');
-        });
-
-        it('should reset touched state when auth type changes', () => {
-            const store = createMockStore(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', '');
-
-            const { rerender } = render(
-                <Provider store={store}>
-                    <AuthDialog databaseHostName="test-db" />
-                </Provider>
-            );
-
-            // Blur username to set touched
-            const usernameInputs = screen.getAllByPlaceholderText(/databases.general.enter/i);
-            fireEvent.blur(usernameInputs[0]);
-
-            // Change auth type
-            const windowsAuthRadio = screen.getByTitle('databases.explore-savings.windows-authentication');
-            fireEvent.click(windowsAuthRadio);
-
-            // Rerender with new auth type
-            const newStore = createMockStore(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION, '', '');
-            rerender(
-                <Provider store={newStore}>
-                    <AuthDialog databaseHostName="test-db" />
-                </Provider>
-            );
-
-            // Should render Windows auth fields
-            const newInputs = screen.getAllByPlaceholderText('databases.register-flow.detect-windows-username');
-            expect(newInputs.length).toBeGreaterThan(0);
-        });
-    });
-
-    describe('CSS Classes', () => {
-        it('should apply authDialog class to main container', () => {
-            const { container } = renderComponent();
-            const mainDiv = container.firstChild as HTMLElement;
-            expect(mainDiv?.className).toContain('authDialog');
-        });
-
-        it('should apply radioContainer class', () => {
-            const { container } = renderComponent();
-            const radioContainers = container.querySelectorAll('[class*="radioContainer"]');
-            expect(radioContainers.length).toBeGreaterThan(0);
-        });
-
-        it('should apply textFieldContainer class', () => {
-            const { container } = renderComponent();
-            const textFieldContainers = container.querySelectorAll('[class*="textFieldContainer"]');
-            expect(textFieldContainers.length).toBeGreaterThan(0);
-        });
-
-        it('should apply accordionContainer class', () => {
-            const { container } = renderComponent();
-            const accordionContainers = container.querySelectorAll('[class*="accordionContainer"]');
-            expect(accordionContainers.length).toBeGreaterThan(0);
-        });
-    });
-
-    describe('Multiple Field Interactions', () => {
-        it('should handle username and password changes sequentially', () => {
-            // Verify both fields exist
-            const { container } = renderComponent();
-
-            // Both fields' labels are present in the component
-            expect(container.textContent).toContain('databases.register-flow.detect-mssql-username');
-            expect(container.textContent).toContain('databases.register-flow.detect-mssql-password');
-        });
-
-        it('should validate both fields independently', () => {
-            const { container } = renderComponent();
-
-            const inputs = container.querySelectorAll('input');
-            const usernameInput = Array.from(inputs).find(input => input.type === 'text');
-            const passwordInput = Array.from(inputs).find(input => input.type === 'password');
-
-            if (usernameInput) fireEvent.blur(usernameInput);
-            if (passwordInput) fireEvent.blur(passwordInput);
-
-            // At least one should show error after blur with empty values
-            const text = container.textContent || '';
-            const hasError = text.includes('databases.general.action-required');
-            // The error might appear after state update
-            expect(container).toBeTruthy();
-        });
-    });
-
-    describe('Edge Cases', () => {
-        it('should handle undefined selectedAuthenticationType gracefully', () => {
-            const store = configureStore({
-                reducer: {
-                    exploreSavings: () => ({
-                        selectedAuthenticationType: undefined,
-                        serverDetails: { userName: '', password: '' }
-                    }),
-                    dialogComponent: () => ({ actionsDisabled: false })
-                }
-            });
-
-            const { container } = render(
-                <Provider store={store}>
-                    <AuthDialog databaseHostName="test-db" />
-                </Provider>
-            );
-
-            expect(container.firstChild).toBeTruthy();
-        });
-
+    describe('Edge cases', () => {
         it('should handle empty databaseHostName', () => {
             const { container } = renderComponent('');
             expect(container.firstChild).toBeTruthy();
         });
 
         it('should handle special characters in databaseHostName', () => {
-            const { container } = renderComponent('test-db-name_123.example.com');
-            expect(container.textContent).toContain('test-db-name_123.example.com');
+            renderComponent('db_host-123.example.com');
+            expect(screen.getByText('db_host-123.example.com')).toBeTruthy();
         });
     });
 
-    describe('Component Structure', () => {
-        it('should render AccordionCard component', () => {
+    // ── CSS classes ─────────────────────────────────────────────────────────
+
+    describe('CSS classes', () => {
+        it('should apply authDialog class to main container', () => {
             const { container } = renderComponent();
-            // AccordionCard should be present - check for accordion structure
-            const accordionElements = container.querySelectorAll('[class*="accordion"]');
-            expect(accordionElements.length).toBeGreaterThan(0);
+            expect((container.firstChild as HTMLElement)?.className).toContain('authDialog');
         });
 
-        it('should render both radio buttons with correct IDs', () => {
+        it('should apply radioContainer class', () => {
             const { container } = renderComponent();
-            // Check for radio buttons by their titles instead of IDs
-            const sqlAuth = screen.getByTitle('databases.explore-savings.sql-server-authentication');
-            const windowsAuth = screen.getByTitle('databases.explore-savings.windows-authentication');
-            expect(sqlAuth).toBeTruthy();
-            expect(windowsAuth).toBeTruthy();
+            expect(container.querySelector('.radioContainer')).toBeTruthy();
         });
 
-        it('should render all typography variants', () => {
+        it('should apply textFieldContainer class', () => {
             const { container } = renderComponent();
-            const typographyElements = container.querySelectorAll('[class*="dsTypography"]');
-            expect(typographyElements.length).toBeGreaterThan(0);
+            expect(container.querySelector('.textFieldContainer')).toBeTruthy();
+        });
+
+        it('should apply accordionContainer class', () => {
+            const { container } = renderComponent();
+            expect(container.querySelector('.accordionContainer')).toBeTruthy();
         });
     });
 });

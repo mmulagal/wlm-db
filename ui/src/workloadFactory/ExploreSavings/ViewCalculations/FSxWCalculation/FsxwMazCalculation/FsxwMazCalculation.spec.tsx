@@ -165,9 +165,6 @@ describe('FsxwMazCalculation', () => {
 
     it('should call viewCalculationForFsxw with type Multi and correct args', () => {
         renderComponent({ selectedDeploymentModel: 'FCI' });
-        expect(mockViewCalculationForFsxw).toHaveBeenCalledWith(
-            { ...defaultResponse, type: 'Multi' },
-            'FCI'
-        );
+        expect(mockViewCalculationForFsxw).toHaveBeenCalledWith({ ...defaultResponse, type: 'Multi' }, 'FCI');
     });
 });

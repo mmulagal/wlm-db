@@ -12,7 +12,9 @@ vi.mock('@netapp/design-system', () => ({
     Table: ({ tableProps, variant }: any) => (
         <div data-testid="table" data-variant={variant}>
             {tableProps?.rows?.map((row: any, i: number) => (
-                <div key={i} data-testid={`row-${i}`}>{row.details}: {row.value}</div>
+                <div key={i} data-testid={`row-${i}`}>
+                    {row.details}: {row.value}
+                </div>
             ))}
         </div>
     ),
@@ -39,7 +41,12 @@ vi.mock('../../../../utils/appConstants', () => ({
         ES_SQL_EDITION_MULTI_TOOLTIP: 'SQL edition tooltip',
         INSTANCE_TYPE_FINDINGS_TOOLTIP: 'Instance type findings tooltip',
         NOT_OPTIMIZED: 'Not optimized tooltip',
-        FINDINGS: { OPTIMIZED: 'Optimized', NOT_OPTIMIZED: 'Not optimized', OVER_PROVISIONED: 'Over-provisioned', UNDER_PROVISIONED: 'Under-provisioned' }
+        FINDINGS: {
+            OPTIMIZED: 'Optimized',
+            NOT_OPTIMIZED: 'Not optimized',
+            OVER_PROVISIONED: 'Over-provisioned',
+            UNDER_PROVISIONED: 'Under-provisioned'
+        }
     }
 }));
 
@@ -91,17 +98,29 @@ describe('InstanceInformation', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('renders Instance information heading', () => {
-        const { container } = render(<Provider store={makeStore()}><InstanceInformation /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <InstanceInformation />
+            </Provider>
+        );
         expect(container.textContent).toContain('Instance information:');
     });
 
     it('renders table component', () => {
-        render(<Provider store={makeStore()}><InstanceInformation /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <InstanceInformation />
+            </Provider>
+        );
         expect(screen.getByTestId('table')).toBeTruthy();
     });
 
     it('renders table with Instance type, SQL Edition, and Deployment model rows', () => {
-        render(<Provider store={makeStore()}><InstanceInformation /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <InstanceInformation />
+            </Provider>
+        );
         expect(screen.getByTestId('row-0').textContent).toContain('Instance type');
         expect(screen.getByTestId('row-0').textContent).toContain('r5.xlarge');
         expect(screen.getByTestId('row-1').textContent).toContain('SQL Edition');
@@ -120,7 +139,11 @@ describe('InstanceInformation', () => {
                 totalInstance: 0
             }
         });
-        render(<Provider store={store}><InstanceInformation /></Provider>);
+        render(
+            <Provider store={store}>
+                <InstanceInformation />
+            </Provider>
+        );
         expect(screen.getByTestId('row-0').textContent).toContain('n/a');
     });
 
@@ -149,7 +172,11 @@ describe('InstanceInformation', () => {
                 totalInstance: 1
             }
         });
-        render(<Provider store={store}><InstanceInformation host={host} /></Provider>);
+        render(
+            <Provider store={store}>
+                <InstanceInformation host={host} />
+            </Provider>
+        );
         expect(screen.getByTestId('row-0').textContent).toContain('m5.large');
     });
 
@@ -178,7 +205,11 @@ describe('InstanceInformation', () => {
                 totalInstance: 2
             }
         });
-        render(<Provider store={store}><InstanceInformation host={host} /></Provider>);
+        render(
+            <Provider store={store}>
+                <InstanceInformation host={host} />
+            </Provider>
+        );
         // Should use selectedHostDetails since IDs match
         expect(screen.getByTestId('row-0').textContent).toContain('r5.xlarge');
     });
@@ -188,16 +219,17 @@ describe('InstanceInformation', () => {
             selectedHostDetails: {
                 name: 'host1',
                 loading: false,
-                clusterNodeDetails: [
-                    { ec2InstanceType: 'r5.xlarge' },
-                    { ec2InstanceType: 'r5.2xlarge' }
-                ],
+                clusterNodeDetails: [{ ec2InstanceType: 'r5.xlarge' }, { ec2InstanceType: 'r5.2xlarge' }],
                 sqlServerInstances: [],
                 serverInstallationMode: 'Standalone',
                 totalInstance: 1
             }
         });
-        render(<Provider store={store}><InstanceInformation /></Provider>);
+        render(
+            <Provider store={store}>
+                <InstanceInformation />
+            </Provider>
+        );
         expect(screen.getByTestId('row-0').textContent).toContain('r5.xlarge, r5.2xlarge');
     });
 
@@ -212,7 +244,11 @@ describe('InstanceInformation', () => {
                 sqlServerInstances: [{ sqlEdition: 'Enterprise' }]
             }
         });
-        render(<Provider store={store}><InstanceInformation /></Provider>);
+        render(
+            <Provider store={store}>
+                <InstanceInformation />
+            </Provider>
+        );
         expect(screen.getByTestId('row-0').textContent).toContain('SQL Edition');
         expect(screen.getByTestId('row-0').textContent).toContain('Enterprise');
         expect(screen.getByTestId('row-1').textContent).toContain('Deployment model');
@@ -220,7 +256,11 @@ describe('InstanceInformation', () => {
 
     it('uses alternate class for Auto_FSXW mode', () => {
         const store = makeStore({ savingsCalculatorFrom: 'Auto_FSXW' });
-        const { container } = render(<Provider store={store}><InstanceInformation /></Provider>);
+        const { container } = render(
+            <Provider store={store}>
+                <InstanceInformation />
+            </Provider>
+        );
         expect(container.querySelector('.instanceInformationAlternate')).toBeTruthy();
     });
 
@@ -229,17 +269,29 @@ describe('InstanceInformation', () => {
             selectedExploreSavingsTab: 'MSSQL_ON_PREMISES',
             selectedOnPremHostDetails: { resourceName: 'host', deploymentModel: 'Standalone', sqlServerInstances: [] }
         });
-        const { container } = render(<Provider store={store}><InstanceInformation /></Provider>);
+        const { container } = render(
+            <Provider store={store}>
+                <InstanceInformation />
+            </Provider>
+        );
         expect(container.querySelector('.instanceInformationAlternate')).toBeTruthy();
     });
 
     it('uses default class for Auto_EBS mode', () => {
-        const { container } = render(<Provider store={makeStore()}><InstanceInformation /></Provider>);
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <InstanceInformation />
+            </Provider>
+        );
         expect(container.querySelector('.instanceInformation')).toBeTruthy();
     });
 
     it('sets table variant to innerTable', () => {
-        render(<Provider store={makeStore()}><InstanceInformation /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <InstanceInformation />
+            </Provider>
+        );
         expect(screen.getByTestId('table')).toHaveAttribute('data-variant', 'innerTable');
     });
 
@@ -254,7 +306,11 @@ describe('InstanceInformation', () => {
                 totalInstance: 1
             }
         });
-        render(<Provider store={store}><InstanceInformation /></Provider>);
+        render(
+            <Provider store={store}>
+                <InstanceInformation />
+            </Provider>
+        );
         // Deployment model findings should be NOT_OPTIMIZED for AOAG
         expect(screen.getByTestId('row-2').textContent).toContain('Deployment model');
     });
@@ -270,7 +326,11 @@ describe('InstanceInformation', () => {
                 totalInstance: 1
             }
         });
-        render(<Provider store={store}><InstanceInformation /></Provider>);
+        render(
+            <Provider store={store}>
+                <InstanceInformation />
+            </Provider>
+        );
         expect(screen.getByTestId('row-2').textContent).toContain('Standalone, FCI');
     });
 });

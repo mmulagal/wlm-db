@@ -153,9 +153,6 @@ describe('FsxnSazCalculation', () => {
 
     it('should call viewCalculation with type Single and correct args', () => {
         renderComponent({ selectedDeploymentModel: 'FCI' });
-        expect(mockViewCalculation).toHaveBeenCalledWith(
-            { ...defaultResponse, type: 'Single' },
-            'FCI'
-        );
+        expect(mockViewCalculation).toHaveBeenCalledWith({ ...defaultResponse, type: 'Single' }, 'FCI');
     });
 });

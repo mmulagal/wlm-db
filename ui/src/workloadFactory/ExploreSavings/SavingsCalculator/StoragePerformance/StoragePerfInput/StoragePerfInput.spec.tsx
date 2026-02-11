@@ -7,7 +7,13 @@ import StoragePerfInput from './StoragePerfInput';
 
 vi.mock('@netapp/design-system', () => ({
     TextField: ({ onChange, value, placeholder, className }: any) => (
-        <input data-testid="text-field" onChange={onChange} value={value || ''} placeholder={placeholder} className={className} />
+        <input
+            data-testid="text-field"
+            onChange={onChange}
+            value={value || ''}
+            placeholder={placeholder}
+            className={className}
+        />
     )
 }));
 
@@ -44,7 +50,11 @@ describe('StoragePerfInput', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('renders 3 text fields when printState is false', () => {
-        render(<Provider store={makeStore()}><StoragePerfInput /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <StoragePerfInput />
+            </Provider>
+        );
         const fields = screen.getAllByTestId('text-field');
         expect(fields.length).toBe(3);
     });
@@ -52,7 +62,10 @@ describe('StoragePerfInput', () => {
     it('renders printState mockInputClone divs when printState is true', () => {
         const { container } = render(
             <Provider store={makeStore()}>
-                <StoragePerfInput printState data={{ sqlInstanceName: 'inst1', totalStorage: 100, totalIops: 3000, totalThroughput: 125 }} />
+                <StoragePerfInput
+                    printState
+                    data={{ sqlInstanceName: 'inst1', totalStorage: 100, totalIops: 3000, totalThroughput: 125 }}
+                />
             </Provider>
         );
         const mockInputs = container.querySelectorAll('.mockInputClone');
@@ -62,7 +75,10 @@ describe('StoragePerfInput', () => {
     it('does not render text fields when printState is true', () => {
         render(
             <Provider store={makeStore()}>
-                <StoragePerfInput printState data={{ sqlInstanceName: 'inst1', totalStorage: 100, totalIops: 3000, totalThroughput: 125 }} />
+                <StoragePerfInput
+                    printState
+                    data={{ sqlInstanceName: 'inst1', totalStorage: 100, totalIops: 3000, totalThroughput: 125 }}
+                />
             </Provider>
         );
         expect(screen.queryAllByTestId('text-field').length).toBe(0);
@@ -71,7 +87,10 @@ describe('StoragePerfInput', () => {
     it('shows data values in mockInputClone divs when printState is true', () => {
         const { container } = render(
             <Provider store={makeStore()}>
-                <StoragePerfInput printState data={{ sqlInstanceName: 'inst1', totalStorage: 100, totalIops: 3000, totalThroughput: 125 }} />
+                <StoragePerfInput
+                    printState
+                    data={{ sqlInstanceName: 'inst1', totalStorage: 100, totalIops: 3000, totalThroughput: 125 }}
+                />
             </Provider>
         );
         const inputFields = container.querySelectorAll('.inputField');
@@ -83,7 +102,9 @@ describe('StoragePerfInput', () => {
     it('sets storage, iops, throughput from data prop', () => {
         render(
             <Provider store={makeStore()}>
-                <StoragePerfInput data={{ sqlInstanceName: 'inst1', totalStorage: 100, totalIops: 3000, totalThroughput: 125 }} />
+                <StoragePerfInput
+                    data={{ sqlInstanceName: 'inst1', totalStorage: 100, totalIops: 3000, totalThroughput: 125 }}
+                />
             </Provider>
         );
         const fields = screen.getAllByTestId('text-field');
@@ -93,21 +114,33 @@ describe('StoragePerfInput', () => {
     });
 
     it('strips non-numeric characters from storage input', () => {
-        render(<Provider store={makeStore()}><StoragePerfInput /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <StoragePerfInput />
+            </Provider>
+        );
         const fields = screen.getAllByTestId('text-field');
         fireEvent.change(fields[0], { target: { value: '50abc' } });
         expect((fields[0] as HTMLInputElement).value).toBe('50');
     });
 
     it('strips non-numeric characters from iops input', () => {
-        render(<Provider store={makeStore()}><StoragePerfInput /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <StoragePerfInput />
+            </Provider>
+        );
         const fields = screen.getAllByTestId('text-field');
         fireEvent.change(fields[1], { target: { value: '3000xyz' } });
         expect((fields[1] as HTMLInputElement).value).toBe('3000');
     });
 
     it('strips non-numeric characters from throughput input', () => {
-        render(<Provider store={makeStore()}><StoragePerfInput /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <StoragePerfInput />
+            </Provider>
+        );
         const fields = screen.getAllByTestId('text-field');
         fireEvent.change(fields[2], { target: { value: '125!@#' } });
         expect((fields[2] as HTMLInputElement).value).toBe('125');
@@ -116,20 +149,32 @@ describe('StoragePerfInput', () => {
     it('uses uniqueKey as storeKey when provided', () => {
         const store = makeStore();
         const dispatchSpy = vi.spyOn(store, 'dispatch');
-        render(<Provider store={store}><StoragePerfInput uniqueKey="res1_inst1" data={{ sqlInstanceName: 'inst1' }} /></Provider>);
+        render(
+            <Provider store={store}>
+                <StoragePerfInput uniqueKey="res1_inst1" data={{ sqlInstanceName: 'inst1' }} />
+            </Provider>
+        );
         // The dispatch happens via debounce effects, but the storeKey is set
         expect(dispatchSpy).toBeTruthy();
     });
 
     it('falls back to sqlInstanceName when uniqueKey is not provided', () => {
         const store = makeStore();
-        render(<Provider store={store}><StoragePerfInput data={{ sqlInstanceName: 'inst1', totalStorage: 50 }} /></Provider>);
+        render(
+            <Provider store={store}>
+                <StoragePerfInput data={{ sqlInstanceName: 'inst1', totalStorage: 50 }} />
+            </Provider>
+        );
         // Component renders without error using sqlInstanceName as storeKey
         expect(screen.getAllByTestId('text-field').length).toBe(3);
     });
 
     it('renders empty fields when no data is provided', () => {
-        render(<Provider store={makeStore()}><StoragePerfInput /></Provider>);
+        render(
+            <Provider store={makeStore()}>
+                <StoragePerfInput />
+            </Provider>
+        );
         const fields = screen.getAllByTestId('text-field');
         expect((fields[0] as HTMLInputElement).value).toBe('');
         expect((fields[1] as HTMLInputElement).value).toBe('');

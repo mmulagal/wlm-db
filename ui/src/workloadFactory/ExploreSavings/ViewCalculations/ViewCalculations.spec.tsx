@@ -35,11 +35,7 @@ vi.mock('../../../common/BreadCrumbs/BreadCrumbs', () => ({
     default: ({ items }: any) => (
         <nav data-testid="breadcrumbs">
             {items.map((item: any, idx: number) => (
-                <span
-                    key={idx}
-                    data-testid={`breadcrumb-${idx}`}
-                    onClick={item.onClick}
-                >
+                <span key={idx} data-testid={`breadcrumb-${idx}`} onClick={item.onClick}>
                     {item.title}
                 </span>
             ))}
@@ -48,23 +44,57 @@ vi.mock('../../../common/BreadCrumbs/BreadCrumbs', () => ({
 }));
 
 // Child calculation components – render as simple stubs
-vi.mock('./EBSCalculation/SnapshotsEBSCalculation/SnapshotsEBSCalculation', () => ({ default: () => <div data-testid="snapshots-ebs" /> }));
-vi.mock('./EBSCalculation/ClonesEBSCalculation/ClonesEBSCalculation', () => ({ default: () => <div data-testid="clones-ebs" /> }));
-vi.mock('./OntapCalculation/SnapshotsOntapCalculation/SnapshotsOntapCalculation', () => ({ default: () => <div data-testid="snapshots-ontap" /> }));
-vi.mock('./OntapCalculation/ClonesOntapCalculation/ClonesOntapCalculation', () => ({ default: () => <div data-testid="clones-ontap" /> }));
-vi.mock('./EBSCalculation/ElasticBlockStorageCalculation/ElasticBlockStorageCalculation', () => ({ default: () => <div data-testid="ebs-storage" /> }));
-vi.mock('./OntapCalculation/FsxnSazCalculation/FsxnSazCalculation', () => ({ default: () => <div data-testid="fsxn-saz" /> }));
-vi.mock('./OntapCalculation/FsxnMazCalculation/FsxnMazCalculation', () => ({ default: () => <div data-testid="fsxn-maz" /> }));
-vi.mock('./EBSCalculation/InstancesEbsCalculation/InstancesEbsCalculation', () => ({ default: () => <div data-testid="instances-ebs" /> }));
-vi.mock('./OntapCalculation/InstancesOntapCalculation/InstancesOntapCalculation', () => ({ default: () => <div data-testid="instances-ontap" /> }));
-vi.mock('./OntapCalculation/TotalMonthlyCostOntapCalculation/TotalMonthlyCostOntapCalculation', () => ({ default: () => <div data-testid="total-ontap" /> }));
-vi.mock('./EBSCalculation/TotalMonthlyCostEbsCalculation/TotalMonthlyCostEbsCalculation', () => ({ default: () => <div data-testid="total-ebs" /> }));
-vi.mock('./FSxWCalculation/InstancesFsxwCalculation/InstancesFsxwCalculation', () => ({ default: () => <div data-testid="instances-fsxw" /> }));
-vi.mock('./FSxWCalculation/FsxwSazCalculation/FsxwSazCalculation', () => ({ default: () => <div data-testid="fsxw-saz" /> }));
-vi.mock('./FSxWCalculation/ClonesFsxwCalculation/ClonesFsxwCalculation', () => ({ default: () => <div data-testid="clones-fsxw" /> }));
-vi.mock('./FSxWCalculation/TotalMonthlyCostFsxwCalculation/TotalMonthlyCostFsxwCalculation', () => ({ default: () => <div data-testid="total-fsxw" /> }));
-vi.mock('./FSxWCalculation/ShadowCopyFsxwCalculation/ShadowCopyFsxwCalculation', () => ({ default: () => <div data-testid="shadow-copy-fsxw" /> }));
-vi.mock('./FSxWCalculation/FsxwMazCalculation/FsxwMazCalculation', () => ({ default: () => <div data-testid="fsxw-maz" /> }));
+vi.mock('./EBSCalculation/SnapshotsEBSCalculation/SnapshotsEBSCalculation', () => ({
+    default: () => <div data-testid="snapshots-ebs" />
+}));
+vi.mock('./EBSCalculation/ClonesEBSCalculation/ClonesEBSCalculation', () => ({
+    default: () => <div data-testid="clones-ebs" />
+}));
+vi.mock('./OntapCalculation/SnapshotsOntapCalculation/SnapshotsOntapCalculation', () => ({
+    default: () => <div data-testid="snapshots-ontap" />
+}));
+vi.mock('./OntapCalculation/ClonesOntapCalculation/ClonesOntapCalculation', () => ({
+    default: () => <div data-testid="clones-ontap" />
+}));
+vi.mock('./EBSCalculation/ElasticBlockStorageCalculation/ElasticBlockStorageCalculation', () => ({
+    default: () => <div data-testid="ebs-storage" />
+}));
+vi.mock('./OntapCalculation/FsxnSazCalculation/FsxnSazCalculation', () => ({
+    default: () => <div data-testid="fsxn-saz" />
+}));
+vi.mock('./OntapCalculation/FsxnMazCalculation/FsxnMazCalculation', () => ({
+    default: () => <div data-testid="fsxn-maz" />
+}));
+vi.mock('./EBSCalculation/InstancesEbsCalculation/InstancesEbsCalculation', () => ({
+    default: () => <div data-testid="instances-ebs" />
+}));
+vi.mock('./OntapCalculation/InstancesOntapCalculation/InstancesOntapCalculation', () => ({
+    default: () => <div data-testid="instances-ontap" />
+}));
+vi.mock('./OntapCalculation/TotalMonthlyCostOntapCalculation/TotalMonthlyCostOntapCalculation', () => ({
+    default: () => <div data-testid="total-ontap" />
+}));
+vi.mock('./EBSCalculation/TotalMonthlyCostEbsCalculation/TotalMonthlyCostEbsCalculation', () => ({
+    default: () => <div data-testid="total-ebs" />
+}));
+vi.mock('./FSxWCalculation/InstancesFsxwCalculation/InstancesFsxwCalculation', () => ({
+    default: () => <div data-testid="instances-fsxw" />
+}));
+vi.mock('./FSxWCalculation/FsxwSazCalculation/FsxwSazCalculation', () => ({
+    default: () => <div data-testid="fsxw-saz" />
+}));
+vi.mock('./FSxWCalculation/ClonesFsxwCalculation/ClonesFsxwCalculation', () => ({
+    default: () => <div data-testid="clones-fsxw" />
+}));
+vi.mock('./FSxWCalculation/TotalMonthlyCostFsxwCalculation/TotalMonthlyCostFsxwCalculation', () => ({
+    default: () => <div data-testid="total-fsxw" />
+}));
+vi.mock('./FSxWCalculation/ShadowCopyFsxwCalculation/ShadowCopyFsxwCalculation', () => ({
+    default: () => <div data-testid="shadow-copy-fsxw" />
+}));
+vi.mock('./FSxWCalculation/FsxwMazCalculation/FsxwMazCalculation', () => ({
+    default: () => <div data-testid="fsxw-maz" />
+}));
 
 vi.mock('../../../store/workloadFactory/exploreSavingsSlice', () => ({
     addExploreSavingsInitialData: (val: any) => ({ type: 'es/addInitialData', payload: val })
@@ -172,7 +202,10 @@ describe('ViewCalculations', () => {
             renderComponent({ statusCheck: true });
             fireEvent.click(screen.getByTestId('breadcrumb-0'));
 
-            expect(mockDispatch).toHaveBeenCalledWith({ type: 'inv/setSelectedHeaderTab', payload: WLF_TABS.EXPLORE_SAVINGS });
+            expect(mockDispatch).toHaveBeenCalledWith({
+                type: 'inv/setSelectedHeaderTab',
+                payload: WLF_TABS.EXPLORE_SAVINGS
+            });
             expect(mockDispatch).toHaveBeenCalledWith({ type: 'es/addInitialData', payload: null });
             expect(mockDispatch).toHaveBeenCalledWith({ type: 'bulk/setSelectedRows', payload: [] });
         });
@@ -180,7 +213,10 @@ describe('ViewCalculations', () => {
         it('should dispatch setSelectedHeaderTab when second breadcrumb is clicked', () => {
             renderComponent({ statusCheck: true });
             fireEvent.click(screen.getByTestId('breadcrumb-1'));
-            expect(mockDispatch).toHaveBeenCalledWith({ type: 'inv/setSelectedHeaderTab', payload: WLF_TABS.SAVINGS_CALCULATOR });
+            expect(mockDispatch).toHaveBeenCalledWith({
+                type: 'inv/setSelectedHeaderTab',
+                payload: WLF_TABS.SAVINGS_CALCULATOR
+            });
         });
     });
 
@@ -200,7 +236,10 @@ describe('ViewCalculations', () => {
         it('should dispatch setSelectedHeaderTab when first breadcrumb clicked', () => {
             renderComponent({ statusCheck: false });
             fireEvent.click(screen.getByTestId('breadcrumb-0'));
-            expect(mockDispatch).toHaveBeenCalledWith({ type: 'inv/setSelectedHeaderTab', payload: WLF_TABS.SAVINGS_CALCULATOR });
+            expect(mockDispatch).toHaveBeenCalledWith({
+                type: 'inv/setSelectedHeaderTab',
+                payload: WLF_TABS.SAVINGS_CALCULATOR
+            });
         });
     });
 
@@ -222,103 +261,136 @@ describe('ViewCalculations', () => {
         });
 
         it('should return "N hosts selected" for AUTO_EBS with multiple bulk rows', () => {
-            renderComponent({ statusCheck: false }, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_EBS,
-                selectedRowsForExploreSavingsEBSBulk: [
-                    { id: '1', name: 'H1' },
-                    { id: '2', name: 'H2' },
-                    { id: '3', name: 'H3' }
-                ]
-            });
+            renderComponent(
+                { statusCheck: false },
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_EBS,
+                    selectedRowsForExploreSavingsEBSBulk: [
+                        { id: '1', name: 'H1' },
+                        { id: '2', name: 'H2' },
+                        { id: '3', name: 'H3' }
+                    ]
+                }
+            );
             expect(screen.getByTestId('breadcrumb-0').textContent).toBe('3 hosts selected');
         });
 
         it('should return first row name for AUTO_EBS with single bulk row', () => {
-            renderComponent({ statusCheck: false }, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_EBS,
-                selectedRowsForExploreSavingsEBSBulk: [{ id: '1', name: 'SingleHost' }]
-            });
+            renderComponent(
+                { statusCheck: false },
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_EBS,
+                    selectedRowsForExploreSavingsEBSBulk: [{ id: '1', name: 'SingleHost' }]
+                }
+            );
             expect(screen.getByTestId('breadcrumb-0').textContent).toBe('SingleHost');
         });
 
         it('should fallback to selectedServerName for AUTO_EBS with single row without name', () => {
-            renderComponent({ statusCheck: false }, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_EBS,
-                selectedRowsForExploreSavingsEBSBulk: [{ id: '1', name: '' }],
-                selectedServerName: 'FallbackServer'
-            });
+            renderComponent(
+                { statusCheck: false },
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_EBS,
+                    selectedRowsForExploreSavingsEBSBulk: [{ id: '1', name: '' }],
+                    selectedServerName: 'FallbackServer'
+                }
+            );
             expect(screen.getByTestId('breadcrumb-0').textContent).toBe('FallbackServer');
         });
 
         it('should return "N hosts selected" for ONPREM with multiple bulk rows', () => {
-            renderComponent({ statusCheck: false }, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
-                selectedRowsForExploreSavingsOnPremBulk: [
-                    { id: '1', resourceName: 'O1' },
-                    { id: '2', resourceName: 'O2' }
-                ]
-            });
+            renderComponent(
+                { statusCheck: false },
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
+                    selectedRowsForExploreSavingsOnPremBulk: [
+                        { id: '1', resourceName: 'O1' },
+                        { id: '2', resourceName: 'O2' }
+                    ]
+                }
+            );
             expect(screen.getByTestId('breadcrumb-0').textContent).toBe('2 hosts selected');
         });
 
         it('should return first row resourceName for ONPREM with single bulk row', () => {
-            renderComponent({ statusCheck: false }, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
-                selectedRowsForExploreSavingsOnPremBulk: [{ id: '1', resourceName: 'OnPremHost' }]
-            });
+            renderComponent(
+                { statusCheck: false },
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
+                    selectedRowsForExploreSavingsOnPremBulk: [{ id: '1', resourceName: 'OnPremHost' }]
+                }
+            );
             expect(screen.getByTestId('breadcrumb-0').textContent).toBe('OnPremHost');
         });
 
         it('should fallback to selectedServerName for ONPREM with single row without resourceName', () => {
-            renderComponent({ statusCheck: false }, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
-                selectedRowsForExploreSavingsOnPremBulk: [{ id: '1', resourceName: '' }],
-                selectedServerName: 'OnPremFallback'
-            });
+            renderComponent(
+                { statusCheck: false },
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
+                    selectedRowsForExploreSavingsOnPremBulk: [{ id: '1', resourceName: '' }],
+                    selectedServerName: 'OnPremFallback'
+                }
+            );
             expect(screen.getByTestId('breadcrumb-0').textContent).toBe('OnPremFallback');
         });
 
         it('should return selectedServerName as fallback for unknown mode', () => {
-            renderComponent({ statusCheck: false }, {
-                savingsCalculatorFrom: 'UNKNOWN_MODE',
-                selectedServerName: 'MyServer'
-            });
+            renderComponent(
+                { statusCheck: false },
+                {
+                    savingsCalculatorFrom: 'UNKNOWN_MODE',
+                    selectedServerName: 'MyServer'
+                }
+            );
             expect(screen.getByTestId('breadcrumb-0').textContent).toBe('MyServer');
         });
 
         it('should return selectedServerName for AUTO_EBS with empty bulk rows', () => {
-            renderComponent({ statusCheck: false }, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_EBS,
-                selectedRowsForExploreSavingsEBSBulk: [],
-                selectedServerName: 'EmptyBulkServer'
-            });
+            renderComponent(
+                { statusCheck: false },
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_EBS,
+                    selectedRowsForExploreSavingsEBSBulk: [],
+                    selectedServerName: 'EmptyBulkServer'
+                }
+            );
             expect(screen.getByTestId('breadcrumb-0').textContent).toBe('EmptyBulkServer');
         });
 
         it('should return selectedServerName for ONPREM with empty bulk rows', () => {
-            renderComponent({ statusCheck: false }, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
-                selectedRowsForExploreSavingsOnPremBulk: [],
-                selectedServerName: 'EmptyOnPrem'
-            });
+            renderComponent(
+                { statusCheck: false },
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
+                    selectedRowsForExploreSavingsOnPremBulk: [],
+                    selectedServerName: 'EmptyOnPrem'
+                }
+            );
             expect(screen.getByTestId('breadcrumb-0').textContent).toBe('EmptyOnPrem');
         });
 
         it('should return selectedServerName for AUTO_EBS with null bulk rows', () => {
-            renderComponent({ statusCheck: false }, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_EBS,
-                selectedRowsForExploreSavingsEBSBulk: null,
-                selectedServerName: 'NullBulkServer'
-            });
+            renderComponent(
+                { statusCheck: false },
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_EBS,
+                    selectedRowsForExploreSavingsEBSBulk: null,
+                    selectedServerName: 'NullBulkServer'
+                }
+            );
             expect(screen.getByTestId('breadcrumb-0').textContent).toBe('NullBulkServer');
         });
 
         it('should return selectedServerName for ONPREM with null bulk rows', () => {
-            renderComponent({ statusCheck: false }, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
-                selectedRowsForExploreSavingsOnPremBulk: null,
-                selectedServerName: 'NullOnPremServer'
-            });
+            renderComponent(
+                { statusCheck: false },
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
+                    selectedRowsForExploreSavingsOnPremBulk: null,
+                    selectedServerName: 'NullOnPremServer'
+                }
+            );
             expect(screen.getByTestId('breadcrumb-0').textContent).toBe('NullOnPremServer');
         });
     });
@@ -414,19 +486,25 @@ describe('ViewCalculations', () => {
         });
 
         it('should render FsxwSazCalculation for Single AZ in FSxW section', () => {
-            renderComponent({}, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.MANUAL_FSXW,
-                viewCalculationsResponse: { azType: FSX_AZ_TYPE.SINGLE }
-            });
+            renderComponent(
+                {},
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.MANUAL_FSXW,
+                    viewCalculationsResponse: { azType: FSX_AZ_TYPE.SINGLE }
+                }
+            );
             expect(screen.getByTestId('fsxw-saz')).toBeTruthy();
             expect(screen.queryByTestId('fsxw-maz')).toBeNull();
         });
 
         it('should render FsxwMazCalculation for Multi AZ in FSxW section', () => {
-            renderComponent({}, {
-                savingsCalculatorFrom: SAVINGS_CALC_MODE.MANUAL_FSXW,
-                viewCalculationsResponse: { azType: FSX_AZ_TYPE.MULTI }
-            });
+            renderComponent(
+                {},
+                {
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.MANUAL_FSXW,
+                    viewCalculationsResponse: { azType: FSX_AZ_TYPE.MULTI }
+                }
+            );
             expect(screen.getByTestId('fsxw-maz')).toBeTruthy();
             expect(screen.queryByTestId('fsxw-saz')).toBeNull();
         });

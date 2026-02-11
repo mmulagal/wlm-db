@@ -57,9 +57,7 @@ const createMockStore = (overrides: Record<string, any> = {}) => {
 
 const renderHookWithStore = (overrides: Record<string, any> = {}) => {
     const store = createMockStore(overrides);
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <Provider store={store}>{children}</Provider>
-    );
+    const wrapper = ({ children }: { children: React.ReactNode }) => <Provider store={store}>{children}</Provider>;
     return renderHook(() => useOnPremData(), { wrapper });
 };
 
@@ -256,10 +254,7 @@ describe('useOnPremData', () => {
                         {
                             resourceName: 'Host6',
                             deploymentModel: 'standalone',
-                            sqlServerInstances: [
-                                { sqlInstanceName: 'inst1' },
-                                { sqlInstanceName: 'inst2' }
-                            ],
+                            sqlServerInstances: [{ sqlInstanceName: 'inst1' }, { sqlInstanceName: 'inst2' }],
                             onPremisesNodes: ['node1']
                         }
                     ]
@@ -330,7 +325,8 @@ describe('useOnPremData', () => {
             });
             // Should still dispatch the empty result array
             const setDataCall = mockDispatch.mock.calls.find(
-                (c: any) => c[0]?.type === 'es/setOnPremiseData' && Array.isArray(c[0]?.payload) && c[0]?.payload.length === 0
+                (c: any) =>
+                    c[0]?.type === 'es/setOnPremiseData' && Array.isArray(c[0]?.payload) && c[0]?.payload.length === 0
             );
             expect(setDataCall).toBeTruthy();
         });
@@ -397,7 +393,8 @@ describe('useOnPremData', () => {
                 await result.current.fetchOracleOnPremData();
             });
             const setDataCall = mockDispatch.mock.calls.find(
-                (c: any) => c[0]?.type === 'es/setOnPremiseOracleData' && c[0]?.payload !== null && c[0]?.payload.length > 0
+                (c: any) =>
+                    c[0]?.type === 'es/setOnPremiseOracleData' && c[0]?.payload !== null && c[0]?.payload.length > 0
             );
             expect(setDataCall).toBeTruthy();
             const row = setDataCall![0].payload[0];
@@ -424,7 +421,8 @@ describe('useOnPremData', () => {
                 await result.current.fetchOracleOnPremData();
             });
             const setDataCall = mockDispatch.mock.calls.find(
-                (c: any) => c[0]?.type === 'es/setOnPremiseOracleData' && c[0]?.payload !== null && c[0]?.payload.length > 0
+                (c: any) =>
+                    c[0]?.type === 'es/setOnPremiseOracleData' && c[0]?.payload !== null && c[0]?.payload.length > 0
             );
             expect(setDataCall![0].payload[0].deploymentModel).toBe('');
             expect(setDataCall![0].payload[0].databaseNameList).toEqual([]);
@@ -447,7 +445,8 @@ describe('useOnPremData', () => {
                 await result.current.fetchOracleOnPremData();
             });
             const setDataCall = mockDispatch.mock.calls.find(
-                (c: any) => c[0]?.type === 'es/setOnPremiseOracleData' && c[0]?.payload !== null && c[0]?.payload.length > 0
+                (c: any) =>
+                    c[0]?.type === 'es/setOnPremiseOracleData' && c[0]?.payload !== null && c[0]?.payload.length > 0
             );
             expect(setDataCall![0].payload[0].databaseNameList).toEqual([]);
         });
