@@ -189,9 +189,10 @@ router.post(`${BASE_URL}/v1/register-credentials`, async (req: {}, res: any) => 
                         {
                             ec2InstanceId: 'i-008b54cdabafdbc582',
                             ec2HostName: 'WEBER2',
-                            sqlServerName: 'MSSQLSERVER2',
+                            sqlServerName: 'WEBER2',
                             // databaseName: 'MSSQLSERVER2', --- For oracle case ---
-                            role: 'SECONDARY'
+                            role: 'SECONDARY',
+                            availabilityGroupNames: ['satag1', 'AG2']
                         }
                     ]
                 }

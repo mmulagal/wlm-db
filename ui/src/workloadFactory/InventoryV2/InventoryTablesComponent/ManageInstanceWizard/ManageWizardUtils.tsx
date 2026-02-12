@@ -422,17 +422,33 @@ export const getReplicaInstanceList = (result: any, manageSingleInstanceData: an
 
     // Map replicaInfo to matching instances from instanceTableRows
     replicaInfo.forEach((replica: any) => {
-        const matchingInstance = filteredInstances.find(
-            (instance: any) =>
+        // Get replica's availability group list for matching
+        const replicaAgList = replica?.availabilityGroupNames || [];
+
+        const matchingInstance = filteredInstances.find((instance: any) => {
+            // Check if instance has AOAG deployment type
+            const isAoagDeployment = instance?.sqlServerDeploymentType?.includes(DATABASE_DEPLOYMENT_MODE.AOAG_CAPS);
+
+            // Check if instance's availabilityGroupList has any matching with replica's availabilityGroupNames
+            const instanceAgList = instance?.availabilityGroupList || [];
+            const hasMatchingAg =
+                replicaAgList.length > 0 &&
+                instanceAgList.length > 0 &&
+                instanceAgList.some((ag: string) => replicaAgList.includes(ag));
+
+            return (
                 instance?.ec2InstanceId === replica?.ec2InstanceId &&
-                instance?.databaseInstanceName === replica?.sqlServerName &&
+                instance?.sqlServerName === replica?.sqlServerName &&
                 instance?.statusColText !== INVENTORY_STATUS.MANAGED &&
+                isAoagDeployment &&
+                hasMatchingAg &&
                 // Exclude the primary instance itself
                 !(
                     instance?.ec2InstanceId === manageSingleInstanceData?.ec2InstanceId &&
                     instance?.databaseInstanceName === manageSingleInstanceData?.databaseInstanceName
                 )
-        );
+            );
+        });
 
         if (matchingInstance) {
             // Wrap instance in bulk format for consistency with SelectInstances dropdown
@@ -1149,39 +1165,44 @@ export const handleReplicaAuthenticationAndDialog = async (
         }
     };
 
-    // Show initial dialog
-    setDialog(
-        <DialogComponent
-            header={
-                registerHostType === DBType.ORACLE
-                    ? t('databases.register-flow.authenticate-databases')
-                    : t('databases.register-flow.authenticate-instances')
-            }
-            content={
-                <ReplicaInfoDialog
-                    instance={manageSingleInstanceData}
-                    replicaList={replicaList}
-                    databaseType={registerHostType}
-                />
-            }
-            primaryButton={t('databases.general.continue')}
-            callback={() => {
-                const currentState = store.getState();
-                const shouldAuthenticateReplicas = currentState.inventoryV2.registerReplicaSelection;
-
-                if (shouldAuthenticateReplicas) {
-                    handleReplicaAuthCredentials(credList);
-                } else {
-                    closeDialog();
-                    goToNextStep();
+    // Only show dialog if replicaList has data, otherwise proceed to next step
+    if (replicaList && replicaList.length > 0) {
+        setDialog(
+            <DialogComponent
+                header={
+                    registerHostType === DBType.ORACLE
+                        ? t('databases.register-flow.authenticate-databases')
+                        : t('databases.register-flow.authenticate-instances')
                 }
-            }}
-            closeCallback={() => {
-                closeDialog();
-            }}
-            customClass={styles.dialog}
-            testId="wlm-db-authenticate-instances-dialog"
-            dialogFrom={FROM_DIALOG.MANAGE_WIZARD}
-        />
-    );
+                content={
+                    <ReplicaInfoDialog
+                        instance={manageSingleInstanceData}
+                        replicaList={replicaList}
+                        databaseType={registerHostType}
+                    />
+                }
+                primaryButton={t('databases.general.continue')}
+                callback={() => {
+                    const currentState = store.getState();
+                    const shouldAuthenticateReplicas = currentState.inventoryV2.registerReplicaSelection;
+
+                    if (shouldAuthenticateReplicas) {
+                        handleReplicaAuthCredentials(credList);
+                    } else {
+                        closeDialog();
+                        goToNextStep();
+                    }
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                customClass={styles.dialog}
+                testId="wlm-db-authenticate-instances-dialog"
+                dialogFrom={FROM_DIALOG.MANAGE_WIZARD}
+            />
+        );
+    } else {
+        // No replicas found, proceed directly to next step
+        goToNextStep();
+    }
 };
