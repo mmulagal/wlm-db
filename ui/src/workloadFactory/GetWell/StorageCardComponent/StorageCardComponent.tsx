@@ -59,7 +59,7 @@ import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDi
 import store from '../../../store/store';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { handleDialog } from './optimizeUtils';
-import { backupStartTime, formatDateAssess } from '../../../utils/utilityFunctions';
+import { backupStartTime } from '../../../utils/utilityFunctions';
 import { DismissDialog } from './DismissDialog/DismissDialog';
 import {
     getSubConfigurationData,
@@ -999,8 +999,6 @@ const StorageCardComponent = ({
 
     // Dismiss button component
     const renderDismissButton = () => {
-        // Do not show dismiss button for WAD excluded configs
-        if (cardData?.isWadExcluded) return null;
         if (!showDismissButton || !cardData?.block_two?.value) return null;
 
         return (
@@ -1008,9 +1006,9 @@ const StorageCardComponent = ({
                 <DsButton
                     type="text"
                     onClick={handleDismissButtonClick}
-                    isDisabled={loading || dismissAction || dismissDisableButton()}
+                    isDisabled={loading || dismissAction || dismissDisableButton() || isWad}
                 >
-                    {GENERAL.DISMISS}
+                    {t('databases.well-architect.dismiss-text')}
                 </DsButton>
             </div>
         );
