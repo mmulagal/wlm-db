@@ -321,11 +321,89 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
 "@`;
 
 /**
+ * Shared PowerShell function to resolve FCI virtual names to their current owner node + IP.
+ * For FCI+AOAG, replica names are FCI virtual names (e.g., FCI012, FCI034) which don't match
+ * physical cluster node names. This function bridges that gap by:
+ *   1. Looking up each replica's FCI virtual name via SQL Network Name cluster resources
+ *   2. Finding the current OwnerNode for that FCI group
+ *   3. Resolving the owner node's IP from the cluster network interfaces
+ * Returns: array of @{ fciName; ownerNode; ownerIp } for each FCI replica
+ * Safe for standalone AOAG (returns empty array) and pure FCI (no AOAG context needed).
+ */
+const GET_FCI_OWNER_MAPPING_FUNCTION = `
+    Function Get-FciOwnerMapping {
+        param(
+            [object]$AoagDetails,
+            [array]$ClusterNodes
+        )
+        $mapping = @()
+        try {
+            if (-not $AoagDetails -or -not $AoagDetails.baseDeploymentType -or $AoagDetails.baseDeploymentType -ne 'FCI') {
+                return $mapping
+            }
+            if (-not $AoagDetails.availabilityGroups) { return $mapping }
+
+            # Collect unique FCI virtual names from replica names
+            $fciNames = @{}
+            foreach ($ag in $AoagDetails.availabilityGroups) {
+                if (-not $ag.replicas) { continue }
+                foreach ($replica in $ag.replicas) {
+                    $replicaName = $replica.replica
+                    if ([string]::IsNullOrEmpty($replicaName)) { continue }
+                    # Extract FCI name (before backslash for named instances)
+                    $fciName = if ($replicaName -match '\\\\') { $replicaName.Split('\\\\')[0] } else { $replicaName }
+                    if (-not $fciNames.ContainsKey($fciName)) {
+                        $fciNames[$fciName] = $true
+                    }
+                }
+            }
+
+            foreach ($fciName in $fciNames.Keys) {
+                try {
+                    # Try to find SQL Network Name resource for this FCI
+                    $resourceName = "SQL Network Name (" + $fciName + ")"
+                    $resource = Get-ClusterResource -Name $resourceName -ErrorAction SilentlyContinue
+
+                    if (-not $resource) {
+                        # Fallback: find SQL Network Name resource containing the FCI name
+                        $sqlNetworkResources = Get-ClusterResource -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "SQL Network Name*" }
+                        foreach ($res in $sqlNetworkResources) {
+                            if ($res.Name -match [regex]::Escape($fciName)) {
+                                $resource = $res
+                                break
+                            }
+                        }
+                    }
+
+                    if ($resource) {
+                        $ownerNode = $resource.OwnerGroup.OwnerNode.Name
+                        if ($ownerNode -and $ClusterNodes) {
+                            $ownerIp = ($ClusterNodes | Where-Object { $_.Node -eq $ownerNode } | Select-Object -First 1).Address
+                            $mapping += @{
+                                fciName = $fciName
+                                ownerNode = $ownerNode
+                                ownerIp = $ownerIp
+                            }
+                        }
+                    }
+                } catch {
+                    Write-Information "Failed to get FCI owner mapping for '$fciName': $_"
+                }
+            }
+        } catch {
+            Write-Information "Failed to build FCI owner mapping: $_"
+        }
+        return $mapping
+    }
+`;
+
+/**
  * AOAG details script with Windows Cluster node details
  * Uses same pattern as sqlQueryExecutionWithAuth but adds:
  * 1. Wraps AOAG response under 'aoagDetails' key
  * 2. Adds 'windowsClusterNodes' with IPs (same as discovery's GetClusterDetails)
- * Returns: { instanceName: { aoagDetails: {...}, windowsClusterNodes: [...] } }
+ * 3. Adds 'fciOwnerMapping' for FCI+AOAG to map FCI virtual names to owner node IPs
+ * Returns: { instanceName: { aoagDetails: {...}, windowsClusterNodes: [...], fciOwnerMapping?: [...] } }
  */
 const getAoagDetailsScript = (instances: string[], sqlAuthEnabled = false) => `
     $sqlInstances = '${JSON.stringify(instances)}' | ConvertFrom-Json
@@ -338,6 +416,8 @@ const getAoagDetailsScript = (instances: string[], sqlAuthEnabled = false) => `
         if ($isAtleastOneCredentialIsOfDomain) {
             Enable-CredSSP
         }
+
+        ${GET_FCI_OWNER_MAPPING_FUNCTION}
         
         # Get Windows Cluster nodes with IPs (same as discovery's GetClusterDetails)
         $windowsClusterNodes = @()
@@ -459,6 +539,13 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
                 # Add cluster nodes to each instance response
                 if ($windowsClusterNodes -and $windowsClusterNodes.Count -gt 0) {
                     $instanceResult['windowsClusterNodes'] = $windowsClusterNodes
+                }
+                # Build FCI owner mapping for FCI+AOAG replica name → owner node IP resolution
+                if ($instanceResult['aoagDetails']) {
+                    $fciMapping = Get-FciOwnerMapping -AoagDetails $instanceResult['aoagDetails'] -ClusterNodes $windowsClusterNodes
+                    if ($fciMapping -and $fciMapping.Count -gt 0) {
+                        $instanceResult['fciOwnerMapping'] = $fciMapping
+                    }
                 }
                 $responseObject[$serverInstanceName] = $instanceResult
             } catch {
@@ -605,6 +692,8 @@ const validateSQLInstanceConnectivity = (
         $ssmmodulePath = $ssmmodulePath[0]
     }
     Import-Module -Name $ssmmodulePath
+
+    ${GET_FCI_OWNER_MAPPING_FUNCTION}
 
     if ($responseObject -eq $null) {
         $responseObject = @{}
@@ -830,6 +919,13 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
                                         }
                                     } catch {
                                         Write-Information "Failed to get Windows Cluster nodes: $_"
+                                    }
+                                    # Build FCI owner mapping for FCI+AOAG replica name → owner node IP resolution
+                                    if ($instanceResponse['aoagDetails']) {
+                                        $fciMapping = Get-FciOwnerMapping -AoagDetails $instanceResponse['aoagDetails'] -ClusterNodes $windowsClusterNodes
+                                        if ($fciMapping -and $fciMapping.Count -gt 0) {
+                                            $instanceResponse['fciOwnerMapping'] = $fciMapping
+                                        }
                                     }
                                 }
                             } catch {
@@ -2190,5 +2286,6 @@ export {
     GET_FQDN,
     GET_CLUSTER_NAME,
     buildAoagQuery,
-    getAoagDetailsScript
+    getAoagDetailsScript,
+    GET_FCI_OWNER_MAPPING_FUNCTION
 };

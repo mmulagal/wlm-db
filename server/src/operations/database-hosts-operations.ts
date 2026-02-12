@@ -1955,6 +1955,20 @@ async function getDatabaseInstancesSummary(
                     ec2InstanceId?: string;
                     ec2InstanceName?: string;
                 }> = [];
+
+                // Build FCI virtual name → owner IP map for FCI+AOAG
+                // fciOwnerMapping comes from PowerShell Get-FciOwnerMapping and resolves
+                // FCI virtual names (e.g., FCI034) to their current owner node's IP
+                const fciNameToOwnerIp = new Map<string, string>();
+                const instanceFciOwnerMapping = aoagDetailsData[instanceName]?.fciOwnerMapping;
+                if (instanceFciOwnerMapping && isArray(instanceFciOwnerMapping)) {
+                    for (const mapping of instanceFciOwnerMapping) {
+                        if (mapping?.fciName && mapping?.ownerIp) {
+                            fciNameToOwnerIp.set(mapping.fciName.toLowerCase(), mapping.ownerIp);
+                        }
+                    }
+                }
+
                 // Extract unique replica names from all availability groups
                 const replicaNames = new Set<string>();
                 aoagDetails.availabilityGroups?.forEach((ag: any) => {
@@ -1976,8 +1990,15 @@ async function getDatabaseInstancesSummary(
                         ? replicaName.split('\\')[0].toLowerCase()
                         : replicaName.toLowerCase();
 
-                    // First, try to find IP from Windows Cluster nodes using hostname
-                    const nodeIp = aoagNodeToIp.get(hostnameForLookup);
+                    // First, try to find IP from Windows Cluster nodes using hostname (works for standalone AOAG)
+                    let nodeIp = aoagNodeToIp.get(hostnameForLookup);
+
+                    // For FCI+AOAG: hostname is FCI virtual name which won't be in aoagNodeToIp (physical nodes only)
+                    // Use fciOwnerMapping to resolve FCI virtual name → current owner node IP
+                    if (!nodeIp) {
+                        nodeIp = fciNameToOwnerIp.get(hostnameForLookup);
+                    }
+
                     if (nodeIp) {
                         nodeDetail.ip = nodeIp;
                         // Use IP to look up EC2 details

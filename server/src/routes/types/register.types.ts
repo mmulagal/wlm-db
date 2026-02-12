@@ -237,7 +237,10 @@ const replicaNodeInfoObject = Type.Object({
     ec2HostName: Type.String(),
     sqlServerName: Type.Optional(Type.String()),
     databaseName: Type.Optional(Type.String()),
-    role: Type.String()
+    role: Type.String(),
+    availabilityGroupNames: Type.Optional(
+        Type.Array(Type.String({ description: 'Names of availability groups this replica belongs to' }))
+    )
 });
 
 const RegisterCredentialsResponse = Type.Object({

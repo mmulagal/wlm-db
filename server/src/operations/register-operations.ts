@@ -2667,11 +2667,48 @@ async function validateWindowsCredentials(
                 }
 
                 for (const inst of instancesWithAoag) {
-                    const { aoagDetails } = inst;
+                    const { aoagDetails, windowsClusterNodes, fciOwnerMapping } = inst;
                     const { availabilityGroups, baseDeploymentType } = aoagDetails || {};
 
                     if (availabilityGroups && isArray(availabilityGroups)) {
-                        for (const { primaryReplica, replicas } of availabilityGroups) {
+                        // Build hostname → cluster node map for efficient lookup
+                        const hostnameToClusterNode = new Map<string, { Address: string; Node: string }>();
+                        if (windowsClusterNodes && isArray(windowsClusterNodes)) {
+                            for (const cn of windowsClusterNodes) {
+                                if (cn?.Node) {
+                                    hostnameToClusterNode.set(cn.Node.toLowerCase(), cn);
+                                }
+                            }
+                        }
+
+                        // Build FCI virtual name → owner IP map for FCI+AOAG
+                        // This resolves FCI virtual names (e.g., FCI034) to the current owner node's IP
+                        const fciNameToOwnerIp = new Map<string, string>();
+                        if (baseDeploymentType === 'FCI' && fciOwnerMapping && isArray(fciOwnerMapping)) {
+                            for (const { fciName, ownerIp } of fciOwnerMapping) {
+                                if (fciName && ownerIp) {
+                                    fciNameToOwnerIp.set(fciName.toLowerCase(), ownerIp);
+                                }
+                            }
+                        }
+
+                        // Track AG names per replica (a replica can be in multiple AGs)
+                        const replicaToAgNames = new Map<string, string[]>();
+                        for (const { agName, replicas: agReplicas } of availabilityGroups) {
+                            if (agReplicas && isArray(agReplicas) && agName) {
+                                for (const { replica: rName } of agReplicas) {
+                                    if (rName) {
+                                        const existing = replicaToAgNames.get(rName) || [];
+                                        if (!existing.includes(agName)) {
+                                            existing.push(agName);
+                                        }
+                                        replicaToAgNames.set(rName, existing);
+                                    }
+                                }
+                            }
+                        }
+
+                        for (const { agName, primaryReplica, replicas } of availabilityGroups) {
                             if (replicas && isArray(replicas)) {
                                 for (const { role: replicaRole, replica: replicaName, isLocalReplica } of replicas) {
                                     // Determine role: use role field or derive from primaryReplica
@@ -2682,38 +2719,47 @@ async function validateWindowsCredentials(
                                     let ec2InstanceId: string | undefined;
                                     let ec2HostName: string | undefined;
 
+                                    // Extract hostname from replica name for lookup
+                                    // For named instances, replica name format is "HOSTNAME\INSTANCENAME" or "FCINAME\INSTANCENAME"
+                                    const hostnameForLookup = replicaName?.includes('\\')
+                                        ? replicaName.split('\\')[0].toLowerCase()
+                                        : replicaName?.toLowerCase() || '';
+
                                     if (baseDeploymentType === 'FCI') {
-                                        // FCI AOAG: Use isLocalReplica to determine EC2 mapping
+                                        // FCI AOAG: Use isLocalReplica for local, fciOwnerMapping for remote
                                         if (isLocalReplica === true) {
                                             // Local replica runs on current EC2 instance
                                             ec2InstanceId = instanceId;
                                             ec2HostName = currentInstanceName;
                                         } else {
-                                            // Remote replica: find EC2 from other cluster nodes
-                                            // For FCI+AOAG, the other FCI is on different physical nodes
-                                            // Get all EC2s that are NOT the current instance
-                                            const otherEc2s: Array<{ instanceId: string; instanceName: string }> = [];
-                                            for (const [, ec2] of aoagIpToEc2Details.entries()) {
-                                                if (ec2.instanceId !== instanceId) {
-                                                    // Avoid duplicates (same EC2 might have multiple IPs)
-                                                    if (!otherEc2s.some(e => e.instanceId === ec2.instanceId)) {
-                                                        otherEc2s.push(ec2);
+                                            // Remote FCI replica: Use FCI owner mapping to find the correct owner node IP
+                                            // fciOwnerMapping provides FCI virtual name → current owner node IP
+                                            const ownerIp = fciNameToOwnerIp.get(hostnameForLookup);
+                                            if (ownerIp) {
+                                                const ec2Details = aoagIpToEc2Details.get(ownerIp);
+                                                if (ec2Details) {
+                                                    ec2InstanceId = ec2Details.instanceId;
+                                                    ec2HostName = ec2Details.instanceName;
+                                                }
+                                            }
+
+                                            // Fallback: try hostname lookup in cluster nodes (may work if FCI name matches a node)
+                                            if (!ec2InstanceId) {
+                                                const matchingClusterNode =
+                                                    hostnameToClusterNode.get(hostnameForLookup);
+                                                if (matchingClusterNode?.Address) {
+                                                    const ec2Details = aoagIpToEc2Details.get(
+                                                        matchingClusterNode.Address
+                                                    );
+                                                    if (ec2Details) {
+                                                        ec2InstanceId = ec2Details.instanceId;
+                                                        ec2HostName = ec2Details.instanceName;
                                                     }
                                                 }
                                             }
-                                            // For the remote FCI replica, pick the first available EC2
-                                            if (otherEc2s.length > 0) {
-                                                ec2InstanceId = otherEc2s[0].instanceId;
-                                                ec2HostName = otherEc2s[0].instanceName;
-                                            }
                                         }
                                     } else {
-                                        // Standalone AOAG: Use nodeToIpMap logic
-                                        // For named instances, replica name format is "HOSTNAME\INSTANCENAME"
-                                        // Extract just the hostname for Windows Cluster node lookup
-                                        const hostnameForLookup = replicaName?.includes('\\')
-                                            ? replicaName.split('\\')[0].toLowerCase()
-                                            : replicaName?.toLowerCase() || '';
+                                        // Standalone AOAG: Use hostname → cluster node → IP → EC2 lookup
                                         const nodeIp = nodeToIpMap.get(hostnameForLookup);
                                         if (nodeIp) {
                                             const ec2Details = aoagIpToEc2Details.get(nodeIp);
@@ -2729,11 +2775,15 @@ async function validateWindowsCredentials(
                                             r => r.sqlServerName === replicaName && r.ec2InstanceId === ec2InstanceId
                                         );
                                         if (!isDuplicate) {
+                                            // Get all AG names this replica belongs to
+                                            const availabilityGroupNames =
+                                                replicaToAgNames.get(replicaName || '') || (agName ? [agName] : []);
                                             replicaInfoObject.push({
                                                 ec2InstanceId,
                                                 ec2HostName: ec2HostName || '',
                                                 sqlServerName: replicaName,
-                                                role
+                                                role,
+                                                ...(availabilityGroupNames.length > 0 && { availabilityGroupNames })
                                             });
                                         }
                                     }
