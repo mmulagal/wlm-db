@@ -685,7 +685,9 @@ const defaultAuthDetectModule = `
     is_default_auth() {
         local ORACLE_SID="$1"
         local result
-        local authErrorMsg="false"
+        # Use V$INSTANCE instead of dual - V$INSTANCE is a fixed view accessible
+        # even when database is in MOUNTED state (e.g., physical standby databases).
+        # dual requires the database to be OPEN and fails with ORA-01219 on MOUNTED instances.
         result=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
                 export ORACLE_SID="$1"
                 sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
@@ -694,7 +696,7 @@ const defaultAuthDetectModule = `
                 SET FEEDBACK OFF
                 SET VERIFY OFF
                 SET PAGESIZE 0
-                SELECT 'OK' FROM dual;
+                SELECT 'AUTH_OK' FROM v$instance;
                 EXIT;
 EOSQL
 EOF
@@ -702,43 +704,45 @@ EOF
         parsed_result=$(parse_sqlplus_output "$result")
         sqlplus_exit_code=$?
         if [ $sqlplus_exit_code -ne 0 ]; then
-            authErrorMsg="true";
+            echo "false"
+            return
         fi
-        if echo "$parsed_result" | grep -q "^OK"; then
-            local open_mode
-            open_mode=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
-                    export ORACLE_SID="$1"
-                    sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
-                    WHENEVER SQLERROR EXIT SQL.SQLCODE
-                    SET HEADING OFF
-                    SET FEEDBACK OFF
-                    SET VERIFY OFF
-                    SET PAGESIZE 0
-                    SELECT open_mode FROM v$database;
-                    EXIT;
-EOSQL
-EOF
-)
-            parsed_open_mode=$(parse_sqlplus_output "$open_mode")
-            sqlplus_exit_code=$?
-            if [ $sqlplus_exit_code -ne 0 ]; then
-                authErrorMsg="true";
-            fi
-
-            if [ "$authErrorMsg" == "true" ]; then
-                echo "false"
-                return
-            fi
-
-            if echo "$parsed_open_mode" | grep -iq "MOUNTED"; then
-                echo "false"
-                return
-            fi
+        if echo "$parsed_result" | grep -q "^AUTH_OK"; then
             echo "true"
         else
             echo "false"
         fi
-}
+    }
+
+    is_mounted_instance() {
+        local ORACLE_SID="$1"
+        local open_mode
+        open_mode=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
+                export ORACLE_SID="$1"
+                sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
+                WHENEVER SQLERROR EXIT SQL.SQLCODE
+                SET HEADING OFF
+                SET FEEDBACK OFF
+                SET VERIFY OFF
+                SET PAGESIZE 0
+                SELECT open_mode FROM v$database;
+                EXIT;
+EOSQL
+EOF
+)
+        parsed_open_mode=$(parse_sqlplus_output "$open_mode")
+        sqlplus_exit_code=$?
+        if [ $sqlplus_exit_code -ne 0 ]; then
+            echo "false"
+            return
+        fi
+
+        if echo "$parsed_open_mode" | grep -iq "MOUNTED"; then
+            echo "true"
+        else
+            echo "false"
+        fi
+    }
 `;
 
 const extractJsonValueUtil = `
@@ -993,27 +997,85 @@ const getOracleInstanceData = (ec2InstanceId: string) => `
 
     get_instance_details() {
         local ORACLE_SID="$1"
+        local isMounted="$2"
+        
+        # If we have credentials (default auth or user auth), query v$instance
         if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
-
-            sudo -i -u oracle bash <<EOF
-                export ORACLE_SID="$ORACLE_SID"
-                $sqlplus_command
-                    SET HEADING OFF
-                    SET LINESIZE 500
-                    SELECT JSON_OBJECT(
-                            'instance_id' value INSTANCE_NUMBER,
-                            'instance_name' value INSTANCE_NAME,
-                            'host_name' value HOST_NAME,
-                            'version' value VERSION,
-                            'instance_state' value STATUS
-                        ) AS instance_info
-                    FROM V\\$INSTANCE;
+            # For MOUNTED instances, we can still query v$instance but need to get open_mode from v$database
+            if [[ "$isMounted" == "true" ]]; then
+                sudo -i -u oracle bash <<EOF
+                    export ORACLE_SID="$ORACLE_SID"
+                    instance_info=$($sqlplus_command <<'EOSQL'
+                        SET HEADING OFF
+                        SET LINESIZE 500
+                        SET FEEDBACK OFF
+                        SET PAGESIZE 0
+                        SELECT JSON_OBJECT(
+                                'instance_id' value INSTANCE_NUMBER,
+                                'instance_name' value INSTANCE_NAME,
+                                'host_name' value HOST_NAME,
+                                'version' value VERSION,
+                                'instance_state' value STATUS
+                            ) AS instance_info
+                        FROM v$instance;
+EOSQL
+)
+                    open_mode=$($sqlplus_command <<'EOSQL'
+                        SET HEADING OFF
+                        SET FEEDBACK OFF
+                        SET PAGESIZE 0
+                        SELECT open_mode FROM v$database;
+EOSQL
+)
+                    # Parse and combine results
+                    instance_info=$(echo "$instance_info" | tr -d '\\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                    open_mode=$(echo "$open_mode" | tr -d '\\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                    
+                    # Replace STATUS (instance_state) with actual open_mode for MOUNTED instances
+                    echo "$instance_info" | sed "s/\\"instance_state\\":\\"[^\\"]*/\\"instance_state\\":\\"$open_mode/"
 EOF
+            else
+                # For non-MOUNTED instances, STATUS from v$instance is correct
+                sudo -i -u oracle bash <<EOF
+                    export ORACLE_SID="$ORACLE_SID"
+                    $sqlplus_command
+                        SET HEADING OFF
+                        SET LINESIZE 500
+                        SET FEEDBACK OFF
+                        SET PAGESIZE 0
+                        SELECT JSON_OBJECT(
+                                'instance_id' value INSTANCE_NUMBER,
+                                'instance_name' value INSTANCE_NAME,
+                                'host_name' value HOST_NAME,
+                                'version' value VERSION,
+                                'instance_state' value STATUS
+                            ) AS instance_info
+                        FROM V\\$INSTANCE;
+EOF
+            fi
         else
-            # instance name & id are same as ORACLE_SID, hostname is not available in /etc/oratab.
-            # version is not available in /etc/oratab, so setting it to undefined. checking pgrep -f "ora_pmon_$sid" earlier to ensure the instance is running.
-
-            local result="{\\"instance_name\\": \\"$ORACLE_SID\\", \\"instance_state\\": \\"OPEN\\", \\"version\\": \\"undefined\\", \\"instance_id\\": \\"$ORACLE_SID\\", \\"hostname\\": \\"undefined\\"}"
+            # No credentials available - get open_mode if default auth works but returns no creds
+            # This can happen for MOUNTED instances where default auth connects but we treat it as no-creds
+            local open_mode="OPEN"
+            if [[ "$isMounted" == "true" ]]; then
+                open_mode_result=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
+                    export ORACLE_SID="$1"
+                    sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
+                        SET HEADING OFF
+                        SET FEEDBACK OFF
+                        SET PAGESIZE 0
+                        SELECT open_mode FROM v$database;
+                        EXIT;
+EOSQL
+EOF
+)
+                parsed_open_mode=$(parse_sqlplus_output "$open_mode_result")
+                if [ $? -eq 0 ] && [ -n "$parsed_open_mode" ]; then
+                    open_mode="$parsed_open_mode"
+                fi
+            fi
+            
+            local result="{\\"instance_name\\": \\"$ORACLE_SID\\", \\"instance_state\\": \\"$open_mode\\", \\"version\\": \\"undefined\\", \\"instance_id\\": \\"$ORACLE_SID\\", \\"hostname\\": \\"undefined\\"}"
             echo $result
         fi
     }
@@ -1027,6 +1089,8 @@ EOF
         fi
 
         isDefaultAuth=$(is_default_auth "$sid")
+        isMounted=$(is_mounted_instance "$sid")
+        
         if [ "$isDefaultAuth" == "true" ]; then
             sqlplus_command="sqlplus -S / as sysdba"
         elif [ "$isDefaultAuth" == "false" ]; then
@@ -1039,7 +1103,7 @@ EOF
         fi
 
         { 
-            INSTANCE_DETAILS=$(get_instance_details "$sid") 
+            INSTANCE_DETAILS=$(get_instance_details "$sid" "$isMounted") 
         } || { 
             echo "Failed to get instance details for $sid"
             continue

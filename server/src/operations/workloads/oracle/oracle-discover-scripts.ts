@@ -206,11 +206,18 @@ resultObject="{}"
 for oracleSid in "\${oracleSids[@]}"; do
     ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, '$oracleSid')}
     isDefaultAuth=$(is_default_auth "$oracleSid")
+    isMounted=$(is_mounted_instance "$oracleSid")
     ${getDataguardDeploymentDetails}
     check_dataguard_deployment "$oracleSid"
     if [ $? -eq 0 ]; then
-        # DataGuard is configured, fetch details with creds
-        dataguardDetails=$(get_dataguard_details_with_creds "$oracleSid" "NO" "")
+        # DataGuard is configured
+        # Use creds path if we have default auth (even if MOUNTED) or user creds
+        if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
+            dataguardDetails=$(get_dataguard_details_with_creds "$oracleSid" "NO" "")
+        else
+            # Fallback to no-creds path only if we truly have no authentication
+            dataguardDetails=$(get_dataguard_details_without_creds "$oracleSid")
+        fi
         resultObject=$(echo "$resultObject" | jq --arg key "$oracleSid" --argjson val "$dataguardDetails" '. + {($key): $val}')
     else
         resultObject=$(echo "$resultObject" | jq --arg key "$oracleSid" '. + {($key): {}}')
@@ -642,7 +649,7 @@ get_data_directories_without_creds() {
                 spFilePath="\\$ORACLE_BASE/dbs/spfile\\$ORACLE_SID.ora"
                 if [ ! -f "\\$spFilePath" ]; then
                     echo "SPFILE not found"
-                    return 1
+                    exit 1
                 fi
             fi
             controlFilesPath=\\$(strings "\\$spFilePath" | grep -i control_files | sed "s/.*=//;s/'//g" | tr ',' '\n' | sed '/^$/d')
@@ -1157,28 +1164,70 @@ EOF
 const loadDatabaseDetectionModules = `
     get_instance_details() {
         local ORACLE_SID="$1"
+        local isMounted="\${2:-false}"
+        
         if [ "$isDefaultAuth" == "true" ]; then
-
-            sudo -i -u oracle bash <<EOF
-                export ORACLE_SID="$ORACLE_SID"
-                $sqlplus_command <<'EOSQL'
-                    SET HEADING OFF
-                    SET LINESIZE 500
-                    SELECT JSON_OBJECT(
-                            'instance_id' value INSTANCE_NAME,
-                            'instance_name' value INSTANCE_NAME,
-                            'host_name' value HOST_NAME,
-                            'version' value VERSION,
-                            'instance_state' value STATUS
-                        ) AS instance_info
-                    FROM V\\$INSTANCE;
+            if [[ "$isMounted" == "true" ]]; then
+                # For MOUNTED instances, use v$database.OPEN_MODE instead of v$instance.STATUS
+                # v$instance.STATUS shows "STARTED" but we need the actual open mode ("MOUNTED")
+                # Cross-join works because both v$instance and v$database are single-row views
+                sudo -i -u oracle bash <<EOF
+                    export ORACLE_SID="$ORACLE_SID"
+                    $sqlplus_command <<'EOSQL'
+                        SET HEADING OFF
+                        SET LINESIZE 500
+                        SET FEEDBACK OFF
+                        SET PAGESIZE 0
+                        SELECT JSON_OBJECT(
+                                'instance_id' value i.INSTANCE_NAME,
+                                'instance_name' value i.INSTANCE_NAME,
+                                'host_name' value i.HOST_NAME,
+                                'version' value i.VERSION,
+                                'instance_state' value d.OPEN_MODE
+                            ) AS instance_info
+                        FROM v\\$instance i, v\\$database d;
 EOSQL
 EOF
+            else
+                # For non-MOUNTED (OPEN) instances, STATUS from v$instance is correct
+                sudo -i -u oracle bash <<EOF
+                    export ORACLE_SID="$ORACLE_SID"
+                    $sqlplus_command <<'EOSQL'
+                        SET HEADING OFF
+                        SET LINESIZE 500
+                        SELECT JSON_OBJECT(
+                                'instance_id' value INSTANCE_NAME,
+                                'instance_name' value INSTANCE_NAME,
+                                'host_name' value HOST_NAME,
+                                'version' value VERSION,
+                                'instance_state' value STATUS
+                            ) AS instance_info
+                        FROM V\\$INSTANCE;
+EOSQL
+EOF
+            fi
         else
-            # instance name & id are same as ORACLE_SID, hostname is not available in /etc/oratab.
-            # version is not available in /etc/oratab, so setting it to undefined. checking pgrep -f "ora_pmon_$sid" earlier to ensure the instance is running.
+            # No credentials available - try to get open_mode via OS auth for MOUNTED instances
+            local open_mode="OPEN"
+            if [[ "$isMounted" == "true" ]]; then
+                open_mode_result=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
+                    export ORACLE_SID="$1"
+                    sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
+                        SET HEADING OFF
+                        SET FEEDBACK OFF
+                        SET PAGESIZE 0
+                        SELECT open_mode FROM v$database;
+                        EXIT;
+EOSQL
+EOF
+)
+                parsed_open_mode=$(parse_sqlplus_output "$open_mode_result")
+                if [ $? -eq 0 ] && [ -n "$parsed_open_mode" ]; then
+                    open_mode="$parsed_open_mode"
+                fi
+            fi
 
-            local result="{\\"instance_name\\": \\"$ORACLE_SID\\", \\"instance_state\\": \\"OPEN\\", \\"version\\": \\"undefined\\", \\"instance_id\\": \\"$ORACLE_SID\\", \\"hostname\\": \\"undefined\\"}"
+            local result="{\\"instance_name\\": \\"$ORACLE_SID\\", \\"instance_state\\": \\"$open_mode\\", \\"version\\": \\"undefined\\", \\"instance_id\\": \\"$ORACLE_SID\\", \\"hostname\\": \\"undefined\\"}"
             echo $result
         fi
     }
@@ -1422,22 +1471,30 @@ const discoverOracleHosts = `
         if [ $? -ne 0 ]; then
             InstanceDiscoverErrorMsg="failed to retrieve authentication details for instance '$sid'"
         fi
+        isMounted=$(is_mounted_instance "$sid")
         modulesAvailability=$(check_oracle_module_availability)
 
         {
-            INSTANCE_DETAILS=$(get_instance_details "$sid")
+            INSTANCE_DETAILS=$(get_instance_details "$sid" "$isMounted")
             DATABASE_DETAILS=$(get_database_details "$sid")
             if [ $? -ne 0 ]; then
                 DATABASE_DETAILS='{"error": "failed to retrieve database details for instance '$sid'"}'
             fi
 
             if [ "$isDefaultAuth" == "true" ]; then
-                is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
-                if [[ "$is_cdb" == "YES" ]]; then
-                    PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
-                    pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
-                else
+                # For MOUNTED instances (e.g., physical standby), skip PDB queries
+                # DBA_PDBS is not accessible in MOUNTED mode (ORA-01219)
+                if [[ "$isMounted" == "true" ]]; then
                     PDB_DATABASE_DETAILS="[]"
+                    is_cdb="NO"
+                else
+                    is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
+                    if [[ "$is_cdb" == "YES" ]]; then
+                        PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
+                        pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
+                    else
+                        PDB_DATABASE_DETAILS="[]"
+                    fi
                 fi
 
                 ${getInstanceStorageDetails}
@@ -1467,8 +1524,11 @@ const discoverOracleHosts = `
         if [ $? -eq 0 ]; then
             
             isDataguardDeployed=true
+            # Use with-creds path when we have default auth (works even for MOUNTED standbys)
             if [ "$isDefaultAuth" == "true" ]; then
-                dataguardDetails=$(get_dataguard_details_with_creds "$sid")
+                dataguardDetails=$(get_dataguard_details_with_creds "$sid" "NO" "")
+            elif [ "$oracleCredsAvailable" == "true" ]; then
+                dataguardDetails=$(get_dataguard_details_with_creds "$sid" "NO" "")
             else
                 dataguardDetails=$(get_dataguard_details_without_creds "$sid")
             fi
