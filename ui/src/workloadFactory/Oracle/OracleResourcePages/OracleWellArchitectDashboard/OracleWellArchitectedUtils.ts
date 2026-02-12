@@ -675,7 +675,7 @@ export const formatOracleHostOsPatchConfig = (
             ...oracleCardData.host_os_patch?.block_six,
             value: String(totalViolations)
         },
-        tags: hostOsPatchItem?.tags || ['Security', 'Reliability'],
+        tags: hostOsPatchItem?.tags,
         id: hostOsPatchItem?.name || 'host-os-patch',
         category: 'compute',
         errorMessage: hostOsPatchItem?.errorMessage,
@@ -1523,10 +1523,8 @@ export const getDynamicOracleCategoryData = (assessmentData?: any) => {
     categoryMapping.ontap_configuration = { category: 'Storage', subCategory: 'Storage configuration' };
     categoryMapping.os_configuration = { category: 'Storage', subCategory: 'Storage configuration' };
 
-    // Always include host OS patch if assessment data contains it
-    if (assessmentData?.hostOsPatch) {
-        categoryMapping.host_os_patch = { category: 'Compute', subCategory: 'Compute' };
-    }
+    // Always include host OS patch (Compute) so it appears in filters even when Unavailable
+    categoryMapping.host_os_patch = { category: 'Compute', subCategory: 'Compute' };
 
     if (!assessmentData?.storage) {
         // If no assessment data, return static mapping as fallback
@@ -1605,13 +1603,13 @@ export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploy
         const config = cardData[key];
         const categoryInfo = categoryData[key as keyof typeof categoryData];
 
-        if (!config?.block_two?.value) {
-            return;
-        }
-
         if (categoryInfo) {
             availableCategories.add(categoryInfo.category);
             availableSubCategories.add(categoryInfo.subCategory);
+        }
+
+        if (!config?.block_two?.value) {
+            return;
         }
 
         // Add severity if available

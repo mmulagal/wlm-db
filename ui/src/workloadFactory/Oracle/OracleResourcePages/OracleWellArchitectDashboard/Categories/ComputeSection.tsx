@@ -59,8 +59,12 @@ const ComputeSection = ({
 
             const configState = card.dismissedObj?.configState;
             const hasValidAssessment = card.block_two?.value;
+            const hasError = card.errorMessage;
 
-            // Only consider cards with valid assessment data
+            if (!hasValidAssessment && configState !== CONFIG_STATES.DISMISSED && hasError) {
+                hasActiveCards = true;
+            }
+
             if (!hasValidAssessment) return;
 
             if (!configState || configState === CONFIG_STATES.ACTIVE || configState === CONFIG_STATES.ACTIVATING) {
