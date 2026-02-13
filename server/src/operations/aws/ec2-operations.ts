@@ -1026,44 +1026,58 @@ async function getInstanceDetailsByPrivateIp(
 ) {
     logger.info('Get instance details by private ip', { credentialsId, region, privateIps });
 
-    // Normalize for caching: sort and de-duplicate to ensure stable cache keys regardless of input order
-    const normalizedIps = Array.from(new Set(privateIps)).sort((a, b) => a.localeCompare(b));
+    try {
+        // Normalize for caching: sort and de-duplicate to ensure stable cache keys regardless of input order
+        const normalizedIps = Array.from(new Set(compact(privateIps))).sort((a, b) => a.localeCompare(b));
 
-    const { Reservations } = await describeInstance(
-        credentialsId,
-        region,
-        {
-            Filters: [
-                {
-                    Name: 'private-ip-address',
-                    Values: normalizedIps
-                }
-            ]
-        },
-        cacheParams
-    );
-
-    const instanceDetails: NodeDetails[] = [];
-    const ec2InstanceList = compact(
-        Array.isArray(Reservations) ? Reservations.flatMap(reservation => reservation.Instances) : []
-    );
-    ec2InstanceList.forEach(instance => {
-        if (instance) {
-            const { InstanceId, PrivateIpAddress, InstanceType, Tags, UsageOperation, PrivateDnsName } = instance;
-            if (InstanceId && PrivateIpAddress && InstanceType) {
-                instanceDetails.push({
-                    ec2InstanceId: InstanceId,
-                    ec2InstancePrivateIpAddress: PrivateIpAddress,
-                    ec2InstanceType: InstanceType,
-                    ec2InstanceName: getResourceNameFromTags(Tags),
-                    ec2UsageOperation: UsageOperation,
-                    ec2InstancePrivateDnsName: PrivateDnsName
-                });
-            }
+        if (isEmpty(normalizedIps)) {
+            throw Error('No valid private IPs provided');
         }
-    });
 
-    return instanceDetails;
+        const { Reservations } = await describeInstance(
+            credentialsId,
+            region,
+            {
+                Filters: [
+                    {
+                        Name: 'private-ip-address',
+                        Values: normalizedIps
+                    }
+                ]
+            },
+            cacheParams
+        );
+
+        const instanceDetails: NodeDetails[] = [];
+        const ec2InstanceList = compact(
+            Array.isArray(Reservations) ? Reservations.flatMap(reservation => reservation.Instances) : []
+        );
+        ec2InstanceList.forEach(instance => {
+            if (instance) {
+                const { InstanceId, PrivateIpAddress, InstanceType, Tags, UsageOperation, PrivateDnsName } = instance;
+                if (InstanceId && PrivateIpAddress && InstanceType) {
+                    instanceDetails.push({
+                        ec2InstanceId: InstanceId,
+                        ec2InstancePrivateIpAddress: PrivateIpAddress,
+                        ec2InstanceType: InstanceType,
+                        ec2InstanceName: getResourceNameFromTags(Tags),
+                        ec2UsageOperation: UsageOperation,
+                        ec2InstancePrivateDnsName: PrivateDnsName
+                    });
+                }
+            }
+        });
+
+        return instanceDetails;
+    } catch (err) {
+        logger.error('Error while getting instance details by private ip', {
+            credentialsId,
+            region,
+            requestedPrivateIpCount: privateIps.length,
+            error: (err as Error).message
+        });
+        throw err;
+    }
 }
 
 async function waitForInstanceToBeStopped(credentialsId: string, region: string, instanceId: string) {
