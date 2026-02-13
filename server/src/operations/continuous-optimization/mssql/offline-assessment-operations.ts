@@ -377,10 +377,14 @@ async function uploadMssqlOfflineAssessment(
         throw createError(HttpErrorCodes.BAD_REQUEST, 'At least one database instance is required');
     }
 
+    const databaseInstanceName = Object.keys(instanceLevelDetails)[0];
+
     const { id: jobId } = await registerJob(accountId, '', '', {
-        name: `MSSQL offline assessment data upload for ${hostname}`,
-        description: fileName ? `Upload from file: ${fileName}` : 'Upload offline assessment data',
-        resourceName: hostname as string,
+        name: `MSSQL offline assessment data upload for ${hostname}/${databaseInstanceName}`,
+        description: fileName
+            ? `Upload from file: ${fileName} - Database instance: ${databaseInstanceName}`
+            : `Upload offline assessment data - Database instance: ${databaseInstanceName}`,
+        resourceName: `${hostname}/${databaseInstanceName}`,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
         type: JOBTYPE.ASSESSMENT

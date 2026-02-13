@@ -1,6 +1,7 @@
 import randomize from 'randomatic';
 import { isEmpty } from 'lodash-es';
 import { randomUUID } from 'crypto';
+import { DATABASE_TYPE } from '@prisma/client';
 import {
     DatabaseTypes,
     DEFAULT_INSTANCE_NAME,
@@ -10,12 +11,17 @@ import {
     USER_TOKEN
 } from '../consts';
 import getLogger from '../logger';
+import { uploadOfflineAssessment } from '../../operations/offline-assessment-operations';
+import { listOfflineAssessments } from '../../lib/database/offline-assessment';
 import {
     createAssessmentData,
     saveFciConfigurationData,
     savePGSQLConfigurationData,
     savePGSQLHaConfigurationData,
-    saveStandaloneConfigurationData
+    saveStandaloneConfigurationData,
+    offlineAssessmentStdUploadObject,
+    offlineAssessmentFCIUploadObject,
+    offlineAssessmentAOAGUploadObject
 } from './demoMockdata';
 import {
     createAssessmentJobMockData,
@@ -550,4 +556,39 @@ async function createDatabaseInstances(
     return databaseInstanceId;
 }
 
-export { creadteDemoDBData, returnInventorydata, createConfigurations, createDemoResourcesPerRegion };
+async function prepopulateOfflineAssessmentData(accountId: string) {
+    logger.info('Prepopulating offline assessment data for account.', accountId);
+    const offlineAssessments = await listOfflineAssessments({
+        accountId,
+        databaseType: DATABASE_TYPE.mssql,
+        pageSize: 1
+    });
+    if (offlineAssessments.length === 0) {
+        await uploadOfflineAssessment(
+            accountId,
+            offlineAssessmentFCIUploadObject.fileContent,
+            offlineAssessmentFCIUploadObject.fileName,
+            'mssql'
+        );
+        await uploadOfflineAssessment(
+            accountId,
+            offlineAssessmentAOAGUploadObject.fileContent,
+            offlineAssessmentAOAGUploadObject.fileName,
+            'mssql'
+        );
+        await uploadOfflineAssessment(
+            accountId,
+            offlineAssessmentStdUploadObject.fileContent,
+            offlineAssessmentStdUploadObject.fileName,
+            'mssql'
+        );
+    }
+}
+
+export {
+    creadteDemoDBData,
+    returnInventorydata,
+    createConfigurations,
+    createDemoResourcesPerRegion,
+    prepopulateOfflineAssessmentData
+};

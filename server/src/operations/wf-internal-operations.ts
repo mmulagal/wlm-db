@@ -1,7 +1,7 @@
 import { compact, isEmpty, partition, uniqBy } from 'lodash-es';
 import getLogger from '../utils/logger';
 import { getCredentials } from './cloud-manager/credentials-operations';
-import { creadteDemoDBData } from '../utils/demo-utils/demoDefaultUtils';
+import { creadteDemoDBData, prepopulateOfflineAssessmentData } from '../utils/demo-utils/demoDefaultUtils';
 import { DatabaseTypes, MSSQL } from '../utils/consts';
 import {
     onPremAOAGAUploadObject,
@@ -37,6 +37,7 @@ async function getSystemStatus(accountId: string) {
         uploadOnpremTcoData(accountId, MSSQL, onPremAOAGAUploadObject.fileName, onPremAOAGAUploadObject.fileContent);
         uploadOnpremTcoData(accountId, MSSQL, onpremStdUploadObject.fileName, onpremStdUploadObject.fileContent);
     }
+    await prepopulateOfflineAssessmentData(accountId);
     return { isActive: true };
 }
 

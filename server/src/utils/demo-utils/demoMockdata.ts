@@ -3251,9 +3251,9 @@ function enableMPIOJobData(
     ];
 }
 
-function generateBase64ForOnPrem(fileName: string) {
+function generateBase64FromJsonFile(directory: string, fileName: string) {
     const __dirname = path.dirname(new URL(import.meta.url).pathname);
-    const JsonFilePath = path.join(__dirname, `onPremRecords/${fileName}`);
+    const JsonFilePath = path.join(__dirname, `${directory}/${fileName}`);
     const jsonData = fs.readFileSync(JsonFilePath, 'utf8');
     const jsonString = jsonData as string;
 
@@ -3271,25 +3271,55 @@ function generateBase64ForOnPrem(fileName: string) {
     return compressedBase64;
 }
 
-const onpremStdBase64Content = generateBase64ForOnPrem('SQLServerDataResponse-DemoSTD.json');
+const onpremStdBase64Content = generateBase64FromJsonFile('onPremRecords', 'SQLServerDataResponse-DemoSTD.json');
 
 const onpremStdUploadObject = {
     fileContent: onpremStdBase64Content,
     fileName: 'SQLServerDataResponse-GOLDEN-STD1.json'
 };
 
-const onpremFCIBase64Content = generateBase64ForOnPrem('SQLServerDataResponse-DemoFCI.json');
+const onpremFCIBase64Content = generateBase64FromJsonFile('onPremRecords', 'SQLServerDataResponse-DemoFCI.json');
 
 const onPremFCIUploadObject = {
     fileContent: onpremFCIBase64Content,
     fileName: 'SQLServerDataResponse-GOLD-FCI.json'
 };
 
-const onpremAOAGBase64Content = generateBase64ForOnPrem('SQLServerDataResponse-DemoAOAG.json');
+const onpremAOAGBase64Content = generateBase64FromJsonFile('onPremRecords', 'SQLServerDataResponse-DemoAOAG.json');
 
 const onPremAOAGAUploadObject = {
     fileContent: onpremAOAGBase64Content,
     fileName: 'SQLServerDataResponse-GOLDEN-AOAG.json'
+};
+
+const offlineAssessmentStdBase64Content = generateBase64FromJsonFile(
+    'offlineAssessmentRecords',
+    'OfflineAssessment-DemoSTD.json'
+);
+
+const offlineAssessmentStdUploadObject = {
+    fileContent: offlineAssessmentStdBase64Content,
+    fileName: 'OfflineAssessment-DemoSTD.json'
+};
+
+const offlineAssessmentFCIBase64Content = generateBase64FromJsonFile(
+    'offlineAssessmentRecords',
+    'OfflineAssessment-DemoFCI.json'
+);
+
+const offlineAssessmentFCIUploadObject = {
+    fileContent: offlineAssessmentFCIBase64Content,
+    fileName: 'OfflineAssessment-DemoFCI.json'
+};
+
+const offlineAssessmentAOAGBase64Content = generateBase64FromJsonFile(
+    'offlineAssessmentRecords',
+    'OfflineAssessment-DemoAOAG.json'
+);
+
+const offlineAssessmentAOAGUploadObject = {
+    fileContent: offlineAssessmentAOAGBase64Content,
+    fileName: 'OfflineAssessment-DemoAOAG.json'
 };
 
 const DEMO_REGISTER_RESPONSE = {
@@ -6553,6 +6583,9 @@ export {
     onpremStdUploadObject,
     onPremAOAGAUploadObject,
     onPremFCIUploadObject,
+    offlineAssessmentStdUploadObject,
+    offlineAssessmentFCIUploadObject,
+    offlineAssessmentAOAGUploadObject,
     DEMO_REGISTER_RESPONSE,
     demoFsxId,
     ASSESMENT_CONFIG_DATA,
