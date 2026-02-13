@@ -870,6 +870,7 @@ export const handleReplicaAuthenticationAndDialog = async (
 
             // Check if all instances are already authenticated - skip API call
             if (areAllInstancesAuthenticated(replicaSelectedRowsForManage, instanceAuthStatus, hostType)) {
+                closeDialog();
                 goToNextStep();
                 return;
             }
@@ -905,6 +906,7 @@ export const handleReplicaAuthenticationAndDialog = async (
 
             // If no credentials to send (all already authenticated), proceed to next step
             if (payloadItems.length === 0) {
+                closeDialog();
                 goToNextStep();
                 return;
             }
