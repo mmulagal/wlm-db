@@ -438,7 +438,6 @@ export const getReplicaInstanceList = (result: any, manageSingleInstanceData: an
 
             return (
                 instance?.ec2InstanceId === replica?.ec2InstanceId &&
-                instance?.sqlServerName === replica?.sqlServerName &&
                 instance?.statusColText !== INVENTORY_STATUS.MANAGED &&
                 isAoagDeployment &&
                 hasMatchingAg &&
