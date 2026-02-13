@@ -118,11 +118,18 @@ describe('EC2 Operations', () => {
         expect(response.ec2InstanceId).toBeDefined();
     });
 
-    it('Get instance details by private IP', async () => {
+    it('Get instance details by private IP with falsy values', async () => {
         const ips = ['10.0.6.118', null, undefined] as string[];
         const response = await getInstanceDetailsByPrivateIp(credentialsId, DEFAULT_AWS_REGION, ips);
         expect(response[0].ec2InstanceId).toBeDefined();
         expect(response.length).toBe(1);
+    });
+
+    it('Get instance details by private IP with empty array', async () => {
+        const ips = [] as string[];
+        const response = await getInstanceDetailsByPrivateIp(credentialsId, DEFAULT_AWS_REGION, ips);
+        expect(response).toBeDefined();
+        expect(response.length).toBe(0);
     });
 
     it('Get instance types from instance requirements for managed instances', async () => {

@@ -1029,11 +1029,9 @@ async function getInstanceDetailsByPrivateIp(
     try {
         // Normalize for caching: sort and de-duplicate to ensure stable cache keys regardless of input order
         const normalizedIps = Array.from(new Set(compact(privateIps))).sort((a, b) => a.localeCompare(b));
-
         if (isEmpty(normalizedIps)) {
-            throw Error('No valid private IPs provided');
+            logger.warn('No valid private IPs provided to get instance details', { credentialsId, region, privateIps });
         }
-
         const { Reservations } = await describeInstance(
             credentialsId,
             region,
