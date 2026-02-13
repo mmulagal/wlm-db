@@ -83,9 +83,12 @@ const HostTable = () => {
         ) {
             disableOptionDatabase = true;
             disableMessageDatabase = GENERAL.HOST_DOWN;
-        } else if (rowData?.managedInstance <= 0) {
+        } else if (rowData?.managedInstance <= 0 && selectedHostType !== DBType.ORACLE) {
             disableOptionDatabase = true;
-            disableMessageDatabase = GENERAL.DATABASE_AVAILABLE_MSG;
+            disableMessageDatabase = t('databases.inventory.no-databases-available');
+        } else if (rowData?.managedInstance <= 0 && selectedHostType === DBType.ORACLE) {
+            disableOptionDatabase = true;
+            disableMessageDatabase = t('databases.inventory.no-pdb-available');
         }
         return { disableOptionDatabase, disableMessageDatabase };
     };
@@ -105,14 +108,12 @@ const HostTable = () => {
 
             return [
                 {
-                    id: 'viewDatabases',
-                    displayName: 'View PDBs',
-                    disabled: disableOracle,
-                    infoText: disableMessageOracle
+                    id: 'viewInstances',
+                    displayName: 'View databases'
                 },
                 {
-                    id: 'viewInstances',
-                    displayName: 'View databases',
+                    id: 'viewDatabases',
+                    displayName: 'View PDBs',
                     disabled: disableOracle,
                     infoText: disableMessageOracle
                 }

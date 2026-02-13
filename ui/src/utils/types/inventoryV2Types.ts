@@ -266,6 +266,8 @@ export interface InventoryTableInstanceDatInterface {
     windowsDomainUserAuthentication?: boolean;
     isWad?: boolean;
     wadAssessmentData?: any;
+    oracleServerDeploymentType?: string; // will get for Oracle databases
+    dataguardDetails?: any; // will get for Oracle databases
 }
 
 export interface StorageInterface {
@@ -306,6 +308,7 @@ export interface DatabaseInstancesSummaryInterface {
     databaseInstanceId?: string;
     databaseInstanceName?: string;
     status?: string;
+    oracleServerDeploymentType?: string; // will get for Oracle databases
     instanceType?: string; // Oracle tenancy type: SINGLE_TENANT or MULTI_TENANT
     protocol?: string; // Storage protocol used by the Oracle instance
     databases?: Array<{
@@ -414,6 +417,8 @@ export interface ManagedHostsRowInterface {
         isManaged?: boolean;
         databaseInstanceStatus?: string; // up, down
         isInstanceStorageAsmManaged?: boolean; // will get for Oracle databases
+        oracleServerDeploymentType?: string; // will get for Oracle databases
+        dataguardDetails?: any; // will get for Oracle databases
     }>;
     clusterNodeDetails?: Array<{
         ec2InstanceId?: string;

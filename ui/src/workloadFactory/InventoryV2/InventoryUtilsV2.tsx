@@ -617,6 +617,11 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
                 fsxId: statusObj?.[0]?.fsxId,
                 fileSystemName: statusObj?.[0]?.fileSystemName,
+                // Preserve Oracle deployment type and dataguard details for mixed managed/unmanaged cases
+                oracleServerDeploymentType:
+                    perRow?.oracleServerDeploymentType ||
+                    statusObj?.[0]?.discoverInstanceData?.oracleServerDeploymentType,
+                dataguardDetails: perRow?.dataguardDetails || statusObj?.[0]?.discoverInstanceData?.dataguardDetails,
                 ...authAndDetectFields
             };
         });
@@ -684,7 +689,16 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 if (row?.hostType === DBType.ORACLE) {
                     rowDataObject = {
                         ...rowDataObject,
-                        ...oracleSpecificFields
+                        ...oracleSpecificFields,
+                        // Preserve Oracle deployment type and dataguard details for mixed managed/unmanaged cases
+                        oracleServerDeploymentType:
+                            perRow?.oracleServerDeploymentType ||
+                            instRow?.oracleServerDeploymentType ||
+                            statusObj?.[0]?.discoverInstanceData?.oracleServerDeploymentType,
+                        dataguardDetails:
+                            perRow?.dataguardDetails ||
+                            instRow?.dataguardDetails ||
+                            statusObj?.[0]?.discoverInstanceData?.dataguardDetails
                     };
                 }
 
@@ -1635,6 +1649,12 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                     );
                 }
 
+                // Include oracleServerDeploymentType from host row for deployment model display
+                const discoverInstanceData = {
+                    ...perRow,
+                    oracleServerDeploymentType: row?.oracleServerDeploymentType
+                };
+
                 if (
                     ssmState !== INVENTORY_STATUS.ONLINE ||
                     (!isDefaultAuthentication && !oracleServerAuthentication) ||
@@ -1650,6 +1670,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                     );
                     statusObj = {
                         ...detectOptionObj,
+                        discoverInstanceData,
                         name: perRow.instanceName,
                         status: INVENTORY_STATUS.UNDETECTED,
                         storageType: perRow?.storage,
@@ -1663,6 +1684,7 @@ export const getOracleDiscoverPerInstanceStatus = (row: DiscoverOracleHostInterf
                     };
                 } else {
                     statusObj = {
+                        discoverInstanceData,
                         name: perRow.instanceName,
                         status: INVENTORY_STATUS.UNMANAGED,
                         storageType: perRow?.storage,
@@ -2806,6 +2828,12 @@ export const updateSqlServerInstancesForUnmanaged = (
                         instRow?.fileSystemDeploymentMode ||
                         getAzType(perRow?.databaseInstanceTopology?.fileSystemDeploymentMode),
                     sqlServerDeploymentType: instRow?.sqlServerDeploymentType || perRow?.sqlServerDeploymentType,
+                    // Preserve Oracle deployment type and dataguard details for mixed managed/unmanaged cases
+                    oracleServerDeploymentType:
+                        instRow?.oracleServerDeploymentType ||
+                        statusObj?.[0]?.discoverInstanceData?.oracleServerDeploymentType,
+                    dataguardDetails:
+                        instRow?.dataguardDetails || statusObj?.[0]?.discoverInstanceData?.dataguardDetails,
                     isFsxRegistered: instRow?.isFsxRegistered || statusObj?.[0]?.isFsxRegistered,
                     ...authFields
                 };
@@ -2885,6 +2913,12 @@ export const updateSqlServerInstancesForUnmanaged = (
                             sqlServerDeploymentType:
                                 instRow?.sqlServerDeploymentType ||
                                 statusObj?.[0]?.discoverInstanceData?.sqlServerDeploymentType,
+                            // Preserve Oracle deployment type and dataguard details for mixed managed/unmanaged cases
+                            oracleServerDeploymentType:
+                                instRow?.oracleServerDeploymentType ||
+                                statusObj?.[0]?.discoverInstanceData?.oracleServerDeploymentType,
+                            dataguardDetails:
+                                instRow?.dataguardDetails || statusObj?.[0]?.discoverInstanceData?.dataguardDetails,
                             statusColText:
                                 isManagedHost && statusObj?.[0]?.status
                                     ? statusObj?.[0]?.status
