@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { DsSpinner } from '@tlveng/wlm-ds';
 import { useAppSelector } from '../../store/storeHooks';
 import styles from './Inventory.module.scss';
 import InventoryTab from './InventoryTab/InventoryTab';
@@ -41,6 +42,7 @@ import MSSQLBanner from './InventoryBanners/MSSQLBanner/MSSQLBanner';
 import PGSQLBanner from './InventoryBanners/PGSQLBanner/PGSQLBanner';
 import OracleBanner from './InventoryBanners/MSSQLBanner/OracleBanner';
 import EngineTypeSelector from '../../common/EngineTypeSelector/EngineTypeSelector';
+import CommonStyles from '../../utils/CommonStyles.module.scss';
 
 const InventoryV2 = () => {
     const { t } = useTranslation();
@@ -62,7 +64,8 @@ const InventoryV2 = () => {
         fullDatabaseTableRows,
         isManagedHostListLoading,
         fsxCredentialStatusLoading,
-        fsxCredentialStatusLoadingOracle
+        fsxCredentialStatusLoadingOracle,
+        isUploadLoading
     } = useAppSelector(state => state.inventoryV2);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
@@ -484,6 +487,14 @@ const InventoryV2 = () => {
 
     return (
         <div className={styles.inventory}>
+            {isUploadLoading && (
+                <>
+                    <div className={CommonStyles.pageOverlay} />
+                    <div className={CommonStyles.spinnerPlacement}>
+                        <DsSpinner isLarge />
+                    </div>
+                </>
+            )}
             <EngineTypeSelector />
             <div className={styles.banner}>
                 {selectedHostType === DBType.MSSQL && <MSSQLBanner loading={loading} />}

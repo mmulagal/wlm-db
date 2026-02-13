@@ -8,6 +8,35 @@
     width: 196px;
 }
 
+.pageOverlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 70%;
+    background-color: var(--text-primary);
+    z-index: 5;
+}
+
+.loaderOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 70%;
+    background-color: var(--text-primary);
+    z-index: 5 !important;
+}
+
+.spinnerPlacement {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 4;
+}
+
 @mixin detectManageBase($color) {
     width: 134px;
     height: 32px;

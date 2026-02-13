@@ -42,32 +42,30 @@ import {
     uniqueHostRow,
     updateInstanceStatus
 } from '../../InventoryUtilsV2';
-import { bxpRedirect, collapseAllRows, isSmbProtocol } from '../../../../utils/utilityFunctions';
+import { bxpRedirect, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
     ACTION_CTA,
     DBType,
     FROM_DIALOG,
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
-    WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 import {
-    setBreadCrumbSelectedFrom,
     setInProgressInstances,
     setInventoryTableData,
     setRegisterHostType,
     setSelectedFilterValue,
-    setSelectedHeaderTab,
     setSelectedMultiDetectInstances,
     setSelectedRowsForBulkRegister,
     setTableManageColumnState,
     setWizardOperationType,
-    incrementMssqlInstancesTabVisitCount
+    incrementMssqlInstancesTabVisitCount,
+    setIsUploadLoading
 } from '../../../../store/workloadFactory/inventoryV2Slice';
-import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
+
 import { updateOrgId } from '../../../../store/authSlice';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -77,11 +75,9 @@ import {
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import {
-    setFSXId,
     setGwPageLoadInstanceData,
     setLandingFrom,
-    setOptimizingData,
-    setSelectedWellArchitectTab
+    setOptimizingData
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
@@ -1277,6 +1273,7 @@ const InstancesTable = () => {
             event.target.value = ''; // Clear the file input
             return;
         }
+        dispatch(setIsUploadLoading(true));
         const reader = new FileReader();
         reader.onload = async e => {
             try {
@@ -1318,7 +1315,9 @@ const InstancesTable = () => {
                                     clearInterval(jobInterval);
                                     // Refresh offline assessment data after successful upload
                                     refreshOfflineAssessmentData(getAllOfflineAssessmentAPI, dispatch, [], null);
+                                    dispatch(setIsUploadLoading(false));
                                 } else if (status === JOB_MONITORING_STATUS.FAILED) {
+                                    dispatch(setIsUploadLoading(true));
                                     dispatch(
                                         addNotification({
                                             notificationType: NOTIFICATION_TYPES.ERROR,
@@ -1333,6 +1332,7 @@ const InstancesTable = () => {
                 }
             } catch (error) {
                 console.error('Error uploading WAD script:', error);
+                dispatch(setIsUploadLoading(false));
             }
         };
 

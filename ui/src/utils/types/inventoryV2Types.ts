@@ -159,6 +159,7 @@ export interface InventorySliceData {
     instanceAuthStatus: InstanceAuthStatusMap;
     bulkWizardStartAtFsxStep: boolean;
     mssqlInstancesTabVisitCount: number;
+    isUploadLoading: boolean;
 }
 
 export interface InventoryTableData {
