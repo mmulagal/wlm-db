@@ -1,0 +1,359 @@
+name: Codex PR Review
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - server/**
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: codex-pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  codex-pr-review:
+    if: github.event.pull_request.draft == false
+    runs-on: wlmdb-runner
+    steps:
+      - name: Checkout base repository
+        uses: actions/checkout@v4
+
+      - name: Run Codex PR review
+        uses: actions/github-script@v7
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            const marker = '<!-- codex-pr-review -->';
+            const apiKey = process.env.OPENAI_API_KEY;
+            const model = process.env.OPENAI_MODEL || 'gpt-5.2-codex';
+            const pr = context.payload.pull_request;
+            const maxPatchChars = 120000;
+            const maxInlineComments = 20;
+            const maxOpenAiRetries = 3;
+            const retryBaseDelayMs = 1000;
+
+            if (!apiKey) {
+              core.warning('OPENAI_API_KEY is not set. Skipping Codex PR review.');
+              return;
+            }
+
+            function parseRightSideLines(patch) {
+              const rightLines = new Set();
+              if (!patch || typeof patch !== 'string') return rightLines;
+
+              const lines = patch.split('\n');
+              let newLine = null;
+              for (const line of lines) {
+                const header = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/);
+                if (header) {
+                  newLine = Number(header[1]);
+                  continue;
+                }
+                if (newLine === null) continue;
+                if (line.startsWith('+') && !line.startsWith('+++')) {
+                  rightLines.add(newLine);
+                  newLine += 1;
+                } else if (line.startsWith('-') && !line.startsWith('---')) {
+                  // Removed line on left side only.
+                } else {
+                  rightLines.add(newLine);
+                  newLine += 1;
+                }
+              }
+              return rightLines;
+            }
+
+            function safeJsonParse(text) {
+              if (!text) return null;
+              const trimmed = text.trim();
+              try {
+                return JSON.parse(trimmed);
+              } catch {
+                const blockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+                if (blockMatch) {
+                  try {
+                    return JSON.parse(blockMatch[1].trim());
+                  } catch {}
+                }
+                const firstBrace = trimmed.indexOf('{');
+                const lastBrace = trimmed.lastIndexOf('}');
+                if (firstBrace >= 0 && lastBrace > firstBrace) {
+                  try {
+                    return JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
+                  } catch {}
+                }
+                return null;
+              }
+            }
+
+            function extractRawOutput(data) {
+              if (typeof data?.output_text === 'string' && data.output_text.trim()) {
+                return data.output_text;
+              }
+
+              const responsesText = Array.isArray(data?.output)
+                ? data.output
+                    .flatMap((o) => (Array.isArray(o?.content) ? o.content : []))
+                    .find((c) => typeof c?.text === 'string' && c.text.trim())?.text
+                : '';
+              if (typeof responsesText === 'string' && responsesText.trim()) {
+                return responsesText;
+              }
+
+              const chatContent = data?.choices?.[0]?.message?.content;
+              if (typeof chatContent === 'string' && chatContent.trim()) {
+                return chatContent;
+              }
+              if (Array.isArray(chatContent)) {
+                const chunkText = chatContent.find(
+                  (chunk) => typeof chunk?.text === 'string' && chunk.text.trim()
+                )?.text;
+                if (typeof chunkText === 'string') {
+                  return chunkText;
+                }
+              }
+
+              return '';
+            }
+
+            function isTransientOpenAiFailure(status) {
+              return status === 429 || status >= 500;
+            }
+
+            function sleep(ms) {
+              return new Promise((resolve) => setTimeout(resolve, ms));
+            }
+
+            const promptPath = '.github/agents/pr-review-codex-5.2.md';
+            const systemPrompt = fs.existsSync(promptPath)
+              ? fs.readFileSync(promptPath, 'utf8')
+              : 'You are a pull request reviewer. Provide concise, actionable feedback.';
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+
+            const serverFiles = files.filter((f) => f.filename.startsWith('server/'));
+            if (serverFiles.length === 0) {
+              core.info('No server/ changes detected. Skipping Codex PR review.');
+              return;
+            }
+
+            const fileLineMap = new Map(
+              serverFiles.map((f) => [f.filename, parseRightSideLines(f.patch)])
+            );
+
+            const changedFiles = serverFiles.map((f) => f.filename).join('\n');
+            let patchBlob = serverFiles
+              .filter((f) => typeof f.patch === 'string' && f.patch.length > 0)
+              .map((f) => `### ${f.filename}\n${f.patch}`)
+              .join('\n\n');
+            let diffWasTruncated = false;
+
+            if (patchBlob.length > maxPatchChars) {
+              diffWasTruncated = true;
+              patchBlob = `${patchBlob.slice(0, maxPatchChars)}\n\n[TRUNCATED: diff exceeded ${maxPatchChars} chars]`;
+            }
+
+            const userPrompt = [
+              `Repository: ${context.repo.owner}/${context.repo.repo}`,
+              `PR #${pr.number}: ${pr.title}`,
+              '',
+              'Changed files:',
+              changedFiles || '(none)',
+              '',
+              'Diff:',
+              patchBlob || '(no patch content available; review by filenames and metadata)',
+              '',
+              diffWasTruncated
+                ? 'Note: Diff content is truncated due to workflow limits. Mention if confidence is reduced.'
+                : null,
+              diffWasTruncated ? '' : null,
+              'Output must be valid JSON exactly as requested by the system prompt.',
+            ].filter((line) => line !== null).join('\n');
+
+            let data;
+            for (let attempt = 0; attempt <= maxOpenAiRetries; attempt += 1) {
+              let response;
+              try {
+                response = await fetch('https://api.openai.com/v1/responses', {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    model,
+                    input: [
+                      {
+                        role: 'system',
+                        content: [{ type: 'input_text', text: systemPrompt }],
+                      },
+                      {
+                        role: 'user',
+                        content: [{ type: 'input_text', text: userPrompt }],
+                      },
+                    ],
+                  }),
+                });
+              } catch (error) {
+                if (attempt < maxOpenAiRetries) {
+                  await sleep(retryBaseDelayMs * 2 ** attempt);
+                  continue;
+                }
+                throw new Error(
+                  `OpenAI API request failed after ${maxOpenAiRetries + 1} attempts due to network errors`
+                );
+              }
+
+              if (!response.ok) {
+                if (attempt < maxOpenAiRetries && isTransientOpenAiFailure(response.status)) {
+                  await sleep(retryBaseDelayMs * 2 ** attempt);
+                  continue;
+                }
+                throw new Error(`OpenAI API request failed (${response.status} ${response.statusText})`);
+              }
+
+              data = await response.json();
+              break;
+            }
+
+            if (!data || typeof data !== 'object') {
+              throw new Error('OpenAI API request did not return a valid JSON response');
+            }
+
+            const rawOutput = extractRawOutput(data);
+            const parsed = safeJsonParse(rawOutput);
+            if (!parsed || typeof parsed !== 'object') {
+              throw new Error(`Codex output is not valid JSON: ${rawOutput}`);
+            }
+
+            const summary = typeof parsed.summary === 'string' && parsed.summary.trim().length > 0
+              ? parsed.summary.trim()
+              : 'No summary provided.';
+            const verdict = typeof parsed.verdict === 'string' ? parsed.verdict.trim() : 'comment';
+            const suggestedTests = Array.isArray(parsed.suggested_tests)
+              ? parsed.suggested_tests.filter((t) => typeof t === 'string' && t.trim().length > 0).slice(0, 5)
+              : [];
+            const inlineCandidates = Array.isArray(parsed.inline_comments) ? parsed.inline_comments : [];
+
+            const validInlineComments = [];
+            for (const candidate of inlineCandidates) {
+              if (!candidate || typeof candidate !== 'object') continue;
+              const path = String(candidate.path || '');
+              const line = Number(candidate.line);
+              const body = String(candidate.body || '').trim();
+              const severity = String(candidate.severity || 'medium').toLowerCase();
+              if (!path.startsWith('server/')) continue;
+              if (!fileLineMap.has(path)) continue;
+              if (!Number.isInteger(line)) continue;
+              if (!body) continue;
+              const rightLines = fileLineMap.get(path);
+              if (!rightLines || !rightLines.has(line)) continue;
+              validInlineComments.push({
+                path,
+                line,
+                severity: ['high', 'medium', 'low'].includes(severity) ? severity : 'medium',
+                body,
+              });
+              if (validInlineComments.length >= maxInlineComments) break;
+            }
+
+            const dedupedInlineComments = [];
+            const seen = new Set();
+            for (const c of validInlineComments) {
+              const key = `${c.path}:${c.line}:${c.body}`;
+              if (seen.has(key)) continue;
+              seen.add(key);
+              dedupedInlineComments.push(c);
+            }
+
+            const summaryBody = [
+              marker,
+              `Codex PR review (${model})`,
+              '',
+              summary,
+              '',
+              `Verdict: ${verdict}`,
+              suggestedTests.length ? '' : null,
+              suggestedTests.length ? `Suggested tests: ${suggestedTests.join('; ')}` : null,
+              diffWasTruncated ? '' : null,
+              diffWasTruncated ? 'Note: Diff context was truncated due to size limits; review coverage may be partial.' : null,
+              '',
+              '_Automated review generated for the latest server/ diff._',
+            ].filter(Boolean).join('\n');
+
+            const existing = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              per_page: 100,
+            });
+
+            const previous = existing.find((c) => c.user?.type === 'Bot' && c.body?.includes(marker));
+
+            if (previous) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: previous.id,
+                body: summaryBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: summaryBody,
+              });
+            }
+
+            const priorInline = await github.paginate(github.rest.pulls.listReviewComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+
+            for (const c of priorInline) {
+              if (c.user?.type === 'Bot' && typeof c.body === 'string' && c.body.includes(marker)) {
+                await github.rest.pulls.deleteReviewComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: c.id,
+                });
+              }
+            }
+
+            for (const c of dedupedInlineComments) {
+              const inlineBody = `${c.body}\n\n${marker}`;
+              await github.rest.pulls.createReviewComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                commit_id: pr.head.sha,
+                path: c.path,
+                line: c.line,
+                side: 'RIGHT',
+                body: inlineBody,
+              });
+            }
+
+            core.info(`Codex PR review completed for PR #${pr.number}`);
+
