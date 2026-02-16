@@ -57,7 +57,7 @@ export default function sandboxRoutes(fastify: FastifyInstance) {
                     query: { nextToken }
                 } = castRequest(request);
                 const response = await getSandboxesInfo(accountId, credentialsId, region, nextToken);
-                return reply.send(response);
+                return reply.send(response || { count: 0, items: [], nextToken: undefined });
             }
         )
         .get(

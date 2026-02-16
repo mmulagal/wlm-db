@@ -1,6 +1,8 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import { FastifyRequest } from 'fastify';
+import createError from 'http-errors';
+import { HttpErrorCodes } from '../utils/consts';
 import {
     GetRelationshipsSchema,
     GetWorkingEnvironmentSchema,
@@ -32,6 +34,9 @@ export default function workingEnvironmentRoutes(fastify: FastifyInstance) {
                 params: { workingEnvironmentId }
             } = castRequest(request);
             const response = await getWorkingEnvironment(workingEnvironmentId);
+            if (!response) {
+                throw createError(HttpErrorCodes.NOT_FOUND, 'Working environment not found');
+            }
             return reply.send(response);
         }
     );
