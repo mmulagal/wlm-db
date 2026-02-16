@@ -179,11 +179,54 @@ async function runLinuxOsPatchAssessment(
             return false;
         });
 
-        // Wait for AWS Patch Manager to prepare scan results before querying patch status
-        await sleep(5000);
+        let response;
+        let attemptCount = 0;
+        const maxAttempts = 3;
+        const retryDelay = 5000;
+        let hasMissingPatches;
 
-        // Get patch status results
-        const response = await getInstancesPatchStatus(credentialsId, region, instanceIds);
+        while (attemptCount < maxAttempts) {
+            attemptCount += 1;
+            // eslint-disable-next-line no-await-in-loop
+            await sleep(retryDelay);
+
+            // eslint-disable-next-line no-await-in-loop
+            response = await getInstancesPatchStatus(credentialsId, region, instanceIds);
+
+            hasMissingPatches = response?.every(
+                ({
+                    SecurityNonCompliantCount = 0,
+                    OtherNonCompliantCount = 0,
+                    CriticalNonCompliantCount = 0,
+                    missingPatchDetails
+                }) => {
+                    const totalNonCompliant =
+                        SecurityNonCompliantCount + OtherNonCompliantCount + CriticalNonCompliantCount;
+                    if (totalNonCompliant > 0 && missingPatchDetails && missingPatchDetails.length > 0) {
+                        return true;
+                    }
+                    if (totalNonCompliant === 0) {
+                        return true;
+                    }
+                    return false;
+                }
+            );
+
+            if (hasMissingPatches) {
+                logger.info(`Found missing patch details on attempt ${attemptCount}`);
+                break;
+            }
+
+            if (attemptCount < maxAttempts) {
+                logger.info(
+                    `Non-compliant patches found but missing details not yet available on attempt ${attemptCount}, retrying...`
+                );
+            }
+        }
+
+        if (!response || !hasMissingPatches) {
+            throw createError('Failed to get instance patch status after retries');
+        }
 
         const hostOsPatchAssessment = response?.map(
             ({
