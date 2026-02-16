@@ -12,7 +12,7 @@ interface AuthState {
     workspaceId?: string;
     pathname?: string;
     loading?: boolean;
-    isDemoMode?: boolean;
+    isDemoMode: boolean;
     features: any;
     isWorkloadFactory: boolean;
     refreshBlocked: boolean;

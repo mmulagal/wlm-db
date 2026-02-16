@@ -2,7 +2,7 @@ import { useAppSelector } from './store/storeHooks';
 import './App.css';
 import Home from './Home';
 import { BlueXPListeners, ThemeProvider, postBlueXPMessage } from '@netapp/design-system';
-import { FSxpertWidget } from 'fsxpert-widget';
+import { FSxpertWidget } from '@tlveng/fsxpert-widget';
 import ErrorPage from './common/ErrorPage/ErrorPage';
 import { useInitialize } from './utils/appConfig';
 import ComponentLoader from './common/ComponentLoader/ComponentLoader';
