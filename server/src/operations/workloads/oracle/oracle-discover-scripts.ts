@@ -314,7 +314,8 @@ const loadStorageDetectionModules = `
                             WHERE  destination IS NOT NULL
                             AND  LENGTH(TRIM(destination)) > 0
                         )
-                        WHERE LENGTH(TRIM(archive_dir)) > 0 ), '') || 
+                        WHERE LENGTH(TRIM(archive_dir)) > 0
+                        AND (archive_dir LIKE '/%' OR archive_dir LIKE '+%') ), '') || 
                 '],' || CHR(10) ||
                 '        "copies_per_directory": {' ||
                     NVL((SELECT LISTAGG('"' || archive_dir || '": 1', ', ') WITHIN GROUP (ORDER BY archive_dir)
@@ -331,7 +332,8 @@ const loadStorageDetectionModules = `
                             WHERE  destination IS NOT NULL
                             AND  LENGTH(TRIM(destination)) > 0
                         )
-                        WHERE LENGTH(TRIM(archive_dir)) > 0 ), '') ||
+                        WHERE LENGTH(TRIM(archive_dir)) > 0
+                        AND (archive_dir LIKE '/%' OR archive_dir LIKE '+%') ), '') ||
                 '}' || CHR(10) ||
                 '    },' || CHR(10) ||
                 '    "CONTROL_FILES": {' || CHR(10) ||
@@ -965,6 +967,11 @@ get_multipath_mount_details() {
         
         # Get Oracle DB file paths
         db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "NO" | tr -d '\n' | tr -d ' ')
+        # Validate JSON (e.g., ORA- error messages from ALTER SESSION failures in Data Guard can produce malformed output)
+        if ! echo "$db_paths_json" | jq empty 2>/dev/null; then
+            echo "{}"
+            return 1
+        fi
         oracleMountDetails="{"
         for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
             paths=$(echo "$db_paths_json" | jq -r ".$fileType.directories[]" 2>/dev/null)
@@ -1008,6 +1015,11 @@ get_multipath_mount_details() {
 
         # Get Oracle DB file paths
         db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "YES" | tr -d '\n' | tr -d ' ')
+        # Validate JSON (e.g., ORA- error messages from ALTER SESSION failures in Data Guard can produce malformed output)
+        if ! echo "$db_paths_json" | jq empty 2>/dev/null; then
+            echo "{}"
+            return 1
+        fi
         local isAsmLibSetup=$(is_asmlib_setup)
         local isAfdSetup=$(is_oracle_afd_setup)
                     
@@ -1822,6 +1834,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
             
             if [ "$isASMManaged" == "TRUE" ]; then
                 if [ "$is_cdb" == "YES" ]; then
+                    mountDetailsFailed=false
                     finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": true, \\"pdbMountDetails\\": {"
                     firstPdb=true
                     
@@ -1834,17 +1847,27 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                         
                         # Get mount details for this PDB
                         pdbMountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "$pdb_name")
+                        if [ $? -ne 0 ]; then mountDetailsFailed=true; fi
                         finalResult+="\\"$pdb_name\\": $pdbMountDetails"
                     done
                     
-                    finalResult+="}}"
+                    if [ "$mountDetailsFailed" = true ]; then
+                        finalResult+="}, \\"error\\": true}"
+                    else
+                        finalResult+="}}"
+                    fi
                 else
                     mountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "")
-                    finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": true, \\"mountDetails\\": $mountDetails}"
+                    if [ $? -ne 0 ]; then
+                        finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": true, \\"error\\": true}"
+                    else
+                        finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": true, \\"mountDetails\\": $mountDetails}"
+                    fi
                 fi
             else
                 if [ "$is_cdb" == "YES" ]; then
                     # Handle CDB with PDBs
+                    mountDetailsFailed=false
                     finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": false, \\"pdbMountDetails\\": {"
                     firstPdb=true
                     
@@ -1857,14 +1880,23 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                         
                         # Get mount details for this PDB
                         pdbMountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "$pdb_name")
+                        if [ $? -ne 0 ]; then mountDetailsFailed=true; fi
                         finalResult+="\\"$pdb_name\\": $pdbMountDetails"
                     done
                     
-                    finalResult+="}}"
+                    if [ "$mountDetailsFailed" = true ]; then
+                        finalResult+="}, \\"error\\": true}"
+                    else
+                        finalResult+="}}"
+                    fi
                 else
                     # Handle single instance DB
                     mountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "")
-                    finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": false, \\"mountDetails\\": $mountDetails}"
+                    if [ $? -ne 0 ]; then
+                        finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": false, \\"error\\": true}"
+                    else
+                        finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": false, \\"mountDetails\\": $mountDetails}"
+                    fi
                 fi
             fi
         } || {
@@ -1968,6 +2000,16 @@ const getMappedOntapDataVolumeForInstance = (
     for sid in $(echo "$mountPointData" | jq -r 'keys[]'); do
         log "Processing SID: $sid"
         sidData=$(echo "$mountPointData" | jq -r --arg sid "$sid" '.[$sid]')
+
+        # Check if mount detail retrieval failed for this SID
+        hasError=$(echo "$sidData" | jq -r '.error // false')
+        if [ "$hasError" == "true" ]; then
+            log "Mount detail retrieval failed for SID: $sid, skipping volume mapping"
+            sidMapping="{\\"$sid\\": {\\"error\\": true}}"
+            volumeMappings=$(echo "$volumeMappings" | jq --argjson sm "$sidMapping" '. += [$sm]')
+            continue
+        fi
+
         isCDB=$(echo "$sidData" | jq -r '.isCDB')
         isASMManaged=$(echo "$sidData" | jq -r '.isASMManaged')
         
