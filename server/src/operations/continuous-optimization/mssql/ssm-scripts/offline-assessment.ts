@@ -43,7 +43,9 @@ const MSSQL_ONE_TIME_WAD = `
     - High availability settings (FCI/AOAG)
     - Enterprise feature usage for license optimization
     
-    The assessment results are saved to a JSON file in the current directory.
+    The assessment results are saved to a JSON file. By default, files are saved
+    in the current working directory. You can specify a custom output path using
+    the -OutputPath parameter.
 .PARAMETER StorageEndpoint
     The storage system identifier. For FSx for ONTAP, use the file system ID
     (e.g., fs-0123456789abcdef0). For Cloud Volumes ONTAP or direct connections,
@@ -51,12 +53,20 @@ const MSSQL_ONE_TIME_WAD = `
 .PARAMETER Instance
     The name of the SQL Server instance to assess. Use 'MSSQLSERVER' for the
     default instance, or the instance name for named instances.
+.PARAMETER OutputPath
+    Optional. The directory path where JSON output files should be created.
+    If the path doesn't exist, it will be created. If the path cannot be used
+    (e.g., permission denied), files will be created in the current working
+    directory instead.
 .EXAMPLE
     .\\MSSQL_Assessment.ps1 -StorageEndpoint fs-0123456789abcdef0 -Instance MSSQLSERVER
     Runs assessment using FSx for ONTAP file system ID for the default SQL instance.
 .EXAMPLE
     .\\MSSQL_Assessment.ps1 -StorageEndpoint 10.0.1.100 -Instance SQLInstance1
     Runs assessment using ONTAP management IP for a named SQL instance.
+.EXAMPLE
+    .\\MSSQL_Assessment.ps1 -StorageEndpoint fs-0123456789abcdef0 -Instance MSSQLSERVER -OutputPath "C:\\AssessmentResults"
+    Runs assessment and saves JSON files to the specified output directory.
 .NOTES
     Version: ${OFFLINE_ASSESSMENT_SCRIPT_VERSION}
     Requires: PowerShell 5.1 or later, SQL Server sqlcmd utility
@@ -67,7 +77,10 @@ param(
     [string]$StorageEndpoint,
 
     [Parameter(Mandatory = $true)]
-    [string]$Instance
+    [string]$Instance,
+
+    [Parameter(Mandatory = $false)]
+    [string]$OutputPath = $null
 )
 
 # Script Version
@@ -484,6 +497,26 @@ Function Get-FSxNDetails {
     }
 }
 
+Function Write-JsonFile {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Data,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath
+    )
+    
+    try {
+        $jsonContent = $Data | ConvertTo-Json -Depth 10 -Compress
+        $jsonContent | Out-File -FilePath $FilePath -Encoding UTF8 -ErrorAction Stop
+        Write-Log "File written to: $FilePath"
+        return $true
+    } catch {
+        Write-Log -Level "WARNING" -Message "Failed to write to '$FilePath': $($_.Exception.Message)"
+        return $false
+    }
+}
+
 ${mappedVolumesHelperFunctions}
 
 ${TEST_ISCSI_SESSIONS}
@@ -644,7 +677,20 @@ $FinalResponse['rawdata'] = @{
 
 # Define output filename once (used in both success and error paths)
 $outputFileName = "MSSQL_Assessment_v1_$($Instance)_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
-$outputFilePath = Join-Path -Path (Get-Location) -ChildPath $outputFileName
+
+# Build output file path with fallback to current directory
+$outputFilePath = Join-Path -Path (Get-Location).Path -ChildPath $outputFileName
+if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
+    try {
+        $outputDirectory = [System.IO.Path]::GetFullPath($OutputPath)
+        if (-not (Test-Path -Path $outputDirectory -PathType Container)) {
+            New-Item -Path $outputDirectory -ItemType Directory -Force | Out-Null
+        }
+        $outputFilePath = Join-Path -Path $outputDirectory -ChildPath $outputFileName
+    } catch {
+        Write-Log -Level "WARNING" -Message "Invalid output path '$OutputPath': $($_.Exception.Message). Using current directory."
+    }
+}
 
 try {
     $additionalFields = 'svm'
@@ -1146,17 +1192,24 @@ ${SERVER_DETAILS}
         ${hostLevelHighAvailabilityAssessmentTemplate}
     }
 
-    $FinalResponse | ConvertTo-Json -Depth 10 -Compress | Out-File -FilePath $outputFilePath -Encoding UTF8
+    # Write the output file with fallback to current directory if write fails
+    if (-not (Write-JsonFile -Data $FinalResponse -FilePath $outputFilePath)) {
+        $outputFilePath = Join-Path -Path (Get-Location).Path -ChildPath $outputFileName
+        Write-JsonFile -Data $FinalResponse -FilePath $outputFilePath | Out-Null
+    }
+    
     Write-Log "Assessment completed successfully"
-    Write-Log "Assessment results written to: $outputFilePath"
-
     return $outputFilePath
 
 } catch {
     $errorResponse = @{ error = $_.Exception.Message }
-    $errorResponse | ConvertTo-Json -Depth 10 -Compress | Out-File -FilePath $outputFilePath -Encoding UTF8
-    Write-Log "Assessment failed: $($_.Exception.Message)" -Level "ERROR"
-    Write-Log "Error details written to: $outputFilePath" -Level "ERROR"
+    # Write error file with fallback to current directory if write fails
+    if (-not (Write-JsonFile -Data $errorResponse -FilePath $outputFilePath)) {
+        $outputFilePath = Join-Path -Path (Get-Location).Path -ChildPath $outputFileName
+        Write-JsonFile -Data $errorResponse -FilePath $outputFilePath | Out-Null
+    }
+    
+    Write-Log -Level "ERROR" -Message "Assessment failed: $($_.Exception.Message)"
     return $outputFilePath
 }
 `;

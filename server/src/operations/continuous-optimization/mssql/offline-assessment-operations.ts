@@ -20,7 +20,7 @@ import { calculateMaxDOPDrift } from './maxdop-assessment-operations';
 import { getHighAvailabilityDriftData } from './resilience-assessment-operation';
 import { generateSqlResourceId } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
-import { HttpErrorCodes } from '../../../utils/consts';
+import { HttpErrorCodes, AWS_REGIONS } from '../../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentStatus,
@@ -172,6 +172,7 @@ interface MSSQLOfflineAssessmentMetadataType {
     vmName?: string;
     virtualNetworkId?: string;
     virtualNetworkName?: string;
+    region?: string;
     windowsClusterNodes?: Array<{
         Node: string;
         State?: string;
@@ -364,7 +365,8 @@ async function uploadMssqlOfflineAssessment(
         osVersion,
         vmName,
         virtualNetworkId,
-        virtualNetworkName
+        virtualNetworkName,
+        region: metadataRegion
     } = metadata as unknown as MSSQLOfflineAssessmentMetadataType;
 
     if (!ec2InstanceId) {
@@ -405,7 +407,7 @@ async function uploadMssqlOfflineAssessment(
         },
         { hostLevelDetails, instanceLevelDetails },
         credentialsId,
-        region
+        metadataRegion || region
     );
 
     return { jobId };
@@ -587,11 +589,16 @@ async function fetchMssqlOfflineAssessmentPerAccount(
         return { items: [], count: 0 };
     }
 
-    // Fetch assessment results for each item with throttling to avoid overwhelming the system
     const assessmentItems = await Promise.all(
         items.map(
             throat(3, async item => {
-                const { resource_id: resourceId, database_instance_id: databaseInstanceId, metadata } = item;
+                const {
+                    resource_id: resourceId,
+                    database_instance_id: databaseInstanceId,
+                    metadata,
+                    credentials_id: itemCredentialsId,
+                    region: itemRegion
+                } = item;
                 const { databaseInstanceName, windowsClusterNodes, vmName, virtualNetworkId, virtualNetworkName } =
                     metadata as unknown as MSSQLOfflineAssessmentMetadataType;
                 const clusterNodes = windowsClusterNodes?.map(node => ({
@@ -600,13 +607,17 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                     nodeState: node.State
                 }));
 
+                const recordCredentialsId = itemCredentialsId || credentialsId || '';
+                const recordRegion = itemRegion || region || '';
+                const regionName = recordRegion && AWS_REGIONS.has(recordRegion) ? AWS_REGIONS.get(recordRegion) : '';
+
                 try {
                     const assessments = await fetchMssqlOfflineAssessment(
                         accountId,
                         resourceId,
                         databaseInstanceId,
-                        credentialsId,
-                        region,
+                        recordCredentialsId ?? undefined,
+                        recordRegion ?? undefined,
                         undefined,
                         item
                     );
@@ -614,8 +625,9 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                         resourceId,
                         databaseInstanceId,
                         databaseInstanceName,
-                        credentialsId,
-                        region,
+                        credentialsId: recordCredentialsId,
+                        region: recordRegion,
+                        regionName,
                         vmName,
                         virtualNetworkId,
                         virtualNetworkName,
@@ -628,8 +640,9 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                         resourceId,
                         databaseInstanceId,
                         databaseInstanceName,
-                        credentialsId,
-                        region,
+                        credentialsId: recordCredentialsId || '',
+                        region: recordRegion || '',
+                        regionName: regionName || '',
                         vmName,
                         virtualNetworkId,
                         virtualNetworkName,

@@ -50,6 +50,7 @@ const OfflineAssessmentListResponse = Type.Object({
             databaseInstanceName: Type.Optional(Type.String()),
             credentialsId: Type.Optional(Type.String()),
             region: Type.Optional(Type.String()),
+            regionName: Type.Optional(Type.String()),
             vmName: Type.Optional(Type.String()),
             virtualNetworkId: Type.Optional(Type.String()),
             virtualNetworkName: Type.Optional(Type.String()),
