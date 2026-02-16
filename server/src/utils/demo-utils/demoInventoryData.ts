@@ -1000,7 +1000,8 @@ async function discoverDemoDataOracle(
     region: string,
     credentialsId: string,
     fsxId: string,
-    ebsVolId: string
+    ebsVolId: string,
+    fsxIdStandby?: string
 ) {
     if (isEmpty(ORACLE_DISCOVERY_RES.items)) {
         const discoveryRes = [
@@ -1369,9 +1370,9 @@ async function discoverDemoDataOracle(
                             {
                                 type: 'FSXN',
                                 id: fsxId,
-                                svmId: 'svm-098b3b2800853b868',
+                                svmId: 'svm-0a333def9bfd29537',
                                 fileSystemStorageType: 'SSD',
-                                fileSystemName: 'wlmdb-fsx-1737951297350',
+                                fileSystemName: 'demo-fsx',
                                 deploymentType: 'MULTI_AZ_1',
                                 zones: ['ap-south-1c', 'ap-south-1b'],
                                 mountDetails: [
@@ -1465,7 +1466,7 @@ async function discoverDemoDataOracle(
                         storage: [
                             {
                                 type: 'FSXN',
-                                id: fsxId,
+                                id: fsxIdStandby || fsxId,
                                 svmId: 'svm-098b3b2800853b868',
                                 fileSystemStorageType: 'SSD',
                                 fileSystemName: 'wlmdb-fsx-1737951297350',

@@ -228,6 +228,21 @@ async function createDemoResourcesPerRegion(
             snapshotPolicy: 'daily_weekretention'
         };
         await createFileSystemForDemo(credentialsId, region, fsxConfiguration, true);
+
+        // Create a second FSx for the DataGuard standby instance
+        const standbyFsxConfiguration = {
+            fsxDeploymentMode: 'MULTI_AZ_1',
+            fsxFileSystemId: randomUUID(),
+            fsxUsername: 'wlmdb-user',
+            fsxPassword: randomize('a0', 10),
+            databaseSize: 1024,
+            ontapSgGroupId: [randomize('a0', 10)],
+            fsxVolThroughput: 256,
+            fsxIOPS: 10,
+            encryptionKey: randomize('a0', 10),
+            snapshotPolicy: 'daily_weekretention'
+        };
+        await createFileSystemForDemo(credentialsId, region, standbyFsxConfiguration, false);
     }
 
     const jobs = await listJobs(accountId, credentialsId, region);
@@ -470,6 +485,7 @@ async function returnInventorydata(
 ) {
     logger.info('Generate and return inventory data for demo', instances);
     const fsxId = `fs-${randomize('0', 8)}`;
+    const fsxIdStandby = `fs-${randomize('0', 8)}`;
     const ebsVolId = `vol-${randomize('a0', 17)}`;
     const inventoryData =
         databaseType === DatabaseTypes.MS_SQL_SERVER
@@ -479,7 +495,8 @@ async function returnInventorydata(
                   credentialsId,
                   region,
                   fsxId,
-                  ebsVolId
+                  ebsVolId,
+                  fsxIdStandby
               )) as unknown as DiscoverOracleResponseBodyType);
 
     if (instances !== undefined && instances.length > 0) {
