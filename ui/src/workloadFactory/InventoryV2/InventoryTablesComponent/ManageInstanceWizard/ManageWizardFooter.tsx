@@ -21,6 +21,7 @@ import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificat
 import {
     setInventoryTableData,
     setManageSingleInstanceReadiness,
+    setManageSingleInstanceData,
     setSelectedFSxForOntapCredentials,
     setSelectedMultiDetectInstances,
     setFsxAuthStatus,
@@ -386,17 +387,42 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             manageSingleInstanceData
                         );
                         dispatch(setInventoryTableData(updatedInventoryTableData));
-                        if (result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness) {
-                            dispatch(
-                                setManageSingleInstanceReadiness(
-                                    result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness
-                                )
-                            );
+
+                        // Get manageReadiness from API response
+                        const manageReadinessFromResponse =
+                            result?.data?.items?.[0]?.registerDetails?.[0]?.manageReadiness;
+
+                        if (manageReadinessFromResponse) {
+                            dispatch(setManageSingleInstanceReadiness(manageReadinessFromResponse));
                         }
+
                         if (result?.data?.items?.[0]?.replicaInfo) {
+                            // Create updated instance data with authorized flag and manageReadiness
+                            const updatedInstanceData = {
+                                ...manageSingleInstanceData,
+                                authorized: true,
+                                manageReadiness:
+                                    manageReadinessFromResponse || manageSingleInstanceData?.manageReadiness
+                            };
+
+                            // Update manageSingleInstanceData in Redux
+                            dispatch(setManageSingleInstanceData(updatedInstanceData));
+
+                            // Update instanceAuthStatus for the primary instance so isInstanceAuthenticated can find it
+                            const primaryInstanceId = manageSingleInstanceData?.databaseInstanceName;
+
+                            if (primaryInstanceId) {
+                                dispatch(
+                                    setInstanceAuthStatus({
+                                        instanceId: primaryInstanceId,
+                                        status: RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success'
+                                    })
+                                );
+                            }
+                            // Pass the updated instance data (not the old reference)
                             handleReplicaAuthenticationAndDialog(
                                 result?.data?.items?.[0],
-                                manageSingleInstanceData,
+                                updatedInstanceData,
                                 credList,
                                 t,
                                 setDialog,

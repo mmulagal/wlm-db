@@ -49,7 +49,8 @@ export const wrapInstanceForBulk = (instance: any) => {
         return instance;
     }
 
-    const isAuthorized = isAlreadyDetectedCheckBulkSelection(instance);
+    // Use existing authorized flag if present, otherwise calculate from data
+    const isAuthorized = instance?.authorized === true ? true : isAlreadyDetectedCheckBulkSelection(instance);
 
     return {
         ...instance,
@@ -59,7 +60,9 @@ export const wrapInstanceForBulk = (instance: any) => {
         }`,
         value: instance?.name,
         data: instance,
-        authorized: isAuthorized
+        authorized: isAuthorized,
+        // Preserve manageReadiness at top level if it exists
+        manageReadiness: instance?.manageReadiness
     };
 };
 
@@ -995,16 +998,24 @@ export const handleReplicaAuthenticationAndDialog = async (
                         }
                     });
 
-                    // Update selectedMultiDetectInstances with manageReadiness
+                    // Update selectedMultiDetectInstances with manageReadiness and authorized flag
                     const updatedInstances = replicaSelectedRowsForManage.map((instance: any) => {
                         const instanceData = instance.data || instance;
                         const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
 
+                        // Check if this instance was successfully authenticated
+                        const isSuccessfullyAuthenticated =
+                            authStatusUpdates[instanceId]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
+
                         if (instanceId && manageReadinessUpdates[instanceId]) {
-                            // Update the instance with new manageReadiness
+                            // Update the instance with new manageReadiness and authorized flag
+                            // Set manageReadiness at top level (for consistency with updateDetectBulkResponse)
+                            // and inside data (for backward compatibility)
                             if (instance.data) {
                                 return {
                                     ...instance,
+                                    authorized: isSuccessfullyAuthenticated,
+                                    manageReadiness: manageReadinessUpdates[instanceId],
                                     data: {
                                         ...instance.data,
                                         manageReadiness: manageReadinessUpdates[instanceId]
@@ -1013,12 +1024,42 @@ export const handleReplicaAuthenticationAndDialog = async (
                             }
                             return {
                                 ...instance,
+                                authorized: isSuccessfullyAuthenticated,
                                 manageReadiness: manageReadinessUpdates[instanceId]
+                            };
+                        }
+                        // Even if no manageReadiness update, still update authorized flag if authenticated
+                        if (isSuccessfullyAuthenticated) {
+                            return {
+                                ...instance,
+                                authorized: true
                             };
                         }
                         return instance;
                     });
                     dispatch(setSelectedMultiDetectInstances(updatedInstances));
+                } else {
+                    // Even if no manageReadiness updates, we should still update authorized flag for successful instances
+                    const hasSuccessfulAuths = Object.values(authStatusUpdates).some(
+                        status => status?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()
+                    );
+                    if (hasSuccessfulAuths) {
+                        const updatedInstances = replicaSelectedRowsForManage.map((instance: any) => {
+                            const instanceData = instance.data || instance;
+                            const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+                            const isSuccessfullyAuthenticated =
+                                authStatusUpdates[instanceId]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
+
+                            if (isSuccessfullyAuthenticated) {
+                                return {
+                                    ...instance,
+                                    authorized: true
+                                };
+                            }
+                            return instance;
+                        });
+                        dispatch(setSelectedMultiDetectInstances(updatedInstances));
+                    }
                 }
 
                 // Check if all instances are now authenticated
