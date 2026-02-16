@@ -5,6 +5,7 @@ import { ReactComponent as OnboardingIllustration } from '../../../../../assets/
 import { ReactComponent as OnboardingIllustration2 } from '../../../../../assets/onboarding2.svg';
 import { ReactComponent as CarousalLeft } from '../../../../../assets/Carousel Arrow left.svg';
 import { ReactComponent as CarousalRight } from '../../../../../assets/Carousel Arrow right.svg';
+import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import styles from './ScrollableCard.module.scss';
 import { DBType } from '../../../../../utils/consts';
 
@@ -16,7 +17,7 @@ const ScrollableCard = ({ dbType }: { dbType: string }) => {
             {activeSlide === 0 && (
                 <div className={styles.rightSection}>
                     <div className={styles.imageTextSection}>
-                        <div onClick={() => setActiveSlide(1)} style={{ cursor: 'pointer' }}>
+                        <div onClick={() => setActiveSlide(1)} className={CommonStyles.carousalClass}>
                             <CarousalLeft />
                         </div>
                         <div className={styles.topSection}>
@@ -43,7 +44,7 @@ const ScrollableCard = ({ dbType }: { dbType: string }) => {
                             </div>
                         </div>
 
-                        <div onClick={() => setActiveSlide(1)} style={{ cursor: 'pointer' }}>
+                        <div onClick={() => setActiveSlide(1)} className={CommonStyles.carousalClass}>
                             <CarousalRight />
                         </div>
                     </div>
@@ -53,7 +54,7 @@ const ScrollableCard = ({ dbType }: { dbType: string }) => {
             {activeSlide === 1 && (
                 <div className={styles.rightSection}>
                     <div className={styles.secondaryTopSection}>
-                        <div onClick={() => setActiveSlide(0)} style={{ cursor: 'pointer' }}>
+                        <div onClick={() => setActiveSlide(0)} className={CommonStyles.carousalClass}>
                             <CarousalLeft />
                         </div>
                         <div className={styles.imageTextSecondarySection}>
@@ -113,7 +114,7 @@ const ScrollableCard = ({ dbType }: { dbType: string }) => {
                             </div>
                         </div>
 
-                        <div onClick={() => setActiveSlide(0)} style={{ cursor: 'pointer' }}>
+                        <div onClick={() => setActiveSlide(0)} className={CommonStyles.carousalClass}>
                             <CarousalRight />
                         </div>
                     </div>
