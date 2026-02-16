@@ -103,6 +103,11 @@ export const formatInventoryTableData = (managedData: { [key: string]: ManagedHo
  * Formats offline assessment data (WAD data) to match the InventoryTableData structure.
  * This data comes from the getAllOfflineMssqlHostsAssessmentData API.
  * All data is marked with isWad: true to indicate it's offline assessment data.
+ *
+ * New API structure: Each item in the array is a single instance with flat structure:
+ * { resourceId, databaseInstanceId, databaseInstanceName, credentialsId, region, regionName,
+ *   vmName, virtualNetworkId, virtualNetworkName, clusterNodes, assessments }
+ * Items are grouped by resourceId + vmName to create host entries.
  */
 export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [key: string]: InventoryTableData } => {
     const result: { [key: string]: InventoryTableData } = {};
@@ -111,54 +116,88 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
         return result;
     }
 
-    offlineData.forEach((hostData: any) => {
-        const hostId = hostData?.databaseHostId || `wad-${hostData?.vmInstanceId}`;
-        const credId = hostData?.credentialId || hostData?.credentialsId || 'wad';
-        const regionId = hostData?.regionId || hostData?.region || 'wad';
+    // Get credential mapping from state to resolve credentialName and accountId
+    const state = store.getState();
+    const { credentialMapping } = state?.headers;
 
-        // Create a unique key for this host entry
-        const uniqueKey = `${hostId}_${credId}_${regionId}`;
+    // Group items by host (resourceId + vmName) since each item is now a single instance
+    const hostGroups: { [key: string]: any[] } = {};
 
-        // Format instances from instancesAssessment
+    offlineData.forEach((instanceData: any) => {
+        // Use resourceId as host identifier, fallback to vmName
+        const hostId = instanceData?.resourceId || `wad-${instanceData?.vmName}`;
+        const credId = instanceData?.credentialId || instanceData?.credentialsId || 'wad';
+        const regionId = instanceData?.regionId || instanceData?.region || 'wad';
+
+        // Create a unique key for grouping instances by host
+        const groupKey = `${hostId}_${credId}_${regionId}`;
+
+        if (!hostGroups[groupKey]) {
+            hostGroups[groupKey] = [];
+        }
+        hostGroups[groupKey].push(instanceData);
+    });
+
+    // Create inventory entries for each host group
+    Object.keys(hostGroups).forEach((groupKey: string) => {
+        const instances = hostGroups[groupKey];
+        const firstInstance = instances[0]; // Use first instance for host-level data
+
+        const hostId = firstInstance?.resourceId || `wad-${firstInstance?.vmName}`;
+        const credId = firstInstance?.credentialId || firstInstance?.credentialsId || 'wad';
+        const regionId = firstInstance?.regionId || firstInstance?.region || 'wad';
+
+        // Format instances from the grouped data
         const formattedInstances: InventoryTableInstanceDatInterface[] = [];
 
-        if (hostData?.instancesAssessment && Array.isArray(hostData.instancesAssessment)) {
-            hostData.instancesAssessment.forEach((instance: any) => {
-                const assessments = instance?.assessments;
-                const storageConfig = assessments?.storage;
+        instances.forEach((instanceData: any) => {
+            const assessments = instanceData?.assessments;
 
-                formattedInstances.push({
-                    databaseInstanceId: instance?.databaseInstanceId,
-                    databaseInstanceName: instance?.databaseInstanceName,
-                    databaseHostId: hostId, // Added for WAD API calls
-                    status: INVENTORY_STATUS.CASE_SENSITIVE_UP, // Hardcoded until status is available from API
-                    statusColText: INVENTORY_STATUS.UNMANAGED,
-                    sqlServerDeploymentType: instance?.deploymentType || assessments?.deploymentType,
-                    fsxId: instance?.storageEndpoint || assessments?.fileSystemId,
-                    isDetected: false,
-                    isManaged: false,
-                    isWad: true,
-                    wadAssessmentData: instance?.assessments,
-                    storage: storageConfig
-                        ? {
-                              fsxn: {
-                                  size: storageConfig?.optimisedCount?.total,
-                                  used: storageConfig?.optimisedCount?.optimised
-                              }
-                          }
-                        : undefined
+            // Build storage array from assessments.storage.fileSystems for instance level (same as host level logic)
+            const instanceStorageArray: DiscoveredStorageObj[] = [];
+            const instanceFileSystems =
+                assessments?.storage?.fileSystems ||
+                (assessments?.storageEndpoint ? [assessments?.storageEndpoint] : []);
+            if (instanceFileSystems && Array.isArray(instanceFileSystems)) {
+                instanceFileSystems.forEach((fsId: string) => {
+                    instanceStorageArray.push({
+                        id: fsId,
+                        protocol: '',
+                        svmId: '', // Not available in WAD assessment data
+                        type: DETECT_HOST_VAR.FSXN
+                    });
                 });
-            });
-        }
+            }
 
-        // Get VM details from vmNodes if available
+            formattedInstances.push({
+                databaseInstanceId: instanceData?.databaseInstanceId,
+                databaseInstanceName: instanceData?.databaseInstanceName,
+                databaseHostId: hostId, // Added for WAD API calls
+                status: INVENTORY_STATUS.CASE_SENSITIVE_UP, // Hardcoded until status is available from API
+                statusColText: INVENTORY_STATUS.UNMANAGED,
+                sqlServerDeploymentType: assessments?.deploymentType,
+                fsxId: assessments?.storageEndpoint,
+                isDetected: false,
+                isManaged: false,
+                isWad: true,
+                wadAssessmentData: assessments,
+                storage: instanceStorageArray.length > 0 ? instanceStorageArray : undefined
+            });
+        });
+
+        // Get VM details from clusterNodes if available (new structure uses clusterNodes instead of vmNodes)
         const ec2Details: EC2DetailsInterface[] = [];
-        if (hostData?.vmNodes && Array.isArray(hostData.vmNodes)) {
-            hostData.vmNodes.forEach((node: any) => {
+        if (firstInstance?.clusterNodes && Array.isArray(firstInstance.clusterNodes)) {
+            firstInstance.clusterNodes.forEach((node: any) => {
                 ec2Details.push({
                     id: node?.vmInstanceId,
                     name: node?.nodeName
                 });
+            });
+        } else if (firstInstance?.vmName || firstInstance?.vmId) {
+            ec2Details.push({
+                id: firstInstance?.vmId,
+                name: firstInstance?.vmName
             });
         }
 
@@ -166,16 +205,16 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
         const inventoryEntry: InventoryTableData = {
             id: hostId,
             resourceId: hostId,
-            name: hostData?.databaseHostName || hostData?.hostname || `WAD Host ${hostId}`,
+            name: firstInstance?.assessments?.databaseHostName || `${hostId}`,
             hostType: DBType.MSSQL, // WAD data is for MSSQL
-            ec2InstanceId: hostData?.vmInstanceId,
-            ec2InstanceName: hostData?.vmName || hostData?.hostname,
+            ec2InstanceId: firstInstance?.resourceId,
+            ec2InstanceName: firstInstance?.vmName,
             status: INVENTORY_STATUS.ONLINE, // Hardcoded until status is available from API
             ssmState: INVENTORY_STATUS.ONLINE, // Hardcoded until status is available from API
             totalInstance: formattedInstances.length,
             managedInstance: 0,
-            vpcId: hostData?.virtualNetworkId,
-            vpcName: hostData?.virtualNetworkName,
+            vpcId: firstInstance?.virtualNetworkId,
+            vpcName: firstInstance?.virtualNetworkName,
             action: '', // No actions available for WAD data
             actionDisable: true,
             isManagedHost: false,
@@ -186,12 +225,15 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
             hasInstanceData: formattedInstances.length > 0,
             credentialId: credId !== 'wad' ? credId : undefined,
             regionId: regionId !== 'wad' ? regionId : undefined,
+            credentialName: credentialMapping?.[credId]?.name,
+            accountId: credentialMapping?.[credId]?.providerAccountId,
+            regionName: firstInstance?.regionName,
             isWad: true, // Mark as WAD (offline assessment) data
             ec2Details: ec2Details.length > 0 ? ec2Details : undefined,
             statusColText: INVENTORY_STATUS.UNMANAGED // Hardcoded until status is available from API
         };
 
-        result[uniqueKey] = inventoryEntry;
+        result[groupKey] = inventoryEntry;
     });
 
     return result;

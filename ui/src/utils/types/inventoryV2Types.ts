@@ -199,6 +199,7 @@ export interface InventoryTableData {
     platform?: string;
     protocol?: string;
     isWad?: boolean;
+    storage?: Array<DiscoveredStorageObj>;
 }
 
 export interface InventoryTableInstanceDatInterface {
@@ -226,24 +227,26 @@ export interface InventoryTableInstanceDatInterface {
     performance?: {
         assessment?: string;
     };
-    storage?: {
-        fsxn?: {
-            protocol?: Array<string>;
-            size?: number;
-            used?: number;
-            spaceSavings?: number;
-            spaceSavingsPercentage?: number;
-        };
-        fsxw?: {
-            size?: number;
-            used?: number;
-            spaceSavings?: number;
-            spaceSavingsPercentage?: number;
-        };
-        ebs?: {
-            size?: number;
-        };
-    };
+    storage?:
+        | {
+              fsxn?: {
+                  protocol?: Array<string>;
+                  size?: number;
+                  used?: number;
+                  spaceSavings?: number;
+                  spaceSavingsPercentage?: number;
+              };
+              fsxw?: {
+                  size?: number;
+                  used?: number;
+                  spaceSavings?: number;
+                  spaceSavingsPercentage?: number;
+              };
+              ebs?: {
+                  size?: number;
+              };
+          }
+        | Array<DiscoveredStorageObj>;
     allocatedCapacity?: number;
     databaseServer?: {
         activeConnections?: string;

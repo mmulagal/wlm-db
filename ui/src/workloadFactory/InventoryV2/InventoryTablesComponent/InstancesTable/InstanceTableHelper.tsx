@@ -1125,8 +1125,8 @@ export const refreshOfflineAssessmentData = async (
         if (result && !result?.error && result?.data) {
             const newAssessmentData = [
                 ...assessmentData,
-                ...(Array.isArray(result?.data?.assessmentsPerAccount)
-                    ? result.data.assessmentsPerAccount.map((assessment: any) => ({
+                ...(Array.isArray(result?.data?.items)
+                    ? result.data.items.map((assessment: any) => ({
                           ...assessment,
                           isWad: true // Mark as WAD (offline) data
                       }))

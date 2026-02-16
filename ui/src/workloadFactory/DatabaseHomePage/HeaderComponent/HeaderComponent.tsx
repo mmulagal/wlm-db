@@ -168,7 +168,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         perfMssqlInstancesData,
         potentialSavingsHostData,
         createResourceApiLoading,
-        landingFromWizard
+        landingFromWizard,
+        offlineMssqlHostAssessmentLoading
     } = useAppSelector(state => state.inventoryV2);
     const { databaseHostsLoading, fullHostDataLoading } = useAppSelector(state => state.inventoryV2.getDatabaseHosts);
     const { databaseHostsLoading: pgsqlDatabaseHostsLoading, fullHostDataLoading: pgsqlFullHostDataLoading } =
@@ -510,7 +511,8 @@ const HeaderComponent = ({ tab }: Tab) => {
             !discoverOracleHostLoading &&
             !discoverPgsqlHostLoading &&
             !fsxCredentialStatusLoading &&
-            !fsxCredentialStatusLoadingOracle
+            !fsxCredentialStatusLoadingOracle &&
+            !offlineMssqlHostAssessmentLoading
         ) {
             const currentCredId = headerSelectedCred?.data?.credentialsId;
             const currentRegionId = headerSelectedRegion?.data?.regionCode;
@@ -633,7 +635,8 @@ const HeaderComponent = ({ tab }: Tab) => {
         pgsqlInstancesData,
         oracleInstancesData,
         perfMssqlInstancesData,
-        potentialSavingsHostData
+        potentialSavingsHostData,
+        offlineMssqlHostAssessmentLoading
     ]);
 
     // Function to check if all APIs are completed for a cred-region set
