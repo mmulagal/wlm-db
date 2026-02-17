@@ -27,10 +27,19 @@ interface AllWfCredentials {
  * Retuns an array of provided credentialsType
  * credentials added to that account by calling SaS credentials API
  * @param credentialsType
+ * @param includeInvalid - Optional flag to include invalid credentials (default: false for AWS_ASSUME_ROLE)
  * @returns Array of credentials added to BlueXP
  */
-async function getAllWfCredentials(credentialsType: string, nextToken?: string): Promise<AllWfCredentials> {
-    logger.info('Getting all workload factory credentials for credentials type ', { credentialsType, nextToken });
+async function getAllWfCredentials(
+    credentialsType: string,
+    nextToken?: string,
+    includeInvalid = false
+): Promise<AllWfCredentials> {
+    logger.info('Getting all workload factory credentials for credentials type ', {
+        credentialsType,
+        nextToken,
+        includeInvalid
+    });
 
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
 
@@ -44,7 +53,12 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
         authToken = token as string;
     }
 
-    const filterString = encodeURIComponent(`type eq '${credentialsType}'`);
+    // Build filter string: always filter by type, and exclude invalid credentials by default for AWS_ASSUME_ROLE
+    let filterString = `type eq '${credentialsType}'`;
+    if (!includeInvalid) {
+        filterString += ' and invalid eq false';
+    }
+    filterString = encodeURIComponent(filterString);
 
     return gotInstanceForInternalRequest
         .get(`accounts/${accountId}/credentials/v1/credentials?filter=${filterString}`, {
