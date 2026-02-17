@@ -1109,8 +1109,6 @@ export const GENERAL = {
         'You can adjust SQL Server, infrastructure, and storage settings to analyze for potential savings between your environment and SQL Server using FSx for ONTAP.',
     INSTANCE_INFORMATION: 'Instance information:',
     ES_SAVE_CONFIG: 'Save configuration',
-    ES_SAVE_CONFIG_DESC:
-        'You can save this Microsoft SQL Server on AWS EC2 and FSx for ONTAP file system configuration and load the configuration later for a future deployment.',
     ES_SAVE_ERROR: 'This configuration can not be saved',
     MS_SQL_TWO_INSTANCES: 'Microsoft SQL Server EC2 instance - 2 instances',
     MS_SQL_SINGLE_INSTANCES: 'Microsoft SQL Server EC2 instance',
@@ -1145,7 +1143,6 @@ export const GENERAL = {
         'No EBS snapshots authenticated. If you would like to compare the cost of EBS snapshots to FSx for ONTAP snapshots, update the snapshot frequency.',
     NOTICE_MESSAGE_COST_SAVINGS:
         'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.',
-    PDF_DOWNLOAD_SUCCESS: 'PDF file downloaded successfully.',
     REPORT_DOWNLOAD_SUCCESS: 'Report downloaded successfully',
     REPORT_DOWNLOAD_FAIL: 'Failed to download the report. Please try again.',
     MANAGE_HOST_DISABLED: 'Supported only for the FSx for ONTAP storage type',
@@ -1257,7 +1254,6 @@ export const GENERAL = {
     // Explore savings view calculations related consts
     MS_EBS_CALCULATION: 'Microsoft SQL Server on EBS calculation',
     MS_FSXW_CALCULATION: 'Microsoft SQL on FSx for Windows File Server calculation',
-    MS_ONTAP_CALCULATION: 'Microsoft SQL EC2 on FSx for ONTAP calculation',
     ES_CLONES: 'Clones',
     ES_SHADOW_COPY: 'Shadow copy',
     ES_EBS: 'Elastic Block Storage',

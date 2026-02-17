@@ -1,7 +1,7 @@
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import { NavigateFunction } from 'react-router-dom';
 import { Dispatch } from '@reduxjs/toolkit';
-import { TFunction } from 'i18next';
+import i18next, { TFunction } from 'i18next';
 import store from '../../store/store';
 import {
     resetServerDetailsCredentials,
@@ -55,10 +55,13 @@ import {
     setTriggerBulkDataFetch
 } from '../../store/workloadFactory/exploreSavingsBulkSlice';
 
-export const onClickESHostOnPrem = (
+const dispatchCommonOnPremActions = (
     dispatch: any,
     rowData: any,
     isWorkloadFactory: boolean,
+    urlType: string,
+    savingsCalcMode: string,
+    defaultServerName: string,
     navigate?: NavigateFunction
 ) => {
     if (navigate && isWorkloadFactory) {
@@ -69,48 +72,15 @@ export const onClickESHostOnPrem = (
         payload: {
             pathname: `${
                 isWorkloadFactory
-                    ? './storage-saving-calculator?type=onprem&mode=auto'
-                    : '../fsxdb/storage-saving-calculator?type=onprem&mode=auto'
+                    ? `./storage-saving-calculator?type=${urlType}&mode=auto`
+                    : `../fsxdb/storage-saving-calculator?type=${urlType}&mode=auto`
             }`,
             replace: true
         }
     });
-    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.ONPREM));
-
-    // Set single host in bulk selection array to use accordion UI
-    dispatch(setSelectedRowsForExploreSavingsOnPremBulk([rowData]));
-    dispatch(setOnPremTCOAction(''));
-
+    dispatch(setSavingsCalculatorFrom(savingsCalcMode));
     dispatch(setDisableState(true));
     dispatch(setMonthlyChangeRate(3));
-
-    if (rowData?.sqlServerInstances?.length) {
-        const storagePerfAndCompute: any = {};
-        rowData?.sqlServerInstances?.map((instance: any) => {
-            // Use same key format as bulk mode: resourceId_instanceName
-            const uniqueKey = `${rowData.resourceId}_${instance?.sqlInstanceName}`;
-            if (!storagePerfAndCompute?.[uniqueKey]) {
-                storagePerfAndCompute[uniqueKey] = {};
-            }
-            storagePerfAndCompute[uniqueKey].totalStorage = formatFractionalNumber(
-                Number(instance?.totalStorage || 0) / GIB_IN_BYTE,
-                3
-            );
-            storagePerfAndCompute[uniqueKey].totalIops = formatFractionalNumber(instance?.totalIops, 3);
-            storagePerfAndCompute[uniqueKey].totalThroughput = formatFractionalNumber(instance?.totalThroughput, 3);
-            storagePerfAndCompute[uniqueKey].noOfVcpusInUse = instance?.noOfVcpusInUse;
-            storagePerfAndCompute[uniqueKey].memory = formatFractionalNumber(
-                Number(instance?.memory || 0) / GIB_IN_BYTE,
-                3
-            );
-            storagePerfAndCompute[uniqueKey].sqlInstanceName = instance?.sqlInstanceName;
-            storagePerfAndCompute[uniqueKey].sqlInstanceId = instance?.sqlInstanceId;
-            storagePerfAndCompute[uniqueKey].networkPerformance = rowData?.sqlServerInstances?.[0]?.networkPerformance;
-            storagePerfAndCompute[uniqueKey].hostResourceName = rowData?.resourceName; // Add host name for reference
-        });
-        dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
-    }
-
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(
         setSelectedEsPageInstance({
@@ -118,11 +88,105 @@ export const onClickESHostOnPrem = (
             credentialId: '',
             regionId: '',
             deploymentModel: rowData?.deploymentModel,
-            serverName: rowData?.resourceName || GENERAL.ES_SERVER_NAME
+            serverName: rowData?.resourceName || defaultServerName
         })
     );
     dispatch(setSelectedOnPremHostId(rowData?.resourceId));
-    dispatch(setSelectedServerName(rowData?.resourceName || GENERAL.ES_SERVER_NAME));
+    dispatch(setSelectedServerName(rowData?.resourceName || defaultServerName));
+};
+
+const buildStoragePerfAndCompute = (
+    dispatch: any,
+    rowData: any,
+    items: any[],
+    getItemFields: (item: any) => { uniqueName: string; extraFields: Record<string, any> }
+) => {
+    if (!items?.length) return;
+    const storagePerfAndCompute: any = {};
+    items.forEach((item: any) => {
+        const { uniqueName, extraFields } = getItemFields(item);
+        const uniqueKey = `${rowData.resourceId}_${uniqueName}`;
+        storagePerfAndCompute[uniqueKey] = {
+            totalStorage: formatFractionalNumber(Number(item?.totalStorage || 0) / GIB_IN_BYTE, 3),
+            totalIops: formatFractionalNumber(item?.totalIops, 3),
+            totalThroughput: formatFractionalNumber(item?.totalThroughput, 3),
+            memory: formatFractionalNumber(Number(item?.memory || 0) / GIB_IN_BYTE, 3),
+            hostResourceName: rowData?.resourceName,
+            ...extraFields
+        };
+    });
+    dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
+};
+
+export const onClickESHostOracleOnPrem = (
+    dispatch: any,
+    rowData: any,
+    isWorkloadFactory: boolean,
+    navigate?: NavigateFunction
+) => {
+    dispatchCommonOnPremActions(
+        dispatch,
+        rowData,
+        isWorkloadFactory,
+        'oracle-onprem',
+        SAVINGS_CALC_MODE.ORACLE_ONPREM,
+        'Oracle Host',
+        navigate
+    );
+
+    buildStoragePerfAndCompute(dispatch, rowData, rowData?.oracleDatabases, (db: any) => ({
+        uniqueName: db.databaseName,
+        extraFields: {
+            noOfVcpusInUse: db?.vCPUs || 0,
+            databaseName: db?.databaseName,
+            databaseId: db?.databaseId,
+            networkPerformance: rowData?.networkPerformance || 'upTo10',
+            monthlyOracleCost: db?.monthlyOracleCost || ''
+        }
+    }));
+
+    dispatch(
+        setSelectedOnPremHostDetails({
+            ...rowData,
+            totalInstance: rowData?.databaseNameList?.length || 0,
+            recommendedInstance: {
+                serverInstallationMode: rowData?.deploymentModel,
+                serverVersion: 'Oracle'
+            }
+        })
+    );
+};
+
+export const onClickESHostOnPrem = (
+    dispatch: any,
+    rowData: any,
+    isWorkloadFactory: boolean,
+    navigate?: NavigateFunction
+) => {
+    dispatchCommonOnPremActions(
+        dispatch,
+        rowData,
+        isWorkloadFactory,
+        'onprem',
+        SAVINGS_CALC_MODE.ONPREM,
+        GENERAL.ES_SERVER_NAME,
+        navigate
+    );
+
+    // Set single host in bulk selection array to use accordion UI
+    dispatch(setSelectedRowsForExploreSavingsOnPremBulk([rowData]));
+    dispatch(setOnPremTCOAction(''));
+
+    buildStoragePerfAndCompute(dispatch, rowData, rowData?.sqlServerInstances, (instance: any) => ({
+        uniqueName: instance?.sqlInstanceName,
+        extraFields: {
+            noOfVcpusInUse: instance?.noOfVcpusInUse,
+            sqlInstanceName: instance?.sqlInstanceName,
+            sqlInstanceId: instance?.sqlInstanceId,
+            networkPerformance: rowData?.sqlServerInstances?.[0]?.networkPerformance
+        }
+    }));
+
     setESInstanceOnPremData(rowData, dispatch);
 };
 
@@ -369,43 +433,46 @@ export const formatViewCalcInstance = (
     computeDetails: any,
     licenseDetails: any
 ) => {
+    const { savingsCalculatorFrom } = store.getState().exploreSavings;
+    const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+
     let instanceTypelist: any = [];
     if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
         instanceTypelist = selectedHostDetails?.clusterNodeDetails?.map((inst: any) => inst?.ec2InstanceType);
     } else {
         instanceTypelist = selectedHostDetails?.topology?.ec2Details?.map((inst: any) => inst?.instanceType);
     }
+
+    const buildInstanceEntry = (detail: any, index: number) => {
+        const base: any = {
+            instanceType: detail?.instanceType || instanceTypelist?.[index] || GENERAL.NOT_AVAILABLE,
+            computeHourlyPrice: `$${formatNumbers(detail?.price)}`,
+            computeMonthlyPrice: `$${formatNumbers(detail?.computeMonthlyPrice)}`,
+            instanceMonthlyPrice: `$${formatNumberWithCustomComma(detail?.instanceMonthlyPrice)}`,
+            hoursInAMonth: formatNumbers(detail?.hoursInMonth)
+        };
+
+        if (isOracle) {
+            base.oracleEdition = licenseDetails?.oracleEdition || GENERAL.NOT_AVAILABLE;
+            base.oracleLicense = licenseDetails?.licenseIncluded ? 'Yes' : 'No';
+        } else {
+            base.sqlEdition =
+                licenseDetails?.sqlServerEdition ||
+                selectedHostDetails?.databaseServer?.serverEdition ||
+                GENERAL.NOT_AVAILABLE;
+            base.sqlLicense = licenseDetails?.licenseIncluded ? 'Yes' : 'No';
+        }
+
+        return base;
+    };
+
     const instanceCalculationData = (() => {
         if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
-            return [
-                {
-                    instanceType: computeDetails?.[0]?.instanceType || instanceTypelist?.[0] || GENERAL.NOT_AVAILABLE,
-                    computeHourlyPrice: `$${formatNumbers(computeDetails?.[0]?.price)}`,
-                    computeMonthlyPrice: `$${formatNumbers(computeDetails?.[0]?.computeMonthlyPrice)}`,
-                    instanceMonthlyPrice: `$${formatNumberWithCustomComma(computeDetails?.[0]?.instanceMonthlyPrice)}`,
-                    sqlEdition:
-                        licenseDetails?.sqlServerEdition ||
-                        selectedHostDetails?.databaseServer?.serverEdition ||
-                        GENERAL.NOT_AVAILABLE,
-                    sqlLicense: licenseDetails?.licenseIncluded ? 'Yes' : 'No',
-                    hoursInAMonth: formatNumbers(computeDetails?.[0]?.hoursInMonth)
-                }
-            ];
+            return [buildInstanceEntry(computeDetails?.[0], 0)];
         }
         const detailsList: any = [];
         computeDetails?.forEach((detail: any, index: number) => {
-            detailsList.push({
-                instanceType: detail?.instanceType || instanceTypelist?.[index] || GENERAL.NOT_AVAILABLE,
-                computeHourlyPrice: `$${formatNumbers(detail?.price)}`,
-                computeMonthlyPrice: `$${formatNumbers(detail?.computeMonthlyPrice)}`,
-                instanceMonthlyPrice: `$${formatNumberWithCustomComma(detail?.instanceMonthlyPrice)}`,
-                sqlEdition:
-                    licenseDetails?.sqlServerEdition ||
-                    selectedHostDetails?.databaseServer?.serverEdition ||
-                    GENERAL.NOT_AVAILABLE,
-                sqlLicense: licenseDetails?.licenseIncluded ? 'Yes' : 'No',
-                hoursInAMonth: formatNumbers(detail?.hoursInMonth)
-            });
+            detailsList.push(buildInstanceEntry(detail, index));
         });
         return detailsList;
     })();
@@ -517,30 +584,43 @@ export const formatViewCalcData = (
         // Create formatted calculation arrays similar to what viewCalculation functions produce
         const createFormattedCalculation = (machineData: any[]) => {
             const machineDetailsList: any[] = [];
+            const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+            const instanceTypeLabel = isOracle
+                ? i18next.t('databases.explore-savings.oracle-database-type')
+                : i18next.t('databases.explore-savings.sql-instance-type');
+            const editionLabel = isOracle
+                ? i18next.t('databases.explore-savings.oracle-edition')
+                : i18next.t('databases.explore-savings.sql-edition');
+            const licenseLabel = isOracle
+                ? i18next.t('databases.explore-savings.oracle-license-included')
+                : i18next.t('databases.explore-savings.sql-license-included');
+            const licenseTooltip = isOracle
+                ? i18next.t('databases.explore-savings.oracle-license-tooltip')
+                : i18next.t('databases.explore-savings.sql-license-tooltip');
 
             machineData?.forEach((calculation: any, index: number) => {
                 machineDetailsList.push(
                     { label: `Machine ${index + 1} specification` },
                     {
-                        label: 'Instance type',
+                        label: instanceTypeLabel,
                         value: calculation?.instanceType,
                         text: ''
                     },
                     {
-                        label: 'SQL edition',
-                        value: calculation?.sqlEdition,
+                        label: editionLabel,
+                        value: isOracle ? calculation?.oracleEdition : calculation?.sqlEdition,
                         text: ''
                     },
                     {
-                        label: 'SQL license included',
-                        value: calculation?.sqlLicense,
+                        label: licenseLabel,
+                        value: isOracle ? calculation?.oracleLicense : calculation?.sqlLicense,
                         text: ''
                     },
                     { label: `Machine ${index + 1} pricing calculations` },
                     {
                         label: 'Instance hourly price',
                         value: calculation?.computeHourlyPrice,
-                        text: 'Instance hourly price with SQL license included'
+                        text: licenseTooltip
                     },
                     {
                         label: `EC2 machine${index + 1} cost`,
@@ -583,19 +663,31 @@ export const formatViewCalcData = (
     };
 
     // Create host-specific data for bulk calculations
-    const hostCalculationData = isBulkCalculation
-        ? (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-              ? selectedRowsForExploreSavingsOnPremBulk
-              : selectedRowsForExploreSavingsEBSBulk
-          )
-              .map((host: any) => {
-                  // For EBS, host is an object with .name property
-                  // For on-prem, host is an object with .resourceName property
-                  const hostName = savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ? host.resourceName : host.name;
-                  return createHostInstanceCalculationData(hostName);
-              })
-              .filter(Boolean)
-        : [];
+    const hostCalculationData = (() => {
+        if (!isBulkCalculation) return [];
+
+        // For Oracle on-prem, use selectedOnPremHostDetails (single host but array format in API response)
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+            const { selectedOnPremHostDetails } = state.exploreSavings;
+            if (selectedOnPremHostDetails?.resourceName) {
+                const hostData = createHostInstanceCalculationData(selectedOnPremHostDetails.resourceName);
+                return hostData ? [hostData] : [];
+            }
+            return [];
+        }
+
+        // For MSSQL ONPREM, use selectedRowsForExploreSavingsOnPremBulk
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+            return selectedRowsForExploreSavingsOnPremBulk
+                .map((host: any) => createHostInstanceCalculationData(host.resourceName))
+                .filter(Boolean);
+        }
+
+        // For AUTO_EBS, use selectedRowsForExploreSavingsEBSBulk
+        return selectedRowsForExploreSavingsEBSBulk
+            .map((host: any) => createHostInstanceCalculationData(host.name))
+            .filter(Boolean);
+    })();
 
     const totalEbsCost = (ebsViewCalculationData: any) => {
         let cost = 0;
@@ -1285,8 +1377,11 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
             deploymentModelValue = selectedManualDeploymentModel?.value;
         }
 
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
-            // Handle ONPREM mode with array format for compute and license (similar to EBS bulk)
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
+        ) {
+            // Handle ONPREM/ORACLE_ONPREM mode with array format for compute and license (similar to EBS bulk)
             const computeArray = Array.isArray(data?.compute) ? data.compute : [data?.compute].filter(Boolean);
             const licenseArray = Array.isArray(data?.license) ? data.license : [data?.license].filter(Boolean);
 

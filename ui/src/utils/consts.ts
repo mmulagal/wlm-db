@@ -432,6 +432,7 @@ export const WLF_TABS = {
     MSSQL_ELASTIC_BLOCK_STORE: 'SQL Server on Elastic Block Store (EBS)',
     MSSQL_FSX_FOR_WINDOWS: 'SQL Server on FSx for Windows',
     MSSQL_ON_PREMISES: 'SQL Server On-Premises',
+    ORACLE_ON_PREMISES: 'Oracle On-Premises',
     ORACLE_SERVER_ON_PREMISES: 'Oracle Server on-premises',
     ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE: 'Oracle Server on Elastic Block Store (EBS)',
     REGISTER_RESOURCE: 'Register Resource',
@@ -784,6 +785,7 @@ export const SAVINGS_CALC_MODE = {
     AUTO_FSXW: 'Auto_FSXW',
     MANUAL_FSXW: 'Manual_FSXW',
     ONPREM: 'OnPrem',
+    ORACLE_ONPREM: 'Oracle_OnPrem',
     EBS: 'ebs',
     FSXW: 'fsxw',
     ONPREM_MODE: 'onprem'

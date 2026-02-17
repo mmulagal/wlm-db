@@ -621,6 +621,13 @@ const exploreSavingsSlice = createSlice({
             state.storageSavingsLoading = false;
             state.viewCalculationsLoading = false;
             state.storageSavingsOnPremResponse = null;
+        },
+        resetSavingsApiState(state) {
+            state.storageSavingsResponse = null as any;
+            state.viewCalculationsResponse = null;
+            state.viewCalculationsApiResponse = null;
+            state.storageSavingsLoading = false;
+            state.viewCalculationsLoading = false;
         }
     }
 });
@@ -713,7 +720,8 @@ export const {
     setInstanceDataUpdatedTrigger,
     setOnPremBulkLoadingStart,
     setOnPremBulkLoadingSuccess,
-    setOnPremBulkLoadingError
+    setOnPremBulkLoadingError,
+    resetSavingsApiState
 } = exploreSavingsSlice.actions;
 
 export default exploreSavingsSlice;

@@ -150,12 +150,13 @@ const SavingsSelection = ({ printState }: any) => {
     useEffect(() => {
         if (
             (!selectedSnapshotFrequency && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
         ) {
-            // For FSxW default value is Daily.
+            // For FSxW and On-Prem modes, default value is Daily.
             dispatch(setSelectedSnapshotFrequency(generateSnapshotFrequency[2]));
         }
-    }, [generateSnapshotFrequency]);
+    }, [generateSnapshotFrequency, savingsCalculatorFrom]);
 
     // Function to generate the options for Select Field
     const generateCloneRefresh = useMemo<optionType[]>((): optionType[] => {
@@ -205,9 +206,14 @@ const SavingsSelection = ({ printState }: any) => {
         );
     };
 
+    // Check if on-premises mode (MSSQL or Oracle)
+    const isOnPremisesMode =
+        selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+
     return (
         <>
-            {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+            {isOnPremisesMode && (
                 <div
                     className={`${styles.savingsSelection} ${styles.onPremMode}`}
                     id="savings-calculator-input-group"
@@ -288,7 +294,7 @@ const SavingsSelection = ({ printState }: any) => {
                     </div>
                 </div>
             )}
-            {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && (
+            {!isOnPremisesMode && (
                 <div className={styles.savingsSelection} id="savings-calculator-input-group">
                     <DsTypography variant="Regular_14">{GENERAL.ES_SAVINGS_SELECTION_TEXT}</DsTypography>
 

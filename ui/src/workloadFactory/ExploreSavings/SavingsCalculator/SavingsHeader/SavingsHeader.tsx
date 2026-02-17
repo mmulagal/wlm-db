@@ -1,25 +1,34 @@
 import { DsTypography } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as MSSQL } from '../../../../assets/MS-sql-icon.svg';
+import { ReactComponent as OracleIcon } from '../../../../assets/settings.svg';
 
 import styles from './SavingsHeader.module.scss';
-import { GENERAL } from '../../../../utils/appConstants';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
 const SavingsHeader = () => {
+    const { t } = useTranslation();
     const { savingsCalculatorFrom, selectedExploreSavingsTab } = useAppSelector(state => state.exploreSavings);
 
+    // Helper to check if in Oracle on-prem mode
+    const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+
     const setText = () => {
+        // Oracle on-prem specific text
+        if (isOracleOnPrem) {
+            return t('databases.explore-savings.oracle-on-premises-configuration');
+        }
         if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
         ) {
-            return GENERAL.SAVINGS_HEADER;
+            return t('databases.explore-savings.savings-header-ebs');
         }
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
-            return GENERAL.SAVINGS_ONPREM_HEADER;
+            return t('databases.explore-savings.savings-header-onprem');
         }
-        return GENERAL.SAVINGS_HEADER_FSX;
+        return t('databases.explore-savings.savings-header-fsx');
     };
 
     const setCSS = () => {
@@ -29,16 +38,23 @@ const SavingsHeader = () => {
         ) {
             return styles.savingsHeader;
         }
-        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem) {
             return `${styles.savingsHeader} ${styles.savingsHeaderOnPrem}`;
         }
         return `${styles.savingsHeader} ${styles.savingsHeaderFSX}`;
     };
+
+    // Render Oracle or MSSQL icon based on mode
+    const renderIcon = () => {
+        if (isOracleOnPrem) {
+            return <OracleIcon />;
+        }
+        return <MSSQL />;
+    };
+
     return (
         <div className={setCSS()}>
-            <div className={styles.setImage}>
-                <MSSQL />
-            </div>
+            <div className={styles.setImage}>{renderIcon()}</div>
             <DsTypography variant="Semibold_16" className={styles.content}>
                 {setText()}
             </DsTypography>

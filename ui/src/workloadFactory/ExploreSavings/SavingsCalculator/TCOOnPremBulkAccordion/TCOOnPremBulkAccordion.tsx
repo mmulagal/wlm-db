@@ -24,7 +24,7 @@ import {
     setStorageSavingsResponse
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { formatFractionalNumber } from '../../../../utils/utilityFunctions';
-import { GIB_IN_BYTE } from '../../../../utils/consts';
+import { GIB_IN_BYTE, SAVINGS_CALC_MODE } from '../../../../utils/consts';
 import TCOOnPremAddHostTable from './TCOOnPremAddHostTable/TCOOnPremAddHostTable';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import SavingsSelectedHost from '../SavingsSelectedHost/SavingsSelectedHost';
@@ -37,10 +37,14 @@ const TCOOnPremBulkAccordion = () => {
         onPremiseData,
         onPremiseDataLoading,
         storageSavingsLoading,
-        storageSavingsResponse,
-        viewCalculationsResponse
+        viewCalculationsResponse,
+        savingsCalculatorFrom,
+        selectedOnPremHostDetails
     } = useAppSelector(state => state.exploreSavings);
     const { setDialog, closeDialog } = useDialog();
+
+    // Check if Oracle on-prem mode
+    const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
 
     // State to track total host count
     const [totalHostCount, setTotalHostCount] = useState(0);
@@ -63,12 +67,14 @@ const TCOOnPremBulkAccordion = () => {
                 const numericValue = parseFloat(String(totalEbsCapacity).replace(/,/g, '').split(' ')[0]);
 
                 // Show card if less than 800 GiB and if the selected hosts are less than 5
-                setShowSsdTierCard(numericValue < 800 && selectedRowsForExploreSavingsOnPremBulk.length < 5);
+                setShowSsdTierCard(
+                    numericValue < 800 && (isOracleOnPrem || selectedRowsForExploreSavingsOnPremBulk.length < 5)
+                );
             } else {
                 setShowSsdTierCard(false);
             }
         }
-    }, [viewCalculationsResponse, selectedRowsForExploreSavingsOnPremBulk]);
+    }, [viewCalculationsResponse, selectedRowsForExploreSavingsOnPremBulk, isOracleOnPrem]);
 
     const handleRemoveHost = (hostToRemove: any, event: React.SyntheticEvent) => {
         event.stopPropagation(); // Prevent accordion from toggling
@@ -178,9 +184,13 @@ const TCOOnPremBulkAccordion = () => {
         return onPremiseData.items.find((item: any) => item.resourceName === host);
     };
 
-    // Helper function to get instance count for a host
+    // Helper function to get instance/database count for a host
     const getHostInstanceCount = (host: any) => {
         const hostDetails = getHostDetails(host);
+        if (isOracleOnPrem) {
+            // For Oracle, use databaseNameList or totalInstance
+            return hostDetails?.databaseNameList?.length || hostDetails?.totalInstance || 0;
+        }
         return hostDetails?.sqlServerInstances?.length || 0;
     };
 
@@ -189,6 +199,31 @@ const TCOOnPremBulkAccordion = () => {
         const hostDetails = getHostDetails(host);
         return hostDetails?.onPremisesNodes?.length || 0;
     };
+
+    // Get the list of hosts to display (Oracle single-host or MSSQL bulk)
+    const getHostsToDisplay = () => {
+        if (isOracleOnPrem && selectedOnPremHostDetails) {
+            // Oracle single-host mode - wrap in array for consistent rendering
+            return [selectedOnPremHostDetails];
+        }
+        return selectedRowsForExploreSavingsOnPremBulk;
+    };
+
+    const hostsToDisplay = getHostsToDisplay();
+
+    // Get instance/database label based on mode
+    const getInstanceLabel = () => {
+        if (isOracleOnPrem) {
+            return t('databases.explore-savings.databases');
+        }
+        return t('databases.explore-savings.instances');
+    };
+
+    // Determine if Add hosts button should be shown (not for Oracle single-host mode currently)
+    const showAddHostsButton = !isOracleOnPrem;
+
+    // Determine if Remove button should be shown
+    const showRemoveButton = !isOracleOnPrem;
 
     return (
         <div className={styles.tcoOnPremBulkAccordion}>
@@ -204,15 +239,16 @@ const TCOOnPremBulkAccordion = () => {
             <AccordionController isGrouped>
                 <div className={styles.header}>
                     <DsTypography variant="Semibold_16">
-                        {t('databases.explore-savings.selected-hosts')} (
-                        {selectedRowsForExploreSavingsOnPremBulk.length})
+                        {`${t('databases.explore-savings.selected-hosts')} (${hostsToDisplay.length})`}
                     </DsTypography>
-                    <DsButton type="text" onClick={handleManageHosts} isDisabled={onPremiseDataLoading}>
-                        {t('databases.explore-savings.add-hosts')}
-                    </DsButton>
+                    {showAddHostsButton && (
+                        <DsButton type="text" onClick={handleManageHosts} isDisabled={onPremiseDataLoading}>
+                            {t('databases.explore-savings.add-hosts')}
+                        </DsButton>
+                    )}
                 </div>
                 <div className={styles.accordionScrollContainer}>
-                    {selectedRowsForExploreSavingsOnPremBulk.map((host: any, index: number) => {
+                    {hostsToDisplay.map((host: any, index: number) => {
                         const hostDetails = getHostDetails(host);
                         const hostName = host?.resourceName || host;
 
@@ -222,26 +258,34 @@ const TCOOnPremBulkAccordion = () => {
                                 ValueContent={() => (
                                     <div className={styles.centerValue}>
                                         <DsTypography variant="Regular_14" className={styles.centerText}>
-                                            {getHostInstanceCount(host)} {t('databases.explore-savings.instances')}
-                                            <SeparatorComponent variant="vertical" height="16px" />
-                                            {getHostNodeCount(host)}{' '}
-                                            {hostDetails?.deploymentModel === 'Standalone' ? 'node' : 'nodes'}
+                                            {getHostInstanceCount(host)} {getInstanceLabel()}
+                                            {!isOracleOnPrem && (
+                                                <>
+                                                    <SeparatorComponent variant="vertical" height="16px" />
+                                                    {getHostNodeCount(host)}{' '}
+                                                    {hostDetails?.deploymentModel === 'Standalone' ? 'node' : 'nodes'}
+                                                </>
+                                            )}
                                         </DsTypography>
                                     </div>
                                 )}
                                 id={String(hostName || index + 1)}
                                 title={<div className={CommonStyles.title}>{hostName || `Host ${index + 1}`}</div>}
-                                RightWidget={() => (
-                                    <div className={styles.rightWidgetButton}>
-                                        <DsButton
-                                            type="text"
-                                            isDisabled={totalHostCount <= 1 || storageSavingsLoading}
-                                            onClick={event => handleRemoveHost(host, event)}
-                                        >
-                                            {t('databases.explore-savings.remove')}
-                                        </DsButton>
-                                    </div>
-                                )}
+                                RightWidget={
+                                    showRemoveButton
+                                        ? () => (
+                                              <div className={styles.rightWidgetButton}>
+                                                  <DsButton
+                                                      type="text"
+                                                      isDisabled={totalHostCount <= 1 || storageSavingsLoading}
+                                                      onClick={event => handleRemoveHost(host, event)}
+                                                  >
+                                                      {t('databases.explore-savings.remove')}
+                                                  </DsButton>
+                                              </div>
+                                          )
+                                        : undefined
+                                }
                             >
                                 <AccordionCardContent className={styles.accordionContent}>
                                     <DsTypography>

@@ -98,6 +98,7 @@ export const useOnPremData = () => {
                         perRow?.oracleDatabases?.map((detail: { databaseName: string }) => detail?.databaseName) || [],
                     deploymentModel:
                         perRow?.oracleDatabases?.length > 0 ? perRow?.oracleDatabases[0]?.deploymentModel : '',
+                    oracleEdition: perRow?.oracleDatabases?.length > 0 ? perRow?.oracleDatabases[0]?.oracleEdition : '',
                     onPremNode: perRow?.onPremisesNodes[0],
                     uniqueId
                 };

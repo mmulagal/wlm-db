@@ -2,6 +2,7 @@ import { DsAccordion, DsButton, DsTypography, Popover, useDialog } from '@netapp
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './MSSQLAccordion.module.scss';
 import { generateHostMsSqlInstanceData } from './MSSQLAccordionUtils';
 import {
@@ -21,13 +22,18 @@ import {
     WLF_TO_FORM_NAVIGATE
 } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
+import { SELECT_CONFIG } from '../../../../utils/appConstants';
 import SaveConfigSavings from './SaveCongfigSavings/SaveCongfigSavings';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSaveConfigName } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useGetConfigListQuery, useSaveConfigDataMutation } from '../../../../utils/apiService';
 import { LoadRecommendedConfig } from '../../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { setIsLoadConfig, setIsLoading, setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
+// Oracle-specific utility imports
+import {
+    generateOracleInstanceData,
+    OracleServerInstance
+} from '../../OracleTCO/OracleSavingsCalculator/OracleAccordion/OracleAccordionUtils';
 
 const TableLayout = ({ data, type }: any) => (
     <Grid className={styles['fsx-table-column']} style={{ marginBottom: 3 }}>
@@ -47,6 +53,7 @@ const TableLayout = ({ data, type }: any) => (
 );
 
 const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const [saveConfigData] = useSaveConfigDataMutation();
     const {
@@ -71,6 +78,11 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const [fsxData, setFsxData] = useState({});
     const [msSqlInstance, setMsSqlInstance] = useState({});
     const [storageType, setStorageType] = useState('');
+    // Oracle-specific state
+    const [oracleInstance, setOracleInstance] = useState<any>({});
+
+    // Helper to check if in Oracle on-prem mode
+    const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
 
     const [bulkModeState, setBulkModeState] = useState({ isBulkMode: false, shouldRenderMultipleHosts: false });
 
@@ -124,9 +136,9 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
         ) {
-            setStorageType(GENERAL.FSX_FOR_WINDOWS);
+            setStorageType(t('databases.explore-savings.fsx-for-windows'));
         } else {
-            setStorageType(GENERAL.EBS);
+            setStorageType(t('databases.explore-savings.ebs'));
         }
     }, [savingsCalculatorFrom]);
 
@@ -139,7 +151,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             const matchingRegionEntry =
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === selectedExRegionId);
             selectedRegion = `${matchingRegionEntry?.regionName} | ${matchingRegionEntry?.regionCode}`;
-        } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+        } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM || isOracleOnPrem) {
             selectedRegion = `${selectedOnPremRegion?.data?.regionName} | ${selectedOnPremRegion?.data?.regionCode}`;
         } else {
             selectedRegion = `${selectedManualRegion?.data?.regionName} | ${selectedManualRegion?.data?.regionCode}`;
@@ -158,7 +170,15 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             });
         }
         // setMsSqlInstance(storageSavingsResponse?.mssqlInstance);
-    }, [storageSavingsResponse]);
+    }, [storageSavingsResponse, isOracleOnPrem, selectedOnPremRegion]);
+
+    // Oracle instance data generation
+    useEffect(() => {
+        if (isOracleOnPrem && storageSavingsResponse) {
+            const instanceData = generateOracleInstanceData(storageSavingsResponse, selectedOnPremHostDetails);
+            setOracleInstance(instanceData);
+        }
+    }, [isOracleOnPrem, storageSavingsResponse, selectedOnPremHostDetails]);
 
     useEffect(() => {
         let instanceType = '';
@@ -264,8 +284,8 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             mssqlInstanceData = {
                 ...mssqlInstanceData,
                 serverInstallationMode:
-                    selectedManualDeploymentModel?.value === GENERAL.AOAG
-                        ? GENERAL.FAILOVER_CLUSTER_INSTANCES
+                    selectedManualDeploymentModel?.value === t('databases.general.always-on-availability-group')
+                        ? t('databases.general.failover-cluster-instances')
                         : selectedManualDeploymentModel?.value
             };
         }
@@ -273,18 +293,20 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     }, [selectedHostDetails, storageSavingsResponse, selectedManualDeploymentModel, selectedOnPremHostDetails]);
 
     const handleSaveConfiguration = (dialogFrom: any) => {
+        // Use Oracle instance data when in Oracle mode, otherwise MSSQL instance
+        const instanceData = isOracleOnPrem ? oracleInstance : msSqlInstance;
         setDialog(
             <DialogComponent
-                header={GENERAL.ES_SAVE_CONFIG}
-                content={<SaveConfigSavings description={GENERAL.ES_SAVE_CONFIG_DESC} />}
-                primaryButton={GENERAL.SAVE}
-                secondaryButton={GENERAL.CANCEL}
+                header={t('databases.explore-savings.save-configuration')}
+                content={<SaveConfigSavings description={t('databases.explore-savings.save-configuration-desc')} />}
+                primaryButton={t('databases.general.save')}
+                secondaryButton={t('databases.general.cancel')}
                 callback={() =>
                     ExploreSaveConfiguration(
                         dispatch,
                         saveConfigData,
                         closeDialog,
-                        msSqlInstance,
+                        instanceData,
                         fsxData,
                         configRefetch
                     )
@@ -311,15 +333,31 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     };
 
     const setCSS = () => {
-        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem) {
             return `${styles.mssqlAccordion} ${styles.mssqlAccordionOnPremises}`;
         }
         return `${styles.mssqlAccordion}`;
     };
 
+    // Get accordion title based on mode
+    const getAccordionTitle = () => {
+        if (isOracleOnPrem) {
+            return t('databases.explore-savings.oracle-ec2-single-fsx');
+        }
+        return t('databases.explore-savings.recommended-es-title');
+    };
+
+    // Get instance section title based on mode
+    const getInstanceTitle = () => {
+        if (isOracleOnPrem) {
+            return t('databases.explore-savings.oracle-server-instance');
+        }
+        return isMutliFsx ? t('databases.explore-savings.mssql-two-instances') : t('databases.explore-savings.mssql-single-instance');
+    };
+
     const saveIsDisabled = () => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM && isMutliFsx) {
-            return GENERAL.ONPREM_CREATE_TEMPLATE_DISABLE;
+            return t('databases.explore-savings.onprem-create-template-disable');
         }
         if (configData?.length >= MAX_SAVED_CONFIG) {
             return SELECT_CONFIG.MAX_CONFIG_LIMIT;
@@ -331,7 +369,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         <div className={setCSS()} id="recommended-accordion">
             <DsAccordion
                 id="1"
-                title={GENERAL.RECOMMENDED_ES_TITLE}
+                title={getAccordionTitle()}
                 variant="Default"
                 value=""
                 maxExpandHeight={4000}
@@ -343,25 +381,26 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                     isMutliFsx ||
                     !storageSavingsResponse
                 }
-                disabledReason={isMutliFsx ? GENERAL.ES_MULTI_FSX_DISABLE_MSG : ''}
+                disabledReason={isMutliFsx ? t('databases.explore-savings.multi-fsx-disable-msg') : ''}
                 isExpanded={printState}
                 headerActions={[
                     isMutliFsx ? (
                         <Popover
                             popoverClass={styles.popover}
-                            children={GENERAL.ES_SAVE_ERROR}
+                            children={t('databases.explore-savings.save-error')}
                             trigger="hover"
                             container={
                                 <div id="es-save-config">
                                     <DsButton type="text" isDisabled>
-                                        {GENERAL.ES_SAVE_CONFIG}
+                                        {t('databases.explore-savings.save-configuration')}
                                     </DsButton>
                                 </div>
                             }
                         />
                     ) : (
                         !printState &&
-                        !bulkModeState.shouldRenderMultipleHosts && (
+                        !bulkModeState.shouldRenderMultipleHosts &&
+                        !isOracleOnPrem && (
                             <div id="es-save-config">
                                 {saveIsDisabled() ? (
                                     <Popover
@@ -371,7 +410,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                         container={
                                             <div id="es-save-config">
                                                 <DsButton type="text" isDisabled>
-                                                    {GENERAL.ES_SAVE_CONFIG}
+                                                    {t('databases.explore-savings.save-configuration')}
                                                 </DsButton>
                                             </div>
                                         }
@@ -391,24 +430,24 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                         }
                                         onClick={() => handleSaveConfiguration(FROM_DIALOG.SAVE_CONFIG)}
                                     >
-                                        {GENERAL.ES_SAVE_CONFIG}
+                                        {t('databases.explore-savings.save-configuration')}
                                     </DsButton>
                                 )}
                             </div>
                         )
                     ),
 
-                    !printState && !bulkModeState.shouldRenderMultipleHosts && (
+                    !printState && !bulkModeState.shouldRenderMultipleHosts && !isOracleOnPrem && (
                         <div id="es-create" className={`${styles.buttonContainer} ${styles.headerActionsContainer}`}>
                             {savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM && isMutliFsx ? (
                                 <Popover
                                     popoverClass={styles.popover}
-                                    children={GENERAL.ONPREM_CREATE_TEMPLATE_DISABLE}
+                                    children={t('databases.explore-savings.onprem-create-template-disable')}
                                     trigger="hover"
                                     container={
                                         <div id="es-create-template">
                                             <DsButton type="button" isDisabled>
-                                                {GENERAL.CREATE_TEMPLATE}
+                                                {t('databases.explore-savings.create-template')}
                                             </DsButton>
                                         </div>
                                     }
@@ -427,17 +466,38 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                     }
                                     onClick={() => handleCreateClick()}
                                 >
-                                    {GENERAL.CREATE_TEMPLATE}
+                                    {t('databases.explore-savings.create-template')}
                                 </DsButton>
                             )}
                         </div>
                     )
                 ]}
                 children={
-                    isMutliFsx ? (
+                    isOracleOnPrem ? (
+                        // Oracle on-prem content
+                        <div className={styles.accordionContentWrapperSingle}>
+                            <DsTypography variant="Semibold_14" className={styles.instanceTypography}>
+                                {getInstanceTitle()}
+                            </DsTypography>
+                            {OracleServerInstance(oracleInstance, t).map(
+                                (data: { label: string; text: string; value: string }, index: number) => (
+                                    <TableLayout data={data} key={`oracle-instance-${index}`} />
+                                )
+                            )}
+
+                            <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
+                                {t('databases.general.fsx-for-ontap')} 1
+                            </DsTypography>
+                            {calculatedFSXData(fsxData, { isOracleOnPrem: true }).map(
+                                (data: { label: string; text: string; value: string }, index: number) => (
+                                    <TableLayout data={data} key={`oracle-fsx-${index}`} />
+                                )
+                            )}
+                        </div>
+                    ) : isMutliFsx ? (
                         <div className={styles.accordionContentWrapper}>
                             <DsTypography variant="Semibold_14" className={styles.instanceTypography}>
-                                {GENERAL.MS_SQL_TWO_INSTANCES}
+                                {t('databases.explore-savings.mssql-two-instances')}
                             </DsTypography>
 
                             {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES &&
@@ -454,18 +514,18 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                     )
                                 )}
                             <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
-                                {GENERAL.FSX_FOR_ONTAP} 1
+                                {t('databases.general.fsx-for-ontap')} 1
                             </DsTypography>
-                            {calculatedFSXData(fsxData, storageType).map(
+                            {calculatedFSXData(fsxData, { storageType }).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
                                     <TableLayout data={data} key={index} type={WLF_TABS.MSSQL_ON_PREMISES} />
                                 )
                             )}
 
                             <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
-                                {GENERAL.FSX_FOR_ONTAP} 2
+                                {t('databases.general.fsx-for-ontap')} 2
                             </DsTypography>
-                            {calculatedFSXData(fsxData, storageType).map(
+                            {calculatedFSXData(fsxData, { storageType }).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
                                     <TableLayout data={data} key={index} type={WLF_TABS.MSSQL_ON_PREMISES} />
                                 )
@@ -523,7 +583,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                                         marginTop: hostIndex > 0 ? '32px' : '0px'
                                                     }}
                                                 >
-                                                    {`${GENERAL.MS_SQL_SINGLE_INSTANCES} - ${
+                                                    {`${t('databases.explore-savings.mssql-single-instance')} - ${
                                                         host.name ||
                                                         host.resourceName ||
                                                         host.hostname ||
@@ -565,7 +625,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                                 // Render single host (original logic)
                                 <>
                                     <DsTypography variant="Semibold_14" className={styles.instanceTypography}>
-                                        {GENERAL.MS_SQL_SINGLE_INSTANCES}
+                                        {t('databases.explore-savings.mssql-single-instance')}
                                     </DsTypography>
 
                                     {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES &&
@@ -589,9 +649,9 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                             )}
 
                             <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
-                                {GENERAL.FSX_FOR_ONTAP}
+                                {t('databases.general.fsx-for-ontap')}
                             </DsTypography>
-                            {calculatedFSXData(fsxData, storageType, selectedExploreSavingsTab).map(
+                            {calculatedFSXData(fsxData, { storageType, selectedExploreSavingsTab }).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (
                                     <TableLayout data={data} key={index} type={WLF_TABS.MSSQL_ON_PREMISES} />
                                 )

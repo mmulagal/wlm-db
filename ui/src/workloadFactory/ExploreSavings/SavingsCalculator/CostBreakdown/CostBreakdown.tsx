@@ -1,12 +1,12 @@
 import { DsTypography, DsFlashingDotsLoader, TooltipInfo } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './CostBreakdown.module.scss';
 import { Card, CardContent, CardTableContent } from '../../../../ui-components/Cards/Card';
 import { Text } from '../../../../ui-components/Typography';
 import { comparisonData, comparisonDataFsxw } from '../savingsUtil';
 import { Grid, GridItem } from '../../../../ui-components/Layout/Grid';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { GENERAL } from '../../../../utils/appConstants';
 import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 type CB = {
@@ -14,27 +14,33 @@ type CB = {
 };
 
 const CostBreakdown = ({ disableState = false }: CB) => {
+    const { t } = useTranslation();
     const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom } = useAppSelector(
         state => state.exploreSavings
     );
 
+    const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
     const [calculatedResponse, setCalculatedResponse] = useState({});
     const [loading, setLoading] = useState(false);
 
     const checkForTooltip = (() => {
         if (
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) &&
             storageSavingsResponse
         ) {
-            // Handle AUTO_EBS/ONPREM array format - check if ANY host has Enterprise→Standard downgrade
+            // Handle AUTO_EBS/ONPREM/ORACLE_ONPREM array format - check if ANY host has Enterprise→Standard downgrade
             const licenseArray = Array.isArray(storageSavingsResponse?.license)
                 ? storageSavingsResponse.license
                 : [storageSavingsResponse?.license].filter(Boolean);
             return licenseArray.some(
                 license =>
-                    license?.existing?.sqlServerEdition?.includes('Enterprise') &&
-                    license?.recommended?.sqlServerEdition?.includes('Standard')
+                    // Check for MSSQL (sqlServerEdition) or Oracle (oracleEdition) Enterprise→Standard downgrade
+                    (license?.existing?.sqlServerEdition?.includes('Enterprise') &&
+                        license?.recommended?.sqlServerEdition?.includes('Standard')) ||
+                    (license?.existing?.oracleEdition?.includes('Enterprise') &&
+                        license?.recommended?.oracleEdition?.includes('Standard'))
             );
         }
         // Handle single object format for other modes
@@ -49,7 +55,36 @@ const CostBreakdown = ({ disableState = false }: CB) => {
         setLoading(storageSavingsLoading);
     }, [storageSavingsResponse, storageSavingsLoading]);
 
-    const ComparisonTableLayout = ({ data, calculatedResponse, existingType }: any) => {
+    // Helper to get the second category label based on mode
+    const getSecondCategoryLabel = (): string => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+            return t('databases.explore-savings.oracle-server-on-ebs');
+        }
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
+        ) {
+            return t('databases.explore-savings.mssql-on-ebs');
+        }
+        return t('databases.explore-savings.mssql-on-fsxw');
+    };
+
+    // Helper to get the comparison data and existing type based on mode
+    const getComparisonConfig = (): { data: any[]; existingType: string } => {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
+        ) {
+            return { data: comparisonDataFsxw(calculatedResponse), existingType: 'fsxw' };
+        }
+        return { data: comparisonData(calculatedResponse), existingType: 'ebs' };
+    };
+
+    const comparisonConfig = getComparisonConfig();
+
+    // eslint-disable-next-line react/no-unstable-nested-components, no-unused-vars
+    const ComparisonTableLayout = ({ data, calculatedResponse: _calcResp, existingType }: any) => {
         const checkForComputeTooltip = data.isTooltip && data.type === 'Compute';
         return (
             <div
@@ -64,7 +99,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                         : { backgroundColor: 'var(--main-background)' }
                 }
             >
-                <Grid>
+                <Grid className={isOracle ? styles.oracleColumnGrid : undefined}>
                     <GridItem lg="4">
                         <Text
                             color={!calculatedResponse && 'text-disabled'}
@@ -116,7 +151,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                     className={styles.title}
                     style={{ color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)' }}
                 >
-                    {GENERAL.ES_COST_BREAKDOWN}
+                    {t('databases.explore-savings.cost-breakdown')}
                 </DsTypography>
                 {loading && <DsFlashingDotsLoader />}
             </div>
@@ -124,7 +159,11 @@ const CostBreakdown = ({ disableState = false }: CB) => {
             <div>
                 <Card>
                     <CardContent style={{ padding: '24px 40px 32px 40px' }}>
-                        <CardTableContent columns="lg-3" style={{ padding: 0, height: '56px' }}>
+                        <CardTableContent
+                            columns="lg-3"
+                            className={isOracle ? styles.oracleColumnGrid : undefined}
+                            style={{ padding: 0, height: '56px' }}
+                        >
                             <div
                                 style={
                                     !calculatedResponse || disableState
@@ -136,7 +175,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 }
                             >
                                 {' '}
-                                {GENERAL.ES_TYPE}
+                                {t('databases.explore-savings.type')}
                             </div>
                             <div className={styles['table-container']}>
                                 <div
@@ -150,13 +189,15 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
                                     style={{
-                                        width: '150px',
+                                        ...(!isOracle && { width: '150px' }),
                                         fontWeight: '500',
                                         color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                                     }}
                                 >
                                     {' '}
-                                    {GENERAL.ES_MSSQL_SERVER}
+                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
+                                        ? t('databases.explore-savings.oracle-server-on-fsx-ontap')
+                                        : t('databases.explore-savings.mssql-server-on-fsx-ontap')}
                                 </Text>
                             </div>
                             <div className={styles['table-container-right']}>
@@ -171,39 +212,25 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
                                     style={{
-                                        width: '150px',
+                                        ...(!isOracle && { width: '150px' }),
                                         fontWeight: '500',
                                         color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                                     }}
                                 >
                                     {' '}
-                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
-                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-                                        ? GENERAL.ES_MSSQL_EBS
-                                        : GENERAL.ES_MSSQL_FSXW}
+                                    {getSecondCategoryLabel()}
                                 </Text>
                             </div>
                         </CardTableContent>
 
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
-                        savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
-                            ? comparisonDataFsxw(calculatedResponse).map((data: any, index: number) => (
-                                  <ComparisonTableLayout
-                                      key={index}
-                                      data={data}
-                                      calculatedResponse={calculatedResponse}
-                                      existingType="fsxw"
-                                  />
-                              ))
-                            : comparisonData(calculatedResponse).map((data: any, index: number) => (
-                                  <ComparisonTableLayout
-                                      key={index}
-                                      data={data}
-                                      calculatedResponse={calculatedResponse}
-                                      existingType="ebs"
-                                  />
-                              ))}
+                        {comparisonConfig?.data?.map((data: any, idx: number) => (
+                            <ComparisonTableLayout
+                                key={data.type + String(idx)}
+                                data={data}
+                                calculatedResponse={calculatedResponse}
+                                existingType={comparisonConfig.existingType}
+                            />
+                        ))}
                     </CardContent>
                 </Card>
             </div>

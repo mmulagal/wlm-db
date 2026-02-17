@@ -1,4 +1,3 @@
-import { DsTypography } from '@netapp/design-system';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { useDispatch } from 'react-redux';
 import { useEffect, useMemo } from 'react';
@@ -18,16 +17,17 @@ const OnPremRegion = () => {
         const options: optionType[] = [];
         // @ts-ignore
         const sortedRegionsData = regionsSort(getOnPremRegionList?.onPremRegionsData?.regions || []);
-        sortedRegionsData?.map((val: any, idx: number) => {
+        sortedRegionsData?.map((val: any) => {
             const regionValue = `${val.regionCode} | ${val.regionName}`;
             const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
+            return null;
         });
         return options;
     }, [getOnPremRegionList]);
 
     useEffect(() => {
-        if (!selectedOnPremRegion) {
+        if (!selectedOnPremRegion && generateRegionList.length > 0) {
             // @ts-ignore
             const simplifiedRegions = generateRegionList.map(item => item?.data?.regionCode);
 
@@ -39,7 +39,7 @@ const OnPremRegion = () => {
                 dispatch(setSelectedOnPremRegion(generateRegionList[foundRegion]));
             }
         }
-    }, [generateRegionList]);
+    }, [generateRegionList, selectedOnPremRegion, headerSelectedRegion]);
 
     return (
         <div className={styles.onPremRegion}>

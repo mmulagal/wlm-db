@@ -65,8 +65,28 @@ const ViewCalculations = ({ statusCheck }: any) => {
             }
         }
 
+        // For ORACLE_ONPREM mode
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+            return selectedServerName || t('databases.explore-savings.oracle-on-premises-configuration');
+        }
+
         // Fallback to original selectedServerName for other modes
         return selectedServerName;
+    };
+
+    // Helper to get calculation labels based on savings calculator mode
+    const getOntapCalculationLabel = () => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+            return t('databases.explore-savings.oracle-ontap-calculation');
+        }
+        return t('databases.explore-savings.mssql-ontap-calculation');
+    };
+
+    const getEbsCalculationLabel = () => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+            return t('databases.explore-savings.oracle-ebs-calculation');
+        }
+        return t('databases.explore-savings.mssql-ebs-calculation');
     };
 
     return (
@@ -131,7 +151,7 @@ const ViewCalculations = ({ statusCheck }: any) => {
                     <div className={styles.calcSection}>
                         <div>
                             <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
-                                {GENERAL.MS_ONTAP_CALCULATION}
+                                {getOntapCalculationLabel()}
                             </DsTypography>
                             <InstancesOntapCalculation />
                             {viewCalculationsResponse?.azType === FSX_AZ_TYPE.SINGLE ? (
@@ -146,10 +166,11 @@ const ViewCalculations = ({ statusCheck }: any) => {
 
                         {(savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
                             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
-                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) && (
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) && (
                             <div>
                                 <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
-                                    {GENERAL.MS_EBS_CALCULATION}
+                                    {getEbsCalculationLabel()}
                                 </DsTypography>
                                 <InstancesEbsCalculation />
                                 <ElasticBlockStorageCalculation />

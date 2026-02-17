@@ -1,8 +1,8 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './SavingsSelectedHost.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { GENERAL } from '../../../../utils/appConstants';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
 interface SavingsSelectedHostProps {
@@ -10,6 +10,7 @@ interface SavingsSelectedHostProps {
 }
 
 const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
+    const { t } = useTranslation();
     const isDisabled = false;
     const {
         selectedHostDetails,
@@ -24,12 +25,21 @@ const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
     const [hostname, setHostname] = useState('');
     const [noOfInstances, setNoOfInstances] = useState('');
 
+    // Check if Oracle on-prem mode
+    const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM || isOracleOnPrem) {
             const currentHost = host || selectedOnPremHostDetails;
             setTotalVolume(0);
             setHostname(currentHost?.resourceName);
-            setNoOfInstances(currentHost?.totalInstance || currentHost?.sqlServerInstances?.length || 0);
+            // For Oracle, use databaseNameList length; for MSSQL use sqlServerInstances
+            setNoOfInstances(
+                currentHost?.totalInstance ||
+                    currentHost?.databaseNameList?.length ||
+                    currentHost?.sqlServerInstances?.length ||
+                    0
+            );
         } else {
             let volumeCount = 0;
             if (selectedHostDetails?.ebsResourceInfo?.length) {
@@ -47,7 +57,7 @@ const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
     return (
         <div className={styles.selectedHosts}>
             <DsTypography variant="Regular_14" className={isDisabled ? styles.disabledHeading : ''}>
-                Selected host:
+                {t('databases.explore-savings.selected-host')}:
             </DsTypography>
             <div
                 className={styles.valueArea}
@@ -60,7 +70,7 @@ const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                             title={hostname}
                         >
-                            {hostname || GENERAL.NOT_AVAILABLE}
+                            {hostname || t('databases.general.not-available')}
                         </DsTypography>
                     )}
                     {selectedHostDetails?.loading && (
@@ -72,7 +82,7 @@ const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
                         variant="Regular_14"
                         className={isDisabled ? `${styles.heading} ${styles.disabledContent}` : styles.heading}
                     >
-                        {GENERAL.ES_HOST_NAME}
+                        {t('databases.explore-savings.host-name')}
                     </DsTypography>
                 </div>
 
@@ -84,7 +94,7 @@ const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
                             variant="Semibold_14"
                             className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                         >
-                            {noOfInstances || GENERAL.NOT_AVAILABLE}
+                            {noOfInstances || t('databases.general.not-available')}
                         </DsTypography>
                     )}
                     {selectedHostDetails?.loading && (
@@ -96,7 +106,9 @@ const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
                         variant="Regular_14"
                         className={isDisabled ? `${styles.heading2} ${styles.disabledContent}` : styles.heading2}
                     >
-                        {GENERAL.ES_NUMBER_OF_INSTANCE}{' '}
+                        {isOracleOnPrem
+                            ? t('databases.explore-savings.number-of-databases')
+                            : t('databases.explore-savings.number-of-sql-instances')}{' '}
                     </DsTypography>
                 </div>
 
@@ -108,7 +120,7 @@ const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
                                 variant="Semibold_14"
                                 className={isDisabled ? `${styles.value} ${styles.disabledContent}` : styles.value}
                             >
-                                {totalVolume || GENERAL.NOT_AVAILABLE}
+                                {totalVolume || t('databases.general.not-available')}
                             </DsTypography>
                         )}
                         {(selectedHostDetails?.loading || getPartnerHostDetailsLoading) && (
@@ -120,7 +132,7 @@ const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
                             variant="Regular_14"
                             className={isDisabled ? `${styles.heading} ${styles.disabledContent}` : styles.heading}
                         >
-                            {GENERAL.ES_NUMBER_OF_VOLS}
+                            {t('databases.explore-savings.number-of-volumes')}
                         </DsTypography>
                     </div>
                 )}

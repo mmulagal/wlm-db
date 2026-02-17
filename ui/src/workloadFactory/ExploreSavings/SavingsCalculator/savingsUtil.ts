@@ -39,119 +39,77 @@ import { StorageSavingsInterface, ViewCalculationsInterface } from '../../../uti
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
-    const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom, selectedDeploymentModel } =
-        state.exploreSavings;
-    const checkBYOLTooltip = checkIfByolFieldRequired(selectedHostDetails, false, savingsCalculatorFrom);
+    const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom } = state.exploreSavings;
+    const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+    const isArrayMode =
+        (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
+            isOracle) &&
+        Array.isArray(calculatedResponse?.compute);
+
+    const formatCost = (val: any) => (val ? `$${formatFractionalNumberForCost(val, 2)}` : '$0');
+
+    const sumArrayField = (arr: any[], path: string) => {
+        const total = arr.reduce((sum: number, item: any) => sum + Number(item?.existing?.[path] || 0), 0);
+        return total > 0 ? formatCost(total) : '$0';
+    };
+
+    const checkBYOLTooltip = isOracle ? false : checkIfByolFieldRequired(selectedHostDetails, false, savingsCalculatorFrom);
+
+    const licenseLabel = isOracle ? 'Oracle License' : 'SQL license';
+    const licenseTooltip = isOracle
+        ? ''
+        : checkBYOLTooltip
+            ? 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL Server license-included AMIs. SQL license costs for SQL on Elastic Block Store are based on the Enterprise license with BYOL. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.'
+            : 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.';
+
     return [
         {
             type: 'Capacity',
-            fsx: calculatedResponse?.fsx?.capacity
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.capacity, 2)}`
-                : '$0',
-            ebs: calculatedResponse?.ebs?.capacity
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.ebs?.capacity, 2)}`
-                : '$0'
+            fsx: formatCost(calculatedResponse?.fsx?.capacity),
+            ebs: formatCost(calculatedResponse?.ebs?.capacity)
         },
         {
             type: 'IOPS',
-            fsx: calculatedResponse?.fsx?.iops
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.iops, 2)}`
-                : '$0',
-            ebs: calculatedResponse?.ebs?.iops
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.ebs?.iops, 2)}`
-                : '$0'
+            fsx: formatCost(calculatedResponse?.fsx?.iops),
+            ebs: formatCost(calculatedResponse?.ebs?.iops)
         },
         {
             type: 'Throughput',
-            fsx: calculatedResponse?.fsx?.throughput
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.throughput, 2)}`
-                : '$0',
-            ebs: calculatedResponse?.ebs?.throughput
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.ebs?.throughput, 2)}`
-                : '$0'
+            fsx: formatCost(calculatedResponse?.fsx?.throughput),
+            ebs: formatCost(calculatedResponse?.ebs?.throughput)
         },
         {
             type: 'Snapshots',
-            fsx: calculatedResponse?.fsx?.snapshots
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.snapshots, 2)}`
-                : '$0',
-            ebs: calculatedResponse?.ebs?.snapshots
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.ebs?.snapshots, 2)}`
-                : '$0'
+            fsx: formatCost(calculatedResponse?.fsx?.snapshots),
+            ebs: formatCost(calculatedResponse?.ebs?.snapshots)
         },
         {
             type: 'Clones',
-            fsx: calculatedResponse?.fsx?.clones
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.fsx?.clones, 2)}`
-                : '$0',
-            ebs: calculatedResponse?.ebs?.clones
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.ebs?.clones, 2)}`
-                : '$0'
+            fsx: formatCost(calculatedResponse?.fsx?.clones),
+            ebs: formatCost(calculatedResponse?.ebs?.clones)
         },
         {
             type: 'Compute',
             isTooltip: recommendedTargetInstance ? GENERAL.COMPUTE_RECOMMENDED_TOOLTIP : '',
-            fsx: calculatedResponse?.recommendedInstance?.computeMonthlyPrice
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.recommendedInstance?.computeMonthlyPrice, 2)}`
-                : '$0',
-            ebs: (() => {
-                if (
-                    (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
-                        savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
-                    Array.isArray(calculatedResponse?.compute)
-                ) {
-                    // Handle AUTO_EBS/ONPREM array format - sum all existing compute costs
-                    let totalExistingComputePrice = 0;
-                    calculatedResponse.compute.forEach((computeObj: any) => {
-                        totalExistingComputePrice += Number(computeObj?.existing?.computeMonthlyPrice || 0);
-                    });
-                    return totalExistingComputePrice > 0
-                        ? `$${formatFractionalNumberForCost(totalExistingComputePrice, 2)}`
-                        : '$0';
-                }
-                // Handle single object format for other modes
-                return calculatedResponse?.compute?.existing?.computeMonthlyPrice
-                    ? `$${formatFractionalNumberForCost(calculatedResponse?.compute?.existing?.computeMonthlyPrice, 2)}`
-                    : '$0';
-            })()
+            fsx: formatCost(calculatedResponse?.recommendedInstance?.computeMonthlyPrice),
+            ebs: isArrayMode
+                ? sumArrayField(calculatedResponse.compute, 'computeMonthlyPrice')
+                : formatCost(calculatedResponse?.compute?.existing?.computeMonthlyPrice)
         },
         {
-            type: 'SQL license',
-            isTooltip: checkBYOLTooltip
-                ? 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL Server license-included AMIs. SQL license costs for SQL on Elastic Block Store are based on the Enterprise license with BYOL. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.'
-                : 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
-            fsx: calculatedResponse?.recommendedInstance?.licenseMonthlyPrice
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)}`
-                : '$0',
-            ebs: (() => {
-                if (
-                    (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
-                        savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
-                    Array.isArray(calculatedResponse?.license)
-                ) {
-                    // Handle AUTO_EBS/ONPREM array format - sum all existing license costs
-                    let totalExistingLicensePrice = 0;
-                    calculatedResponse.license.forEach((licenseObj: any) => {
-                        totalExistingLicensePrice += Number(licenseObj?.existing?.licenseMonthlyPrice || 0);
-                    });
-                    return totalExistingLicensePrice > 0
-                        ? `$${formatFractionalNumberForCost(totalExistingLicensePrice, 2)}`
-                        : '$0';
-                }
-                // Handle single object format for other modes
-                return calculatedResponse?.license?.existing?.licenseMonthlyPrice
-                    ? `$${formatFractionalNumberForCost(calculatedResponse?.license?.existing?.licenseMonthlyPrice, 2)}`
-                    : '$0';
-            })()
+            type: licenseLabel,
+            isTooltip: licenseTooltip,
+            fsx: formatCost(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice),
+            ebs:
+                isArrayMode && Array.isArray(calculatedResponse?.license)
+                    ? sumArrayField(calculatedResponse.license, 'licenseMonthlyPrice')
+                    : formatCost(calculatedResponse?.license?.existing?.licenseMonthlyPrice)
         },
         {
             type: 'Total summary',
-            fsx: calculatedResponse?.totalSummary?.recommendedTotal
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.totalSummary?.recommendedTotal, 2)}`
-                : '$0',
-            ebs: calculatedResponse?.totalSummary?.existing
-                ? `$${formatFractionalNumberForCost(calculatedResponse?.totalSummary?.existing, 2)}`
-                : '$0'
+            fsx: formatCost(calculatedResponse?.totalSummary?.recommendedTotal),
+            ebs: formatCost(calculatedResponse?.totalSummary?.existing)
         }
     ];
 };
@@ -237,100 +195,108 @@ export const comparisonDataFsxw = (calculatedResponse: any) => {
     ];
 };
 
-export const calculatedFSXData = (fsxData: any, storageType: string, selectedExploreSavingsTab?: string) => [
-    {
-        label: 'Region',
-        value: fsxData?.regionName || GENERAL.NOT_AVAILABLE,
-        text: 'The AWS region that you selected.'
-    },
-    {
-        label: 'Deployment type',
-        value:
-            fsxData?.deploymentType === 'Single'
-                ? 'Single Availability Zone'
-                : fsxData?.deploymentType === 'Multi'
-                ? 'Multi Availability Zone'
-                : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
-        text:
-            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+export const calculatedFSXData = (
+    fsxData: any,
+    { storageType = '', selectedExploreSavingsTab, isOracleOnPrem }: { storageType?: string; selectedExploreSavingsTab?: string; isOracleOnPrem?: boolean } = {}
+) => {
+    const isOnPrem = selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem;
+    const useCaseLabel = fsxData?.useCase || (isOracleOnPrem ? 'Oracle' : '');
+
+    return [
+        {
+            label: 'Region',
+            value: fsxData?.regionName || GENERAL.NOT_AVAILABLE,
+            text: 'The AWS region that you selected.'
+        },
+        {
+            label: 'Deployment type',
+            value:
+                fsxData?.deploymentType === 'Single'
+                    ? 'Single Availability Zone'
+                    : fsxData?.deploymentType === 'Multi'
+                    ? 'Multi Availability Zone'
+                    : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
+            text: isOnPrem
                 ? `${fsxData?.deploymentType} Availability Zones is the equivalent deployment type for your on-premises configuration.`
                 : `${fsxData?.deploymentType} Availability Zones are the equivalent availability for Amazon ${storageType}.`
-    },
-    {
-        label: 'Total storage capacity',
-        value: fsxData?.totalStorageCapacity
-            ? formatSizeTwoPrecision(fsxData?.totalStorageCapacity)
-            : GENERAL.NOT_AVAILABLE,
-        text:
-            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+        },
+        {
+            label: 'Total storage capacity',
+            value: fsxData?.totalStorageCapacity
+                ? formatSizeTwoPrecision(fsxData?.totalStorageCapacity)
+                : GENERAL.NOT_AVAILABLE,
+            text: isOnPrem
                 ? 'According to on-premises total capacity of primary database volumes.'
                 : `According to ${storageType} total capacity of primary database volumes.`
-    },
-
-    {
-        label: 'Percentage of data on SSD storage',
-        value: fsxData?.percentageSsd ? `${formatFractionalNumber(fsxData?.percentageSsd, 2)}%` : GENERAL.NOT_AVAILABLE,
-        text:
-            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-                ? `The percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} database workload when using FSx for ONTAP.`
-                : `The potential percentage of data stored on the SSD tier for a typical ${fsxData?.useCase} workload when using FSx for ONTAP data tiering capabilities.`
-    },
-    {
-        label: 'Savings from compression and deduplication',
-        value: fsxData?.savings ? `${formatFractionalNumber(fsxData?.savings, 2)}%` : '0 %',
-        text: `Potential storage savings for ${fsxData?.useCase} workload. Storage efficiency is based on a typical customer deployment.`
-    },
-    {
-        label: 'Effective capacity',
-        value: fsxData?.effectiveCapacity ? formatSizeTwoPrecision(fsxData?.effectiveCapacity) : GENERAL.NOT_AVAILABLE,
-        text:
-            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+        },
+        {
+            label: 'Percentage of data on SSD storage',
+            value: fsxData?.percentageSsd
+                ? `${formatFractionalNumber(fsxData?.percentageSsd, 2)}%`
+                : GENERAL.NOT_AVAILABLE,
+            text: isOnPrem
+                ? `The percentage of data stored on the SSD tier for a typical ${useCaseLabel} database workload when using FSx for ONTAP.`
+                : `The potential percentage of data stored on the SSD tier for a typical ${useCaseLabel} workload when using FSx for ONTAP data tiering capabilities.`
+        },
+        {
+            label: 'Savings from compression and deduplication',
+            value: fsxData?.savings ? `${formatFractionalNumber(fsxData?.savings, 2)}%` : '0 %',
+            text: `Potential storage savings for ${useCaseLabel} workload. Storage efficiency is based on a typical customer deployment.`
+        },
+        {
+            label: 'Effective capacity',
+            value: fsxData?.effectiveCapacity
+                ? formatSizeTwoPrecision(fsxData?.effectiveCapacity)
+                : GENERAL.NOT_AVAILABLE,
+            text: isOnPrem
                 ? `Effective capacity reduces costs based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
                 : `Cost reduction based on ${fsxData?.savings}% savings from the compression and deduplication features available with FSx for ONTAP.`
-    },
-    {
-        label: 'SSD tier required capacity',
-        value: fsxData?.ssdTierReqCapacity
-            ? formatSizeTwoPrecision(fsxData?.ssdTierReqCapacity)
-            : GENERAL.NOT_AVAILABLE,
-        text: `Based on a typical ${fsxData?.useCase} workload, ${fsxData?.percentageSsd}% of the data is on the SSD tier.`
-    },
-    {
-        label: 'Capacity pool tier required capacity',
-        value: fsxData?.capacityPoolTier ? formatSizeTwoPrecision(fsxData?.capacityPoolTier) : '0 TiB',
-        text: `Based on a typical ${fsxData?.useCase} workload, ${
-            100 - fsxData?.percentageSsd
-        }% of the data is on the capacity pool tier.`
-    },
-    {
-        label: 'Provisioned SSD IOPS',
-        value: fsxData?.ssdIop ? Number(fsxData?.ssdIop).toLocaleString() : GENERAL.NOT_AVAILABLE,
-        text:
-            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+        },
+        {
+            label: 'SSD tier required capacity',
+            value: fsxData?.ssdTierReqCapacity
+                ? formatSizeTwoPrecision(fsxData?.ssdTierReqCapacity)
+                : GENERAL.NOT_AVAILABLE,
+            text: `Based on a typical ${useCaseLabel} workload, ${fsxData?.percentageSsd}% of the data is on the SSD tier.`
+        },
+        {
+            label: 'Capacity pool tier required capacity',
+            value: fsxData?.capacityPoolTier ? formatSizeTwoPrecision(fsxData?.capacityPoolTier) : '0 TiB',
+            text: `Based on a typical ${useCaseLabel} workload, ${
+                100 - (fsxData?.percentageSsd || 0)
+            }% of the data is on the capacity pool tier.`
+        },
+        {
+            label: 'Provisioned SSD IOPS',
+            value: fsxData?.ssdIop ? Number(fsxData?.ssdIop).toLocaleString() : GENERAL.NOT_AVAILABLE,
+            text: isOnPrem
                 ? 'Based on your on-premises configuration.'
                 : 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
-    },
-    {
-        label: 'Throughput capacity',
-        value: fsxData?.throughputCapacity ? `${fsxData?.throughputCapacity} MBps` : GENERAL.NOT_AVAILABLE,
-        text:
-            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+        },
+        {
+            label: 'Throughput capacity',
+            value: fsxData?.throughputCapacity ? `${fsxData?.throughputCapacity} MBps` : GENERAL.NOT_AVAILABLE,
+            text: isOnPrem
                 ? 'Based on your on-premises configuration.'
                 : `Supported FSx for ONTAP throughput according to the consolidated ${storageType} throughput required (${
                       fsxData?.numberOfVolumes * fsxData?.throughput
                   } Mbps).`
-    },
-    {
-        label: 'Monthly snapshot capacity',
-        value: fsxData?.monthlySnapshotCapacity
-            ? formatSizeTwoPrecision(fsxData?.monthlySnapshotCapacity)
-            : GENERAL.NOT_AVAILABLE,
-        text:
-            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-                ? 'FSx for ONTAP data tiering reduces costs by tiering 90% of snapshot data to the capacity pool storage tier.'
-                : 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
-    }
-];
+        },
+        ...(!isOracleOnPrem
+            ? [
+                  {
+                      label: 'Monthly snapshot capacity',
+                      value: fsxData?.monthlySnapshotCapacity
+                          ? formatSizeTwoPrecision(fsxData?.monthlySnapshotCapacity)
+                          : GENERAL.NOT_AVAILABLE,
+                      text: isOnPrem
+                          ? 'FSx for ONTAP data tiering reduces costs by tiering 90% of snapshot data to the capacity pool storage tier.'
+                          : 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
+                  }
+              ]
+            : [])
+    ];
+};
 
 export const MSSQLServerInstance = (sqlData: any, storageType: string) => [
     {

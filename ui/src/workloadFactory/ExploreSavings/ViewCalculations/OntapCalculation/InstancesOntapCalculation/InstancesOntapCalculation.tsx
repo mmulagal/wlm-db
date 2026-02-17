@@ -1,15 +1,31 @@
 import { AccordionCard, AccordionCardContent, DsTypography, useAccordionContext } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { viewCalculation } from '../../../SavingsCalculator/savingsUtil';
 import { GENERAL } from '../../../../../utils/appConstants';
+import { SAVINGS_CALC_MODE } from '../../../../../utils/consts';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { TableLayout } from '../../ViewCalculationsUtils';
 
 const InstancesOntapCalculation = () => {
-    const { viewCalculationsResponse, selectedDeploymentModel, viewCalculationsLoading, selectedHostDetails } =
-        useAppSelector(state => state.exploreSavings);
+    const { t } = useTranslation();
+    const {
+        viewCalculationsResponse,
+        selectedDeploymentModel,
+        viewCalculationsLoading,
+        selectedHostDetails,
+        savingsCalculatorFrom
+    } = useAppSelector(state => state.exploreSavings);
     const [viewLoading, setViewLoading] = useState(false);
+
+    // Get the instances label based on calculator mode (Oracle vs MSSQL)
+    const getInstancesLabel = () => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+            return t('databases.explore-savings.oracle-ec2-instances');
+        }
+        return t('databases.explore-savings.mssql-ec2-instances');
+    };
 
     useEffect(() => {
         setViewLoading(selectedHostDetails?.loading || viewCalculationsLoading);
@@ -81,7 +97,7 @@ const InstancesOntapCalculation = () => {
                                 )}
                                 id={`1-${hostCalculation.hostName}-${hostIndex}`}
                                 title={
-                                    <div>{`${GENERAL.ES_MSSQL_EC2_INSTANCES} ${
+                                    <div>{`${getInstancesLabel()} ${
                                         hostCalculation.hostName || `Host ${hostIndex + 1}`
                                     }`}</div>
                                 }
@@ -109,7 +125,7 @@ const InstancesOntapCalculation = () => {
                 <AccordionCard
                     ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                     id="1"
-                    title={<div>{GENERAL.ES_MSSQL_EC2_INSTANCES}</div>}
+                    title={<div>{getInstancesLabel()}</div>}
                     isLoading={viewLoading}
                     isDisabled={!viewCalculationsResponse}
                 >

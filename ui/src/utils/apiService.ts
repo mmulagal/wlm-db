@@ -1318,6 +1318,14 @@ export const exploreSavingsApi = createApi({
                 method: 'POST',
                 body: payload
             })
+        }),
+        // Oracle On-Prem Savings Calculation (returns both storageSavings and calculations)
+        getOracleOnPremCalculations: builder.mutation({
+            query: ({ payload }) => ({
+                url: 'v1/oracle/onprem-tco/explore-savings',
+                method: 'POST',
+                body: payload
+            })
         })
     })
 });
@@ -1724,7 +1732,8 @@ export const {
     useGetManualStorageSavingsMutation,
     useGetManualViewCalculationsMutation,
     useGetBulkStorageSavingsMutation,
-    useGetBulkViewCalculationsMutation
+    useGetBulkViewCalculationsMutation,
+    useGetOracleOnPremCalculationsMutation
 } = exploreSavingsApi;
 
 export const {

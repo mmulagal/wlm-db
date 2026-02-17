@@ -12,7 +12,6 @@ import SavingsSelection from './SavingsSelection/SavingsSelection';
 import CostBreakdown from './CostBreakdown/CostBreakdown';
 import SavingsSelectedHost from './SavingsSelectedHost/SavingsSelectedHost';
 import InstanceInformation from './InstanceInformation/InstanceInformation';
-import SelectedVolumeSummary from './SelectedVolumeSummary/SelectedVolumeSummary';
 import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
 import { ReactComponent as SuggestionDisable } from '../../../assets/SuggestionDisable.svg';
 import { ReactComponent as CalculateIcon } from '../../../assets/ic_calculateicon.svg';
@@ -21,7 +20,6 @@ import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
 
 import ExportPDF from './ExportPDF/ExportPDF';
 import downloadPdf from '../../../common/pdfGenerator';
-import { GENERAL } from '../../../utils/appConstants';
 import {
     addExploreSavingsInitialData,
     setShowOptimizeModal,
@@ -41,8 +39,6 @@ import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
 import ManualFSXEC2 from './ManualFSXEC2/ManualFSXEC2';
 import WindowFileServer from './WindowFileServer/WindowFileServer';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import ComputeInformation from './ComputeInformation/ComputeInformation';
-import StoragePerformance from './StoragePerformance/StoragePerformance';
 import OnPremRegion from './OnPremRegion/OnPremRegion';
 import downloadPdfEmail from '../../../common/emailPDF';
 import CalculateSavingCard from './CalculateSavingCard/CalculateSavingCard';
@@ -52,6 +48,8 @@ import CalculatorMode from './CalculatorMode/CalculatorMode';
 import { prepareViewCalcData } from './savingsUtil';
 import TCOBulkAccordion from './TCOBulkAccordion/TCOBulkAccordion';
 import TCOOnPremBulkAccordion from './TCOOnPremBulkAccordion/TCOOnPremBulkAccordion';
+// Oracle-specific imports (only API remains Oracle-specific)
+import OracleSavingsCalculatorApi from '../OracleTCO/OracleSavingsCalculator/OracleSavingsCalculatorApi';
 
 const SavingsCalculator = ({ statusCheck }: any) => {
     const { t } = useTranslation();
@@ -79,8 +77,13 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         showOptimizedModal,
         showOptimizeLink,
         showOptimizeMode,
-        selectedCalculatorMode
+        selectedCalculatorMode,
+        selectedOnPremHostDetails
     } = useAppSelector(state => state.exploreSavings);
+
+    // Helper to check if in Oracle on-prem mode
+    const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+    const isOnPremMode = selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem;
 
     const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(
         state => state.exploreSavingsBulk
@@ -214,7 +217,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: GENERAL.PDF_DOWNLOAD_SUCCESS
+                        message: t('databases.explore-savings.pdf-download-success')
                     })
                 );
             });
@@ -247,12 +250,17 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             }
         }
 
+        // For Oracle on-prem mode
+        if (isOracleOnPrem) {
+            return selectedServerName || selectedOnPremHostDetails?.resourceName;
+        }
+
         // Fallback to original selectedServerName for other modes
         return selectedServerName;
     };
 
     const setCSSForTextArea = () => {
-        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+        if (isOnPremMode) {
             return `${styles.selectionArea} ${styles.selectionAreaOnPrem}`;
         }
         return styles.selectionArea;
@@ -280,6 +288,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     };
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
+            {/* Oracle API handler component - conditionally rendered */}
+            {isOracleOnPrem && <OracleSavingsCalculatorApi />}
             <div className="scrollArea">
                 <div className={styles.savingsCalculator} id="export-pdf">
                     {statusCheck ? (
@@ -287,7 +297,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                             <BreadCrumbs
                                 items={[
                                     {
-                                        title: GENERAL.ES_SAVINGS,
+                                        title: t('databases.explore-savings.explore-savings-title'),
                                         onClick: () => {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
                                             dispatch(addExploreSavingsInitialData(null));
@@ -317,13 +327,13 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
                     <div
                         className={
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                            isOnPremMode
                                 ? `${styles.savingsHeading} ${styles.savingsHeadingOnPremise}`
                                 : styles.savingsHeading
                         }
                     >
                         <DsTypography variant="Regular_24" style={{ width: '100%' }}>
-                            {GENERAL.SAVINGS_CALCULATOR}
+                            {t('databases.explore-savings.savings-calculator')}
                         </DsTypography>
                         {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && showOptimizeLink && (
                             <div className={styles.optimizeLinkContainer}>
@@ -365,16 +375,18 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
                     <div
                         className={
-                            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+                            isOnPremMode
                                 ? `${styles.contentArea} ${styles.contentAreaOnPremise}`
                                 : styles.contentArea
                         }
                         style={{
-                            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '1607px ' : '1336px'
+                            width: isOnPremMode
+                                    ? '1607px '
+                                    : '1336px'
                         }}
                     >
                         {/* Left side code here */}
-                        {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && (
+                        {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && !isOracleOnPrem && (
                             <div className={setFirstContainerClass()}>
                                 {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
                                     savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
@@ -420,7 +432,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                             </div>
                         )}
 
-                        {selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && (
+                        {isOnPremMode && (
                             <div
                                 className={
                                     printState
@@ -431,14 +443,14 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                 <SavingsHeader />
                                 <OnPremRegion />
 
-                                {/* Render accordion UI if any on-prem hosts selected (bulk mode) */}
-                                {savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM &&
-                                    selectedRowsForExploreSavingsOnPremBulk.length >= 1 && (
-                                        <>
-                                            <SavingsSelection printState={printState} />
-                                            <TCOOnPremBulkAccordion />
-                                        </>
-                                    )}
+                                {(isOracleOnPrem ||
+                                    (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM &&
+                                        selectedRowsForExploreSavingsOnPremBulk.length >= 1)) && (
+                                    <>
+                                        <SavingsSelection printState={printState} />
+                                        <TCOOnPremBulkAccordion />
+                                    </>
+                                )}
                             </div>
                         )}
 
@@ -463,7 +475,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         <div>{isMutliFsx ? <SuggestionDisable /> : <Suggestion />}</div>
                         <div className={styles.textContent}>
                             <DsTypography variant="Semibold_16" className={isMutliFsx ? styles.textDisable : ''}>
-                                {GENERAL.SELECTION_BASED_TEXT}
+                            {t('databases.explore-savings.mssql-selection-based-text')}
                             </DsTypography>
                             <DsTypography
                                 variant="Regular_14"
@@ -471,12 +483,14 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     isMutliFsx ? `${styles.secondText} ${styles.textDisable}` : styles.secondText
                                 }
                             >
-                                {GENERAL.SELECTION_BASED_SECOND}
+                                {isOracleOnPrem
+                                    ? t('databases.explore-savings.oracle-ec2-single-fsx')
+                                    : t('databases.explore-savings.mssql-selection-based-second-text')}
                             </DsTypography>
                         </div>
                     </div>
 
-                    {/* Accordion here */}
+                    {/* Accordion here - MSSQLAccordion handles both MSSQL and Oracle */}
 
                     <MSSQLAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
                 </div>

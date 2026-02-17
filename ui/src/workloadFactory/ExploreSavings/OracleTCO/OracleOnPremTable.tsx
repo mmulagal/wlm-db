@@ -5,6 +5,7 @@ import { useDialog } from '@netapp/design-system/dist/components/Dialog';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { Popover } from '@netapp/design-system/dist/components/Popover';
+import { useNavigate } from 'react-router-dom';
 
 import { ColumnProps, Table } from '../../../common/Lib/Table/Table';
 import { useTable } from '../../../common/Lib/Table/useTable';
@@ -25,9 +26,11 @@ import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import TableTooltip from './TableTooltip/TableTooltip';
 import { useOnPremData } from '../ExploreSavingsOnPremiseTable/useOnPremData';
 import { formatDateWithTime, getTruncatedItems } from '../../../utils/utilityFunctions';
+import { onClickESHostOracleOnPrem } from '../ExploreSavingsUtils';
 
 const OracleOnPremTable = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { t } = useTranslation();
     const [isUploadLoading, setIsUploadLoading] = useState(false);
     const { fetchOracleOnPremData } = useOnPremData();
@@ -35,7 +38,7 @@ const OracleOnPremTable = () => {
     const buttonRef: any = useRef(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { setDialog } = useDialog();
-    const { isDemoMode } = useAppSelector(state => state.auth);
+    const { isDemoMode, isWorkloadFactory } = useAppSelector(state => state.auth);
     const [getUploadScript] = useGetUploadScriptMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [getOracleOnPremTCODownloadScript] = useGetOracleOnPremTCODownloadScriptMutation();
@@ -208,7 +211,6 @@ const OracleOnPremTable = () => {
             accessor: 'creationTime',
             id: '5',
             width: '16.66%',
-            filterOptions: 'auto',
             renderCell: (cellData: string) => (
                 <div>{cellData ? formatDateWithTime(cellData) : t('databases.general.not-available')}</div>
             )
@@ -223,7 +225,7 @@ const OracleOnPremTable = () => {
                 <div className={styles.lasColContainer}>
                     <div
                         className={CommonStyles.detectManage}
-                        onClick={() => {}}
+                        onClick={() => onClickESHostOracleOnPrem(dispatch, rowData, isWorkloadFactory, navigate)}
                         id="wlm-db-onprem-oracle-explore-savings-table-button"
                     >
                         <DsTypography variant="Regular_14" className={CommonStyles.textStyle}>

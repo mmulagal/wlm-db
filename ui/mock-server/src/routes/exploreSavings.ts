@@ -10,6 +10,7 @@ import SendEmail from '../data/sendEmail.json';
 import ExploreSavingsOnPrem from '../data/exploreSavingsOnPrem.json';
 import ExploreSavingsOnPremOracle from '../data/exploreSavingsOnPremOracle.json';
 import OnPremCalculationsBulk from '../data/onPremCalculationsBulk.json';
+import OnPremCalculationsBulkOracle from '../data/onPremCalculationsBulkOracle.json';
 
 const router = require('express').Router();
 
@@ -46,6 +47,12 @@ router.post(`${BASE_URL}/v1/mssql/onprem-tco/explore-savings`, async (req: {}, r
 router.get(`${BASE_URL}/v1/oracle/onprem-tco/resources`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, ExploreSavingsOnPremOracle);
+    }, 100);
+});
+
+router.post(`${BASE_URL}/v1/oracle/onprem-tco/explore-savings`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, OnPremCalculationsBulkOracle);
     }, 100);
 });
 

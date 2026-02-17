@@ -1,12 +1,17 @@
-import { Table, useTable, DsFlashingDotsLoader, TooltipInfo, DsTypography } from '@netapp/design-system';
-import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import { useEffect, useState } from 'react';
+import { Table, useTable, DsTypography, TextField } from '@netapp/design-system';
+import classNames from 'classnames';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './InstanceInformation.module.scss';
-import { useAppSelector } from '../../../../store/storeHooks';
-import { GENERAL } from '../../../../utils/appConstants';
+import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
 import { FINDINGS, SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
+import { setOnPremStorageAndComputeInfo } from '../../../../store/workloadFactory/exploreSavingsSlice';
+import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
+import { getOracleColDefs, getInstanceColDefs, getInstanceClassName } from './InstanceInformationUtils';
 
 const InstanceInformation = ({ host }: { host?: any }) => {
+    const { t } = useTranslation();
+    const dispatch = useAppDispatch();
     const selectedHostDetails = useAppSelector(state => state.exploreSavings.selectedHostDetails);
     const {
         savingsCalculatorFrom,
@@ -14,12 +19,59 @@ const InstanceInformation = ({ host }: { host?: any }) => {
         storageSavingsLoading,
         snapshotLoading,
         selectedExploreSavingsTab,
-        selectedOnPremHostDetails
+        selectedOnPremHostDetails,
+        onPremStorageAndComputeInfo
     }: any = useAppSelector(state => state.exploreSavings);
 
     const [tableData, setTableData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [noOfInstances, setNoOfInstances] = useState(0);
+    // Local state for Monthly Oracle cost input
+    const [oracleCostLocal, setOracleCostLocal] = useState<string>('');
+    // Debounced value - dispatches to store after 1s of inactivity
+    const [oracleCostDebounced, setOracleCostDebounced] = useSearchDebounce(1000);
+
+    // Check if Oracle on-prem mode
+    const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+
+    // Derive the store key for the current host's first database entry
+    const oracleStoreKey = useMemo(() => {
+        if (!isOracleOnPrem || !onPremStorageAndComputeInfo) return null;
+        const currentHost = host || selectedOnPremHostDetails;
+        if (!currentHost?.resourceId) return null;
+        const matchingKey = Object.keys(onPremStorageAndComputeInfo).find(key =>
+            key.startsWith(`${currentHost.resourceId}_`)
+        );
+        return matchingKey || null;
+    }, [isOracleOnPrem, host, selectedOnPremHostDetails, onPremStorageAndComputeInfo]);
+
+    // Initialize local state from store data when host changes
+    useEffect(() => {
+        if (oracleStoreKey && onPremStorageAndComputeInfo?.[oracleStoreKey]?.monthlyOracleCost !== undefined) {
+            setOracleCostLocal(onPremStorageAndComputeInfo[oracleStoreKey].monthlyOracleCost ?? '');
+        }
+    }, [oracleStoreKey]);
+
+    // Feed local state into debounce
+    useEffect(() => {
+        setOracleCostDebounced(oracleCostLocal);
+    }, [oracleCostLocal]);
+
+    // After debounce, dispatch to Redux store only if value actually changed
+    useEffect(() => {
+        if (oracleCostDebounced !== null && oracleCostDebounced !== undefined && oracleStoreKey) {
+            const currentStoreValue = onPremStorageAndComputeInfo?.[oracleStoreKey]?.monthlyOracleCost ?? '';
+            if (oracleCostDebounced !== currentStoreValue) {
+                dispatch(
+                    setOnPremStorageAndComputeInfo({
+                        type: oracleStoreKey,
+                        mode: 'monthlyOracleCost',
+                        value: oracleCostDebounced
+                    })
+                );
+            }
+        }
+    }, [oracleCostDebounced, oracleStoreKey]);
 
     useEffect(() => {
         if (selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES) {
@@ -69,7 +121,7 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             })();
             const findingsDbModel =
                 currentHost?.serverInstallationMode?.length &&
-                currentHost?.serverInstallationMode.includes(GENERAL.AOAG)
+                currentHost?.serverInstallationMode.includes(t('databases.general.always-on-availability-group'))
                     ? FINDINGS.NOT_OPTIMIZED
                     : FINDINGS.OPTIMIZED;
 
@@ -94,13 +146,13 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             const data: any = [
                 {
                     details: 'Instance type',
-                    value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : GENERAL.NOT_AVAILABLE,
+                    value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : t('databases.general.not-available'),
                     id: '1',
                     findings: savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ? findingsComputeData : ''
                 },
                 {
                     details: 'SQL Edition',
-                    value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
+                    value: serverEdition?.length > 0 ? serverEdition.join(', ') : t('databases.general.not-available'),
                     id: '2',
                     findings: findingsLicenseData
                 },
@@ -108,7 +160,7 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                     details: 'Deployment model',
                     value: currentHost?.serverAllInstallationMode
                         ? currentHost?.serverAllInstallationMode.join(', ')
-                        : currentHost?.serverInstallationMode || GENERAL.NOT_AVAILABLE,
+                        : currentHost?.serverInstallationMode || t('databases.general.not-available'),
                     id: '3',
                     findings: findingsDbModel
                 }
@@ -138,7 +190,7 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                 return storageSavingsResponse && (storageSavingsResponse?.license?.finding || '-');
             })();
 
-            const findingsDbModel = currentHost?.deploymentModel?.includes(GENERAL.AOAG)
+            const findingsDbModel = currentHost?.deploymentModel?.includes(t('databases.general.always-on-availability-group'))
                 ? FINDINGS.NOT_OPTIMIZED
                 : FINDINGS.OPTIMIZED;
 
@@ -153,13 +205,13 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             const data: any = [
                 {
                     details: 'SQL Edition',
-                    value: serverEdition?.length > 0 ? serverEdition.join(', ') : GENERAL.NOT_AVAILABLE,
+                    value: serverEdition?.length > 0 ? serverEdition.join(', ') : t('databases.general.not-available'),
                     id: '2',
                     findings: findingsLicenseData
                 },
                 {
                     details: 'Deployment model',
-                    value: currentHost?.deploymentModel || GENERAL.NOT_AVAILABLE,
+                    value: currentHost?.deploymentModel || t('databases.general.not-available'),
                     id: '3',
                     findings: findingsDbModel
                 }
@@ -168,120 +220,105 @@ const InstanceInformation = ({ host }: { host?: any }) => {
         }
     }, [selectedOnPremHostDetails, storageSavingsResponse, host]);
 
-    const InstanceColDefs: ColumnProps[] = [
-        {
-            Header: 'Details',
-            accessor: 'details',
-            id: '1',
-            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '282px' : '178px',
-            renderCell: (cellData: any, rowData: any) => (
-                <div className={styles.tooltips}>
-                    {rowData.details === 'SQL Edition' && noOfInstances > 1 && (
-                        <TooltipInfo>{GENERAL.ES_SQL_EDITION_MULTI_TOOLTIP}</TooltipInfo>
-                    )}
-                    <DsTypography variant="Regular_14" style={{ minWidth: '125px' }}>
-                        {rowData.details}
-                    </DsTypography>
-                </div>
-            )
-        },
+    // Oracle on-prem mode - Database Information
+    useEffect(() => {
+        if (isOracleOnPrem) {
+            const currentHost = host || selectedOnPremHostDetails;
 
-        {
-            Header: 'Value',
-            accessor: 'value',
-            id: '2',
-            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '282px' : '220px',
-            renderCell: (cellData: any, rowData: any) =>
-                !loading ? (
-                    <DsTypography variant="Regular_14" style={{ minWidth: '200px' }}>
-                        {rowData.value}
-                    </DsTypography>
-                ) : (
-                    <DsFlashingDotsLoader />
-                )
-        },
-        {
-            Header: 'Findings',
-            accessor: 'findings',
-            id: '3',
-            width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '282px' : '192px',
-            renderCell: (cellData: any, rowData: any) =>
-                !storageSavingsLoading && !snapshotLoading ? (
-                    <>
-                        {rowData.details === 'Instance type' &&
-                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
-                                <div className={styles.instanceTypeTooltip}>
-                                    <TooltipInfo>{GENERAL.INSTANCE_TYPE_FINDINGS_TOOLTIP}</TooltipInfo>
-                                </div>
-                            )}
-                        {rowData?.findings === FINDINGS.NOT_OPTIMIZED && (
-                            <div className={styles.tooltips}>
-                                {rowData.details === 'SQL Edition' && (
-                                    <TooltipInfo>{GENERAL.NOT_OPTIMIZED}</TooltipInfo>
-                                )}
-                                <DsTypography variant="Regular_14">
-                                    {rowData?.details === 'Instance type'
-                                        ? GENERAL.FINDINGS.OVER_PROVISIONED
-                                        : GENERAL.FINDINGS.NOT_OPTIMIZED}
-                                </DsTypography>
-                            </div>
-                        )}
+            const findingsLicenseData = (() => {
+                if (storageSavingsResponse) {
+                    const licenseArray = Array.isArray(storageSavingsResponse?.license)
+                        ? storageSavingsResponse.license
+                        : [storageSavingsResponse?.license].filter(Boolean);
+                    const hostLicense = licenseArray.find(
+                        (item: any) => item.resourceName === currentHost?.resourceName
+                    );
+                    return hostLicense?.finding || '-';
+                }
+                return '-';
+            })();
 
-                        {rowData?.findings === FINDINGS.OPTIMIZED && (
-                            <DsTypography variant="Regular_14">{GENERAL.FINDINGS.OPTIMIZED}</DsTypography>
-                        )}
+            // For Oracle, deployment model is typically standalone or RAC
+            const findingsDbModel = FINDINGS.OPTIMIZED;
 
-                        {rowData?.findings === FINDINGS.UNDER_PROVISIONED && (
-                            <DsTypography variant="Regular_14">{GENERAL.FINDINGS.UNDER_PROVISIONED}</DsTypography>
-                        )}
+            setNoOfInstances(currentHost?.totalInstance || currentHost?.databaseNameList?.length || 0);
 
-                        {(rowData?.findings === FINDINGS.INSUFFICIENT_DATA ||
-                            rowData?.findings === FINDINGS.INSUFFICIENT_PERMISSIONS) && (
-                            <DsTypography variant="Regular_14">{GENERAL.NOT_AVAILABLE}</DsTypography>
-                        )}
-
-                        {rowData.details === 'Instance type' &&
-                            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && (
-                                <DsTypography variant="Regular_14">-</DsTypography>
-                            )}
-                    </>
-                ) : (
-                    <DsFlashingDotsLoader />
-                )
+            const data: any = [
+                {
+                    details: 'Database edition',
+                    value: currentHost?.oracleEdition || t('databases.general.not-available'),
+                    id: '1',
+                    findings: findingsLicenseData
+                },
+                {
+                    details: 'Deployment model',
+                    value: currentHost?.deploymentModel || t('databases.general.not-available'),
+                    id: '2',
+                    findings: findingsDbModel
+                }
+            ];
+            setTableData(data);
         }
-    ];
+    }, [isOracleOnPrem, selectedOnPremHostDetails, storageSavingsResponse, host]);
+
+    // Determine column width based on mode
+    const isOnPremMode = selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem;
+
+    const columns = isOracleOnPrem
+        ? getOracleColDefs({ loading, noOfInstances, styles, t })
+        : getInstanceColDefs({
+              loading,
+              noOfInstances,
+              storageSavingsLoading,
+              snapshotLoading,
+              savingsCalculatorFrom,
+              isOnPremMode,
+              styles,
+              t
+          });
 
     const tableProps = useTable({
         // @ts-ignore
         selectAllProps: false,
         // @ts-ignore
         manageColumnsProps: false,
-
-        columns: InstanceColDefs,
+        columns,
         rows: tableData,
         pageSize: 10
     });
 
-    const getInstanceClassName = () => {
-        if (
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ||
-            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
-        ) {
-            return styles.instanceInformationAlternate;
+    // Get the section title based on mode
+    const getSectionTitle = () => {
+        if (isOracleOnPrem) {
+            return t('databases.explore-savings.database-information');
         }
-        return styles.instanceInformation;
+        return t('databases.explore-savings.instance-information');
     };
 
     return (
-        <div className={getInstanceClassName()}>
-            <DsTypography variant="Regular_14">{GENERAL.INSTANCE_INFORMATION}</DsTypography>
-            <div className={styles.instanceTable}>
+        <div className={getInstanceClassName({ savingsCalculatorFrom, selectedExploreSavingsTab, isOracleOnPrem, styles })}>
+            <DsTypography variant="Regular_14">{getSectionTitle()}</DsTypography>
+            <div className={classNames(styles.instanceTable, { [styles.oracleTable]: isOracleOnPrem })}>
                 <Table
                     // @ts-ignore
                     tableProps={tableProps}
                     variant="innerTable"
                 />
             </div>
+            {isOracleOnPrem && (
+                <div className={styles.monthlyOracleCost}>
+                    <TextField
+                        label={t('databases.explore-savings.monthly-oracle-cost')}
+                        placeholder=""
+                        value={oracleCostLocal}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const value = e.target.value.replace(/[^0-9]/g, '');
+                            setOracleCostLocal(value);
+                        }}
+                        className={styles.oracleCostInput}
+                    />
+                </div>
+            )}
         </div>
     );
 };
