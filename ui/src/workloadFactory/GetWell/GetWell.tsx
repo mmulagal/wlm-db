@@ -36,7 +36,9 @@ import {
     applyFilter,
     resetGwValuesOnRefresh,
     generateDynamicFilterOptions,
-    formatGetWellData
+    formatGetWellData,
+    isAoagDeployment as checkIsAoagDeployment,
+    isMssqlHaDeployment
 } from './GetWellUtils';
 import { setDefaultFilterOptions, setOptimizeFilterTags } from '../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../store/storeHooks';
@@ -300,6 +302,9 @@ const GetWell = () => {
         }
         return generateDynamicFilterOptions(filteredCardData, instanceDeploymentType);
     }, [filteredCardData, instanceDeploymentType]);
+
+    // Check if deployment type is AOAG - used to hide configurations not supported for AOAG
+    const isAoagDeployment = useMemo(() => checkIsAoagDeployment(instanceDeploymentType), [instanceDeploymentType]);
 
     GetWellApi();
 
@@ -2309,7 +2314,7 @@ const GetWell = () => {
                             )}
 
                             {/* Section five */}
-                            {(filteredCardData?.sql_licenses ||
+                            {((filteredCardData?.sql_licenses && !isAoagDeployment) ||
                                 filteredCardData?.microsoft_sql_patch ||
                                 filteredCardData?.maxdop) && (
                                 <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
@@ -2325,7 +2330,8 @@ const GetWell = () => {
                                     </div>
 
                                     <div className={styles.accordionGroups}>
-                                        {filteredCardData?.sql_licenses && (
+                                        {/* License (SQL Server) card is not supported for AOAG deployments */}
+                                        {filteredCardData?.sql_licenses && !isAoagDeployment && (
                                             <div className={styles.combineComponent}>
                                                 <StorageCardComponent
                                                     cardData={filteredCardData?.sql_licenses}
@@ -2584,7 +2590,7 @@ const GetWell = () => {
                             {(filteredCardData?.scheduled_local_snapshot ||
                                 filteredCardData?.crr ||
                                 filteredCardData?.scheduled_fsx_for_ontap_backups ||
-                                (instanceDeploymentType === GENERAL.FCI &&
+                                (isMssqlHaDeployment(instanceDeploymentType) &&
                                     filteredCardData?.mssql_high_availability)) && (
                                 <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
                                     <div className={styles['header-buttons']}>
@@ -2862,7 +2868,7 @@ const GetWell = () => {
                                             </div>
                                         )}
 
-                                        {instanceDeploymentType === GENERAL.FCI &&
+                                        {isMssqlHaDeployment(instanceDeploymentType) &&
                                             filteredCardData?.mssql_high_availability && (
                                                 <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
                                                     <StorageCardComponent

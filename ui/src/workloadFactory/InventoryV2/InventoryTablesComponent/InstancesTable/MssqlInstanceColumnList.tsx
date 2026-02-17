@@ -108,7 +108,7 @@ export function getMssqlInstanceTableColumns({
                                     return rowData?.status;
                                 })()}
                                 {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && INVENTORY_STATUS.UNKNOWN}
+                                {!rowData?.status && !rowData?.loading && !rowData?.isWad && INVENTORY_STATUS.UNKNOWN}
                             </DsTypography>
                         </div>
                     </div>

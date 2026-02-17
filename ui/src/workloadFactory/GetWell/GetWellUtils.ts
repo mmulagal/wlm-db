@@ -29,11 +29,13 @@ import {
 import { setInstanceDetailsData } from '../../store/workloadFactory/workloadFactoryResourceSlice';
 import { GENERAL } from '../../utils/appConstants';
 import {
+    AOAG_NOT_SUPPORTED_CONFIGS,
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_NAME_TO_ID_MAPPING,
     CONFIG_STATES,
     CONFIG_STATES_UI,
     CONFIG_STATE_ACTIONS,
+    DATABASE_DEPLOYMENT_MODE,
     DBType,
     FINDINGS,
     GETWELL_CONFIG,
@@ -42,6 +44,7 @@ import {
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
+    SQL_DEPLOYMENT_MODE,
     STATUS_CONST,
     WAD_EXCLUDED_CONFIGS_MSSQL,
     WA_FLAG_SKIP,
@@ -63,6 +66,31 @@ import {
 } from '../../utils/utilityFunctions';
 import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';
 import { formatOracleWellArchitectedData } from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+
+/**
+ * Checks if a configuration should be skipped for AOAG deployments.
+ * Use this utility to centralize the AOAG not-supported configuration check.
+ */
+export const isConfigSkippedForAoag = (configName: string, deploymentType?: string): boolean => {
+    if (!configName || !deploymentType) {
+        return false;
+    }
+    return AOAG_NOT_SUPPORTED_CONFIGS.includes(configName) && deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS;
+};
+
+/**
+ * Checks if the deployment type is AOAG.
+ */
+export const isAoagDeployment = (deploymentType?: string): boolean =>
+    deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS;
+
+/**
+ * Checks if the deployment type supports MSSQL High Availability features.
+ * This includes both FCI (Failover Cluster Instance) and AOAG (Always On Availability Group).
+ */
+export const isMssqlHaDeployment = (deploymentType?: string): boolean =>
+    deploymentType === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE_CAPS ||
+    deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS;
 
 // Category and subcategory mapping for configurations
 export const getCategoryData = () => ({
@@ -93,9 +121,6 @@ export const getCategoryData = () => ({
  * Checks if a configuration is excluded for WAD (offline assessment) MSSQL instances.
  * These configurations require online connectivity and are not available for WAD instances.
  * If a config is removed from WAD_EXCLUDED_CONFIGS_MSSQL, it will be shown normally.
- * @param configMapName - The configuration map name (display name)
- * @param isWad - Whether the instance is a WAD (offline assessment) instance
- * @returns true if the config should be excluded for WAD MSSQL instances
  */
 export const isWadExcludedConfig = (configMapName: string | undefined, isWad: boolean): boolean => {
     if (!isWad || !configMapName) return false;
@@ -117,13 +142,18 @@ export const generateDynamicFilterOptions = (cardData: any, deploymentType?: str
             return; // Skip deploymentType as it is not a card
         }
 
-        // Skip MSSQL High Availability for non-FCI instances
+        // Skip MSSQL High Availability for non-HA instances (only show for FCI and AOAG)
         const isMSSQLHighAvailability = key === GETWELL_CONFIG.mssqlhighavailability;
-        if (isMSSQLHighAvailability && deploymentType !== GENERAL.FCI) {
-            return; // Skip this card for non-FCI instances
+        if (isMSSQLHighAvailability && !isMssqlHaDeployment(deploymentType)) {
+            return; // Skip this card for non-HA instances
         }
 
         const config = cardData[key];
+
+        // Skip configurations not supported for AOAG deployments (compare by mapName)
+        if (isConfigSkippedForAoag(config?.mapName, deploymentType)) {
+            return; // Skip this card for AOAG instances
+        }
         const categoryInfo = categoryData[key as keyof typeof categoryData];
 
         if (categoryInfo) {
@@ -2948,6 +2978,11 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
             return;
         }
 
+        // Skip configurations not supported for AOAG deployments (compare by mapName)
+        if (isConfigSkippedForAoag(nestedObject?.mapName, cardsData?.deploymentType)) {
+            return; // Skip this card for AOAG instances
+        }
+
         const dismissedState = nestedObject?.dismissedObj?.configState;
         const isDismissed = dismissedState === CONFIG_STATES.DISMISSED;
         const isPostponed = dismissedState === CONFIG_STATES.POSTPONED;
@@ -3033,11 +3068,11 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
                 notOptimizedApplication++;
             }
         } else if (nestedObject?.category === 'resiliency') {
-            // Skip MSSQL High Availability for non-FCI instances
+            // Skip MSSQL High Availability for non-HA instances (only show for FCI and AOAG)
             const isMSSQLHighAvailability =
                 key === 'mssql_high_availability' || nestedObject?.id === 'mssql-high-availability';
-            if (isMSSQLHighAvailability && cardsData?.deploymentType !== GENERAL.FCI) {
-                return; // Skip this card for non-FCI instances
+            if (isMSSQLHighAvailability && !isMssqlHaDeployment(cardsData?.deploymentType)) {
+                return; // Skip this card for non-HA instances
             }
 
             // Check if all sub-configurations are in ACTIVATING state for MSSQL HA
@@ -3338,7 +3373,10 @@ export const getCardsData = (
         isWad: data?.isWad || false
     };
 
-    cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
+    // Skip License (Application) card for AOAG deployments - not supported for AOAG
+    if (!isAoagDeployment(data?.deploymentType)) {
+        cardsData = formatApplicationCardMainConfig(data, optimizingData, cardsData);
+    }
 
     cardsData = formatOsPatchCardConfig(data, optimizingData, cardsData);
 
@@ -3664,10 +3702,10 @@ export const applyFilter = (
         if (WA_FLAG_SKIP.includes(key)) {
             return; // Skip deploymentType as it is not a card
         }
-        // Skip MSSQL High Availability for non-FCI instances (same logic as in formatOptimizationBreakDown)
+        // Skip MSSQL High Availability for non-HA instances (only show for FCI and AOAG)
         const isMSSQLHighAvailability = key === 'mssql_high_availability';
-        if (isMSSQLHighAvailability && cardData?.deploymentType !== GENERAL.FCI) {
-            return; // Skip this card for non-FCI instances
+        if (isMSSQLHighAvailability && !isMssqlHaDeployment(cardData?.deploymentType)) {
+            return; // Skip this card for non-HA instances
         }
 
         // Check if this config is excluded for WAD instances
@@ -5796,8 +5834,9 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         );
     } else {
         let totalInstance = 0;
-        if (configKey === 'mssqlhighAvailability') {
-            // For above configs we need to calculate dynamic total instance as all instance might not be FCI.
+        if (configKey === 'mssqlhighAvailability' || configKey === 'applicationSqlServer') {
+            // For mssqlhighAvailability we need to calculate dynamic total instance as only FCI and AOAG instances support HA.
+            // For applicationSqlServer (License) we need to exclude AOAG instances as License is not supported for AOAG.
             totalInstance = configData?.[configKey]?.total || 0;
         } else {
             totalInstance = configData?.total || 0;

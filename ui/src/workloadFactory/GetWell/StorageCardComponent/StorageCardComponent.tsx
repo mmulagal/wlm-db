@@ -106,7 +106,13 @@ const StorageCardComponent = ({
     // Function to determine if dismissed style should be applied
     const shouldApplyDismissedStyle = () => {
         // WAD excluded configs should have disabled/dismissed style
-        if (cardData?.isWadExcluded) {
+        // If the configuration data is not available, show the disabled/dismissed style
+        if (
+            cardData?.isWadExcluded ||
+            cardData?.block_two?.value === GENERAL.UNAVAILABLE ||
+            cardData?.errorMessage ||
+            !cardData?.block_four?.value
+        ) {
             return true;
         }
 
@@ -348,12 +354,15 @@ const StorageCardComponent = ({
                     </>
                 ) : (
                     <>
-                        {cardData?.errorMessage && (
+                        {(!cardData?.block_two?.value || cardData?.errorMessage) && (
                             <span className={styles.overProvisioned}>
                                 <span className={styles.tooltipLevel}>
                                     <Popover
                                         popoverClass=""
-                                        children={cardData?.errorMessage}
+                                        children={
+                                            cardData?.errorMessage ||
+                                            t('databases.general.assessment-unavailable-with-tooltip')
+                                        }
                                         trigger="hover"
                                         isAppendedToBody={false}
                                         container={<TooltipIcon />}

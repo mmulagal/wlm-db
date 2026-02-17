@@ -4,7 +4,7 @@ import { Button, Popover, Typography } from '@netapp/design-system';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
 import { INVENTORY_STATUS, SSM_TROUBLESHOOTING_LINK } from '../../../../utils/consts';
-import { getFilterOptions } from '../../../../utils/utilityFunctions';
+import { createNACustomFilter, getFilterOptions, getFilterOptionsWithNA } from '../../../../utils/utilityFunctions';
 import { renderCellData, renderEstimatedCost, renderInstanceListText, renderVpcText } from '../../InventoryUtilsV2';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -69,6 +69,9 @@ export function MssqlPgsqlHostTableColDefs({
                                     if (rowData?.loading) {
                                         return <DsFlashingDotsLoader />;
                                     }
+                                    if (rowData?.isWad) {
+                                        return '';
+                                    }
                                     return INVENTORY_STATUS.UNKNOWN;
                                 })()}
                             </DsTypography>
@@ -130,7 +133,12 @@ export function MssqlPgsqlHostTableColDefs({
             Header: t('databases.host-table.headers.ssm-connectivity'),
             accessor: 'ssmState',
             width: '200px',
-            filterOptions: getFilterOptions(hostTableRows, 'ssmState'),
+            filterOptions: getFilterOptionsWithNA(
+                hostTableRows,
+                'ssmState',
+                t('databases.general.not-available-table-columns')
+            ),
+            customFilter: createNACustomFilter,
             renderCell: (cellData: any, rowData: any) => (
                 <div className={styles.firstColText}>
                     {rowData?.ssmState === INVENTORY_STATUS.ONLINE && (
@@ -169,6 +177,11 @@ export function MssqlPgsqlHostTableColDefs({
                                 />
                             </div>
                         </>
+                    )}
+                    {!rowData?.ssmState && (
+                        <DsTypography variant="Regular_13">
+                            {t('databases.general.not-available-table-columns')}
+                        </DsTypography>
                     )}
                 </div>
             )

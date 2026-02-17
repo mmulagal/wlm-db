@@ -1,5 +1,4 @@
-import { DsFlashingDotsLoader, DsTypography, TooltipInfo } from '@netapp/design-system';
-import { ReactComponent as DevCircle } from '../../../assets/DevCircle.svg';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import styles from './OptimizeComponent.module.scss';
 import GetWellBar from './GetWellBar/GetWellBar';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -12,6 +11,7 @@ type OptimizeComponentType = {
     image: any;
     isComingSoon: boolean;
     allConfigurationsDismissed?: boolean;
+    isDisabled?: boolean;
 };
 
 const OptimizeComponent = ({
@@ -20,32 +20,34 @@ const OptimizeComponent = ({
     data,
     image,
     isComingSoon,
-    allConfigurationsDismissed
+    allConfigurationsDismissed,
+    isDisabled = false
 }: OptimizeComponentType) => {
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const isAssessmentAvailable = useAppSelector(state => state.getWellOptimize.isAssessmentAvailable);
 
+    // Simplified disabled state logic
+    const isComponentDisabled = !loading && isDisabled;
+    const isUnavailable = !loading && !isAssessmentAvailable;
+    const shouldShowDisabledState = isComponentDisabled || isUnavailable || allConfigurationsDismissed;
+    const showConfigurationDetails = isAssessmentAvailable || isDisabled;
+
     return (
-        <div className={styles.optimizeComponent}>
+        <div className={`${styles.optimizeComponent} ${isComponentDisabled ? styles.disabled : ''}`}>
             <div className={styles.svgContainer}>{image}</div>
 
             <div className={styles.rightSection}>
                 <div className={styles.topSection}>
                     <div className={styles.textWithLoading}>
-                        {(!isAssessmentAvailable && !loading) || allConfigurationsDismissed ? (
-                            <DsTypography variant="Semibold_14" isDisabled>
-                                {text}
-                            </DsTypography>
-                        ) : (
-                            <DsTypography variant="Semibold_14">{text}</DsTypography>
-                        )}
-
+                        <DsTypography variant="Semibold_14" isDisabled={shouldShowDisabledState}>
+                            {text}
+                        </DsTypography>
                         {loading && !isComingSoon && <DsFlashingDotsLoader />}
                     </div>
 
                     <div className={styles.optimizeText}>
                         {!isComingSoon &&
-                            ((!isAssessmentAvailable && !loading) || allConfigurationsDismissed ? (
+                            (shouldShowDisabledState ? (
                                 <DsTypography
                                     variant="Regular_14"
                                     style={{ lineHeight: 'unset', marginTop: '5px' }}
@@ -63,8 +65,6 @@ const OptimizeComponent = ({
                                 {value}
                             </DsTypography>
                         )}
-
-                        {/* <DsTypography variant="Regular_14">Optimized</DsTypography> */}
                     </div>
                 </div>
 
@@ -72,24 +72,26 @@ const OptimizeComponent = ({
                     <GetWellBar
                         barValue={value}
                         isComingSoon={isComingSoon}
-                        allConfigurationsDismissed={allConfigurationsDismissed}
+                        allConfigurationsDismissed={allConfigurationsDismissed || isComponentDisabled}
                     />
                 </div>
 
                 {!isComingSoon && !allConfigurationsDismissed && (
                     <div className={styles.bottomTextSection}>
-                        {!loading && !isAssessmentAvailable ? (
+                        {isUnavailable && !isDisabled ? (
                             <div style={{ height: '24px' }} />
                         ) : (
                             <div className={styles.tooltipContainer}>
-                                <DsTypography variant="Regular_14">Well-architected configurations:</DsTypography>
+                                <DsTypography variant="Regular_14" isDisabled={isComponentDisabled}>
+                                    Well-architected configurations:
+                                </DsTypography>
                             </div>
                         )}
 
                         {!loading &&
-                            (isAssessmentAvailable ? (
-                                <DsTypography variant="Semibold_14">
-                                    {data?.optimized} out of {data?.total}
+                            (showConfigurationDetails ? (
+                                <DsTypography variant="Semibold_14" isDisabled={isComponentDisabled}>
+                                    {data?.optimized ?? 0} out of {data?.total ?? 0}
                                 </DsTypography>
                             ) : (
                                 <div style={{ height: '24px' }} />

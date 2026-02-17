@@ -180,7 +180,6 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
                 databaseInstanceId: instanceData?.databaseInstanceId,
                 databaseInstanceName: instanceData?.databaseInstanceName,
                 databaseHostId: hostId, // Added for WAD API calls
-                status: INVENTORY_STATUS.CASE_SENSITIVE_UP, // Hardcoded until status is available from API
                 statusColText: INVENTORY_STATUS.UNMANAGED,
                 sqlServerDeploymentType: assessments?.deploymentType,
                 fsxId: assessments?.storageEndpoint,
@@ -221,8 +220,6 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
             hostType: DBType.MSSQL, // WAD data is for MSSQL
             ec2InstanceId: firstInstance?.resourceId,
             ec2InstanceName: firstInstance?.vmName,
-            status: INVENTORY_STATUS.ONLINE, // Hardcoded until status is available from API
-            ssmState: INVENTORY_STATUS.ONLINE, // Hardcoded until status is available from API
             totalInstance: formattedInstances.length,
             managedInstance: 0,
             vpcId: firstInstance?.virtualNetworkId,

@@ -1075,6 +1075,10 @@ export const ASSESSMENT_CONFIG_NAMES = {
     MICROSOFT_SQL_SERVER_PATCH_SHORT: 'Microsoft SQL Server patch'
 };
 
+// Configurations not supported for AOAG (Always On Availability Group) MSSQL deployments
+// Uses ASSESSMENT_CONFIG_NAMES values (mapName) for comparison
+export const AOAG_NOT_SUPPORTED_CONFIGS = [ASSESSMENT_CONFIG_NAMES.LICENSE];
+
 // Configuration names mapping for unified display names for the export pdf
 export const CONFIG_NAMES = {
     // Oracle Storage sizing configurations

@@ -43,7 +43,8 @@ import { calculatePostponeInfo, sortOptimizeDashboardInnerTable } from '../Dashb
 import { ButtonWithDropdown } from '../../../../common/ButtonWithDropdown/ButtonWithDropdown';
 import {
     disableOptimizeCheckBoxForErrCase,
-    disableOptimizeCheckBoxForOptimizeCase
+    disableOptimizeCheckBoxForOptimizeCase,
+    isMssqlHaDeployment
 } from '../../../GetWell/GetWellUtils';
 import { GENERAL } from '../../../../utils/appConstants';
 
@@ -137,7 +138,7 @@ const DashboardMultiTableConfig = ({
 
                     if (
                         configType === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY &&
-                        instanceData?.assessments?.deploymentType !== GENERAL.FCI
+                        !isMssqlHaDeployment(instanceData?.assessments?.deploymentType)
                     ) {
                         return;
                     }

@@ -27,7 +27,8 @@ import {
 } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
-    disableOptimizeCheckBoxForOptimizeCase
+    disableOptimizeCheckBoxForOptimizeCase,
+    isConfigSkippedForAoag
 } from '../../../GetWell/GetWellUtils';
 import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
 import { useTable } from '../../../../common/Lib/Table/useTable';
@@ -734,6 +735,11 @@ const DashboardConfigsTable = ({
 
                     // Filter Oracle ASM-related configurations
                     if (!filterDatabaseRowsForNonAsm(config.configName, instanceData?.assessments)) {
+                        return;
+                    }
+
+                    // Skip configurations not supported for AOAG deployments (e.g., License)
+                    if (isConfigSkippedForAoag(configType, instanceData?.assessments?.deploymentType)) {
                         return;
                     }
 

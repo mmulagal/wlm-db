@@ -19,6 +19,7 @@
             "fix-after-operation-ends": "You will be able to fix after the current well-architected operation ends."
         },
         "general": {
+            "assessment-unavailable-with-tooltip": "Configuration data is not available.",
             "save": "Save",
             "availability-groups": "Availability Groups",
             "failover-cluster-instances": "Failover Cluster Instances",

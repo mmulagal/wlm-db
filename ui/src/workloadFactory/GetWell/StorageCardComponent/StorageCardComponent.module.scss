@@ -22,6 +22,12 @@
             * {
                 color: var(--text-disabled);
             }
+
+            .tooltipLevel {
+                * {
+                    color: var(--text-primary);
+                }
+            }
         }
     }
 

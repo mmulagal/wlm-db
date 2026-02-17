@@ -11,7 +11,12 @@ import {
 import { GENERAL } from '../../utils/appConstants';
 import { ReactComponent as Postpone } from '../../assets/Schedule.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
-import { getConfigurationTechnicalName, isWadExcludedConfig } from './GetWellUtils';
+import {
+    getConfigurationTechnicalName,
+    isConfigSkippedForAoag,
+    isMssqlHaDeployment,
+    isWadExcludedConfig
+} from './GetWellUtils';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
 
 // Helper component for postpone information
@@ -223,9 +228,9 @@ export const calculateTotalConfigCount = (
     Object.keys(cardData).forEach((key: string) => {
         if (WA_FLAG_SKIP.includes(key)) return;
 
-        // Skip MSSQL High Availability for non-FCI instances
+        // Skip MSSQL High Availability for non-HA instances (only show for FCI and AOAG)
         const isMSSQLHighAvailability = key === GETWELL_CONFIG.mssqlhighavailability;
-        if (isMSSQLHighAvailability && cardData?.deploymentType !== GENERAL.FCI) {
+        if (isMSSQLHighAvailability && !isMssqlHaDeployment(cardData?.deploymentType)) {
             return;
         }
 
@@ -468,9 +473,14 @@ export const checkAllConfigurationsDismissed = (cardData: any, assessmentData?: 
     Object.keys(cardData).forEach((key: string) => {
         if (WA_FLAG_SKIP.includes(key)) return;
 
-        // Skip MSSQL High Availability for non-FCI instances
+        // Skip MSSQL High Availability for non-HA instances (only show for FCI and AOAG)
         const isMSSQLHighAvailability = key === GETWELL_CONFIG.mssqlhighavailability;
-        if (isMSSQLHighAvailability && cardData?.deploymentType !== GENERAL.FCI) {
+        if (isMSSQLHighAvailability && !isMssqlHaDeployment(cardData?.deploymentType)) {
+            return;
+        }
+
+        // Skip configurations not supported for AOAG deployments (compare by mapName)
+        if (isConfigSkippedForAoag(cardData[key]?.mapName, cardData?.deploymentType)) {
             return;
         }
 

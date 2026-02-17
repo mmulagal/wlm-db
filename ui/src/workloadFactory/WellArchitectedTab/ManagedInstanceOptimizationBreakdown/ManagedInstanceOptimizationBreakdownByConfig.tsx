@@ -371,7 +371,12 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 total = configData?.oracleTotal || 1;
                 afterOutOfTotal = configData?.oracleTotal;
             }
-        } else if (headingText === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) {
+        } else if (
+            headingText === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY ||
+            headingText === ASSESSMENT_CONFIG_NAMES.LICENSE
+        ) {
+            // For MSSQL High Availability, total is calculated dynamically as only FCI and AOAG instances support HA.
+            // For License, total is calculated dynamically as License is not supported for AOAG deployments.
             total = configData?.[key]?.total || 1;
             afterOutOfTotal = configData?.[key]?.total;
         } else {

@@ -5,6 +5,7 @@ import { GENERAL } from '../../utils/appConstants';
 import {
     CONFIG_STATES,
     COSTING_TYPES,
+    DATABASE_DEPLOYMENT_MODE,
     DBType,
     ERROR_ANALYZER_STATUS,
     FINDINGS,
@@ -26,7 +27,12 @@ import {
     roundOffNumber,
     sortListOfDict
 } from '../../utils/utilityFunctions';
-import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
+import {
+    formatOptimizationBreakDown,
+    getCardsData,
+    isAoagDeployment,
+    isMssqlHaDeployment
+} from '../GetWell/GetWellUtils';
 import { uniqueHostRow } from '../InventoryV2/InventoryUtilsV2';
 import {
     formatOracleOptimizationBreakDown,
@@ -589,10 +595,13 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
                     instanceAssessmentData?.mtuAlignment?.status,
                     instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
                 );
-                const isLicenseOptimized = isOptimized(
-                    instanceAssessmentData?.license?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.license?.configState
-                );
+                // License is not supported for AOAG deployments, so always consider it optimized for AOAG
+                const isLicenseOptimized = isAoagDeployment(instanceAssessmentData?.deploymentType)
+                    ? true
+                    : isOptimized(
+                          instanceAssessmentData?.license?.status,
+                          instanceAssessmentData?.dismissedConfigurations?.license?.configState
+                      );
                 const isMicrosoftSqlPatchOptimized = isOptimized(
                     instanceAssessmentData?.mssqlPatch?.status,
                     instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
@@ -688,10 +697,13 @@ const checkMSSQLConfigurationsOptimized = (instanceAssessmentData: any) => {
         instanceAssessmentData?.mtuAlignment?.status,
         instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
     );
-    const isLicenseOptimized = isOptimized(
-        instanceAssessmentData?.license?.status,
-        instanceAssessmentData?.dismissedConfigurations?.license?.configState
-    );
+    // License is not supported for AOAG deployments, so always consider it optimized for AOAG
+    const isLicenseOptimized = isAoagDeployment(instanceAssessmentData?.deploymentType)
+        ? true
+        : isOptimized(
+              instanceAssessmentData?.license?.status,
+              instanceAssessmentData?.dismissedConfigurations?.license?.configState
+          );
     const isMicrosoftSqlPatchOptimized = isOptimized(
         instanceAssessmentData?.mssqlPatch?.status,
         instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
@@ -1390,10 +1402,13 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
                             return isOptimized(subItem?.status, configState);
                         })
                     );
-                const isApplicationOptimized = isOptimized(
-                    instanceAssessmentData?.license?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.license?.configState
-                );
+                // License is not supported for AOAG deployments, so always consider it optimized for AOAG
+                const isApplicationOptimized = isAoagDeployment(instanceAssessmentData?.deploymentType)
+                    ? true
+                    : isOptimized(
+                          instanceAssessmentData?.license?.status,
+                          instanceAssessmentData?.dismissedConfigurations?.license?.configState
+                      );
                 const isMicrosoftSqlPatchOptimized = isOptimized(
                     instanceAssessmentData?.mssqlPatch?.status,
                     instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
@@ -1463,7 +1478,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
                     isScheduledLoclaSnapshotOptimized &&
                     isCRROptimized &&
                     isScheduledAWSBackUpOptimized &&
-                    (instance?.assessments?.deploymentType !== GENERAL.FCI ||
+                    (!isMssqlHaDeployment(instance?.assessments?.deploymentType) ||
                         (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability))
                 ) {
                     assessmentGroupedByCategory.resiliency++;
@@ -1993,6 +2008,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             activating: 0
         },
         applicationSqlServer: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
@@ -2354,15 +2370,21 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                     instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
                 );
 
-                const isApplicationSqlServerOptimized = isOptimizedDashInner(
-                    instanceAssessmentData?.license?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.license?.configState
-                );
-                setConfigState(
-                    configState,
-                    'applicationSqlServer',
-                    instanceAssessmentData?.dismissedConfigurations?.license?.configState
-                );
+                // License is not supported for AOAG deployments
+                const isAoagInstanceDeployment = isAoagDeployment(instanceAssessmentData?.deploymentType);
+                const isApplicationSqlServerOptimized = isAoagInstanceDeployment
+                    ? false // For AOAG, we don't count license - will be skipped in counting below
+                    : isOptimizedDashInner(
+                          instanceAssessmentData?.license?.status,
+                          instanceAssessmentData?.dismissedConfigurations?.license?.configState
+                      );
+                if (!isAoagInstanceDeployment) {
+                    setConfigState(
+                        configState,
+                        'applicationSqlServer',
+                        instanceAssessmentData?.dismissedConfigurations?.license?.configState
+                    );
+                }
 
                 const isMicrosoftSqlPatchOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.mssqlPatch?.status,
@@ -2644,22 +2666,25 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                 getAssessmentGroupedByConfigurations.severityObj.mtuConfiguration =
                     GETWELL_VALUES[instanceAssessmentData?.mtuAlignment?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.mtuConfiguration;
-                getAssessmentGroupedByConfigurations.applicationSqlServer.optimized += isApplicationSqlServerOptimized
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.applicationSqlServer.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.license?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.applicationSqlServer.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.license?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.applicationSqlServer =
-                    GETWELL_VALUES[instanceAssessmentData?.license?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.applicationSqlServer;
+                // Skip license (applicationSqlServer) counting for AOAG deployments - not supported
+                if (!isAoagInstanceDeployment) {
+                    getAssessmentGroupedByConfigurations.applicationSqlServer.total++;
+                    getAssessmentGroupedByConfigurations.applicationSqlServer.optimized +=
+                        isApplicationSqlServerOptimized ? 1 : 0;
+                    getAssessmentGroupedByConfigurations.applicationSqlServer.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.license?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.applicationSqlServer.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.license?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.applicationSqlServer =
+                        GETWELL_VALUES[instanceAssessmentData?.license?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.applicationSqlServer;
+                }
                 getAssessmentGroupedByConfigurations.mssqlPatch.optimized += isMicrosoftSqlPatchOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.mssqlPatch.dismissed += isDismissed(
                     instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
@@ -2752,11 +2777,11 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                     GETWELL_VALUES[instanceAssessmentData?.crr?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.crr;
 
-                if (instance?.assessments?.deploymentType === GENERAL.FCI) {
+                if (isMssqlHaDeployment(instance?.assessments?.deploymentType)) {
                     getAssessmentGroupedByConfigurations.isHaMssqlEnable = true;
                     getAssessmentGroupedByConfigurations.mssqlhighAvailability.total++;
                     getAssessmentGroupedByConfigurations.mssqlhighAvailability.optimized +=
-                        instance?.assessments?.deploymentType !== GENERAL.FCI ||
+                        !isMssqlHaDeployment(instance?.assessments?.deploymentType) ||
                         (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability)
                             ? 1
                             : 0;

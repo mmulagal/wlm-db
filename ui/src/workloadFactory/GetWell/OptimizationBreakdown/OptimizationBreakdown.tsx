@@ -213,6 +213,7 @@ const OptimizationBreakdown = ({
                         image={<Storage />}
                         isComingSoon={false}
                         allConfigurationsDismissed={allConfigurationsDismissed}
+                        isDisabled={(optimizationBreakDown?.storage?.total ?? 0) === 0}
                     />
                     <OptimizeComponent
                         value={optimizationBreakDown?.compute?.percent || 0}
@@ -221,6 +222,7 @@ const OptimizationBreakdown = ({
                         image={<Compute />}
                         isComingSoon={false}
                         allConfigurationsDismissed={allConfigurationsDismissed}
+                        isDisabled={(optimizationBreakDown?.compute?.total ?? 0) === 0}
                     />
                     <OptimizeComponent
                         value={
@@ -241,6 +243,9 @@ const OptimizationBreakdown = ({
                         allConfigurationsDismissed={
                             engineType === DBType.ORACLE ? undefined : allConfigurationsDismissed
                         }
+                        isDisabled={
+                            engineType !== DBType.ORACLE && (optimizationBreakDown?.application?.total ?? 0) === 0
+                        }
                     />
                 </div>
 
@@ -260,6 +265,9 @@ const OptimizationBreakdown = ({
                         allConfigurationsDismissed={
                             engineType === DBType.ORACLE ? undefined : allConfigurationsDismissed
                         }
+                        isDisabled={
+                            engineType !== DBType.ORACLE && (optimizationBreakDown?.resiliency?.total ?? 0) === 0
+                        }
                     />
                     <OptimizeComponent
                         value={
@@ -272,6 +280,7 @@ const OptimizationBreakdown = ({
                         allConfigurationsDismissed={
                             engineType === DBType.ORACLE ? undefined : allConfigurationsDismissed
                         }
+                        isDisabled={engineType !== DBType.ORACLE && (optimizationBreakDown?.cloning?.total ?? 0) === 0}
                     />
                 </div>
             </div>
