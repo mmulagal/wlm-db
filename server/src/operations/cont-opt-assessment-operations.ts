@@ -3,7 +3,8 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import throat from 'throat';
 import getLogger from '../utils/logger';
 import { DatabaseInstancesIncludingResource } from '../utils/common-types';
-import { DatabaseTypes } from '../utils/consts';
+import { ACCOUNT_ID, DatabaseTypes } from '../utils/consts';
+import { setAsyncLocalStorageResource, getLocalStorage } from '../utils/async-local-storage';
 import { IS_DEMO_FLOW, formatDuration, sleep } from '../utils/utils';
 import { registerJob, updateParentJobStatus } from './database/job-operations';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
@@ -237,12 +238,15 @@ async function processCurrentBatch(
                 }
 
                 try {
-                    await processAccountInstancesBatch(
-                        accountId,
-                        accountInstances,
-                        accountJob.parentJobId,
-                        batchNumber
-                    );
+                    await getLocalStorage().run(new Map(), async () => {
+                        setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                        await processAccountInstancesBatch(
+                            accountId,
+                            accountInstances,
+                            accountJob.parentJobId,
+                            batchNumber
+                        );
+                    });
 
                     accountJob.processedInstances += accountInstances.length;
                     logger.info(

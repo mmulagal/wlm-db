@@ -45,6 +45,7 @@ import {
     DEFAULT_INSTANCE_NAME,
     MSSQL_SYSTEM_DATABASES,
     PGSQL_DEFAULT_INSTANCE_NAME,
+    ACCOUNT_ID,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
     RESOURCESTYPE
 } from '../utils/consts';
@@ -92,6 +93,7 @@ import { CLUSTER_NETWORK_IP_INFO_PS1 } from './workloads/mssql/discover-consts';
 import { getPgSqlDatabaseInstancesDetails, getPgSqlDatabaseInstancesSummary } from './workloads/pgsql/pgsql-operations';
 import { getDatabaseInstanceTopology } from '../utils/sql-utils';
 import { AssessmentCategories } from '../utils/continous-optimization-consts';
+import { setAsyncLocalStorageResource, getLocalStorage } from '../utils/async-local-storage';
 import { paginateListInstanceConfigData } from './database/instance-config-operations';
 import {
     getOracleDatabaseInstancesDetails,
@@ -2327,19 +2329,22 @@ async function processResourcesBatch(
                 } = resource;
 
                 try {
-                    await processResourceNodes(
-                        accountId,
-                        credentialsId,
-                        region!,
-                        databaseHostId,
-                        metadata,
-                        batchNumber,
-                        resourceType as RESOURCESTYPE,
-                        dbInstances?.map(dbInstance => dbInstance.database_instance_name) || []
-                    );
+                    await getLocalStorage().run(new Map(), async () => {
+                        setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                        await processResourceNodes(
+                            accountId,
+                            credentialsId,
+                            region!,
+                            databaseHostId,
+                            metadata,
+                            batchNumber,
+                            resourceType as RESOURCESTYPE,
+                            dbInstances?.map(dbInstance => dbInstance.database_instance_name) || []
+                        );
 
-                    // Mark as processed after successful processing
-                    processedResourceIds.add(resource.resource_id);
+                        // Mark as processed after successful processing
+                        processedResourceIds.add(resource.resource_id);
+                    });
                 } catch (error: any) {
                     logger.error('Error while triggering performance assessment for resource', {
                         accountId,

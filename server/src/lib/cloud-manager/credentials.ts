@@ -81,6 +81,9 @@ async function getWfCredentialDetails(credentialsId: string, accountId?: string)
     }
 
     const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
+    if (!tenancyAccountId && !process.env.TEST) {
+        throw new Error(`Account ID is required to fetch credential details for credentials id: ${credentialsId}`);
+    }
     const { token } = await getWfServiceToken();
 
     const response = await gotInstanceForInternalRequest
