@@ -409,7 +409,7 @@
             "already-registered": "This instance is already registered.",
             "already-registered-database": "This database is already registered.",
             "select-header-disabled": "Filter the table with at most 10 unregistered Standalone or FCI instances to enable bulk registration.",
-            "select-header-disabled-oracle": "Filter the table with at most 10 unregistered databases to enable bulk registration.",
+            "select-header-disabled-oracle": "Filter the table with at most 10 unregistered Standalone databases to enable bulk registration.",
             "max-selection-reached": "Maximum of {{max}} instances can be selected for bulk registration.",
             "too-many-visible-rows": "Filter the table to show {{max}} or fewer unregistered instances to enable bulk selection.",
             "register-selected": "Register all",
