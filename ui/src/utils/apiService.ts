@@ -849,16 +849,47 @@ export const inventoryApiV2 = createApi({
             })
         }),
         getOneTimeWADDownloadScript: builder.mutation({
-            query: () => ({
-                url: 'v1/mssql/offline-assessment/collector',
-                responseHandler: async (response: Response) => {
-                    const contentDisposition = response.headers.get('Content-Disposition');
-                    const fileName =
-                        contentDisposition?.match(/filename="?([^";\n]+)"?/)?.[1] || 'NetApp_WF_MSSQL_Assessment.zip';
-                    const blob = await response.blob();
-                    return { blob, fileName };
+            queryFn: async (_arg, _queryApi, _extraOptions, baseQuery) => {
+                const result: any = await baseQuery({
+                    url: 'v1/mssql/offline-assessment/collector',
+                    responseHandler: (response: Response) => response.blob()
+                });
+
+                if (result.error) {
+                    return { error: result.error };
                 }
-            })
+
+                const blob: Blob = result.data;
+                let fileName = 'NetApp_WF_MSSQL_Assessment.zip';
+
+                // Try Content-Disposition header first
+                const contentDisposition = result.meta?.response?.headers?.get('Content-Disposition');
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
+                    if (match?.[1]) {
+                        fileName = match[1].trim();
+                    }
+                } else {
+                    // Fallback: read the script filename from the zip's local file header
+                    // and replace its extension with .zip to derive the download filename
+                    try {
+                        const headerBytes = await blob.slice(0, 300).arrayBuffer();
+                        const view = new DataView(headerBytes);
+                        // Verify zip signature (PK\x03\x04)
+                        if (view.getUint32(0, true) === 0x04034b50) {
+                            const nameLength = view.getUint16(26, true);
+                            const entryName = new TextDecoder().decode(new Uint8Array(headerBytes, 30, nameLength));
+                            if (entryName) {
+                                fileName = entryName.replace(/\.[^.]+$/, '.zip');
+                            }
+                        }
+                    } catch {
+                        fileName = 'NetApp_WF_MSSQL_Assessment_v1.0.0.zip';
+                    }
+                }
+
+                return { data: { blob, fileName } };
+            }
         }),
         getAllOfflineMssqlHostsAssessmentData: builder.query({
             query: ({ credentialId = null, regionId = null, nextToken = null }) => {
