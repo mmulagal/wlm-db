@@ -207,6 +207,9 @@ export interface InventoryTableInstanceDatInterface {
     databaseInstanceName?: string;
     databaseHostId?: string;
     status?: string;
+    aoagDetails?: {
+        baseDeploymentType?: string;
+    };
     instanceType?: string; // Oracle tenancy type: SINGLE_TENANT or MULTI_TENANT
     protocol?: string; // Storage protocol used by the Oracle instance
     databaseCount?: number;

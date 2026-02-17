@@ -405,7 +405,11 @@ const ReplicaInfoDialog: React.FC<ReplicaInfoDialogProps> = ({
                 )}
             </div>
 
-            <div className={styles.tableSection}>
+            <div
+                className={`${styles.tableSection} ${
+                    !showFailedState && !registerReplicaSelection ? styles.disabled : ''
+                }`}
+            >
                 <TableTopBar
                     // @ts-ignore
                     tableProps={tableProps}

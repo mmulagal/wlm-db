@@ -1136,6 +1136,9 @@ const DashboardInnerPage = () => {
             dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_OPTIMIZE_INNER_PAGE));
         } else {
             const assessmentStatusConsistent = getAssessmentStatusConsistency(rowData);
+            // Check if any row is a WAD (offline assessment) instance
+            // For single: check rowData?.isWad, for bulk: check if any row has isWad
+            const isWad = Array.isArray(rowData) ? rowData.some((row: any) => row?.isWad) : rowData?.isWad;
 
             setDialog(
                 <DialogComponent
@@ -1163,6 +1166,8 @@ const DashboardInnerPage = () => {
                         closeDialog();
                     }}
                     customClass={type !== ASSESSMENT_CONFIG_NAMES.MAXDOP ? 'innerPage' : ''}
+                    primaryButtonDisabled={isWad}
+                    primaryButtonTooltip={isWad ? t('databases.wad.tab-disabled-message') : ''}
                     hidePrimaryButton={
                         (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
                             type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||

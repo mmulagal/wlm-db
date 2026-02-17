@@ -1,15 +1,16 @@
 {
   "items": [
     {
-      "resourceId": "7bc6636d8d41fa2a",
-      "databaseInstanceId": "CB5F9F8D-C315-42E7-8169-A4BC16A0FEA5",
-      "databaseInstanceName": "OfflineMSSQLSERVER",
+      "resourceId": "e553f5bd93805433",
+      "databaseInstanceId": "demo-offline-std-instance-001",
+      "databaseInstanceName": "MSSQLSERVER",
       "credentialsId": "3ad8702c-a2fd-48d2-be50-1ba6ce83acd5",
       "region": "ap-southeast-1",
       "regionName": "Asia Pacific (Singapore)",
-      "vmName": "sqlnode-81470",
+      "vmName": "SQL-PROD-STD-01",
+      "vmInstanceId": "demo-sql-prod-std-001",
       "virtualNetworkId": "vpc-046f7e26255458373",
-      "virtualNetworkName": "kanika-vpc",
+      "virtualNetworkName": "demo-vpc",
       "clusterNodes": [],
       "assessments": {
         "storage": {
@@ -27,7 +28,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -43,7 +44,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -59,7 +60,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -75,7 +76,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -91,7 +92,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -107,7 +108,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -123,7 +124,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -138,7 +139,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -153,7 +154,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               }
@@ -170,7 +171,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Lun"
               },
@@ -185,7 +186,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Lun"
               },
@@ -200,12 +201,41 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Lun"
               }
             ],
             "os": [
+              {
+                "name": "ntfs-allocation-unit-size",
+                "status": "optimized",
+                "recommended": "65536",
+                "severity": "critical",
+                "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
+                "tags": [
+                  "Performance efficiency"
+                ],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Drive"
+              },
+              {
+                "name": "mpio-iscsi-count",
+                "status": "optimized",
+                "recommended": "5",
+                "severity": "critical",
+                "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
+                "tags": [
+                  "Performance efficiency",
+                  "Reliability"
+                ],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Storage multipath"
+              },
               {
                 "name": "mpio-enabled",
                 "status": "optimized",
@@ -217,7 +247,7 @@
                   "Reliability"
                 ],
                 "violationDetails": [],
-                "totalObjectsAssessed": 0,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Storage multipath"
               },
@@ -236,21 +266,6 @@
                 "resourceType": "Storage multipath"
               },
               {
-                "name": "mpio-iscsi-count",
-                "status": "optimized",
-                "recommended": "5",
-                "severity": "critical",
-                "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                "tags": [
-                  "Performance efficiency",
-                  "Reliability"
-                ],
-                "violationDetails": [],
-                "totalObjectsAssessed": 1,
-                "totalObjectsInViolation": 0,
-                "resourceType": "Storage multipath"
-              },
-              {
                 "name": "mpio-load-balance-policy",
                 "status": "optimized",
                 "recommended": "RR",
@@ -261,133 +276,13 @@
                   "Reliability"
                 ],
                 "violationDetails": [],
-                "totalObjectsAssessed": 9,
-                "totalObjectsInViolation": 0,
-                "resourceType": "Drive"
-              },
-              {
-                "name": "ntfs-allocation-unit-size",
-                "status": "optimized",
-                "recommended": "65536",
-                "severity": "critical",
-                "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
-                "tags": [
-                  "Performance efficiency"
-                ],
-                "violationDetails": [],
-                "totalObjectsAssessed": 9,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Drive"
               }
             ]
           },
           "sizing": [
-            {
-              "name": "performance-tier",
-              "status": "optimized",
-              "recommended": "100%",
-              "severity": "critical",
-              "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
-              "tags": [
-                "Performance efficiency"
-              ],
-              "violationDetails": [],
-              "missingPermissions": [],
-              "current": "100%",
-              "totalObjectsAssessed": 9,
-              "totalObjectsInViolation": 0,
-              "resourceType": "Volume"
-            },
-            {
-              "name": "log-drive-size",
-              "status": "not-optimized",
-              "recommended": "25%",
-              "severity": "warning",
-              "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
-              "tags": [
-                "Operational excellence"
-              ],
-              "missingPermissions": [],
-              "current": "10% - 401%",
-              "totalObjectsAssessed": 5,
-              "totalObjectsInViolation": 4,
-              "resourceType": "Drive",
-              "sizingViolations": {
-                "overProvisionedDrives": [
-                  {
-                    "databases": [
-                      "testdb2"
-                    ],
-                    "dataAccessPath": [
-                      "L:\\"
-                    ],
-                    "dataDriveTotalSizeMB": 51069,
-                    "logAccessPath": "S:\\",
-                    "logDriveTotalSizeMB": 204669,
-                    "svmName": "wlmdb_sqlsvm_1770688985190",
-                    "ontapVolumeName": "wlmdb_sqldata_1770688985190",
-                    "ontapVolumeUuid": "f1d3d5d9-0629-11f1-81f5-2f7b01d3b10b",
-                    "lunUuid": "1de4d3a5-d2a9-4f40-a128-4fb87c6c54e5",
-                    "diskSerialNumber": "lWB2f?Zdjzyw",
-                    "sizePercentToDataDrive": 401
-                  },
-                  {
-                    "databases": [
-                      "optimize_avd4z"
-                    ],
-                    "dataAccessPath": [
-                      "F:\\"
-                    ],
-                    "dataDriveTotalSizeMB": 1041,
-                    "logAccessPath": "G:\\",
-                    "logDriveTotalSizeMB": 1041,
-                    "svmName": "wlmdb_sqlsvm_1770688985190",
-                    "ontapVolumeName": "wlmdb_sqllog_1770703510",
-                    "ontapVolumeUuid": "7e9bc200-0646-11f1-81f5-2f7b01d3b10b",
-                    "lunUuid": "f4f97f89-5044-424a-a4e4-cc0961a125d9",
-                    "diskSerialNumber": "lWB2f?ZdjzzD",
-                    "sizePercentToDataDrive": 100
-                  }
-                ],
-                "underProvisionedDrives": [
-                  {
-                    "databases": [
-                      "testdb1"
-                    ],
-                    "dataAccessPath": [
-                      "D:\\"
-                    ],
-                    "dataDriveTotalSizeMB": 10705,
-                    "logAccessPath": "E:\\",
-                    "logDriveTotalSizeMB": 1041,
-                    "svmName": "wlmdb_sqlsvm_1770688985190",
-                    "ontapVolumeName": "wlmdb_sqllog_1770697673",
-                    "ontapVolumeUuid": "e7188888-0638-11f1-81f5-2f7b01d3b10b",
-                    "lunUuid": "62c737e9-27a0-4dc1-b9e3-12cf605cd41d",
-                    "diskSerialNumber": "lWB2f?Zdjzz0",
-                    "sizePercentToDataDrive": 10
-                  },
-                  {
-                    "databases": [
-                      "sizeoptimize_gk500"
-                    ],
-                    "dataAccessPath": [
-                      "H:\\"
-                    ],
-                    "dataDriveTotalSizeMB": 10705,
-                    "logAccessPath": "I:\\",
-                    "logDriveTotalSizeMB": 1041,
-                    "svmName": "wlmdb_sqlsvm_1770688985190",
-                    "ontapVolumeName": "wlmdb_sqllog_1770703957",
-                    "ontapVolumeUuid": "87dd680e-0647-11f1-81f5-2f7b01d3b10b",
-                    "lunUuid": "912f7f71-559b-4127-bd0e-03b2dac474cb",
-                    "diskSerialNumber": "lWB2f?ZdjzzF",
-                    "sizePercentToDataDrive": 10
-                  }
-                ],
-                "ignoredDrives": []
-              }
-            },
             {
               "name": "tempdb-drive-size",
               "status": "not-optimized",
@@ -411,6 +306,42 @@
                   }
                 ]
               }
+            },
+            {
+              "name": "log-drive-size",
+              "status": "optimized",
+              "recommended": "25%",
+              "severity": "warning",
+              "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
+              "tags": [
+                "Operational excellence"
+              ],
+              "missingPermissions": [],
+              "current": "25%",
+              "totalObjectsAssessed": 1,
+              "totalObjectsInViolation": 0,
+              "resourceType": "Drive",
+              "sizingViolations": {
+                "overProvisionedDrives": [],
+                "underProvisionedDrives": [],
+                "ignoredDrives": []
+              }
+            },
+            {
+              "name": "performance-tier",
+              "status": "optimized",
+              "recommended": "100%",
+              "severity": "critical",
+              "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
+              "tags": [
+                "Performance efficiency"
+              ],
+              "violationDetails": [],
+              "missingPermissions": [],
+              "current": "100%",
+              "totalObjectsAssessed": 3,
+              "totalObjectsInViolation": 0,
+              "resourceType": "Volume"
             },
             {
               "name": "headroom",
@@ -457,7 +388,7 @@
               ],
               "objectsInViolation": [],
               "current": "separate drive",
-              "totalObjectsAssessed": 4,
+              "totalObjectsAssessed": 0,
               "totalObjectsInViolation": 0,
               "resourceType": "Database"
             },
@@ -473,13 +404,13 @@
               ],
               "objectsInViolation": [],
               "current": "separate drive",
-              "totalObjectsAssessed": 4,
+              "totalObjectsAssessed": 0,
               "totalObjectsInViolation": 0,
               "resourceType": "Database"
             }
           ],
           "fileSystems": [
-            "10.0.18.153"
+            "fs-0f06b4d3901153300"
           ]
         },
         "rssConfig": {
@@ -510,534 +441,40 @@
           "current": "4",
           "resourceType": "SQL instance"
         },
-        "lastAssessmentTimestamp": 1770732274000,
-        "storageEndpoint": "10.0.18.153",
-        "databaseInstanceName": "OfflineMSSQLSERVER",
+        "lastAssessmentTimestamp": 1770788480000,
+        "storageEndpoint": "fs-0f06b4d3901153300",
+        "ec2InstanceId": "demo-sql-prod-std-001",
+        "databaseInstanceName": "MSSQLSERVER",
         "deploymentType": "Standalone",
-        "databaseHostName": "Offline-STVYYZ1"
+        "baseDeploymentType": "",
+        "databaseHostName": "SQL-PROD-STD-01"
       }
     },
     {
-      "resourceId": "d222f6ab9efa2154",
-      "databaseInstanceId": "F26ACF7F-1AE7-49D3-BBB6-432ACB1CE6FF",
-      "databaseInstanceName": "OfflineMSSQLSERVER",
+      "resourceId": "b21e19db22b07973",
+      "databaseInstanceId": "demo-offline-aoag-instance-001",
+      "databaseInstanceName": "MSSQLSERVER",
       "credentialsId": "",
-      "region": "",
-      "regionName": "",
-      "vmName": "wlmdbsql",
-      "virtualNetworkId": "172.30.24.0/22",
-      "virtualNetworkName": "",
-      "clusterNodes": [],
-      "assessments": {
-        "storage": {
-          "configuration": {
-            "volumes": [
-              {
-                "name": "thin-provision",
-                "status": "optimized",
-                "recommended": "true",
-                "severity": "critical",
-                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
-                "tags": [
-                  "Cost optimization",
-                  "Operational excellence"
-                ],
-                "objectsInViolation": [],
-                "violationDetails": [],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 0,
-                "resourceType": "Volume"
-              },
-              {
-                "name": "autosize",
-                "status": "not-optimized",
-                "recommended": "on",
-                "severity": "critical",
-                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
-                "tags": [
-                  "Cost optimization",
-                  "Operational excellence"
-                ],
-                "objectsInViolation": [
-                  "data1",
-                  "log1"
-                ],
-                "violationDetails": [
-                  {
-                    "objectName": "data1",
-                    "value": "off",
-                    "objectType": "Volume"
-                  },
-                  {
-                    "objectName": "log1",
-                    "value": "off",
-                    "objectType": "Volume"
-                  }
-                ],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 2,
-                "resourceType": "Volume"
-              },
-              {
-                "name": "autosize-mode",
-                "status": "not-optimized",
-                "recommended": "grow",
-                "severity": "critical",
-                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
-                "tags": [
-                  "Cost optimization",
-                  "Operational excellence"
-                ],
-                "objectsInViolation": [
-                  "data1",
-                  "log1"
-                ],
-                "violationDetails": [
-                  {
-                    "objectName": "data1",
-                    "value": "off",
-                    "objectType": "Volume"
-                  },
-                  {
-                    "objectName": "log1",
-                    "value": "off",
-                    "objectType": "Volume"
-                  }
-                ],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 2,
-                "resourceType": "Volume"
-              },
-              {
-                "name": "fractional-reserve",
-                "status": "optimized",
-                "recommended": "0",
-                "severity": "critical",
-                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
-                "tags": [
-                  "Cost optimization",
-                  "Operational excellence"
-                ],
-                "objectsInViolation": [],
-                "violationDetails": [],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 0,
-                "resourceType": "Volume"
-              },
-              {
-                "name": "snapshot-copy-reserve",
-                "status": "not-optimized",
-                "recommended": "0",
-                "severity": "critical",
-                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
-                "tags": [
-                  "Cost optimization",
-                  "Operational excellence"
-                ],
-                "objectsInViolation": [
-                  "data1",
-                  "log1"
-                ],
-                "violationDetails": [
-                  {
-                    "objectName": "data1",
-                    "value": "5",
-                    "objectType": "Volume"
-                  },
-                  {
-                    "objectName": "log1",
-                    "value": "5",
-                    "objectType": "Volume"
-                  }
-                ],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 2,
-                "resourceType": "Volume"
-              },
-              {
-                "name": "snapshot-autodelete",
-                "status": "not-optimized",
-                "recommended": "true",
-                "severity": "warning",
-                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
-                "tags": [
-                  "Cost optimization",
-                  "Operational excellence"
-                ],
-                "objectsInViolation": [
-                  "data1",
-                  "log1"
-                ],
-                "violationDetails": [
-                  {
-                    "objectName": "data1",
-                    "value": "",
-                    "objectType": "Volume"
-                  },
-                  {
-                    "objectName": "log1",
-                    "value": "",
-                    "objectType": "Volume"
-                  }
-                ],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 2,
-                "resourceType": "Volume"
-              },
-              {
-                "name": "space-mgmt-try-first",
-                "status": "optimized",
-                "recommended": "volume_grow",
-                "severity": "warning",
-                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
-                "tags": [
-                  "Cost optimization",
-                  "Operational excellence"
-                ],
-                "objectsInViolation": [],
-                "violationDetails": [],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 0,
-                "resourceType": "Volume"
-              },
-              {
-                "name": "tiering-policy",
-                "status": "optimized",
-                "recommended": "snapshot_only",
-                "severity": "critical",
-                "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.",
-                "tags": [
-                  "Performance efficiency"
-                ],
-                "objectsInViolation": [],
-                "violationDetails": [],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 0,
-                "resourceType": "Volume"
-              },
-              {
-                "name": "tiering-min-cooling-days",
-                "status": "not-optimized",
-                "recommended": "7",
-                "severity": "warning",
-                "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.",
-                "tags": [
-                  "Cost optimization"
-                ],
-                "objectsInViolation": [
-                  "data1",
-                  "log1"
-                ],
-                "violationDetails": [
-                  {
-                    "objectName": "data1",
-                    "value": "2",
-                    "objectType": "Volume"
-                  },
-                  {
-                    "objectName": "log1",
-                    "value": "2",
-                    "objectType": "Volume"
-                  }
-                ],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 2,
-                "resourceType": "Volume"
-              }
-            ],
-            "luns": [
-              {
-                "name": "os-type",
-                "status": "not-optimized",
-                "recommended": "windows_2008",
-                "severity": "critical",
-                "recommendation": "ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
-                "tags": [
-                  "Performance efficiency"
-                ],
-                "objectsInViolation": [
-                  "/vol/data1/lun1",
-                  "/vol/log1/lun1"
-                ],
-                "violationDetails": [
-                  {
-                    "objectName": "/vol/data1/lun1",
-                    "value": "windows",
-                    "objectType": "Lun"
-                  },
-                  {
-                    "objectName": "/vol/log1/lun1",
-                    "value": "windows",
-                    "objectType": "Lun"
-                  }
-                ],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 2,
-                "resourceType": "Lun"
-              },
-              {
-                "name": "space-reservation-enabled",
-                "status": "optimized",
-                "recommended": "true",
-                "severity": "critical",
-                "recommendation": "When space reservation is enabled, ONTAP reserves enough space in the volume so that writes to those LUNs do not fail because of a lack of disk space.",
-                "tags": [
-                  "Reliability"
-                ],
-                "objectsInViolation": [],
-                "violationDetails": [],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 0,
-                "resourceType": "Lun"
-              },
-              {
-                "name": "space-allocation-allocated",
-                "status": "optimized",
-                "recommended": "true",
-                "severity": "critical",
-                "recommendation": "This option ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.",
-                "tags": [
-                  "Reliability"
-                ],
-                "objectsInViolation": [],
-                "violationDetails": [],
-                "totalObjectsAssessed": 2,
-                "totalObjectsInViolation": 0,
-                "resourceType": "Lun"
-              }
-            ],
-            "os": [
-              {
-                "name": "mpio-policy",
-                "errorMessage": "Theterm'Get-MSDSMSupportedHW'isnotrecognizedasthenameofacmdlet,function,scriptfile,oroperableprogram.Checkthespellingofthename,orifapathwasincluded,verifythatthepathiscorrectandtryagain."
-              },
-              {
-                "name": "mpio-iscsi-count",
-                "status": "not-optimized",
-                "recommended": "5",
-                "severity": "critical",
-                "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                "tags": [
-                  "Performance efficiency",
-                  "Reliability"
-                ],
-                "violationDetails": [],
-                "totalObjectsAssessed": 0,
-                "totalObjectsInViolation": 0,
-                "resourceType": "Storage multipath"
-              },
-              {
-                "name": "ntfs-allocation-unit-size",
-                "status": "not-optimized",
-                "recommended": "65536",
-                "severity": "critical",
-                "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
-                "tags": [
-                  "Performance efficiency"
-                ],
-                "violationDetails": [
-                  {
-                    "objectName": "C:",
-                    "value": "4096",
-                    "objectType": "Drive"
-                  },
-                  {
-                    "objectName": "D:",
-                    "value": "4096",
-                    "objectType": "Drive"
-                  },
-                  {
-                    "objectName": "H:",
-                    "value": "4096",
-                    "objectType": "Drive"
-                  },
-                  {
-                    "objectName": "I:",
-                    "value": "4096",
-                    "objectType": "Drive"
-                  }
-                ],
-                "totalObjectsAssessed": 4,
-                "totalObjectsInViolation": 4,
-                "resourceType": "Drive"
-              }
-            ]
-          },
-          "sizing": [
-            {
-              "name": "tempdb-drive-size",
-              "errorMessage": "TempDBdriveisnotaNetAppdrive."
-            },
-            {
-              "name": "performance-tier",
-              "status": "optimized",
-              "recommended": "100%",
-              "severity": "critical",
-              "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
-              "tags": [
-                "Performance efficiency"
-              ],
-              "violationDetails": [],
-              "missingPermissions": [],
-              "current": "100%",
-              "totalObjectsAssessed": 2,
-              "totalObjectsInViolation": 0,
-              "resourceType": "Volume"
-            },
-            {
-              "name": "log-drive-size",
-              "status": "over-provisioned",
-              "recommended": "25%",
-              "severity": "warning",
-              "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
-              "tags": [
-                "Operational excellence"
-              ],
-              "missingPermissions": [],
-              "current": "89%",
-              "totalObjectsAssessed": 2,
-              "totalObjectsInViolation": 1,
-              "resourceType": "Drive",
-              "sizingViolations": {
-                "overProvisionedDrives": [
-                  {
-                    "databases": [
-                      "SQLDB1"
-                    ],
-                    "dataAccessPath": [
-                      "H:\\"
-                    ],
-                    "dataDriveTotalSizeMB": 46061,
-                    "logAccessPath": "I:\\",
-                    "logDriveTotalSizeMB": 40941,
-                    "svmName": "svm_WLMDBCVO1",
-                    "ontapVolumeName": "log1",
-                    "ontapVolumeUuid": "0d17a71f-064a-11f1-893c-7c1e52b6ca16",
-                    "lunUuid": "39807019-5108-483c-8d6c-e7175bd5debd",
-                    "diskSerialNumber": "f1sO9+ZdluFI",
-                    "sizePercentToDataDrive": 89
-                  }
-                ],
-                "underProvisionedDrives": [],
-                "ignoredDrives": []
-              }
-            }
-          ],
-          "layout": [
-            {
-              "name": "tempdb-files-location",
-              "errorMessage": "TempDBdriveisnotaNetAppdrive."
-            },
-            {
-              "name": "data-files-location",
-              "status": "optimized",
-              "recommended": "separate drive",
-              "severity": "critical",
-              "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
-              "tags": [
-                "Performance efficiency",
-                "Operational excellence"
-              ],
-              "objectsInViolation": [],
-              "current": "separate drive",
-              "totalObjectsAssessed": 1,
-              "totalObjectsInViolation": 0,
-              "resourceType": "Database"
-            },
-            {
-              "name": "log-files-location",
-              "status": "optimized",
-              "recommended": "separate drive",
-              "severity": "critical",
-              "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
-              "tags": [
-                "Performance efficiency",
-                "Operational excellence"
-              ],
-              "objectsInViolation": [],
-              "current": "separate drive",
-              "totalObjectsAssessed": 1,
-              "totalObjectsInViolation": 0,
-              "resourceType": "Database"
-            }
-          ],
-          "fileSystems": [
-            "172.30.25.38"
-          ]
-        },
-        "rssConfig": {
-          "name": "rss-config",
-          "status": "not-optimized",
-          "recommended": "optimized",
-          "severity": "warning",
-          "recommendation": "To enhance network performance and system efficiency for your SQL Server EC2 instance, we recommend optimizing your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple processors, reducing latency and improving application responsiveness. Adhering to best practices ensures efficient handling of network traffic, leading to better stability and reliability.",
-          "tags": [
-            "Cost optimization"
-          ],
-          "totalObjectsAssessed": 2,
-          "totalObjectsInViolation": 2,
-          "resourceType": "Network Adapter",
-          "rssAdapters": [
-            {
-              "adapterName": "Ethernet3",
-              "rssEnabled": true,
-              "rssProfile": "NUMAStatic",
-              "baseProcessorNumber": 0,
-              "numberOfReceiveQueues": 16
-            },
-            {
-              "adapterName": "Ethernet2",
-              "rssEnabled": true,
-              "rssProfile": "NUMAStatic",
-              "baseProcessorNumber": 0,
-              "numberOfReceiveQueues": 1
-            }
-          ],
-          "recommendedAdapterSettings": {
-            "recommendedRssProfile": "NUMAStatic",
-            "recommendedBaseProcessorNumber": 0,
-            "recommendedReceiveQueues": 2
-          },
-          "tcpOffloadState": "Disabled"
-        },
-        "maxDOP": {
-          "name": "maxdop",
-          "status": "not-optimized",
-          "recommended": "2",
-          "severity": "warning",
-          "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16. Your current settings are not optimized.",
-          "tags": [
-            "Performance efficiency"
-          ],
-          "current": "0",
-          "resourceType": "SQL instance"
-        },
-        "lastAssessmentTimestamp": 1770720932000,
-        "storageEndpoint": "172.30.25.38",
-        "databaseInstanceName": "OfflineMSSQLSERVER",
-        "deploymentType": "Standalone",
-        "databaseHostName": "Offline-wlmdbsql"
-      }
-    },
-    {
-      "resourceId": "61954d56592c4dec",
-      "databaseInstanceId": "8265E84A-9571-4EF7-B85B-2F91094CF91C",
-      "databaseInstanceName": "OfflineMSSQLSERVER",
-      "credentialsId": "",
-      "region": "",
-      "regionName": "",
-      "vmName": "sqlnode1-57329",
+      "region": "ap-southeast-1",
+      "regionName": "Asia Pacific (Singapore)",
+      "vmName": "SQL-PROD-AOAG-01",
+      "vmInstanceId": "demo-sql-prod-aoag-001",
       "virtualNetworkId": "vpc-046f7e26255458373",
-      "virtualNetworkName": "kanika-vpc",
+      "virtualNetworkName": "demo-vpc",
       "clusterNodes": [
         {
-          "vmInstanceId": "i-051c549bab1c4a21e",
-          "nodeName": "sqlnode1-57329",
+          "vmInstanceId": "demo-sql-prod-aoag-001",
+          "nodeName": "SQL-PROD-AOAG-01",
           "nodeState": "Up"
         },
         {
-          "vmInstanceId": "i-0a737d69472bcfad1",
-          "nodeName": "sqlnode2-57329",
+          "vmInstanceId": "demo-sql-prod-aoag-002",
+          "nodeName": "SQL-PROD-AOAG-02",
+          "nodeState": "Up"
+        },
+        {
+          "vmInstanceId": "demo-sql-prod-aoag-003",
+          "nodeName": "SQL-PROD-AOAG-03",
           "nodeState": "Up"
         }
       ],
@@ -1057,7 +494,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -1073,7 +510,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -1089,7 +526,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -1105,7 +542,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -1121,7 +558,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -1137,7 +574,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -1153,7 +590,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -1168,7 +605,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               },
@@ -1183,7 +620,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Volume"
               }
@@ -1200,7 +637,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Lun"
               },
@@ -1215,7 +652,7 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Lun"
               },
@@ -1230,12 +667,41 @@
                 ],
                 "objectsInViolation": [],
                 "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Lun"
               }
             ],
             "os": [
+              {
+                "name": "ntfs-allocation-unit-size",
+                "status": "optimized",
+                "recommended": "65536",
+                "severity": "critical",
+                "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
+                "tags": [
+                  "Performance efficiency"
+                ],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Drive"
+              },
+              {
+                "name": "mpio-iscsi-count",
+                "status": "optimized",
+                "recommended": "5",
+                "severity": "critical",
+                "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
+                "tags": [
+                  "Performance efficiency",
+                  "Reliability"
+                ],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Storage multipath"
+              },
               {
                 "name": "mpio-enabled",
                 "status": "optimized",
@@ -1247,7 +713,7 @@
                   "Reliability"
                 ],
                 "violationDetails": [],
-                "totalObjectsAssessed": 0,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Storage multipath"
               },
@@ -1266,21 +732,6 @@
                 "resourceType": "Storage multipath"
               },
               {
-                "name": "mpio-iscsi-count",
-                "status": "optimized",
-                "recommended": "5",
-                "severity": "critical",
-                "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
-                "tags": [
-                  "Performance efficiency",
-                  "Reliability"
-                ],
-                "violationDetails": [],
-                "totalObjectsAssessed": 1,
-                "totalObjectsInViolation": 0,
-                "resourceType": "Storage multipath"
-              },
-              {
                 "name": "mpio-load-balance-policy",
                 "status": "optimized",
                 "recommended": "RR",
@@ -1291,99 +742,13 @@
                   "Reliability"
                 ],
                 "violationDetails": [],
-                "totalObjectsAssessed": 6,
-                "totalObjectsInViolation": 0,
-                "resourceType": "Drive"
-              },
-              {
-                "name": "ntfs-allocation-unit-size",
-                "status": "optimized",
-                "recommended": "65536",
-                "severity": "critical",
-                "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
-                "tags": [
-                  "Performance efficiency"
-                ],
-                "violationDetails": [],
-                "totalObjectsAssessed": 5,
+                "totalObjectsAssessed": 3,
                 "totalObjectsInViolation": 0,
                 "resourceType": "Drive"
               }
             ]
           },
           "sizing": [
-            {
-              "name": "performance-tier",
-              "status": "optimized",
-              "recommended": "100%",
-              "severity": "critical",
-              "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
-              "tags": [
-                "Performance efficiency"
-              ],
-              "violationDetails": [],
-              "missingPermissions": [],
-              "current": "100%",
-              "totalObjectsAssessed": 5,
-              "totalObjectsInViolation": 0,
-              "resourceType": "Volume"
-            },
-            {
-              "name": "log-drive-size",
-              "status": "not-optimized",
-              "recommended": "25%",
-              "severity": "warning",
-              "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
-              "tags": [
-                "Operational excellence"
-              ],
-              "missingPermissions": [],
-              "current": "10% - 40%",
-              "totalObjectsAssessed": 3,
-              "totalObjectsInViolation": 2,
-              "resourceType": "Drive",
-              "sizingViolations": {
-                "overProvisionedDrives": [
-                  {
-                    "databases": [
-                      "testdb2"
-                    ],
-                    "dataAccessPath": [
-                      "L:\\"
-                    ],
-                    "dataDriveTotalSizeMB": 51182,
-                    "logAccessPath": "T:\\",
-                    "logDriveTotalSizeMB": 20462,
-                    "svmName": "wlmdb_sqlsvm_1770598576831",
-                    "ontapVolumeName": "wlmdb_sqltemp_1770598576831",
-                    "ontapVolumeUuid": "bf1bfeb6-0556-11f1-b5f2-c3dc90f5efeb",
-                    "lunUuid": "576999b1-492c-4623-a6bb-26e3c080a7ec",
-                    "diskSerialNumber": "lWB1d]ZdP2M/",
-                    "sizePercentToDataDrive": 40
-                  }
-                ],
-                "underProvisionedDrives": [
-                  {
-                    "databases": [
-                      "testdb1"
-                    ],
-                    "dataAccessPath": [
-                      "D:\\"
-                    ],
-                    "dataDriveTotalSizeMB": 10722,
-                    "logAccessPath": "E:\\",
-                    "logDriveTotalSizeMB": 1057,
-                    "svmName": "wlmdb_sqlsvm_1770598576831",
-                    "ontapVolumeName": "wlmdb_sqllog_1770613630",
-                    "ontapVolumeUuid": "37688656-0575-11f1-b5f2-c3dc90f5efeb",
-                    "lunUuid": "31d0bc6f-b8e0-454a-821b-93983eefdb3b",
-                    "diskSerialNumber": "lWB1d]ZdP2Mc",
-                    "sizePercentToDataDrive": 10
-                  }
-                ],
-                "ignoredDrives": []
-              }
-            },
             {
               "name": "tempdb-drive-size",
               "status": "not-optimized",
@@ -1407,6 +772,61 @@
                   }
                 ]
               }
+            },
+            {
+              "name": "log-drive-size",
+              "status": "under-provisioned",
+              "recommended": "25%",
+              "severity": "warning",
+              "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
+              "tags": [
+                "Operational excellence"
+              ],
+              "missingPermissions": [],
+              "current": "12%",
+              "totalObjectsAssessed": 1,
+              "totalObjectsInViolation": 1,
+              "resourceType": "Drive",
+              "sizingViolations": {
+                "overProvisionedDrives": [],
+                "underProvisionedDrives": [
+                  {
+                    "databases": [
+                      "SalesDB",
+                      "InventoryDB"
+                    ],
+                    "dataAccessPath": [
+                      "S:\\"
+                    ],
+                    "dataDriveTotalSizeMB": 184304,
+                    "logAccessPath": "L:\\",
+                    "logDriveTotalSizeMB": 20480,
+                    "svmName": "wlmdb_sqlsvm_1770775096801",
+                    "ontapVolumeName": "wlmdb_aoag_sqllog_1770775096801",
+                    "ontapVolumeUuid": "bf0d4032-06f2-11f1-a170-7143fc0c8c33",
+                    "lunUuid": "309c04cc-88c3-40f3-b3bc-36e2970f3980",
+                    "diskSerialNumber": "lWB0t?Ze3zn2",
+                    "sizePercentToDataDrive": 12
+                  }
+                ],
+                "ignoredDrives": []
+              }
+            },
+            {
+              "name": "performance-tier",
+              "status": "optimized",
+              "recommended": "100%",
+              "severity": "critical",
+              "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
+              "tags": [
+                "Performance efficiency"
+              ],
+              "violationDetails": [],
+              "missingPermissions": [],
+              "current": "100%",
+              "totalObjectsAssessed": 3,
+              "totalObjectsInViolation": 0,
+              "resourceType": "Volume"
             },
             {
               "name": "headroom",
@@ -1453,7 +873,7 @@
               ],
               "objectsInViolation": [],
               "current": "separate drive",
-              "totalObjectsAssessed": 2,
+              "totalObjectsAssessed": 1,
               "totalObjectsInViolation": 0,
               "resourceType": "Database"
             },
@@ -1469,87 +889,15 @@
               ],
               "objectsInViolation": [],
               "current": "separate drive",
-              "totalObjectsAssessed": 2,
+              "totalObjectsAssessed": 1,
               "totalObjectsInViolation": 0,
               "resourceType": "Database"
             }
           ],
           "fileSystems": [
-            "fs-030a8e61dd0631815"
+            "fs-0f06b4d3901153300"
           ]
         },
-        "highAvailability": [
-          {
-            "errorMessage": "No shared-storage assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try after running adhoc assessment.",
-            "name": "shared-storage"
-          },
-          {
-            "errorMessage": "No drive-letter assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try after running adhoc assessment.",
-            "name": "drive-letter"
-          },
-          {
-            "name": "cluster-quorum",
-            "status": "optimized",
-            "recommended": "",
-            "severity": "critical",
-            "recommendation": "The quorum configuration should be tailored to a 2-node Windows Failover Cluster, using Node and Disk Majority with a Disk Witness to ensure high availability.",
-            "tags": [
-              "Reliability"
-            ],
-            "objectsInViolation": [],
-            "violationDetails": [],
-            "totalObjectsAssessed": 1,
-            "totalObjectsInViolation": 0,
-            "resourceType": "EC2 instance"
-          },
-          {
-            "name": "heartbeat-settings",
-            "status": "not-optimized",
-            "recommended": "",
-            "severity": "critical",
-            "recommendation": "Set heartbeat thresholds to 40 heartbeats, specifically optimized for cloud deployments, to ensure high availability and prevent unnecessary failovers.",
-            "tags": [
-              "Reliability"
-            ],
-            "objectsInViolation": [
-              "SQLNODE1-57329"
-            ],
-            "violationDetails": [
-              {
-                "objectName": "CrossSiteThreshold",
-                "value": "20",
-                "objectType": "configuration"
-              },
-              {
-                "objectName": "SameSubnetThreshold",
-                "value": "20",
-                "objectType": "configuration"
-              },
-              {
-                "objectName": "CrossSubnetThreshold",
-                "value": "20",
-                "objectType": "configuration"
-              }
-            ],
-            "totalObjectsAssessed": 1,
-            "totalObjectsInViolation": 1,
-            "resourceType": "EC2 instance"
-          },
-          {
-            "name": "sqlServer-service",
-            "status": "optimized",
-            "recommended": "",
-            "severity": "critical",
-            "recommendation": "SQL Server services must be set to start automatically and run on the primary node and stop on the secondary node.",
-            "tags": [
-              "Reliability"
-            ],
-            "objectsInViolation": [],
-            "totalObjectsAssessed": 2,
-            "totalObjectsInViolation": 0,
-            "resourceType": "EC2 instance"
-          }
-        ],
         "rssConfig": {
           "name": "rss-config",
           "status": "optimized",
@@ -1578,11 +926,474 @@
           "current": "4",
           "resourceType": "SQL instance"
         },
-        "lastAssessmentTimestamp": 1770653885000,
-        "storageEndpoint": "fs-030a8e61dd0631815",
-        "databaseInstanceName": "OfflineMSSQLSERVER",
+        "lastAssessmentTimestamp": 1770788480000,
+        "storageEndpoint": "fs-0f06b4d3901153300",
+        "ec2InstanceId": "demo-sql-prod-aoag-001",
+        "databaseInstanceName": "MSSQLSERVER",
+        "deploymentType": "AOAG",
+        "baseDeploymentType": "Standalone",
+        "databaseHostName": "SQL-PROD-AOAG-01"
+      }
+    },
+    {
+      "resourceId": "abcb556613c691d5",
+      "databaseInstanceId": "demo-offline-fci-instance-001",
+      "databaseInstanceName": "MSSQLSERVER",
+      "credentialsId": "",
+      "region": "ap-southeast-1",
+      "regionName": "Asia Pacific (Singapore)",
+      "vmName": "SQL-PROD-FCI-01",
+      "vmInstanceId": "demo-sql-prod-fci-001",
+      "virtualNetworkId": "vpc-046f7e26255458373",
+      "virtualNetworkName": "demo-vpc",
+      "clusterNodes": [
+        {
+          "vmInstanceId": "demo-sql-prod-fci-001",
+          "nodeName": "SQL-PROD-FCI-01",
+          "nodeState": "Up"
+        },
+        {
+          "vmInstanceId": "demo-sql-prod-fci-002",
+          "nodeName": "SQL-PROD-FCI-02",
+          "nodeState": "Up"
+        }
+      ],
+      "assessments": {
+        "storage": {
+          "configuration": {
+            "volumes": [
+              {
+                "name": "thin-provision",
+                "status": "optimized",
+                "recommended": "true",
+                "severity": "critical",
+                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                "tags": [
+                  "Cost optimization",
+                  "Operational excellence"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Volume"
+              },
+              {
+                "name": "autosize",
+                "status": "optimized",
+                "recommended": "on",
+                "severity": "critical",
+                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                "tags": [
+                  "Cost optimization",
+                  "Operational excellence"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Volume"
+              },
+              {
+                "name": "autosize-mode",
+                "status": "optimized",
+                "recommended": "grow",
+                "severity": "critical",
+                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                "tags": [
+                  "Cost optimization",
+                  "Operational excellence"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Volume"
+              },
+              {
+                "name": "fractional-reserve",
+                "status": "optimized",
+                "recommended": "0",
+                "severity": "critical",
+                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                "tags": [
+                  "Cost optimization",
+                  "Operational excellence"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Volume"
+              },
+              {
+                "name": "snapshot-copy-reserve",
+                "status": "optimized",
+                "recommended": "0",
+                "severity": "critical",
+                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                "tags": [
+                  "Cost optimization",
+                  "Operational excellence"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Volume"
+              },
+              {
+                "name": "snapshot-autodelete",
+                "status": "optimized",
+                "recommended": "true",
+                "severity": "warning",
+                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                "tags": [
+                  "Cost optimization",
+                  "Operational excellence"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Volume"
+              },
+              {
+                "name": "space-mgmt-try-first",
+                "status": "optimized",
+                "recommended": "volume_grow",
+                "severity": "warning",
+                "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+                "tags": [
+                  "Cost optimization",
+                  "Operational excellence"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Volume"
+              },
+              {
+                "name": "tiering-policy",
+                "status": "optimized",
+                "recommended": "snapshot_only",
+                "severity": "critical",
+                "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.",
+                "tags": [
+                  "Performance efficiency"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Volume"
+              },
+              {
+                "name": "tiering-min-cooling-days",
+                "status": "optimized",
+                "recommended": "7",
+                "severity": "warning",
+                "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.",
+                "tags": [
+                  "Cost optimization"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Volume"
+              }
+            ],
+            "luns": [
+              {
+                "name": "os-type",
+                "status": "optimized",
+                "recommended": "windows_2008",
+                "severity": "critical",
+                "recommendation": "ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
+                "tags": [
+                  "Performance efficiency"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Lun"
+              },
+              {
+                "name": "space-reservation-enabled",
+                "status": "optimized",
+                "recommended": "true",
+                "severity": "critical",
+                "recommendation": "When space reservation is enabled, ONTAP reserves enough space in the volume so that writes to those LUNs do not fail because of a lack of disk space.",
+                "tags": [
+                  "Reliability"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Lun"
+              },
+              {
+                "name": "space-allocation-allocated",
+                "status": "optimized",
+                "recommended": "true",
+                "severity": "critical",
+                "recommendation": "This option ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.",
+                "tags": [
+                  "Reliability"
+                ],
+                "objectsInViolation": [],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Lun"
+              }
+            ],
+            "os": [
+              {
+                "name": "ntfs-allocation-unit-size",
+                "status": "optimized",
+                "recommended": "65536",
+                "severity": "critical",
+                "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
+                "tags": [
+                  "Performance efficiency"
+                ],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Drive"
+              },
+              {
+                "name": "mpio-iscsi-count",
+                "status": "optimized",
+                "recommended": "5",
+                "severity": "critical",
+                "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
+                "tags": [
+                  "Performance efficiency",
+                  "Reliability"
+                ],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Storage multipath"
+              },
+              {
+                "name": "mpio-enabled",
+                "status": "optimized",
+                "recommended": "true",
+                "severity": "critical",
+                "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
+                "tags": [
+                  "Performance efficiency",
+                  "Reliability"
+                ],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Storage multipath"
+              },
+              {
+                "name": "mpio-timeout",
+                "status": "optimized",
+                "recommended": "60",
+                "severity": "warning",
+                "recommendation": "Ensure the Multipath I/O Timeout setting on the host is configured to 60 seconds to maintain connectivity and stability during FSxN failovers. Properly configured Multipath I/O Timeout settings prevent disconnections from the disk, which can occur during FSX failovers. Insufficient timeout settings can lead to temporary disconnections, application errors, and potential data loss.",
+                "tags": [
+                  "Reliability"
+                ],
+                "violationDetails": [],
+                "totalObjectsAssessed": 1,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Storage multipath"
+              },
+              {
+                "name": "mpio-load-balance-policy",
+                "status": "optimized",
+                "recommended": "RR",
+                "severity": "critical",
+                "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
+                "tags": [
+                  "Performance efficiency",
+                  "Reliability"
+                ],
+                "violationDetails": [],
+                "totalObjectsAssessed": 3,
+                "totalObjectsInViolation": 0,
+                "resourceType": "Drive"
+              }
+            ]
+          },
+          "sizing": [
+            {
+              "name": "tempdb-drive-size",
+              "status": "not-optimized",
+              "recommended": "10%",
+              "severity": "warning",
+              "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
+              "tags": [
+                "Operational excellence"
+              ],
+              "missingPermissions": [],
+              "current": "",
+              "totalObjectsAssessed": 1,
+              "totalObjectsInViolation": 1,
+              "resourceType": "Drive",
+              "sizingViolations": {
+                "overProvisionedDrives": [],
+                "underProvisionedDrives": [],
+                "ignoredDrives": [
+                  {
+                    "sizePercentToDataDrive": 0
+                  }
+                ]
+              }
+            },
+            {
+              "name": "log-drive-size",
+              "status": "optimized",
+              "recommended": "25%",
+              "severity": "warning",
+              "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.",
+              "tags": [
+                "Operational excellence"
+              ],
+              "missingPermissions": [],
+              "current": "25%",
+              "totalObjectsAssessed": 1,
+              "totalObjectsInViolation": 0,
+              "resourceType": "Drive",
+              "sizingViolations": {
+                "overProvisionedDrives": [],
+                "underProvisionedDrives": [],
+                "ignoredDrives": []
+              }
+            },
+            {
+              "name": "performance-tier",
+              "status": "optimized",
+              "recommended": "100%",
+              "severity": "critical",
+              "recommendation": "For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency",
+              "tags": [
+                "Performance efficiency"
+              ],
+              "violationDetails": [],
+              "missingPermissions": [],
+              "current": "100%",
+              "totalObjectsAssessed": 3,
+              "totalObjectsInViolation": 0,
+              "resourceType": "Volume"
+            },
+            {
+              "name": "headroom",
+              "status": "over-provisioned",
+              "recommended": "35%",
+              "severity": "critical",
+              "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
+              "tags": [
+                "Performance efficiency"
+              ],
+              "recommendedSizeInGib": 8,
+              "current": "100%",
+              "totalObjectsAssessed": 1,
+              "totalObjectsInViolation": 1,
+              "resourceType": "File system (FSx for ONTAP)"
+            }
+          ],
+          "layout": [
+            {
+              "name": "tempdb-files-location",
+              "status": "optimized",
+              "recommended": "separate-drive",
+              "severity": "critical",
+              "recommendation": "Isolate TempDB I/O and avoid I/O contention from other databases by placing TempDB on its own dedicated drive. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
+              "tags": [
+                "Performance efficiency",
+                "Operational excellence"
+              ],
+              "objectsInViolation": [],
+              "current": "separate drive",
+              "totalObjectsAssessed": 1,
+              "totalObjectsInViolation": 0,
+              "resourceType": "Database"
+            },
+            {
+              "name": "data-files-location",
+              "status": "optimized",
+              "recommended": "separate drive",
+              "severity": "critical",
+              "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
+              "tags": [
+                "Performance efficiency",
+                "Operational excellence"
+              ],
+              "objectsInViolation": [],
+              "current": "separate drive",
+              "totalObjectsAssessed": 0,
+              "totalObjectsInViolation": 0,
+              "resourceType": "Database"
+            },
+            {
+              "name": "log-files-location",
+              "status": "optimized",
+              "recommended": "separate drive",
+              "severity": "critical",
+              "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
+              "tags": [
+                "Performance efficiency",
+                "Operational excellence"
+              ],
+              "objectsInViolation": [],
+              "current": "separate drive",
+              "totalObjectsAssessed": 0,
+              "totalObjectsInViolation": 0,
+              "resourceType": "Database"
+            }
+          ],
+          "fileSystems": [
+            "fs-0f06b4d3901153300"
+          ]
+        },
+        "rssConfig": {
+          "name": "rss-config",
+          "status": "optimized",
+          "recommended": "optimized",
+          "severity": "warning",
+          "recommendation": "When the Receive Side Scaling (RSS) configuration values meets the best practices, the instance is considered optimized",
+          "tags": [
+            "Cost optimization"
+          ],
+          "totalObjectsAssessed": 1,
+          "totalObjectsInViolation": 0,
+          "resourceType": "Network Adapter",
+          "rssAdapters": [],
+          "recommendedAdapterSettings": {},
+          "tcpOffloadState": "Disabled"
+        },
+        "maxDOP": {
+          "name": "maxdop",
+          "status": "not-optimized",
+          "recommended": "4",
+          "severity": "warning",
+          "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16. Your current settings are not optimized.",
+          "tags": [
+            "Performance efficiency"
+          ],
+          "current": "8",
+          "resourceType": "SQL instance"
+        },
+        "lastAssessmentTimestamp": 1770788480000,
+        "storageEndpoint": "fs-0f06b4d3901153300",
+        "ec2InstanceId": "demo-sql-prod-fci-001",
+        "databaseInstanceName": "MSSQLSERVER",
         "deploymentType": "FCI",
-        "databaseHostName": "Offline-SQLNODE1-57329"
+        "baseDeploymentType": "",
+        "databaseHostName": "SQL-PROD-FCI-01"
       }
     }
   ],

@@ -62,8 +62,7 @@ import {
     setSelectedRowsForBulkRegister,
     setTableManageColumnState,
     setWizardOperationType,
-    incrementMssqlInstancesTabVisitCount,
-    setIsUploadLoading
+    incrementMssqlInstancesTabVisitCount
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 import { updateOrgId } from '../../../../store/authSlice';
@@ -1273,7 +1272,12 @@ const InstancesTable = () => {
             event.target.value = ''; // Clear the file input
             return;
         }
-        dispatch(setIsUploadLoading(true));
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: t('databases.inventory.one-time-wad-upload-inprogress')
+            })
+        );
         const reader = new FileReader();
         reader.onload = async e => {
             try {
@@ -1315,9 +1319,7 @@ const InstancesTable = () => {
                                     clearInterval(jobInterval);
                                     // Refresh offline assessment data after successful upload
                                     refreshOfflineAssessmentData(getAllOfflineAssessmentAPI, dispatch, [], null);
-                                    dispatch(setIsUploadLoading(false));
                                 } else if (status === JOB_MONITORING_STATUS.FAILED) {
-                                    dispatch(setIsUploadLoading(true));
                                     dispatch(
                                         addNotification({
                                             notificationType: NOTIFICATION_TYPES.ERROR,
@@ -1332,7 +1334,6 @@ const InstancesTable = () => {
                 }
             } catch (error) {
                 console.error('Error uploading WAD script:', error);
-                dispatch(setIsUploadLoading(false));
             }
         };
 

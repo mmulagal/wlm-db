@@ -1,7 +1,11 @@
+import i18next from 'i18next';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import { ASSESSMENT_CONFIG_NAMES, DBType, FROM_DIALOG, GETWELL_STATUS } from '../../../utils/consts';
 import DialogContent from './DialogContent/DialogContent';
+
+// WAD disabled message for primary button tooltip
+const WAD_DISABLED_MESSAGE = 'databases.wad.tab-disabled-message';
 
 const primaryButtonDisable = (engineType, type) => {
     // oracle storage layout 6 configs fix are disabled
@@ -28,7 +32,8 @@ export const handleDialog = (
     cardData,
     operation,
     singleRowData,
-    engineType = DBType.MSSQL
+    engineType = DBType.MSSQL,
+    isWad = false
 ) => {
     // Oracle FILE_SYSTEM_HEADROOM with permissions and under provisioned status - show enabled Continue button
     if (
@@ -59,6 +64,8 @@ export const handleDialog = (
                     closeDialog();
                 }}
                 customClass="innerPage"
+                primaryButtonDisabled={isWad}
+                primaryButtonTooltip={isWad ? i18next.t(WAD_DISABLED_MESSAGE) : ''}
             />
         );
     } else if (
@@ -116,7 +123,8 @@ export const handleDialog = (
                     closeDialog();
                 }}
                 customClass="innerPage"
-                primaryButtonDisabled={primaryButtonDisable(engineType, type)}
+                primaryButtonDisabled={isWad || primaryButtonDisable(engineType, type)}
+                primaryButtonTooltip={isWad ? i18next.t(WAD_DISABLED_MESSAGE) : ''}
                 hidePrimaryButton={
                     (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
                         type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
@@ -157,7 +165,15 @@ const isDialogPrimaryBtnDisabled = rowData => {
     return false;
 };
 
-export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowData, operation, singleRowData) => {
+export const handleOntapDialog = (
+    setDialog,
+    callOptimizeApi,
+    closeDialog,
+    rowData,
+    operation,
+    singleRowData,
+    isWad = false
+) => {
     // Check if this is an ASM configuration that should only have a Close button
     const isCloseButton =
         rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
@@ -180,6 +196,14 @@ export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowDa
             />
         );
     } else {
+        // Determine primary button disabled state: isWad takes precedence, then check dialog-specific disabling
+        const isPrimaryDisabled = isWad || isDialogPrimaryBtnDisabled(rowData);
+        // Determine tooltip: isWad message takes precedence over "coming soon"
+        const primaryTooltip = isWad
+            ? i18next.t(WAD_DISABLED_MESSAGE)
+            : isDialogPrimaryBtnDisabled(rowData)
+            ? GENERAL.COMING_SOON
+            : '';
         setDialog(
             <DialogComponent
                 header={`${rowData?.data?.name} `}
@@ -193,8 +217,8 @@ export const handleOntapDialog = (setDialog, callOptimizeApi, closeDialog, rowDa
                     closeDialog();
                 }}
                 customClass="innerPage"
-                primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
-                primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? GENERAL.COMING_SOON : ''}
+                primaryButtonDisabled={isPrimaryDisabled}
+                primaryButtonTooltip={primaryTooltip}
             />
         );
     }

@@ -575,6 +575,14 @@ const RecommendationTable = ({
                 />
             );
         } else {
+            // Determine primary button disabled state: isWad takes precedence, then check dialog-specific disabling
+            const isPrimaryDisabled = isWad || isDialogPrimaryBtnDisabled(rowData);
+            // Determine tooltip: isWad message takes precedence over "coming soon"
+            const primaryTooltip = isWad
+                ? t('databases.wad.tab-disabled-message')
+                : isDialogPrimaryBtnDisabled(rowData)
+                ? t('databases.general.coming-soon')
+                : '';
             setDialog(
                 <DialogComponent
                     header={`${rowData?.name}`}
@@ -594,8 +602,8 @@ const RecommendationTable = ({
                         closeDialog();
                     }}
                     customClass="innerPage"
-                    primaryButtonDisabled={isDialogPrimaryBtnDisabled(rowData)}
-                    primaryButtonTooltip={isDialogPrimaryBtnDisabled(rowData) ? t('databases.general.coming-soon') : ''}
+                    primaryButtonDisabled={isPrimaryDisabled}
+                    primaryButtonTooltip={primaryTooltip}
                 />
             );
         }
@@ -605,15 +613,6 @@ const RecommendationTable = ({
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE));
         dispatch(setSelectedOptimizeConfig({ type: rowData?.name, data: rowData, hostId, instanceId, engineType }));
     };
-
-    // Helper to check if clicking would open OntapDialog
-    const wouldOpenOntapDialog = (rowData: any) =>
-        !(
-            (selectedHeaderTab === WLF_TABS.OPTIMIZE || selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED) &&
-            innerPageOracleCheck(rowData?.name) &&
-            innerPageCheck(rowData?.name)
-        );
-
     // This is for inner page
     const handleDifferentNavigation = (rowData: any) => {
         if (
@@ -814,6 +813,7 @@ const RecommendationTable = ({
     const renderDismissButton = (rowData: any) => {
         // Don't show dismiss button when in dismissed configuration mode or when row is activating
         if (
+            isWad ||
             showDismissedConfigurations === undefined ||
             showDismissedConfigurations ||
             shouldApplyDisabledRowStyle(rowData)
@@ -1220,23 +1220,6 @@ const RecommendationTable = ({
                                             height="50px"
                                         >
                                             <div>
-                                                <DsButton variant="secondary" isDisabled>
-                                                    {innerPageText(rowData?.name)}
-                                                </DsButton>
-                                            </div>
-                                        </TooltipComponent>
-                                    ) : isWad && wouldOpenOntapDialog(rowData) ? (
-                                        <TooltipComponent
-                                            title={
-                                                <DsTypography variant="Regular_13">
-                                                    {t('databases.wad.tab-disabled-message')}
-                                                </DsTypography>
-                                            }
-                                            placement="bottom"
-                                            width="350px"
-                                            height="110px"
-                                        >
-                                            <div id={`${engineType}-${rowData?.id}-optimize`}>
                                                 <DsButton variant="secondary" isDisabled>
                                                     {innerPageText(rowData?.name)}
                                                 </DsButton>

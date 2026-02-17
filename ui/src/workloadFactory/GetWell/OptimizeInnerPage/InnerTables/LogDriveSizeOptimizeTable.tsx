@@ -54,24 +54,17 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
         return uniqueViolatedRows?.map((row: any) => ({
             ...row,
             id: String(id++),
-            cellProps: isWad
-                ? {
-                      isDisabled: true,
-                      selectionProps: {
-                          title: t('databases.wad.tab-disabled-message')
-                      }
-                  }
-                : {
-                      isDisabled: row?.status === 'Over-provisioned' || row?.status === 'Shared drive',
-                      selectionProps: {
-                          title:
-                              row?.status === 'Over-provisioned'
-                                  ? GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR
-                                  : row?.status === 'Shared drive'
-                                  ? GENERAL.NOT_OPTIMIZED_SHARED_DRIVES
-                                  : ''
-                      }
-                  }
+            cellProps: {
+                isDisabled: row?.status === 'Over-provisioned' || row?.status === 'Shared drive',
+                selectionProps: {
+                    title:
+                        row?.status === 'Over-provisioned'
+                            ? GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR
+                            : row?.status === 'Shared drive'
+                            ? GENERAL.NOT_OPTIMIZED_SHARED_DRIVES
+                            : ''
+                }
+            }
         }));
     }, [data, isWad]);
 

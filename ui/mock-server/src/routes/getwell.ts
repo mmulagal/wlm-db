@@ -1,5 +1,6 @@
 import { BASE_URL, delay, generateResponse } from '../utils/appUtils';
 import GetWellJson from '../data/getWell.json';
+import GetWellOfflineJson from '../data/getWellOffline.json';
 import GetWellHostJson from '../data/getWellHost.json';
 import SnapshotPolicies from '../data/snapshotPolicies.json';
 import GetWellAccJson from '../data/getWellAcc.json';
@@ -50,7 +51,7 @@ router.get(
     `${BASE_URL}/v1/mssql/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/offline-assessment`,
     async (req: {}, res: any) => {
         setTimeout(() => {
-            generateResponse(res, 200, GetWellJson);
+            generateResponse(res, 200, GetWellOfflineJson);
         }, 20);
     }
 );

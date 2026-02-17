@@ -827,7 +827,7 @@ export const getOracleSelectionCompatibility = (
         if (isRowStandalone) {
             return {
                 isSelectable: false,
-                reason: t('databases.bulk-register.standalone-disabled-dataguard-selected')
+                reason: t('databases.bulk-register.dataguard-selected')
             };
         }
 
@@ -849,7 +849,7 @@ export const getOracleSelectionCompatibility = (
             if (!isOracleRowConnectedToSelected(rowData, selectedRows)) {
                 return {
                     isSelectable: false,
-                    reason: t('databases.bulk-register.dataguard-not-connected')
+                    reason: t('databases.bulk-register.dataguard-selected')
                 };
             }
         }
@@ -921,7 +921,9 @@ export const getDisabledSelectionTooltip = (
 ): string | React.ReactNode => {
     // Already managed - specific bulk registration message
     if (rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-        return t('databases.bulk-register.already-registered');
+        return selectedHostType === DBType.MSSQL
+            ? t('databases.bulk-register.already-registered')
+            : t('databases.bulk-register.already-registered-database');
     }
 
     // Check deployment type validity

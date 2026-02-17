@@ -534,9 +534,13 @@ const GetWell = () => {
                                                 {!hasDismissedConfigurations ? (
                                                     <DsPopover
                                                         trigger="hover"
-                                                        title={t(
-                                                            'databases.well-architect.dismiss.no-dismissed-configurations'
-                                                        )}
+                                                        title={
+                                                            cardData?.isWad
+                                                                ? t('databases.wad.tab-disabled-message')
+                                                                : t(
+                                                                      'databases.well-architect.dismiss.no-dismissed-configurations'
+                                                                  )
+                                                        }
                                                         monitorPosition="all"
                                                         placement="bottom"
                                                     >

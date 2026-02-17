@@ -1,6 +1,7 @@
 import { useDispatch } from 'react-redux';
 import { Button, DsTypography, useDialog } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import styles from './OptimizeInnerPage.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -35,12 +36,15 @@ import { cloneAgeRange } from '../../../utils/utilityFunctions';
 
 const CloneTabs = ({ fromPage = '' }: any) => {
     const dispatch = useDispatch();
-    const { selectedCloneTab } = useAppSelector(state => state.getWellOptimize);
+    const { t } = useTranslation();
+    const { selectedCloneTab, cardData: fullCardData } = useAppSelector(state => state.getWellOptimize);
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { cloneDashboardData, cloneIsOptimizedRows } = useAppSelector(state => state.getWellOptimize);
     const { inProgressOptimizationData, inProgressHostData, inProgressResourceOptimizeData } = useAppSelector(
         state => state.getWellOptimize
     );
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = fullCardData?.isWad || false;
     const [wfDatabase, setWfDatabase] = useState<any>(null);
     const [otherDatabase, setOtherDatabase] = useState<any>(null);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -292,6 +296,8 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                     closeDialog();
                 }}
                 customClass="innerPage"
+                primaryButtonDisabled={isWad}
+                primaryButtonTooltip={isWad ? t('databases.wad.tab-disabled-message') : ''}
             />
         );
     };

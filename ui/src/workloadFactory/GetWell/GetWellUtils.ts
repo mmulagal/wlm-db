@@ -6154,14 +6154,14 @@ export const getWadCellProps = (
     isWad: boolean,
     t: TFunction,
     fallbackCellProps?: Record<string, unknown>
-): Record<string, unknown> | undefined => {
-    if (isWad) {
-        return {
-            isDisabled: true,
-            selectionProps: {
-                title: t('databases.wad.tab-disabled-message')
-            }
-        };
-    }
-    return fallbackCellProps;
-};
+): Record<string, unknown> | undefined =>
+    // It is added in multiple files so commenting out for now. Will remove when we will create single file for Inner tables.
+    // if (isWad) {
+    //     return {
+    //         isDisabled: true,
+    //         selectionProps: {
+    //             title: t('databases.wad.tab-disabled-message')
+    //         }
+    //     };
+    // }
+    fallbackCellProps;

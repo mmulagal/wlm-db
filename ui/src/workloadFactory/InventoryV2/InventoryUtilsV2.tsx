@@ -169,6 +169,13 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
                 });
             }
 
+            const aoagDetails =
+                assessments?.deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS
+                    ? {
+                          baseDeploymentType: assessments?.baseDeploymentType
+                      }
+                    : undefined;
+
             formattedInstances.push({
                 databaseInstanceId: instanceData?.databaseInstanceId,
                 databaseInstanceName: instanceData?.databaseInstanceName,
@@ -181,22 +188,27 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
                 isManaged: false,
                 isWad: true,
                 wadAssessmentData: assessments,
-                storage: instanceStorageArray.length > 0 ? instanceStorageArray : undefined
+                storage: instanceStorageArray.length > 0 ? instanceStorageArray : undefined,
+                aoagDetails
             });
         });
 
         // Get VM details from clusterNodes if available (new structure uses clusterNodes instead of vmNodes)
         const ec2Details: EC2DetailsInterface[] = [];
-        if (firstInstance?.clusterNodes && Array.isArray(firstInstance.clusterNodes)) {
+        if (
+            firstInstance?.assessments?.deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS &&
+            firstInstance?.clusterNodes &&
+            Array.isArray(firstInstance.clusterNodes)
+        ) {
             firstInstance.clusterNodes.forEach((node: any) => {
                 ec2Details.push({
                     id: node?.vmInstanceId,
                     name: node?.nodeName
                 });
             });
-        } else if (firstInstance?.vmName || firstInstance?.vmId) {
+        } else if (firstInstance?.vmName || firstInstance?.vmInstanceId) {
             ec2Details.push({
-                id: firstInstance?.vmId,
+                id: firstInstance?.vmInstanceId,
                 name: firstInstance?.vmName
             });
         }
@@ -3824,7 +3836,7 @@ export const renderInstanceListText = (cellData: any, rowData: any, styles: any)
             </div>
 
             {!instanceList && rowData?.loading && <DsFlashingDotsLoader />}
-            {!instanceList && !rowData?.loading && GENERAL.NOT_AVAILABLE}
+            {!instanceList && !rowData?.loading && !rowData?.instanceNameListText && GENERAL.NOT_AVAILABLE}
         </>
     );
 };

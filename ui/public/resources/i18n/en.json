@@ -80,6 +80,7 @@
             "no-analysis-performed": "No analysis performed",
             "assessment-performed": "Automatic daily analysis",
             "last-update": "Last update:",
+            "date": "Date:",
             "assess-now": "Analyze now",
             "online": "ONLINE",
             "offline": "OFFLINE",
@@ -400,12 +401,13 @@
             "oracle": "Oracle instance"
         },
         "bulk-register": {
-            "dataguard-selection-info": "A database from the Data Guard deployment model is selected, only databases within the same group (sharing the same database name) are available for selection, while other databases are disabled. You can select all by using the header checkbox, or you can filter and search by database name.",
+            "dataguard-selection-info": "Select only databases that use the same deployment model, including databases with the same name in the Data Guard deployment model.",
             "aoag-not-supported": "Bulk registration is not supported for Always on Availability Group instances.",
             "aoag-tooltip-title": "We do not support bulk actions for AOAG instances.",
             "aoag-tooltip-bullet1": "We support only single instance registration for AOAG instances. You can register each AOAG instance individually through the main table CTA.",
             "aoag-tooltip-bullet2": "After authenticating an instance, we will provide the option to authenticate related instances that share the same availability group.",
             "already-registered": "This instance is already registered.",
+            "already-registered-database": "This database is already registered.",
             "select-header-disabled": "Filter the table with at most 10 unregistered Standalone or FCI instances to enable bulk registration.",
             "select-header-disabled-oracle": "Filter the table with at most 10 unregistered databases to enable bulk registration.",
             "max-selection-reached": "Maximum of {{max}} instances can be selected for bulk registration.",
@@ -420,9 +422,10 @@
             "dataguard-coming-soon": "Registration for Data Guard databases is coming soon.",
             "aoag-coming-soon": "Registration for AOAG instances is coming soon.",
             "not-supported-for-engine": "Bulk registration is not supported for this database type.",
-            "dataguard-disabled-standalone-selected": "Data Guard databases cannot be selected when Standalone databases are already selected.",
+            "dataguard-disabled-standalone-selected": "When a standalone database is selected, databases belonging to a Data Guard configuration are unavailable. Only other standalone databases can be selected. You can select all using the header checkbox, or filter and search by database name.",
             "standalone-disabled-dataguard-selected": "Standalone databases cannot be selected when Data Guard databases are already selected.",
-            "dataguard-not-connected": "This Data Guard database is not connected to the selected Data Guard configuration."
+            "dataguard-not-connected": "This Data Guard database is not connected to the selected Data Guard configuration.",
+            "dataguard-selected": "A database from the Data Guard deployment is selected, only databases within the same configuration are available for selection, while other databases are disabled. You can select all by using the header checkbox, or you can filter and search by database name."
         },
         "oracle-inner-page": {
             "overview": "Overview",
@@ -1199,6 +1202,7 @@
             "no-databases-available": "Databases are available for registered instances only.",
             "no-pdb-available": "PDBs are available for registered databases only.",
             "one-time-wad-dialog-heading-final": "Learn about one-time assessment for SQL Server instances",
+            "one-time-wad-upload-inprogress": "Uploading one-time assessment results.",
             "one-time-wad-upload-success": "Uploaded one-time assessment results.",
             "one-time-wad-download-success": "Downloaded script for the one-time assessment.",
             "one-time-assessment": "One-time assessment",
@@ -1768,7 +1772,7 @@
             "jm-type-register-resource": "Register resource"
         },
         "wad": {
-            "tab-disabled-message": "The Well-Architected information is accessible through a one-time assessment that determines the status of your Microsoft SQL Server instances. To enable all functionalities, please register the instance first.",
+            "tab-disabled-message": "To enable all functionalities, please register the instance first.",
             "register-disabled-no-credentials": "Registration requires AWS credentials. Add credentials to register this instance."
         }
     }

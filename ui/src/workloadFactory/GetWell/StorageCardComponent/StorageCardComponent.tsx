@@ -862,7 +862,17 @@ const StorageCardComponent = ({
         if (!wouldCallHandleDialog()) {
             handleNavigateToOptimizePage(type);
         } else {
-            handleDialog(setDialog, type, callOptimizeApi, closeDialog, cardData);
+            handleDialog(
+                setDialog,
+                type,
+                callOptimizeApi,
+                closeDialog,
+                cardData,
+                undefined,
+                undefined,
+                DBType.MSSQL,
+                isWad
+            );
         }
     };
 
@@ -999,14 +1009,14 @@ const StorageCardComponent = ({
 
     // Dismiss button component
     const renderDismissButton = () => {
-        if (!showDismissButton || !cardData?.block_two?.value) return null;
+        if (isWad || !showDismissButton || !cardData?.block_two?.value) return null;
 
         return (
             <div className={styles.buttonSection}>
                 <DsButton
                     type="text"
                     onClick={handleDismissButtonClick}
-                    isDisabled={loading || dismissAction || dismissDisableButton() || isWad}
+                    isDisabled={loading || dismissAction || dismissDisableButton()}
                 >
                     {t('databases.well-architect.dismiss-text')}
                 </DsButton>
@@ -1103,36 +1113,8 @@ const StorageCardComponent = ({
                     </div>
                 ) : null}
 
-                {/* Disabled button with tooltip for WAD excluded configs */}
-                {cardData?.isWadExcluded && !optimizePrintState && !showDismissedConfigurations && (
-                    <div className={styles.buttonGroup}>
-                        <DsPopover
-                            title={
-                                <DsTypography variant="Regular_14">
-                                    {t('databases.wad.tab-disabled-message')}
-                                </DsTypography>
-                            }
-                            trigger="hover"
-                            placement="left"
-                        >
-                            <div
-                                className={
-                                    isDarkTheme
-                                        ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
-                                        : styles.buttonSection
-                                }
-                            >
-                                <DsButton variant="secondary" isDisabled>
-                                    {setButtonText()}
-                                </DsButton>
-                            </div>
-                        </DsPopover>
-                    </div>
-                )}
-
                 {/* Buttons for regular cards */}
                 {!showDismissedConfigurations &&
-                    !cardData?.isWadExcluded &&
                     !(
                         cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
                         cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
@@ -1219,46 +1201,22 @@ const StorageCardComponent = ({
                             {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
                             {loading || dismissDisableButton() ? '' : renderDismissButton()}
                             {/* View and Fix Action Button - disabled with Popover for WAD when it would call handleDialog */}
-                            {isWad && wouldCallHandleDialog() ? (
-                                <DsPopover
-                                    title={
-                                        <DsTypography variant="Regular_14">
-                                            {t('databases.wad.tab-disabled-message')}
-                                        </DsTypography>
-                                    }
-                                    trigger="hover"
-                                    placement="left"
+                            <div
+                                className={
+                                    isDarkTheme && (loading || disableOptimizeButton)
+                                        ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
+                                        : styles.buttonSection
+                                }
+                                id={`${cardData?.id}-optimize`}
+                            >
+                                <DsButton
+                                    variant="secondary"
+                                    onClick={() => handleDifferentNavigation()}
+                                    isDisabled={loading || disableOptimizeButton || dismissDisableButton()}
                                 >
-                                    <div
-                                        className={
-                                            isDarkTheme
-                                                ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
-                                                : styles.buttonSection
-                                        }
-                                    >
-                                        <DsButton variant="secondary" isDisabled>
-                                            {setButtonText()}
-                                        </DsButton>
-                                    </div>
-                                </DsPopover>
-                            ) : (
-                                <div
-                                    className={
-                                        isDarkTheme && (loading || disableOptimizeButton)
-                                            ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
-                                            : styles.buttonSection
-                                    }
-                                    id={`${cardData?.id}-optimize`}
-                                >
-                                    <DsButton
-                                        variant="secondary"
-                                        onClick={() => handleDifferentNavigation()}
-                                        isDisabled={loading || disableOptimizeButton || dismissDisableButton()}
-                                    >
-                                        {setButtonText()}
-                                    </DsButton>
-                                </div>
-                            )}
+                                    {setButtonText()}
+                                </DsButton>
+                            </div>
                         </div>
                     ))}
 

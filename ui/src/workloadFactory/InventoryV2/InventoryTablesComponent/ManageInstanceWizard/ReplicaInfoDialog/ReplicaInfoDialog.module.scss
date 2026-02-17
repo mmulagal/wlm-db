@@ -53,6 +53,11 @@
     }
 
     .tableSection {
+        &.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
         .agContainer {
             display: flex;
             align-items: center;

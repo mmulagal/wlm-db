@@ -229,22 +229,6 @@ const OptimizeInnerPage = () => {
     }, [selectedOptimizeConfig]);
 
     const buttonComponent = (rowData: any) => {
-        if (isWad) {
-            return (
-                <Popover
-                    isAppendedToBody
-                    children={t('databases.wad.tab-disabled-message')}
-                    trigger="hover"
-                    delayHide={200}
-                    interactive
-                    container={
-                        <DsButton variant="secondary" isDisabled isThin>
-                            {t('databases.well-architect.fix')}
-                        </DsButton>
-                    }
-                />
-            );
-        }
         if (
             selectedOptimizeConfig?.type === 'Data files' ||
             selectedOptimizeConfig?.type === 'Log files' ||
@@ -337,7 +321,9 @@ const OptimizeInnerPage = () => {
                             closeDialog,
                             selectedOptimizeConfig?.data,
                             'single',
-                            rowData
+                            rowData,
+                            selectedOptimizeConfig?.engineType,
+                            isWad
                         );
                     }}
                 >
@@ -372,7 +358,8 @@ const OptimizeInnerPage = () => {
                             selectedOptimizeConfig?.data,
                             'single',
                             rowData,
-                            DBType.ORACLE
+                            DBType.ORACLE,
+                            isWad
                         );
                     }}
                 >
@@ -764,7 +751,8 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.data,
             'bulk',
             {},
-            selectedOptimizeConfig?.engineType
+            selectedOptimizeConfig?.engineType,
+            isWad
         );
     };
 

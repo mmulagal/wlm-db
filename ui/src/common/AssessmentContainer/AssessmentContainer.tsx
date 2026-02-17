@@ -35,14 +35,18 @@ const AssessmentContainer = ({
                         <ScanImage />
                     </div>
                     <div className={styles.textSection}>
-                        <DsTypography variant="Regular_14">{t('databases.general.assessment-performed')}</DsTypography>
+                        <DsTypography variant="Regular_14">
+                            {isWad
+                                ? t('databases.inventory.one-time-assessment')
+                                : t('databases.general.assessment-performed')}
+                        </DsTypography>
                         <SeparatorComponent variant="vertical" height="16px" />
                         <div className={styles.dateSection}>
                             {optimizePageLoading && <DsFlashingDotsLoader />}
                             {!optimizePageLoading && gwTimestamp && gwTimestamp !== '0' && (
                                 <>
                                     <DsTypography variant="Regular_14">
-                                        {t('databases.general.last-update')}
+                                        {isWad ? t('databases.general.date') : t('databases.general.last-update')}
                                     </DsTypography>
                                     <DsTypography variant="Semibold_14">{gwTimestamp}</DsTypography>
                                 </>

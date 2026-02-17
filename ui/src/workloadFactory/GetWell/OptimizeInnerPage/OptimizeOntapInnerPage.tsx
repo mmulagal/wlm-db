@@ -232,22 +232,6 @@ const OptimizeOntapInnerPage = () => {
                 />
             );
         }
-        if (isWad) {
-            return (
-                <Popover
-                    isAppendedToBody
-                    children={t('databases.wad.tab-disabled-message')}
-                    trigger="hover"
-                    delayHide={200}
-                    interactive
-                    container={
-                        <DsButton variant="secondary" isDisabled isThin>
-                            {buttonText}
-                        </DsButton>
-                    }
-                />
-            );
-        }
         return (
             <DsButton
                 isThin
@@ -260,7 +244,8 @@ const OptimizeOntapInnerPage = () => {
                         closeDialog,
                         selectedOptimizeConfig,
                         'single',
-                        rowData
+                        rowData,
+                        isWad
                     );
                 }}
             >
@@ -539,7 +524,7 @@ const OptimizeOntapInnerPage = () => {
     };
 
     const handleBulkAction = () => {
-        handleOntapDialog(setDialog, callOptimizeApi, closeDialog, selectedOptimizeConfig, 'bulk');
+        handleOntapDialog(setDialog, callOptimizeApi, closeDialog, selectedOptimizeConfig, 'bulk', null, isWad);
     };
 
     const renderTable = () => {
