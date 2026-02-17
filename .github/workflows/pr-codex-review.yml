@@ -31,14 +31,42 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
 
             const marker = '<!-- codex-pr-review -->';
-            const apiKey = process.env.OPENAI_API_KEY;
-            const model = process.env.OPENAI_MODEL || 'gpt-5.2-codex';
+            const apiKey = (process.env.OPENAI_API_KEY || '').trim();
+            const model = process.env.OPENAI_MODEL || 'gpt-5.1-codex';
+            const rawBaseUrl = (process.env.OPENAI_BASE_URL || 'https://llm-proxy-api.ai.openeng.netapp.com').trim();
+            const allowedHosts = new Set([
+              'llm-proxy-api.ai.openeng.netapp.com',
+              'api.openai.com',
+            ]);
+            let baseUrl;
+            try {
+              const parsed = new URL(rawBaseUrl);
+              if (parsed.protocol !== 'https:' || !allowedHosts.has(parsed.hostname)) {
+                core.setFailed(
+                  `OPENAI_BASE_URL host "${parsed.hostname}" is not allowed. Must be one of: ${Array.from(allowedHosts).join(', ')}`
+                );
+                return;
+              }
+              baseUrl = `${parsed.origin}${parsed.pathname}`.replace(/\/+$/, '');
+            } catch {
+              core.setFailed(`OPENAI_BASE_URL "${rawBaseUrl}" is not a valid URL.`);
+              return;
+            }
+            let responsesUrl;
+            if (baseUrl.endsWith('/v1/responses') || baseUrl.endsWith('/responses')) {
+              responsesUrl = baseUrl;
+            } else if (baseUrl.endsWith('/v1')) {
+              responsesUrl = `${baseUrl}/responses`;
+            } else {
+              responsesUrl = `${baseUrl}/v1/responses`;
+            }
             const pr = context.payload.pull_request;
             const maxPatchChars = 120000;
             const maxInlineComments = 20;
@@ -48,6 +76,25 @@ jobs:
             if (!apiKey) {
               core.warning('OPENAI_API_KEY is not set. Skipping Codex PR review.');
               return;
+            }
+
+            async function deleteSummaryComment() {
+              const existing = await github.paginate(github.rest.issues.listComments, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                per_page: 100,
+              });
+              const previous = existing.filter(
+                (c) => c.user?.type === 'Bot' && typeof c.body === 'string' && c.body.includes(marker)
+              );
+              for (const c of previous) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: c.id,
+                });
+              }
             }
 
             function parseRightSideLines(patch) {
@@ -192,7 +239,7 @@ jobs:
             for (let attempt = 0; attempt <= maxOpenAiRetries; attempt += 1) {
               let response;
               try {
-                response = await fetch('https://api.openai.com/v1/responses', {
+                response = await fetch(responsesUrl, {
                   method: 'POST',
                   headers: {
                     Authorization: `Bearer ${apiKey}`,
@@ -226,6 +273,12 @@ jobs:
                 if (attempt < maxOpenAiRetries && isTransientOpenAiFailure(response.status)) {
                   await sleep(retryBaseDelayMs * 2 ** attempt);
                   continue;
+                }
+                if (response.status === 401 || response.status === 403) {
+                  core.warning(
+                    `OpenAI API request failed (${response.status} ${response.statusText}). Check OPENAI_API_KEY and model access.`
+                  );
+                  return;
                 }
                 throw new Error(`OpenAI API request failed (${response.status} ${response.statusText})`);
               }
@@ -284,46 +337,6 @@ jobs:
               dedupedInlineComments.push(c);
             }
 
-            const summaryBody = [
-              marker,
-              `Codex PR review (${model})`,
-              '',
-              summary,
-              '',
-              `Verdict: ${verdict}`,
-              suggestedTests.length ? '' : null,
-              suggestedTests.length ? `Suggested tests: ${suggestedTests.join('; ')}` : null,
-              diffWasTruncated ? '' : null,
-              diffWasTruncated ? 'Note: Diff context was truncated due to size limits; review coverage may be partial.' : null,
-              '',
-              '_Automated review generated for the latest server/ diff._',
-            ].filter(Boolean).join('\n');
-
-            const existing = await github.paginate(github.rest.issues.listComments, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              per_page: 100,
-            });
-
-            const previous = existing.find((c) => c.user?.type === 'Bot' && c.body?.includes(marker));
-
-            if (previous) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: previous.id,
-                body: summaryBody,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                body: summaryBody,
-              });
-            }
-
             const priorInline = await github.paginate(github.rest.pulls.listReviewComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -339,6 +352,12 @@ jobs:
                   comment_id: c.id,
                 });
               }
+            }
+
+            await deleteSummaryComment();
+            if (dedupedInlineComments.length === 0) {
+              core.info(`Codex PR review completed for PR #${pr.number} with no inline findings.`);
+              return;
             }
 
             for (const c of dedupedInlineComments) {
