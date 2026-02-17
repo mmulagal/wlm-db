@@ -1293,8 +1293,13 @@ const InstancesTable = () => {
                 // Compress the Base64 data using fflate
                 const compressedData = compressSync(base64Bytes);
 
-                // Convert the compressed data to Base64
-                const compressedBase64 = btoa(String.fromCharCode(...compressedData));
+                // Convert the compressed data to Base64 (process in chunks to avoid call stack overflow)
+                let binaryString = '';
+                const chunkSize = 8192;
+                for (let i = 0; i < compressedData.length; i += chunkSize) {
+                    binaryString += String.fromCharCode(...compressedData.subarray(i, i + chunkSize));
+                }
+                const compressedBase64 = btoa(binaryString);
 
                 if (compressedBase64) {
                     const result = await getOneTimeWADUploadScript({
