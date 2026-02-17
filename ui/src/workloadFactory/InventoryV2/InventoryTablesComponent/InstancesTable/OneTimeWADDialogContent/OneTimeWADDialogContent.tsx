@@ -82,6 +82,15 @@ const OneTimeWADDialogContent = () => {
                                                     )}
                                                 </DsTypography>
                                             </div>
+
+                                            <div className={styles.listItems}>
+                                                <div className={styles.numberDigit}>5 &nbsp;|</div>
+                                                <DsTypography variant="Regular_14">
+                                                    {t(
+                                                        'databases.inventory.first-upload-creates-a-new-instance'
+                                                    )}
+                                                </DsTypography>
+                                            </div>
                                         </div>
                                     </Typography>
                                 </AccordionCardContent>

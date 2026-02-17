@@ -1221,6 +1221,7 @@
             "copy-the-script-to-your-sql-server-host": "Copy the script to your Microsoft SQL Server host.",
             "run-the-script-in-powershell": "Run the script in PowerShell. One script collects metadata from all instances.",
             "upload-the-output-file-back-to-this-console": "Upload the output file back to this console.",
+            "first-upload-creates-a-new-instance": "First upload creates a new instance entry; later uploads update the existing assessment.",
             "what-data-does-the-script-collect": "What data does the script collect?",
             "database-metadata": "Database metadata (names, sizes, recovery models - no actual data)",
             "storage-configuration": "Storage configuration (drives, FSx for ONTAP volume information)",
