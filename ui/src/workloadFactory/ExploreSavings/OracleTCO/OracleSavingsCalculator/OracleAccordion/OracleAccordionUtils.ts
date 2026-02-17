@@ -57,4 +57,3 @@ export const OracleServerInstance = (oracleInstance: any, t: TFunction) => [
         text: t('databases.explore-savings.oracle-instance-type-text')
     }
 ];
-

@@ -200,6 +200,9 @@ const inventoryV2Slice = createSlice({
         incrementMssqlInstancesTabVisitCount: state => {
             state.mssqlInstancesTabVisitCount += 1;
         },
+        setMssqlInstancesTabVisitCount: (state, action: PayloadAction<number>) => {
+            state.mssqlInstancesTabVisitCount = action.payload;
+        },
         setIsUploadLoading: (state, action: PayloadAction<boolean>) => {
             state.isUploadLoading = action.payload;
         },
@@ -795,6 +798,7 @@ export const {
     setBulkDetectedInstanceList,
     setSelectedRowsForBulkRegister,
     incrementMssqlInstancesTabVisitCount,
+    setMssqlInstancesTabVisitCount,
     setIsUploadLoading
 } = inventoryV2Slice.actions;
 

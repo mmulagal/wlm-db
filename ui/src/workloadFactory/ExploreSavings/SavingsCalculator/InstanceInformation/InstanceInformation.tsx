@@ -146,7 +146,10 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             const data: any = [
                 {
                     details: 'Instance type',
-                    value: instanceTypelist?.length > 0 ? instanceTypelist.join(', ') : t('databases.general.not-available'),
+                    value:
+                        instanceTypelist?.length > 0
+                            ? instanceTypelist.join(', ')
+                            : t('databases.general.not-available'),
                     id: '1',
                     findings: savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ? findingsComputeData : ''
                 },
@@ -190,7 +193,9 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                 return storageSavingsResponse && (storageSavingsResponse?.license?.finding || '-');
             })();
 
-            const findingsDbModel = currentHost?.deploymentModel?.includes(t('databases.general.always-on-availability-group'))
+            const findingsDbModel = currentHost?.deploymentModel?.includes(
+                t('databases.general.always-on-availability-group')
+            )
                 ? FINDINGS.NOT_OPTIMIZED
                 : FINDINGS.OPTIMIZED;
 
@@ -296,7 +301,14 @@ const InstanceInformation = ({ host }: { host?: any }) => {
     };
 
     return (
-        <div className={getInstanceClassName({ savingsCalculatorFrom, selectedExploreSavingsTab, isOracleOnPrem, styles })}>
+        <div
+            className={getInstanceClassName({
+                savingsCalculatorFrom,
+                selectedExploreSavingsTab,
+                isOracleOnPrem,
+                styles
+            })}
+        >
             <DsTypography variant="Regular_14">{getSectionTitle()}</DsTypography>
             <div className={classNames(styles.instanceTable, { [styles.oracleTable]: isOracleOnPrem })}>
                 <Table

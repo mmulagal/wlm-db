@@ -1,14 +1,27 @@
 import { DsButton, DsTypography } from '@netapp/design-system';
-
+import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as StorageCredentials } from '../../../../../assets/WAD.svg';
 
 import styles from './IntroductionWADCard.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { setMssqlInstancesTabVisitCount } from '../../../../../store/workloadFactory/inventoryV2Slice';
+import { STAGING } from '../../../../../utils/consts';
+
+const MAX_WAD_CARD_VISITS = 3;
 
 const IntroductionWADCard = ({ buttonRef, setIsCardOpen }: any) => {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { t } = useTranslation();
+    const dispatch = useDispatch();
+
+    const handleClose = () => {
+        setIsCardOpen(false);
+        if (import.meta.env.VITE_APP_ENVIRONMENT === STAGING) {
+            dispatch(setMssqlInstancesTabVisitCount(MAX_WAD_CARD_VISITS));
+        }
+    };
+
     return (
         <div
             className={styles['intro-card']}
@@ -39,7 +52,7 @@ const IntroductionWADCard = ({ buttonRef, setIsCardOpen }: any) => {
                 </DsTypography>
             </div>
             <div className={styles.buttonContainer}>
-                <DsButton isThin variant="secondary" className={styles.button} onClick={() => setIsCardOpen(false)}>
+                <DsButton isThin variant="secondary" className={styles.button} onClick={handleClose}>
                     {t('databases.banner.close')}
                 </DsButton>
             </div>

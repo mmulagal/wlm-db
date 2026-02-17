@@ -109,12 +109,11 @@ export const getInstanceColDefs = ({
         renderCell: (_cellData: any, rowData: any) =>
             !storageSavingsLoading && !snapshotLoading ? (
                 <>
-                    {rowData.details === 'Instance type' &&
-                        savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
-                            <div className={styles.instanceTypeTooltip}>
-                                <TooltipInfo>{t('databases.explore-savings.instance-type-findings-tooltip')}</TooltipInfo>
-                            </div>
-                        )}
+                    {rowData.details === 'Instance type' && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                        <div className={styles.instanceTypeTooltip}>
+                            <TooltipInfo>{t('databases.explore-savings.instance-type-findings-tooltip')}</TooltipInfo>
+                        </div>
+                    )}
                     {rowData?.findings === FINDINGS.NOT_OPTIMIZED && (
                         <div className={styles.tooltips}>
                             {rowData.details === 'SQL Edition' && (
@@ -133,7 +132,9 @@ export const getInstanceColDefs = ({
                     )}
 
                     {rowData?.findings === FINDINGS.UNDER_PROVISIONED && (
-                        <DsTypography variant="Regular_14">{t('databases.explore-savings.findings-under-provisioned')}</DsTypography>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.explore-savings.findings-under-provisioned')}
+                        </DsTypography>
                     )}
 
                     {(rowData?.findings === FINDINGS.INSUFFICIENT_DATA ||
@@ -141,10 +142,9 @@ export const getInstanceColDefs = ({
                         <DsTypography variant="Regular_14">{t('databases.general.not-available')}</DsTypography>
                     )}
 
-                    {rowData.details === 'Instance type' &&
-                        savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && (
-                            <DsTypography variant="Regular_14">-</DsTypography>
-                        )}
+                    {rowData.details === 'Instance type' && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && (
+                        <DsTypography variant="Regular_14">-</DsTypography>
+                    )}
                 </>
             ) : (
                 <DsFlashingDotsLoader />

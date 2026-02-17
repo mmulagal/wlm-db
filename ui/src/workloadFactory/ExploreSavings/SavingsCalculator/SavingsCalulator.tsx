@@ -375,14 +375,10 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
                     <div
                         className={
-                            isOnPremMode
-                                ? `${styles.contentArea} ${styles.contentAreaOnPremise}`
-                                : styles.contentArea
+                            isOnPremMode ? `${styles.contentArea} ${styles.contentAreaOnPremise}` : styles.contentArea
                         }
                         style={{
-                            width: isOnPremMode
-                                    ? '1607px '
-                                    : '1336px'
+                            width: isOnPremMode ? '1607px ' : '1336px'
                         }}
                     >
                         {/* Left side code here */}
@@ -475,7 +471,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         <div>{isMutliFsx ? <SuggestionDisable /> : <Suggestion />}</div>
                         <div className={styles.textContent}>
                             <DsTypography variant="Semibold_16" className={isMutliFsx ? styles.textDisable : ''}>
-                            {t('databases.explore-savings.mssql-selection-based-text')}
+                                {t('databases.explore-savings.mssql-selection-based-text')}
                             </DsTypography>
                             <DsTypography
                                 variant="Regular_14"

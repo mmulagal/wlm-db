@@ -54,14 +54,16 @@ export const comparisonData = (calculatedResponse: any) => {
         return total > 0 ? formatCost(total) : '$0';
     };
 
-    const checkBYOLTooltip = isOracle ? false : checkIfByolFieldRequired(selectedHostDetails, false, savingsCalculatorFrom);
+    const checkBYOLTooltip = isOracle
+        ? false
+        : checkIfByolFieldRequired(selectedHostDetails, false, savingsCalculatorFrom);
 
     const licenseLabel = isOracle ? 'Oracle License' : 'SQL license';
     const licenseTooltip = isOracle
         ? ''
         : checkBYOLTooltip
-            ? 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL Server license-included AMIs. SQL license costs for SQL on Elastic Block Store are based on the Enterprise license with BYOL. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.'
-            : 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.';
+        ? 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL Server license-included AMIs. SQL license costs for SQL on Elastic Block Store are based on the Enterprise license with BYOL. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.'
+        : 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.';
 
     return [
         {
@@ -197,7 +199,11 @@ export const comparisonDataFsxw = (calculatedResponse: any) => {
 
 export const calculatedFSXData = (
     fsxData: any,
-    { storageType = '', selectedExploreSavingsTab, isOracleOnPrem }: { storageType?: string; selectedExploreSavingsTab?: string; isOracleOnPrem?: boolean } = {}
+    {
+        storageType = '',
+        selectedExploreSavingsTab,
+        isOracleOnPrem
+    }: { storageType?: string; selectedExploreSavingsTab?: string; isOracleOnPrem?: boolean } = {}
 ) => {
     const isOnPrem = selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem;
     const useCaseLabel = fsxData?.useCase || (isOracleOnPrem ? 'Oracle' : '');

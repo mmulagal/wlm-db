@@ -352,7 +352,9 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         if (isOracleOnPrem) {
             return t('databases.explore-savings.oracle-server-instance');
         }
-        return isMutliFsx ? t('databases.explore-savings.mssql-two-instances') : t('databases.explore-savings.mssql-single-instance');
+        return isMutliFsx
+            ? t('databases.explore-savings.mssql-two-instances')
+            : t('databases.explore-savings.mssql-single-instance');
     };
 
     const saveIsDisabled = () => {
