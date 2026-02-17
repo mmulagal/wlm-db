@@ -70,14 +70,16 @@ import {
 import { SSMDocument } from '../utils/common-types';
 import {
     fetchMssqlOfflineAssessmentPerAccount,
-    fetchMssqlOfflineAssessment
+    fetchMssqlOfflineAssessment,
+    deleteOfflineAssessmentRecord
 } from '../operations/continuous-optimization/mssql/offline-assessment-operations';
 import { uploadOfflineAssessment, downloadOfflineAssessmentScript } from '../operations/offline-assessment-operations';
 import {
     OfflineAssessmentListSchema,
     OfflineAssessmentUploadSchema,
     OfflineAssessmentGetByIdSchema,
-    OfflineAssessmentDownloadSchema
+    OfflineAssessmentDownloadSchema,
+    DeleteOfflineAssessment
 } from './schemas/offline-assessment-schema';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -594,6 +596,18 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                     .header('Content-Type', 'application/zip')
                     .header('Content-Disposition', `attachment; filename="${filename}"`)
                     .send(zipBuffer);
+            }
+        )
+        .delete(
+            '/v1/mssql/offline-assessment/database-hosts/:databaseHostIds',
+            { schema: DeleteOfflineAssessment },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostIds }
+                } = castRequest(request);
+
+                const response = await deleteOfflineAssessmentRecord(accountId, databaseHostIds);
+                return reply.send(response);
             }
         );
 }

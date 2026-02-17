@@ -73,10 +73,26 @@ const OfflineAssessmentListSchema = (databaseType?: string) => ({
     }
 });
 
+const DeleteOfflineAssessment = {
+    tags: [RouteTags.MSSQL_ASSESSMENT],
+    summary: 'Delete offline assessment record',
+    description: 'Delete offline assessment record',
+    params: Type.Object({
+        accountId: Type.String({ description: 'The account ID' }),
+        databaseHostIds: Type.String({ description: 'The resource IDs for the offline assessment record' })
+    }),
+    response: {
+        200: Type.Object({
+            count: Type.Number()
+        })
+    }
+};
+
 export {
     OfflineAssessmentUploadSchema,
     OfflineAssessmentGetByIdSchema,
     OfflineAssessmentDownloadSchema,
     OfflineAssessmentListSchema,
+    DeleteOfflineAssessment,
     getOfflineAssessmentTags
 };

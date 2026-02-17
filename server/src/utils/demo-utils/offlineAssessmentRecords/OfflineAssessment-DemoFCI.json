@@ -159,6 +159,7 @@
                 },
                 "instanceDetails": {
                     "deploymentType": "FCI",
+                    "baseDeploymentType": null,
                     "enterpriseFeatures": [],
                     "isHadrEnabled": false,
                     "isUsingEnterpriseFeatures": false,

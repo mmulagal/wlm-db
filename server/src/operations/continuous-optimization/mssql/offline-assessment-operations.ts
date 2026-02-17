@@ -6,6 +6,7 @@ import {
     bulkUpsertOfflineAssessments,
     getOfflineAssessment,
     listOfflineAssessments as dbListOfflineAssessments,
+    removeOfflineAssessmentData,
     OfflineAssessmentRecord
 } from '../../../lib/database/offline-assessment';
 import {
@@ -51,6 +52,7 @@ interface MSSQLDatabaseInstanceData {
         ec2InstanceId?: string;
     }>;
     deploymentType: 'FCI' | 'AOAG' | 'Standalone';
+    baseDeploymentType?: 'FCI' | 'Standalone';
     isClustered: boolean;
     isHadrEnabled: boolean;
     windowsClusterName?: string | null;
@@ -167,6 +169,7 @@ interface MSSQLOfflineAssessmentMetadataType {
     assessmentTimestamp: string;
     osVersion: string;
     deploymentType: 'FCI' | 'AOAG' | 'Standalone';
+    baseDeploymentType?: 'FCI' | 'Standalone';
     databaseInstanceName: string;
     ec2InstanceId?: string;
     vmName?: string;
@@ -279,10 +282,26 @@ async function processOfflineAssessmentUpload(
             .filter(([, data]) => data.instanceDetails?.databaseInstanceId)
             .map(([instanceName, instanceData]) => {
                 const { instanceDetails, mappedVolumes, assessment } = instanceData;
-                const { databaseInstanceId, windowsClusterNodes, deploymentType } = instanceDetails;
+                const {
+                    databaseInstanceId,
+                    windowsClusterNodes,
+                    deploymentType,
+                    baseDeploymentType,
+                    isClustered,
+                    isHadrEnabled,
+                    windowsClusterName,
+                    databaseVersion,
+                    databaseEdition
+                } = instanceDetails;
+
+                // Determine if FCI nodes should be used for resource ID
+                // FCI: direct FCI deployment
+                // AOAG+FCI: AOAG deployment with FCI as the base deployment type
+                const isFciOrAoagFci =
+                    deploymentType === 'FCI' || (deploymentType === 'AOAG' && baseDeploymentType === 'FCI');
 
                 let resourceId = generateSqlResourceId(ec2InstanceId);
-                if (deploymentType === 'FCI' && windowsClusterNodes?.length === 2) {
+                if (isFciOrAoagFci && windowsClusterNodes?.length === 2) {
                     const partnerNode = windowsClusterNodes.find(
                         n => n.ec2InstanceId && n.ec2InstanceId !== ec2InstanceId
                     );
@@ -313,15 +332,17 @@ async function processOfflineAssessmentUpload(
                         assessmentTimestamp,
                         osVersion,
                         vmName,
+                        ec2InstanceId,
                         virtualNetworkId,
                         virtualNetworkName,
-                        deploymentType: instanceDetails.deploymentType,
-                        isClustered: instanceDetails.isClustered,
-                        isHadrEnabled: instanceDetails.isHadrEnabled,
-                        windowsClusterName: instanceDetails.windowsClusterName,
+                        deploymentType,
+                        baseDeploymentType,
+                        isClustered,
+                        isHadrEnabled,
+                        windowsClusterName,
                         windowsClusterNodes,
-                        databaseVersion: instanceDetails.databaseVersion,
-                        databaseEdition: instanceDetails.databaseEdition
+                        databaseVersion,
+                        databaseEdition
                     }
                 } as OfflineAssessmentRecord;
             });
@@ -444,8 +465,15 @@ async function fetchMssqlOfflineAssessment(
 
     const rawdata = (record.rawdata as MSSQLOfflineAssessmentRawData) || {};
     const metadata = (record.metadata as unknown as MSSQLOfflineAssessmentMetadataType) || {};
-    const { hostname, storageEndpoint, assessmentTimestamp, databaseInstanceName, deploymentType, ec2InstanceId } =
-        metadata;
+    const {
+        hostname,
+        storageEndpoint,
+        assessmentTimestamp,
+        databaseInstanceName,
+        deploymentType,
+        baseDeploymentType,
+        ec2InstanceId
+    } = metadata;
     const { instanceLevelAssessment, rssConfig, headroom, hostLevelHighAvailability } = rawdata;
     const { maxDop, highAvailability } = (instanceLevelAssessment as MSSQLInstanceLevelAssessment) || {};
 
@@ -489,7 +517,7 @@ async function fetchMssqlOfflineAssessment(
                   instanceLevelAssessment as unknown as StorageAssessment
               )
             : Promise.resolve(undefined),
-        deploymentType === 'FCI' && hasHAData
+        (deploymentType === 'FCI' || (deploymentType === 'AOAG' && baseDeploymentType === 'FCI')) && hasHAData
             ? getHighAvailabilityDriftData(
                   accountId,
                   '',
@@ -556,7 +584,8 @@ async function fetchMssqlOfflineAssessment(
         databaseInstanceName,
         ec2InstanceId,
         databaseHostName: hostname,
-        deploymentType
+        deploymentType,
+        baseDeploymentType
     };
 
     return driftAssessmentData;
@@ -599,8 +628,14 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                     credentials_id: itemCredentialsId,
                     region: itemRegion
                 } = item;
-                const { databaseInstanceName, windowsClusterNodes, vmName, virtualNetworkId, virtualNetworkName } =
-                    metadata as unknown as MSSQLOfflineAssessmentMetadataType;
+                const {
+                    databaseInstanceName,
+                    windowsClusterNodes,
+                    vmName,
+                    ec2InstanceId: vmInstanceId,
+                    virtualNetworkId,
+                    virtualNetworkName
+                } = metadata as unknown as MSSQLOfflineAssessmentMetadataType;
                 const clusterNodes = windowsClusterNodes?.map(node => ({
                     vmInstanceId: node.ec2InstanceId || '',
                     nodeName: node.Node,
@@ -629,6 +664,7 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                         region: recordRegion,
                         regionName,
                         vmName,
+                        vmInstanceId,
                         virtualNetworkId,
                         virtualNetworkName,
                         clusterNodes,
@@ -644,6 +680,7 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                         region: recordRegion || '',
                         regionName: regionName || '',
                         vmName,
+                        vmInstanceId,
                         virtualNetworkId,
                         virtualNetworkName,
                         clusterNodes,
@@ -662,4 +699,36 @@ async function fetchMssqlOfflineAssessmentPerAccount(
     };
 }
 
-export { uploadMssqlOfflineAssessment, fetchMssqlOfflineAssessment, fetchMssqlOfflineAssessmentPerAccount };
+async function deleteOfflineAssessmentRecord(
+    accountId: string,
+    databaseHostIds: string,
+    databaseType: DATABASE_TYPE = DATABASE_TYPE.mssql
+) {
+    logger.info('Delete offline assessment record', { accountId, databaseHostIds });
+
+    const resourcesIdList = databaseHostIds.split(',').filter(Boolean);
+    try {
+        const response = await removeOfflineAssessmentData(accountId, resourcesIdList, databaseType);
+        if (response.count === 0) {
+            logger.error('No offline assessment found to delete', { accountId, databaseHostIds });
+            throw createError(
+                HttpErrorCodes.NOT_FOUND,
+                `Offline assessment id ${databaseHostIds} not found for account ${accountId}`
+            );
+        }
+        return response;
+    } catch (error: any) {
+        if (error.status === HttpErrorCodes.NOT_FOUND) {
+            throw createError(error);
+        }
+        logger.error('Error deleting offline assessment', { error });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error deleting offline assessment ${error}`);
+    }
+}
+
+export {
+    uploadMssqlOfflineAssessment,
+    fetchMssqlOfflineAssessment,
+    fetchMssqlOfflineAssessmentPerAccount,
+    deleteOfflineAssessmentRecord
+};

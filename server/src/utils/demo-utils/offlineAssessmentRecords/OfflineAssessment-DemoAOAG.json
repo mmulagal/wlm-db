@@ -161,6 +161,7 @@
                 },
                 "instanceDetails": {
                     "deploymentType": "AOAG",
+                    "baseDeploymentType": "Standalone",
                     "enterpriseFeatures": [
                         "You have Availability Groups with > 1 database",
                         "You have read-only Replicas"

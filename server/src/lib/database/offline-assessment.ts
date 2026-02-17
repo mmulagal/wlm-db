@@ -193,10 +193,29 @@ async function bulkUpsertOfflineAssessments(records: OfflineAssessmentRecord[]) 
     return results;
 }
 
+async function removeOfflineAssessmentData(accountId: string, resourceIdList: string[], databaseType?: DATABASE_TYPE) {
+    logger.info('Removing offline assessment data', {
+        accountId,
+        resourceIdList,
+        databaseType
+    });
+
+    return prisma.client.offline_assessment.deleteMany({
+        where: {
+            AND: [
+                { account_id: checkAccount(accountId) },
+                { resource_id: { in: resourceIdList } },
+                ...(databaseType ? [{ database_type: databaseType }] : [])
+            ]
+        }
+    });
+}
+
 export {
     OfflineAssessmentRecord,
     ListOfflineAssessmentParams,
     listOfflineAssessments,
     getOfflineAssessment,
-    bulkUpsertOfflineAssessments
+    bulkUpsertOfflineAssessments,
+    removeOfflineAssessmentData
 };

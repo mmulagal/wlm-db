@@ -277,6 +277,7 @@ const MSSQLDriftAssessmentResponse = Type.Object({
     ec2InstanceId: Type.Optional(Type.String()),
     databaseInstanceName: Type.Optional(Type.String()),
     deploymentType: Type.Optional(Type.String()),
+    baseDeploymentType: Type.Optional(Type.String()),
     databaseHostName: Type.Optional(Type.String())
 });
 

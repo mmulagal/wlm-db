@@ -141,6 +141,7 @@
                 },
                 "instanceDetails": {
                     "deploymentType": "Standalone",
+                    "baseDeploymentType": null,
                     "enterpriseFeatures": [],
                     "isHadrEnabled": false,
                     "isUsingEnterpriseFeatures": false,

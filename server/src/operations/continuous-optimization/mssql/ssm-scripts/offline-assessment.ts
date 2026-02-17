@@ -802,11 +802,16 @@ ${SERVER_DETAILS}
             }
             
             # Determine deployment type based on cluster and HADR settings
+            # AOAG takes priority: if HADR is enabled, it's AOAG regardless of isClustered
+            # baseDeploymentType indicates the underlying HA: 'FCI' if clustered, 'Standalone' if not
             $deploymentType = 'Standalone'
-            if ($isClustered) {
-                $deploymentType = 'FCI'
-            } elseif ($isHadrEnabled) {
+            $baseDeploymentType = $null
+            if ($isHadrEnabled) {
                 $deploymentType = 'AOAG'
+                $baseDeploymentType = if ($isClustered) { 'FCI' } else { 'Standalone' }
+                Write-Log "AOAG deployment detected. Base deployment type: $baseDeploymentType"
+            } elseif ($isClustered) {
+                $deploymentType = 'FCI'
             }
             
             # ========================================
@@ -820,7 +825,8 @@ ${SERVER_DETAILS}
             if ($deploymentType -ne 'Standalone') {
                 Write-Log "Getting Windows cluster information for instance: $serverInstanceName"
                 
-                if ($deploymentType -eq 'FCI') {
+                # Gather cluster info for FCI deployments AND for AOAG deployments with FCI base (FCI+AOAG)
+                if ($deploymentType -eq 'FCI' -or ($deploymentType -eq 'AOAG' -and $baseDeploymentType -eq 'FCI')) {
                     try {
                         $clusterServiceStatus = (Get-Service -Name "ClusSvc" -ErrorAction SilentlyContinue).Status
                         if ($clusterServiceStatus -eq "Running") {
@@ -926,6 +932,7 @@ ${SERVER_DETAILS}
                     databaseEdition = $databaseEdition
                     sqlEngineEdition = $sqlEngineEdition
                     deploymentType = $deploymentType
+                    baseDeploymentType = $baseDeploymentType
                     isClustered = $isClustered
                     isHadrEnabled = $isHadrEnabled
                     windowsClusterName = $windowsClusterName
