@@ -2,6 +2,8 @@ import { useDispatch } from 'react-redux';
 import { DsTypography, useDialog, DsButton, Button, Popover, TooltipInfo } from '@netapp/design-system';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useEffect, useMemo, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
 import {
     isLayoutConfig,
     getLinkedConfigNames,
@@ -9,8 +11,6 @@ import {
     getRecommendationType
 } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleConfigDependencies';
 import LinkedConfigBanner from '../../../common/LinkedConfigBanner/LinkedConfigBanner';
-import { useTranslation } from 'react-i18next';
-import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
 import store from '../../../store/store';
