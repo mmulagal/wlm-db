@@ -303,16 +303,17 @@ const loadStorageDetectionModules = `
                     NVL(( SELECT LISTAGG('"' || archive_dir || '"', ', ') WITHIN GROUP (ORDER BY archive_dir)
                         FROM (
                             SELECT DISTINCT
-                                CASE destination
+                                CASE d.destination
                                         WHEN 'USE_DB_RECOVERY_FILE_DEST'
                                             THEN (SELECT value
                                                     FROM v\\$parameter
                                                     WHERE name = 'db_recovery_file_dest')
-                                        ELSE destination
+                                        ELSE d.destination
                                 END AS archive_dir
-                            FROM   v\\$archive_dest
-                            WHERE  destination IS NOT NULL
-                            AND  LENGTH(TRIM(destination)) > 0
+                            FROM   v\\$archive_dest_status d
+                            WHERE  d.destination IS NOT NULL
+                            AND  LENGTH(TRIM(d.destination)) > 0
+                            AND  d.type = 'LOCAL'
                         )
                         WHERE LENGTH(TRIM(archive_dir)) > 0
                         AND (archive_dir LIKE '/%' OR archive_dir LIKE '+%') ), '') || 
@@ -321,16 +322,17 @@ const loadStorageDetectionModules = `
                     NVL((SELECT LISTAGG('"' || archive_dir || '": 1', ', ') WITHIN GROUP (ORDER BY archive_dir)
                         FROM (
                             SELECT DISTINCT
-                                CASE destination
+                                CASE d.destination
                                         WHEN 'USE_DB_RECOVERY_FILE_DEST'
                                             THEN (SELECT value
                                                     FROM v\\$parameter
                                                     WHERE name = 'db_recovery_file_dest')
-                                        ELSE destination
+                                        ELSE d.destination
                                 END AS archive_dir
-                            FROM   v\\$archive_dest
-                            WHERE  destination IS NOT NULL
-                            AND  LENGTH(TRIM(destination)) > 0
+                            FROM   v\\$archive_dest_status d
+                            WHERE  d.destination IS NOT NULL
+                            AND  LENGTH(TRIM(d.destination)) > 0
+                            AND  d.type = 'LOCAL'
                         )
                         WHERE LENGTH(TRIM(archive_dir)) > 0
                         AND (archive_dir LIKE '/%' OR archive_dir LIKE '+%') ), '') ||
@@ -1504,6 +1506,7 @@ const discoverOracleHosts = `
                     if [[ "$is_cdb" == "YES" ]]; then
                         PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
                         pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
+                        pdb_names=$(echo "$pdb_names" | tr ' ' '\\n' | grep -v '^PDB\\$SEED$' | tr '\\n' ' ')
                     else
                         PDB_DATABASE_DETAILS="[]"
                     fi
