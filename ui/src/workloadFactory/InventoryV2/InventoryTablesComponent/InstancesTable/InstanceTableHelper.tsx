@@ -620,7 +620,7 @@ export const isInstanceActionDisabled = (
         return {
             isDisabled: true,
             disableMsg: t('databases.bulk-register.host-down'),
-            tooltipWidth: '120px',
+            tooltipWidth: '140px',
             tooltipHeight: '33px'
         };
     }
