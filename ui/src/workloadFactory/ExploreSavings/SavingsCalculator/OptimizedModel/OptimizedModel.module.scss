@@ -16,6 +16,14 @@
         background: var(--content-background);
         height: 460px;
         width: 500px;
+
+        .header {
+            svg {
+                rect:first-child {
+                    fill: #4d5765;
+                }
+            }
+        }
     }
 
     .content {

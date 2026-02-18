@@ -643,7 +643,7 @@ export const isInstanceActionDisabled = (
                 selectedHostType === DBType.ORACLE
                     ? t('databases.register-flow.oracle-server-instance-down')
                     : t('databases.register-flow.sql-server-instance-down'),
-            tooltipWidth: '220px',
+            tooltipWidth: '240px',
             tooltipHeight: '33px'
         };
     }
