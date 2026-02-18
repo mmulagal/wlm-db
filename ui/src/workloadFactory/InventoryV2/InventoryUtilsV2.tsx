@@ -218,9 +218,9 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
             resourceId: hostId,
             name: firstInstance?.assessments?.databaseHostName || `${hostId}`,
             hostType: DBType.MSSQL, // WAD data is for MSSQL
-            ec2InstanceId: firstInstance?.resourceId,
+            ec2InstanceId: firstInstance?.vmInstanceId,
             ec2InstanceName: firstInstance?.vmName,
-            totalInstance: formattedInstances.length,
+            totalInstance: firstInstance?.numberOfDatabaseInstances || formattedInstances.length,
             managedInstance: 0,
             vpcId: firstInstance?.virtualNetworkId,
             vpcName: firstInstance?.virtualNetworkName,

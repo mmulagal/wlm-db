@@ -1508,7 +1508,7 @@
             "no-credentials": "No credentials",
             "add-credentials": "Add credentials",
             "learn-more": "Learn more",
-            "discover-database": "to discover databases.",
+            "discover-database": "to discover or register databases.",
             "sandboxes": "Sandboxes",
             "sandbox-distribution-by-age": "Sandboxes distribution by age",
             "view": "View",
@@ -1860,7 +1860,7 @@
         },
         "wad": {
             "tab-disabled-message": "To enable all functionalities, please register the instance first.",
-            "register-disabled-no-credentials": "Registration requires AWS credentials. Add credentials to register this instance."
+            "register-disabled-no-credentials": "Registration requires AWS credentials. Add database credentials to register this instance."
         }
     }
 }
