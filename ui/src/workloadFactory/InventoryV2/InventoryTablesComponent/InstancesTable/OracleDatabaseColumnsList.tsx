@@ -49,6 +49,19 @@ export function getOracleDatabaseColumnsList({
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+    const notAvailableWithTooltip = (unlockKey: string) => (
+        <div className={styles.naWithTooltip}>
+            <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                <div>
+                    <DsTypography variant="Regular_13">{t(unlockKey)}</DsTypography>
+                </div>
+            </TooltipInfo>
+            <div className={styles.colText}>
+                <DsTypography variant="Regular_13">{t('databases.general.not-available-table-columns')}</DsTypography>
+            </div>
+        </div>
+    );
+
     const allColumns: ColumnProps[] = [
         {
             Header: t('databases.databases-table.oracle.headers.database-name'),
@@ -168,7 +181,7 @@ export function getOracleDatabaseColumnsList({
                     return (
                         <div className={styles.firstColumnClass}>
                             <DsTypography variant="Regular_13" className={styles.colText}>
-                                {cellData || t('databases.general.not-available-table-columns')}
+                                {cellData}
                             </DsTypography>
 
                             <div className={styles.firstColText}>
@@ -198,9 +211,12 @@ export function getOracleDatabaseColumnsList({
                         </div>
                     );
                 }
+                if (!cellData) {
+                    return notAvailableWithTooltip('databases.databases-table.oracle.unlock-deployment-model');
+                }
                 return (
                     <DsTypography variant="Regular_13" className={styles.colText}>
-                        {cellData || t('databases.general.not-available-table-columns')}
+                        {cellData}
                     </DsTypography>
                 );
             }
@@ -334,22 +350,9 @@ export function getOracleDatabaseColumnsList({
                             </div>
                         )}
                         {!cellData && loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && (
-                            <div className={styles.naWithTooltip}>
-                                <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                                    <div>
-                                        <DsTypography variant="Regular_13">
-                                            {t('databases.databases-table.oracle.unlock-protection-status')}
-                                        </DsTypography>
-                                    </div>
-                                </TooltipInfo>
-                                <div className={styles.colText}>
-                                    <DsTypography variant="Regular_13">
-                                        {t('databases.general.not-available-table-columns')}
-                                    </DsTypography>
-                                </div>
-                            </div>
-                        )}
+                        {!cellData &&
+                            !loading &&
+                            notAvailableWithTooltip('databases.databases-table.oracle.unlock-protection-status')}
                     </>
                 );
             }
@@ -369,9 +372,12 @@ export function getOracleDatabaseColumnsList({
                     displayText = t('databases.oracle-inner-page.single-tenant');
                 }
 
+                if (!displayText) {
+                    return notAvailableWithTooltip('databases.databases-table.oracle.unlock-tenancy');
+                }
                 return (
                     <DsTypography variant="Regular_13" className={styles.colText}>
-                        {displayText || t('databases.general.not-available-table-columns')}
+                        {displayText}
                     </DsTypography>
                 );
             }
@@ -395,22 +401,9 @@ export function getOracleDatabaseColumnsList({
                             </DsTypography>
                         )}
                         {!cellData && loadingPA && <DsFlashingDotsLoader />}
-                        {!cellData && !loadingPA && (
-                            <div className={styles.naWithTooltip}>
-                                <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                                    <div>
-                                        <DsTypography variant="Regular_13">
-                                            {t('databases.databases-table.oracle.unlock-performance-metrics')}
-                                        </DsTypography>
-                                    </div>
-                                </TooltipInfo>
-                                <div className={styles.colText}>
-                                    <DsTypography variant="Regular_13">
-                                        {t('databases.general.not-available-table-columns')}
-                                    </DsTypography>
-                                </div>
-                            </div>
-                        )}
+                        {!cellData &&
+                            !loadingPA &&
+                            notAvailableWithTooltip('databases.databases-table.oracle.unlock-performance-metrics')}
                     </>
                 );
             }
@@ -426,14 +419,18 @@ export function getOracleDatabaseColumnsList({
                 if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
                     loading = true;
                 }
+                const isNotAvailable = !cellData || cellData === INVENTORY_STATUS.NOT_AVAILABLE;
                 return (
                     <>
-                        {loading && <DsFlashingDotsLoader />}
-                        {!loading && (
+                        {!isNotAvailable && !loading && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {cellData}
                             </DsTypography>
                         )}
+                        {loading && <DsFlashingDotsLoader />}
+                        {isNotAvailable &&
+                            !loading &&
+                            notAvailableWithTooltip('databases.databases-table.oracle.unlock-protocol')}
                     </>
                 );
             }
@@ -453,22 +450,9 @@ export function getOracleDatabaseColumnsList({
                 return (
                     <>
                         {loading && <DsFlashingDotsLoader />}
-                        {!loading && !rowData?.size && (
-                            <div className={styles.naWithTooltip}>
-                                <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                                    <div>
-                                        <DsTypography variant="Regular_13">
-                                            {t('databases.databases-table.oracle.unlock-database-size')}
-                                        </DsTypography>
-                                    </div>
-                                </TooltipInfo>
-                                <div className={styles.colText}>
-                                    <DsTypography variant="Regular_13">
-                                        {t('databases.general.not-available-table-columns')}
-                                    </DsTypography>
-                                </div>
-                            </div>
-                        )}
+                        {!loading &&
+                            !rowData?.size &&
+                            notAvailableWithTooltip('databases.databases-table.oracle.unlock-database-size')}
                         {!loading && rowData?.size && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {formatSize(rowData?.size)}

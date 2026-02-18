@@ -1797,7 +1797,10 @@
                 },
                 "unlock-database-size": "Register this database to unlock actual database size",
                 "unlock-protection-status": "Register this database to unlock protection status",
-                "unlock-performance-metrics": "Register this database to unlock performance metrics"
+                "unlock-performance-metrics": "Register this database to unlock performance metrics",
+                "unlock-deployment-model": "Register this database to unlock deployment model",
+                "unlock-tenancy": "Register this database to unlock tenancy information",
+                "unlock-protocol": "Register this database to unlock protocol information"
             }
         },
         "host-table": {
