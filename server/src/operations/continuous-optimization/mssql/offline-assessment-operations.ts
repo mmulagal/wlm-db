@@ -166,6 +166,8 @@ interface MSSQLInstanceLevelAssessment {
 interface MSSQLOfflineAssessmentMetadataType {
     hostname: string;
     storageEndpoint: string;
+    fsxId?: string;
+    numberOfDatabaseInstances?: number;
     assessmentTimestamp: string;
     osVersion: string;
     deploymentType: 'FCI' | 'AOAG' | 'Standalone';
@@ -182,8 +184,6 @@ interface MSSQLOfflineAssessmentMetadataType {
         Address?: string;
         ec2InstanceId?: string;
     }>;
-    vmConnectivityStatus?: string;
-    agentConnectivityStatus?: string;
 }
 
 /**
@@ -248,16 +248,7 @@ function calculateOneTimeWADHeadroomDrift(headroomData: OneTimeWADHeadroomData) 
 async function processOfflineAssessmentUpload(
     accountId: string,
     jobId: string,
-    metadata: {
-        ec2InstanceId: string;
-        hostname?: string;
-        storageEndpoint?: string;
-        assessmentTimestamp?: string;
-        osVersion?: string;
-        vmName?: string;
-        virtualNetworkId?: string;
-        virtualNetworkName?: string;
-    },
+    metadata: Partial<MSSQLOfflineAssessmentMetadataType>,
     rawdata: OfflineAssessmentInputRawData,
     credentialsId?: string,
     region?: string
@@ -268,6 +259,8 @@ async function processOfflineAssessmentUpload(
         ec2InstanceId,
         hostname,
         storageEndpoint,
+        fsxId,
+        numberOfDatabaseInstances,
         assessmentTimestamp,
         osVersion,
         vmName,
@@ -300,13 +293,13 @@ async function processOfflineAssessmentUpload(
                 const isFciOrAoagFci =
                     deploymentType === 'FCI' || (deploymentType === 'AOAG' && baseDeploymentType === 'FCI');
 
-                let resourceId = generateSqlResourceId(ec2InstanceId);
+                let resourceId = generateSqlResourceId(ec2InstanceId!);
                 if (isFciOrAoagFci && windowsClusterNodes?.length === 2) {
                     const partnerNode = windowsClusterNodes.find(
                         n => n.ec2InstanceId && n.ec2InstanceId !== ec2InstanceId
                     );
                     if (partnerNode?.ec2InstanceId) {
-                        resourceId = generateSqlResourceId(ec2InstanceId, partnerNode.ec2InstanceId);
+                        resourceId = generateSqlResourceId(ec2InstanceId!, partnerNode.ec2InstanceId);
                     }
                 }
 
@@ -329,6 +322,8 @@ async function processOfflineAssessmentUpload(
                         databaseInstanceName: instanceName,
                         hostname,
                         storageEndpoint,
+                        fsxId,
+                        numberOfDatabaseInstances,
                         assessmentTimestamp,
                         osVersion,
                         vmName,
@@ -382,6 +377,8 @@ async function uploadMssqlOfflineAssessment(
         ec2InstanceId,
         hostname,
         storageEndpoint,
+        fsxId,
+        numberOfDatabaseInstances,
         assessmentTimestamp,
         osVersion,
         vmName,
@@ -420,6 +417,8 @@ async function uploadMssqlOfflineAssessment(
             ec2InstanceId,
             hostname,
             storageEndpoint,
+            fsxId,
+            numberOfDatabaseInstances,
             assessmentTimestamp,
             osVersion,
             vmName,
@@ -468,6 +467,7 @@ async function fetchMssqlOfflineAssessment(
     const {
         hostname,
         storageEndpoint,
+        fsxId,
         assessmentTimestamp,
         databaseInstanceName,
         deploymentType,
@@ -543,11 +543,12 @@ async function fetchMssqlOfflineAssessment(
 
     const highAvailabilityResponse = Array.isArray(haResult) ? haResult : undefined;
 
-    // Add storageEndpoint to storage.fileSystems for offline assessments
+    // Add fsxId to storage.fileSystems for offline assessments
     // and add headroom assessment to sizing if available
+    const fileSystemIdentifier = fsxId || storageEndpoint;
     let storageWithEndpoint = storageAssessmentResponse;
-    if (storageAssessmentResponse && storageEndpoint) {
-        storageWithEndpoint = { ...storageAssessmentResponse, fileSystems: [storageEndpoint] };
+    if (storageAssessmentResponse && fileSystemIdentifier) {
+        storageWithEndpoint = { ...storageAssessmentResponse, fileSystems: [fileSystemIdentifier] };
     }
 
     // Add headroom assessment to storage sizing if headroom data is available
@@ -566,7 +567,7 @@ async function fetchMssqlOfflineAssessment(
                     configuration: { volumes: [], luns: [], os: [] },
                     sizing: [headroomDrift as any],
                     layout: [],
-                    fileSystems: storageEndpoint ? [storageEndpoint] : []
+                    fileSystems: fileSystemIdentifier ? [fileSystemIdentifier] : []
                 } as any;
             }
         }
@@ -580,7 +581,7 @@ async function fetchMssqlOfflineAssessment(
         lastAssessmentTimestamp: assessmentTimestamp
             ? new Date(assessmentTimestamp).getTime()
             : record.created_time.getTime(),
-        storageEndpoint,
+        storageEndpoint: fileSystemIdentifier,
         databaseInstanceName,
         ec2InstanceId,
         databaseHostName: hostname,
@@ -634,7 +635,8 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                     vmName,
                     ec2InstanceId: vmInstanceId,
                     virtualNetworkId,
-                    virtualNetworkName
+                    virtualNetworkName,
+                    numberOfDatabaseInstances
                 } = metadata as unknown as MSSQLOfflineAssessmentMetadataType;
                 const clusterNodes = windowsClusterNodes?.map(node => ({
                     vmInstanceId: node.ec2InstanceId || '',
@@ -645,6 +647,20 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                 const recordCredentialsId = itemCredentialsId || credentialsId || '';
                 const recordRegion = itemRegion || region || '';
                 const regionName = recordRegion && AWS_REGIONS.has(recordRegion) ? AWS_REGIONS.get(recordRegion) : '';
+                const response = {
+                    resourceId,
+                    databaseInstanceId,
+                    databaseInstanceName,
+                    credentialsId: recordCredentialsId,
+                    region: recordRegion,
+                    regionName,
+                    vmName,
+                    vmInstanceId,
+                    virtualNetworkId,
+                    virtualNetworkName,
+                    numberOfDatabaseInstances,
+                    clusterNodes
+                };
 
                 try {
                     const assessments = await fetchMssqlOfflineAssessment(
@@ -656,36 +672,10 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                         undefined,
                         item
                     );
-                    return {
-                        resourceId,
-                        databaseInstanceId,
-                        databaseInstanceName,
-                        credentialsId: recordCredentialsId,
-                        region: recordRegion,
-                        regionName,
-                        vmName,
-                        vmInstanceId,
-                        virtualNetworkId,
-                        virtualNetworkName,
-                        clusterNodes,
-                        assessments
-                    };
+                    return { ...response, assessments };
                 } catch (error: any) {
                     logger.error(`Error fetching MSSQL assessment for ${resourceId}/${databaseInstanceId}:`, error);
-                    return {
-                        resourceId,
-                        databaseInstanceId,
-                        databaseInstanceName,
-                        credentialsId: recordCredentialsId || '',
-                        region: recordRegion || '',
-                        regionName: regionName || '',
-                        vmName,
-                        vmInstanceId,
-                        virtualNetworkId,
-                        virtualNetworkName,
-                        clusterNodes,
-                        error: error.message || 'Failed to fetch assessment'
-                    };
+                    return { ...response, error: error.message || 'Failed to fetch assessment' };
                 }
             })
         )

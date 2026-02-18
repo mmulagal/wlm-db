@@ -14,7 +14,8 @@
         "assessmentTimestamp": "2026-02-11T05:41:20Z",
         "region": "ap-southeast-1",
         "virtualNetworkName": "demo-vpc",
-        "hostname": "SQL-PROD-STD-01"
+        "hostname": "SQL-PROD-STD-01",
+        "numberOfDatabaseInstances": 1
     },
     "rawdata": {
         "hostLevelDetails": {

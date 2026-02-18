@@ -598,6 +598,16 @@ if (-not [string]::IsNullOrEmpty($vmRegion)) {
     Write-Log -Level "WARNING" -Message "AWS region not available. AWS Secrets Manager lookups will be skipped."
 }
 
+# Collect the number of SQL Server instances on this host
+$numberOfDatabaseInstances = 0
+try {
+    $sqlServices = Get-Service | Where-Object { $_.DisplayName -like "*SQL Server (*)" }
+    $numberOfDatabaseInstances = @($sqlServices).Count
+    Write-Log "Found $numberOfDatabaseInstances SQL Server instance(s) on this host"
+} catch {
+    Write-Log -Level "WARNING" -Message "Could not enumerate SQL Server instances: $($_.Exception.Message)"
+}
+
 Write-Log "Resolving ONTAP storage credentials..."
 $ontapCreds = Get-OntapCredentials -StorageEndpoint $StorageEndpoint -Region $vmRegion
 
@@ -662,9 +672,11 @@ $FinalResponse['metadata'] = @{
     virtualNetworkName = $virtualNetworkName
     region = $vmRegion
     storageEndpoint = $StorageEndpoint
+    fsxId = $FSxID
     ontapHostName = $OntapHostName
     credentialSource = $ontapCreds.Source
     hostname = $env:COMPUTERNAME
+    numberOfDatabaseInstances = $numberOfDatabaseInstances
     assessmentTimestamp = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
     osVersion = (Get-WmiObject -Class Win32_OperatingSystem).Caption
 }
@@ -1197,6 +1209,32 @@ ${SERVER_DETAILS}
 
     if ($hasFciInstance) {
         ${hostLevelHighAvailabilityAssessmentTemplate}
+    }
+
+    # ========================================
+    # PART 6: Resolve FSx ID from Management IP via ONTAP /api/cluster
+    # ========================================
+    if (-not [string]::IsNullOrEmpty($ManagementIP) -and [string]::IsNullOrEmpty($FSxID)) {
+        Write-Log "Management IP was provided. Attempting to resolve FSx file system ID via ONTAP cluster API..."
+        try {
+            $clusterResponse = Invoke-ONTAPRequest -ApiEndpoint "/cluster" -ApiQueryFields "fields=name"
+            if ($clusterResponse -and $clusterResponse.name) {
+                $clusterName = $clusterResponse.name
+                Write-Log "ONTAP cluster name: $clusterName"
+                # Cluster name format: FsxId0d5efc3057c4f12cb -> fs-0d5efc3057c4f12cb
+                if ($clusterName -match '^FsxId([a-fA-F0-9]+)$') {
+                    $FSxID = "fs-" + $Matches[1]
+                    Write-Log "Resolved FSx file system ID from cluster name: $FSxID"
+                    $FinalResponse['metadata']['fsxId'] = $FSxID
+                } else {
+                    Write-Log -Level "WARNING" -Message "Cluster name '$clusterName' does not match expected FsxId format"
+                }
+            } else {
+                Write-Log -Level "WARNING" -Message "Could not retrieve cluster name from ONTAP API"
+            }
+        } catch {
+            Write-Log -Level "WARNING" -Message "Failed to resolve FSx ID from ONTAP cluster API: $($_.Exception.Message)"
+        }
     }
 
     # Write the output file with fallback to current directory if write fails
