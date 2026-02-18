@@ -304,14 +304,15 @@ async function getHostAndSqlServerInfo(
                 );
             });
 
-        fsxList.forEach(({ FileSystemId, OntapConfiguration, WindowsConfiguration, SubnetIds, StorageType }) => {
+        fsxList.forEach(({ FileSystemId, OntapConfiguration, WindowsConfiguration, SubnetIds, StorageType, Tags }) => {
             if (FileSystemId) {
                 fsIdWithFsxInfo.set(FileSystemId, {
                     deploymentType: isEmpty(OntapConfiguration)
                         ? WindowsConfiguration?.DeploymentType
                         : OntapConfiguration?.DeploymentType,
                     subnetIds: SubnetIds,
-                    fileSystemStorageType: StorageType
+                    fileSystemStorageType: StorageType,
+                    fileSystemName: getFsxNameFromTags(Tags)
                 });
             }
         });
@@ -563,7 +564,7 @@ async function getHostAndSqlInfoFromPsOutput(
                         } else if (endPointIpWithFsxInfo.has(di?.SerialNumberOrScsiTarget)) {
                             const { fsxId, svmId } = endPointIpWithFsxInfo.get(di?.SerialNumberOrScsiTarget)!;
 
-                            const { deploymentType, subnetIds, fileSystemStorageType } =
+                            const { deploymentType, subnetIds, fileSystemStorageType, fileSystemName } =
                                 fsIdWithFsxInfo.get(fsxId!) || {};
 
                             storageTypes.push({
@@ -571,7 +572,8 @@ async function getHostAndSqlInfoFromPsOutput(
                                 id: fsxId!,
                                 svmId,
                                 protocol: STORAGE_PROTOCOLS.ISCSI,
-                                fileSystemStorageType
+                                fileSystemStorageType,
+                                fileSystemName
                             });
 
                             deploymentTypes.push({
@@ -600,13 +602,14 @@ async function getHostAndSqlInfoFromPsOutput(
                                     fsxId,
                                     svmId
                                 } = endPointIpWithFsxInfo.get(matchedEndpoint) || {};
-                                const { fileSystemStorageType } = fsIdWithFsxInfo.get(fsxId!) || {};
+                                const { fileSystemStorageType, fileSystemName } = fsIdWithFsxInfo.get(fsxId!) || {};
                                 if (fsxType === FileSystemType.WINDOWS) {
                                     storageTypes.push({
                                         type: STORAGE_TYPE.FSXW,
                                         id: fsxId,
                                         protocol: STORAGE_PROTOCOLS.SMB,
-                                        fileSystemStorageType
+                                        fileSystemStorageType,
+                                        fileSystemName
                                     });
                                 } else {
                                     storageTypes.push({
@@ -614,7 +617,8 @@ async function getHostAndSqlInfoFromPsOutput(
                                         id: fsxId,
                                         svmId,
                                         protocol: STORAGE_PROTOCOLS.SMB,
-                                        fileSystemStorageType
+                                        fileSystemStorageType,
+                                        fileSystemName
                                     });
                                 }
 

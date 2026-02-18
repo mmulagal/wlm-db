@@ -174,7 +174,8 @@ const SqlServerInstanceInfo = Type.Object({
                 protocol: Type.Optional(Type.String({ description: 'Data sharing protocol, iSCSI or SMB' })),
                 fileSystemStorageType: Type.Optional(
                     Type.String({ description: 'File system storage type, SSD or HDD' })
-                )
+                ),
+                fileSystemName: Type.Optional(Type.String({ description: 'File system name' }))
             })
         )
     ),
