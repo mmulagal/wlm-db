@@ -1,9 +1,8 @@
 import { DsTypography, DsButton } from '@tlveng/wlm-ds';
-import { TooltipInfo, useDialog } from '@netapp/design-system';
+import { useDialog } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import styles from '../../StorageCompute/LunsDialogContent/LunsDialogContent.module.scss';
-import commonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { DBType, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../../utils/consts';
 import { toSentenceCase } from '../../../../../utils/resourceUtils';
 import {
@@ -28,6 +27,7 @@ import {
 } from '../../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetEiData } from '../../../../../store/workloadFactory/agenticAISlice';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import DotComponent from '../../../../../common/DotComponent/DotComponent';
 
 type AssociatedHost = {
     hostIp: string;
@@ -129,6 +129,9 @@ const ReplicatesDialogContent = ({ resourceDetails }: any) => {
                     {t('databases.data-guard.database-name')}
                 </DsTypography>
                 <DsTypography variant="Semibold_14" className={styles.tableCell}>
+                    {t('databases.data-guard.database-status')}
+                </DsTypography>
+                <DsTypography variant="Semibold_14" className={styles.tableCell}>
                     {t('databases.data-guard.role')}
                 </DsTypography>
             </div>
@@ -143,14 +146,14 @@ const ReplicatesDialogContent = ({ resourceDetails }: any) => {
                                 {host.serviceName}
                             </DsButton>
                         ) : (
-                            <div className={commonStyles.textWithTooltip}>
-                                <DsTypography variant="Regular_14">{host.serviceName}</DsTypography>
-                                <TooltipInfo trigger="hover">
-                                    <DsTypography variant="Regular_14">
-                                        {t('databases.data-guard.database-not-registered')}
-                                    </DsTypography>
-                                </TooltipInfo>
-                            </div>
+                            <DsTypography variant="Regular_14">{host.serviceName}</DsTypography>
+                        )}
+                    </div>
+                    <div className={styles.statusCell} role="cell">
+                        {host?.databaseHostId ? (
+                            <DotComponent color="var(--success)" value={t('databases.general.registered')} />
+                        ) : (
+                            <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />
                         )}
                     </div>
                     <DsTypography variant="Regular_14" className={styles.tableCell} title={toSentenceCase(host.role)}>

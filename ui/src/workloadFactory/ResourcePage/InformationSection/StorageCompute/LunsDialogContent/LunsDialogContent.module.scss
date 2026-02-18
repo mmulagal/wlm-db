@@ -31,4 +31,13 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+    .statusCell {
+        display: table-cell;
+        width: 250px;
+        max-width: 250px;
+        min-width: 250px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
 }

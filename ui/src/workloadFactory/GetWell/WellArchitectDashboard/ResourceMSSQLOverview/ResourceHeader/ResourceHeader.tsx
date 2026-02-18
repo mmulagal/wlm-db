@@ -49,6 +49,10 @@ const ResourceHeader = ({
 
     const deploymentType = getDiscoveredHostDeploymentV2(resourceDetails, t);
 
+    const oracleDeploymentType = resourceDetails?.isDataGuardDeployed
+        ? [resourceDetails?.topology?.serverInstallationMode, 'Data Guard'].filter(Boolean).join(' + ')
+        : resourceDetails?.topology?.serverInstallationMode;
+
     return (
         <div className={styles.cardHeader}>
             {resourceHeaderType === DBType.MSSQL && (
@@ -188,16 +192,8 @@ const ResourceHeader = ({
 
                     {/* section 3 */}
                     <div className={`${styles.column}`}>
-                        <DsTypography
-                            variant="Semibold_14"
-                            className={styles.titleText}
-                            title={resourceDetails?.topology?.serverInstallationMode}
-                        >
-                            {resourceLoading ? (
-                                <DsFlashingDotsLoader />
-                            ) : (
-                                resourceDetails?.topology?.serverInstallationMode
-                            )}
+                        <DsTypography variant="Semibold_14" className={styles.titleText} title={oracleDeploymentType}>
+                            {resourceLoading ? <DsFlashingDotsLoader /> : oracleDeploymentType}
                         </DsTypography>
 
                         <DsTypography

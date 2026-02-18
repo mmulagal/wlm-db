@@ -1,5 +1,5 @@
 import { useDispatch } from 'react-redux';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { ButtonWithDropdown, Popover, useDialog } from '@netapp/design-system';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circle.svg';
@@ -38,6 +38,7 @@ import { resetEiData, setEiRefreshPage, setEiRefreshTimestamp } from '../../../s
 const OracleResourcePages = () => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
     const { selectedOracleInnerPageTab, visitedTabs, resourceDetails, refreshTimes } = useAppSelector(
         state => state.oracleSlice
@@ -45,7 +46,9 @@ const OracleResourcePages = () => {
     const { selectedHostname, selectedDatabaseInstanceName, innerPageDetails } = useAppSelector(
         state => state.getWellOptimize
     );
-    const { selectedResourceCredId, selectedResourceRegionId } = useAppSelector(state => state.workloadFactoryResource);
+    const { selectedResourceCredId, selectedResourceRegionId, selectedResourceId } = useAppSelector(
+        state => state.workloadFactoryResource
+    );
 
     const { eiRefreshTimestamp } = useAppSelector(state => state.agenticAI);
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
@@ -96,6 +99,13 @@ const OracleResourcePages = () => {
         );
     };
 
+    // Scroll to top when selected resource changes (e.g. when navigating from Data Guard replica link)
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        const el = scrollContainerRef.current;
+        if (el) el.scrollTop = 0;
+    }, [selectedResourceId]);
+
     // Mark the current tab as visited when the component mounts
     useEffect(() => {
         if (!visitedTabs[selectedOracleInnerPageTab]) {
@@ -138,7 +148,7 @@ const OracleResourcePages = () => {
         }
     };
     return (
-        <div className={styles['oracle-inner-pages']}>
+        <div ref={scrollContainerRef} className={styles['oracle-inner-pages']}>
             <div className={`${commonStyles.commonBreadCrumb} ${styles.breadCrumb}`} style={{ left: '0%' }}>
                 <BreadCrumbs
                     items={[

@@ -1200,10 +1200,11 @@
             "apply-lag": "Apply lag:",
             "host-name": "Host name",
             "database-name": "Database name",
+            "database-status": "Database status",
+            "unregistered": "Unregistered",
             "role": "Role",
             "replica-details": "Database details",
             "view-replica-details": "View details",
-            "database-not-registered": "Database not registered",
             "enabled": "Enabled",
             "disabled": "Disabled"
         },

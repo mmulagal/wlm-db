@@ -188,7 +188,7 @@ export const REPLICA_ROLES = {
     SECONDARY: 'SECONDARY'
 };
 export const OVERVIEW_CARDS_HEADINGS = {
-    DATA_GUARD_CONFIGURATIONS: 'Data Guard configurations'
+    DATA_GUARD_CONFIGURATIONS: 'Data Guard configuration'
 };
 
 export const TENANCY = {
