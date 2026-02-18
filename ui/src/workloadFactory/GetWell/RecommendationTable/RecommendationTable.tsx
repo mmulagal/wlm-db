@@ -64,6 +64,7 @@ import {
 } from '../../../utils/consts';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
+    setDriftAssessmentData,
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
@@ -72,6 +73,7 @@ import {
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import store from '../../../store/store';
+import { checkLinkedConfigAcknowledge } from '../StorageCardComponent/optimizeUtils';
 import { callDashboardDismissApi } from '../../Dashboard/DashboardInnerPage/DashboardInnerPageHelper';
 import { GENERAL } from '../../../utils/appConstants';
 
@@ -596,6 +598,9 @@ const RecommendationTable = ({
                     primaryButton={t('databases.general.continue')}
                     secondaryButton={t('databases.general.cancel')}
                     callback={() => {
+                        if (checkLinkedConfigAcknowledge()) {
+                            return;
+                        }
                         callOptimizeApi(rowData);
                     }}
                     closeCallback={() => {
@@ -622,6 +627,15 @@ const RecommendationTable = ({
         ) {
             handleNavigateToOptimizePage(rowData);
         } else {
+            if (from === WLF_TABS.DASHBOARD && engineType === DBType.ORACLE) {
+                const instanceAssessments = dashboardInstanceData?.instanceAssessments;
+                if (instanceAssessments) {
+                    dispatch(setDriftAssessmentData(instanceAssessments));
+                } else {
+                    // Reset to prevent stale data from a previous instance's dialog
+                    dispatch(setDriftAssessmentData(null));
+                }
+            }
             handleOntapDialog(rowData);
         }
     };

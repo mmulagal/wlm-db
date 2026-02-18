@@ -186,7 +186,13 @@ const DashboardMultiTableConfig = ({
                         regionName: matchingRegionEntry?.regionName,
                         accountId: matchingCredEntry?.providerAccountId,
                         assessmentStatus,
-                        configStateList: getConfigStateList(mergedData, mergedDismissedData, configEngineType, fullData)
+                        configStateList: getConfigStateList(
+                            mergedData,
+                            mergedDismissedData,
+                            configEngineType,
+                            fullData
+                        ),
+                        instanceAssessments: instanceData?.assessments
                     });
                 }
             });

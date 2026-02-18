@@ -1,0 +1,42 @@
+.linkedConfigBanner {
+    min-height: 88px;
+    background-color: var(--notification-warning-bg);
+    box-shadow: 2px 2px 6px 0px var(--border);
+    padding: 16px 24px 16px 32px;
+    display: flex;
+    flex-direction: column;
+    margin-top: 24px;
+    margin-bottom: 0;
+    gap: 8px;
+    word-break: break-word;
+
+    .firstSegment {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        svg {
+            width: 20px;
+            height: 20px;
+        }
+    }
+
+    .secondSegment {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .thirdSegment {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 12px;
+
+        .configItem {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    }
+}

@@ -14,6 +14,7 @@ interface DialogComponentState {
         bulletPoints?: string[];
     };
     actionsDisabled?: boolean;
+    requireAcknowledge?: boolean;
 }
 
 const initialState: DialogComponentState = {
@@ -25,7 +26,8 @@ const initialState: DialogComponentState = {
         showTooltipInfo: false,
         tooltipText: ''
     },
-    actionsDisabled: false
+    actionsDisabled: false,
+    requireAcknowledge: false
 };
 
 const dialogComponentSlice = createSlice({
@@ -59,10 +61,18 @@ const dialogComponentSlice = createSlice({
         setActionsDisabled: (state, action: PayloadAction<boolean>) => {
             state.actionsDisabled = action.payload;
         },
+        setRequireAcknowledge: (state, action: PayloadAction<boolean>) => {
+            state.requireAcknowledge = action.payload;
+        },
         resetDialogComponent: () => initialState
     }
 });
 
-export const { setDialogError, setDialogErrorWithTooltip, setActionsDisabled, resetDialogComponent } =
-    dialogComponentSlice.actions;
+export const {
+    setDialogError,
+    setDialogErrorWithTooltip,
+    setActionsDisabled,
+    setRequireAcknowledge,
+    resetDialogComponent
+} = dialogComponentSlice.actions;
 export default dialogComponentSlice;

@@ -943,6 +943,14 @@
             "oracle-file-system-headroom-option2-step2": "Choose File systems.",
             "oracle-file-system-headroom-option2-step3": "Select the FSx for ONTAP file system that you want to update SSD storage capacity.",
             "oracle-file-system-headroom-option2-step4": "Update storage capacity to the desired capacity.",
+            "linked-config": {
+                "title": "Configuration dependencies",
+                "message": "Your {{dependencyType}} affects {{recommendationType}} recommendations (such as {{configName}}).",
+                "message-line2": "For the best {{configName}} recommendation, fix your {{dependencyType}} first, then update the {{configName}}.",
+                "linked-configurations": "Linked configurations",
+                "acknowledge-checkbox": "I understand the recommendations may not be optimal, and I want to continue with this fix.",
+                "acknowledge-error": "Please select the checkbox."
+            },
             "oracle-swap-space-action-summary": "Workload Factory recommends setting the proper swap size to ensure the system can handle memory pressure gracefully, avoiding potential performance degradation or system crashes.",
             "oracle-swap-space-action-summary-heading": "Swap space should be sized relatively to RAM:",
             "oracle-swap-space-action-summary-bullet1": "Between 1 GB and 2 GB: 1.5 times the size of the RAM",

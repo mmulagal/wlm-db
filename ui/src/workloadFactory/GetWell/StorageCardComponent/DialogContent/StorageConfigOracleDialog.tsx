@@ -1,7 +1,20 @@
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DsCheckbox } from '@tlveng/wlm-ds';
 import styles from './DialogContent.module.scss';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 import { createStandardDialog, createStandardNotesSection, createSection } from './DialogContentHelper';
+import {
+    isOntapConfig,
+    getFilteredLinkedConfigNames
+} from '../../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleConfigDependencies';
+import LinkedConfigBanner from '../../../../common/LinkedConfigBanner/LinkedConfigBanner';
+import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
+import {
+    setRequireAcknowledge,
+    setDialogErrorWithTooltip,
+    resetDialogComponent
+} from '../../../../store/workloadFactory/dialogComponentSlice';
 
 const StorageConfigOracleDialog = ({
     type,
@@ -11,6 +24,31 @@ const StorageConfigOracleDialog = ({
     createONTAPConfigSection: any;
 }) => {
     const { t } = useTranslation();
+    const dispatch = useAppDispatch();
+    const driftAssessmentData = useAppSelector(state => state.getWellOptimize.driftAssessmentData);
+
+    const linkedConfigNames = isOntapConfig(type) ? getFilteredLinkedConfigNames(type, driftAssessmentData) : [];
+    const showDependencyWarning = linkedConfigNames.length > 0;
+    const [acknowledged, setAcknowledged] = useState(false);
+
+    useEffect(() => {
+        if (showDependencyWarning) {
+            dispatch(setRequireAcknowledge(true));
+        }
+        return () => {
+            dispatch(resetDialogComponent());
+        };
+    }, [dispatch, showDependencyWarning]);
+
+    const handleCheckboxChange = () => {
+        const newValue = !acknowledged;
+        setAcknowledged(newValue);
+        dispatch(setRequireAcknowledge(!newValue));
+        if (newValue) {
+            dispatch(setDialogErrorWithTooltip({ showDialogError: false, showTooltipInfo: false }));
+        }
+    };
+
     const setContent = () => {
         switch (type) {
             case 'Thin provisioning':
@@ -172,7 +210,24 @@ const StorageConfigOracleDialog = ({
                 return null;
         }
     };
-    return <div className={styles['storage-tier-block']}>{setContent()}</div>;
+    return (
+        <div className={styles['storage-tier-block']}>
+            {showDependencyWarning && (
+                <>
+                    <LinkedConfigBanner linkedConfigNames={linkedConfigNames} configName={type} />
+                    <div className={styles.acknowledgeCheckbox}>
+                        <DsCheckbox
+                            id="wlm-db-linked-config-acknowledge"
+                            title={t('databases.well-architect.linked-config.acknowledge-checkbox')}
+                            onSelect={handleCheckboxChange}
+                            isSelected={acknowledged}
+                        />
+                    </div>
+                </>
+            )}
+            {setContent()}
+        </div>
+    );
 };
 
 export default StorageConfigOracleDialog;

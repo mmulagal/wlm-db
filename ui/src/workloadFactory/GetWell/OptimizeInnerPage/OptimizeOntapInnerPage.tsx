@@ -1,6 +1,6 @@
 import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useTranslation } from 'react-i18next';
 import styles from './OptimizeInnerPage.module.scss';
@@ -44,6 +44,13 @@ import {
     useOptimizeOracleOperatingSystemMutation
 } from '../../../utils/apiService';
 import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
+import {
+    isLinkedConfig,
+    getLinkedConfigNames,
+    getDependencyType,
+    getRecommendationType
+} from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleConfigDependencies';
+import LinkedConfigBanner from '../../../common/LinkedConfigBanner/LinkedConfigBanner';
 
 import OntapTable from './InnerTables/OntapTable';
 import OSMultiPathIOPolicy from './InnerTables/OSMultiPathIOPolicy';
@@ -661,6 +668,14 @@ const OptimizeOntapInnerPage = () => {
         }
     };
 
+    const linkedConfigNames = useMemo(() => {
+        const configType = selectedOptimizeConfig?.type;
+        if (configType && selectedOptimizeConfig?.engineType === DBType.ORACLE && isLinkedConfig(configType)) {
+            return getLinkedConfigNames(configType);
+        }
+        return [];
+    }, [selectedOptimizeConfig?.type, selectedOptimizeConfig?.engineType]);
+
     const setHeading = () => {
         if (
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE ||
@@ -749,6 +764,15 @@ const OptimizeOntapInnerPage = () => {
                         />
                     </div>
                 </div>
+
+                {linkedConfigNames.length > 0 && (
+                    <LinkedConfigBanner
+                        linkedConfigNames={linkedConfigNames}
+                        configName={selectedOptimizeConfig?.type}
+                        dependencyType={getDependencyType(selectedOptimizeConfig?.type || '')}
+                        recommendationType={getRecommendationType(selectedOptimizeConfig?.type || '')}
+                    />
+                )}
 
                 <div className={styles.tableSection}>{renderTable()}</div>
             </div>

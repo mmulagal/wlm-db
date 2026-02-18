@@ -3,9 +3,28 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
 import { ASSESSMENT_CONFIG_NAMES, DBType, FROM_DIALOG, GETWELL_STATUS } from '../../../utils/consts';
 import DialogContent from './DialogContent/DialogContent';
+import store from '../../../store/store';
+import { setDialogErrorWithTooltip } from '../../../store/workloadFactory/dialogComponentSlice';
 
 // WAD disabled message for primary button tooltip
 const WAD_DISABLED_MESSAGE = 'databases.wad.tab-disabled-message';
+
+// Check if linked config acknowledgment is required and show error if not acknowledged
+export const checkLinkedConfigAcknowledge = () => {
+    const { requireAcknowledge } = store.getState().dialogComponent;
+    if (requireAcknowledge) {
+        store.dispatch(
+            setDialogErrorWithTooltip({
+                showDialogError: true,
+                errorMessage: i18next.t('databases.well-architect.linked-config.acknowledge-error'),
+                showTooltipInfo: true,
+                tooltipText: i18next.t('databases.well-architect.linked-config.acknowledge-checkbox')
+            })
+        );
+        return true;
+    }
+    return false;
+};
 
 const primaryButtonDisable = (engineType, type) => {
     // oracle storage layout 6 configs fix are disabled
@@ -117,6 +136,9 @@ export const handleDialog = (
                 secondaryButton={GENERAL.CANCEL}
                 dialogFrom={FROM_DIALOG.OPTIMIZE}
                 callback={() => {
+                    if (engineType === DBType.ORACLE && checkLinkedConfigAcknowledge()) {
+                        return;
+                    }
                     callOptimizeApi(type, operation, singleRowData);
                 }}
                 closeCallback={() => {
@@ -211,6 +233,9 @@ export const handleOntapDialog = (
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
+                    if (checkLinkedConfigAcknowledge()) {
+                        return;
+                    }
                     callOptimizeApi(rowData?.data, operation, singleRowData);
                 }}
                 closeCallback={() => {

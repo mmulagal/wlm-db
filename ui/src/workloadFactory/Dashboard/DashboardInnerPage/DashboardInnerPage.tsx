@@ -2,6 +2,13 @@ import { useDispatch } from 'react-redux';
 import { DsTypography, useDialog, DsButton, Button, Popover, TooltipInfo } from '@netapp/design-system';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useEffect, useMemo, useState, useRef } from 'react';
+import {
+    isLayoutConfig,
+    getLinkedConfigNames,
+    getDependencyType,
+    getRecommendationType
+} from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleConfigDependencies';
+import LinkedConfigBanner from '../../../common/LinkedConfigBanner/LinkedConfigBanner';
 import { useTranslation } from 'react-i18next';
 import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
@@ -159,6 +166,13 @@ const DashboardInnerPage = () => {
         }
         return selectedConfig;
     }, [selectedConfig]);
+
+    const linkedConfigNames = useMemo(() => {
+        if (selectedConfig && configEngineType === DBType.ORACLE && isLayoutConfig(selectedConfig)) {
+            return getLinkedConfigNames(selectedConfig);
+        }
+        return [];
+    }, [selectedConfig, configEngineType]);
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
@@ -1970,6 +1984,15 @@ const DashboardInnerPage = () => {
                         />
                     </div>
                 </div>
+
+                {linkedConfigNames.length > 0 && (
+                    <LinkedConfigBanner
+                        linkedConfigNames={linkedConfigNames}
+                        configName={selectedConfig}
+                        dependencyType={getDependencyType(selectedConfig)}
+                        recommendationType={getRecommendationType(selectedConfig)}
+                    />
+                )}
 
                 <div className={styles.tableSection}>{renderTable()}</div>
             </div>

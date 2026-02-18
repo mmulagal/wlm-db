@@ -1,6 +1,6 @@
 import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useTranslation } from 'react-i18next';
 import styles from './OptimizeInnerPage.module.scss';
@@ -47,6 +47,13 @@ import {
     useOptimizeStorageTierMutation
 } from '../../../utils/apiService';
 import { handleDialog } from '../StorageCardComponent/optimizeUtils';
+import {
+    isLinkedConfig,
+    getLinkedConfigNames,
+    getDependencyType,
+    getRecommendationType
+} from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleConfigDependencies';
+import LinkedConfigBanner from '../../../common/LinkedConfigBanner/LinkedConfigBanner';
 import FileSystemHeadroomOptimizeTable from './InnerTables/FileSystemHeaderoomOptimizeTable';
 import LogDriveSizeOptimizeTable from './InnerTables/LogDriveSizeOptimizeTable';
 import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
@@ -877,6 +884,14 @@ const OptimizeInnerPage = () => {
         }
     };
 
+    const linkedConfigNames = useMemo(() => {
+        const configType = selectedOptimizeConfig?.type;
+        if (configType && selectedOptimizeConfig?.engineType === DBType.ORACLE && isLinkedConfig(configType)) {
+            return getLinkedConfigNames(configType);
+        }
+        return [];
+    }, [selectedOptimizeConfig?.type, selectedOptimizeConfig?.engineType]);
+
     const setHeading = () => {
         if (
             selectedOptimizeConfig?.type === 'Data files' ||
@@ -952,6 +967,15 @@ const OptimizeInnerPage = () => {
                         <TagComponent tagHeight={cardHeight.tagSection} type={selectedOptimizeConfig?.type} />
                     </div>
                 </div>
+
+                {linkedConfigNames.length > 0 && (
+                    <LinkedConfigBanner
+                        linkedConfigNames={linkedConfigNames}
+                        configName={selectedOptimizeConfig?.type}
+                        dependencyType={getDependencyType(selectedOptimizeConfig?.type || '')}
+                        recommendationType={getRecommendationType(selectedOptimizeConfig?.type || '')}
+                    />
+                )}
 
                 {selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT && <CloneTabs />}
 

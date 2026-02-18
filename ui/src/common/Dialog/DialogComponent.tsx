@@ -57,7 +57,8 @@ const DialogComponent = ({
     const {
         dialogError: { showDialogError = false, errorMessage = '' } = {},
         dialogTooltip: { showTooltipInfo = false, tooltipText = '' } = {},
-        actionsDisabled
+        actionsDisabled,
+        requireAcknowledge
     } = useAppSelector(state => state.dialogComponent);
 
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
@@ -154,6 +155,7 @@ const DialogComponent = ({
     const primaryButtonClick = () => {
         callback();
         if (
+            !requireAcknowledge &&
             dialogFrom !== FROM_DIALOG.LOAD_CONFIG &&
             dialogFrom !== FROM_DIALOG.SAVE_CONFIG &&
             dialogFrom !== FROM_DIALOG.HEADER_CROSS &&
