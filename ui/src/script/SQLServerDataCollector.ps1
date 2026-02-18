@@ -1,6 +1,6 @@
 <#
 ===============================================================================
-        NETAPP BLUEXP WORKLOAD FACTORY - SQL SERVER DATA COLLECTOR
+        NETAPP CONSOLE WORKLOAD FACTORY - SQL SERVER DATA COLLECTOR
         Version 1.0.0
         Copyright (c) 2025 NetApp, Inc. All rights reserved.
 ===============================================================================

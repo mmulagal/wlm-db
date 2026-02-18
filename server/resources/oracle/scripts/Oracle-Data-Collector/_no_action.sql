@@ -1,0 +1,3 @@
+-- No data collection required
+-- This is a placeholder script used when the controller determines
+-- no AWR or STATSPACK collection should be performed.
