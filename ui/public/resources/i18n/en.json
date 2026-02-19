@@ -1198,6 +1198,7 @@
             "active-data-guard": "Active Data Guard:",
             "transport-lag": "Transport lag:",
             "apply-lag": "Apply lag:",
+            "ahead-by": "Ahead by",
             "host-name": "Host name",
             "database-name": "Database name",
             "database-status": "Database status",

@@ -153,7 +153,7 @@ const ReplicatesDialogContent = ({ resourceDetails }: any) => {
                         {host?.databaseHostId ? (
                             <DotComponent color="var(--success)" value={t('databases.general.registered')} />
                         ) : (
-                            <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />
+                            <DotComponent color="var(--toggle-off-bg)" value={t('databases.data-guard.unregistered')} />
                         )}
                     </div>
                     <DsTypography variant="Regular_14" className={styles.tableCell} title={toSentenceCase(host.role)}>

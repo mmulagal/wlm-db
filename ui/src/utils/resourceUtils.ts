@@ -78,6 +78,58 @@ export const removeObjectFromArray = (array: any, obj: any) =>
             !(item.id === obj.id && item.label === obj.label && item.value === obj.value && item.type === obj.type)
     );
 
+/**
+ * Parses Oracle Data Guard lag string (DD HH:MI:SS or +DD HH:MI:SS) to total seconds.
+ * Returns null if input is invalid or not parseable.
+ */
+const parseDataGuardLagToSeconds = (lagValue: string | undefined): number | null => {
+    if (lagValue == null || typeof lagValue !== 'string') return null;
+    const trimmed = lagValue.trim();
+    if (!trimmed) return null;
+    // Oracle format: optional +/-, then "DDD HH:MI:SS" or "DDD HH:MI:SS.FF"
+    const match = trimmed.match(/^([+-]?)\s*(\d+)\s+(\d{1,2}):(\d{1,2}):(\d{1,2})/);
+    if (!match) return null;
+    const sign = match[1] === '-' ? -1 : 1;
+    const days = parseInt(match[2], 10);
+    const hours = parseInt(match[3], 10);
+    const minutes = parseInt(match[4], 10);
+    const seconds = parseInt(match[5], 10);
+    const totalSeconds = sign * (days * 86400 + hours * 3600 + minutes * 60 + seconds);
+    return totalSeconds;
+};
+
+/**
+ * Formats a positive lag (total seconds) for display: 45s, 12m 10s, 8h 3m, 2d 4h.
+ */
+const formatPositiveLag = (totalSeconds: number): string => {
+    const abs = Math.abs(totalSeconds);
+    const d = Math.floor(abs / 86400);
+    const h = Math.floor((abs % 86400) / 3600);
+    const m = Math.floor((abs % 3600) / 60);
+    const s = Math.floor(abs % 60);
+    if (d >= 1) return `${d}d ${h}h`;
+    if (h >= 1) return `${h}h ${m}m`;
+    if (m >= 1) return `${m}m ${s}s`;
+    return `${s}s`;
+};
+
+/**
+ * Formats Oracle Data Guard transport/apply lag for readable display.
+ * - Positive: &lt; 1 min → seconds; &lt; 1 hr → m s; &lt; 1 day → h m; ≥ 1 day → d h.
+ * - Negative: -60s &lt; lag &lt; 0 → "0s"; lag ≤ -60s → "Ahead by &lt;formatted&gt;".
+ * @param lagValue - Oracle format string (e.g. "+00 00:08:03", "-00 00:12:10")
+ * @param aheadByLabel - Translated "Ahead by" string for negative lag display
+ * @returns Formatted string or original value if unparseable
+ */
+export const formatDataGuardLag = (lagValue: string | undefined, aheadByLabel: string): string => {
+    const totalSeconds = parseDataGuardLagToSeconds(lagValue);
+    if (totalSeconds === null) return lagValue ?? '';
+    if (totalSeconds >= 0) return formatPositiveLag(totalSeconds);
+    // Negative lag (standby is ahead)
+    if (totalSeconds > -60) return '0s';
+    return `${aheadByLabel} ${formatPositiveLag(totalSeconds)}`;
+};
+
 export const handleSelectForFilter = (
     filters: Array<{ id: string; label: string; value: string }>,
     filterLabel: string,

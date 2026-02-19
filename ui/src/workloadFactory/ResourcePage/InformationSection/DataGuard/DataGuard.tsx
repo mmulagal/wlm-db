@@ -4,7 +4,7 @@ import { Button, useDialog } from '@netapp/design-system';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
-import { toSentenceCase } from '../../../../utils/resourceUtils';
+import { formatDataGuardLag, toSentenceCase } from '../../../../utils/resourceUtils';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import ReplicatesDialogContent from './ReplicatesDialogContent/ReplicatesDialogContent';
 import { OVERVIEW_CARDS_HEADINGS } from '../../../../utils/consts';
@@ -67,7 +67,10 @@ const DataGuard = ({ handleToggle, openKey, resourceDetails, resourceLoading }: 
                                 {t('databases.data-guard.transport-lag')}
                             </DsTypography>
                             <DsTypography variant="Regular_14">
-                                {resourceDetails?.dataguardDetails?.status?.transportLag}
+                                {formatDataGuardLag(
+                                    resourceDetails?.dataguardDetails?.status?.transportLag,
+                                    t('databases.data-guard.ahead-by')
+                                )}
                             </DsTypography>
                         </div>
                         <div className={commonStyles.row}>
@@ -75,7 +78,10 @@ const DataGuard = ({ handleToggle, openKey, resourceDetails, resourceLoading }: 
                                 {t('databases.data-guard.apply-lag')}
                             </DsTypography>
                             <DsTypography variant="Regular_14">
-                                {resourceDetails?.dataguardDetails?.status?.applyLag}
+                                {formatDataGuardLag(
+                                    resourceDetails?.dataguardDetails?.status?.applyLag,
+                                    t('databases.data-guard.ahead-by')
+                                )}
                             </DsTypography>
                         </div>
                     </>
