@@ -238,6 +238,16 @@ const HOST_AND_SQL_INFO_PS1 = [
       }
     }
 
+    # Extract unique iSCSI IP targets at script scope for the storage fallback block
+    try {
+      $allTargets = @()
+      foreach ($k in $DriveTargetMap.Keys) { $allTargets += $DriveTargetMap[$k] }
+      $ipTargets = @($allTargets | Where-Object { $_ -match '^\\d{1,3}(\\.\\d{1,3}){3}$' })
+      $script:UniqueIscsiIpTargets = @($ipTargets | Select-Object -Unique)
+    } catch {
+      $script:UniqueIscsiIpTargets = @()
+    }
+
     return $DriveTargetMap
   }
 
@@ -323,6 +333,38 @@ const HOST_AND_SQL_INFO_PS1 = [
       $sqlInstanceDriveLetterOrPathList += $driveOrPath
     }
     return ($sqlInstanceDriveLetterOrPathList | Select -Unique)
+  }
+
+  # Fallback: derive drives/UNC roots from SQL service registry Parameters.
+  # This does not require SQL authentication and helps when sys.master_files cannot be queried.
+  # Uses: -d (master.mdf), -l (mastlog.ldf), -e (ERRORLOG) paths.
+  Function GetSQLInstanceDriveDetailsFromRegistryParameters($registryInstanceKey) {
+    $driveOrPathList = @()
+    try {
+      if ([string]::IsNullOrEmpty($registryInstanceKey)) { return @() }
+      $paramsPath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\$registryInstanceKey\\MSSQLServer\\Parameters"
+      $params = Get-ItemProperty -Path $paramsPath -ErrorAction SilentlyContinue
+      if ($params -eq $null) { return @() }
+
+      $args = $params.PSObject.Properties |
+                Where-Object { $_.Name -like "SQLArg*" } |
+                  Sort-Object -Property Name |
+                    ForEach-Object { $_.Value }
+
+      foreach ($arg in $args) {
+        if ([string]::IsNullOrEmpty($arg)) { continue }
+        # Example: -dC:(local path)master.mdf  OR  -l(UNC path)mastlog.ldf
+        $pathValue = $arg -replace '^-{1}[del]\\s*', ''
+        $pathValue = $pathValue.Trim('"')
+        if ([string]::IsNullOrEmpty($pathValue)) { continue }
+        $driveOrPath = (($pathValue.TrimStart('\\')) -split '\\\\')[0]
+        if (-not [string]::IsNullOrEmpty($driveOrPath)) { $driveOrPathList += $driveOrPath }
+      }
+    } catch {
+      # swallow
+    }
+
+    return ($driveOrPathList | Select-Object -Unique)
   }
   
   Function GetClusterDetails {
@@ -502,6 +544,9 @@ const HOST_AND_SQL_INFO_PS1 = [
         return $null
     }
 
+    # Persist instance key for other registry lookups (e.g., Parameters path)
+    $sqlServerInfo['registryInstanceKey'] = $instance
+
     $instanceConfigPath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\$instance\\MSSQLServer"
     $instanceSetupConfigPath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\$instance\\Setup"
 
@@ -651,7 +696,9 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
           }
         } catch {
           $result['databaseAgCheckError'] = "$_"
-          # Continue with normal AOAG query on error - don't block discovery
+          # Auth/query failed - treat as no valid credentials so fallback synthesis is used
+          $hasValidCredentials = $False
+          $result['hasValidCredentials'] = $False
         }
       }
       
@@ -662,6 +709,8 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
     } catch {
       if ($sqlCredential['useDomainAuth'] -eq $True) { $result['aoagQueryDomainError'] = "$_" }
       elseif ($sqlCredential['useSqlAuth'] -eq $True) { $result['aoagQuerySqlError'] = "$_" }
+      # AOAG query failed - credentials exist but don't work, so use fallback synthesis path
+      $result['hasValidCredentials'] = $False
     }
 
     # Parse / normalize JSON
@@ -1043,8 +1092,17 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
               $responseObject['sqlPermissions'] = @()
             }
 
+            $usedRegistryDriveDetailsFallback = $False
+            $usedRegistryParametersFallback = $False
+            if(($sqlInstanceDriveLetterOrPathList.Count -eq 0) -and (-Not [string]::IsNullOrEmpty($sqlServerInfoFromRegistry)) -and $sqlServerInfoFromRegistry.ContainsKey('registryInstanceKey')) {
+              $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetailsFromRegistryParameters $sqlServerInfoFromRegistry['registryInstanceKey']
+              if ($sqlInstanceDriveLetterOrPathList.Count -gt 0) {
+                $usedRegistryParametersFallback = $True
+              }
+            }
             if(($sqlInstanceDriveLetterOrPathList.Count -eq 0) -and (-Not [string]::IsNullOrEmpty($sqlServerInfoFromRegistry)) -and $sqlServerInfoFromRegistry.ContainsKey('driveDetails')) {
               $sqlInstanceDriveLetterOrPathList = $sqlServerInfoFromRegistry['driveDetails']
+              $usedRegistryDriveDetailsFallback = $True
             }
 
             $sqlServerInstanceStorageInfo = ForEach ($sqlInstanceDriveLetterOrPath in $sqlInstanceDriveLetterOrPathList) {
@@ -1058,6 +1116,38 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
                 New-Object -TypeName PSObject -Property @{ SmbSharePath = $MappedDrivesWithPath[$sqlInstanceDriveLetterOrPath] }  
               }
             }
+            
+            # Last-resort fallback for storage type detection:
+            # When SQL file-path discovery fails (auth issues) and drive list collapses to only C:,
+            # but the host has iSCSI target IPs (FSxN), append those IPs so backend can classify FSxN.
+            # Uses $script:UniqueIscsiIpTargets computed inside GetDiskDriveDetails().
+            $uniqueIpTargetsFromDiskFn = @()
+            if ($script:UniqueIscsiIpTargets) { $uniqueIpTargetsFromDiskFn = @($script:UniqueIscsiIpTargets) }
+
+            $driveListNormalized = @($sqlInstanceDriveLetterOrPathList | ForEach-Object { "$_".ToUpper().Trim() })
+            $driveListIsOnlySystemDrive = (($driveListNormalized.Count -eq 1) -and ($driveListNormalized[0] -eq 'C:'))
+
+            if (($driveListIsOnlySystemDrive -eq $True) -and (($usedRegistryParametersFallback -eq $True) -or ($usedRegistryDriveDetailsFallback -eq $True)) -and ($uniqueIpTargetsFromDiskFn.Count -gt 0)) {
+              try {
+                $existingTargets = @()
+                if ($sqlServerInstanceStorageInfo) {
+                  $existingTargets = @($sqlServerInstanceStorageInfo | ForEach-Object { $_.SerialNumberOrScsiTarget })
+                }
+                foreach ($ip in $uniqueIpTargetsFromDiskFn) {
+                  if ($existingTargets -notcontains $ip) {
+                    $newObj = New-Object -TypeName PSObject -Property @{ SerialNumberOrScsiTarget = $ip }
+                    if ($sqlServerInstanceStorageInfo -eq $null) {
+                      $sqlServerInstanceStorageInfo = @($newObj)
+                    } else {
+                      $sqlServerInstanceStorageInfo = @($sqlServerInstanceStorageInfo) + @($newObj)
+                    }
+                  }
+                }
+              } catch {
+                # Fallback failure is non-fatal; storage will still contain EBS entries
+              }
+            }
+
             $responseObject['sqlServerInstanceStorageInfo'] = $sqlServerInstanceStorageInfo | ConvertTo-Json -Compress
           }
       } else {
