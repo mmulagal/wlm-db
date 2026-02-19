@@ -2852,11 +2852,11 @@ export const updateSqlServerInstancesForUnmanaged = (
                     };
                 } else {
                     authFields = {
-                        windowsAuthentication: instRow?.windowsAuthentication || statusObj?.[0]?.windowsAuthentication,
+                        windowsAuthentication: instRow?.windowsAuthentication ?? statusObj?.[0]?.windowsAuthentication,
                         sqlServerAuthentication:
-                            instRow?.sqlServerAuthentication || statusObj?.[0]?.sqlServerAuthentication,
+                            instRow?.sqlServerAuthentication ?? statusObj?.[0]?.sqlServerAuthentication,
                         windowsDomainUserAuthentication:
-                            instRow?.windowsDomainUserAuthentication || statusObj?.[0]?.windowsDomainUserAuthentication
+                            instRow?.windowsDomainUserAuthentication ?? statusObj?.[0]?.windowsDomainUserAuthentication
                     };
                 }
                 return {
