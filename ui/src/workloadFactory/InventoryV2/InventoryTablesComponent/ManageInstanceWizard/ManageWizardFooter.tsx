@@ -475,8 +475,6 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 message: t('databases.register-flow.bulk-auth-in-progress')
             })
         );
-        dispatch(setManageSingleInstanceReadiness(null));
-
         // Get FSx IDs from storage array that need authentication
         const getUnregisteredFsxIds = (): string[] => {
             const storage = manageSingleInstanceData?.storage;
