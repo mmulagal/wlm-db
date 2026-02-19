@@ -248,8 +248,16 @@ function expandDatabaseDetailForSizingAssessment(data: LogDriveDetails[]) {
     return expandedData;
 }
 
-function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStatus, key: string) {
-    logger.info('Getting log volume drift', { logVolumesLength: logVolumes.length });
+function getLogVolumeDrift(
+    logVolumes: LogDriveDetails[],
+    status: AssessmentStatus,
+    key: string,
+    databaseRoles?: Array<{ databaseName: string; agName: string; replicaRole: string }>
+) {
+    logger.info('Getting log volume drift', { logVolumesLength: logVolumes.length, hasDatabaseRoles: !!databaseRoles });
+    const primaryDatabases = new Set(
+        databaseRoles?.filter(db => db.replicaRole === 'PRIMARY').map(db => db.databaseName.toLowerCase()) ?? []
+    );
 
     const overProvisionedDrives: SizingViolationResponseType[] = [];
     const underProvisionedDrives: SizingViolationResponseType[] = [];
@@ -308,9 +316,14 @@ function getLogVolumeDrift(logVolumes: LogDriveDetails[], status: AssessmentStat
         } else if (dataAccessPath !== logAccessPath) {
             const logToDriveSizePercent = Math.ceil((logDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
             currentSizePercentForAllVolumes.push(logToDriveSizePercent);
-            if (logToDriveSizePercent > 30) {
+            const volumeDatabases = [...new Set(drive.databaseName.split(','))].map(db => db.trim().toLowerCase());
+            const hasPrimaryDatabases =
+                primaryDatabases.size > 0 && volumeDatabases.some(db => primaryDatabases.has(db));
+            const lowerThreshold = hasPrimaryDatabases ? 25 : 20;
+            const upperThreshold = hasPrimaryDatabases ? 35 : 30;
+            if (logToDriveSizePercent > upperThreshold) {
                 overProvisionedDrives.push(formattedDriveInfo as SizingViolationResponseType);
-            } else if (logToDriveSizePercent < 20) {
+            } else if (logToDriveSizePercent < lowerThreshold) {
                 underProvisionedDrives.push(formattedDriveInfo as SizingViolationResponseType);
             } else {
                 optimisedDrives.push(formattedDriveInfo as SizingViolationResponseType);
@@ -413,7 +426,8 @@ async function calculateStorageDrift(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    storageAssessmentData: StorageAssessment
+    storageAssessmentData: StorageAssessment,
+    aoagContext?: { databaseRoles: Array<{ databaseName: string; agName: string; replicaRole: string }> }
 ) {
     logger.info('Calculating storage drift', { accountId, credentialsId, region, databaseHostId });
 
@@ -866,7 +880,7 @@ async function calculateStorageDrift(
                         currentSizePercentForAllVolumes,
                         drivesCount: totalObjectsAssessed,
                         totalObjectsInViolation
-                    } = getLogVolumeDrift(value, status, key));
+                    } = getLogVolumeDrift(value, status, key, aoagContext?.databaseRoles));
                     resourceType = ASSESSMENT_RESOURCE_TYPE.DRIVE;
                 }
 

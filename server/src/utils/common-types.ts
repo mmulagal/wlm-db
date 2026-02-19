@@ -261,6 +261,12 @@ interface ResourceAssessmentData {
             error?: string;
         };
     };
+    aoagDetails?: {
+        replicaRole: string;
+        baseDeploymentType: string;
+        replicaRoles?: Array<{ agName: string; replicaRole: string }>;
+        databaseRoles?: Array<{ databaseName: string; agName: string; replicaRole: string }>;
+    };
     lastAssessedDate?: string;
     errors?: {
         compute?: string;

@@ -278,6 +278,7 @@ const MSSQLDriftAssessmentResponse = Type.Object({
     databaseInstanceName: Type.Optional(Type.String()),
     deploymentType: Type.Optional(Type.String()),
     baseDeploymentType: Type.Optional(Type.String()),
+    replicaRole: Type.Optional(Type.String()),
     databaseHostName: Type.Optional(Type.String())
 });
 

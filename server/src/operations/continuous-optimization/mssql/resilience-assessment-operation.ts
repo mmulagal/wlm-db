@@ -22,7 +22,7 @@ import {
     ASSESSMENT_RESOURCE_TYPE
 } from '../../../utils/continous-optimization-consts';
 import storageGoldenConfigData from './golden-config';
-import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes } from '../../../utils/consts';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SqlServerDeploymentModel } from '../../../utils/consts';
 import { IS_DEMO_FLOW, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
 import {
     DatabaseInstance,
@@ -51,7 +51,8 @@ import {
     SQL_SERVER_SERVICES,
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
-    GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN
+    GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN,
+    AOAG_INSTANCE_ROLE
 } from '../../workloads/mssql/high-availability-scripts';
 
 const logger = getLogger();
@@ -1005,6 +1006,54 @@ async function getSqlServiceStartupAssessment(
     }
 }
 
+function deriveAoagDetails(parsedAoagData: Record<string, unknown>) {
+    if (!parsedAoagData || parsedAoagData.error) {
+        logger.warn('Failed to fetch AOAG instance role details', { error: String(parsedAoagData?.error ?? '') });
+        return undefined;
+    }
+
+    const baseDeploymentType = parsedAoagData.isClustered === 1 ? 'FCI' : 'Standalone';
+
+    let replicaRoles: Array<{ agName: string; replicaRole: string }> = [];
+    try {
+        const rawRoles =
+            typeof parsedAoagData.replicaRoles === 'string'
+                ? JSON.parse(parsedAoagData.replicaRoles)
+                : parsedAoagData.replicaRoles;
+        if (Array.isArray(rawRoles)) {
+            replicaRoles = rawRoles as Array<{ agName: string; replicaRole: string }>;
+        }
+    } catch {
+        logger.warn('Failed to parse AOAG replica roles JSON');
+    }
+
+    let databaseRoles: Array<{ databaseName: string; agName: string; replicaRole: string }> = [];
+    try {
+        const rawDbRoles =
+            typeof parsedAoagData.databaseRoles === 'string'
+                ? JSON.parse(parsedAoagData.databaseRoles)
+                : parsedAoagData.databaseRoles;
+        if (Array.isArray(rawDbRoles)) {
+            databaseRoles = rawDbRoles as Array<{ databaseName: string; agName: string; replicaRole: string }>;
+        }
+    } catch {
+        logger.warn('Failed to parse AOAG database roles JSON');
+    }
+
+    const uniqueRoles = [...new Set(replicaRoles.map(r => r.replicaRole))];
+    const [firstRole] = uniqueRoles;
+    let replicaRole: string;
+    if (!firstRole) {
+        replicaRole = 'UNKNOWN';
+    } else if (uniqueRoles.length === 1) {
+        replicaRole = firstRole;
+    } else {
+        replicaRole = 'MIXED';
+    }
+
+    return { replicaRole, baseDeploymentType, replicaRoles, databaseRoles };
+}
+
 async function initiateHostLevelHighAvailabilityAssessment(
     accountId: string,
     credentialsId: string,
@@ -1012,7 +1061,8 @@ async function initiateHostLevelHighAvailabilityAssessment(
     databaseHostId: string,
     instanceRecord: WorkloadInstance,
     parentJobId: string,
-    metadata: Metadata
+    metadata: Metadata,
+    deploymentType?: string
 ) {
     logger.info('Fetch cluster quorum, heartbeat settings for instance', {
         accountId,
@@ -1022,9 +1072,10 @@ async function initiateHostLevelHighAvailabilityAssessment(
         parentJobId
     });
 
-    const { isHeartBeatOptimized, isClusterQuorumOptimized } = metadata; // applicable only in case of demo flow
-    const { resourceName, name: databaseInstanceName, activeNodeInstanceid } = instanceRecord;
+    const { isHeartBeatOptimized, isClusterQuorumOptimized } = metadata;
+    const { resourceName, name: databaseInstanceName, activeNodeInstanceid, sqlAuthEnabled } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
+    const isAoag = deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT;
 
     const jobName = `Microsoft SQL server high availability assessment for heartbeat and quorum settings for ${resourceName}`;
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
@@ -1042,26 +1093,31 @@ async function initiateHostLevelHighAvailabilityAssessment(
     });
 
     try {
-        // Prepare all commands in a single SSM document execution
+        const commands = isAoag
+            ? [CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS, AOAG_INSTANCE_ROLE(databaseInstanceName, sqlAuthEnabled)]
+            : [CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS];
 
-        const commands = [CLUSTER_QUORUM_TYPE, HEARTBEAT_SETTINGS];
         const rawResponses = await callSsmExecution({
             credentialsId,
             region,
             commands,
             ec2InstanceId: activeNodeInstanceid,
-            comment: `Fetch cluster quorum, heartbeat settings on node ${activeNodeInstanceid}`,
+            comment: `Fetch cluster quorum, heartbeat settings${
+                isAoag ? ', AOAG role' : ''
+            } on node ${activeNodeInstanceid}`,
             accountId,
             shouldReadFromCloudWatchLogs: true
         });
 
-        // Parse SSM output into separate objects
         const rawResponsesParsed = parseMultipleCommandResponse(rawResponses);
-        const [parsedQuorumData, parsedHeartSettingsData] = rawResponsesParsed;
+        const [parsedQuorumData, parsedHeartSettingsData, parsedAoagData] = rawResponsesParsed;
+
+        const aoagDetails = isAoag ? deriveAoagDetails(parsedAoagData as Record<string, unknown>) : undefined;
+        const isStandaloneAoag = isAoag && aoagDetails?.baseDeploymentType === 'Standalone';
 
         let clusterQuorumResult: {
             status: AssessmentStatus;
-            details: Record<string, { current: number; recommended: number; status: AssessmentStatus }> | null;
+            details: Record<string, unknown> | null;
             error?: string;
         };
 
@@ -1070,30 +1126,41 @@ async function initiateHostLevelHighAvailabilityAssessment(
                 status: AssessmentStatus.OPTIMIZED,
                 details: null
             };
+        } else if (!parsedQuorumData || typeof parsedQuorumData !== 'object') {
+            clusterQuorumResult = {
+                status: AssessmentStatus.NOT_OPTIMIZED,
+                details: null,
+                error: 'Unable to parse quorum data from ssm response'
+            };
+        } else if (isStandaloneAoag) {
+            // Standalone AOAG expects Node Majority + Cloud Witness (not Disk Witness)
+            const isCloudWitnessQuorum = parsedQuorumData.IsMajority && !parsedQuorumData.IsPhysicalDisk;
+            clusterQuorumResult = {
+                status: isCloudWitnessQuorum ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+                details: {
+                    isMajority: parsedQuorumData.IsMajority,
+                    quorumType: parsedQuorumData.QuorumType,
+                    isPhysicalDisk: parsedQuorumData.IsPhysicalDisk,
+                    quorumResourceName: parsedQuorumData.QuorumResourceName,
+                    isCloudWitnessQuorum
+                }
+            };
         } else {
-            // --- Cluster Quorum ---
-            clusterQuorumResult =
-                !parsedQuorumData || typeof parsedQuorumData !== 'object'
-                    ? {
-                          status: AssessmentStatus.NOT_OPTIMIZED,
-                          details: null,
-                          error: 'Unable to parse quorum data from ssm response'
-                      }
-                    : {
-                          status: parsedQuorumData.IsPhysicalDiskAndMajority
-                              ? AssessmentStatus.OPTIMIZED
-                              : AssessmentStatus.NOT_OPTIMIZED,
-                          details: {
-                              isMajority: parsedQuorumData.IsMajority,
-                              quorumType: parsedQuorumData.QuorumType,
-                              isPhysicalDisk: parsedQuorumData.IsPhysicalDisk,
-                              quorumResourceName: parsedQuorumData.QuorumResourceName,
-                              isPhysicalDiskAndMajority: parsedQuorumData.IsPhysicalDiskAndMajority
-                          }
-                      };
+            // FCI and FCI+AOAG expect Node and Disk Majority with Disk Witness
+            clusterQuorumResult = {
+                status: parsedQuorumData.IsPhysicalDiskAndMajority
+                    ? AssessmentStatus.OPTIMIZED
+                    : AssessmentStatus.NOT_OPTIMIZED,
+                details: {
+                    isMajority: parsedQuorumData.IsMajority,
+                    quorumType: parsedQuorumData.QuorumType,
+                    isPhysicalDisk: parsedQuorumData.IsPhysicalDisk,
+                    quorumResourceName: parsedQuorumData.QuorumResourceName,
+                    isPhysicalDiskAndMajority: parsedQuorumData.IsPhysicalDiskAndMajority
+                }
+            };
         }
 
-        // --- Heartbeat Settings ---
         const recommendedHeartbeatSettings = storageGoldenConfigData.resiliency.heartbeatSettings as HeartbeatSettings;
         let heartbeatResult: {
             status: AssessmentStatus;
@@ -1145,7 +1212,8 @@ async function initiateHostLevelHighAvailabilityAssessment(
 
         response = {
             clusterQuorum: clusterQuorumResult,
-            heartbeat: heartbeatResult
+            heartbeat: heartbeatResult,
+            ...(aoagDetails && { aoagDetails })
         };
     } catch (err: any) {
         errorMessage = `Error while running heartbeat settings and cluster quorum type assessment. Error:${err.message}`;

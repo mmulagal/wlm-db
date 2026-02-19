@@ -100,11 +100,9 @@ const AOAG_EXCLUDED_CATEGORIES = [
     AssessmentCategories.CLONE
 ];
 
-// High availability items to exclude for AOAG (keep shared-storage and drive-letter)
-const AOAG_EXCLUDED_HA_ITEMS = ['cluster-quorum', 'heartbeat-settings', 'sqlServer-service'];
+// HA items to exclude for AOAG (cluster-quorum and heartbeat-settings now enabled for AOAG)
+const AOAG_EXCLUDED_HA_ITEMS = ['sqlServer-service'];
 
-// Storage items to exclude for AOAG
-const AOAG_EXCLUDED_STORAGE_SIZING = ['log-drive-size'];
 const AOAG_EXCLUDED_STORAGE_VOLUME_CONFIG = ['snapshot-copy-reserve'];
 
 /**
@@ -117,13 +115,8 @@ function filterAssessmentForAoag(
 ): { filteredAssessment: MSSQLDriftAssessmentResponseType; filteredHostData: Record<string, unknown> } {
     const filteredAssessment = { ...assessmentData };
 
-    // Filter storage.sizing (remove log-drive-size)
     if (filteredAssessment.storage && 'sizing' in filteredAssessment.storage) {
         const storageData = filteredAssessment.storage as StorageParameterDriftResponseType;
-        storageData.sizing = storageData.sizing.filter(
-            (item: { name?: string }) => !AOAG_EXCLUDED_STORAGE_SIZING.includes(item.name || '')
-        );
-        // Filter storage.configuration.volumes (remove snapshot-copy-reserve)
         if (storageData.configuration?.volumes) {
             storageData.configuration.volumes = storageData.configuration.volumes.filter(
                 (item: { name?: string }) => !AOAG_EXCLUDED_STORAGE_VOLUME_CONFIG.includes(item.name || '')
@@ -349,6 +342,8 @@ async function fetchMssqlDriftAssessment(
         {} as Record<string, unknown>
     );
 
+    const storedAoagDetails = (hostLevelAssessmentData as ResourceAssessmentData)?.aoagDetails;
+
     const [storageAssessmentResponse, resilienceAssessmentResponse] = await Promise.all([
         assessmentFlags.storage
             ? calculateStorageDrift(
@@ -357,7 +352,10 @@ async function fetchMssqlDriftAssessment(
                   region,
                   databaseHostId,
                   databaseInstanceId,
-                  assessmentDataMap[AssessmentCategories.STORAGE] as StorageAssessment
+                  assessmentDataMap[AssessmentCategories.STORAGE] as StorageAssessment,
+                  isAoagDeployment && storedAoagDetails?.databaseRoles
+                      ? { databaseRoles: storedAoagDetails.databaseRoles }
+                      : undefined
               )
             : Promise.resolve({}),
         assessmentFlags.resilience
@@ -439,6 +437,10 @@ async function fetchMssqlDriftAssessment(
         databaseInstanceName,
         ec2InstanceId: (resourceMetadata as Metadata)?.node1InstanceId,
         deploymentType: databaseDeploymentType,
+        ...(isAoagDeployment && {
+            baseDeploymentType: (hostLevelAssessmentData as ResourceAssessmentData)?.aoagDetails?.baseDeploymentType,
+            replicaRole: (hostLevelAssessmentData as ResourceAssessmentData)?.aoagDetails?.replicaRole
+        }),
         databaseHostName: resourceName || ''
     };
 
@@ -680,7 +682,7 @@ async function initiateHostLevelAssessmentDataCollection(
     });
 
     const { id: databaseInstanceId, resourceName, sqlAuthEnabled, databaseInstanceObject } = databaseInstanceRecord;
-    const { resource } = databaseInstanceObject as DatabaseInstance;
+    const { resource, database_deployment_type: deploymentType } = databaseInstanceObject as DatabaseInstance;
     const {
         metadata,
         cloud_provider_account_id: awsAccountId,
@@ -829,18 +831,25 @@ async function initiateHostLevelAssessmentDataCollection(
                 jobId
             )) || {});
     }
+    let aoagDetails;
     if (fields?.includes(AssessmentCategories.HIGH_AVAILABILITY)) {
-        const { clusterQuorum, heartbeat } =
-            (await initiateHostLevelHighAvailabilityAssessment(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceRecord,
-                jobId,
-                metadata as Metadata
-            )) || {};
-        highAvailabilityAssessment = { clusterQuorum, heartbeat };
+        const haResult = await initiateHostLevelHighAvailabilityAssessment(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceRecord,
+            jobId,
+            metadata as Metadata,
+            deploymentType
+        );
+        if (haResult) {
+            const { clusterQuorum, heartbeat } = haResult;
+            highAvailabilityAssessment = { clusterQuorum, heartbeat };
+            if ('aoagDetails' in haResult) {
+                aoagDetails = haResult.aoagDetails;
+            }
+        }
     }
     const hasAssessmentOrError = [
         licenseAssessment,
@@ -873,6 +882,7 @@ async function initiateHostLevelAssessmentDataCollection(
             mssqlPatch:
                 mssqlPatchAssessment || (!mssqlPatchErrorMessage ? existingAssessmentData?.mssqlPatch : undefined),
             highAvailability: highAvailabilityAssessment,
+            ...(aoagDetails && { aoagDetails }),
             errors: {
                 license:
                     licenseErrorMessage || (!licenseAssessment ? existingAssessmentData?.errors?.license : undefined),

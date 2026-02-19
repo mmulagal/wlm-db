@@ -2,6 +2,7 @@ import { IgroupMissingInitiators } from '../../../utils/common-types';
 import GOLDEN_CONFIG from '../../continuous-optimization/mssql/golden-config';
 import { ontapRestRequest } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
+import { readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
 const { heartbeatSettings } = GOLDEN_CONFIG.resiliency;
 
@@ -397,6 +398,63 @@ $result | ConvertTo-Json -Compress
 Stop-Transcript | Out-Null
 `;
 
+const AOAG_INSTANCE_ROLE = (instanceName: string, sqlAuthEnabled: boolean) => `
+$sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+$sqlInstanceName = "${instanceName}"
+
+${slqcmdExecutionTemplate}
+$sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
+if($sqlAuthEnabled) {
+    ${readSsmParameter(instanceName)}
+}
+
+$ServerInstanceName = "$env:COMPUTERNAME"
+$regBasePath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server"
+$instanceRegKey = (Get-ItemProperty -Path "$regBasePath\\Instance Names\\SQL" -ErrorAction SilentlyContinue).$sqlInstanceName
+if ($instanceRegKey) {
+    $clusterPath = "$regBasePath\\$instanceRegKey\\Cluster"
+    if (Test-Path $clusterPath) {
+        $fciVirtualName = (Get-ItemProperty -Path $clusterPath -Name "ClusterName" -ErrorAction SilentlyContinue).ClusterName
+        if ($fciVirtualName) {
+            $ServerInstanceName = $fciVirtualName
+        }
+    }
+}
+If ($sqlInstanceName -ne "MSSQLSERVER") {
+    $ServerInstanceName = "$ServerInstanceName\\$sqlInstanceName"
+}
+
+$query = @"
+SET NOCOUNT ON;
+SELECT
+    CAST(SERVERPROPERTY('IsClustered') AS INT) AS isClustered,
+    (SELECT ag.name AS agName, ars.role_desc AS replicaRole
+     FROM sys.dm_hadr_availability_replica_states ars
+     JOIN sys.availability_groups ag ON ag.group_id = ars.group_id
+     WHERE ars.is_local = 1
+     FOR JSON PATH) AS replicaRoles,
+    (SELECT d.name AS databaseName, ag.name AS agName, ars.role_desc AS replicaRole
+     FROM sys.databases d
+     JOIN sys.dm_hadr_database_replica_states drs ON d.database_id = drs.database_id
+     JOIN sys.availability_groups ag ON drs.group_id = ag.group_id
+     JOIN sys.dm_hadr_availability_replica_states ars ON ars.replica_id = drs.replica_id AND ars.group_id = drs.group_id
+     WHERE drs.is_local = 1
+     FOR JSON PATH) AS databaseRoles
+FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+"@
+
+try {
+    $result = Call-SqlCmd -SqlCredential $sqlCredential -Query $query -InstanceName "$ServerInstanceName" -SuppressStderr $True
+    if (-not [string]::IsNullOrEmpty($result)) {
+        $result
+    } else {
+        @{ error = 'Empty response from AOAG role query' } | ConvertTo-Json -Compress
+    }
+} catch {
+    @{ error = $_.Exception.Message } | ConvertTo-Json -Compress
+}
+`;
+
 export {
     CLUSTER_QUORUM_TYPE,
     SQL_SERVER_SERVICES,
@@ -406,5 +464,6 @@ export {
     ADD_INITIATOR_TO_IGROUP,
     REMEDIATE_HEARTBEAT_SETTINGS,
     REMEDIATE_CLUSTER_QUORUM_SETTINGS,
-    REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE
+    REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE,
+    AOAG_INSTANCE_ROLE
 };
