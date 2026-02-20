@@ -1,7 +1,7 @@
 .errorMsg {
     display: flex;
     width: 290px;
-    margin-right: 20%;
+    margin-right: auto;
     min-width: 290px;
     align-items: center;
 
@@ -76,6 +76,10 @@
 
 [class*='DialogLayout-module_header'] {
     color: var(--text-primary) !important;
+}
+
+[class*='DialogLayout-module_buttons-container'] {
+    width: 100%;
 }
 
 .errorIcon {

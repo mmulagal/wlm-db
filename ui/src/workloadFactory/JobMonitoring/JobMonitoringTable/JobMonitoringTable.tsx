@@ -280,7 +280,8 @@ const JobMonitoringTable = React.memo(() => {
                 const statusType = rowData?.status.toLowerCase();
                 const isExpandDisable =
                     rowData?.name?.includes('Check data integrity') ||
-                    rowData?.type === JOB_MONITORING_TYPE.LOGS_ANALYSIS;
+                    rowData?.type === JOB_MONITORING_TYPE.LOGS_ANALYSIS ||
+                    rowData?.name?.includes('MSSQL offline assessment data upload');
                 return (
                     <>
                         <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
