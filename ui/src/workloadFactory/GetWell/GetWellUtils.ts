@@ -19,7 +19,9 @@ import {
     setOptimizationBreakDown,
     setOptimizingData,
     setOptimizingInstanceData,
-    setOsConfigTableData
+    setOsConfigTableData,
+    setGwDatabaseStorageType,
+    setGwDatabaseAoagStorageType
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import {
     addAllMssqlHostAssessmentData,
@@ -340,8 +342,8 @@ export const cardDataDefault: any = {
         recommendation: {
             title: 'Log drive size recommendation',
             description:
-                'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.',
-            valuesHeading: 'Log drive size percentages are as follows:',
+                'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.\nAn additional 20% buffer would be required if the drive is hosting a primary replica of Always On Availability Group.',
+            valuesHeading: 'Log drive size (relative to data drive size):',
             values: ['Under-provisioned: <20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
         },
         tags: ['Operational excellence']
@@ -378,7 +380,7 @@ export const cardDataDefault: any = {
             title: 'TempDB drive size recommendation',
             description:
                 'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to well-architect performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
-            valuesHeading: 'TempDB drive size percentages are as follows:',
+            valuesHeading: 'TempDB drive size (relative to data drive size):',
             values: ['Under-provisioned: <10%', 'Optimized: 10-20%', 'Over-provisioned: >20%']
         },
         tags: ['Operational excellence']
@@ -898,6 +900,8 @@ export const cardDataDefault: any = {
         },
         recommendation: {
             title: 'Cross-Region Replication (CRR) recommendation',
+            aoagDescription:
+                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. In AOAG distributed groups, use CRR alongside asynchronous replicas and coordinate SnapMirror with AG seeding for effective multi-region support.',
             description:
                 'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.'
         },
@@ -2882,8 +2886,13 @@ export const formatMssqlHighAvailabilityConfig = (
     let mssqlHANotOptimizedConfig = 0;
 
     // Count optimized vs not optimized configurations from active configs
-    if (mssqlHAData && !mssqlHAData?.[0]?.errorMessage) {
+    if (mssqlHAData) {
         mssqlHAData?.forEach((item: PerConfigInterface) => {
+            // Skip items with errorMessage (assessment data not available for this config)
+            if ((item as any)?.errorMessage) {
+                return;
+            }
+
             // Get the dismiss state for this configuration
             const dismissedObj = getIndividualConfigDismissState(
                 item?.name || '',
@@ -3370,6 +3379,7 @@ export const getCardsData = (
     cardsData = {
         ...cardsData,
         deploymentType: data?.deploymentType || '',
+        baseDeploymentType: data?.baseDeploymentType || '',
         isWad: data?.isWad || false
     };
 
@@ -3605,6 +3615,20 @@ export const getCardsData = (
         }
     };
 
+    // Update CRR recommendation description for AOAG deployments
+    if (isAoagDeployment(data?.deploymentType)) {
+        cardsData = {
+            ...cardsData,
+            crr: {
+                ...cardsData?.crr,
+                recommendation: {
+                    ...cardsData?.crr?.recommendation,
+                    description: cardsData?.crr?.recommendation?.aoagDescription
+                }
+            }
+        };
+    }
+
     return { cardsData, formatOntapConfigList, formatOsConfigList, formatMssqlHighAvailabilityConfigList };
 };
 
@@ -3631,6 +3655,8 @@ export const formatGetWellData = (
         getCardsData(data || ({} as AssessmentResponseInterface), optimizingData, showDismissedView);
 
     const optBreakDown = formatOptimizationBreakDown(cardsData, data);
+    dispatch(setGwDatabaseStorageType(data?.deploymentType || ''));
+    dispatch(setGwDatabaseAoagStorageType(data?.baseDeploymentType || ''));
 
     // For Reset Password data
     dispatch(

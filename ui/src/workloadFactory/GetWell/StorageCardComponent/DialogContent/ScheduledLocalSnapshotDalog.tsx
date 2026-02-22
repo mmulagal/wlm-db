@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Button, DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
+import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
@@ -13,6 +14,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { formatCronSchedule } from './cronUtils';
 
 const ScheduledLocalSnapshotDalog = ({ type, data }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const {
         selectedResourceId,
@@ -198,6 +200,15 @@ const ScheduledLocalSnapshotDalog = ({ type, data }: any) => {
                         </div>
                         <DsTypography variant="Regular_14">
                             No disruption to your service is expected during this process.
+                        </DsTypography>
+                    </div>
+
+                    <div className={styles.row}>
+                        <div>
+                            <Bullet />
+                        </div>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.well-architect.scheduled-local-snapshot-note-aoag')}
                         </DsTypography>
                     </div>
 

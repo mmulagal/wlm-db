@@ -1248,8 +1248,8 @@ const DashboardInnerPage = () => {
                 setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
                     configurationState: selectedConfigSummary.configState,
-                    cardHeight: prev.cardHeight || '208px',
-                    tagHeight: prev.tagHeight || '305px',
+                    cardHeight: prev.cardHeight || '228px',
+                    tagHeight: prev.tagHeight || '325px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.transaction_log_drive_size?.recommendation?.description,

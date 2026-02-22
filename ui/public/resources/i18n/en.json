@@ -577,7 +577,7 @@
             "storage-tier-what-will-happen-content2": "Cloud retrieval policy update: The cloud retrieval policy will be updated.",
             "storage-tier-what-will-happen-content3": "Data movement: The data will move gradually from the capacity tier to the performance tier.",
             "file-system-headroom-action-summary": "Workload Factory recommends increasing the FSx for ONTAP file system capacity to maintain the right headroom. However, the required modify permissions are currently missing.",
-            "log-drive-size-action-summary": "Workload Factory recommends updating the provisioned capacity for your SQL Server log volume and iSCSI LUN so that their sizing will be 25% of the user data volume.",
+            "log-drive-size-action-summary": "Workload Factory recommends updating the provisioned capacity for your SQL Server log volume and iSCSI LUN so that their sizing will be 25% of the user data volume (and an additional 20% buffer for primary replica of database in Availability Group).",
             "log-drive-size-what-will-happen": "Log volume provisioned capacity update: The provisioned capacity of your SQL Server log volume and iSCSI LUN will be increased to maintain the right sizing relative to the user data volume.",
             "tempdb-drive-size-action-summary": "Workload Factory recommends updating the provisioned capacity for your SQL Server TempDB volume and iSCSI LUN so that their sizing will be 10% of the user data volume.",
             "tempdb-drive-size-what-will-happen": "TempDB volume provisioned capacity update: The provisioned capacity of your SQL Server TempDB volume and iSCSI LUN will be increased to maintain the right sizing relative to the user data volume.",
@@ -634,6 +634,7 @@
             "failover-cluster-action-summary": "Workload Factory recommends updating the failover cluster instance (FCI) configuration of Microsoft SQL Server to ensure high availability and reduce downtime.",
             "shared-storage-action-summary": "All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover.",
             "shared-storage-what-will-happen": "The iSCSI LUN will be mounted to both nodes.",
+            "snapshot-copy-reserve-aoag-note": "For AOAG, it is recommended to update this configuration on volumes hosting the primary replica first.",
             "failover-cluster-note1": "No disruption to your services are expected during this process.",
             "failover-cluster-note2": "Click continue to authorize Workload Factory to automatically perform these actions on your behalf.",
             "failover-cluster-note3": "This process might require a temporary downtime of your SQL Server services. To avoid unintended downtime or data loss, perform necessary backups, notify affected users, and schedule the change during a maintenance window.",
@@ -654,10 +655,14 @@
             "heartbeat-setting-what-will-happen-content5": "CrossSubnetDelay will be set to 1000 milliseconds.",
             "heartbeat-setting-what-will-happen-content6": "CrossSiteDelay will be set to 1000 milliseconds.",
             "cluster-quorum-action-summary": "The quorum configuration should be tailored to a 2-node cluster with a disk witness.",
+            "cluster-quorum-aoag-standalone-action-summary": "The quorum configuration should be set to node majority with cloud witness.",
             "cluster-quorum-what-will-happen": "Workload Factory will configure the cluster quorum setting to 'Node and Disk Majority' to prevent unnecessary failovers.",
-            "sql-server-configuration-action-summary1": "Workload Factory recommends updating the failover configuration of SQL to ensure high availability and reduce downtime.",
-            "sql-server-configuration-action-summary2": "SQL Server services should be set to start automatically and run on the primary node and stopped on the secondary node.",
-            "sql-server-configuration-what-will-happen": "Server services will be set to start automatically and run on the primary node and stopped on the secondary node.",
+            "sql-server-configuration-action-summary1": "Workload Factory recommends updating the standalone SQL service.",
+            "sql-server-configuration-action-summary2": "SQL Server services startup  should be set to automatic so that Windows starts the service automatically on reboot.",
+            "sql-server-configuration-fci-action-summary1": "Workload Factory recommends updating the failover configuration of SQL to ensure high availability and reduce downtime.",
+            "sql-server-configuration-fci-action-summary2": "SQL Server service startup  should be set to manual so that Windows Server Failover Cluster can control automatic failover of service.",
+            "sql-server-configuration-what-will-happen": "SQL Server service startup will be set to automatic.",
+            "sql-server-configuration-fci-what-will-happen": "SQL Server service startup will be set to manual and service will be set to running state on primary node.",
             "sql-service-startup-type-config": "SQL Server (MSSQLSERVER) service startup type will be set to manual on node-",
             "sql-service-role-ownership-config": "SQL Server (MSSQLSERVER) service role ownership will be transferred to primary node",
             "mtu-alignment-action-summary-heading": "Action Summary",
@@ -793,7 +798,9 @@
             "mssql-os-patch-mssql-patch-content5": "Follow the steps to apply the missing patches listed above according to your organization’s policies.",
             "mssql-os-patch-mssql-patch-content6": "Ensure that all patches are successfully installed.",
             "mssql-os-patch-note1": "It is recommended that these updates are performed during a maintenance window to minimize any potential disruption to your services.",
+            "mssql-os-patch-note-aoag": "When patching SQL for AOAG, update secondary replicas first, confirm synchronization health, then patch the primary. This minimizes the risk of unwanted failovers.",
             "mssql-os-patch-note2": "It is recommended to perform these updates during a maintenance window to minimize any potential disruption to your services.",
+            "scheduled-local-snapshot-note-aoag": "In AOAG, take local snapshots on secondary replicas before the primary to offload workload, and coordinate timing across all replicas for point-in-time consistency.",
             "kb-id": "KB",
             "cve-id": "CVE",
             "name": "Name",
@@ -1861,7 +1868,7 @@
             "jm-type-register-resource": "Register resource"
         },
         "wad": {
-            "tab-disabled-message": "To enable all functionalities, please register the instance first.",
+            "tab-disabled-message": "The one-time assessment lets you check the well-architected status of your Microsoft SQL Server instances and get recommendations. To use other features, register the instance first.",
             "register-disabled-no-credentials": "Registration requires AWS credentials. Add database credentials to register this instance."
         }
     }

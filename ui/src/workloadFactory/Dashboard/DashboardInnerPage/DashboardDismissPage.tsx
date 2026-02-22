@@ -299,8 +299,8 @@ const DashboardDismissPage = () => {
                     instances: selectedConfigSummary.totalInstances,
                     configurationState: selectedConfigSummary.configState,
                     severity: selectedConfigSummary.severity,
-                    cardHeight: '208px',
-                    tagHeight: '305px',
+                    cardHeight: '228px',
+                    tagHeight: '325px',
                     data: {
                         title: 'Recommendations',
                         description: cardDataDefault?.transaction_log_drive_size?.recommendation?.description,

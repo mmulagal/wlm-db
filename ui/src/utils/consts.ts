@@ -1497,4 +1497,11 @@ export const ENGINE_TYPES = {
     POSTGRESQL: 'PostgreSQL'
 };
 
-export const WA_FLAG_SKIP = ['isASMManaged', 'deploymentType', 'isStorageLayoutFra', 'storageProtocol', 'isWad'];
+export const WA_FLAG_SKIP = [
+    'isASMManaged',
+    'deploymentType',
+    'isStorageLayoutFra',
+    'storageProtocol',
+    'isWad',
+    'baseDeploymentType'
+];

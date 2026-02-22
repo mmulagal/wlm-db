@@ -1,11 +1,17 @@
-import { ASSESSMENT_CONFIG_NAMES } from './consts';
+import { ASSESSMENT_CONFIG_NAMES, DATABASE_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from './consts';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from './appConstants';
 import enTranslations from '../../public/resources/i18n/en.json';
 import { engineTypeText, ontapConfigTextSet } from './dialogContentUtils';
 
 const wellArchitectMessages = enTranslations.databases['well-architect'];
 
-function getActionSummaryMessages(configName: string, databaseType: string, objectsInViolation?: string[]): string {
+function getActionSummaryMessages(
+    configName: string,
+    databaseType: string,
+    objectsInViolation?: string[],
+    deploymentType?: string,
+    baseDeploymentType?: string
+): string {
     switch (configName) {
         case ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION:
             return [
@@ -131,6 +137,26 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
                 configSection1
             ].join(' ');
         }
+        case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE: {
+            const ontapConfigText1 = ontapConfigTextSet(configName, databaseType);
+            const configSection1 = Array.isArray(ontapConfigText1) ? ontapConfigText1.join(' ') : ontapConfigText1;
+            return [
+                wellArchitectMessages['autosize-action-summary'].replace(
+                    '{{engineType}}',
+                    engineTypeText(databaseType)
+                ),
+                wellArchitectMessages['what-will-happen'],
+                wellArchitectMessages['autosize-what-will-happen'].replace(
+                    '{{engineType}}',
+                    engineTypeText(databaseType)
+                ),
+                wellArchitectMessages.note1,
+                wellArchitectMessages['snapshot-copy-reserve-aoag-note'],
+                wellArchitectMessages.note2,
+                'Well-architected configuration:',
+                configSection1
+            ].join(' ');
+        }
 
         case ASSESSMENT_CONFIG_NAMES.OS_TYPE:
         case ASSESSMENT_CONFIG_NAMES.SPACE_RESERVATION:
@@ -249,7 +275,10 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
         case ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM:
             return [
                 wellArchitectMessages['failover-cluster-action-summary'],
-                wellArchitectMessages['cluster-quorum-action-summary'],
+                deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS &&
+                baseDeploymentType === DATABASE_DEPLOYMENT_MODE.STANDALONE
+                    ? wellArchitectMessages['cluster-quorum-aoag-standalone-action-summary']
+                    : wellArchitectMessages['cluster-quorum-action-summary'],
                 wellArchitectMessages['what-will-happen'],
                 wellArchitectMessages['cluster-quorum-what-will-happen'],
                 wellArchitectMessages['failover-cluster-note1']
@@ -258,6 +287,20 @@ function getActionSummaryMessages(configName: string, databaseType: string, obje
         case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE: {
             const ontapConfigText7 = ontapConfigTextSet(configName, databaseType, objectsInViolation);
             const configSection7 = Array.isArray(ontapConfigText7) ? ontapConfigText7.join(' ') : ontapConfigText7;
+            if (
+                deploymentType === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE_CAPS ||
+                baseDeploymentType === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE_CAPS
+            ) {
+                return [
+                    wellArchitectMessages['sql-server-configuration-fci-action-summary1'],
+                    wellArchitectMessages['sql-server-configuration-fci-action-summary2'],
+                    wellArchitectMessages['what-will-happen'],
+                    wellArchitectMessages['sql-server-configuration-fci-what-will-happen'],
+                    wellArchitectMessages['failover-cluster-note1'],
+                    'Well-architected configuration:',
+                    configSection7
+                ].join(' ');
+            }
             return [
                 wellArchitectMessages['sql-server-configuration-action-summary1'],
                 wellArchitectMessages['sql-server-configuration-action-summary2'],

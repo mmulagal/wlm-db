@@ -15,6 +15,7 @@ const initialState: GetWellSliceInterface = {
     selectedGwInstanceCredId: '',
     selectedGwInstanceRegionId: '',
     selectedDatabaseStorageType: '',
+    selectedDatabaseAoagStorageType: '',
     selectedRowFsxId: '',
     cardData: cardDataDefault,
     osConfigTableData: null,
@@ -127,6 +128,9 @@ const getWellOptimizeSlice = createSlice({
         setGwDatabaseStorageType: (state, action: PayloadAction<any>) => {
             state.selectedDatabaseStorageType = action.payload;
         },
+        setGwDatabaseAoagStorageType: (state, action: PayloadAction<any>) => {
+            state.selectedDatabaseAoagStorageType = action.payload;
+        },
         setCardData: (state, action: PayloadAction<any>) => {
             state.cardData = action.payload;
         },
@@ -160,6 +164,7 @@ const getWellOptimizeSlice = createSlice({
             state.selectedDatabaseInstance = '';
             state.selectedDatabaseInstanceName = '';
             state.selectedDatabaseStorageType = '';
+            state.selectedDatabaseAoagStorageType = '';
             state.selectedRowFsxId = '';
             state.cardData = cardDataDefault;
             state.osConfigTableData = null;
@@ -221,6 +226,7 @@ const getWellOptimizeSlice = createSlice({
             state.selectedGwInstanceCredId = action.payload.credId;
             state.selectedGwInstanceRegionId = action.payload.regionId;
             state.selectedDatabaseStorageType = action.payload.storageType;
+            state.selectedDatabaseAoagStorageType = action.payload.storageAoagType;
             state.isWad = action.payload.isWad || false;
         },
         setLandingFromInnerPage: (state, action: PayloadAction<any>) => {
@@ -266,6 +272,7 @@ export const {
     setGwDatabaseInstance,
     setGwDatabaseInstanceName,
     setGwDatabaseStorageType,
+    setGwDatabaseAoagStorageType,
     setCardData,
     setOsConfigTableData,
     setOntapConfigTableData,

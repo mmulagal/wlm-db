@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 
 type MSSQLPatchDialogProps = {
     type: string;
@@ -271,12 +272,25 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                 </DsTypography>
                 <div className={styles.content}>
                     <div className={styles.row}>
+                        <div>
+                            <Bullet />
+                        </div>
                         <DsTypography variant="Regular_14">
                             {type === 'mssqlPatch'
                                 ? t('databases.well-architect.mssql-os-patch-note1')
                                 : t('databases.well-architect.mssql-os-patch-note2')}
                         </DsTypography>
                     </div>
+                    {type === 'mssqlPatch' && (
+                        <div className={styles.row}>
+                            <div>
+                                <Bullet />
+                            </div>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.mssql-os-patch-note-aoag')}
+                            </DsTypography>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

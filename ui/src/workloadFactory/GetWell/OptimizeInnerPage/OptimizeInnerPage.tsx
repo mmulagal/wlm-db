@@ -182,8 +182,8 @@ const OptimizeInnerPage = () => {
                 break;
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 setCardHeight({
-                    recommendationSection: '208px',
-                    tagSection: '304px'
+                    recommendationSection: '228px',
+                    tagSection: '324px'
                 });
                 break;
 

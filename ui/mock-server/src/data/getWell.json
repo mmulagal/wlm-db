@@ -4,7 +4,9 @@
     "ec2InstanceId": "i-0a1f31a39bd2d9362",
     "databaseHostName": "DBHost",
     "databaseInstanceName": "MSSQLSERVER",
-    "deploymentType": "FCI",
+    "deploymentType": "AOAG",
+    "baseDeploymentType": "Standalone",
+    "replicaRole": "mixed",
     "storage": {
         "timestamp": 1730074791000,
         "optimisedCount": {

@@ -317,7 +317,11 @@ const DialogComponent = ({
                         isDisabled={disabledCheck() || refreshSandboxDisabled}
                         isLoading={primaryButtonLoad}
                         onClick={primaryButtonClick}
-                        title={primaryButtonTooltip}
+                        title={
+                            <DsTypography variant="Regular_13" style={{ maxWidth: '300px' }}>
+                                {primaryButtonTooltip}
+                            </DsTypography>
+                        }
                         data-testid={testId}
                     >
                         {primaryButton}

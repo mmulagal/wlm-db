@@ -104,6 +104,7 @@ export interface AssessmentResponseInterface {
     databaseInstanceName: string;
     lastAssessmentTimestamp?: string;
     deploymentType?: string;
+    baseDeploymentType?: string;
     isASMManaged?: boolean;
     storageProtocol?: string;
     isStorageLayoutFra?: boolean;
@@ -223,6 +224,7 @@ export interface GetWellSliceInterface {
     selectedGwInstanceCredId: string;
     selectedGwInstanceRegionId: string;
     selectedDatabaseStorageType: string;
+    selectedDatabaseAoagStorageType: string;
     selectedRowFsxId: string;
     cardData: any;
     osConfigTableData: PerConfigInterface[] | null;

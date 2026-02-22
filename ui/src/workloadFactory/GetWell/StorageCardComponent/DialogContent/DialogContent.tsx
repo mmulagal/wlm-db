@@ -14,7 +14,14 @@ import {
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { ASSESSMENT_CONFIG_NAMES, AWS_RESIZE_URL, DBType, GETWELL_STATUS } from '../../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    AWS_RESIZE_URL,
+    DATABASE_DEPLOYMENT_MODE,
+    DBType,
+    GETWELL_STATUS,
+    SQL_DEPLOYMENT_MODE
+} from '../../../../utils/consts';
 import { engineTypeText, ontapConfigTextSet } from '../../../../utils/dialogContentUtils';
 import MSSQLPatchDialog from './MSSQLPatchDialog';
 
@@ -97,9 +104,12 @@ const DialogContent = ({
 }: DialogType) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const { selectedRecommendedInstance, selectedDatabaseStorageType, recommendedInstanceInBulk } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const {
+        selectedRecommendedInstance,
+        selectedDatabaseStorageType,
+        selectedDatabaseAoagStorageType,
+        recommendedInstanceInBulk
+    } = useAppSelector(state => state.getWellOptimize);
 
     const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
@@ -468,7 +478,7 @@ const DialogContent = ({
             case 'Autosize':
             case 'Autosize-mode':
             case 'Fractional reserve':
-            case 'Snapshot copy reserve':
+
             case 'Snapshot autodelete':
             case 'Space management':
             case 'Tiering policy':
@@ -484,7 +494,22 @@ const DialogContent = ({
                     createStandardNotesSection(),
                     createONTAPConfigSection()
                 );
-
+            case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE:
+                return createStandardDialog(
+                    t,
+                    t('databases.well-architect.autosize-action-summary', { engineType: engineTypeText(engineType) }),
+                    t('databases.well-architect.autosize-what-will-happen', { engineType: engineTypeText(engineType) }),
+                    createSection(
+                        t('databases.well-architect.note'),
+                        createContentWithBullets([
+                            t('databases.well-architect.failover-cluster-note1'),
+                            t('databases.well-architect.snapshot-copy-reserve-aoag-note'),
+                            t('databases.well-architect.failover-cluster-note2')
+                        ]),
+                        { width: '712px' }
+                    ),
+                    createONTAPConfigSection()
+                );
             case 'OS type':
             case 'Space reservation':
             case 'Space allocation':
@@ -620,14 +645,29 @@ const DialogContent = ({
                     t,
                     [
                         t('databases.well-architect.failover-cluster-action-summary'),
-                        t('databases.well-architect.cluster-quorum-action-summary')
+                        selectedDatabaseStorageType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS &&
+                        selectedDatabaseAoagStorageType === DATABASE_DEPLOYMENT_MODE.STANDALONE
+                            ? t('databases.well-architect.cluster-quorum-aoag-standalone-action-summary')
+                            : t('databases.well-architect.cluster-quorum-action-summary')
                     ],
                     t('databases.well-architect.cluster-quorum-what-will-happen'),
                     // createONTAPConfigSection(),  will be added again after the dynamic values are populated
                     <></>,
                     createClusterQuorumSQLNotesSection(t)
                 );
-            case 'SQL Server Service':
+            case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
+                if (selectedDatabaseStorageType === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE_CAPS) {
+                    return createFailoverClusterDialog(
+                        t,
+                        [
+                            t('databases.well-architect.sql-server-configuration-fci-action-summary1'),
+                            t('databases.well-architect.sql-server-configuration-fci-action-summary2')
+                        ],
+                        t('databases.well-architect.sql-server-configuration-fci-what-will-happen'),
+                        createONTAPConfigSection(),
+                        createClusterQuorumSQLNotesSection(t)
+                    );
+                }
                 return createFailoverClusterDialog(
                     t,
                     [

@@ -253,6 +253,7 @@ interface ComprehensiveAssessmentData {
     ec2InstanceId?: string;
     databaseInstanceName?: string;
     deploymentType?: string;
+    baseDeploymentType?: string;
     databaseHostName?: string;
 }
 
@@ -831,7 +832,11 @@ const createComputeRightsizingData = (config: AssessmentItem, details: any[]) =>
     }
 };
 
-const createBaseConfigurationObject = (config: AssessmentItem, databaseType: string) => ({
+const createBaseConfigurationObject = (
+    config: AssessmentItem,
+    databaseType: string,
+    data: ComprehensiveAssessmentData
+) => ({
     'Configuration name': getConfigurationDisplayName(config.name, databaseType),
     ...(config.status && { Status: config.status }),
     ...(config.severity && { Severity: config.severity }),
@@ -842,7 +847,9 @@ const createBaseConfigurationObject = (config: AssessmentItem, databaseType: str
         getActionSummaryMessages(
             getConfigurationDisplayName(config.name, databaseType),
             databaseType,
-            config.objectsInViolation
+            config.objectsInViolation,
+            data?.deploymentType,
+            data?.baseDeploymentType
         ) || 'n/a',
     'Impacted resources (X out of Y)':
         'errorMessage' in config && config.errorMessage
@@ -1026,7 +1033,7 @@ function generateDetailedConfigurationData(
     const details: any[] = [];
 
     // Base configuration info
-    const baseConfig = createBaseConfigurationObject(config, databaseType);
+    const baseConfig = createBaseConfigurationObject(config, databaseType, data);
 
     details.push(baseConfig);
 
