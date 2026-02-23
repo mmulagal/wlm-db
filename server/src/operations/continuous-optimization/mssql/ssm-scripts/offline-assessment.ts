@@ -29,14 +29,20 @@ import { INSTANCE_GUID, SERVER_DETAILS, ENTERPRISE_CHECK_QUERY } from '../../../
 const OFFLINE_ASSESSMENT_SCRIPT_VERSION = '1.0.0';
 
 const MSSQL_ONE_TIME_WAD = `
+#=====================================================================================
+#        NETAPP CONSOLE WORKLOAD FACTORY - MSSQL SERVER ONE TIME ASSESSMENT COLLECTOR
+#        Version 1.0.0
+#        Copyright (c) 2026 NetApp, Inc. All rights reserved.
+#=====================================================================================
+
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    MSSQL Workload Assessment Script for NetApp ONTAP Storage
+    MSSQL One Time Assessment Script for NetApp ONTAP Storage
 .DESCRIPTION
     This script performs a comprehensive assessment of your SQL Server environment
-    and its storage configuration on NetApp ONTAP storage systems (Amazon FSx for
-    NetApp ONTAP or Cloud Volumes ONTAP). It collects:
+    and its storage configuration on NetApp ONTAP storage systems (Amazon FSx forNetApp ONTAP). 
+    It collects:
     - SQL Server instance configuration and version information
     - Mapped ONTAP volumes and LUN details
     - Storage configuration best practices analysis
@@ -47,12 +53,76 @@ const MSSQL_ONE_TIME_WAD = `
     in the current working directory. You can specify a custom output path using
     the -OutputPath parameter.
 .PARAMETER StorageEndpoint
-    The storage system identifier. For FSx for ONTAP, use the file system ID
-    (e.g., fs-0123456789abcdef0). For Cloud Volumes ONTAP or direct connections,
-    use the ONTAP management IP address.
+    The storage system identifier that uniquely identifies the Amazon FSx for NetApp
+    ONTAP file system to be assessed. This parameter is required and must be provided
+    in one of two formats:
+    
+    Option 1 - FSx File System ID:
+    - Format: fs-xxxxxxxxxxxxxxxxx (where x is alphanumeric)
+    - Example: fs-0123456789abcdef0
+    - This is the AWS file system ID that uniquely identifies your FSx for ONTAP
+      file system. You can find this ID in the AWS Console under FSx, or by using
+      the AWS CLI command: aws fsx describe-file-systems
+    - When an FSx ID is provided, the script will automatically construct the
+      management endpoint using the format: management.<fsx-id>.fsx.<region>.amazonaws.com
+    - If the management domain cannot be resolved, the script will fall back to
+      retrieving the management IP address from AWS FSx API
+    
+    Option 2 - FSx Management IP Address:
+    - Format: Valid IPv4 address (e.g., 10.0.1.100)
+    - Example: 192.168.1.50
+    - This is the management IP address of your FSx for ONTAP file system's
+      management endpoint
+    - The management IP is the network endpoint used to access the ONTAP REST API
+      for administrative operations
+    - You can find the management IP in the AWS Console under FSx file system
+      details (ONTAP Configuration > Management Endpoint), or by using the AWS CLI:
+      aws fsx describe-file-systems --file-system-id <fsx-id> --query
+      'FileSystems[0].OntapConfiguration.Endpoints.Management.IpAddresses[0]'
+    - Ensure this IP address is reachable from the host where the script is running
+      and that network connectivity is available on the management network
+    - When a management IP is provided, the script will use it directly to connect
+      to the FSx ONTAP storage system
+    
+    The script automatically detects which format you've provided by checking if
+    the value starts with "fs-" (FSx ID) or matches an IPv4 address pattern
+    (management IP). The StorageEndpoint is used to authenticate and connect to
+    the FSx ONTAP storage system to retrieve volume details, LUN information, storage
+    configuration, and aggregate capacity data during the assessment.
+    
 .PARAMETER Instance
-    The name of the SQL Server instance to assess. Use 'MSSQLSERVER' for the
-    default instance, or the instance name for named instances.
+    The name of the SQL Server instance to assess. This parameter is required and
+    specifies which SQL Server database instance on the local host should be
+    evaluated for workload assessment and discovery.
+    
+    For the Default SQL Server Instance:
+    - Use the literal string: 'MSSQLSERVER' (case-insensitive)
+    - This is the standard name for the default SQL Server instance that was
+      installed without specifying a custom instance name
+    - The default instance listens on the standard SQL Server port (1433) and
+      can be accessed using just the server hostname or IP address
+    - Example: If your server is named "SQLSERVER01" and you installed SQL Server
+      as the default instance, use: -Instance MSSQLSERVER
+    
+    For Named SQL Server Instances:
+    - Use the exact instance name as it was configured during SQL Server installation
+    - Example: If you installed SQL Server with instance name "PROD", use: -Instance PROD
+    - Example: If you installed SQL Server with instance name "SQLInstance1", use:
+      -Instance SQLInstance1
+    - Named instances can be accessed using the format: <hostname>\\<instancename>
+      or <hostname>\\<instancename>,<port>
+    
+    The script uses this instance name to:
+    - Connect to SQL Server using Windows Authentication (preferred) or SQL Authentication
+    - Query SQL Server system views and dynamic management views (DMVs) to collect
+      database configuration, version information, and volume mappings
+    - Identify which databases and files are stored on ONTAP volumes
+    - Assess high availability configurations (FCI, AOAG) for the specific instance
+    - Collect enterprise feature usage for license optimization analysis
+    
+    Note: The script will attempt to connect using multiple instance name formats
+    (e.g., COMPUTERNAME\\InstanceName) if the initial connection fails. Ensure
+    the SQL Server instance is running and accessible before running the assessment.
 .PARAMETER OutputPath
     Optional. The directory path where JSON output files should be created.
     If the path doesn't exist, it will be created. If the path cannot be used
@@ -105,12 +175,13 @@ Function Write-Log {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $logMessage = "[$timestamp] [$Level] $Message"
     
-    # Write to console with color based on level
-    switch ($Level) {
-        "WARNING" { Write-Host $logMessage -ForegroundColor Yellow }
-        "ERROR" { Write-Host $logMessage -ForegroundColor Red }
-        "DEBUG" { Write-Host $logMessage -ForegroundColor Gray }
-        default { Write-Host $logMessage }
+    # Write to console with color based on level (DEBUG messages skip console output)
+    if ($Level -ne "DEBUG") {
+        switch ($Level) {
+            "WARNING" { Write-Host $logMessage -ForegroundColor Yellow }
+            "ERROR" { Write-Host $logMessage -ForegroundColor Red }
+            default { Write-Host $logMessage }
+        }
     }
     
     # Write to log file if path is set
@@ -123,8 +194,19 @@ if ($StorageEndpoint -match '^fs-[a-zA-Z0-9]+$') {
     $FSxID = $StorageEndpoint
     Write-Log "StorageEndpoint detected as FSx ID: $FSxID"
 } else {
-    $ManagementIP = $StorageEndpoint
-    Write-Log "StorageEndpoint detected as Management IP: $ManagementIP"
+    # Check if it's a valid IP address (IPv4)
+    $ipAddress = $null
+    $isValidIP = [System.Net.IPAddress]::TryParse($StorageEndpoint, [ref]$ipAddress)
+    
+    if ($isValidIP -and $ipAddress.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork) {
+        $ManagementIP = $StorageEndpoint
+        Write-Log "StorageEndpoint detected as Management IP: $ManagementIP"
+    } else {
+        $errorMessage = "Invalid StorageEndpoint format: '$StorageEndpoint'. StorageEndpoint must be either an FSx ID (format: fs-xxxxxxxxxxxxxxxxx) or a valid IPv4 Management IP address."
+        Write-Log -Level "ERROR" -Message $errorMessage
+        Write-Log -Level "ERROR" -Message "Usage: .\\MSSQL_OneTimeWAD.ps1 -StorageEndpoint <FSxID or ManagementIP> -Instance <InstanceName>"
+        throw $errorMessage
+    }
 }
 
 # Validate Instance parameter
@@ -152,14 +234,16 @@ Function Get-CredentialFromWindowsCredentialManager {
                         Password = $password
                         Source = "WindowsCredentialManager"
                     }
+                } else {
+                    Write-Log -Level "DEBUG" -Message "Credential not found in Windows Credential Manager for target: $targetName"
                 }
             } catch {
-                Write-Debug "Credential '$targetName' not found: $($_.Exception.Message)"
+                Write-Log -Level "DEBUG" -Message "Error retrieving credential '$targetName' from Windows Credential Manager: $($_.Exception.Message)"
             }
         }
         return $null
     } catch {
-        Write-Debug "Error accessing Windows Credential Manager: $($_.Exception.Message)"
+        Write-Log -Level "DEBUG" -Message "Error accessing Windows Credential Manager: $($_.Exception.Message)"
         return $null
     }
 }
@@ -179,6 +263,7 @@ Function Get-CredentialFromSecretsManager {
         
         foreach ($secretName in $SecretNames) {
             try {
+                Write-Log -Level "DEBUG" -Message "Attempting to retrieve secret: $secretName from region: $Region"
                 $secret = Get-SECSecretValue -SecretId $secretName -Region $Region -ErrorAction SilentlyContinue
                 if ($secret -and $secret.SecretString) {
                     $secretData = $secret.SecretString | ConvertFrom-Json
@@ -189,10 +274,14 @@ Function Get-CredentialFromSecretsManager {
                             Password = $secretData.password
                             Source = "SecretsManager"
                         }
+                    } else {
+                        Write-Log -Level "DEBUG" -Message "Secret '$secretName' does not contain required username/password fields"
                     }
+                } else {
+                    Write-Log -Level "DEBUG" -Message "Secret '$secretName' returned null or empty SecretString"
                 }
             } catch {
-                Write-Debug "Secret '$secretName' not found or inaccessible: $($_.Exception.Message)"
+                Write-Log -Level "DEBUG" -Message "Secret '$secretName' not found or inaccessible: $($_.Exception.Message)"
             }
         }
         
@@ -228,7 +317,7 @@ Function Get-CredentialInteractive {
         if (-not [string]::IsNullOrEmpty($DefaultUsername)) {
             $username = $DefaultUsername
         } elseif (-not $AllowEmptyUsername) {
-            Write-Log -Level "WARNING" -Message "$CredentialType username cannot be empty"
+            Write-Log -Level "WARNING" -Message "$CredentialType username cannot be empty. Please enter a valid username."
             return $null
         }
     }
@@ -267,14 +356,19 @@ Function Test-SqlConnection {
         
         if ([string]::IsNullOrEmpty($Username)) {
             # Windows Authentication
+            Write-Log -Level "DEBUG" -Message "Executing sqlcmd with Windows Authentication: sqlcmd -S $ExecutableInstance -Q '$testQuery'"
             $result = sqlcmd -S $ExecutableInstance -Q $testQuery -h -1 -W 2>&1
         } else {
             # SQL Authentication
+            Write-Log -Level "DEBUG" -Message "Executing sqlcmd with SQL Authentication: sqlcmd -S $ExecutableInstance -U $Username -Q '$testQuery'"
             $result = sqlcmd -S $ExecutableInstance -U $Username -P $Password -Q $testQuery -h -1 -W 2>&1
         }
         
+        Write-Log -Level "DEBUG" -Message "sqlcmd exit code: $LASTEXITCODE, result: $($result -join ' ')"
+        
         if ($LASTEXITCODE -eq 0 -and $result -match "^1") {
             Write-Log "$authType Authentication successful for instance: $ExecutableInstance"
+            Write-Log -Level "DEBUG" -Message "Authentication test passed for instance: $ExecutableInstance"
             return @{
                 Success = $true
                 ErrorMessage = $null
@@ -297,7 +391,7 @@ Function Test-SqlConnection {
             ErrorMessage = $errorMsg
         }
     } catch {
-        $errorMsg = "$authType Authentication test error for instance $ExecutableInstance : $($_.Exception.Message)"
+        $errorMsg = "Failed to test $authType authentication for SQL instance '$ExecutableInstance'. Error: $($_.Exception.Message). Please verify the instance name and that SQL Server is running."
         Write-Log -Level "WARNING" -Message $errorMsg
         return @{
             Success = $false
@@ -310,8 +404,6 @@ Function Get-SqlCredentials {
     param(
         [Parameter(Mandatory = $true)]
         [string]$InstanceName,
-        [Parameter(Mandatory = $true)]
-        [string]$ExecutableInstance,
         [Parameter(Mandatory = $false)]
         [string]$Region = $null,
         [Parameter(Mandatory = $false)]
@@ -320,22 +412,46 @@ Function Get-SqlCredentials {
         [int]$MaxRetries = 3
     )
     
-    $windowsAuthResult = Test-SqlConnection -ExecutableInstance $ExecutableInstance
+    $serverInstanceName = $InstanceName
+    
+    # Determine initial executable instance based on serverInstanceName
+    if ($serverInstanceName -eq 'MSSQLSERVER') {
+        $executableInstance = $env:COMPUTERNAME
+    } else {
+        $executableInstance = $serverInstanceName
+    }
+    
+    Write-Log -Level "DEBUG" -Message "Starting credential resolution for SQL instance: $serverInstanceName, Initial ExecutableInstance: $executableInstance, Region: $Region, Hostname: $Hostname"
+    
+    # Test connection with initial executable instance
+    $windowsAuthResult = Test-SqlConnection -ExecutableInstance $executableInstance
+    Write-Log -Level "DEBUG" -Message "Windows Authentication test result: Success=$($windowsAuthResult.Success), ErrorMessage=$($windowsAuthResult.ErrorMessage)"
+    
+    # If test-connection fails and this is a named instance (not MSSQLSERVER), try with COMPUTERNAME\\serverInstanceName format
+    if (-not $windowsAuthResult.Success -and $serverInstanceName -ne 'MSSQLSERVER') {
+        Write-Log -Level "DEBUG" -Message "Initial connection test failed for named instance, trying with COMPUTERNAME\\serverInstanceName format"
+        $executableInstance = "$env:COMPUTERNAME\\$serverInstanceName"
+        $windowsAuthResult = Test-SqlConnection -ExecutableInstance $executableInstance
+        Write-Log -Level "DEBUG" -Message "Retry Windows Authentication test result: Success=$($windowsAuthResult.Success), ErrorMessage=$($windowsAuthResult.ErrorMessage)"
+    }
+    
     if ($windowsAuthResult.Success) {
+        Write-Log -Level "DEBUG" -Message "Windows Authentication successful, returning credentials"
         return @{
             UseWindowsAuth = $true
             Username = $null
             Password = $null
             Source = "WindowsAuthentication"
+            ExecutableInstance = $executableInstance
         }
     }
     
     Write-Log "Windows Authentication not available, trying SQL Authentication..."
     
     $ValidateSqlCredentials = {
-        param($Credentials, $Source)
+        param($Credentials, $Source, $ExecInstance)
         
-        $testResult = Test-SqlConnection -ExecutableInstance $ExecutableInstance -Username $Credentials.Username -Password $Credentials.Password
+        $testResult = Test-SqlConnection -ExecutableInstance $ExecInstance -Username $Credentials.Username -Password $Credentials.Password
         if ($testResult.Success) {
             Write-Log "SQL Authentication validated successfully (source: $Source)"
             return @{
@@ -343,6 +459,7 @@ Function Get-SqlCredentials {
                 Username = $Credentials.Username
                 Password = $Credentials.Password
                 Source = $Source
+                ExecutableInstance = $ExecInstance
             }
         } else {
             Write-Log -Level "WARNING" -Message "SQL credentials from $Source are invalid: $($testResult.ErrorMessage)"
@@ -351,23 +468,38 @@ Function Get-SqlCredentials {
     }
     
     if (-not [string]::IsNullOrEmpty($Region)) {
-        $credentials = Get-CredentialFromSecretsManager -SecretNames @("$Hostname/$InstanceName") -Region $Region -CredentialType "SQL"
+        Write-Log -Level "DEBUG" -Message "Region available ($Region), attempting Secrets Manager lookup for SQL credentials"
+        $credentials = Get-CredentialFromSecretsManager -SecretNames @("$Hostname/$serverInstanceName") -Region $Region -CredentialType "SQL"
         if ($credentials) {
-            $validatedCreds = & $ValidateSqlCredentials $credentials "SecretsManager"
+            Write-Log -Level "DEBUG" -Message "Credentials retrieved from Secrets Manager, validating..."
+            $validatedCreds = & $ValidateSqlCredentials $credentials "SecretsManager" $executableInstance
             if ($validatedCreds) {
+                Write-Log -Level "DEBUG" -Message "Secrets Manager credentials validated successfully"
                 return $validatedCreds
+            } else {
+                Write-Log -Level "DEBUG" -Message "Secrets Manager credentials failed validation"
             }
+        } else {
+            Write-Log -Level "DEBUG" -Message "No credentials found in Secrets Manager"
         }
     } else {
         Write-Log -Level "WARNING" -Message "AWS region not available, skipping Secrets Manager lookup for SQL credentials"
+        Write-Log -Level "DEBUG" -Message "Region is null or empty, skipping Secrets Manager lookup"
     }
     
-    $credentials = Get-CredentialFromWindowsCredentialManager -TargetNames @($InstanceName)
+    Write-Log -Level "DEBUG" -Message "Attempting Windows Credential Manager lookup for SQL credentials"
+    $credentials = Get-CredentialFromWindowsCredentialManager -TargetNames @($serverInstanceName)
     if ($credentials) {
-        $validatedCreds = & $ValidateSqlCredentials $credentials "WindowsCredentialManager"
+        Write-Log -Level "DEBUG" -Message "Credentials retrieved from Windows Credential Manager, validating..."
+        $validatedCreds = & $ValidateSqlCredentials $credentials "WindowsCredentialManager" $executableInstance
         if ($validatedCreds) {
+            Write-Log -Level "DEBUG" -Message "Windows Credential Manager credentials validated successfully"
             return $validatedCreds
+        } else {
+            Write-Log -Level "DEBUG" -Message "Windows Credential Manager credentials failed validation"
         }
+    } else {
+        Write-Log -Level "DEBUG" -Message "No credentials found in Windows Credential Manager"
     }
     
     $retryCount = 0
@@ -380,7 +512,7 @@ Function Get-SqlCredentials {
         
         $credentials = Get-CredentialInteractive -CredentialType "SQL" -UsernamePrompt "Enter SQL username (e.g., sa)" -AllowEmptyUsername $false
         if ($credentials) {
-            $testResult = Test-SqlConnection -ExecutableInstance $ExecutableInstance -Username $credentials.Username -Password $credentials.Password
+            $testResult = Test-SqlConnection -ExecutableInstance $executableInstance -Username $credentials.Username -Password $credentials.Password
             if ($testResult.Success) {
                 Write-Log "SQL Authentication validated successfully (source: Interactive)"
                 return @{
@@ -388,15 +520,16 @@ Function Get-SqlCredentials {
                     Username = $credentials.Username
                     Password = $credentials.Password
                     Source = "Interactive"
+                    ExecutableInstance = $executableInstance
                 }
             } else {
-                Write-Log -Level "ERROR" -Message "Authentication failed: $($testResult.ErrorMessage)"
+                Write-Log -Level "ERROR" -Message "SQL Server authentication failed: $($testResult.ErrorMessage). Please verify your username and password."
             }
         }
     }
     
     Write-Log -Level "ERROR" -Message "Failed to obtain valid SQL credentials after $MaxRetries attempts"
-    return $null
+    throw "Failed to obtain valid SQL credentials after $MaxRetries attempts. Cannot continue without valid SQL authentication."
 }
 
 Function Get-OntapCredentials {
@@ -408,21 +541,32 @@ Function Get-OntapCredentials {
     )
     
     $credentials = $null
+    Write-Log -Level "DEBUG" -Message "Starting ONTAP credential resolution: StorageEndpoint=$StorageEndpoint, Region=$Region"
     
     if (-not [string]::IsNullOrEmpty($Region)) {
+        Write-Log -Level "DEBUG" -Message "Region available, attempting Secrets Manager lookup for ONTAP credentials"
         $credentials = Get-CredentialFromSecretsManager -SecretNames @($StorageEndpoint) -Region $Region -CredentialType "ONTAP"
         if ($credentials) {
+            Write-Log -Level "DEBUG" -Message "ONTAP credentials retrieved from Secrets Manager, source: $($credentials.Source)"
             return $credentials
+        } else {
+            Write-Log -Level "DEBUG" -Message "No ONTAP credentials found in Secrets Manager"
         }
     } else {
         Write-Log -Level "WARNING" -Message "AWS region not available, skipping Secrets Manager lookup for ONTAP credentials"
+        Write-Log -Level "DEBUG" -Message "Region is null or empty, skipping Secrets Manager lookup"
     }
     
+    Write-Log -Level "DEBUG" -Message "Attempting Windows Credential Manager lookup for ONTAP credentials"
     $credentials = Get-CredentialFromWindowsCredentialManager -TargetNames @($StorageEndpoint)
     if ($credentials) {
+        Write-Log -Level "DEBUG" -Message "ONTAP credentials retrieved from Windows Credential Manager, source: $($credentials.Source)"
         return $credentials
+    } else {
+        Write-Log -Level "DEBUG" -Message "No ONTAP credentials found in Windows Credential Manager"
     }
     
+    Write-Log -Level "DEBUG" -Message "Falling back to interactive credential prompt for ONTAP"
     $credentials = Get-CredentialInteractive -CredentialType "ONTAP" -DefaultUsername "fsxadmin" -UsernamePrompt "Enter ONTAP admin username" -AllowEmptyUsername $false
     return $credentials
 }
@@ -612,7 +756,9 @@ Write-Log "Resolving ONTAP storage credentials..."
 $ontapCreds = Get-OntapCredentials -StorageEndpoint $StorageEndpoint -Region $vmRegion
 
 if (-not $ontapCreds) {
-    throw "Failed to obtain ONTAP storage credentials"
+    $errorMessage = "Failed to obtain ONTAP storage credentials. The script attempted to retrieve credentials from AWS Secrets Manager, Windows Credential Manager, and interactive prompts. Please ensure credentials are available in one of these sources or provide them when prompted."
+    Write-Log -Level "ERROR" -Message $errorMessage
+    throw $errorMessage
 }
 
 $OntapUsername = $ontapCreds.Username
@@ -632,28 +778,38 @@ if (-not [string]::IsNullOrEmpty($ManagementIP)) {
         throw "AWS region is required when using FSx ID. Could not retrieve region from EC2 instance metadata. Either run on an EC2 instance or provide the Management IP instead of FSx ID."
     }
     $OntapHostName = "management.$FSxID.fsx.$vmRegion.amazonaws.com"
+    Write-Log -Level "DEBUG" -Message "Constructed FSx management domain: $OntapHostName"
     try {
         $OntapHTTP_Request = [System.Net.WebRequest]::Create("https://$OntapHostName")
         $OntapHTTP_Response = $OntapHTTP_Request.GetResponse()
         $OntapHTTP_Response.Close()
         Write-Log "Using FSx management domain: $OntapHostName"
+        Write-Log -Level "DEBUG" -Message "FSx management domain connectivity test successful"
     } catch {
+        Write-Log -Level "DEBUG" -Message "FSx management domain connectivity test failed: $($_.Exception.Message)"
         if ($_.Exception.Message -like "*remote server returned an error*") {
             Write-Log "ONTAP management endpoint validated"
+            Write-Log -Level "DEBUG" -Message "Remote server error indicates endpoint is reachable (expected for HTTPS without valid cert)"
         } else {
             Write-Log "FSx management domain not resolved. Switching to management IP."
+            Write-Log -Level "DEBUG" -Message "Calling Get-FSXFileSystem to retrieve management IP for FSxID: $FSxID"
             $FileSystemDetails = Get-FSXFileSystem -FileSystemId $FSxID
             $OntapHostName = $FileSystemDetails.ontapconfiguration.Endpoints.Management.IpAddresses
+            Write-Log -Level "DEBUG" -Message "Retrieved management IP addresses: $($OntapHostName | ConvertTo-Json)"
             if ($OntapHostName -is [array]) {
                 $OntapHostName = $OntapHostName[0]
+                Write-Log -Level "DEBUG" -Message "Multiple IPs found, using first: $OntapHostName"
             }
             $OntapIPUsed = $true
+            Write-Log -Level "DEBUG" -Message "Switched to management IP: $OntapHostName"
         }
     }
 }
 
 if ([string]::IsNullOrEmpty($OntapHostName)) {
-    throw "Could not determine ONTAP management endpoint from StorageEndpoint: $StorageEndpoint"
+    $errorMessage = "Could not determine ONTAP management endpoint from StorageEndpoint: '$StorageEndpoint'. Please verify that the StorageEndpoint is either a valid FSx ID (format: fs-xxxxxxxxxxxxxxxxx) or a valid IPv4 management IP address."
+    Write-Log -Level "ERROR" -Message $errorMessage
+    throw $errorMessage
 }
 
 $OntapCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($OntapUsername + ':' + $OntapPassword))
@@ -712,12 +868,9 @@ try {
 
     $sqlInstances = @($Instance) | ForEach-Object {
         $serverInstanceName = $_
-        $executableInstance = "$env:COMPUTERNAME"
-        if ($serverInstanceName -ne 'MSSQLSERVER') {
-            $executableInstance = "$env:COMPUTERNAME\\$serverInstanceName"
-        }
         
-        $sqlCreds = Get-SqlCredentials -InstanceName $serverInstanceName -ExecutableInstance $executableInstance -Region $vmRegion
+        $sqlCreds = Get-SqlCredentials -InstanceName $serverInstanceName -Region $vmRegion
+        $executableInstance = $sqlCreds.ExecutableInstance
         
         $sqlCredential = @{}
         if ($sqlCreds.UseWindowsAuth) {
@@ -1000,26 +1153,36 @@ ${SERVER_DETAILS}
             }
 
             if ([string]::IsNullOrEmpty($SqlResponse)) {
-                throw "Couldn't get database windows volumes"
+                $errorMessage = "Failed to retrieve Windows volume information from SQL Server instance '$serverInstanceName'. This may indicate that SQL Server cannot access the volume information, or the SQL query failed. Please verify SQL Server is running and accessible, and that you have appropriate permissions."
+                Write-Log -Level "ERROR" -Message $errorMessage
+                throw $errorMessage
             }
 
             $VolumeIds = Get-VolumeIdsList $SqlQueryResponse
+            Write-Log -Level "DEBUG" -Message "Extracted $($VolumeIds.Count) volume IDs from SQL query response"
+            
             $Result = Get-SerialNumberOfWinVolumes $VolumeIds
             $SerialNumbers = $Result.Lunserialnumbers
+            Write-Log -Level "DEBUG" -Message "Retrieved $($SerialNumbers.Count) LUN serial numbers from Windows volumes"
 
             $LunResult = Get-LunFromSerialNumber $SerialNumbers $Result.VolumeSerialMapping $visitedFileSystems $instanceLevelFsxnId
             $VolumeNames = $LunResult.LunNames
             $VolumeLunMapping = $LunResult.VolumeLunMapping
+            Write-Log -Level "DEBUG" -Message "LUN resolution result: Found $($VolumeNames.Count) volume names, $($VolumeLunMapping.Count) volume-LUN mappings"
 
             if (!($VolumeNames.count -gt 0)) {
-                throw "Couldn't get associated Ontap LUN volume names"
+                $errorMessage = "Failed to retrieve ONTAP LUN volume names associated with the Windows volumes for SQL Server instance '$serverInstanceName'. This may indicate that the volumes are not properly mapped to ONTAP LUNs, or there was an error communicating with the ONTAP storage system. Please verify the storage configuration and ONTAP connectivity."
+                Write-Log -Level "ERROR" -Message $errorMessage
+                throw $errorMessage
             }
 
             $VolumeResult = Get-VolumeIdFromName $VolumeNames $VolumeLunMapping $visitedFileSystems $instanceLevelFsxnId $serverInstanceName
             $Volumes = $VolumeResult.Response
             $VolumeNameMapping = $VolumeResult.volumeNameMapping
+            Write-Log -Level "DEBUG" -Message "Volume details retrieved: $($Volumes.Count) volumes, $($VolumeNameMapping.Count) name mappings"
 
             $ProcessedRecords = Process-Records $Volumes
+            Write-Log -Level "DEBUG" -Message "Processed records: $($ProcessedRecords.records.Count) volume records processed"
             
             Function Update-VolumeMappings {
                 param(
@@ -1062,11 +1225,13 @@ ${SERVER_DETAILS}
             }
             
             $VolumeDBMap = Update-VolumeMappings -SqlQueryResponse $SqlQueryResponse -VolumeNameMapping $VolumeNameMapping
+            Write-Log -Level "DEBUG" -Message "Volume-Database mapping created: $($VolumeDBMap.Count) mappings"
 
             $MappedVolumesResponse = @{}
             $MappedVolumesResponse['volumes'] = $ProcessedRecords
             $MappedVolumesResponse['volumeDBMap'] = $VolumeDBMap
             $MappedVolumesResponse['luns'] = $LunResult.LunDetails
+            Write-Log -Level "DEBUG" -Message "Mapped volumes response assembled: $($ProcessedRecords.records.Count) volumes, $($VolumeDBMap.Count) DB mappings, $($LunResult.LunDetails.Count) LUNs"
             $FinalResponse['rawdata']['instanceLevelDetails'][$serverInstanceName]['mappedVolumes'] = $MappedVolumesResponse
 
             # ========================================
@@ -1105,7 +1270,9 @@ ${SERVER_DETAILS}
             $FinalResponse['rawdata']['instanceLevelDetails'][$serverInstanceName]['assessment'] = $DriftAssessmentData
 
         } catch {
-            $FinalResponse['rawdata']['hostLevelDetails']['errors'][$serverInstanceName] = $_.Exception.Message
+            $errorMessage = "Error processing instance '$serverInstanceName': $($_.Exception.Message)"
+            Write-Log -Level "ERROR" -Message $errorMessage
+            $FinalResponse['rawdata']['hostLevelDetails']['errors'][$serverInstanceName] = $errorMessage
         }
     }
 
@@ -1239,11 +1406,16 @@ ${SERVER_DETAILS}
 
     # Write the output file with fallback to current directory if write fails
     if (-not (Write-JsonFile -Data $FinalResponse -FilePath $outputFilePath)) {
+        Write-Log -Level "DEBUG" -Message "Initial write failed, attempting fallback to current directory"
         $outputFilePath = Join-Path -Path (Get-Location).Path -ChildPath $outputFileName
         Write-JsonFile -Data $FinalResponse -FilePath $outputFilePath | Out-Null
+        Write-Log -Level "DEBUG" -Message "Fallback write completed to: $outputFilePath"
+    } else {
+        Write-Log -Level "DEBUG" -Message "Output file written successfully to: $outputFilePath"
     }
     
     Write-Log "Assessment completed successfully"
+    Write-Log -Level "DEBUG" -Message "Assessment completed, returning output file path: $outputFilePath"
     return $outputFilePath
 
 } catch {
@@ -1254,7 +1426,8 @@ ${SERVER_DETAILS}
         Write-JsonFile -Data $errorResponse -FilePath $outputFilePath | Out-Null
     }
     
-    Write-Log -Level "ERROR" -Message "Assessment failed: $($_.Exception.Message)"
+    $errorMessage = "Assessment failed with error: $($_.Exception.Message). Check the log file for detailed information: $script:LogFilePath"
+    Write-Log -Level "ERROR" -Message $errorMessage
     return $outputFilePath
 }
 `;
