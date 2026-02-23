@@ -55,8 +55,8 @@ import {
     UNAVAILABLE_PS_MODULES
 } from './workloads/mssql/discover-consts';
 import { REQUIRED_PS_MODULES_FOR_MANAGEMENT, AOAG_ROLE_PRIMARY, AOAG_ROLE_SECONDARY } from './workloads/mssql/const';
-import { getPaginatedDatabaseInstances, getResources } from './database/database-operations';
-import { createResource, deleteDatabaseInstance, deleteResource, upsertDatabaseInstance } from '../lib/database/db';
+import { getPaginatedDatabaseInstances, getResources, upsertDatabaseInstance } from './database/database-operations';
+import { createResource, deleteDatabaseInstance, deleteResource } from '../lib/database/db';
 import { tagResources } from './aws/sqs-operations';
 import { createAssessmentDataForOracle } from './demo-operations';
 import { preSignedUrl } from '../lib/aws/s3';
@@ -703,7 +703,8 @@ async function registerSqlInstance(
                             sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType,
                             fsxSvmId: { [storageInfo.id]: storageInfo.svmId },
                             storageProtocol: storageProtocols ? storageProtocols.join() : '',
-                            databaseType: DatabaseTypes.MS_SQL_SERVER
+                            databaseType: DatabaseTypes.MS_SQL_SERVER,
+                            checkOfflineAssessment: true
                         });
                         if (IS_DEMO_FLOW) {
                             await createAssessmentData(
@@ -1225,7 +1226,8 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                         sqlDeploymentType: sqlInstanceInfo.sqlServerDeploymentType!,
                                         fsxSvmId: { [storageInfo!.id]: storageInfo!.svmId },
                                         storageProtocol: storageProtocols ? storageProtocols.join() : '',
-                                        databaseType: DatabaseTypes.MS_SQL_SERVER
+                                        databaseType: DatabaseTypes.MS_SQL_SERVER,
+                                        checkOfflineAssessment: true
                                     });
                                     if (IS_DEMO_FLOW) {
                                         await createAssessmentData(
@@ -1909,18 +1911,18 @@ async function registerResourceCredentials(
         items: []
     };
 
-    try {
-        await Promise.all(
-            credentialsTobeValidated.map(
-                throat(3, async resource => {
-                    const {
-                        credentialsId,
-                        region,
-                        ec2InstanceId,
-                        credentials,
-                        checkManageReadiness,
-                        isReplicaInfoRequired
-                    } = resource;
+    await Promise.all(
+        credentialsTobeValidated.map(
+            throat(3, async resource => {
+                const {
+                    credentialsId,
+                    region,
+                    ec2InstanceId,
+                    credentials,
+                    checkManageReadiness,
+                    isReplicaInfoRequired
+                } = resource;
+                try {
                     const { response: registerResponse, replicaInfoObject } =
                         await validateAndStoreDiscoveredParameters(
                             accountId,
@@ -1941,25 +1943,38 @@ async function registerResourceCredentials(
                         registerDetails: Array.isArray(registerResponse) ? registerResponse : [registerResponse],
                         ...(isReplicaInfoRequired === true ? { replicaInfo: replicaInfoObject } : {})
                     });
-                })
-            )
-        );
+                } catch (error: any) {
+                    logger.error('Error while registering resource credentials for instance', {
+                        accountId,
+                        ec2InstanceId,
+                        credentialsId,
+                        region,
+                        error: error.message
+                    });
+                    response.items.push({
+                        ec2InstanceId,
+                        credentialsId,
+                        region,
+                        errorMessage: error?.message || 'Failed to register credentials',
+                        registerDetails: []
+                    });
+                }
+            })
+        )
+    );
 
-        // Reset the redis cache with cache key instanceid, region and credentialsId
-        const redisClient = getRedisConnection();
-        if (isRedisConnected(redisClient)) {
-            const cacheKeys = compact(
-                response.items.map(({ ec2InstanceId, region, credentialsId }) => {
-                    if (ec2InstanceId && region && credentialsId) {
-                        return generateHash(stringify({ instance: ec2InstanceId, region, credentialsId }));
-                    }
-                    return undefined;
-                })
-            );
-            await redisClient.del(...cacheKeys);
-        }
-    } catch (error: any) {
-        logger.error('Error while registering resource credentials', { accountId, error: error.message });
+    // Reset the redis cache with cache key instanceid, region and credentialsId
+    const redisClient = getRedisConnection();
+    if (isRedisConnected(redisClient)) {
+        const cacheKeys = compact(
+            response.items.map(({ ec2InstanceId, region, credentialsId }) => {
+                if (ec2InstanceId && region && credentialsId) {
+                    return generateHash(stringify({ instance: ec2InstanceId, region, credentialsId }));
+                }
+                return undefined;
+            })
+        );
+        await redisClient.del(...cacheKeys);
     }
 
     return response;

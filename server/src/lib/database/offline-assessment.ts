@@ -1,7 +1,8 @@
 import { DATABASE_TYPE } from '@prisma/client';
+import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
-import { checkAccount } from './db';
+import { checkAccount, buildSelectFields } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -180,14 +181,22 @@ async function listOfflineAssessments({
 /**
  * Get a specific offline assessment
  */
-async function getOfflineAssessment(accountId: string, resourceId: string, databaseInstanceId: string) {
+async function getOfflineAssessment(
+    accountId: string,
+    resourceId: string,
+    databaseInstanceId: string,
+    selectKeys?: string[]
+) {
     logger.info('Getting offline assessment', {
         accountId,
         resourceId,
-        databaseInstanceId
+        databaseInstanceId,
+        selectKeys
     });
 
     const checkedAccountId = checkAccount(accountId);
+
+    const select = selectKeys && !isEmpty(selectKeys) ? buildSelectFields(selectKeys) : undefined;
 
     return prisma.client.offline_assessment.findUnique({
         where: {
@@ -196,7 +205,8 @@ async function getOfflineAssessment(accountId: string, resourceId: string, datab
                 resource_id: resourceId,
                 database_instance_id: databaseInstanceId
             }
-        }
+        },
+        ...(select && { select })
     });
 }
 

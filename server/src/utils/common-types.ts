@@ -325,6 +325,7 @@ interface DatabaseInstanceMetadata {
     sandboxes?: Array<Sandbox>;
     configsOptimized?: any;
     oracleDeploymentType?: OracleDeploymentTenacy;
+    numberOfTimesAssessedOffline?: number;
 }
 
 interface DatabaseInstanceConfigurations {
@@ -508,6 +509,7 @@ interface DatabaseInstance {
     configurations?: DatabaseInstanceConfigurations | JsonValue;
     crrConfigData?: { crrDetails: CrrDetails[] };
     account_id?: string;
+    resource_id?: string;
 }
 
 interface InstanceDetails {

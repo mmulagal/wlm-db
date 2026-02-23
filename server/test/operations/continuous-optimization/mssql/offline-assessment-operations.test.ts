@@ -12,7 +12,7 @@ import {
     AssessmentStatus,
     MIN_OPTIMIZED_HEADROOM_PERCENTAGE
 } from '../../../../src/utils/continous-optimization-consts';
-import { generateSqlResourceId } from '../../../../src/utils/utils';
+import { generateSqlResourceId, sleep } from '../../../../src/utils/utils';
 
 // Test constants
 const TEST_RESOURCE_ID = 'i-test-offline-assessment';
@@ -238,6 +238,8 @@ describe('MSSQL Offline Assessment Operations', () => {
 
             expect(result).toBeDefined();
             expect(result.jobId).toBeDefined();
+
+            await sleep(2000);
 
             // Verify the headroom data was stored - resourceId is a hash of ec2InstanceId
             const expectedResourceId = generateSqlResourceId('i-with-headroom');
@@ -506,13 +508,7 @@ describe('MSSQL Offline Assessment Operations', () => {
         });
 
         it('should accept optional credentialsId and region parameters', async () => {
-            const result = await fetchMssqlOfflineAssessmentPerAccount(
-                ACCOUNT_ID,
-                50,
-                undefined,
-                'cred-123',
-                'us-east-1'
-            );
+            const result = await fetchMssqlOfflineAssessmentPerAccount(ACCOUNT_ID, 50, 'cred-123', 'us-east-1');
 
             expect(result).toBeDefined();
         });

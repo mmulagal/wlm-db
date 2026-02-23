@@ -75,6 +75,7 @@ interface DatabaseInstanceRecord {
     databaseType: string;
     storageType?: string;
     configurations?: DatabaseInstanceConfigurations;
+    checkOfflineAssessment?: boolean;
 }
 
 interface ListDatabaseInstancesRecord {

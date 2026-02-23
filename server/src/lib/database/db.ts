@@ -666,7 +666,7 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
             ...(storageProtocol && { storage_protocol: storageProtocol }),
             ...(numberofUserDbsCreated && { number_of_user_dbs_created: numberofUserDbsCreated }),
             ...(sandboxCreated && { sandbox_created: sandboxCreated }),
-            ...(metaData && { metadata: metaData as { string: string } })
+            ...(!isEmpty(metaData) && { metadata: metaData as { string: string } })
         },
         update: {
             ...(databaseInstanceName && { database_instance_name: databaseInstanceName }),

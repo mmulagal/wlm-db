@@ -33,10 +33,12 @@ import {
     ResourceAssessmentData,
     Metadata,
     HighAvailabilityAssessment,
-    RssConfigAssesment
+    RssConfigAssesment,
+    DatabaseInstance
 } from '../../../utils/common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import GOLDEN_CONFIG from './golden-config';
+import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 
 const logger = getLogger();
 
@@ -270,6 +272,9 @@ async function processOfflineAssessmentUpload(
 
     let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
     let errorMessage: string = '';
+    const managedInstances: DatabaseInstance[] = (
+        await getPaginatedDatabaseInstances(accountId, { selectKeys: ['resource_id', 'database_instance_id'] })
+    ).items;
     try {
         const records = Object.entries(instanceLevelDetails || {})
             .filter(([, data]) => data.instanceDetails?.databaseInstanceId)
@@ -301,6 +306,16 @@ async function processOfflineAssessmentUpload(
                     if (partnerNode?.ec2InstanceId) {
                         resourceId = generateSqlResourceId(ec2InstanceId!, partnerNode.ec2InstanceId);
                     }
+                }
+
+                if (
+                    managedInstances.some(
+                        instance =>
+                            instance.resource_id === resourceId && instance.database_instance_id === databaseInstanceId
+                    )
+                ) {
+                    errorMessage = `Offline assessment data upload failed. Database instance ${instanceName} is already managed.`;
+                    throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
                 }
 
                 return {

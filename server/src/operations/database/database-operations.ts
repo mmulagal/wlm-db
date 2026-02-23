@@ -12,6 +12,7 @@ import {
     countResources,
     listDatabaseInstances,
     updateDatabaseInstance,
+    upsertDatabaseInstance as dbUpsertDatabaseInstance,
     updateResource,
     countDatabaseInstances,
     listTrackedEc2,
@@ -25,14 +26,28 @@ import {
 } from '../../routes/types/form-config.types';
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
-import { CONFIG_NOT_FOUND, HttpErrorCodes, RESOURCESTYPE, STACK_NOT_FOUND, TCO_FEATURE } from '../../utils/consts';
-import { ResourceDetails, DeploymentDetails, DatabaseInstance } from '../../utils/common-types';
+import {
+    CONFIG_NOT_FOUND,
+    HttpErrorCodes,
+    RESOURCESTYPE,
+    STACK_NOT_FOUND,
+    TCO_FEATURE,
+    DatabaseTypes
+} from '../../utils/consts';
+import {
+    ResourceDetails,
+    DeploymentDetails,
+    DatabaseInstance,
+    DatabaseInstanceMetadata
+} from '../../utils/common-types';
+import { getOfflineAssessment } from '../../lib/database/offline-assessment';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
     ListDatabaseInstancesRecord,
     GetResourcesParams,
     PaginatedDatabaseInstancesResponse,
-    ListTrackedEc2Params
+    ListTrackedEc2Params,
+    DatabaseInstanceRecord
 } from '../../lib/database/db-types';
 import { getInstancesWithResourceForDemo, getNextToken, IS_DEMO_FLOW } from '../../utils/utils';
 import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
@@ -525,6 +540,72 @@ async function populateDbInstances(resourceDetails: ResourceDetails) {
     }
 }
 
+async function upsertDatabaseInstance(
+    accountId: string,
+    record: DatabaseInstanceRecord,
+    checkOfflineAssessment: boolean = false
+) {
+    const { metaData, databaseType, resourceId, databaseInstanceId } = record;
+    logger.info('Upsert database instance', {
+        accountId,
+        resourceId,
+        databaseInstanceId,
+        checkOfflineAssessment
+    });
+
+    try {
+        // Check if instance was assessed using onetimewad and get updateCount
+        // Only check when explicitly requested (e.g., from register-operations.ts)
+        let numberOfTimesAssessedOffline: number | undefined;
+        if (metaData && checkOfflineAssessment && databaseType === DatabaseTypes.MS_SQL_SERVER) {
+            try {
+                // Get offline assessment, selecting only metadata column
+                const offlineAssessment = await getOfflineAssessment(accountId, resourceId, databaseInstanceId, [
+                    'metadata'
+                ]);
+
+                if (offlineAssessment?.metadata) {
+                    numberOfTimesAssessedOffline = (offlineAssessment.metadata as Record<string, unknown>)
+                        .updateCount as number | undefined;
+                }
+            } catch (error: any) {
+                logger.warn('Failed to check offline assessment for instance', {
+                    accountId,
+                    resourceId,
+                    databaseInstanceId,
+                    error: error.message
+                });
+            }
+        }
+
+        const finalMetaData: DatabaseInstanceMetadata | undefined =
+            metaData !== undefined && numberOfTimesAssessedOffline !== undefined
+                ? { ...metaData, numberOfTimesAssessedOffline }
+                : metaData !== undefined
+                ? metaData
+                : undefined;
+
+        // Create updated record with final metadata
+        const updatedRecord: DatabaseInstanceRecord = {
+            ...record,
+            metaData: finalMetaData
+        };
+
+        return dbUpsertDatabaseInstance(accountId, updatedRecord);
+    } catch (error) {
+        logger.error('Failed to upsert database instance', {
+            accountId,
+            resourceId: record.resourceId,
+            databaseInstanceId: record.databaseInstanceId,
+            error
+        });
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Failed to upsert database instance ${record.databaseInstanceId}. ${error}`
+        );
+    }
+}
+
 async function listTrackedEc2Operation({
     feature,
     accountId,
@@ -579,5 +660,6 @@ export {
     updateDatabaseHostAssessmentResults,
     updateDatabaseInstanceAssessmentResults,
     populateDbInstances,
+    upsertDatabaseInstance,
     listTrackedEc2Operation
 };
