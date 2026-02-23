@@ -22,27 +22,8 @@ export const ORACLE_ONTAP_CONFIGS: string[] = [
     ASSESSMENT_CONFIG_NAMES.COMPACTION
 ];
 
-/** Banner text constants for linked config warnings */
-export const DEPENDENCY_TYPE = {
-    STORAGE_LAYOUT: 'storage layout',
-    STORAGE_CONFIGURATION: 'storage configuration'
-} as const;
-
-export const RECOMMENDATION_TYPE = {
-    ONTAP: 'ONTAP',
-    STORAGE_LAYOUT: 'storage layout'
-} as const;
-
 /** Returns true if the given config name is a storage layout parent config */
 export const isLayoutConfig = (configName: string): boolean => ORACLE_LAYOUT_CONFIGS.includes(configName);
-
-/** Returns the dependency type based on config type */
-export const getDependencyType = (configName: string): string =>
-    isLayoutConfig(configName) ? DEPENDENCY_TYPE.STORAGE_CONFIGURATION : DEPENDENCY_TYPE.STORAGE_LAYOUT;
-
-/** Returns the recommendation type based on config type */
-export const getRecommendationType = (configName: string): string =>
-    isLayoutConfig(configName) ? RECOMMENDATION_TYPE.STORAGE_LAYOUT : RECOMMENDATION_TYPE.ONTAP;
 
 /** Returns true if the given config name is an ONTAP sub-config */
 export const isOntapConfig = (configName: string): boolean => ORACLE_ONTAP_CONFIGS.includes(configName);

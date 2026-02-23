@@ -891,7 +891,7 @@
             "oracle-snapshot-autodelete-what-will-happen": "Workload Factory will configure snapshot autodelete to delete the oldest snapshot first on the selected volumes.",
             "oracle-space-mgmt-action-summary": "Workload Factory recommends configuring space management to prioritize volume expansion over snapshot deletion for thin-provisioned FSx for ONTAP volumes with volume autogrow enabled.",
             "oracle-space-mgmt-what-will-happen": " Workload Factory will configure space management to prioritize volume expansion on the selected thin-provisioned volumes.",
-            "oracle-tiering-policy-action-summary": "Workload Factory recommends tiering FSx for ONTAP volumes used by databases when applicable. Tiering optimizes storage utilization by automatically moving less frequently accessed data such as snapshots or archived logs to cost-effective capacity tiers while keeping active data and redo logs on the high-performance primary storage tier. Tiering reduces overall storage costs, enhances performance for critical workloads, and simplifies management through automated data placement. For different Oracle files—data, redo log, and archive —distinct tiering policies ensure tailored efficiency.",
+            "oracle-tiering-policy-action-summary": "Workload Factory recommends enabling tiering for database volumes on FSx for ONTAP when it makes sense. Tiering automatically moves less-used data, such as snapshots and archived logs, to lower-cost storage while keeping active data and redo logs on high-performance storage. This lowers storage costs, helps protect performance for critical workloads, and reduces manual management. You can set different tiering policies for Oracle data files, redo logs, and archive logs.",
             "oracle-tiering-policy-what-will-happen": "Workload Factory will enable tiering and configure the recommended FSx for ONTAP tiering policy based on the type of file that is located in the volume.",
             "oracle-tiering-min-cooling-days-action-summary": "Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data. Tailored settings for each volume type—data, redo log, and archive (FRA)—ensure efficient resource utilization.",
             "oracle-tiering-min-cooling-days-what-will-happen": "Workload Factory will set the recommended minimum cooling days based on the type of file that is located in the volume.",
@@ -958,9 +958,10 @@
             "oracle-file-system-headroom-option2-step4": "Update storage capacity to the desired capacity.",
             "linked-config": {
                 "title": "Configuration dependencies",
-                "message": "Your {{dependencyType}} affects {{recommendationType}} recommendations (such as {{configName}}).",
-                "message-line2": "For the best {{configName}} recommendation, fix your {{dependencyType}} first, then update the {{configName}}.",
-                "linked-configurations": "Linked configurations",
+                "ontap-message": "Your storage layout for {{linkedNames}} affects ONTAP recommendations.",
+                "ontap-message-line2": "For the best {{configName}} recommendation, fix your storage layout first, then update the {{configName}}.",
+                "layout-message": "Your {{configName}} affects the following ONTAP recommendations. Fix your {{configName}} first, then update the related configurations for optimal recommendations.",
+                "related-configurations": "Related configurations",
                 "acknowledge-checkbox": "I understand the recommendations may not be optimal, and I want to continue with this fix.",
                 "acknowledge-error": "Please select the checkbox."
             },

@@ -6,9 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
 import {
     isLayoutConfig,
-    getLinkedConfigNames,
-    getDependencyType,
-    getRecommendationType
+    getLinkedConfigNames
 } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleConfigDependencies';
 import LinkedConfigBanner from '../../../common/LinkedConfigBanner/LinkedConfigBanner';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
@@ -1986,12 +1984,7 @@ const DashboardInnerPage = () => {
                 </div>
 
                 {linkedConfigNames.length > 0 && (
-                    <LinkedConfigBanner
-                        linkedConfigNames={linkedConfigNames}
-                        configName={selectedConfig}
-                        dependencyType={getDependencyType(selectedConfig)}
-                        recommendationType={getRecommendationType(selectedConfig)}
-                    />
+                    <LinkedConfigBanner linkedConfigNames={linkedConfigNames} configName={selectedConfig} />
                 )}
 
                 <div className={styles.tableSection}>{renderTable()}</div>

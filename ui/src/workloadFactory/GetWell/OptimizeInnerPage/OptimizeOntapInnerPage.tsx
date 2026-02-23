@@ -46,9 +46,7 @@ import {
 import { handleOntapDialog } from '../StorageCardComponent/optimizeUtils';
 import {
     isLinkedConfig,
-    getLinkedConfigNames,
-    getDependencyType,
-    getRecommendationType
+    getLinkedConfigNames
 } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleConfigDependencies';
 import LinkedConfigBanner from '../../../common/LinkedConfigBanner/LinkedConfigBanner';
 
@@ -769,8 +767,6 @@ const OptimizeOntapInnerPage = () => {
                     <LinkedConfigBanner
                         linkedConfigNames={linkedConfigNames}
                         configName={selectedOptimizeConfig?.type}
-                        dependencyType={getDependencyType(selectedOptimizeConfig?.type || '')}
-                        recommendationType={getRecommendationType(selectedOptimizeConfig?.type || '')}
                     />
                 )}
 
