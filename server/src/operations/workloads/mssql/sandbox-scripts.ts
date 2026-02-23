@@ -859,7 +859,8 @@ const cleanUpOntapResources = (
     executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
     instanceName: string = DEFAULT_INSTANCE_NAME,
     logPrefix: string = '',
-    sqlAuthEnabled: boolean
+    sqlAuthEnabled: boolean,
+    isFci: boolean = false
 ) => `
     $fsxid = '${fsxid}'
     $fsxregion = '${fsxregion}'
@@ -870,6 +871,7 @@ const cleanUpOntapResources = (
     $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+    $isFci = [System.Convert]::ToBoolean('${isFci}')
 
     Start-Transcript -Path "C:\\cfn\\log\\cleanup_ontap_resources_$DBName.log.txt" -Append | Out-Null
     
@@ -907,7 +909,7 @@ const cleanUpOntapResources = (
                 } | Sort-Object -Unique
 
                 Write-Information "$logPrefix Windows Volume Ids: $windowsVolumeIds"
-                if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
+                if ($clusterServiceStatus -eq 'Running' -and $isFci -and $windowsVolumeIds.count -ne 0) {
                     $sqlgroup = Get-ClusterResource | Where-Object Name -eq $resourceType
                     $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
                     $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
@@ -1074,7 +1076,8 @@ const detachDbAndRemoveAccessPath = (
     executableInstance: string = DEFAULT_MSSQL_INSTANCE_NAME,
     instanceName: string = DEFAULT_INSTANCE_NAME,
     logPrefix: string = '',
-    sqlAuthEnabled: boolean
+    sqlAuthEnabled: boolean,
+    isFci: boolean = false
 ) => `
     $dbname = '${dbName}'
     $serialNumbers = '${serialNumbers}' | ConvertFrom-Json
@@ -1083,6 +1086,7 @@ const detachDbAndRemoveAccessPath = (
     $instanceName = '${instanceName}'
     $logPrefix = '${logPrefix}'
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${sqlAuthEnabled}')
+    $isFci = [System.Convert]::ToBoolean('${isFci}')
 
     Start-Transcript -Path "C:\\cfn\\log\\detachdb_remove_accesspath_$dbname.log.txt" -Append | Out-Null
     
@@ -1165,7 +1169,7 @@ const detachDbAndRemoveAccessPath = (
             }
         }
 
-        if ($clusterServiceStatus -eq 'Running' -and $windowsVolumeIds.count -ne 0) {
+        if ($clusterServiceStatus -eq 'Running' -and $isFci -and $windowsVolumeIds.count -ne 0) {
             $sqlgroup = Get-ClusterResource | Where-Object Name -eq $resourceType
             $sqlserver = Get-WmiObject -namespace root\\MSCluster MSCluster_Resource -filter "Name='$sqlgroup'"
             $resourcegroup = $sqlserver.GetRelated() | Where Type -eq 'Physical Disk'
@@ -1562,7 +1566,8 @@ const invokeVirtualMountScript = (
     fileLunMap: string,
     instanceName: string = DEFAULT_INSTANCE_NAME,
     isDefaultInstance: boolean,
-    logPrefix: string = ''
+    logPrefix: string = '',
+    isFci: boolean = false
 ) => `
 
 $ErrorActionPreference = "Stop"
@@ -1572,6 +1577,7 @@ $FileLunArr = '${fileLunMap}' | ConvertFrom-Json
 $InstanceName = '${instanceName}'
 $IsDefaultInstance = [System.Convert]::ToBoolean('${isDefaultInstance}')
 $LogPrefix = '${logPrefix}'
+$IsFci = [System.Convert]::ToBoolean('${isFci}')
 
 $null = (Start-Transcript -Path "C:\\cfn\\log\\invoke_virtualmount_$DBName.log.txt" -Append)
 
@@ -1692,7 +1698,7 @@ finally {
 try {
     $clusterServiceStatus = (Get-Service -Name clussvc -ErrorAction SilentlyContinue).Status
 
-    if ($clusterServiceStatus -eq 'Running') {
+    if ($clusterServiceStatus -eq 'Running' -and $IsFci) {
         # Add new disks to Cluster Storage
         #In some cases onlining disk and setting Filesystem label fails and volume returns empty in PS cmdlet. Fail check with diskpart
 

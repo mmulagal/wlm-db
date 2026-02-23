@@ -312,6 +312,9 @@ interface Metadata {
     isHeartBeatOptimized?: boolean;
     isClusterQuorumOptimized?: boolean;
     optimizedMtus?: string[];
+    aoagDetails?: {
+        baseDeploymentType: string;
+    };
 }
 
 interface DatabaseInstanceMetadata {

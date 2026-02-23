@@ -17,7 +17,8 @@ import {
     SandboxLifecycleAction,
     SANDBOX_LIFECYCLE_REFRESH,
     SQL_SERVICE_STATE,
-    AuditStatus
+    AuditStatus,
+    SqlServerDeploymentModel
 } from '../utils/consts';
 import { IS_DEMO_FLOW, getDatabaseInstanceName, retryWithDelay, sleep, sqlResponseParsing } from '../utils/utils';
 import {
@@ -531,6 +532,14 @@ interface HostAndDbInfo extends DbInfo {
     activeNodeDetails?: ActiveSqlNodeDetails;
     databaseInstanceId?: string;
     sqlAuthEnabled?: boolean;
+}
+
+function isFciDeployment(metadata: Metadata): boolean {
+    const { sqlDeploymentType, aoagDetails: { baseDeploymentType } = {} } = metadata;
+    return (
+        sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
+        baseDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT
+    );
 }
 
 interface ClonedVolume {
@@ -1219,7 +1228,8 @@ async function invokeVirtualMount(
                     JSON.stringify(fileLunMap),
                     destDetails.databaseInstanceName!,
                     isDefaultSqlServerInstance,
-                    `Sandbox:${destDetails.database}:`
+                    `Sandbox:${destDetails.database}:`,
+                    isFciDeployment(destDetails.metadata)
                 )
             ];
 
@@ -1583,7 +1593,8 @@ async function startCleanup(
                 destDetails.instanceName,
                 destDetails.databaseInstanceName,
                 `SandBox:${destDetails.database}:`,
-                destDetails.sqlAuthEnabled || false
+                destDetails.sqlAuthEnabled || false,
+                isFciDeployment(destDetails.metadata)
             )
         ];
 
@@ -2559,7 +2570,8 @@ async function detachSandboxAndAccessPath(
                 resourceDetails.instanceName,
                 resourceDetails.databaseInstanceName,
                 `SandBox:${resourceDetails.database}:`,
-                resourceDetails.sqlAuthEnabled || false
+                resourceDetails.sqlAuthEnabled || false,
+                isFciDeployment(resourceDetails.metadata)
             )
         ];
 
@@ -2686,7 +2698,8 @@ async function reAttachSandboxAndAccessPath(
                 JSON.stringify(fileLunMap),
                 resourceDetails.instanceName,
                 resourceDetails.databaseInstanceName === DEFAULT_INSTANCE_NAME,
-                `SandBox:${resourceDetails.database}:`
+                `SandBox:${resourceDetails.database}:`,
+                isFciDeployment(resourceDetails.metadata)
             )
         ];
         let resp = await callSsmExecution({
