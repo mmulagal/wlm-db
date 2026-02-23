@@ -15,7 +15,7 @@ import {
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { GET_VCPU_AND_MAXDOP_DETAILS } from '../../workloads/mssql/assessment-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import { sqlResponseParsing } from '../../../utils/utils';
+import { sqlResponseParsing, calculateRecommendedMaxDOP } from '../../../utils/utils';
 import { ParameterDriftResponseType } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 
@@ -171,15 +171,7 @@ async function runMaxDOPAssessment(
     const parsedResponse = sqlResponseParsing(response);
     const { maxDOP, vcpuCount } = parsedResponse;
 
-    let recommendedMaxDOP;
-    if (vcpuCount <= 8) {
-        recommendedMaxDOP = '4';
-    } else if (vcpuCount <= 16) {
-        recommendedMaxDOP = '8';
-    } else {
-        recommendedMaxDOP = '16';
-    }
-
+    const recommendedMaxDOP = calculateRecommendedMaxDOP(vcpuCount);
     const isOptimized = maxDOP === recommendedMaxDOP;
     const optimizationStatus = isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
 

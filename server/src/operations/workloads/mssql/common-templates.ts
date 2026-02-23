@@ -1462,12 +1462,9 @@ const maxDopAssessmentTemplate = `
             $maxDop = "0"
         }
 
-        # Calculate recommended MAXDOP based on vCPU count (min of 8 or vCPU count)
-        $recommendedMaxDOP = [Math]::Min(8, $vcpus)
-
         $DriftAssessmentData['maxDop'] = @{
             current = $maxDop
-            recommendedMaxDOP = "$recommendedMaxDOP"
+            vcpuCount = $vcpus
         }
     } catch {
         $DriftAssessmentData['errors']['maxDop'] = $_.Exception.Message

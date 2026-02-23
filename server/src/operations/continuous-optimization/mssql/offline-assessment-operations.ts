@@ -19,7 +19,7 @@ import { calculateStorageDrift } from './storage-assessment-operations';
 import { calculateRssConfigDrift } from './rssConfig-assessment-operations';
 import { calculateMaxDOPDrift } from './maxdop-assessment-operations';
 import { getHighAvailabilityDriftData } from './resilience-assessment-operation';
-import { generateSqlResourceId } from '../../../utils/utils';
+import { generateSqlResourceId, calculateRecommendedMaxDOP } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
 import { HttpErrorCodes, AWS_REGIONS } from '../../../utils/consts';
 import {
@@ -479,7 +479,8 @@ async function fetchMssqlOfflineAssessment(
 
     let maxDopData: MaxDOPAssesment | undefined;
     if (maxDop) {
-        const { status, current, recommendedMaxDOP } = maxDop as MaxDOPAssesment;
+        const { status, current, vcpuCount } = maxDop as MaxDOPAssesment;
+        const recommendedMaxDOP = calculateRecommendedMaxDOP(vcpuCount || 0);
         const currentStatus =
             status || current === recommendedMaxDOP ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
 

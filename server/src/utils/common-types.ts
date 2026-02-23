@@ -90,6 +90,7 @@ interface MaxDOPAssesment {
     current: string;
     recommendedMaxDOP: string;
     status: string;
+    vcpuCount?: number;
 }
 
 interface CrrDetails {

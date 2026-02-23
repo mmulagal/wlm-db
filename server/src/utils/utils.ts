@@ -1167,6 +1167,16 @@ function calculateDaysSince(startDate: string | Date, endDate: string | Date = n
     return Math.floor(timeDifference / (1000 * 60 * 60 * 24));
 }
 
+function calculateRecommendedMaxDOP(vcpuCount: number) {
+    let recommendedMaxDOP = '16';
+    if (vcpuCount <= 8) {
+        recommendedMaxDOP = '4';
+    } else if (vcpuCount <= 16) {
+        recommendedMaxDOP = '8';
+    }
+    return recommendedMaxDOP;
+}
+
 function determineVolumeType(cloneVolumeName: string): 'log' | 'data' | 'unknown' {
     if (cloneVolumeName.includes('sqllog')) {
         return 'log';
@@ -1598,6 +1608,7 @@ export {
     divideArrayIntoChunks,
     isValidProp,
     calculateDaysSince,
+    calculateRecommendedMaxDOP,
     determineVolumeType,
     formatSsmArrayResponse,
     generateSqlResourceId,
