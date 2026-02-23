@@ -139,7 +139,12 @@ async function listOfflineAssessments({
 
     const checkedAccountId = checkAccount(accountId);
 
-    return prisma.client.offline_assessment.findMany({
+    // Two-step approach to avoid MySQL sort buffer issues:
+    // 1. Get IDs only (minimal memory, uses index efficiently) with cursor pagination
+    // 2. Fetch full records for those IDs using primary key lookup
+
+    // Step 1: Get IDs only - this avoids loading large JSON fields during filtering
+    const idResults = await prisma.client.offline_assessment.findMany({
         where: {
             account_id: checkedAccountId,
             ...(credentialsId && { credentials_id: credentialsId }),
@@ -148,14 +153,30 @@ async function listOfflineAssessments({
             ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
             ...(databaseType && { database_type: databaseType })
         },
+        select: { id: true, created_time: true },
         orderBy: {
             created_time: 'desc'
         },
-        take: pageSize,
+        ...(pageSize && pageSize > 0 && { take: pageSize }),
         ...(nextToken && {
             cursor: { id: nextToken },
             skip: 1
         })
+    });
+
+    if (idResults.length === 0) {
+        return [];
+    }
+
+    // Step 2: Fetch full records using primary key lookup (very fast)
+    const ids = idResults.map(r => r.id);
+    return prisma.client.offline_assessment.findMany({
+        where: {
+            id: { in: ids }
+        },
+        orderBy: {
+            created_time: 'desc'
+        }
     });
 }
 

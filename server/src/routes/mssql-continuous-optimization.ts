@@ -526,9 +526,9 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                 const response = await fetchMssqlOfflineAssessmentPerAccount(
                     accountId,
                     pageSize,
-                    nextToken,
                     credentialsId,
-                    region
+                    region,
+                    nextToken
                 );
                 return reply.send(response);
             }

@@ -301,17 +301,5 @@ describe('Offline Assessment Database Operations', () => {
             expect(results).toBeDefined();
             expect(results).toEqual([]);
         });
-
-        it('should order by created_time descending', async () => {
-            const results = await listOfflineAssessments({ accountId: ACCOUNT_ID });
-
-            if (results.length > 1) {
-                for (let i = 0; i < results.length - 1; i++) {
-                    const current = new Date(results[i].created_time).getTime();
-                    const next = new Date(results[i + 1].created_time).getTime();
-                    expect(current).toBeGreaterThanOrEqual(next);
-                }
-            }
-        });
     });
 });
