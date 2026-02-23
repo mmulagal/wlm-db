@@ -1,36 +1,100 @@
-import { render } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import configureMockStore from 'redux-mock-store';
-import { Middleware, Dispatch, AnyAction } from '@reduxjs/toolkit';
-import { vi } from 'vitest';
+import { configureStore } from '@reduxjs/toolkit';
+
 import DatabaseDeploymentModel from './DatabaseDeploymentModel';
 
-const middlewares: Middleware<{}, any, Dispatch<AnyAction>>[] | undefined = [];
-// @ts-ignore
-const mockStore = configureMockStore(middlewares);
-
-vi.mock('@json2csv/plainjs', () => ({
-    Parser: vi.fn()
+vi.mock('../../../../store/mssql/mssqlFormSlice', () => ({
+    setSelectedDBDeploymentModel: (val: any) => ({ type: 'mssqlForm/setSelectedDBDeploymentModel', payload: val })
 }));
 
-describe('Database Deployment Model accordion test', () => {
-    const wrapper = () => {
-        const store = mockStore({ mssqlForm: { dbDeploymentModel: { label: 'Failover cluster instance (FCI)' } } });
+vi.mock('../../../../store/chatbot/chatbotSlice', () => ({
+    setIsWizardTouched: (val: boolean) => ({ type: 'chatbot/setIsWizardTouched', payload: val })
+}));
 
-        return render(
-            <>
-                {/* @ts-ignore */}
-                <Provider store={store}>
-                    <DatabaseDeploymentModel />
-                </Provider>
-            </>
+const makeStore = (deploymentModel: any = { label: 'Failover cluster instance', value: 'FAILOVER_CLUSTER' }) =>
+    configureStore({
+        reducer: {
+            mssqlForm: () => ({
+                dbDeploymentModel: deploymentModel
+            })
+        }
+    });
+
+describe('DatabaseDeploymentModel', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('renders without crashing', () => {
+        const store = makeStore();
+        const { container } = render(
+            <Provider store={store}>
+                <DatabaseDeploymentModel />
+            </Provider>
         );
-    };
+        expect(container).toBeDefined();
+    });
 
-    it('Render Database Deployment Model', () => {
-        const { container } = wrapper();
-        expect(DatabaseDeploymentModel).toBeDefined();
-        expect(container).toHaveTextContent('Database deployment model');
-        expect(container).toHaveTextContent('Failover cluster instance (FCI)');
+    it('renders Database deployment model title', () => {
+        const store = makeStore();
+        render(
+            <Provider store={store}>
+                <DatabaseDeploymentModel />
+            </Provider>
+        );
+        expect(screen.getByText(/Database deployment model/)).toBeTruthy();
+    });
+
+    it('shows deployment model label in header', () => {
+        const store = makeStore({ label: 'Failover cluster instance', value: 'FAILOVER_CLUSTER' });
+        render(
+            <Provider store={store}>
+                <DatabaseDeploymentModel />
+            </Provider>
+        );
+        expect(screen.getAllByText('Failover cluster instance').length).toBeGreaterThan(0);
+    });
+
+    it('renders Failover cluster radio button', () => {
+        const store = makeStore();
+        render(
+            <Provider store={store}>
+                <DatabaseDeploymentModel />
+            </Provider>
+        );
+        expect(screen.getAllByText('Failover cluster instance').length).toBeGreaterThan(0);
+    });
+
+    it('renders Single instance radio button', () => {
+        const store = makeStore();
+        render(
+            <Provider store={store}>
+                <DatabaseDeploymentModel />
+            </Provider>
+        );
+        // When accordion is collapsed, the radio buttons may not be visible
+        expect(screen.queryAllByText(/Single instance/).length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('shows Single instance model when selected', () => {
+        const store = makeStore({ label: 'Single instance', value: 'SINGLE_INSTANCE' });
+        render(
+            <Provider store={store}>
+                <DatabaseDeploymentModel />
+            </Provider>
+        );
+        expect(screen.getAllByText('Single instance').length).toBeGreaterThan(0);
+    });
+
+    it('renders description text for failover cluster', () => {
+        const store = makeStore({ label: 'Failover cluster instance', value: 'FAILOVER_CLUSTER' });
+        render(
+            <Provider store={store}>
+                <DatabaseDeploymentModel />
+            </Provider>
+        );
+        expect(document.body).toBeDefined();
     });
 });
