@@ -7,6 +7,7 @@ import styles from './Inventory.module.scss';
 import InventoryTab from './InventoryTab/InventoryTab';
 import InventoryTablesComponent from './InventoryTablesComponent/InventoryTablesComponent';
 import {
+    DATABASE_DEPLOYMENT_MODE,
     DBType,
     ERROR_ANALYZER_STATUS,
     INVENTORY_ACTIONS,
@@ -281,8 +282,20 @@ const InventoryV2 = () => {
                         }
 
                         const availabilityGroupList = getAvailabilityGroupListForAoag(perRow);
+
+                        const serverInstallationMode = getDiscoveredHostDeploymentV2(perRow, t);
+
+                        // For Oracle, we need to show the DB name instead of the instance name in the table
+                        let dbOrInstanceName = perRow?.databaseInstanceName;
+                        if (
+                            serverInstallationMode === DATABASE_DEPLOYMENT_MODE.DATAGUARD &&
+                            perRow?.dataguardDetails?.dbName
+                        ) {
+                            dbOrInstanceName = perRow?.dataguardDetails?.dbName;
+                        }
                         const perRowData = {
                             ...perRow,
+                            dbOrInstanceName,
                             logAnalyzer: {
                                 loading: logAnalysisLoading,
                                 errorCount: logAnalyzerRow?.latestReport?.errorCount || 0,
@@ -299,7 +312,7 @@ const InventoryV2 = () => {
                             name: perHost?.name,
                             hostType: perHost?.hostType,
                             fsxList,
-                            serverInstallationMode: getDiscoveredHostDeploymentV2(perRow, t),
+                            serverInstallationMode,
                             loading: inventoryTableData?.[key]?.loading,
                             fullManagedInstanceLoading: inventoryTableData?.[key]?.fullManagedInstanceLoading,
                             subLoading: perRow?.loading,

@@ -65,7 +65,7 @@ export function getOracleDatabaseColumnsList({
     const allColumns: ColumnProps[] = [
         {
             Header: t('databases.databases-table.oracle.headers.database-name'),
-            accessor: 'databaseInstanceName',
+            accessor: 'dbOrInstanceName',
             customAccessor: 'statusAccessor',
             id: '1',
             isSortable: true,
@@ -75,59 +75,50 @@ export function getOracleDatabaseColumnsList({
             ],
             width: '260px',
             isSticky: true,
-            renderCell: (cellData: any, rowData: any) => {
-                let name = rowData?.databaseInstanceName;
-                if (
-                    rowData?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.DATAGUARD &&
-                    rowData?.dataguardDetails?.dbName
-                ) {
-                    name = rowData?.dataguardDetails?.dbName;
-                }
-                return (
-                    <div className={styles.firstColumnClass}>
-                        <DsTypography
-                            title={name || t('databases.general.not-available-table-columns')}
-                            className={styles.textClass}
-                            variant="Semibold_14"
-                        >
-                            {name && instanceNameHyperLink(rowData, name, dispatch)}
-                            {!name && t('databases.general.not-available-table-columns')}
+            renderCell: (cellData: any, rowData: any) => (
+                <div className={styles.firstColumnClass}>
+                    <DsTypography
+                        title={cellData || t('databases.general.not-available-table-columns')}
+                        className={styles.textClass}
+                        variant="Semibold_14"
+                    >
+                        {cellData && instanceNameHyperLink(rowData, cellData, dispatch)}
+                        {!cellData && t('databases.general.not-available-table-columns')}
+                    </DsTypography>
+                    <div className={styles.firstColText}>
+                        {(rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
+                            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
+                            <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
+                        )}
+                        {(rowData?.status === INVENTORY_STATUS.STOPPED ||
+                            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
+                            <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
+                        )}
+                        {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
+                            <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
+                        )}
+                        <DsTypography variant="Regular_13">
+                            {(() => {
+                                if (
+                                    rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
+                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
+                                ) {
+                                    return INVENTORY_STATUS.ONLINE;
+                                }
+                                if (
+                                    rowData?.status === INVENTORY_STATUS.STOPPED ||
+                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
+                                ) {
+                                    return INVENTORY_STATUS.OFFLINE;
+                                }
+                                return rowData?.status;
+                            })()}
+                            {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
+                            {!rowData?.status && !rowData?.loading && INVENTORY_STATUS.UNKNOWN}
                         </DsTypography>
-                        <div className={styles.firstColText}>
-                            {(rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
-                            )}
-                            {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
-                            )}
-                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
-                            )}
-                            <DsTypography variant="Regular_13">
-                                {(() => {
-                                    if (
-                                        rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
-                                        rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                    ) {
-                                        return INVENTORY_STATUS.ONLINE;
-                                    }
-                                    if (
-                                        rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                        rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                    ) {
-                                        return INVENTORY_STATUS.OFFLINE;
-                                    }
-                                    return rowData?.status;
-                                })()}
-                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && INVENTORY_STATUS.UNKNOWN}
-                            </DsTypography>
-                        </div>
                     </div>
-                );
-            }
+                </div>
+            )
         },
         {
             Header: t('databases.databases-table.oracle.headers.sid'),
