@@ -885,6 +885,8 @@ async function calculateStorageDrift(
                 }
 
                 if (key === 'data-tempdb-drive-details') {
+                    // TempDB drive details can be an array with a single element or single object. Extract the single element if it exists.
+                    const tempdbValue = Array.isArray(value) && value.length > 0 ? value[0] : value;
                     ({
                         status,
                         key,
@@ -893,7 +895,7 @@ async function calculateStorageDrift(
                         ignoredDrives,
                         currentSizePercentForAllVolumes,
                         totalObjectsInViolation
-                    } = getTempDbVolumeDrift(value, status, key));
+                    } = getTempDbVolumeDrift(tempdbValue, status, key));
                     resourceType = ASSESSMENT_RESOURCE_TYPE.DRIVE;
                 }
 
