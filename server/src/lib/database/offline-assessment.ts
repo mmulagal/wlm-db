@@ -153,7 +153,7 @@ async function listOfflineAssessments({
             ...(databaseInstanceId && { database_instance_id: databaseInstanceId }),
             ...(databaseType && { database_type: databaseType })
         },
-        select: { id: true, created_time: true },
+        select: { id: true },
         orderBy: {
             created_time: 'desc'
         },
@@ -173,9 +173,6 @@ async function listOfflineAssessments({
     return prisma.client.offline_assessment.findMany({
         where: {
             id: { in: ids }
-        },
-        orderBy: {
-            created_time: 'desc'
         }
     });
 }
