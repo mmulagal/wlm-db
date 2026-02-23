@@ -4,6 +4,8 @@ Python-based collector for gathering Oracle database configuration, performance,
 
 ## Quick Start
 
+Use `python` or `python3` depending on what is available on your system:
+
 ```bash
 # Interactive mode (prompts for credentials and SIDs)
 python OracleDataCollector.py
@@ -14,6 +16,8 @@ python OracleDataCollector.py -s "ORCL TESTDB DGDB"
 # Username/password authentication
 python OracleDataCollector.py -u system -p password -s "ORCL TESTDB"
 ```
+
+> **Tip:** On systems where `python` is not available (e.g. RHEL/OL 8+), use `python3` instead.
 
 ## Requirements
 
@@ -94,3 +98,10 @@ Each database entry carries its own `collectionMethod` to handle mixed AWR/STATS
 ## User Switching
 
 If not running as the `oracle` OS user, the script automatically switches via `su` (if root) or `sudo su` to run the SQL*Plus database collection phase as `oracle`.
+
+## Next Steps
+
+After the script completes successfully:
+
+1. Upload the generated JSON file (e.g. `OracleDataResponse-<epoch_timestamp>.json`) to **Workload Factory**.
+2. Select your host and explore the potential savings and recommended **FSxN** configuration.

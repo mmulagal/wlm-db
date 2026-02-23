@@ -9,11 +9,11 @@
 # Python 2.7+ / 3.x compatible alternative to OracleDataCollector.sh
 # Produces identical JSON output. Uses the same SQL scripts.
 #
-# USAGE:
-#   python OracleDataCollector.py                          # Interactive mode
-#   python OracleDataCollector.py -s "ORCL TESTDB"         # OS auth with specific SIDs
-#   python OracleDataCollector.py -u system -s ORCL        # Prompt for password, specific SID
-#   python OracleDataCollector.py -h                       # Show help
+# USAGE (use 'python' or 'python3' depending on your system):
+#   python OracleDataCollector.py                            # Interactive mode
+#   python OracleDataCollector.py -s "ORCL TESTDB"           # OS auth with specific SIDs
+#   python OracleDataCollector.py -u system -s ORCL          # Prompt for password, specific SID
+#   python OracleDataCollector.py -h                         # Show help
 #
 # ===============================================================================
 
@@ -36,7 +36,9 @@ from collections import OrderedDict
 from multiprocessing import cpu_count
 
 # Python 2/3 compatibility
-if sys.version_info[0] >= 3:
+_PY3 = sys.version_info[0] >= 3
+
+if _PY3:
     get_input = input
 else:
     get_input = raw_input  # noqa: F821
@@ -318,7 +320,11 @@ def detect_storage_protocol():
 def collect_host_info(storage_info):
     """Collect all host information into an OrderedDict."""
     host_info = OrderedDict()
-    host_info["collectionTimestamp"] = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    if _PY3:
+        from datetime import timezone
+        host_info["collectionTimestamp"] = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    else:
+        host_info["collectionTimestamp"] = datetime.utcnow().strftime("%Y%m%d%H%M%S")
     host_info["hostname"] = get_hostname()
     host_info["operatingSystem"] = get_os_info()
     host_info["cpuCount"] = get_cpu_count()
@@ -488,10 +494,10 @@ def parse_args():
         description="NetApp Console Workload Factory - Oracle Data Collector",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""\
-Examples:
-  python OracleDataCollector.py                          # Interactive mode
-  python OracleDataCollector.py -s "ORCL TESTDB"         # OS auth with specific SIDs
-  python OracleDataCollector.py -u system -s ORCL        # Prompt for password
+Examples (use 'python' or 'python3' depending on your system):
+  python OracleDataCollector.py                            # Interactive mode
+  python OracleDataCollector.py -s "ORCL TESTDB"           # OS auth with specific SIDs
+  python OracleDataCollector.py -u system -s ORCL          # Prompt for password
   python OracleDataCollector.py -u system -p pass -s ORCL  # Non-interactive
 """,
     )
@@ -556,7 +562,7 @@ def write_phase2_data(host_info, storage_info, db_user, sid_list):
     )
     json.dump(data, fd)
     fd.close()
-    os.chmod(fd.name, 0o600)
+    os.chmod(fd.name, 0o644)
     return fd.name
 
 
@@ -643,12 +649,24 @@ def main():
             phase2_file = write_phase2_data(host_info, storage_info, db_user, sid_list)
 
             script_path = os.path.abspath(__file__)
-            python_cmd = 'python "%s" --internal-phase2 "%s"' % (script_path, phase2_file)
-            
-            # Pass password via environment variable (not written to disk)
-            # Escape single quotes in password for shell safety
-            escaped_pass = db_pass.replace("'", "'\\''") if db_pass else ""
-            inner_cmd = "export ORACLE_COLLECTOR_DB_PASS='%s'; %s" % (escaped_pass, python_cmd)
+            _safe_path_re = r'^[a-zA-Z0-9/_.\-]+$'
+            python_exe = _find_python_executable()
+            if not re.match(_safe_path_re, python_exe):
+                print("WARNING: Detected Python path contains unexpected characters: %s" % python_exe)
+                python_exe = "/usr/bin/python3" if _PY3 else "/usr/bin/python"
+            if not re.match(_safe_path_re, script_path):
+                print("ERROR: Script path contains unexpected characters: %s" % script_path)
+                print("Please move the script to a path containing only alphanumeric characters, slashes, dots, underscores, and hyphens.")
+                sys.exit(1)
+            print("  Python interpreter: %s" % python_exe)
+            python_cmd = "%s %s --internal-phase2 %s" % (
+                _shell_quote(python_exe), _shell_quote(script_path), _shell_quote(phase2_file)
+            )
+
+            if db_pass:
+                inner_cmd = "export ORACLE_COLLECTOR_DB_PASS=%s; %s" % (_shell_quote(db_pass), python_cmd)
+            else:
+                inner_cmd = python_cmd
 
             if current_user == "root":
                 full_cmd = ["su", "-", oracle_os_user, "-c", inner_cmd]
@@ -741,7 +759,7 @@ def main():
             script_info = script_info_from_first or OrderedDict([
                 ("scriptVersion", "1.0.0"),
                 ("outputFormat", "JSON_V1"),
-                ("lookbackDays", 7),
+                ("lookbackDays", 30),
                 ("collectionTimestamp", host_info.get("collectionTimestamp", "")),
                 ("collectionMethod", "AWR"),
             ])
@@ -800,8 +818,23 @@ def main():
 
     print("")
     print("===============================================================================")
+    print("")
+    print("Next Steps:")
+    print("  1. Upload the generated JSON file to Workload Factory.")
+    print("  2. Select your host and explore the potential savings")
+    print("     and recommended FSxN configuration.")
 
     sys.exit(1 if failure_count > 0 else 0)
+
+
+def _shell_quote(s):
+    """Shell-escape a string for safe interpolation into sh -c / su -c commands."""
+    if _PY3:
+        import shlex
+        return shlex.quote(s)
+    else:
+        import pipes
+        return pipes.quote(s)
 
 
 def _get_current_user():
@@ -811,6 +844,43 @@ def _get_current_user():
         return pwd.getpwuid(os.getuid()).pw_name
     except (ImportError, KeyError):
         return os.environ.get("USER", os.environ.get("USERNAME", "unknown"))
+
+
+def _find_python_executable():
+    """Find the absolute path to a working Python interpreter.
+
+    Needed for Phase 2 re-invocation via su/sudo, where the login shell
+    resets PATH. An absolute path avoids relying on the target user's PATH.
+    """
+    # Best option: the interpreter currently running this script
+    if sys.executable and os.path.isabs(sys.executable) and os.path.isfile(sys.executable):
+        return sys.executable
+
+    # Search well-known absolute paths, preferring the same major version
+    if _PY3:
+        candidates = (
+            "/usr/bin/python3", "/usr/bin/python",
+            "/usr/local/bin/python3", "/usr/local/bin/python",
+        )
+    else:
+        candidates = (
+            "/usr/bin/python", "/usr/bin/python3",
+            "/usr/local/bin/python", "/usr/local/bin/python3",
+        )
+    for path in candidates:
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+
+    # Last resort: 'which' lookup (works for the current user's PATH)
+    for name in (("python3", "python") if _PY3 else ("python", "python3")):
+        try:
+            rc, out, _, _ = run_cmd_with_timeout(["which", name], timeout_sec=5)
+            if rc == 0 and out.strip() and os.path.isabs(out.strip()):
+                return out.strip()
+        except (OSError, IOError):
+            pass
+
+    return "/usr/bin/python3" if _PY3 else "/usr/bin/python"
 
 
 def _detect_oracle_os_user():
