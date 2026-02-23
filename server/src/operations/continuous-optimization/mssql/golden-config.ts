@@ -423,8 +423,7 @@ const GOLDEN_CONFIG = {
                 severity: SEVERITY.CRITICAL,
                 tags: [AwsWellArchitecturedPillars.RELIABILITY],
                 resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                recommendation:
-                    'SQL Server services must be set to start automatically and run on the primary node and stop on the secondary node.',
+                recommendation: 'SQL Server service must be configured for automatic failover and startup.',
                 recommended: ''
             }
         }

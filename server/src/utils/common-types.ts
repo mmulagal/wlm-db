@@ -179,6 +179,7 @@ interface HighAvailabilityAssessment {
         preferredNodeId?: string;
         nonPreferredNodeId?: string;
         nodesInViolation?: string[];
+        totalNodes?: number;
         details: HighAvailabilitySqlServerServiceDetail[];
         error?: string;
     };

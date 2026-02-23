@@ -36,7 +36,9 @@ import {
     HighAvailabilityAssessment,
     Metadata,
     ResourceAssessmentData,
-    HighAvailabilitySharedStorage
+    HighAvailabilitySharedStorage,
+    VolumeRecord,
+    VolumeDBMapEntry
 } from '../../../utils/common-types';
 import { getInstanceInfo } from '../../database/database-operations';
 import { describeFSx } from '../../../lib/aws/fsx';
@@ -225,7 +227,10 @@ async function getResilienceDriftAssessment(
                       region,
                       databaseHostId,
                       databaseInstanceId,
-                      crrAssessmentData as unknown as CrrAssessment
+                      crrAssessmentData as unknown as CrrAssessment,
+                      Boolean(resourceAssessmentData?.aoagDetails),
+                      resourceAssessmentData?.aoagDetails?.databaseRoles,
+                      mappedVolumesData
                   )
                 : Promise.resolve(undefined),
             shouldTriggerAwsBackupAssessment
@@ -651,13 +656,21 @@ async function initiateCrossRegionResiliencyAssessment(
     }
 }
 
+const CRR_RECOMMENDATION_DEFAULT =
+    'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.';
+const CRR_RECOMMENDATION_AOAG =
+    'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. In AOAG distributed groups, use CRR alongside asynchronous replicas and coordinate SnapMirror with AG seeding for effective multi-region support.';
+
 async function getCrrDriftData(
     accountId: string,
     credentialsId: string,
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    crrAssessmentData: CrrAssessment
+    crrAssessmentData: CrrAssessment,
+    isAoag?: boolean,
+    aoagDatabaseRoles?: Array<{ databaseName: string; agName: string; replicaRole: string }>,
+    mappedVolumesData?: Record<string, MappedOnTapVolumeResponse>
 ) {
     logger.info('Calculate crr drift data for:', {
         accountId,
@@ -675,19 +688,59 @@ async function getCrrDriftData(
     const { crrDetails } = crrAssessmentData;
 
     try {
-        const allVolumesOptimized: boolean = crrDetails.every((detail: CrrDetails) => detail.isCRREnabled);
+        // For AOAG, filter out volumes that only host secondary databases (already replicated via AG)
+        let filteredCrrDetails = crrDetails;
+        if (isAoag && aoagDatabaseRoles?.length && mappedVolumesData) {
+            const secondaryDbNames = new Set(
+                aoagDatabaseRoles.filter(db => db.replicaRole === 'SECONDARY').map(db => db.databaseName)
+            );
+
+            const { volumeRecords, volumeDBMap } = Object.values(mappedVolumesData).reduce(
+                (acc, item) => {
+                    if (item?.volumeRecords) {
+                        acc.volumeRecords.push(...item.volumeRecords);
+                    }
+                    if (item?.volumeDBMap) {
+                        acc.volumeDBMap.push(...item.volumeDBMap);
+                    }
+                    return acc;
+                },
+                { volumeRecords: [] as VolumeRecord[], volumeDBMap: [] as VolumeDBMapEntry[] }
+            );
+
+            const volumeNameToDbNames = new Map<string, string[]>();
+            for (const dbEntry of volumeDBMap) {
+                const volRecord = volumeRecords.find(v => v.uuid === dbEntry.ontapVolumeuuid);
+                if (volRecord) {
+                    const dbNames = volumeNameToDbNames.get(volRecord.name) || [];
+                    dbNames.push(dbEntry.databaseName);
+                    volumeNameToDbNames.set(volRecord.name, dbNames);
+                }
+            }
+
+            filteredCrrDetails = crrDetails.filter(detail => {
+                const dbNames = volumeNameToDbNames.get(detail.volumeName) || [];
+                if (dbNames.length === 0) {
+                    return true;
+                }
+                return dbNames.some(dbName => !secondaryDbNames.has(dbName));
+            });
+        }
+
+        const allVolumesOptimized: boolean = filteredCrrDetails.every((detail: CrrDetails) => detail.isCRREnabled);
 
         const response: ParameterDriftResponseType = {
             name: 'crr',
             status: allVolumesOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
             severity: SEVERITY.WARNING,
-            recommendation:
-                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.',
+            recommendation: isAoag ? CRR_RECOMMENDATION_AOAG : CRR_RECOMMENDATION_DEFAULT,
             objectsInViolation: allVolumesOptimized
                 ? []
-                : crrDetails.filter(detail => !detail.isCRREnabled).map(detail => detail.volumeName),
-            totalObjectsAssessed: crrDetails.length,
-            totalObjectsInViolation: allVolumesOptimized ? 0 : crrDetails.filter(detail => !detail.isCRREnabled).length,
+                : filteredCrrDetails.filter(detail => !detail.isCRREnabled).map(detail => detail.volumeName),
+            totalObjectsAssessed: filteredCrrDetails.length,
+            totalObjectsInViolation: allVolumesOptimized
+                ? 0
+                : filteredCrrDetails.filter(detail => !detail.isCRREnabled).length,
             tags: [AwsWellArchitecturedPillars.RELIABILITY],
             resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             recommended: 'crr-enabled'
@@ -924,12 +977,47 @@ async function getSqlServiceStartupAssessment(
         const { metadata: resourceMetadata } = (databaseInstanceObject as DatabaseInstance).resource;
         const { node1InstanceId, node2InstanceId } = resourceMetadata as Metadata;
 
-        // Ensure both node1InstanceId and node2InstanceId are defined
-        if (!node1InstanceId || !node2InstanceId) {
+        // Standalone AOAG: no FCI pair, check single node for automatic startup
+        if (!node2InstanceId) {
+            const ec2InstanceId = activeNodeInstanceid || node1InstanceId;
+            if (!ec2InstanceId) {
+                throw new Error('EC2 instance ID not available for SQL Server service assessment.');
+            }
+
+            logger.info(`Standalone AOAG SQL service check on node: ${ec2InstanceId}`);
+
+            const rawResponse = await callSsmExecution({
+                credentialsId,
+                region,
+                commands: [SQL_SERVER_SERVICES(databaseInstanceName)],
+                ec2InstanceId,
+                comment: `Fetch sql service status for instance ${databaseInstanceName} on node ${ec2InstanceId}`,
+                accountId
+            });
+
+            const [parsedResponse] = parseMultipleCommandResponse(rawResponse);
+            const services = (
+                Array.isArray(parsedResponse) ? parsedResponse : parsedResponse ? [parsedResponse] : []
+            ).map(svc => ({ ...svc, instanceId: ec2InstanceId }));
+
+            const nodesInViolation = services.some((svc: any) => svc.StartType?.toLowerCase() !== 'automatic')
+                ? [ec2InstanceId]
+                : [];
+
+            return {
+                status: isEmpty(nodesInViolation) ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+                nodesInViolation,
+                totalNodes: 1,
+                details: services
+            };
+        }
+
+        // FCI path: both nodes must exist
+        if (!node1InstanceId) {
             throw new Error('Both node1InstanceId and node2InstanceId must be available for FCI instances.');
         }
 
-        // 1. Determine preferred and non-preferred nodes
+        // Determine preferred and non-preferred nodes
         const { preferredNodeId, standbyNodeId } = await getMZFsxnNodePreference(
             accountId,
             credentialsId,
@@ -951,7 +1039,7 @@ async function getSqlServiceStartupAssessment(
             `Preferred node: ${preferredNodeId}, Non-preferred node: ${standbyNodeId}, Active node: ${activeNodeInstanceid}`
         );
 
-        // 3. Run SSM command on both nodes in parallel
+        // Run SSM command on both nodes in parallel
         const [preferredNodeRaw, nonPreferredNodeRaw] = await Promise.all([
             callSsmExecution({
                 credentialsId,
@@ -971,7 +1059,7 @@ async function getSqlServiceStartupAssessment(
             })
         ]);
 
-        // 4. Parse SSM outputs
+        // Parse SSM outputs
         const [parsedPreferred] = parseMultipleCommandResponse(preferredNodeRaw);
         const [parsedNonPreferred] = parseMultipleCommandResponse(nonPreferredNodeRaw);
 
@@ -998,6 +1086,7 @@ async function getSqlServiceStartupAssessment(
             preferredNodeId,
             standbyNodeId,
             nodesInViolation: [...new Set(nodesInViolation)],
+            totalNodes: 2,
             details: [...servicesPreferred, ...servicesNonPreferred]
         };
     } catch (err) {
@@ -1113,7 +1202,8 @@ async function initiateHostLevelHighAvailabilityAssessment(
         const [parsedQuorumData, parsedHeartSettingsData, parsedAoagData] = rawResponsesParsed;
 
         const aoagDetails = isAoag ? deriveAoagDetails(parsedAoagData as Record<string, unknown>) : undefined;
-        const isStandaloneAoag = isAoag && aoagDetails?.baseDeploymentType === 'Standalone';
+        const isStandaloneAoag =
+            isAoag && aoagDetails?.baseDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT;
 
         let clusterQuorumResult: {
             status: AssessmentStatus;
@@ -1356,6 +1446,11 @@ async function getHighAvailabilityDriftData(
             }
         }
         const resiliencyConfig = storageGoldenConfigData.resiliency;
+        const isStandaloneAoag =
+            resourceAssessmentData?.aoagDetails?.baseDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT;
+        const clusterQuorumRecommendation = isStandaloneAoag
+            ? 'The quorum configuration should be set to Node Majority with a Cloud Witness (no disk) to ensure high availability.'
+            : resiliencyConfig.highAvailability.clusterQuorum.recommendation;
 
         const haChecks: GenericAssessmentResponseType[] = [
             isEmpty(sharedStorage)
@@ -1394,6 +1489,7 @@ async function getHighAvailabilityDriftData(
                 : {
                       ...resiliencyConfig.highAvailability.clusterQuorum,
                       name: 'cluster-quorum',
+                      recommendation: clusterQuorumRecommendation,
                       status: clusterQuorum.status as AssessmentStatus,
                       objectsInViolation: clusterQuorum.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
                       violationDetails:
@@ -1443,7 +1539,7 @@ async function getHighAvailabilityDriftData(
                           sqlServerServices.status !== AssessmentStatus.OPTIMIZED
                               ? sqlServerServices.nodesInViolation
                               : [],
-                      totalObjectsAssessed: 2,
+                      totalObjectsAssessed: sqlServerServices.totalNodes || 2,
                       totalObjectsInViolation: sqlServerServices.nodesInViolation?.length
                   }
         ];

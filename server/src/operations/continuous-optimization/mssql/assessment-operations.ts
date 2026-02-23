@@ -90,18 +90,12 @@ import { listJobs } from '../../../lib/database/job';
 const logger = getLogger();
 
 // Categories to exclude from assessment response for AOAG deployment type
-const AOAG_EXCLUDED_CATEGORIES = [
-    AssessmentCategories.COMPUTE,
-    AssessmentCategories.LICENSE,
-    AssessmentCategories.MSSQL_PATCH,
-    AssessmentCategories.MAXDOP,
-    AssessmentCategories.SNAPSHOT_POLICY,
-    AssessmentCategories.CRR,
-    AssessmentCategories.CLONE
-];
+const AOAG_EXCLUDED_CATEGORIES = [AssessmentCategories.LICENSE];
 
-// HA items to exclude for AOAG (cluster-quorum and heartbeat-settings now enabled for AOAG)
-const AOAG_EXCLUDED_HA_ITEMS = ['sqlServer-service'];
+// HA items to exclude for all AOAG deployments (sqlServer-service runs for both FCI and standalone AOAG)
+const AOAG_EXCLUDED_HA_ITEMS: string[] = [];
+// HA items to additionally exclude for standalone AOAG (shared-storage and drive-letter are FCI-specific checks)
+const STANDALONE_AOAG_EXCLUDED_HA_ITEMS = ['shared-storage', 'drive-letter'];
 
 const AOAG_EXCLUDED_STORAGE_VOLUME_CONFIG = ['snapshot-copy-reserve'];
 
@@ -124,10 +118,14 @@ function filterAssessmentForAoag(
         }
     }
 
-    // Filter highAvailability (keep only shared-storage and drive-letter)
+    const isStandaloneAoag = assessmentData.baseDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT;
+    const excludedHaItems = isStandaloneAoag
+        ? [...AOAG_EXCLUDED_HA_ITEMS, ...STANDALONE_AOAG_EXCLUDED_HA_ITEMS]
+        : AOAG_EXCLUDED_HA_ITEMS;
+
     if (filteredAssessment.highAvailability && Array.isArray(filteredAssessment.highAvailability)) {
         const filteredHA = filteredAssessment.highAvailability.filter(
-            (item: { name?: string }) => !AOAG_EXCLUDED_HA_ITEMS.includes(item.name || '')
+            (item: { name?: string }) => !excludedHaItems.includes(item.name || '')
         );
         filteredAssessment.highAvailability = filteredHA.length > 0 ? filteredHA : undefined;
     }
