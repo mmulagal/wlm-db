@@ -109,7 +109,8 @@
             "overview": "Overview",
             "well-architected-status": "Well-architected status",
             "databases": "Databases",
-            "sandboxes": "Sandboxes"
+            "sandboxes": "Sandboxes",
+            "host": "Host"
         },
         "banner": {
             "one-time-assessment": "One-time assessment",
@@ -154,6 +155,7 @@
             "instance-readiness-view": "Instance readiness view",
             "prerequisite-check-view": "Prerequisite check view",
             "registering": "Registering",
+            "id": "ID",
             "authenticate-instance": "Authenticate instance",
             "authenticate-database": "Authenticate database",
             "use-the-same-credentials-for-all-resources": "Use the same credentials for all resources",
@@ -413,6 +415,10 @@
             "select-header-disabled-oracle": "Filter the table with at most 10 unregistered Standalone databases to enable bulk registration.",
             "max-selection-reached": "Maximum of {{max}} instances can be selected for bulk registration.",
             "too-many-visible-rows": "Filter the table to show {{max}} or fewer unregistered instances to enable bulk selection.",
+            "register-selected-instances": "Register {{count}} selected instances",
+            "register-selected-databases": "Register {{count}} selected databases",
+            "register-selected-instance": "Register {{count}} selected instance",
+            "register-selected-database": "Register {{count}} selected database",
             "register-selected": "Register all",
             "host-down": "Host is down.",
             "ssm-down": "SSM is not connected.",
@@ -1666,21 +1672,21 @@
             "iops-disabled-tooltip": "IOPS doesn't apply to this disk type volumes.",
             "throughput-disabled-tooltip": "Throughput doesn't apply to this disk type volumes.",
             "oracle-on-premises-configuration": "Oracle on-premises configuration",
-            "oracle-server-on-fsx-ontap": "Oracle Server on FSx for ONTAP",
+            "oracle-server-on-fsx-ontap": "Oracle database on FSx for ONTAP",
             "mssql-server-on-fsx-ontap": "Microsoft SQL Server on FSx for ONTAP",
-            "oracle-server-on-ebs": "Oracle Server on EBS",
+            "oracle-server-on-ebs": "Oracle database on EBS",
             "mssql-server-on-ebs": "Microsoft SQL Server on Amazon Elastic Block Store (EBS)",
             "mssql-server-fsxw-category": "Microsoft SQL Server on FSx for Windows File Server",
             "oracle-ec2-single-fsx": "Oracle on AWS EC2 using one FSx for ONTAP file system",
             "mssql-selection-based-text": "Based on your selections, we recommend creating the following:",
             "mssql-selection-based-second-text": "Microsoft SQL Server on AWS EC2 using FSx for ONTAP file system",
             "oracle-ec2-multiple-fsx": "Oracle on AWS EC2 using multiple FSx for ONTAP file systems",
-            "oracle-server-instance": "Oracle Server Instance",
-            "oracle-ontap-calculation": "Oracle Server on FSx for ONTAP calculation",
+            "oracle-server-instance": "Oracle database Instance",
+            "oracle-ontap-calculation": "Oracle database on FSx for ONTAP calculation",
             "mssql-ontap-calculation": "Microsoft SQL EC2 on FSx for ONTAP calculation",
-            "oracle-ebs-calculation": "Oracle Server on EBS calculation",
+            "oracle-ebs-calculation": "Oracle database on EBS calculation",
             "mssql-ebs-calculation": "Microsoft SQL Server on EBS calculation",
-            "oracle-ec2-instances": "Oracle EC2 Instances",
+            "oracle-ec2-instances": "Oracle EC2 database",
             "mssql-ec2-instances": "Microsoft SQL EC2 Instances",
             "number-of-databases": "Number of databases",
             "number-of-sql-instances": "Number of SQL instances",
@@ -1736,7 +1742,11 @@
                     "value": "Value",
                     "findings": "Findings"
                 }
-            }
+            },
+            "oracle-database-on-premises": "Oracle database on-premises",
+            "oracle-database-ebs": "Oracle database on Elastic Block Store (EBS)",
+            "oracle-view-calc-text": "Learn how we calculated the estimated cost of Oracle database on FSx for ONTAP for your specific use case and the configuration that you selected.",
+            "mssql-view-calc-text": "Learn how we calculated the estimated cost of Microsoft SQL Server on FSx for ONTAP for your specific use case and the configuration that you selected."
         },
         "instance-table": {
             "headers": {

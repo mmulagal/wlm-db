@@ -1,13 +1,16 @@
-import { DsCheckbox, DsTypography, useWizard, TooltipInfo } from '@netapp/design-system';
+import { DsCheckbox, DsTypography, useWizard, Popover } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import React, { useEffect, useMemo } from 'react';
 import styles from './ActionComponent.module.scss';
+import CommonStyles from '../../../../../../utils/CommonStyles.module.scss';
+import { ReactComponent as InfoIcon } from '../../../../../../assets/tooltipGrey.svg';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { setInstallType } from '../../../../../../store/workloadFactory/inventoryV2Slice';
 import { ManageStates, UseWizardReturn } from '../../../../../../utils/types/registerTypes';
 import { CHECK_LABELS, ENGINE_TYPE_CHECKS } from '../ManageInstanceStepHelper';
 import { ACTION_TYPE, DBType } from '../../../../../../utils/consts';
+import SeparatorComponent from '../../../../../../common/SeparatorComponent/SeparatorComponent';
 
 type ActionComponentProps = {
     manageChecks: Partial<ManageStates>;
@@ -33,7 +36,17 @@ const hasJqRequirement = (instance: BulkInstance): boolean => !!instance?.manage
 
 const hasPythonRequirement = (instance: BulkInstance): boolean => !!instance?.manageStates?.installMissingPython;
 
+interface InstanceDetail {
+    name: string;
+    hostName: string;
+}
+
 const getInstanceName = (instance: BulkInstance): string => instance?.instanceName || instance?.hostName || '';
+
+const getInstanceDetail = (instance: BulkInstance): InstanceDetail => ({
+    name: instance?.instanceName || instance?.hostName || '',
+    hostName: instance?.hostName || ''
+});
 
 const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: ActionComponentProps) => {
     const { t } = useTranslation();
@@ -68,10 +81,9 @@ const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: Acti
                     );
                 });
 
-            // Get count and names helper
             const getCountAndNames = (filtered: BulkInstance[]) => ({
                 count: filtered.length,
-                names: filtered.map(getInstanceName)
+                names: filtered.map(getInstanceDetail)
             });
 
             // Common filters
@@ -143,30 +155,30 @@ const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: Acti
             powershellCount: needsPowershell,
             powershellInstanceNames: [] as string[],
             awsAndPowershellCount: needsAws && needsPowershell ? 1 : 0,
-            awsAndPowershellInstanceNames: [] as string[],
+            awsAndPowershellInstanceNames: [] as InstanceDetail[],
             awsOnlyMssqlCount: needsAws && !needsPowershell ? 1 : 0,
-            awsOnlyMssqlInstanceNames: [] as string[],
+            awsOnlyMssqlInstanceNames: [] as InstanceDetail[],
             powershellOnlyCount: needsPowershell && !needsAws ? 1 : 0,
-            powershellOnlyInstanceNames: [] as string[],
+            powershellOnlyInstanceNames: [] as InstanceDetail[],
             // Oracle specific
             jqCount: needsJQ,
             jqInstanceNames: [] as string[],
             pythonCount: needsPython,
             pythonInstanceNames: [] as string[],
             awsOnlyOracleCount: needsAws && !needsJQ && !needsPython ? 1 : 0,
-            awsOnlyOracleInstanceNames: [] as string[],
+            awsOnlyOracleInstanceNames: [] as InstanceDetail[],
             jqOnlyCount: needsJQ && !needsAws && !needsPython ? 1 : 0,
-            jqOnlyInstanceNames: [] as string[],
+            jqOnlyInstanceNames: [] as InstanceDetail[],
             pythonOnlyCount: needsPython && !needsAws && !needsJQ ? 1 : 0,
-            pythonOnlyInstanceNames: [] as string[],
+            pythonOnlyInstanceNames: [] as InstanceDetail[],
             allThreeCount: needsAws && needsJQ && needsPython ? 1 : 0,
-            allThreeInstanceNames: [] as string[],
+            allThreeInstanceNames: [] as InstanceDetail[],
             awsAndJqOnlyCount: needsAws && needsJQ && !needsPython ? 1 : 0,
-            awsAndJqOnlyInstanceNames: [] as string[],
+            awsAndJqOnlyInstanceNames: [] as InstanceDetail[],
             awsAndPythonOnlyCount: needsAws && !needsJQ && needsPython ? 1 : 0,
-            awsAndPythonOnlyInstanceNames: [] as string[],
+            awsAndPythonOnlyInstanceNames: [] as InstanceDetail[],
             jqAndPythonOnlyCount: !needsAws && needsJQ && needsPython ? 1 : 0,
-            jqAndPythonOnlyInstanceNames: [] as string[]
+            jqAndPythonOnlyInstanceNames: [] as InstanceDetail[]
         };
     }, [wizardOperationType, bulkDetectedInstanceList, manageChecks]);
 
@@ -189,7 +201,8 @@ const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: Acti
                 singlePrefix: 'databases.register-flow.single-instance-require-modules-prefix',
                 singularText: 'instance requires',
                 pluralText: 'instances require',
-                tooltipHeader: 'databases.register-flow.instances',
+                tooltipHeaderSingle: 'databases.well-architect.instance',
+                tooltipHeaderPlural: 'databases.register-flow.instances',
                 showRebootNotice: instanceCounts.powershellCount > 0,
                 moduleConfigs: [
                     {
@@ -220,7 +233,8 @@ const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: Acti
                 singlePrefix: 'databases.register-flow.single-database-require-modules-prefix',
                 singularText: 'database requires',
                 pluralText: 'databases require',
-                tooltipHeader: 'databases.register-flow.databases',
+                tooltipHeaderSingle: 'databases.well-architect.database',
+                tooltipHeaderPlural: 'databases.register-flow.databases',
                 showRebootNotice: instanceCounts.jqCount > 0 || instanceCounts.pythonCount > 0,
                 moduleConfigs: [
                     {
@@ -320,19 +334,41 @@ const ActionComponent = ({ manageChecks, engineType, wizardOperationType }: Acti
                                     ))}
                                 </DsTypography>
                                 {config.instanceNames.length > 0 && (
-                                    <TooltipInfo placement="bottom" trigger="hover">
-                                        <div className={styles.tooltipContent}>
-                                            <DsTypography variant="Semibold_14">
-                                                {t(installationConfig.tooltipHeader)}
+                                    <Popover
+                                        popoverClass={CommonStyles.scrollablePopover}
+                                        trigger="hover"
+                                        placement="bottom"
+                                        delayHide={200}
+                                        interactive
+                                        isAppendedToBody
+                                        container={<InfoIcon className={styles.infoIcon} />}
+                                    >
+                                        <div className={CommonStyles.popoverTooltipContent}>
+                                            <DsTypography
+                                                variant="Semibold_14"
+                                                className={CommonStyles.popoverTooltipTitle}
+                                            >
+                                                {config.instanceNames.length === 1
+                                                    ? t(installationConfig.tooltipHeaderSingle)
+                                                    : t(installationConfig.tooltipHeaderPlural)}
                                             </DsTypography>
-                                            {config.instanceNames.map(name => (
-                                                <React.Fragment key={name}>
-                                                    <hr className={styles.tooltipDivider} />
-                                                    <DsTypography variant="Regular_14">{name}</DsTypography>
+                                            {config.instanceNames.map(instance => (
+                                                <React.Fragment key={`${instance.name}-${instance.hostName}`}>
+                                                    <SeparatorComponent variant="horizontal" />
+                                                    <div className={CommonStyles.popoverInstanceHostRow}>
+                                                        <DsTypography variant="Semibold_14">
+                                                            {instance.name}
+                                                        </DsTypography>
+                                                        <DsTypography variant="Regular_14">
+                                                            {t('databases.general.host')}
+                                                            {': '}
+                                                            {instance.hostName}
+                                                        </DsTypography>
+                                                    </div>
                                                 </React.Fragment>
                                             ))}
                                         </div>
-                                    </TooltipInfo>
+                                    </Popover>
                                 )}
                             </div>
                         ))}

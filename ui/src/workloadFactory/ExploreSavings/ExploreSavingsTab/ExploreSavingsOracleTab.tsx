@@ -1,6 +1,7 @@
 import { DsTypography } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './ExploreSavingsTab.module.scss';
 import { setSelectedOracleExploreSavingsTab } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { WLF_TABS } from '../../../utils/consts';
@@ -10,6 +11,7 @@ import { handleExploreSavingsURL } from '../../../utils/utilityFunctions';
 
 const ExploreSavingsOracleTab = () => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(WLF_TABS.ORACLE_SERVER_ON_PREMISES);
     const selectedOracleExploreSavingsTab = useAppSelector(
         state => state.exploreSavings.selectedOracleExploreSavingsTab
@@ -43,7 +45,7 @@ const ExploreSavingsOracleTab = () => {
                     }
                     onClick={() => handleClick(WLF_TABS.ORACLE_SERVER_ON_PREMISES)}
                 >
-                    Oracle Server on-premises
+                    {t('databases.explore-savings.oracle-database-on-premises')}
                 </DsTypography>
             </div>
             <div
@@ -61,7 +63,7 @@ const ExploreSavingsOracleTab = () => {
                             : `${styles.headerPart1} ${styles.headerDisabled}`
                     }
                 >
-                    <span>Oracle Server on Elastic Block Store (EBS)</span>
+                    <span>{t('databases.explore-savings.oracle-database-ebs')}</span>
                     <div className={styles.comingSoonStyle}>
                         <ComingSoon />
                     </div>

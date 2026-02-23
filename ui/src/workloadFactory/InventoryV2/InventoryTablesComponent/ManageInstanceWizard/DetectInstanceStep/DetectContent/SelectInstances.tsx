@@ -187,7 +187,11 @@ const SelectInstances = ({ engineType }: { engineType: string }) => {
 
                                 <SeparatorComponent variant="vertical" height="20px" />
 
-                                <DsTypography variant="Regular_14">Host: {values[1]}</DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.general.host')}
+                                    {': '}
+                                    {values[1]}
+                                </DsTypography>
                             </div>
                         </div>
                     );

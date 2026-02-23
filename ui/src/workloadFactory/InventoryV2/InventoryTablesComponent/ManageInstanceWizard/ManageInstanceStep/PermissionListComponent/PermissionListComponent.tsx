@@ -29,11 +29,13 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
                 engineType === DBType.ORACLE
                     ? ['assessment', 'remediation', 'errorInvestigation']
                     : ['assessment', 'remediation', 'dbcreation', 'sandbox', 'errorInvestigation'];
-            const counts: Record<string, { ready: number; total: number; missingInstances: string[] }> = {};
+            const counts: Record<
+                string,
+                { ready: number; total: number; missingInstances: { name: string; hostName: string }[] }
+            > = {};
 
             capabilities.forEach(cap => {
-                // Get instances that are NOT ready for this specific capability
-                const missingInstances: string[] = [];
+                const missingInstances: { name: string; hostName: string }[] = [];
                 let readyCount = 0;
 
                 bulkDetectedInstanceList.forEach((instance: any) => {
@@ -43,9 +45,9 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
                     if (status === MANAGE_STATES.READY) {
                         readyCount++;
                     } else {
-                        // Get instance name for tooltip
-                        const instanceName = instance?.instanceName || instance?.data?.databaseInstanceName;
-                        missingInstances.push(instanceName);
+                        const hostName = instance?.hostName || instance?.data?.name || instance?.hostRow?.name || '';
+                        const instanceName = instance?.instanceName || instance?.data?.databaseInstanceName || '-';
+                        missingInstances.push({ name: instanceName, hostName });
                     }
                 });
 

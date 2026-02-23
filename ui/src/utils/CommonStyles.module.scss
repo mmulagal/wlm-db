@@ -415,6 +415,29 @@
     }
 }
 
+// Shared popover tooltip styles used by ManageInstanceAccordion and ActionComponent
+.popoverTooltipContent {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    min-width: 180px;
+
+    .popoverTooltipTitle {
+        padding: 8px 16px;
+        display: flex;
+        flex-direction: column;
+        width: 268px;
+        max-height: 356px;
+    }
+
+    .popoverInstanceHostRow {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 16px;
+    }
+}
+
 // Scrollable popover styles for FSx lists
 .scrollablePopover {
     display: flex;

@@ -376,8 +376,8 @@ const OracleOnPremTable = () => {
             <TableTopBar
                 // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle="Oracle Server on-premises"
-                singularTitle="Oracle Server on-premises"
+                pluralTitle={t('databases.explore-savings.oracle-database-on-premises')}
+                singularTitle={t('databases.explore-savings.oracle-database-on-premises')}
                 className={styles.topBarInstanceStyle}
                 info={<TableTooltip />}
                 actionsRight={

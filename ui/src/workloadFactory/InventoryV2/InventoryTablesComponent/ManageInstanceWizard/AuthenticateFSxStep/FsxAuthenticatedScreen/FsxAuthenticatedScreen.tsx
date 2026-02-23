@@ -39,6 +39,9 @@ const FsxAuthenticatedScreen = () => {
                     }`}
                 >
                     <DsTypography variant="Semibold_14">{fsx.fsxName}</DsTypography>
+                    <DsTypography variant="Regular_14">
+                        {t('databases.register-flow.id')}: {fsx.fsxId}
+                    </DsTypography>
                 </div>
             ))}
         </div>

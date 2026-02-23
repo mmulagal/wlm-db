@@ -34,18 +34,8 @@
         gap: 8px;
     }
 
-    .tooltipContent {
-        display: flex;
-        flex-direction: column;
-        padding: 8px;
-        min-width: 180px;
-    }
-
-    .tooltipDivider {
-        border: 0;
-        border-top: 1px solid var(--border);
-        margin: 8px 0;
-        width: 100%;
+    .infoIcon {
+        margin-top: 2px;
     }
 
     .boldText {

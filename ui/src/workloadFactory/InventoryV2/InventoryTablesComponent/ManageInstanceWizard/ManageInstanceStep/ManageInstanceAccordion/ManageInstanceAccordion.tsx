@@ -1,13 +1,16 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { DsFlashingDotsLoader, DsTooltipInfo, DsTypography } from '@tlveng/wlm-ds';
+import { Popover } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import styles from './ManageInstanceAccordion.module.scss';
+import CommonStyles from '../../../../../../utils/CommonStyles.module.scss';
 import { ReactComponent as Arrow } from '../../../../../../assets/row arrow2.svg';
 import { ReactComponent as Success } from '../../../../../../assets/success.svg';
 import { ReactComponent as Cross } from '../../../../../../assets/black-cross.svg';
 import { ReactComponent as InfoIcon } from '../../../../../../assets/ic_info.svg';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { ACTION_TYPE, DBType } from '../../../../../../utils/consts';
+import SeparatorComponent from '../../../../../../common/SeparatorComponent/SeparatorComponent';
 
 export type AccordionItem = {
     id: string;
@@ -28,7 +31,10 @@ type AccordionProps = {
     loading?: boolean;
     errorInvestigationLoading?: boolean;
     type?: string;
-    readinessCounts?: Record<string, { ready: number; total: number; missingInstances?: string[] }> | null;
+    readinessCounts?: Record<
+        string,
+        { ready: number; total: number; missingInstances?: { name: string; hostName: string }[] }
+    > | null;
     engineType?: string;
 };
 
@@ -198,25 +204,45 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                                                         </span>
                                                     )}
                                                     {partialReady && (
-                                                        <DsTooltipInfo
-                                                            placement="bottom"
+                                                        <Popover
+                                                            popoverClass={CommonStyles.scrollablePopover}
                                                             trigger="hover"
-                                                            icon={<InfoIcon className={styles.blueIcon} />}
+                                                            placement="bottom"
+                                                            delayHide={200}
+                                                            interactive
+                                                            isAppendedToBody
+                                                            container={<InfoIcon className={styles.blueIcon} />}
                                                         >
-                                                            <div className={styles.tooltipContent}>
-                                                                <DsTypography variant="Semibold_14">
+                                                            <div className={CommonStyles.popoverTooltipContent}>
+                                                                <DsTypography
+                                                                    variant="Semibold_14"
+                                                                    className={CommonStyles.popoverTooltipTitle}
+                                                                >
                                                                     {t('databases.register-flow.missing-prerequisite')}
                                                                 </DsTypography>
-                                                                {counts.missingInstances?.map(name => (
-                                                                    <React.Fragment key={name}>
-                                                                        <hr className={styles.tooltipDivider} />
-                                                                        <DsTypography variant="Regular_14">
-                                                                            {name}
-                                                                        </DsTypography>
+                                                                {counts.missingInstances?.map(instance => (
+                                                                    <React.Fragment
+                                                                        key={`${instance.name}-${instance.hostName}`}
+                                                                    >
+                                                                        <SeparatorComponent variant="horizontal" />
+                                                                        <div
+                                                                            className={
+                                                                                CommonStyles.popoverInstanceHostRow
+                                                                            }
+                                                                        >
+                                                                            <DsTypography variant="Semibold_14">
+                                                                                {instance.name}
+                                                                            </DsTypography>
+                                                                            <DsTypography variant="Regular_14">
+                                                                                {t('databases.general.host')}
+                                                                                {': '}
+                                                                                {instance.hostName}
+                                                                            </DsTypography>
+                                                                        </div>
                                                                     </React.Fragment>
                                                                 ))}
                                                             </div>
-                                                        </DsTooltipInfo>
+                                                        </Popover>
                                                     )}
                                                     <DsTypography variant="Semibold_14">
                                                         {allReady && t('databases.register-flow.prepare-all-ready')}

@@ -1361,7 +1361,16 @@ const InstancesTable = () => {
                 {/* Show BulkActionContainer above the table when rows are selected */}
                 {isBulkActionVisible && (
                     <BulkActionContainer
-                        action={t('databases.bulk-register.register-selected')}
+                        action={t(
+                            selectedHostType === DBType.ORACLE
+                                ? selectedRowsForBulkRegister.length === 1
+                                    ? 'databases.bulk-register.register-selected-database'
+                                    : 'databases.bulk-register.register-selected-databases'
+                                : selectedRowsForBulkRegister.length === 1
+                                ? 'databases.bulk-register.register-selected-instance'
+                                : 'databases.bulk-register.register-selected-instances',
+                            { count: selectedRowsForBulkRegister.length }
+                        )}
                         onClick={handleBulkRegisterAction}
                     />
                 )}

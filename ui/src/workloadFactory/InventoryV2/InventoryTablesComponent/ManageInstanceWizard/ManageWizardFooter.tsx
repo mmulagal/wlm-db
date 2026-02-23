@@ -153,9 +153,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         // Check both storage array AND direct fsxId field since FSx can come from either source
         const getInstanceForFsx = (fsxId: string): BulkDetectedInstance | undefined =>
             selectedMultiDetectInstances.find((instance: BulkDetectedInstance) => {
-                const storage = instance.data?.storage || instance.storage;
-                // Check if FSx is in storage array
-                const inStorage = storage?.some((item: any) => item.id === fsxId && item.type === DETECT_HOST_VAR.FSXN);
+                const storageData = instance.data?.storage || instance.storage;
+                const storage = Array.isArray(storageData) ? storageData : [];
+                const inStorage = storage.some((item: any) => item.id === fsxId && item.type === DETECT_HOST_VAR.FSXN);
                 // Also check direct fsxId field on instance
                 const directFsxId = instance.data?.fsxId || (instance as any).fsxId;
                 return inStorage || directFsxId === fsxId;
@@ -1109,8 +1109,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
     const goFsxForwardForSingleRegister = () => {
         // Check if all FSx are already authenticated using storage array and fsxCredentialStatusObj
-        const storage = manageSingleInstanceData?.storage;
-        const fsxnItems = storage?.filter((item: any) => item.type === DETECT_HOST_VAR.FSXN && item.id) || [];
+        const storageArr = Array.isArray(manageSingleInstanceData?.storage) ? manageSingleInstanceData.storage : [];
+        const fsxnItems = storageArr.filter((item: any) => item.type === DETECT_HOST_VAR.FSXN && item.id);
 
         const isFsxAlreadyAuthenticated =
             fsxnItems.length === 0 || fsxnItems.every((item: any) => fsxCredentialStatusObj?.[item.id] === true);

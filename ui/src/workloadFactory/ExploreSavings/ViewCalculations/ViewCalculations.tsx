@@ -137,7 +137,9 @@ const ViewCalculations = ({ statusCheck }: any) => {
                     <div className={styles.topHeading}>
                         <DsTypography variant="Semibold_24">{GENERAL.COST_CALCULATION}</DsTypography>
                         <DsTypography variant="Regular_14" style={{ marginBottom: '4px' }}>
-                            {GENERAL.VIEW_CALC_TEXT}
+                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
+                                ? t('databases.explore-savings.oracle-view-calc-text')
+                                : t('databases.explore-savings.mssql-view-calc-text')}
                         </DsTypography>
 
                         <DsTypography variant="Regular_14" style={{ marginBottom: '40px', fontWeight: '500' }}>

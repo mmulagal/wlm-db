@@ -147,6 +147,9 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                     }`}
                 >
                     <DsTypography variant="Semibold_14">{fsx.fsxName}</DsTypography>
+                    <DsTypography variant="Regular_14">
+                        {t('databases.register-flow.id')}: {fsx.fsxId}
+                    </DsTypography>
                 </div>
             ))}
         </div>
@@ -239,6 +242,9 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                             >
                                 <div className={styles.firstCol}>
                                     <DsTypography variant="Semibold_14">{fsx.fsxName}</DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.register-flow.id')}: {fsx.fsxId}
+                                    </DsTypography>
                                 </div>
 
                                 <div className={styles.textFieldContainer}>

@@ -205,6 +205,11 @@ export const Content = () => {
                         }`}
                     >
                         <DsTypography variant="Semibold_14">{instance.instanceName}</DsTypography>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.general.host')}
+                            {': '}
+                            {instance.hostName}
+                        </DsTypography>
                     </div>
                 ))}
             </div>
@@ -314,6 +319,11 @@ export const Content = () => {
                                                 <DsTypography variant="Semibold_13">
                                                     {instance.instanceName}
                                                 </DsTypography>
+                                                <DsTypography variant="Regular_13">
+                                                    {t('databases.general.host')}
+                                                    {': '}
+                                                    {instance.hostName}
+                                                </DsTypography>
                                                 <DotComponent
                                                     color={authenticated ? 'var(--success)' : 'var(--toggle-off-bg)'}
                                                     value={
@@ -399,6 +409,11 @@ export const Content = () => {
                                     <div className={styles.instanceHeader}>
                                         <DsTypography variant="Semibold_14" className={styles.instanceName}>
                                             {instance.instanceName}
+                                        </DsTypography>
+                                        <DsTypography variant="Regular_14">
+                                            {t('databases.general.host')}
+                                            {': '}
+                                            {instance.hostName}
                                         </DsTypography>
                                     </div>
                                 </div>

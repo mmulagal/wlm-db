@@ -77,16 +77,16 @@ const InstanceReadinessTable = () => {
             isSortable: true,
             renderCell: (cellData: string, rowData: any) => (
                 <div className={styles.instanceNameCell}>
-                    <span>{cellData}</span>
                     <TooltipInfo trigger="hover" placement="bottom">
                         <div className={styles.hostNameTooltip}>
-                            <DsTypography variant="Semibold_14">
-                                {t('databases.register-flow.detect-instance-table-col.host-name')}
+                            <DsTypography variant="Regular_14">
+                                {t('databases.general.host')}
+                                {': '}
+                                {rowData?.hostName || '-'}
                             </DsTypography>
-                            <br />
-                            <DsTypography variant="Regular_14">{rowData?.hostName || '-'}</DsTypography>
                         </div>
                     </TooltipInfo>
+                    <span>{cellData}</span>
                 </div>
             )
         },

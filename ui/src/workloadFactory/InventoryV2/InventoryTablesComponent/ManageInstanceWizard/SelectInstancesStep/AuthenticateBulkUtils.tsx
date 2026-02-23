@@ -36,6 +36,7 @@ export interface BulkAuthPayloadItem {
 export interface BulkInstanceItem {
     instanceId: string;
     instanceName: string;
+    hostName: string;
     ec2InstanceId: string;
     region: string;
     credentialsId: string;
@@ -66,6 +67,7 @@ export const getSelectedInstancesForBulk = (
         return {
             instanceId: databaseInstanceName,
             instanceName: databaseInstanceName,
+            hostName: instance.data?.name || instance.data?.hostRow?.name || instance?.value,
             ec2InstanceId,
             region: instance.data?.regionId || instance.region || '',
             credentialsId: instance.data?.credentialId || instance.credentialsId || '',
