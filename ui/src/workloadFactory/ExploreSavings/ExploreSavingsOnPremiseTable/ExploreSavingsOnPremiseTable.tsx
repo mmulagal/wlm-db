@@ -193,6 +193,7 @@ const ExploreSavingsOnPremiseTable = () => {
                         // Access the data inside the JSON
                         if (compressedBase64) {
                             const result = await getUploadScript({
+                                type: 'mssql',
                                 payload: {
                                     fileContent: compressedBase64,
                                     fileName: selectedFile.name

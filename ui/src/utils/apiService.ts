@@ -1246,8 +1246,8 @@ export const exploreSavingsApi = createApi({
             })
         }),
         getUploadScript: builder.mutation({
-            query: ({ payload }) => ({
-                url: 'v1/mssql/onprem-tco/upload',
+            query: ({ payload, type }) => ({
+                url: `v1/${type}/onprem-tco/upload`,
                 method: 'POST',
                 body: payload
             })

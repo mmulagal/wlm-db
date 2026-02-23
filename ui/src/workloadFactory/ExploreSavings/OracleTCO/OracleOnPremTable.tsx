@@ -318,6 +318,7 @@ const OracleOnPremTable = () => {
 
                     if (compressedBase64) {
                         const result = await getUploadScript({
+                            type: 'oracle',
                             payload: {
                                 fileContent: compressedBase64,
                                 fileName: selectedFile.name
