@@ -25,7 +25,6 @@ interface OracleOnPremPayload {
     regionCode?: string;
     resources?: Array<{
         resourceId: string;
-        monthlySqlByolCost?: number;
         databaseData: Array<{
             databaseId?: string;
             noOfVcpusInUse?: number;
@@ -100,7 +99,6 @@ const OracleSavingsCalculatorApi = () => {
             totalThroughput?: number | string;
             totalStorage?: number;
         }> = [];
-        let monthlySqlByolCost: number | undefined;
 
         if (onPremStorageAndComputeInfo && selectedOnPremHostDetails?.resourceId) {
             Object.keys(onPremStorageAndComputeInfo).forEach(key => {
@@ -118,9 +116,6 @@ const OracleSavingsCalculatorApi = () => {
                         totalThroughput: value?.totalThroughput || 0,
                         totalStorage: Number(value?.totalStorage || 0) * GIB_IN_BYTE
                     };
-                    if (value?.monthlyOracleCost && monthlySqlByolCost === undefined) {
-                        monthlySqlByolCost = Number(value.monthlyOracleCost);
-                    }
                     databaseData.push(instanceEntry);
                 }
             });
@@ -146,7 +141,6 @@ const OracleSavingsCalculatorApi = () => {
         if (databaseData.length > 0 && selectedOnPremHostDetails?.resourceId) {
             payload.resources!.push({
                 resourceId: selectedOnPremHostDetails.resourceId,
-                ...(monthlySqlByolCost !== undefined && { monthlySqlByolCost }),
                 databaseData
             });
         }

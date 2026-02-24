@@ -433,7 +433,7 @@ export const formatViewCalcInstance = (
     computeDetails: any,
     licenseDetails: any
 ) => {
-    const { savingsCalculatorFrom } = store.getState().exploreSavings;
+    const { savingsCalculatorFrom, selectedOnPremHostDetails } = store.getState().exploreSavings;
     const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
 
     let instanceTypelist: any = [];
@@ -453,7 +453,8 @@ export const formatViewCalcInstance = (
         };
 
         if (isOracle) {
-            base.oracleEdition = licenseDetails?.oracleEdition || GENERAL.NOT_AVAILABLE;
+            base.oracleEdition =
+                licenseDetails?.oracleEdition || selectedOnPremHostDetails?.oracleEdition || GENERAL.NOT_AVAILABLE;
             base.oracleLicense = licenseDetails?.licenseIncluded ? 'Yes' : 'No';
         } else {
             base.sqlEdition =

@@ -1692,6 +1692,7 @@
             "number-of-databases": "Number of databases",
             "number-of-sql-instances": "Number of SQL instances",
             "monthly-oracle-cost": "Monthly Oracle cost",
+            "monthly-oracle-cost-tooltip": "License cost is user-provided. Oracle licensing varies widely, so the calculator doesn't calculate or adjust it.",
             "oracle-edition": "Oracle edition",
             "sql-edition": "SQL edition",
             "oracle-license-included": "Oracle license included",

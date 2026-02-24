@@ -39,7 +39,7 @@ import { StorageSavingsInterface, ViewCalculationsInterface } from '../../../uti
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
-    const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom } = state.exploreSavings;
+    const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom, onPremStorageAndComputeInfo, selectedOnPremHostDetails } = state.exploreSavings;
     const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
     const isArrayMode =
         (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
@@ -64,6 +64,17 @@ export const comparisonData = (calculatedResponse: any) => {
         : checkBYOLTooltip
         ? 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL Server license-included AMIs. SQL license costs for SQL on Elastic Block Store are based on the Enterprise license with BYOL. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.'
         : 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.';
+
+    const getOracleLicenseCost = () => {
+        if (!isOracle || !onPremStorageAndComputeInfo || !selectedOnPremHostDetails?.resourceId) return '$0';
+        const matchingKey = Object.keys(onPremStorageAndComputeInfo).find(key =>
+            key.startsWith(`${selectedOnPremHostDetails.resourceId}_`)
+        );
+        const cost = matchingKey ? onPremStorageAndComputeInfo[matchingKey]?.monthlyOracleCost : null;
+        return cost ? `$${formatFractionalNumberForCost(Number(cost), 2)}` : '$0';
+    };
+
+    const oracleLicenseCost = isOracle ? getOracleLicenseCost() : null;
 
     return [
         {
@@ -102,9 +113,12 @@ export const comparisonData = (calculatedResponse: any) => {
         {
             type: licenseLabel,
             isTooltip: licenseTooltip,
-            fsx: formatCost(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice),
-            ebs:
-                isArrayMode && Array.isArray(calculatedResponse?.license)
+            fsx: isOracle
+                ? oracleLicenseCost
+                : formatCost(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice),
+            ebs: isOracle
+                ? oracleLicenseCost
+                : isArrayMode && Array.isArray(calculatedResponse?.license)
                     ? sumArrayField(calculatedResponse.license, 'licenseMonthlyPrice')
                     : formatCost(calculatedResponse?.license?.existing?.licenseMonthlyPrice)
         },

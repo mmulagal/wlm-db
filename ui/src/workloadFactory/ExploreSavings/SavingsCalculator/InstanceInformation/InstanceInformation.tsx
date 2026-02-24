@@ -74,7 +74,7 @@ const InstanceInformation = ({ host }: { host?: any }) => {
     }, [oracleCostDebounced, oracleStoreKey]);
 
     useEffect(() => {
-        if (selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES) {
+        if (selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && !isOracleOnPrem) {
             let currentHost = host || selectedHostDetails;
 
             // If host prop exists and matches selectedHostDetails, prefer selectedHostDetails for latest data
@@ -170,7 +170,7 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             ];
             setTableData(data);
         }
-    }, [selectedHostDetails, storageSavingsResponse, host]);
+    }, [selectedHostDetails, storageSavingsResponse, host, isOracleOnPrem]);
 
     useEffect(() => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
@@ -328,6 +328,7 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                             setOracleCostLocal(value);
                         }}
                         className={styles.oracleCostInput}
+                        info={t('databases.explore-savings.monthly-oracle-cost-tooltip')}
                     />
                 </div>
             )}

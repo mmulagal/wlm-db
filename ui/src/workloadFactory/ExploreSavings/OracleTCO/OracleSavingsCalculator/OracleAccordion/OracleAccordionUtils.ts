@@ -4,28 +4,18 @@ import { TFunction } from 'i18next';
  * Generates Oracle instance data for the accordion display
  */
 export const generateOracleInstanceData = (storageSavingsResponse: any, selectedOnPremHostDetails: any) => {
-    // Handle array format for compute/license
     const computeArray = Array.isArray(storageSavingsResponse?.compute)
         ? storageSavingsResponse.compute
         : [storageSavingsResponse?.compute].filter(Boolean);
-    const licenseArray = Array.isArray(storageSavingsResponse?.license)
-        ? storageSavingsResponse.license
-        : [storageSavingsResponse?.license].filter(Boolean);
 
     const [firstCompute] = computeArray;
-    const [firstLicense] = licenseArray;
 
     let instanceType = '';
     if (firstCompute?.recommended?.instanceType) {
         [instanceType] = firstCompute.recommended.instanceType.split(',');
     }
 
-    let oracleEdition = '';
-    if (firstLicense?.recommended?.sqlServerEdition) {
-        [oracleEdition] = firstLicense.recommended.sqlServerEdition.split(',');
-    } else if (selectedOnPremHostDetails?.oracleEdition) {
-        oracleEdition = selectedOnPremHostDetails.oracleEdition;
-    }
+    const oracleEdition = selectedOnPremHostDetails?.oracleEdition || '';
 
     // Deployment model from the on-prem host details
     const deploymentModel = selectedOnPremHostDetails?.deploymentModel || '';
