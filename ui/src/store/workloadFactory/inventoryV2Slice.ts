@@ -636,6 +636,7 @@ const inventoryV2Slice = createSlice({
             state.allmssqlHostAssessmentData = [];
             state.allOracleHostAssessmentData = [];
             state.allLogAnalysisData = [];
+            state.offlineMssqlHostAssessmentData = [];
             state.dashSandboxList.data = [];
             state.dashSandboxSavings.data = [];
             state.hostTableRows = [];

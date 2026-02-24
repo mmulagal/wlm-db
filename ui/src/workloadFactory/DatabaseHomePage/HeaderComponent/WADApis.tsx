@@ -15,6 +15,7 @@ const WADApis = () => {
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const offlineMssqlHostAssessmentData = useAppSelector(state => state.inventoryV2.offlineMssqlHostAssessmentData);
+    const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
 
     // Refs to track current selections and prevent infinite loops
     const headerSelectedMultiCredIdsListRef = useRef(headerSelectedMultiCredIdsList);
@@ -39,6 +40,14 @@ const WADApis = () => {
         getAllOfflineAssessmentData([], null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Re-call offline assessment API on refresh
+    useEffect(() => {
+        if (isRefreshed) {
+            getAllOfflineAssessmentData([], null);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isRefreshed]);
 
     // When cred/region changes, reformat the offline data
     useEffect(() => {
