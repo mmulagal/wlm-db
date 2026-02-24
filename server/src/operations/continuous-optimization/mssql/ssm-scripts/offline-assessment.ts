@@ -1,5 +1,5 @@
 /**
- * MSSQL One-Time Workload Assessment and Discovery (WAD) Script
+ * MSSQL One-Time Assessment Script
  *
  * This script generates a standalone PowerShell script that can be run on Windows
  * hosts to collect MSSQL database and storage assessment data.
@@ -129,13 +129,13 @@ const MSSQL_ONE_TIME_WAD = `
     (e.g., permission denied), files will be created in the current working
     directory instead.
 .EXAMPLE
-    .\\MSSQL_Assessment.ps1 -StorageEndpoint fs-0123456789abcdef0 -Instance MSSQLSERVER
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageEndpoint fs-0123456789abcdef0 -Instance MSSQLSERVER
     Runs assessment using FSx for ONTAP file system ID for the default SQL instance.
 .EXAMPLE
-    .\\MSSQL_Assessment.ps1 -StorageEndpoint 10.0.1.100 -Instance SQLInstance1
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageEndpoint 10.0.1.100 -Instance SQLInstance1
     Runs assessment using ONTAP management IP for a named SQL instance.
 .EXAMPLE
-    .\\MSSQL_Assessment.ps1 -StorageEndpoint fs-0123456789abcdef0 -Instance MSSQLSERVER -OutputPath "C:\\AssessmentResults"
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageEndpoint fs-0123456789abcdef0 -Instance MSSQLSERVER -OutputPath "C:\\AssessmentResults"
     Runs assessment and saves JSON files to the specified output directory.
 .NOTES
     Version: ${OFFLINE_ASSESSMENT_SCRIPT_VERSION}
@@ -204,7 +204,7 @@ if ($StorageEndpoint -match '^fs-[a-zA-Z0-9]+$') {
     } else {
         $errorMessage = "Invalid StorageEndpoint format: '$StorageEndpoint'. StorageEndpoint must be either an FSx ID (format: fs-xxxxxxxxxxxxxxxxx) or a valid IPv4 Management IP address."
         Write-Log -Level "ERROR" -Message $errorMessage
-        Write-Log -Level "ERROR" -Message "Usage: .\\MSSQL_OneTimeWAD.ps1 -StorageEndpoint <FSxID or ManagementIP> -Instance <InstanceName>"
+        Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageEndpoint <FSxID or ManagementIP> -Instance <InstanceName>"
         throw $errorMessage
     }
 }
@@ -212,7 +212,7 @@ if ($StorageEndpoint -match '^fs-[a-zA-Z0-9]+$') {
 # Validate Instance parameter
 if ([string]::IsNullOrWhiteSpace($Instance)) {
     Write-Log -Level "ERROR" -Message "No SQL Server instance name provided. Please specify an instance name using the -Instance parameter."
-    Write-Log -Level "ERROR" -Message "Usage: .\\MSSQL_OneTimeWAD.ps1 -StorageEndpoint <FSxID or ManagementIP> -Instance <InstanceName>"
+    Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageEndpoint <FSxID or ManagementIP> -Instance <InstanceName>"
     throw "No SQL Server instance name provided. Please specify an instance name using the -Instance parameter."
 }
 
@@ -682,7 +682,7 @@ if (-not (Test-Path -Path $LogFilesPath -PathType Container)) {
 $script:LogFilePath = "${OFFLINE_ASSESSMENT_LOG_PATH}"
 
 Write-Log "=========================================="
-Write-Log "Starting MSSQL One-Time WAD Assessment"
+Write-Log "Starting MSSQL One-Time Assessment"
 Write-Log "StorageEndpoint: $StorageEndpoint"
 Write-Log "Instance: $Instance"
 Write-Log "=========================================="

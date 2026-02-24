@@ -12,7 +12,8 @@ import {
 import {
     MSSQLDriftAssessmentResponseType,
     RssConfigDriftResponseType,
-    ParameterDriftResponseType
+    ParameterDriftResponseType,
+    MSSQLDriftAssessmentResponse
 } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { OfflineAssessmentListResponseType } from '../../../routes/types/offline-assessment.types';
 import { calculateStorageDrift } from './storage-assessment-operations';
@@ -39,6 +40,7 @@ import {
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import GOLDEN_CONFIG from './golden-config';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
+import { validateAssessment } from '../assessment-utils';
 
 const logger = getLogger();
 
@@ -557,7 +559,11 @@ async function fetchMssqlOfflineAssessment(
         ? calculateMaxDOPDrift(accountId, '', '', resourceId, databaseInstanceId, maxDopData)
         : undefined;
 
-    const highAvailabilityResponse = Array.isArray(haResult) ? haResult : undefined;
+    // For offline assessments, only include cluster-quorum and heartbeat settings
+    // Filter out shared-storage, drive-letter, and sqlServer-service
+    const highAvailabilityResponse = Array.isArray(haResult)
+        ? haResult.filter((item: any) => item?.name === 'cluster-quorum' || item?.name === 'heartbeat-settings')
+        : undefined;
 
     // Add fsxId to storage.fileSystems for offline assessments
     // and add headroom assessment to sizing if available
@@ -602,8 +608,19 @@ async function fetchMssqlOfflineAssessment(
         ec2InstanceId,
         databaseHostName: hostname,
         deploymentType,
-        baseDeploymentType
+        baseDeploymentType: baseDeploymentType ?? ''
     };
+
+    const { isValid, errors: validationErrors } = validateAssessment(MSSQLDriftAssessmentResponse, driftAssessmentData);
+    if (!isValid) {
+        logger.error('Offline assessment data validation failed', {
+            accountId,
+            resourceId,
+            databaseInstanceId,
+            validationErrors
+        });
+        return {} as MSSQLDriftAssessmentResponseType;
+    }
 
     return driftAssessmentData;
 }
