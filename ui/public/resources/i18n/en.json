@@ -1215,11 +1215,10 @@
             "ahead-by": "Ahead by",
             "host-name": "Host name",
             "database-name": "Database name",
-            "database-status": "Database status",
             "unregistered": "Unregistered",
             "role": "Role",
-            "replica-details": "Database details",
-            "view-replica-details": "View details",
+            "related-databases": "Related databases",
+            "view-related-databases": "View related databases",
             "enabled": "Enabled",
             "disabled": "Disabled"
         },

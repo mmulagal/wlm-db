@@ -24,7 +24,7 @@ const DataGuard = ({ handleToggle, openKey, resourceDetails, resourceLoading }: 
     const handleReplicaDialog = () => {
         setDialog(
             <DialogComponent
-                header={t('databases.data-guard.replica-details')}
+                header={t('databases.data-guard.related-databases')}
                 content={<ReplicatesDialogContent resourceDetails={resourceDetails} />}
                 primaryButton={t('databases.general.close')}
                 callback={() => {}}
@@ -88,7 +88,7 @@ const DataGuard = ({ handleToggle, openKey, resourceDetails, resourceLoading }: 
                 )}
                 <div className={`${commonStyles.row} ${commonStyles.rowSingleColumn}`}>
                     <Button variant="text" onClick={handleReplicaDialog} style={{ justifySelf: 'start' }}>
-                        {t('databases.data-guard.view-replica-details')}
+                        {t('databases.data-guard.view-related-databases')}
                     </Button>
                 </div>
             </>

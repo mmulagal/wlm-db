@@ -129,7 +129,7 @@ const ReplicatesDialogContent = ({ resourceDetails }: any) => {
                     {t('databases.data-guard.database-name')}
                 </DsTypography>
                 <DsTypography variant="Semibold_14" className={styles.tableCell}>
-                    {t('databases.data-guard.database-status')}
+                    {t('databases.databases-table.oracle.headers.registration-status')}
                 </DsTypography>
                 <DsTypography variant="Semibold_14" className={styles.tableCell}>
                     {t('databases.data-guard.role')}
