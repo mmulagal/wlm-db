@@ -566,7 +566,6 @@ export const getReplicaInstanceListForAuthenticatedRow = (manageSingleInstanceDa
             return (
                 instance?.ec2InstanceId === replica?.ec2InstanceId &&
                 instance?.statusColText !== INVENTORY_STATUS.MANAGED &&
-                instance?.sqlServerName?.toLowerCase() === replica?.node?.toLowerCase() &&
                 isAoagDeployment &&
                 hasMatchingAg &&
                 // Exclude the primary instance itself
@@ -871,10 +870,35 @@ export const handleReplicaAuthenticationAndDialog = async (
         if (replicaSelectedRowsForManage && replicaSelectedRowsForManage.length > 0) {
             const hostType = registerHostType || DBType.MSSQL;
 
-            // Check if all instances are already authenticated - skip API call
+            // Check if all instances are already authenticated - skip API call but still add for bulk registration
             if (areAllInstancesAuthenticated(replicaSelectedRowsForManage, instanceAuthStatus, hostType)) {
+                // All already authenticated. Store data in multi select and switch to bulk flow
+                // Combine original instance + authenticated replicas
+                const newStore = store.getState();
+                const { selectedMultiDetectInstances: latestSelectedMultiDetectInstances }: any = newStore?.inventoryV2;
+                const bulkInstances = [
+                    wrapInstanceForBulk(manageSingleInstanceData),
+                    ...latestSelectedMultiDetectInstances
+                ];
+
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.INFO,
+                        message:
+                            registerHostType === DBType.ORACLE
+                                ? t('databases.register-flow.all-databases-authenticated')
+                                : t('databases.register-flow.all-instances-authenticated')
+                    })
+                );
+
+                // Update to bulk operation mode and flag to start at FSx authentication step
+                dispatch(setSelectedMultiDetectInstances(bulkInstances));
+                dispatch(setWizardOperationType(ACTION_TYPE.BULK));
+                dispatch(setBulkWizardStartAtFsxStep(true));
+
                 closeDialog();
-                goToNextStep();
+                // Don't call goToNextStep here - the wizard will be re-mounted with bulk flow
+                // and will start at FSx step based on the flag
                 return;
             }
 
