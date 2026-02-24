@@ -403,14 +403,12 @@ const OracleOnPremTable = () => {
                                     {
                                         id: 'wlm-db-download-script-mssql',
                                         label: t('databases.explore-savings.download-assessment-script'),
-                                        isDisabled: true,
                                         onClick: () => {
                                             handleDownload();
                                         }
                                     },
                                     {
                                         id: 'wlm-db-upload-script-mssql',
-                                        isDisabled: true,
                                         label: t('databases.explore-savings.upload-script-results'),
                                         onClick: handleFileInputClick
                                     }

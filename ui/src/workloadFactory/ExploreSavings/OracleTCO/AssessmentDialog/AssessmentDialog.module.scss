@@ -18,6 +18,11 @@
             .listItem {
                 display: flex;
                 gap: 16px;
+                align-items: flex-start;
+
+                > svg {
+                    flex-shrink: 0;
+                }
 
                 .secondLevelList {
                     display: flex;
