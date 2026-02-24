@@ -61,9 +61,9 @@ const OracleOnPremTable = () => {
     const handleDownload = async () => {
         try {
             const result: any = await getOracleOnPremTCODownloadScript({});
-            if (result?.data?.downloadLink) {
+            if (result?.data?.url) {
                 const link = document.createElement('a');
-                link.href = result.data.downloadLink;
+                link.href = result.data.url;
                 link.setAttribute('download', '');
                 document.body.appendChild(link);
                 link.click();
