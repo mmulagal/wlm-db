@@ -415,7 +415,7 @@ async function uploadMssqlOfflineAssessment(
     const databaseInstanceName = Object.keys(instanceLevelDetails)[0];
 
     const { id: jobId } = await registerJob(accountId, '', '', {
-        name: `MSSQL offline assessment data upload for ${hostname}/${databaseInstanceName}`,
+        name: `Microsoft SQL Server offline assessment data upload for ${hostname}/${databaseInstanceName}`,
         description: fileName
             ? `Upload from file: ${fileName} - Database instance: ${databaseInstanceName}`
             : `Upload offline assessment data - Database instance: ${databaseInstanceName}`,
