@@ -594,7 +594,9 @@ const IO2_AVAILABLE_REGIONS = [
 const WLMDB = 'wlmdb';
 const INITIALIZER = 'initializer';
 const MSSQL = 'mssql';
+const ORACLE = 'oracle';
 const PGSQL = 'pgsql';
+const WINDOWS = 'windows';
 
 const ARTIFACT_BUCKET_NAME = process.env.ARTIFACT_BUCKET_NAME || config.get<string>('bucket.artifacts');
 const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.get<string>('bucket.signedTemplates');
@@ -2175,6 +2177,7 @@ export {
     PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT,
     INITIALIZER,
     MSSQL,
+    ORACLE,
     AL2023_AMI_NAME,
     DEMO_AWS_ACCOUNT_ID,
     DEMO_DEFAULT_REGION,
@@ -2199,6 +2202,7 @@ export {
     PGSQL_TF_VARS_CONFIG,
     CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING,
     PGSQL,
+    WINDOWS,
     GERERIC_JOB_ERROR_MESSAGE,
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
     ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,

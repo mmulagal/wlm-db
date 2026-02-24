@@ -1,13 +1,16 @@
 import { Type } from 'typebox';
 import { RouteTags } from '../../utils/consts';
 import {
+    UploadMetricsFileBody,
     OnPremDatabaseResourcesResponse,
     OnPremTcoExploreSavingsRequestBody,
     OnPremTcoExploreSavingsResponse,
-    UploadMetricsFileBody,
     OnPremDatabaseResourceObject,
     BulkOnPremTcoExploreSavingsRequestBody,
-    BulkOnPremTcoExploreSavingsResponse
+    BulkTcoExploreSavingsResponse,
+    OracleDatabaseResourcesResponse,
+    OracleDatabaseResourceObject,
+    BulkOracleTcoExploreSavingsRequestBody
 } from '../types/onprem-tco.types';
 import { JobIdResponse, NextTokenQueryString } from '../types/generic.types';
 
@@ -32,48 +35,58 @@ const GeneratePayloadInternal = {
     }
 };
 
-const DeleteOnPremReport = {
-    tags: [RouteTags.ONPREM_TCO],
-    summary: 'Delete report for on-premises metrics collector',
-    description: 'Delete report for on-premises metrics collector',
-    params: Type.Object({
-        accountId: Type.String({ description: 'The account ID' }),
-        resourceId: Type.String({ description: 'The resource ID for part of the onprem report' })
-    }),
-    response: {
-        200: Type.Object({
-            count: Type.Number()
-        })
-    }
-};
+function createDeleteSchema(dbLabel: string) {
+    return {
+        tags: [RouteTags.ONPREM_TCO],
+        summary: `Delete ${dbLabel} on-premises TCO report`,
+        description: `Delete ${dbLabel} on-premises TCO report for a given resource`,
+        params: Type.Object({
+            accountId: Type.String({ description: 'The account ID' }),
+            resourceId: Type.String({ description: `The resource ID for the ${dbLabel} on-prem report` })
+        }),
+        response: {
+            200: Type.Object({
+                count: Type.Number()
+            })
+        }
+    };
+}
 
-const DownloadSqlServerDataCollectorScriptSchema = {
-    tags: [RouteTags.ONPREM_TCO],
-    summary: 'Download OnPremises metrics collector script',
-    description: 'Downloads OnPremises metrics collector script',
-    response: {
-        200: Type.Object({
-            url: Type.String()
-        })
-    }
-};
+function createDownloadSchema(dbLabel: string) {
+    return {
+        tags: [RouteTags.ONPREM_TCO],
+        summary: `Download ${dbLabel} on-premises data collector script`,
+        description: `Downloads the ${dbLabel} on-premises data collector script`,
+        response: {
+            200: Type.Object({
+                url: Type.String()
+            })
+        }
+    };
+}
 
-const UploadOnPremTcoDataSchema = {
-    tags: [RouteTags.ONPREM_TCO],
-    summary: 'Upload OnPremises metrics collector data',
-    description: 'Upload OnPremises metrics collector data',
-    body: UploadMetricsFileBody,
-    response: {
-        202: JobIdResponse
-    }
-};
+function createUploadSchema(dbLabel: string) {
+    return {
+        tags: [RouteTags.ONPREM_TCO],
+        summary: `Upload ${dbLabel} on-premises data collector output`,
+        description: `Upload ${dbLabel} on-premises data collector output for TCO analysis`,
+        body: UploadMetricsFileBody,
+        response: {
+            202: JobIdResponse
+        }
+    };
+}
+
+const DeleteOnPremReport = createDeleteSchema('SQL Server');
+const DownloadSqlServerDataCollectorScriptSchema = createDownloadSchema('SQL Server');
+const UploadOnPremTcoDataSchema = createUploadSchema('SQL Server');
 
 const ListOnPremDatabaseResourcesSchema = {
     tags: [RouteTags.ONPREM_TCO],
-    summary: 'Fetch all the OnPremises database resources for a given account',
+    summary: 'Fetch all the SQL Server OnPremises database resources for a given account',
     querystring: NextTokenQueryString,
     description:
-        'Fetch all the OnPremises database resources for a given account. A resource is a set of database instances in a database host or cluster of a specific deployment type.',
+        'Fetch all the SQL Server OnPremises database resources for a given account. A resource is a set of database instances in a database host or cluster of a specific deployment type.',
     response: {
         200: OnPremDatabaseResourcesResponse
     }
@@ -81,10 +94,10 @@ const ListOnPremDatabaseResourcesSchema = {
 
 const GetOnPremDatabaseResourceSchema = {
     tags: [RouteTags.ONPREM_TCO],
-    summary: 'Fetch an onprem database resource for a given account and resource identifier',
+    summary: 'Fetch a SQL Server onprem database resource for a given account and resource identifier',
     querystring: NextTokenQueryString,
     description:
-        'Fetch an onprem database resource for a given account and resource identifier. A resource is a set of database instances in a database host or cluster of a specific deployment type.',
+        'Fetch a SQL Server onprem database resource for a given account and resource identifier. A resource is a set of database instances in a database host or cluster of a specific deployment type.',
     response: {
         200: OnPremDatabaseResourceObject
     }
@@ -92,8 +105,8 @@ const GetOnPremDatabaseResourceSchema = {
 
 const OnpremTcoExploreSavingsSchema = {
     tags: [RouteTags.ONPREM_TCO],
-    summary: 'Explore potential savings for OnPremises workloads',
-    description: 'Explore potential savings for OnPremises workloads',
+    summary: 'Explore potential savings for SQL Server OnPremises workloads',
+    description: 'Explore potential savings for SQL Server OnPremises workloads',
     body: OnPremTcoExploreSavingsRequestBody,
     response: {
         202: OnPremTcoExploreSavingsResponse
@@ -102,11 +115,49 @@ const OnpremTcoExploreSavingsSchema = {
 
 const BulkOnpremTcoExploreSavingsSchema = {
     tags: [RouteTags.ONPREM_TCO],
-    summary: 'Explore potential savings for multiple OnPremises resources',
-    description: 'Explore potential savings for multiple OnPremises resources in a single request',
+    summary: 'Explore potential savings for multiple SQL Server OnPremises resources',
+    description: 'Explore potential savings for multiple SQL Server OnPremises resources in a single request',
     body: BulkOnPremTcoExploreSavingsRequestBody,
     response: {
-        202: BulkOnPremTcoExploreSavingsResponse
+        202: BulkTcoExploreSavingsResponse
+    }
+};
+
+const DeleteOracleOnPremReport = createDeleteSchema('Oracle');
+const DownloadOracleDataCollectorScriptSchema = createDownloadSchema('Oracle');
+const UploadOracleTcoDataSchema = createUploadSchema('Oracle');
+
+const ListOracleDatabaseResourcesSchema = {
+    tags: [RouteTags.ONPREM_TCO],
+    summary: 'Fetch all Oracle on-premises database resources for a given account',
+    querystring: NextTokenQueryString,
+    description:
+        'Fetch all Oracle on-premises database resources for a given account. A resource is an Oracle database instance or RAC cluster.',
+    response: {
+        200: OracleDatabaseResourcesResponse
+    }
+};
+
+const GetOracleDatabaseResourceSchema = {
+    tags: [RouteTags.ONPREM_TCO],
+    summary: 'Fetch an Oracle on-prem database resource for a given account and resource identifier',
+    params: Type.Object({
+        accountId: Type.String({ description: 'The account ID' }),
+        resourceId: Type.String({ description: 'The resource ID' })
+    }),
+    description: 'Fetch an Oracle on-prem database resource for a given account and resource identifier.',
+    response: {
+        200: OracleDatabaseResourceObject
+    }
+};
+
+const BulkOracleTcoExploreSavingsSchema = {
+    tags: [RouteTags.ONPREM_TCO],
+    summary: 'Explore potential savings for multiple Oracle on-premises resources',
+    description: 'Explore potential savings for multiple Oracle on-premises resources in a single request',
+    body: BulkOracleTcoExploreSavingsRequestBody,
+    response: {
+        202: BulkTcoExploreSavingsResponse
     }
 };
 
@@ -118,5 +169,11 @@ export {
     ListOnPremDatabaseResourcesSchema,
     GetOnPremDatabaseResourceSchema,
     OnpremTcoExploreSavingsSchema,
-    BulkOnpremTcoExploreSavingsSchema
+    BulkOnpremTcoExploreSavingsSchema,
+    DeleteOracleOnPremReport,
+    DownloadOracleDataCollectorScriptSchema,
+    UploadOracleTcoDataSchema,
+    ListOracleDatabaseResourcesSchema,
+    GetOracleDatabaseResourceSchema,
+    BulkOracleTcoExploreSavingsSchema
 };

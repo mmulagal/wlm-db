@@ -1,0 +1,571 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE } from '@prisma/client';
+
+import { removeOnPremTcoReportData } from '../../../src/lib/database/onprem-tco';
+import {
+    uploadOnpremTcoData,
+    getIndividualOnPremDatabaseResource,
+    getOnPremDatabaseResources,
+    saveReportInWlmdbDatabase,
+    deriveHostConfigBasedInstanceType,
+    groupSqlServerInstancesByDeploymentType,
+    deriveEbsVolumesListForMarketing,
+    deriveSqlUsageBasedInstanceType,
+    getOnpremLicenseRecommendations,
+    deriveInstanceRequirements,
+    getOnPremResourceExploreSavings,
+    getOnPremBulkResourceExploreSavings,
+    calculateTotalAllocatedCapacity
+} from '../../../src/operations/workloads/mssql/mssql-onprem-tco-operations';
+import { processEbsDisks, EbsVolumeType } from '../../../src/operations/onprem-tco-operations';
+import { ACCOUNT_ID, DEFAULT_AWS_REGION, MSSQL } from '../../../src/utils/consts';
+import { convertGiBToBytes } from '../../../src/utils/utils';
+import { OnPremCollectionObject, SqlInstanceDetails } from '../../../src/utils/onprem-tco/onprem-tco-generic.types';
+
+const loadJson = (filename: string): OnPremCollectionObject => {
+    const filePath = path.join(__dirname, '../../../src/utils/demo-utils/onPremRecords', filename);
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+};
+
+// ============================================================================
+// Suite 1: MSSQL Validation Functions
+// ============================================================================
+
+describe('MSSQL Validation Functions', () => {
+    const stdData = loadJson('SQLServerDataResponse-DemoSTD.json');
+
+    describe('validateOnPremCollectionObject (via uploadOnpremTcoData)', () => {
+        it('should reject upload for null/empty file content', async () => {
+            await expect(uploadOnpremTcoData(ACCOUNT_ID, MSSQL, 'test.json', '')).rejects.toThrow();
+        });
+
+        it('should reject upload for non-base64 garbage content', async () => {
+            await expect(
+                uploadOnpremTcoData(ACCOUNT_ID, MSSQL, 'test.json', 'not-valid-compressed-data')
+            ).rejects.toThrow();
+        });
+    });
+
+    describe('validateWindowsConfig (via saveReportInWlmdbDatabase)', () => {
+        afterEach(async () => {
+            await removeOnPremTcoReportData(undefined, ACCOUNT_ID, undefined, DATABASE_TYPE.mssql);
+        });
+
+        it('should reject data with empty sqlServerInfo', async () => {
+            const invalidData = { ...stdData, sqlServerInfo: [] } as OnPremCollectionObject;
+            await expect(saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, invalidData)).rejects.toThrow();
+        });
+
+        it('should reject data with missing windowsConfig', async () => {
+            const invalidData = { ...stdData, windowsConfig: undefined } as any;
+            await expect(saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, invalidData)).rejects.toThrow();
+        });
+
+        it('should reject data with missing sqlServerInfo and windowsConfig', async () => {
+            const invalidData = { ...stdData, sqlServerInfo: undefined, windowsConfig: undefined } as any;
+            await expect(saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, invalidData)).rejects.toThrow();
+        });
+    });
+});
+
+// ============================================================================
+// Suite 2: MSSQL Deployment Type Grouping and Instance Requirements
+// ============================================================================
+
+describe('MSSQL Deployment Type Grouping', () => {
+    const stdData = loadJson('SQLServerDataResponse-DemoSTD.json');
+    const fciData = loadJson('SQLServerDataResponse-DemoFCI.json');
+    const aoagData = loadJson('SQLServerDataResponse-DemoAOAG.json');
+
+    describe('groupSqlServerInstancesByDeploymentType', () => {
+        it('should group Standalone instances correctly', () => {
+            const grouped = groupSqlServerInstancesByDeploymentType(stdData.sqlServerInfo);
+            expect(grouped[DATABASE_DEPLOYMENT_TYPE.Standalone]).toBeDefined();
+            expect(grouped[DATABASE_DEPLOYMENT_TYPE.Standalone].length).toEqual(1);
+        });
+
+        it('should group FCI instances correctly', () => {
+            const grouped = groupSqlServerInstancesByDeploymentType(fciData.sqlServerInfo);
+            expect(grouped[DATABASE_DEPLOYMENT_TYPE.FCI]).toBeDefined();
+            expect(grouped[DATABASE_DEPLOYMENT_TYPE.FCI].length).toEqual(fciData.sqlServerInfo.length);
+        });
+
+        it('should group AOAG instances correctly', () => {
+            const grouped = groupSqlServerInstancesByDeploymentType(aoagData.sqlServerInfo);
+            expect(grouped[DATABASE_DEPLOYMENT_TYPE.AOAG]).toBeDefined();
+            expect(grouped[DATABASE_DEPLOYMENT_TYPE.AOAG].length).toBeGreaterThan(0);
+        });
+
+        it('should handle mixed deployment types', () => {
+            const mixedInstances = [
+                { ...stdData.sqlServerInfo[0], deploymentType: 'standalone' },
+                { ...fciData.sqlServerInfo[0], deploymentType: 'fci' }
+            ] as SqlInstanceDetails[];
+            const grouped = groupSqlServerInstancesByDeploymentType(mixedInstances);
+            expect(Object.keys(grouped).length).toEqual(2);
+            expect(grouped[DATABASE_DEPLOYMENT_TYPE.Standalone]).toBeDefined();
+            expect(grouped[DATABASE_DEPLOYMENT_TYPE.FCI]).toBeDefined();
+        });
+
+        it('should return empty object for empty input', () => {
+            const grouped = groupSqlServerInstancesByDeploymentType([]);
+            expect(Object.keys(grouped).length).toEqual(0);
+        });
+    });
+
+    describe('deriveInstanceRequirements', () => {
+        it('should derive correct requirements from STD data', () => {
+            const requirements = deriveInstanceRequirements(stdData.sqlServerInfo);
+            expect(requirements).toBeDefined();
+            expect(requirements.ArchitectureTypes).toEqual(['x86_64']);
+            expect(requirements.VirtualizationTypes).toEqual(['hvm']);
+            expect(requirements.InstanceRequirements).toBeDefined();
+            expect(requirements.InstanceRequirements?.VCpuCount?.Min).toBeGreaterThanOrEqual(4);
+            expect(requirements.InstanceRequirements?.MemoryMiB?.Min).toBeGreaterThanOrEqual(8192);
+            expect(requirements.InstanceRequirements?.CpuManufacturers).toContain('intel');
+            expect(requirements.InstanceRequirements?.AllowedInstanceTypes).toEqual(['m*', 'c*', 'r*']);
+            expect(requirements.InstanceRequirements?.InstanceGenerations).toEqual(['current']);
+        });
+
+        it('should derive correct requirements from FCI data', () => {
+            const requirements = deriveInstanceRequirements(fciData.sqlServerInfo);
+            expect(requirements).toBeDefined();
+            expect(requirements.InstanceRequirements?.VCpuCount?.Min).toBeGreaterThanOrEqual(4);
+        });
+
+        it('should set VCpuCount Max to a power of 2', () => {
+            const requirements = deriveInstanceRequirements(stdData.sqlServerInfo);
+            const maxVcpu = requirements.InstanceRequirements?.VCpuCount?.Max;
+            expect(maxVcpu).toBeDefined();
+            expect(Math.log2(maxVcpu!) % 1).toEqual(0);
+        });
+    });
+});
+
+// ============================================================================
+// Suite 3: License Recommendations and EBS Volumes
+// ============================================================================
+
+describe('License Recommendations and EBS Volumes', () => {
+    const stdData = loadJson('SQLServerDataResponse-DemoSTD.json');
+    const fciData = loadJson('SQLServerDataResponse-DemoFCI.json');
+    const aoagData = loadJson('SQLServerDataResponse-DemoAOAG.json');
+
+    describe('getOnpremLicenseRecommendations', () => {
+        it('should return Standard Edition when no enterprise features are used', () => {
+            const { currentLicenseEdition, recommendedLicenseEdition } = getOnpremLicenseRecommendations(
+                stdData.sqlServerInfo
+            );
+            expect(currentLicenseEdition).toBeDefined();
+            expect(recommendedLicenseEdition).toEqual('Standard Edition');
+        });
+
+        it('should return Enterprise Edition when enterprise features are used', () => {
+            const { currentLicenseEdition, recommendedLicenseEdition } = getOnpremLicenseRecommendations(
+                fciData.sqlServerInfo
+            );
+            expect(currentLicenseEdition).toBeDefined();
+            expect(recommendedLicenseEdition).toEqual('Enterprise Edition');
+        });
+
+        it('should detect enterprise features from AOAG data', () => {
+            const { recommendedLicenseEdition } = getOnpremLicenseRecommendations(aoagData.sqlServerInfo);
+            expect(recommendedLicenseEdition).toEqual('Enterprise Edition');
+        });
+    });
+
+    describe('calculateTotalAllocatedCapacity', () => {
+        it('should compute totalAllocatedCapacity for DemoSTD', () => {
+            const totalAllocatedCapacity = calculateTotalAllocatedCapacity(stdData.sqlServerInfo);
+            expect(totalAllocatedCapacity).toBe('819467386880');
+        });
+
+        it('should compute totalAllocatedCapacity for DemoFCI', () => {
+            const totalAllocatedCapacity = calculateTotalAllocatedCapacity(fciData.sqlServerInfo);
+            expect(totalAllocatedCapacity).toBe('2012079980544');
+        });
+
+        it('should compute totalAllocatedCapacity for DemoAOAG', () => {
+            const totalAllocatedCapacity = calculateTotalAllocatedCapacity(aoagData.sqlServerInfo);
+            expect(totalAllocatedCapacity).toBe('964494884864');
+        });
+
+        it('should return "0" for empty sqlServerInfo', () => {
+            const result = calculateTotalAllocatedCapacity([]);
+            expect(result).toBe('0');
+        });
+    });
+
+    describe('deriveEbsVolumesListForMarketing', () => {
+        it('should derive EBS volumes from STD data', () => {
+            const result = deriveEbsVolumesListForMarketing(DEFAULT_AWS_REGION, stdData.sqlServerInfo);
+            expect(result).toBeDefined();
+            expect(result.primaryEbsVolumes).toBeDefined();
+            expect(result.primaryEbsVolumes.length).toBeGreaterThan(0);
+        });
+
+        it('should produce volumes with required fields', () => {
+            const result = deriveEbsVolumesListForMarketing(DEFAULT_AWS_REGION, stdData.sqlServerInfo);
+            result.primaryEbsVolumes.forEach((vol: EbsVolumeType) => {
+                expect(vol.volumeType).toBeDefined();
+                expect(vol.volumeNumber).toBeGreaterThan(0);
+                expect(vol.storageAmount).toBeGreaterThan(0);
+            });
+        });
+
+        it('should handle AOAG data with secondary volumes', () => {
+            const result = deriveEbsVolumesListForMarketing(DEFAULT_AWS_REGION, aoagData.sqlServerInfo);
+            expect(result).toBeDefined();
+            expect(result.primaryEbsVolumes).toBeDefined();
+            // AOAG data has read replicas, so secondary volumes may exist
+        });
+    });
+
+    describe('processEbsDisks', () => {
+        it('should process gp3 EBS disks within limits', () => {
+            const gp3List = [
+                {
+                    instanceName: 'TEST',
+                    numDatabases: 1,
+                    requiredIops: 3000,
+                    requiredThroughput: 150,
+                    ebsType: 'gp3',
+                    requiredVolumeSize: 5,
+                    isPrimary: true
+                }
+            ];
+            const ebsDisks = processEbsDisks(gp3List);
+            expect(ebsDisks[0].throughput).toEqual(150);
+            expect(ebsDisks[0].volumeIops).toEqual(3000);
+            expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(5));
+        });
+
+        it('should clamp gp3 IOPS to max 16000', () => {
+            const gp3List = [
+                {
+                    instanceName: 'TEST',
+                    numDatabases: 1,
+                    requiredIops: 259000,
+                    requiredThroughput: 3000,
+                    ebsType: 'gp3',
+                    requiredVolumeSize: 64 * 1024,
+                    isPrimary: true
+                }
+            ];
+            const ebsDisks = processEbsDisks(gp3List);
+            expect(ebsDisks[0].volumeIops).toEqual(16000);
+            expect(ebsDisks[0].throughput).toEqual(1000);
+        });
+
+        it('should process io2 EBS disks with max limits', () => {
+            const io2List = [
+                {
+                    instanceName: 'TEST',
+                    numDatabases: 1,
+                    requiredIops: 259000,
+                    requiredThroughput: 3000,
+                    ebsType: 'io2',
+                    requiredVolumeSize: 64 * 1024,
+                    isPrimary: true
+                }
+            ];
+            const ebsDisks = processEbsDisks(io2List);
+            expect(ebsDisks[0].throughput).toEqual(0);
+            expect(ebsDisks[0].volumeIops).toEqual(256000);
+            expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(64 * 1024));
+        });
+
+        it('should process io1 EBS disks with max limits', () => {
+            const io1List = [
+                {
+                    instanceName: 'TEST',
+                    numDatabases: 1,
+                    requiredIops: 259000,
+                    requiredThroughput: 3000,
+                    ebsType: 'io1',
+                    requiredVolumeSize: 64 * 1024,
+                    isPrimary: true
+                }
+            ];
+            const ebsDisks = processEbsDisks(io1List);
+            expect(ebsDisks[0].throughput).toEqual(0);
+            expect(ebsDisks[0].volumeIops).toEqual(64000);
+            expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(16 * 1024));
+        });
+
+        it('should skip disks with numDatabases = 0', () => {
+            const emptyList = [
+                {
+                    instanceName: 'TEST',
+                    numDatabases: 0,
+                    requiredIops: 3000,
+                    requiredThroughput: 150,
+                    ebsType: 'gp3',
+                    requiredVolumeSize: 5,
+                    isPrimary: true
+                }
+            ];
+            const ebsDisks = processEbsDisks(emptyList);
+            expect(ebsDisks.length).toEqual(0);
+        });
+    });
+});
+
+// ============================================================================
+// Suite 4: MSSQL Database Resources CRUD
+// ============================================================================
+
+describe('MSSQL Database Resources CRUD', () => {
+    const stdData = loadJson('SQLServerDataResponse-DemoSTD.json');
+    const fciData = loadJson('SQLServerDataResponse-DemoFCI.json');
+    const aoagData = loadJson('SQLServerDataResponse-DemoAOAG.json');
+
+    afterEach(async () => {
+        await removeOnPremTcoReportData(undefined, ACCOUNT_ID, undefined, DATABASE_TYPE.mssql);
+    });
+
+    it('should save and retrieve a Standalone report in the database', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+
+        const result = await getOnPremDatabaseResources(ACCOUNT_ID);
+        expect(result.count).toEqual(1);
+        expect(result.items.length).toEqual(1);
+
+        const resource = result.items[0];
+        expect(resource.resourceId).toBeDefined();
+        expect(resource.resourceName).toEqual('WLMDBSTD1');
+        expect(resource.deploymentModel).toEqual(DATABASE_DEPLOYMENT_TYPE.Standalone);
+        expect(resource.sqlServerInstances).toBeDefined();
+        expect(resource.sqlServerInstances.length).toBeGreaterThan(0);
+    });
+
+    it('should save and retrieve an FCI report in the database', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, fciData);
+
+        const result = await getOnPremDatabaseResources(ACCOUNT_ID);
+        expect(result.count).toEqual(1);
+        expect(result.items.length).toEqual(1);
+
+        const resource = result.items[0];
+        expect(resource.resourceId).toBeDefined();
+        expect(resource.deploymentModel).toEqual(DATABASE_DEPLOYMENT_TYPE.FCI);
+    });
+
+    it('should save AOAG report and produce correct deployment model', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, aoagData);
+
+        const result = await getOnPremDatabaseResources(ACCOUNT_ID);
+        expect(result.count).toBeGreaterThanOrEqual(1);
+
+        const aoagResource = result.items.find(r => r.deploymentModel === DATABASE_DEPLOYMENT_TYPE.AOAG);
+        expect(aoagResource).toBeDefined();
+    });
+
+    it('should throw when uploading duplicate data', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+
+        await expect(saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData)).rejects.toThrow(
+            'Report already generated for the collected SQL Server data.'
+        );
+    });
+
+    it('should retrieve an individual resource by ID', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+
+        const result = await getOnPremDatabaseResources(ACCOUNT_ID);
+        const { resourceId } = result.items[0];
+
+        const individual = await getIndividualOnPremDatabaseResource(ACCOUNT_ID, resourceId);
+        expect(individual).toBeDefined();
+        expect(individual.resourceId).toEqual(resourceId);
+        expect(individual.resourceName).toEqual('WLMDBSTD1');
+    });
+
+    it('should return empty result when no resources exist', async () => {
+        const result = await getOnPremDatabaseResources(ACCOUNT_ID);
+        expect(result.count).toEqual(0);
+        expect(result.items).toEqual([]);
+    });
+
+    it('should handle multiple MSSQL resources for one account', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, fciData);
+
+        const result = await getOnPremDatabaseResources(ACCOUNT_ID);
+        expect(result.count).toEqual(2);
+
+        const deploymentModels = result.items.map(r => r.deploymentModel).sort();
+        expect(deploymentModels).toContain(DATABASE_DEPLOYMENT_TYPE.Standalone);
+        expect(deploymentModels).toContain(DATABASE_DEPLOYMENT_TYPE.FCI);
+    });
+
+    it('should include totalAllocatedCapacity in returned resources', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+
+        const result = await getOnPremDatabaseResources(ACCOUNT_ID);
+        const resource = result.items[0];
+
+        expect(resource.totalAllocatedCapacity).toBeDefined();
+        expect(resource.totalAllocatedCapacity).toEqual('819467386880');
+    });
+
+    it('should include SQL instance details with required fields', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+
+        const result = await getOnPremDatabaseResources(ACCOUNT_ID);
+        const resource = result.items[0];
+
+        expect(resource.sqlServerInstances.length).toBeGreaterThan(0);
+
+        const instance = resource.sqlServerInstances[0];
+        expect(instance.sqlInstanceId).toBeDefined();
+        expect(instance.sqlInstanceName).toBeDefined();
+    });
+
+    it('should include onPremisesNodes for clustered configurations', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, fciData);
+
+        const result = await getOnPremDatabaseResources(ACCOUNT_ID);
+        const resource = result.items[0];
+
+        expect(resource.onPremisesNodes).toBeDefined();
+        expect(resource.onPremisesNodes.length).toBeGreaterThan(0);
+    });
+});
+
+// ============================================================================
+// Suite 5: Instance Type Derivation
+// ============================================================================
+
+describe('Instance Type Derivation', () => {
+    const stdData = loadJson('SQLServerDataResponse-DemoSTD.json');
+    const fciData = loadJson('SQLServerDataResponse-DemoFCI.json');
+
+    it('should derive an instance type based on host config for STD', async () => {
+        const instanceType = await deriveHostConfigBasedInstanceType(
+            DEFAULT_AWS_REGION,
+            stdData.windowsConfig,
+            'Enterprise Edition'
+        );
+        expect(instanceType).toBeDefined();
+        expect(typeof instanceType).toEqual('string');
+    });
+
+    it('should derive an instance type based on host config for FCI', async () => {
+        const instanceType = await deriveHostConfigBasedInstanceType(
+            DEFAULT_AWS_REGION,
+            fciData.windowsConfig,
+            'Standard Edition'
+        );
+        expect(instanceType).toBeDefined();
+        expect(typeof instanceType).toEqual('string');
+    });
+
+    it('should derive an instance type based on SQL usage', async () => {
+        const instanceType = await deriveSqlUsageBasedInstanceType(
+            DEFAULT_AWS_REGION,
+            stdData.sqlServerInfo,
+            'Enterprise Edition'
+        );
+        expect(instanceType).toBeDefined();
+        expect(typeof instanceType).toEqual('string');
+    });
+});
+
+// ============================================================================
+// Suite 6: Explore Savings (mocked external dependencies)
+// ============================================================================
+
+describe('Explore Savings', () => {
+    const stdData = loadJson('SQLServerDataResponse-DemoSTD.json');
+    const fciData = loadJson('SQLServerDataResponse-DemoFCI.json');
+
+    afterEach(async () => {
+        await removeOnPremTcoReportData(undefined, ACCOUNT_ID, undefined, DATABASE_TYPE.mssql);
+        vi.clearAllMocks();
+    });
+
+    it('should return explore savings for a single MSSQL resource', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+        const resources = await getOnPremDatabaseResources(ACCOUNT_ID);
+        expect(resources.count).toEqual(1);
+
+        const { resourceId } = resources.items[0];
+        // Pass snapshotInfo to trigger the analysis path (without it, MSSQL returns persisted assessmentData which is empty for freshly saved reports)
+        const snapshotInfo = {
+            clonedCopiesCount: 1,
+            monthlyChangeRatePercentage: 8,
+            snapshotFrequency: 'Daily' as const
+        };
+        const savings = await getOnPremResourceExploreSavings(
+            ACCOUNT_ID,
+            resourceId,
+            DEFAULT_AWS_REGION,
+            undefined,
+            snapshotInfo
+        );
+
+        expect(savings).toBeDefined();
+        expect(savings.resourceId).toEqual(resourceId);
+        expect(savings.resourceName).toEqual('WLMDBSTD1');
+        expect(savings.regionCode).toEqual(DEFAULT_AWS_REGION);
+        expect(savings.calculations).toBeDefined();
+        expect(savings.storageSavings).toBeDefined();
+        expect(savings.storageSavings.compute).toBeDefined();
+        expect(savings.storageSavings.totalSummary).toBeDefined();
+        const totalSummary = savings.storageSavings.totalSummary as { existing: number; recommended: number };
+        expect(totalSummary.existing).toBeGreaterThanOrEqual(0);
+        expect(totalSummary.recommended).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should return bulk explore savings aggregating totals', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, fciData);
+
+        const resources = await getOnPremDatabaseResources(ACCOUNT_ID);
+        expect(resources.count).toEqual(2);
+
+        const bulkInput = resources.items.map(r => ({ resourceId: r.resourceId }));
+
+        const bulkSavings = await getOnPremBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, bulkInput);
+
+        expect(bulkSavings).toBeDefined();
+        expect(bulkSavings.regionCode).toEqual(DEFAULT_AWS_REGION);
+        expect(bulkSavings.calculations).toBeDefined();
+        expect(bulkSavings.storageSavings).toBeDefined();
+        expect(bulkSavings.storageSavings.totalSummary).toBeDefined();
+        expect(bulkSavings.storageSavings.totalSummary.existing).toBeGreaterThanOrEqual(0);
+        expect(bulkSavings.storageSavings.totalSummary.recommended).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should throw for invalid region code', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+        const resources = await getOnPremDatabaseResources(ACCOUNT_ID);
+        const { resourceId } = resources.items[0];
+
+        await expect(getOnPremResourceExploreSavings(ACCOUNT_ID, resourceId, 'invalid-region-code')).rejects.toThrow(
+            'Invalid region code'
+        );
+    });
+
+    it('should throw when no resources found for bulk', async () => {
+        await expect(
+            getOnPremBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [
+                { resourceId: 'nonexistent-resource' }
+            ])
+        ).rejects.toThrow('No On-premises database resources found');
+    });
+
+    it('should throw for invalid region code on bulk', async () => {
+        await expect(
+            getOnPremBulkResourceExploreSavings(ACCOUNT_ID, 'invalid-region', [{ resourceId: 'test-resource-id' }])
+        ).rejects.toThrow('Invalid region code');
+    });
+
+    it('should throw when resource not found for individual explore savings', async () => {
+        await expect(
+            getOnPremResourceExploreSavings(ACCOUNT_ID, 'nonexistent-resource-id', DEFAULT_AWS_REGION)
+        ).rejects.toThrow('No On-premises');
+    });
+});

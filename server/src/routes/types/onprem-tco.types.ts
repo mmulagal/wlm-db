@@ -1,4 +1,4 @@
-import { Static, Type } from '@fastify/type-provider-typebox';
+import { Static, TSchema, Type } from '@fastify/type-provider-typebox';
 import {
     StorageSavingsCalculationsMetricsResponse,
     StorageSavingsRequestBody,
@@ -13,15 +13,26 @@ const UploadMetricsFileBody = Type.Object({
     fileContent: Type.String()
 });
 
-const SqlInstanceDetailsRequestObject = Type.Object({
-    sqlInstanceId: Type.String(),
-    noOfVcpusInUse: Type.Number(),
-    memory: Type.Number(),
+const OnPremTcoResourceObject = Type.Object({
+    resourceId: Type.String(),
+    resourceName: Type.String(),
+    deploymentModel: Type.String(),
+    creationTime: Type.Number()
+});
+
+const DatabaseInstanceRequestBase = Type.Object({
+    noOfVcpusInUse: Type.Number({ description: 'Number of vCPUs actually in use' }),
+    memory: Type.Number({ description: 'Memory in bytes' }),
     networkPerformance: Type.String({ enum: [NETWORK_PERF.UP_TO_10, NETWORK_PERF.ABOVE_10] }),
-    totalIops: Type.Optional(Type.Number()),
+    totalIops: Type.Optional(Type.Number({ description: 'Total IOPS' })),
     totalThroughput: Type.Optional(Type.Number({ description: 'Throughput in mbps' })),
     totalStorage: Type.Optional(Type.Number({ description: 'Storage in bytes' }))
 });
+
+const SqlInstanceDetailsRequestObject = Type.Intersect([
+    Type.Object({ sqlInstanceId: Type.String() }),
+    DatabaseInstanceRequestBase
+]);
 
 type SqlInstanceDetailsRequestObjectType = Static<typeof SqlInstanceDetailsRequestObject>;
 
@@ -44,16 +55,6 @@ const SqlInstanceDetailsResponseObject = Type.Union([
     })
 ]);
 
-const OnPremDatabaseResources = Type.Object({
-    resourceId: Type.String(),
-    resourceName: Type.String(),
-    deploymentModel: Type.String(),
-    sqlInstanceDetails: Type.Array(SqlInstanceDetailsResponseObject),
-    onPremisesNodes: Type.Array(Type.String())
-});
-
-type OnPremDatabaseResourcesType = Static<typeof OnPremDatabaseResources>;
-
 const OnPremTcoExploreSavingsRequestBody = Type.Object({
     regionCode: Type.String(),
     sqlInstanceData: Type.Optional(Type.Array(SqlInstanceDetailsRequestObject)),
@@ -75,7 +76,7 @@ const BulkOnPremTcoExploreSavingsRequestBody = Type.Object({
     snapshotInfo: Type.Optional(StorageSavingsRequestBody)
 });
 
-const BulkOnPremTcoExploreSavingsResponse = Type.Object({
+const BulkTcoExploreSavingsResponse = Type.Object({
     region: Type.String(),
     regionCode: Type.String(),
     calculations: BulkStorageSavingsCalculationsMetricsResponse,
@@ -83,13 +84,6 @@ const BulkOnPremTcoExploreSavingsResponse = Type.Object({
 });
 
 type BulkResourcesType = Static<typeof BulkResources>;
-
-const OnPremTcoResourceObject = Type.Object({
-    resourceId: Type.String(),
-    resourceName: Type.String(),
-    deploymentModel: Type.String(),
-    creationTime: Type.Number()
-});
 
 const OnPremTcoExploreSavingsResponse = Type.Intersect([
     OnPremTcoResourceObject,
@@ -112,22 +106,107 @@ const OnPremDatabaseResourceObject = Type.Intersect([
 
 type OnPremDatabaseResourcesObjectType = Static<typeof OnPremDatabaseResourceObject>;
 
-const OnPremDatabaseResourcesResponse = Type.Object({
-    count: Type.Number(),
-    items: Type.Array(OnPremDatabaseResourceObject),
-    nextToken: Type.Optional(Type.String())
+function createDatabaseResourcesResponse(itemSchema: TSchema) {
+    return Type.Object({
+        count: Type.Number(),
+        items: Type.Array(itemSchema),
+        nextToken: Type.Optional(Type.String())
+    });
+}
+
+const OnPremDatabaseResourcesResponse = createDatabaseResourcesResponse(OnPremDatabaseResourceObject);
+
+const OracleDatabaseDetailsRequestObject = Type.Intersect([
+    Type.Object({ databaseId: Type.String({ description: 'Oracle database ID (DBID) or unique identifier' }) }),
+    DatabaseInstanceRequestBase
+]);
+
+type OracleDatabaseDetailsRequestObjectType = Static<typeof OracleDatabaseDetailsRequestObject>;
+
+const OracleDatabaseDetailsResponseObject = Type.Object({
+    databaseId: Type.String(),
+    databaseName: Type.String(),
+    sid: Type.String(),
+    oracleVersion: Type.String(),
+    oracleEdition: Type.String(),
+    deploymentModel: Type.String({ enum: ['Standalone', 'DG'] }),
+    isRacEnabled: Type.Boolean(),
+    isDataGuardEnabled: Type.Boolean(),
+    databaseRole: Type.String(),
+    isCDB: Type.Boolean(),
+    vCPUs: Type.Number(),
+    pdbCount: Type.Number(),
+    totalIops: Type.Optional(Type.Number()),
+    totalThroughput: Type.Optional(Type.Number({ description: 'Throughput in MB/s' })),
+    totalStorage: Type.Optional(Type.Number({ description: 'Storage in bytes' })),
+    memory: Type.Optional(Type.Number({ description: 'Oracle memory (SGA + PGA) in bytes' })),
+    networkPerformance: Type.Optional(Type.String({ enum: [NETWORK_PERF.UP_TO_10, NETWORK_PERF.ABOVE_10] })),
+    errorMessage: Type.Optional(Type.String())
+});
+
+type OracleDatabaseDetailsResponseObjectType = Static<typeof OracleDatabaseDetailsResponseObject>;
+
+const OracleDatabaseResourceObject = Type.Intersect([
+    OnPremTcoResourceObject,
+    Type.Object({
+        oracleDatabases: Type.Array(OracleDatabaseDetailsResponseObject),
+        hostInfo: Type.Object({
+            hostname: Type.String(),
+            cpuCount: Type.Number(),
+            totalRamGB: Type.Number(),
+            storageProtocol: Type.String()
+        }),
+        totalAllocatedCapacityGB: Type.Optional(Type.Number()),
+        onPremisesNodes: Type.Array(Type.String())
+    })
+]);
+
+type OracleDatabaseResourceObjectType = Static<typeof OracleDatabaseResourceObject>;
+
+const OracleDatabaseResourcesResponse = createDatabaseResourcesResponse(OracleDatabaseResourceObject);
+
+const BulkOracleResources = Type.Object({
+    resourceId: Type.String(),
+    databaseData: Type.Optional(Type.Array(OracleDatabaseDetailsRequestObject)),
+    monthlyByolCost: Type.Optional(
+        Type.Number({
+            description: 'Monthly BYOL license cost for this Oracle resource. Defaults to 0 if not provided.'
+        })
+    )
+});
+
+type BulkOracleResourcesType = Static<typeof BulkOracleResources>;
+
+const BulkOracleTcoExploreSavingsRequestBody = Type.Object({
+    regionCode: Type.String(),
+    resources: Type.Array(BulkOracleResources, {
+        description: 'List of Oracle resources with their instance details',
+        minItems: 1,
+        maxItems: 5
+    }),
+    snapshotInfo: Type.Optional(StorageSavingsRequestBody)
 });
 
 export {
     UploadMetricsFileBody,
+    OnPremTcoResourceObject,
     OnPremDatabaseResourcesResponse,
-    OnPremDatabaseResourcesType,
     OnPremTcoExploreSavingsRequestBody,
     OnPremTcoExploreSavingsResponse,
     SqlInstanceDetailsRequestObjectType,
     OnPremDatabaseResourceObject,
     OnPremDatabaseResourcesObjectType,
     BulkOnPremTcoExploreSavingsRequestBody,
-    BulkOnPremTcoExploreSavingsResponse,
-    BulkResourcesType
+    BulkTcoExploreSavingsResponse,
+    BulkResourcesType,
+    OracleDatabaseDetailsRequestObject,
+    OracleDatabaseDetailsRequestObjectType,
+    OracleDatabaseDetailsResponseObject,
+    OracleDatabaseDetailsResponseObjectType,
+    OracleDatabaseResourceObject,
+    OracleDatabaseResourceObjectType,
+    OracleDatabaseResourcesResponse,
+    BulkOracleResources,
+    BulkOracleResourcesType,
+    BulkOracleTcoExploreSavingsRequestBody
 };

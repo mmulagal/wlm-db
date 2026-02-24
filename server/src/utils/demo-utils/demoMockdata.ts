@@ -3271,6 +3271,10 @@ function generateBase64FromJsonFile(directory: string, fileName: string) {
     return compressedBase64;
 }
 
+function generateBase64ForOnPrem(fileName: string) {
+    return generateBase64FromJsonFile('onPremRecords', fileName);
+}
+
 const onpremStdBase64Content = generateBase64FromJsonFile('onPremRecords', 'SQLServerDataResponse-DemoSTD.json');
 
 const onpremStdUploadObject = {
@@ -3320,6 +3324,24 @@ const offlineAssessmentAOAGBase64Content = generateBase64FromJsonFile(
 const offlineAssessmentAOAGUploadObject = {
     fileContent: offlineAssessmentAOAGBase64Content,
     fileName: 'OfflineAssessment-DemoAOAG.json'
+};
+
+const oracleStandaloneBase64 = generateBase64ForOnPrem('OracleDataResponse-DemoStandalone.json');
+const oracleStandaloneUploadObject = {
+    fileContent: oracleStandaloneBase64,
+    fileName: 'OracleDataResponse-DemoStandalone.json'
+};
+
+const oracleDataGuardBase64 = generateBase64ForOnPrem('OracleDataResponse-DemoDataGuard.json');
+const oracleDataGuardUploadObject = {
+    fileContent: oracleDataGuardBase64,
+    fileName: 'OracleDataResponse-DemoDataGuard.json'
+};
+
+const oracleMultiDBBase64 = generateBase64ForOnPrem('OracleDataResponse-DemoMultiDB.json');
+const oracleMultiDBUploadObject = {
+    fileContent: oracleMultiDBBase64,
+    fileName: 'OracleDataResponse-DemoMultiDB.json'
 };
 
 const DEMO_REGISTER_RESPONSE = {
@@ -6607,5 +6629,8 @@ export {
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     PDB_DETAILS,
     createAssessmentData,
-    createAssessmentDataWithRetry
+    createAssessmentDataWithRetry,
+    oracleStandaloneUploadObject,
+    oracleDataGuardUploadObject,
+    oracleMultiDBUploadObject
 };

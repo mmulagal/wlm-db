@@ -26,7 +26,8 @@ import {
     EBS_ROOT_VOLUME,
     PRICING_LICENSE_KEYS,
     DatabaseTypes,
-    HA
+    HA,
+    WINDOWS
 } from '../../utils/consts';
 import { DEMO_PRODUCT_RATE } from '../../utils/demo-utils/demoMockdata';
 import getProducts from '../../lib/aws/pricing';
@@ -978,23 +979,32 @@ async function getSqlInstancePricingDetails(
     }
 
     if (instanceType) {
-        return pricingDetails; // returns in format { instanceType: { preInstalledSw: { pricePerUnit, unit } } }
+        return pricingDetails;
     }
     /**
-     * If no instanceType is provided, this function gets the pricing details for all instance types.
-     * It sorts and filters the pricing details based on the specified license type.
-     * - Filters out entries that do not have the specified license type (if provided) or are not available in NA.
-     * - Sorts the remaining entries by the price per unit in ascending order.
+     * When fetching pricing for all instance types (no specific instanceType):
+     * - All instance types must have base (NA) pricing to be included.
+     * - For Windows (MSSQL): additionally filters by SQL Server license type and SQL_STD
+     *   pricing to ensure the instance supports SQL Server AMI licensing.
+     * - For non-Windows (e.g. Oracle/Linux): SQL Server license filters are skipped.
+     * - Results are sorted by base (NA) price in ascending order.
      */
+    const isWindows = operatingSystem?.toLowerCase() === WINDOWS;
     const sortedPricingDetails =
         Object.entries(pricingDetails).length > 1
             ? Object.fromEntries(
                   Object.entries(pricingDetails)
-                      .filter(([, licenses]) =>
-                          licenseType
-                              ? licenses[licenseType] && licenses[PRICING_LICENSE_KEYS.SQL_STD] && licenses.NA
-                              : licenses[PRICING_LICENSE_KEYS.SQL_STD] && licenses.NA
-                      )
+                      .filter(([, licenses]) => {
+                          if (!licenses.NA) {
+                              return false;
+                          }
+                          if (!isWindows) {
+                              return true;
+                          }
+                          return licenseType
+                              ? licenses[licenseType] && licenses[PRICING_LICENSE_KEYS.SQL_STD]
+                              : !!licenses[PRICING_LICENSE_KEYS.SQL_STD];
+                      })
                       .sort(([, licensesA], [, licensesB]) => {
                           const priceA = licensesA.NA ? licensesA.NA.pricePerUnit : Infinity;
                           const priceB = licensesB.NA ? licensesB.NA.pricePerUnit : Infinity;

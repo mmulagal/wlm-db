@@ -1,7 +1,16 @@
-import * as fs from 'fs';
-import * as path from 'path';
-
 import { listOnPremDatabaseResources, removeOnPremTcoReportData } from '../../src/lib/database/onprem-tco';
+import {
+    processEbsDisks,
+    EbsVolumeType,
+    buildCombinedEc2Instances,
+    buildComputeCalculationEntry,
+    fetchPricingForResourcesGeneric,
+    PricingDetails,
+    MachineDetail,
+    generatePayload,
+    decompressCollectorPayload,
+    downloadDataCollectorScript
+} from '../../src/operations/onprem-tco-operations';
 import {
     getOnpremLicenseRecommendations,
     deriveEbsVolumesListForMarketing,
@@ -10,50 +19,12 @@ import {
     deriveSqlUsageBasedInstanceType,
     groupSqlServerInstancesByDeploymentType,
     saveReportInWlmdbDatabase,
-    processEbsDisks,
-    getOnPremBulkResourceExploreSavings,
-    calculateTotalAllocatedCapacity
-} from '../../src/operations/onprem-tco-operations';
+    getOnPremBulkResourceExploreSavings
+} from '../../src/operations/workloads/mssql/mssql-onprem-tco-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_REGION, MSSQL } from '../../src/utils/consts';
 import { convertGiBToBytes, sleep } from '../../src/utils/utils';
-import { WindowsConfig, SqlInstanceDetails } from '../../src/utils/onprem-tco/onprem-tco-generic.types';
 
-const loadJson = (filename: string) => {
-    const filePath = path.join(__dirname, '../../src/utils/demo-utils/onPremRecords', filename);
-    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-};
-
-describe('calculateTotalAllocatedCapacity utility', () => {
-    it('computes totalAllocatedCapacity for DemoAOAG', () => {
-        const data: {
-            windowsConfig: WindowsConfig;
-            sqlServerInfo: SqlInstanceDetails[];
-        } = loadJson('SQLServerDataResponse-DemoAOAG.json');
-        const totalAllocatedCapacity = calculateTotalAllocatedCapacity(data.sqlServerInfo);
-        // Expected value: sum of allocatedSizeMb from all databases * 1024 * 1024 (bytes conversion)
-        expect(totalAllocatedCapacity).toBe('964494884864');
-    });
-
-    it('computes totalAllocatedCapacity for DemoFCI', () => {
-        const data: {
-            windowsConfig: WindowsConfig;
-            sqlServerInfo: SqlInstanceDetails[];
-        } = loadJson('SQLServerDataResponse-DemoFCI.json');
-        const totalAllocatedCapacity = calculateTotalAllocatedCapacity(data.sqlServerInfo);
-        // Expected value: sum of allocatedSizeMb from all databases * 1024 * 1024 (bytes conversion)
-        expect(totalAllocatedCapacity).toBe('2012079980544');
-    });
-
-    it('computes totalAllocatedCapacity for DemoSTD', () => {
-        const data: {
-            windowsConfig: WindowsConfig;
-            sqlServerInfo: SqlInstanceDetails[];
-        } = loadJson('SQLServerDataResponse-DemoSTD.json');
-        const totalAllocatedCapacity = calculateTotalAllocatedCapacity(data.sqlServerInfo);
-        // Expected value: sum of allocatedSizeMb from all databases * 1024 * 1024 (bytes conversion)
-        expect(totalAllocatedCapacity).toBe('819467386880');
-    });
-});
+// calculateTotalAllocatedCapacity tests are in mssql-onprem-tco-operations.test.ts
 
 const reportData = {
     scriptVersion: '1.0.0',
@@ -265,8 +236,12 @@ describe('onPrem TCO operations', () => {
 
         const { primaryEbsVolumes } =
             deriveEbsVolumesListForMarketing(DEFAULT_AWS_REGION, reportData.sqlServerInfo) || {};
-        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume?.volumeType === 'gp3')?.throughput).toBeDefined();
-        expect(primaryEbsVolumes?.find(ebsVolume => ebsVolume?.volumeType === 'gp3')?.volumeIops).toBeDefined();
+        expect(
+            primaryEbsVolumes?.find((ebsVolume: EbsVolumeType) => ebsVolume?.volumeType === 'gp3')?.throughput
+        ).toBeDefined();
+        expect(
+            primaryEbsVolumes?.find((ebsVolume: EbsVolumeType) => ebsVolume?.volumeType === 'gp3')?.volumeIops
+        ).toBeDefined();
         expect(primaryEbsVolumes?.length).toEqual(expectedEbsVolumes.length);
     });
 
@@ -412,7 +387,7 @@ describe('onPrem TCO operations', () => {
         expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(16 * 1024)); // max storage for io1 is 16TiB
     });
 
-    it('should process IO1 EBS disks min limits', () => {
+    it('should process IO2 EBS disks min limits', () => {
         const io1List = [
             {
                 instanceName: 'FCI23NEW',
@@ -500,6 +475,340 @@ describe('onPrem TCO operations', () => {
         expect(ebsDisks[0].throughput).toEqual(150);
         expect(ebsDisks[0].volumeIops).toEqual(3000);
         expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(5));
+    });
+});
+
+const HOURS_IN_MONTH = 730;
+
+describe('buildComputeCalculationEntry', () => {
+    it('should compute aggregated prices for a multi-node deployment', () => {
+        const machineDetails = [
+            { instanceType: 'r5.xlarge', price: 0.4 },
+            { instanceType: 'r5.xlarge', price: 0.4 }
+        ] as MachineDetail[];
+
+        const result = buildComputeCalculationEntry({
+            resourceName: 'TestDB',
+            deploymentType: 'AOAG',
+            instanceType: 'r5.xlarge',
+            basePrice: 0.25,
+            fullPrice: 0.4,
+            nodeCount: 2,
+            machineDetails
+        });
+
+        expect(result.resourceName).toBe('TestDB');
+        expect(result.deploymentType).toBe('AOAG');
+        expect(result.instanceType).toBe('r5.xlarge');
+        expect(result.computeHourlyPrice).toBe(0.25 * 2);
+        expect(result.computeMonthlyPrice).toBe(0.25 * HOURS_IN_MONTH * 2);
+        expect(result.instanceMonthlyPrice).toBe(0.4 * HOURS_IN_MONTH * 2);
+        expect(result.hoursInMonth).toBe(HOURS_IN_MONTH);
+        expect(result.machineDetails).toBe(machineDetails);
+    });
+
+    it('should handle single-node deployment', () => {
+        const machineDetails = [{ instanceType: 'm5.large', price: 0.1 }] as MachineDetail[];
+
+        const result = buildComputeCalculationEntry({
+            resourceName: 'SingleDB',
+            deploymentType: 'Standalone',
+            instanceType: 'm5.large',
+            basePrice: 0.1,
+            fullPrice: 0.1,
+            nodeCount: 1,
+            machineDetails
+        });
+
+        expect(result.computeHourlyPrice).toBe(0.1);
+        expect(result.computeMonthlyPrice).toBe(0.1 * HOURS_IN_MONTH);
+        expect(result.instanceMonthlyPrice).toBe(0.1 * HOURS_IN_MONTH);
+    });
+});
+
+describe('buildCombinedEc2Instances', () => {
+    const primaryVolumes: EbsVolumeType[] = [
+        { storageAmount: 107374182400, volumeIops: 3000, throughput: 125, volumeType: 'gp3', volumeNumber: 1 }
+    ];
+    const secondaryVolumes: EbsVolumeType[] = [
+        { storageAmount: 53687091200, volumeIops: 3000, throughput: 125, volumeType: 'gp3', volumeNumber: 1 }
+    ];
+
+    it('should build both existing and recommended instances for primary and secondary', () => {
+        const { existingEc2Instances, recommendedEc2Instances } = buildCombinedEc2Instances(
+            primaryVolumes,
+            secondaryVolumes,
+            'r5.xlarge',
+            'r5.large'
+        );
+
+        expect(existingEc2Instances).toHaveLength(2);
+        expect(recommendedEc2Instances).toHaveLength(2);
+
+        expect(existingEc2Instances[0].ec2InstanceType).toBe('r5.xlarge');
+        expect(existingEc2Instances[0].isPrimary).toBe(true);
+        expect(existingEc2Instances[0].volumes).toBe(primaryVolumes);
+
+        expect(existingEc2Instances[1].ec2InstanceType).toBe('r5.xlarge');
+        expect(existingEc2Instances[1].isPrimary).toBe(false);
+        expect(existingEc2Instances[1].volumes).toBe(secondaryVolumes);
+
+        expect(recommendedEc2Instances[0].ec2InstanceType).toBe('r5.large');
+        expect(recommendedEc2Instances[0].isPrimary).toBe(true);
+
+        expect(recommendedEc2Instances[1].ec2InstanceType).toBe('r5.large');
+        expect(recommendedEc2Instances[1].isPrimary).toBe(false);
+    });
+
+    it('should use default description strings when not provided', () => {
+        const { existingEc2Instances } = buildCombinedEc2Instances(
+            primaryVolumes,
+            secondaryVolumes,
+            'r5.xlarge',
+            'r5.large'
+        );
+
+        expect(existingEc2Instances[0].ec2InstanceDescription).toBe('Combined Primary');
+        expect(existingEc2Instances[1].ec2InstanceDescription).toBe('Combined Secondary');
+    });
+
+    it('should use custom description strings when provided', () => {
+        const { existingEc2Instances } = buildCombinedEc2Instances(
+            primaryVolumes,
+            secondaryVolumes,
+            'r5.xlarge',
+            'r5.large',
+            'Oracle Primary',
+            'Oracle Data Guard'
+        );
+
+        expect(existingEc2Instances[0].ec2InstanceDescription).toBe('Oracle Primary');
+        expect(existingEc2Instances[1].ec2InstanceDescription).toBe('Oracle Data Guard');
+    });
+
+    it('should skip primary instances when primary volumes are empty', () => {
+        const { existingEc2Instances, recommendedEc2Instances } = buildCombinedEc2Instances(
+            [],
+            secondaryVolumes,
+            'r5.xlarge',
+            'r5.large'
+        );
+
+        expect(existingEc2Instances).toHaveLength(1);
+        expect(existingEc2Instances[0].isPrimary).toBe(false);
+        expect(recommendedEc2Instances).toHaveLength(1);
+        expect(recommendedEc2Instances[0].isPrimary).toBe(false);
+    });
+
+    it('should skip secondary instances when secondary volumes are empty', () => {
+        const { existingEc2Instances, recommendedEc2Instances } = buildCombinedEc2Instances(
+            primaryVolumes,
+            [],
+            'r5.xlarge',
+            'r5.large'
+        );
+
+        expect(existingEc2Instances).toHaveLength(1);
+        expect(existingEc2Instances[0].isPrimary).toBe(true);
+        expect(recommendedEc2Instances).toHaveLength(1);
+        expect(recommendedEc2Instances[0].isPrimary).toBe(true);
+    });
+
+    it('should return empty arrays when both volume lists are empty', () => {
+        const { existingEc2Instances, recommendedEc2Instances } = buildCombinedEc2Instances(
+            [],
+            [],
+            'r5.xlarge',
+            'r5.large'
+        );
+
+        expect(existingEc2Instances).toHaveLength(0);
+        expect(recommendedEc2Instances).toHaveLength(0);
+    });
+});
+
+describe('fetchPricingForResourcesGeneric', () => {
+    type TestResource = {
+        name: string;
+        currentInstanceType: string;
+        recommendedInstanceType: string;
+    };
+
+    type EnrichedResource = TestResource & {
+        currentPricing?: PricingDetails;
+        recommendedPricing?: PricingDetails;
+    };
+
+    it('should fetch pricing from the simulator and enrich each resource', async () => {
+        const resources: TestResource[] = [
+            { name: 'DB1', currentInstanceType: 'r5.xlarge', recommendedInstanceType: 'r5.large' }
+        ];
+
+        const result = await fetchPricingForResourcesGeneric<TestResource, EnrichedResource>(
+            resources,
+            DEFAULT_AWS_REGION,
+            {
+                osType: 'Windows',
+                getCacheKeys: r => ({
+                    current: { key: r.currentInstanceType, instanceType: r.currentInstanceType },
+                    recommended: { key: r.recommendedInstanceType, instanceType: r.recommendedInstanceType }
+                }),
+                enrichResource: (r, currentPricing, recommendedPricing) => ({
+                    ...r,
+                    currentPricing,
+                    recommendedPricing
+                })
+            }
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].name).toBe('DB1');
+        expect(result[0].currentPricing).toBeDefined();
+        expect(result[0].recommendedPricing).toBeDefined();
+    });
+
+    it('should deduplicate pricing requests for identical instance types across resources', async () => {
+        const resources: TestResource[] = [
+            { name: 'DB1', currentInstanceType: 'r5.xlarge', recommendedInstanceType: 'r5.xlarge' },
+            { name: 'DB2', currentInstanceType: 'r5.xlarge', recommendedInstanceType: 'r5.xlarge' }
+        ];
+
+        const result = await fetchPricingForResourcesGeneric<TestResource, EnrichedResource>(
+            resources,
+            DEFAULT_AWS_REGION,
+            {
+                osType: 'Windows',
+                getCacheKeys: r => ({
+                    current: { key: r.currentInstanceType, instanceType: r.currentInstanceType },
+                    recommended: { key: r.recommendedInstanceType, instanceType: r.recommendedInstanceType }
+                }),
+                enrichResource: (r, currentPricing, recommendedPricing) => ({
+                    ...r,
+                    currentPricing,
+                    recommendedPricing
+                })
+            }
+        );
+
+        expect(result).toHaveLength(2);
+        expect(result[0].currentPricing).toEqual(result[1].currentPricing);
+    });
+
+    it('should handle resources with only current or only recommended pricing keys', async () => {
+        const resources: TestResource[] = [
+            { name: 'CurrentOnly', currentInstanceType: 'r5.xlarge', recommendedInstanceType: '' },
+            { name: 'RecommendedOnly', currentInstanceType: '', recommendedInstanceType: 'r5.large' }
+        ];
+
+        const result = await fetchPricingForResourcesGeneric<TestResource, EnrichedResource>(
+            resources,
+            DEFAULT_AWS_REGION,
+            {
+                osType: 'Windows',
+                getCacheKeys: r => ({
+                    current: r.currentInstanceType
+                        ? { key: r.currentInstanceType, instanceType: r.currentInstanceType }
+                        : undefined,
+                    recommended: r.recommendedInstanceType
+                        ? { key: r.recommendedInstanceType, instanceType: r.recommendedInstanceType }
+                        : undefined
+                }),
+                enrichResource: (r, currentPricing, recommendedPricing) => ({
+                    ...r,
+                    currentPricing,
+                    recommendedPricing
+                })
+            }
+        );
+
+        expect(result).toHaveLength(2);
+        expect(result[0].currentPricing).toBeDefined();
+        expect(result[0].recommendedPricing).toBeUndefined();
+        expect(result[1].currentPricing).toBeUndefined();
+        expect(result[1].recommendedPricing).toBeDefined();
+    });
+
+    it('should return an empty array when given no resources', async () => {
+        const result = await fetchPricingForResourcesGeneric<TestResource, EnrichedResource>([], DEFAULT_AWS_REGION, {
+            osType: 'Windows',
+            getCacheKeys: () => ({}),
+            enrichResource: r => ({ ...r })
+        });
+
+        expect(result).toEqual([]);
+    });
+});
+
+describe('generatePayload and decompressCollectorPayload', () => {
+    it('should round-trip: generatePayload output can be decompressed back to original', async () => {
+        const originalContent = JSON.stringify({ hello: 'world', num: 42 });
+        const buffer = Buffer.from(originalContent);
+
+        const payload = await generatePayload('test-account', 'test.json', buffer);
+
+        expect(payload.fileName).toBe('test.json');
+        expect(typeof payload.fileContent).toBe('string');
+        expect(payload.fileContent.length).toBeGreaterThan(0);
+
+        const decompressed = decompressCollectorPayload(payload.fileContent);
+        expect(decompressed).toBe(originalContent);
+    });
+
+    it('should handle binary content in a Buffer', async () => {
+        const binaryContent = Buffer.from([0x00, 0x01, 0x02, 0xff, 0xfe, 0x80]);
+        const payload = await generatePayload('test-account', 'binary.bin', binaryContent);
+
+        expect(payload.fileName).toBe('binary.bin');
+        expect(payload.fileContent.length).toBeGreaterThan(0);
+    });
+
+    it('should handle empty content', async () => {
+        const emptyBuffer = Buffer.from('');
+        const payload = await generatePayload('test-account', 'empty.json', emptyBuffer);
+
+        expect(payload.fileName).toBe('empty.json');
+        const decompressed = decompressCollectorPayload(payload.fileContent);
+        expect(decompressed).toBe('');
+    });
+
+    it('should handle large JSON content', async () => {
+        const largeObj = { data: 'x'.repeat(10000) };
+        const buffer = Buffer.from(JSON.stringify(largeObj));
+
+        const payload = await generatePayload('test-account', 'large.json', buffer);
+        const decompressed = decompressCollectorPayload(payload.fileContent);
+        expect(JSON.parse(decompressed)).toEqual(largeObj);
+    });
+});
+
+describe('downloadDataCollectorScript', () => {
+    it('should return a url for default (mssql) database type', async () => {
+        const result = await downloadDataCollectorScript(ACCOUNT_ID);
+
+        expect(result).toBeDefined();
+        expect(result.url).toBeDefined();
+        expect(typeof result.url).toBe('string');
+    });
+
+    it('should return a url for mssql database type', async () => {
+        const result = await downloadDataCollectorScript(ACCOUNT_ID, 'mssql');
+
+        expect(result).toBeDefined();
+        expect(result.url).toBeDefined();
+    });
+
+    it('should return a url for oracle database type', async () => {
+        const result = await downloadDataCollectorScript(ACCOUNT_ID, 'oracle');
+
+        expect(result).toBeDefined();
+        expect(result.url).toBeDefined();
+    });
+
+    it('should fall back to mssql path for unknown database type', async () => {
+        const result = await downloadDataCollectorScript(ACCOUNT_ID, 'postgres');
+
+        expect(result).toBeDefined();
+        expect(result.url).toBeDefined();
     });
 });
 

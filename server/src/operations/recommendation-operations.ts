@@ -564,9 +564,10 @@ async function manualModeComputeLicenseDetails(
                 basePrice: priceWithoutLicense,
                 computeMonthlyPrice,
                 instanceMonthlyPrice,
-                licenseMonthlyPrice: instanceTypes.length
-                    ? getMonthlyPriceFromHourlyPrice(existingLicensePrice)! / instanceTypes.length
-                    : undefined,
+                licenseMonthlyPrice:
+                    instanceTypes.length && existingLicensePrice !== undefined
+                        ? getMonthlyPriceFromHourlyPrice(existingLicensePrice)! / instanceTypes.length
+                        : 0,
                 hoursInMonth: HOURS_IN_MONTH,
                 licenseIncluded
             };
@@ -614,7 +615,7 @@ function updateRecommendedComputeMachineDetails(recommendedComputeDetails: any, 
     const recommendedMachineDetails = cloneDeep(recommendedComputeDetails?.machineDetails);
     if (!isEmpty(recommendedMachineDetails)) {
         recommendedMachineDetails.forEach((machineDetail: any) => {
-            machineDetail.licenseMonthlyPrice = licenseMonthlyPrice! / recommendedMachineDetails.length;
+            machineDetail.licenseMonthlyPrice = (licenseMonthlyPrice ?? 0) / recommendedMachineDetails.length;
         });
         return recommendedMachineDetails;
     }

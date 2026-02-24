@@ -71,33 +71,6 @@ async function updateOnPremTcoReportRecord(
     });
 }
 
-/**
- * Bulk update multiple onprem TCO report records in a single transaction
- */
-async function bulkUpdateOnPremTcoReportRecords(
-    accountId: string,
-    updates: Array<{
-        resourceId: string;
-        data: { assessment_data: object };
-    }>
-) {
-    logger.info('Bulk updating onprem TCO reports', { accountId, updateCount: updates.length });
-
-    const checkedAccountId = checkAccount(accountId);
-
-    const updateOperations = updates.map(({ resourceId, data }) =>
-        prisma.client.onprem_tco_reports.updateMany({
-            where: {
-                account_id: checkedAccountId,
-                resource_id: resourceId
-            },
-            data
-        })
-    );
-
-    return prisma.client.$transaction(updateOperations);
-}
-
 async function listOnPremDatabaseResources(
     accountId: string,
     databaseType: DATABASE_TYPE,
@@ -135,7 +108,6 @@ export {
     createOnPremTcoReportData,
     removeOnPremTcoReportData,
     updateOnPremTcoReportRecord,
-    bulkUpdateOnPremTcoReportRecords,
     listOnPremDatabaseResources,
     OnPremTcoReportObject
 };

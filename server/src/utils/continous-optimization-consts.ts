@@ -379,6 +379,7 @@ const TEST_CONNECTION_COMMAND =
 
 // ONPREM CONTINUOUS OPTIMIZATION
 const SQLSERVER_DATA_COLLECTOR_SCRIPT_PATH = `${WLMDB}/scripts/SQLServer-Data-Collector.zip`;
+const ORACLE_DATA_COLLECTOR_SCRIPT_PATH = `${WLMDB}/scripts/Oracle-Data-Collector.zip`;
 const REPORTING_BUCKET = process.env.S3_BUCKET_NAME ?? (config.get('reporting.bucket-name') as string);
 
 const NETWORK_PERF = {
@@ -648,6 +649,7 @@ export {
     OptimizeOperatingSystemParams,
     TEST_CONNECTION_COMMAND,
     SQLSERVER_DATA_COLLECTOR_SCRIPT_PATH,
+    ORACLE_DATA_COLLECTOR_SCRIPT_PATH,
     REPORTING_BUCKET,
     STORAGE_OPTIMIZE_JOB_PARAM,
     NUMASTATIC,

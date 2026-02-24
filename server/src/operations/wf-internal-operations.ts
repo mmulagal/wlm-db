@@ -6,9 +6,16 @@ import { DatabaseTypes, MSSQL } from '../utils/consts';
 import {
     onPremAOAGAUploadObject,
     onPremFCIUploadObject,
-    onpremStdUploadObject
+    onpremStdUploadObject,
+    oracleStandaloneUploadObject,
+    oracleDataGuardUploadObject,
+    oracleMultiDBUploadObject
 } from '../utils/demo-utils/demoMockdata';
-import { getOnPremDatabaseResources, uploadOnpremTcoData } from './onprem-tco-operations';
+import { getOnPremDatabaseResources, uploadOnpremTcoData } from './workloads/mssql/mssql-onprem-tco-operations';
+import {
+    uploadOracleTcoData,
+    getOnPremisesOracleDatabaseResources
+} from './workloads/oracle/oracle-onprem-tco-operations';
 import { AssessmentCategories, SEVERITY } from '../utils/continous-optimization-consts';
 import { MappedOnTapVolumeResponse } from '../utils/common-types';
 import { paginateListInstanceConfigData } from './database/instance-config-operations';
@@ -37,7 +44,14 @@ async function getSystemStatus(accountId: string) {
         uploadOnpremTcoData(accountId, MSSQL, onPremAOAGAUploadObject.fileName, onPremAOAGAUploadObject.fileContent);
         uploadOnpremTcoData(accountId, MSSQL, onpremStdUploadObject.fileName, onpremStdUploadObject.fileContent);
     }
+
     await prepopulateOfflineAssessmentData(accountId);
+    const oracleResource = await getOnPremisesOracleDatabaseResources(accountId);
+    if (oracleResource.count === 0) {
+        uploadOracleTcoData(accountId, oracleStandaloneUploadObject.fileName, oracleStandaloneUploadObject.fileContent);
+        uploadOracleTcoData(accountId, oracleDataGuardUploadObject.fileName, oracleDataGuardUploadObject.fileContent);
+        uploadOracleTcoData(accountId, oracleMultiDBUploadObject.fileName, oracleMultiDBUploadObject.fileContent);
+    }
     return { isActive: true };
 }
 
