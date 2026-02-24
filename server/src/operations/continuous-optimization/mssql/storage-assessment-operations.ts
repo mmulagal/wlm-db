@@ -273,11 +273,18 @@ function getLogVolumeDrift(
         // Both the cases are handled here
         const logDrive = acc.find(el => el.diskNumber === driveDetail.diskNumber);
         if (logDrive) {
+            // For AOAG, check if this database is a primary database
+            const isAoag = primaryDatabases.size > 0;
+            const isPrimaryDatabase = primaryDatabases.has(driveDetail.databaseName.toLowerCase());
+
             // Add all data drives (not shared) to the same log drive - DBS-4838
-            // In the case multiple data drives are shared by the same log drive, add the data drive to the log drive and append the dataAccessPath
+            // For AOAG: Only sum data drives for primary databases, exclude secondary/replica drives
             if (!logDrive.dataAccessPath?.includes(driveDetail.dataAccessPath)) {
                 logDrive.dataAccessPath += `,${driveDetail.dataAccessPath}`;
-                logDrive.dataDriveTotalSizeMB += driveDetail.dataDriveTotalSizeMB;
+                // Only add to total if it's not AOAG, or if it's a primary database in AOAG
+                if (!isAoag || isPrimaryDatabase) {
+                    logDrive.dataDriveTotalSizeMB += driveDetail.dataDriveTotalSizeMB;
+                }
             }
             // Append all databases sharing the same data and log drives as impacted databases - DBS-4838
             if (!logDrive.databaseName?.includes(driveDetail.databaseName)) {
@@ -319,7 +326,10 @@ function getLogVolumeDrift(
             const volumeDatabases = [...new Set(drive.databaseName.split(','))].map(db => db.trim().toLowerCase());
             const hasPrimaryDatabases =
                 primaryDatabases.size > 0 && volumeDatabases.some(db => primaryDatabases.has(db));
-            const lowerThreshold = hasPrimaryDatabases ? 25 : 20;
+            // For AOAG primary databases: 30% recommended (26% to 35% range)
+            // Anything < 26% (including 25%) is under-provisioned for AOAG primary
+            // For non-primary/non-AOAG: 25% recommended (20% to 30% range, same as original)
+            const lowerThreshold = hasPrimaryDatabases ? 26 : 20;
             const upperThreshold = hasPrimaryDatabases ? 35 : 30;
             if (logToDriveSizePercent > upperThreshold) {
                 overProvisionedDrives.push(formattedDriveInfo as SizingViolationResponseType);
@@ -335,6 +345,12 @@ function getLogVolumeDrift(
     });
     const totalObjectsInViolation = [...new Set(overProvisionedDrives.concat(underProvisionedDrives, ignoredDrives))]
         .length;
+
+    // Check if ANY drive has primary databases for AOAG recommended value calculation
+    const hasAnyPrimaryDatabase = filteredDriveDetails.some(drive => {
+        const volumeDatabases = [...new Set(drive.databaseName.split(','))].map(db => db.trim().toLowerCase());
+        return primaryDatabases.size > 0 && volumeDatabases.some(db => primaryDatabases.has(db));
+    });
 
     status =
         !isEmpty(overProvisionedDrives) && !isEmpty(underProvisionedDrives)
@@ -356,7 +372,8 @@ function getLogVolumeDrift(
         optimisedDrives,
         currentSizePercentForAllVolumes,
         drivesCount,
-        totalObjectsInViolation
+        totalObjectsInViolation,
+        hasPrimaryDatabases: hasAnyPrimaryDatabase
     };
 }
 
@@ -871,6 +888,7 @@ async function calculateStorageDrift(
                     status = value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
                 }
                 if (key === 'data-log-drive-details') {
+                    let hasPrimaryDatabases = false;
                     ({
                         key,
                         status,
@@ -879,9 +897,16 @@ async function calculateStorageDrift(
                         ignoredDrives,
                         currentSizePercentForAllVolumes,
                         drivesCount: totalObjectsAssessed,
-                        totalObjectsInViolation
+                        totalObjectsInViolation,
+                        hasPrimaryDatabases
                     } = getLogVolumeDrift(value, status, key, aoagContext?.databaseRoles));
                     resourceType = ASSESSMENT_RESOURCE_TYPE.DRIVE;
+
+                    // For AOAG primary databases, use 30% recommended (25% base + 20% of 25%)
+                    // For all others (non-AOAG, AOAG secondary), use golden config value (25%)
+                    if (hasPrimaryDatabases && goldenData) {
+                        goldenData = { ...goldenData, value: '30%' };
+                    }
                 }
 
                 if (key === 'data-tempdb-drive-details') {

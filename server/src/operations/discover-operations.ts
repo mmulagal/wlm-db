@@ -663,7 +663,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlPermissions,
                         availablePsModules,
                         isSqlCmdAvailable,
-                        aoagDetails
+                        aoagDetails,
+                        fciOwnerNodes
                     } = sqlServerInstanceInfo;
                     logger.info(
                         `API1Performance: Time taken to execute PowerShell script for instance ${sqlServerInstance}: ${scriptExecutionTime}ms`
@@ -761,11 +762,26 @@ async function getHostAndSqlInfoFromPsOutput(
 
                                 // For FCI AOAG: replica names are FCI virtual names (e.g., XFCI012)
                                 // which won't match physical cluster node names (e.g., XFCI1, XFCI2)
-                                // In this case, try to find any cluster node with a valid IP
+                                // Use fciOwnerNodes (FCI virtual name → active physical node) for accurate mapping
                                 if (!matchingClusterNode && baseDeploymentType === 'FCI') {
-                                    matchingClusterNode = clusterNodes.find(
-                                        (cn: any) => cn?.Address && aoagIpToInstanceId.has(cn.Address)
-                                    );
+                                    const fciOwnerNodeMap = fciOwnerNodes
+                                        ? typeof fciOwnerNodes === 'string'
+                                            ? JSON.parse(fciOwnerNodes)
+                                            : fciOwnerNodes
+                                        : {};
+
+                                    const replicaHost = replicaName.includes('\\')
+                                        ? replicaName.split('\\')[0]
+                                        : replicaName;
+
+                                    // Look up active physical node for this FCI (case-insensitive)
+                                    const activeNode = Object.entries(fciOwnerNodeMap).find(
+                                        ([fciName]) => fciName.toLowerCase() === replicaHost.toLowerCase()
+                                    )?.[1] as string | undefined;
+
+                                    if (activeNode) {
+                                        matchingClusterNode = hostnameToClusterNode.get(activeNode.toLowerCase());
+                                    }
                                 }
 
                                 if (

@@ -402,6 +402,20 @@ const HOST_AND_SQL_INFO_PS1 = [
         } else {
           $clusterDetailsResponse['${SQL_SERVER_DEPLOYMENT_TYPE}'] = '${SqlServerDeploymentModel.SQL_FCI_SHORT}'
         }
+
+        # Collect FCI virtual name → current active owner node mapping
+        try {
+          $fciOwnerNodes = @{}
+          Get-ClusterResource -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "SQL Network Name*" } | ForEach-Object {
+            $fciName = ($_.Name -replace '^SQL Network Name \\(', '') -replace '\\)$', ''
+            $fciOwnerNodes[$fciName] = "$($_.OwnerNode)"
+          }
+          if ($fciOwnerNodes.Count -gt 0) {
+            $clusterDetailsResponse['fciOwnerNodes'] = $fciOwnerNodes
+          }
+        } catch {
+          Write-Information "Failed to collect FCI owner nodes: $($_)"
+        }
       }
     }
     else {
@@ -860,6 +874,7 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
         $responseObject['windowsClusterName'] = $clusterDetails['name']
         $responseObject['windowsClusterNodes'] = $clusterDetails['windowsClusterNodes']
         if ($clusterDetails['aoagName']) { $responseObject['aoagNameFromCluster'] = $clusterDetails['aoagName'] }
+        if ($clusterDetails['fciOwnerNodes']) { $responseObject['fciOwnerNodes'] = $clusterDetails['fciOwnerNodes'] | ConvertTo-Json }
         $sqlNodes = (Get-ClusterOwnerNode -ResourceType "SQL Server Availability Group" -ErrorAction SilentlyContinue).OwnerNodes.NodeName
       }
         
