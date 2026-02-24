@@ -145,7 +145,7 @@ const GOLDEN_CONFIG = {
                 focusWidgetName: 'ONTAP',
                 severity: SEVERITY.CRITICAL,
                 recommendation:
-                    'Workload Factory recommends tiering FSx for ONTAP volumes used by databases when applicable. Tiering optimizes storage utilization by automatically moving less frequently accessed data such as snapshots or archived logs to cost-effective capacity tiers while keeping active data and redo logs on the high-performance primary storage tier. Tiering reduces overall storage costs, enhances performance for critical workloads, and simplifies management through automated data placement. For different Oracle files—data, redo log, and archive —distinct tiering policies ensure tailored efficiency.',
+                    'Workload Factory recommends enabling tiering for database volumes on FSx for ONTAP when it makes sense. Tiering automatically moves less-used data, such as snapshots and archived logs, to lower-cost storage while keeping active data and redo logs on high-performance storage. This lowers storage costs, helps protect performance for critical workloads, and reduces manual management. You can set different tiering policies for Oracle data files, redo logs, and archive logs.',
                 tags: [
                     AwsWellArchitecturedPillars.COST_OPTIMIZATION,
                     AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,

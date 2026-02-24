@@ -6306,6 +6306,8 @@ const MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {
     },
     sqlServerServices: {
         status: 'optimized',
+        nodesInViolation: [],
+        totalNodes: 2,
         details: [
             {
                 Name: 'MSSQLSERVER',
@@ -6368,6 +6370,8 @@ const ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {
     },
     sqlServerServices: {
         status: 'not-optimized',
+        nodesInViolation: ['demo-sql-prod-fci-001'],
+        totalNodes: 2,
         details: [
             { Name: 'MSSQLSERVER', Status: 'Running', StartType: 'Automatic', DisplayName: 'SQL Server (MSSQLSERVER)' }
         ]
