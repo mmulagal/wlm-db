@@ -129,7 +129,7 @@ const OracleDatabaseDetailsResponseObject = Type.Object({
     sid: Type.String(),
     oracleVersion: Type.String(),
     oracleEdition: Type.String(),
-    deploymentModel: Type.String({ enum: ['Standalone', 'DG'] }),
+    deploymentModel: Type.String({ enum: ['Standalone', 'Data Guard'] }),
     isRacEnabled: Type.Boolean(),
     isDataGuardEnabled: Type.Boolean(),
     databaseRole: Type.String(),

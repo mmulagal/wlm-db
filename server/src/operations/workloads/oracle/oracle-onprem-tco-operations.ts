@@ -7,7 +7,7 @@ import {
     type onprem_tco_reports as OnPremTcoReport
 } from '@prisma/client';
 import { compact, isEmpty, sumBy } from 'lodash-es';
-import { DEFAULT_AWS_REGION, HttpErrorCodes, ORACLE } from '../../../utils/consts';
+import { DEFAULT_AWS_REGION, HttpErrorCodes, ORACLE, OracleDeploymentModel } from '../../../utils/consts';
 import { IS_DEMO_FLOW, convertGiBToBytes, sizeInGigaBytes } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
 import { registerJob } from '../../database/job-operations';
@@ -329,7 +329,9 @@ function getOracleNodeCounts(
     entries: OracleDatabaseEntry[]
 ): { existingNodeCount: number; recommendedNodeCount: number } {
     if (deploymentType === DATABASE_DEPLOYMENT_TYPE.DG) {
-        const standbyHostCount = new Set(entries.flatMap(e => e.instanceInfo?.standbyHosts || [])).size;
+        const standbyHostCount = new Set(
+            entries.flatMap(e => (e.instanceInfo?.standbyDatabases || []).map(s => s.dbUniqueName))
+        ).size;
         return {
             existingNodeCount: 1 + Math.max(standbyHostCount, 1),
             recommendedNodeCount: 2
@@ -776,9 +778,7 @@ async function getOnPremisesOracleDatabaseResources(
             // Build oracleDatabases[] from all entries in this group
             const oracleDatabases = entries.map((entry: OracleDatabaseEntry) => {
                 const { instanceInfo, storageInfo: entryStorage, performanceSummary: entryPerf } = entry;
-                const entryDeploymentModel = instanceInfo
-                    ? determineOracleDeploymentType(instanceInfo)
-                    : deploymentType;
+                const deploymentModel = instanceInfo ? determineOracleDeploymentType(instanceInfo) : deploymentType;
                 const { iops: entryIops, throughputMBps: entryThroughput } = deriveIopsAndThroughput(entryPerf);
 
                 return {
@@ -787,7 +787,10 @@ async function getOnPremisesOracleDatabaseResources(
                     sid: instanceInfo?.instanceName || 'Unknown',
                     oracleVersion: instanceInfo?.oracleVersion || 'Unknown',
                     oracleEdition: instanceInfo?.oracleEdition || 'Unknown',
-                    deploymentModel: entryDeploymentModel,
+                    deploymentModel:
+                        deploymentModel === DATABASE_DEPLOYMENT_TYPE.DG
+                            ? OracleDeploymentModel.DG
+                            : OracleDeploymentModel.STANDALONE,
                     isRacEnabled: instanceInfo?.isRacEnabled || false,
                     isDataGuardEnabled: instanceInfo?.isDataGuardEnabled || false,
                     databaseRole: instanceInfo?.databaseRole || 'Unknown',
@@ -810,18 +813,16 @@ async function getOnPremisesOracleDatabaseResources(
 
             const onPremisesNodes = [
                 hostInfo?.hostname || 'Unknown',
-                ...new Set(
-                    entries.flatMap(e => {
-                        const sh = (e.instanceInfo as unknown as Record<string, unknown>)?.standbyHosts;
-                        return Array.isArray(sh) ? (sh as string[]) : [];
-                    })
-                )
+                ...new Set(entries.flatMap(e => (e.instanceInfo?.standbyDatabases || []).map(s => s.dbUniqueName)))
             ];
 
             return {
                 resourceId: onpremResourceId,
                 resourceName: hostInfo?.hostname || 'Unknown',
-                deploymentModel: deploymentType,
+                deploymentModel:
+                    deploymentType === DATABASE_DEPLOYMENT_TYPE.DG
+                        ? OracleDeploymentModel.DG
+                        : OracleDeploymentModel.STANDALONE,
                 creationTime: new Date(reportCreationTime).getTime(),
                 oracleDatabases,
                 hostInfo: {

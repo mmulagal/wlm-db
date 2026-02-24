@@ -40,7 +40,15 @@
                 "oracleEditionFull": "Oracle Database 19c Enterprise Edition Release 19.0.0.0.0",
                 "pdbCount": 2,
                 "pdbList": ["ERPPDB1", "ERPPDB2"],
-                "standbyHosts": ["ora-prod-dg-standby-01"]
+                "standbyDatabases": [
+                    {
+                        "dbUniqueName": "ora-prod-dg-standby-01",
+                        "destination": "ora-prod-dg-standby-01",
+                        "destId": 2,
+                        "status": "VALID",
+                        "error": ""
+                    }
+                ]
             },
             "resourceUtilization": {
                 "cpuUtilization": {

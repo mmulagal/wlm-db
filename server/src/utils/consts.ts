@@ -198,6 +198,11 @@ enum SqlServerDeploymentModel {
     SQL_AOAG_SHORT = 'AOAG'
 }
 
+enum OracleDeploymentModel {
+    STANDALONE = 'Standalone',
+    DG = 'Data Guard'
+}
+
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
 
 const CF_STACK_COUNT_QUOTANAME = 'Stacks';
@@ -1969,6 +1974,7 @@ export {
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,
+    OracleDeploymentModel,
     TEMPLATE_CLOUD_PROVIDER_ID,
     TEMPLATE_JWT_TOKEN,
     TEMPLATE_CREDENTIALS_ID,

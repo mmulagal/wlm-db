@@ -152,7 +152,15 @@ interface OracleInstanceInfo {
     oracleEditionFull?: string;
     pdbCount?: number;
     pdbList?: string[];
-    standbyHosts?: string[];
+    standbyDatabases?: OracleStandbyDatabase[];
+}
+
+interface OracleStandbyDatabase {
+    dbUniqueName: string;
+    destination: string;
+    destId: number;
+    status: string;
+    error: string;
 }
 
 interface OracleStatsSummary {
@@ -352,6 +360,7 @@ export {
     OracleScriptInfo,
     OracleHostInfo,
     OracleInstanceInfo,
+    OracleStandbyDatabase,
     OracleStatsSummary,
     OracleSizingStatistics,
     OracleMemoryUtilization,

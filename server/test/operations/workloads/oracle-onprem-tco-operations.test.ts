@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE } from '@prisma/client';
+import { DATABASE_TYPE } from '@prisma/client';
 
 import { removeOnPremTcoReportData } from '../../../src/lib/database/onprem-tco';
 import {
@@ -20,7 +20,7 @@ import {
     uploadOracleTcoData,
     aggregateDatabaseEntries
 } from '../../../src/operations/workloads/oracle/oracle-onprem-tco-operations';
-import { ACCOUNT_ID, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
+import { ACCOUNT_ID, DEFAULT_AWS_REGION, OracleDeploymentModel } from '../../../src/utils/consts';
 import {
     OracleCollectionObject,
     OracleDatabaseEntry,
@@ -199,7 +199,7 @@ describe('Oracle Database Resources CRUD', () => {
         expect(db.databaseName).toEqual('FINDB');
         expect(db.sid).toEqual('findb1');
         expect(db.pdbCount).toEqual(0);
-        expect(db.deploymentModel).toEqual(DATABASE_DEPLOYMENT_TYPE.Standalone);
+        expect(db.deploymentModel).toEqual(OracleDeploymentModel.STANDALONE);
     });
 
     it('should include correct fields for a DataGuard resource', async () => {
@@ -216,7 +216,7 @@ describe('Oracle Database Resources CRUD', () => {
         expect(db.sid).toEqual('erpdb1');
         expect(db.pdbCount).toEqual(2);
         expect(db.isDataGuardEnabled).toBe(true);
-        expect(db.deploymentModel).toEqual(DATABASE_DEPLOYMENT_TYPE.DG);
+        expect(db.deploymentModel).toEqual(OracleDeploymentModel.DG);
     });
 
     it('should throw when uploading duplicate data', async () => {
@@ -469,7 +469,7 @@ describe('Multi-SID Aggregation', () => {
             expect(result.count).toEqual(2);
 
             const deploymentModels = result.items.map(r => r.deploymentModel).sort();
-            expect(deploymentModels).toEqual([DATABASE_DEPLOYMENT_TYPE.DG, DATABASE_DEPLOYMENT_TYPE.Standalone]);
+            expect(deploymentModels).toEqual([OracleDeploymentModel.DG, OracleDeploymentModel.STANDALONE]);
         });
 
         it('should put all Standalone SIDs into one resource', async () => {
