@@ -688,6 +688,7 @@ const storageLayoutAssessmentTemplate = `
         }
     }
     
+    
     $driveDetailsErrors = @{}
     $DriftAssessmentData['layout'] = @{}
     
@@ -728,7 +729,9 @@ SET NOCOUNT ON;
 SELECT (SELECT 
     d.name AS databaseName,
     LEFT(mf.physical_name, 2) AS dataDriveLetter,
-    ISNULL(vs.total_bytes / 1048576, 0) AS dataDriveTotalSizeMB
+    mf.size * 8.0 / 1024.0 AS sizeInMb,
+    vs.total_bytes / 1048576.0 AS driveTotalSizeMB,
+    vs.volume_id AS volumeid
 FROM 
     sys.databases d
 JOIN 
@@ -756,7 +759,9 @@ SELECT (SELECT
     d.name AS databaseName,
     LEFT(mf.physical_name, 2) AS logDriveLetter,
     mf.physical_name AS logDrivePath,
-    ISNULL(vs.total_bytes / 1048576, 0) AS logDriveTotalSizeMB
+    mf.size * 8.0 / 1024.0 AS sizeInMb,
+    vs.total_bytes / 1048576.0 AS driveTotalSizeMB,
+    vs.volume_id AS volumeid
 FROM 
     sys.databases d
 JOIN 
@@ -783,7 +788,8 @@ SET NOCOUNT ON;
 SELECT 
     LEFT(d.filename, 2) AS tempdbDriveLetter,
     mf.physical_name AS tempdbDrivePath,
-    ISNULL(vs.total_bytes / 1048576, 0) AS tempdbDriveTotalSizeMB
+    ISNULL(vs.total_bytes / 1048576, 0) AS tempdbDriveTotalSizeMB,
+    vs.volume_id AS volumeid
 FROM 
     tempdb.sys.sysfiles d
 JOIN
@@ -805,6 +811,10 @@ ORDER BY
         # Get default data and log drive details from msdb
         $defaultDataDriveDetails = $instanceAllDataDrivesSizes | Where-Object { $_.databaseName -eq 'msdb' }
         $defaultLogDriveDetails = $instanceAllLogDrivesSizes | Where-Object { $_.databaseName -eq 'msdb' }
+        
+        # Filter out msdb from user database lists (msdb is only used for default file locations, not in user-database-layout)
+        $userDataDrivesSizes = $instanceAllDataDrivesSizes | Where-Object { $_.databaseName -ne 'msdb' }
+        $userLogDrivesSizes = $instanceAllLogDrivesSizes | Where-Object { $_.databaseName -ne 'msdb' }
         
         # Determine default file locations
         $defaultDataDrive = 'shared-drive'
@@ -856,27 +866,63 @@ ORDER BY
         # Build enriched user database layout with ONTAP volume/lun details from Part 1
         Write-Information "Caching volume, partition, and disk information for performance..."
         
-        # Cache all volumes, partitions, and disks once
-        $allVolumes = Get-Volume -ErrorAction SilentlyContinue
+        # Collect volume IDs from SQL query results
+        $sqlVolumes = @()
+        foreach ($drive in $instanceAllDataDrivesSizes) {
+            if ($drive.volumeid) {
+                $sqlVolumes += [PSCustomObject]@{ volumeid = $drive.volumeid; driveLetter = $drive.dataDriveLetter }
+            }
+        }
+        foreach ($drive in $instanceAllLogDrivesSizes) {
+            if ($drive.volumeid) {
+                $sqlVolumes += [PSCustomObject]@{ volumeid = $drive.volumeid; driveLetter = $drive.logDriveLetter }
+            }
+        }
+        foreach ($drive in $defaultTempDBDriveDetails) {
+            if ($drive.volumeid) {
+                $sqlVolumes += [PSCustomObject]@{ volumeid = $drive.volumeid; driveLetter = $drive.tempdbDriveLetter }
+            }
+        }
+        # Get unique volume IDs
+        $uniqueVolumeIds = $sqlVolumes | Select-Object -Property volumeid, driveLetter -Unique
+        
+        # Cache all disks once
         $allDisksCache = Get-Disk -ErrorAction SilentlyContinue
         
         # Build a lookup table by drive letter for fast access
         # Note: DriveLetter from Get-Volume is a [char], convert to string for consistent hashtable lookups
         $driveLetterCache = @{}
-        foreach ($vol in $allVolumes) {
-            if ($vol.DriveLetter) {
+        $partitionmap = @{}
+        foreach ($winvolume in $uniqueVolumeIds) {
+            if ([string]::IsNullOrEmpty($winvolume.volumeid) -or [string]::IsNullOrEmpty($winvolume.driveLetter)) {
+                continue
+            }
+            
+            # Cache partition data by volume ID 
+            if (-not $partitionmap.Contains($winvolume.volumeid)) {
+                $vol = Get-Volume -Path $winvolume.volumeid -ErrorAction SilentlyContinue
                 $partition = $vol | Get-Partition -ErrorAction SilentlyContinue
-                $disk = $null
-                if ($partition) {
+                if ($vol -and $partition) {
                     $disk = $allDisksCache | Where-Object { $_.Number -eq $partition.DiskNumber } | Select-Object -First 1
+                    $partitionmap[$winvolume.volumeid] = @{
+                        "volume" = $vol
+                        "partition" = $partition
+                        "disk" = $disk
+                    }
                 }
-                # Convert DriveLetter to string for consistent hashtable key type
-                $driveLetterKey = [string]$vol.DriveLetter
-                $driveLetterCache[$driveLetterKey] = @{
-                    Volume = $vol
-                    Partition = $partition
-                    Disk = $disk
-                    AccessPaths = if ($partition -and $partition.AccessPaths) { $partition.AccessPaths } else { @() }
+            }
+            
+            # Build drive letter cache from cached partition data
+            $cachedData = $partitionmap[$winvolume.volumeid]
+            if ($cachedData) {
+                $driveLetterKey = [string]$winvolume.driveLetter.TrimEnd(':')
+                if (-not $driveLetterCache.ContainsKey($driveLetterKey)) {
+                    $driveLetterCache[$driveLetterKey] = @{
+                        Volume = $cachedData.volume
+                        Partition = $cachedData.partition
+                        Disk = $cachedData.disk
+                        AccessPaths = if ($cachedData.partition.AccessPaths) { $cachedData.partition.AccessPaths } else { @() }
+                    }
                 }
             }
         }
@@ -938,23 +984,26 @@ ORDER BY
             if ($volumeInfo) {
                 $result['ontapVolumeUuid'] = $volumeInfo.uuid
                 $result['ontapVolumeName'] = $volumeInfo.name
-                
-                # Find matching lun by volume name
-                foreach ($lun in $LunDetails) {
-                    $lunVolName = $lun.name -replace '^\\/vol\\/(.*?)\\/.*$', '$1'
-                    if ($lunVolName -eq $volumeInfo.name) {
-                        $result['lunUuid'] = $lun.uuid
-                        $result['lunSerialNumber'] = $lun.serial_number
-                        $result['lunPath'] = $lun.name
-                        break
+                if ($disk) {
+                    $result['diskNumber'] = $disk.Number
+                    $result['lunSerialNumber'] = $disk.SerialNumber
+                    foreach ($lun in $LunDetails) {
+                        if ($lun.serial_number -eq $disk.SerialNumber) {
+                            $result['lunUuid'] = $lun.uuid
+                            $result['lunPath'] = $lun.name
+                            break
+                        }
                     }
-                }
-                
-                # Get disk info from serial number using cache
-                if ($result['lunSerialNumber']) {
-                    $diskFromCache = $SerialNumberToDisk[$result['lunSerialNumber']]
-                    if ($diskFromCache) {
-                        $result['diskNumber'] = $diskFromCache.Number
+                } else {
+                    # Fallback if disk info not available: try matching by volume name only
+                    foreach ($lun in $LunDetails) {
+                        $lunVolName = $lun.name -replace '^\\/vol\\/(.*?)\\/.*$', '$1'
+                        if ($lunVolName -eq $volumeInfo.name) {
+                            $result['lunUuid'] = $lun.uuid
+                            $result['lunPath'] = $lun.name
+                            $result['lunSerialNumber'] = $lun.serial_number
+                            break
+                        }
                     }
                 }
                 
@@ -962,32 +1011,6 @@ ORDER BY
                 $volumeRec = $VolumeRecords | Where-Object { $_.name -eq $volumeInfo.name } | Select-Object -First 1
                 if ($volumeRec -and $volumeRec.svm) {
                     $result['svmName'] = $volumeRec.svm.name
-                }
-            } else {
-                # Fallback: use cached disk info directly
-                if ($disk) {
-                    $result['diskNumber'] = $disk.Number
-                    $result['lunSerialNumber'] = $disk.SerialNumber
-                    
-                    # Try to find matching lun by serial number (case-insensitive)
-                    foreach ($lun in $LunDetails) {
-                        if ($lun.serial_number -eq $disk.SerialNumber) {
-                            $result['lunUuid'] = $lun.uuid
-                            $result['lunPath'] = $lun.name
-                            $lunVolName = $lun.name -replace '^\\/vol\\/(.*?)\\/.*$', '$1'
-                            $result['ontapVolumeName'] = $lunVolName
-                            
-                            # Find volume UUID from records
-                            $volumeRec = $VolumeRecords | Where-Object { $_.name -eq $lunVolName } | Select-Object -First 1
-                            if ($volumeRec) {
-                                $result['ontapVolumeUuid'] = $volumeRec.uuid
-                                if ($volumeRec.svm) {
-                                    $result['svmName'] = $volumeRec.svm.name
-                                }
-                            }
-                            break
-                        }
-                    }
                 }
             }
             
@@ -1015,7 +1038,7 @@ ORDER BY
         # Build enriched data drives with ONTAP details (using pre-cached ONTAP lookups)
         # Use ArrayList for O(1) append instead of += which is O(n)
         $enrichedDataDrives = [System.Collections.ArrayList]::new()
-        foreach ($dataDb in $instanceAllDataDrivesSizes) {
+        foreach ($dataDb in $userDataDrivesSizes) {
             $driveDetails = $ontapDetailsByDriveLetter[$dataDb.dataDriveLetter]
             if (-not $driveDetails) { $driveDetails = @{} }
             
@@ -1026,7 +1049,7 @@ ORDER BY
             $enrichedDrive = [PSCustomObject]@{
                 name = $dataDb.databaseName
                 driveLetter = $dataDb.dataDriveLetter
-                sizeInMb = $dataDb.dataDriveTotalSizeMB
+                sizeInMb = $dataDb.sizeInMb
                 accessPaths = $accessPaths
                 lunSerialNumber = $driveDetails['lunSerialNumber']
                 diskNumber = $driveDetails['diskNumber']
@@ -1041,13 +1064,10 @@ ORDER BY
         }
         
         # Simplify data drives by grouping by diskNumber using hashtable for O(1) lookup
+        # When a database has multiple data files on the same disk, sum their sizes into a single entry
         $dataGroupByDisk = @{}
         foreach ($drive in $enrichedDataDrives) {
             $key = if ($null -ne $drive.diskNumber) { $drive.diskNumber.ToString() } else { "null_$($drive.driveLetter)" }
-            $dbObject = @{
-                "name" = $drive.name
-                "sizeInMb" = $drive.sizeInMb
-            }
             if (-not $dataGroupByDisk.ContainsKey($key)) {
                 $dataGroupByDisk[$key] = [PSCustomObject]@{
                     driveLetter = $drive.driveLetter
@@ -1062,13 +1082,23 @@ ORDER BY
                     databaseDetails = [System.Collections.ArrayList]::new()
                 }
             }
-            [void]$dataGroupByDisk[$key].databaseDetails.Add($dbObject)
+            # Check if database already exists in databaseDetails and sum sizes
+            $existingDb = $dataGroupByDisk[$key].databaseDetails | Where-Object { $_.name -eq $drive.name } | Select-Object -First 1
+            if ($existingDb) {
+                $existingDb.sizeInMb += $drive.sizeInMb
+            } else {
+                $dbObject = @{
+                    "name" = $drive.name
+                    "sizeInMb" = $drive.sizeInMb
+                }
+                [void]$dataGroupByDisk[$key].databaseDetails.Add($dbObject)
+            }
         }
         $SimplifiedDataDriveDetails = @($dataGroupByDisk.Values)
         
         # Build enriched log drives with ONTAP details (using pre-cached ONTAP lookups)
         $enrichedLogDrives = [System.Collections.ArrayList]::new()
-        foreach ($logDb in $instanceAllLogDrivesSizes) {
+        foreach ($logDb in $userLogDrivesSizes) {
             $driveDetails = $ontapDetailsByDriveLetter[$logDb.logDriveLetter]
             if (-not $driveDetails) { $driveDetails = @{} }
             
@@ -1079,7 +1109,7 @@ ORDER BY
             $enrichedDrive = [PSCustomObject]@{
                 name = $logDb.databaseName
                 driveLetter = $logDb.logDriveLetter
-                sizeInMb = $logDb.logDriveTotalSizeMB
+                sizeInMb = $logDb.sizeInMb
                 accessPaths = $accessPaths
                 lunSerialNumber = $driveDetails['lunSerialNumber']
                 diskNumber = $driveDetails['diskNumber']
@@ -1094,13 +1124,10 @@ ORDER BY
         }
         
         # Simplify log drives by grouping by diskNumber using hashtable for O(1) lookup
+        # When a database has multiple log files on the same disk, sum their sizes into a single entry
         $logGroupByDisk = @{}
         foreach ($drive in $enrichedLogDrives) {
             $key = if ($null -ne $drive.diskNumber) { $drive.diskNumber.ToString() } else { "null_$($drive.driveLetter)" }
-            $dbObject = @{
-                "name" = $drive.name
-                "sizeInMb" = $drive.sizeInMb
-            }
             if (-not $logGroupByDisk.ContainsKey($key)) {
                 $logGroupByDisk[$key] = [PSCustomObject]@{
                     driveLetter = $drive.driveLetter
@@ -1115,35 +1142,48 @@ ORDER BY
                     databaseDetails = [System.Collections.ArrayList]::new()
                 }
             }
-            [void]$logGroupByDisk[$key].databaseDetails.Add($dbObject)
+            # Check if database already exists in databaseDetails and sum sizes
+            $existingDb = $logGroupByDisk[$key].databaseDetails | Where-Object { $_.name -eq $drive.name } | Select-Object -First 1
+            if ($existingDb) {
+                $existingDb.sizeInMb += $drive.sizeInMb
+            } else {
+                $dbObject = @{
+                    "name" = $drive.name
+                    "sizeInMb" = $drive.sizeInMb
+                }
+                [void]$logGroupByDisk[$key].databaseDetails.Add($dbObject)
+            }
         }
         $SimplifiedLogDriveDetails = @($logGroupByDisk.Values)
         
         # Build enriched tempdb details (using pre-cached ONTAP lookups)
+        # Only build if tempdb is on a NetApp drive, otherwise set to empty array
         $enrichedTempDbDetails = [System.Collections.ArrayList]::new()
-        foreach ($tempDb in $defaultTempDBDriveDetails) {
-            $driveDetails = $ontapDetailsByDriveLetter[$tempDb.tempdbDriveLetter]
-            if (-not $driveDetails) { $driveDetails = @{} }
-            
-            $driveLetter = $tempDb.tempdbDriveLetter.TrimEnd(':')
-            $cachedDrive = $driveLetterCache[$driveLetter]
-            $accessPaths = if ($cachedDrive) { $cachedDrive.AccessPaths } else { @() }
-            
-            $enrichedDrive = [PSCustomObject]@{
-                name = "tempdev"
-                driveLetter = $tempDb.tempdbDriveLetter
-                sizeInMb = $tempDb.tempdbDriveTotalSizeMB
-                accessPaths = $accessPaths
-                lunSerialNumber = $driveDetails['lunSerialNumber']
-                diskNumber = $driveDetails['diskNumber']
-                ontapVolumeUuid = $driveDetails['ontapVolumeUuid']
-                ontapVolumeName = $driveDetails['ontapVolumeName']
-                lunUuid = $driveDetails['lunUuid']
-                lunPath = $driveDetails['lunPath']
-                svmName = $driveDetails['svmName']
+        if ([string]::IsNullOrEmpty($driveDetailsErrors["instanceTempDBDriveError"])) {
+            foreach ($tempDb in $defaultTempDBDriveDetails) {
+                $driveDetails = $ontapDetailsByDriveLetter[$tempDb.tempdbDriveLetter]
+                if (-not $driveDetails) { $driveDetails = @{} }
+                
+                $driveLetter = $tempDb.tempdbDriveLetter.TrimEnd(':')
+                $cachedDrive = $driveLetterCache[$driveLetter]
+                $accessPaths = if ($cachedDrive) { $cachedDrive.AccessPaths } else { @() }
+                
+                $enrichedDrive = [PSCustomObject]@{
+                    name = "tempdev"
+                    driveLetter = $tempDb.tempdbDriveLetter
+                    sizeInMb = $tempDb.tempdbDriveTotalSizeMB
+                    accessPaths = $accessPaths
+                    lunSerialNumber = $driveDetails['lunSerialNumber']
+                    diskNumber = $driveDetails['diskNumber']
+                    ontapVolumeUuid = $driveDetails['ontapVolumeUuid']
+                    ontapVolumeName = $driveDetails['ontapVolumeName']
+                    lunUuid = $driveDetails['lunUuid']
+                    lunPath = $driveDetails['lunPath']
+                    svmName = $driveDetails['svmName']
+                }
+                
+                [void]$enrichedTempDbDetails.Add($enrichedDrive)
             }
-            
-            [void]$enrichedTempDbDetails.Add($enrichedDrive)
         }
         
         # Build user database layout with enriched details
@@ -1170,7 +1210,7 @@ ORDER BY
                     tempdbDrivePath = $defaultTempDBDriveDetails[0].tempdbDrivePath
                     tempdbDriveTotalSizeMB = $tempDb.sizeInMb
                     dataDriveLetter = $defaultDataDriveDetails.dataDriveLetter
-                    dataDriveTotalSizeMB = $defaultDataDriveDetails.dataDriveTotalSizeMB
+                    dataDriveTotalSizeMB = $defaultDataDriveDetails.driveTotalSizeMB
                     ontapVolumeUuid = $tempDb.ontapVolumeUuid
                     ontapVolumeName = $tempDb.ontapVolumeName
                     lunUuid = $tempDb.lunUuid
@@ -1186,12 +1226,12 @@ ORDER BY
         # Build data-log-drive-details by combining data and log drive information with ONTAP details
         # PERFORMANCE: Build lookup table for log databases by name for O(1) access instead of O(n) Where-Object
         $logDbByName = @{}
-        foreach ($logDb in $instanceAllLogDrivesSizes) {
+        foreach ($logDb in $userLogDrivesSizes) {
             $logDbByName[$logDb.databaseName] = $logDb
         }
         
         $consolidatedDriveDetails = [System.Collections.ArrayList]::new()
-        foreach ($dataDb in $instanceAllDataDrivesSizes) {
+        foreach ($dataDb in $userDataDrivesSizes) {
             $logDb = $logDbByName[$dataDb.databaseName]
             if ($logDb) {
                 # Get ONTAP details from pre-cached lookup
@@ -1210,10 +1250,10 @@ ORDER BY
                 $driveDetail = [PSCustomObject]@{
                     databaseName = $dataDb.databaseName
                     dataDriveLetter = $dataDb.dataDriveLetter
-                    dataDriveTotalSizeMB = $dataDb.dataDriveTotalSizeMB
+                    dataDriveTotalSizeMB = $dataDb.driveTotalSizeMB
                     logDriveLetter = $logDb.logDriveLetter
                     logDrivePath = $logDb.logDrivePath
-                    logDriveTotalSizeMB = $logDb.logDriveTotalSizeMB
+                    logDriveTotalSizeMB = $logDb.driveTotalSizeMB
                     ontapVolumeUuid = $logDriveDetails['ontapVolumeUuid']
                     ontapVolumeName = $logDriveDetails['ontapVolumeName']
                     lunUuid = $logDriveDetails['lunUuid']
@@ -1471,7 +1511,7 @@ const maxDopAssessmentTemplate = `
     }
 `;
 
-// Template for High Availability Assessment (FCI only)
+// Template for High Availability Assessment (FCI and AOAG)
 // This includes cluster quorum, heartbeat settings, and SQL Server service configuration
 /**
  * Host-level High Availability Assessment Template (clusterQuorum and heartbeat)
@@ -1480,10 +1520,10 @@ const maxDopAssessmentTemplate = `
  */
 const hostLevelHighAvailabilityAssessmentTemplate = `
     # ========================================
-    # Host-Level High Availability Assessment (FCI Only)
+    # Host-Level High Availability Assessment (FCI and AOAG)
     # Cluster Quorum and Heartbeat Settings
     # ========================================
-    if ($deploymentType -eq 'FCI') {
+    if ($deploymentType -eq 'FCI' -or $deploymentType -eq 'AOAG') {
         Write-Information "Getting host-level high availability assessment..."
         
         if ($null -eq $FinalResponse['rawdata']['hostLevelDetails']['highAvailability']) {
@@ -1593,10 +1633,10 @@ const hostLevelHighAvailabilityAssessmentTemplate = `
  */
 const highAvailabilityAssessmentTemplate = `
     # ========================================
-    # Instance-Level High Availability Assessment (FCI Only)
+    # Instance-Level High Availability Assessment (FCI, AOAG Standalone, and AOAG FCI)
     # SQL Server Service Startup Type
     # ========================================
-    if ($deploymentType -eq 'FCI') {
+    if ($deploymentType -eq 'FCI' -or $deploymentType -eq 'AOAG') {
         Write-Information "Getting instance-level high availability assessment for FCI instance: $serverInstanceName..."
         $DriftAssessmentData['highAvailability'] = @{}
         $DriftAssessmentData['highAvailability']['errors'] = @{}
@@ -1615,8 +1655,15 @@ const highAvailabilityAssessmentTemplate = `
             $sqlService = Get-Service -Name $serviceName -ErrorAction Stop
             $startupType = $sqlService.StartType.ToString()
             
-            # For FCI, SQL Server service should be set to Manual (cluster manages it)
-            $isOptimized = $startupType -eq 'Manual'
+            # FCI and AOAG FCI require Manual (cluster manages it); AOAG Standalone requires Automatic
+            $isClustered = $deploymentType -eq 'FCI' -or ($deploymentType -eq 'AOAG' -and $baseDeploymentType -eq 'FCI')
+            if ($isClustered) {
+                $isOptimized = $startupType -eq 'Manual'
+                $recommendedStartupType = 'Manual'
+            } else {
+                $isOptimized = $startupType -eq 'Automatic'
+                $recommendedStartupType = 'Automatic'
+            }
             
             # Build nodesInViolation array (current host is in violation if not optimized)
             $nodesInViolation = @()
@@ -1632,7 +1679,7 @@ const highAvailabilityAssessmentTemplate = `
                         serviceName = $sqlService.Name
                         displayName = $sqlService.DisplayName
                         currentStartupType = $startupType
-                        recommendedStartupType = 'Manual'
+                        recommendedStartupType = $recommendedStartupType
                         serviceStatus = $sqlService.Status.ToString()
                         instanceId = $ec2InstanceId
                     }

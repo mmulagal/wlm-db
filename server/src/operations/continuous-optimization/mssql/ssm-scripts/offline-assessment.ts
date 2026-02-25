@@ -1399,21 +1399,21 @@ ${SERVER_DETAILS}
     }
 
     # ========================================
-    # PART 5: Host-Level High Availability Assessment (FCI Only)
+    # PART 5: Host-Level High Availability Assessment (FCI and AOAG)
     # Cluster Quorum and Heartbeat are cluster-wide settings
     # ========================================
-    # Check if any instance is FCI to determine if we need host-level HA assessment
-    $hasFciInstance = $false
+    # Check if any instance is FCI or AOAG  to determine if we need host-level HA assessment
+    $hasHaInstance = $false
+
     foreach ($instanceName in $FinalResponse['rawdata']['instanceLevelDetails'].Keys) {
         $instanceDetails = $FinalResponse['rawdata']['instanceLevelDetails'][$instanceName]['instanceDetails']
-        if ($instanceDetails -and $instanceDetails['deploymentType'] -eq 'FCI') {
-            $hasFciInstance = $true
-            $deploymentType = 'FCI'
+        if ($instanceDetails -and ($instanceDetails['deploymentType'] -eq 'FCI' -or $instanceDetails['deploymentType'] -eq 'AOAG')) {
+            $hasHaInstance = $true
             break
         }
     }
 
-    if ($hasFciInstance) {
+    if ($hasHaInstance) {
         ${hostLevelHighAvailabilityAssessmentTemplate}
     }
 
