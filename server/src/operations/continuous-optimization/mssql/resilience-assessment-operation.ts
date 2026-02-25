@@ -1435,14 +1435,28 @@ async function getHighAvailabilityDriftData(
         );
 
         if (IS_DEMO_FLOW) {
-            const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-            const { configsOptimized } =
-                ((instanceDetail as unknown as DatabaseInstance)?.metadata as DatabaseInstanceMetadata) ?? {};
-            if (configsOptimized?.HIGH_AVAILABILITY?.includes('shared-storage') && sharedStorage) {
-                (sharedStorage as HighAvailabilitySharedStorage).status = AssessmentStatus.OPTIMIZED;
-            }
-            if (configsOptimized?.HIGH_AVAILABILITY?.includes('sql-server-services') && sqlServerServices) {
-                sqlServerServices.status = AssessmentStatus.OPTIMIZED;
+            try {
+                const instanceDetail = await getInstanceInfo(
+                    accountId,
+                    credentialsId,
+                    databaseHostId,
+                    databaseInstanceId
+                );
+                const { configsOptimized } =
+                    ((instanceDetail as unknown as DatabaseInstance)?.metadata as DatabaseInstanceMetadata) ?? {};
+                if (configsOptimized?.HIGH_AVAILABILITY?.includes('shared-storage') && sharedStorage) {
+                    (sharedStorage as HighAvailabilitySharedStorage).status = AssessmentStatus.OPTIMIZED;
+                }
+                if (configsOptimized?.HIGH_AVAILABILITY?.includes('sql-server-services') && sqlServerServices) {
+                    sqlServerServices.status = AssessmentStatus.OPTIMIZED;
+                }
+            } catch (error) {
+                // Instance doesn't exist for offline assessments - this is expected
+                logger.debug('Instance not found for offline assessment, skipping configsOptimized check', {
+                    accountId,
+                    databaseHostId,
+                    databaseInstanceId
+                });
             }
         }
         const resiliencyConfig = storageGoldenConfigData.resiliency;

@@ -50,12 +50,13 @@ import {
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     createAssessmentDataWithRetry
 } from '../utils/demo-utils/demoMockdata';
-import { generateRandomIP, summarizeFirstLevel } from '../utils/utils';
+import { generateRandomIP, summarizeFirstLevel, parseAssessmentFileContent } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
 import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
 import { describeFSxVolumes } from '../lib/aws/fsx';
 import { AssessmentCategories, AssessmentStatus } from '../utils/continous-optimization-consts';
+import { offlineAssessmentDemoFCI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoFCI';
 import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
 import {
     mockResourceAssessmentData,
@@ -1246,6 +1247,47 @@ function getMssqlStorageDataForDemo(totalUsed: number) {
     };
 }
 
+function loadAndModifyDemoFCIData() {
+    const assessmentData = parseAssessmentFileContent(JSON.stringify(offlineAssessmentDemoFCI)) as {
+        metadata?: Record<string, unknown>;
+        rawdata?: Record<string, unknown>;
+    };
+
+    // Generate unique identifiers for this upload
+    const uniqueId = randomUUID().substring(0, 8);
+    const timestamp = new Date().toISOString();
+
+    // Modify metadata with unique identifiers
+    if (assessmentData.metadata) {
+        assessmentData.metadata.ec2InstanceId = `demo-offline-fci-${uniqueId}`;
+        assessmentData.metadata.hostname = `SQL-PROD-FCI-${uniqueId}`;
+        assessmentData.metadata.vmName = `SQL-PROD-FCI-${uniqueId}`;
+        assessmentData.metadata.assessmentTimestamp = timestamp;
+        assessmentData.metadata.ontapHostName = [`management.fs-${uniqueId}.fsx.ap-southeast-1.amazonaws.com`];
+        assessmentData.metadata.storageEndpoint = `fs-${uniqueId}`;
+        assessmentData.metadata.fsxId = `fs-${uniqueId}`;
+    }
+
+    // Modify instance-level details with unique identifiers
+    if (assessmentData.rawdata?.instanceLevelDetails) {
+        const instanceLevelDetails = assessmentData.rawdata.instanceLevelDetails as Record<
+            string,
+            Record<string, unknown>
+        >;
+        const instanceKeys = Object.keys(instanceLevelDetails);
+        instanceKeys.forEach(instanceName => {
+            const instanceData = instanceLevelDetails[instanceName];
+            if (instanceData?.instanceDetails) {
+                const instanceDetails = instanceData.instanceDetails as Record<string, unknown>;
+                instanceDetails.databaseInstanceId = `demo-offline-fci-instance-${uniqueId}`;
+                instanceDetails.executableInstance = `SQL-PROD-FCI-${uniqueId}`;
+            }
+        });
+    }
+
+    return assessmentData;
+}
+
 function handleGetOracleAssessmentForDemo(
     accountId: string,
     instanceDetail: DatabaseInstance,
@@ -1369,5 +1411,6 @@ export {
     createDeploymentMockDataInDBForOracle,
     createAssessmentDataForOracle,
     updateAllOptimizedClonesDemoFlow,
-    getMssqlStorageDataForDemo
+    getMssqlStorageDataForDemo,
+    loadAndModifyDemoFCIData
 };

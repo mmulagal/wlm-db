@@ -620,6 +620,17 @@ function sqlResponseParsing(response: string) {
     }
 }
 
+/**
+ * Parses JSON file content and throws a standardized error if parsing fails
+ */
+function parseAssessmentFileContent(fileContent: string) {
+    try {
+        return JSON.parse(fileContent);
+    } catch {
+        throw createError(HttpErrorCodes.BAD_REQUEST, 'Invalid JSON file format');
+    }
+}
+
 function parsePgSqlInstanceInfo(instanceInfo: string) {
     try {
         let dbInstanceId;
@@ -1638,5 +1649,6 @@ export {
     hyphenatedToPascalCaseWithSpace,
     createInMemoryZip,
     ASSESSMENT_SCRIPT_FILENAMES,
-    compressSsmCommand
+    compressSsmCommand,
+    parseAssessmentFileContent
 };

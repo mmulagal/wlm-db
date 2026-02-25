@@ -5,6 +5,9 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { compressSync } from 'fflate';
 import path from 'path';
+import { offlineAssessmentDemoSTD } from './offlineAssessmentRecords/offlineAssessmentDemoSTD';
+import { offlineAssessmentDemoFCI } from './offlineAssessmentRecords/offlineAssessmentDemoFCI';
+import { offlineAssessmentDemoAOAG } from './offlineAssessmentRecords/offlineAssessmentDemoAOAG';
 import {
     AWS_REGIONS,
     DatabaseTypes,
@@ -3296,30 +3299,34 @@ const onPremAOAGAUploadObject = {
     fileName: 'SQLServerDataResponse-GOLDEN-AOAG.json'
 };
 
-const offlineAssessmentStdBase64Content = generateBase64FromJsonFile(
-    'offlineAssessmentRecords',
-    'OfflineAssessment-DemoSTD.json'
-);
+function generateBase64FromData(data: object): string {
+    const jsonString = JSON.stringify(data);
+    // Encode JSON to Base64
+    const base64Encoded = btoa(jsonString);
+    // Convert Base64 string to Uint8Array
+    const base64Bytes = new TextEncoder().encode(base64Encoded);
+    // Compress the Base64 data using fflate
+    const compressedData = compressSync(base64Bytes);
+    // Convert the compressed data to Base64
+    const compressedBase64 = btoa(String.fromCharCode(...compressedData));
+    return compressedBase64;
+}
+
+const offlineAssessmentStdBase64Content = generateBase64FromData(offlineAssessmentDemoSTD);
 
 const offlineAssessmentStdUploadObject = {
     fileContent: offlineAssessmentStdBase64Content,
     fileName: 'OfflineAssessment-DemoSTD.json'
 };
 
-const offlineAssessmentFCIBase64Content = generateBase64FromJsonFile(
-    'offlineAssessmentRecords',
-    'OfflineAssessment-DemoFCI.json'
-);
+const offlineAssessmentFCIBase64Content = generateBase64FromData(offlineAssessmentDemoFCI);
 
 const offlineAssessmentFCIUploadObject = {
     fileContent: offlineAssessmentFCIBase64Content,
     fileName: 'OfflineAssessment-DemoFCI.json'
 };
 
-const offlineAssessmentAOAGBase64Content = generateBase64FromJsonFile(
-    'offlineAssessmentRecords',
-    'OfflineAssessment-DemoAOAG.json'
-);
+const offlineAssessmentAOAGBase64Content = generateBase64FromData(offlineAssessmentDemoAOAG);
 
 const offlineAssessmentAOAGUploadObject = {
     fileContent: offlineAssessmentAOAGBase64Content,

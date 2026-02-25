@@ -20,7 +20,12 @@ import { calculateStorageDrift } from './storage-assessment-operations';
 import { calculateRssConfigDrift } from './rssConfig-assessment-operations';
 import { calculateMaxDOPDrift } from './maxdop-assessment-operations';
 import { getHighAvailabilityDriftData } from './resilience-assessment-operation';
-import { generateSqlResourceId, calculateRecommendedMaxDOP } from '../../../utils/utils';
+import {
+    generateSqlResourceId,
+    calculateRecommendedMaxDOP,
+    IS_DEMO_FLOW,
+    parseAssessmentFileContent
+} from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
 import { HttpErrorCodes, AWS_REGIONS } from '../../../utils/consts';
 import {
@@ -41,6 +46,7 @@ import { registerJob, updateJobDetails } from '../../database/job-operations';
 import GOLDEN_CONFIG from './golden-config';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { validateAssessment } from '../assessment-utils';
+import { loadAndModifyDemoFCIData } from '../../demo-operations';
 
 const logger = getLogger();
 
@@ -379,10 +385,21 @@ async function uploadMssqlOfflineAssessment(
     region?: string
 ) {
     let assessmentData: { metadata?: Record<string, unknown>; rawdata?: Record<string, unknown> };
-    try {
-        assessmentData = JSON.parse(fileContent);
-    } catch {
-        throw createError(HttpErrorCodes.BAD_REQUEST, 'Invalid JSON file format');
+
+    if (IS_DEMO_FLOW) {
+        try {
+            assessmentData = loadAndModifyDemoFCIData();
+        } catch (error) {
+            logger.error('Failed to load demo standalone data template, falling back to user upload', {
+                accountId,
+                error: error instanceof Error ? error.message : String(error)
+            });
+            // Fall back to user's uploaded data if demo template fails
+            assessmentData = parseAssessmentFileContent(fileContent);
+        }
+    } else {
+        // Parse user's uploaded file in non-demo mode
+        assessmentData = parseAssessmentFileContent(fileContent);
     }
 
     const { metadata, rawdata } = assessmentData;
@@ -535,7 +552,7 @@ async function fetchMssqlOfflineAssessment(
                   instanceLevelAssessment as unknown as StorageAssessment
               )
             : Promise.resolve(undefined),
-        (deploymentType === 'FCI' || (deploymentType === 'AOAG' && baseDeploymentType === 'FCI')) && hasHAData
+        (deploymentType === 'FCI' || deploymentType === 'AOAG') && hasHAData
             ? getHighAvailabilityDriftData(
                   accountId,
                   '',
