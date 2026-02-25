@@ -1220,7 +1220,8 @@
             "related-databases": "Related databases",
             "view-related-databases": "View related databases",
             "enabled": "Enabled",
-            "disabled": "Disabled"
+            "disabled": "Disabled",
+            "unknown-role-tooltip": "This role cannot be identified due to an Oracle limitation. In a Data Guard setup, standby instances cannot resolve the role of other standby databases."
         },
         "inventory": {
             "no-databases-available": "Databases are available for registered instances only.",

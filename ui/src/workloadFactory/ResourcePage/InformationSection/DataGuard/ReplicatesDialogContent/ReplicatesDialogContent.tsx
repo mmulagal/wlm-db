@@ -1,5 +1,5 @@
 import { DsTypography, DsButton } from '@tlveng/wlm-ds';
-import { useDialog } from '@netapp/design-system';
+import { useDialog, TooltipInfo } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import styles from '../../StorageCompute/LunsDialogContent/LunsDialogContent.module.scss';
@@ -49,6 +49,7 @@ const ReplicatesDialogContent = ({ resourceDetails }: any) => {
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
 
     const allAssociatedHosts = resourceDetails?.dataguardDetails?.associatedHosts || [];
+    const isPrimaryNode = resourceDetails?.dataguardDetails?.isPrimaryNode === true;
     // Current database identity from the resource we're viewing (dbUniqueName is unique per instance)
     const currentDbUniqueName = resourceDetails?.dataguardDetails?.dbUniqueName;
     // Exclude the current database - show only other replicas
@@ -156,9 +157,18 @@ const ReplicatesDialogContent = ({ resourceDetails }: any) => {
                             <DotComponent color="var(--toggle-off-bg)" value={t('databases.data-guard.unregistered')} />
                         )}
                     </div>
-                    <DsTypography variant="Regular_14" className={styles.tableCell} title={toSentenceCase(host.role)}>
-                        {toSentenceCase(host.role)}
-                    </DsTypography>
+                    <div className={styles.roleCell}>
+                        <DsTypography variant="Regular_14" title={toSentenceCase(host.role)}>
+                            {toSentenceCase(host.role)}
+                        </DsTypography>
+                        {!isPrimaryNode && host.role?.toUpperCase() === 'UNKNOWN' && (
+                            <TooltipInfo trigger="hover" isAppendedToBody>
+                                <DsTypography variant="Regular_13">
+                                    {t('databases.data-guard.unknown-role-tooltip')}
+                                </DsTypography>
+                            </TooltipInfo>
+                        )}
+                    </div>
                 </div>
             ))}
         </div>
