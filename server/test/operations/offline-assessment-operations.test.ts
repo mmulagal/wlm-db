@@ -111,13 +111,14 @@ describe('Generic Offline Assessment Operations', () => {
     });
 
     describe('downloadOfflineAssessmentScript', () => {
-        it('should generate ZIP for mssql database type', async () => {
+        it('should generate streaming ZIP for mssql database type', async () => {
             const result = await downloadOfflineAssessmentScript(ACCOUNT_ID, 'mssql');
 
             expect(result).toBeDefined();
-            expect(result.zipBuffer).toBeDefined();
+            expect(result.archive).toBeDefined();
             expect(result.filename).toBeDefined();
-            expect(result.zipBuffer).toBeInstanceOf(Buffer);
+            expect(result.archive).toHaveProperty('readable');
+            expect(result.archive).toHaveProperty('pipe');
             expect(result.filename).toContain('.zip');
         });
 
@@ -125,7 +126,7 @@ describe('Generic Offline Assessment Operations', () => {
             const result = await downloadOfflineAssessmentScript(ACCOUNT_ID);
 
             expect(result).toBeDefined();
-            expect(result.zipBuffer).toBeDefined();
+            expect(result.archive).toBeDefined();
             expect(result.filename).toBeDefined();
         });
 
@@ -139,6 +140,25 @@ describe('Generic Offline Assessment Operations', () => {
             await expect(downloadOfflineAssessmentScript(ACCOUNT_ID, 'oracle')).rejects.toThrow(
                 'Script generation not yet implemented for database type: oracle'
             );
+        });
+
+        it('should produce valid zip stream data', async () => {
+            const result = await downloadOfflineAssessmentScript(ACCOUNT_ID, 'mssql');
+
+            // Collect stream data to verify it produces valid zip content
+            const chunks: Buffer[] = [];
+            for await (const chunk of result.archive) {
+                chunks.push(chunk as Buffer);
+            }
+
+            const zipBuffer = Buffer.concat(chunks);
+
+            // Verify zip file signature (PK\x03\x04)
+            expect(zipBuffer.length).toBeGreaterThan(0);
+            expect(zipBuffer[0]).toBe(0x50); // 'P'
+            expect(zipBuffer[1]).toBe(0x4b); // 'K'
+            expect(zipBuffer[2]).toBe(0x03);
+            expect(zipBuffer[3]).toBe(0x04);
         });
     });
 });

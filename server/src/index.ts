@@ -335,7 +335,11 @@ const app = fastify({
             let replyBody = payload;
             if (replyBody) {
                 try {
-                    replyBody = JSON.parse(payload as unknown as string);
+                    if (typeof payload === 'string') {
+                        replyBody = JSON.parse(payload);
+                    } else {
+                        replyBody = { type: 'binary' };
+                    }
                 } catch (e) {
                     //  285:25  error    Empty block statement                               no-empty
                     logger.error('Error parsing reply body', e);

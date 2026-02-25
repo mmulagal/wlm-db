@@ -1466,35 +1466,49 @@ function hyphenatedToPascalCaseWithSpace(str: string): string {
         .join(' ');
 }
 
-async function createInMemoryZip(options: {
+async function createStreamingZip(options: {
     scriptContent: string;
     databaseType: string;
     filename?: string;
     version?: string;
-}): Promise<{ zipBuffer: Buffer; filename: string }> {
-    const { scriptContent, databaseType, filename, version } = options;
+    readmeContent?: string;
+}): Promise<{ archive: archiver.Archiver; filename: string }> {
+    const { scriptContent, databaseType, filename, version, readmeContent } = options;
     const baseFilename = filename ?? ASSESSMENT_SCRIPT_FILENAMES[databaseType];
 
     if (!baseFilename) {
         throw new Error(`No default filename found for database type: ${databaseType}`);
     }
 
-    // Insert version into filename (e.g., NetApp_WF_MSSQL_Assessment_v1.0.0.ps1)
     const scriptFilename = version ? baseFilename.replace(/(\.[^.]+)$/, `_v${version}$1`) : baseFilename;
 
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    archive.append(scriptContent, { name: scriptFilename });
-    archive.finalize();
+    return new Promise((resolve, reject) => {
+        const archive = archiver('zip', { zlib: { level: 9 } });
 
-    const chunks: Buffer[] = [];
-    for await (const chunk of archive) {
-        chunks.push(chunk as Buffer);
-    }
+        archive.on('error', (err: any) => {
+            reject(err);
+        });
 
-    return {
-        zipBuffer: Buffer.concat(chunks),
-        filename: scriptFilename.replace(/\.[^.]+$/, '.zip')
-    };
+        archive.on('warning', (err: any) => {
+            // Log warnings but don't reject - archiver can continue with warnings
+            logger.warn('Archive warning', err);
+        });
+
+        archive.append(scriptContent, { name: scriptFilename });
+
+        if (readmeContent) {
+            archive.append(readmeContent, { name: 'README.md' });
+        }
+
+        archive.finalize();
+
+        process.nextTick(() => {
+            resolve({
+                archive,
+                filename: scriptFilename.replace(/\.[^.]+$/, '.zip')
+            });
+        });
+    });
 }
 
 /**
@@ -1647,7 +1661,7 @@ export {
     summarizeFirstLevel,
     camelCaseToHyphenated,
     hyphenatedToPascalCaseWithSpace,
-    createInMemoryZip,
+    createStreamingZip,
     ASSESSMENT_SCRIPT_FILENAMES,
     compressSsmCommand,
     parseAssessmentFileContent

@@ -6,9 +6,10 @@ import {
     OFFLINE_ASSESSMENT_SCRIPT_VERSION
 } from './continuous-optimization/mssql/ssm-scripts/offline-assessment';
 import { uploadMssqlOfflineAssessment } from './continuous-optimization/mssql/offline-assessment-operations';
-import { createInMemoryZip, ASSESSMENT_SCRIPT_FILENAMES } from '../utils/utils';
+import { createStreamingZip, ASSESSMENT_SCRIPT_FILENAMES } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { DatabaseTypes, HttpErrorCodes } from '../utils/consts';
+import { MSSQL_ONE_TIME_ASSESSMENT_README } from './continuous-optimization/one-time-assessment-consts';
 
 const logger = getLogger();
 
@@ -77,11 +78,8 @@ async function uploadOfflineAssessment(
     }
 }
 
-async function downloadOfflineAssessmentScript(
-    accountId: string,
-    databaseType: string = 'mssql'
-): Promise<{ zipBuffer: Buffer; filename: string }> {
-    logger.info('Generating one-time WAD assessment script', { accountId, databaseType });
+async function downloadOfflineAssessmentScript(accountId: string, databaseType: string = 'mssql') {
+    logger.info('Generating one-time WAD assessment script (streaming)', { accountId, databaseType });
 
     const supportedTypes = Object.keys(ASSESSMENT_SCRIPT_FILENAMES);
     if (!supportedTypes.includes(databaseType)) {
@@ -94,11 +92,13 @@ async function downloadOfflineAssessmentScript(
     try {
         let scriptContent: string;
         let version: string | undefined;
+        let readmeContent: string | undefined;
 
         switch (databaseType) {
             case DatabaseTypes.MS_SQL_SERVER.toLowerCase():
                 scriptContent = MSSQL_ONE_TIME_WAD;
                 version = OFFLINE_ASSESSMENT_SCRIPT_VERSION;
+                readmeContent = MSSQL_ONE_TIME_ASSESSMENT_README;
                 break;
             default:
                 throw createError(
@@ -107,13 +107,14 @@ async function downloadOfflineAssessmentScript(
                 );
         }
 
-        const { zipBuffer, filename } = await createInMemoryZip({
+        const { archive, filename } = await createStreamingZip({
             scriptContent,
             databaseType,
-            version
+            version,
+            readmeContent
         });
 
-        return { zipBuffer, filename };
+        return { archive, filename };
     } catch (error: any) {
         logger.error('Failed to generate offline assessment script ZIP', {
             error: error.message,

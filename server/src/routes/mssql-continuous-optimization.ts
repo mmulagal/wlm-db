@@ -81,6 +81,9 @@ import {
     OfflineAssessmentDownloadSchema,
     DeleteOfflineAssessment
 } from './schemas/offline-assessment-schema';
+import getLogger from '../utils/logger';
+
+const logger = getLogger();
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/mssql';
@@ -590,12 +593,24 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                     params: { accountId }
                 } = castRequest(request);
 
-                const { zipBuffer, filename } = await downloadOfflineAssessmentScript(accountId, 'mssql');
+                const { archive, filename } = await downloadOfflineAssessmentScript(accountId, 'mssql');
+
+                archive.on('error', err => {
+                    if (!reply.sent) {
+                        logger.error('Error creating assessment script package stream', {
+                            accountId,
+                            error: err instanceof Error ? err.message : String(err)
+                        });
+                        reply.code(500).send({
+                            error: 'Failed to create assessment script package. Please try again or contact support if the issue persists.'
+                        });
+                    }
+                });
 
                 return reply
                     .header('Content-Type', 'application/zip')
                     .header('Content-Disposition', `attachment; filename="${filename}"`)
-                    .send(zipBuffer);
+                    .send(archive);
             }
         )
         .delete(
