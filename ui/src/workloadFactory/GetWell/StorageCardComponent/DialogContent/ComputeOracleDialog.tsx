@@ -35,7 +35,7 @@ function ComputeOracleDialog({ missingPatchList = [] }: ComputeOracleDialogProps
             width: '262px'
         },
         {
-            Header: t('databases.well-architect.classification'),
+            Header: t('databases.well-architect.update-type'),
             accessor: 'classification',
             id: '3',
             isSortable: true,
