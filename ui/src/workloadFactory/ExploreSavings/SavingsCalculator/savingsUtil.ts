@@ -320,19 +320,15 @@ export const calculatedFSXData = (
                       fsxData?.numberOfVolumes * fsxData?.throughput
                   } Mbps).`
         },
-        ...(!isOracleOnPrem
-            ? [
-                  {
-                      label: 'Monthly snapshot capacity',
-                      value: fsxData?.monthlySnapshotCapacity
-                          ? formatSizeTwoPrecision(fsxData?.monthlySnapshotCapacity)
-                          : GENERAL.NOT_AVAILABLE,
-                      text: isOnPrem
-                          ? 'FSx for ONTAP data tiering reduces costs by tiering 90% of snapshot data to the capacity pool storage tier.'
-                          : 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
-                  }
-              ]
-            : [])
+        {
+            label: 'Monthly snapshot capacity',
+            value: fsxData?.monthlySnapshotCapacity
+                ? formatSizeTwoPrecision(fsxData?.monthlySnapshotCapacity)
+                : GENERAL.NOT_AVAILABLE,
+            text: isOnPrem
+                ? 'FSx for ONTAP data tiering reduces costs by tiering 90% of snapshot data to the capacity pool storage tier.'
+                : 'Cost reduction is based on FSx for ONTAP data tiering capability. 90% of snapshots data will be tiered to the capacity pool tier.'
+        }
     ];
 };
 

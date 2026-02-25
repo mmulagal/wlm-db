@@ -488,7 +488,7 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                             )}
 
                             <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
-                                {t('databases.general.fsx-for-ontap')} 1
+                                {t('databases.general.fsx-for-ontap')}
                             </DsTypography>
                             {calculatedFSXData(fsxData, { isOracleOnPrem: true }).map(
                                 (data: { label: string; text: string; value: string }, index: number) => (

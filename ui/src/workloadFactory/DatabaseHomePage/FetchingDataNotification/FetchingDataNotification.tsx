@@ -21,7 +21,7 @@ const FetchingDataNotification = ({
             bottom: 100,
             left: '25%',
             backgroundColor: 'var(--hover-background)',
-            zIndex: 3
+            zIndex: 10
         }}
     >
         <Grid style={{ padding: '16px 40px', boxShadow: '2px 2px 6px 0px var(--drop-shadow)', margin: 0 }}>
