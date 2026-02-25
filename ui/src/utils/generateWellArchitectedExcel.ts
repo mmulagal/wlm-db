@@ -582,40 +582,22 @@ const createPatchData = (
     details: any[],
     instanceKey: string,
     headerText: string,
-    databaseType?: string,
-    databaseHostName?: string,
-    databaseInstanceName?: string
+    databaseType?: string
 ) => {
     const instances = config[instanceKey as keyof AssessmentItem] as any[];
     if (instances && instances.length > 0) {
         details.push({}, {});
 
-        // Use CVE for Oracle, KB for MSSQL
         const isOracle = databaseType === DBType.ORACLE;
         const idColumnName = isOracle ? 'CVE' : 'KB';
 
-        // Determine the column header name based on configuration type
-        // For host-os-patch: "EC2 Instance Name" (both Oracle and MSSQL)
-        // For mssql-patch: "Host Name" (MSSQL only)
-        const instanceNameHeader = instanceKey === 'ec2InstancesToPatch' ? 'EC2 Instance Name' : 'Host Name';
-
-        // Determine the host name value to display in cells
-        // For mssql-patch: show databaseHostName\databaseInstanceName
-        // For host-os-patch: will use ec2InstanceName from instanceData
-        const hostNameValue =
-            instanceKey === 'missingPatchesInEc2Instances' && databaseHostName && databaseInstanceName
-                ? `${databaseHostName}\\${databaseInstanceName}`
-                : undefined;
-
         details.push({
-            [instanceNameHeader]: headerText,
-            [idColumnName]: '',
+            [idColumnName]: headerText,
             Name: '',
             Classification: ''
         });
 
         details.push({
-            [instanceNameHeader]: instanceNameHeader,
             [idColumnName]: idColumnName,
             Name: 'Name',
             Classification: 'Classification'
@@ -623,14 +605,8 @@ const createPatchData = (
 
         instances.forEach((instanceData: any) => {
             if (instanceData.missingPatchDetails && instanceData.missingPatchDetails.length > 0) {
-                // Use hostNameValue if it's defined (for mssql-patch),
-                // otherwise use ec2InstanceName from instanceData (for host-os-patch)
-                const instanceValue =
-                    hostNameValue || instanceData.ec2InstanceName || instanceData.ec2InstanceId || 'N/A';
-
                 instanceData.missingPatchDetails.forEach((patch: any) => {
                     details.push({
-                        [instanceNameHeader]: instanceValue,
                         [idColumnName]: isOracle ? patch.cveIds || 'N/A' : patch.kbId || 'N/A',
                         Name: patch.title || 'N/A',
                         Classification: patch.classification || 'N/A'
@@ -1046,15 +1022,7 @@ function generateDetailedConfigurationData(
     const specialHandlers: { [key: string]: () => void } = {
         'mtu-alignment': () => createMTUAlignmentData(config, details),
         'mssql-patch': () =>
-            createPatchData(
-                config,
-                details,
-                'missingPatchesInEc2Instances',
-                'Impacted resources',
-                databaseType,
-                data.databaseHostName,
-                data.databaseInstanceName
-            ),
+            createPatchData(config, details, 'missingPatchesInEc2Instances', 'Impacted resources', databaseType),
         'host-os-patch': () =>
             createPatchData(config, details, 'ec2InstancesToPatch', 'Impacted resources', databaseType),
         'sql-license': () => createSQLLicenseData(config, details),
@@ -1732,8 +1700,8 @@ const applySpecialConfigurationStyling = (
         // Handle special multi-column configurations
         const specialConfigs = {
             'mtu-alignment': 4,
-            'mssql-patch': 4,
-            'host-os-patch': 4,
+            'mssql-patch': 3,
+            'host-os-patch': 3,
             'sql-license': 6,
             'rss-config': 2,
             'log-drive-size': 7,

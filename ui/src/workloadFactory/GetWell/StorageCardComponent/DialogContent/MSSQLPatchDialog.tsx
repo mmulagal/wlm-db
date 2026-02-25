@@ -24,40 +24,30 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
 
     const EncryptionColDefs: ColumnProps[] = [
         {
-            Header:
-                type === 'osPatch'
-                    ? t('databases.well-architect.ec2instance-name')
-                    : t('databases.well-architect.instance-name'),
-            accessor: type === 'osPatch' ? 'instanceName' : 'hostInstanceName',
-            id: '1',
-            isSortable: true,
-            width: '180px'
-        },
-        {
             Header: t('databases.well-architect.kb-id'),
             accessor: 'kbId',
-            id: '2',
+            id: '1',
             isSortable: true,
             width: '137px'
         },
         {
             Header: t('databases.well-architect.name'),
             accessor: 'title',
-            id: '3',
+            id: '2',
             isSortable: true,
             width: '262px'
         },
         {
             Header: t('databases.well-architect.classification'),
             accessor: 'classification',
-            id: '4',
+            id: '3',
             isSortable: true,
             width: '164px'
         },
         {
             Header: t('databases.well-architect.severity'),
             accessor: 'severity',
-            id: '5',
+            id: '4',
             isSortable: true,
             width: '144px'
         }

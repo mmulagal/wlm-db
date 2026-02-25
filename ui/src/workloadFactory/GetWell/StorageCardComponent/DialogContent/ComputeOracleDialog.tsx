@@ -21,37 +21,30 @@ function ComputeOracleDialog({ missingPatchList = [] }: ComputeOracleDialogProps
 
     const EncryptionColDefs: ColumnProps[] = [
         {
-            Header: t('databases.well-architect.ec2instance-name'),
-            accessor: 'instanceName',
-            id: '1',
-            isSortable: true,
-            width: '180px'
-        },
-        {
             Header: t('databases.well-architect.cve-id'),
             accessor: 'cveIds',
-            id: '2',
+            id: '1',
             isSortable: true,
             width: '137px'
         },
         {
             Header: t('databases.well-architect.name'),
             accessor: 'title',
-            id: '3',
+            id: '2',
             isSortable: true,
             width: '262px'
         },
         {
             Header: t('databases.well-architect.classification'),
             accessor: 'classification',
-            id: '4',
+            id: '3',
             isSortable: true,
             width: '164px'
         },
         {
             Header: t('databases.well-architect.severity'),
             accessor: 'severity',
-            id: '5',
+            id: '4',
             isSortable: true,
             width: '144px'
         }
