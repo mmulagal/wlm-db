@@ -153,6 +153,7 @@ interface OracleInstanceInfo {
     pdbCount?: number;
     pdbList?: string[];
     standbyDatabases?: OracleStandbyDatabase[];
+    partnerNodes?: string[];
 }
 
 interface OracleStandbyDatabase {

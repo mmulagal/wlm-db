@@ -48,7 +48,8 @@
                         "status": "VALID",
                         "error": ""
                     }
-                ]
+                ],
+                "partnerNodes": ["ora-prod-dg-primary-01", "ora-prod-dg-standby-host-01"]
             },
             "resourceUtilization": {
                 "cpuUtilization": {

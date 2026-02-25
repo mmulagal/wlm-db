@@ -312,6 +312,51 @@ BEGIN
     END IF;
     DBMS_OUTPUT.PUT_LINE('],');
     
+    -- Add partnerNodes array: primary hostname + standby hosts extracted from LOG_ARCHIVE_DEST_n.
+    -- The HOST is parsed from inline connect descriptors or easy-connect strings in v$parameter.
+    -- Falls back gracefully when only TNS aliases are configured (no standby hosts emitted).
+    DBMS_OUTPUT.PUT('"partnerNodes": [');
+    DBMS_OUTPUT.PUT(escape_json(r.host_name));
+    IF v_is_dataguard = 'true' THEN
+      DECLARE
+        v_dest_value     VARCHAR2(4000);
+        v_extracted_host VARCHAR2(256);
+        v_added_hosts    VARCHAR2(4000) := '|';
+        TYPE ref_cur IS REF CURSOR;
+        dest_cur ref_cur;
+      BEGIN
+        OPEN dest_cur FOR
+          'SELECT value FROM v$parameter'
+          || ' WHERE REGEXP_LIKE(name, ''^log_archive_dest_[0-9]+$'')'
+          || ' AND value IS NOT NULL'
+          || ' AND UPPER(value) LIKE ''%SERVICE=%'''
+          || ' AND UPPER(value) LIKE ''%DB_UNIQUE_NAME=%''';
+        LOOP
+          FETCH dest_cur INTO v_dest_value;
+          EXIT WHEN dest_cur%NOTFOUND;
+          
+          v_extracted_host := REGEXP_SUBSTR(v_dest_value, '\(HOST=([^)]+)\)', 1, 1, 'i', 1);
+          
+          IF v_extracted_host IS NULL THEN
+            v_extracted_host := REGEXP_SUBSTR(v_dest_value, 'SERVICE=([^:( ]+)', 1, 1, 'i', 1);
+            IF v_extracted_host IS NOT NULL AND INSTR(v_extracted_host, '.') = 0 THEN
+              v_extracted_host := NULL;
+            END IF;
+          END IF;
+          
+          IF v_extracted_host IS NOT NULL
+             AND UPPER(v_extracted_host) != UPPER(r.host_name)
+             AND INSTR(v_added_hosts, '|' || UPPER(v_extracted_host) || '|') = 0 THEN
+            DBMS_OUTPUT.PUT(', ' || escape_json(v_extracted_host));
+            v_added_hosts := v_added_hosts || UPPER(v_extracted_host) || '|';
+          END IF;
+        END LOOP;
+        CLOSE dest_cur;
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END;
+    END IF;
+    DBMS_OUTPUT.PUT_LINE('],');
+    
     -- Add pdbList array if CDB (uses dynamic SQL to avoid compile-time
     -- failures and to surface privilege errors instead of silently returning 0)
     DBMS_OUTPUT.PUT('"pdbList": [');

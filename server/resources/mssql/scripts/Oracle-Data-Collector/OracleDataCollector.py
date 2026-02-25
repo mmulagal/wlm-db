@@ -246,6 +246,127 @@ def get_ip_addresses():
 
 
 # ============================================================================
+# tnsnames.ora Parsing for Data Guard Partner Nodes
+# ============================================================================
+
+def _find_tnsnames_ora(oracle_home):
+    """Locate tnsnames.ora, checking $TNS_ADMIN first, then ORACLE_HOME."""
+    tns_admin = os.environ.get("TNS_ADMIN", "")
+    if tns_admin:
+        candidate = os.path.join(tns_admin, "tnsnames.ora")
+        if os.path.isfile(candidate):
+            return candidate
+    if oracle_home:
+        candidate = os.path.join(oracle_home, "network", "admin", "tnsnames.ora")
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def parse_tnsnames_hosts(oracle_home):
+    """Parse tnsnames.ora and return {ALIAS_UPPER: [host1, host2, ...]}."""
+    tns_path = _find_tnsnames_ora(oracle_home)
+    if not tns_path:
+        return {}
+    try:
+        with open(tns_path, "r") as f:
+            raw = f.read()
+    except (IOError, OSError) as e:
+        print("WARNING: Could not read tnsnames.ora at %s: %s" % (tns_path, e))
+        return {}
+
+    # Strip comment lines
+    lines = []
+    for line in raw.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            continue
+        lines.append(line)
+    content = "\n".join(lines)
+
+    result = {}
+
+    # Tokenize: split into top-level alias blocks.
+    # A top-level alias starts at column 0 (no leading whitespace) with
+    # ALIAS_NAME = (DESCRIPTION ...).  We locate each such boundary.
+    # The regex also captures comma-separated alias lists like
+    # "ALIAS1, ALIAS2 =" by matching everything before '=' on the line.
+    alias_starts = []
+    for m in re.finditer(r'^([A-Za-z0-9_., \t]+?)\s*=', content, re.MULTILINE):
+        if m.start() == 0 or content[m.start() - 1] == '\n':
+            raw_aliases = [a.strip().upper() for a in m.group(1).split(',') if a.strip()]
+            alias_starts.append((raw_aliases, m.start(), m.end()))
+
+    for idx, (aliases, start, _) in enumerate(alias_starts):
+        if idx + 1 < len(alias_starts):
+            block = content[start:alias_starts[idx + 1][1]]
+        else:
+            block = content[start:]
+
+        hosts = re.findall(r'\(\s*HOST\s*=\s*([^)]+?)\s*\)', block, re.IGNORECASE)
+        hosts = [h.strip() for h in hosts if h.strip()]
+        if hosts:
+            for alias in aliases:
+                if re.match(r'^[A-Za-z0-9_.]+$', alias):
+                    result[alias] = hosts
+
+    return result
+
+
+def _resolve_host_fqdn(host):
+    """Reverse-DNS lookup to get FQDN for an IP address.
+
+    Returns the FQDN if resolution succeeds, otherwise the original host string.
+    """
+    try:
+        fqdn = socket.getfqdn(host)
+        if fqdn and fqdn != host:
+            return fqdn
+    except (socket.error, OSError):
+        pass
+    return host
+
+
+def enrich_partner_nodes(sid_data, oracle_home):
+    """Resolve standby TNS aliases to actual hostnames via tnsnames.ora.
+
+    Updates instanceInfo.partnerNodes in-place when Data Guard standbys
+    are present and their destinations can be resolved.  IP addresses
+    are reverse-resolved to FQDNs when possible.
+    """
+    instance_info = sid_data.get("instanceInfo", {})
+    if not instance_info.get("isDataGuardEnabled"):
+        return
+    standbys = instance_info.get("standbyDatabases", [])
+    if not standbys:
+        return
+
+    tns_map = parse_tnsnames_hosts(oracle_home)
+    if not tns_map:
+        return
+
+    primary_host = instance_info.get("hostName", "")
+    seen = set()
+    if primary_host:
+        seen.add(primary_host.upper())
+    resolved = []
+
+    for sb in standbys:
+        dest = sb.get("destination", "") or sb.get("dbUniqueName", "")
+        if not dest:
+            continue
+        hosts = tns_map.get(dest.upper(), [])
+        for h in hosts:
+            h = _resolve_host_fqdn(h)
+            if h.upper() not in seen:
+                resolved.append(h)
+                seen.add(h.upper())
+
+    if resolved:
+        instance_info["partnerNodes"] = [primary_host] + resolved
+
+
+# ============================================================================
 # Storage Protocol Detection
 # ============================================================================
 
@@ -592,6 +713,7 @@ def run_db_collection(host_info, storage_info, db_user, db_pass, sid_list):
                 if json_file:
                     sid_data = parse_per_sid_json(json_file)
                     if sid_data:
+                        enrich_partner_nodes(sid_data, oracle_home)
                         per_sid_dicts.append(sid_data)
                         per_sid_files.append(json_file)
                         if script_info_from_first is None and "scriptInfo" in sid_data:

@@ -258,21 +258,23 @@ async function deriveOracleInstanceType(
 
     let requiredVCpus = instanceInfo.vCPUs || hostInfo.cpuCount;
 
-    if (aggregatedValues?.maxP95Cpu != null) {
-        requiredVCpus = computeEffectiveVCpus(aggregatedValues.maxP95Cpu, hostInfo.cpuCount);
+    if (!instanceInfo.vCPUs) {
+        if (aggregatedValues?.maxP95Cpu != null) {
+            requiredVCpus = computeEffectiveVCpus(aggregatedValues.maxP95Cpu, hostInfo.cpuCount);
 
-        logger.info('Using aggregated maxP95Cpu for CPU sizing', {
-            maxP95Cpu: aggregatedValues.maxP95Cpu,
-            requiredVCpus
-        });
-    } else if (resourceUtilization?.cpuUtilization && 'p95' in resourceUtilization.cpuUtilization) {
-        const p95CpuPercent = (resourceUtilization.cpuUtilization as OracleStatsSummary).p95;
-        requiredVCpus = computeEffectiveVCpus(p95CpuPercent, hostInfo.cpuCount);
+            logger.info('Using aggregated maxP95Cpu for CPU sizing', {
+                maxP95Cpu: aggregatedValues.maxP95Cpu,
+                requiredVCpus
+            });
+        } else if (resourceUtilization?.cpuUtilization && 'p95' in resourceUtilization.cpuUtilization) {
+            const p95CpuPercent = (resourceUtilization.cpuUtilization as OracleStatsSummary).p95;
+            requiredVCpus = computeEffectiveVCpus(p95CpuPercent, hostInfo.cpuCount);
 
-        logger.info('Using resourceUtilization p95 CPU for sizing', {
-            p95CpuPercent,
-            requiredVCpus
-        });
+            logger.info('Using resourceUtilization p95 CPU for sizing', {
+                p95CpuPercent,
+                requiredVCpus
+            });
+        }
     }
 
     // Ensure vCPU count is a power of 2 (AWS instances typically use powers of 2)
@@ -324,20 +326,36 @@ function deriveIopsAndThroughput(performanceSummary: OraclePerformanceSummary | 
     return { iops, throughputMBps };
 }
 
+// All entries in a DG resource share the same physical host, so partnerNodes
+// (which lists primary + standby hostnames) is identical across SIDs — reading
+// from entries[0] is sufficient.
 function getOracleNodeCounts(
     deploymentType: string,
     entries: OracleDatabaseEntry[]
 ): { existingNodeCount: number; recommendedNodeCount: number } {
     if (deploymentType === DATABASE_DEPLOYMENT_TYPE.DG) {
-        const standbyHostCount = new Set(
-            entries.flatMap(e => (e.instanceInfo?.standbyDatabases || []).map(s => s.dbUniqueName))
-        ).size;
-        return {
-            existingNodeCount: 1 + Math.max(standbyHostCount, 1),
-            recommendedNodeCount: 2
-        };
+        const partnerNodes = entries[0]?.instanceInfo?.partnerNodes;
+        let nodeCount: number;
+        if (partnerNodes?.length) {
+            nodeCount = partnerNodes.length;
+        } else {
+            const maxStandbyPerSid = Math.max(...entries.map(e => (e.instanceInfo?.standbyDatabases || []).length), 0);
+            nodeCount = 1 + Math.max(maxStandbyPerSid, 1);
+        }
+        return { existingNodeCount: nodeCount, recommendedNodeCount: nodeCount };
     }
     return { existingNodeCount: 1, recommendedNodeCount: 1 };
+}
+
+function getStandbyNodesFromBestSid(entries: OracleDatabaseEntry[]): string[] {
+    const bestEntry = entries.reduce(
+        (best, e) =>
+            (e.instanceInfo?.standbyDatabases || []).length > (best.instanceInfo?.standbyDatabases || []).length
+                ? e
+                : best,
+        entries[0]
+    );
+    return (bestEntry?.instanceInfo?.standbyDatabases || []).map(s => s.dbUniqueName);
 }
 
 async function saveOracleReportInWlmdbDatabase(
@@ -811,10 +829,10 @@ async function getOnPremisesOracleDatabaseResources(
                 0
             );
 
-            const onPremisesNodes = [
-                hostInfo?.hostname || 'Unknown',
-                ...new Set(entries.flatMap(e => (e.instanceInfo?.standbyDatabases || []).map(s => s.dbUniqueName)))
-            ];
+            const partnerNodes = entries[0]?.instanceInfo?.partnerNodes;
+            const onPremisesNodes = partnerNodes?.length
+                ? partnerNodes
+                : [hostInfo?.hostname || 'Unknown', ...getStandbyNodesFromBestSid(entries)];
 
             return {
                 resourceId: onpremResourceId,
@@ -1233,14 +1251,10 @@ async function getOracleBulkResourceExploreSavings(
             buildOraclePerResourceCalculations(resourcesWithNodeCounts);
 
         // Step 9: Extract shared storage data from existing config API response
-        const {
-            ebs,
-            fsx,
-            single,
-            multi,
-            totalSummary: { existing: existingTotalSummary = 0 } = {}
-        } = existingConfigData as StorageSavingsResponseType;
+        const { ebs, fsx, single, multi } = existingConfigData as StorageSavingsResponseType;
 
+        // Compute both totals consistently using per-resource compute calculations
+        const existingTotalSummary = Number(ebs?.total || 0) + sumBy(existingComputeCalculation, 'computeMonthlyPrice');
         const recommendedTotalSummary =
             Number(fsx?.total || 0) + sumBy(recommendedComputeCalculation, 'computeMonthlyPrice');
 
