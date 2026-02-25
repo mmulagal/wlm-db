@@ -73,6 +73,9 @@ const makeStore = (overrides: any = {}) => {
                 totalSummary: { recommendedTotal: 500, existing: 1000 }
             },
             storageSavingsLoading: false,
+            savingsCalculatorFrom: '',
+            onPremStorageAndComputeInfo: null,
+            selectedOnPremHostDetails: {},
             ...overrides
         },
         reducers: {}

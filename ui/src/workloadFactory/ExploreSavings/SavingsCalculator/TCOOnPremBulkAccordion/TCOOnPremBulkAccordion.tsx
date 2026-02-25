@@ -4,7 +4,11 @@ import { DsButton } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { ReactComponent as Info } from '../../../../assets/info.svg';
-import { AccordionCard, AccordionController } from '../../../../common/AccordionCard/AccordionCard';
+import {
+    AccordionCard,
+    AccordionController,
+    useAccordionContext
+} from '../../../../common/AccordionCard/AccordionCard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './TCOOnPremBulkAccordion.module.scss';
 
@@ -28,6 +32,20 @@ import { GIB_IN_BYTE, SAVINGS_CALC_MODE } from '../../../../utils/consts';
 import TCOOnPremAddHostTable from './TCOOnPremAddHostTable/TCOOnPremAddHostTable';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import SavingsSelectedHost from '../SavingsSelectedHost/SavingsSelectedHost';
+
+const AutoExpandAccordions = ({ hostIds }: { hostIds: string[] }) => {
+    const context = useAccordionContext();
+    useEffect(() => {
+        if (context?.setOpenChildren && hostIds.length > 0) {
+            const openState: Record<string, boolean> = {};
+            hostIds.forEach(id => {
+                openState[id] = true;
+            });
+            context.setOpenChildren(openState);
+        }
+    }, []);
+    return null;
+};
 
 const TCOOnPremBulkAccordion = () => {
     const { t } = useTranslation();
@@ -237,6 +255,13 @@ const TCOOnPremBulkAccordion = () => {
                 </div>
             )}
             <AccordionController isGrouped>
+                {isOracleOnPrem && (
+                    <AutoExpandAccordions
+                        hostIds={hostsToDisplay.map((host: any, index: number) =>
+                            String(host?.resourceName || index + 1)
+                        )}
+                    />
+                )}
                 <div className={styles.header}>
                     <DsTypography variant="Semibold_16">
                         {`${t('databases.explore-savings.selected-hosts')} (${hostsToDisplay.length})`}

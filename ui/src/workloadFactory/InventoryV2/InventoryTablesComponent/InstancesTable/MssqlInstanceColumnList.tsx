@@ -527,13 +527,11 @@ export function getMssqlInstanceTableColumns({
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'regionName'),
             width: '213px',
-            renderCell: (cellData: any) => {
-                return (
-                    <DsTypography variant="Regular_13" className={styles.colText}>
-                        {cellData || t('databases.general.not-available-table-columns')}
-                    </DsTypography>
-                );
-            }
+            renderCell: (cellData: any) => (
+                <DsTypography variant="Regular_13" className={styles.colText}>
+                    {cellData || t('databases.general.not-available-table-columns')}
+                </DsTypography>
+            )
         },
         {
             id: '13',

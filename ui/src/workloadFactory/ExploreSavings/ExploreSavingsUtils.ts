@@ -595,9 +595,7 @@ export const formatViewCalcData = (
             const licenseLabel = isOracle
                 ? i18next.t('databases.explore-savings.oracle-license-included')
                 : i18next.t('databases.explore-savings.sql-license-included');
-            const licenseTooltip = isOracle
-                ? i18next.t('databases.explore-savings.oracle-license-tooltip')
-                : i18next.t('databases.explore-savings.sql-license-tooltip');
+            const licenseTooltip = isOracle ? '' : i18next.t('databases.explore-savings.sql-license-tooltip');
 
             machineData?.forEach((calculation: any, index: number) => {
                 machineDetailsList.push(

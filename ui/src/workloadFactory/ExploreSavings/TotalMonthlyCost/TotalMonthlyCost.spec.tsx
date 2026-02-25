@@ -50,6 +50,8 @@ const createMockStore = (overrides: Record<string, any> = {}) =>
                 storageSavingsResponse: {},
                 storageSavingsLoading: false,
                 savingsCalculatorFrom: SAVINGS_CALC_MODE.MANUAL_EBS,
+                onPremStorageAndComputeInfo: null,
+                selectedOnPremHostDetails: {},
                 ...overrides
             })
         }

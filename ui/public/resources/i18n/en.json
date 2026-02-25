@@ -1555,7 +1555,7 @@
             "update-configuration-state-for": "Update configuration analysis state for"
         },
         "explore-savings": {
-            "downloaded-assessment-script-and-readme": "Downloaded assessment script and README file in a zip file.",
+            "downloaded-assessment-script-and-readme": "Downloaded the assessment script and README in a zip file.",
             "downloaded-assessment-script": "Downloaded assessment script in a zip file.",
             "assessment-script": "Assessment script",
             "assessment-script-information": "Assessment script information",
@@ -1697,7 +1697,6 @@
             "sql-edition": "SQL edition",
             "oracle-license-included": "Oracle license included",
             "sql-license-included": "SQL license included",
-            "oracle-license-tooltip": "Instance hourly price with Oracle license included",
             "sql-license-tooltip": "Instance hourly price with SQL license included",
             "oracle-database-type": "Database type",
             "sql-instance-type": "Instance type",

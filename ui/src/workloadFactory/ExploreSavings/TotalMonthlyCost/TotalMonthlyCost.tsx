@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { DsTypography, DsFlashingDotsLoader } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as GraphIcon } from '../../../assets/ic_graph.svg';
@@ -13,9 +14,23 @@ type TMC = {
 };
 const TotalMonthlyCost = ({ disableState = false }: TMC) => {
     const { t } = useTranslation();
-    const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const {
+        storageSavingsResponse,
+        storageSavingsLoading,
+        savingsCalculatorFrom,
+        onPremStorageAndComputeInfo,
+        selectedOnPremHostDetails
+    } = useAppSelector(state => state.exploreSavings);
+
+    const oracleLicenseCost = useMemo(() => {
+        const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+        if (!isOracle || !onPremStorageAndComputeInfo || !selectedOnPremHostDetails?.resourceId) return 0;
+        const matchingKey = Object.keys(onPremStorageAndComputeInfo).find((key: string) =>
+            key.startsWith(`${selectedOnPremHostDetails.resourceId}_`)
+        );
+        const cost = matchingKey ? onPremStorageAndComputeInfo[matchingKey]?.monthlyOracleCost : null;
+        return cost ? Number(cost) : 0;
+    }, [savingsCalculatorFrom, onPremStorageAndComputeInfo, selectedOnPremHostDetails]);
     const noData = disableState;
     const costZeroCase = false;
 
@@ -89,12 +104,12 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                 {!noData && !storageSavingsLoading && !costZeroCase && (
                     <ComparisonChart
                         data={[
-                            storageSavingsResponse?.totalSummary?.recommendedTotal
+                            (storageSavingsResponse?.totalSummary?.recommendedTotal
                                 ? Number(storageSavingsResponse?.totalSummary?.recommendedTotal)
-                                : 0,
-                            storageSavingsResponse?.totalSummary?.existing
+                                : 0) + oracleLicenseCost,
+                            (storageSavingsResponse?.totalSummary?.existing
                                 ? Number(storageSavingsResponse?.totalSummary?.existing)
-                                : 0
+                                : 0) + oracleLicenseCost
                         ]}
                         yTickFormatter={yValue => `$${formatNumberWithCustomComma(Number(yValue), true)}`}
                         height={370}

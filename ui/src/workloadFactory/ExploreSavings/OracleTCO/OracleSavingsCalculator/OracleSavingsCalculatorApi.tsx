@@ -160,7 +160,6 @@ const OracleSavingsCalculatorApi = () => {
         try {
             dispatch(setStorageSavingsLoading(true));
             dispatch(setViewCalculationsLoading(true));
-            dispatch(setDisableState(true));
 
             const result = await getOracleOnPremCalculationsApi({ payload });
 
@@ -221,6 +220,7 @@ const OracleSavingsCalculatorApi = () => {
             dispatch(setRequestedPayload(newPayload));
             dispatch(setRequestedRegion(selectedOnPremRegion));
             dispatch(setStorageSavingsResponse({}));
+            dispatch(setDisableState(false));
             dispatch(setViewCalculationsLoading(true));
             dispatch(setStorageSavingsLoading(true));
             setTimeout(() => {

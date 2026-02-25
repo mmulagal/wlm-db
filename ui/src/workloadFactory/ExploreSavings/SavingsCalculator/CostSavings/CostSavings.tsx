@@ -1,25 +1,38 @@
 import { DsTypography, FlashingDotsLoader, Popover } from '@netapp/design-system';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ReactComponent as CostSavingsImage } from '../../../../assets/cost-savings.svg';
 import { ReactComponent as CostSavingsDisabledImage } from '../../../../assets/Cost-Disabled.svg';
 import styles from './CostSavings.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
-import {
-    formatFractionalNumber,
-    formatFractionalNumberForCost,
-    formatNumberWithCustomComma
-} from '../../../../utils/utilityFunctions';
+import { formatFractionalNumberForCost, formatNumberWithCustomComma } from '../../../../utils/utilityFunctions';
 import useResize from '../../../../common/hooks/useResize';
+import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 
 type CS = {
     disableState?: boolean;
 };
 
 const CostSavings = ({ disableState }: CS) => {
-    const { storageSavingsResponse, storageSavingsLoading } = useAppSelector(state => state.exploreSavings);
+    const {
+        storageSavingsResponse,
+        storageSavingsLoading,
+        savingsCalculatorFrom,
+        onPremStorageAndComputeInfo,
+        selectedOnPremHostDetails
+    } = useAppSelector(state => state.exploreSavings);
     const windowSize = useResize();
+
+    const oracleLicenseCost = useMemo(() => {
+        const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+        if (!isOracle || !onPremStorageAndComputeInfo || !selectedOnPremHostDetails?.resourceId) return 0;
+        const matchingKey = Object.keys(onPremStorageAndComputeInfo).find((key: string) =>
+            key.startsWith(`${selectedOnPremHostDetails.resourceId}_`)
+        );
+        const cost = matchingKey ? onPremStorageAndComputeInfo[matchingKey]?.monthlyOracleCost : null;
+        return cost ? Number(cost) : 0;
+    }, [savingsCalculatorFrom, onPremStorageAndComputeInfo, selectedOnPremHostDetails]);
 
     const [savings, setSavings] = useState<any>(0);
     const [savingsPer, setSavingsPer] = useState<any>(0);
@@ -27,12 +40,14 @@ const CostSavings = ({ disableState }: CS) => {
     const [savingsCalculated, setSavingsCalculated] = useState(false);
 
     useEffect(() => {
-        const fsxTotal = storageSavingsResponse?.totalSummary?.recommendedTotal
-            ? Number(storageSavingsResponse?.totalSummary?.recommendedTotal)
-            : 0;
-        const ebsTotal = storageSavingsResponse?.totalSummary?.existing
-            ? Number(storageSavingsResponse?.totalSummary?.existing)
-            : 0;
+        const fsxTotal =
+            (storageSavingsResponse?.totalSummary?.recommendedTotal
+                ? Number(storageSavingsResponse?.totalSummary?.recommendedTotal)
+                : 0) + oracleLicenseCost;
+        const ebsTotal =
+            (storageSavingsResponse?.totalSummary?.existing
+                ? Number(storageSavingsResponse?.totalSummary?.existing)
+                : 0) + oracleLicenseCost;
         if (storageSavingsResponse && fsxTotal && ebsTotal && fsxTotal <= ebsTotal) {
             setSavings(ebsTotal - fsxTotal);
             setSavingsCalculated(true);
@@ -46,7 +61,7 @@ const CostSavings = ({ disableState }: CS) => {
                 setCostZeroCase(true);
             }
         }
-    }, [storageSavingsResponse]);
+    }, [storageSavingsResponse, oracleLicenseCost]);
 
     return (
         <div className={styles.costSavings}>

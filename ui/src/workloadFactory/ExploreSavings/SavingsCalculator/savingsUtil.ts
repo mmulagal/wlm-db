@@ -37,6 +37,18 @@ import {
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 import { StorageSavingsInterface, ViewCalculationsInterface } from '../../../utils/types/exploreSavingsType';
 
+export const getOracleLicenseCostValue = () => {
+    const state = store.getState();
+    const { savingsCalculatorFrom, onPremStorageAndComputeInfo, selectedOnPremHostDetails } = state.exploreSavings;
+    const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+    if (!isOracle || !onPremStorageAndComputeInfo || !selectedOnPremHostDetails?.resourceId) return 0;
+    const matchingKey = Object.keys(onPremStorageAndComputeInfo).find(key =>
+        key.startsWith(`${selectedOnPremHostDetails.resourceId}_`)
+    );
+    const cost = matchingKey ? onPremStorageAndComputeInfo[matchingKey]?.monthlyOracleCost : null;
+    return cost ? Number(cost) : 0;
+};
+
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
     const {
@@ -71,16 +83,8 @@ export const comparisonData = (calculatedResponse: any) => {
         ? 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL Server license-included AMIs. SQL license costs for SQL on Elastic Block Store are based on the Enterprise license with BYOL. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.'
         : 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on Elastic Block Store are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.';
 
-    const getOracleLicenseCost = () => {
-        if (!isOracle || !onPremStorageAndComputeInfo || !selectedOnPremHostDetails?.resourceId) return '$0';
-        const matchingKey = Object.keys(onPremStorageAndComputeInfo).find(key =>
-            key.startsWith(`${selectedOnPremHostDetails.resourceId}_`)
-        );
-        const cost = matchingKey ? onPremStorageAndComputeInfo[matchingKey]?.monthlyOracleCost : null;
-        return cost ? `$${formatFractionalNumberForCost(Number(cost), 2)}` : '$0';
-    };
-
-    const oracleLicenseCost = isOracle ? getOracleLicenseCost() : null;
+    const oracleLicenseCostValue = getOracleLicenseCostValue();
+    const oracleLicenseCost = isOracle ? formatCost(oracleLicenseCostValue) : null;
 
     return [
         {
@@ -130,8 +134,16 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: 'Total summary',
-            fsx: formatCost(calculatedResponse?.totalSummary?.recommendedTotal),
-            ebs: formatCost(calculatedResponse?.totalSummary?.existing)
+            fsx:
+                isOracle && oracleLicenseCostValue
+                    ? formatCost(
+                          (Number(calculatedResponse?.totalSummary?.recommendedTotal) || 0) + oracleLicenseCostValue
+                      )
+                    : formatCost(calculatedResponse?.totalSummary?.recommendedTotal),
+            ebs:
+                isOracle && oracleLicenseCostValue
+                    ? formatCost((Number(calculatedResponse?.totalSummary?.existing) || 0) + oracleLicenseCostValue)
+                    : formatCost(calculatedResponse?.totalSummary?.existing)
         }
     ];
 };

@@ -12,28 +12,23 @@
         display: flex;
 
         .container {
+            width: 50% !important;
             display: flex;
             flex-direction: column;
 
             .value {
-                width: 142px;
-                max-width: 142px;
                 white-space: nowrap;
                 text-overflow: ellipsis;
                 overflow: hidden;
             }
 
             .heading {
-                width: 140px;
-                max-width: 142px;
                 white-space: nowrap;
                 text-overflow: ellipsis;
                 overflow: hidden;
             }
 
             .heading2 {
-                width: 169px;
-                max-width: 169px;
                 white-space: nowrap;
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -41,7 +36,6 @@
         }
 
         .numberContainer {
-            width: 186px;
             border-left: 1px solid var(--border);
             margin-left: 22px;
             padding-left: 22px;
