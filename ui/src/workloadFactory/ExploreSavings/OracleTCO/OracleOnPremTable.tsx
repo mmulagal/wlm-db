@@ -1,6 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { DsButton, DsTypography } from '@tlveng/wlm-ds';
-import { compressSync } from 'fflate';
+import { compressSync, zipSync, strToU8 } from 'fflate';
+import readmeContent from './DownloadContent/README 4.MD?raw';
+import statspackContent from './DownloadContent/OracleDataCollectorStatspack 3.sql?raw';
+import permissionsContent from './DownloadContent/OracleDataCollectorPermissions 1.json?raw';
+import controllerContent from './DownloadContent/OracleDataCollectorController 3.sql?raw';
+import noActionContent from './DownloadContent/_no_action 3.sql?raw';
+import collectorContent from './DownloadContent/OracleDataCollector 4.py?raw';
+import awrContent from './DownloadContent/OracleDataCollectorAWR 3.sql?raw';
 import { useDialog } from '@netapp/design-system/dist/components/Dialog';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -59,37 +66,57 @@ const OracleOnPremTable = () => {
     };
 
     const handleDownload = async () => {
-        try {
-            const result: any = await getOracleOnPremTCODownloadScript({});
-            if (result?.data?.url) {
-                const link = document.createElement('a');
-                link.href = result.data.url;
-                link.setAttribute('download', '');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.INFO,
-                        message: t('databases.explore-savings.downloaded-assessment-script-and-readme')
-                    })
-                );
-            } else {
+        if (isDemoMode) {
+            const zipped = zipSync({
+                'README.MD': strToU8(readmeContent),
+                'OracleDataCollectorStatspack.sql': strToU8(statspackContent),
+                'OracleDataCollectorPermissions.json': strToU8(permissionsContent),
+                'OracleDataCollectorController.sql': strToU8(controllerContent),
+                '_no_action.sql': strToU8(noActionContent),
+                'OracleDataCollector.py': strToU8(collectorContent),
+                'OracleDataCollectorAWR.sql': strToU8(awrContent)
+            });
+            const blob = new Blob([zipped.buffer as ArrayBuffer], { type: 'application/zip' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Oracle-Data-Collector.zip';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } else {
+            try {
+                const result: any = await getOracleOnPremTCODownloadScript({});
+                if (result?.data?.url) {
+                    const link = document.createElement('a');
+                    link.href = result.data.url;
+                    link.setAttribute('download', '');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.INFO,
+                            message: t('databases.explore-savings.downloaded-assessment-script-and-readme')
+                        })
+                    );
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: result?.error?.data?.message
+                        })
+                    );
+                }
+            } catch (error) {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: result?.error?.data?.message
+                        message: 'Error downloading assessment script.'
                     })
                 );
             }
-        } catch (error) {
-            console.error('Error downloading assessment script:', error);
-            dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: 'Error downloading assessment script.'
-                })
-            );
         }
     };
     const OracleOnPremColDefs: ColumnProps[] = [
