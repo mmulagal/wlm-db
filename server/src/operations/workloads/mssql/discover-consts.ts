@@ -874,7 +874,7 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
         $responseObject['windowsClusterName'] = $clusterDetails['name']
         $responseObject['windowsClusterNodes'] = $clusterDetails['windowsClusterNodes']
         if ($clusterDetails['aoagName']) { $responseObject['aoagNameFromCluster'] = $clusterDetails['aoagName'] }
-        if ($clusterDetails['fciOwnerNodes']) { $responseObject['fciOwnerNodes'] = $clusterDetails['fciOwnerNodes'] | ConvertTo-Json }
+        if ($clusterDetails['fciOwnerNodes']) { $responseObject['fciOwnerNodes'] = $clusterDetails['fciOwnerNodes'] }
         $sqlNodes = (Get-ClusterOwnerNode -ResourceType "SQL Server Availability Group" -ErrorAction SilentlyContinue).OwnerNodes.NodeName
       }
         

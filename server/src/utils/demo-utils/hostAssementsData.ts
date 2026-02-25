@@ -795,12 +795,260 @@ const mockOracleHostOsPatchAssessmentDataAllOptimized = {
     lastAssessedDate: new Date().getTime().toString()
 };
 
+const mockAoagResourceAssessmentData = {
+    assessment: {
+        rssConfig: {
+            rssAdapters: [
+                {
+                    adapterName: 'Ethernet 3',
+                    rssEnabled: true,
+                    rssProfile: 'NUMAStatic',
+                    baseProcessorNumber: 0,
+                    numberOfReceiveQueues: 4
+                }
+            ],
+            tcpOffloadState: 'Disabled',
+            recommendedAdapterSettings: {
+                recommendedRssProfile: 'NUMAStatic',
+                recommendedBaseProcessorNumber: 2,
+                recommendedReceiveQueues: 4
+            },
+            rssConfigFinding: 'not-optimized',
+            totalObjectsAssessed: 1
+        },
+        hostOsPatch: [
+            {
+                baselineId: 'pb-03e4a480964bbb87f',
+                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c1',
+                ec2InstanceName: 'PRD-SQL-CRM-AG3',
+                operationEndTime: 999,
+                operationStartTime: 1,
+                missingPatchDetails: [
+                    {
+                        kbId: 'KB5051979',
+                        state: 'Missing',
+                        title: '2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)',
+                        severity: 'Critical',
+                        classification: 'SecurityUpdates'
+                    },
+                    {
+                        kbId: 'KB5050187',
+                        state: 'Missing',
+                        title: '2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)',
+                        severity: 'Important',
+                        classification: 'SecurityUpdates'
+                    }
+                ],
+                otherNonCompliantCount: 0,
+                criticalNonCompliantCount: 0,
+                securityNonCompliantCount: 2
+            },
+            {
+                baselineId: 'pb-03e4a480964bbb87f',
+                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c2',
+                ec2InstanceName: 'PRD-SQL-CRM-AG4',
+                operationEndTime: 819,
+                operationStartTime: 244,
+                missingPatchDetails: [
+                    {
+                        kbId: 'KB5051979',
+                        state: 'Missing',
+                        title: '2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)',
+                        severity: 'Critical',
+                        classification: 'SecurityUpdates'
+                    }
+                ],
+                otherNonCompliantCount: 0,
+                criticalNonCompliantCount: 0,
+                securityNonCompliantCount: 1
+            }
+        ],
+        highAvailability: {
+            clusterQuorum: {
+                status: 'not-optimized',
+                details: {
+                    isMajority: true,
+                    quorumType: 1,
+                    isPhysicalDisk: false,
+                    quorumResourceName: 'Quorum',
+                    isPhysicalDiskAndMajority: true
+                }
+            },
+            heartbeat: {
+                status: 'not-optimized',
+                details: {
+                    CrossSiteDelay: {
+                        status: 'optimized',
+                        current: 1000,
+                        recommended: 1000
+                    },
+                    SameSubnetDelay: {
+                        status: 'not-optimized',
+                        current: 100,
+                        recommended: 1000
+                    },
+                    CrossSubnetDelay: {
+                        status: 'optimized',
+                        current: 1000,
+                        recommended: 1000
+                    },
+                    CrossSiteThreshold: {
+                        status: 'optimized',
+                        current: 20,
+                        recommended: 20
+                    },
+                    SameSubnetThreshold: {
+                        status: 'not-optimized',
+                        current: 20,
+                        recommended: 10
+                    },
+                    CrossSubnetThreshold: {
+                        status: 'optimized',
+                        current: 20,
+                        recommended: 20
+                    }
+                }
+            }
+        },
+        mtuAlignment: {
+            fsxMTU: {
+                error: null,
+                fsxInterfaces: [
+                    {
+                        MTU: 9001,
+                        Name: 'e0e'
+                    },
+                    {
+                        MTU: 9001,
+                        Name: 'e0e'
+                    }
+                ]
+            },
+            sqlServerMTU: {
+                error: null,
+                sqlInterfaces: [
+                    {
+                        name: 'Ethernet 3',
+                        mtu: 1500,
+                        interfaceIndex: 9,
+                        ports: ['1433'],
+                        ipAddresses: [
+                            { address: '10.0.10.101', family: 'IPv4' },
+                            { address: 'fe80::a1b2:c3d4:e5f6:7891', family: 'IPv6' }
+                        ]
+                    },
+                    {
+                        name: 'Ethernet 4',
+                        mtu: 9001,
+                        interfaceIndex: 10,
+                        ports: ['1434'],
+                        ipAddresses: [{ address: '10.0.10.102', family: 'IPv4' }]
+                    }
+                ]
+            }
+        },
+        lastAssessedDate: new Date().getTime().toString()
+    }
+};
+
+const mockAoagResourceAssessmentDataAllOptimized = {
+    assessment: {
+        rssConfig: {
+            rssAdapters: [
+                {
+                    adapterName: 'Ethernet 3',
+                    rssEnabled: true,
+                    rssProfile: 'NUMAStatic',
+                    baseProcessorNumber: 2,
+                    numberOfReceiveQueues: 4
+                }
+            ],
+            tcpOffloadState: 'Disabled',
+            recommendedAdapterSettings: {
+                recommendedRssProfile: 'NUMAStatic',
+                recommendedBaseProcessorNumber: 2,
+                recommendedReceiveQueues: 4
+            },
+            rssConfigFinding: 'optimized',
+            totalObjectsAssessed: 1
+        },
+        hostOsPatch: [
+            {
+                baselineId: 'pb-03e4a480964bbb87f',
+                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c1',
+                ec2InstanceName: 'PRD-SQL-CRM-AG3',
+                operationEndTime: 999,
+                operationStartTime: 1,
+                missingPatchDetails: [],
+                otherNonCompliantCount: 0,
+                criticalNonCompliantCount: 0,
+                securityNonCompliantCount: 0
+            },
+            {
+                baselineId: 'pb-03e4a480964bbb87f',
+                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c2',
+                ec2InstanceName: 'PRD-SQL-CRM-AG4',
+                operationEndTime: 819,
+                operationStartTime: 244,
+                missingPatchDetails: [],
+                otherNonCompliantCount: 0,
+                criticalNonCompliantCount: 0,
+                securityNonCompliantCount: 0
+            }
+        ],
+        mtuAlignment: {
+            fsxMTU: {
+                error: null,
+                fsxInterfaces: [
+                    {
+                        MTU: 9001,
+                        Name: 'e0e'
+                    },
+                    {
+                        MTU: 9001,
+                        Name: 'e0e'
+                    }
+                ]
+            },
+            sqlServerMTU: {
+                error: null,
+                sqlInterfaces: [
+                    {
+                        mtu: 9001,
+                        name: 'Ethernet 3',
+                        ports: [
+                            59628, 59587, 57948, 57910, 57769, 57271, 55251, 55082, 54977, 54876, 54568, 54512, 54466,
+                            54414, 54377, 54344, 54281, 54246, 53950, 53917, 50052, 1433
+                        ],
+                        ipAddresses: [
+                            {
+                                family: 'IPv6',
+                                address: 'fe80::841:f19d:c148:aa1%9'
+                            },
+                            {
+                                family: 'IPv4',
+                                address: '10.0.30.101'
+                            }
+                        ],
+                        interfaceIndex: 9
+                    }
+                ]
+            }
+        },
+        lastAssessedDate: new Date().getTime().toString()
+    }
+};
+
 const optimizedResourceName = ['SQL-Managed-Host-DEV'];
+const aoagPrimaryHostName = 'PRD-SQL-CRM-AG3';
 
 export {
     mockResourceAssessmentData,
     mockResourceAssessmentDataAllOptimized,
+    mockAoagResourceAssessmentData,
+    mockAoagResourceAssessmentDataAllOptimized,
     mockOracleHostOsPatchAssessmentData,
     mockOracleHostOsPatchAssessmentDataAllOptimized,
-    optimizedResourceName
+    optimizedResourceName,
+    aoagPrimaryHostName
 };

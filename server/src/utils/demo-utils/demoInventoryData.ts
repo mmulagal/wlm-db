@@ -990,6 +990,224 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                         ]
                     }
                 ]
+            },
+
+            // ============================================================
+            // Managed AOAG Standalone Instances (2-node cluster - DemoAOAG)
+            // ============================================================
+            {
+                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c1',
+                ec2InstanceType: 'm5.xlarge',
+                ec2UsageOperation: 'RunInstances:0002',
+                ssmState: 'connected',
+                ec2InstanceName: 'PRD-SQL-CRM-AG3',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'a1b2c3d4-e5f6-7890-aoag-managed-pri01',
+                        isDefaultInstance: true,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4095.4',
+                        databaseCount: 4,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: false,
+                        windowsDomainUserAuthentication: false,
+                        windowsOsVersion: 'Microsoft Windows Server 2022 Standard',
+                        sqlServerName: 'PRD-SQL-CRM-AG3',
+                        sqlServerDeploymentType: 'AOAG',
+                        sqlServerNodes: ['PRD-SQL-CRM-AG3'],
+                        nodeIps: ['10.0.10.101', '10.0.30.101'],
+                        windowsClusterNodes: [
+                            { Node: 'PRD-SQL-CRM-AG3', Address: '10.0.10.101' },
+                            { Node: 'PRD-SQL-CRM-AG4', Address: '10.0.30.101' }
+                        ],
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-1', 'availability-zone-2']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS,
+                        aoagDetails: {
+                            serverInfo: {
+                                serverName: 'PRD-SQL-CRM-AG3',
+                                isHadrEnabled: 1
+                            },
+                            baseDeploymentType: 'Standalone',
+                            availabilityGroups: [
+                                {
+                                    agName: 'DemoAOAG',
+                                    primaryReplica: 'PRD-SQL-CRM-AG3',
+                                    replicas: [
+                                        {
+                                            replica: 'PRD-SQL-CRM-AG3',
+                                            role: 'PRIMARY',
+                                            availabilityMode: 'SYNCHRONOUS_COMMIT',
+                                            failoverMode: 'AUTOMATIC',
+                                            syncHealth: 'HEALTHY',
+                                            connectedState: 'CONNECTED',
+                                            isLocalReplica: true,
+                                            secondaryConnections: 'ALL',
+                                            primaryConnections: 'ALLOW_ALL_CONNECTIONS',
+                                            isReadReplica: 0,
+                                            isRoutableReadReplica: 0
+                                        },
+                                        {
+                                            replica: 'PRD-SQL-CRM-AG4',
+                                            role: 'SECONDARY',
+                                            availabilityMode: 'SYNCHRONOUS_COMMIT',
+                                            failoverMode: 'AUTOMATIC',
+                                            syncHealth: 'HEALTHY',
+                                            connectedState: 'CONNECTED',
+                                            isLocalReplica: false,
+                                            secondaryConnections: 'ALL',
+                                            primaryConnections: 'ALLOW_ALL_CONNECTIONS',
+                                            isReadReplica: 1,
+                                            isRoutableReadReplica: 1
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        aoagClusterNodeDetails: [
+                            {
+                                node: 'PRD-SQL-CRM-AG3',
+                                ip: '10.0.10.101',
+                                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c1',
+                                ec2InstanceName: 'PRD-SQL-CRM-AG3'
+                            },
+                            {
+                                node: 'PRD-SQL-CRM-AG4',
+                                ip: '10.0.30.101',
+                                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c2',
+                                ec2InstanceName: 'PRD-SQL-CRM-AG4'
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c2',
+                ec2InstanceType: 'm5.xlarge',
+                ec2UsageOperation: 'RunInstances:0002',
+                ssmState: 'connected',
+                ec2InstanceName: 'PRD-SQL-CRM-AG4',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'a1b2c3d4-e5f6-7890-aoag-managed-sec01',
+                        isDefaultInstance: true,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4095.4',
+                        databaseCount: 4,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: false,
+                        windowsDomainUserAuthentication: false,
+                        windowsOsVersion: 'Microsoft Windows Server 2022 Standard',
+                        sqlServerName: 'PRD-SQL-CRM-AG4',
+                        sqlServerDeploymentType: 'AOAG',
+                        sqlServerNodes: ['PRD-SQL-CRM-AG4'],
+                        nodeIps: ['10.0.10.101', '10.0.30.101'],
+                        windowsClusterNodes: [
+                            { Node: 'PRD-SQL-CRM-AG3', Address: '10.0.10.101' },
+                            { Node: 'PRD-SQL-CRM-AG4', Address: '10.0.30.101' }
+                        ],
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-1', 'availability-zone-2']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS,
+                        aoagDetails: {
+                            serverInfo: {
+                                serverName: 'PRD-SQL-CRM-AG4',
+                                isHadrEnabled: 1
+                            },
+                            baseDeploymentType: 'Standalone',
+                            availabilityGroups: [
+                                {
+                                    agName: 'DemoAOAG',
+                                    primaryReplica: 'PRD-SQL-CRM-AG3',
+                                    replicas: [
+                                        {
+                                            replica: 'PRD-SQL-CRM-AG3',
+                                            role: 'PRIMARY',
+                                            availabilityMode: 'SYNCHRONOUS_COMMIT',
+                                            failoverMode: 'AUTOMATIC',
+                                            syncHealth: 'HEALTHY',
+                                            connectedState: 'CONNECTED',
+                                            isLocalReplica: false,
+                                            secondaryConnections: 'ALL',
+                                            primaryConnections: 'ALLOW_ALL_CONNECTIONS',
+                                            isReadReplica: 0,
+                                            isRoutableReadReplica: 0
+                                        },
+                                        {
+                                            replica: 'PRD-SQL-CRM-AG4',
+                                            role: 'SECONDARY',
+                                            availabilityMode: 'SYNCHRONOUS_COMMIT',
+                                            failoverMode: 'AUTOMATIC',
+                                            syncHealth: 'HEALTHY',
+                                            connectedState: 'CONNECTED',
+                                            isLocalReplica: true,
+                                            secondaryConnections: 'ALL',
+                                            primaryConnections: 'ALLOW_ALL_CONNECTIONS',
+                                            isReadReplica: 1,
+                                            isRoutableReadReplica: 1
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        aoagClusterNodeDetails: [
+                            {
+                                node: 'PRD-SQL-CRM-AG3',
+                                ip: '10.0.10.101',
+                                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c1',
+                                ec2InstanceName: 'PRD-SQL-CRM-AG3'
+                            },
+                            {
+                                node: 'PRD-SQL-CRM-AG4',
+                                ip: '10.0.30.101',
+                                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c2',
+                                ec2InstanceName: 'PRD-SQL-CRM-AG4'
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     };

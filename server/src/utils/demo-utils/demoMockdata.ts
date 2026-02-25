@@ -6407,6 +6407,62 @@ const ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {
     }
 };
 
+const AOAG_STANDALONE_HIGH_AVAILABILITY_CONFIG_DATA = {
+    clusterQuorum: {
+        status: 'not-optimized',
+        details: {
+            isMajority: true,
+            quorumType: 1,
+            isPhysicalDisk: false,
+            quorumResourceName: 'Quorum',
+            isPhysicalDiskAndMajority: true
+        }
+    },
+    heartbeat: {
+        status: 'not-optimized',
+        details: {
+            CrossSiteDelay: {
+                status: 'optimized',
+                current: 1000,
+                recommended: 1000
+            },
+            SameSubnetDelay: {
+                status: 'not-optimized',
+                current: 100,
+                recommended: 1000
+            },
+            CrossSubnetDelay: {
+                status: 'optimized',
+                current: 1000,
+                recommended: 1000
+            },
+            CrossSiteThreshold: {
+                status: 'optimized',
+                current: 20,
+                recommended: 20
+            },
+            SameSubnetThreshold: {
+                status: 'not-optimized',
+                current: 20,
+                recommended: 10
+            },
+            CrossSubnetThreshold: {
+                status: 'optimized',
+                current: 20,
+                recommended: 20
+            }
+        }
+    },
+    sqlServerServices: {
+        status: 'optimized',
+        nodesInViolation: [],
+        totalNodes: 2,
+        details: [
+            { Name: 'MSSQLSERVER', Status: 'Running', StartType: 'Automatic', DisplayName: 'SQL Server (MSSQLSERVER)' }
+        ]
+    }
+};
+
 async function createAssessmentData(
     accountId: string,
     credentialsId: string,
@@ -6463,13 +6519,17 @@ async function createAssessmentData(
                 ? MSSQL_ASSESSMENT_CLONE_CONFIG_DATA
                 : ASSESSMENT_CLONE_CONFIG_DATA
     };
+    const haConfigData =
+        sqlDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
+            ? AOAG_STANDALONE_HIGH_AVAILABILITY_CONFIG_DATA
+            : databaseInstanceName === DEFAULT_INSTANCE_NAME
+            ? MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
+            : ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA;
+
     const instanceHighAvailabilityDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.HIGH_AVAILABILITY,
-        config_data:
-            databaseInstanceName === DEFAULT_INSTANCE_NAME
-                ? MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
-                : ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
+        config_data: haConfigData
     };
     const configDataRecords = [
         instanceConfigDataRecord,
@@ -6632,6 +6692,7 @@ export {
     MAPPED_ONTAP_VOLUMES_DATA,
     MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
     ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
+    AOAG_STANDALONE_HIGH_AVAILABILITY_CONFIG_DATA,
     ORACLE_STORAGE_ASSESSMENT_DATA,
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     PDB_DETAILS,

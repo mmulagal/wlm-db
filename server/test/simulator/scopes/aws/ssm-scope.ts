@@ -757,10 +757,17 @@ ssmMock
         return isAoagDbQuery;
     })
     .callsFake(async (params: any) => {
-        // Return different CommandId for primary vs secondary AOAG host
         const instanceId = params.InstanceIds?.[0];
-        const isSecondaryHost = instanceId === 'i-0a1b2c3d4e5f6a0a2';
-        const commandName = isSecondaryHost ? 'dbSummaryWithAoagSecondaryCommand' : 'dbSummaryWithAoagCommand';
+        let commandName;
+        if (instanceId === 'i-0a1b2c3d4e5f6a0a2') {
+            commandName = 'dbSummaryWithAoagSecondaryCommand';
+        } else if (instanceId === 'i-0b2c3d4e5f6a7b8c1') {
+            commandName = 'dbSummaryWithAoagDemoAOAGCommand';
+        } else if (instanceId === 'i-0b2c3d4e5f6a7b8c2') {
+            commandName = 'dbSummaryWithAoagDemoAOAGSecondaryCommand';
+        } else {
+            commandName = 'dbSummaryWithAoagCommand';
+        }
         return getSampleCommandResponse(commandName);
     })
     .on(SendCommandCommand, { Parameters: pgsqlInstanceInfo })
@@ -1042,7 +1049,11 @@ ssmMock
     .on(SendCommandCommand, params => params.Comment === 'Check if Linux package repositories are reachable')
     .resolves(getSampleCommandResponse('checkLinuxRepoConnectivity'))
     .on(SendCommandCommand, params => params.Comment === 'Get AOAG details for MSSQL instance')
-    .resolves(getSampleCommandResponse('getAoagDetails'))
+    .callsFake(async (params: any) => {
+        const instanceId = params.InstanceIds?.[0];
+        const isDemoAOAGHost = instanceId === 'i-0b2c3d4e5f6a7b8c1' || instanceId === 'i-0b2c3d4e5f6a7b8c2';
+        return getSampleCommandResponse(isDemoAOAGHost ? 'getAoagDetailsDemoAOAG' : 'getAoagDetails');
+    })
     .on(SendCommandCommand, params => params.Comment === 'Get DataGuard details for all Oracle SIDs')
     .resolves(getSampleCommandResponse('getDataguardDetails'));
 
@@ -1208,6 +1219,24 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'dbSummaryWithAoagSecondaryCommand',
             JSON.stringify(getCommandInvocationResponse.dbSummaryWithAoagDatabasesSecondary)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryWithAoagDemoAOAGCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'dbSummaryWithAoagDemoAOAGCommand',
+            JSON.stringify(getCommandInvocationResponse.dbSummaryWithAoagDatabasesDemoAOAG)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-dbSummaryWithAoagDemoAOAGSecondaryCommand'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'dbSummaryWithAoagDemoAOAGSecondaryCommand',
+            JSON.stringify(getCommandInvocationResponse.dbSummaryWithAoagDatabasesDemoAOAGSecondary)
         )
     )
     .on(GetCommandInvocationCommand, {
@@ -1761,6 +1790,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'getAoagDetails',
             JSON.stringify(getCommandInvocationResponse.aoagDetailsResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getAoagDetailsDemoAOAG'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getAoagDetailsDemoAOAG',
+            JSON.stringify(getCommandInvocationResponse.aoagDetailsResponseDemoAOAG)
         )
     )
     .on(GetCommandInvocationCommand, {

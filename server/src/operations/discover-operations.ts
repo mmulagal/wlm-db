@@ -764,11 +764,12 @@ async function getHostAndSqlInfoFromPsOutput(
                                 // which won't match physical cluster node names (e.g., XFCI1, XFCI2)
                                 // Use fciOwnerNodes (FCI virtual name → active physical node) for accurate mapping
                                 if (!matchingClusterNode && baseDeploymentType === 'FCI') {
-                                    const fciOwnerNodeMap = fciOwnerNodes
-                                        ? typeof fciOwnerNodes === 'string'
-                                            ? JSON.parse(fciOwnerNodes)
-                                            : fciOwnerNodes
-                                        : {};
+                                    const fciOwnerNodeMap =
+                                        fciOwnerNodes &&
+                                        typeof fciOwnerNodes === 'object' &&
+                                        !Array.isArray(fciOwnerNodes)
+                                            ? (fciOwnerNodes as unknown as Record<string, string>)
+                                            : {};
 
                                     const replicaHost = replicaName.includes('\\')
                                         ? replicaName.split('\\')[0]

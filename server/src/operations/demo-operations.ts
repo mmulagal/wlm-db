@@ -61,8 +61,11 @@ import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from 
 import {
     mockResourceAssessmentData,
     mockResourceAssessmentDataAllOptimized,
+    mockAoagResourceAssessmentData,
+    mockAoagResourceAssessmentDataAllOptimized,
     mockOracleHostOsPatchAssessmentData,
-    optimizedResourceName
+    optimizedResourceName,
+    aoagPrimaryHostName
 } from '../utils/demo-utils/hostAssementsData';
 import {
     ParameterDriftResponseType,
@@ -162,7 +165,9 @@ async function createDeploymentMockDataInDB(
     serverName: string,
     createSandbox: boolean = true,
     storageProtocol?: string,
-    resourceId?: string
+    resourceId?: string,
+    ec2InstanceId?: string,
+    partnerEc2InstanceId?: string
 ) {
     logger.info('create resource and job table mock data in database', {
         accountId,
@@ -191,7 +196,7 @@ async function createDeploymentMockDataInDB(
 
     const metadata: Metadata = {
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
-        node1InstanceId: generateRandomEc2InstanceId(),
+        node1InstanceId: ec2InstanceId || generateRandomEc2InstanceId(),
         creationDate: new Date().getTime().toString(),
         activeDirectoryName: 'wlm.com',
         activeDirectoryAddress: generateRandomIP(),
@@ -201,13 +206,24 @@ async function createDeploymentMockDataInDB(
         ...(createSandbox && prepareDemoSandboxMetadata(resourceName, instanceId))
     };
 
-    const assessmentData = optimizedResourceName.includes(resourceName)
-        ? (mockResourceAssessmentData.assessment as unknown as ResourceAssessmentData)
-        : (mockResourceAssessmentDataAllOptimized.assessment as unknown as ResourceAssessmentData);
+    let assessmentData: ResourceAssessmentData;
+    if (sqlDeploymentMode === 'AOAG') {
+        assessmentData =
+            resourceName === aoagPrimaryHostName
+                ? (mockAoagResourceAssessmentData.assessment as unknown as ResourceAssessmentData)
+                : (mockAoagResourceAssessmentDataAllOptimized.assessment as unknown as ResourceAssessmentData);
+    } else {
+        assessmentData = optimizedResourceName.includes(resourceName)
+            ? (mockResourceAssessmentData.assessment as unknown as ResourceAssessmentData)
+            : (mockResourceAssessmentDataAllOptimized.assessment as unknown as ResourceAssessmentData);
+    }
 
     if (sqlDeploymentMode === 'FCI') {
         metadata.node2InstanceId = generateRandomEc2InstanceId();
         metadata.activeDirectoryAddress = `${generateRandomIP()}, ${generateRandomIP()}`;
+    }
+    if (sqlDeploymentMode === 'AOAG' && partnerEc2InstanceId) {
+        metadata.node2InstanceId = partnerEc2InstanceId;
     }
     await createResource(accountId, {
         resourceId,

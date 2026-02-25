@@ -98,6 +98,26 @@ function generateDemoResources() {
             sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'oracle-orahost' }],
             databaseType: DatabaseTypes.ORACLE,
             deploymentType: 'Standalone'
+        },
+        {
+            resourceId: randomUUID(),
+            hostName: 'PRD-SQL-CRM-AG3',
+            protocol: STORAGE_PROTOCOLS.ISCSI,
+            sqlInstances: [],
+            databaseType: DatabaseTypes.MS_SQL_SERVER,
+            deploymentType: 'AOAG',
+            ec2InstanceId: 'i-0b2c3d4e5f6a7b8c1',
+            partnerEc2InstanceId: 'i-0b2c3d4e5f6a7b8c2'
+        },
+        {
+            resourceId: randomUUID(),
+            hostName: 'PRD-SQL-CRM-AG4',
+            protocol: STORAGE_PROTOCOLS.ISCSI,
+            sqlInstances: [],
+            databaseType: DatabaseTypes.MS_SQL_SERVER,
+            deploymentType: 'AOAG',
+            ec2InstanceId: 'i-0b2c3d4e5f6a7b8c2',
+            partnerEc2InstanceId: 'i-0b2c3d4e5f6a7b8c1'
         }
     ];
 }
@@ -111,7 +131,9 @@ async function createDemoResources(
     storageProtocol?: string,
     resourceId?: string,
     databaseType: string = DatabaseTypes.MS_SQL_SERVER,
-    deploymentType: string = 'Standalone'
+    deploymentType: string = 'Standalone',
+    ec2InstanceId?: string,
+    partnerEc2InstanceId?: string
 ) {
     logger.info('Creating demo database resources and corresponding details.');
     const stackName = randomize('A', 10);
@@ -131,7 +153,9 @@ async function createDemoResources(
             serverName || `sqldatabase${randomize('a', 4)}`,
             true,
             storageProtocol,
-            resourceId
+            resourceId,
+            ec2InstanceId,
+            partnerEc2InstanceId
         );
     } else if (databaseType === DatabaseTypes.PG_SQL) {
         await createDeploymentMockDataInDBForPgSql(
@@ -255,6 +279,9 @@ async function createDemoResourcesPerRegion(
         await Promise.all(
             mockedHosts.map(async mockedHost => {
                 const { resourceId, hostName, protocol, sqlInstances, databaseType, deploymentType } = mockedHost;
+                const ec2InstanceId = 'ec2InstanceId' in mockedHost ? mockedHost.ec2InstanceId : undefined;
+                const partnerEc2InstanceId =
+                    'partnerEc2InstanceId' in mockedHost ? mockedHost.partnerEc2InstanceId : undefined;
                 // create hosts and default instances
                 await createDemoResources(
                     accountId,
@@ -265,7 +292,9 @@ async function createDemoResourcesPerRegion(
                     protocol,
                     resourceId,
                     databaseType,
-                    deploymentType
+                    deploymentType,
+                    ec2InstanceId as string | undefined,
+                    partnerEc2InstanceId as string | undefined
                 );
                 const instanceNames: string[] = [];
                 let instanceIds: string = '';
@@ -350,28 +379,32 @@ async function createDemoResourcesPerRegion(
                         });
                     }
 
-                    // create sandbox metadata for instances
-                    // Update assessment configs
+                    const defaultInstance = resource.database_instances?.find(
+                        (i: { is_default: boolean }) => i.is_default
+                    );
+                    const effectiveInstanceName = instanceNames[0] || DEFAULT_INSTANCE_NAME;
+                    const effectiveInstanceId =
+                        instanceIds.split(',').filter(Boolean)[0] || defaultInstance?.database_instance_id || '';
+
                     const optimizeStorageJobMockdata = createOptimizeJobMockData(
                         accountId,
                         hostName,
-                        instanceNames[0],
+                        effectiveInstanceName,
                         credentialsId,
                         region,
-                        instanceIds.split(',')[0],
+                        effectiveInstanceId,
                         resourceId
                     );
 
-                    // create assessment and optimization jobs
                     const jobPromiseList = [createJobs(accountId, optimizeStorageJobMockdata)];
 
                     const operatingSystemOptimizeJobMockData = createOperatingSystemOptimizeJobMockData(
                         accountId,
                         hostName,
-                        instanceNames[0],
+                        effectiveInstanceName,
                         credentialsId,
                         region,
-                        instanceIds.split(',')[0],
+                        effectiveInstanceId,
                         resourceId
                     );
                     jobPromiseList.push(createJobs(accountId, operatingSystemOptimizeJobMockData));
@@ -380,30 +413,30 @@ async function createDemoResourcesPerRegion(
                         createOperatingSystemMpioSessionsOptimizeJobMockData(
                             accountId,
                             hostName,
-                            instanceNames[0],
+                            effectiveInstanceName,
                             credentialsId,
                             region,
-                            instanceIds.split(',')[0],
+                            effectiveInstanceId,
                             resourceId
                         );
                     jobPromiseList.push(createJobs(accountId, operatingSystemMpioSessionsOptimizeJobMockData));
                     const storageTierJobMockData = createStorageTierJobMockData(
                         accountId,
                         hostName,
-                        instanceNames[0],
+                        effectiveInstanceName,
                         credentialsId,
                         region,
-                        instanceIds.split(',')[0],
+                        effectiveInstanceId,
                         resourceId
                     );
                     jobPromiseList.push(createJobs(accountId, storageTierJobMockData));
                     const enableMpioJobMockData = createEnableMpioJobMockData(
                         accountId,
                         hostName,
-                        instanceNames[0],
+                        effectiveInstanceName,
                         credentialsId,
                         region,
-                        instanceIds.split(',')[0],
+                        effectiveInstanceId,
                         resourceId
                     );
                     jobPromiseList.push(createJobs(accountId, enableMpioJobMockData));
