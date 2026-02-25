@@ -59,7 +59,7 @@ const TCOOnPremBulkAccordion = () => {
 
     // Check if SSD tier card should be shown based on ebsCapacity
     useEffect(() => {
-        if (viewCalculationsResponse) {
+        if (viewCalculationsResponse && !isOracleOnPrem) {
             const totalEbsCapacity = viewCalculationsResponse?.fsxOntapCalculation?.ebsCapacity;
 
             if (totalEbsCapacity !== null && totalEbsCapacity !== undefined) {
@@ -270,7 +270,11 @@ const TCOOnPremBulkAccordion = () => {
                                     </div>
                                 )}
                                 id={String(hostName || index + 1)}
-                                title={<div className={CommonStyles.title}>{hostName || `Host ${index + 1}`}</div>}
+                                title={
+                                    <div className={isOracleOnPrem ? styles.oracleTitle : CommonStyles.title}>
+                                        {hostName || `Host ${index + 1}`}
+                                    </div>
+                                }
                                 RightWidget={
                                     showRemoveButton
                                         ? () => (

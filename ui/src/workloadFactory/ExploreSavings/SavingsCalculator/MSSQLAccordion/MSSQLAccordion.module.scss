@@ -1,6 +1,7 @@
 .mssqlAccordion {
     margin: 0 auto;
-    width: 1336px;
+    width: 100%;
+    max-width: 1336px;
 
     .buttonContainer {
         [class*='dsButtonContainer'] {
@@ -20,7 +21,7 @@
 }
 
 .mssqlAccordionOnPremises {
-    width: 1607px;
+    max-width: 1607px;
 }
 
 .setWidth {
@@ -39,7 +40,7 @@
 
 @media screen and (max-width: 1500px) {
     .mssqlAccordionOnPremises {
-        width: 1407px !important;
+        max-width: 1407px !important;
     }
 }
 

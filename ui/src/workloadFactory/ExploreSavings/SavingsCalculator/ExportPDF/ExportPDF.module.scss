@@ -5,7 +5,8 @@
     background-color: var(--content-background);
     box-shadow: 2px 2px 6px 0px var(--border);
     padding: 13px 40px;
-    width: 1336px;
+    width: 100%;
+    max-width: 1336px;
     height: 59px;
 
     display: flex;
@@ -43,33 +44,33 @@
 }
 
 .exportPdfOnPrem {
-    width: 1607px;
+    max-width: 1607px;
 }
 
 @media screen and (max-width: 1500px) {
     .exportPdf {
-        width: 1128px;
+        max-width: 1128px;
     }
 
     .exportPdfOnPrem {
-        width: 1407px;
+        max-width: 1407px;
     }
 }
 
 @media screen and (min-width: 1920px) {
     .exportPdf {
-        width: 91%;
+        max-width: 91%;
     }
 }
 
 @media screen and (min-width: 2133px) and (max-width: 5020px) {
     .exportPdf {
-        width: 86%;
+        max-width: 86%;
     }
 }
 
 @media screen and (min-width: 1900px) and (max-width: 2000px) {
     .exportPdf {
-        width: 83%;
+        max-width: 83%;
     }
 }

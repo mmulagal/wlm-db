@@ -1,4 +1,5 @@
 import { DsTypography } from '@netapp/design-system';
+import classNames from 'classnames';
 import { useMemo } from 'react';
 import styles from './ComputeInformation.module.scss';
 import ComputeInputComponent from './ComputeInputComponent/ComputeInputComponent';
@@ -58,7 +59,7 @@ const ComputeInformation = ({ printState, host }: ComputeInformationProps) => {
     };
 
     return (
-        <div className={styles.computeInformation}>
+        <div className={classNames(styles.computeInformation, { [styles.oracleMode]: isOracleOnPrem })}>
             <DsTypography style={{ marginBottom: '8px' }} variant="Regular_14">
                 Compute information:
             </DsTypography>

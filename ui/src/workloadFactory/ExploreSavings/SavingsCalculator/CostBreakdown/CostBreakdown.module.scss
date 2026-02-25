@@ -1,6 +1,7 @@
 .costBreakdown {
-    width: 656px;
-    height: 648px;
+    width: 100%;
+    min-height: 648px;
+    height: auto;
     background-color: var(--content-background);
     box-shadow: 2px 2px 6px 0px var(--border);
 
@@ -75,7 +76,7 @@
 
 @media screen and (max-width: 1500px) {
     .costBreakdown {
-        width: 456px;
+        width: 100%;
 
         [class*='table-content'] {
             height: 96px !important;

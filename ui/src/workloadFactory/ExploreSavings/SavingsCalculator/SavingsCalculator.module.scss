@@ -17,7 +17,8 @@
     .savingsHeading {
         margin: 0 auto;
         margin-top: 12px;
-        width: 1336px;
+        width: 100%;
+        max-width: 1336px;
         display: flex;
         justify-content: space-between;
         position: relative;
@@ -34,11 +35,12 @@
     }
 
     .savingsHeadingOnPremise {
-        width: 1607px;
+        max-width: 1607px;
     }
 
     .contentArea {
-        width: 1336px;
+        width: 100%;
+        max-width: 1336px;
         margin: 0 auto;
         margin-top: 8px;
         margin-bottom: 40px;
@@ -56,7 +58,8 @@
         }
 
         .onPremiseContainer {
-            width: 928px;
+            flex: 1 1 auto;
+            min-width: 0;
             height: 1315px;
             max-height: 1315px;
             overflow-y: auto;
@@ -74,6 +77,8 @@
             display: flex;
             flex-direction: column;
             gap: 24px;
+            flex: 0 0 656px;
+            min-width: 0;
         }
 
         .classForManualFsx {
@@ -88,7 +93,15 @@
         }
     }
     .contentAreaOnPremise {
-        width: 1607px;
+        max-width: 1607px;
+
+        .onPremiseContainer {
+            flex: 1 1 0;
+        }
+
+        .secondContainer {
+            flex: 1 1 0;
+        }
     }
 
     .selectionArea {
@@ -96,7 +109,8 @@
         margin-top: 24px;
         box-shadow: 2px 2px 6px 0px var(--border);
         height: 105px;
-        width: 1336px;
+        width: 100%;
+        max-width: 1336px;
         background-color: var(--content-background);
         padding: 28px 40px;
         display: flex;
@@ -107,7 +121,7 @@
             display: flex;
             flex-direction: column;
             .secondText {
-                width: 1168px;
+                width: 100%;
             }
         }
 
@@ -117,22 +131,22 @@
     }
 
     .selectionAreaOnPrem {
-        width: 1607px;
+        max-width: 1607px;
     }
 }
 
 @media screen and (max-width: 1500px) {
     .savingsCalculator {
         .savingsHeading {
-            width: 1128px;
+            max-width: 1128px;
         }
 
         .savingsHeadingOnPremise {
-            width: 1407px !important;
+            max-width: 1407px !important;
         }
 
         .contentArea {
-            width: 1128px !important;
+            max-width: 1128px !important;
             .firstContainer {
                 width: 648px !important;
                 height: 1356px;
@@ -158,23 +172,28 @@
             }
 
             .secondContainer {
-                width: 456px;
+                flex: 0 0 456px;
             }
         }
 
         .contentAreaOnPremise {
-            width: 1407px !important;
+            max-width: 1407px !important;
+
+            .secondContainer {
+                flex: 1 1 0;
+            }
         }
         .selectionArea {
-            width: 1128px;
+            max-width: 1128px;
         }
 
         .selectionAreaOnPrem {
-            width: 1407px;
+            max-width: 1407px;
         }
 
         [class*='mssqlAccordion'] {
-            width: 1128px;
+            max-width: 1128px;
+            width: 100%;
         }
     }
 }
@@ -182,13 +201,13 @@
 @media screen and (min-width: 1920px) {
     .savingsCalculator {
         .savingsHeading {
-            width: 95%;
+            max-width: 95%;
             padding: 0px 120px 0px;
             padding-top: 16px;
         }
 
         .contentArea {
-            width: 95% !important;
+            max-width: 95% !important;
             padding: 0 120px 56px;
 
             .firstContainer {
@@ -199,15 +218,13 @@
             }
 
             .onPremiseContainer {
-                width: 50%;
                 [class*='savingsHeader'] {
                     width: 100%;
                 }
             }
             .secondContainer {
-                width: 50%;
+                flex: 0 0 50%;
                 [class*='costSavings'] {
-                    width: 100%;
                     [class*='leftSide'] {
                         width: 50%;
                     }
@@ -215,22 +232,22 @@
                         width: 50%;
                     }
                 }
+            }
+        }
 
-                [class*='totalMonthlyCost'] {
-                    width: 100%;
-                }
-                [class*='costBreakdown'] {
-                    width: 100%;
-                }
+        .contentAreaOnPremise {
+            .secondContainer {
+                flex: 1 1 0;
             }
         }
 
         .selectionArea {
-            width: 91%;
+            max-width: 91%;
         }
 
         [class*='mssqlAccordion'] {
-            width: 91%;
+            max-width: 91%;
+            width: 100%;
         }
         [class*='instanceInformation'] {
             [class*='Table-module_table'] {
@@ -246,29 +263,6 @@
         [class*='onPremRegion'] {
             width: 100%;
         }
-        [class*='computeTable'] {
-            width: 100% !important;
-
-            > div:nth-child(1) {
-                justify-content: space-between;
-
-                > div:nth-child(1) {
-                    width: 1%;
-                }
-            }
-            > div:nth-child(2),
-            > div:nth-child(3) {
-                width: 100%;
-
-                > div:nth-child(1) {
-                    width: 31%;
-                }
-                > div:nth-child(2) {
-                    width: 100%;
-                    justify-content: space-between;
-                }
-            }
-        }
         [class*='savingsSelection'] {
             width: 100%;
             [class*='firstRow'] {
@@ -280,44 +274,21 @@
 
 @media screen and (min-width: 2133px) and (max-width: 5020px) {
     .selectionArea {
-        width: 86% !important;
+        max-width: 86% !important;
     }
     [class*='mssqlAccordion'] {
-        width: 86% !important;
-    }
-    [class*='computeTable'] {
-        width: 100% !important;
-
-        > div:nth-child(3) {
-            > div:nth-child(1) {
-                width: 2%;
-            }
-        }
+        max-width: 86% !important;
+        width: 100%;
     }
 }
 
 @media screen and (min-width: 1900px) and (max-width: 2000px) {
     .selectionArea {
-        width: 83% !important;
+        max-width: 83% !important;
     }
     [class*='mssqlAccordion'] {
-        width: 83% !important;
+        max-width: 83% !important;
+        width: 100%;
     }
 
-    [class*='computeTable'] {
-        width: 100% !important;
-
-        > div:nth-child(1) {
-            margin-left: 9%;
-        }
-        > div:nth-child(2),
-        > div:nth-child(3) {
-            > div:nth-child(1) {
-                width: 1%;
-            }
-            > div:nth-child(2) {
-                width: 91% !important;
-            }
-        }
-    }
 }

@@ -19,7 +19,13 @@ import {
     setRequestedRegion
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../../ExploreSavingsUtils';
-import { GIB_IN_BYTE, MAX_CLONED_COPIES, MAX_MONTHLY_CHANGE_RATE, NETWORK_PERFORMANCE_OPTIONS, SAVINGS_CALC_MODE } from '../../../../utils/consts';
+import {
+    GIB_IN_BYTE,
+    MAX_CLONED_COPIES,
+    MAX_MONTHLY_CHANGE_RATE,
+    NETWORK_PERFORMANCE_OPTIONS,
+    SAVINGS_CALC_MODE
+} from '../../../../utils/consts';
 
 interface OracleOnPremPayload {
     regionCode?: string;
@@ -125,13 +131,9 @@ const OracleSavingsCalculatorApi = () => {
             databaseData.push({
                 databaseId: selectedOnPremHostDetails?.databaseId,
                 noOfVcpusInUse: selectedOnPremHostDetails?.noOfVcpusInUse || 0,
-                memory: selectedOnPremHostDetails?.Memory
-                    ? Number(selectedOnPremHostDetails?.Memory) * GIB_IN_BYTE
-                    : 0,
+                memory: selectedOnPremHostDetails?.Memory ? Number(selectedOnPremHostDetails?.Memory) * GIB_IN_BYTE : 0,
                 networkPerformance:
-                    onPremNetworkPerformance?.value ||
-                    selectedOnPremHostDetails?.networkPerformance ||
-                    'upTo10',
+                    onPremNetworkPerformance?.value || selectedOnPremHostDetails?.networkPerformance || 'upTo10',
                 totalIops: selectedOnPremHostDetails?.totalIops || 0,
                 totalThroughput: selectedOnPremHostDetails?.totalThroughput || 0,
                 totalStorage: Number(selectedOnPremHostDetails?.totalStorage || 0) * GIB_IN_BYTE

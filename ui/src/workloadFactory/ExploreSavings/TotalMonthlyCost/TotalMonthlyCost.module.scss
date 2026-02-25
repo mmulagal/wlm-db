@@ -1,5 +1,5 @@
 .totalMonthlyCost {
-    width: 656px;
+    width: 100%;
     height: 514px;
     background-color: var(--content-background);
     box-shadow: 2px 2px 6px 0px var(--border);
@@ -35,7 +35,7 @@
 
 @media screen and (max-width: 1500px) {
     .totalMonthlyCost {
-        width: 456px;
+        width: 100%;
 
         .mainSection {
             .loadingState {

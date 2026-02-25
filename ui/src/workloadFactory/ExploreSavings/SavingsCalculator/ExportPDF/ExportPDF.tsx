@@ -4,7 +4,7 @@ import { DsTypography } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
 import { ReactComponent as Calculate } from '../../../../assets/ic_calculate.svg';
 import { ReactComponent as Email } from '../../../../assets/ic_email.svg';
-import { WLF_TABS } from '../../../../utils/consts';
+import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 import styles from './ExportPDF.module.scss';
 
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -17,7 +17,8 @@ const ExportPDF = ({ printDocument, disableState, sendEmail, emailStatus }: any)
         selectedHostDetails,
         viewCalculationsLoading,
         viewCalculationsResponse,
-        selectedExploreSavingsTab
+        selectedExploreSavingsTab,
+        savingsCalculatorFrom
     } = useAppSelector(state => state.exploreSavings);
 
     const dispatch = useDispatch();
@@ -42,8 +43,10 @@ const ExportPDF = ({ printDocument, disableState, sendEmail, emailStatus }: any)
         sendEmail();
     };
 
+    const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+
     const setCSSForExportPDF = () => {
-        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem) {
             return `${styles.exportPdf} ${styles.exportPdfOnPrem}`;
         }
         return styles.exportPdf;

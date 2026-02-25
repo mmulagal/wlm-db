@@ -382,9 +382,6 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         className={
                             isOnPremMode ? `${styles.contentArea} ${styles.contentAreaOnPremise}` : styles.contentArea
                         }
-                        style={{
-                            width: isOnPremMode ? '1607px ' : '1336px'
-                        }}
                     >
                         {/* Left side code here */}
                         {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && !isOracleOnPrem && (

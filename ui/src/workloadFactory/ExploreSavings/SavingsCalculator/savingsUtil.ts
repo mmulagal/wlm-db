@@ -39,7 +39,13 @@ import { StorageSavingsInterface, ViewCalculationsInterface } from '../../../uti
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
-    const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom, onPremStorageAndComputeInfo, selectedOnPremHostDetails } = state.exploreSavings;
+    const {
+        recommendedTargetInstance,
+        selectedHostDetails,
+        savingsCalculatorFrom,
+        onPremStorageAndComputeInfo,
+        selectedOnPremHostDetails
+    } = state.exploreSavings;
     const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
     const isArrayMode =
         (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
@@ -119,8 +125,8 @@ export const comparisonData = (calculatedResponse: any) => {
             ebs: isOracle
                 ? oracleLicenseCost
                 : isArrayMode && Array.isArray(calculatedResponse?.license)
-                    ? sumArrayField(calculatedResponse.license, 'licenseMonthlyPrice')
-                    : formatCost(calculatedResponse?.license?.existing?.licenseMonthlyPrice)
+                ? sumArrayField(calculatedResponse.license, 'licenseMonthlyPrice')
+                : formatCost(calculatedResponse?.license?.existing?.licenseMonthlyPrice)
         },
         {
             type: 'Total summary',

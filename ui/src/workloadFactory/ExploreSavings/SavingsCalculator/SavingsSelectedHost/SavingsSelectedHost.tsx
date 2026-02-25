@@ -59,10 +59,7 @@ const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
             <DsTypography variant="Regular_14" className={isDisabled ? styles.disabledHeading : ''}>
                 {t('databases.explore-savings.selected-host')}:
             </DsTypography>
-            <div
-                className={styles.valueArea}
-                style={{ width: selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ? '848px' : '576px' }}
-            >
+            <div className={styles.valueArea}>
                 <div className={styles.container}>
                     {!selectedHostDetails?.loading && (
                         <DsTypography

@@ -1,18 +1,22 @@
 .computeInformation {
-    padding: 0 40px;
+    padding: 0 0 0 40px;
     margin-top: 32px;
 
+    &.oracleMode {
+        margin-top: 0;
+    }
+
     .computeTable {
-        width: 848px;
+        width: 100%;
         background-color: var(--main-background);
-        padding: 16px 40px;
+        padding: 16px 24px;
         display: flex;
         flex-direction: column;
         gap: 22px;
 
         .row1 {
             display: grid;
-            grid-template-columns: 1fr 1.5fr 1.5fr 1.5fr;
+            grid-template-columns: 1.2fr 1.9fr 1fr 1.7fr;
             gap: 24px;
 
             .col1 {
