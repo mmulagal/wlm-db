@@ -61,7 +61,47 @@ import { createSandboxNavigation, formatDateWithTime } from '../../../../utils/u
 import { ReactComponent as NotActiveNotificationIcon } from '../../../../assets/NotActiveNotificationIcon.svg';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import tooltipStyles from './InstanceTableHelper.module.scss';
+import inventoryStyles from '../InventoryTable.module.scss';
 import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
+
+export const isInstanceOffline = (rowData: any) =>
+    rowData?.status === INVENTORY_STATUS.STOPPED ||
+    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||
+    rowData?.status === INVENTORY_STATUS.OFFLINE;
+
+export const notAvailableWithTooltip = (t: TFunction, unlockKey: string, rowData: any, offlineKey: string) => {
+    const isOffline = rowData && isInstanceOffline(rowData);
+    const isRegistered = rowData?.managementStatus === INVENTORY_STATUS.REGISTERED;
+    let tooltipKey = '';
+    if (isOffline) {
+        tooltipKey = offlineKey;
+    } else if (!isRegistered) {
+        tooltipKey = unlockKey;
+    }
+
+    if (tooltipKey) {
+        return (
+            <div className={inventoryStyles.naWithTooltip}>
+                <TooltipInfo className={inventoryStyles['tooltip-icon']} trigger="hover">
+                    <div>
+                        <DsTypography variant="Regular_13">{t(tooltipKey)}</DsTypography>
+                    </div>
+                </TooltipInfo>
+                <div className={inventoryStyles.colText}>
+                    <DsTypography variant="Regular_13">
+                        {t('databases.general.not-available-table-columns')}
+                    </DsTypography>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <DsTypography variant="Regular_13" className={inventoryStyles.colText}>
+            {t('databases.general.not-available-table-columns')}
+        </DsTypography>
+    );
+};
 
 export interface InstanceMenuSelectionParams {
     menuId: string;

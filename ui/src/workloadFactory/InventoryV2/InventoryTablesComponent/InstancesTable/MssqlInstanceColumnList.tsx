@@ -40,7 +40,7 @@ import { selectedTabSelection } from '../../../../store/workloadFactory/database
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { manageActionCol } from '../../InventoryUtilsV2';
 import { resetAgenticPreCheckData } from '../../../../store/workloadFactory/agenticAISlice';
-import { logAnalyzerStatusCol, handleWadOptimizeAction } from './InstanceTableHelper';
+import { logAnalyzerStatusCol, handleWadOptimizeAction, notAvailableWithTooltip } from './InstanceTableHelper';
 
 export function getMssqlInstanceTableColumns({
     t,
@@ -237,11 +237,21 @@ export function getMssqlInstanceTableColumns({
             id: '5',
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'serverInstallationMode'),
-            renderCell: (cellData: string) => (
-                <DsTypography variant="Regular_13" className={styles.colText} title={cellData}>
-                    {cellData || t('databases.general.not-available-table-columns')}
-                </DsTypography>
-            )
+            renderCell: (cellData: string, rowData: any) => {
+                if (!cellData) {
+                    return notAvailableWithTooltip(
+                        t,
+                        'databases.instance-table.unlock-deployment-model',
+                        rowData,
+                        'databases.instance-table.offline-deployment-model'
+                    );
+                }
+                return (
+                    <DsTypography variant="Regular_13" className={styles.colText} title={cellData}>
+                        {cellData}
+                    </DsTypography>
+                );
+            }
         },
         {
             Header: t('databases.instance-table.headers.availability-group'),
@@ -379,11 +389,14 @@ export function getMssqlInstanceTableColumns({
                             </div>
                         )}
                         {!cellData && loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && (
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {t('databases.general.not-available-table-columns')}
-                            </DsTypography>
-                        )}
+                        {!cellData &&
+                            !loading &&
+                            notAvailableWithTooltip(
+                                t,
+                                'databases.instance-table.unlock-protection-status',
+                                rowData,
+                                'databases.instance-table.offline-protection-status'
+                            )}
                     </>
                 );
             }
@@ -407,11 +420,14 @@ export function getMssqlInstanceTableColumns({
                             </DsTypography>
                         )}
                         {!cellData && loadingPA && <DsFlashingDotsLoader />}
-                        {!cellData && !loadingPA && (
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {t('databases.general.not-available-table-columns')}
-                            </DsTypography>
-                        )}
+                        {!cellData &&
+                            !loadingPA &&
+                            notAvailableWithTooltip(
+                                t,
+                                'databases.instance-table.unlock-performance-metrics',
+                                rowData,
+                                'databases.instance-table.offline-performance-metrics'
+                            )}
                     </>
                 );
             }
@@ -511,11 +527,13 @@ export function getMssqlInstanceTableColumns({
             isSortable: true,
             filterOptions: getFilterOptions(updatedTableData, 'regionName'),
             width: '213px',
-            renderCell: (cellData: any) => (
-                <DsTypography variant="Regular_13" className={styles.colText}>
-                    {cellData || t('databases.general.not-available-table-columns')}
-                </DsTypography>
-            )
+            renderCell: (cellData: any) => {
+                return (
+                    <DsTypography variant="Regular_13" className={styles.colText}>
+                        {cellData || t('databases.general.not-available-table-columns')}
+                    </DsTypography>
+                );
+            }
         },
         {
             id: '13',

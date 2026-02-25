@@ -35,7 +35,7 @@ import {
 import { manageActionCol } from '../../InventoryUtilsV2';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 import { setFSXId } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { logAnalyzerStatusCol } from './InstanceTableHelper';
+import { logAnalyzerStatusCol, notAvailableWithTooltip } from './InstanceTableHelper';
 
 export function getOracleDatabaseColumnsList({
     t,
@@ -48,19 +48,6 @@ export function getOracleDatabaseColumnsList({
 }): ColumnProps[] {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-
-    const notAvailableWithTooltip = (unlockKey: string) => (
-        <div className={styles.naWithTooltip}>
-            <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
-                <div>
-                    <DsTypography variant="Regular_13">{t(unlockKey)}</DsTypography>
-                </div>
-            </TooltipInfo>
-            <div className={styles.colText}>
-                <DsTypography variant="Regular_13">{t('databases.general.not-available-table-columns')}</DsTypography>
-            </div>
-        </div>
-    );
 
     const allColumns: ColumnProps[] = [
         {
@@ -203,7 +190,12 @@ export function getOracleDatabaseColumnsList({
                     );
                 }
                 if (!cellData) {
-                    return notAvailableWithTooltip('databases.databases-table.oracle.unlock-deployment-model');
+                    return notAvailableWithTooltip(
+                        t,
+                        'databases.databases-table.oracle.unlock-deployment-model',
+                        rowData,
+                        'databases.databases-table.oracle.offline-deployment-model'
+                    );
                 }
                 return (
                     <DsTypography variant="Regular_13" className={styles.colText}>
@@ -343,7 +335,12 @@ export function getOracleDatabaseColumnsList({
                         {!cellData && loading && <DsFlashingDotsLoader />}
                         {!cellData &&
                             !loading &&
-                            notAvailableWithTooltip('databases.databases-table.oracle.unlock-protection-status')}
+                            notAvailableWithTooltip(
+                                t,
+                                'databases.databases-table.oracle.unlock-protection-status',
+                                rowData,
+                                'databases.databases-table.oracle.offline-protection-status'
+                            )}
                     </>
                 );
             }
@@ -355,7 +352,7 @@ export function getOracleDatabaseColumnsList({
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'instanceType'),
             info: t('databases.databases-table.oracle.tenancy-column-info'),
-            renderCell: (cellData: string) => {
+            renderCell: (cellData: string, rowData: any) => {
                 let displayText = cellData;
                 if (cellData === 'Multi Tenant') {
                     displayText = t('databases.oracle-inner-page.multi-tenant');
@@ -364,7 +361,12 @@ export function getOracleDatabaseColumnsList({
                 }
 
                 if (!displayText) {
-                    return notAvailableWithTooltip('databases.databases-table.oracle.unlock-tenancy');
+                    return notAvailableWithTooltip(
+                        t,
+                        'databases.databases-table.oracle.unlock-tenancy',
+                        rowData,
+                        'databases.databases-table.oracle.offline-tenancy'
+                    );
                 }
                 return (
                     <DsTypography variant="Regular_13" className={styles.colText}>
@@ -394,7 +396,12 @@ export function getOracleDatabaseColumnsList({
                         {!cellData && loadingPA && <DsFlashingDotsLoader />}
                         {!cellData &&
                             !loadingPA &&
-                            notAvailableWithTooltip('databases.databases-table.oracle.unlock-performance-metrics')}
+                            notAvailableWithTooltip(
+                                t,
+                                'databases.databases-table.oracle.unlock-performance-metrics',
+                                rowData,
+                                'databases.databases-table.oracle.offline-performance-metrics'
+                            )}
                     </>
                 );
             }
@@ -421,7 +428,12 @@ export function getOracleDatabaseColumnsList({
                         {loading && <DsFlashingDotsLoader />}
                         {isNotAvailable &&
                             !loading &&
-                            notAvailableWithTooltip('databases.databases-table.oracle.unlock-protocol')}
+                            notAvailableWithTooltip(
+                                t,
+                                'databases.databases-table.oracle.unlock-protocol',
+                                rowData,
+                                'databases.databases-table.oracle.offline-protocol'
+                            )}
                     </>
                 );
             }
@@ -443,7 +455,12 @@ export function getOracleDatabaseColumnsList({
                         {loading && <DsFlashingDotsLoader />}
                         {!loading &&
                             !rowData?.size &&
-                            notAvailableWithTooltip('databases.databases-table.oracle.unlock-database-size')}
+                            notAvailableWithTooltip(
+                                t,
+                                'databases.databases-table.oracle.unlock-database-size',
+                                rowData,
+                                'databases.databases-table.oracle.offline-database-size'
+                            )}
                         {!loading && rowData?.size && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {formatSize(rowData?.size)}

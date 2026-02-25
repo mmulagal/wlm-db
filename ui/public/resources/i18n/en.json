@@ -1779,7 +1779,13 @@
                 "edit-protection": "Edit protection",
                 "deregister": "Deregister",
                 "view-protection-details": "View protection details"
-            }
+            },
+            "unlock-deployment-model": "Register this instance to view its deployment type",
+            "unlock-protection-status": "Register this instance to view its protection status",
+            "unlock-performance-metrics": "Register this instance to view its performance metrics",
+            "offline-deployment-model": "Deployment type is unavailable when the instance is offline",
+            "offline-protection-status": "Protection status is unavailable when the instance is offline",
+            "offline-performance-metrics": "Performance metrics are unavailable when the instance is offline"
         },
         "databases-table": {
             "headers": {
@@ -1824,12 +1830,18 @@
                     "investigate-errors": "Analyze errors",
                     "deregister": "Deregister"
                 },
-                "unlock-database-size": "Register this database to unlock actual database size",
-                "unlock-protection-status": "Register this database to unlock protection status",
-                "unlock-performance-metrics": "Register this database to unlock performance metrics",
-                "unlock-deployment-model": "Register this database to unlock deployment model",
-                "unlock-tenancy": "Register this database to unlock tenancy information",
-                "unlock-protocol": "Register this database to unlock protocol information"
+                "unlock-database-size": "Register this database to view its database size",
+                "unlock-protection-status": "Register this database to view its protection status",
+                "unlock-performance-metrics": "Register this database to view its performance metrics",
+                "unlock-deployment-model": "Register this database to view its deployment model",
+                "unlock-tenancy": "Register this database to view its tenancy information",
+                "unlock-protocol": "Register this database to view its protocol information",
+                "offline-database-size": "Database size is unavailable when the database is offline",
+                "offline-protection-status": "Protection status is unavailable when the database is offline",
+                "offline-performance-metrics": "Performance metrics are unavailable when the database is offline",
+                "offline-deployment-model": "Deployment model is unavailable when the database is offline",
+                "offline-tenancy": "Tenancy information is unavailable when the database is offline",
+                "offline-protocol": "Protocol information is unavailable when the database is offline"
             }
         },
         "host-table": {
