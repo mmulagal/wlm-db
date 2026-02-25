@@ -125,4 +125,4 @@ async function downloadOfflineAssessmentScript(accountId: string, databaseType: 
     }
 }
 
-export { uploadOfflineAssessment, downloadOfflineAssessmentScript };
+export { uploadOfflineAssessment, downloadOfflineAssessmentScript, decodeBase64FileContent };

@@ -11,8 +11,12 @@ import {
     USER_TOKEN
 } from '../consts';
 import getLogger from '../logger';
-import { uploadOfflineAssessment } from '../../operations/offline-assessment-operations';
-import { listOfflineAssessments } from '../../lib/database/offline-assessment';
+import { decodeBase64FileContent } from '../../operations/offline-assessment-operations';
+import {
+    listOfflineAssessments,
+    bulkUpsertOfflineAssessments,
+    OfflineAssessmentRecord
+} from '../../lib/database/offline-assessment';
 import {
     createAssessmentData,
     saveFciConfigurationData,
@@ -23,6 +27,7 @@ import {
     offlineAssessmentFCIUploadObject,
     offlineAssessmentAOAGUploadObject
 } from './demoMockdata';
+import { parseAssessmentFileContent, generateSqlResourceId } from '../utils';
 import {
     createAssessmentJobMockData,
     createDeploymentMockDataInDB,
@@ -614,24 +619,57 @@ async function prepopulateOfflineAssessmentData(accountId: string) {
         pageSize: 1
     });
     if (offlineAssessments.length === 0) {
-        await uploadOfflineAssessment(
+        const allRecords = [
+            offlineAssessmentFCIUploadObject,
+            offlineAssessmentAOAGUploadObject,
+            offlineAssessmentStdUploadObject
+        ].flatMap(demoFile => {
+            const assessmentData = parseAssessmentFileContent(decodeBase64FileContent(demoFile.fileContent)) as any;
+            const { metadata, rawdata } = assessmentData;
+            const { hostLevelDetails, instanceLevelDetails } = rawdata;
+            const { ec2InstanceId } = metadata;
+
+            return Object.entries(instanceLevelDetails).map(([instanceName, instanceData]: [string, any]) => {
+                const { instanceDetails, mappedVolumes, assessment } = instanceData;
+                const { databaseInstanceId, windowsClusterNodes, deploymentType, baseDeploymentType } = instanceDetails;
+
+                const isFciOrAoagFci =
+                    deploymentType === 'FCI' || (deploymentType === 'AOAG' && baseDeploymentType === 'FCI');
+                const partnerNode =
+                    isFciOrAoagFci && windowsClusterNodes?.length === 2
+                        ? windowsClusterNodes.find((n: any) => n.ec2InstanceId && n.ec2InstanceId !== ec2InstanceId)
+                        : null;
+                const resourceId = partnerNode?.ec2InstanceId
+                    ? generateSqlResourceId(ec2InstanceId, partnerNode.ec2InstanceId)
+                    : generateSqlResourceId(ec2InstanceId);
+
+                return {
+                    accountId,
+                    resourceId,
+                    databaseInstanceId,
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: {
+                        instanceLevelAssessment: assessment || {},
+                        rssConfig: hostLevelDetails.rssConfig || {},
+                        headroom: hostLevelDetails.headroom || {},
+                        hostLevelHighAvailability: hostLevelDetails.highAvailability || {},
+                        errors: hostLevelDetails.errors?.[instanceName] || hostLevelDetails.errors || {}
+                    },
+                    mappedOntapVolumes: mappedVolumes || {},
+                    metadata: {
+                        ...metadata,
+                        ...instanceDetails,
+                        databaseInstanceName: instanceName
+                    }
+                } as OfflineAssessmentRecord;
+            });
+        });
+
+        await bulkUpsertOfflineAssessments(allRecords);
+        logger.info('Successfully prepopulated offline assessment data', {
             accountId,
-            offlineAssessmentFCIUploadObject.fileContent,
-            offlineAssessmentFCIUploadObject.fileName,
-            'mssql'
-        );
-        await uploadOfflineAssessment(
-            accountId,
-            offlineAssessmentAOAGUploadObject.fileContent,
-            offlineAssessmentAOAGUploadObject.fileName,
-            'mssql'
-        );
-        await uploadOfflineAssessment(
-            accountId,
-            offlineAssessmentStdUploadObject.fileContent,
-            offlineAssessmentStdUploadObject.fileName,
-            'mssql'
-        );
+            recordCount: allRecords.length
+        });
     }
 }
 

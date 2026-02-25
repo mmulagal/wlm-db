@@ -281,7 +281,9 @@ async function processOfflineAssessmentUpload(
     let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
     let errorMessage: string = '';
     const managedInstances: DatabaseInstance[] = (
-        await getPaginatedDatabaseInstances(accountId, { selectKeys: ['resource_id', 'database_instance_id'] })
+        await getPaginatedDatabaseInstances(accountId, {
+            selectKeys: ['account_id', 'resource_id', 'database_instance_id']
+        })
     ).items;
     try {
         const records = Object.entries(instanceLevelDetails || {})
