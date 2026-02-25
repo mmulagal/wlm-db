@@ -143,18 +143,28 @@
             flex-direction: column;
         }
 
-        .acknowledgeCheckbox {
+        .dependencyWarningSection {
             display: flex;
-            align-items: flex-start;
-            padding: 12px 0;
-            margin-bottom: 16px;
-            gap: 8px;
-            cursor: pointer;
+            flex-direction: column;
+            gap: 24px;
+            margin-bottom: -8px;
 
-            input[type='checkbox'] {
-                margin-top: 2px;
-                flex-shrink: 0;
-                cursor: pointer;
+            [data-testid='linked-config-banner'] {
+                margin-top: 0;
+                margin-bottom: 0;
+                padding: 16px 24px;
+                max-width: 713px;
+            }
+
+            .acknowledgeCheckbox {
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+
+                input[type='checkbox'] {
+                    margin-top: 2px;
+                    flex-shrink: 0;
+                }
             }
         }
     }

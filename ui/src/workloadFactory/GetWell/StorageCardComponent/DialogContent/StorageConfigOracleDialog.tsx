@@ -213,7 +213,7 @@ const StorageConfigOracleDialog = ({
     return (
         <div className={styles['storage-tier-block']}>
             {showDependencyWarning && (
-                <>
+                <div className={styles.dependencyWarningSection}>
                     <LinkedConfigBanner linkedConfigNames={linkedConfigNames} configName={type} />
                     <div className={styles.acknowledgeCheckbox}>
                         <DsCheckbox
@@ -223,7 +223,7 @@ const StorageConfigOracleDialog = ({
                             isSelected={acknowledged}
                         />
                     </div>
-                </>
+                </div>
             )}
             {setContent()}
         </div>
