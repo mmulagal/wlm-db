@@ -1923,11 +1923,11 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
             if [ "$isSetContainerRoleGranted" == "false" ]; then
                 missingPermissions="$missingPermissions\\"SET CONTAINER ROLE\\","
             fi
-            if [ "$isContainerDataPermissionGranted" == "false" ]; then
-                missingPermissions="$missingPermissions\\"SET CONTAINER_DATA\\","
-                errors="$errors\\"either SET CONTAINER_DATA privilege is not granted or PDBs are not in READ WRITE or READ ONLY state\\","
-            elif [ "$isContainerDataPermissionGranted" == "true" ] && [ "$arePDBsInReadWriteState" == "false" ]; then
+            if [ "$arePDBsInReadWriteState" == "false" ]; then
                 errors="$errors\\"Not all PDBs are in READ WRITE or READ ONLY state\\","
+            elif [ "$isContainerDataPermissionGranted" == "false" ]; then
+                missingPermissions="$missingPermissions\\"SET CONTAINER_DATA\\","
+                errors="$errors\\"SET CONTAINER_DATA privilege is not granted\\","
             fi
 
             if [ "$isSelectCatalogRoleGranted" == "false" ]; then
