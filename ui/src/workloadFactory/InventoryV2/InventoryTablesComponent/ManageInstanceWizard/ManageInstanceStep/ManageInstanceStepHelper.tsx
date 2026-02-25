@@ -1,5 +1,11 @@
 import { TFunction } from 'i18next';
-import { ACTION_TYPE, DBType, MANAGE_STATES, REGISTER_INSTANCE_STATE } from '../../../../../utils/consts';
+import {
+    ACTION_TYPE,
+    DBType,
+    INVENTORY_STATUS,
+    MANAGE_STATES,
+    REGISTER_INSTANCE_STATE
+} from '../../../../../utils/consts';
 import {
     BulkDetectedInstance,
     ExtendedManageStates,
@@ -75,7 +81,11 @@ export const getManageReadinessFromInstance = (instance: any, hostType: string, 
         return dbDetail?.manageReadiness || null;
     }
     // Default: MSSQL, use sqlServerInstances and match on sqlServerInstance
-    const sqlInstance = instance.sqlServerInstances?.find((sqlInst: any) => sqlInst.sqlServerInstance === serverName);
+    const sqlInstance = instance.sqlServerInstances?.find(
+        (sqlInst: any) =>
+            sqlInst.sqlServerInstance === serverName &&
+            sqlInst.sqlServerState?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER
+    );
     return sqlInstance?.manageReadiness || null;
 };
 

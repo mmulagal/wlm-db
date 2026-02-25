@@ -12,7 +12,8 @@ const TotalOptimizationScore = ({
     loading,
     optimizationBreakDown,
     isAssessmentAvailable,
-    allConfigurationsDismissed
+    allConfigurationsDismissed,
+    isWad = false
 }: any) => {
     const { t } = useTranslation();
 
@@ -68,12 +69,13 @@ const TotalOptimizationScore = ({
                                 {t('databases.well-architect.well-architected-instance')}
                             </DsTypography>
                         </div>
-
-                        <div className={styles.secondBlock}>
-                            <DsTypography variant="Regular_14" style={{ textAlign: 'center' }}>
-                                {t('databases.well-architect.well-architected-issue')}
-                            </DsTypography>
-                        </div>
+                        {!isWad && (
+                            <div className={styles.secondBlock}>
+                                <DsTypography variant="Regular_14" style={{ textAlign: 'center' }}>
+                                    {t('databases.well-architect.well-architected-issue')}
+                                </DsTypography>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

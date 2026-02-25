@@ -493,6 +493,7 @@ const GetWell = () => {
                                 optimizationBreakDown={optimizationBreakDown}
                                 isAssessmentAvailable={isAssessmentAvailable}
                                 allConfigurationsDismissed={allConfigurationsDismissed}
+                                isWad={cardData?.isWad || false}
                             />
                             <OptimizationBreakdown allConfigurationsDismissed={allConfigurationsDismissed} />
                         </div>

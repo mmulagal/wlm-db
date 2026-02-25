@@ -125,7 +125,6 @@ const ManagedInstanceOptimization = () => {
                                 {t('databases.dashboard.all-instances-are-well-architected')}
                             </DsTypography>
                         </div>
-
                         <div className={styles.secondBlock}>
                             <DsTypography variant="Regular_14">
                                 {t('databases.dashboard.there-are-no-issues')}

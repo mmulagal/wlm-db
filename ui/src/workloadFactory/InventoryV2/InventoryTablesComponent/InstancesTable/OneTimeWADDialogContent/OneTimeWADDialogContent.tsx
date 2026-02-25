@@ -131,13 +131,6 @@ const OneTimeWADDialogContent = () => {
                                                 <div className={styles.listItem}>
                                                     <Bullet />
                                                     <DsTypography variant="Regular_14">
-                                                        {t('databases.inventory.performance-counters')}
-                                                    </DsTypography>
-                                                </div>
-
-                                                <div className={styles.listItem}>
-                                                    <Bullet />
-                                                    <DsTypography variant="Regular_14">
                                                         {t('databases.inventory.high-availability-settings')}
                                                     </DsTypography>
                                                 </div>

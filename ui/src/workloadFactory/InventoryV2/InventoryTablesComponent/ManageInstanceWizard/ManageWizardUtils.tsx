@@ -874,12 +874,7 @@ export const handleReplicaAuthenticationAndDialog = async (
             if (areAllInstancesAuthenticated(replicaSelectedRowsForManage, instanceAuthStatus, hostType)) {
                 // All already authenticated. Store data in multi select and switch to bulk flow
                 // Combine original instance + authenticated replicas
-                const newStore = store.getState();
-                const { selectedMultiDetectInstances: latestSelectedMultiDetectInstances }: any = newStore?.inventoryV2;
-                const bulkInstances = [
-                    wrapInstanceForBulk(manageSingleInstanceData),
-                    ...latestSelectedMultiDetectInstances
-                ];
+                const bulkInstances = [wrapInstanceForBulk(manageSingleInstanceData), ...replicaSelectedRowsForManage];
 
                 dispatch(
                     addNotification({

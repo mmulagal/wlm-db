@@ -1245,7 +1245,7 @@
             "how-to-run-the-assessment": "How to run the assessment?",
             "download-the-data-collection-script": "Download the data collection script",
             "copy-the-script-to-your-sql-server-host": "Copy the script to your Microsoft SQL Server host.",
-            "run-the-script-in-powershell": "Run the script in PowerShell. One script collects metadata from all instances.",
+            "run-the-script-in-powershell": "Run the script in PowerShell. One script collects metadata from the selected instance.",
             "upload-the-output-file-back-to-this-console": "Upload the output file back to this console.",
             "first-upload-creates-a-new-instance": "First upload creates a new instance entry; later uploads update the existing assessment.",
             "what-data-does-the-script-collect": "What data does the script collect?",
@@ -1892,7 +1892,7 @@
             "jm-type-register-resource": "Register resource"
         },
         "wad": {
-            "tab-disabled-message": "The one-time assessment lets you check the well-architected status of your Microsoft SQL Server instances and get recommendations. To use other features, register the instance first.",
+            "tab-disabled-message": "The one-time assessment provides only well-architected status and recommendations. Register instances to unlock more features.",
             "register-disabled-no-credentials": "Registration requires AWS credentials. Add database credentials to register this instance."
         }
     }

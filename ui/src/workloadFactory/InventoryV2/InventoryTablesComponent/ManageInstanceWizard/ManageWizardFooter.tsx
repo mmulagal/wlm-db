@@ -762,9 +762,10 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
                     if (instanceId && manageReadinessUpdates[instanceId]) {
                         // Update the instance with new manageReadiness
-                        if (instance.data) {
+                        if (instance?.data) {
                             return {
                                 ...instance,
+                                manageReadiness: manageReadinessUpdates[instanceId],
                                 data: {
                                     ...instance.data,
                                     manageReadiness: manageReadinessUpdates[instanceId]

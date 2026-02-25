@@ -318,9 +318,11 @@ const DialogComponent = ({
                         isLoading={primaryButtonLoad}
                         onClick={primaryButtonClick}
                         title={
-                            <DsTypography variant="Regular_13" style={{ maxWidth: '300px' }}>
-                                {primaryButtonTooltip}
-                            </DsTypography>
+                            primaryButtonTooltip && (
+                                <DsTypography variant="Regular_13" style={{ maxWidth: '300px' }}>
+                                    {primaryButtonTooltip}
+                                </DsTypography>
+                            )
                         }
                         data-testid={testId}
                     >
