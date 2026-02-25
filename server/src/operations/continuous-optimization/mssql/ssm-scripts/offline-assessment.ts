@@ -216,6 +216,12 @@ if ([string]::IsNullOrWhiteSpace($Instance)) {
     throw "No SQL Server instance name provided. Please specify an instance name using the -Instance parameter."
 }
 
+$extractedInstanceName = $Instance
+if ($Instance -match '^[^\\\\/]+[\\\\/](.+)$') {
+    $extractedInstanceName = $Matches[1]
+    Write-Log -Level "DEBUG" -Message "Extracted instance name '$extractedInstanceName' from '$Instance'"
+}
+
 Function Get-CredentialFromWindowsCredentialManager {
     param(
         [Parameter(Mandatory = $true)]
@@ -260,6 +266,26 @@ Function Get-CredentialFromSecretsManager {
     
     try {
         Write-Log "Attempting to retrieve $CredentialType credentials from AWS Secrets Manager..."
+        
+        if (-not (Get-Command -Name "Get-SECSecretValue" -ErrorAction SilentlyContinue)) {
+            $awsSecretsManagerModule = "AWS.Tools.SecretsManager"
+            if (Get-Module -ListAvailable -Name $awsSecretsManagerModule) {
+                try {
+                    Import-Module -Name $awsSecretsManagerModule -ErrorAction Stop
+                    Write-Log -Level "DEBUG" -Message "Successfully imported AWS.Tools.SecretsManager module"
+                    if (-not (Get-Command -Name "Get-SECSecretValue" -ErrorAction SilentlyContinue)) {
+                        Write-Log -Level "WARNING" -Message "Get-SECSecretValue cmdlet not available after importing module. Cannot retrieve credentials from Secrets Manager."
+                        return $null
+                    }
+                } catch {
+                    Write-Log -Level "WARNING" -Message "Failed to import AWS.Tools.SecretsManager module: $($_.Exception.Message). Cannot retrieve credentials from Secrets Manager."
+                    return $null
+                }
+            } else {
+                Write-Log -Level "DEBUG" -Message "AWS.Tools.SecretsManager module not found. AWS PowerShell Tools may not be installed."
+                return $null
+            }
+        }
         
         foreach ($secretName in $SecretNames) {
             try {
@@ -448,31 +474,52 @@ Function Get-SqlCredentials {
     
     Write-Log "Windows Authentication not available, trying SQL Authentication..."
     
-    $ValidateSqlCredentials = {
-        param($Credentials, $Source, $ExecInstance)
-        
-        $testResult = Test-SqlConnection -ExecutableInstance $ExecInstance -Username $Credentials.Username -Password $Credentials.Password
-        if ($testResult.Success) {
-            Write-Log "SQL Authentication validated successfully (source: $Source)"
-            return @{
-                UseWindowsAuth = $false
-                Username = $Credentials.Username
-                Password = $Credentials.Password
-                Source = $Source
-                ExecutableInstance = $ExecInstance
-            }
+    # Build array of executable instances to try for SQL auth
+    # For default instance: single entry with $env:COMPUTERNAME
+    # For named instance: $InstanceName first, then $env:COMPUTERNAME\\$InstanceName
+    $execInstancesToTry = @()
+    if ($InstanceName -eq 'MSSQLSERVER') {
+        $execInstancesToTry = @($env:COMPUTERNAME)
+    } else {
+        if ($InstanceName -match '\\\\') {
+            $execInstancesToTry = @($InstanceName)
         } else {
-            Write-Log -Level "WARNING" -Message "SQL credentials from $Source are invalid: $($testResult.ErrorMessage)"
-            return $null
+            $execInstancesToTry = @($InstanceName, "$env:COMPUTERNAME\\$InstanceName")
         }
+    }
+    
+    $ValidateSqlCredentials = {
+        param($Credentials, $Source, $ExecInstances)
+        
+        foreach ($execInstance in $ExecInstances) {
+            $testResult = Test-SqlConnection -ExecutableInstance $execInstance -Username $Credentials.Username -Password $Credentials.Password
+            if ($testResult.Success) {
+                Write-Log "SQL Authentication validated successfully (source: $Source) with instance: $execInstance"
+                return @{
+                    UseWindowsAuth = $false
+                    Username = $Credentials.Username
+                    Password = $Credentials.Password
+                    Source = $Source
+                    ExecutableInstance = $execInstance
+                }
+            } else {
+                Write-Log -Level "DEBUG" -Message "SQL auth failed for instance: $execInstance - $($testResult.ErrorMessage)"
+            }
+        }
+        
+        Write-Log -Level "WARNING" -Message "SQL credentials from $Source are invalid for all instance formats tried"
+        return $null
     }
     
     if (-not [string]::IsNullOrEmpty($Region)) {
         Write-Log -Level "DEBUG" -Message "Region available ($Region), attempting Secrets Manager lookup for SQL credentials"
-        $credentials = Get-CredentialFromSecretsManager -SecretNames @("$Hostname/$serverInstanceName") -Region $Region -CredentialType "SQL"
+        # Build secret names: try with hostname prefix, and also try with backslashes replaced by forward slashes
+        $secretNameWithSlashes = $serverInstanceName -replace '\\\\', '/'
+        $secretNames = @("$Hostname/$serverInstanceName", $secretNameWithSlashes)
+        $credentials = Get-CredentialFromSecretsManager -SecretNames $secretNames -Region $Region -CredentialType "SQL"
         if ($credentials) {
             Write-Log -Level "DEBUG" -Message "Credentials retrieved from Secrets Manager, validating..."
-            $validatedCreds = & $ValidateSqlCredentials $credentials "SecretsManager" $executableInstance
+            $validatedCreds = & $ValidateSqlCredentials $credentials "SecretsManager" $execInstancesToTry
             if ($validatedCreds) {
                 Write-Log -Level "DEBUG" -Message "Secrets Manager credentials validated successfully"
                 return $validatedCreds
@@ -491,7 +538,7 @@ Function Get-SqlCredentials {
     $credentials = Get-CredentialFromWindowsCredentialManager -TargetNames @($serverInstanceName)
     if ($credentials) {
         Write-Log -Level "DEBUG" -Message "Credentials retrieved from Windows Credential Manager, validating..."
-        $validatedCreds = & $ValidateSqlCredentials $credentials "WindowsCredentialManager" $executableInstance
+        $validatedCreds = & $ValidateSqlCredentials $credentials "WindowsCredentialManager" $execInstancesToTry
         if ($validatedCreds) {
             Write-Log -Level "DEBUG" -Message "Windows Credential Manager credentials validated successfully"
             return $validatedCreds
@@ -512,18 +559,11 @@ Function Get-SqlCredentials {
         
         $credentials = Get-CredentialInteractive -CredentialType "SQL" -UsernamePrompt "Enter SQL username (e.g., sa)" -AllowEmptyUsername $false
         if ($credentials) {
-            $testResult = Test-SqlConnection -ExecutableInstance $executableInstance -Username $credentials.Username -Password $credentials.Password
-            if ($testResult.Success) {
-                Write-Log "SQL Authentication validated successfully (source: Interactive)"
-                return @{
-                    UseWindowsAuth = $false
-                    Username = $credentials.Username
-                    Password = $credentials.Password
-                    Source = "Interactive"
-                    ExecutableInstance = $executableInstance
-                }
+            $validatedCreds = & $ValidateSqlCredentials $credentials "Interactive" $execInstancesToTry
+            if ($validatedCreds) {
+                return $validatedCreds
             } else {
-                Write-Log -Level "ERROR" -Message "SQL Server authentication failed: $($testResult.ErrorMessage). Please verify your username and password."
+                Write-Log -Level "ERROR" -Message "SQL Server authentication failed for all instance formats. Please verify your username and password."
             }
         }
     }
@@ -843,8 +883,7 @@ $FinalResponse['rawdata'] = @{
     instanceLevelDetails = @{}
 }
 
-# Define output filename once (used in both success and error paths)
-$outputFileName = "MSSQL_Assessment_v1_$($Instance)_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
+$outputFileName = "MSSQL_Assessment_v1_$($extractedInstanceName)_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
 
 # Build output file path with fallback to current directory
 $outputFilePath = Join-Path -Path (Get-Location).Path -ChildPath $outputFileName
@@ -1088,10 +1127,10 @@ ${SERVER_DETAILS}
             }
             
             # Initialize instance-level data structure
-            $FinalResponse['rawdata']['instanceLevelDetails'][$serverInstanceName] = @{
+            $FinalResponse['rawdata']['instanceLevelDetails'][$extractedInstanceName] = @{
                 instanceDetails = @{
                     databaseInstanceId = $serverGuid
-                    instanceName = $serverInstanceName
+                    instanceName = $extractedInstanceName
                     executableInstance = $executableInstance
                     databaseVersion = $databaseVersion
                     databaseEdition = $databaseEdition
@@ -1232,7 +1271,7 @@ ${SERVER_DETAILS}
             $MappedVolumesResponse['volumeDBMap'] = $VolumeDBMap
             $MappedVolumesResponse['luns'] = $LunResult.LunDetails
             Write-Log -Level "DEBUG" -Message "Mapped volumes response assembled: $($ProcessedRecords.records.Count) volumes, $($VolumeDBMap.Count) DB mappings, $($LunResult.LunDetails.Count) LUNs"
-            $FinalResponse['rawdata']['instanceLevelDetails'][$serverInstanceName]['mappedVolumes'] = $MappedVolumesResponse
+            $FinalResponse['rawdata']['instanceLevelDetails'][$extractedInstanceName]['mappedVolumes'] = $MappedVolumesResponse
 
             # ========================================
             # PART 2: Storage Configuration Assessment
@@ -1267,7 +1306,7 @@ ${SERVER_DETAILS}
 
             ${highAvailabilityAssessmentTemplate}
 
-            $FinalResponse['rawdata']['instanceLevelDetails'][$serverInstanceName]['assessment'] = $DriftAssessmentData
+            $FinalResponse['rawdata']['instanceLevelDetails'][$extractedInstanceName]['assessment'] = $DriftAssessmentData
 
         } catch {
             $errorMessage = "Error processing instance '$serverInstanceName': $($_.Exception.Message)"
