@@ -4,7 +4,7 @@ import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@net
 import { useEffect, useRef, useState } from 'react';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './SavingsCalculator.module.scss';
-import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
+import { DBType, DETECT_HOST_VAR, SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
 import CostSavings from './CostSavings/CostSavings';
 import TotalMonthlyCost from '../TotalMonthlyCost/TotalMonthlyCost';
 import SavingsHeader from './SavingsHeader/SavingsHeader';
@@ -78,7 +78,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         showOptimizeLink,
         showOptimizeMode,
         selectedCalculatorMode,
-        selectedOnPremHostDetails
+        selectedOnPremHostDetails,
+        selectedTCOHostType
     } = useAppSelector(state => state.exploreSavings);
 
     // Helper to check if in Oracle on-prem mode
@@ -152,6 +153,10 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             formData.append('userEmail', userMetadata?.email);
             formData.append('emailType', 'savings-calculations');
             formData.append('storageType', setEmailSubject());
+            formData.append(
+                'databaseType',
+                selectedTCOHostType === DBType.MSSQL ? DETECT_HOST_VAR.MSSQL : DETECT_HOST_VAR.ORACLE
+            );
             const dynamicHostName = getDynamicBreadcrumbTitle();
             if (dynamicHostName) {
                 formData.append('hostName', dynamicHostName);
