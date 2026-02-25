@@ -1862,6 +1862,17 @@ enum SSM_COMMAND_RUNTIMES {
 }
 const CLOUDFLARE_DNS_IP = '1.1.1.1';
 const NOTIFICATION_SERVICE_NAME = 'Workload Factory for Databases';
+
+const STORAGE_LABEL: { [key: string]: string } = {
+    ebs: 'Amazon EBS',
+    fsxw: 'Amazon FSx for Windows',
+    onprem: 'On-premises'
+};
+
+const DATABASE_LABEL: { [key: string]: string } = {
+    MSSQL: 'Microsoft SQL Server',
+    ORACLE: 'Oracle Database'
+};
 // Temp directory for file operations (writable in read-only pods)
 const TEMP_DIRECTORY = '/tmp';
 
@@ -2247,5 +2258,7 @@ export {
     CLOUDFLARE_DNS_IP,
     LINUX_HOST_UTILITIES_RELATIVE_PATH,
     NOTIFICATION_SERVICE_NAME,
-    SSM_COMMAND_COMPRESSION_THRESHOLD
+    SSM_COMMAND_COMPRESSION_THRESHOLD,
+    STORAGE_LABEL,
+    DATABASE_LABEL
 };

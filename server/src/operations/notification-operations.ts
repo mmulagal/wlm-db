@@ -3,7 +3,14 @@ import config from 'config';
 import { EmailResponseType } from '../routes/types/notification.types';
 import { sendEmail } from './aws/ses-operations';
 import getLogger from '../utils/logger';
-import { EMAIL_RATE_LIMIT_TYPE, EMAIL_TYPES, HttpErrorCodes, MAX_EMAIL_ATTACHMENT_SIZE } from '../utils/consts';
+import {
+    DATABASE_LABEL,
+    EMAIL_RATE_LIMIT_TYPE,
+    EMAIL_TYPES,
+    HttpErrorCodes,
+    MAX_EMAIL_ATTACHMENT_SIZE,
+    STORAGE_LABEL
+} from '../utils/consts';
 import { IS_DEMO_FLOW, isRateLimited, isValidEmail } from '../utils/utils';
 
 const logger = getLogger();
@@ -30,7 +37,7 @@ export default async function processEmailRequest(
     }
 
     if (emailType && emailType === EMAIL_TYPES.SAVINGS_CALCULATIONS) {
-        const { storageType, hostName } = fields;
+        const { storageType, hostName, databaseType } = fields;
 
         if (!fileBuffer) {
             throw createError(HttpErrorCodes.BAD_REQUEST, 'Attachment file not found in the request');
@@ -47,7 +54,15 @@ export default async function processEmailRequest(
             default:
         }
 
-        response = await sendSavingsCalculationEmail(accountId, fileBuffer, fileName, userEmail, storageType, hostName);
+        response = await sendSavingsCalculationEmail(
+            accountId,
+            fileBuffer,
+            fileName,
+            userEmail,
+            storageType,
+            hostName,
+            databaseType
+        );
     } else {
         response.message = 'Invalid emailType';
         throw createError(HttpErrorCodes.BAD_REQUEST, response);
@@ -62,24 +77,21 @@ async function sendSavingsCalculationEmail(
     fileName: string,
     userEmail: string,
     storageType: string,
-    hostName?: string
+    hostName?: string,
+    databaseType?: string
 ): Promise<EmailResponseType> {
-    logger.info('Sending savings calculation email', { accountId, fileName, userEmail, storageType });
+    logger.info('Sending savings calculation email', { accountId, fileName, userEmail, storageType, databaseType });
     const successMsg = { message: 'Email sent successfully' };
 
     if (IS_DEMO_FLOW) {
         return successMsg;
     }
 
-    const storageDesc: { [key: string]: string } = {
-        ebs: 'Amazon EBS',
-        fsxw: 'Amazon FSx for Windows',
-        onprem: 'On-premises'
-    };
-    const desc = storageDesc[storageType];
+    const desc = STORAGE_LABEL[storageType];
+    const dbLabel = DATABASE_LABEL[databaseType ?? 'MSSQL'] ?? 'Microsoft SQL Server';
     const emailSubject = hostName
-        ? `Savings Calculator Report is Ready for the host: ${hostName}`
-        : 'Savings Calculator Report is Ready';
+        ? `Savings Calculator Report is Ready for ${dbLabel} on host: ${hostName}`
+        : `Savings Calculator Report is Ready for ${dbLabel}`;
     const emailBody = `
         <!DOCTYPE html>
         <html lang="en">
@@ -96,8 +108,8 @@ async function sendSavingsCalculationEmail(
             <body padding="20px">
                 <p>Hi there,</p>
                 <p>
-                    Here's the savings calculator report that provides a comparison of your current Microsoft SQL
-                    Server environment using ${desc} storage and the potential savings you could achieve by
+                    Here's the savings calculator report that provides a comparison of your current ${dbLabel}
+                    environment using ${desc} storage and the potential savings you could achieve by
                     switching to Amazon FSx for NetApp ONTAP.
                 </p>
                 <p>Key highlights from the report include:</p>

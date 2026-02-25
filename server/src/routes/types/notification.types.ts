@@ -18,7 +18,13 @@ const EmailRequestBody = Type.Object({
         description: 'Type of storage to calculate savings for',
         enum: ['ebs', 'fsxw', 'onprem']
     }),
-    hostName: Type.Optional(Type.String({}))
+    hostName: Type.Optional(Type.String({})),
+    databaseType: Type.Optional(
+        Type.String({
+            description: 'Database engine type (e.g. MSSQL, ORACLE)',
+            enum: ['MSSQL', 'ORACLE']
+        })
+    )
 });
 
 type EmailResponseType = Static<typeof EmailResponse>;
