@@ -4699,7 +4699,8 @@ export const enrichInstancesWithDataGuardFlags = (allInstanceTableRows: any[], d
             hasReplicas,
             replicasCount,
             replicasList,
-            connectedInstances
+            connectedInstances,
+            totalDgReplicaCount: instance.totalDgReplicaCount ?? replicasCount
         };
     });
 };
@@ -5477,4 +5478,27 @@ export const getAoagTotalReplicaCountPerDatabase = (perRow: any, perDatabase: an
     }
 
     return 0;
+};
+
+/**
+ * Returns the number of replica nodes for a DataGuard primary instance.
+ * Returns 0 if the instance is not a DataGuard deployment or not a primary node.
+ * The count excludes the primary itself (associatedHosts length - 1).
+ */
+export const getDgTotalReplicaCountPerInstance = (perRow: any, serverInstallationMode: string): number => {
+    if (serverInstallationMode !== DATABASE_DEPLOYMENT_MODE.DATAGUARD) {
+        return 0;
+    }
+
+    if (isAuthRequiredForInstance(perRow, DBType.ORACLE) && perRow?.statusColText !== INVENTORY_STATUS.MANAGED) {
+        return 0;
+    }
+
+    if (!perRow?.dataguardDetails?.isPrimaryNode) {
+        return 0;
+    }
+
+    return perRow?.dataguardDetails?.associatedHosts?.length > 0
+        ? perRow?.dataguardDetails?.associatedHosts?.length - 1
+        : 0;
 };

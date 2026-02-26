@@ -1244,7 +1244,7 @@
             "one-time-wad-bullet-3": "Easy upgrade: register instances for automated assessments and monitoring",
             "how-to-run-the-assessment": "How to run the assessment?",
             "download-the-data-collection-script": "Download the data collection script",
-            "copy-the-script-to-your-sql-server-host": "Copy the script to your Microsoft SQL Server host.",
+            "copy-the-script-to-your-sql-server-host": "Copy the script to your Microsoft SQL Server host. For Failover Cluster Instances (FCI) and Always On Availability Groups (AOAG), use the primary node.",
             "run-the-script-in-powershell": "Run the script in PowerShell. One script collects metadata from the selected instance.",
             "upload-the-output-file-back-to-this-console": "Upload the output file back to this console.",
             "first-upload-creates-a-new-instance": "First upload creates a new instance entry; later uploads update the existing assessment.",
@@ -1253,7 +1253,7 @@
             "storage-configuration": "Storage configuration (drives, FSx for ONTAP volume information)",
             "performance-counters": "Performance counters (CPU, memory, I/O statistics)",
             "high-availability-settings": "High availability settings (FCI, AOAG configuration)",
-            "what-access-is-needed": "What access is needed?",
+            "prerequisites": "Prerequisites",
             "read-only-access-to-sql-server-system-views-and-dmvs": "Read-only access to Microsoft SQL Server system views and dynamic management views (DMV)",
 
             "windows-powershell-execution-on-the-db-host": "Windows PowerShell execution on the DB host",

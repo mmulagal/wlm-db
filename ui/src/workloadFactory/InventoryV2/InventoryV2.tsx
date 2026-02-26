@@ -34,7 +34,8 @@ import {
     uniqueHostRow,
     getDiscoveredHostDeploymentAtHostLevel,
     getAvailabilityGroupListForAoag,
-    getAoagTotalReplicaCountPerDatabase
+    getAoagTotalReplicaCountPerDatabase,
+    getDgTotalReplicaCountPerInstance
 } from './InventoryUtilsV2';
 import { setFullInventoryTablesRows, setInventoryTablesRows } from '../../store/workloadFactory/inventoryV2Slice';
 import store from '../../store/store';
@@ -293,6 +294,7 @@ const InventoryV2 = () => {
                         ) {
                             dbOrInstanceName = perRow?.dataguardDetails?.dbName;
                         }
+                        const totalDgReplicaCount = getDgTotalReplicaCountPerInstance(perRow, serverInstallationMode);
                         const perRowData = {
                             ...perRow,
                             dbOrInstanceName,
@@ -359,7 +361,8 @@ const InventoryV2 = () => {
                                 'Database size': perRow?.databases?.[0]?.size
                                     ? formatSize(perRow?.databases?.[0]?.size)
                                     : GENERAL.NOT_AVAILABLE
-                            })
+                            }),
+                            totalDgReplicaCount
                         };
                         perInstanceData.push(perRowData);
                     });

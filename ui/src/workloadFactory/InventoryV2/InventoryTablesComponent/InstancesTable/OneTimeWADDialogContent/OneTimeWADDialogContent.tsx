@@ -146,7 +146,7 @@ const OneTimeWADDialogContent = () => {
                                 id="3"
                                 title={
                                     <DsTypography variant="Semibold_14">
-                                        {t('databases.inventory.what-access-is-needed')}
+                                        {t('databases.inventory.prerequisites')}
                                     </DsTypography>
                                 }
                             >

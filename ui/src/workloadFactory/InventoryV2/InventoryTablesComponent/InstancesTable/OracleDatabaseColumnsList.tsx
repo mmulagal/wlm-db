@@ -163,16 +163,16 @@ export function getOracleDatabaseColumnsList({
                             </DsTypography>
 
                             <div className={styles.firstColText}>
-                                {rowData.replicasCount > 0 && rowData?.dataguardDetails?.isPrimaryNode && (
+                                {rowData.totalDgReplicaCount > 0 && rowData?.dataguardDetails?.isPrimaryNode && (
                                     <DsTypography variant="Regular_13" className={styles.colText}>
-                                        {`${t('databases.general.primary')} | ${rowData.replicasCount || 0} ${
-                                            rowData.replicasCount <= 1
+                                        {`${t('databases.general.primary')} | ${rowData.totalDgReplicaCount || 0} ${
+                                            rowData.totalDgReplicaCount <= 1
                                                 ? t('databases.general.replica')
                                                 : t('databases.general.replicas')
                                         }`}
                                     </DsTypography>
                                 )}
-                                {!rowData.hasReplicas && rowData?.dataguardDetails?.isPrimaryNode && (
+                                {rowData.totalDgReplicaCount === 0 && rowData?.dataguardDetails?.isPrimaryNode && (
                                     <DsTypography variant="Regular_13" className={styles.colText}>
                                         {`${t('databases.general.primary')}`}
                                     </DsTypography>
