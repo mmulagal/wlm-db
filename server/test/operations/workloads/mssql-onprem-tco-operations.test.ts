@@ -537,6 +537,31 @@ describe('Explore Savings', () => {
         expect(bulkSavings.storageSavings.totalSummary).toBeDefined();
         expect(bulkSavings.storageSavings.totalSummary.existing).toBeGreaterThanOrEqual(0);
         expect(bulkSavings.storageSavings.totalSummary.recommended).toBeGreaterThanOrEqual(0);
+
+        const { calculations, storageSavings } = bulkSavings;
+        const existingComputeSum = (calculations.existingComputeCalculation as any[]).reduce(
+            (sum: number, c: any) => sum + (c.computeMonthlyPrice || 0),
+            0
+        );
+        const existingLicenseSum = (calculations.existingLicenseCalculation as any[]).reduce(
+            (sum: number, l: any) => sum + (l.licenseMonthlyPrice || 0),
+            0
+        );
+        const ebsTotal = Number((storageSavings.ebs as any)?.total || 0);
+        const expectedExisting = ebsTotal + existingComputeSum + existingLicenseSum;
+        expect(storageSavings.totalSummary.existing).toBeCloseTo(expectedExisting, 2);
+
+        const recommendedComputeSum = (calculations.recommendedComputeCalculation as any[]).reduce(
+            (sum: number, c: any) => sum + (c.computeMonthlyPrice || 0),
+            0
+        );
+        const recommendedLicenseSum = (calculations.recommendedLicenseCalculation as any[]).reduce(
+            (sum: number, l: any) => sum + (l.licenseMonthlyPrice || 0),
+            0
+        );
+        const fsxTotal = Number((storageSavings.fsx as any)?.total || 0);
+        const expectedRecommended = fsxTotal + recommendedComputeSum + recommendedLicenseSum;
+        expect(storageSavings.totalSummary.recommended).toBeCloseTo(expectedRecommended, 2);
     });
 
     it('should throw for invalid region code', async () => {

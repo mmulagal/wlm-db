@@ -1653,15 +1653,13 @@ async function getOnPremBulkResourceExploreSavings(
         } = buildPerResourceCalculations(resourcesWithPricing, monthlySqlByolCost);
 
         // Step 10: Extract shared storage data from existing config API response
-        const {
-            ebs,
-            fsx,
-            single,
-            multi,
-            totalSummary: { existing: existingTotalSummary = undefined } = {}
-        } = existingConfigData || {};
+        const { ebs, fsx, single, multi } = existingConfigData || {};
 
-        // Derive recommended total from per-resource pricing: FSx storage + compute + license
+        // Derive totals from per-resource pricing (consistent with how Oracle bulk flow computes them)
+        const existingTotalSummary =
+            Number(ebs?.total || 0) +
+            sumBy(existingComputeCalculation, 'computeMonthlyPrice') +
+            sumBy(existingLicenseCalculation, 'licenseMonthlyPrice');
         const recommendedTotalSummary =
             Number(fsx?.total || 0) +
             sumBy(recommendedComputeCalculation, 'computeMonthlyPrice') +
