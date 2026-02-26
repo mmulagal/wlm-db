@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { DsButton, DsTypography } from '@tlveng/wlm-ds';
 import { compressSync, zipSync, strToU8 } from 'fflate';
+import { useDialog } from '@netapp/design-system/dist/components/Dialog';
+import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import { Popover } from '@netapp/design-system/dist/components/Popover';
+import { useNavigate } from 'react-router-dom';
 import readmeContent from './DownloadContent/README 4.MD?raw';
 import statspackContent from './DownloadContent/OracleDataCollectorStatspack 3.sql?raw';
 import permissionsContent from './DownloadContent/OracleDataCollectorPermissions 1.json?raw';
@@ -8,11 +13,6 @@ import controllerContent from './DownloadContent/OracleDataCollectorController 3
 import noActionContent from './DownloadContent/_no_action 3.sql?raw';
 import collectorContent from './DownloadContent/OracleDataCollector 4.py?raw';
 import awrContent from './DownloadContent/OracleDataCollectorAWR 3.sql?raw';
-import { useDialog } from '@netapp/design-system/dist/components/Dialog';
-import { useDispatch } from 'react-redux';
-import { useTranslation } from 'react-i18next';
-import { Popover } from '@netapp/design-system/dist/components/Popover';
-import { useNavigate } from 'react-router-dom';
 
 import { ColumnProps, Table } from '../../../common/Lib/Table/Table';
 import { useTable } from '../../../common/Lib/Table/useTable';
@@ -85,6 +85,12 @@ const OracleOnPremTable = () => {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: t('databases.explore-savings.downloaded-assessment-script-and-readme')
+                })
+            );
         } else {
             try {
                 const result: any = await getOracleOnPremTCODownloadScript({});
