@@ -403,15 +403,16 @@ BEGIN
       WITH os_data AS (
         SELECT
           s.snap_id,
-          SUM(CASE WHEN st.stat_name = 'BUSY_TIME' THEN st.value END) as busy,
-          SUM(CASE WHEN st.stat_name = 'IDLE_TIME' THEN st.value END) as idle
+          SUM(CASE WHEN sn.stat_name = 'BUSY_TIME' THEN st.value END) as busy,
+          SUM(CASE WHEN sn.stat_name = 'IDLE_TIME' THEN st.value END) as idle
         FROM stats$snapshot s
         JOIN stats$osstat st ON s.snap_id = st.snap_id
           AND s.instance_number = st.instance_number
           AND s.dbid = st.dbid
+        JOIN stats$osstatname sn ON st.osstat_id = sn.osstat_id
         WHERE s.snap_time > SYSDATE - c_lookback_days
           AND s.dbid = v_dbid
-          AND st.stat_name IN ('BUSY_TIME', 'IDLE_TIME')
+          AND sn.stat_name IN ('BUSY_TIME', 'IDLE_TIME')
         GROUP BY s.snap_id
         ORDER BY s.snap_id
       ),
@@ -509,7 +510,7 @@ BEGIN
         AND s.instance_number = st.instance_number
         AND s.dbid = st.dbid
       WHERE s.snap_time > SYSDATE - c_lookback_days
-        AND st.stat_name = 'DB time'
+        AND st.name = 'DB time'
     ),
     db_time_per_sec AS (
       SELECT
@@ -553,17 +554,17 @@ BEGIN
         s.snap_id,
         s.instance_number,
         s.snap_time,
-        st.stat_name,
+        st.name as stat_name,
         st.value as current_value,
-        LEAD(s.snap_time) OVER (PARTITION BY st.stat_name, st.instance_number ORDER BY s.snap_id) as next_snap_time,
-        LEAD(st.value) OVER (PARTITION BY st.stat_name, st.instance_number ORDER BY s.snap_id) as next_value
+        LEAD(s.snap_time) OVER (PARTITION BY st.name, st.instance_number ORDER BY s.snap_id) as next_snap_time,
+        LEAD(st.value) OVER (PARTITION BY st.name, st.instance_number ORDER BY s.snap_id) as next_value
       FROM stats$snapshot s
       JOIN stats$sysstat st ON s.snap_id = st.snap_id 
         AND s.instance_number = st.instance_number 
         AND s.dbid = st.dbid
       WHERE s.snap_time > SYSDATE - c_lookback_days
         AND s.dbid = v_dbid
-        AND st.stat_name IN (
+        AND st.name IN (
           'physical reads', 
           'physical writes', 
           'physical read bytes', 
@@ -946,17 +947,17 @@ BEGIN
         s.snap_id,
         s.instance_number,
         s.snap_time,
-        st.stat_name,
+        st.name as stat_name,
         st.value as current_value,
-        LEAD(s.snap_time) OVER (PARTITION BY st.stat_name, st.instance_number ORDER BY s.snap_id) as next_snap_time,
-        LEAD(st.value) OVER (PARTITION BY st.stat_name, st.instance_number ORDER BY s.snap_id) as next_value
+        LEAD(s.snap_time) OVER (PARTITION BY st.name, st.instance_number ORDER BY s.snap_id) as next_snap_time,
+        LEAD(st.value) OVER (PARTITION BY st.name, st.instance_number ORDER BY s.snap_id) as next_value
       FROM stats$snapshot s
       JOIN stats$sysstat st ON s.snap_id = st.snap_id 
         AND s.instance_number = st.instance_number 
         AND s.dbid = st.dbid
       WHERE s.snap_time > SYSDATE - c_lookback_days
         AND s.dbid = v_dbid
-        AND st.stat_name IN (
+        AND st.name IN (
           'physical reads', 
           'physical writes', 
           'physical read bytes', 

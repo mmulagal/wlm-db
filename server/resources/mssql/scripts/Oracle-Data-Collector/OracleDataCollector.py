@@ -869,6 +869,7 @@ def main():
 
         inline_script = "\n".join([
             "import sys, os, json, base64",
+            "sys.dont_write_bytecode = True",
             "from collections import OrderedDict",
             "sys.path.insert(0, %s)" % repr(script_dir),
             "os.chdir(%s)" % repr(script_dir),

@@ -392,8 +392,9 @@ async function executeWithJobTracking(
     try {
         await work();
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         logger.error(errorMessagePrefix, { accountId, jobId, error });
-        jobError = errorMessagePrefix;
+        jobError = `${errorMessagePrefix} ${errorMessage}`;
         jobStatus = JOBSTATUS.FAILED;
     } finally {
         await updateJob(accountId, jobId, undefined, jobStatus || JOBSTATUS.COMPLETED, Date.now(), jobError);
