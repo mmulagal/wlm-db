@@ -46,7 +46,9 @@ const AssessmentContainer = ({
                             {!optimizePageLoading && gwTimestamp && gwTimestamp !== '0' && (
                                 <>
                                     <DsTypography variant="Regular_14">
-                                        {isWad ? t('databases.general.date') : t('databases.general.last-update')}
+                                        {isWad
+                                            ? t('databases.general.data-collection-date')
+                                            : t('databases.general.last-update')}
                                     </DsTypography>
                                     <DsTypography variant="Semibold_14">{gwTimestamp}</DsTypography>
                                 </>

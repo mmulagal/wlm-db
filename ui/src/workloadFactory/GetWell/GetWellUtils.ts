@@ -342,7 +342,7 @@ export const cardDataDefault: any = {
         recommendation: {
             title: 'Log drive size recommendation',
             description:
-                'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.\nAn additional 20% buffer would be required if the drive is hosting a primary replica of Always On Availability Group.',
+                'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.\nAn additional 20% buffer is required if the drive is hosting a primary replica of Always On Availability Group.',
             valuesHeading: 'Log drive size (relative to data drive size):',
             values: ['Under-provisioned: <20%', 'Optimized: 20-30%', 'Over-provisioned: >30%']
         },
@@ -901,7 +901,7 @@ export const cardDataDefault: any = {
         recommendation: {
             title: 'Cross-Region Replication (CRR) recommendation',
             aoagDescription:
-                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. In AOAG distributed groups, use CRR alongside asynchronous replicas and coordinate SnapMirror with AG seeding for effective multi-region support.',
+                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. In AOAG distributed groups, use CRR cross-region replication alongside and asynchronous replicas and coordinate SnapMirror replication with availablity group seeding for effective multi-region support.',
             description:
                 'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.'
         },
