@@ -1470,7 +1470,7 @@ const discoverOracleHosts = `
     ${checkOracleModuleAvailability}
     ${getDataguardDeploymentDetails}
 
-    hostname=$(hostname)
+    hostname=$(hostname -f 2>/dev/null || hostname)
     RESULTS="{\\"hostname\\":\\"$hostname\\", \\"dbInstances\\":["
 
     while IFS=: read -r sid oracle_home; do
