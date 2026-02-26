@@ -411,7 +411,7 @@
         {
             "error": "Process termination requested for pid 4015878 [source = rdbms], [info = 2] [request issued by pid: 2477563, uid: 54321]",
             "cause": "Oracle Database process with PID 4015878 was terminated by another process (PID 2477563). This could be due to administrative action, resource constraints, abnormal process behavior, or system cleanup. The 'info = 2' indicates the termination reason code from the Oracle process monitor.",
-            "count": 2,
+            "count": 3,
             "remediation": [
                 "Check Oracle alert log and trace files for detailed information about why the process was terminated",
                 "Verify system memory and CPU resources to ensure adequate capacity for Oracle processes",
