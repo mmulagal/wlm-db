@@ -414,7 +414,7 @@ async function saveOracleReportInWlmdbDatabase(
 
     const filteredReports = compact(validReports);
     if (isEmpty(filteredReports)) {
-        throw new Error('Report already generated for this Oracle collector data.');
+        throw new Error('Report already generated for the collected Oracle Server data.');
     }
 
     await createOnPremTcoReportData(filteredReports);
@@ -1297,7 +1297,10 @@ async function getOracleBulkResourceExploreSavings(
         };
     } catch (error) {
         logger.error('Failed to fetch Oracle bulk assessment data', { accountId, error });
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to fetch Oracle bulk assessment data');
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Failed to fetch Oracle bulk assessment data: ${(error as Error).message}`
+        );
     }
 }
 

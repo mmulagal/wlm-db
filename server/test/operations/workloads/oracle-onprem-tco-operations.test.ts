@@ -223,7 +223,7 @@ describe('Oracle Database Resources CRUD', () => {
         await saveOracleReportInWlmdbDatabase(ACCOUNT_ID, standaloneData);
 
         await expect(saveOracleReportInWlmdbDatabase(ACCOUNT_ID, standaloneData)).rejects.toThrow(
-            'Report already generated for this Oracle collector data.'
+            'Report already generated for the collected Oracle Server data.'
         );
     });
 

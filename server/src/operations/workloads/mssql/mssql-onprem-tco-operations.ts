@@ -405,7 +405,10 @@ function deriveEbsVolumesListForMarketing(region: string, sqlInstancesDetails: S
         return { primaryEbsVolumes, secondaryEbsVolumes };
     } catch (error) {
         logger.error('Error deriving EBS Volumes List', { region, error });
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error deriving EBS Volumes List');
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error deriving EBS Volumes List: ${(error as Error).message}`
+        );
     }
 }
 
@@ -663,7 +666,7 @@ function getEbsDisks(region: string, instance: SqlInstanceDetails, classificatio
         logger.error('Error getting EBS Disks', { instance: instance?.sqlInstanceName, region, error });
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error getting EBS Disks for ${instance?.sqlInstanceName}`
+            `Error getting EBS Disks for ${instance?.sqlInstanceName}: ${(error as Error).message}`
         );
     }
 }
@@ -1704,7 +1707,10 @@ async function getOnPremBulkResourceExploreSavings(
         };
     } catch (error) {
         logger.error('Failed to fetch bulk assessment data', { accountId, error });
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to fetch bulk assessment data');
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Failed to fetch bulk assessment data: ${(error as Error).message}`
+        );
     }
 }
 
