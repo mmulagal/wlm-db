@@ -50,7 +50,6 @@ async function listRegisteredUbrCredentials({ ...params }) {
             },
             searchParams: {
                 ...(resourceId && { credentialsName: resourceId }),
-                ...(connectorId && { connectorId }),
                 ...(username && { userName: username })
             }
         })
@@ -68,7 +67,7 @@ async function registerUbrCredentials({ ...params }) {
     const { accountId, workspaceId, connectorId, organizationId, sqlInstanceName, username, password, resourceId } =
         params;
 
-    const response = await gotInstanceForInternalRequest
+    return gotInstanceForInternalRequest
         .post(`backup-recovery/organizations/${organizationId ?? workspaceId}/v1/workloads/sql/credentials`, {
             prefixUrl: CLOUD_MANAGER_ENDPOINT,
             headers: {
@@ -89,7 +88,6 @@ async function registerUbrCredentials({ ...params }) {
             }
         })
         .json<RegisterUbrCredentialsResponse>();
-    return response;
 }
 
 export { registerUbrCredentials, listRegisteredUbrCredentials };

@@ -86,6 +86,10 @@ async function generateUbrCredentials({
         return response;
     } catch (error: any) {
         logger.error('Error registering UBR credentials:', { error, accountId, region, credentialsId });
+        const errorMessage = error?.response?.body?.errorMessage;
+        if (errorMessage && /The specified name \w+ exist already\./.test(errorMessage)) {
+            error.message = errorMessage;
+        }
         throw createError(HttpErrorCodes.PRECONDITION_FAILED, `Failed to register UBR credentials: ${error.message}`);
     }
 }
