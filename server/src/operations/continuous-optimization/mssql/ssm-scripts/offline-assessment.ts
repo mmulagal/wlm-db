@@ -52,7 +52,7 @@ const MSSQL_ONE_TIME_WAD = `
     The assessment results are saved to a JSON file. By default, files are saved
     in the current working directory. You can specify a custom output path using
     the -OutputPath parameter.
-.PARAMETER StorageEndpoint
+.PARAMETER StorageManagementAddress
     The storage system identifier that uniquely identifies the Amazon FSx for NetApp
     ONTAP file system to be assessed. This parameter is required and must be provided
     in one of two formats:
@@ -86,11 +86,11 @@ const MSSQL_ONE_TIME_WAD = `
     
     The script automatically detects which format you've provided by checking if
     the value starts with "fs-" (FSx ID) or matches an IPv4 address pattern
-    (management IP). The StorageEndpoint is used to authenticate and connect to
+    (management IP). The StorageManagementAddress is used to authenticate and connect to
     the FSx ONTAP storage system to retrieve volume details, LUN information, storage
     configuration, and aggregate capacity data during the assessment.
     
-.PARAMETER Instance
+.PARAMETER SqlInstanceName
     The name of the SQL Server instance to assess. This parameter is required and
     specifies which SQL Server database instance on the local host should be
     evaluated for workload assessment and discovery.
@@ -102,13 +102,13 @@ const MSSQL_ONE_TIME_WAD = `
     - The default instance listens on the standard SQL Server port (1433) and
       can be accessed using just the server hostname or IP address
     - Example: If your server is named "SQLSERVER01" and you installed SQL Server
-      as the default instance, use: -Instance MSSQLSERVER
+      as the default instance, use: -SqlInstanceName MSSQLSERVER
     
     For Named SQL Server Instances:
     - Use the exact instance name as it was configured during SQL Server installation
-    - Example: If you installed SQL Server with instance name "PROD", use: -Instance PROD
+    - Example: If you installed SQL Server with instance name "PROD", use: -SqlInstanceName PROD
     - Example: If you installed SQL Server with instance name "SQLInstance1", use:
-      -Instance SQLInstance1
+      -SqlInstanceName SQLInstance1
     - Named instances can be accessed using the format: <hostname>\\<instancename>
       or <hostname>\\<instancename>,<port>
     
@@ -129,13 +129,13 @@ const MSSQL_ONE_TIME_WAD = `
     (e.g., permission denied), files will be created in the current working
     directory instead.
 .EXAMPLE
-    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageEndpoint fs-0123456789abcdef0 -Instance MSSQLSERVER
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
     Runs assessment using FSx for ONTAP file system ID for the default SQL instance.
 .EXAMPLE
-    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageEndpoint 10.0.1.100 -Instance SQLInstance1
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress 10.0.1.100 -SqlInstanceName SQLInstance1
     Runs assessment using ONTAP management IP for a named SQL instance.
 .EXAMPLE
-    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageEndpoint fs-0123456789abcdef0 -Instance MSSQLSERVER -OutputPath "C:\\AssessmentResults"
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER -OutputPath "C:\\AssessmentResults"
     Runs assessment and saves JSON files to the specified output directory.
 .NOTES
     Version: ${OFFLINE_ASSESSMENT_SCRIPT_VERSION}
@@ -144,10 +144,10 @@ const MSSQL_ONE_TIME_WAD = `
 
 param(
     [Parameter(Mandatory = $true)]
-    [string]$StorageEndpoint,
+    [string]$StorageManagementAddress,
 
     [Parameter(Mandatory = $true)]
-    [string]$Instance,
+    [string]$SqlInstanceName,
 
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = $null
@@ -156,7 +156,7 @@ param(
 # Script Version
 $ScriptVersion = "${OFFLINE_ASSESSMENT_SCRIPT_VERSION}"
 
-# Determine if StorageEndpoint is an FSx ID or Management IP
+# Determine if StorageManagementAddress is an FSx ID or Management IP
 # FSx IDs start with "fs-" followed by alphanumeric characters
 $FSxID = $null
 $ManagementIP = $null
@@ -190,36 +190,36 @@ Function Write-Log {
     }
 }
 
-if ($StorageEndpoint -match '^fs-[a-zA-Z0-9]+$') {
-    $FSxID = $StorageEndpoint
-    Write-Log "StorageEndpoint detected as FSx ID: $FSxID"
+if ($StorageManagementAddress -match '^fs-[a-zA-Z0-9]+$') {
+    $FSxID = $StorageManagementAddress
+    Write-Log "StorageManagementAddress detected as FSx ID: $FSxID"
 } else {
     # Check if it's a valid IP address (IPv4)
     $ipAddress = $null
-    $isValidIP = [System.Net.IPAddress]::TryParse($StorageEndpoint, [ref]$ipAddress)
+    $isValidIP = [System.Net.IPAddress]::TryParse($StorageManagementAddress, [ref]$ipAddress)
     
     if ($isValidIP -and $ipAddress.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork) {
-        $ManagementIP = $StorageEndpoint
-        Write-Log "StorageEndpoint detected as Management IP: $ManagementIP"
+        $ManagementIP = $StorageManagementAddress
+        Write-Log "StorageManagementAddress detected as Management IP: $ManagementIP"
     } else {
-        $errorMessage = "Invalid StorageEndpoint format: '$StorageEndpoint'. StorageEndpoint must be either an FSx ID (format: fs-xxxxxxxxxxxxxxxxx) or a valid IPv4 Management IP address."
+        $errorMessage = "Invalid StorageManagementAddress format: '$StorageManagementAddress'. StorageManagementAddress must be either an FSx ID (format: fs-xxxxxxxxxxxxxxxxx) or a valid IPv4 Management IP address."
         Write-Log -Level "ERROR" -Message $errorMessage
-        Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageEndpoint <FSxID or ManagementIP> -Instance <InstanceName>"
+        Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress <FSxID or ManagementIP> -SqlInstanceName <InstanceName>"
         throw $errorMessage
     }
 }
 
-# Validate Instance parameter
-if ([string]::IsNullOrWhiteSpace($Instance)) {
-    Write-Log -Level "ERROR" -Message "No SQL Server instance name provided. Please specify an instance name using the -Instance parameter."
-    Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageEndpoint <FSxID or ManagementIP> -Instance <InstanceName>"
-    throw "No SQL Server instance name provided. Please specify an instance name using the -Instance parameter."
+# Validate SqlInstanceName parameter
+if ([string]::IsNullOrWhiteSpace($SqlInstanceName)) {
+    Write-Log -Level "ERROR" -Message "No SQL Server instance name provided. Please specify an instance name using the -SqlInstanceName parameter."
+    Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress <FSxID or ManagementIP> -SqlInstanceName <InstanceName>"
+    throw "No SQL Server instance name provided. Please specify an instance name using the -SqlInstanceName parameter."
 }
 
-$extractedInstanceName = $Instance
-if ($Instance -match '^[^\\\\/]+[\\\\/](.+)$') {
+$extractedInstanceName = $SqlInstanceName
+if ($SqlInstanceName -match '^[^\\\\/]+[\\\\/](.+)$') {
     $extractedInstanceName = $Matches[1]
-    Write-Log -Level "DEBUG" -Message "Extracted instance name '$extractedInstanceName' from '$Instance'"
+    Write-Log -Level "DEBUG" -Message "Extracted instance name '$extractedInstanceName' from '$SqlInstanceName'"
 }
 
 Function Get-CredentialFromWindowsCredentialManager {
@@ -433,9 +433,7 @@ Function Get-SqlCredentials {
         [Parameter(Mandatory = $false)]
         [string]$Region = $null,
         [Parameter(Mandatory = $false)]
-        [string]$Hostname = $env:COMPUTERNAME,
-        [Parameter(Mandatory = $false)]
-        [int]$MaxRetries = 3
+        [string]$Hostname = $env:COMPUTERNAME
     )
     
     $serverInstanceName = $InstanceName
@@ -549,43 +547,35 @@ Function Get-SqlCredentials {
         Write-Log -Level "DEBUG" -Message "No credentials found in Windows Credential Manager"
     }
     
-    $retryCount = 0
-    while ($retryCount -lt $MaxRetries) {
-        $retryCount++
-        
-        if ($retryCount -gt 1) {
-            Write-Log -Level "WARNING" -Message "Invalid credentials. Attempt $retryCount of $MaxRetries"
+    $credentials = Get-CredentialInteractive -CredentialType "SQL" -UsernamePrompt "Enter SQL username (e.g., sa)" -AllowEmptyUsername $false
+    if ($credentials) {
+        $validatedCreds = & $ValidateSqlCredentials $credentials "Interactive" $execInstancesToTry
+        if ($validatedCreds) {
+            return $validatedCreds
+        } else {
+            Write-Log -Level "ERROR" -Message "SQL Server authentication failed for all instance formats. Please verify your username and password."
+            throw "Failed to obtain valid SQL credentials. Cannot continue without valid SQL authentication."
         }
-        
-        $credentials = Get-CredentialInteractive -CredentialType "SQL" -UsernamePrompt "Enter SQL username (e.g., sa)" -AllowEmptyUsername $false
-        if ($credentials) {
-            $validatedCreds = & $ValidateSqlCredentials $credentials "Interactive" $execInstancesToTry
-            if ($validatedCreds) {
-                return $validatedCreds
-            } else {
-                Write-Log -Level "ERROR" -Message "SQL Server authentication failed for all instance formats. Please verify your username and password."
-            }
-        }
+    } else {
+        Write-Log -Level "ERROR" -Message "No SQL credentials provided"
+        throw "Failed to obtain valid SQL credentials. Cannot continue without valid SQL authentication."
     }
-    
-    Write-Log -Level "ERROR" -Message "Failed to obtain valid SQL credentials after $MaxRetries attempts"
-    throw "Failed to obtain valid SQL credentials after $MaxRetries attempts. Cannot continue without valid SQL authentication."
 }
 
 Function Get-OntapCredentials {
     param(
         [Parameter(Mandatory = $true)]
-        [string]$StorageEndpoint,
+        [string]$StorageManagementAddress,
         [Parameter(Mandatory = $false)]
         [string]$Region = $null
     )
     
     $credentials = $null
-    Write-Log -Level "DEBUG" -Message "Starting ONTAP credential resolution: StorageEndpoint=$StorageEndpoint, Region=$Region"
+    Write-Log -Level "DEBUG" -Message "Starting ONTAP credential resolution: StorageManagementAddress=$StorageManagementAddress, Region=$Region"
     
     if (-not [string]::IsNullOrEmpty($Region)) {
         Write-Log -Level "DEBUG" -Message "Region available, attempting Secrets Manager lookup for ONTAP credentials"
-        $credentials = Get-CredentialFromSecretsManager -SecretNames @($StorageEndpoint) -Region $Region -CredentialType "ONTAP"
+        $credentials = Get-CredentialFromSecretsManager -SecretNames @($StorageManagementAddress) -Region $Region -CredentialType "ONTAP"
         if ($credentials) {
             Write-Log -Level "DEBUG" -Message "ONTAP credentials retrieved from Secrets Manager, source: $($credentials.Source)"
             return $credentials
@@ -598,7 +588,7 @@ Function Get-OntapCredentials {
     }
     
     Write-Log -Level "DEBUG" -Message "Attempting Windows Credential Manager lookup for ONTAP credentials"
-    $credentials = Get-CredentialFromWindowsCredentialManager -TargetNames @($StorageEndpoint)
+    $credentials = Get-CredentialFromWindowsCredentialManager -TargetNames @($StorageManagementAddress)
     if ($credentials) {
         Write-Log -Level "DEBUG" -Message "ONTAP credentials retrieved from Windows Credential Manager, source: $($credentials.Source)"
         return $credentials
@@ -620,6 +610,7 @@ Function Resolve-ServerToEC2Info {
     $result = @{
         IpAddress = $null
         Ec2InstanceId = $null
+        Ec2Name = $null
     }
     
     try {
@@ -631,6 +622,12 @@ Function Resolve-ServerToEC2Info {
                 $ec2Instance = Get-EC2Instance -Filter @{Name='private-ip-address'; Values=$ipInfo.IPAddressToString} -ErrorAction SilentlyContinue
                 if ($ec2Instance -and $ec2Instance.Instances -and $ec2Instance.Instances.Count -gt 0) {
                     $result.Ec2InstanceId = $ec2Instance.Instances[0].InstanceId
+                    
+                    # Get EC2 instance name from tags
+                    $nameTag = $ec2Instance.Instances[0].Tags | Where-Object { $_.Key -eq 'Name' } | Select-Object -First 1
+                    if ($nameTag) {
+                        $result.Ec2Name = $nameTag.Value
+                    }
                 }
             } catch {
                 Write-Log -Level "WARNING" -Message "Could not resolve EC2 instance ID for $ServerName (IP: $($ipInfo.IPAddressToString)): $($_.Exception.Message)"
@@ -707,6 +704,26 @@ ${TEST_ISCSI_SESSIONS}
 
 ${slqcmdExecutionTemplate}
 
+# Collect the number of SQL Server instances on this host
+$sqlServices = Get-Service | Where-Object { $_.DisplayName -like "*SQL Server (*)" }
+$numberOfDatabaseInstances = @($sqlServices).Count
+if ($numberOfDatabaseInstances -eq 0) {
+    Write-Log -Level "WARNING" -Message "No SQL Server instances found on this host"
+    throw "No SQL Server instances found on this host"
+}
+Write-Log "Found $numberOfDatabaseInstances SQL Server instance(s) on this host"
+$sqlServiceNames = @($sqlServices.Name | ForEach-Object {
+    $serviceName = $_.ToUpper()
+    if ($serviceName -like 'MSSQL$*') {
+        $serviceName = $serviceName -replace '^MSSQL\\$', ''
+    }
+    $serviceName
+})
+if($extractedInstanceName.ToUpper() -notin $sqlServiceNames) {
+    Write-Log -Level "WARNING" -Message "SQL Server instance '$extractedInstanceName' not found on this host"
+    throw "SQL Server instance '$extractedInstanceName' not found on this host"
+}
+
 # Initialize ONTAP storage variables
 $OntapUsername = $null
 $OntapPassword = $null
@@ -723,9 +740,12 @@ $script:LogFilePath = "${OFFLINE_ASSESSMENT_LOG_PATH}"
 
 Write-Log "=========================================="
 Write-Log "Starting MSSQL One-Time Assessment"
-Write-Log "StorageEndpoint: $StorageEndpoint"
-Write-Log "Instance: $Instance"
+Write-Log "StorageManagementAddress: $StorageManagementAddress"
+Write-Log "SqlInstanceName: $SqlInstanceName"
 Write-Log "=========================================="
+
+# Initialize script-level global variable for FCI name
+$script:FciName = ''
 
 # Get EC2 instance metadata
 $ec2InstanceId = $null
@@ -793,7 +813,7 @@ try {
 }
 
 Write-Log "Resolving ONTAP storage credentials..."
-$ontapCreds = Get-OntapCredentials -StorageEndpoint $StorageEndpoint -Region $vmRegion
+$ontapCreds = Get-OntapCredentials -StorageManagementAddress $StorageManagementAddress -Region $vmRegion
 
 if (-not $ontapCreds) {
     $errorMessage = "Failed to obtain ONTAP storage credentials. The script attempted to retrieve credentials from AWS Secrets Manager, Windows Credential Manager, and interactive prompts. Please ensure credentials are available in one of these sources or provide them when prompted."
@@ -847,7 +867,7 @@ if (-not [string]::IsNullOrEmpty($ManagementIP)) {
 }
 
 if ([string]::IsNullOrEmpty($OntapHostName)) {
-    $errorMessage = "Could not determine ONTAP management endpoint from StorageEndpoint: '$StorageEndpoint'. Please verify that the StorageEndpoint is either a valid FSx ID (format: fs-xxxxxxxxxxxxxxxxx) or a valid IPv4 management IP address."
+    $errorMessage = "Could not determine ONTAP management endpoint from StorageManagementAddress: '$StorageManagementAddress'. Please verify that the StorageManagementAddress is either a valid FSx ID (format: fs-xxxxxxxxxxxxxxxxx) or a valid IPv4 management IP address."
     Write-Log -Level "ERROR" -Message $errorMessage
     throw $errorMessage
 }
@@ -867,7 +887,7 @@ $FinalResponse['metadata'] = @{
     virtualNetworkId = $virtualNetworkId
     virtualNetworkName = $virtualNetworkName
     region = $vmRegion
-    storageEndpoint = $StorageEndpoint
+    storageEndpoint = $StorageManagementAddress
     fsxId = $FSxID
     ontapHostName = $OntapHostName
     credentialSource = $ontapCreds.Source
@@ -881,6 +901,45 @@ $FinalResponse['rawdata'] = @{
         errors = @{}
     }
     instanceLevelDetails = @{}
+}
+    
+${invokeOntapRequestTemplate}
+
+# ========================================
+# Validate and resolve FSx ID from Management IP via ONTAP /api/cluster
+# ========================================
+try {
+    $clusterResponse = Invoke-ONTAPRequest -ApiEndpoint "/cluster" -ApiQueryFields "fields=name"
+    if ($clusterResponse -and $clusterResponse.name) {
+        $clusterName = $clusterResponse.name
+        Write-Log "ONTAP cluster name: $clusterName"
+        # Cluster name format: FsxId0d5efc3057c4f12cb -> fs-0d5efc3057c4f12cb
+        if ($clusterName -match '^FsxId([a-fA-F0-9]+)$') {
+            $FSxID = "fs-" + $Matches[1]
+            Write-Log "Resolved FSx file system ID from cluster name: $FSxID"
+            $FinalResponse['metadata']['fsxId'] = $FSxID
+        } else {
+            Write-Log -Level "WARNING" -Message "Cluster name '$clusterName' does not match expected FsxId format"
+        }
+    } else {
+        Write-Log -Level "WARNING" -Message "Could not retrieve cluster name from ONTAP API"
+    }
+} catch {
+    $errorDetails = $_.Exception.Message
+    if ($_.Exception.Response) {
+        $statusCode = $_.Exception.Response.StatusCode.value__
+        if ($statusCode -eq 401) {
+            $errorDetails = "Failed to resolve FSx ID: Authentication failed (401 Unauthorized). Invalid ONTAP credentials. Please verify your ONTAP credentials are correct."
+        } elseif ($statusCode -eq 404) {
+            $errorDetails = "Failed to resolve FSx ID: Endpoint not found (404). The ONTAP management endpoint may be incorrect. Please verify the Management IP address: $ManagementIP"
+        } elseif ($statusCode -ge 500) {
+            $errorDetails = "Failed to resolve FSx ID: ONTAP server error ($statusCode). The storage system may be unavailable. Please verify the ONTAP storage system is operational."
+        } else {
+            $errorDetails = "Failed to resolve FSx ID: ONTAP API request failed with status code $statusCode. Error: $($_.Exception.Message)"
+        }
+    } 
+    Write-Log -Level "ERROR" -Message $errorDetails
+    throw $errorDetails
 }
 
 $outputFileName = "MSSQL_Assessment_v1_$($extractedInstanceName)_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
@@ -905,7 +964,7 @@ try {
     $instanceLevelFsxnIds = @{}
     $includeLogVolumes = $true
 
-    $sqlInstances = @($Instance) | ForEach-Object {
+    $sqlInstances = @($SqlInstanceName) | ForEach-Object {
         $serverInstanceName = $_
         
         $sqlCreds = Get-SqlCredentials -InstanceName $serverInstanceName -Region $vmRegion
@@ -932,8 +991,6 @@ try {
         }
     }
 
-    ${invokeOntapRequestTemplate}
-
     $visitedFileSystems = @{}
     $instanceRespones = @{}
 
@@ -945,7 +1002,7 @@ try {
 
             $instanceLevelFsxnId = $($instanceLevelFsxnIds.$serverInstanceName.fsxId)
             if ([string]::IsNullOrEmpty($instanceLevelFsxnId)) {
-                $instanceLevelFsxnId = if ([string]::IsNullOrEmpty($FSxID)) { $StorageEndpoint } else { $FSxID }
+                $instanceLevelFsxnId = if ([string]::IsNullOrEmpty($FSxID)) { $StorageManagementAddress } else { $FSxID }
             }
             if ($instanceLevelFsxnId -ne $null -and -not $visitedFileSystems.ContainsKey($instanceLevelFsxnId)) {
                 $FSxNDetails = Get-FSxNDetails -fsxId $instanceLevelFsxnId
@@ -1040,23 +1097,66 @@ ${SERVER_DETAILS}
                                 Write-Log "Found cluster name: $windowsClusterName"
                             }
                             
-                            $clusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue | ForEach-Object {
-                                $ec2Info = Resolve-ServerToEC2Info -ServerName $_.Name
-                                $nodeInfo = @{
-                                    Node = $_.Name
-                                    State = $_.State.ToString()
+                            
+                            $fciResource = $null
+                            try {
+                                Write-Log "Getting FCI name for instance: $extractedInstanceName"
+                                $escapedInstanceName = [regex]::Escape($extractedInstanceName)
+                                $matchedResource = Get-ClusterResource -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "SQL Network Name*" -and $_.OwnerGroup -match "\\($escapedInstanceName\\)" }
+                                if ($matchedResource) {
+                                    $script:FciName = $matchedResource.Name -replace '^SQL Network Name\\s+\\(([^)]+)\\)$', '$1'
+                                    $fciResource = $matchedResource
+                                    Write-Log "Found FCI name: $script:FciName for instance: $extractedInstanceName"
+                                } else {
+                                    Write-Log -Level "WARNING" -Message "No matching SQL Network Name resource found for instance: $extractedInstanceName"
                                 }
-                                if ($ec2Info.IpAddress) {
-                                    $nodeInfo['Address'] = $ec2Info.IpAddress
-                                }
-                                if ($ec2Info.Ec2InstanceId) {
-                                    $nodeInfo['ec2InstanceId'] = $ec2Info.Ec2InstanceId
-                                }
-                                $nodeInfo
+                            } catch {
+                                Write-Log -Level "WARNING" -Message "Could not get FCI name: $($_.Exception.Message)"
                             }
+                            
+                            # Get cluster nodes, but filter to only those belonging to this FCI
+                            $fciOwnerNodeNames = @()
+                            if ($fciResource) {
+                                try {
+                                    $fciOwnerNodes = Get-ClusterOwnerNode -InputObject $fciResource -ErrorAction SilentlyContinue
+                                    if ($fciOwnerNodes -and $fciOwnerNodes.OwnerNodes) {
+                                        $fciOwnerNodeNames = @($fciOwnerNodes.OwnerNodes.NodeName)
+                                        Write-Log "Found $($fciOwnerNodeNames.Count) FCI owner nodes for FCI: $script:FciName"
+                                    }
+                                } catch {
+                                    Write-Log -Level "WARNING" -Message "Could not get FCI owner nodes: $($_.Exception.Message)"
+                                }
+                            }
+                            
+                            # Get cluster nodes, but only if we have FCI owner nodes to filter by
+                            $clusterNodes = @()
+                            if ($fciOwnerNodeNames.Count -gt 0) {
+                                $allClusterNodes = Get-ClusterNode -ErrorAction SilentlyContinue
+                                # Filter to only nodes that belong to this FCI
+                                $clusterNodes = $allClusterNodes | Where-Object { $fciOwnerNodeNames -contains $_.Name } | ForEach-Object {
+                                    $ec2Info = Resolve-ServerToEC2Info -ServerName $_.Name
+                                    $nodeInfo = @{
+                                        State = $_.State.ToString()
+                                    }
+                                    if ($ec2Info.IpAddress) {
+                                        $nodeInfo['Address'] = $ec2Info.IpAddress
+                                    }
+                                    if ($ec2Info.Ec2InstanceId) {
+                                        $nodeInfo['ec2InstanceId'] = $ec2Info.Ec2InstanceId
+                                    }
+                                    if ($ec2Info.Ec2Name) {
+                                        $nodeInfo['Node'] = $ec2Info.Ec2Name
+                                    }
+                                    $nodeInfo
+                                }
+                                Write-Log "Filtered cluster nodes to $($fciOwnerNodeNames.Count) nodes belonging to FCI: $script:FciName"
+                            } else {
+                                Write-Log -Level "WARNING" -Message "Could not determine FCI owner nodes, skipping cluster node collection"
+                            }
+                            
                             if ($clusterNodes) {
                                 $windowsClusterNodes = @($clusterNodes)
-                                Write-Log "Found $($windowsClusterNodes.Count) cluster nodes"
+                                Write-Log "Found $($windowsClusterNodes.Count) cluster nodes for FCI: $script:FciName"
                             }
                         }
                     } catch {
@@ -1417,30 +1517,9 @@ ${SERVER_DETAILS}
         ${hostLevelHighAvailabilityAssessmentTemplate}
     }
 
-    # ========================================
-    # PART 6: Resolve FSx ID from Management IP via ONTAP /api/cluster
-    # ========================================
-    if (-not [string]::IsNullOrEmpty($ManagementIP) -and [string]::IsNullOrEmpty($FSxID)) {
-        Write-Log "Management IP was provided. Attempting to resolve FSx file system ID via ONTAP cluster API..."
-        try {
-            $clusterResponse = Invoke-ONTAPRequest -ApiEndpoint "/cluster" -ApiQueryFields "fields=name"
-            if ($clusterResponse -and $clusterResponse.name) {
-                $clusterName = $clusterResponse.name
-                Write-Log "ONTAP cluster name: $clusterName"
-                # Cluster name format: FsxId0d5efc3057c4f12cb -> fs-0d5efc3057c4f12cb
-                if ($clusterName -match '^FsxId([a-fA-F0-9]+)$') {
-                    $FSxID = "fs-" + $Matches[1]
-                    Write-Log "Resolved FSx file system ID from cluster name: $FSxID"
-                    $FinalResponse['metadata']['fsxId'] = $FSxID
-                } else {
-                    Write-Log -Level "WARNING" -Message "Cluster name '$clusterName' does not match expected FsxId format"
-                }
-            } else {
-                Write-Log -Level "WARNING" -Message "Could not retrieve cluster name from ONTAP API"
-            }
-        } catch {
-            Write-Log -Level "WARNING" -Message "Failed to resolve FSx ID from ONTAP cluster API: $($_.Exception.Message)"
-        }
+    # Add fciName to metadata from script global variable
+    if ($script:fciName) {
+        $FinalResponse['metadata']['fciName'] = $script:fciName
     }
 
     # Write the output file with fallback to current directory if write fails

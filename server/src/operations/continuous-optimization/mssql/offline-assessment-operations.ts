@@ -27,7 +27,7 @@ import {
     parseAssessmentFileContent
 } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
-import { HttpErrorCodes, AWS_REGIONS } from '../../../utils/consts';
+import { HttpErrorCodes } from '../../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentStatus,
@@ -194,6 +194,7 @@ interface MSSQLOfflineAssessmentMetadataType {
         Address?: string;
         ec2InstanceId?: string;
     }>;
+    fciName?: string;
 }
 
 /**
@@ -275,7 +276,8 @@ async function processOfflineAssessmentUpload(
         osVersion,
         vmName,
         virtualNetworkId,
-        virtualNetworkName
+        virtualNetworkName,
+        fciName
     } = metadata;
 
     let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
@@ -362,7 +364,8 @@ async function processOfflineAssessmentUpload(
                         windowsClusterName,
                         windowsClusterNodes,
                         databaseVersion,
-                        databaseEdition
+                        databaseEdition,
+                        ...(fciName && { fciName })
                     }
                 } as OfflineAssessmentRecord;
             });
@@ -420,7 +423,8 @@ async function uploadMssqlOfflineAssessment(
         vmName,
         virtualNetworkId,
         virtualNetworkName,
-        region: metadataRegion
+        region: metadataRegion,
+        fciName
     } = metadata as unknown as MSSQLOfflineAssessmentMetadataType;
 
     if (!ec2InstanceId) {
@@ -459,7 +463,8 @@ async function uploadMssqlOfflineAssessment(
             osVersion,
             vmName,
             virtualNetworkId,
-            virtualNetworkName
+            virtualNetworkName,
+            fciName
         },
         { hostLevelDetails, instanceLevelDetails },
         credentialsId,
@@ -508,7 +513,8 @@ async function fetchMssqlOfflineAssessment(
         databaseInstanceName,
         deploymentType,
         baseDeploymentType,
-        ec2InstanceId
+        ec2InstanceId,
+        fciName
     } = metadata;
     const { instanceLevelAssessment, rssConfig, headroom, hostLevelHighAvailability } = rawdata;
     const { maxDop, highAvailability } = (instanceLevelAssessment as MSSQLInstanceLevelAssessment) || {};
@@ -625,7 +631,7 @@ async function fetchMssqlOfflineAssessment(
         storageEndpoint: fileSystemIdentifier,
         databaseInstanceName,
         ec2InstanceId,
-        databaseHostName: hostname,
+        databaseHostName: fciName && fciName.trim() !== '' ? fciName : hostname,
         deploymentType,
         baseDeploymentType: baseDeploymentType ?? ''
     };
@@ -698,14 +704,15 @@ async function fetchMssqlOfflineAssessmentPerAccount(
 
                 const recordCredentialsId = itemCredentialsId || credentialsId || '';
                 const recordRegion = itemRegion || region || '';
-                const regionName = recordRegion && AWS_REGIONS.has(recordRegion) ? AWS_REGIONS.get(recordRegion) : '';
+                // Until PM figures how to filter records by region, we'll keep the regionName as empty string
+                // const regionName = recordRegion && AWS_REGIONS.has(recordRegion) ? AWS_REGIONS.get(recordRegion) : '';
                 const response = {
                     resourceId,
                     databaseInstanceId,
                     databaseInstanceName,
                     credentialsId: recordCredentialsId,
-                    region: recordRegion,
-                    regionName,
+                    region: '',
+                    regionName: '',
                     vmName,
                     vmInstanceId,
                     virtualNetworkId,

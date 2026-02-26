@@ -44,7 +44,7 @@ This PowerShell script performs a comprehensive assessment of your SQL Server en
 
 ### Example 1: Using FSx File System ID (Default Instance)
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageEndpoint fs-0123456789abcdef0 -Instance MSSQLSERVER
+.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
 \`\`\`
 
 This example:
@@ -54,7 +54,7 @@ This example:
 
 ### Example 2: Using Management IP Address (Named Instance)
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageEndpoint 10.0.1.100 -Instance SQLInstance1
+.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress 10.0.1.100 -SqlInstanceName SQLInstance1
 \`\`\`
 
 This example:
@@ -64,7 +64,7 @@ This example:
 
 ### Example 3: Custom Output Directory
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageEndpoint fs-0123456789abcdef0 -Instance MSSQLSERVER -OutputPath "C:\\AssessmentResults"
+.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER -OutputPath "C:\\AssessmentResults"
 \`\`\`
 
 This example:
@@ -74,12 +74,12 @@ This example:
 
 ### Example 4: Named Instance with Custom Path
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageEndpoint 192.168.1.50 -Instance PROD -OutputPath "D:\\Reports\\SQLAssessment"
+.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress 192.168.1.50 -SqlInstanceName PROD -OutputPath "D:\\Reports\\SQLAssessment"
 \`\`\`
 
 ## Parameters
 
-### -StorageEndpoint (Required)
+### -StorageManagementAddress (Required)
 The storage system identifier. Can be provided in one of two formats:
 
 **Option 1: FSx File System ID**
@@ -93,7 +93,7 @@ The storage system identifier. Can be provided in one of two formats:
 - Example: \`10.0.1.100\` or \`192.168.1.50\`
 - Must be reachable from the host where the script is running
 
-### -Instance (Required)
+### -SqlInstanceName (Required)
 The name of the SQL Server instance to assess:
 
 **Default Instance:**
@@ -131,7 +131,7 @@ Allows the script to automatically retrieve SQL Server and ONTAP credentials fro
 
 **Secret Naming Convention:**
 - SQL Server credentials: \`<Hostname>/<InstanceName>\`
-- ONTAP credentials: Use the StorageEndpoint (FSx ID or Management IP) as the secret name
+- ONTAP credentials: Use the StorageManagementAddress (FSx ID or Management IP) as the secret name
 
 ### EC2 Metadata Access (Recommended)
 Allows the script to automatically detect EC2 instance metadata:
@@ -190,7 +190,7 @@ The script attempts to retrieve credentials in the following order:
 - Verify SQL Server authentication mode allows your connection type
 
 **Issue: Cannot connect to ONTAP storage**
-- Verify the StorageEndpoint is correct (FSx ID or Management IP)
+- Verify the StorageManagementAddress is correct (FSx ID or Management IP)
 - Check network connectivity to the management endpoint
 - Ensure ONTAP credentials are correct
 - Verify security group rules allow access to the management endpoint
