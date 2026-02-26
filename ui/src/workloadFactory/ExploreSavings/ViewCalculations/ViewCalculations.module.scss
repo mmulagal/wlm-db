@@ -1,13 +1,13 @@
 .viewCalculations {
-    height: 90vh;
-    width: 100vw;
     background-color: var(--main-background);
     overflow-y: auto;
+    width: 100vw;
+    overflow-x: hidden;
 
     .breadCrumb {
         margin-top: 24px;
         margin-left: 40px;
-        width: 1687px;
+
         display: flex;
         justify-content: space-between;
 
@@ -19,7 +19,8 @@
 
     .mainSection {
         margin: 0 auto;
-        width: 1334px;
+        width: 100%;
+        min-width: 1064px;
         margin-top: 40px;
 
         .headingArea {

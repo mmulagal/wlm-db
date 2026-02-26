@@ -280,7 +280,7 @@ const OracleOnPremTable = () => {
         columns: OracleOnPremColDefs,
         rows: onPremiseOracleData || [],
         pageSize: 50,
-        isLoading: onPremiseOracleDataLoading || isUploadLoading
+        isLazyLoading: onPremiseOracleDataLoading || isUploadLoading
     });
 
     const handleFileInputClick = () => {

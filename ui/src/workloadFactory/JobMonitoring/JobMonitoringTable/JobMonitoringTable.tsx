@@ -281,7 +281,8 @@ const JobMonitoringTable = React.memo(() => {
                 const isExpandDisable =
                     rowData?.name?.includes('Check data integrity') ||
                     rowData?.type === JOB_MONITORING_TYPE.LOGS_ANALYSIS ||
-                    rowData?.name?.includes('offline assessment data upload');
+                    rowData?.name?.includes('offline assessment data upload') ||
+                    rowData?.name?.includes('Upload Oracle on-premises data collector results');
                 return (
                     <>
                         <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
