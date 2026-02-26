@@ -879,8 +879,8 @@ async function initiateHostLevelAssessmentDataCollection(
                 (!mtuAlignmentErrorMessage ? existingAssessmentData?.mtuAlignment : undefined),
             mssqlPatch:
                 mssqlPatchAssessment || (!mssqlPatchErrorMessage ? existingAssessmentData?.mssqlPatch : undefined),
-            highAvailability: highAvailabilityAssessment,
-            ...(aoagDetails && { aoagDetails }),
+            highAvailability: highAvailabilityAssessment ?? existingAssessmentData?.highAvailability,
+            aoagDetails: aoagDetails ?? existingAssessmentData?.aoagDetails,
             errors: {
                 license:
                     licenseErrorMessage || (!licenseAssessment ? existingAssessmentData?.errors?.license : undefined),

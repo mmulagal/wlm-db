@@ -23,6 +23,7 @@ import { getInstanceInfo, updateDatabaseHostAssessmentData } from '../database/d
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { listSsmCommands } from '../../lib/aws/ssm';
 import { listResources } from '../../lib/database/db';
+import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
 
 const logger = getLogger();
 
@@ -293,7 +294,12 @@ async function updatePatchBaselineStatusForHost(
     databaseHostId: string,
     hostOsPatchAssessment?: HostOsPatchAssessmentObject[]
 ): Promise<void> {
-    const resources = (await listResources({ accountId, resourceId: databaseHostId })) || [];
+    const resources =
+        (await listResources({
+            accountId,
+            resourceId: databaseHostId,
+            selectKeys: [...new Set([...RESOURCE_DEFAULT_SELECT_FIELDS, 'assessment_data'])]
+        })) || [];
 
     if (!isEmpty(resources) && !isEmpty(hostOsPatchAssessment)) {
         await Promise.all(
