@@ -148,6 +148,15 @@ const Home = () => {
                             path="/databases/explore-savings/explore-savings-on-premise"
                             element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ONPREM} />}
                         />
+                        {/* Routes For Oracle Explore savings */}
+                        <Route
+                            path="/databases/explore-savings/explore-savings-oracle-on-premise"
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM} />}
+                        />
+                        <Route
+                            path="/databases/explore-savings/explore-savings-oracle-ebs"
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS} />}
+                        />
                         <Route
                             path="/databases/saving-calculator"
                             element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
@@ -233,6 +242,14 @@ const Home = () => {
                             <Route
                                 path="/fsxdb/explore-savings-on-premise"
                                 element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ONPREM} />}
+                            />
+                            <Route
+                                path="/fsxdb/explore-savings-oracle-on-premise"
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM} />}
+                            />
+                            <Route
+                                path="/fsxdb/explore-savings-oracle-ebs"
+                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS} />}
                             />
                             <Route path="/create-new-user" element={<WizardComponent />} />
                             <Route path="/job-monitor" element={<JobMonitoring />} />

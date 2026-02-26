@@ -226,7 +226,9 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (
             tabValue === WLF_TABS.EXPLORE_SAVINGS_EBS ||
             tabValue === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
-            tabValue === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+            tabValue === WLF_TABS.EXPLORE_SAVINGS_ONPREM ||
+            tabValue === WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM ||
+            tabValue === WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS
         ) {
             setExploreSavingsSubTab(tabValue, dispatch);
         }
@@ -247,7 +249,9 @@ const HeaderComponent = ({ tab }: Tab) => {
             if (
                 tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS ||
                 tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
-                tabInfo === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+                tabInfo === WLF_TABS.EXPLORE_SAVINGS_ONPREM ||
+                tabInfo === WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM ||
+                tabInfo === WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS
             ) {
                 if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS) {
                     postBlueXPMessage({
@@ -969,7 +973,9 @@ const HeaderComponent = ({ tab }: Tab) => {
     const isExploreSavingsTab =
         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
-        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM;
+        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM ||
+        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM ||
+        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS;
 
     const isOnPremMSSQL =
         isExploreSavingsTab &&
@@ -1427,7 +1433,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                                                     selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
                                                     selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
                                                     selectedHeaderTab === WLF_TABS.VIEW_THE_CALCULATIONS ||
-                                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM
+                                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM ||
+                                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM ||
+                                                    selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS
                                                         ? `${
                                                               isWorkloadFactory
                                                                   ? styles.headerPart5
@@ -1646,7 +1654,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                     {(selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
                         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
                         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
-                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM) && (
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ONPREM ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS) && (
                         <>
                             <div className={styles.exploreSavingSection}>
                                 <div className={styles.contentArea}>
@@ -1679,7 +1689,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                         selectedHeaderTab === WLF_TABS.WELL_ARCHITECTED_TAB ||
                         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS ||
                         selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS ||
-                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) && (
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM ||
+                        selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS) && (
                         <FetchingDataNotification
                             pendingQueriesCounter={pendingQueriesCounter}
                             completedTask={currentIndex}

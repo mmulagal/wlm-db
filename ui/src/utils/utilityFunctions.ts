@@ -56,7 +56,9 @@ import {
 } from '../store/workloadFactory/databaseHomeSlice';
 import {
     addExploreSavingsInitialData,
-    setSelectedExploreSavingsTab
+    setSelectedExploreSavingsTab,
+    setSelectedOracleExploreSavingsTab,
+    setSelectedTCOHostType
 } from '../store/workloadFactory/exploreSavingsSlice';
 import { PgsqlInstancesDiscovered } from './types/inventoryV2Types';
 import { addNotification, NOTIFICATION_TYPES } from '../store/notificationSlice';
@@ -2301,6 +2303,12 @@ export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolea
             case WLF_TABS.MSSQL_ON_PREMISES:
                 path = './explore-savings/explore-savings-on-premise';
                 break;
+            case WLF_TABS.ORACLE_SERVER_ON_PREMISES:
+                path = './explore-savings/explore-savings-oracle-on-premise';
+                break;
+            case WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE:
+                path = './explore-savings/explore-savings-oracle-ebs';
+                break;
         }
     } else {
         switch (value) {
@@ -2312,6 +2320,12 @@ export const handleExploreSavingsURL = (value: string, isWorkloadFactory: boolea
                 break;
             case WLF_TABS.MSSQL_ON_PREMISES:
                 path = '../../fsxdb/explore-savings-on-premise';
+                break;
+            case WLF_TABS.ORACLE_SERVER_ON_PREMISES:
+                path = '../../fsxdb/explore-savings-oracle-on-premise';
+                break;
+            case WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE:
+                path = '../../fsxdb/explore-savings-oracle-ebs';
                 break;
         }
     }
@@ -2596,6 +2610,10 @@ export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
             return WLF_TABS.EXPLORE_SAVINGS_FsxW;
         case WLF_TABS.EXPLORE_SAVINGS_ONPREM:
             return WLF_TABS.EXPLORE_SAVINGS_ONPREM;
+        case WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM:
+            return WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM;
+        case WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS:
+            return WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS;
         case WLF_TABS.SANDBOXES:
             return WLF_TABS.SANDBOXES;
         case WLF_TABS.EXPLORE_SAVINGS:
@@ -2620,6 +2638,12 @@ export const setExploreSavingsSubTab = (tabValue: string, dispatch: Dispatch): v
         dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE));
     } else if (tabValue === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
         dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_FSX_FOR_WINDOWS));
+    } else if (tabValue === WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM) {
+        dispatch(setSelectedOracleExploreSavingsTab(WLF_TABS.ORACLE_SERVER_ON_PREMISES));
+        dispatch(setSelectedTCOHostType(DBType.ORACLE));
+    } else if (tabValue === WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS) {
+        dispatch(setSelectedOracleExploreSavingsTab(WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE));
+        dispatch(setSelectedTCOHostType(DBType.ORACLE));
     } else {
         dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_ON_PREMISES));
     }
