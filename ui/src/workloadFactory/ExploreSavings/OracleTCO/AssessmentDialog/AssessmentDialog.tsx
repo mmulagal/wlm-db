@@ -17,12 +17,6 @@ const AssessmentDialog = () => {
                         ? t('databases.explore-savings.assessment-dialog-oracle-heading-part-one')
                         : t('databases.explore-savings.assessment-dialog-mssql-heading-part-one')}
                 </DsTypography>
-
-                <DsTypography variant="Regular_14">
-                    {selectedTCOHostType === DBType.ORACLE
-                        ? t('databases.explore-savings.assessment-dialog-oracle-heading-part-two')
-                        : t('databases.explore-savings.assessment-dialog-mssql-heading-part-two')}
-                </DsTypography>
             </div>
 
             <div className={styles.partOne}>
@@ -79,6 +73,14 @@ const AssessmentDialog = () => {
                                                         <DsTypography variant="Regular_14">
                                                             {t(
                                                                 'databases.explore-savings.mssql-accordion-one-point-one'
+                                                            )}
+                                                        </DsTypography>
+                                                    </div>
+                                                    <div className={styles.listItem}>
+                                                        <Bullet />
+                                                        <DsTypography variant="Regular_14">
+                                                            {t(
+                                                                'databases.explore-savings.mssql-accordion-one-point-four'
                                                             )}
                                                         </DsTypography>
                                                     </div>

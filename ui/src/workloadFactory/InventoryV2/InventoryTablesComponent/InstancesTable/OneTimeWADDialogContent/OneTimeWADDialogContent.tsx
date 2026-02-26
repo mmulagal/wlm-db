@@ -156,19 +156,100 @@ const OneTimeWADDialogContent = () => {
                                             <div className={styles.list}>
                                                 <div className={styles.listItem} style={{ marginTop: '24px' }}>
                                                     <Bullet />
-                                                    <DsTypography variant="Regular_14">
-                                                        {t(
-                                                            'databases.inventory.read-only-access-to-sql-server-system-views-and-dmvs'
-                                                        )}
+                                                    <DsTypography variant="Semibold_14">
+                                                        {t('databases.inventory.wad-accordion-three-point-one')}
                                                     </DsTypography>
                                                 </div>
                                                 <div className={styles.listItem}>
                                                     <Bullet />
+
                                                     <DsTypography variant="Regular_14">
-                                                        {t(
-                                                            'databases.inventory.windows-powershell-execution-on-the-db-host'
-                                                        )}
+                                                        <span className={styles.fontApplied}>
+                                                            {t(
+                                                                'databases.inventory.wad-accordion-three-point-two-bold'
+                                                            )}
+                                                        </span>
+                                                        <span>
+                                                            {t('databases.inventory.wad-accordion-three-point-two')}
+                                                        </span>
                                                     </DsTypography>
+                                                </div>
+
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+
+                                                    <DsTypography variant="Regular_14">
+                                                        <span className={styles.fontApplied}>
+                                                            {t(
+                                                                'databases.inventory.wad-accordion-three-point-three-bold'
+                                                            )}
+                                                        </span>
+                                                        <span>
+                                                            {t('databases.inventory.wad-accordion-three-point-three')}
+                                                        </span>
+                                                    </DsTypography>
+                                                </div>
+
+                                                <div className={styles.listItem}>
+                                                    <div>
+                                                        <Bullet />
+                                                    </div>
+
+                                                    <DsTypography variant="Regular_14">
+                                                        <span className={styles.fontApplied}>
+                                                            {t(
+                                                                'databases.inventory.wad-accordion-three-point-four-bold'
+                                                            )}
+                                                        </span>
+                                                        <span>
+                                                            {t('databases.inventory.wad-accordion-three-point-four')}
+                                                        </span>
+                                                    </DsTypography>
+                                                </div>
+
+                                                <div className={styles.listItem}>
+                                                    <Bullet />
+
+                                                    <div>
+                                                        <DsTypography variant="Regular_14">
+                                                            <span className={styles.fontApplied}>
+                                                                {t(
+                                                                    'databases.inventory.wad-accordion-three-point-five-bold'
+                                                                )}
+                                                            </span>
+                                                            <span>
+                                                                {t(
+                                                                    'databases.inventory.wad-accordion-three-point-five'
+                                                                )}
+                                                            </span>
+                                                        </DsTypography>
+
+                                                        <div className={styles.secondLevelList}>
+                                                            <div className={styles.item}>
+                                                                <DsTypography variant="Regular_14">
+                                                                    {t(
+                                                                        'databases.inventory.wad-accordion-three-point-five-option-one'
+                                                                    )}
+                                                                </DsTypography>
+                                                            </div>
+
+                                                            <div className={styles.item}>
+                                                                <DsTypography variant="Regular_14">
+                                                                    {t(
+                                                                        'databases.inventory.wad-accordion-three-point-five-option-two'
+                                                                    )}
+                                                                </DsTypography>
+                                                            </div>
+
+                                                            <div className={styles.item}>
+                                                                <DsTypography variant="Regular_14">
+                                                                    {t(
+                                                                        'databases.inventory.wad-accordion-three-point-five-option-three'
+                                                                    )}
+                                                                </DsTypography>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

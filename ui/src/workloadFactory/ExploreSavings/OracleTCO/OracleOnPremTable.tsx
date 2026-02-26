@@ -412,7 +412,7 @@ const OracleOnPremTable = () => {
                 tableProps={tableProps}
                 pluralTitle={t('databases.explore-savings.oracle-database-on-premises')}
                 singularTitle={t('databases.explore-savings.oracle-database-on-premises')}
-                className={styles.topBarInstanceStyle}
+                className={`${styles.topBarInstanceStyle} ${CommonStyles.commonTopBarInstanceStyle}`}
                 info={<TableTooltip />}
                 actionsRight={
                     <div>

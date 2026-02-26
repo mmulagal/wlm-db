@@ -6,6 +6,7 @@ import { compressSync } from 'fflate';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import styles from './ExploreSavingsOnPremiseTable.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { onClickESHostOnPrem, onClickESHostOnPremBulk } from '../ExploreSavingsUtils';
@@ -635,7 +636,7 @@ const ExploreSavingsOnPremiseTable = () => {
                 tableProps={tableProps}
                 pluralTitle="Microsoft SQL Server hosts on-premises"
                 singularTitle="Microsoft SQL Server host on-premises"
-                className={styles.topBarInstanceStyle}
+                className={`${styles.topBarInstanceStyle} ${CommonStyles.commonTopBarInstanceStyle}`}
                 info={<TableTooltip />}
                 actionsRight={
                     <div>

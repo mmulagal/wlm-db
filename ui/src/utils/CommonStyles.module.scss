@@ -8,6 +8,12 @@
     width: 196px;
 }
 
+.commonTopBarInstanceStyle {
+    [class*='actionListContainer'] {
+        width: 250px;
+    }
+}
+
 .pageOverlay {
     position: fixed;
     inset: 0;

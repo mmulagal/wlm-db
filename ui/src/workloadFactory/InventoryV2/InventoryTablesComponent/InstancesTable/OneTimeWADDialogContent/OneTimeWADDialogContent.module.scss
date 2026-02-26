@@ -18,7 +18,43 @@
             .listItem {
                 display: flex;
                 gap: 16px;
+
+                .sentence {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .secondLevelList {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    margin-top: 8px;
+
+                    .item {
+                        display: flex;
+                        gap: 16px;
+                    }
+                }
             }
+        }
+    }
+
+    .fontApplied {
+        font-weight: 500;
+        margin-right: 8px;
+    }
+
+    .secondLevelList {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 8px;
+        margin-left: 16px;
+
+        .item {
+            display: flex;
+            gap: 16px;
         }
     }
 
