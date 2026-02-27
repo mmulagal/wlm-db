@@ -440,14 +440,10 @@ async function registerSqlInstance(
             }
         }
 
-        // Filter SQL Server instances: not already managed, storage is FSXN, deployment is Standalone or FCI
-        const eligibleSqlInstances = (sqlServerInstances || []).filter((sqlInst: any) => {
-            const isAlreadyManaged = alreadyManagedDatabaseInstances.some(
-                elem => elem.database_instance_name === sqlInst.sqlServerInstance
-            );
-            const isSupportedDeployment = sqlInst.sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_AOAG_SHORT;
-            return !isAlreadyManaged && isSupportedDeployment;
-        });
+        const eligibleSqlInstances = (sqlServerInstances || []).filter(
+            (sqlInst: any) =>
+                !alreadyManagedDatabaseInstances.some(elem => elem.database_instance_name === sqlInst.sqlServerInstance)
+        );
 
         const fciInstanceDetails = await getPartnerNodeDetails(
             credentialsId,
