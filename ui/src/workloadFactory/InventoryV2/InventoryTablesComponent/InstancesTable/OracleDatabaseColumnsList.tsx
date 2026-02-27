@@ -155,6 +155,13 @@ export function getOracleDatabaseColumnsList({
             width: '213px',
             filterOptions: getFilterOptions(updatedTableData, 'serverInstallationMode'),
             renderCell: (cellData: string, rowData: any) => {
+                let loading = rowData?.loading || rowData?.subLoading;
+                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+                    loading = true;
+                }
+                if (loading && !cellData) {
+                    return <DsFlashingDotsLoader />;
+                }
                 if (cellData === DATABASE_DEPLOYMENT_MODE.DATAGUARD) {
                     return (
                         <div className={styles.firstColumnClass}>

@@ -11,14 +11,9 @@ import {
     DETECT_HOST_VAR,
     FROM_DIALOG,
     RESET_PASSWORD_TYPE,
-    WELL_ARCHITECTED_TABS,
-    WLF_TABS
+    WELL_ARCHITECTED_TABS
 } from '../../../utils/consts';
-import {
-    setDefaultFilterOptions,
-    setOptimizeFilterTags,
-    setSelectedHeaderTab
-} from '../../../store/workloadFactory/inventoryV2Slice';
+import { setDefaultFilterOptions, setOptimizeFilterTags } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     resetGwData,
     resetVisitedTabs,
@@ -65,7 +60,8 @@ const WellArchitectDashboard = () => {
         selectedWellArchitectTab,
         visitedTabs,
         gwRefreshTimestamp,
-        innerPageDetails
+        innerPageDetails,
+        isWad
     } = useAppSelector(state => state.getWellOptimize);
 
     const { refreshTime } = useAppSelector(state => state.headers);
@@ -313,7 +309,7 @@ const WellArchitectDashboard = () => {
                         }
                     />
 
-                    {selectedWellArchitectTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && (
+                    {selectedWellArchitectTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && !isWad && (
                         <div className={styles.buttonContainer}>
                             <ButtonWithDropdown
                                 variant="icon"

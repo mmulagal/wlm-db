@@ -17,6 +17,7 @@ import {
 import { ReactComponent as ErrorInvestigateSmall } from '../../../../assets/ErrorInvestigationSmallImage.svg';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import {
+    ACTION_TYPE,
     DBType,
     ERROR_ANALYZER_STATUS,
     INVENTORY_STATUS,
@@ -33,7 +34,11 @@ import {
     getErrorInvestigationSummary
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import store from '../../../../store/store';
-import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
+import {
+    setBreadCrumbSelectedFrom,
+    setSelectedHeaderTab,
+    setWizardOperationType
+} from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     setFSXId,
     setGwPageLoadInstanceData,
@@ -99,6 +104,7 @@ const ErrorInvestigationOverview = () => {
     }, [allLogAnalysisData, inventoryTableData]);
 
     const redirectToLogAnalyzerPage = (type: string) => {
+        dispatch(setWizardOperationType(ACTION_TYPE.SINGLE));
         const updatedState = store.getState();
         const { selectedErrorInvestigationRow, selectedViewInvestigationRow }: any = updatedState.agenticAI;
         let selectedRowData = null;

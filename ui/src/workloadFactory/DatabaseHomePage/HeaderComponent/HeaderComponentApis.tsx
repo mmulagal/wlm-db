@@ -87,11 +87,15 @@ const HeaderComponentApi = () => {
         dispatch(setCredentialMapping(makeCredMapping(credentialData)));
 
         // Set showNA flag based on credentials availability
+        // Only set to false if credentials exist AND status is active (not error)
         const hasNoCredentials = credentialData && credentialData.length === 0;
-        dispatch(setShowNA(hasNoCredentials));
+        const isStatusInactive = statusError || (statusData && !statusData?.isActive);
+
+        // showNA should be true if: no credentials OR status error OR status inactive
+        dispatch(setShowNA(hasNoCredentials || isStatusInactive));
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [credentialData, credentialLoading, credentialError]);
+    }, [credentialData, credentialLoading, credentialError, statusData, statusError]);
 
     useEffect(() => {
         if (regionsError) {
