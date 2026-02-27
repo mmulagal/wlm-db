@@ -204,7 +204,7 @@ async function runLinuxOsPatchAssessment(
                 securityNonCompliantCount: securityNonCompliantCount ?? 0,
                 missingPatchDetails: missingPatchDetails?.map(patch => ({
                     classification: patch.classification,
-                    cveIds: patch.cveIds ?? '',
+                    cveIds: patch.kbId || patch.cveIds || '',
                     severity: patch.severity,
                     state: patch.state,
                     title: patch.title

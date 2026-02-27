@@ -7,7 +7,7 @@ import { ACCOUNT_ID, DatabaseTypes } from '../utils/consts';
 import { setAsyncLocalStorageResource, getLocalStorage } from '../utils/async-local-storage';
 import { IS_DEMO_FLOW, formatDuration, sleep } from '../utils/utils';
 import { registerJob, updateParentJobStatus } from './database/job-operations';
-import { AssessmentCategories } from '../utils/continous-optimization-consts';
+import { AssessmentCategories, AssessmentCategoriesOracle } from '../utils/continous-optimization-consts';
 import { getPaginatedDatabaseInstances } from './database/database-operations';
 import {
     triggerMssqlAssessment,
@@ -148,7 +148,10 @@ async function processAccountInstancesBatch(
                             ]);
                             break;
                         case DatabaseTypes.ORACLE:
-                            await triggerOracleAssessment(instance, parentJobId, [AssessmentCategories.STORAGE]);
+                            await triggerOracleAssessment(instance, parentJobId, [
+                                AssessmentCategoriesOracle.STORAGE,
+                                AssessmentCategoriesOracle.HOST_OS_PATCH
+                            ]);
                             break;
                         default:
                             logger.error(
