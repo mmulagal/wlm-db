@@ -55,18 +55,23 @@ const MSSQL_ONE_TIME_WAD = `
 .PARAMETER StorageManagementAddress
     The storage system identifier that uniquely identifies the Amazon FSx for NetApp
     ONTAP file system to be assessed. This parameter is required and must be provided
-    in one of two formats:
+    in one of three formats:
     
-    Option 1 - FSx File System ID:
-    - Format: fs-xxxxxxxxxxxxxxxxx (where x is alphanumeric)
-    - Example: fs-0123456789abcdef0
-    - This is the AWS file system ID that uniquely identifies your FSx for ONTAP
-      file system. You can find this ID in the AWS Console under FSx, or by using
-      the AWS CLI command: aws fsx describe-file-systems
-    - When an FSx ID is provided, the script will automatically construct the
-      management endpoint using the format: management.<fsx-id>.fsx.<region>.amazonaws.com
-    - If the management domain cannot be resolved, the script will fall back to
-      retrieving the management IP address from AWS FSx API
+    Option 1 - FSx Management FQDN (Fully Qualified Domain Name):
+    - Format: Valid domain name (e.g., management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com)
+    - Example: management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com
+    - This is the fully qualified domain name of your FSx for ONTAP file system's
+      management endpoint
+    - The management FQDN is the DNS-resolvable hostname used to access the ONTAP REST API
+      for administrative operations
+    - You can find the management FQDN in the AWS Console under FSx file system
+      details (ONTAP Configuration > Management Endpoint), or by using the AWS CLI:
+      aws fsx describe-file-systems --file-system-id <fsx-id> --query
+      'FileSystems[0].OntapConfiguration.Endpoints.Management.DNSName'
+    - Ensure this FQDN is resolvable from the host where the script is running
+      and that network connectivity is available on the management network
+    - When a management FQDN is provided, the script will use it directly to connect
+      to the FSx ONTAP storage system
     
     Option 2 - FSx Management IP Address:
     - Format: Valid IPv4 address (e.g., 10.0.1.100)
@@ -84,11 +89,22 @@ const MSSQL_ONE_TIME_WAD = `
     - When a management IP is provided, the script will use it directly to connect
       to the FSx ONTAP storage system
     
+    Option 3 - FSx File System ID:
+    - Format: fs-xxxxxxxxxxxxxxxxx (where x is alphanumeric)
+    - Example: fs-0123456789abcdef0
+    - This is the AWS file system ID that uniquely identifies your FSx for ONTAP
+      file system. You can find this ID in the AWS Console under FSx, or by using
+      the AWS CLI command: aws fsx describe-file-systems
+    - When an FSx ID is provided, the script will automatically construct the
+      management endpoint using the format: management.<fsx-id>.fsx.<region>.amazonaws.com
+    - If the management domain cannot be resolved, the script will fall back to
+      retrieving the management IP address from AWS FSx API
+    
     The script automatically detects which format you've provided by checking if
-    the value starts with "fs-" (FSx ID) or matches an IPv4 address pattern
-    (management IP). The StorageManagementAddress is used to authenticate and connect to
-    the FSx ONTAP storage system to retrieve volume details, LUN information, storage
-    configuration, and aggregate capacity data during the assessment.
+    the value matches a valid domain name pattern (FQDN), matches an IPv4 address pattern
+    (management IP), or starts with "fs-" (FSx ID). The StorageManagementAddress
+    is used to authenticate and connect to the FSx ONTAP storage system to retrieve volume
+    details, LUN information, storage configuration, and aggregate capacity data during the assessment.
     
 .PARAMETER SqlInstanceName
     The name of the SQL Server instance to assess. This parameter is required and
@@ -129,11 +145,14 @@ const MSSQL_ONE_TIME_WAD = `
     (e.g., permission denied), files will be created in the current working
     directory instead.
 .EXAMPLE
-    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
-    Runs assessment using FSx for ONTAP file system ID for the default SQL instance.
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com -SqlInstanceName MSSQLSERVER
+    Runs assessment using ONTAP management FQDN for the default SQL instance.
 .EXAMPLE
     .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress 10.0.1.100 -SqlInstanceName SQLInstance1
     Runs assessment using ONTAP management IP for a named SQL instance.
+.EXAMPLE
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
+    Runs assessment using FSx for ONTAP file system ID for the default SQL instance.
 .EXAMPLE
     .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER -OutputPath "C:\\AssessmentResults"
     Runs assessment and saves JSON files to the specified output directory.
@@ -153,13 +172,20 @@ param(
     [string]$OutputPath = $null
 )
 
+$StorageManagementAddress = $StorageManagementAddress.Trim()
+$SqlInstanceName = $SqlInstanceName.Trim()
+if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
+    $OutputPath = $OutputPath.Trim()
+}
+
 # Script Version
 $ScriptVersion = "${OFFLINE_ASSESSMENT_SCRIPT_VERSION}"
 
-# Determine if StorageManagementAddress is an FSx ID or Management IP
+# Determine if StorageManagementAddress is an FSx ID, Management IP, or FQDN
 # FSx IDs start with "fs-" followed by alphanumeric characters
 $FSxID = $null
 $ManagementIP = $null
+$ManagementFQDN = $null
 
 $script:LogFilePath = $null
 
@@ -202,17 +228,23 @@ if ($StorageManagementAddress -match '^fs-[a-zA-Z0-9]+$') {
         $ManagementIP = $StorageManagementAddress
         Write-Log "StorageManagementAddress detected as Management IP: $ManagementIP"
     } else {
-        $errorMessage = "Invalid StorageManagementAddress format: '$StorageManagementAddress'. StorageManagementAddress must be either an FSx ID (format: fs-xxxxxxxxxxxxxxxxx) or a valid IPv4 Management IP address."
-        Write-Log -Level "ERROR" -Message $errorMessage
-        Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress <FSxID or ManagementIP> -SqlInstanceName <InstanceName>"
-        throw $errorMessage
+        # FQDN pattern: alphanumeric, dots, hyphens, must contain at least one dot
+        if ($StorageManagementAddress -match '^[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?(\\.[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)+$') {
+            $ManagementFQDN = $StorageManagementAddress
+            Write-Log "StorageManagementAddress detected as Management FQDN: $ManagementFQDN"
+        } else {
+            $errorMessage = "Invalid StorageManagementAddress format: '$StorageManagementAddress'. StorageManagementAddress must be either a valid FQDN (Fully Qualified Domain Name), a valid IPv4 Management IP address, or an FSx ID (format: fs-xxxxxxxxxxxxxxxxx)."
+            Write-Log -Level "ERROR" -Message $errorMessage
+            Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress <FQDN, ManagementIP, or FSxID> -SqlInstanceName <InstanceName>"
+            throw $errorMessage
+        }
     }
 }
 
 # Validate SqlInstanceName parameter
 if ([string]::IsNullOrWhiteSpace($SqlInstanceName)) {
     Write-Log -Level "ERROR" -Message "No SQL Server instance name provided. Please specify an instance name using the -SqlInstanceName parameter."
-    Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress <FSxID or ManagementIP> -SqlInstanceName <InstanceName>"
+    Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress <FQDN, ManagementIP, or FSxID> -SqlInstanceName <InstanceName>"
     throw "No SQL Server instance name provided. Please specify an instance name using the -SqlInstanceName parameter."
 }
 
@@ -833,6 +865,9 @@ if (-not [string]::IsNullOrEmpty($ManagementIP)) {
     $OntapHostName = $ManagementIP
     $OntapIPUsed = $true
     Write-Log "Using provided management IP: $OntapHostName"
+} elseif (-not [string]::IsNullOrEmpty($ManagementFQDN)) {
+    $OntapHostName = $ManagementFQDN
+    Write-Log "Using provided management FQDN: $OntapHostName"
 } elseif (-not [string]::IsNullOrEmpty($FSxID)) {
     if ([string]::IsNullOrEmpty($vmRegion)) {
         throw "AWS region is required when using FSx ID. Could not retrieve region from EC2 instance metadata. Either run on an EC2 instance or provide the Management IP instead of FSx ID."
@@ -867,7 +902,7 @@ if (-not [string]::IsNullOrEmpty($ManagementIP)) {
 }
 
 if ([string]::IsNullOrEmpty($OntapHostName)) {
-    $errorMessage = "Could not determine ONTAP management endpoint from StorageManagementAddress: '$StorageManagementAddress'. Please verify that the StorageManagementAddress is either a valid FSx ID (format: fs-xxxxxxxxxxxxxxxxx) or a valid IPv4 management IP address."
+    $errorMessage = "Could not determine ONTAP management endpoint from StorageManagementAddress: '$StorageManagementAddress'. Please verify that the StorageManagementAddress is either a valid FQDN (Fully Qualified Domain Name), a valid IPv4 management IP address, or a valid FSx ID (format: fs-xxxxxxxxxxxxxxxxx)."
     Write-Log -Level "ERROR" -Message $errorMessage
     throw $errorMessage
 }

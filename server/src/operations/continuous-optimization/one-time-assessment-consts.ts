@@ -42,13 +42,13 @@ This PowerShell script performs a comprehensive assessment of your SQL Server en
 
 ## Usage Examples
 
-### Example 1: Using FSx File System ID (Default Instance)
+### Example 1: Using Management FQDN (Default Instance)
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
+.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com -SqlInstanceName MSSQLSERVER
 \`\`\`
 
 This example:
-- Uses the FSx file system ID to identify the storage system
+- Uses the ONTAP management FQDN (Fully Qualified Domain Name) directly
 - Assesses the default SQL Server instance (MSSQLSERVER)
 - Saves output to the current working directory
 
@@ -62,7 +62,17 @@ This example:
 - Assesses a named SQL Server instance called "SQLInstance1"
 - Saves output to the current working directory
 
-### Example 3: Custom Output Directory
+### Example 3: Using FSx File System ID (Default Instance)
+\`\`\`powershell
+.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
+\`\`\`
+
+This example:
+- Uses the FSx file system ID to identify the storage system
+- Assesses the default SQL Server instance (MSSQLSERVER)
+- Saves output to the current working directory
+
+### Example 4: Custom Output Directory
 \`\`\`powershell
 .\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER -OutputPath "C:\\AssessmentResults"
 \`\`\`
@@ -72,7 +82,7 @@ This example:
 - Creates the directory if it doesn't exist
 - Saves JSON output files to the specified path
 
-### Example 4: Named Instance with Custom Path
+### Example 5: Named Instance with Custom Path
 \`\`\`powershell
 .\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress 192.168.1.50 -SqlInstanceName PROD -OutputPath "D:\\Reports\\SQLAssessment"
 \`\`\`
@@ -80,18 +90,24 @@ This example:
 ## Parameters
 
 ### -StorageManagementAddress (Required)
-The storage system identifier. Can be provided in one of two formats:
+The storage system identifier. Can be provided in one of three formats:
 
-**Option 1: FSx File System ID**
-- Format: \`fs-xxxxxxxxxxxxxxxxx\` (where x is alphanumeric)
-- Example: \`fs-0123456789abcdef0\`
-- The script automatically constructs the management endpoint
-- Falls back to management IP if domain cannot be resolved
+**Option 1: FSx Management FQDN (Fully Qualified Domain Name)**
+- Format: Valid domain name
+- Example: \`management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com\`
+- Must be DNS-resolvable from the host where the script is running
+- You can find the management FQDN in the AWS Console under FSx file system details (ONTAP Configuration > Management Endpoint), or by using the AWS CLI: \`aws fsx describe-file-systems --file-system-id <fsx-id> --query 'FileSystems[0].OntapConfiguration.Endpoints.Management.DNSName'\`
 
 **Option 2: FSx Management IP Address**
 - Format: Valid IPv4 address
 - Example: \`10.0.1.100\` or \`192.168.1.50\`
 - Must be reachable from the host where the script is running
+
+**Option 3: FSx File System ID**
+- Format: \`fs-xxxxxxxxxxxxxxxxx\` (where x is alphanumeric)
+- Example: \`fs-0123456789abcdef0\`
+- The script automatically constructs the management endpoint
+- Falls back to management IP if domain cannot be resolved
 
 ### -SqlInstanceName (Required)
 The name of the SQL Server instance to assess:
@@ -131,7 +147,7 @@ Allows the script to automatically retrieve SQL Server and ONTAP credentials fro
 
 **Secret Naming Convention:**
 - SQL Server credentials: \`<Hostname>/<InstanceName>\`
-- ONTAP credentials: Use the StorageManagementAddress (FSx ID or Management IP) as the secret name
+- ONTAP credentials: Use the StorageManagementAddress (FQDN, Management IP, or FSx ID) as the secret name
 
 ### EC2 Metadata Access (Recommended)
 Allows the script to automatically detect EC2 instance metadata:
@@ -190,8 +206,9 @@ The script attempts to retrieve credentials in the following order:
 - Verify SQL Server authentication mode allows your connection type
 
 **Issue: Cannot connect to ONTAP storage**
-- Verify the StorageManagementAddress is correct (FSx ID or Management IP)
+- Verify the StorageManagementAddress is correct (FQDN, Management IP, or FSx ID)
 - Check network connectivity to the management endpoint
+- If using FQDN, verify DNS resolution is working (try \`nslookup <fqdn>\`)
 - Ensure ONTAP credentials are correct
 - Verify security group rules allow access to the management endpoint
 
