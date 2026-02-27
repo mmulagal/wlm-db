@@ -75,7 +75,7 @@
             .table {
                 min-height: 100px;
 
-                [class*='Table-module_innerTable'] {
+                [class*='Table-module_innerTable'] > [class*='Table-module_table'] {
                     min-height: 100px !important;
                     max-height: 224px !important;
                     overflow: auto !important;
