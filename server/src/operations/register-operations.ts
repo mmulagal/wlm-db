@@ -290,6 +290,14 @@ async function powershellInstallations(
     return { powershellInstallationResponse, modulesInstallationResponse };
 }
 
+function isAoAgFciDeployment(sqlServerDeploymentType: string | undefined, aoagDetails: any) {
+    return (
+        sqlServerDeploymentType &&
+        sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT &&
+        (aoagDetails as any)?.baseDeploymentType === 'FCI'
+    );
+}
+
 async function getPartnerNodeDetails(
     credentialsId: string,
     region: string,
@@ -304,8 +312,10 @@ async function getPartnerNodeDetails(
     });
     const fciInstanceDetails = sqlServerInstances
         .filter(
-            ({ sqlServerDeploymentType, windowsClusterNodes }) =>
-                sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT && windowsClusterNodes
+            ({ sqlServerDeploymentType, windowsClusterNodes, aoagDetails }) =>
+                (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
+                    isAoAgFciDeployment(sqlServerDeploymentType, aoagDetails)) &&
+                windowsClusterNodes
         )
         .map(({ sqlServerInstance, windowsClusterNodes }) => ({
             databaseInstanceName: sqlServerInstance,
@@ -476,11 +486,13 @@ async function registerSqlInstance(
                             (sqlInst: { sqlServerInstance: string }) => sqlInst.sqlServerInstance === dbInst
                         );
 
-                        // If the current node is not active for FCI, then serverGuid will be empty and check on the partner node is handled later.
+                        const isMultiNodeDeployment =
+                            sqlInstanceInfo?.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT ||
+                            isAoAgFciDeployment(sqlInstanceInfo?.sqlServerDeploymentType, sqlInstanceInfo?.aoagDetails);
+                        // If the current node is not active for FCI/AOAG+FCI, then serverGuid will be empty and check on the partner node is handled later.
                         if (
                             !sqlInstanceInfo?.sqlServerDeploymentType ||
-                            (sqlInstanceInfo.sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_FCI_SHORT &&
-                                !sqlInstanceInfo.serverGuid)
+                            (!isMultiNodeDeployment && !sqlInstanceInfo.serverGuid)
                         ) {
                             throw new Error(
                                 'SQL Server instance not found or the required details (e.g., server GUID, deployment type) are missing.'
@@ -494,15 +506,15 @@ async function registerSqlInstance(
                             throw new Error('SQL Server instance is not hosted on FSx for NetApp.');
                         }
 
-                        // If the SQL Server instance is part of an FCI, get the partner EC2 instance ID.
-                        if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
+                        // If the SQL Server instance is part of a multi-node deployment (FCI/AOAG), get the partner EC2 instance ID.
+                        if (isMultiNodeDeployment) {
                             const fciInstance = fciInstanceDetails.find(
                                 instance => instance.databaseInstanceName === dbInst
                             );
                             partnerEc2InstanceId = fciInstance?.partnerEc2InstanceId;
 
                             if (!fciInstance || !partnerEc2InstanceId) {
-                                throw new Error('FCI instance details or partner EC2 instance ID is missing.');
+                                throw new Error('Multi-node instance details or partner EC2 instance ID is missing.');
                             }
 
                             // If the SQL Server instance is not found on the current node, check the partner node.
@@ -600,7 +612,7 @@ async function registerSqlInstance(
                         let partnerPowershellInstallationResponse;
                         let partnerModulesInstallationResponse;
 
-                        if (sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT) {
+                        if (isMultiNodeDeployment) {
                             ({
                                 powershellInstallationResponse: partnerPowershellInstallationResponse,
                                 modulesInstallationResponse: partnerModulesInstallationResponse
