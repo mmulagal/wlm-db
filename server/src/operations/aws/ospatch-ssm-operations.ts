@@ -93,8 +93,11 @@ async function getInstancesPatchStatus(
         );
 
         const isNotOptimized = instancePatchStates?.some(
-            ({ CriticalNonCompliantCount: critical = 0, SecurityNonCompliantCount: security = 0 }) =>
-                critical > 0 || security > 0
+            ({
+                CriticalNonCompliantCount: critical = 0,
+                SecurityNonCompliantCount: security = 0,
+                OtherNonCompliantCount: other = 0
+            }) => critical > 0 || security > 0 || other > 0
         );
         if (isNotOptimized) {
             const instanceMissingPatchDetails = await getMissingPatchDetails(

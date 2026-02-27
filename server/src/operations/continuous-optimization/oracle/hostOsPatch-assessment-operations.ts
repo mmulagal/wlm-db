@@ -1,16 +1,14 @@
 import { isEmpty } from 'lodash-es';
-import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-
 import getLogger from '../../../utils/logger';
 import { AssessmentCategoriesOracle, AssessmentStatus } from '../../../utils/continous-optimization-consts';
 import { HostOsPatchAssessmentObject, ResourceAssessmentData } from '../../../utils/common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
-import { DatabaseTypes, GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../../utils/consts';
+import { DatabaseTypes, GENERIC_ASSESSMENT_ERROR_MESSAGE, SUCCESS } from '../../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../../aws/ospatch-ssm-operations';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
-import { getResourceNameFromTags, sleep, sqlResponseParsing } from '../../../utils/utils';
+import { getResourceNameFromTags, sqlResponseParsing } from '../../../utils/utils';
 import { HostOsPatchDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
 import { checkLinuxRepoConnectivityScript } from './ssm-scripts/host-assessment-scripts';
 import GOLDEN_CONFIG from './golden-config';
@@ -50,10 +48,7 @@ async function checkIfLinuxRepoReachable(
         }
     } catch (error) {
         logger.error('Error while checking if Linux package repositories are reachable', { error });
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            'Linux package repositories are not reachable from the Oracle database host'
-        );
+        throw new Error(`Linux package repositories are not reachable from the Oracle database host: ${error}`);
     }
 }
 
@@ -166,7 +161,7 @@ async function runLinuxOsPatchAssessment(
 
         const isPatchBaselineInProgress = await checkIfPatchBaselineInProgress(credentialsId, region, instanceIds);
         if (isPatchBaselineInProgress) {
-            throw createError(`${PATCH_ASSESSMENT_IN_PROGRESS} on ${instanceIds?.join(',')} in ${region}`);
+            throw new Error(`${PATCH_ASSESSMENT_IN_PROGRESS} on ${instanceIds?.join(',')} in ${region}`);
         }
 
         // Run AWS Patch Baseline scan (not install)
@@ -174,58 +169,18 @@ async function runLinuxOsPatchAssessment(
 
         patchBaselineResponse?.some(({ response: { Status: runPatchBaselineStatus } = {}, error }) => {
             if (runPatchBaselineStatus?.toLowerCase() !== SUCCESS || error !== undefined) {
-                throw createError('Failed to run operating system patch baseline on the Oracle database host.');
+                throw new Error('Failed to run operating system patch baseline on the Oracle database host.');
             }
             return false;
         });
 
-        let response;
-        let attemptCount = 0;
-        const maxAttempts = 3;
-        const retryDelay = 5000;
-        let hasMissingPatches;
+        const response = await getInstancesPatchStatus(credentialsId, region, instanceIds, DatabaseTypes.ORACLE);
 
-        while (attemptCount < maxAttempts) {
-            attemptCount += 1;
-            // eslint-disable-next-line no-await-in-loop
-            await sleep(retryDelay);
-
-            // eslint-disable-next-line no-await-in-loop
-            response = await getInstancesPatchStatus(credentialsId, region, instanceIds, DatabaseTypes.ORACLE);
-
-            hasMissingPatches = response?.every(
-                ({
-                    SecurityNonCompliantCount = 0,
-                    OtherNonCompliantCount = 0,
-                    CriticalNonCompliantCount = 0,
-                    missingPatchDetails
-                }) => {
-                    const totalNonCompliant =
-                        SecurityNonCompliantCount + OtherNonCompliantCount + CriticalNonCompliantCount;
-                    if (totalNonCompliant > 0 && missingPatchDetails && missingPatchDetails.length > 0) {
-                        return true;
-                    }
-                    if (totalNonCompliant === 0) {
-                        return true;
-                    }
-                    return false;
-                }
+        if (!response) {
+            throw new Error(
+                `Host OS patch assessment failed for instance ${ec2InstanceId}: ` +
+                    'Unable to retrieve patch status after the baseline scan completed.'
             );
-
-            if (hasMissingPatches) {
-                logger.info(`Found missing patch details on attempt ${attemptCount}`);
-                break;
-            }
-
-            if (attemptCount < maxAttempts) {
-                logger.info(
-                    `Non-compliant patches found but missing details not yet available on attempt ${attemptCount}, retrying...`
-                );
-            }
-        }
-
-        if (!response || !hasMissingPatches) {
-            throw createError('Failed to get instance patch status after retries');
         }
 
         const hostOsPatchAssessment = response?.map(

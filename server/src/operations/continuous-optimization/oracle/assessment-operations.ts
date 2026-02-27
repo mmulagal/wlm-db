@@ -19,7 +19,7 @@ import {
     WorkloadInstance
 } from '../../../utils/common-types';
 import { AuditStatus, HttpErrorCodes, RESOURCESTYPE, DatabaseTypes, STORAGE_PROTOCOLS } from '../../../utils/consts';
-import { IS_DEMO_FLOW, IS_PROD, sleep } from '../../../utils/utils';
+import { IS_DEMO_FLOW, sleep } from '../../../utils/utils';
 import { AssessmentCategoriesOracle, AssessmentTriggeredBy } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
@@ -426,20 +426,18 @@ async function triggerOracleAssessment(
         // Run host-level and instance-level assessments concurrently
         const assessmentPromises: Promise<void>[] = [];
 
-        if (!IS_PROD) {
-            if (shouldRunHostLevelAssessment) {
-                assessmentPromises.push(
-                    initiateHostLevelAssessmentDataCollection(
-                        accountId,
-                        credentialsId,
-                        region,
-                        databaseHostId,
-                        instanceRecord,
-                        parentJobId,
-                        fields
-                    )
-                );
-            }
+        if (shouldRunHostLevelAssessment) {
+            assessmentPromises.push(
+                initiateHostLevelAssessmentDataCollection(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    instanceRecord,
+                    parentJobId,
+                    fields
+                )
+            );
         }
 
         if (shouldRunInstanceLevelAssessment) {
@@ -697,7 +695,7 @@ async function fetchOracleDriftAssessment(
 
     const assessmentFlags = {
         storage: fieldsValues.includes(AssessmentCategoriesOracle.STORAGE.toLowerCase()),
-        hostOsPatch: !IS_PROD && fieldsValues.includes(AssessmentCategoriesOracle.HOST_OS_PATCH.toLowerCase())
+        hostOsPatch: fieldsValues.includes(AssessmentCategoriesOracle.HOST_OS_PATCH.toLowerCase())
     };
 
     const [storageDriftData, hostLevelData] = await Promise.all([
