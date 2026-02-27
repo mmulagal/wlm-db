@@ -6,7 +6,7 @@ import getLogger from '../../../utils/logger';
 import { AssessmentCategoriesOracle, AssessmentStatus } from '../../../utils/continous-optimization-consts';
 import { HostOsPatchAssessmentObject, ResourceAssessmentData } from '../../../utils/common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
-import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../../utils/consts';
+import { DatabaseTypes, GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../../aws/ospatch-ssm-operations';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
@@ -191,7 +191,7 @@ async function runLinuxOsPatchAssessment(
             await sleep(retryDelay);
 
             // eslint-disable-next-line no-await-in-loop
-            response = await getInstancesPatchStatus(credentialsId, region, instanceIds);
+            response = await getInstancesPatchStatus(credentialsId, region, instanceIds, DatabaseTypes.ORACLE);
 
             hasMissingPatches = response?.every(
                 ({

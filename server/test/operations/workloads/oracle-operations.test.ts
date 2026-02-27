@@ -13,6 +13,7 @@ import {
     deleteResource,
     upsertDatabaseInstance
 } from '../../../src/lib/database/db';
+import { initializeDatabase } from '../../../src/utils/prisma-utils';
 
 const credentialsId = DEFAULT_AWS_CREDENTIALS_ID;
 const region = DEFAULT_AWS_REGION;
@@ -22,6 +23,7 @@ const node1InstanceId = 'i-07e76a4b916548dc';
 const fsxNId = 'fs-f6082f35c1db';
 
 beforeAll(async () => {
+    await initializeDatabase();
     await createResource(ACCOUNT_ID, {
         resourceId: '6cbdabbfe3fb147e',
         resourceName: dbInstanceSid,

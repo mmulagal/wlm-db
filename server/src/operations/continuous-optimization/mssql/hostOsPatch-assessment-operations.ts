@@ -15,7 +15,7 @@ import {
 import { HostOsPatchAssessmentObject, Metadata, ResourceAssessmentData } from '../../../utils/common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getAllClusterNodeDetails } from '../../database-hosts-operations';
-import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../../utils/consts';
+import { DatabaseTypes, GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SUCCESS } from '../../../utils/consts';
 import { getInstancesPatchStatus, runAwsPatchBaseline } from '../../aws/ospatch-ssm-operations';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
@@ -261,7 +261,12 @@ async function runOsPatchAssessment(
                     return false;
                 }); // If any of the instances failed to run the patch baseline, throw an error
 
-                const response = await getInstancesPatchStatus(credentialsId, region, clusterNodeInstanceIds);
+                const response = await getInstancesPatchStatus(
+                    credentialsId,
+                    region,
+                    clusterNodeInstanceIds,
+                    DatabaseTypes.MS_SQL_SERVER
+                );
 
                 const hostOsPatchAssessment = response?.map(
                     ({
