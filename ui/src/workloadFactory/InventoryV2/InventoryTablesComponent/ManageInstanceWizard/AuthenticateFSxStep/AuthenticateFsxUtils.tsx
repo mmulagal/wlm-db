@@ -4,6 +4,7 @@ import {
     DiscoverHostInterface,
     DiscoverOracleHostInterface,
     FsxAuthStatusMap,
+    InventorySliceData,
     SQLServerInstancesDiscovered,
     OracleInstancesDiscovered
 } from '../../../../../utils/types/inventoryV2Types';
@@ -50,6 +51,32 @@ export interface FsxDiscoverContextResult {
     manageSingleInstanceData: any;
     selectedMultiDetectInstances: BulkDetectedInstance[];
 }
+
+/**
+ * Returns the engine-specific FSx credential status object from inventoryV2 state.
+ * Each engine (MSSQL, Oracle, PostgreSQL) maintains its own FSx credential tracking
+ * because discovery flows run independently per engine.
+ */
+export const getFsxCredStatusByEngine = (
+    inventoryV2State: Pick<
+        InventorySliceData,
+        'fsxCredentialStatusObj' | 'fsxCredentialStatusObjOracle' | 'fsxCredentialStatusObjPgsql'
+    >,
+    engineType?: string
+): Record<string, boolean> => {
+    switch (engineType) {
+        case 'oracle':
+        case DBType.ORACLE:
+            return (inventoryV2State.fsxCredentialStatusObjOracle as Record<string, boolean>) || {};
+        case 'pgsql':
+        case DBType.POSTGRESQL:
+            return (inventoryV2State.fsxCredentialStatusObjPgsql as Record<string, boolean>) || {};
+        case 'mssql':
+        case DBType.MSSQL:
+        default:
+            return (inventoryV2State.fsxCredentialStatusObj as Record<string, boolean>) || {};
+    }
+};
 
 /**
  * Custom hook to build discover data context and instance identifiers for FSx lookups.

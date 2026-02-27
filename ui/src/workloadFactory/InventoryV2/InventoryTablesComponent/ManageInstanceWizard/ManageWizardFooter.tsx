@@ -40,6 +40,7 @@ import {
 import {
     areAllFsxAuthenticated,
     getFsxNeedingAuthFromBulk,
+    getFsxCredStatusByEngine,
     DiscoverDataContext
 } from './AuthenticateFSxStep/AuthenticateFsxUtils';
 import {
@@ -81,9 +82,9 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const detectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);
 
     // Consolidated inventoryV2 state selectors
+    const inventoryV2State = useAppSelector(state => state.inventoryV2);
     const {
         manageSingleInstanceData,
-        fsxCredentialStatusObj,
         manageSingleInstanceChecks,
         wizardOperationType,
         selectedMultiDetectInstances,
@@ -94,7 +95,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         instanceCredentials,
         instanceAuthStatus,
         registerHostType
-    } = useAppSelector(state => state.inventoryV2);
+    } = inventoryV2State;
+    const fsxCredentialStatusObj = getFsxCredStatusByEngine(inventoryV2State, registerHostType);
     const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
     const { discoveredOracleHostData } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
 
@@ -265,7 +267,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
             // Mark successful FSx as registered
             successFsxIds.forEach(fsxId => {
-                saveFsxInCredRegisteredObj(fsxId, dispatch);
+                saveFsxInCredRegisteredObj(fsxId, dispatch, registerHostType);
             });
 
             // Check results and proceed accordingly
@@ -542,7 +544,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             // Partial failure - switch to manual mode and show which ones failed
                             // Mark successful FSx as registered so they won't be re-sent
                             successFsxIds.forEach(fsxId => {
-                                saveFsxInCredRegisteredObj(fsxId, dispatch);
+                                saveFsxInCredRegisteredObj(fsxId, dispatch, registerHostType);
                             });
                             dispatch(setSelectedFSxForOntapCredentials(FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY));
                             dispatch(
@@ -568,7 +570,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     } else {
                         // All FSx authenticated successfully
                         fsxIds.forEach(fsxId => {
-                            saveFsxInCredRegisteredObj(fsxId, dispatch);
+                            saveFsxInCredRegisteredObj(fsxId, dispatch, registerHostType);
                         });
                         const updatedInventoryTableData = updateInstanceStatus(
                             'detect',
@@ -746,7 +748,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         // Also save FSx credential status for successful instances with FSx storage
                         const fsxId = instanceData?.fsxId;
                         if (fsxId) {
-                            saveFsxInCredRegisteredObj(fsxId, dispatch);
+                            saveFsxInCredRegisteredObj(fsxId, dispatch, registerHostType);
                         }
 
                         // Update inventory table data for this instance
@@ -970,7 +972,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                         // Also save FSx credential status for successful databases with FSx storage
                         const fsxId = instanceData?.fsxId;
                         if (fsxId) {
-                            saveFsxInCredRegisteredObj(fsxId, dispatch);
+                            saveFsxInCredRegisteredObj(fsxId, dispatch, registerHostType);
                         }
 
                         // Update inventory table data for this database

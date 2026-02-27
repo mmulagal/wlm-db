@@ -458,6 +458,11 @@ const inventoryV2Slice = createSlice({
                 oracleUsername: '',
                 oraclePassword: ''
             };
+            state.detectCredentialErrors = {
+                databaseServerError: '',
+                fsxnError: '',
+                oracleAsmError: ''
+            };
         },
         setDetectWindowsAuthentication: (
             state,
@@ -633,6 +638,8 @@ const inventoryV2Slice = createSlice({
         resetRefreshData: (state, action: PayloadAction<any>) => {
             state.inventoryTableData = null;
             state.fsxCredentialStatusObj = {};
+            state.fsxCredentialStatusObjOracle = {};
+            state.fsxCredentialStatusObjPgsql = {};
             state.allmssqlHostAssessmentData = [];
             state.allOracleHostAssessmentData = [];
             state.allLogAnalysisData = [];

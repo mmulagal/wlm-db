@@ -6,7 +6,9 @@ import {
     setInProgressInstances,
     setInventoryTableData,
     setLandingFromWizard,
-    setSelectedHeaderTab
+    setSelectedHeaderTab,
+    resetFsxAuthStatus,
+    resetInstanceAuthStatus
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
@@ -236,6 +238,9 @@ export const callManageSingleInstanceApi = async (
                     </Button>
                 </DsTypography>
             );
+            // Reset auth/FSx credentials so next wizard opens with a clean state
+            dispatch(resetInstanceAuthStatus());
+            dispatch(resetFsxAuthStatus());
             setTimeout(() => {
                 dispatch(setLandingFromWizard(true));
                 navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
@@ -570,6 +575,9 @@ export const callManageMultiInstanceApi = async (
                     </Button>
                 </DsTypography>
             );
+            // Reset auth/FSx credentials so next wizard opens with a clean state
+            dispatch(resetInstanceAuthStatus());
+            dispatch(resetFsxAuthStatus());
             setTimeout(() => {
                 dispatch(setLandingFromWizard(true));
                 navigate(FORM_TO_WLF_NAVIGATE_INVENTORY);
@@ -1030,7 +1038,7 @@ export const updateDetectBulkResponse = (
 
         // Optionally update FSX registration if successful
         if (authorized && isFsxRegisterRequired && fsxSuccess) {
-            saveFsxInCredRegisteredObj(instance?.data?.fsxId, dispatch);
+            saveFsxInCredRegisteredObj(instance?.data?.fsxId, dispatch, engineType);
             const updatedInventoryTableData = updateInstanceStatus('detect', instance?.data, instance?.data);
             dispatch(setInventoryTableData(updatedInventoryTableData));
         }

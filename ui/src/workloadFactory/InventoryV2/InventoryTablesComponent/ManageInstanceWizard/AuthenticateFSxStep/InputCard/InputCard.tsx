@@ -23,6 +23,7 @@ import {
     getFsxNeedingAuth,
     getAllFsxFromBulkStorage,
     getFsxNeedingAuthFromBulk,
+    getFsxCredStatusByEngine,
     useFsxDiscoverContext
 } from '../AuthenticateFsxUtils';
 
@@ -32,14 +33,25 @@ interface InputCardProps {
 }
 
 const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) => {
+    const inventoryV2State = useAppSelector(state => state.inventoryV2);
     const {
         detectOntapUsername,
         detectOntapPassword,
         selectedFSxForOntapCredentials,
         detectOntapCredentialsByFsx,
         fsxAuthStatus,
-        fsxCredentialStatusObj
-    } = useAppSelector(state => state.inventoryV2);
+        registerHostType
+    } = inventoryV2State;
+
+    const fsxCredentialStatusObj = useMemo(
+        () => getFsxCredStatusByEngine(inventoryV2State, registerHostType),
+        [
+            inventoryV2State.fsxCredentialStatusObj,
+            inventoryV2State.fsxCredentialStatusObjOracle,
+            inventoryV2State.fsxCredentialStatusObjPgsql,
+            registerHostType
+        ]
+    );
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { state, setState }: UseWizardReturn = useWizard();

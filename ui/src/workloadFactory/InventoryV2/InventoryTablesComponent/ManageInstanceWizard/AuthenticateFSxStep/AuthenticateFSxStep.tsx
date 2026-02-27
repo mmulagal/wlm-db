@@ -14,15 +14,27 @@ import {
     hasPartialAuthSuccess,
     useFsxDiscoverContext,
     getFsxNeedingAuth,
-    getFsxNeedingAuthFromBulk
+    getFsxNeedingAuthFromBulk,
+    getFsxCredStatusByEngine
 } from './AuthenticateFsxUtils';
 import { setSelectedFSxForOntapCredentials } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { FSX_FOR_ONTAP_CRED_OPTION } from '../../../../../utils/consts';
 
 export const Content = () => {
     const dispatch = useDispatch();
-    const { manageSingleInstanceData, fsxCredentialStatusObj, fsxAuthStatus, selectedMultiDetectInstances } =
-        useAppSelector(state => state.inventoryV2);
+    const inventoryV2State = useAppSelector(state => state.inventoryV2);
+    const { manageSingleInstanceData, fsxAuthStatus, selectedMultiDetectInstances, registerHostType } =
+        inventoryV2State;
+
+    const fsxCredentialStatusObj = useMemo(
+        () => getFsxCredStatusByEngine(inventoryV2State, registerHostType),
+        [
+            inventoryV2State.fsxCredentialStatusObj,
+            inventoryV2State.fsxCredentialStatusObjOracle,
+            inventoryV2State.fsxCredentialStatusObjPgsql,
+            registerHostType
+        ]
+    );
 
     // Get loading state from msSqlAction slice to disable inputs during API calls
     const isDetectHostLoading = useAppSelector(state => state.msSqlAction.isDetectHostLoading);

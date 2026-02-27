@@ -36,6 +36,7 @@ import {
 import { setIsDetectReplicaHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import { InstanceAuthStatusMap } from '../../../../utils/types/inventoryV2Types';
 import { isAlreadyDetectedCheckBulkSelection } from './ManageInstanceUtils';
+import { getFsxCredStatusByEngine } from './AuthenticateFSxStep/AuthenticateFsxUtils';
 
 /**
  * Wraps an instance in the bulk format { data: instance } to match the SelectInstances dropdown structure.
@@ -326,13 +327,9 @@ export const detectFsxFieldsValidation = (
     selectedInstances?: any[]
 ) => {
     const state = store.getState();
-    const {
-        detectOntapUsername,
-        detectOntapPassword,
-        detectOntapCredentialsByFsx,
-        selectedFSxForOntapCredentials,
-        fsxCredentialStatusObj
-    } = state.inventoryV2;
+    const { detectOntapUsername, detectOntapPassword, detectOntapCredentialsByFsx, selectedFSxForOntapCredentials } =
+        state.inventoryV2;
+    const fsxCredentialStatusObj = getFsxCredStatusByEngine(state.inventoryV2, engineType);
 
     // Get list of unregistered FSx IDs that need credentials
     const getUnregisteredFsxIds = (): string[] => {
@@ -668,9 +665,10 @@ export const getReplicaInstanceListForAuthenticatedRowOracle = (manageSingleInst
 
 /**
  * Marks FSx as registered in Redux state based on engine type.
+ * Supports both shared credential mode (USE_THE_SAME_CRED) and per-FSx credential mode (MANAGE_CRED_MANUALLY).
  * @param fsxId - FSx for ONTAP ID
  * @param dispatch - Redux dispatch
- * @param engineType - Database type ('mssql', 'oracle', 'pgsql')
+ * @param engineType - Database type (DBType constants or short names 'mssql', 'oracle', 'pgsql')
  * @returns True if successfully marked as registered
  */
 export const saveFsxInCredRegisteredObj = (fsxId: string, dispatch: any, engineType: string = 'mssql') => {
@@ -680,22 +678,33 @@ export const saveFsxInCredRegisteredObj = (fsxId: string, dispatch: any, engineT
         fsxCredentialStatusObjOracle,
         fsxCredentialStatusObjPgsql,
         detectOntapUsername,
-        detectOntapPassword
+        detectOntapPassword,
+        detectOntapCredentialsByFsx
     } = state?.inventoryV2;
-    if (detectOntapUsername && detectOntapPassword && fsxId) {
+
+    if (!fsxId) return false;
+
+    const hasSharedCredentials = !!(detectOntapUsername && detectOntapPassword);
+    const perFsxCred = detectOntapCredentialsByFsx?.[fsxId];
+    const hasPerFsxCredentials = !!(perFsxCred?.username && perFsxCred?.password);
+
+    if (hasSharedCredentials || hasPerFsxCredentials) {
         let currentFsxObj: any;
         let setStatusAction: any;
 
         switch (engineType) {
             case 'oracle':
+            case DBType.ORACLE:
                 currentFsxObj = fsxCredentialStatusObjOracle || {};
                 setStatusAction = setFsxCredentialStatusOracle;
                 break;
             case 'pgsql':
+            case DBType.POSTGRESQL:
                 currentFsxObj = fsxCredentialStatusObjPgsql || {};
                 setStatusAction = setFsxCredentialStatusPgsql;
                 break;
             case 'mssql':
+            case DBType.MSSQL:
             default:
                 currentFsxObj = fsxCredentialStatusObj || {};
                 setStatusAction = setFsxCredentialStatus;
