@@ -473,7 +473,7 @@ def auto_detect_sids():
         with open(oratab, "r") as f:
             for line in f:
                 line = line.strip()
-                if not line or line.startswith("#") or line.startswith("*"):
+                if not line or line.startswith(("#", "*", "+", "-")):
                     continue
                 parts = line.split(":")
                 if len(parts) >= 2 and parts[0]:
@@ -544,7 +544,10 @@ def run_sqlplus(sid, db_user, db_pass):
     ]
 
     if db_user and db_pass:
-        sql_lines.append('CONNECT %s/"%s"' % (db_user, db_pass))
+        if db_user.upper() == "SYS":
+            sql_lines.append('CONNECT %s/"%s" AS SYSDBA' % (db_user, db_pass))
+        else:
+            sql_lines.append('CONNECT %s/"%s"' % (db_user, db_pass))
     elif db_user:
         sql_lines.append("CONNECT %s" % db_user)
     else:

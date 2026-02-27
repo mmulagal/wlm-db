@@ -36,7 +36,39 @@ The database user running the collector needs **read access** to Oracle dictiona
 
 > **Important:** The collector uses PL/SQL dynamic SQL internally. Role-based grants like `SELECT_CATALOG_ROLE` may **not** be effective inside PL/SQL blocks. Use `SELECT ANY DICTIONARY` (a system privilege) or direct object grants instead.
 
-For the full list of required Oracle views and tables -- grouped by category, with mandatory/optional flags and which Oracle setups they apply to -- see **[`OracleDataCollectorPermissions.json`](OracleDataCollectorPermissions.json)**.
+### Mandatory (all setups)
+
+- `v$instance`
+- `v$database`
+- `v$version`
+- `v$option`
+- `v$parameter`
+- `v$sga`
+- `v$pgastat`
+- `v$osstat`
+- `gv$instance`
+- `dba_data_files`
+- `dba_temp_files`
+- `dba_free_space`
+- `v$log`
+
+### Mandatory (AWR - Enterprise Edition with Diagnostics Pack)
+
+- `dba_hist_snapshot`
+- `dba_hist_sysmetric_summary`
+
+### Mandatory (Statspack - Standard Edition or Enterprise without Diagnostics Pack)
+
+- `stats$snapshot`
+- `stats$sysstat`
+- `stats$osstat`
+
+### Optional (setup-dependent)
+
+- `v$pdbs` (CDB/multitenant only)
+- `v$dataguard_config` (Data Guard only)
+- `v$archive_dest_status` (Data Guard only)
+- `v$asm_diskgroup` (ASM storage only)
 
 For **CDB/PDB environments** (Container Databases with `C##` common users), both steps below are required:
 
@@ -44,6 +76,10 @@ For **CDB/PDB environments** (Container Databases with `C##` common users), both
 GRANT SELECT ANY DICTIONARY TO C##WF_COLLECT CONTAINER=ALL;
 ALTER USER C##WF_COLLECT SET CONTAINER_DATA = ALL CONTAINER = CURRENT;
 ```
+
+## Sizing Scope
+
+The sizing target is the entire CDB including all PDBs. The collector gathers metrics at the CDB level, so the resulting TCO analysis covers the full container database and all pluggable databases within it.
 
 ## Output
 
@@ -85,7 +121,6 @@ Each database entry carries its own `collectionMethod` to handle mixed AWR/STATS
 |------|-------------|
 | `OracleDataCollector.py` | Main Python collector script |
 | `OracleDataCollectorController.sql` | SQL*Plus controller script (called by Python) |
-| `OracleDataCollectorPermissions.json` | Required Oracle permissions (views/tables, mandatory/optional, per setup) |
 | `OracleDataResponse-<epoch>.json` | Combined output (all SIDs on one host) |
 
 ## How It Works

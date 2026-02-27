@@ -414,7 +414,7 @@ async function saveOracleReportInWlmdbDatabase(
 
     const filteredReports = compact(validReports);
     if (isEmpty(filteredReports)) {
-        throw new Error('Report already generated for the collected Oracle Server data.');
+        throw new Error('Report already generated for the collected Oracle Database data.');
     }
 
     await createOnPremTcoReportData(filteredReports);
