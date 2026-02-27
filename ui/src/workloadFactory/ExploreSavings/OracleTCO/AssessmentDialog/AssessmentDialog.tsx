@@ -157,15 +157,6 @@ const AssessmentDialog = () => {
                                                             )}
                                                         </DsTypography>
                                                     </div>
-
-                                                    <div className={styles.listItem}>
-                                                        <Bullet />
-                                                        <DsTypography variant="Regular_14">
-                                                            {t(
-                                                                'databases.explore-savings.oracle-accordion-two-point-five'
-                                                            )}
-                                                        </DsTypography>
-                                                    </div>
                                                 </div>
                                             </div>
                                         )}
@@ -258,14 +249,6 @@ const AssessmentDialog = () => {
                                                         <DsTypography variant="Regular_14">
                                                             {t(
                                                                 'databases.explore-savings.oracle-accordion-three-point-three'
-                                                            )}
-                                                        </DsTypography>
-                                                    </div>
-                                                    <div className={styles.listItem}>
-                                                        <Bullet />
-                                                        <DsTypography variant="Regular_14">
-                                                            {t(
-                                                                'databases.explore-savings.oracle-accordion-three-point-four'
                                                             )}
                                                         </DsTypography>
                                                     </div>

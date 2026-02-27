@@ -113,7 +113,6 @@ describe('AssessmentDialog', () => {
                 expect(screen.getByText('databases.explore-savings.oracle-accordion-two-point-two')).toBeTruthy();
                 expect(screen.getByText('databases.explore-savings.oracle-accordion-two-point-three')).toBeTruthy();
                 expect(screen.getByText('databases.explore-savings.oracle-accordion-two-point-four')).toBeTruthy();
-                expect(screen.getByText('databases.explore-savings.oracle-accordion-two-point-five')).toBeTruthy();
             });
 
             it('should not render MSSQL accordion two points', () => {
@@ -128,7 +127,6 @@ describe('AssessmentDialog', () => {
                 expect(screen.getByText('databases.explore-savings.oracle-accordion-three-point-one')).toBeTruthy();
                 expect(screen.getByText('databases.explore-savings.oracle-accordion-three-point-two')).toBeTruthy();
                 expect(screen.getByText('databases.explore-savings.oracle-accordion-three-point-three')).toBeTruthy();
-                expect(screen.getByText('databases.explore-savings.oracle-accordion-three-point-four')).toBeTruthy();
             });
 
             it('should not render MSSQL accordion three points', () => {
