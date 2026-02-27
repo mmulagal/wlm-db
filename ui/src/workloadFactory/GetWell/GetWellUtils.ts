@@ -901,7 +901,7 @@ export const cardDataDefault: any = {
         recommendation: {
             title: 'Cross-Region Replication (CRR) recommendation',
             aoagDescription:
-                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. In AOAG distributed groups, use CRR cross-region replication alongside and asynchronous replicas and coordinate SnapMirror replication with availablity group seeding for effective multi-region support.',
+                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. In AOAG distributed groups, use CRR with SnapMirror replication in addition to availability group replication (automatic seeding) to ensure effective redundancy with multi-region support.',
             description:
                 'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.'
         },
