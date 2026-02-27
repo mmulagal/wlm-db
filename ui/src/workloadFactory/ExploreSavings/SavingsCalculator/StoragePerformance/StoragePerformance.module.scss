@@ -30,6 +30,15 @@
             .col4 {
                 grid-column: 4;
             }
+
+            &.headerRow {
+                .col2,
+                .col3,
+                .col4 {
+                    border-left: 1px solid var(--text-primary);
+                    padding-left: 24px;
+                }
+            }
         }
     }
 }

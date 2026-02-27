@@ -47,7 +47,7 @@ const AutoExpandAccordions = ({ hostIds }: { hostIds: string[] }) => {
     return null;
 };
 
-const TCOOnPremBulkAccordion = () => {
+const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(state => state.exploreSavingsBulk);
@@ -324,10 +324,10 @@ const TCOOnPremBulkAccordion = () => {
                                         <InstanceInformation host={hostDetails} />
                                     </DsTypography>
                                     <DsTypography>
-                                        <ComputeInformation host={hostDetails} printState={false} />
+                                        <ComputeInformation host={hostDetails} printState={printState} />
                                     </DsTypography>
                                     <DsTypography>
-                                        <StoragePerformance host={hostDetails} printState={false} />
+                                        <StoragePerformance host={hostDetails} printState={printState} />
                                     </DsTypography>
                                 </AccordionCardContent>
                             </AccordionCard>

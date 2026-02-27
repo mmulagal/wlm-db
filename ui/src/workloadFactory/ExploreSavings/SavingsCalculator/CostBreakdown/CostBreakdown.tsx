@@ -99,7 +99,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                         : { backgroundColor: 'var(--main-background)' }
                 }
             >
-                <Grid className={isOracle ? styles.oracleColumnGrid : undefined}>
+                <Grid>
                     <GridItem lg="4">
                         <Text
                             color={!calculatedResponse && 'text-disabled'}
@@ -159,11 +159,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
             <div>
                 <Card>
                     <CardContent style={{ padding: '24px 40px 32px 40px' }}>
-                        <CardTableContent
-                            columns="lg-3"
-                            className={isOracle ? styles.oracleColumnGrid : undefined}
-                            style={{ padding: 0, height: '56px' }}
-                        >
+                        <CardTableContent columns="lg-3" style={{ padding: 0, height: '56px' }}>
                             <div
                                 style={
                                     !calculatedResponse || disableState
@@ -189,12 +185,10 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
                                     style={{
-                                        ...(!isOracle && { width: '150px' }),
                                         fontWeight: '500',
                                         color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                                     }}
                                 >
-                                    {' '}
                                     {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
                                         ? t('databases.explore-savings.oracle-server-on-fsx-ontap')
                                         : t('databases.explore-savings.mssql-server-on-fsx-ontap')}
@@ -212,12 +206,10 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 <Text
                                     color={!calculatedResponse && 'text-disabled'}
                                     style={{
-                                        ...(!isOracle && { width: '150px' }),
                                         fontWeight: '500',
                                         color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                                     }}
                                 >
-                                    {' '}
                                     {getSecondCategoryLabel()}
                                 </Text>
                             </div>

@@ -1,6 +1,7 @@
 import { DsTypography } from '@netapp/design-system';
 import classNames from 'classnames';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './ComputeInformation.module.scss';
 import ComputeInputComponent from './ComputeInputComponent/ComputeInputComponent';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -27,6 +28,7 @@ interface ComputeInformationProps {
 }
 
 const ComputeInformation = ({ printState, host }: ComputeInformationProps) => {
+    const { t } = useTranslation();
     const { onPremStorageAndComputeInfo, savingsCalculatorFrom } = useAppSelector(state => state.exploreSavings);
 
     // Check if Oracle on-prem mode
@@ -65,16 +67,26 @@ const ComputeInformation = ({ printState, host }: ComputeInformationProps) => {
             </DsTypography>
 
             <div className={styles.computeTable}>
-                <div className={styles.row1}>
-                    <div className={styles.col1} />
+                <div className={classNames(styles.row1, styles.headerRow)}>
+                    <div className={styles.col1}>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.explore-savings.compute-information.details')}
+                        </DsTypography>
+                    </div>
                     <div className={styles.col2}>
-                        <DsTypography variant="Semibold_14">Number of vCPUs in use</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.explore-savings.compute-information.no-of-vcpus')}
+                        </DsTypography>
                     </div>
                     <div className={styles.col3}>
-                        <DsTypography variant="Semibold_14">Memory (GiB)</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.explore-savings.compute-information.memory')}
+                        </DsTypography>
                     </div>
                     <div className={styles.col4}>
-                        <DsTypography variant="Semibold_14">Network performance</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.explore-savings.compute-information.network-performance')}
+                        </DsTypography>
                     </div>
                 </div>
                 {Object.keys(hostSpecificData || {}).map((key, index) => (

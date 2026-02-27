@@ -80,7 +80,6 @@ const dispatchCommonOnPremActions = (
     });
     dispatch(setSavingsCalculatorFrom(savingsCalcMode));
     dispatch(setDisableState(true));
-    dispatch(setMonthlyChangeRate(3));
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
     dispatch(
         setSelectedEsPageInstance({
@@ -332,7 +331,6 @@ export const onClickESHostOnPremBulk = (
     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.ONPREM));
 
     dispatch(setDisableState(true));
-    dispatch(setMonthlyChangeRate(3));
 
     // Combine storage and compute info from ALL selected hosts
     const storagePerfAndCompute: any = {};

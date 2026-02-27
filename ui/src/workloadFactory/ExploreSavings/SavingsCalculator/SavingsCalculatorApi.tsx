@@ -121,7 +121,10 @@ const SavingsCalculatorApi = () => {
     const [getRegionsWithoutCred] = useLazyGetRegionsWithoutCredQuery();
 
     useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
+        ) {
             dispatch(setOnPremRegionsLoading(true));
             getRegionsWithoutCred({})
                 .then((res: any) => {

@@ -1,4 +1,5 @@
 import { TFunction } from 'i18next';
+import { DATABASE_DEPLOYMENT_MODE } from '../../../../../utils/consts';
 
 /**
  * Generates Oracle instance data for the accordion display
@@ -17,8 +18,8 @@ export const generateOracleInstanceData = (storageSavingsResponse: any, selected
 
     const oracleEdition = selectedOnPremHostDetails?.oracleEdition || '';
 
-    // Deployment model from the on-prem host details
-    const deploymentModel = selectedOnPremHostDetails?.deploymentModel || '';
+    // always Standalone regardless of on-prem deployment model
+    const deploymentModel = DATABASE_DEPLOYMENT_MODE.STANDALONE;
 
     return {
         instanceType,

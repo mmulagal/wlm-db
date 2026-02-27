@@ -255,8 +255,8 @@ export const calculatedFSXData = (
                     ? 'Multi Availability Zone'
                     : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
             text: isOnPrem
-                ? `${fsxData?.deploymentType} Availability Zones is the equivalent deployment type for your on-premises configuration.`
-                : `${fsxData?.deploymentType} Availability Zones are the equivalent availability for Amazon ${storageType}.`
+                ? `${fsxData?.deploymentType} Availability Zone is the equivalent deployment type for your on-premises configuration.`
+                : `${fsxData?.deploymentType} Availability Zone are the equivalent availability for Amazon ${storageType}.`
         },
         {
             label: 'Total storage capacity',

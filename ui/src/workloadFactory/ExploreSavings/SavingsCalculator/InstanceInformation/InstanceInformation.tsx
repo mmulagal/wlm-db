@@ -266,9 +266,6 @@ const InstanceInformation = ({ host }: { host?: any }) => {
         }
     }, [isOracleOnPrem, selectedOnPremHostDetails, storageSavingsResponse, host]);
 
-    // Determine column width based on mode
-    const isOnPremMode = selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem;
-
     const columns = isOracleOnPrem
         ? getOracleColDefs({ loading, noOfInstances, styles, t })
         : getInstanceColDefs({
@@ -277,7 +274,6 @@ const InstanceInformation = ({ host }: { host?: any }) => {
               storageSavingsLoading,
               snapshotLoading,
               savingsCalculatorFrom,
-              isOnPremMode,
               styles,
               t
           });
@@ -310,7 +306,12 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             })}
         >
             <DsTypography variant="Regular_14">{getSectionTitle()}</DsTypography>
-            <div className={classNames(styles.instanceTable, { [styles.oracleTable]: isOracleOnPrem })}>
+            <div
+                className={classNames(styles.instanceTable, {
+                    [styles.oracleTable]: isOracleOnPrem,
+                    [styles.mssqlTable]: !isOracleOnPrem
+                })}
+            >
                 <Table
                     // @ts-ignore
                     tableProps={tableProps}

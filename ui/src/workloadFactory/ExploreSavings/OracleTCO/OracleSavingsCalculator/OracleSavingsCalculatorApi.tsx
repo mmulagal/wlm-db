@@ -1,13 +1,8 @@
 import { useEffect } from 'react';
 import isEqual from 'lodash/isEqual';
 import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
+import { useGetOracleOnPremCalculationsMutation } from '../../../../utils/apiService';
 import {
-    useGetOracleOnPremCalculationsMutation,
-    useLazyGetRegionsWithoutCredQuery
-} from '../../../../utils/apiService';
-import {
-    addOnPremRegionsList,
-    setOnPremRegionsLoading,
     setStorageSavingsLoading,
     setStorageSavingsResponse,
     setViewCalculationsApiResponse,
@@ -65,22 +60,6 @@ const OracleSavingsCalculatorApi = () => {
     const { selectedDeploymentModel } = useAppSelector(state => state.exploreSavings);
 
     const [getOracleOnPremCalculationsApi] = useGetOracleOnPremCalculationsMutation();
-    const [getRegionsWithoutCred] = useLazyGetRegionsWithoutCredQuery();
-
-    // Load regions for Oracle on-prem
-    useEffect(() => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
-            dispatch(setOnPremRegionsLoading(true));
-            getRegionsWithoutCred({})
-                .then((res: any) => {
-                    dispatch(addOnPremRegionsList(res?.data));
-                    dispatch(setOnPremRegionsLoading(false));
-                })
-                .catch(() => {
-                    dispatch(setOnPremRegionsLoading(false));
-                });
-        }
-    }, [savingsCalculatorFrom, dispatch, getRegionsWithoutCred]);
 
     const createOracleOnPremPayload = (): OracleOnPremPayload => {
         const payload: OracleOnPremPayload = {

@@ -41,6 +41,15 @@
     align-items: center;
 }
 
+// MSSQL uses 3 columns - use flexible widths to prevent horizontal overflow
+.mssqlTable {
+    [class*='Table-module_table'],
+    [class*='Table-module_header-row'],
+    [class*='Table-module_body'] {
+        grid-template-columns: 1fr 1.5fr 1fr !important;
+    }
+}
+
 // Oracle uses 2 columns (no Findings column) - override any 3-column grid
 .oracleTable {
     [class*='Table-module_table'],

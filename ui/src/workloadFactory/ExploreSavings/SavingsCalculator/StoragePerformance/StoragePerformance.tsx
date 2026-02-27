@@ -1,5 +1,7 @@
 import { DsTypography } from '@netapp/design-system';
+import classNames from 'classnames';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './StoragePerformance.module.scss';
 import StoragePerfInput from './StoragePerfInput/StoragePerfInput';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -26,6 +28,7 @@ interface StoragePerformanceProps {
 }
 
 const StoragePerformance = ({ printState, host }: StoragePerformanceProps) => {
+    const { t } = useTranslation();
     const { onPremStorageAndComputeInfo, savingsCalculatorFrom } = useAppSelector(state => state.exploreSavings);
 
     // Check if Oracle on-prem mode
@@ -64,16 +67,26 @@ const StoragePerformance = ({ printState, host }: StoragePerformanceProps) => {
             </DsTypography>
 
             <div className={styles.computeTable}>
-                <div className={styles.row1}>
-                    <div className={styles.col1} />
+                <div className={classNames(styles.row1, styles.headerRow)}>
+                    <div className={styles.col1}>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.explore-savings.storage-performance.details')}
+                        </DsTypography>
+                    </div>
                     <div className={styles.col2}>
-                        <DsTypography variant="Semibold_14">Total Storage amount (GiB)</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.explore-savings.storage-performance.total-storage')}
+                        </DsTypography>
                     </div>
                     <div className={styles.col3}>
-                        <DsTypography variant="Semibold_14">IOPS</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.explore-savings.storage-performance.iops')}
+                        </DsTypography>
                     </div>
                     <div className={styles.col4}>
-                        <DsTypography variant="Semibold_14">Throughput (MB/s)</DsTypography>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.explore-savings.storage-performance.throughput')}
+                        </DsTypography>
                     </div>
                 </div>
 

@@ -355,14 +355,18 @@ const exploreSavingsSlice = createSlice({
             state.savingsCalculatorFrom = action.payload;
 
             // Set defaults based on calculator mode
-            if (action.payload === SAVINGS_CALC_MODE.AUTO_EBS || action.payload === SAVINGS_CALC_MODE.MANUAL_EBS) {
+            if (
+                action.payload === SAVINGS_CALC_MODE.AUTO_EBS ||
+                action.payload === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                action.payload === SAVINGS_CALC_MODE.ONPREM ||
+                action.payload === SAVINGS_CALC_MODE.ORACLE_ONPREM
+            ) {
                 // EBS defaults
                 state.numberOfClonedCopies = 3;
                 state.monthlyChangeRate = 10;
             } else if (
                 action.payload === SAVINGS_CALC_MODE.AUTO_FSXW ||
-                action.payload === SAVINGS_CALC_MODE.MANUAL_FSXW ||
-                action.payload === SAVINGS_CALC_MODE.ONPREM
+                action.payload === SAVINGS_CALC_MODE.MANUAL_FSXW
             ) {
                 // FSxW and OnPrem defaults
                 state.numberOfClonedCopies = 1;

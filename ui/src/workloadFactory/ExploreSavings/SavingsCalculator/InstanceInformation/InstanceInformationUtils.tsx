@@ -16,7 +16,6 @@ interface InstanceColDefsParams {
     storageSavingsLoading: boolean;
     snapshotLoading: boolean;
     savingsCalculatorFrom: string | null;
-    isOnPremMode: boolean;
     styles: Record<string, string>;
     t: TFunction;
 }
@@ -33,15 +32,13 @@ export const getOracleColDefs = ({ loading, noOfInstances, styles, t }: OracleCo
         Header: t('databases.explore-savings.instance-information-table.headers.database-information'),
         accessor: 'details',
         id: '1',
-        width: '282px',
+        width: 'auto',
         renderCell: (_cellData: any, rowData: any) => (
             <div className={styles.tooltips}>
                 {rowData.details === 'Database edition' && noOfInstances > 1 && (
                     <TooltipInfo>{t('databases.explore-savings.oracle-edition-multi-tooltip')}</TooltipInfo>
                 )}
-                <DsTypography variant="Regular_14" style={{ minWidth: '125px' }}>
-                    {rowData.details}
-                </DsTypography>
+                <DsTypography variant="Regular_14">{rowData.details}</DsTypography>
             </div>
         )
     },
@@ -49,15 +46,9 @@ export const getOracleColDefs = ({ loading, noOfInstances, styles, t }: OracleCo
         Header: t('databases.explore-savings.instance-information-table.headers.value'),
         accessor: 'value',
         id: '2',
-        width: '282px',
+        width: 'auto',
         renderCell: (_cellData: any, rowData: any) =>
-            !loading ? (
-                <DsTypography variant="Regular_14" style={{ minWidth: '200px' }}>
-                    {rowData.value}
-                </DsTypography>
-            ) : (
-                <DsFlashingDotsLoader />
-            )
+            !loading ? <DsTypography variant="Regular_14">{rowData.value}</DsTypography> : <DsFlashingDotsLoader />
     }
 ];
 
@@ -67,7 +58,6 @@ export const getInstanceColDefs = ({
     storageSavingsLoading,
     snapshotLoading,
     savingsCalculatorFrom,
-    isOnPremMode,
     styles,
     t
 }: InstanceColDefsParams): ColumnProps[] => [
@@ -75,15 +65,13 @@ export const getInstanceColDefs = ({
         Header: t('databases.explore-savings.instance-information-table.headers.details'),
         accessor: 'details',
         id: '1',
-        width: isOnPremMode ? '282px' : '178px',
+        width: 'auto',
         renderCell: (_cellData: any, rowData: any) => (
             <div className={styles.tooltips}>
                 {rowData.details === 'SQL Edition' && noOfInstances > 1 && (
                     <TooltipInfo>{t('databases.explore-savings.sql-edition-multi-tooltip')}</TooltipInfo>
                 )}
-                <DsTypography variant="Regular_14" style={{ minWidth: '125px' }}>
-                    {rowData.details}
-                </DsTypography>
+                <DsTypography variant="Regular_14">{rowData.details}</DsTypography>
             </div>
         )
     },
@@ -91,21 +79,15 @@ export const getInstanceColDefs = ({
         Header: t('databases.explore-savings.instance-information-table.headers.value'),
         accessor: 'value',
         id: '2',
-        width: isOnPremMode ? '282px' : '220px',
+        width: 'auto',
         renderCell: (_cellData: any, rowData: any) =>
-            !loading ? (
-                <DsTypography variant="Regular_14" style={{ minWidth: '200px' }}>
-                    {rowData.value}
-                </DsTypography>
-            ) : (
-                <DsFlashingDotsLoader />
-            )
+            !loading ? <DsTypography variant="Regular_14">{rowData.value}</DsTypography> : <DsFlashingDotsLoader />
     },
     {
         Header: t('databases.explore-savings.instance-information-table.headers.findings'),
         accessor: 'findings',
         id: '3',
-        width: isOnPremMode ? '282px' : '192px',
+        width: 'auto',
         renderCell: (_cellData: any, rowData: any) =>
             !storageSavingsLoading && !snapshotLoading ? (
                 <>

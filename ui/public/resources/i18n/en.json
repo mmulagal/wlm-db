@@ -1756,7 +1756,19 @@
             "oracle-database-on-premises": "Oracle database on-premises",
             "oracle-database-ebs": "Oracle database on Elastic Block Store (EBS)",
             "oracle-view-calc-text": "Learn how we calculated the estimated cost of Oracle database on FSx for ONTAP for your specific use case and the configuration that you selected.",
-            "mssql-view-calc-text": "Learn how we calculated the estimated cost of Microsoft SQL Server on FSx for ONTAP for your specific use case and the configuration that you selected."
+            "mssql-view-calc-text": "Learn how we calculated the estimated cost of Microsoft SQL Server on FSx for ONTAP for your specific use case and the configuration that you selected.",
+            "compute-information": {
+                "details": "Details",
+                "no-of-vcpus": "Number of vCPUs in use",
+                "memory": "Memory (GiB)",
+                "network-performance": "Network performance"
+            },
+            "storage-performance": {
+                "details": "Details",
+                "iops": "IOPS",
+                "throughput": "Throughput (MB/s)",
+                "total-storage": "Total Storage amount (GiB)"
+            }
         },
         "instance-table": {
             "headers": {

@@ -446,7 +446,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                         selectedRowsForExploreSavingsOnPremBulk.length >= 1)) && (
                                     <>
                                         <SavingsSelection printState={printState} />
-                                        <TCOOnPremBulkAccordion />
+                                        <TCOOnPremBulkAccordion printState={printState} />
                                     </>
                                 )}
                             </div>
