@@ -15,6 +15,9 @@ python OracleDataCollector.py -s "ORCL TESTDB DGDB"
 
 # Username/password authentication
 python OracleDataCollector.py -u system -p password -s "ORCL TESTDB"
+
+# Specify a custom output directory
+python OracleDataCollector.py -s ORCL -o /data/collector-output
 ```
 
 > **Tip:** On systems where `python` is not available (e.g. RHEL/OL 8+), use `python3` instead.
@@ -80,6 +83,21 @@ ALTER USER C##WF_COLLECT SET CONTAINER_DATA = ALL CONTAINER = CURRENT;
 ## Sizing Scope
 
 The sizing target is the entire CDB including all PDBs. The collector gathers metrics at the CDB level, so the resulting TCO analysis covers the full container database and all pluggable databases within it.
+
+## Output Directory (`-o`)
+
+By default, output files are written to the script directory. If the script directory is not writable by the target OS user (common when switching from `root` to `grid`/`oracle`), the collector automatically falls back to `/tmp/oracle-collector-<pid>/`.
+
+Use `-o` / `--output-dir` to specify a custom output directory:
+
+```bash
+python OracleDataCollector.py -o /data/collector-output
+```
+
+The resolution order is:
+1. User-specified path (`-o`) -- used if writable
+2. Script directory -- used if writable
+3. `/tmp/oracle-collector-<pid>/` -- guaranteed fallback
 
 ## Output
 

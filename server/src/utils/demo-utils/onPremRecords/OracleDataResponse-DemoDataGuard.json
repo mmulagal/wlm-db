@@ -11,7 +11,7 @@
         "hostname": "ora-prod-dg-primary-01",
         "operatingSystem": "Oracle Linux Server release 8.7",
         "cpuCount": 16,
-        "totalRamBytes": 68719476736,
+        "totalRamBytes": 4294967296,
         "uniqueHostId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
         "ipAddresses": "10.20.30.40",
         "storageProtocol": "iSCSI",
@@ -34,8 +34,8 @@
                 "containerName": "CDB$ROOT",
                 "containerId": 1,
                 "vCPUs": 16,
-                "sgaTargetGB": 32,
-                "pgaTargetGB": 12,
+                "sgaTargetGB": 2.5,
+                "pgaTargetGB": 1,
                 "oracleEdition": "Enterprise Edition",
                 "oracleEditionFull": "Oracle Database 19c Enterprise Edition Release 19.0.0.0.0",
                 "pdbCount": 2,
@@ -60,11 +60,11 @@
                     "p95": 78.5
                 },
                 "memoryUtilization": {
-                    "sgaAllocatedGB": 32,
-                    "pgaAllocatedGB": 12,
-                    "totalOracleMemoryGB": 44,
-                    "memoryTargetGB": 44,
-                    "hostPhysicalMemoryGB": 64
+                    "sgaAllocatedGB": 2.5,
+                    "pgaAllocatedGB": 1,
+                    "totalOracleMemoryGB": 3.5,
+                    "memoryTargetGB": 3.5,
+                    "hostPhysicalMemoryGB": 4
                 },
                 "dbTimePerSec": {
                     "min": 0.8,
@@ -77,18 +77,18 @@
             "performanceSummary": {
                 "snapshotCount": 168,
                 "readIOPS": {
-                    "min": 597,
-                    "avg": 2571.96,
-                    "max": 5275,
-                    "p50": 2229.5,
-                    "p95": 4936
+                    "min": 5970,
+                    "avg": 25719.6,
+                    "max": 52750,
+                    "p50": 22295,
+                    "p95": 49360
                 },
                 "writeIOPS": {
-                    "min": 310,
-                    "avg": 1341.37,
-                    "max": 2813,
-                    "p50": 1250.5,
-                    "p95": 2569.05
+                    "min": 3100,
+                    "avg": 13413.7,
+                    "max": 28130,
+                    "p50": 12505,
+                    "p95": 25690.5
                 },
                 "readThroughputMBps": {
                     "min": 5.07,
@@ -113,28 +113,28 @@
                 },
                 "sizingStats": {
                     "readIOPS": {
-                        "avgOfAverages": 2571.96,
-                        "p95OfAverages": 4936,
-                        "avgOfPeaks": 5155.45,
-                        "p50OfPeaks": 4510.5,
-                        "maxOfPeaks": 11505,
-                        "recommendedValue": 4936
+                        "avgOfAverages": 25719.6,
+                        "p95OfAverages": 49360,
+                        "avgOfPeaks": 51554.5,
+                        "p50OfPeaks": 45105,
+                        "maxOfPeaks": 115050,
+                        "recommendedValue": 49360
                     },
                     "writeIOPS": {
-                        "avgOfAverages": 1341.37,
-                        "p95OfAverages": 2569.05,
-                        "avgOfPeaks": 2724.21,
-                        "p50OfPeaks": 2496.5,
-                        "maxOfPeaks": 6727,
-                        "recommendedValue": 2569.05
+                        "avgOfAverages": 13413.7,
+                        "p95OfAverages": 25690.5,
+                        "avgOfPeaks": 27242.1,
+                        "p50OfPeaks": 24965,
+                        "maxOfPeaks": 67270,
+                        "recommendedValue": 25690.5
                     },
                     "totalIOPS": {
-                        "avgOfAverages": 3913.33,
-                        "p95OfAverages": 7355.05,
-                        "avgOfPeaks": 7879.67,
-                        "p50OfPeaks": 6813.5,
-                        "maxOfPeaks": 16443,
-                        "recommendedValue": 7355.05
+                        "avgOfAverages": 39133.3,
+                        "p95OfAverages": 73555.05,
+                        "avgOfPeaks": 78796.7,
+                        "p50OfPeaks": 68135,
+                        "maxOfPeaks": 164430,
+                        "recommendedValue": 73555.05
                     },
                     "readThroughputMBps": {
                         "avgOfAverages": 20.78,
@@ -163,40 +163,40 @@
                 }
             },
             "storageInfo": {
-                "totalDatabaseSizeGB": 1200,
+                "totalDatabaseSizeGB": 12000,
                 "tempTablespaceSizeGB": 20,
                 "redoLogCount": 8,
                 "totalRedoSizeMB": 8192,
                 "tablespaces": [
                     {
                         "name": "SYSTEM",
-                        "sizeGB": 3.5,
-                        "usedGB": 2.6
+                        "sizeGB": 35,
+                        "usedGB": 26
                     },
                     {
                         "name": "SYSAUX",
-                        "sizeGB": 5,
-                        "usedGB": 3.8
+                        "sizeGB": 50,
+                        "usedGB": 38
                     },
                     {
                         "name": "UNDOTBS1",
-                        "sizeGB": 30,
-                        "usedGB": 12.5
+                        "sizeGB": 300,
+                        "usedGB": 125
                     },
                     {
                         "name": "ERP_DATA",
-                        "sizeGB": 750,
-                        "usedGB": 620
+                        "sizeGB": 7500,
+                        "usedGB": 6200
                     },
                     {
                         "name": "ERP_INDEX",
-                        "sizeGB": 250,
-                        "usedGB": 195
+                        "sizeGB": 2500,
+                        "usedGB": 1950
                     },
                     {
                         "name": "ERP_LOB",
-                        "sizeGB": 150,
-                        "usedGB": 110
+                        "sizeGB": 1500,
+                        "usedGB": 1100
                     },
                     {
                         "name": "USERS",
