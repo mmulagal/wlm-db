@@ -24,7 +24,7 @@ import { ACCOUNT_ID, DEFAULT_AWS_REGION, OracleDeploymentModel } from '../../../
 import {
     OracleCollectionObject,
     OracleDatabaseEntry,
-    OracleInstanceInfo,
+    OracleDatabaseInfo,
     OracleResourceUtilization
 } from '../../../src/utils/onprem-tco/onprem-tco-generic.types';
 
@@ -74,7 +74,7 @@ describe('Oracle Validation Functions', () => {
         it('should return false when a database entry is missing required fields', () => {
             const missingInstanceInfo = {
                 ...standaloneData,
-                databases: [{ ...standaloneData.databases[0], instanceInfo: undefined }]
+                databases: [{ ...standaloneData.databases[0], databaseInfo: undefined }]
             } as any;
             expect(validateOracleCollectionObject(missingInstanceInfo)).toBe(false);
 
@@ -405,7 +405,7 @@ describe('Multi-SID Aggregation', () => {
             const aggregated = aggregateDatabaseEntries(entries);
 
             const db0 = entries[0];
-            const expectedMemory = db0.instanceInfo.sgaTargetGB + db0.instanceInfo.pgaTargetGB;
+            const expectedMemory = db0.databaseInfo.sgaTargetGB + db0.databaseInfo.pgaTargetGB;
             expect(aggregated.totalMemoryGB).toEqual(expectedMemory);
             expect(aggregated.totalStorageGB).toEqual(db0.storageInfo.totalDatabaseSizeGB);
         });
@@ -418,9 +418,9 @@ describe('Multi-SID Aggregation', () => {
             const aggregated = aggregateDatabaseEntries(entries);
 
             const expectedMemory =
-                entry1.instanceInfo.sgaTargetGB +
-                entry1.instanceInfo.pgaTargetGB +
-                (entry2.instanceInfo.sgaTargetGB + entry2.instanceInfo.pgaTargetGB);
+                entry1.databaseInfo.sgaTargetGB +
+                entry1.databaseInfo.pgaTargetGB +
+                (entry2.databaseInfo.sgaTargetGB + entry2.databaseInfo.pgaTargetGB);
             expect(aggregated.totalMemoryGB).toEqual(expectedMemory);
 
             const expectedStorage = entry1.storageInfo.totalDatabaseSizeGB + entry2.storageInfo.totalDatabaseSizeGB;
@@ -454,8 +454,8 @@ describe('Multi-SID Aggregation', () => {
                     standaloneData.databases[0],
                     {
                         ...dataGuardData.databases[0],
-                        instanceInfo: {
-                            ...dataGuardData.databases[0].instanceInfo,
+                        databaseInfo: {
+                            ...dataGuardData.databases[0].databaseInfo,
                             hostName: standaloneData.hostInfo.hostname
                         }
                     }
@@ -481,8 +481,8 @@ describe('Multi-SID Aggregation', () => {
                     standaloneData.databases[0],
                     {
                         ...standaloneData.databases[0],
-                        instanceInfo: {
-                            ...standaloneData.databases[0].instanceInfo,
+                        databaseInfo: {
+                            ...standaloneData.databases[0].databaseInfo,
                             dbName: 'TESTDB',
                             dbId: 9999999999,
                             instanceName: 'testdb1'
@@ -515,7 +515,7 @@ describe('deriveOracleInstanceType', () => {
     it('should return a valid instance type for standalone Oracle workload', async () => {
         const instanceType = await deriveOracleInstanceType(
             DEFAULT_AWS_REGION,
-            db0.instanceInfo as OracleInstanceInfo,
+            db0.databaseInfo as OracleDatabaseInfo,
             standaloneData.hostInfo
         );
 
@@ -527,7 +527,7 @@ describe('deriveOracleInstanceType', () => {
     it('should respect resourceUtilization CPU stats for right-sizing', async () => {
         const instanceType = await deriveOracleInstanceType(
             DEFAULT_AWS_REGION,
-            db0.instanceInfo as OracleInstanceInfo,
+            db0.databaseInfo as OracleDatabaseInfo,
             standaloneData.hostInfo,
             db0.resourceUtilization as OracleResourceUtilization
         );
@@ -539,7 +539,7 @@ describe('deriveOracleInstanceType', () => {
     it('should use aggregated values when provided (multi-SID)', async () => {
         const instanceType = await deriveOracleInstanceType(
             DEFAULT_AWS_REGION,
-            db0.instanceInfo as OracleInstanceInfo,
+            db0.databaseInfo as OracleDatabaseInfo,
             standaloneData.hostInfo,
             undefined,
             { totalMemoryGB: 32, maxP95Cpu: 55 }
@@ -557,7 +557,7 @@ describe('deriveOracleInstanceType', () => {
 
         const instanceType = await deriveOracleInstanceType(
             DEFAULT_AWS_REGION,
-            db0.instanceInfo as OracleInstanceInfo,
+            db0.databaseInfo as OracleDatabaseInfo,
             tinyHost
         );
 
@@ -672,7 +672,7 @@ describe('uploadOracleTcoData', () => {
         const badHostData = JSON.stringify({
             scriptInfo: { scriptVersion: '1.0.0' },
             hostInfo: { hostname: '' },
-            databases: [{ instanceInfo: { dbName: 'test' } }]
+            databases: [{ databaseInfo: { dbName: 'test' } }]
         });
         const base64Content = Buffer.from(badHostData).toString('base64');
         const { compressSync } = await import('fflate');

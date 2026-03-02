@@ -20,7 +20,7 @@
     },
     "databases": [
         {
-            "instanceInfo": {
+            "databaseInfo": {
                 "dbName": "ERPDB",
                 "dbId": 2847561039,
                 "instanceName": "erpdb1",

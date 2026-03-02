@@ -20,7 +20,7 @@
     },
     "databases": [
         {
-            "instanceInfo": {
+            "databaseInfo": {
                 "dbName": "CDBPROD",
                 "dbId": 3948271605,
                 "instanceName": "cdbprod1",
@@ -1427,6 +1427,660 @@
                 }
             ],
             "collectionMethod": "AWR"
+        },
+        {
+            "databaseInfo": {
+                "dbName": "HRDB",
+                "dbId": 1726394850,
+                "instanceName": "hrdb1",
+                "hostName": "ora-prod-multidb-01",
+                "oracleVersion": "19.21.0.0.0",
+                "isRacEnabled": false,
+                "isDataGuardEnabled": false,
+                "databaseRole": "PRIMARY",
+                "logMode": "ARCHIVELOG",
+                "isCDB": false,
+                "containerName": "N/A",
+                "containerId": 0,
+                "vCPUs": 8,
+                "sgaTargetGB": 8,
+                "pgaTargetGB": 4,
+                "oracleEdition": "Enterprise Edition",
+                "oracleEditionFull": "Oracle Database 19c Enterprise Edition Release 19.0.0.0.0",
+                "pdbCount": 0,
+                "pdbList": []
+            },
+            "resourceUtilization": {
+                "cpuUtilization": {
+                    "min": 5.2,
+                    "avg": 34.8,
+                    "max": 72.1,
+                    "p50": 32,
+                    "p95": 61.5
+                },
+                "memoryUtilization": {
+                    "sgaAllocatedGB": 8,
+                    "pgaAllocatedGB": 4,
+                    "totalOracleMemoryGB": 12,
+                    "memoryTargetGB": 12,
+                    "hostPhysicalMemoryGB": 128
+                },
+                "dbTimePerSec": {
+                    "min": 0.4,
+                    "avg": 3.1,
+                    "max": 9.8,
+                    "p50": 2.8,
+                    "p95": 7.2
+                }
+            },
+            "performanceSummary": {
+                "snapshotCount": 24,
+                "readIOPS": {
+                    "min": 280,
+                    "avg": 1245,
+                    "max": 2890,
+                    "p50": 1150,
+                    "p95": 2610
+                },
+                "writeIOPS": {
+                    "min": 145,
+                    "avg": 688,
+                    "max": 1520,
+                    "p50": 630,
+                    "p95": 1380
+                },
+                "readThroughputMBps": {
+                    "min": 2.3,
+                    "avg": 10.5,
+                    "max": 24.1,
+                    "p50": 9.6,
+                    "p95": 21.8
+                },
+                "writeThroughputMBps": {
+                    "min": 1.1,
+                    "avg": 5.7,
+                    "max": 12.9,
+                    "p50": 5.2,
+                    "p95": 11.7
+                },
+                "activeSessions": {
+                    "min": 0.8,
+                    "avg": 3.2,
+                    "max": 8.5,
+                    "p50": 2.9,
+                    "p95": 7.1
+                },
+                "sizingStats": {
+                    "readIOPS": {
+                        "avgOfAverages": 1245,
+                        "p95OfAverages": 2610,
+                        "avgOfPeaks": 2750,
+                        "p50OfPeaks": 2480,
+                        "maxOfPeaks": 5890,
+                        "recommendedValue": 2610
+                    },
+                    "writeIOPS": {
+                        "avgOfAverages": 688,
+                        "p95OfAverages": 1380,
+                        "avgOfPeaks": 1450,
+                        "p50OfPeaks": 1310,
+                        "maxOfPeaks": 3120,
+                        "recommendedValue": 1380
+                    },
+                    "totalIOPS": {
+                        "avgOfAverages": 1933,
+                        "p95OfAverages": 3990,
+                        "avgOfPeaks": 4200,
+                        "p50OfPeaks": 3790,
+                        "maxOfPeaks": 9010,
+                        "recommendedValue": 3990
+                    },
+                    "readThroughputMBps": {
+                        "avgOfAverages": 10.5,
+                        "p95OfAverages": 21.8,
+                        "avgOfPeaks": 23.1,
+                        "p50OfPeaks": 20.7,
+                        "maxOfPeaks": 50.2,
+                        "recommendedValue": 21.8
+                    },
+                    "writeThroughputMBps": {
+                        "avgOfAverages": 5.7,
+                        "p95OfAverages": 11.7,
+                        "avgOfPeaks": 12.3,
+                        "p50OfPeaks": 11.1,
+                        "maxOfPeaks": 26.8,
+                        "recommendedValue": 11.7
+                    },
+                    "totalThroughputMBps": {
+                        "avgOfAverages": 16.2,
+                        "p95OfAverages": 33.5,
+                        "avgOfPeaks": 35.4,
+                        "p50OfPeaks": 31.8,
+                        "maxOfPeaks": 77.0,
+                        "recommendedValue": 33.5
+                    }
+                }
+            },
+            "storageInfo": {
+                "totalDatabaseSizeGB": 820,
+                "tempTablespaceSizeGB": 15,
+                "redoLogCount": 6,
+                "totalRedoSizeMB": 6144,
+                "tablespaces": [
+                    {
+                        "name": "SYSTEM",
+                        "sizeGB": 2.5,
+                        "usedGB": 1.9
+                    },
+                    {
+                        "name": "SYSAUX",
+                        "sizeGB": 3.5,
+                        "usedGB": 2.7
+                    },
+                    {
+                        "name": "UNDOTBS1",
+                        "sizeGB": 50,
+                        "usedGB": 22
+                    },
+                    {
+                        "name": "HR_DATA",
+                        "sizeGB": 450,
+                        "usedGB": 375
+                    },
+                    {
+                        "name": "HR_INDEX",
+                        "sizeGB": 180,
+                        "usedGB": 142
+                    },
+                    {
+                        "name": "HR_LOB",
+                        "sizeGB": 120,
+                        "usedGB": 88
+                    },
+                    {
+                        "name": "USERS",
+                        "sizeGB": 14,
+                        "usedGB": 5.2
+                    }
+                ]
+            },
+            "performanceSnapshots": [
+                {
+                    "snapId": 2000,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T00:00:00.000Z",
+                    "endTime": "2025-11-24T01:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 310,
+                    "writeIOPS": 165,
+                    "readMBps": 2.6,
+                    "writeMBps": 1.3,
+                    "activeSessions": 1.0,
+                    "peakReadIOPS": 620,
+                    "peakWriteIOPS": 340,
+                    "peakReadMBps": 5.8,
+                    "peakWriteMBps": 2.9,
+                    "peakActiveSessions": 2.1
+                },
+                {
+                    "snapId": 2001,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T01:00:00.000Z",
+                    "endTime": "2025-11-24T02:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 285,
+                    "writeIOPS": 148,
+                    "readMBps": 2.4,
+                    "writeMBps": 1.2,
+                    "activeSessions": 0.8,
+                    "peakReadIOPS": 570,
+                    "peakWriteIOPS": 298,
+                    "peakReadMBps": 5.1,
+                    "peakWriteMBps": 2.5,
+                    "peakActiveSessions": 1.7
+                },
+                {
+                    "snapId": 2006,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T06:00:00.000Z",
+                    "endTime": "2025-11-24T07:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 680,
+                    "writeIOPS": 365,
+                    "readMBps": 5.8,
+                    "writeMBps": 3.0,
+                    "activeSessions": 2.4,
+                    "peakReadIOPS": 1420,
+                    "peakWriteIOPS": 760,
+                    "peakReadMBps": 12.5,
+                    "peakWriteMBps": 6.4,
+                    "peakActiveSessions": 4.8
+                },
+                {
+                    "snapId": 2009,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T09:00:00.000Z",
+                    "endTime": "2025-11-24T10:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 1850,
+                    "writeIOPS": 920,
+                    "readMBps": 15.8,
+                    "writeMBps": 7.6,
+                    "activeSessions": 5.2,
+                    "peakReadIOPS": 3700,
+                    "peakWriteIOPS": 1840,
+                    "peakReadMBps": 31.6,
+                    "peakWriteMBps": 15.2,
+                    "peakActiveSessions": 8.5
+                },
+                {
+                    "snapId": 2012,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T12:00:00.000Z",
+                    "endTime": "2025-11-24T13:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 2150,
+                    "writeIOPS": 1080,
+                    "readMBps": 18.4,
+                    "writeMBps": 9.1,
+                    "activeSessions": 6.1,
+                    "peakReadIOPS": 4300,
+                    "peakWriteIOPS": 2160,
+                    "peakReadMBps": 36.8,
+                    "peakWriteMBps": 18.2,
+                    "peakActiveSessions": 8.5
+                },
+                {
+                    "snapId": 2015,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T15:00:00.000Z",
+                    "endTime": "2025-11-24T16:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 2890,
+                    "writeIOPS": 1520,
+                    "readMBps": 24.1,
+                    "writeMBps": 12.9,
+                    "activeSessions": 7.8,
+                    "peakReadIOPS": 5890,
+                    "peakWriteIOPS": 3120,
+                    "peakReadMBps": 50.2,
+                    "peakWriteMBps": 26.8,
+                    "peakActiveSessions": 8.5
+                },
+                {
+                    "snapId": 2018,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T18:00:00.000Z",
+                    "endTime": "2025-11-24T19:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 1420,
+                    "writeIOPS": 710,
+                    "readMBps": 12.1,
+                    "writeMBps": 5.9,
+                    "activeSessions": 3.8,
+                    "peakReadIOPS": 2840,
+                    "peakWriteIOPS": 1420,
+                    "peakReadMBps": 24.2,
+                    "peakWriteMBps": 11.8,
+                    "peakActiveSessions": 6.2
+                },
+                {
+                    "snapId": 2021,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T21:00:00.000Z",
+                    "endTime": "2025-11-24T22:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 520,
+                    "writeIOPS": 275,
+                    "readMBps": 4.4,
+                    "writeMBps": 2.3,
+                    "activeSessions": 1.6,
+                    "peakReadIOPS": 1040,
+                    "peakWriteIOPS": 550,
+                    "peakReadMBps": 8.8,
+                    "peakWriteMBps": 4.6,
+                    "peakActiveSessions": 3.2
+                }
+            ],
+            "collectionMethod": "AWR"
+        },
+        {
+            "databaseInfo": {
+                "dbName": "ANALYTDB",
+                "dbId": 5092847163,
+                "instanceName": "analytdb1",
+                "hostName": "ora-prod-multidb-01",
+                "oracleVersion": "19.21.0.0.0",
+                "isRacEnabled": false,
+                "isDataGuardEnabled": false,
+                "databaseRole": "PRIMARY",
+                "logMode": "NOARCHIVELOG",
+                "isCDB": true,
+                "containerName": "CDB$ROOT",
+                "containerId": 1,
+                "vCPUs": 16,
+                "sgaTargetGB": 24,
+                "pgaTargetGB": 8,
+                "oracleEdition": "Standard Edition",
+                "oracleEditionFull": "Oracle Database 19c Standard Edition 2 Release 19.0.0.0.0",
+                "pdbCount": 2,
+                "pdbList": ["ANALYT_PDB1", "ANALYT_PDB2"]
+            },
+            "resourceUtilization": {
+                "cpuUtilization": {
+                    "min": 3.8,
+                    "avg": 41.2,
+                    "max": 85.3,
+                    "p50": 39,
+                    "p95": 72.8
+                },
+                "memoryUtilization": {
+                    "sgaAllocatedGB": 24,
+                    "pgaAllocatedGB": 8,
+                    "totalOracleMemoryGB": 32,
+                    "memoryTargetGB": 32,
+                    "hostPhysicalMemoryGB": 128
+                },
+                "dbTimePerSec": {
+                    "min": 0.6,
+                    "avg": 5.3,
+                    "max": 19.4,
+                    "p50": 4.7,
+                    "p95": 14.1
+                }
+            },
+            "performanceSummary": {
+                "snapshotCount": 24,
+                "readIOPS": {
+                    "min": 1520,
+                    "avg": 6340,
+                    "max": 14200,
+                    "p50": 5820,
+                    "p95": 12950
+                },
+                "writeIOPS": {
+                    "min": 320,
+                    "avg": 1415,
+                    "max": 3180,
+                    "p50": 1290,
+                    "p95": 2870
+                },
+                "readThroughputMBps": {
+                    "min": 18.5,
+                    "avg": 78.2,
+                    "max": 175.6,
+                    "p50": 71.8,
+                    "p95": 159.8
+                },
+                "writeThroughputMBps": {
+                    "min": 3.9,
+                    "avg": 17.4,
+                    "max": 39.2,
+                    "p50": 15.9,
+                    "p95": 35.3
+                },
+                "activeSessions": {
+                    "min": 1.2,
+                    "avg": 6.8,
+                    "max": 18.9,
+                    "p50": 6.1,
+                    "p95": 16.4
+                },
+                "sizingStats": {
+                    "readIOPS": {
+                        "avgOfAverages": 6340,
+                        "p95OfAverages": 12950,
+                        "avgOfPeaks": 13580,
+                        "p50OfPeaks": 12200,
+                        "maxOfPeaks": 31500,
+                        "recommendedValue": 12950
+                    },
+                    "writeIOPS": {
+                        "avgOfAverages": 1415,
+                        "p95OfAverages": 2870,
+                        "avgOfPeaks": 3020,
+                        "p50OfPeaks": 2710,
+                        "maxOfPeaks": 7050,
+                        "recommendedValue": 2870
+                    },
+                    "totalIOPS": {
+                        "avgOfAverages": 7755,
+                        "p95OfAverages": 15820,
+                        "avgOfPeaks": 16600,
+                        "p50OfPeaks": 14910,
+                        "maxOfPeaks": 38550,
+                        "recommendedValue": 15820
+                    },
+                    "readThroughputMBps": {
+                        "avgOfAverages": 78.2,
+                        "p95OfAverages": 159.8,
+                        "avgOfPeaks": 167.7,
+                        "p50OfPeaks": 150.5,
+                        "maxOfPeaks": 390.2,
+                        "recommendedValue": 159.8
+                    },
+                    "writeThroughputMBps": {
+                        "avgOfAverages": 17.4,
+                        "p95OfAverages": 35.3,
+                        "avgOfPeaks": 37.1,
+                        "p50OfPeaks": 33.3,
+                        "maxOfPeaks": 86.5,
+                        "recommendedValue": 35.3
+                    },
+                    "totalThroughputMBps": {
+                        "avgOfAverages": 95.6,
+                        "p95OfAverages": 195.1,
+                        "avgOfPeaks": 204.8,
+                        "p50OfPeaks": 183.8,
+                        "maxOfPeaks": 476.7,
+                        "recommendedValue": 195.1
+                    }
+                }
+            },
+            "storageInfo": {
+                "totalDatabaseSizeGB": 3200,
+                "tempTablespaceSizeGB": 50,
+                "redoLogCount": 8,
+                "totalRedoSizeMB": 8192,
+                "tablespaces": [
+                    {
+                        "name": "SYSTEM",
+                        "sizeGB": 4,
+                        "usedGB": 3.1
+                    },
+                    {
+                        "name": "SYSAUX",
+                        "sizeGB": 6,
+                        "usedGB": 4.5
+                    },
+                    {
+                        "name": "UNDOTBS1",
+                        "sizeGB": 80,
+                        "usedGB": 35
+                    },
+                    {
+                        "name": "ANALYT_FACT",
+                        "sizeGB": 1800,
+                        "usedGB": 1520
+                    },
+                    {
+                        "name": "ANALYT_DIM",
+                        "sizeGB": 600,
+                        "usedGB": 475
+                    },
+                    {
+                        "name": "ANALYT_INDEX",
+                        "sizeGB": 500,
+                        "usedGB": 390
+                    },
+                    {
+                        "name": "ANALYT_STAGE",
+                        "sizeGB": 200,
+                        "usedGB": 85
+                    },
+                    {
+                        "name": "USERS",
+                        "sizeGB": 10,
+                        "usedGB": 3.8
+                    }
+                ]
+            },
+            "performanceSnapshots": [
+                {
+                    "snapId": 3000,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T00:00:00.000Z",
+                    "endTime": "2025-11-24T01:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 1620,
+                    "writeIOPS": 340,
+                    "readMBps": 19.8,
+                    "writeMBps": 4.2,
+                    "activeSessions": 1.5,
+                    "peakReadIOPS": 3240,
+                    "peakWriteIOPS": 680,
+                    "peakReadMBps": 39.6,
+                    "peakWriteMBps": 8.4,
+                    "peakActiveSessions": 3.0
+                },
+                {
+                    "snapId": 3001,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T01:00:00.000Z",
+                    "endTime": "2025-11-24T02:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 1520,
+                    "writeIOPS": 320,
+                    "readMBps": 18.5,
+                    "writeMBps": 3.9,
+                    "activeSessions": 1.2,
+                    "peakReadIOPS": 3040,
+                    "peakWriteIOPS": 640,
+                    "peakReadMBps": 37.0,
+                    "peakWriteMBps": 7.8,
+                    "peakActiveSessions": 2.4
+                },
+                {
+                    "snapId": 3004,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T04:00:00.000Z",
+                    "endTime": "2025-11-24T05:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 8950,
+                    "writeIOPS": 2240,
+                    "readMBps": 109.2,
+                    "writeMBps": 27.5,
+                    "activeSessions": 8.4,
+                    "peakReadIOPS": 17900,
+                    "peakWriteIOPS": 4480,
+                    "peakReadMBps": 218.4,
+                    "peakWriteMBps": 55.0,
+                    "peakActiveSessions": 16.8
+                },
+                {
+                    "snapId": 3008,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T08:00:00.000Z",
+                    "endTime": "2025-11-24T09:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 4280,
+                    "writeIOPS": 1070,
+                    "readMBps": 52.2,
+                    "writeMBps": 13.1,
+                    "activeSessions": 4.8,
+                    "peakReadIOPS": 8560,
+                    "peakWriteIOPS": 2140,
+                    "peakReadMBps": 104.4,
+                    "peakWriteMBps": 26.2,
+                    "peakActiveSessions": 9.6
+                },
+                {
+                    "snapId": 3010,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T10:00:00.000Z",
+                    "endTime": "2025-11-24T11:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 9840,
+                    "writeIOPS": 2460,
+                    "readMBps": 120.1,
+                    "writeMBps": 30.3,
+                    "activeSessions": 12.5,
+                    "peakReadIOPS": 19680,
+                    "peakWriteIOPS": 4920,
+                    "peakReadMBps": 240.2,
+                    "peakWriteMBps": 60.6,
+                    "peakActiveSessions": 18.9
+                },
+                {
+                    "snapId": 3013,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T13:00:00.000Z",
+                    "endTime": "2025-11-24T14:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 7650,
+                    "writeIOPS": 1910,
+                    "readMBps": 93.4,
+                    "writeMBps": 23.5,
+                    "activeSessions": 9.2,
+                    "peakReadIOPS": 15300,
+                    "peakWriteIOPS": 3820,
+                    "peakReadMBps": 186.8,
+                    "peakWriteMBps": 47.0,
+                    "peakActiveSessions": 14.1
+                },
+                {
+                    "snapId": 3016,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T16:00:00.000Z",
+                    "endTime": "2025-11-24T17:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 14200,
+                    "writeIOPS": 3180,
+                    "readMBps": 175.6,
+                    "writeMBps": 39.2,
+                    "activeSessions": 18.9,
+                    "peakReadIOPS": 31500,
+                    "peakWriteIOPS": 7050,
+                    "peakReadMBps": 390.2,
+                    "peakWriteMBps": 86.5,
+                    "peakActiveSessions": 18.9
+                },
+                {
+                    "snapId": 3019,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T19:00:00.000Z",
+                    "endTime": "2025-11-24T20:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 5120,
+                    "writeIOPS": 1280,
+                    "readMBps": 62.5,
+                    "writeMBps": 15.7,
+                    "activeSessions": 6.1,
+                    "peakReadIOPS": 10240,
+                    "peakWriteIOPS": 2560,
+                    "peakReadMBps": 125.0,
+                    "peakWriteMBps": 31.4,
+                    "peakActiveSessions": 12.2
+                },
+                {
+                    "snapId": 3022,
+                    "instanceNumber": 1,
+                    "beginTime": "2025-11-24T22:00:00.000Z",
+                    "endTime": "2025-11-24T23:00:00.000Z",
+                    "intervalSeconds": 3600,
+                    "readIOPS": 2380,
+                    "writeIOPS": 595,
+                    "readMBps": 29.1,
+                    "writeMBps": 7.3,
+                    "activeSessions": 2.8,
+                    "peakReadIOPS": 4760,
+                    "peakWriteIOPS": 1190,
+                    "peakReadMBps": 58.2,
+                    "peakWriteMBps": 14.6,
+                    "peakActiveSessions": 5.6
+                }
+            ],
+            "collectionMethod": "STATSPACK"
         }
     ],
     "timestamp": "2025-12-01T06:00:00Z"

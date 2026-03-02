@@ -20,7 +20,7 @@
     },
     "databases": [
         {
-            "instanceInfo": {
+            "databaseInfo": {
                 "dbName": "FINDB",
                 "dbId": 1928374650,
                 "instanceName": "findb1",

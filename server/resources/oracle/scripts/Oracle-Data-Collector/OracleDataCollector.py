@@ -107,7 +107,7 @@ def build_combined_json(script_info, host_info, per_sid_dicts):
     """Build a single combined JSON dict with all SIDs in a databases[] array.
 
     Each per-SID dict produced by the SQL script has top-level keys like:
-        scriptInfo, instanceInfo, resourceUtilization, performanceSnapshots,
+        scriptInfo, databaseInfo, resourceUtilization, performanceSnapshots,
         performanceSummary, storageInfo, sizingRecommendations
 
     The combined output groups per-SID data under 'databases[]' and lifts
@@ -116,7 +116,7 @@ def build_combined_json(script_info, host_info, per_sid_dicts):
     databases = []
     for sid_data in per_sid_dicts:
         entry = OrderedDict()
-        for key in ("instanceInfo", "resourceUtilization", "performanceSnapshots",
+        for key in ("databaseInfo", "resourceUtilization", "performanceSnapshots",
                      "performanceSummary", "storageInfo", "sizingRecommendations"):
             if key in sid_data:
                 entry[key] = sid_data[key]
@@ -330,11 +330,11 @@ def _resolve_host_fqdn(host):
 def enrich_partner_nodes(sid_data, oracle_home):
     """Resolve standby TNS aliases to actual hostnames via tnsnames.ora.
 
-    Updates instanceInfo.partnerNodes in-place when Data Guard standbys
+    Updates databaseInfo.partnerNodes in-place when Data Guard standbys
     are present and their destinations can be resolved.  IP addresses
     are reverse-resolved to FQDNs when possible.
     """
-    instance_info = sid_data.get("instanceInfo", {})
+    instance_info = sid_data.get("databaseInfo", {})
     if not instance_info.get("isDataGuardEnabled"):
         return
     standbys = instance_info.get("standbyDatabases", [])

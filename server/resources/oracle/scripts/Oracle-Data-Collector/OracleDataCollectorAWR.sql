@@ -11,7 +11,7 @@ REM
 REM OUTPUT FORMAT (TCO-Enhanced):
 REM   - scriptInfo: Version, collection method, timestamp
 REM   - hostInfo: Merged by shell script (CPU, RAM, storage protocol)
-REM   - instanceInfo: Database details, edition, RAC, DataGuard status
+REM   - databaseInfo: Database details, edition, RAC, DataGuard status
 REM   - performanceSnapshots[]: Raw per-snapshot metrics for backend processing
 REM   - performanceSummary: Pre-computed min/avg/max/P50/P95 for quick access
 REM   - resourceUtilization: CPU/Memory usage for instance right-sizing
@@ -60,7 +60,7 @@ DECLARE
   -- DBID for AWR queries (H5/H8: prefer CON_DBID for PDB-local AWR)
   v_dbid NUMBER := 0;
   
-  -- DataGuard status (M11: separated to avoid killing instanceInfo query)
+  -- DataGuard status (M11: separated to avoid killing databaseInfo query)
   v_is_dataguard VARCHAR2(10) := 'false';
   v_is_rac_flag VARCHAR2(10) := 'false';
   
@@ -186,7 +186,7 @@ BEGIN
     DBMS_OUTPUT.PUT('"Snapshots span only ' || v_snap_time_span || ' hours (need at least ' || c_min_hours || ' hours)"');
   END IF;
   
-  -- Check for RAC (will be checked after instanceInfo query, but we can pre-check)
+  -- Check for RAC (will be checked after databaseInfo query, but we can pre-check)
   DECLARE
     v_rac_check VARCHAR2(10) := 'FALSE';
   BEGIN
@@ -251,7 +251,7 @@ BEGIN
       ) FROM dual)/1024/1024/1024 as pga_gb
     FROM v$instance i CROSS JOIN v$database d
   ) LOOP
-    DBMS_OUTPUT.PUT_LINE('"instanceInfo": {');
+    DBMS_OUTPUT.PUT_LINE('"databaseInfo": {');
     DBMS_OUTPUT.PUT_LINE('"dbName": ' || escape_json(r.db_name) || ',');
     DBMS_OUTPUT.PUT_LINE('"dbId": ' || r.dbid || ',');
     DBMS_OUTPUT.PUT_LINE('"instanceName": ' || escape_json(r.instance_name) || ',');

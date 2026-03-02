@@ -16,7 +16,7 @@ import { ONPREM_TCO_CREDENTIALS_ID, NETWORK_PERF } from '../../../utils/continou
 import {
     OracleCollectionObject,
     OracleDatabaseEntry,
-    OracleInstanceInfo,
+    OracleDatabaseInfo,
     OraclePerformanceSummary,
     OracleStatsSummary,
     OracleResourceUtilization
@@ -79,7 +79,7 @@ function validateOracleCollectionObject(data: OracleCollectionObject): boolean {
     }
     // Validate each database entry
     for (const entry of databases) {
-        if (!entry.instanceInfo || !entry.performanceSummary || !entry.storageInfo) {
+        if (!entry.databaseInfo || !entry.performanceSummary || !entry.storageInfo) {
             return false;
         }
         if (!Array.isArray(entry.performanceSnapshots) || isEmpty(entry.performanceSnapshots)) {
@@ -108,8 +108,8 @@ function getHostUniqueId(hostInfo: OracleCollectionObject['hostInfo']): string {
     return hostInfo.hostname;
 }
 
-function determineOracleDeploymentType(instanceInfo: OracleInstanceInfo): DATABASE_DEPLOYMENT_TYPE {
-    return instanceInfo.isDataGuardEnabled ? DATABASE_DEPLOYMENT_TYPE.DG : DATABASE_DEPLOYMENT_TYPE.Standalone;
+function determineOracleDeploymentType(databaseInfo: OracleDatabaseInfo): DATABASE_DEPLOYMENT_TYPE {
+    return databaseInfo.isDataGuardEnabled ? DATABASE_DEPLOYMENT_TYPE.DG : DATABASE_DEPLOYMENT_TYPE.Standalone;
 }
 
 interface OracleResourcePrepData {
@@ -172,7 +172,7 @@ function deriveOracleEc2InstanceListForMarketing(
     const ebsClassifications: EBSClassification[] = [];
 
     for (const entry of entries) {
-        const { storageInfo, performanceSummary, instanceInfo } = entry;
+        const { storageInfo, performanceSummary, databaseInfo } = entry;
 
         const totalDatabaseSizeGiB = storageInfo?.totalDatabaseSizeGB || 100;
 
@@ -181,7 +181,7 @@ function deriveOracleEc2InstanceListForMarketing(
         validateEbsLimits(totalDatabaseSizeGiB, iops, throughputMBps);
         const ebsType = classifyEbsVolumeType(totalDatabaseSizeGiB, iops, throughputMBps, region);
 
-        const sidLabel = instanceInfo?.instanceName || instanceInfo?.dbName || 'Oracle';
+        const sidLabel = databaseInfo?.instanceName || databaseInfo?.dbName || 'Oracle';
         ebsClassifications.push({
             instanceName: sidLabel,
             numDatabases: 1,
@@ -243,7 +243,7 @@ async function deriveOracleHostConfigBasedInstanceType(
 
 async function deriveOracleInstanceType(
     region: string,
-    instanceInfo: OracleInstanceInfo,
+    databaseInfo: OracleDatabaseInfo,
     hostInfo: OracleCollectionObject['hostInfo'],
     resourceUtilization?: OracleResourceUtilization,
     aggregatedValues?: {
@@ -251,14 +251,14 @@ async function deriveOracleInstanceType(
         maxP95Cpu?: number;
     }
 ): Promise<string | undefined> {
-    logger.info('Deriving Oracle instance type', { region, instanceInfo: instanceInfo.instanceName });
+    logger.info('Deriving Oracle instance type', { region, databaseInfo: databaseInfo.instanceName });
 
-    const totalMemoryGB = aggregatedValues?.totalMemoryGB ?? instanceInfo.sgaTargetGB + instanceInfo.pgaTargetGB;
+    const totalMemoryGB = aggregatedValues?.totalMemoryGB ?? databaseInfo.sgaTargetGB + databaseInfo.pgaTargetGB;
     const requiredMemoryMiB = Math.max(totalMemoryGB * 1024, 8192);
 
-    let requiredVCpus = instanceInfo.vCPUs || hostInfo.cpuCount;
+    let requiredVCpus = databaseInfo.vCPUs || hostInfo.cpuCount;
 
-    if (!instanceInfo.vCPUs) {
+    if (!databaseInfo.vCPUs) {
         if (aggregatedValues?.maxP95Cpu != null) {
             requiredVCpus = computeEffectiveVCpus(aggregatedValues.maxP95Cpu, hostInfo.cpuCount);
 
@@ -297,7 +297,7 @@ async function deriveOracleInstanceType(
 function groupDatabasesByDeployment(databases: OracleDatabaseEntry[]): Record<string, OracleDatabaseEntry[]> {
     const grouped: Record<string, OracleDatabaseEntry[]> = {};
     for (const entry of databases) {
-        const deploymentType = determineOracleDeploymentType(entry.instanceInfo);
+        const deploymentType = determineOracleDeploymentType(entry.databaseInfo);
         if (!grouped[deploymentType]) {
             grouped[deploymentType] = [];
         }
@@ -334,12 +334,12 @@ function getOracleNodeCounts(
     entries: OracleDatabaseEntry[]
 ): { existingNodeCount: number; recommendedNodeCount: number } {
     if (deploymentType === DATABASE_DEPLOYMENT_TYPE.DG) {
-        const partnerNodes = entries[0]?.instanceInfo?.partnerNodes;
+        const partnerNodes = entries[0]?.databaseInfo?.partnerNodes;
         let nodeCount: number;
         if (partnerNodes?.length) {
             nodeCount = partnerNodes.length;
         } else {
-            const maxStandbyPerSid = Math.max(...entries.map(e => (e.instanceInfo?.standbyDatabases || []).length), 0);
+            const maxStandbyPerSid = Math.max(...entries.map(e => (e.databaseInfo?.standbyDatabases || []).length), 0);
             nodeCount = 1 + Math.max(maxStandbyPerSid, 1);
         }
         return { existingNodeCount: nodeCount, recommendedNodeCount: nodeCount };
@@ -350,12 +350,12 @@ function getOracleNodeCounts(
 function getStandbyNodesFromBestSid(entries: OracleDatabaseEntry[]): string[] {
     const bestEntry = entries.reduce(
         (best, e) =>
-            (e.instanceInfo?.standbyDatabases || []).length > (best.instanceInfo?.standbyDatabases || []).length
+            (e.databaseInfo?.standbyDatabases || []).length > (best.databaseInfo?.standbyDatabases || []).length
                 ? e
                 : best,
         entries[0]
     );
-    return (bestEntry?.instanceInfo?.standbyDatabases || []).map(s => s.dbUniqueName);
+    return (bestEntry?.databaseInfo?.standbyDatabases || []).map(s => s.dbUniqueName);
 }
 
 async function saveOracleReportInWlmdbDatabase(
@@ -379,7 +379,7 @@ async function saveOracleReportInWlmdbDatabase(
     const groupedByDeployment = groupDatabasesByDeployment(databases);
 
     const reports = Object.entries(groupedByDeployment).map(([deploymentType, entries]) => {
-        const sidNames = entries.map(e => e.instanceInfo.instanceName || e.instanceInfo.dbName);
+        const sidNames = entries.map(e => e.databaseInfo.instanceName || e.databaseInfo.dbName);
         const resourceId = generateUniqueId(accountId, sidNames, [hostId]);
         return {
             account_id: accountId,
@@ -497,10 +497,10 @@ function aggregateDatabaseEntries(entries: OracleDatabaseEntry[]) {
     let totalStorageGB = 0;
 
     for (const entry of entries) {
-        const { instanceInfo, performanceSummary, resourceUtilization, storageInfo } = entry;
+        const { databaseInfo, performanceSummary, resourceUtilization, storageInfo } = entry;
 
         // Memory: SUM of SGA + PGA
-        totalMemoryGB += (instanceInfo.sgaTargetGB || 0) + (instanceInfo.pgaTargetGB || 0);
+        totalMemoryGB += (databaseInfo.sgaTargetGB || 0) + (databaseInfo.pgaTargetGB || 0);
 
         // IOPS/Throughput: SUM of recommendedValue (or avg fallback)
         const { iops: entryIOPS, throughputMBps: entryThroughput } = deriveIopsAndThroughput(performanceSummary);
@@ -528,14 +528,14 @@ function applyOracleDatabaseOverrides(
         return entries;
     }
     return entries.map(entry => {
-        const override = databaseData.find(d => d.databaseId === String(entry.instanceInfo?.dbId));
+        const override = databaseData.find(d => d.databaseId === String(entry.databaseInfo?.dbId));
         if (!override) {
             return entry;
         }
         return {
             ...entry,
-            instanceInfo: {
-                ...entry.instanceInfo,
+            databaseInfo: {
+                ...entry.databaseInfo,
                 ...(override.noOfVcpusInUse != null && { vCPUs: override.noOfVcpusInUse }),
                 ...(override.memory != null && {
                     sgaTargetGB: sizeInGigaBytes(override.memory, 'B'),
@@ -629,9 +629,9 @@ async function computeOracleStorageSavings(
     snapshotInfo?: StorageSavingsRequestBodyType
 ) {
     const [firstEntry] = entries;
-    const { instanceInfo } = firstEntry;
+    const { databaseInfo } = firstEntry;
     const aggregated = aggregateDatabaseEntries(entries);
-    const deploymentType = determineOracleDeploymentType(instanceInfo);
+    const deploymentType = determineOracleDeploymentType(databaseInfo);
 
     const prepData: OracleResourcePrepData = {
         resourceId: '',
@@ -795,30 +795,30 @@ async function getOnPremisesOracleDatabaseResources(
 
             // Build oracleDatabases[] from all entries in this group
             const oracleDatabases = entries.map((entry: OracleDatabaseEntry) => {
-                const { instanceInfo, storageInfo: entryStorage, performanceSummary: entryPerf } = entry;
-                const deploymentModel = instanceInfo ? determineOracleDeploymentType(instanceInfo) : deploymentType;
+                const { databaseInfo, storageInfo: entryStorage, performanceSummary: entryPerf } = entry;
+                const deploymentModel = databaseInfo ? determineOracleDeploymentType(databaseInfo) : deploymentType;
                 const { iops: entryIops, throughputMBps: entryThroughput } = deriveIopsAndThroughput(entryPerf);
 
                 return {
-                    databaseId: String(instanceInfo?.dbId || onpremResourceId),
-                    databaseName: instanceInfo?.dbName || 'Unknown',
-                    sid: instanceInfo?.instanceName || 'Unknown',
-                    oracleVersion: instanceInfo?.oracleVersion || 'Unknown',
-                    oracleEdition: instanceInfo?.oracleEdition || 'Unknown',
+                    databaseId: String(databaseInfo?.dbId || onpremResourceId),
+                    databaseName: databaseInfo?.dbName || 'Unknown',
+                    sid: databaseInfo?.instanceName || 'Unknown',
+                    oracleVersion: databaseInfo?.oracleVersion || 'Unknown',
+                    oracleEdition: databaseInfo?.oracleEdition || 'Unknown',
                     deploymentModel:
                         deploymentModel === DATABASE_DEPLOYMENT_TYPE.DG
                             ? OracleDeploymentModel.DG
                             : OracleDeploymentModel.STANDALONE,
-                    isRacEnabled: instanceInfo?.isRacEnabled || false,
-                    isDataGuardEnabled: instanceInfo?.isDataGuardEnabled || false,
-                    databaseRole: instanceInfo?.databaseRole || 'Unknown',
-                    isCDB: instanceInfo?.isCDB || false,
-                    vCPUs: instanceInfo?.vCPUs || 0,
-                    pdbCount: instanceInfo?.pdbCount ?? (instanceInfo?.pdbList?.length || 0),
+                    isRacEnabled: databaseInfo?.isRacEnabled || false,
+                    isDataGuardEnabled: databaseInfo?.isDataGuardEnabled || false,
+                    databaseRole: databaseInfo?.databaseRole || 'Unknown',
+                    isCDB: databaseInfo?.isCDB || false,
+                    vCPUs: databaseInfo?.vCPUs || 0,
+                    pdbCount: databaseInfo?.pdbCount ?? (databaseInfo?.pdbList?.length || 0),
                     totalIops: entryIops || 0,
                     totalThroughput: entryThroughput || 0,
                     totalStorage: convertGiBToBytes(entryStorage?.totalDatabaseSizeGB || 0),
-                    memory: convertGiBToBytes((instanceInfo?.sgaTargetGB || 0) + (instanceInfo?.pgaTargetGB || 0)),
+                    memory: convertGiBToBytes((databaseInfo?.sgaTargetGB || 0) + (databaseInfo?.pgaTargetGB || 0)),
                     networkPerformance: NETWORK_PERF.UP_TO_10
                 };
             });
@@ -829,7 +829,7 @@ async function getOnPremisesOracleDatabaseResources(
                 0
             );
 
-            const partnerNodes = entries[0]?.instanceInfo?.partnerNodes;
+            const partnerNodes = entries[0]?.databaseInfo?.partnerNodes;
             const onPremisesNodes = partnerNodes?.length
                 ? partnerNodes
                 : [hostInfo?.hostname || 'Unknown', ...getStandbyNodesFromBestSid(entries)];
@@ -923,11 +923,11 @@ async function deriveOracleInstanceTypesForResource(
 ): Promise<OracleResourceWithInstanceTypes> {
     const { hostInfo, entries, aggregated } = prepData;
     const [firstEntry] = entries;
-    const { instanceInfo, resourceUtilization } = firstEntry;
+    const { databaseInfo, resourceUtilization } = firstEntry;
 
     const [currentInstanceType, recommendedInstanceType] = await Promise.all([
         deriveOracleHostConfigBasedInstanceType(regionCode, hostInfo),
-        deriveOracleInstanceType(regionCode, instanceInfo, hostInfo, resourceUtilization, aggregated)
+        deriveOracleInstanceType(regionCode, databaseInfo, hostInfo, resourceUtilization, aggregated)
     ]);
 
     return {
@@ -956,14 +956,14 @@ function collectAndAggregateOracleEbsVolumes(
 
         const ebsClassifications: EBSClassification[] = [];
         for (const entry of entries) {
-            const { storageInfo, performanceSummary, instanceInfo } = entry;
+            const { storageInfo, performanceSummary, databaseInfo } = entry;
             const totalDatabaseSizeGiB = storageInfo?.totalDatabaseSizeGB || 100;
             const { iops, throughputMBps } = deriveIopsAndThroughput(performanceSummary);
 
             validateEbsLimits(totalDatabaseSizeGiB, iops, throughputMBps);
             const ebsType = classifyEbsVolumeType(totalDatabaseSizeGiB, iops, throughputMBps, regionCode);
 
-            const sidLabel = instanceInfo?.instanceName || instanceInfo?.dbName || 'Oracle';
+            const sidLabel = databaseInfo?.instanceName || databaseInfo?.dbName || 'Oracle';
             ebsClassifications.push({
                 instanceName: sidLabel,
                 numDatabases: 1,

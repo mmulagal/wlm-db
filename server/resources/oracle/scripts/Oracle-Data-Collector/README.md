@@ -115,7 +115,7 @@ The file contains host-level info and a `databases` array with one entry per SID
   "hostInfo": { ... },
   "databases": [
     {
-      "instanceInfo": { ... },
+      "databaseInfo": { ... },
       "resourceUtilization": { ... },
       "performanceSnapshots": [ ... ],
       "performanceSummary": { ... },
@@ -123,7 +123,7 @@ The file contains host-level info and a `databases` array with one entry per SID
       "collectionMethod": "AWR"
     },
     {
-      "instanceInfo": { ... },
+      "databaseInfo": { ... },
       "collectionMethod": "STATSPACK",
       ...
     }

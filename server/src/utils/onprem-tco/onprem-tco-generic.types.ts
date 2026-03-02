@@ -132,7 +132,7 @@ interface OracleHostInfo {
     nfsMounts: string;
 }
 
-interface OracleInstanceInfo {
+interface OracleDatabaseInfo {
     dbName: string;
     dbId: number;
     instanceName: string;
@@ -327,7 +327,7 @@ interface AWSSizingRecommendations {
 
 // A single Oracle database (SID) entry within a multi-SID collection
 interface OracleDatabaseEntry {
-    instanceInfo: OracleInstanceInfo;
+    databaseInfo: OracleDatabaseInfo;
     resourceUtilization?: OracleResourceUtilization;
     performanceSnapshots: OraclePerformanceSnapshot[];
     performanceSummary: OraclePerformanceSummary;
@@ -360,7 +360,7 @@ export {
     OnPremCollectionObject,
     OracleScriptInfo,
     OracleHostInfo,
-    OracleInstanceInfo,
+    OracleDatabaseInfo,
     OracleStandbyDatabase,
     OracleStatsSummary,
     OracleSizingStatistics,
