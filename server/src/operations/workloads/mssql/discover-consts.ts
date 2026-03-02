@@ -760,6 +760,14 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
             }
           }
           
+          # Remove isClustered from serverInfo (internal-only, used to derive baseDeploymentType at top level)
+          if ($aoagParsed.serverInfo) {
+            $cleanServerInfo = @{}
+            if ($aoagParsed.serverInfo.serverName) { $cleanServerInfo['serverName'] = $aoagParsed.serverInfo.serverName }
+            if ($null -ne $aoagParsed.serverInfo.isHadrEnabled) { $cleanServerInfo['isHadrEnabled'] = $aoagParsed.serverInfo.isHadrEnabled }
+            $aoagParsed.serverInfo = $cleanServerInfo
+          }
+
           $result['aoagDetails'] = $aoagParsed
         } else {
           Write-Information "Failed to fetch AOAG details for instance '$instanceName'."
@@ -1175,34 +1183,41 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
           $isAoagFromCluster = ($clusterDetails['${SQL_SERVER_DEPLOYMENT_TYPE}'] -eq '${SqlServerDeploymentModel.SQL_AOAG_SHORT}')
           
           if ($isAoagFromCluster -or $isHadrEnabled -eq $True) {
-            Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails -IsAoag $True
-            
-            $sqlServerNameForNodes = $responseObject['sqlServerName']
-            if ($sqlServerNameForNodes) {
-              $fciOwnerNodes = Get-FciOwnerNodes -sqlServerName $sqlServerNameForNodes
-              if ($fciOwnerNodes -and $fciOwnerNodes.Count -gt 0) {
-                $responseObject['sqlServerNodes'] = $fciOwnerNodes
-              }
-            }
-            
             $fallbackAgName = $clusterDetails['aoagName']
-            if (-not $fallbackAgName) { $fallbackAgName = $responseObject['windowsClusterName'] }
-            
+            if (-not $fallbackAgName -and $isAoagFromCluster) { $fallbackAgName = $responseObject['windowsClusterName'] }
             $replicaFciName = $responseObject['sqlServerName']
             
-            $serverInfo = @{ 
-              'serverName' = $replicaFciName
-              'isHadrEnabled' = if ($isHadrEnabled -eq $True) { 1 } else { 0 }
-            }
-            
-            $availabilityGroup = @{ 
-              'agName' = $fallbackAgName
-              'replicas' = @(@{ 'replica' = $replicaFciName })
-            }
-            
-            $responseObject['aoagDetails'] = @{ 
-              'serverInfo' = $serverInfo
-              'availabilityGroups' = @($availabilityGroup)
+            # Only classify as AOAG if we have a valid AG name to synthesize
+            # HADR enabled in registry alone (without cluster or AG info) is not sufficient for stopped instances
+            if ($fallbackAgName) {
+              Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails -IsAoag $True
+              
+              $sqlServerNameForNodes = $responseObject['sqlServerName']
+              if ($sqlServerNameForNodes) {
+                $fciOwnerNodes = Get-FciOwnerNodes -sqlServerName $sqlServerNameForNodes
+                if ($fciOwnerNodes -and $fciOwnerNodes.Count -gt 0) {
+                  $responseObject['sqlServerNodes'] = $fciOwnerNodes
+                }
+              }
+              
+              $serverInfo = @{ 
+                'serverName' = $replicaFciName
+                'isHadrEnabled' = if ($isHadrEnabled -eq $True) { 1 } else { 0 }
+              }
+              
+              $availabilityGroup = @{ 
+                'agName' = $fallbackAgName
+                'replicas' = @(@{ 'replica' = $replicaFciName })
+              }
+              
+              $responseObject['aoagDetails'] = @{ 
+                'serverInfo' = $serverInfo
+                'availabilityGroups' = @($availabilityGroup)
+              }
+            } else {
+              # HADR enabled but no AG/cluster info — treat as Standalone/FCI
+              Write-Information "Instance '$instanceName' is stopped with HADR enabled but no AG/cluster info. Falling back to Standalone/FCI."
+              Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $isClustered -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails
             }
           } elseif ($isClustered -eq $True) {
             Set-SqlDeploymentType -ResponseObject $responseObject -IsClustered $True -SqlServerInfoFromRegistry $sqlServerInfoFromRegistry -ClusterDetails $clusterDetails

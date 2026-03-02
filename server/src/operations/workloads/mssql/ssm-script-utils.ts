@@ -1759,7 +1759,14 @@ Function Call-SqlCmd {
         }
     }
 
-    if ($($LASTEXITCODE -and $LASTEXITCODE -ne 0) -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
+    # Fallback to native Windows auth (sqlcmd without credentials) when:
+    # 1. SQL auth was attempted and failed ($LASTEXITCODE non-zero from sqlcmd)
+    # 2. Domain auth (CredSSP) was attempted but returned no response — CredSSP may fail due to
+    #    policy/config issues while plain Windows auth can still work for local SQL instances.
+    #    We check $sqlresponse instead of $LASTEXITCODE because Invoke-Command (cmdlet) does not
+    #    set $LASTEXITCODE, so it would be stale from earlier native commands like Enable-CredSSP.
+    # 3. Neither auth type was configured — try Windows auth as the only option.
+    if (($sqlCredential.useSqlAuth -eq $True -And $LASTEXITCODE -And $LASTEXITCODE -ne 0) -Or ($sqlCredential.useDomainAuth -eq $True -And [string]::IsNullOrEmpty($sqlresponse)) -Or ($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
             if ($SuppressStderr) {
                 $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0 2> $null;

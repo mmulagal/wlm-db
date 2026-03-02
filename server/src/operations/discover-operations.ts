@@ -467,11 +467,14 @@ async function getHostAndSqlInfoFromPsOutput(
                 try {
                     if (item.hasOwnProperty('windowsClusterNodes')) {
                         item.windowsClusterNodes = JSON.parse(item.windowsClusterNodes);
+                        item.windowsClusterNodes = item.windowsClusterNodes ?? [];
                         // DBS-3941 fix
                         if (!isArray(item.windowsClusterNodes)) {
                             item.windowsClusterNodes = [item.windowsClusterNodes];
                         }
-                        item.nodeIps = item.windowsClusterNodes.map(({ Address }: { Address: string }) => Address);
+                        item.nodeIps = item.windowsClusterNodes
+                            .filter((node: any) => node && node.Address)
+                            .map(({ Address }: { Address: string }) => Address);
                     }
                 } catch (error) {
                     logger.error('Error parsing windowsClusterNodes:', error);
@@ -854,28 +857,35 @@ async function getHostAndSqlInfoFromPsOutput(
                             processedAoagDetails.availabilityGroups &&
                             isArray(processedAoagDetails.availabilityGroups)
                         ) {
-                            processedAoagDetails.availabilityGroups = processedAoagDetails.availabilityGroups.map(
-                                (ag: any) => {
+                            // Filter out AGs with null/empty agName (broken AOAG query results)
+                            processedAoagDetails.availabilityGroups = processedAoagDetails.availabilityGroups
+                                .filter((ag: any) => ag.agName)
+                                .map((ag: any) => {
                                     const { primaryReplica, replicas, ...restAg } = ag;
                                     if (replicas && isArray(replicas)) {
-                                        const normalizedReplicas = replicas.map((replica: any) => {
-                                            const { role, replica: replicaName, ...restReplica } = replica;
-                                            return {
-                                                replica: replicaName,
-                                                // Derive role if missing: PRIMARY if matches primaryReplica, else SECONDARY
-                                                role:
-                                                    role ||
-                                                    (replicaName === primaryReplica
-                                                        ? AOAG_ROLE_PRIMARY
-                                                        : AOAG_ROLE_SECONDARY),
-                                                ...restReplica
-                                            };
-                                        });
+                                        const normalizedReplicas = replicas
+                                            .filter((r: any) => r.replica)
+                                            .map((replica: any) => {
+                                                const { role, replica: replicaName, ...restReplica } = replica;
+                                                return {
+                                                    replica: replicaName,
+                                                    // Derive role if missing: PRIMARY if matches primaryReplica, else SECONDARY
+                                                    role:
+                                                        role ||
+                                                        (replicaName === primaryReplica
+                                                            ? AOAG_ROLE_PRIMARY
+                                                            : AOAG_ROLE_SECONDARY),
+                                                    ...restReplica
+                                                };
+                                            });
                                         return { ...restAg, primaryReplica, replicas: normalizedReplicas };
                                     }
                                     return ag;
-                                }
-                            );
+                                });
+                            // If all AGs were filtered out, discard aoagDetails entirely
+                            if (processedAoagDetails.availabilityGroups.length === 0) {
+                                processedAoagDetails = undefined;
+                            }
                         }
                     }
 
