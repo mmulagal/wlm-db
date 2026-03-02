@@ -299,7 +299,7 @@ export const calculatedFSXData = (
         },
         {
             label: 'Capacity pool tier required capacity',
-            value: fsxData?.capacityPoolTier ? formatSizeTwoPrecision(fsxData?.capacityPoolTier) : '0 TiB',
+            value: fsxData?.capacityPoolTier ? formatSizeTwoPrecision(fsxData?.capacityPoolTier) : '0 GiB',
             text: `Based on a typical ${useCaseLabel} workload, ${
                 100 - (fsxData?.percentageSsd || 0)
             }% of the data is on the capacity pool tier.`
