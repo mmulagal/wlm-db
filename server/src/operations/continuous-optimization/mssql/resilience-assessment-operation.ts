@@ -1202,8 +1202,6 @@ async function initiateHostLevelHighAvailabilityAssessment(
         const [parsedQuorumData, parsedHeartSettingsData, parsedAoagData] = rawResponsesParsed;
 
         const aoagDetails = isAoag ? deriveAoagDetails(parsedAoagData as Record<string, unknown>) : undefined;
-        const isStandaloneAoag =
-            isAoag && aoagDetails?.baseDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT;
 
         let clusterQuorumResult: {
             status: AssessmentStatus;
@@ -1222,21 +1220,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
                 details: null,
                 error: 'Unable to parse quorum data from ssm response'
             };
-        } else if (isStandaloneAoag) {
-            // Standalone AOAG expects Node Majority + Cloud Witness (not Disk Witness)
-            const isCloudWitnessQuorum = parsedQuorumData.IsMajority && !parsedQuorumData.IsPhysicalDisk;
-            clusterQuorumResult = {
-                status: isCloudWitnessQuorum ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-                details: {
-                    isMajority: parsedQuorumData.IsMajority,
-                    quorumType: parsedQuorumData.QuorumType,
-                    isPhysicalDisk: parsedQuorumData.IsPhysicalDisk,
-                    quorumResourceName: parsedQuorumData.QuorumResourceName,
-                    isCloudWitnessQuorum
-                }
-            };
         } else {
-            // FCI and FCI+AOAG expect Node and Disk Majority with Disk Witness
             clusterQuorumResult = {
                 status: parsedQuorumData.IsPhysicalDiskAndMajority
                     ? AssessmentStatus.OPTIMIZED
@@ -1460,11 +1444,6 @@ async function getHighAvailabilityDriftData(
             }
         }
         const resiliencyConfig = storageGoldenConfigData.resiliency;
-        const isStandaloneAoag =
-            resourceAssessmentData?.aoagDetails?.baseDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT;
-        const clusterQuorumRecommendation = isStandaloneAoag
-            ? 'The quorum configuration should be set to Node Majority with a Cloud Witness (no disk) to ensure high availability.'
-            : resiliencyConfig.highAvailability.clusterQuorum.recommendation;
 
         const haChecks: GenericAssessmentResponseType[] = [
             isEmpty(sharedStorage)
@@ -1503,7 +1482,6 @@ async function getHighAvailabilityDriftData(
                 : {
                       ...resiliencyConfig.highAvailability.clusterQuorum,
                       name: 'cluster-quorum',
-                      recommendation: clusterQuorumRecommendation,
                       status: clusterQuorum.status as AssessmentStatus,
                       objectsInViolation: clusterQuorum.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
                       violationDetails:

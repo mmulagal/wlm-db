@@ -95,7 +95,7 @@ const AOAG_EXCLUDED_CATEGORIES = [AssessmentCategories.LICENSE];
 // HA items to exclude for all AOAG deployments (sqlServer-service runs for both FCI and standalone AOAG)
 const AOAG_EXCLUDED_HA_ITEMS: string[] = [];
 // HA items to additionally exclude for standalone AOAG (shared-storage and drive-letter are FCI-specific checks)
-const STANDALONE_AOAG_EXCLUDED_HA_ITEMS = ['shared-storage', 'drive-letter'];
+const STANDALONE_AOAG_EXCLUDED_HA_ITEMS = ['shared-storage', 'drive-letter', 'cluster-quorum'];
 
 const AOAG_EXCLUDED_STORAGE_VOLUME_CONFIG = ['snapshot-copy-reserve'];
 
@@ -130,9 +130,8 @@ function filterAssessmentForAoag(
         filteredAssessment.highAvailability = filteredHA.length > 0 ? filteredHA : undefined;
     }
 
-    // Filter host-level data (remove compute, license, mssqlPatch)
     const filteredHostData: Record<string, unknown> = hostLevelData
-        ? omit(hostLevelData, ['compute', 'license', 'mssqlPatch'])
+        ? omit(hostLevelData, AOAG_EXCLUDED_CATEGORIES)
         : {};
 
     return { filteredAssessment, filteredHostData };

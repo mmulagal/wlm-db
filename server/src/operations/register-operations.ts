@@ -55,7 +55,12 @@ import {
     UNAVAILABLE_PS_MODULES
 } from './workloads/mssql/discover-consts';
 import { REQUIRED_PS_MODULES_FOR_MANAGEMENT, AOAG_ROLE_PRIMARY, AOAG_ROLE_SECONDARY } from './workloads/mssql/const';
-import { getPaginatedDatabaseInstances, getResources, upsertDatabaseInstance } from './database/database-operations';
+import {
+    getPaginatedDatabaseInstances,
+    getResources,
+    upsertDatabaseInstance,
+    updateDatabaseHostAssessmentData
+} from './database/database-operations';
 import { createResource, deleteDatabaseInstance, deleteResource } from '../lib/database/db';
 import { tagResources } from './aws/sqs-operations';
 import { createAssessmentDataForOracle } from './demo-operations';
@@ -83,6 +88,11 @@ import {
 } from '../routes/types/register.types';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { createAssessmentData, DEMO_REGISTER_RESPONSE } from '../utils/demo-utils/demoMockdata';
+import {
+    mockAoagResourceAssessmentData,
+    mockAoagResourceAssessmentDataAllOptimized,
+    aoagPrimaryHostName
+} from '../utils/demo-utils/hostAssementsData';
 import {
     copyPowerShellModule,
     validateOntapConnectivity,
@@ -695,6 +705,21 @@ async function registerSqlInstance(
                                     ...(ebsVolumesFiltered && { ebsVolumes: ebsVolumesFiltered })
                                 }
                             });
+                            if (
+                                IS_DEMO_FLOW &&
+                                sqlInstanceInfo.sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
+                            ) {
+                                const aoagMockData =
+                                    sqlInstanceInfo.sqlServerName === aoagPrimaryHostName
+                                        ? mockAoagResourceAssessmentData.assessment
+                                        : mockAoagResourceAssessmentDataAllOptimized.assessment;
+                                await updateDatabaseHostAssessmentData(
+                                    accountId,
+                                    credentialsId,
+                                    resourceId,
+                                    aoagMockData
+                                );
+                            }
                             isResourceTobeCreated = false;
                         }
 
@@ -1213,6 +1238,22 @@ async function manageSqlServerV2(accountId: string, itemsTobeManged: MultiInstan
                                                 ...(ebsVolumesFiltered && { ebsVolumes: ebsVolumesFiltered })
                                             }
                                         });
+                                        if (
+                                            IS_DEMO_FLOW &&
+                                            sqlInstanceInfo.sqlServerDeploymentType ===
+                                                SqlServerDeploymentModel.SQL_AOAG_SHORT
+                                        ) {
+                                            const aoagMockData =
+                                                sqlInstanceInfo.sqlServerName === aoagPrimaryHostName
+                                                    ? mockAoagResourceAssessmentData.assessment
+                                                    : mockAoagResourceAssessmentDataAllOptimized.assessment;
+                                            await updateDatabaseHostAssessmentData(
+                                                accountId,
+                                                credentialsId,
+                                                resourceId,
+                                                aoagMockData
+                                            );
+                                        }
 
                                         isResourceTobeCreated = false;
                                     }

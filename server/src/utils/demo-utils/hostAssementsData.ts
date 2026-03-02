@@ -797,6 +797,62 @@ const mockOracleHostOsPatchAssessmentDataAllOptimized = {
 
 const mockAoagResourceAssessmentData = {
     assessment: {
+        aoagDetails: {
+            baseDeploymentType: 'Standalone',
+            replicaRole: 'PRIMARY',
+            replicaRoles: [{ agName: 'DemoAOAG', replicaRole: 'PRIMARY' }],
+            databaseRoles: [{ databaseName: 'AOAG3_DB1', agName: 'DemoAOAG', replicaRole: 'PRIMARY' }]
+        },
+        compute: {
+            finding: 'OVER_PROVISIONED',
+            findingReasonCodes: ['CPUOverprovisioned', 'NetworkBandwidthOverprovisioned'],
+            currentInstanceType: 'r7i.xlarge',
+            recommendationOptions: [
+                {
+                    instanceType: 'm6a.large',
+                    platformDifferences: [],
+                    rank: 1,
+                    savingsOpportunity: {
+                        estimatedMonthlySavings: { currency: 'USD', value: 57.524 },
+                        savingsOpportunityPercentage: 37.17
+                    }
+                }
+            ]
+        },
+        mssqlPatch: [
+            {
+                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c1',
+                ec2InstanceName: 'PRD-SQL-CRM-AG3',
+                missingPatchDetails: [
+                    {
+                        kbId: 'KB5046861',
+                        title: 'Security Update for SQL Server 2022 CU16 (KB5046861)',
+                        severity: 'Important',
+                        classification: 'SecurityUpdates',
+                        releaseDate: '2025-11-12'
+                    }
+                ],
+                missingPatchesCount: 1,
+                criticalMissingPatchesCount: 0,
+                importantMissingPatchesCount: 1
+            },
+            {
+                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c2',
+                ec2InstanceName: 'PRD-SQL-CRM-AG4',
+                missingPatchDetails: [
+                    {
+                        kbId: 'KB5046861',
+                        title: 'Security Update for SQL Server 2022 CU16 (KB5046861)',
+                        severity: 'Important',
+                        classification: 'SecurityUpdates',
+                        releaseDate: '2025-11-12'
+                    }
+                ],
+                missingPatchesCount: 1,
+                criticalMissingPatchesCount: 0,
+                importantMissingPatchesCount: 1
+            }
+        ],
         rssConfig: {
             rssAdapters: [
                 {
@@ -953,6 +1009,28 @@ const mockAoagResourceAssessmentData = {
 
 const mockAoagResourceAssessmentDataAllOptimized = {
     assessment: {
+        aoagDetails: {
+            baseDeploymentType: 'Standalone',
+            replicaRole: 'SECONDARY',
+            replicaRoles: [{ agName: 'DemoAOAG', replicaRole: 'SECONDARY' }],
+            databaseRoles: [{ databaseName: 'AOAG3_DB1', agName: 'DemoAOAG', replicaRole: 'SECONDARY' }]
+        },
+        compute: {
+            finding: 'OPTIMIZED',
+            findingReasonCodes: [],
+            currentInstanceType: 'r7i.xlarge',
+            recommendationOptions: []
+        },
+        mssqlPatch: [
+            {
+                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c2',
+                ec2InstanceName: 'PRD-SQL-CRM-AG4',
+                missingPatchDetails: [],
+                missingPatchesCount: 0,
+                criticalMissingPatchesCount: 0,
+                importantMissingPatchesCount: 0
+            }
+        ],
         rssConfig: {
             rssAdapters: [
                 {
@@ -996,6 +1074,29 @@ const mockAoagResourceAssessmentDataAllOptimized = {
                 securityNonCompliantCount: 0
             }
         ],
+        highAvailability: {
+            clusterQuorum: {
+                status: 'optimized',
+                details: {
+                    isMajority: true,
+                    quorumType: 1,
+                    isPhysicalDisk: true,
+                    quorumResourceName: 'Cluster Disk 1',
+                    isPhysicalDiskAndMajority: true
+                }
+            },
+            heartbeat: {
+                status: 'optimized',
+                details: {
+                    CrossSiteDelay: { status: 'optimized', current: 1000, recommended: 1000 },
+                    SameSubnetDelay: { status: 'optimized', current: 1000, recommended: 1000 },
+                    CrossSubnetDelay: { status: 'optimized', current: 1000, recommended: 1000 },
+                    CrossSiteThreshold: { status: 'optimized', current: 20, recommended: 20 },
+                    SameSubnetThreshold: { status: 'optimized', current: 10, recommended: 10 },
+                    CrossSubnetThreshold: { status: 'optimized', current: 20, recommended: 20 }
+                }
+            }
+        },
         mtuAlignment: {
             fsxMTU: {
                 error: null,
