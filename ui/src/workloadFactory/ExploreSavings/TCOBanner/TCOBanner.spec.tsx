@@ -307,32 +307,32 @@ describe('TCOBanner', () => {
     });
 
     describe('Auto-Rotation (useEffect with setInterval)', () => {
-        it('should auto-rotate from slide 0 to slide 1 after 8 seconds', () => {
+        it('should auto-rotate from slide 0 to slide 1 after 20 seconds', () => {
             renderComponent();
             // Initially on slide 0
             expect(screen.getByTestId('oracle-tco-svg')).toBeTruthy();
 
-            // Advance time by 8 seconds
+            // Advance time by 20 seconds
             act(() => {
-                vi.advanceTimersByTime(8000);
+                vi.advanceTimersByTime(20000);
             });
 
             // Should now be on slide 1
             expect(screen.getByText('Step 1')).toBeTruthy();
         });
 
-        it('should auto-rotate from slide 1 back to slide 0 after another 8 seconds', () => {
+        it('should auto-rotate from slide 1 back to slide 0 after another 20 seconds', () => {
             renderComponent();
 
             // Advance to slide 1
             act(() => {
-                vi.advanceTimersByTime(8000);
+                vi.advanceTimersByTime(20000);
             });
             expect(screen.getByText('Step 1')).toBeTruthy();
 
-            // Advance another 8 seconds to go back to slide 0
+            // Advance another 20 seconds to go back to slide 0
             act(() => {
-                vi.advanceTimersByTime(8000);
+                vi.advanceTimersByTime(20000);
             });
             expect(screen.getByTestId('oracle-tco-svg')).toBeTruthy();
         });
@@ -363,7 +363,7 @@ describe('TCOBanner', () => {
 
             // Navigate to slide 1
             act(() => {
-                vi.advanceTimersByTime(8000);
+                vi.advanceTimersByTime(20000);
             });
 
             const rects = container.querySelectorAll('rect');

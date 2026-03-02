@@ -5,6 +5,21 @@ import { Provider } from 'react-redux';
 import { configureStore, createSlice } from '@reduxjs/toolkit';
 import CostBreakdown from './CostBreakdown';
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const map: Record<string, string> = {
+                'databases.explore-savings.cost-breakdown': 'Cost breakdown - Monthly charge',
+                'databases.explore-savings.type': 'Type',
+                'databases.explore-savings.mssql-server-on-fsx-ontap': 'Microsoft SQL Server on FSx for ONTAP',
+                'databases.explore-savings.mssql-on-ebs': 'Microsoft SQL Server on EBS',
+                'databases.explore-savings.mssql-on-fsxw': 'Microsoft SQL Server on FSx for Windows'
+            };
+            return map[key] ?? key;
+        }
+    })
+}));
+
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, variant, className, style }: any) => (
         <span data-variant={variant} className={className} style={style}>

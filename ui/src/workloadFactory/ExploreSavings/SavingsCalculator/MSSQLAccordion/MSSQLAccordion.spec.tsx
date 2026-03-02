@@ -22,6 +22,22 @@ const mockCloseDialog = vi.fn();
 const mockSaveConfigData = vi.fn();
 const mockConfigRefetch = vi.fn();
 
+const mockTranslation = (key: string) => {
+    const map: Record<string, string> = {
+        'databases.explore-savings.recommended-es-title': GENERAL.RECOMMENDED_ES_TITLE,
+        'databases.explore-savings.multi-fsx-disable-msg': GENERAL.ES_MULTI_FSX_DISABLE_MSG,
+        'databases.explore-savings.save-error': GENERAL.ES_SAVE_ERROR,
+        'databases.explore-savings.save-configuration': GENERAL.ES_SAVE_CONFIG,
+        'databases.explore-savings.create-template': GENERAL.CREATE_TEMPLATE,
+        'databases.explore-savings.onprem-create-template-disable': GENERAL.ONPREM_CREATE_TEMPLATE_DISABLE,
+        'databases.explore-savings.mssql-two-instances': GENERAL.MS_SQL_TWO_INSTANCES,
+        'databases.explore-savings.mssql-single-instance': GENERAL.MS_SQL_SINGLE_INSTANCES,
+        'databases.general.fsx-for-ontap': GENERAL.FSX_FOR_ONTAP
+    };
+
+    return map[key] ?? key;
+};
+
 let mockConfigDataList: any[] = [];
 let mockConfigLoading = false;
 
@@ -36,6 +52,10 @@ vi.mock('react-router-dom', async () => {
     const actual = await vi.importActual('react-router-dom');
     return { ...actual, useNavigate: () => mockNavigate };
 });
+
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: mockTranslation })
+}));
 
 vi.mock('./MSSQLAccordion.module.scss', () => ({
     default: new Proxy({}, { get: (_t, p) => String(p) })

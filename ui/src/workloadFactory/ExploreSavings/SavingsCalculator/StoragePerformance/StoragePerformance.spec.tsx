@@ -5,6 +5,20 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import StoragePerformance from './StoragePerformance';
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const map: Record<string, string> = {
+                'databases.explore-savings.storage-performance.details': 'Storage & performance:',
+                'databases.explore-savings.storage-performance.total-storage': 'Total Storage amount (GiB)',
+                'databases.explore-savings.storage-performance.iops': 'IOPS',
+                'databases.explore-savings.storage-performance.throughput': 'Throughput (MB/s)'
+            };
+            return map[key] ?? key;
+        }
+    })
+}));
+
 // Mocks
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, variant, style, className }: any) => (

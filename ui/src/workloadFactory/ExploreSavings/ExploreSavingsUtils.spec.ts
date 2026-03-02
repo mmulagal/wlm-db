@@ -73,6 +73,10 @@ vi.mock('@reduxjs/toolkit', () => ({
 }));
 
 vi.mock('i18next', () => ({
+    __esModule: true,
+    default: {
+        t: (key: string) => key
+    },
     TFunction: undefined
 }));
 

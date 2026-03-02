@@ -7,6 +7,21 @@ import TotalMonthlyCost from './TotalMonthlyCost';
 import { GENERAL } from '../../../utils/appConstants';
 import { SAVINGS_CALC_MODE } from '../../../utils/consts';
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) =>
+            ((
+                {
+                    'databases.explore-savings.mssql-server-on-fsx-ontap': GENERAL.CATEGORY_POINT_ONE,
+                    'databases.explore-savings.mssql-server-on-ebs': GENERAL.CATEGORY_POINT_TWO,
+                    'databases.explore-savings.mssql-server-fsxw-category': GENERAL.FSXW_CATEGORY,
+                    'databases.explore-savings.oracle-server-on-fsx-ontap': GENERAL.CATEGORY_POINT_ONE,
+                    'databases.explore-savings.oracle-server-on-ebs': GENERAL.CATEGORY_POINT_TWO
+                } as Record<string, string>
+            )[key] ?? key)
+    })
+}));
+
 // Mock SVG component
 vi.mock('../../../assets/ic_graph.svg', () => ({
     ReactComponent: (props: any) => <div data-testid="graph-icon" {...props} />

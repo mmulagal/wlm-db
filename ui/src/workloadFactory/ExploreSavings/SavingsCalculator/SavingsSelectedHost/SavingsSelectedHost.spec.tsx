@@ -7,6 +7,21 @@ import SavingsSelectedHost from './SavingsSelectedHost';
 import { GENERAL } from '../../../../utils/appConstants';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const map: Record<string, string> = {
+                'databases.explore-savings.selected-host': 'Selected host:',
+                'databases.explore-savings.host-name': 'Host name',
+                'databases.explore-savings.number-of-sql-instances': 'Number of SQL instances',
+                'databases.explore-savings.number-of-volumes': 'Number of volumes',
+                'databases.general.not-available': GENERAL.NOT_AVAILABLE
+            };
+            return map[key] ?? key;
+        }
+    })
+}));
+
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, variant, className, title, style }: any) => (
         <span data-variant={variant} className={className} title={title}>

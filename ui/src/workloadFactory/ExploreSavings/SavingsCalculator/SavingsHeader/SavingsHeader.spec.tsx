@@ -7,6 +7,19 @@ import SavingsHeader from './SavingsHeader';
 import { GENERAL } from '../../../../utils/appConstants';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const map: Record<string, string> = {
+                'databases.explore-savings.savings-header-ebs': GENERAL.SAVINGS_HEADER,
+                'databases.explore-savings.savings-header-fsx': GENERAL.SAVINGS_HEADER_FSX,
+                'databases.explore-savings.savings-header-onprem': GENERAL.SAVINGS_ONPREM_HEADER
+            };
+            return map[key] ?? key;
+        }
+    })
+}));
+
 // Mocks
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, className }: any) => <span className={className}>{children}</span>

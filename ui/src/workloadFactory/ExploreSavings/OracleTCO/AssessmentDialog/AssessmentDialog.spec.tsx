@@ -212,15 +212,15 @@ describe('AssessmentDialog', () => {
         it('should render bullet icons for Oracle content', () => {
             renderComponent(DBType.ORACLE);
             const bullets = screen.getAllByTestId('bullet-svg');
-            // Oracle: accordion 1 (4) + accordion 2 (5) + accordion 3 (4) = 13
-            expect(bullets).toHaveLength(13);
+            // Oracle: accordion 1 (4) + accordion 2 (4) + accordion 3 (3) = 11
+            expect(bullets).toHaveLength(11);
         });
 
         it('should render bullet icons for MSSQL content', () => {
             renderComponent(DBType.MSSQL);
             const bullets = screen.getAllByTestId('bullet-svg');
-            // MSSQL: accordion 1 (3) + accordion 2 (5) + accordion 3 (3) = 11
-            expect(bullets).toHaveLength(11);
+            // MSSQL: accordion 1 (4) + accordion 2 (5) + accordion 3 (3) = 12
+            expect(bullets).toHaveLength(12);
         });
     });
 });

@@ -5,6 +5,20 @@ import { Provider } from 'react-redux';
 import { configureStore, createSlice } from '@reduxjs/toolkit';
 import ComputeInformation from './ComputeInformation';
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const map: Record<string, string> = {
+                'databases.explore-savings.compute-information.details': 'Compute information:',
+                'databases.explore-savings.compute-information.no-of-vcpus': 'Number of vCPUs in use',
+                'databases.explore-savings.compute-information.memory': 'Memory (GiB)',
+                'databases.explore-savings.compute-information.network-performance': 'Network performance'
+            };
+            return map[key] ?? key;
+        }
+    })
+}));
+
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, variant, style, className }: any) => (
         <span data-variant={variant} style={style} className={className}>

@@ -18,7 +18,15 @@ vi.mock('react-redux', async () => {
 });
 
 vi.mock('react-i18next', () => ({
-    useTranslation: () => ({ t: (key: string) => key })
+    useTranslation: () => ({
+        t: (key: string) => {
+            const map: Record<string, string> = {
+                'databases.explore-savings.mssql-ebs-calculation': GENERAL.MS_EBS_CALCULATION,
+                'databases.explore-savings.mssql-fsxw-calculation': GENERAL.MS_FSXW_CALCULATION
+            };
+            return map[key] ?? key;
+        }
+    })
 }));
 
 vi.mock('@netapp/design-system', () => ({

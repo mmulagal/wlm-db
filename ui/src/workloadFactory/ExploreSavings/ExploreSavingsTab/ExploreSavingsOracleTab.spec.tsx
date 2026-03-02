@@ -16,6 +16,18 @@ vi.mock('react-redux', async () => {
     return { ...actual, useDispatch: () => mockDispatch };
 });
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) =>
+            ((
+                {
+                    'databases.explore-savings.oracle-database-on-premises': 'Oracle Server on-premises',
+                    'databases.explore-savings.oracle-database-ebs': 'Oracle Server on Elastic Block Store (EBS)'
+                } as Record<string, string>
+            )[key] ?? key)
+    })
+}));
+
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, className, onClick }: any) => (
         <span data-testid="ds-typography" className={className} onClick={onClick}>

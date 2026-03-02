@@ -125,9 +125,13 @@ vi.mock('../../../../utils/utilityFunctions', () => ({
     formatFractionalNumber: (n: number) => String(n || 0)
 }));
 
-vi.mock('../../../../utils/consts', () => ({
-    GIB_IN_BYTE: 1073741824
-}));
+vi.mock('../../../../utils/consts', async importOriginal => {
+    const actual = await importOriginal();
+    return {
+        ...actual,
+        GIB_IN_BYTE: 1073741824
+    };
+});
 
 const makeStore = (overrides: any = {}) => {
     const bulkSlice = createSlice({

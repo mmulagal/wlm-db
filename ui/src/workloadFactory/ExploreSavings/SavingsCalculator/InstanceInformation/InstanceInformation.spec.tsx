@@ -5,6 +5,21 @@ import { Provider } from 'react-redux';
 import { configureStore, createSlice } from '@reduxjs/toolkit';
 import InstanceInformation from './InstanceInformation';
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) =>
+            ((
+                {
+                    'databases.explore-savings.instance-information': 'Instance information:',
+                    'databases.explore-savings.database-information': 'Database information:',
+                    'databases.general.not-available': 'n/a',
+                    'databases.general.always-on-availability-group': 'Always on availability group',
+                    'databases.explore-savings.monthly-oracle-cost': 'Monthly Oracle cost'
+                } as Record<string, string>
+            )[key] ?? key)
+    })
+}));
+
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, variant, style }: any) => <span data-variant={variant}>{children}</span>,
     DsFlashingDotsLoader: () => <span data-testid="loader">loading...</span>,
@@ -50,24 +65,28 @@ vi.mock('../../../../utils/appConstants', () => ({
     }
 }));
 
-vi.mock('../../../../utils/consts', () => ({
-    FINDINGS: {
-        OPTIMIZED: 'OPTIMIZED',
-        NOT_OPTIMIZED: 'NOT_OPTIMIZED',
-        UNDER_PROVISIONED: 'UNDER_PROVISIONED',
-        INSUFFICIENT_DATA: 'INSUFFICIENT_DATA',
-        INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS'
-    },
-    SAVINGS_CALC_MODE: {
-        AUTO_EBS: 'Auto_EBS',
-        AUTO_FSXW: 'Auto_FSXW',
-        ONPREM: 'OnPrem'
-    },
-    WLF_TABS: {
-        MSSQL_ON_PREMISES: 'MSSQL_ON_PREMISES',
-        MSSQL_ELASTIC_BLOCK_STORE: 'MSSQL_ELASTIC_BLOCK_STORE'
-    }
-}));
+vi.mock('../../../../utils/consts', async () => {
+    const actual = await vi.importActual('../../../../utils/consts');
+    return {
+        ...actual,
+        FINDINGS: {
+            OPTIMIZED: 'OPTIMIZED',
+            NOT_OPTIMIZED: 'NOT_OPTIMIZED',
+            UNDER_PROVISIONED: 'UNDER_PROVISIONED',
+            INSUFFICIENT_DATA: 'INSUFFICIENT_DATA',
+            INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS'
+        },
+        SAVINGS_CALC_MODE: {
+            AUTO_EBS: 'Auto_EBS',
+            AUTO_FSXW: 'Auto_FSXW',
+            ONPREM: 'OnPrem'
+        },
+        WLF_TABS: {
+            MSSQL_ON_PREMISES: 'MSSQL_ON_PREMISES',
+            MSSQL_ELASTIC_BLOCK_STORE: 'MSSQL_ELASTIC_BLOCK_STORE'
+        }
+    };
+});
 
 const makeStore = (overrides: any = {}) => {
     const slice = createSlice({

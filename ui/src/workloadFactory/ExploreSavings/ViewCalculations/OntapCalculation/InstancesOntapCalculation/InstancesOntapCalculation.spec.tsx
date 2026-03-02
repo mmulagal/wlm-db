@@ -6,6 +6,17 @@ import { configureStore } from '@reduxjs/toolkit';
 import InstancesOntapCalculation from './InstancesOntapCalculation';
 import { GENERAL } from '../../../../../utils/appConstants';
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const map: Record<string, string> = {
+                'databases.explore-savings.mssql-ec2-instances': GENERAL.ES_MSSQL_EC2_INSTANCES
+            };
+            return map[key] ?? key;
+        }
+    })
+}));
+
 // ========================
 //  Mocks
 // ========================

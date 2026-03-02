@@ -89,4 +89,14 @@ describe('FilesSize Component', () => {
                 }
             }
         });
+
+    it('renders without crashing', () => {
+        const store = createMockStore();
+        const { container } = render(
+            <Provider store={store}>
+                <FilesSize />
+            </Provider>
+        );
+        expect(container.firstChild).toBeTruthy();
+    });
 });

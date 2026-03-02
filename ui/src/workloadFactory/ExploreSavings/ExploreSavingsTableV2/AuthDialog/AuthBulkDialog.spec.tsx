@@ -275,9 +275,7 @@ describe('AuthBulkDialog', () => {
             });
             // Should show "2 out of the 3 ..." message
             expect(screen.getByText(/2 out of the/)).toBeTruthy();
-            expect(
-                screen.getByText('databases.explore-savings.authentication-bulk-dialog-content-someAuthRequired')
-            ).toBeTruthy();
+            expect(screen.getByText(/authentication-bulk-dialog-content-someAuthRequired/)).toBeTruthy();
         });
 
         it('should NOT show partial auth header when all rows need auth', () => {
@@ -288,9 +286,7 @@ describe('AuthBulkDialog', () => {
                 ],
                 rowsRequiringAuthBulk: []
             });
-            expect(
-                screen.queryByText('databases.explore-savings.authentication-bulk-dialog-content-someAuthRequired')
-            ).toBeNull();
+            expect(screen.queryByText(/authentication-bulk-dialog-content-someAuthRequired/)).toBeNull();
         });
     });
 
