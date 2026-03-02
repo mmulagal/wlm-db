@@ -317,13 +317,28 @@ async function getPartnerNodeDetails(
                     isAoAgFciDeployment(sqlServerDeploymentType, aoagDetails)) &&
                 windowsClusterNodes
         )
-        .map(({ sqlServerInstance, windowsClusterNodes }) => ({
-            databaseInstanceName: sqlServerInstance,
-            clusterIps: !Array.isArray(windowsClusterNodes)
-                ? [windowsClusterNodes]
-                : windowsClusterNodes.map(node => node?.Address),
-            partnerEc2InstanceId: ''
-        }));
+        .map(({ sqlServerInstance, windowsClusterNodes, sqlServerNodes }) => {
+            let clusterIps: (string | undefined)[];
+            if (!Array.isArray(windowsClusterNodes)) {
+                clusterIps = [windowsClusterNodes];
+            } else {
+                // For AOAG+FCI, sqlServerNodes contains only the FCI-specific hostnames.
+                // Filter windowsClusterNodes to only include nodes matching this FCI's sqlServerNodes.
+                const fciNodeNames = Array.isArray(sqlServerNodes)
+                    ? new Set(sqlServerNodes.map(n => n?.toLowerCase()))
+                    : undefined;
+                clusterIps = fciNodeNames?.size
+                    ? windowsClusterNodes
+                          .filter(node => node?.Node && fciNodeNames.has(node.Node.toLowerCase()))
+                          .map(node => node?.Address)
+                    : windowsClusterNodes.map(node => node?.Address);
+            }
+            return {
+                databaseInstanceName: sqlServerInstance,
+                clusterIps,
+                partnerEc2InstanceId: ''
+            };
+        });
 
     // Extract all cluster IPs from the FCI instance details and flatten the array.
     const clusterIps = [...new Set(fciInstanceDetails.map(fciInstance => fciInstance.clusterIps).flat())];
