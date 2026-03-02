@@ -9,6 +9,7 @@ import {
     WorkloadInstance,
     StorageAssessment,
     DatabaseInstanceMetadata,
+    ResourceAssessmentData,
     OptimizeMpioPolicyParams,
     LogDriveDetails,
     TempDbDriveDetails,
@@ -842,6 +843,8 @@ async function optimizeStorage(params: OptimizeStorageParams & SSMDocument, bulk
     return { jobId: parentJobId };
 }
 
+type DatabaseRole = { databaseName: string; agName: string; replicaRole: string };
+
 async function modifySizingAttributes(
     accountId: string,
     credentialsId: string,
@@ -853,7 +856,8 @@ async function modifySizingAttributes(
     serverNameWithHostName: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    objectsToOptimize?: string[]
+    objectsToOptimize?: string[],
+    databaseRoles?: DatabaseRole[]
 ) {
     logger.info('Modifying sizing attributes ', {
         accountId,
@@ -918,7 +922,8 @@ async function modifySizingAttributes(
                         databaseHostId,
                         databaseInstanceId,
                         activeNodeInstanceId,
-                        objectsToOptimize
+                        objectsToOptimize,
+                        databaseRoles
                     );
                     childJobsStatus.push(result);
                     break;
@@ -1079,7 +1084,8 @@ async function logDriveOptimization(
     databaseHostId: string,
     databaseInstanceId: string,
     activeNodeInstanceId: string,
-    objectsToOptimize?: string[]
+    objectsToOptimize?: string[],
+    databaseRoles?: DatabaseRole[]
 ) {
     logger.info('Optimizing log drive ', {
         accountId,
@@ -1091,7 +1097,8 @@ async function logDriveOptimization(
         databaseHostId,
         databaseInstanceId,
         activeNodeInstanceId,
-        objectsToOptimize
+        objectsToOptimize,
+        hasDatabaseRoles: Boolean(databaseRoles?.length)
     });
     const jobId = await handleOptimizeJobCreation(
         accountId,
@@ -1104,10 +1111,12 @@ async function logDriveOptimization(
         parentJobId
     );
 
+    // GH-7830: Pass databaseRoles so AOAG primary uses same thresholds as assessment (26%/35%); otherwise fix says "volume is not underprovisioned"
     let { underProvisionedDrives } = getLogVolumeDrift(
         logDriveDetails,
         AssessmentStatus.UNDER_PROVISIONED,
-        'log-drive-size'
+        'log-drive-size',
+        databaseRoles
     );
 
     let jobStatus: string = '';
@@ -1135,11 +1144,19 @@ async function logDriveOptimization(
                 fsxVolumeIdList
             );
 
+            // GH-7830: AOAG primary log drives use 30% of data drive; non-primary/non-AOAG use 25% (align with getLogVolumeDrift thresholds)
+            const primaryDatabases = new Set(
+                databaseRoles?.filter(db => db.replicaRole === 'PRIMARY').map(db => db.databaseName.toLowerCase()) ?? []
+            );
             await Promise.all(
                 underProvisionedDrives.map(async (drive: SizingViolationResponseType) => {
-                    const { dataDriveTotalSizeMB = 0, lunUuid, diskSerialNumber, ontapVolumeUuid } = drive;
+                    const { dataDriveTotalSizeMB = 0, lunUuid, diskSerialNumber, ontapVolumeUuid, databases } = drive;
                     if (dataDriveTotalSizeMB > 0) {
-                        const requiredLogLunSizeBytes = convertToBytes(dataDriveTotalSizeMB * 0.25, 'MiB') || 0;
+                        const volumeDatabases = (databases ?? []).map(db => db.trim().toLowerCase());
+                        const hasPrimaryDatabases =
+                            primaryDatabases.size > 0 && volumeDatabases.some(db => primaryDatabases.has(db));
+                        const logPercentOfData = hasPrimaryDatabases ? 0.3 : 0.25;
+                        const requiredLogLunSizeBytes = convertToBytes(dataDriveTotalSizeMB * logPercentOfData, 'MiB') || 0;
                         const requiredLogVolumeSizeBytes = 1.1 * requiredLogLunSizeBytes;
 
                         const [matchingFsxVolumeId] =
@@ -1422,7 +1439,7 @@ async function optimizeSizing(
     const {
         config_data: configData,
         database_instances: { database_instance_name: instanceName = '' } = {},
-        resource: { resource_name: sqlServerName = '' } = {}
+        resource: { resource_name: sqlServerName = '', assessment_data: resourceAssessmentData } = {}
     } = persistedConfigurationData || {};
     const storageAssessmentConfigData = configData as unknown as StorageAssessment;
     const { filesystemId = '' } = storageAssessmentConfigData || {};
@@ -1431,6 +1448,11 @@ async function optimizeSizing(
         logger.error('Instance name or sql server name is missing');
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Instance name or sql server name is missing');
     }
+
+    // GH-7830: Use already-fetched resource from paginateListInstanceConfigData (includeResource: true selects assessment_data)
+    const databaseRoles = types.includes(OPTIMIZE_SIZING_CONFIGS.LOG_DRIVE_SIZE)
+        ? (resourceAssessmentData as ResourceAssessmentData)?.aoagDetails?.databaseRoles
+        : undefined;
 
     const jobMetadata: JobMetadata = {
         hostsToOptimize: [
@@ -1462,7 +1484,8 @@ async function optimizeSizing(
         serverNameWithHostName,
         databaseHostId,
         databaseInstanceId,
-        objectsToOptimize
+        objectsToOptimize,
+        databaseRoles
     );
 
     return { jobId };
