@@ -18,7 +18,7 @@ export const checkLinkedConfigAcknowledge = () => {
                 showDialogError: true,
                 errorMessage: i18next.t('databases.well-architect.linked-config.acknowledge-error'),
                 showTooltipInfo: true,
-                tooltipText: i18next.t('databases.well-architect.linked-config.acknowledge-checkbox')
+                tooltipText: i18next.t('databases.well-architect.linked-config.acknowledge-error')
             })
         );
         return true;

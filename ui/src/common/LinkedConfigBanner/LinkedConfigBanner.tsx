@@ -17,7 +17,10 @@ const LinkedConfigBanner = ({ linkedConfigNames, configName }: LinkedConfigBanne
 
     const isLayout = isLayoutConfig(configName);
     const configNameLower = configName.toLowerCase();
-    const linkedNames = linkedConfigNames.join(', ');
+    const linkedNames =
+        linkedConfigNames.length > 1
+            ? `${linkedConfigNames.slice(0, -1).join(', ')}, and ${linkedConfigNames[linkedConfigNames.length - 1]}`
+            : linkedConfigNames[0];
 
     return (
         <div className={styles.linkedConfigBanner} data-testid="linked-config-banner">

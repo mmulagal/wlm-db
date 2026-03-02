@@ -963,8 +963,8 @@
                 "ontap-message-line2": "For the best {{configName}} recommendation, fix your storage layout first, then update the {{configName}}.",
                 "layout-message": "Your {{configName}} affects the following ONTAP recommendations. Fix your {{configName}} first, then update the related configurations for optimal recommendations.",
                 "related-configurations": "Related configurations",
-                "acknowledge-checkbox": "I understand the recommendations may not be optimal, and I want to continue with this fix.",
-                "acknowledge-error": "Please select the checkbox."
+                "acknowledge-checkbox": "I understand these recommendations are based on my current setup, which isn’t ideal, and I want to continue with this fix.",
+                "acknowledge-error": "Select the checkbox to confirm you understand the warning before you continue with the fix."
             },
             "oracle-swap-space-action-summary": "Workload Factory recommends setting the proper swap size to ensure the system can handle memory pressure gracefully, avoiding potential performance degradation or system crashes.",
             "oracle-swap-space-action-summary-heading": "Swap space should be sized relatively to RAM:",

@@ -148,22 +148,37 @@
             flex-direction: column;
             gap: 24px;
             margin-bottom: -8px;
+            max-width: 713px;
 
             [data-testid='linked-config-banner'] {
                 margin-top: 0;
                 margin-bottom: 0;
                 padding: 16px 24px;
-                max-width: 713px;
             }
 
             .acknowledgeCheckbox {
                 display: flex;
                 align-items: flex-start;
                 gap: 8px;
+                min-width: 0;
 
                 input[type='checkbox'] {
                     margin-top: 2px;
                     flex-shrink: 0;
+                }
+
+                [class*='dsCheckbox'] {
+                    align-items: flex-start !important;
+                }
+
+                [class*='ellipsis'] {
+                    white-space: normal !important;
+                    text-overflow: unset !important;
+                    overflow: visible !important;
+                }
+
+                [class*='checkmark'] {
+                    margin-top: 4px;
                 }
             }
         }
