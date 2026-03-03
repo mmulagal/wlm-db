@@ -4,7 +4,6 @@ import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/use
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
-import DiscoverPage from './components/Discover/DiscoverPage';
 
 import styles from './Home.module.scss';
 import { clearNotifications, removeNotification } from './store/notificationSlice';
@@ -118,10 +117,6 @@ const Home = () => {
                         <Route path="/databases/marketing" element={<Marketing />} />
                         <Route path="postgreSQL-deploy-wizard" element={<PostgressMainComponent />} />
                         <Route path="/databases/postgreSQL-deploy-wizard" element={<PostgressMainComponent />} />
-                        <Route
-                            path="add-working-environment/database-services/:storage/discover"
-                            element={<DiscoverPage />}
-                        />
 
                         <Route path="/databases" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
                         <Route path="/databases/dashboard" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
@@ -191,10 +186,6 @@ const Home = () => {
                             <Route path="/fsxdb/mssql-deploy-wizard" element={<MainComponent />} />
                             <Route path="/fsxdb/marketing" element={<Marketing />} />
                             <Route path="/fsxdb/postgreSQL-deploy-wizard" element={<PostgressMainComponent />} />
-                            <Route
-                                path="/add-working-environment/database-services/:storage/discover"
-                                element={<DiscoverPage />}
-                            />
 
                             <Route path="/fsxdb" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
                             <Route path="/fsxdb/dashboard" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
