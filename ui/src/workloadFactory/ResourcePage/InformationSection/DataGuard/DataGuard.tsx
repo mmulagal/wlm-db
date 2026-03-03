@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@tlveng/wlm-ds';
-import { Button, useDialog } from '@netapp/design-system';
+import { Button, useDialog, TooltipInfo } from '@netapp/design-system';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -22,6 +22,7 @@ const DataGuard = ({ handleToggle, openKey, resourceDetails, resourceLoading }: 
     const isPrimary = resourceDetails?.dataguardDetails?.isPrimaryNode === true;
 
     const handleReplicaDialog = () => {
+        if (!resourceDetails?.dataguardDetails?.associatedHosts?.length) return;
         setDialog(
             <DialogComponent
                 header={t('databases.data-guard.related-databases')}
@@ -86,10 +87,23 @@ const DataGuard = ({ handleToggle, openKey, resourceDetails, resourceLoading }: 
                         </div>
                     </>
                 )}
-                <div className={`${commonStyles.row} ${commonStyles.rowSingleColumn}`}>
-                    <Button variant="text" onClick={handleReplicaDialog} style={{ justifySelf: 'start' }}>
+                <div
+                    className={`${commonStyles.row} ${commonStyles.rowSingleColumn} ${commonStyles.rowFlexCenter}`}
+                >
+                    <Button
+                        variant="text"
+                        onClick={handleReplicaDialog}
+                        disabled={!resourceDetails?.dataguardDetails?.associatedHosts?.length}
+                    >
                         {t('databases.data-guard.view-related-databases')}
                     </Button>
+                    {!resourceDetails?.dataguardDetails?.associatedHosts?.length && (
+                        <TooltipInfo trigger="hover" isAppendedToBody>
+                            <DsTypography variant="Regular_13">
+                                {t('databases.data-guard.related-databases-config-issue-tooltip')}
+                            </DsTypography>
+                        </TooltipInfo>
+                    )}
                 </div>
             </>
         );

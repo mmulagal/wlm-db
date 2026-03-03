@@ -150,6 +150,12 @@
     grid-template-columns: 1fr;
 }
 
+.rowFlexCenter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .heading {
     // white-space: nowrap;
     // overflow: hidden;
