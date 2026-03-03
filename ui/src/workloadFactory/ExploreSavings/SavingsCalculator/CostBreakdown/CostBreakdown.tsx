@@ -174,44 +174,52 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                 {t('databases.explore-savings.type')}
                             </div>
                             <div className={styles['table-container']}>
-                                <div
-                                    className={styles['table-header']}
-                                    style={
-                                        !calculatedResponse || disableState
-                                            ? { backgroundColor: 'var(--border)' }
-                                            : { backgroundColor: 'var(--chart-9)' }
-                                    }
-                                />
-                                <Text
-                                    color={!calculatedResponse && 'text-disabled'}
-                                    style={{
-                                        fontWeight: '500',
-                                        color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
-                                    }}
-                                >
-                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
-                                        ? t('databases.explore-savings.oracle-server-on-fsx-ontap')
-                                        : t('databases.explore-savings.mssql-server-on-fsx-ontap')}
-                                </Text>
+                                <div className={styles['header-label']}>
+                                    <div
+                                        className={styles['table-header']}
+                                        style={
+                                            !calculatedResponse || disableState
+                                                ? { backgroundColor: 'var(--border)' }
+                                                : { backgroundColor: 'var(--chart-9)' }
+                                        }
+                                    />
+                                    <Text
+                                        color={!calculatedResponse && 'text-disabled'}
+                                        style={{
+                                            fontWeight: '500',
+                                            color: disableState
+                                                ? 'var(--text-disabled)'
+                                                : 'var(--text-primary)'
+                                        }}
+                                    >
+                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
+                                            ? t('databases.explore-savings.oracle-server-on-fsx-ontap')
+                                            : t('databases.explore-savings.mssql-server-on-fsx-ontap')}
+                                    </Text>
+                                </div>
                             </div>
                             <div className={styles['table-container-right']}>
-                                <div
-                                    className={styles['table-header']}
-                                    style={
-                                        !calculatedResponse || disableState
-                                            ? { backgroundColor: 'var(--border)' }
-                                            : { backgroundColor: 'var(--chart-6)' }
-                                    }
-                                />
-                                <Text
-                                    color={!calculatedResponse && 'text-disabled'}
-                                    style={{
-                                        fontWeight: '500',
-                                        color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
-                                    }}
-                                >
-                                    {getSecondCategoryLabel()}
-                                </Text>
+                                <div className={styles['header-label']}>
+                                    <div
+                                        className={styles['table-header']}
+                                        style={
+                                            !calculatedResponse || disableState
+                                                ? { backgroundColor: 'var(--border)' }
+                                                : { backgroundColor: 'var(--chart-6)' }
+                                        }
+                                    />
+                                    <Text
+                                        color={!calculatedResponse && 'text-disabled'}
+                                        style={{
+                                            fontWeight: '500',
+                                            color: disableState
+                                                ? 'var(--text-disabled)'
+                                                : 'var(--text-primary)'
+                                        }}
+                                    >
+                                        {getSecondCategoryLabel()}
+                                    </Text>
+                                </div>
                             </div>
                         </CardTableContent>
 
