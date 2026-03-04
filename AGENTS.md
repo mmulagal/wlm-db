@@ -1,128 +1,8 @@
 # WLM-DB AI Coding Agent Instructions
 
-Also respect package-specific rules in `.github/instructions/*` (server/ui/logs-analyzer), and keep `.github/copilot-instructions.md` aligned with this document.
+Coding rules live in `.github/instructions/`. For Cursor, an `alwaysApply` rule in `.cursor/rules/` auto-loads all instruction files; the files contain `applyTo` metadata that controls which paths they apply to. For git workflow conventions, see `.github/instructions/git-conventions.instructions.md`.
 
-## Pre-Push Validation (Server Only)
-
-**⚠️ CRITICAL:** Complete ALL steps before pushing server code.
-
-```bash
-cd server
-
-# Step 1: Build + ESLint validation
-npm run build
-npm run lint
-# ✅ Must pass: No TypeScript/ESLint errors
-
-# Step 2: Tests
-npm run test:nowatch
-# ✅ Must pass: All tests passing
-
-# Step 3: API doc lint (Spectral)
-npm run apidoc
-# ✅ Must pass: No OpenAPI violations
-
-# Optional: Integration/simulator flows
-npm run simulator  # run in a separate terminal if workflow requires it
-```
-
-## Git Workflow & Branch Naming Convention
-
-### Naming Convention Enforcement
-
-This repository enforces strict naming conventions for branches, commits, and pull requests to ensure traceability and consistency.
-
-**Default Branch:** `master`. Ensure instruction files (e.g., `.github/copilot-instructions.md`) remain up-to-date on the default branch so agents can read them.
-
-**⚠️ CRITICAL FOR COPILOT CODING AGENT:**
-- **ALWAYS** create branches with the pattern: `copilot/GH-<issue-number>-<description>`
-- **ALWAYS** create commits with the pattern: `GH-<issue-number>: <description>` (note the space after colon)
-- **ALWAYS** create PR titles with the pattern: `GH-<issue-number>: <description>` (same as commit messages)
-- The `<issue-number>` is the **numeric ID of the GitHub issue** you are working on (e.g., `1234` from issue `#1234`)
-- The issue number MUST be extracted from the original GitHub issue/task that describes the problem you're trying to fix or feature to implement
-- If no issue number is available, DO NOT proceed - ask the user to create an issue first
-- Repository rules will REJECT any branch/commit/PR that doesn't match these patterns
-
-### Validation Patterns
-
-**Branch Names:**
-- **Pattern:** `copilot/GH-<issue-number>-<description>`
-- **Regex:** `^copilot/GH-[0-9]+-[a-zA-Z0-9-_]+$`
-- **Note:** If a branch was already created with a non-conventional name, that's acceptable. However, ensure all commit messages follow the required pattern.
-- **Examples:**
-  - ✅ `copilot/GH-1234-fix-performance`
-  - ✅ `copilot/GH-456-add-new-feature`
-  - ❌ `GH-1234-fix` (missing `copilot/` prefix)
-  - ❌ `copilot/1234-fix` (missing `GH-` prefix)
-
-**Commit Messages:**
-- **Pattern:** `GH-<issue-number>: <description>` (note the space after colon)
-- **Regex:** `^GH-[0-9]+:\s.*$`
-- **Note:** ALL commits MUST follow the `GH-<issue-number>: <description>` pattern. Commits without the `GH-<issue-number>` prefix will be rejected.
-- **Examples:**
-  - ✅ `GH-2296: delete obsolete files`
-  - ✅ `GH-1234: fix performance issue`
-  - ✅ `GH-456: add new feature for migration`
-  - ❌ `Fix performance issue` (missing `GH-` prefix)
-  - ❌ `GH-1234:fix` (missing space after colon)
-
-**Pull Request Titles:**
-- **Pattern:** `GH-<issue-number>: <description>` (same format as commit messages)
-- **Regex:** `^GH-[0-9]+:\s.*$`
-- **Examples:**
-  - ✅ `GH-2296: delete obsolete files`
-  - ✅ `GH-1101: fix float to double conversion`
-  - ✅ `GH-2262: refactor copilot instructions`
-  - ❌ `Delete obsolete files` (missing `GH-` prefix)
-  - ❌ `GH-1234:Fix issue` (missing space after colon)
-
-### Examples
-
-```bash
-# ✅ Valid branch names
-copilot/GH-1101-support-demo-deploymentPlans
-copilot/GH-2262-Fix-codeowners
-copilot/GH-456-add-new-feature
-
-# ❌ Invalid branch names (will be REJECTED)
-GH-1234-fix-performance (missing copilot/ prefix)
-feature/new-feature
-bugfix-something
-my-branch
-1101-fix-issue
-copilot/1234-fix-issue (missing GH- prefix)
-
-# ✅ Valid commit messages
-GH-2296: delete obsolete files
-GH-1101: fix float to double conversion
-GH-2262: refactor copilot instructions
-GH-456: add new feature for performance optimization
-
-# ❌ Invalid commit messages (will be REJECTED)
-Fix float conversion (missing GH- prefix)
-GH-1234:fix issue (missing space after colon)
-Add new feature (missing GH- prefix and issue number)
-
-# ✅ Valid PR titles
-GH-2296: delete obsolete files
-GH-1101: fix float to double conversion
-GH-456: implement storage migration feature
-
-# ❌ Invalid PR titles (will be REJECTED)
-Delete obsolete files (missing GH- prefix)
-GH-1234:Fix (missing space after colon)
-```
-
-### Why This Matters
-
-1. **Traceability:** Every branch, commit, and PR is linked to a GitHub issue
-2. **Consistency:** All work follows the same naming pattern
-3. **Automation:** Repository rules enforce these conventions at commit/PR level
-4. **Documentation:** Clear history showing what issue each change addresses
-
-**Important:** GitHub Copilot coding agent MUST use these exact patterns. The repository has commit-level validation that will REJECT non-compliant branches, commits, and PRs.
-
-
+---
 
 ## Server (`server/`)
 
@@ -135,25 +15,16 @@ npm run dev        # Dev server with hot reload
 npm run simulator  # Simulator for offline development
 ```
 
-**⚠️ Before pushing code, see [Pre-Push Validation](#pre-push-validation-server-only) section at the top.**
+**⚠️ Before pushing code, see pre-push validation in `.github/instructions/git-conventions.instructions.md`.**
 
 ### Development Patterns
+See `.github/instructions/*`. The instruction files contain their own `applyTo` metadata that controls which files they apply to.
 
-**Operations Layer** (`src/operations/`)
-- `*-operations.ts` files contain business logic, not controllers
-
-**API Routes** (`src/routes/`)
-- Use TypeBox schemas for validation
-- Import operations, define schemas, register endpoints
-
-**Testing**
-- Unit tests: Vitest for business logic
-- Test files: `*.test.ts`
-
-**Simulator** (`test/simulator/`)
-- Mock AWS services with `aws-sdk-client-mock` + `nock`
-- Mock database with `prismock`
-- Use top-level await (Node.js 24+) - no function wrappers
+**Quick Reference:**
+- Operations Layer: `*-operations.ts` files contain business logic, not controllers
+- API Routes: Use TypeBox schemas for validation
+- Testing: Vitest unit tests (`*.test.ts`)
+- Simulator: Mock AWS with `aws-sdk-client-mock` + `nock`, database with `prismock`
 
 **Key Files:**
 - `schema.prisma` - DB schema location
@@ -192,13 +63,10 @@ Notes:
 - A mock server exists under `ui/mock-server/` for simulator workflows.
 
 ### Development Patterns
+See `.github/instructions/*`. The instruction files contain their own `applyTo` metadata that controls which files they apply to.
 
-- **State Management:** Redux Toolkit slices with typed hooks from `src/store/storeHooks.ts` (use `useAppSelector`/`useAppDispatch`). Core slices include `authSlice` and `notificationSlice`; feature slices live under `src/store/workloadFactory/`.
-- **API Integration:** RTK Query defined in `src/utils/apiService.ts`; use `createApi` and typed endpoints; follow `use<Get|Update><Resource>Query/Mutation` naming.
-- **Components:** Feature-first organization under `src/workloadFactory/` (Dashboard, InventoryV2, JobMonitoring, CreateNewDB) and `src/components/` (CreateMsSql, Discover, Postgress). Reusable building blocks in `src/common/` and `src/ui-components/`.
-- **Styling:** SCSS Modules (`*.module.scss`) with `classnames` for conditional styles.
-- **Design System:** Use `@netapp/design-system` and WLMDB components from `@tlveng/wlm-ds`; wrap app in design system providers.
-- **Routing & BlueXP:** React Router v7 with `useNavigate`; integrate via BlueXP iframe messaging for navigation and readiness events.
+**Quick Reference:**
+- Components: Feature-first organization under `src/workloadFactory/` (Dashboard, InventoryV2, JobMonitoring, CreateNewDB) and `src/components/` (CreateMsSql, Discover, Postgress). Reusable building blocks in `src/common/` and `src/ui-components/`.
 
 **Key Files:**
 - `vite.config.ts` — Build config
@@ -234,18 +102,14 @@ Notes:
 - Outputs are written to `logs-analyzer/output/` with timestamped filenames.
 
 ### Development Patterns
+See `.github/instructions/*`. The instruction files contain their own `applyTo` metadata that controls which files they apply to.
 
-- **CLI Parsing:** Use `commander` in `src/agent.ts` for flags and required options.
-- **Logging:** Use `log4js` via `src/utils/logging.ts`; avoid logging secrets.
-- **Type Safety:** Strict TypeScript; central interfaces in `src/utils/interfaces.ts`.
-- **Structure:**
+**Quick Reference:**
+- Structure:
   - `src/agent.ts` — CLI entry
   - `src/operations/` — DB-specific parsing (mssql/oracle/pgsql)
   - `src/aws/` — Bedrock and CloudWatch clients
   - `src/utils/` — consts, tools, logging, helpers
-- **AI Integration:** Use `@aws-sdk/client-bedrock-runtime` with structured prompts/tools.
-- **Concurrency:** Use `p-limit` when processing many files.
-- **Testing:** Vitest under `logs-analyzer/test/` mirroring `src/` layout; mock external services.
 
 **Key Files:**
 - `src/agent.ts` — CLI entry

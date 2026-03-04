@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+description: All coding instructions from .github/instructions/
+---
+
+# WLMDB Coding Instructions
+
+All coding rules and patterns are defined in `.github/instructions/`. The instruction files contain their own `applyTo` metadata that controls which files they apply to.
+
+@.github/instructions/*
