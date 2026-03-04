@@ -87,9 +87,7 @@ const DataGuard = ({ handleToggle, openKey, resourceDetails, resourceLoading }: 
                         </div>
                     </>
                 )}
-                <div
-                    className={`${commonStyles.row} ${commonStyles.rowSingleColumn} ${commonStyles.rowFlexCenter}`}
-                >
+                <div className={`${commonStyles.row} ${commonStyles.rowSingleColumn} ${commonStyles.rowFlexCenter}`}>
                     <Button
                         variant="text"
                         onClick={handleReplicaDialog}

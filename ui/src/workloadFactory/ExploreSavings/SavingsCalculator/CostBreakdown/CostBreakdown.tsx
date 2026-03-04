@@ -187,9 +187,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                         color={!calculatedResponse && 'text-disabled'}
                                         style={{
                                             fontWeight: '500',
-                                            color: disableState
-                                                ? 'var(--text-disabled)'
-                                                : 'var(--text-primary)'
+                                            color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                                         }}
                                     >
                                         {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
@@ -212,9 +210,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                         color={!calculatedResponse && 'text-disabled'}
                                         style={{
                                             fontWeight: '500',
-                                            color: disableState
-                                                ? 'var(--text-disabled)'
-                                                : 'var(--text-primary)'
+                                            color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                                         }}
                                     >
                                         {getSecondCategoryLabel()}
