@@ -580,11 +580,50 @@ EOF
             sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_cmd" <<'EOF'
                 export ORACLE_SID="$1"
                 sqlplus_cmd="$2"
-                $sqlplus_cmd <<EOSQL
-SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
+                result=$($sqlplus_cmd <<EOSQL
+${sqlplusOutputFormatSettings}
 SELECT db_unique_name || '|' || dest_role FROM V\\$DATAGUARD_CONFIG;
 EXIT;
 EOSQL
+)
+                sqlplus_rc=$?
+                # V$DATAGUARD_CONFIG is only populated when LOG_ARCHIVE_CONFIG is set.
+                # If sqlplus succeeded and returned 2+ members (self + standbys/primary), use it.
+                # Otherwise fall back to V$DATABASE + V$ARCHIVE_DEST_STATUS + FAL_SERVER.
+                if [ $sqlplus_rc -eq 0 ] && [ "$(echo "$result" | grep -cF '|')" -gt 1 ]; then
+                    echo "$result"
+                else
+                    $sqlplus_cmd <<EOSQL2
+${sqlplusOutputFormatSettings}
+SELECT db_unique_name || '|' || dest_role FROM (
+    SELECT DB_UNIQUE_NAME,
+           CASE DATABASE_ROLE WHEN 'PRIMARY' THEN 'PRIMARY DATABASE' ELSE DATABASE_ROLE END AS dest_role
+    FROM V\\$DATABASE
+    UNION
+    SELECT ADS.DB_UNIQUE_NAME,
+           CASE ADS.TYPE
+               WHEN 'PHYSICAL' THEN 'PHYSICAL STANDBY'
+               WHEN 'LOGICAL' THEN 'LOGICAL STANDBY'
+               WHEN 'SNAPSHOT' THEN 'SNAPSHOT STANDBY'
+               WHEN 'FAR SYNC' THEN 'FAR SYNC INSTANCE'
+               ELSE ADS.TYPE
+           END
+    FROM V\\$ARCHIVE_DEST_STATUS ADS
+    WHERE ADS.TYPE IN ('PHYSICAL','LOGICAL','SNAPSHOT','FAR SYNC')
+      AND ADS.DB_UNIQUE_NAME IS NOT NULL
+      AND ADS.DB_UNIQUE_NAME != 'NONE'
+      AND (SELECT DATABASE_ROLE FROM V\\$DATABASE) = 'PRIMARY'
+    UNION
+    SELECT REGEXP_SUBSTR(P.VALUE, '[^,]+', 1, 1),
+           'PRIMARY DATABASE'
+    FROM V\\$PARAMETER P
+    WHERE P.NAME = 'fal_server'
+      AND P.VALUE IS NOT NULL
+      AND (SELECT DATABASE_ROLE FROM V\\$DATABASE) <> 'PRIMARY'
+);
+EXIT;
+EOSQL2
+                fi
 EOF
         }
 
