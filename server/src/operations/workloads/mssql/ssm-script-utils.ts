@@ -2001,7 +2001,6 @@ elseif ($moduleFound) {
 SET NOCOUNT ON; SET QUOTED_IDENTIFIER ON; WITH CPUUsage AS (
     SELECT
         DATEADD(ms, -1 * (rb.timestamp - si.ms_ticks), GETDATE()) AS EventTime,
-        CAST(x.record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]', 'int') AS INT) AS SystemIdle,
         CAST(x.record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]', 'int') AS INT) AS SQLProcessUtilization
     FROM
         sys.dm_os_ring_buffers AS rb
@@ -2013,7 +2012,7 @@ SET NOCOUNT ON; SET QUOTED_IDENTIFIER ON; WITH CPUUsage AS (
         rb.ring_buffer_type = N'RING_BUFFER_SCHEDULER_MONITOR'
 )
 SELECT
-    MAX(100 - SystemIdle) AS MaxCPUUtilizationPercentage
+    MAX(SQLProcessUtilization) AS MaxCPUUtilizationPercentage
 FROM
     CPUUsage
 WHERE
