@@ -1,4 +1,4 @@
-.mssqlAccordion {
+.recommendedAccordion {
     margin: 0 auto;
     width: 100%;
     max-width: 1336px;
@@ -20,7 +20,7 @@
     }
 }
 
-.mssqlAccordionOnPremises {
+.recommendedAccordionOnPremises {
     max-width: 1607px;
 }
 
@@ -39,7 +39,7 @@
 }
 
 @media screen and (max-width: 1500px) {
-    .mssqlAccordionOnPremises {
+    .recommendedAccordionOnPremises {
         max-width: 1407px !important;
     }
 }

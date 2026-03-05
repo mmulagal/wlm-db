@@ -109,7 +109,11 @@ vi.mock('../../../store/workloadFactory/exploreSavingsSlice', () => ({
 }));
 
 vi.mock('../../../store/workloadFactory/exploreSavingsBulkSlice', () => ({
-    setSelectedRowsForExploreSavingsEBSBulk: (val: any) => ({ type: 'bulk/setSelectedRows', payload: val })
+    setSelectedRowsForExploreSavingsEBSBulk: (val: any) => ({ type: 'bulk/setSelectedRows', payload: val }),
+    setSelectedRowsForExploreSavingsOracleOnPremBulk: (val: any) => ({
+        type: 'bulk/setSelectedOracleOnPremRows',
+        payload: val
+    })
 }));
 
 vi.mock('../../../store/workloadFactory/inventoryV2Slice', () => ({

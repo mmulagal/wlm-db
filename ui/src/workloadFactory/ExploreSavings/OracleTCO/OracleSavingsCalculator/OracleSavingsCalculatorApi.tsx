@@ -1,18 +1,23 @@
 import { useEffect } from 'react';
 import isEqual from 'lodash/isEqual';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
 import { useGetOracleOnPremCalculationsMutation } from '../../../../utils/apiService';
 import {
-    setStorageSavingsLoading,
     setStorageSavingsResponse,
+    setStorageSavingsLoading,
     setViewCalculationsApiResponse,
-    setViewCalculationsLoading,
     setViewCalculationsResponse,
+    setViewCalculationsLoading,
     setDisableState,
-    resetSavingsApiState,
+    setOnPremBulkLoadingState,
+    setStorageSavingsOnPremResponse,
+    setStorageSavingsOnPremLoading,
     setRequestedPayload,
     setRequestedRegion
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
+import { setTriggerBulkDataFetch } from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../../ExploreSavingsUtils';
 import {
     GIB_IN_BYTE,
@@ -44,6 +49,7 @@ interface OracleOnPremPayload {
 }
 
 const OracleSavingsCalculatorApi = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const {
         selectedSnapshotFrequency,
@@ -52,16 +58,28 @@ const OracleSavingsCalculatorApi = () => {
         savingsCalculatorFrom,
         selectedOnPremHostDetails,
         selectedOnPremRegion,
+        selectedOnPremHostId,
         onPremNetworkPerformance,
         onPremStorageAndComputeInfo,
+        selectedDeploymentModel,
         requestedPayload,
         requestedRegion
     } = useAppSelector(state => state.exploreSavings);
-    const { selectedDeploymentModel } = useAppSelector(state => state.exploreSavings);
+
+    const { selectedRowsForExploreSavingsOracleOnPremBulk, triggerBulkDataFetch } = useAppSelector(
+        state => state.exploreSavingsBulk
+    );
 
     const [getOracleOnPremCalculationsApi] = useGetOracleOnPremCalculationsMutation();
 
     const createOracleOnPremPayload = (): OracleOnPremPayload => {
+        const hostsToProcess =
+            selectedRowsForExploreSavingsOracleOnPremBulk && selectedRowsForExploreSavingsOracleOnPremBulk.length > 0
+                ? selectedRowsForExploreSavingsOracleOnPremBulk
+                : selectedOnPremHostDetails?.resourceId
+                ? [selectedOnPremHostDetails]
+                : [];
+
         const payload: OracleOnPremPayload = {
             snapshotInfo: {
                 snapshotFrequency: selectedSnapshotFrequency?.value || 'daily',
@@ -75,110 +93,127 @@ const OracleSavingsCalculatorApi = () => {
             payload.regionCode = selectedOnPremRegion?.data?.regionCode;
         }
 
-        const databaseData: Array<{
-            databaseId?: string;
-            noOfVcpusInUse?: number;
-            memory?: number;
-            networkPerformance?: string;
-            totalIops?: number | string;
-            totalThroughput?: number | string;
-            totalStorage?: number;
-        }> = [];
+        hostsToProcess.forEach((host: any) => {
+            const databaseData: Array<{
+                databaseId?: string;
+                noOfVcpusInUse?: number;
+                memory?: number;
+                networkPerformance?: string;
+                totalIops?: number | string;
+                totalThroughput?: number | string;
+                totalStorage?: number;
+            }> = [];
+            if (onPremStorageAndComputeInfo) {
+                Object.keys(onPremStorageAndComputeInfo).forEach(key => {
+                    if (key.startsWith(`${host.resourceId}_`)) {
+                        const value = onPremStorageAndComputeInfo[key];
+                        databaseData.push({
+                            databaseId: value?.databaseId,
+                            noOfVcpusInUse: value?.noOfVcpusInUse || 0,
+                            memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
+                            networkPerformance:
+                                (onPremNetworkPerformance?.value
+                                    ? NETWORK_PERFORMANCE_OPTIONS?.[onPremNetworkPerformance?.value || '']
+                                    : value?.networkPerformance) || 'upTo10',
+                            totalIops: value?.totalIops || 0,
+                            totalThroughput: value?.totalThroughput || 0,
+                            totalStorage: Number(value?.totalStorage || 0) * GIB_IN_BYTE
+                        });
+                    }
+                });
+            }
 
-        if (onPremStorageAndComputeInfo && selectedOnPremHostDetails?.resourceId) {
-            Object.keys(onPremStorageAndComputeInfo).forEach(key => {
-                if (key.startsWith(`${selectedOnPremHostDetails.resourceId}_`)) {
-                    const value = onPremStorageAndComputeInfo[key];
-                    const instanceEntry: any = {
-                        databaseId: value?.databaseId,
-                        noOfVcpusInUse: value?.noOfVcpusInUse || 0,
-                        memory: value?.memory ? Number(value?.memory) * GIB_IN_BYTE : 0,
-                        networkPerformance:
-                            (onPremNetworkPerformance?.value
-                                ? NETWORK_PERFORMANCE_OPTIONS?.[onPremNetworkPerformance?.value || '']
-                                : value?.networkPerformance) || 'upTo10',
-                        totalIops: value?.totalIops || 0,
-                        totalThroughput: value?.totalThroughput || 0,
-                        totalStorage: Number(value?.totalStorage || 0) * GIB_IN_BYTE
-                    };
-                    databaseData.push(instanceEntry);
-                }
-            });
-        }
-
-        if (databaseData.length === 0 && selectedOnPremHostDetails) {
-            databaseData.push({
-                databaseId: selectedOnPremHostDetails?.databaseId,
-                noOfVcpusInUse: selectedOnPremHostDetails?.noOfVcpusInUse || 0,
-                memory: selectedOnPremHostDetails?.Memory ? Number(selectedOnPremHostDetails?.Memory) * GIB_IN_BYTE : 0,
-                networkPerformance:
-                    onPremNetworkPerformance?.value || selectedOnPremHostDetails?.networkPerformance || 'upTo10',
-                totalIops: selectedOnPremHostDetails?.totalIops || 0,
-                totalThroughput: selectedOnPremHostDetails?.totalThroughput || 0,
-                totalStorage: Number(selectedOnPremHostDetails?.totalStorage || 0) * GIB_IN_BYTE
-            });
-        }
-
-        if (databaseData.length > 0 && selectedOnPremHostDetails?.resourceId) {
-            payload.resources!.push({
-                resourceId: selectedOnPremHostDetails.resourceId,
-                databaseData
-            });
-        }
+            if (databaseData.length > 0) {
+                payload.resources!.push({
+                    resourceId: host.resourceId,
+                    databaseData
+                });
+            }
+        });
 
         return payload;
     };
 
-    const getOracleOnPremData = async () => {
+    const getOracleOnPremSavingsData = async () => {
         const payload = createOracleOnPremPayload();
 
         if (!payload.resources || payload.resources.length === 0) {
             return;
         }
 
+        // Filter out resources with no database data
+        payload.resources = payload.resources.filter(r => r.databaseData && r.databaseData.length > 0);
+
         try {
-            dispatch(setStorageSavingsLoading(true));
-            dispatch(setViewCalculationsLoading(true));
+            dispatch(setOnPremBulkLoadingState('start'));
 
             const result = await getOracleOnPremCalculationsApi({ payload });
+            const hasErrors = (result as any)?.error;
 
-            if (result && !('error' in result)) {
-                const responseData = result?.data;
-                if (responseData) {
-                    dispatch(
-                        setStorageSavingsResponse(
-                            formatStorageSavingsRecommendedData(responseData.storageSavings || responseData)
-                        )
-                    );
-                    dispatch(setViewCalculationsApiResponse(responseData.calculations || responseData));
-                    dispatch(
-                        setViewCalculationsResponse(
-                            formatViewCalcData(
-                                responseData.calculations || responseData,
-                                selectedDeploymentModel,
-                                monthlyChangeRate
-                            )
-                        )
-                    );
-                    dispatch(setDisableState(false));
-                }
-            } else {
-                dispatch(resetSavingsApiState());
+            if (hasErrors) {
+                dispatch(setOnPremBulkLoadingState('error'));
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: t('databases.explore-savings.oracle-savings-error')
+                    })
+                );
+                return;
             }
-            dispatch(setStorageSavingsLoading(false));
-            dispatch(setViewCalculationsLoading(false));
+
+            const responseData = (result as any)?.data;
+            if (responseData) {
+                dispatch(setStorageSavingsOnPremResponse(responseData));
+                dispatch(
+                    setStorageSavingsResponse(
+                        formatStorageSavingsRecommendedData(responseData.storageSavings || responseData)
+                    )
+                );
+                dispatch(setViewCalculationsApiResponse(responseData.calculations || responseData));
+                dispatch(
+                    setViewCalculationsResponse(
+                        formatViewCalcData(
+                            responseData.calculations || responseData,
+                            selectedDeploymentModel,
+                            monthlyChangeRate
+                        )
+                    )
+                );
+            }
+
+            dispatch(setOnPremBulkLoadingState('success'));
         } catch (error) {
-            dispatch(resetSavingsApiState());
+            dispatch(setOnPremBulkLoadingState('error'));
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: t('databases.explore-savings.oracle-savings-unexpected-error')
+                })
+            );
         }
     };
 
-    // Trigger API calls when relevant state changes — mirrors MSSQL on-prem pattern
+    // Re-fetch when triggerBulkDataFetch is set (e.g., after host add/remove)
+    useEffect(() => {
+        if (triggerBulkDataFetch && savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+            dispatch(setTriggerBulkDataFetch(false));
+
+            const hasHosts =
+                (selectedRowsForExploreSavingsOracleOnPremBulk &&
+                    selectedRowsForExploreSavingsOracleOnPremBulk.length > 0) ||
+                selectedOnPremHostId;
+
+            if (hasHosts) {
+                dispatch(setDisableState(false));
+                // Reset requestedPayload to force the main useEffect to re-trigger API call
+                dispatch(setRequestedPayload(null));
+            }
+        }
+    }, [triggerBulkDataFetch]);
+
+    // Trigger API calls when relevant state changes
     useEffect(() => {
         if (savingsCalculatorFrom !== SAVINGS_CALC_MODE.ORACLE_ONPREM) {
-            return;
-        }
-
-        if (!selectedOnPremHostDetails?.resourceId || !selectedOnPremRegion?.data?.regionCode) {
             return;
         }
 
@@ -187,8 +222,13 @@ const OracleSavingsCalculatorApi = () => {
             isEqual(newPayload, requestedPayload) &&
             selectedOnPremRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
 
+        const hasHosts =
+            selectedOnPremHostId ||
+            (selectedRowsForExploreSavingsOracleOnPremBulk && selectedRowsForExploreSavingsOracleOnPremBulk.length > 0);
+
         if (
             !comparedPayloadValues &&
+            hasHosts &&
             selectedSnapshotFrequency &&
             numberOfClonedCopies &&
             numberOfClonedCopies <= MAX_CLONED_COPIES &&
@@ -199,16 +239,18 @@ const OracleSavingsCalculatorApi = () => {
             dispatch(setRequestedPayload(newPayload));
             dispatch(setRequestedRegion(selectedOnPremRegion));
             dispatch(setStorageSavingsResponse({}));
-            dispatch(setDisableState(false));
-            dispatch(setViewCalculationsLoading(true));
             dispatch(setStorageSavingsLoading(true));
+            dispatch(setViewCalculationsApiResponse({}));
+            dispatch(setViewCalculationsLoading(true));
+            dispatch(setStorageSavingsOnPremLoading(true));
             setTimeout(() => {
-                getOracleOnPremData();
+                getOracleOnPremSavingsData();
             }, 1);
         }
     }, [
         savingsCalculatorFrom,
-        selectedOnPremHostDetails,
+        selectedOnPremHostId,
+        selectedRowsForExploreSavingsOracleOnPremBulk,
         selectedOnPremRegion?.data?.regionCode,
         selectedSnapshotFrequency?.value,
         numberOfClonedCopies,

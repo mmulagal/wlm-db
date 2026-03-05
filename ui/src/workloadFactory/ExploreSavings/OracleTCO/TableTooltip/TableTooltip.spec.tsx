@@ -68,9 +68,10 @@ describe('TableTooltip', () => {
             expect(infoContainer.style.width).toBe('auto');
         });
 
-        it('should not render bullet icon in first item for Oracle', () => {
+        it('should render bullet icons for Oracle', () => {
             renderComponent(DBType.ORACLE);
-            expect(screen.queryByTestId('bullet-svg')).toBeNull();
+            const bullets = screen.getAllByTestId('bullet-svg');
+            expect(bullets).toHaveLength(2);
         });
 
         it('should render tooltip content text for Oracle', () => {
@@ -78,9 +79,9 @@ describe('TableTooltip', () => {
             expect(screen.getByText('databases.explore-savings.table-tooltip-content')).toBeTruthy();
         });
 
-        it('should not render the second MSSQL-only item for Oracle', () => {
+        it('should not render the MSSQL-only tooltip-content-three for Oracle', () => {
             renderComponent(DBType.ORACLE);
-            expect(screen.queryByText('databases.explore-savings.table-tooltip-content-two')).toBeNull();
+            expect(screen.getByText('databases.explore-savings.table-tooltip-content-two')).toBeTruthy();
             expect(screen.queryByText('databases.explore-savings.table-tooltip-content-three')).toBeNull();
         });
     });

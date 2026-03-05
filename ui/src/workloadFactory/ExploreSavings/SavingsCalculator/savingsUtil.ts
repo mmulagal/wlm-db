@@ -39,25 +39,22 @@ import { StorageSavingsInterface, ViewCalculationsInterface } from '../../../uti
 
 export const getOracleLicenseCostValue = () => {
     const state = store.getState();
-    const { savingsCalculatorFrom, onPremStorageAndComputeInfo, selectedOnPremHostDetails } = state.exploreSavings;
+    const { savingsCalculatorFrom, onPremStorageAndComputeInfo } = state.exploreSavings;
     const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
-    if (!isOracle || !onPremStorageAndComputeInfo || !selectedOnPremHostDetails?.resourceId) return 0;
-    const matchingKey = Object.keys(onPremStorageAndComputeInfo).find(key =>
-        key.startsWith(`${selectedOnPremHostDetails.resourceId}_`)
+    if (!isOracle || !onPremStorageAndComputeInfo) return 0;
+    // Sum monthlyOracleCost across ALL hosts in onPremStorageAndComputeInfo
+    return Object.values(onPremStorageAndComputeInfo as Record<string, { monthlyOracleCost?: string | number }>).reduce(
+        (total, entry) => {
+            const cost = entry?.monthlyOracleCost;
+            return total + (cost ? Number(cost) : 0);
+        },
+        0
     );
-    const cost = matchingKey ? onPremStorageAndComputeInfo[matchingKey]?.monthlyOracleCost : null;
-    return cost ? Number(cost) : 0;
 };
 
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
-    const {
-        recommendedTargetInstance,
-        selectedHostDetails,
-        savingsCalculatorFrom,
-        onPremStorageAndComputeInfo,
-        selectedOnPremHostDetails
-    } = state.exploreSavings;
+    const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom } = state.exploreSavings;
     const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
     const isArrayMode =
         (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||

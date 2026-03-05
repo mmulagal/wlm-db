@@ -27,10 +27,7 @@ import { useOnPremData } from './useOnPremData';
 import useResize from '../../../common/hooks/useResize';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import BulkActionContainer from '../../../common/BulkAction/BulkActionContainer';
-import {
-    setSelectedRowsForExploreSavingsOnPremBulk,
-    setOnPremTCOAction
-} from '../../../store/workloadFactory/exploreSavingsBulkSlice';
+import { setSelectedRowsForExploreSavingsOnPremBulk } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import { setOnPremiseData } from '../../../store/workloadFactory/exploreSavingsSlice';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import AssessmentDialog from '../OracleTCO/AssessmentDialog/AssessmentDialog';
@@ -563,32 +560,32 @@ const ExploreSavingsOnPremiseTable = () => {
 
     // Sync Redux selection state back to table when rows are removed externally
     useEffect(() => {
-        if (
-            selectedRowsForExploreSavingsOnPremBulk &&
-            selectedRowsForExploreSavingsOnPremBulk.length > 0 &&
-            onPremiseData &&
-            onPremiseData.length > 0
-        ) {
-            const selectedIds = selectedRowsForExploreSavingsOnPremBulk.map((row: any) => row.id);
-            const currentlySelected = Object.keys(tableProps.selectionState?.rows || {}).filter(
-                key => tableProps.selectionState?.rows[key]
-            );
-            const needsUpdate = selectedIds.some((id: any) => !currentlySelected.includes(String(id)));
+        if (!onPremiseData || onPremiseData.length === 0) return;
 
-            if (needsUpdate) {
-                selectedIds.forEach((id: any) => {
-                    tableProps.toggleRowSelection?.(String(id));
-                });
+        const currentTableSelectedIds = new Set(
+            Object.keys(tableProps.selectionState?.rows || {}).filter(id => tableProps.selectionState?.rows[id])
+        );
+        const reduxSelectedIds = new Set<string>(
+            selectedRowsForExploreSavingsOnPremBulk.map((row: any) => String(row.id))
+        );
+
+        // Deselect rows that are selected in the table but not in Redux
+        currentTableSelectedIds.forEach(id => {
+            if (!reduxSelectedIds.has(id)) {
+                tableProps.toggleRowSelection(id)(false);
             }
-        }
+        });
+
+        // Select rows that are in Redux but not selected in the table
+        reduxSelectedIds.forEach((id: string) => {
+            if (!currentTableSelectedIds.has(id)) {
+                tableProps.toggleRowSelection(id)(true);
+            }
+        });
     }, [selectedRowsForExploreSavingsOnPremBulk, onPremiseData]);
 
     const handleOnPremBulkAction = () => {
         if (selectedRowsForExploreSavingsOnPremBulk.length > 0) {
-            // Set bulk action in Redux
-            dispatch(setOnPremTCOAction('bulk'));
-
-            // Use the new bulk function that handles all selected hosts
             onClickESHostOnPremBulk(dispatch, selectedRowsForExploreSavingsOnPremBulk, isWorkloadFactory, navigate);
         }
     };

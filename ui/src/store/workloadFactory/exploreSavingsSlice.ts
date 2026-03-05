@@ -604,27 +604,16 @@ const exploreSavingsSlice = createSlice({
         setInstanceDataUpdatedTrigger(state, action: PayloadAction<string | null>) {
             state.instanceDataUpdatedTrigger = action.payload;
         },
-        // Combined action for on-prem bulk loading start state
-        setOnPremBulkLoadingStart(state) {
-            state.disableState = false;
-            state.storageSavingsOnPremLoading = true;
-            state.storageSavingsLoading = true;
-            state.viewCalculationsLoading = true;
-        },
-        // Combined action for on-prem bulk loading success state
-        setOnPremBulkLoadingSuccess(state) {
-            state.disableState = false;
-            state.storageSavingsOnPremLoading = false;
-            state.storageSavingsLoading = false;
-            state.viewCalculationsLoading = false;
-        },
-        // Combined action for on-prem bulk loading error state
-        setOnPremBulkLoadingError(state) {
-            state.disableState = true;
-            state.storageSavingsOnPremLoading = false;
-            state.storageSavingsLoading = false;
-            state.viewCalculationsLoading = false;
-            state.storageSavingsOnPremResponse = null;
+        setOnPremBulkLoadingState(state, action: PayloadAction<'start' | 'success' | 'error'>) {
+            const status = action.payload;
+            const isLoading = status === 'start';
+            state.disableState = status === 'error';
+            state.storageSavingsOnPremLoading = isLoading;
+            state.storageSavingsLoading = isLoading;
+            state.viewCalculationsLoading = isLoading;
+            if (status === 'error') {
+                state.storageSavingsOnPremResponse = null;
+            }
         },
         resetSavingsApiState(state) {
             state.storageSavingsResponse = null as any;
@@ -722,9 +711,7 @@ export const {
     resetServerDetailsCredentials,
     setShowFirstTimeOptimize,
     setInstanceDataUpdatedTrigger,
-    setOnPremBulkLoadingStart,
-    setOnPremBulkLoadingSuccess,
-    setOnPremBulkLoadingError,
+    setOnPremBulkLoadingState,
     resetSavingsApiState
 } = exploreSavingsSlice.actions;
 

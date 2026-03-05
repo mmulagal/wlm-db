@@ -3,7 +3,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import MSSQLAccordion from './MSSQLAccordion';
+import RecommendedAccordion from './RecommendedAccordion';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import {
     SAVINGS_CALC_MODE,
@@ -57,7 +57,7 @@ vi.mock('react-i18next', () => ({
     useTranslation: () => ({ t: mockTranslation })
 }));
 
-vi.mock('./MSSQLAccordion.module.scss', () => ({
+vi.mock('./RecommendedAccordion.module.scss', () => ({
     default: new Proxy({}, { get: (_t, p) => String(p) })
 }));
 
@@ -200,7 +200,7 @@ const mockGenerateHostMsSqlInstanceData = vi.fn().mockReturnValue({
     actualServerInstallationMode: 'Standalone'
 });
 
-vi.mock('./MSSQLAccordionUtils', () => ({
+vi.mock('./RecommendedAccordionUtils', () => ({
     generateHostMsSqlInstanceData: (...args: any[]) => mockGenerateHostMsSqlInstanceData(...args)
 }));
 
@@ -297,7 +297,7 @@ const renderComponent = (
         store,
         ...render(
             <Provider store={store}>
-                <MSSQLAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
+                <RecommendedAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
             </Provider>
         )
     };
@@ -305,7 +305,7 @@ const renderComponent = (
 
 // ─── tests ──────────────────────────────────────────────────────────────────────
 
-describe('MSSQLAccordion', () => {
+describe('RecommendedAccordion', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
@@ -334,14 +334,14 @@ describe('MSSQLAccordion', () => {
             expect(screen.getByTestId('accordion-title').textContent).toBe(GENERAL.RECOMMENDED_ES_TITLE);
         });
 
-        it('should apply mssqlAccordion class by default', () => {
+        it('should apply recommendedAccordion class by default', () => {
             const { container } = renderComponent();
-            expect((container.firstChild as HTMLElement).className).toContain('mssqlAccordion');
+            expect((container.firstChild as HTMLElement).className).toContain('recommendedAccordion');
         });
 
-        it('should apply mssqlAccordionOnPremises class when on-prem tab is selected', () => {
+        it('should apply recommendedAccordionOnPremises class when on-prem tab is selected', () => {
             const { container } = renderComponent({}, { selectedExploreSavingsTab: WLF_TABS.MSSQL_ON_PREMISES });
-            expect((container.firstChild as HTMLElement).className).toContain('mssqlAccordionOnPremises');
+            expect((container.firstChild as HTMLElement).className).toContain('recommendedAccordionOnPremises');
         });
     });
 

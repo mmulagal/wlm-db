@@ -1,15 +1,9 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
-import ExploreSavingsOnPremiseTable from '../ExploreSavingsOnPremiseTable';
-import exploreSavingsSlice from '../../../../store/workloadFactory/exploreSavingsSlice';
-import exploreSavingsBulkSlice from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
-import notificationSlice, { NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
-import authSlice from '../../../../store/authSlice';
-import { JOB_MONITORING_STATUS } from '../../../../utils/consts';
+import exploreSavingsSlice from '../../../store/workloadFactory/exploreSavingsSlice';
+import exploreSavingsBulkSlice from '../../../store/workloadFactory/exploreSavingsBulkSlice';
+import notificationSlice from '../../../store/notificationSlice';
+import authSlice from '../../../store/authSlice';
 
 // Mock fflate
 vi.mock('fflate', () => ({
@@ -22,7 +16,7 @@ vi.mock('../../../script/SQLServerDataCollector.ps1?raw', () => ({
 }));
 
 // Mock FileUpload component
-vi.mock('../FileUpload', () => ({
+vi.mock('./FileUpload', () => ({
     default: ({ handleFileChange }: any) => (
         <div>
             <input type="file" id="file-input" accept=".json" onChange={handleFileChange} data-testid="file-upload" />
@@ -100,7 +94,7 @@ vi.mock('../../../utils/apiService', () => ({
 }));
 
 // Mock custom hooks
-vi.mock('../useOnPremData', () => ({
+vi.mock('./useOnPremData', () => ({
     useOnPremData: () => ({
         fetchOnPremData: mockFetchOnPremData,
         error: null,
@@ -144,8 +138,6 @@ describe('ExploreSavingsOnPremiseTable', () => {
                     selectedRowsForExploreSavingsOnPremBulk: [],
                     selectedRowsForExploreSavingsEBSBulk: [],
                     ebsTCOAction: '',
-                    onPremTCOAction: '',
-                    selectedAddHostRows: [],
                     bulkAuthCredentials: {},
                     rowsRequiringAuthBulk: [],
                     bulkAuthStatus: {},

@@ -19,6 +19,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorComponent';
 import {
     setSelectedRowsForExploreSavingsOnPremBulk,
+    setSelectedRowsForExploreSavingsOracleOnPremBulk,
     setTriggerBulkDataFetch
 } from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
 import {
@@ -50,10 +51,14 @@ const AutoExpandAccordions = ({ hostIds }: { hostIds: string[] }) => {
 const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const { selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(state => state.exploreSavingsBulk);
+    const { selectedRowsForExploreSavingsOnPremBulk, selectedRowsForExploreSavingsOracleOnPremBulk } = useAppSelector(
+        state => state.exploreSavingsBulk
+    );
     const {
         onPremiseData,
         onPremiseDataLoading,
+        onPremiseOracleData,
+        onPremiseOracleDataLoading,
         storageSavingsLoading,
         viewCalculationsResponse,
         savingsCalculatorFrom,
@@ -72,12 +77,16 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
 
     // Update total host count whenever selection changes
     useEffect(() => {
-        setTotalHostCount(selectedRowsForExploreSavingsOnPremBulk.length);
-    }, [selectedRowsForExploreSavingsOnPremBulk]);
+        if (isOracleOnPrem) {
+            setTotalHostCount(selectedRowsForExploreSavingsOracleOnPremBulk?.length || 0);
+        } else {
+            setTotalHostCount(selectedRowsForExploreSavingsOnPremBulk.length);
+        }
+    }, [selectedRowsForExploreSavingsOnPremBulk, selectedRowsForExploreSavingsOracleOnPremBulk, isOracleOnPrem]);
 
     // Check if SSD tier card should be shown based on ebsCapacity
     useEffect(() => {
-        if (viewCalculationsResponse && !isOracleOnPrem) {
+        if (viewCalculationsResponse) {
             const totalEbsCapacity = viewCalculationsResponse?.fsxOntapCalculation?.ebsCapacity;
 
             if (totalEbsCapacity !== null && totalEbsCapacity !== undefined) {
@@ -85,78 +94,110 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
                 const numericValue = parseFloat(String(totalEbsCapacity).replace(/,/g, '').split(' ')[0]);
 
                 // Show card if less than 800 GiB and if the selected hosts are less than 5
-                setShowSsdTierCard(
-                    numericValue < 800 && (isOracleOnPrem || selectedRowsForExploreSavingsOnPremBulk.length < 5)
-                );
+                const hostCount = isOracleOnPrem
+                    ? selectedRowsForExploreSavingsOracleOnPremBulk?.length || 0
+                    : selectedRowsForExploreSavingsOnPremBulk.length;
+                setShowSsdTierCard(numericValue < 800 && hostCount < 5);
             } else {
                 setShowSsdTierCard(false);
             }
         }
-    }, [viewCalculationsResponse, selectedRowsForExploreSavingsOnPremBulk, isOracleOnPrem]);
+    }, [
+        viewCalculationsResponse,
+        selectedRowsForExploreSavingsOnPremBulk,
+        selectedRowsForExploreSavingsOracleOnPremBulk,
+        isOracleOnPrem
+    ]);
 
     const handleRemoveHost = (hostToRemove: any, event: React.SyntheticEvent) => {
-        event.stopPropagation(); // Prevent accordion from toggling
-        const updatedHosts = selectedRowsForExploreSavingsOnPremBulk.filter(
-            (host: any) => host.resourceId !== hostToRemove.resourceId
-        );
-        dispatch(setSelectedRowsForExploreSavingsOnPremBulk(updatedHosts));
+        event.stopPropagation();
 
-        // Update server name to reflect new host count or name
-        if (updatedHosts.length > 0) {
-            // Show host name if only 1 host, otherwise show count
-            const serverName =
-                updatedHosts.length === 1 ? updatedHosts[0]?.resourceName : `${updatedHosts.length} hosts selected`;
-
-            dispatch(setSelectedServerName(serverName));
-            dispatch(
-                setSelectedEsPageInstance({
-                    instanceId: '',
-                    credentialId: '',
-                    regionId: '',
-                    deploymentModel: updatedHosts[0]?.deploymentModel,
-                    serverName
-                })
+        if (isOracleOnPrem) {
+            const updatedHosts = selectedRowsForExploreSavingsOracleOnPremBulk.filter(
+                (host: any) => host.resourceId !== hostToRemove.resourceId
             );
+            dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk(updatedHosts));
+
+            if (updatedHosts.length > 0) {
+                const serverName =
+                    updatedHosts.length === 1 ? updatedHosts[0]?.resourceName : `${updatedHosts.length} hosts selected`;
+                dispatch(setSelectedServerName(serverName));
+                dispatch(
+                    setSelectedEsPageInstance({
+                        instanceId: '',
+                        credentialId: '',
+                        regionId: '',
+                        deploymentModel: updatedHosts[0]?.deploymentModel,
+                        serverName
+                    })
+                );
+            }
+
+            const storagePerfAndCompute: any = {};
+            updatedHosts.forEach((rowData: any) => {
+                if (rowData?.oracleDatabases?.length) {
+                    rowData.oracleDatabases.forEach((db: any) => {
+                        const uniqueKey = `${rowData.resourceId}_${db.databaseName}`;
+                        storagePerfAndCompute[uniqueKey] = {
+                            totalStorage: formatFractionalNumber(Number(db?.totalStorage || 0) / GIB_IN_BYTE, 3),
+                            totalIops: formatFractionalNumber(db?.totalIops, 3),
+                            totalThroughput: formatFractionalNumber(db?.totalThroughput, 3),
+                            noOfVcpusInUse: db?.vCPUs || 0,
+                            memory: formatFractionalNumber(Number(db?.memory || 0) / GIB_IN_BYTE, 3),
+                            databaseName: db?.databaseName,
+                            databaseId: db?.databaseId,
+                            networkPerformance: rowData?.networkPerformance || 'upTo10',
+                            monthlyOracleCost: db?.monthlyOracleCost || '',
+                            hostResourceName: rowData?.resourceName
+                        };
+                    });
+                }
+            });
+            dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
+        } else {
+            const updatedHosts = selectedRowsForExploreSavingsOnPremBulk.filter(
+                (host: any) => host.resourceId !== hostToRemove.resourceId
+            );
+            dispatch(setSelectedRowsForExploreSavingsOnPremBulk(updatedHosts));
+
+            if (updatedHosts.length > 0) {
+                const serverName =
+                    updatedHosts.length === 1 ? updatedHosts[0]?.resourceName : `${updatedHosts.length} hosts selected`;
+                dispatch(setSelectedServerName(serverName));
+                dispatch(
+                    setSelectedEsPageInstance({
+                        instanceId: '',
+                        credentialId: '',
+                        regionId: '',
+                        deploymentModel: updatedHosts[0]?.deploymentModel,
+                        serverName
+                    })
+                );
+            }
+
+            const storagePerfAndCompute: any = {};
+            updatedHosts.forEach((rowData: any) => {
+                if (rowData?.sqlServerInstances?.length) {
+                    rowData.sqlServerInstances.forEach((instance: any) => {
+                        const uniqueKey = `${rowData.resourceId}_${instance.sqlInstanceName}`;
+                        storagePerfAndCompute[uniqueKey] = {
+                            totalStorage: formatFractionalNumber(Number(instance?.totalStorage || 0) / GIB_IN_BYTE, 3),
+                            totalIops: formatFractionalNumber(instance?.totalIops, 3),
+                            totalThroughput: formatFractionalNumber(instance?.totalThroughput, 3),
+                            noOfVcpusInUse: instance?.noOfVcpusInUse,
+                            memory: formatFractionalNumber(Number(instance?.memory || 0) / GIB_IN_BYTE, 3),
+                            sqlInstanceName: instance?.sqlInstanceName,
+                            sqlInstanceId: instance?.sqlInstanceId,
+                            networkPerformance: instance?.networkPerformance,
+                            hostResourceName: rowData?.resourceName
+                        };
+                    });
+                }
+            });
+            dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
         }
 
-        // Rebuild compute/storage data for remaining hosts
-        const storagePerfAndCompute: any = {};
-        updatedHosts.forEach((rowData: any) => {
-            if (rowData?.sqlServerInstances?.length) {
-                rowData.sqlServerInstances.forEach((instance: any) => {
-                    const uniqueKey = `${rowData.resourceId}_${instance.sqlInstanceName}`;
-                    if (!storagePerfAndCompute[uniqueKey]) {
-                        storagePerfAndCompute[uniqueKey] = {};
-                    }
-                    storagePerfAndCompute[uniqueKey].totalStorage = formatFractionalNumber(
-                        Number(instance?.totalStorage || 0) / GIB_IN_BYTE,
-                        3
-                    );
-                    storagePerfAndCompute[uniqueKey].totalIops = formatFractionalNumber(instance?.totalIops, 3);
-                    storagePerfAndCompute[uniqueKey].totalThroughput = formatFractionalNumber(
-                        instance?.totalThroughput,
-                        3
-                    );
-                    storagePerfAndCompute[uniqueKey].noOfVcpusInUse = instance?.noOfVcpusInUse;
-                    storagePerfAndCompute[uniqueKey].memory = formatFractionalNumber(
-                        Number(instance?.memory || 0) / GIB_IN_BYTE,
-                        3
-                    );
-                    storagePerfAndCompute[uniqueKey].sqlInstanceName = instance?.sqlInstanceName;
-                    storagePerfAndCompute[uniqueKey].sqlInstanceId = instance?.sqlInstanceId;
-                    storagePerfAndCompute[uniqueKey].networkPerformance = instance?.networkPerformance;
-                    storagePerfAndCompute[uniqueKey].hostResourceName = rowData?.resourceName;
-                });
-            }
-        });
-
-        // Replace compute/storage data with updated data
-        dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
-
-        // Clear storageSavingsResponse before triggering API to prevent showing stale/partial data
         dispatch(setStorageSavingsResponse(null));
-
-        // Trigger data fetch after removing hosts - the API will create fresh aggregated data
         dispatch(setTriggerBulkDataFetch(true));
     };
 
@@ -198,6 +239,10 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
         if (host && typeof host === 'object' && host.resourceName) {
             return host;
         }
+        if (isOracleOnPrem) {
+            if (!onPremiseOracleData || !Array.isArray(onPremiseOracleData)) return null;
+            return onPremiseOracleData.find((item: any) => item.resourceName === host);
+        }
         if (!onPremiseData?.items) return null;
         return onPremiseData.items.find((item: any) => item.resourceName === host);
     };
@@ -206,8 +251,7 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
     const getHostInstanceCount = (host: any) => {
         const hostDetails = getHostDetails(host);
         if (isOracleOnPrem) {
-            // For Oracle, use databaseNameList or totalInstance
-            return hostDetails?.databaseNameList?.length || hostDetails?.totalInstance || 0;
+            return hostDetails?.oracleDatabases?.length || 0;
         }
         return hostDetails?.sqlServerInstances?.length || 0;
     };
@@ -218,11 +262,13 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
         return hostDetails?.onPremisesNodes?.length || 0;
     };
 
-    // Get the list of hosts to display (Oracle single-host or MSSQL bulk)
+    // Get the list of hosts to display (Oracle bulk/single-host or MSSQL bulk)
     const getHostsToDisplay = () => {
-        if (isOracleOnPrem && selectedOnPremHostDetails) {
-            // Oracle single-host mode - wrap in array for consistent rendering
-            return [selectedOnPremHostDetails];
+        if (isOracleOnPrem) {
+            if (selectedRowsForExploreSavingsOracleOnPremBulk?.length > 1) {
+                return selectedRowsForExploreSavingsOracleOnPremBulk;
+            }
+            return selectedOnPremHostDetails ? [selectedOnPremHostDetails] : [];
         }
         return selectedRowsForExploreSavingsOnPremBulk;
     };
@@ -237,11 +283,8 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
         return t('databases.explore-savings.instances');
     };
 
-    // Determine if Add hosts button should be shown (not for Oracle single-host mode currently)
-    const showAddHostsButton = !isOracleOnPrem;
-
-    // Determine if Remove button should be shown
-    const showRemoveButton = !isOracleOnPrem;
+    // Show Add/Remove for Oracle bulk (>1 hosts) and always for MSSQL on-prem
+    const isOracleBulkMode = isOracleOnPrem && selectedRowsForExploreSavingsOracleOnPremBulk?.length > 1;
 
     return (
         <div className={styles.tcoOnPremBulkAccordion}>
@@ -255,7 +298,7 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
                 </div>
             )}
             <AccordionController isGrouped>
-                {isOracleOnPrem && (
+                {isOracleOnPrem && !isOracleBulkMode && (
                     <AutoExpandAccordions
                         hostIds={hostsToDisplay.map((host: any, index: number) =>
                             String(host?.resourceName || index + 1)
@@ -266,11 +309,13 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
                     <DsTypography variant="Semibold_16">
                         {`${t('databases.explore-savings.selected-hosts')} (${hostsToDisplay.length})`}
                     </DsTypography>
-                    {showAddHostsButton && (
-                        <DsButton type="text" onClick={handleManageHosts} isDisabled={onPremiseDataLoading}>
-                            {t('databases.explore-savings.add-hosts')}
-                        </DsButton>
-                    )}
+                    <DsButton
+                        type="text"
+                        onClick={handleManageHosts}
+                        isDisabled={isOracleOnPrem ? onPremiseOracleDataLoading : onPremiseDataLoading}
+                    >
+                        {t('databases.explore-savings.add-hosts')}
+                    </DsButton>
                 </div>
                 <div className={styles.accordionScrollContainer}>
                     {hostsToDisplay.map((host: any, index: number) => {
@@ -300,21 +345,17 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
                                         {hostName || `Host ${index + 1}`}
                                     </div>
                                 }
-                                RightWidget={
-                                    showRemoveButton
-                                        ? () => (
-                                              <div className={styles.rightWidgetButton}>
-                                                  <DsButton
-                                                      type="text"
-                                                      isDisabled={totalHostCount <= 1 || storageSavingsLoading}
-                                                      onClick={event => handleRemoveHost(host, event)}
-                                                  >
-                                                      {t('databases.explore-savings.remove')}
-                                                  </DsButton>
-                                              </div>
-                                          )
-                                        : undefined
-                                }
+                                RightWidget={() => (
+                                    <div className={styles.rightWidgetButton}>
+                                        <DsButton
+                                            type="text"
+                                            isDisabled={totalHostCount <= 1 || storageSavingsLoading}
+                                            onClick={event => handleRemoveHost(host, event)}
+                                        >
+                                            {t('databases.explore-savings.remove')}
+                                        </DsButton>
+                                    </div>
+                                )}
                             >
                                 <AccordionCardContent className={styles.accordionContent}>
                                     <DsTypography>

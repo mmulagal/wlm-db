@@ -7,7 +7,11 @@ import { FSX_AZ_TYPE, SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts'
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { addExploreSavingsInitialData } from '../../../store/workloadFactory/exploreSavingsSlice';
-import { setSelectedRowsForExploreSavingsEBSBulk } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
+import {
+    setSelectedRowsForExploreSavingsEBSBulk,
+    setSelectedRowsForExploreSavingsOnPremBulk,
+    setSelectedRowsForExploreSavingsOracleOnPremBulk
+} from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import SnapshotsEBSCalculation from './EBSCalculation/SnapshotsEBSCalculation/SnapshotsEBSCalculation';
 import ClonesEBSCalculation from './EBSCalculation/ClonesEBSCalculation/ClonesEBSCalculation';
 import SnapshotsOntapCalculation from './OntapCalculation/SnapshotsOntapCalculation/SnapshotsOntapCalculation';
@@ -32,9 +36,11 @@ const ViewCalculations = ({ statusCheck }: any) => {
     const { t } = useTranslation();
     const selectedServerName = useAppSelector(state => state.exploreSavings.selectedServerName);
     const { viewCalculationsResponse, savingsCalculatorFrom } = useAppSelector(state => state.exploreSavings);
-    const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(
-        state => state.exploreSavingsBulk
-    );
+    const {
+        selectedRowsForExploreSavingsEBSBulk,
+        selectedRowsForExploreSavingsOnPremBulk,
+        selectedRowsForExploreSavingsOracleOnPremBulk
+    } = useAppSelector(state => state.exploreSavingsBulk);
 
     const getDynamicBreadcrumbTitle = () => {
         // For manual modes, use the manual breadcrumb title
@@ -65,8 +71,14 @@ const ViewCalculations = ({ statusCheck }: any) => {
             }
         }
 
-        // For ORACLE_ONPREM mode
+        // For ORACLE_ONPREM mode with bulk selection capability
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+            if (selectedRowsForExploreSavingsOracleOnPremBulk?.length > 1) {
+                return `${selectedRowsForExploreSavingsOracleOnPremBulk.length} hosts selected`;
+            }
+            if (selectedRowsForExploreSavingsOracleOnPremBulk?.length === 1) {
+                return selectedRowsForExploreSavingsOracleOnPremBulk[0]?.resourceName || selectedServerName;
+            }
             return selectedServerName || t('databases.explore-savings.oracle-on-premises-configuration');
         }
 
@@ -101,6 +113,8 @@ const ViewCalculations = ({ statusCheck }: any) => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
                                     dispatch(addExploreSavingsInitialData(null));
                                     dispatch(setSelectedRowsForExploreSavingsEBSBulk([]));
+                                    dispatch(setSelectedRowsForExploreSavingsOnPremBulk([]));
+                                    dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk([]));
                                 }
                             },
                             {

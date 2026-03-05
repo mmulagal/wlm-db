@@ -14,22 +14,22 @@ const TableTooltip = () => {
             style={{ width: selectedTCOHostType === DBType.MSSQL ? '690px' : 'auto' }}
         >
             <div className={styles.item}>
-                {selectedTCOHostType === DBType.MSSQL && <Bullet />}
+                <Bullet />
                 <DsTypography variant="Regular_14">{t('databases.explore-savings.table-tooltip-content')}</DsTypography>
             </div>
-            {selectedTCOHostType === DBType.MSSQL && (
-                <div className={styles.item}>
-                    <Bullet />
-                    <div className={styles.subItem}>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.explore-savings.table-tooltip-content-two')}
-                        </DsTypography>
+            <div className={styles.item}>
+                <Bullet />
+                <div className={styles.subItem}>
+                    <DsTypography variant="Regular_14">
+                        {t('databases.explore-savings.table-tooltip-content-two')}
+                    </DsTypography>
+                    {selectedTCOHostType === DBType.MSSQL && (
                         <DsTypography variant="Semibold_14">
                             {t('databases.explore-savings.table-tooltip-content-three')}
                         </DsTypography>
-                    </div>
+                    )}
                 </div>
-            )}
+            </div>
         </div>
     );
 };

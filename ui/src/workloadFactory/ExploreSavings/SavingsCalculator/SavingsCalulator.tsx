@@ -16,7 +16,7 @@ import { ReactComponent as Suggestion } from '../../../assets/Suggestion.svg';
 import { ReactComponent as SuggestionDisable } from '../../../assets/SuggestionDisable.svg';
 import { ReactComponent as CalculateIcon } from '../../../assets/ic_calculateicon.svg';
 import { ReactComponent as LightIcon } from '../../../assets/lighticon.svg';
-import MSSQLAccordion from './MSSQLAccordion/MSSQLAccordion';
+import RecommendedAccordion from './RecommendedAccordion/RecommendedAccordion';
 
 import ExportPDF from './ExportPDF/ExportPDF';
 import downloadPdf from '../../../common/pdfGenerator';
@@ -26,7 +26,11 @@ import {
     setStorageSavingsResponse,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
-import { setSelectedRowsForExploreSavingsEBSBulk } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
+import {
+    setSelectedRowsForExploreSavingsEBSBulk,
+    setSelectedRowsForExploreSavingsOnPremBulk,
+    setSelectedRowsForExploreSavingsOracleOnPremBulk
+} from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import ManualTCOFields from './ManualTCOFields/ManualTCOFields';
@@ -86,9 +90,11 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
     const isOnPremMode = selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem;
 
-    const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(
-        state => state.exploreSavingsBulk
-    );
+    const {
+        selectedRowsForExploreSavingsEBSBulk,
+        selectedRowsForExploreSavingsOnPremBulk,
+        selectedRowsForExploreSavingsOracleOnPremBulk
+    } = useAppSelector(state => state.exploreSavingsBulk);
 
     const { isWorkloadFactory, userMetadata } = useAppSelector(state => state.auth);
 
@@ -255,8 +261,11 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             }
         }
 
-        // For Oracle on-prem mode
+        // For Oracle on-prem mode (bulk or single)
         if (isOracleOnPrem) {
+            if (selectedRowsForExploreSavingsOracleOnPremBulk?.length > 1) {
+                return `${selectedRowsForExploreSavingsOracleOnPremBulk.length} hosts selected`;
+            }
             return selectedServerName || selectedOnPremHostDetails?.resourceName;
         }
 
@@ -307,6 +316,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                             dispatch(setSelectedHeaderTab(WLF_TABS.EXPLORE_SAVINGS));
                                             dispatch(addExploreSavingsInitialData(null));
                                             dispatch(setSelectedRowsForExploreSavingsEBSBulk([]));
+                                            dispatch(setSelectedRowsForExploreSavingsOnPremBulk([]));
+                                            dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk([]));
                                             postBlueXPMessage({
                                                 type: BlueXPListeners.navigate,
                                                 payload: {
@@ -488,9 +499,9 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         </div>
                     </div>
 
-                    {/* Accordion here - MSSQLAccordion handles both MSSQL and Oracle */}
+                    {/* Accordion here - RecommendedAccordion handles both MSSQL and Oracle */}
 
-                    <MSSQLAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
+                    <RecommendedAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
                 </div>
 
                 {/* last section */}

@@ -200,7 +200,6 @@ vi.mock('../../store/workloadFactory/exploreSavingsBulkSlice', () => ({
         type: 'setSelectedRowsForExploreSavingsOnPremBulk',
         payload: val
     })),
-    setOnPremTCOAction: vi.fn((val: any) => ({ type: 'setOnPremTCOAction', payload: val })),
     setTriggerBulkDataFetch: vi.fn((val: any) => ({ type: 'setTriggerBulkDataFetch', payload: val }))
 }));
 

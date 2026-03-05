@@ -6,6 +6,7 @@ import { ColumnProps, Table } from '../../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../../common/Lib/Table/useTable';
 import {
     setSelectedRowsForExploreSavingsOnPremBulk,
+    setSelectedRowsForExploreSavingsOracleOnPremBulk,
     setTriggerBulkDataFetch
 } from '../../../../../store/workloadFactory/exploreSavingsBulkSlice';
 import {
@@ -18,7 +19,7 @@ import {
     formatFractionalNumber,
     formatSizeTwoPrecision
 } from '../../../../../utils/utilityFunctions';
-import { GIB_IN_BYTE } from '../../../../../utils/consts';
+import { GIB_IN_BYTE, SAVINGS_CALC_MODE } from '../../../../../utils/consts';
 import { GENERAL } from '../../../../../utils/appConstants';
 import styles from '../../TCOBulkAccordion/TCOAddHostTable/TCOAddHostTable.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
@@ -35,18 +36,40 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
     const dispatch = useDispatch();
     const [onPremTableData, setOnPremTableData] = useState<any>([]);
     const [updatedTableData, setUpdatedTableData] = useState<any>([]);
-    const { selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(state => state.exploreSavingsBulk);
-    const { onPremiseData, onPremiseDataLoading, onPremStorageAndComputeInfo } = useAppSelector(
-        state => state.exploreSavings
+    const { selectedRowsForExploreSavingsOnPremBulk, selectedRowsForExploreSavingsOracleOnPremBulk } = useAppSelector(
+        state => state.exploreSavingsBulk
     );
+    const { onPremiseData, onPremiseOracleData, savingsCalculatorFrom } = useAppSelector(state => state.exploreSavings);
+
+    const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+    const activeSelectedRows = isOracleOnPrem
+        ? selectedRowsForExploreSavingsOracleOnPremBulk
+        : selectedRowsForExploreSavingsOnPremBulk;
 
     // Format on-premises data for table
     useEffect(() => {
-        if (onPremiseData && Array.isArray(onPremiseData)) {
-            // Don't filter - show ALL hosts (like EBS does)
-            // The already selected hosts will be pre-checked via defaultSelectedRows
+        if (isOracleOnPrem) {
+            if (onPremiseOracleData && Array.isArray(onPremiseOracleData)) {
+                const formattedData = onPremiseOracleData.map((item: any) => ({
+                    id: item.id || item.resourceId,
+                    resourceName: item.resourceName,
+                    resourceId: item.resourceId,
+                    deploymentModel: item.deploymentModel,
+                    instanceCount: item.oracleDatabases?.length || 0,
+                    nodeCount: item.onPremisesNodes?.length || 0,
+                    nameForSorting: item.resourceName?.toLowerCase(),
+                    oracleDatabases: item.oracleDatabases,
+                    onPremisesNodes: item.onPremisesNodes,
+                    databaseNameList: item.databaseNameList,
+                    totalAllocatedCapacity: formatSizeTwoPrecision(item.totalAllocatedCapacityGB * GIB_IN_BYTE)
+                }));
+                setOnPremTableData(formattedData);
+            } else {
+                setOnPremTableData([]);
+            }
+        } else if (onPremiseData && Array.isArray(onPremiseData)) {
             const formattedData = onPremiseData.map((item: any) => ({
-                id: item.id || item.resourceId, // Use existing id or resourceId as fallback
+                id: item.id || item.resourceId,
                 resourceName: item.resourceName,
                 resourceId: item.resourceId,
                 deploymentModel: item.deploymentModel,
@@ -61,7 +84,7 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
         } else {
             setOnPremTableData([]);
         }
-    }, [onPremiseData]);
+    }, [onPremiseData, onPremiseOracleData, isOracleOnPrem]);
 
     const AddHostColDefs: ColumnProps[] = [
         {
@@ -80,7 +103,9 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
             }
         },
         {
-            Header: t('databases.explore-savings.instances'),
+            Header: isOracleOnPrem
+                ? t('databases.explore-savings.databases')
+                : t('databases.explore-savings.instances'),
             accessor: 'instanceCount',
             isSortable: true,
             id: '2',
@@ -105,7 +130,7 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
         selectionType: 'multiple',
         columns: AddHostColDefs,
         // Todo : what is resuorceId here
-        defaultSelectedRows: selectedRowsForExploreSavingsOnPremBulk.map((row: any) => row.id || row.resourceId),
+        defaultSelectedRows: activeSelectedRows.map((row: any) => row.id || row.resourceId),
         rows: updatedTableData,
         pageSize: 10
     });
@@ -154,54 +179,63 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
         });
 
         setUpdatedTableData(updatedData);
-    }, [onPremTableData, selectedRowsForExploreSavingsOnPremBulk, tableProps.selectionState]);
+    }, [onPremTableData, activeSelectedRows, tableProps.selectionState]);
 
     const handleExploreSavings = () => {
         const selectedRows: any = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
-        // Replace the entire selection- this allows both adding and removing hosts
-        dispatch(setSelectedRowsForExploreSavingsOnPremBulk(selectedRows));
+        if (isOracleOnPrem) {
+            dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk(selectedRows));
 
-        // Populate compute/storage data for selected hosts
-        const storagePerfAndCompute: any = {};
-        selectedRows.forEach((rowData: any) => {
-            if (rowData?.sqlServerInstances?.length) {
-                rowData.sqlServerInstances.forEach((instance: any) => {
-                    const uniqueKey = `${rowData.resourceId}_${instance.sqlInstanceName}`;
-                    if (!storagePerfAndCompute[uniqueKey]) {
-                        storagePerfAndCompute[uniqueKey] = {};
-                    }
-                    storagePerfAndCompute[uniqueKey].totalStorage = formatFractionalNumber(
-                        Number(instance?.totalStorage || 0) / GIB_IN_BYTE,
-                        3
-                    );
-                    storagePerfAndCompute[uniqueKey].totalIops = formatFractionalNumber(instance?.totalIops, 3);
-                    storagePerfAndCompute[uniqueKey].totalThroughput = formatFractionalNumber(
-                        instance?.totalThroughput,
-                        3
-                    );
-                    storagePerfAndCompute[uniqueKey].noOfVcpusInUse = instance?.noOfVcpusInUse;
-                    storagePerfAndCompute[uniqueKey].memory = formatFractionalNumber(
-                        Number(instance?.memory || 0) / GIB_IN_BYTE,
-                        3
-                    );
-                    storagePerfAndCompute[uniqueKey].sqlInstanceName = instance?.sqlInstanceName;
-                    storagePerfAndCompute[uniqueKey].sqlInstanceId = instance?.sqlInstanceId;
-                    storagePerfAndCompute[uniqueKey].networkPerformance = instance?.networkPerformance;
-                    storagePerfAndCompute[uniqueKey].hostResourceName = rowData?.resourceName;
-                });
-            }
-        });
+            const storagePerfAndCompute: any = {};
+            selectedRows.forEach((rowData: any) => {
+                if (rowData?.oracleDatabases?.length) {
+                    rowData.oracleDatabases.forEach((db: any) => {
+                        const uniqueKey = `${rowData.resourceId}_${db.databaseName}`;
+                        storagePerfAndCompute[uniqueKey] = {
+                            totalStorage: formatFractionalNumber(Number(db?.totalStorage || 0) / GIB_IN_BYTE, 3),
+                            totalIops: formatFractionalNumber(db?.totalIops, 3),
+                            totalThroughput: formatFractionalNumber(db?.totalThroughput, 3),
+                            noOfVcpusInUse: db?.vCPUs || 0,
+                            memory: formatFractionalNumber(Number(db?.memory || 0) / GIB_IN_BYTE, 3),
+                            databaseName: db?.databaseName,
+                            databaseId: db?.databaseId,
+                            networkPerformance: rowData?.networkPerformance || 'upTo10',
+                            monthlyOracleCost: db?.monthlyOracleCost || '',
+                            hostResourceName: rowData?.resourceName
+                        };
+                    });
+                }
+            });
+            dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
+        } else {
+            dispatch(setSelectedRowsForExploreSavingsOnPremBulk(selectedRows));
 
-        // Replace the entire compute/storage data to match the current selection
-        dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
+            const storagePerfAndCompute: any = {};
+            selectedRows.forEach((rowData: any) => {
+                if (rowData?.sqlServerInstances?.length) {
+                    rowData.sqlServerInstances.forEach((instance: any) => {
+                        const uniqueKey = `${rowData.resourceId}_${instance.sqlInstanceName}`;
+                        storagePerfAndCompute[uniqueKey] = {
+                            totalStorage: formatFractionalNumber(Number(instance?.totalStorage || 0) / GIB_IN_BYTE, 3),
+                            totalIops: formatFractionalNumber(instance?.totalIops, 3),
+                            totalThroughput: formatFractionalNumber(instance?.totalThroughput, 3),
+                            noOfVcpusInUse: instance?.noOfVcpusInUse,
+                            memory: formatFractionalNumber(Number(instance?.memory || 0) / GIB_IN_BYTE, 3),
+                            sqlInstanceName: instance?.sqlInstanceName,
+                            sqlInstanceId: instance?.sqlInstanceId,
+                            networkPerformance: instance?.networkPerformance,
+                            hostResourceName: rowData?.resourceName
+                        };
+                    });
+                }
+            });
+            dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
+        }
 
-        // Update server name to reflect current host count or name
         if (selectedRows.length > 0) {
-            // Show host name if only 1 host, otherwise show count (matching EBS pattern)
             const serverName =
                 selectedRows.length === 1 ? selectedRows[0]?.resourceName : `${selectedRows.length} hosts selected`;
-
             dispatch(setSelectedServerName(serverName));
             dispatch(
                 setSelectedEsPageInstance({
@@ -214,7 +248,6 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
             );
         }
 
-        // Trigger data fetch after updating selection
         dispatch(setTriggerBulkDataFetch(true));
 
         if (onExploreSavings) {
@@ -237,8 +270,16 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
             <TableTopBar
                 // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={t('databases.explore-savings.mssql-on-prem')}
-                singularTitle={t('databases.explore-savings.mssql-on-prem')}
+                pluralTitle={
+                    isOracleOnPrem
+                        ? t('databases.explore-savings.oracle-on-prem')
+                        : t('databases.explore-savings.mssql-on-prem')
+                }
+                singularTitle={
+                    isOracleOnPrem
+                        ? t('databases.explore-savings.oracle-on-prem')
+                        : t('databases.explore-savings.mssql-on-prem')
+                }
             />
             <Table
                 // @ts-ignore

@@ -12,9 +12,8 @@ export interface BulkAuthStatus {
 export interface ExploreSavingsBulkSliceEntities {
     selectedRowsForExploreSavingsEBSBulk: Array<string> | any;
     selectedRowsForExploreSavingsOnPremBulk: Array<string> | any;
+    selectedRowsForExploreSavingsOracleOnPremBulk: Array<any>;
     ebsTCOAction: string;
-    onPremTCOAction: string;
-    selectedAddHostRows: Array<string> | any;
     bulkAuthCredentials: BulkAuthCredentials;
     rowsRequiringAuthBulk?: Array<any> | any;
     bulkAuthStatus?: BulkAuthStatus;

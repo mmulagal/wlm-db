@@ -31,9 +31,7 @@ import {
     setViewCalculationsLoading,
     setViewCalculationsResponse,
     setInstanceDataUpdatedTrigger,
-    setOnPremBulkLoadingStart,
-    setOnPremBulkLoadingSuccess,
-    setOnPremBulkLoadingError,
+    setOnPremBulkLoadingState,
     setRequestedPayload,
     setRequestedRegion
 } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -231,7 +229,7 @@ const SavingsCalculatorApi = () => {
         }
 
         try {
-            dispatch(setOnPremBulkLoadingStart());
+            dispatch(setOnPremBulkLoadingState('start'));
 
             // Make a single API call with the bulk payload
             const result = await getStorageSavingsOnPremDataApi({
@@ -242,7 +240,7 @@ const SavingsCalculatorApi = () => {
             const hasErrors = result?.error;
 
             if (hasErrors) {
-                dispatch(setOnPremBulkLoadingError());
+                dispatch(setOnPremBulkLoadingState('error'));
                 return;
             }
 
@@ -270,9 +268,9 @@ const SavingsCalculatorApi = () => {
             }
 
             // Set loading to false
-            dispatch(setOnPremBulkLoadingSuccess());
+            dispatch(setOnPremBulkLoadingState('success'));
         } catch (error) {
-            dispatch(setOnPremBulkLoadingError());
+            dispatch(setOnPremBulkLoadingState('error'));
         }
     };
 

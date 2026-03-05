@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import styles from './MSSQLAccordion.module.scss';
-import { generateHostMsSqlInstanceData } from './MSSQLAccordionUtils';
+import styles from './RecommendedAccordion.module.scss';
+import { generateHostMsSqlInstanceData } from './RecommendedAccordionUtils';
 import {
     ExploreSaveConfiguration,
     MSSQLServerInstance,
@@ -52,7 +52,7 @@ const TableLayout = ({ data, type }: any) => (
     </Grid>
 );
 
-const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
+const RecommendedAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [saveConfigData] = useSaveConfigDataMutation();
@@ -69,9 +69,11 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         selectedOnPremRegion,
         selectedExRegionId
     } = useAppSelector(state => state.exploreSavings);
-    const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOnPremBulk } = useAppSelector(
-        state => state.exploreSavingsBulk
-    );
+    const {
+        selectedRowsForExploreSavingsEBSBulk,
+        selectedRowsForExploreSavingsOnPremBulk,
+        selectedRowsForExploreSavingsOracleOnPremBulk
+    } = useAppSelector(state => state.exploreSavingsBulk);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
@@ -103,6 +105,9 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
             return selectedRowsForExploreSavingsOnPremBulk || [];
         }
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+            return selectedRowsForExploreSavingsOracleOnPremBulk || [];
+        }
         return [];
     };
 
@@ -120,16 +125,30 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
             selectedRowsForExploreSavingsOnPremBulk &&
             selectedRowsForExploreSavingsOnPremBulk.length > 1;
 
-        const shouldRender = isEBSBulk || isOnPremBulk;
+        // Check for Oracle On-Prem bulk mode
+        const isOracleOnPremBulk =
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM &&
+            selectedRowsForExploreSavingsOracleOnPremBulk &&
+            selectedRowsForExploreSavingsOracleOnPremBulk.length > 1;
+
+        const shouldRender = isEBSBulk || isOnPremBulk || isOracleOnPremBulk;
 
         const isBulk =
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && selectedRowsForExploreSavingsEBSBulk.length > 0) ||
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM &&
                 selectedRowsForExploreSavingsOnPremBulk &&
-                selectedRowsForExploreSavingsOnPremBulk.length > 0);
+                selectedRowsForExploreSavingsOnPremBulk.length > 0) ||
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM &&
+                selectedRowsForExploreSavingsOracleOnPremBulk &&
+                selectedRowsForExploreSavingsOracleOnPremBulk.length > 0);
 
         setBulkModeState({ isBulkMode: isBulk, shouldRenderMultipleHosts: shouldRender });
-    }, [savingsCalculatorFrom, selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOnPremBulk]);
+    }, [
+        savingsCalculatorFrom,
+        selectedRowsForExploreSavingsEBSBulk,
+        selectedRowsForExploreSavingsOnPremBulk,
+        selectedRowsForExploreSavingsOracleOnPremBulk
+    ]);
 
     useEffect(() => {
         if (
@@ -334,9 +353,9 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
 
     const setCSS = () => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem) {
-            return `${styles.mssqlAccordion} ${styles.mssqlAccordionOnPremises}`;
+            return `${styles.recommendedAccordion} ${styles.recommendedAccordionOnPremises}`;
         }
-        return `${styles.mssqlAccordion}`;
+        return `${styles.recommendedAccordion}`;
     };
 
     // Get accordion title based on mode
@@ -383,7 +402,15 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                     isMutliFsx ||
                     !storageSavingsResponse
                 }
-                disabledReason={isMutliFsx ? t('databases.explore-savings.multi-fsx-disable-msg') : ''}
+                disabledReason={
+                    isMutliFsx
+                        ? t(
+                              isOracleOnPrem
+                                  ? 'databases.explore-savings.multi-fsx-disable-msg-oracle'
+                                  : 'databases.explore-savings.multi-fsx-disable-msg'
+                          )
+                        : ''
+                }
                 isExpanded={printState}
                 headerActions={[
                     isMutliFsx ? (
@@ -478,22 +505,68 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
                     isOracleOnPrem ? (
                         // Oracle on-prem content
                         <div className={styles.accordionContentWrapperSingle}>
-                            <DsTypography variant="Semibold_14" className={styles.instanceTypography}>
-                                {getInstanceTitle()}
-                            </DsTypography>
-                            {OracleServerInstance(oracleInstance, t).map(
-                                (data: { label: string; text: string; value: string }, index: number) => (
-                                    <TableLayout data={data} key={`oracle-instance-${index}`} />
-                                )
-                            )}
+                            {bulkModeState.isBulkMode ? (
+                                <>
+                                    {getActiveSelectedRows().map((host: any, hostIndex: number) => {
+                                        const hostOracleData = generateOracleInstanceData(
+                                            storageSavingsResponse,
+                                            host,
+                                            host.resourceName
+                                        );
+                                        return (
+                                            <div key={host.resourceId || `oracle-host-${hostIndex}`}>
+                                                <DsTypography
+                                                    variant="Semibold_14"
+                                                    className={styles.instanceTypography}
+                                                    style={{ marginTop: hostIndex > 0 ? '32px' : '0px' }}
+                                                >
+                                                    {`${t('databases.explore-savings.oracle-server-instance')} - ${
+                                                        host.resourceName || `Host ${hostIndex + 1}`
+                                                    }`}
+                                                </DsTypography>
+                                                {OracleServerInstance(hostOracleData, t).map(
+                                                    (
+                                                        data: { label: string; text: string; value: string },
+                                                        index: number
+                                                    ) => (
+                                                        <TableLayout
+                                                            data={data}
+                                                            key={`oracle-bulk-${hostIndex}-${index}`}
+                                                        />
+                                                    )
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                    <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
+                                        {t('databases.general.fsx-for-ontap')} 1
+                                    </DsTypography>
+                                    {calculatedFSXData(fsxData, { isOracleOnPrem: true }).map(
+                                        (data: { label: string; text: string; value: string }, index: number) => (
+                                            <TableLayout data={data} key={`oracle-bulk-fsx-${index}`} />
+                                        )
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <DsTypography variant="Semibold_14" className={styles.instanceTypography}>
+                                        {getInstanceTitle()}
+                                    </DsTypography>
+                                    {OracleServerInstance(oracleInstance, t).map(
+                                        (data: { label: string; text: string; value: string }, index: number) => (
+                                            <TableLayout data={data} key={`oracle-instance-${index}`} />
+                                        )
+                                    )}
 
-                            <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
-                                {t('databases.general.fsx-for-ontap')}
-                            </DsTypography>
-                            {calculatedFSXData(fsxData, { isOracleOnPrem: true }).map(
-                                (data: { label: string; text: string; value: string }, index: number) => (
-                                    <TableLayout data={data} key={`oracle-fsx-${index}`} />
-                                )
+                                    <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
+                                        {t('databases.general.fsx-for-ontap')}
+                                    </DsTypography>
+                                    {calculatedFSXData(fsxData, { isOracleOnPrem: true }).map(
+                                        (data: { label: string; text: string; value: string }, index: number) => (
+                                            <TableLayout data={data} key={`oracle-fsx-${index}`} />
+                                        )
+                                    )}
+                                </>
                             )}
                         </div>
                     ) : isMutliFsx ? (
@@ -666,4 +739,4 @@ const MSSQLAccordion = ({ printState, disableState, isMutliFsx }: any) => {
     );
 };
 
-export default MSSQLAccordion;
+export default RecommendedAccordion;

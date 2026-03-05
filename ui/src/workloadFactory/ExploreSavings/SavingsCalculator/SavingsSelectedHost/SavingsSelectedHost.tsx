@@ -33,12 +33,10 @@ const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
             const currentHost = host || selectedOnPremHostDetails;
             setTotalVolume(0);
             setHostname(currentHost?.resourceName);
-            // For Oracle, use databaseNameList length; for MSSQL use sqlServerInstances
             setNoOfInstances(
-                currentHost?.totalInstance ||
-                    currentHost?.databaseNameList?.length ||
-                    currentHost?.sqlServerInstances?.length ||
-                    0
+                isOracleOnPrem
+                    ? currentHost?.oracleDatabases?.length || 0
+                    : currentHost?.sqlServerInstances?.length || 0
             );
         } else {
             let volumeCount = 0;

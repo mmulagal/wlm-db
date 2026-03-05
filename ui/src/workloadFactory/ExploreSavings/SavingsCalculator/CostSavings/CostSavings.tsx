@@ -15,24 +15,19 @@ type CS = {
 };
 
 const CostSavings = ({ disableState }: CS) => {
-    const {
-        storageSavingsResponse,
-        storageSavingsLoading,
-        savingsCalculatorFrom,
-        onPremStorageAndComputeInfo,
-        selectedOnPremHostDetails
-    } = useAppSelector(state => state.exploreSavings);
+    const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom, onPremStorageAndComputeInfo } =
+        useAppSelector(state => state.exploreSavings);
     const windowSize = useResize();
 
     const oracleLicenseCost = useMemo(() => {
         const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
-        if (!isOracle || !onPremStorageAndComputeInfo || !selectedOnPremHostDetails?.resourceId) return 0;
-        const matchingKey = Object.keys(onPremStorageAndComputeInfo).find((key: string) =>
-            key.startsWith(`${selectedOnPremHostDetails.resourceId}_`)
-        );
-        const cost = matchingKey ? onPremStorageAndComputeInfo[matchingKey]?.monthlyOracleCost : null;
-        return cost ? Number(cost) : 0;
-    }, [savingsCalculatorFrom, onPremStorageAndComputeInfo, selectedOnPremHostDetails]);
+        if (!isOracle || !onPremStorageAndComputeInfo) return 0;
+        // Sum monthlyOracleCost across ALL hosts in onPremStorageAndComputeInfo
+        return Object.values(onPremStorageAndComputeInfo).reduce((total: number, entry: any) => {
+            const cost = entry?.monthlyOracleCost;
+            return total + (cost ? Number(cost) : 0);
+        }, 0);
+    }, [savingsCalculatorFrom, onPremStorageAndComputeInfo]);
 
     const [savings, setSavings] = useState<any>(0);
     const [savingsPer, setSavingsPer] = useState<any>(0);

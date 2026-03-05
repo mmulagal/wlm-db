@@ -51,7 +51,7 @@ import {
     setBulkAuthStatus,
     setSelectedRowsForExploreSavingsEBSBulk,
     setSelectedRowsForExploreSavingsOnPremBulk,
-    setOnPremTCOAction,
+    setSelectedRowsForExploreSavingsOracleOnPremBulk,
     setTriggerBulkDataFetch
 } from '../../store/workloadFactory/exploreSavingsBulkSlice';
 
@@ -96,23 +96,27 @@ const dispatchCommonOnPremActions = (
 
 const buildStoragePerfAndCompute = (
     dispatch: any,
-    rowData: any,
-    items: any[],
-    getItemFields: (item: any) => { uniqueName: string; extraFields: Record<string, any> }
+    hosts: any | any[],
+    getHostItems: (host: any) => any[],
+    getItemFields: (host: any, item: any) => { uniqueName: string; extraFields: Record<string, any> }
 ) => {
-    if (!items?.length) return;
+    const hostsArray = Array.isArray(hosts) ? hosts : [hosts];
     const storagePerfAndCompute: any = {};
-    items.forEach((item: any) => {
-        const { uniqueName, extraFields } = getItemFields(item);
-        const uniqueKey = `${rowData.resourceId}_${uniqueName}`;
-        storagePerfAndCompute[uniqueKey] = {
-            totalStorage: formatFractionalNumber(Number(item?.totalStorage || 0) / GIB_IN_BYTE, 3),
-            totalIops: formatFractionalNumber(item?.totalIops, 3),
-            totalThroughput: formatFractionalNumber(item?.totalThroughput, 3),
-            memory: formatFractionalNumber(Number(item?.memory || 0) / GIB_IN_BYTE, 3),
-            hostResourceName: rowData?.resourceName,
-            ...extraFields
-        };
+    hostsArray.forEach((host: any) => {
+        const items = getHostItems(host);
+        if (!items?.length) return;
+        items.forEach((item: any) => {
+            const { uniqueName, extraFields } = getItemFields(host, item);
+            const uniqueKey = `${host.resourceId}_${uniqueName}`;
+            storagePerfAndCompute[uniqueKey] = {
+                totalStorage: formatFractionalNumber(Number(item?.totalStorage || 0) / GIB_IN_BYTE, 3),
+                totalIops: formatFractionalNumber(item?.totalIops, 3),
+                totalThroughput: formatFractionalNumber(item?.totalThroughput, 3),
+                memory: formatFractionalNumber(Number(item?.memory || 0) / GIB_IN_BYTE, 3),
+                hostResourceName: host?.resourceName,
+                ...extraFields
+            };
+        });
     });
     dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
 };
@@ -133,16 +137,21 @@ export const onClickESHostOracleOnPrem = (
         navigate
     );
 
-    buildStoragePerfAndCompute(dispatch, rowData, rowData?.oracleDatabases, (db: any) => ({
-        uniqueName: db.databaseName,
-        extraFields: {
-            noOfVcpusInUse: db?.vCPUs || 0,
-            databaseName: db?.databaseName,
-            databaseId: db?.databaseId,
-            networkPerformance: rowData?.networkPerformance || 'upTo10',
-            monthlyOracleCost: db?.monthlyOracleCost || ''
-        }
-    }));
+    buildStoragePerfAndCompute(
+        dispatch,
+        rowData,
+        (host: any) => host?.oracleDatabases,
+        (host: any, db: any) => ({
+            uniqueName: db.databaseName,
+            extraFields: {
+                noOfVcpusInUse: db?.vCPUs || 0,
+                databaseName: db?.databaseName,
+                databaseId: db?.databaseId,
+                networkPerformance: host?.networkPerformance || 'upTo10',
+                monthlyOracleCost: db?.monthlyOracleCost || ''
+            }
+        })
+    );
 
     dispatch(
         setSelectedOnPremHostDetails({
@@ -150,6 +159,71 @@ export const onClickESHostOracleOnPrem = (
             totalInstance: rowData?.databaseNameList?.length || 0,
             recommendedInstance: {
                 serverInstallationMode: rowData?.deploymentModel,
+                serverVersion: 'Oracle'
+            }
+        })
+    );
+};
+
+export const onClickESHostOracleOnPremBulk = (
+    dispatch: any,
+    selectedHosts: any[],
+    isWorkloadFactory: boolean,
+    navigate?: NavigateFunction
+) => {
+    const firstHost = selectedHosts[0];
+
+    dispatchCommonOnPremActions(
+        dispatch,
+        firstHost,
+        isWorkloadFactory,
+        'oracle-onprem',
+        SAVINGS_CALC_MODE.ORACLE_ONPREM,
+        'Oracle Hosts',
+        navigate
+    );
+
+    // Store Oracle bulk selection
+    dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk(selectedHosts));
+
+    // Build storage/compute data from ALL selected hosts
+    buildStoragePerfAndCompute(
+        dispatch,
+        selectedHosts,
+        (host: any) => host?.oracleDatabases,
+        (host: any, db: any) => ({
+            uniqueName: db.databaseName,
+            extraFields: {
+                noOfVcpusInUse: db?.vCPUs || 0,
+                databaseName: db?.databaseName,
+                databaseId: db?.databaseId,
+                networkPerformance: host?.networkPerformance || 'upTo10',
+                monthlyOracleCost: db?.monthlyOracleCost || ''
+            }
+        })
+    );
+
+    dispatch(setSelectedOnPremHostId(firstHost?.resourceId));
+    dispatch(
+        setSelectedServerName(
+            selectedHosts.length > 1 ? `${selectedHosts.length} hosts selected` : firstHost?.resourceName
+        )
+    );
+    dispatch(
+        setSelectedEsPageInstance({
+            instanceId: '',
+            credentialId: '',
+            regionId: '',
+            deploymentModel: firstHost?.deploymentModel,
+            serverName: selectedHosts.length > 1 ? `${selectedHosts.length} hosts selected` : firstHost?.resourceName
+        })
+    );
+    dispatch(
+        setSelectedOnPremHostDetails({
+            ...firstHost,
+            totalInstance: firstHost?.databaseNameList?.length || 0,
+            recommendedInstance: {
+                serverInstallationMode: firstHost?.deploymentModel,
                 serverVersion: 'Oracle'
             }
         })
@@ -174,17 +248,21 @@ export const onClickESHostOnPrem = (
 
     // Set single host in bulk selection array to use accordion UI
     dispatch(setSelectedRowsForExploreSavingsOnPremBulk([rowData]));
-    dispatch(setOnPremTCOAction(''));
 
-    buildStoragePerfAndCompute(dispatch, rowData, rowData?.sqlServerInstances, (instance: any) => ({
-        uniqueName: instance?.sqlInstanceName,
-        extraFields: {
-            noOfVcpusInUse: instance?.noOfVcpusInUse,
-            sqlInstanceName: instance?.sqlInstanceName,
-            sqlInstanceId: instance?.sqlInstanceId,
-            networkPerformance: rowData?.sqlServerInstances?.[0]?.networkPerformance
-        }
-    }));
+    buildStoragePerfAndCompute(
+        dispatch,
+        rowData,
+        (host: any) => host?.sqlServerInstances,
+        (_host: any, instance: any) => ({
+            uniqueName: instance?.sqlInstanceName,
+            extraFields: {
+                noOfVcpusInUse: instance?.noOfVcpusInUse,
+                sqlInstanceName: instance?.sqlInstanceName,
+                sqlInstanceId: instance?.sqlInstanceId,
+                networkPerformance: instance?.networkPerformance
+            }
+        })
+    );
 
     setESInstanceOnPremData(rowData, dispatch);
 };
@@ -333,34 +411,20 @@ export const onClickESHostOnPremBulk = (
     dispatch(setDisableState(true));
 
     // Combine storage and compute info from ALL selected hosts
-    const storagePerfAndCompute: any = {};
-    selectedHosts.forEach((rowData: any) => {
-        if (rowData?.sqlServerInstances?.length) {
-            rowData.sqlServerInstances.forEach((instance: any) => {
-                // Use a unique key combining host resourceId and instance name to avoid conflicts
-                const uniqueKey = `${rowData.resourceId}_${instance.sqlInstanceName}`;
-                if (!storagePerfAndCompute[uniqueKey]) {
-                    storagePerfAndCompute[uniqueKey] = {};
-                }
-                storagePerfAndCompute[uniqueKey].totalStorage = formatFractionalNumber(
-                    Number(instance?.totalStorage || 0) / GIB_IN_BYTE,
-                    3
-                );
-                storagePerfAndCompute[uniqueKey].totalIops = formatFractionalNumber(instance?.totalIops, 3);
-                storagePerfAndCompute[uniqueKey].totalThroughput = formatFractionalNumber(instance?.totalThroughput, 3);
-                storagePerfAndCompute[uniqueKey].noOfVcpusInUse = instance?.noOfVcpusInUse;
-                storagePerfAndCompute[uniqueKey].memory = formatFractionalNumber(
-                    Number(instance?.memory || 0) / GIB_IN_BYTE,
-                    3
-                );
-                storagePerfAndCompute[uniqueKey].sqlInstanceName = instance?.sqlInstanceName;
-                storagePerfAndCompute[uniqueKey].sqlInstanceId = instance?.sqlInstanceId;
-                storagePerfAndCompute[uniqueKey].networkPerformance = instance?.networkPerformance;
-                storagePerfAndCompute[uniqueKey].hostResourceName = rowData?.resourceName; // Add host name for reference
-            });
-        }
-    });
-    dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
+    buildStoragePerfAndCompute(
+        dispatch,
+        selectedHosts,
+        (host: any) => host?.sqlServerInstances,
+        (_host: any, instance: any) => ({
+            uniqueName: instance?.sqlInstanceName,
+            extraFields: {
+                noOfVcpusInUse: instance?.noOfVcpusInUse,
+                sqlInstanceName: instance?.sqlInstanceName,
+                sqlInstanceId: instance?.sqlInstanceId,
+                networkPerformance: instance?.networkPerformance
+            }
+        })
+    );
 
     // Use first host for basic navigation setup
     const firstHost = selectedHosts[0];
@@ -516,7 +580,11 @@ export const formatViewCalcData = (
 ) => {
     const state = store.getState();
     const { savingsCalculatorFrom } = state.exploreSavings;
-    const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOnPremBulk } = state.exploreSavingsBulk;
+    const {
+        selectedRowsForExploreSavingsEBSBulk,
+        selectedRowsForExploreSavingsOnPremBulk,
+        selectedRowsForExploreSavingsOracleOnPremBulk
+    } = state.exploreSavingsBulk;
 
     // Check if we're dealing with bulk calculations (arrays) vs single calculations (objects)
     const isBulkCalculation = Array.isArray(viewCalculations.recommendedComputeCalculation);
@@ -663,8 +731,13 @@ export const formatViewCalcData = (
     const hostCalculationData = (() => {
         if (!isBulkCalculation) return [];
 
-        // For Oracle on-prem, use selectedOnPremHostDetails (single host but array format in API response)
+        // For Oracle on-prem, use Oracle bulk selection or single host fallback
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+            if (selectedRowsForExploreSavingsOracleOnPremBulk?.length > 1) {
+                return selectedRowsForExploreSavingsOracleOnPremBulk
+                    .map((host: any) => createHostInstanceCalculationData(host.resourceName))
+                    .filter(Boolean);
+            }
             const { selectedOnPremHostDetails } = state.exploreSavings;
             if (selectedOnPremHostDetails?.resourceName) {
                 const hostData = createHostInstanceCalculationData(selectedOnPremHostDetails.resourceName);

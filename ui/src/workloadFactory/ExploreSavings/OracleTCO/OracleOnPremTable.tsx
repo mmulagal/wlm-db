@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DsButton, DsTypography } from '@tlveng/wlm-ds';
 import { compressSync, zipSync, strToU8 } from 'fflate';
 import { useDialog } from '@netapp/design-system/dist/components/Dialog';
@@ -18,6 +18,7 @@ import { ColumnProps, Table } from '../../../common/Lib/Table/Table';
 import { useTable } from '../../../common/Lib/Table/useTable';
 import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
+import BulkActionContainer from '../../../common/BulkAction/BulkActionContainer';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './OracleTCOTables.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
@@ -33,7 +34,8 @@ import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import TableTooltip from './TableTooltip/TableTooltip';
 import { useOnPremData } from '../ExploreSavingsOnPremiseTable/useOnPremData';
 import { formatDateWithTime, getTruncatedItems } from '../../../utils/utilityFunctions';
-import { onClickESHostOracleOnPrem } from '../ExploreSavingsUtils';
+import { onClickESHostOracleOnPrem, onClickESHostOracleOnPremBulk } from '../ExploreSavingsUtils';
+import { setSelectedRowsForExploreSavingsOracleOnPremBulk } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 
 const OracleOnPremTable = () => {
     const dispatch = useDispatch();
@@ -46,12 +48,52 @@ const OracleOnPremTable = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { setDialog } = useDialog();
     const { isDemoMode, isWorkloadFactory } = useAppSelector(state => state.auth);
+    const { selectedRowsForExploreSavingsOracleOnPremBulk } = useAppSelector(state => state.exploreSavingsBulk);
     const [getUploadScript] = useGetUploadScriptMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [getOracleOnPremTCODownloadScript] = useGetOracleOnPremTCODownloadScriptMutation();
+
     useEffect(() => {
         fetchOracleOnPremData();
     }, []);
+
+    const updatedTableData = useMemo(() => {
+        if (!onPremiseOracleData || onPremiseOracleData.length === 0) {
+            return [];
+        }
+
+        return onPremiseOracleData.map((item: any) => {
+            const isSelected = selectedRowsForExploreSavingsOracleOnPremBulk.some(
+                (selectedRow: any) => selectedRow.id === item.id
+            );
+
+            const limitReached = selectedRowsForExploreSavingsOracleOnPremBulk.length >= 5;
+            const shouldDisableDueToLimit = limitReached && !isSelected;
+            const isDisabled = shouldDisableDueToLimit;
+
+            let tooltipTitle = '';
+            if (shouldDisableDueToLimit) {
+                tooltipTitle = t('databases.explore-savings.disabled-tooltip-limit-exceed');
+            }
+
+            const currentIsDisabled = item.cellProps?.isDisabled;
+            const currentTooltip = item.cellProps?.selectionProps?.title;
+
+            if (currentIsDisabled === isDisabled && currentTooltip === tooltipTitle) {
+                return item;
+            }
+
+            return {
+                ...item,
+                cellProps: {
+                    isDisabled,
+                    selectionProps: {
+                        title: tooltipTitle
+                    }
+                }
+            };
+        });
+    }, [onPremiseOracleData, selectedRowsForExploreSavingsOracleOnPremBulk]);
 
     const openAssessmentDialog = () => {
         setDialog(
@@ -257,8 +299,16 @@ const OracleOnPremTable = () => {
             renderCell: (cellData: any, rowData: any) => (
                 <div className={styles.lasColContainer}>
                     <div
-                        className={CommonStyles.detectManage}
-                        onClick={() => onClickESHostOracleOnPrem(dispatch, rowData, isWorkloadFactory, navigate)}
+                        className={
+                            selectedRowsForExploreSavingsOracleOnPremBulk.length > 0
+                                ? CommonStyles.detectManageDisable
+                                : CommonStyles.detectManage
+                        }
+                        onClick={
+                            selectedRowsForExploreSavingsOracleOnPremBulk.length > 0
+                                ? undefined
+                                : () => onClickESHostOracleOnPrem(dispatch, rowData, isWorkloadFactory, navigate)
+                        }
                         id="wlm-db-onprem-oracle-explore-savings-table-button"
                     >
                         <DsTypography variant="Regular_14" className={CommonStyles.textStyle}>
@@ -276,12 +326,54 @@ const OracleOnPremTable = () => {
         // @ts-ignore
         manageColumnsProps: false,
         isSorting: false,
-        selectionType: 'none',
+        selectionType: 'multiple',
         columns: OracleOnPremColDefs,
-        rows: onPremiseOracleData || [],
+        rows: updatedTableData || [],
         pageSize: 50,
-        isLazyLoading: onPremiseOracleDataLoading || isUploadLoading
+        defaultSelectedRows: [],
+        isLoading: onPremiseOracleDataLoading || isUploadLoading
     });
+
+    // Sync table selection state to Redux
+    useEffect(() => {
+        if (onPremiseOracleData && onPremiseOracleData.length > 0) {
+            const selectedRowIds = Object.keys(tableProps.selectionState?.rows || {}).filter(
+                key => tableProps.selectionState?.rows[key]
+            );
+            if (selectedRowIds.length > 0) {
+                const selectedRows = onPremiseOracleData.filter((row: any) => selectedRowIds.includes(String(row.id)));
+                dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk(selectedRows));
+            } else {
+                dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk([]));
+            }
+        }
+    }, [tableProps.selectionState, onPremiseOracleData]);
+
+    // Sync Redux selection state back to table when rows are removed externally
+    useEffect(() => {
+        if (!onPremiseOracleData || onPremiseOracleData.length === 0) return;
+
+        const currentTableSelectedIds = new Set(
+            Object.keys(tableProps.selectionState?.rows || {}).filter(id => tableProps.selectionState?.rows[id])
+        );
+        const reduxSelectedIds = new Set(
+            selectedRowsForExploreSavingsOracleOnPremBulk.map((row: any) => String(row.id))
+        );
+
+        // Deselect rows that are selected in the table but not in Redux
+        currentTableSelectedIds.forEach(id => {
+            if (!reduxSelectedIds.has(id)) {
+                tableProps.toggleRowSelection(id)(false);
+            }
+        });
+
+        // Select rows that are in Redux but not selected in the table
+        reduxSelectedIds.forEach(id => {
+            if (!currentTableSelectedIds.has(id)) {
+                tableProps.toggleRowSelection(id)(true);
+            }
+        });
+    }, [selectedRowsForExploreSavingsOracleOnPremBulk, onPremiseOracleData]);
 
     const handleFileInputClick = () => {
         fileInputRef.current?.click();
@@ -405,6 +497,17 @@ const OracleOnPremTable = () => {
         }
     };
 
+    const handleOracleOnPremBulkAction = () => {
+        if (selectedRowsForExploreSavingsOracleOnPremBulk.length > 0) {
+            onClickESHostOracleOnPremBulk(
+                dispatch,
+                selectedRowsForExploreSavingsOracleOnPremBulk,
+                isWorkloadFactory,
+                navigate
+            );
+        }
+    };
+
     return (
         <>
             <TableTopBar
@@ -458,6 +561,12 @@ const OracleOnPremTable = () => {
                     </div>
                 }
             />
+            {selectedRowsForExploreSavingsOracleOnPremBulk.length > 0 && (
+                <BulkActionContainer
+                    action={t('databases.explore-savings.explore-savings-title')}
+                    onClick={handleOracleOnPremBulkAction}
+                />
+            )}
             <Table
                 // @ts-ignore
                 tableProps={tableProps}

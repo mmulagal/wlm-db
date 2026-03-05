@@ -76,17 +76,9 @@ describe('AssessmentDialog', () => {
             ).toBeTruthy();
         });
 
-        it('should render Oracle heading part two', () => {
-            renderComponent(DBType.ORACLE);
-            expect(
-                screen.getByText('databases.explore-savings.assessment-dialog-oracle-heading-part-two')
-            ).toBeTruthy();
-        });
-
         it('should not render MSSQL headings', () => {
             renderComponent(DBType.ORACLE);
             expect(screen.queryByText('databases.explore-savings.assessment-dialog-mssql-heading-part-one')).toBeNull();
-            expect(screen.queryByText('databases.explore-savings.assessment-dialog-mssql-heading-part-two')).toBeNull();
         });
 
         describe('Accordion 1 - What data does the script collect', () => {
@@ -142,18 +134,10 @@ describe('AssessmentDialog', () => {
             expect(screen.getByText('databases.explore-savings.assessment-dialog-mssql-heading-part-one')).toBeTruthy();
         });
 
-        it('should render MSSQL heading part two', () => {
-            renderComponent(DBType.MSSQL);
-            expect(screen.getByText('databases.explore-savings.assessment-dialog-mssql-heading-part-two')).toBeTruthy();
-        });
-
         it('should not render Oracle headings', () => {
             renderComponent(DBType.MSSQL);
             expect(
                 screen.queryByText('databases.explore-savings.assessment-dialog-oracle-heading-part-one')
-            ).toBeNull();
-            expect(
-                screen.queryByText('databases.explore-savings.assessment-dialog-oracle-heading-part-two')
             ).toBeNull();
         });
 

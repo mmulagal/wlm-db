@@ -246,7 +246,7 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             // For Oracle, deployment model is typically standalone or RAC
             const findingsDbModel = FINDINGS.OPTIMIZED;
 
-            setNoOfInstances(currentHost?.totalInstance || currentHost?.databaseNameList?.length || 0);
+            setNoOfInstances(currentHost?.oracleDatabases?.length || 0);
 
             const data: any = [
                 {
