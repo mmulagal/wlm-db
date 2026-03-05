@@ -1358,6 +1358,32 @@ EOF
 EOSQL
 EOF
     }
+
+    get_open_pdb_names() {
+        local ORACLE_SID="$1"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            $sqlplus_command <<'EOSQL'
+            SET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 500
+            SELECT NAME FROM V\\$PDBS
+            WHERE NAME != 'PDB\\$SEED'
+            AND OPEN_MODE IN ('READ WRITE', 'READ ONLY');
+EOSQL
+EOF
+    }
+
+    get_mounted_pdb_names() {
+        local ORACLE_SID="$1"
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            $sqlplus_command <<'EOSQL'
+            SET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 500
+            SELECT NAME FROM V\\$PDBS
+            WHERE NAME != 'PDB\\$SEED'
+            AND OPEN_MODE NOT IN ('READ WRITE', 'READ ONLY');
+EOSQL
+EOF
+    }
 `;
 
 const checkOraclePermissionsInDiscovery = `
@@ -1505,8 +1531,7 @@ const discoverOracleHosts = `
                     is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
                     if [[ "$is_cdb" == "YES" ]]; then
                         PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
-                        pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
-                        pdb_names=$(echo "$pdb_names" | tr ' ' '\\n' | grep -v '^PDB\\$SEED$' | tr '\\n' ' ')
+                        pdb_names=$(get_open_pdb_names "$sid" | tr -d ' ' | tr '\\n' ' ')
                     else
                         PDB_DATABASE_DETAILS="[]"
                     fi
@@ -1610,17 +1635,18 @@ const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: s
         if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
             if [ "$(is_cdb_instance)" == "true" ]; then
                 is_cdb="YES"
-                PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$dbSid")
-                pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
-                pdb_names=$(echo "$pdb_names" | tr ' ' '\\n' | grep -v '^PDB\\$SEED$' | tr '\\n' ' ')
+                pdb_names=$(get_open_pdb_names "$dbSid" | tr -d ' ' | tr '\\n' ' ')
+                mounted_pdb_names=$(get_mounted_pdb_names "$dbSid" | tr -d ' ' | tr '\\n' ' ')
             else
                 is_cdb="NO"
-                pdb_names='[]'
+                pdb_names=""
+                mounted_pdb_names=""
             fi
             ${loadStorageDetectionModules}
             ${getInstanceStorageDetails}
         else
             ${getStorageWithoutCreds}
+            mounted_pdb_names=""
         fi
 
         if [ -n "$pdb_names" ]; then
@@ -1629,7 +1655,21 @@ const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: s
         else
             pdb_names="[]"
         fi
-        results="{\\"storage_details\\": $storageDetails, \\"is_cdb\\": \\"$is_cdb\\", \\"pdb_names\\": $pdb_names}"
+        mounted_pdb_names_json="[]"
+        if [ -n "$mounted_pdb_names" ]; then
+            mounted_pdb_names_json="["
+            firstMpdb=true
+            for mpdb in $mounted_pdb_names; do
+                if [ "$firstMpdb" = true ]; then
+                    firstMpdb=false
+                else
+                    mounted_pdb_names_json+=","
+                fi
+                mounted_pdb_names_json+="\\"$mpdb\\""
+            done
+            mounted_pdb_names_json+="]"
+        fi
+        results="{\\"storage_details\\": $storageDetails, \\"is_cdb\\": \\"$is_cdb\\", \\"pdb_names\\": $pdb_names, \\"mounted_pdbs\\": $mounted_pdb_names_json}"
     done <<< "$oratab_entries"
 
     echo $results
@@ -1818,13 +1858,10 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
             is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
 
             if [ "$is_cdb" == "YES" ]; then
-                PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
-                # pdb_names will be array of pdb names: pdb1 pdb2
-                pdb_names=$(echo "$PDB_DATABASE_DETAILS" | grep -o '"pdb_name":"[^"]*"' | sed 's/"pdb_name":"\\([^"]*\\)"/\\1/g')
-                # Remove PDB$SEED as it is not a user created PDB
-                pdb_names=$(echo "$pdb_names" | tr ' ' '\\n' | grep -v '^PDB\\$SEED$' | tr '\\n' ' ')
+                pdb_names=$(get_open_pdb_names "$sid" | tr -d ' ' | tr '\\n' ' ')
+                mounted_pdb_names=$(get_mounted_pdb_names "$sid" | tr -d ' ' | tr '\\n' ' ')
             else
-                PDB_DATABASE_DETAILS="null"
+                mounted_pdb_names=""
             fi
             
             isASMManaged=$(check_asm_managed $sid)
@@ -1834,11 +1871,27 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
             else
                 finalResult+=","
             fi
+
+            # Build mountedPdbs JSON array
+            mountedPdbsJson="[]"
+            if [ -n "$mounted_pdb_names" ]; then
+                mountedPdbsJson="["
+                firstMounted=true
+                for mpdb in $mounted_pdb_names; do
+                    if [ "$firstMounted" = true ]; then
+                        firstMounted=false
+                    else
+                        mountedPdbsJson+=","
+                    fi
+                    mountedPdbsJson+="\\"$mpdb\\""
+                done
+                mountedPdbsJson+="]"
+            fi
             
             if [ "$isASMManaged" == "TRUE" ]; then
                 if [ "$is_cdb" == "YES" ]; then
                     mountDetailsFailed=false
-                    finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": true, \\"pdbMountDetails\\": {"
+                    finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": true, \\"mountedPdbs\\": $mountedPdbsJson, \\"pdbMountDetails\\": {"
                     firstPdb=true
                     
                     for pdb_name in $pdb_names; do
@@ -1871,7 +1924,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                 if [ "$is_cdb" == "YES" ]; then
                     # Handle CDB with PDBs
                     mountDetailsFailed=false
-                    finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": false, \\"pdbMountDetails\\": {"
+                    finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": false, \\"mountedPdbs\\": $mountedPdbsJson, \\"pdbMountDetails\\": {"
                     firstPdb=true
                     
                     for pdb_name in $pdb_names; do
