@@ -11,7 +11,18 @@ vi.mock('@netapp/design-system', () => ({
         <span data-testid={`typography-${variant}`} className={className}>
             {children}
         </span>
-    )
+    ),
+    Button: ({ children, onClick, variant, className }: any) => (
+        <button data-testid={`button-${variant}`} className={className} onClick={onClick}>
+            {children}
+        </button>
+    ),
+    DsButton: ({ children, onClick, variant, className }: any) => (
+        <button data-testid={`ds-button-${variant}`} className={className} onClick={onClick}>
+            {children}
+        </button>
+    ),
+    useDialog: () => ({ setDialog: vi.fn() })
 }));
 
 vi.mock('@tlveng/wlm-ds', () => ({
