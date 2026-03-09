@@ -4,6 +4,8 @@ import React from 'react';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 
+import WADApis from '../WADApis';
+
 // ── Hoist mocks ──────────────────────────────────────────────────────────────
 const {
     mockDispatch,
@@ -27,8 +29,8 @@ const {
     mockFormatOfflineAssessmentToInventoryData: vi.fn(() => ({}))
 }));
 
-vi.mock('react-redux', async (importOriginal) => {
-    const actual = await importOriginal() as any;
+vi.mock('react-redux', async importOriginal => {
+    const actual = (await importOriginal()) as any;
     return { ...actual, useDispatch: () => mockDispatch };
 });
 
@@ -53,8 +55,6 @@ vi.mock('../../../../store/store', () => ({
         }))
     }
 }));
-
-import WADApis from '../WADApis';
 
 const makeStore = (overrides: any = {}) =>
     configureStore({
@@ -160,7 +160,7 @@ describe('WADApis', () => {
         mockGetAllOfflineAssessmentAPI.mockResolvedValue({
             data: { items: [{ hostId: 'host1' }], nextToken: null }
         });
-        mockFormatOfflineAssessmentToInventoryData.mockReturnValue({ 'key1': { name: 'host1' } });
+        mockFormatOfflineAssessmentToInventoryData.mockReturnValue({ key1: { name: 'host1' } });
         await act(async () => render(<Wrapper store={makeStore()} />));
         expect(mockSetInventoryTableData).toHaveBeenCalled();
     });
@@ -179,8 +179,8 @@ describe('WADApis', () => {
     });
 
     it('merges offline data with existing inventoryTableData', async () => {
-        const existingData = { 'existing_host': { name: 'existing' } };
-        const newData = { 'new_host': { name: 'new', isWad: true } };
+        const existingData = { existing_host: { name: 'existing' } };
+        const newData = { new_host: { name: 'new', isWad: true } };
         mockFormatOfflineAssessmentToInventoryData.mockReturnValue(newData);
         mockGetAllOfflineAssessmentAPI.mockResolvedValue({
             data: { items: [{ hostId: 'new_host' }], nextToken: null }
@@ -193,7 +193,7 @@ describe('WADApis', () => {
 
         await act(async () => render(<Wrapper store={makeStore({ inventoryTableData: existingData })} />));
         expect(mockSetInventoryTableData).toHaveBeenCalledWith(
-            expect.objectContaining({ 'existing_host': { name: 'existing' } })
+            expect.objectContaining({ existing_host: { name: 'existing' } })
         );
     });
 });

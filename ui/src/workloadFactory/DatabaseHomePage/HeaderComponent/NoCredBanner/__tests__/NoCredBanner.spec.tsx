@@ -15,18 +15,20 @@ vi.mock('react-router-dom', () => ({
 vi.mock('@netapp/design-system', () => ({
     BlueXPListeners: { navigate: 'navigate' },
     Button: ({ children, onClick, className, variant }: any) => (
-        <button data-testid={`button-${variant}`} className={className} onClick={onClick}>{children}</button>
+        <button data-testid={`button-${variant}`} className={className} onClick={onClick}>
+            {children}
+        </button>
     ),
     postBlueXPMessage: (...args: any[]) => mockPostBlueXPMessage(...args)
 }));
 
 vi.mock('@tlveng/wlm-ds', () => ({
     DsButton: ({ children, onClick, type }: any) => (
-        <button data-testid={`ds-button-${type}`} onClick={onClick}>{children}</button>
+        <button data-testid={`ds-button-${type}`} onClick={onClick}>
+            {children}
+        </button>
     ),
-    DsTypography: ({ children, variant }: any) => (
-        <span data-testid={`ds-typography-${variant}`}>{children}</span>
-    )
+    DsTypography: ({ children, variant }: any) => <span data-testid={`ds-typography-${variant}`}>{children}</span>
 }));
 
 vi.mock('react-i18next', () => ({

@@ -53,7 +53,7 @@ describe('HighlighterWord', () => {
     it('renders inside .aws-cli when isAWSCli is true', () => {
         const countFn = vi.fn();
         const { container } = render(
-            <HighlighterWord highlight="he" count={countFn} isAWSCli={true}>
+            <HighlighterWord highlight="he" count={countFn} isAWSCli>
                 hello world
             </HighlighterWord>
         );

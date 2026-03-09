@@ -15,7 +15,9 @@ vi.mock('chart.js', () => {
 
 vi.mock('@netapp/design-system', () => ({
     Typography: ({ children, variant, style }: any) => (
-        <span data-testid={`typography-${variant}`} style={style}>{children}</span>
+        <span data-testid={`typography-${variant}`} style={style}>
+            {children}
+        </span>
     )
 }));
 
@@ -27,7 +29,9 @@ vi.mock('../../../../utils/appConstants', () => ({
     GENERAL: { PROTECTION_CHART: 'Protected' }
 }));
 
-vi.mock('../MultiRingDoughnut.module.scss', () => ({ default: { chartItem: 'chartItem', 'center-text': 'center-text', emptyCircle: 'emptyCircle' } }));
+vi.mock('../MultiRingDoughnut.module.scss', () => ({
+    default: { chartItem: 'chartItem', 'center-text': 'center-text', emptyCircle: 'emptyCircle' }
+}));
 
 describe('MultiRingDoughnut', () => {
     beforeEach(() => {
@@ -50,23 +54,21 @@ describe('MultiRingDoughnut', () => {
     });
 
     it('renders emptyCircle when both percents are 0', () => {
-        const { container } = render(
-            <MultiRingDoughnut hostData={{ protectedPercent: 0, unprotectedPercent: 0 }} />
-        );
+        const { container } = render(<MultiRingDoughnut hostData={{ protectedPercent: 0, unprotectedPercent: 0 }} />);
         expect(container.querySelector('.emptyCircle')).not.toBeNull();
     });
 
     it('renders canvas when protectedPercent is non-zero', () => {
-        const { container } = render(
-            <MultiRingDoughnut hostData={{ protectedPercent: 50, unprotectedPercent: 50 }} />
-        );
+        const { container } = render(<MultiRingDoughnut hostData={{ protectedPercent: 50, unprotectedPercent: 50 }} />);
         expect(container.querySelector('canvas')).not.toBeNull();
     });
 
     it('uses grey unProtectedColor when unProtectColor is truthy', () => {
         // When unProtectColor is set the unprotected color becomes #E0E0E0
         // Just ensure it renders without errors
-        render(<MultiRingDoughnut unProtectColor="someColor" hostData={{ protectedPercent: 50, unprotectedPercent: 50 }} />);
+        render(
+            <MultiRingDoughnut unProtectColor="someColor" hostData={{ protectedPercent: 50, unprotectedPercent: 50 }} />
+        );
         expect(screen.getByText('50%')).toBeDefined();
     });
 

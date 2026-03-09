@@ -17,7 +17,15 @@ vi.mock('@tlveng/wlm-ds', () => ({
 }));
 
 vi.mock('../SquareComponent.module.scss', () => ({
-    default: { container: 'container', headerArea: 'headerArea', valueText: 'valueText', loadingClass: 'loadingClass', loadingClassSmall: 'loadingClassSmall', bottomRow: 'bottomRow', square: 'square' }
+    default: {
+        container: 'container',
+        headerArea: 'headerArea',
+        valueText: 'valueText',
+        loadingClass: 'loadingClass',
+        loadingClassSmall: 'loadingClassSmall',
+        bottomRow: 'bottomRow',
+        square: 'square'
+    }
 }));
 
 vi.mock('../../../utils/CommonStyles.module.scss', () => ({

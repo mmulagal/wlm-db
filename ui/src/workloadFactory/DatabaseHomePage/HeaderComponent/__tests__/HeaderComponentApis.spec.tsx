@@ -4,6 +4,8 @@ import React from 'react';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 
+import HeaderComponentApi from '../HeaderComponentApis';
+
 // ── Hoist mocks ─────────────────────────────────────────────────────────────
 const {
     mockDispatch,
@@ -23,8 +25,8 @@ const {
     mockSetShowNA: vi.fn((v: any) => ({ type: 'setShowNA', payload: v }))
 }));
 
-vi.mock('react-redux', async (importOriginal) => {
-    const actual = await importOriginal() as any;
+vi.mock('react-redux', async importOriginal => {
+    const actual = (await importOriginal()) as any;
     return { ...actual, useDispatch: () => mockDispatch };
 });
 
@@ -68,8 +70,6 @@ vi.mock('../../../../utils/utilityFunctions', () => ({
     makeCredMapping: vi.fn(() => ({})),
     makeRegionMapping: vi.fn(() => ({}))
 }));
-
-import HeaderComponentApi from '../HeaderComponentApis';
 
 // minimal store for Provider
 const makeStore = (overrides: any = {}) =>

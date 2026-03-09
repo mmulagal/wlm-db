@@ -13,8 +13,8 @@ const mockDeleteConfigApi = vi.fn().mockResolvedValue({});
 const mockRenameConfigApi = vi.fn().mockResolvedValue({});
 const mockLoadConfigDataExe = vi.fn().mockResolvedValue({});
 
-vi.mock('react-redux', async (importOriginal) => {
-    const actual = await importOriginal() as any;
+vi.mock('react-redux', async importOriginal => {
+    const actual = (await importOriginal()) as any;
     return {
         ...actual,
         useDispatch: () => mockDispatch
@@ -28,7 +28,9 @@ vi.mock('react-router-dom', () => ({
 vi.mock('@netapp/design-system', () => ({
     useDialog: () => ({ setDialog: mockSetDialog, closeDialog: mockCloseDialog }),
     Typography: ({ children, variant, className }: any) => (
-        <span data-testid={`typography-${variant}`} className={className}>{children}</span>
+        <span data-testid={`typography-${variant}`} className={className}>
+            {children}
+        </span>
     )
 }));
 
@@ -175,8 +177,12 @@ vi.mock('../../../../store/notificationSlice', () => ({
 vi.mock('../../../common/MenuPopover/MenuPopover', () => ({
     default: ({ menuItems, toggleMenu, isMenuOpen }: any) => (
         <div data-testid="menu-popover">
-            <button data-testid="menu-open-btn" onClick={() => toggleMenu('open', '')}>Open</button>
-            <button data-testid="menu-close-btn" onClick={() => toggleMenu('close', '')}>Close</button>
+            <button data-testid="menu-open-btn" onClick={() => toggleMenu('open', '')}>
+                Open
+            </button>
+            <button data-testid="menu-close-btn" onClick={() => toggleMenu('close', '')}>
+                Close
+            </button>
             {menuItems?.map((item: any) => (
                 <button
                     key={item.id}
@@ -193,8 +199,12 @@ vi.mock('../../../common/MenuPopover/MenuPopover', () => ({
 vi.mock('../../../../common/MenuPopover/MenuPopover', () => ({
     default: ({ menuItems, toggleMenu, isMenuOpen }: any) => (
         <div data-testid="menu-popover">
-            <button data-testid="menu-open-btn" onClick={() => toggleMenu('open', '')}>Open</button>
-            <button data-testid="menu-close-btn" onClick={() => toggleMenu('close', '')}>Close</button>
+            <button data-testid="menu-open-btn" onClick={() => toggleMenu('open', '')}>
+                Open
+            </button>
+            <button data-testid="menu-close-btn" onClick={() => toggleMenu('close', '')}>
+                Close
+            </button>
             {menuItems?.map((item: any) => (
                 <button
                     key={item.id}

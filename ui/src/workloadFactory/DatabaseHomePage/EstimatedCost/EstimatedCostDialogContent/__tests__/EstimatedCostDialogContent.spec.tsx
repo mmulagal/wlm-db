@@ -5,7 +5,9 @@ import EstimatedCostDialogContent from '../EstimatedCostDialogContent';
 
 vi.mock('@netapp/design-system', () => ({
     Typography: ({ children, variant, className }: any) => (
-        <span data-testid={`typography-${variant}`} className={className}>{children}</span>
+        <span data-testid={`typography-${variant}`} className={className}>
+            {children}
+        </span>
     ),
     AccordionController: ({ children }: any) => <div data-testid="accordion-controller">{children}</div>,
     AccordionCard: ({ children, id, title }: any) => (
@@ -18,7 +20,12 @@ vi.mock('@netapp/design-system', () => ({
     DsTooltipInfo: ({ children }: any) => <div data-testid="ds-tooltip-info">{children}</div>,
     useDialog: () => ({ setDialog: vi.fn(), closeDialog: vi.fn() }),
     Button: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,
-    Popover: ({ children, container }: any) => <div>{container}{children}</div>,
+    Popover: ({ children, container }: any) => (
+        <div>
+            {container}
+            {children}
+        </div>
+    )
 }));
 
 vi.mock('@netapp/design-system/dist/components/Popover', () => ({

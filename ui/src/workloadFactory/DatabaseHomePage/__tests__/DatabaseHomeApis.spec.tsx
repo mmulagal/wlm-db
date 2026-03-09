@@ -4,6 +4,8 @@ import React from 'react';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 
+import DatabaseHomeApis from '../DatabaseHomeApis';
+
 const {
     mockDispatch,
     mockGetManagedAggrProtection,
@@ -20,8 +22,8 @@ const {
     mockGetPotentialSavingsValues: vi.fn(() => ({ savings: 100 }))
 }));
 
-vi.mock('react-redux', async (importOriginal) => {
-    const actual = await importOriginal() as any;
+vi.mock('react-redux', async importOriginal => {
+    const actual = (await importOriginal()) as any;
     return {
         ...actual,
         useDispatch: () => mockDispatch
@@ -53,26 +55,28 @@ vi.mock('../../../utils/consts', () => ({
     WIZARD_TYPE: { MSSQL: 'MSSQL', PGSQL: 'PGSQL', ORACLE: 'ORACLE' }
 }));
 
-import DatabaseHomeApis from '../DatabaseHomeApis';
-
 const makeStore = (overrides: any = {}) =>
     configureStore({
         reducer: {
-            inventoryV2: (state = {
-                multiMssqlDatabaseHostsData: overrides.mssqlData ?? null,
-                multiPgSqlDatabaseHostsData: overrides.pgsqlData ?? null,
-                multiOracleDatabaseHostsData: overrides.oracleData ?? null,
-                inventoryTableData: overrides.inventoryTableData ?? null,
-                potentialSavingsHostData: overrides.potentialSavingsHostData ?? null,
-                dashSandboxSavings: { data: overrides.dashSandboxSavingsData ?? null },
-                ...overrides.inventoryV2
-            }) => state,
+            inventoryV2: (
+                state = {
+                    multiMssqlDatabaseHostsData: overrides.mssqlData ?? null,
+                    multiPgSqlDatabaseHostsData: overrides.pgsqlData ?? null,
+                    multiOracleDatabaseHostsData: overrides.oracleData ?? null,
+                    inventoryTableData: overrides.inventoryTableData ?? null,
+                    potentialSavingsHostData: overrides.potentialSavingsHostData ?? null,
+                    dashSandboxSavings: { data: overrides.dashSandboxSavingsData ?? null },
+                    ...overrides.inventoryV2
+                }
+            ) => state,
             auth: (state = { refreshBlocked: overrides.refreshBlocked ?? false }) => state,
-            headers: (state = {
-                headerSelectedMultiCredIdsList: ['cred1'],
-                headerSelectedMultiRegionIdsList: ['us-east-1'],
-                ...overrides.headers
-            }) => state
+            headers: (
+                state = {
+                    headerSelectedMultiCredIdsList: ['cred1'],
+                    headerSelectedMultiRegionIdsList: ['us-east-1'],
+                    ...overrides.headers
+                }
+            ) => state
         }
     });
 

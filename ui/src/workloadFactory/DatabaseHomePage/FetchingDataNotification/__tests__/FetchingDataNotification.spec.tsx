@@ -6,18 +6,24 @@ import FetchingDataNotification from '../FetchingDataNotification';
 vi.mock('lodash', () => ({ padEnd: vi.fn() }));
 
 vi.mock('../../../../common/ProgressLoader/ProgressLoader', () => ({
-    default: ({ percent, style }: any) => (
-        <div data-testid="progress-loader" data-percent={percent} style={style} />
-    )
+    default: ({ percent, style }: any) => <div data-testid="progress-loader" data-percent={percent} style={style} />
 }));
 
 vi.mock('../../../../ui-components/Typography', () => ({
-    Text: ({ children, style }: any) => <span data-testid="text" style={style}>{children}</span>,
+    Text: ({ children, style }: any) => (
+        <span data-testid="text" style={style}>
+            {children}
+        </span>
+    ),
     Heading: ({ children, level }: any) => <h4 data-testid={`heading-${level}`}>{children}</h4>
 }));
 
 vi.mock('../../../../ui-components/Layout/Grid', () => ({
-    Grid: ({ children, style }: any) => <div data-testid="grid" style={style}>{children}</div>,
+    Grid: ({ children, style }: any) => (
+        <div data-testid="grid" style={style}>
+            {children}
+        </div>
+    ),
     GridItem: ({ children, lg }: any) => <div data-testid={`grid-item-${lg}`}>{children}</div>
 }));
 
@@ -73,12 +79,7 @@ describe('FetchingDataNotification', () => {
     });
 
     it('renders without optional regions and credentials', () => {
-        render(
-            <FetchingDataNotification
-                pendingQueriesCounter={3}
-                completedTask={1}
-            />
-        );
+        render(<FetchingDataNotification pendingQueriesCounter={3} completedTask={1} />);
         expect(screen.getByTestId('text')).toHaveTextContent('undefined / undefined');
     });
 });

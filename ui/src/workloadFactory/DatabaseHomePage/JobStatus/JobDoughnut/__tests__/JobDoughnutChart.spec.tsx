@@ -14,7 +14,9 @@ vi.mock('chart.js', () => {
 
 vi.mock('@netapp/design-system', () => ({
     Typography: ({ children, variant, style }: any) => (
-        <span data-testid={`typography-${variant}`} style={style}>{children}</span>
+        <span data-testid={`typography-${variant}`} style={style}>
+            {children}
+        </span>
     )
 }));
 
@@ -47,12 +49,14 @@ describe('JobDoughnutChart', () => {
     });
 
     it('renders emptyCircle when loading', () => {
-        const { container } = render(<JobDoughnutChart jobsSummaryData={{ totalJobs: 5 }} jobsSummaryLoading={true} />);
+        const { container } = render(<JobDoughnutChart jobsSummaryData={{ totalJobs: 5 }} jobsSummaryLoading />);
         expect(container.querySelector('.emptyCircle')).not.toBeNull();
     });
 
     it('renders emptyCircle when totalJobs is 0', () => {
-        const { container } = render(<JobDoughnutChart jobsSummaryData={{ totalJobs: 0 }} jobsSummaryLoading={false} />);
+        const { container } = render(
+            <JobDoughnutChart jobsSummaryData={{ totalJobs: 0 }} jobsSummaryLoading={false} />
+        );
         expect(container.querySelector('.emptyCircle')).not.toBeNull();
     });
 
@@ -64,7 +68,13 @@ describe('JobDoughnutChart', () => {
     it('renders canvas when data exists and not loading', () => {
         const { container } = render(
             <JobDoughnutChart
-                jobsSummaryData={{ totalJobs: 10, completedPercent: 60, failedPercent: 20, inProgressPercent: 10, warning: 10 }}
+                jobsSummaryData={{
+                    totalJobs: 10,
+                    completedPercent: 60,
+                    failedPercent: 20,
+                    inProgressPercent: 10,
+                    warning: 10
+                }}
                 jobsSummaryLoading={false}
             />
         );

@@ -1,5 +1,41 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import {
+    isOptimized,
+    isOptimizedDashInner,
+    isActivating,
+    isDismissed,
+    hasPostponedOrDismissed,
+    checkConfigState,
+    setConfigState,
+    filterDatabaseRowsForNonAsm,
+    getTotalManagedAggrCost,
+    getManagedHostCountFromInventory,
+    getManagedHostCount,
+    getManagedAggrProtection,
+    getManagedAggrStorageSavings,
+    getManageAggrCost,
+    getPotentialSavingsValues,
+    getManagedInstanceOptimizationSummary,
+    getErrorInvestigationSummary,
+    getAssessmentGroupedByCategory,
+    getAssessmentGroupedByConfigurations,
+    getConfigStateList,
+    disableOfflineRows,
+    mapHostStatusToAssessmentData,
+    formatAssessmentTableData,
+    categorizeStateInstances,
+    createLogAnalyzerNotActiveInstance,
+    createLogAnalyzerActiveInstance,
+    getManagedOptimizationSummary,
+    getAssessmentHostListGroupedByCategory
+} from '../DatabaseHomeUtils';
+
+import {
+    isAoagDeployment as mockIsAoagDeployment,
+    isMssqlHaDeployment as mockIsMssqlHaDeployment
+} from '../../GetWell/GetWellUtils';
+
 // ── Mock store & dependencies before importing utils ────────────────────────
 const { mockGetState } = vi.hoisted(() => ({
     mockGetState: vi.fn(() => ({
@@ -38,42 +74,6 @@ vi.mock('../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWel
     formatOracleOptimizationBreakDown: vi.fn(),
     getOracleCardsData: vi.fn()
 }));
-
-import {
-    isOptimized,
-    isOptimizedDashInner,
-    isActivating,
-    isDismissed,
-    hasPostponedOrDismissed,
-    checkConfigState,
-    setConfigState,
-    filterDatabaseRowsForNonAsm,
-    getTotalManagedAggrCost,
-    getManagedHostCountFromInventory,
-    getManagedHostCount,
-    getManagedAggrProtection,
-    getManagedAggrStorageSavings,
-    getManageAggrCost,
-    getPotentialSavingsValues,
-    getManagedInstanceOptimizationSummary,
-    getErrorInvestigationSummary,
-    getAssessmentGroupedByCategory,
-    getAssessmentGroupedByConfigurations,
-    getConfigStateList,
-    disableOfflineRows,
-    mapHostStatusToAssessmentData,
-    formatAssessmentTableData,
-    categorizeStateInstances,
-    createLogAnalyzerNotActiveInstance,
-    createLogAnalyzerActiveInstance,
-    getManagedOptimizationSummary,
-    getAssessmentHostListGroupedByCategory
-} from '../DatabaseHomeUtils';
-
-import {
-    isAoagDeployment as mockIsAoagDeployment,
-    isMssqlHaDeployment as mockIsMssqlHaDeployment
-} from '../../GetWell/GetWellUtils';
 
 describe('isOptimized', () => {
     it('returns true when status is OPTIMIZED', () => {
@@ -266,9 +266,9 @@ describe('filterDatabaseRowsForNonAsm', () => {
     });
 
     it('returns false for data-dg-lun-layout when not iSCSI protocol', () => {
-        expect(
-            filterDatabaseRowsForNonAsm('data-dg-lun-layout', { isASMManaged: true, storageProtocol: 'NFS' })
-        ).toBe(false);
+        expect(filterDatabaseRowsForNonAsm('data-dg-lun-layout', { isASMManaged: true, storageProtocol: 'NFS' })).toBe(
+            false
+        );
     });
 
     it('returns true for data-dg-lun-layout when ASM managed and iSCSI', () => {
@@ -332,12 +332,22 @@ describe('getTotalManagedAggrCost', () => {
 
     it('returns requireBillingPerm true when either source has it', () => {
         const mssql = {
-            storageCost: '0', computeCost: '0', connectivityCost: '0', otherCost: '0', totalCost: '0',
-            requireBillingPerm: true, noDeploymentChk: false
+            storageCost: '0',
+            computeCost: '0',
+            connectivityCost: '0',
+            otherCost: '0',
+            totalCost: '0',
+            requireBillingPerm: true,
+            noDeploymentChk: false
         };
         const pgsql = {
-            storageCost: '0', computeCost: '0', connectivityCost: '0', otherCost: '0', totalCost: '0',
-            requireBillingPerm: false, noDeploymentChk: false
+            storageCost: '0',
+            computeCost: '0',
+            connectivityCost: '0',
+            otherCost: '0',
+            totalCost: '0',
+            requireBillingPerm: false,
+            noDeploymentChk: false
         };
         const result = getTotalManagedAggrCost(mssql, pgsql);
         expect(result.requireBillingPerm).toBe(true);
@@ -358,15 +368,13 @@ describe('getManagedHostCountFromInventory', () => {
 
     it('counts managed MSSQL hosts correctly', () => {
         const inventoryTableData = {
-            'host1': {
+            host1: {
                 credentialId: 'cred1',
                 regionId: 'us-east-1',
                 resourceId: 'res1',
                 managedInstance: 1,
                 hostType: 'MSSQL',
-                sqlServerInstances: [
-                    { statusColText: 'Managed', databaseCount: 3 }
-                ]
+                sqlServerInstances: [{ statusColText: 'Managed', databaseCount: 3 }]
             }
         };
         const result: any = getManagedHostCountFromInventory(inventoryTableData, mockDispatch, 'MSSQL');
@@ -378,7 +386,7 @@ describe('getManagedHostCountFromInventory', () => {
 
     it('skips entries not in selected creds/regions', () => {
         const inventoryTableData = {
-            'host1': {
+            host1: {
                 credentialId: 'other-cred',
                 regionId: 'eu-west-1',
                 resourceId: 'res1',
@@ -393,7 +401,7 @@ describe('getManagedHostCountFromInventory', () => {
 
     it('skips entries where managedInstance is 0', () => {
         const inventoryTableData = {
-            'host1': {
+            host1: {
                 credentialId: 'cred1',
                 regionId: 'us-east-1',
                 resourceId: 'res1',
@@ -436,9 +444,7 @@ describe('getManagedAggrProtection', () => {
     it('skips hosts not in selected credentials', () => {
         const data = {
             'host1_othercred_us-east-1': {
-                databaseInstancesSummary: [
-                    { status: 'UP', protection: { isFsxOntapSnapshotsEnabled: true } }
-                ]
+                databaseInstancesSummary: [{ status: 'UP', protection: { isFsxOntapSnapshotsEnabled: true } }]
             }
         };
         const result = getManagedAggrProtection(data);
@@ -814,21 +820,14 @@ describe('getConfigStateList', () => {
     });
 
     it('collects config states from formatted data', () => {
-        const formattedData = [
-            { configState: 'DISMISSED' },
-            { configState: 'ACTIVE' }
-        ];
+        const formattedData = [{ configState: 'DISMISSED' }, { configState: 'ACTIVE' }];
         const result = getConfigStateList([], [], undefined, formattedData);
         expect(result).toContain('DISMISSED');
         expect(result).toContain('ACTIVE');
     });
 
     it('returns unique config states', () => {
-        const formattedData = [
-            { configState: 'DISMISSED' },
-            { configState: 'DISMISSED' },
-            { configState: 'ACTIVE' }
-        ];
+        const formattedData = [{ configState: 'DISMISSED' }, { configState: 'DISMISSED' }, { configState: 'ACTIVE' }];
         const result = getConfigStateList([], [], undefined, formattedData);
         const dismissedCount = result.filter(s => s === 'DISMISSED').length;
         expect(dismissedCount).toBe(1);
@@ -1042,9 +1041,7 @@ describe('getAssessmentGroupedByCategory', () => {
                 credentialId: 'other',
                 regionId: 'eu-west-1',
                 databaseHostId: 'h1',
-                instancesAssessment: [
-                    { assessments: { lastAssessmentTimestamp: '2024-01-01' } }
-                ]
+                instancesAssessment: [{ assessments: { lastAssessmentTimestamp: '2024-01-01' } }]
             }
         ];
         const result = getAssessmentGroupedByCategory(data, []);
@@ -1139,9 +1136,7 @@ describe('createLogAnalyzerNotActiveInstance', () => {
                         resourceId: 'res1',
                         managedInstance: 1,
                         hostType: 'Microsoft SQL Server',
-                        sqlServerInstances: [
-                            { statusColText: 'Unmanaged', databaseInstanceId: 'inst2' }
-                        ]
+                        sqlServerInstances: [{ statusColText: 'Unmanaged', databaseInstanceId: 'inst2' }]
                     }
                 },
                 allLogAnalysisData: [],
@@ -1241,9 +1236,7 @@ describe('createLogAnalyzerActiveInstance', () => {
                         resourceId: 'res1',
                         managedInstance: 1,
                         hostType: 'Microsoft SQL Server',
-                        sqlServerInstances: [
-                            { statusColText: 'Managed', databaseInstanceId: 'inst1' }
-                        ]
+                        sqlServerInstances: [{ statusColText: 'Managed', databaseInstanceId: 'inst1' }]
                     }
                 },
                 allLogAnalysisData: [],
@@ -1284,9 +1277,7 @@ describe('getAssessmentHostListGroupedByCategory', () => {
                 regionId: 'eu-west-1',
                 databaseHostId: 'h1',
                 databaseHostName: 'host1',
-                instancesAssessment: [
-                    { assessments: { lastAssessmentTimestamp: '2024-01-01' } }
-                ]
+                instancesAssessment: [{ assessments: { lastAssessmentTimestamp: '2024-01-01' } }]
             }
         ];
         const result = getAssessmentHostListGroupedByCategory(data, []);
@@ -1781,10 +1772,7 @@ describe('getAssessmentGroupedByConfigurations', () => {
     });
 
     it('does NOT set isAsmEnable for non-iSCSI even if isASMManaged', () => {
-        const host = makeOracleHost(
-            'oh1',
-            makeAsmOracleAssessment({ storageProtocol: 'NFS', isASMManaged: true })
-        );
+        const host = makeOracleHost('oh1', makeAsmOracleAssessment({ storageProtocol: 'NFS', isASMManaged: true }));
         const result = getAssessmentGroupedByConfigurations([], [host]);
         expect(result.isAsmEnable).toBe(false);
     });
@@ -2067,9 +2055,12 @@ describe('getAssessmentGroupedByCategory (extended)', () => {
     });
 
     it('does NOT increment oracleCompute when Oracle hostOsPatch is NOT_OPTIMIZED', () => {
-        const host = makeOracleHost('oh1', makeOracleAssessment({
-            hostOsPatch: { status: 'NOT_OPTIMIZED', severity: 'critical' }
-        }));
+        const host = makeOracleHost(
+            'oh1',
+            makeOracleAssessment({
+                hostOsPatch: { status: 'NOT_OPTIMIZED', severity: 'critical' }
+            })
+        );
         const result = getAssessmentGroupedByCategory([], [host]);
         expect(result.oracleCompute).toBe(0);
     });

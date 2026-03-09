@@ -5,6 +5,17 @@ import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 
+import { postBlueXPMessage } from '@netapp/design-system';
+import HeaderComponent from '../HeaderComponent';
+import {
+    checkValueSavedForCred,
+    checkValueSavedForRegion,
+    handleURL,
+    handleURLFromDashboard,
+    resetDBHomePageState
+} from '../../../../utils/utilityFunctions';
+import { navigateToCanvas } from '../../../../utils/appConfig';
+
 // ── Hoist mocks ──────────────────────────────────────────────────────────────
 const { mockDispatch, mockNavigate, mockNavigationType, mockFetchOnPremData, mockCreateDemoApi } = vi.hoisted(() => ({
     mockDispatch: vi.fn(),
@@ -14,13 +25,13 @@ const { mockDispatch, mockNavigate, mockNavigationType, mockFetchOnPremData, moc
     mockCreateDemoApi: vi.fn(() => Promise.resolve())
 }));
 
-vi.mock('react-redux', async (importOriginal) => {
+vi.mock('react-redux', async importOriginal => {
     const actual = (await importOriginal()) as any;
     return { ...actual, useDispatch: () => mockDispatch };
 });
 
 // Mock react-router-dom navigation hooks
-vi.mock('react-router-dom', async (importOriginal) => {
+vi.mock('react-router-dom', async importOriginal => {
     const actual = (await importOriginal()) as any;
     return {
         ...actual,
@@ -36,7 +47,14 @@ vi.mock('@netapp/design-system', () => ({
         <div data-testid="ds-select" data-disabled={isDisabled} data-readonly={isReadOnly}>
             {formatLabel && <span data-testid="ds-select-label">{formatLabel()}</span>}
             {onSelect && (
-                <button data-testid="ds-select-trigger" onClick={() => onSelect([{ data: { credentialsId: 'c1', name: 'cred1' }, id: 'r1', label: 'Region 1', value: 'val' }])}>
+                <button
+                    data-testid="ds-select-trigger"
+                    onClick={() =>
+                        onSelect([
+                            { data: { credentialsId: 'c1', name: 'cred1' }, id: 'r1', label: 'Region 1', value: 'val' }
+                        ])
+                    }
+                >
                     select
                 </button>
             )}
@@ -52,7 +70,10 @@ vi.mock('@netapp/design-system', () => ({
     SelectField: ({ onChange, options, value, isDisabled, isReadOnly, ...rest }: any) => (
         <div data-testid="select-field" data-disabled={isDisabled} data-readonly={isReadOnly}>
             {onChange && (
-                <button data-testid="select-field-trigger" onClick={() => onChange({ value: 'Last 7 days', data: { regionCode: 'us-east-1' } })}>
+                <button
+                    data-testid="select-field-trigger"
+                    onClick={() => onChange({ value: 'Last 7 days', data: { regionCode: 'us-east-1' } })}
+                >
                     change
                 </button>
             )}
@@ -410,17 +431,6 @@ vi.mock('../../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData', ()
     useOnPremData: vi.fn(() => ({ fetchOnPremData: mockFetchOnPremData }))
 }));
 
-import HeaderComponent from '../HeaderComponent';
-import {
-    checkValueSavedForCred,
-    checkValueSavedForRegion,
-    handleURL,
-    handleURLFromDashboard,
-    resetDBHomePageState
-} from '../../../../utils/utilityFunctions';
-import { postBlueXPMessage } from '@netapp/design-system';
-import { navigateToCanvas } from '../../../../utils/appConfig';
-
 // ── Store builder ──────────────────────────────────────────────────────────────
 const makeStore = (overrides: any = {}) =>
     configureStore({
@@ -747,9 +757,7 @@ describe('HeaderComponent', () => {
     // ── Credential & region data ───────────────────────────────────────────────
     describe('credential and region data handling', () => {
         it('renders when credentialData has entries', () => {
-            const credentialData = [
-                { credentialsId: 'cred-1', name: 'My AWS', providerAccountId: '123456789' }
-            ];
+            const credentialData = [{ credentialsId: 'cred-1', name: 'My AWS', providerAccountId: '123456789' }];
             const { container } = renderComponent('dashboard', { credentialData });
             expect(container).toBeDefined();
         });
@@ -791,9 +799,7 @@ describe('HeaderComponent', () => {
         });
 
         it('dispatches credential selection when cred data loads and no selection exists', () => {
-            const credentialData = [
-                { credentialsId: 'cred-1', name: 'My AWS', providerAccountId: '123456789' }
-            ];
+            const credentialData = [{ credentialsId: 'cred-1', name: 'My AWS', providerAccountId: '123456789' }];
             renderComponent('dashboard', { credentialData });
             // generateAccountsForMultiSelect runs and dispatches setHeaderSelectedMultiCred
             expect(mockDispatch).toHaveBeenCalled();
@@ -1031,9 +1037,7 @@ describe('HeaderComponent', () => {
     // ── Sandbox tab specifics ──────────────────────────────────────────────────
     describe('sandbox tab specifics', () => {
         it('renders sandbox components (credential/region selects) when showNA=false', () => {
-            const credentialData = [
-                { credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }
-            ];
+            const credentialData = [{ credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }];
             renderComponent('sandboxes', {
                 selectedHeaderTab: 'sandboxes',
                 showNA: false,
@@ -1101,9 +1105,7 @@ describe('HeaderComponent', () => {
     // ── Multi-select components rendering ──────────────────────────────────────
     describe('multi-select components', () => {
         it('renders credential and region multi-selects on dashboard', () => {
-            const credentialData = [
-                { credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }
-            ];
+            const credentialData = [{ credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }];
             renderComponent('dashboard', {
                 selectedHeaderTab: 'dashboard',
                 credentialData,
@@ -1165,7 +1167,10 @@ describe('HeaderComponent', () => {
     describe('label functions', () => {
         it('shows single credential name when one credential selected', () => {
             const headerSelectedMultiCred = [
-                { value: 'Cred1 | Account ID: 111', data: { credentialsId: 'c1', name: 'Cred1', providerAccountId: '111' } }
+                {
+                    value: 'Cred1 | Account ID: 111',
+                    data: { credentialsId: 'c1', name: 'Cred1', providerAccountId: '111' }
+                }
             ];
             renderComponent('dashboard', {
                 selectedHeaderTab: 'dashboard',
@@ -1310,15 +1315,16 @@ describe('HeaderComponent', () => {
     describe('localStorage interactions', () => {
         it('reads selectedCred from localStorage when credential data loads', () => {
             localStorage.setItem('selectedCred', JSON.stringify({ value: 'test', data: { credentialsId: 'c1' } }));
-            const credentialData = [
-                { credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }
-            ];
+            const credentialData = [{ credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }];
             renderComponent('dashboard', { credentialData });
             expect(mockDispatch).toHaveBeenCalled();
         });
 
         it('reads selectedRegion from localStorage when region data loads', () => {
-            localStorage.setItem('selectedRegion', JSON.stringify({ value: 'test', data: { regionCode: 'us-east-1' } }));
+            localStorage.setItem(
+                'selectedRegion',
+                JSON.stringify({ value: 'test', data: { regionCode: 'us-east-1' } })
+            );
             const regionsData = { regions: [{ regionName: 'US East', regionCode: 'us-east-1' }] };
             renderComponent('dashboard', { regionsData });
             expect(mockDispatch).toHaveBeenCalled();
@@ -1329,9 +1335,7 @@ describe('HeaderComponent', () => {
                 'selectedSandboxCred',
                 JSON.stringify({ value: 'test', data: { credentialsId: 'c1' } })
             );
-            const credentialData = [
-                { credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }
-            ];
+            const credentialData = [{ credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }];
             renderComponent('sandboxes', { selectedHeaderTab: 'sandboxes', credentialData });
             expect(mockDispatch).toHaveBeenCalled();
         });
@@ -2041,9 +2045,7 @@ describe('HeaderComponent', () => {
                 'selectedSandboxCred',
                 JSON.stringify({ value: 'saved', data: { credentialsId: 'c1' } })
             );
-            const credentialData = [
-                { credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }
-            ];
+            const credentialData = [{ credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }];
             renderComponent('sandboxes', {
                 selectedHeaderTab: 'sandboxes',
                 credentialData
@@ -2056,9 +2058,7 @@ describe('HeaderComponent', () => {
                 'selectedSandboxCred',
                 JSON.stringify({ value: 'saved', data: { credentialsId: 'c1' } })
             );
-            const credentialData = [
-                { credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }
-            ];
+            const credentialData = [{ credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }];
             renderComponent('sandboxes', {
                 selectedHeaderTab: 'sandboxes',
                 credentialData
@@ -2067,9 +2067,7 @@ describe('HeaderComponent', () => {
         });
 
         it('uses first option when no localStorage selectedSandboxCred', () => {
-            const credentialData = [
-                { credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }
-            ];
+            const credentialData = [{ credentialsId: 'c1', name: 'Acct1', providerAccountId: '111' }];
             renderComponent('sandboxes', {
                 selectedHeaderTab: 'sandboxes',
                 credentialData
@@ -2086,21 +2084,14 @@ describe('HeaderComponent', () => {
                 'selectedCred',
                 JSON.stringify({ value: 'saved', data: { credentialsId: 'c1', name: 'Cred1' } })
             );
-            const credentialData = [
-                { credentialsId: 'c1', name: 'Cred1', providerAccountId: '111' }
-            ];
+            const credentialData = [{ credentialsId: 'c1', name: 'Cred1', providerAccountId: '111' }];
             renderComponent('dashboard', { credentialData });
             expect(mockDispatch).toHaveBeenCalled();
         });
 
         it('falls back to first option when localStorage cred not valid', () => {
-            localStorage.setItem(
-                'selectedCred',
-                JSON.stringify({ value: 'invalid', data: { credentialsId: 'x1' } })
-            );
-            const credentialData = [
-                { credentialsId: 'c1', name: 'Cred1', providerAccountId: '111' }
-            ];
+            localStorage.setItem('selectedCred', JSON.stringify({ value: 'invalid', data: { credentialsId: 'x1' } }));
+            const credentialData = [{ credentialsId: 'c1', name: 'Cred1', providerAccountId: '111' }];
             renderComponent('dashboard', { credentialData });
             expect(mockDispatch).toHaveBeenCalled();
         });
@@ -2122,10 +2113,7 @@ describe('HeaderComponent', () => {
         });
 
         it('falls back to first option when localStorage region not valid', () => {
-            localStorage.setItem(
-                'selectedRegion',
-                JSON.stringify({ value: 'invalid', data: { regionCode: 'xx' } })
-            );
+            localStorage.setItem('selectedRegion', JSON.stringify({ value: 'invalid', data: { regionCode: 'xx' } }));
             const regionsData = {
                 regions: [{ regionName: 'US East', regionCode: 'us-east-1' }]
             };

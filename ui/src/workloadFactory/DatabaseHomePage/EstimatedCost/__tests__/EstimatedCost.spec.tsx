@@ -9,10 +9,14 @@ const mockSetDialog = vi.fn();
 
 vi.mock('@netapp/design-system', () => ({
     Typography: ({ children, variant, className, style }: any) => (
-        <span data-testid={`typography-${variant}`} className={className} style={style}>{children}</span>
+        <span data-testid={`typography-${variant}`} className={className} style={style}>
+            {children}
+        </span>
     ),
     Button: ({ children, onClick, variant }: any) => (
-        <button data-testid={`button-${variant}`} onClick={onClick}>{children}</button>
+        <button data-testid={`button-${variant}`} onClick={onClick}>
+            {children}
+        </button>
     ),
     FlashingDotsLoader: () => <div data-testid="flashing-dots-loader" />,
     TooltipInfo: ({ children }: any) => <div data-testid="tooltip-info">{children}</div>,
@@ -66,13 +70,12 @@ const makeStore = (showNA = false) =>
         }
     });
 
-const renderComponent = (hostData: any = null, hostsLoading = false, showNA = false) => {
-    return render(
+const renderComponent = (hostData: any = null, hostsLoading = false, showNA = false) =>
+    render(
         <Provider store={makeStore(showNA)}>
             <EstimatedCost hostData={hostData} hostsLoading={hostsLoading} />
         </Provider>
     );
-};
 
 describe('EstimatedCost', () => {
     beforeEach(() => {
