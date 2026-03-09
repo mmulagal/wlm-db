@@ -2,6 +2,7 @@ name: Test Plan
 description: Create a comprehensive test plan for a project or feature.
 title: "[Test Plan]: "
 labels: ["Test Plan"]
+type: "Test Plan"
 assignees:
   - shaswatinetapp
 projects: ["TLVeng/41"]
@@ -13,6 +14,15 @@ body:
         ## 📝 Test Plan
 
         Please fill out the details below to outline the test plan for your project or feature.
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: "Parent Issue"
+      description: "Link to the parent issue (e.g., #1234 or full URL). Leave blank if none."
+      placeholder: "#1234"
+    validations:
+      required: false
 
   - type: input
     id: project

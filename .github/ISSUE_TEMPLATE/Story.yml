@@ -2,6 +2,7 @@ name: Story
 description: Create a new user story.
 title: "[STORY]: "
 labels: ["Story"]
+type: "User Story"
 assignees:
   - shaswatinetapp
 projects: ["TLVeng/41"]
@@ -13,6 +14,15 @@ body:
         ## 📖 User Story
 
         Please provide details for this user story.
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: "Parent Issue"
+      description: "Link to the parent issue (e.g., #1234 or full URL). Leave blank if none."
+      placeholder: "#1234"
+    validations:
+      required: false
 
   - type: textarea
     id: summary

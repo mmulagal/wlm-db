@@ -2,6 +2,7 @@ name: Backend Bug Report
 description: Report a bug related to backend/API functionality.
 title: "[BUG][API]: "
 labels: ["Bug", "Backend"]
+type: "Bug"
 assignees:
   - shaswatinetapp
 projects: ["TLVeng/41"]
@@ -13,6 +14,15 @@ body:
         ## 🐞 Backend/API Bug Report
 
         Thank you for taking the time to help us improve! Please fill out the details below as thoroughly as possible.
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: "Parent Issue"
+      description: "Link to the parent issue (e.g., #1234 or full URL). Leave blank if none."
+      placeholder: "#1234"
+    validations:
+      required: false
 
   - type: textarea
     id: summary

@@ -2,6 +2,7 @@ name: UI Bug Report
 description: Report a bug related to the user interface.
 title: "[BUG][UI]: "
 labels: ["Bug", "UI"]
+type: "Bug"
 assignees:
   - shaswatinetapp
 projects: ["TLVeng/41"]
@@ -13,6 +14,15 @@ body:
         ## 🐞 UI Bug Report
 
         Thank you for helping us improve the user experience! Please provide as much detail as possible.
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: "Parent Issue"
+      description: "Link to the parent issue (e.g., #1234 or full URL). Leave blank if none."
+      placeholder: "#1234"
+    validations:
+      required: false
 
   - type: textarea
     id: summary

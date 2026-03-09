@@ -5,50 +5,32 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
 const ISSUE_NUMBER = parseInt(process.env.ISSUE_NUMBER, 10);
 const ISSUE_CREATOR = process.env.ISSUE_CREATOR;
-const ISSUE_LABELS = JSON.parse(process.env.ISSUE_LABELS || "[]");
 
 const PROJECT_ORG = "TLVeng";
 const PROJECT_NUMBER = 41;
 
-const STATUS_DEFAULT = "Todo";
-
-// Map issue labels to the project "Type" field value.
-// First matching label wins.
-const LABEL_TO_TYPE = {
-  "Test Item": "Test Item",
-  "Test Plan": "Test Plan",
-  Task: "Task",
-  Story: "Story",
-  Epic: "Epic",
-  Bug: "Bug",
-};
+const STATUS_DEFAULT = "To Do";
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 const graphqlWithAuth = graphql.defaults({
   headers: { authorization: `token ${GITHUB_TOKEN}` },
 });
 
-// ── Resolve Type from labels ────────────────────────────────────────────────
+// ── 0. Fetch Issue Data (single API call, reused across steps) ───────────────
 
-function resolveType() {
-  for (const label of ISSUE_LABELS) {
-    if (LABEL_TO_TYPE[label]) {
-      return LABEL_TO_TYPE[label];
-    }
-  }
-  return null;
-}
-
-// ── 1. Set Assignee to Issue Creator ────────────────────────────────────────
-
-async function setAssignee() {
-  console.log(`Setting assignee to issue creator: ${ISSUE_CREATOR}`);
-  // Remove any existing assignees first
+async function fetchIssue() {
   const { data: issue } = await octokit.issues.get({
     owner,
     repo,
     issue_number: ISSUE_NUMBER,
   });
+  return issue;
+}
+
+// ── 1. Set Assignee to Issue Creator ────────────────────────────────────────
+
+async function setAssignee(issue) {
+  console.log(`Setting assignee to issue creator: ${ISSUE_CREATOR}`);
   const existingAssignees = issue.assignees.map((a) => a.login);
   if (existingAssignees.length > 0) {
     await octokit.issues.removeAssignees({
@@ -105,7 +87,7 @@ async function setMilestone() {
 
 // ── 3. Get Project Info and Ensure Issue is in Project ──────────────────────
 
-async function getProjectAndAddIssue() {
+async function getProjectAndAddIssue(issueNodeId) {
   console.log(
     `Fetching project ${PROJECT_ORG}/${PROJECT_NUMBER} and its fields...`
   );
@@ -170,7 +152,7 @@ async function getProjectAndAddIssue() {
   `,
     {
       projectId: project.id,
-      contentId: ISSUE_NODE_ID,
+      contentId: issueNodeId,
     }
   );
 
@@ -301,36 +283,92 @@ async function setIterationValue(project, itemId, field, iteration) {
   console.log(`Sprint set to "${iteration.title}"`);
 }
 
+// ── 6. Link Parent Issue (sub-issue relationship) ───────────────────────────
+
+function parseParentIssueNumber(body) {
+  // Look for the "### Parent Issue" section in the issue body.
+  // GitHub Issue Forms render input fields as: ### Label\n\n<value>
+  if (!body) return null;
+
+  const match = body.match(
+    /###\s*Parent\s*Issue\s*\n\n\s*(.+)/i
+  );
+  if (!match) return null;
+
+  const value = match[1].trim();
+  if (!value || value === "_No response_") return null;
+
+  // Support formats: #1234, 1234, or full GitHub URL
+  const hashMatch = value.match(/^#?(\d+)$/);
+  if (hashMatch) return parseInt(hashMatch[1], 10);
+
+  const urlMatch = value.match(
+    /github\.com\/[^/]+\/[^/]+\/issues\/(\d+)/
+  );
+  if (urlMatch) return parseInt(urlMatch[1], 10);
+
+  console.warn(
+    `Could not parse parent issue number from: "${value}" — skipping.`
+  );
+  return null;
+}
+
+async function linkParentIssue(issue) {
+  const parentNumber = parseParentIssueNumber(issue.body);
+  if (!parentNumber) {
+    console.log("No parent issue specified — skipping sub-issue linking.");
+    return;
+  }
+
+  console.log(
+    `Linking issue #${ISSUE_NUMBER} as sub-issue of #${parentNumber}...`
+  );
+  try {
+    await octokit.request(
+      "POST /repos/{owner}/{repo}/issues/{issue_number}/sub_issues",
+      {
+        owner,
+        repo,
+        issue_number: parentNumber,
+        sub_issue_id: issue.id,
+      }
+    );
+    console.log(`Issue #${ISSUE_NUMBER} linked as sub-issue of #${parentNumber}`);
+  } catch (error) {
+    console.warn(
+      `Could not link parent issue #${parentNumber}: ${error.message}`
+    );
+  }
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
+// Note: Issue type is set natively by each issue template via the `type` field
+// in .github/ISSUE_TEMPLATE/*.yml — no need to set it here.
 
 (async () => {
   try {
-    console.log(`Processing issue #${ISSUE_NUMBER} with labels: ${ISSUE_LABELS.join(", ")}`);
+    console.log(`Processing issue #${ISSUE_NUMBER}...`);
+
+    // Fetch issue data once (reused by multiple steps)
+    const issue = await fetchIssue();
 
     // Step 1: Set assignee to issue creator
-    await setAssignee();
+    await setAssignee(issue);
 
     // Step 2: Set milestone
     await setMilestone();
 
     // Step 3: Get project, add issue, fetch fields
-    const { project, itemId } = await getProjectAndAddIssue();
+    const { project, itemId } = await getProjectAndAddIssue(issue.node_id);
 
-    // Step 4: Set Status to "Todo"
+    // Step 4: Set Status to "To Do"
     await setSingleSelectField(project, itemId, "Status", STATUS_DEFAULT);
 
-    // Step 5: Set Type based on label
-    const issueType = resolveType();
-    if (issueType) {
-      await setSingleSelectField(project, itemId, "Type", issueType);
-    } else {
-      console.warn(
-        `No matching Type found for labels: ${ISSUE_LABELS.join(", ")} — skipping Type.`
-      );
-    }
-
-    // Step 6: Set Sprint to current iteration
+    // Step 5: Set Sprint to current iteration
     await setCurrentSprint(project, itemId);
+
+    // Step 6: Link parent issue if specified in the issue body
+    await linkParentIssue(issue);
 
     console.log("All defaults set successfully.");
   } catch (error) {

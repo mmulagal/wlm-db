@@ -2,6 +2,7 @@ name: Epic
 description: Create a new epic to group related stories and tasks.
 title: "[EPIC]: "
 labels: ["Epic"]
+type: "Epic"
 projects: ["TLVeng/41"]
 
 body:

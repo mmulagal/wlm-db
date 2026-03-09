@@ -2,6 +2,7 @@ name: Test Item
 description: Create a specific test item (test case/scenario) for a feature or requirement.
 title: "[Test Item]: "
 labels: ["Test Item"]
+type: "Test Item"
 assignees:
   - shaswatinetapp
 projects: ["TLVeng/41"]
@@ -13,6 +14,15 @@ body:
         ## ✅ Test Item
 
         Please provide details for this specific test case or scenario.
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: "Parent Issue"
+      description: "Link to the parent issue (e.g., #1234 or full URL). Leave blank if none."
+      placeholder: "#1234"
+    validations:
+      required: false
 
   - type: textarea
     id: description

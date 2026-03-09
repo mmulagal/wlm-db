@@ -2,6 +2,7 @@ name: Task
 description: Create a new task for implementation or tracking.
 title: "[TASK]: "
 labels: ["Task"]
+type: "Task"
 assignees:
   - shaswatinetapp
 projects: ["TLVeng/41"]
@@ -13,6 +14,15 @@ body:
         ## 📝 Task
 
         Please provide details for this task.
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: "Parent Issue"
+      description: "Link to the parent issue (e.g., #1234 or full URL). Leave blank if none."
+      placeholder: "#1234"
+    validations:
+      required: false
 
   - type: textarea
     id: summary
