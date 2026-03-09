@@ -843,9 +843,29 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
       $responseObject = @{}
       $instanceSectionStartTime = Get-Date
       
-  
+      $isDefaultInstance = ($sqlService.Name -eq 'MSSQLSERVER')
+      $responseObject['isDefaultInstance'] = $isDefaultInstance
+      $instanceName = $sqlService.Name -Replace "MSSQL\\$", ""
+      $responseObject['sqlServerInstance'] = $instanceName
+      $responseObject['sqlServerState'] = $sqlService.State
+
+      try {
+        $sqlServiceBinaryPath = ($sqlService.PathName  -Replace "-s.*", "").Trim().Trim('"')
+        If (Test-Path $sqlServiceBinaryPath) {
+          $info = (Get-Item $sqlServiceBinaryPath).VersionInfo
+          $responseObject['sqlServerMajorVersion'] = $info.ProductMajorPart
+          $responseObject['sqlServerVersion'] = $info.ProductVersion
+        } Else {
+          $responseObject['failureInfo'] += "\${instanceName}: Path $sqlServiceBinaryPath does not exist\`n"
+        }
+      } catch {
+        $responseObject['failureInfo'] += "Failed to get SQL Server version from binary path: $_\`n"
+      }
+
+      try {
+
       If ($DiskTargetInfoMap.Count -le 0) {
-        $body['failureInfo'] += "Failed to get drive letter and disk target details\`n"
+        $responseObject['failureInfo'] += "Failed to get drive letter and disk target details\`n"
       }
 
       If ($RegistryErrors) {
@@ -855,25 +875,9 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
       $editionDBCountMachineInfoGuid = @($null, $null, $null, $null, $null)
       $responseObject['windowsAuthentication'] = $False
       $sqlServerInstanceStorageInfo = $null
-  
-      $isDefaultInstance = -Not $sqlService.Name.Contains('$')
-      $responseObject['isDefaultInstance'] = $isDefaultInstance
-      $instanceName = $sqlService.Name -Replace "MSSQL\\$", ""
-
 
       $sqlServerInfoFromRegistry = FetchSqlServerInfoFromRegistry $allSqlInstanceNamesFromRegistry $instanceName
-     
-      $sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
-      If (Test-Path $sqlServiceBinaryPath.Replace('"', '')) {
-        $info = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"
-        $responseObject['sqlServerMajorVersion'] = $info.ProductMajorPart
-        $responseObject['sqlServerVersion'] = $info.ProductVersion
-      } Else {
-        $responseObject['failureInfo'] += "\${instanceName}: Path $sqlServiceBinaryPath does not exist\`n"
-      }
-  
-      $responseObject['sqlServerInstance'] = $instanceName
-      $responseObject['sqlServerState'] = $sqlService.State
+
       $responseObject['windowsOsVersion'] = (Get-WmiObject -Class Win32_OperatingSystem).Caption
       $responseObject['${SQL_SERVER_DEPLOYMENT_TYPE}'] = $clusterDetails['${SQL_SERVER_DEPLOYMENT_TYPE}']
 
@@ -1226,6 +1230,9 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
           }
       }
       
+      } catch {
+        $responseObject['failureInfo'] += "Instance processing error: $_\`n"
+      }
       $instanceSectionEndTime = Get-Date
       $responseObject['scriptExecutionTime'] = (($instanceSectionEndTime - $instanceSectionStartTime).TotalMilliseconds)
       Echo $responseObject
