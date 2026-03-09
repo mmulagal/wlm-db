@@ -1,0 +1,23 @@
+.tableWrapper {
+    display: flex;
+    flex-direction: column;
+
+    .tableRow {
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+        height: 56px;
+    }
+
+    .tableCell {
+        flex: 1;
+        min-width: 0;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}

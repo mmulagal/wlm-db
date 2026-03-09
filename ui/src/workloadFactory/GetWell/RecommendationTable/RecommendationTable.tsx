@@ -15,7 +15,9 @@ import Tag from '../../../common/Tag/Tag';
 import RecommendationTooltip from '../RecommendationTooltip/RecommendationTooltip';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
+import ImpactedDriveDialog from '../../Dashboard/DashboardInnerPage/RenderTables/ImpactedDriveDialog/ImpactedDriveDialog';
 import { DismissDialog } from '../StorageCardComponent/DismissDialog/DismissDialog';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import {
     calculatePostponeInfo,
     PostponeInfo,
@@ -60,6 +62,8 @@ import {
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     GETWELL_STATUS,
     GW_CONFIG_OPTIMIZE_NA,
+    MSSQL_IMPACTED_DRIVE_CONFIGS,
+    ORACLE_IMPACTED_DRIVE_CONFIGS,
     WLF_TABS
 } from '../../../utils/consts';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -897,6 +901,28 @@ const RecommendationTable = ({
         </div>
     );
 
+    const handleImpactedDriveDialog = (rowData: any) => {
+        setDialog(
+            <DialogComponent
+                header={t('databases.well-architect.impacted-resources')}
+                content={<ImpactedDriveDialog data={rowData} />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+            />
+        );
+    };
+
+    const impactedDriveDialogCheck = (rowData: any) => {
+        if (
+            from === WLF_TABS.DASHBOARD &&
+            ((engineType === DBType.MSSQL && MSSQL_IMPACTED_DRIVE_CONFIGS.includes(rowData?.name)) ||
+                (engineType === DBType.ORACLE && ORACLE_IMPACTED_DRIVE_CONFIGS.includes(rowData?.name)))
+        ) {
+            return true;
+        }
+        return false;
+    };
+
     const ColDefs: ColumnProps[] = [
         {
             id: '1',
@@ -1060,11 +1086,27 @@ const RecommendationTable = ({
                                     rowData?.name !== ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_TIMEOUT) ||
                                 engineType === DBType.ORACLE ? (
                                     <div>
-                                        <DsTypography variant="Regular_13" className={`${styles.colText}`}>
-                                            {`${rowData?.totalObjectsInViolation || 0} out of ${
-                                                rowData?.totalObjectsAssessed || 0
-                                            } ${type}`}
-                                        </DsTypography>
+                                        {impactedDriveDialogCheck(rowData) && rowData?.totalObjectsInViolation > 0 ? (
+                                            <div className={CommonStyles.impactedDrivesCell}>
+                                                <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                                    {`${rowData?.totalObjectsInViolation || 0} out of ${
+                                                        rowData?.totalObjectsAssessed || 0
+                                                    } ${type}`}
+                                                </DsTypography>
+                                                <Button
+                                                    variant="text"
+                                                    onClick={() => handleImpactedDriveDialog(rowData)}
+                                                >
+                                                    {t('databases.dashboard.view')}
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <DsTypography variant="Regular_13" className={`${styles.colText}`}>
+                                                {`${rowData?.totalObjectsInViolation || 0} out of ${
+                                                    rowData?.totalObjectsAssessed || 0
+                                                } ${type}`}
+                                            </DsTypography>
+                                        )}
                                     </div>
                                 ) : (
                                     <DsTypography variant="Regular_13" className={`${styles.colText}`}>

@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { DsToggleSwitch } from '@tlveng/wlm-ds';
-import { DsTypography } from '@netapp/design-system';
+import { Button, DsTypography, useDialog } from '@netapp/design-system';
+import { TFunction } from 'i18next';
 import styles from './RenderTables.module.scss';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { ReactComponent as NotActive } from '../../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../../assets/optimized.svg';
@@ -40,6 +42,20 @@ import BulkCombineActionController from '../../../../common/BulkAction/BulkCombi
 import { GwSqlServerInstanceInterface, RSSConfigAdapterInterface } from '../../../../utils/types/getWellTypes';
 import { bulkFixDisableCheck, sortOptimizeDashboardInnerTable } from '../DashboardInnerPageHelper';
 import { engineTypeBasedResourceStr } from '../../../WellArchitectedTab/WellArchitectedTabUtils';
+import DialogComponent from '../../../../common/Dialog/DialogComponent';
+import ImpactedDriveDialog from './ImpactedDriveDialog/ImpactedDriveDialog';
+import { GENERAL } from '../../../../utils/appConstants';
+
+interface ConfigTableRowData {
+    totalObjectsAssessed?: number;
+    totalObjectsInViolation?: number;
+    configState?: string;
+    configurationName?: string;
+    name?: string;
+    [key: string]: any;
+}
+
+type HandleImpactedDriveDialog = (rowData: ConfigTableRowData) => void;
 
 interface DashboardConfigsTableProps {
     configType: string;
@@ -96,7 +112,9 @@ const CONFIG_MAPPING: Record<string, any> = {
         dataMapping: (obj: any) => ({
             current: obj?.current,
             totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation
+            totalObjectsInViolation: obj?.totalObjectsInViolation,
+            violationDetails: obj?.violationDetails || [],
+            configurationName: 'performance-tier'
         }),
         customColumns: [
             {
@@ -104,8 +122,21 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '220px',
-                renderCell: (cellData: string, rowData: any) =>
-                    `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                ) => (
+                    <div className={CommonStyles.impactedDrivesCell}>
+                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                                {t('databases.dashboard.view')}
+                            </Button>
+                        )}
+                    </div>
+                )
             }
         ]
     },
@@ -125,7 +156,7 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'fileSystemHeadroom',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
+                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                     cellData || t('databases.general.not-available-table-columns')
             }
         ]
@@ -138,7 +169,9 @@ const CONFIG_MAPPING: Record<string, any> = {
         dataMapping: (obj: any) => ({
             percentDataDriveSize: obj?.current,
             totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation
+            totalObjectsInViolation: obj?.totalObjectsInViolation,
+            sizingViolations: obj?.sizingViolations || {},
+            configurationName: 'log-drive-size'
         }),
         customColumns: [
             {
@@ -146,8 +179,21 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
-                    `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                ) => (
+                    <div className={CommonStyles.impactedDrivesCell}>
+                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                                {t('databases.dashboard.view')}
+                            </Button>
+                        )}
+                    </div>
+                )
             }
         ]
     },
@@ -167,7 +213,7 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'percentDataDriveSize',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
+                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                     cellData || t('databases.general.not-available-table-columns')
             }
         ]
@@ -179,7 +225,9 @@ const CONFIG_MAPPING: Record<string, any> = {
         dataMapping: (obj: any) => ({
             userDataFiles: obj?.current,
             totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation
+            totalObjectsInViolation: obj?.totalObjectsInViolation,
+            objectsInViolation: obj?.objectsInViolation || [],
+            configurationName: 'data-files-location'
         }),
         isFixSupported: false, // Fix is not supported for OS patch configurations
         customColumns: [
@@ -188,8 +236,21 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
-                    `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                ) => (
+                    <div className={CommonStyles.impactedDrivesCell}>
+                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                                {t('databases.dashboard.view')}
+                            </Button>
+                        )}
+                    </div>
+                )
             }
         ]
     },
@@ -200,7 +261,9 @@ const CONFIG_MAPPING: Record<string, any> = {
         dataMapping: (obj: any) => ({
             userDataFiles: obj?.current,
             totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation
+            totalObjectsInViolation: obj?.totalObjectsInViolation,
+            objectsInViolation: obj?.objectsInViolation || [],
+            configurationName: 'log-files-location'
         }),
         isFixSupported: false, // Fix is not supported for OS patch configurations
         customColumns: [
@@ -209,8 +272,21 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
-                    `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                ) => (
+                    <div className={CommonStyles.impactedDrivesCell}>
+                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                                {t('databases.dashboard.view')}
+                            </Button>
+                        )}
+                    </div>
+                )
             }
         ]
     },
@@ -230,7 +306,7 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'tempDBPlacement',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
+                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                     cellData || t('databases.general.not-available-table-columns')
             }
         ]
@@ -251,7 +327,7 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'findingReasons',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
+                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                     cellData || t('databases.general.not-available-table-columns')
             }
         ]
@@ -270,7 +346,7 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'current',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
+                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                     cellData || t('databases.general.not-available-table-columns')
             }
         ]
@@ -305,7 +381,7 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
+                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                     `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
             }
         ]
@@ -327,7 +403,7 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
+                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                     `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
             }
         ]
@@ -363,7 +439,7 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'current',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
+                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                     cellData || t('databases.general.not-available-table-columns')
             }
         ]
@@ -408,7 +484,7 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'current',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
+                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                     cellData || t('databases.general.not-available-table-columns')
             }
         ]
@@ -429,7 +505,7 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'current',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
+                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                     cellData || t('databases.general.not-available-table-columns')
             }
         ]
@@ -441,7 +517,9 @@ const CONFIG_MAPPING: Record<string, any> = {
         dataMapping: (obj: any) => ({
             current: obj?.current,
             totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: obj?.totalObjectsInViolation || 0
+            totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
+            objectsInViolation: obj?.objectsInViolation || [],
+            configurationName: 'snapshot-policy'
         }),
         isFixSupported: true,
         customColumns: [
@@ -450,8 +528,21 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
-                    `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                ) => (
+                    <div className={CommonStyles.impactedDrivesCell}>
+                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                                {t('databases.dashboard.view')}
+                            </Button>
+                        )}
+                    </div>
+                )
             }
         ]
     },
@@ -462,7 +553,9 @@ const CONFIG_MAPPING: Record<string, any> = {
         dataMapping: (obj: any) => ({
             current: obj?.current,
             totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: obj?.totalObjectsInViolation || 0
+            totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
+            objectsInViolation: obj?.objectsInViolation || [],
+            configurationName: 'crr'
         }),
         isFixSupported: false,
         customColumns: [
@@ -471,8 +564,21 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
-                    `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                ) => (
+                    <div className={CommonStyles.impactedDrivesCell}>
+                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                                {t('databases.dashboard.view')}
+                            </Button>
+                        )}
+                    </div>
+                )
             }
         ]
     },
@@ -483,7 +589,9 @@ const CONFIG_MAPPING: Record<string, any> = {
         dataMapping: (obj: any) => ({
             current: obj?.current,
             totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: obj?.totalObjectsInViolation || 0
+            totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
+            objectsInViolation: obj?.objectsInViolation || [],
+            configurationName: 'backup-configuration'
         }),
         isFixSupported: true,
         customColumns: [
@@ -492,8 +600,21 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
-                    `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                ) => (
+                    <div className={CommonStyles.impactedDrivesCell}>
+                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                                {t('databases.dashboard.view')}
+                            </Button>
+                        )}
+                    </div>
+                )
             }
         ]
     },
@@ -518,12 +639,21 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: any, t: any) =>
+                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                     `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
             }
         ]
     }
 };
+
+const PLACEMENT_CONFIGS_WITH_VIEW = new Set([
+    'oracle-binary-placement',
+    'datafiles-placement',
+    'controlfiles-placement',
+    'redologs-placement',
+    'templogs-placement',
+    'archive-placement'
+]);
 
 // Helper function to create Oracle placement configuration
 const createOraclePlacementConfig = (configName: string, isFixSupported: boolean) => ({
@@ -544,8 +674,27 @@ const createOraclePlacementConfig = (configName: string, isFixSupported: boolean
             accessor: 'totalObjectsInViolation',
             id: '4',
             width: '220px',
-            renderCell: (cellData: string, rowData: any) =>
-                `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
+            renderCell: (
+                cellData: string,
+                rowData: ConfigTableRowData,
+                t: TFunction,
+                handleImpactedDriveDialog: HandleImpactedDriveDialog
+            ) => {
+                if (PLACEMENT_CONFIGS_WITH_VIEW.has(configName)) {
+                    const newObj = { ...rowData, name: configName };
+                    return (
+                        <div className={CommonStyles.impactedDrivesCell}>
+                            {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                            {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                                <Button variant="text" onClick={() => handleImpactedDriveDialog(newObj)}>
+                                    {t('databases.dashboard.view')}
+                                </Button>
+                            )}
+                        </div>
+                    );
+                }
+                return `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`;
+            }
         }
     ]
 });
@@ -573,7 +722,7 @@ const createOracleStorageSizingConfig = (
             accessor,
             id: '4',
             width: '200px',
-            renderCell: (cellData: string, rowData: any, t: any) =>
+            renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                 cellData || t('databases.general.not-available-table-columns')
         }
     ]
@@ -628,7 +777,7 @@ const createOracleHostOsPatchConfig = () => ({
             accessor: 'current',
             id: '4',
             width: '200px',
-            renderCell: (cellData: string, rowData: any, t: any) =>
+            renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
                 cellData || t('databases.general.not-available-table-columns')
         }
     ]
@@ -894,6 +1043,19 @@ const DashboardConfigsTable = ({
         t
     );
 
+    const { setDialog } = useDialog();
+
+    const handleImpactedDriveDialog: HandleImpactedDriveDialog = rowData => {
+        setDialog(
+            <DialogComponent
+                header={t('databases.well-architect.impacted-resources')}
+                content={<ImpactedDriveDialog data={rowData} />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+            />
+        );
+    };
+
     // Build dynamic columns
     const TableColDefs: ColumnProps[] = [
         // Standard columns that are common across all configs
@@ -1015,7 +1177,7 @@ const DashboardConfigsTable = ({
                               </div>
                           );
                       }
-                      return col.renderCell(cellData, rowData, t);
+                      return col.renderCell(cellData, rowData, t, handleImpactedDriveDialog);
                   }
                 : undefined
         })),

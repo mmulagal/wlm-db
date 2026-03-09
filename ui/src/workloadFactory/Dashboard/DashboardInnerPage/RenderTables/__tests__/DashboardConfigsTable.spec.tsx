@@ -6,6 +6,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import DashboardConfigsTable from '../DashboardConfigsTable';
 
+const mockSetDialog = vi.fn();
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, variant, className }: any) => (
         <span data-testid={`typography-${variant}`} className={className}>
@@ -22,7 +23,7 @@ vi.mock('@netapp/design-system', () => ({
             {children}
         </button>
     ),
-    useDialog: () => ({ setDialog: vi.fn() })
+    useDialog: () => ({ setDialog: mockSetDialog, closeDialog: vi.fn() })
 }));
 
 vi.mock('@tlveng/wlm-ds', () => ({
@@ -240,6 +241,14 @@ vi.mock('../RenderTables.module.scss', () => ({
         jobMenuPopover: 'jmp',
         menuIcon: 'mi'
     }
+}));
+
+vi.mock('../../../../../utils/CommonStyles.module.scss', () => ({
+    default: { impactedDrivesCell: 'impactedDrivesCell' }
+}));
+
+vi.mock('../ImpactedDriveDialog/ImpactedDriveDialog', () => ({
+    default: ({ data }: any) => <div data-testid="impacted-drive-dialog">{data?.configurationName}</div>
 }));
 
 const makeStore = (overrides: any = {}) =>
@@ -823,6 +832,94 @@ describe('DashboardConfigsTable', () => {
             </Provider>
         );
         expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    // ── View button conditional rendering and click behaviour ──
+    it('renders View button for rows with violations > 0', () => {
+        render(
+            <Provider store={makeStore()}>
+                <DashboardConfigsTable {...defaultProps} />
+            </Provider>
+        );
+        const viewButtons = screen.getAllByText('databases.dashboard.view');
+        expect(viewButtons.length).toBeGreaterThan(0);
+    });
+
+    it('does not render View button for rows with zero or undefined violations', () => {
+        render(
+            <Provider store={makeStore()}>
+                <DashboardConfigsTable {...defaultProps} />
+            </Provider>
+        );
+        // Row 4 (index 4): configState ACTIVE, no totalObjectsInViolation → custom renderCell fires
+        const activeNoViolationCell = screen.getByTestId('cell-4-4');
+        expect(activeNoViolationCell.textContent).toContain('0 out of 0');
+        expect(activeNoViolationCell.querySelector('[data-testid="button-text"]')).toBeNull();
+    });
+
+    it('shows N/A instead of View button for DISMISSED / POSTPONED rows', () => {
+        render(
+            <Provider store={makeStore()}>
+                <DashboardConfigsTable {...defaultProps} />
+            </Provider>
+        );
+        // Row 1 (DISMISSED) and Row 2 (POSTPONED) should show N/A text, not the impacted-drives cell
+        const dismissedCell = screen.getByTestId('cell-4-1');
+        expect(dismissedCell.textContent).toContain('databases.general.not-available-table-columns');
+        expect(dismissedCell.querySelector('[data-testid="button-text"]')).toBeNull();
+
+        const postponedCell = screen.getByTestId('cell-4-2');
+        expect(postponedCell.textContent).toContain('databases.general.not-available-table-columns');
+        expect(postponedCell.querySelector('[data-testid="button-text"]')).toBeNull();
+    });
+
+    it('calls setDialog when View button is clicked', () => {
+        mockSetDialog.mockClear();
+        render(
+            <Provider store={makeStore()}>
+                <DashboardConfigsTable {...defaultProps} />
+            </Provider>
+        );
+        const viewButtons = screen.getAllByText('databases.dashboard.view');
+        fireEvent.click(viewButtons[0]);
+        expect(mockSetDialog).toHaveBeenCalledTimes(1);
+    });
+
+    it('passes ImpactedDriveDialog as dialog content when View is clicked', () => {
+        mockSetDialog.mockClear();
+        render(
+            <Provider store={makeStore()}>
+                <DashboardConfigsTable {...defaultProps} />
+            </Provider>
+        );
+        const viewButtons = screen.getAllByText('databases.dashboard.view');
+        fireEvent.click(viewButtons[0]);
+
+        const dialogElement = mockSetDialog.mock.calls[0][0];
+        expect(dialogElement.props.header).toBe('databases.well-architect.impacted-resources');
+        expect(dialogElement.props.content).toBeTruthy();
+        expect(dialogElement.props.callback).toBeTypeOf('function');
+    });
+
+    it('does not render View button for Oracle config when violations are 0', () => {
+        render(
+            <Provider
+                store={makeStore({
+                    getWellOptimize: {
+                        configEngineType: 'ORACLE',
+                        inProgressOptimizationData: {},
+                        inProgressHostData: {},
+                        inProgressStateData: {}
+                    }
+                })}
+            >
+                <DashboardConfigsTable {...defaultProps} configType="Data files placement" />
+            </Provider>
+        );
+        // Row 4 has no violations and ACTIVE state
+        const activeNoViolationCell = screen.getByTestId('cell-4-4');
+        expect(activeNoViolationCell.textContent).toContain('0 out of 0');
+        expect(activeNoViolationCell.querySelector('[data-testid="button-text"]')).toBeNull();
     });
 
     // ── Skip host when cred/region not matching ──

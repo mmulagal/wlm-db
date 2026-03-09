@@ -25,6 +25,13 @@
     z-index: 5;
 }
 
+.impactedDrivesCell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
 .loaderOverlay {
     position: absolute;
     inset: 0;
