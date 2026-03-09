@@ -28,7 +28,7 @@ function ComputeOracleDialog({ missingPatchList = [] }: ComputeOracleDialogProps
             width: '137px'
         },
         {
-            Header: t('databases.well-architect.name'),
+            Header: t('databases.well-architect.package-name'),
             accessor: 'title',
             id: '2',
             isSortable: true,
