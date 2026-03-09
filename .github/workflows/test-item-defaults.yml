@@ -1,0 +1,43 @@
+name: Issue Template Defaults
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  set-defaults:
+    if: >-
+      contains(github.event.issue.labels.*.name, 'Test Item') ||
+      contains(github.event.issue.labels.*.name, 'Test Plan') ||
+      contains(github.event.issue.labels.*.name, 'Task') ||
+      contains(github.event.issue.labels.*.name, 'Story') ||
+      contains(github.event.issue.labels.*.name, 'Epic') ||
+      contains(github.event.issue.labels.*.name, 'Bug')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ vars.APP_ID }}
+          private_key: ${{ secrets.GG_PEM }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23.9.0
+
+      - name: Install dependencies
+        run: npm install @octokit/rest@20.1.1 @octokit/graphql@7.0.2
+
+      - name: Set Issue Defaults
+        run: node .github/scripts/test-item-defaults.js
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_CREATOR: ${{ github.event.issue.user.login }}
+          ISSUE_LABELS: ${{ toJson(github.event.issue.labels.*.name) }}
