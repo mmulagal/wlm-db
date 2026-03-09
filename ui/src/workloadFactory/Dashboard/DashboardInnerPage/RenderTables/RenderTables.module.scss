@@ -64,10 +64,9 @@
     }
 
     .arrow {
-        width: 100%;
         display: flex;
         justify-content: end;
-        margin-right: 40px;
+
         svg {
             transform: rotate(90deg);
             -webkit-transform: rotate(90deg);
@@ -118,6 +117,7 @@
         align-items: center;
         gap: 48px;
         justify-content: flex-end;
+        width: 100%;
 
         [class*='dsButtons'] {
             border-radius: 20px !important;

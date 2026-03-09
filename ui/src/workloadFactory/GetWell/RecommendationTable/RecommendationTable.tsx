@@ -863,6 +863,9 @@ const RecommendationTable = ({
 
     const lastColWidth = () => {
         if (from === WLF_TABS.DASHBOARD) {
+            if (windowSize.width > 1847) {
+                return showDismissedConfigurations ? '25%' : '22%';
+            }
             if (showDismissedConfigurations) {
                 return '403px';
             }
@@ -899,7 +902,7 @@ const RecommendationTable = ({
             id: '1',
             Header: t('databases.well-architect.recommendation-table.headers.configuration'),
             accessor: 'name',
-            width: from === WLF_TABS.DASHBOARD ? '240px' : '15%',
+            width: from === WLF_TABS.DASHBOARD ? (windowSize.width > 1847 ? '15%' : '240px') : '15%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
                 <CellWrapper rowData={rowData}>{cellData || t('databases.general.not-available')}</CellWrapper>
@@ -909,7 +912,7 @@ const RecommendationTable = ({
             id: '2',
             Header: t('databases.well-architect.recommendation-table.headers.status'),
             accessor: 'status',
-            width: from === WLF_TABS.DASHBOARD ? '180px' : '13%',
+            width: from === WLF_TABS.DASHBOARD ? (windowSize.width > 1847 ? '13%' : '180px') : '13%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
                 <CellWrapper rowData={rowData}>
@@ -948,7 +951,7 @@ const RecommendationTable = ({
             id: '3',
             Header: t('databases.well-architect.recommendation-table.headers.severity'),
             accessor: 'severity',
-            width: from === WLF_TABS.DASHBOARD ? '140px' : '8%',
+            width: from === WLF_TABS.DASHBOARD ? (windowSize.width > 1847 ? '8%' : '140px') : '8%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 if (rowData?.errorMessage) {
@@ -987,7 +990,7 @@ const RecommendationTable = ({
             id: '4',
             Header: t('databases.well-architect.recommendation-table.headers.impacted-resources'),
             accessor: 'totalObjectsInViolation',
-            width: from === WLF_TABS.DASHBOARD ? '200px' : '15%',
+            width: from === WLF_TABS.DASHBOARD ? (windowSize.width > 1847 ? '15%' : '200px') : '15%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 let type = '';
@@ -1078,7 +1081,7 @@ const RecommendationTable = ({
             id: '5',
             Header: t('databases.well-architect.recommendation-table.headers.tags'),
             accessor: 'tags',
-            width: from === WLF_TABS.DASHBOARD ? '140px' : '10%',
+            width: from === WLF_TABS.DASHBOARD ? (windowSize.width > 1847 ? '10%' : '140px') : '10%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
                 <CellWrapper rowData={rowData}>
@@ -1119,7 +1122,7 @@ const RecommendationTable = ({
             id: '6',
             Header: t('databases.well-architect.recommendation-table.headers.recommendations'),
             accessor: 'recommendation',
-            width: from === WLF_TABS.DASHBOARD ? '232px' : 'auto',
+            width: from === WLF_TABS.DASHBOARD ? (windowSize.width > 1847 ? 'auto' : '232px') : 'auto',
             renderCell: (cellData: any, rowData: any) => (
                 <CellWrapper rowData={rowData}>
                     <div className={styles.recommendation}>
