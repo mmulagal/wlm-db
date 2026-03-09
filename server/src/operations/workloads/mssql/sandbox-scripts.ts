@@ -178,23 +178,30 @@ const getDbMappedOntapVolumes = (
             $responseObject['data'] = @()
             $responseObject['log'] = @()
 
+            $allDisks = Get-Disk | Select SerialNumber, Number, BusType
             $winvolumes = $sqlresponse | foreach { $_ | ConvertFrom-Json }
             foreach ($winvolume in $winvolumes) {
-
-                # check in winvolume volume id is null or empty string
 
                 if ([string]::IsNullOrEmpty($winvolume.volumeid)) {
                     throw "Could not get volume id for database $dbname, please make sure the database is using iscsi protocol"
                 }
-                $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype
+                $partitions = @(Get-Volume -Path $winvolume.volumeid | Get-Partition | Where-Object DiskNumber -in $allDisks.Number)
+                if ($partitions.Count -eq 0) {
+                    throw "Could not find any disk partition for volume id $($winvolume.volumeid)"
+                }
+                $partition = $partitions[0]
+                $disk = $allDisks | Where-Object Number -eq $partition.DiskNumber
+                if ($null -eq $disk) {
+                    throw "Could not find disk for DiskNumber $($partition.DiskNumber) of volume id $($winvolume.volumeid)"
+                }
 
-                if ($vol.bustype -ne 'iscsi') {
+                if ($disk.BusType -ne 'iSCSI') {
                     throw "Protocol Error: The database should be using iscsi protocol"
                 }
 
                 $object = @{
                     "fileName" = $winvolume.filename
-                    "lunSerialNumber" = $vol.serialnumber
+                    "lunSerialNumber" = $disk.SerialNumber
                     "fileId" = $winvolume.fileid
                     "fileType" = $winvolume.type
                 }
