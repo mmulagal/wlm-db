@@ -1,10 +1,13 @@
 import createError from 'http-errors';
 import getLogger from '../../utils/logger';
+import { sleep } from '../../utils/utils';
 import { executeSSMDocumentMultipleInstances } from './ssm-operations';
 import { describeInstancePatchStates, describeInstancePatches } from '../../lib/aws/ssm';
 import { DatabaseTypes } from '../../utils/consts';
 
 const logger = getLogger();
+const MAX_PATCH_DETAILS_RETRY_ATTEMPTS = 3;
+const PATCH_DETAILS_RETRY_DELAY_MS = 5000;
 
 async function runAwsPatchBaseline(
     credentialId: string,
@@ -42,12 +45,8 @@ async function getMissingPatchDetails(
         databaseType === DatabaseTypes.MS_SQL_SERVER
             ? [
                   {
-                      Key: 'Severity',
-                      Values: ['Critical', 'Important']
-                  },
-                  {
                       Key: 'State',
-                      Values: ['Missing']
+                      Values: ['Missing', 'AvailableSecurityUpdate']
                   }
               ]
             : [
@@ -73,6 +72,61 @@ async function getMissingPatchDetails(
     );
 }
 
+async function fetchPatchDetailsWithRetry(
+    credentialsId: string,
+    region: string,
+    instanceIds: string[],
+    databaseType: DatabaseTypes,
+    expectedPatchCountByInstanceId: Map<string, number>
+) {
+    const maxAttempts = MAX_PATCH_DETAILS_RETRY_ATTEMPTS;
+    let instanceMissingPatchDetails: Awaited<ReturnType<typeof getMissingPatchDetails>> = [];
+    const expectedMissingPatchDetailsCountByInstanceId = Object.fromEntries(expectedPatchCountByInstanceId);
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        instanceMissingPatchDetails = await getMissingPatchDetails(credentialsId, region, instanceIds, databaseType);
+        const actualMissingPatchDetailsCountByInstanceId = instanceMissingPatchDetails.map(
+            ({ instanceId, missingPatches }) => ({
+                instanceId,
+                missingPatchDetailsCount: missingPatches?.length || 0
+            })
+        );
+        const hasMismatchedMissingPatchDetailsCount = instanceMissingPatchDetails.some(
+            ({ instanceId, missingPatches }) =>
+                (missingPatches?.length || 0) !== (expectedPatchCountByInstanceId.get(instanceId) || 0)
+        );
+
+        if (!hasMismatchedMissingPatchDetailsCount) {
+            break;
+        }
+
+        if (attempt >= maxAttempts) {
+            logger.info('Missing patch details retry limit reached with mismatched counts', {
+                credentialsId,
+                region,
+                maxAttempts,
+                expectedMissingPatchDetailsCountByInstanceId,
+                actualMissingPatchDetailsCountByInstanceId
+            });
+            break;
+        }
+
+        logger.info('Retrying missing patch details fetch due to mismatched count', {
+            credentialsId,
+            region,
+            attempt,
+            expectedMissingPatchDetailsCountByInstanceId,
+            actualMissingPatchDetailsCountByInstanceId
+        });
+
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(PATCH_DETAILS_RETRY_DELAY_MS);
+    }
+
+    return instanceMissingPatchDetails;
+}
+
 async function getInstancesPatchStatus(
     credentialsId: string,
     region: string,
@@ -92,19 +146,33 @@ async function getInstancesPatchStatus(
             params
         );
 
-        const isNotOptimized = instancePatchStates?.some(
+        let isNotOptimized = false;
+        const expectedPatchCountByInstanceId = new Map<string, number>();
+
+        (instancePatchStates || []).forEach(
             ({
-                CriticalNonCompliantCount: critical = 0,
-                SecurityNonCompliantCount: security = 0,
-                OtherNonCompliantCount: other = 0
-            }) => critical > 0 || security > 0 || other > 0
+                InstanceId,
+                CriticalNonCompliantCount = 0,
+                SecurityNonCompliantCount = 0,
+                OtherNonCompliantCount = 0
+            }) => {
+                if (InstanceId) {
+                    const nonCompliantCount =
+                        CriticalNonCompliantCount + SecurityNonCompliantCount + OtherNonCompliantCount;
+                    expectedPatchCountByInstanceId.set(InstanceId, nonCompliantCount);
+                    if (nonCompliantCount > 0) {
+                        isNotOptimized = true;
+                    }
+                }
+            }
         );
         if (isNotOptimized) {
-            const instanceMissingPatchDetails = await getMissingPatchDetails(
+            const instanceMissingPatchDetails = await fetchPatchDetailsWithRetry(
                 credentialsId,
                 region,
                 instanceIds,
-                databaseType
+                databaseType,
+                expectedPatchCountByInstanceId
             );
             response = instanceMissingPatchDetails?.map(({ instanceId, missingPatches }) => {
                 const instancePatchState = instancePatchStates?.find(({ InstanceId }) => InstanceId === instanceId);
