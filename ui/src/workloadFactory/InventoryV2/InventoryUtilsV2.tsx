@@ -4418,13 +4418,15 @@ export const addHostHandlerSc = async (
         )
     );
     const dialogKey = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
-    const state: any = store.getState().snapCenter;
+    const currentState = store.getState();
+    const state: any = currentState.snapCenter;
+    const orgId = currentState.auth.orgId;
     const payload = {
         connectorId: state.selectedAgent[0]?.id,
         ec2InstanceIds: [rowData.ec2InstanceId],
         sqlInstanceName: rowData.databaseInstanceName,
         resourceId: rowData.resourceId,
-        organizationId: state?.workSpaceData?.id
+        ...(orgId ? { organizationId: orgId } : {})
     };
     try {
         const credIdResponse = await generateCredentialID({
