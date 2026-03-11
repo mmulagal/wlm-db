@@ -874,7 +874,7 @@ export const cardDataDefault: any = {
         category: 'application',
         block_one: {
             type: GENERAL.RESILIENCY,
-            value: GENERAL.CRR
+            value: ASSESSMENT_CONFIG_NAMES.CRR
         },
         block_two: {
             type: 'Status',
@@ -3103,8 +3103,6 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
                 // Use proper display name for MSSQL High Availability
                 if (key === GETWELL_CONFIG.mssqlhighavailability) {
                     dismissedResiliencyIds.push(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY);
-                } else if (nestedObject?.mapName === ASSESSMENT_CONFIG_NAMES.CRR) {
-                    dismissedResiliencyIds.push(ASSESSMENT_CONFIG_NAMES.CRR_DISPLAY_NAME);
                 } else {
                     dismissedResiliencyIds.push(nestedObject?.mapName);
                 }
@@ -5759,7 +5757,7 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             configKey = 'scheduledLocalSnapshot';
             break;
         case ASSESSMENT_CONFIG_NAMES.CRR:
-            configKey = 'crr';
+            configKey = dbType === DBType.ORACLE ? 'oracleCrr' : 'crr';
             break;
         case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
             configKey = 'scheduledawsBackup';

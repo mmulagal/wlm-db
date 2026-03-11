@@ -211,7 +211,7 @@ const OptimizeInnerPage = () => {
                     tagSection: '304px'
                 });
                 break;
-            case 'Cross-Region Replication (CRR)':
+            case ASSESSMENT_CONFIG_NAMES.CRR:
                 setCardHeight({
                     recommendationSection: '160px',
                     tagSection: '256px'
@@ -255,7 +255,10 @@ const OptimizeInnerPage = () => {
                 />
             );
         }
-        if (selectedOptimizeConfig?.type === GENERAL.CRR) {
+        if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CRR &&
+            selectedOptimizeConfig?.engineType === DBType.MSSQL
+        ) {
             return (
                 <DsButton isThin variant="secondary" isDisabled>
                     {GENERAL.OPTIMIZE}
@@ -310,7 +313,9 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.MTU ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT ||
+            (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CRR &&
+                selectedOptimizeConfig?.engineType === DBType.ORACLE)
         ) {
             return (
                 <DsButton
@@ -867,7 +872,7 @@ const OptimizeInnerPage = () => {
                         isWad={isWad}
                     />
                 );
-            case GENERAL.CRR:
+            case ASSESSMENT_CONFIG_NAMES.CRR:
                 return (
                     <CRROptimizeTable
                         type={selectedOptimizeConfig?.type}
@@ -933,7 +938,7 @@ const OptimizeInnerPage = () => {
                                 }
                             },
                             {
-                                title: `${selectedOptimizeConfig?.type}`,
+                                title: `${setHeading()}`,
                                 dataTestId: `wlm-db-manage-instance-inner-page-heading-for-${selectedOptimizeConfig?.type
                                     .toLowerCase()
                                     .replace(/ /g, '-')}`

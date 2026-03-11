@@ -35,7 +35,7 @@ export const getDisplayNameToTechnicalKeyMapping = () => ({
     [ASSESSMENT_CONFIG_NAMES.MAXDOP]: 'maxdop',
     [ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]: 'scheduled_local_snapshot',
     [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: 'scheduled_fsx_for_ontap_backups',
-    [ASSESSMENT_CONFIG_NAMES.CRR_DISPLAY_NAME]: 'crr',
+    [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
     [ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]: 'clone_management',
     [ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]: 'mssql_high_availability'
 });
@@ -95,7 +95,8 @@ export const getOracleDisplayNameToTechnicalKeyMapping = () => ({
     [ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION]: 'dnfs-consistent-ip-resolution',
     [ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT]: 'dnfs-enabled',
     [ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE]: 'dnfs-configuration-file',
-    [ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE]: 'dnfs-no-shared-cache'
+    [ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE]: 'dnfs-no-shared-cache',
+    [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr'
 });
 
 // Helper function to get technical key to display name mapping for MSSQL

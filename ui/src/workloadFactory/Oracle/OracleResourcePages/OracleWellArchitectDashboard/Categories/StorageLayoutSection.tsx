@@ -74,9 +74,8 @@ const StorageLayoutSection = ({
 
             const configState = card.dismissedObj?.configState;
             const hasValidAssessment = card.block_two?.value; // Check if card has actual assessment data
-            const hasError = card.errorMessage;
 
-            if (!hasValidAssessment && configState !== CONFIG_STATES.DISMISSED && hasError) {
+            if (!hasValidAssessment && configState !== CONFIG_STATES.DISMISSED) {
                 hasActiveCards = true;
             }
             if (!hasValidAssessment) return;

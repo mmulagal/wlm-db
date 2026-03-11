@@ -2699,7 +2699,7 @@ const GetWell = () => {
                                                 <StorageCardComponent
                                                     cardData={filteredCardData?.crr}
                                                     optimizePrintState={optimizePrintState}
-                                                    type={GENERAL.CRR}
+                                                    type={ASSESSMENT_CONFIG_NAMES.CRR}
                                                     showDismissedConfigurations={showDismissedConfigurations}
                                                     setShowDismissedConfigurations={setShowDismissedConfigurations}
                                                 />

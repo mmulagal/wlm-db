@@ -56,8 +56,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     // Maintain separate category selections/applied filters for MSSQL and Oracle
     const [selectedCategoriesMssql, setSelectedCategoriesMssql] = useState<string[]>(categoryOptions);
     const [appliedCategoriesMssql, setAppliedCategoriesMssql] = useState<string[]>(categoryOptions);
-    // For Oracle: Only Storage and Compute should be selectable
-    const ORACLE_DEFAULT_SELECTED = ['Storage', 'Compute'];
+    // For Oracle: Storage, Compute, and Resiliency are selectable by default (Application is present but disabled)
+    const ORACLE_DEFAULT_SELECTED = ['Storage', 'Compute', 'Resiliency'];
     const [selectedCategoriesOracle, setSelectedCategoriesOracle] = useState<string[]>(ORACLE_DEFAULT_SELECTED);
     const [appliedCategoriesOracle, setAppliedCategoriesOracle] = useState<string[]>(ORACLE_DEFAULT_SELECTED);
     // Separate severity selections per engine so severity filtering affects only that engine
@@ -135,8 +135,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
     const toggleCategory = (item: string) => {
         if (configEngineType === DBType.ORACLE) {
-            // For Oracle: Don't allow toggling disabled categories (Application and Resiliency)
-            if (item === 'Application' || item === 'Resiliency') return;
+            if (item === 'Application') return;
             setSelectedCategoriesOracle(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
         } else {
             setSelectedCategoriesMssql(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
@@ -364,7 +363,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 headingText === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
                 headingText === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
             ) {
-                // For ASM configs total is calculated dynamically as all databases does not have ASM setup
                 total = configData?.[key]?.total || 1;
                 afterOutOfTotal = configData?.[key]?.total;
             } else {
@@ -585,9 +583,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                     <div className={styles.column}>
                                         {currentCategoryOptions.map(option => {
                                             const isOracle = configEngineType === DBType.ORACLE;
-                                            // For Oracle: Disable Application and Resiliency
-                                            const isDisabled =
-                                                isOracle && (option === 'Application' || option === 'Resiliency');
+                                            const isDisabled = isOracle && option === 'Application';
                                             const isSelected = currentSelectedCategories.includes(option);
                                             return (
                                                 <div className={styles.itemWrapper} key={option}>
@@ -1142,7 +1138,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.CRR) && (
                     <div className={styles.tile}>
-                        {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.CRR, 'Cross-Region Replication (CRR)', 'crr')}
+                        {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.CRR, ASSESSMENT_CONFIG_NAMES.CRR, 'crr')}
 
                         <SeparatorComponent variant="vertical" height="60px" />
 
@@ -1418,6 +1414,16 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         'wlm-db-optimize-oracle-operating-system-patch',
                         'Operating system patch',
                         ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+                        false
+                    )}
+
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.CRR,
+                        'oracleCrr',
+                        'wlm-db-optimize-oracle-crr',
+                        ASSESSMENT_CONFIG_NAMES.CRR,
+                        ASSESSMENT_CONFIG_NAMES.CRR,
                         false
                     )}
             </div>

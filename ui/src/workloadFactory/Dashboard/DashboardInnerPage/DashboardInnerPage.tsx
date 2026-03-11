@@ -158,13 +158,6 @@ const DashboardInnerPage = () => {
         };
     }, [valueCardData?.data?.description, valueCardData?.data?.descriptionRssConfig, valueCardData?.data?.values]);
 
-    const selectedConfigName = useMemo(() => {
-        if (selectedConfig === ASSESSMENT_CONFIG_NAMES.CRR) {
-            return 'Cross-Region Replication (CRR)';
-        }
-        return selectedConfig;
-    }, [selectedConfig]);
-
     const linkedConfigNames = useMemo(() => {
         if (selectedConfig && configEngineType === DBType.ORACLE && isLayoutConfig(selectedConfig)) {
             return getLinkedConfigNames(selectedConfig);
@@ -1485,7 +1478,10 @@ const DashboardInnerPage = () => {
                     tagHeight: prev.tagHeight || '233px',
                     data: {
                         title: 'Recommendations',
-                        description: cardDataDefault?.crr?.recommendation?.description
+                        description:
+                            configEngineType === DBType.ORACLE
+                                ? oracleCardData?.crr?.recommendation?.description
+                                : cardDataDefault?.crr?.recommendation?.description
                     }
                 }));
                 break;
@@ -1930,7 +1926,7 @@ const DashboardInnerPage = () => {
                                 }
                             },
                             {
-                                title: `${t('databases.well-architect.fix-configuration')} (${selectedConfigName})`,
+                                title: `${t('databases.well-architect.fix-configuration')} (${selectedConfig})`,
                                 dataTestId: 'wlm-db-optimize-configuration'
                             }
                         ]}
@@ -1943,7 +1939,7 @@ const DashboardInnerPage = () => {
                         variant="Semibold_24"
                         style={{ lineHeight: 'unset' }}
                     >
-                        {selectedConfigName}
+                        {selectedConfig}
                     </DsTypography>
                     <SeparatorComponent variant="vertical" height="24px" />
                     <DsTypography

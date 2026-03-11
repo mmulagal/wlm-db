@@ -861,7 +861,7 @@ const StorageCardComponent = ({
             type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF ||
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
-            type === GENERAL.CRR ||
+            type === ASSESSMENT_CONFIG_NAMES.CRR ||
             type === GENERAL.CLONE_MANAGEMENT ||
             type === ASSESSMENT_CONFIG_NAMES.MTU
         );
@@ -903,7 +903,7 @@ const StorageCardComponent = ({
             type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF ||
             type === GENERAL.OPERATING_SYSTEM_PATCH ||
             type === GENERAL.MICROSOFT_SQL_PATCH ||
-            type === GENERAL.CRR ||
+            type === ASSESSMENT_CONFIG_NAMES.CRR ||
             type === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
             type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
             type === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||

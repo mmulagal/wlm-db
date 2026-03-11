@@ -1,7 +1,6 @@
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@netapp/design-system';
-import { useMemo } from 'react';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
@@ -19,13 +18,6 @@ const DashboardOptimizeInnerPage = () => {
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const { configEngineType } = useAppSelector(state => state.getWellOptimize);
 
-    const selectedConfigName = useMemo(() => {
-        if (selectedConfig === ASSESSMENT_CONFIG_NAMES.CRR) {
-            return 'Cross-Region Replication (CRR)';
-        }
-        return selectedConfig;
-    }, [selectedConfig]);
-
     return (
         <div className={styles.dashboardInnerPage}>
             <div className={styles.innerPage}>
@@ -39,7 +31,7 @@ const DashboardOptimizeInnerPage = () => {
                                 }
                             },
                             {
-                                title: `${t('databases.well-architect.fix-configuration')} (${selectedConfigName})`,
+                                title: `${t('databases.well-architect.fix-configuration')} (${selectedConfig})`,
                                 dataTestId: 'wlm-db-optimize-configuration',
                                 onClick: () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
@@ -58,7 +50,7 @@ const DashboardOptimizeInnerPage = () => {
                         data-testid={`wlm-db-${selectedConfig.toLowerCase().replace(/ /g, '-')}`}
                         variant="Semibold_20"
                     >
-                        {selectedConfigName}
+                        {selectedConfig}
                     </DsTypography>
                     <SeparatorComponent variant="vertical" height="24px" />
                     <DsTypography

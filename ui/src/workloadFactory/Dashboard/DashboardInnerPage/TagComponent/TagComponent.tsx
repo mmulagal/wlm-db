@@ -107,6 +107,9 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                         }
                     ]);
                     break;
+                case ASSESSMENT_CONFIG_NAMES.CRR:
+                    setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
+                    break;
                 case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
                 case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
                 case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
@@ -240,7 +243,6 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     ]);
                     break;
                 case ASSESSMENT_CONFIG_NAMES.CRR:
-                case 'Cross-Region Replication (CRR)':
                     setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
                     break;
                 case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:

@@ -1023,7 +1023,8 @@ const checkOracleConfigurationSeverities = (
     instanceAssessmentData: any,
     isOracleStorageLayoutOptimized: boolean,
     isOracleStorageConfigOptimized: boolean,
-    isOracleComputeConfigOptimized: boolean
+    isOracleComputeConfigOptimized: boolean,
+    isOracleResiliencyOptimized?: boolean
 ) => {
     let hasCriticalIssue = false;
     let hasWarningIssue = false;
@@ -1089,6 +1090,21 @@ const checkOracleConfigurationSeverities = (
                 }
             });
         });
+    }
+
+    // Check Oracle CRR severity
+    if (!isOracleResiliencyOptimized) {
+        const crrItem = instanceAssessmentData?.crr;
+        if (crrItem) {
+            const configState = instanceAssessmentData?.dismissedConfigurations?.crr?.configState;
+            if (!isOptimized(crrItem?.status, configState)) {
+                if (crrItem?.severity?.toLowerCase() === 'critical') {
+                    hasCriticalIssue = true;
+                } else {
+                    hasWarningIssue = true;
+                }
+            }
+        }
     }
 
     return { hasCriticalIssue, hasWarningIssue };
@@ -1159,9 +1175,18 @@ const processOracleAssessmentData = (
                     instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
                 );
 
+                // Check if Oracle Resiliency (CRR) is optimized
+                const isOracleResiliencyOptimized = isOptimized(
+                    instanceAssessmentData?.crr?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                );
+
                 // Check if Oracle instance is fully optimized
                 const isOracleInstanceOptimized =
-                    isOracleStorageLayoutOptimized && isOracleStorageConfigOptimized && isOracleComputeConfigOptimized;
+                    isOracleStorageLayoutOptimized &&
+                    isOracleStorageConfigOptimized &&
+                    isOracleComputeConfigOptimized &&
+                    isOracleResiliencyOptimized;
 
                 if (isOracleInstanceOptimized) {
                     optimizedInstances += 1;
@@ -1171,7 +1196,8 @@ const processOracleAssessmentData = (
                         instanceAssessmentData,
                         isOracleStorageLayoutOptimized,
                         isOracleStorageConfigOptimized,
-                        isOracleComputeConfigOptimized
+                        isOracleComputeConfigOptimized,
+                        isOracleResiliencyOptimized
                     );
 
                     // Prioritize critical over warning
@@ -1331,7 +1357,8 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
         mssqlCompute: 0,
         oracleCompute: 0,
         application: 0,
-        resiliency: 0,
+        mssqlResiliency: 0,
+        oracleResiliency: 0,
         cloning: 0,
         total: 0,
         mssqlTotal: 0,
@@ -1481,7 +1508,7 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
                     (!isMssqlHaDeployment(instance?.assessments?.deploymentType) ||
                         (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability))
                 ) {
-                    assessmentGroupedByCategory.resiliency++;
+                    assessmentGroupedByCategory.mssqlResiliency++;
                 }
 
                 if (isCloneOptimized) {
@@ -1538,6 +1565,15 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
 
                 if (isStorageLayoutOptimized && isStorageConfigOptimized) {
                     assessmentGroupedByCategory.oracleStorage++;
+                }
+
+                const isOracleCRROptimized = isOptimized(
+                    instanceAssessmentData?.crr?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                );
+
+                if (isOracleCRROptimized) {
+                    assessmentGroupedByCategory.oracleResiliency++;
                 }
             }
         });
@@ -1866,6 +1902,30 @@ const processOracleConfigurationData = (
                 )
                     ? 1
                     : 0;
+
+                const isCrrOptimized = isOptimizedDashInner(
+                    instanceAssessmentData?.crr?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                );
+                setConfigState(
+                    configState,
+                    'oracleCrr',
+                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                );
+                getAssessmentGroupedByConfigurations.oracleCrr.optimized += isCrrOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.oracleCrr.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleCrr.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleCrr =
+                    GETWELL_VALUES[instanceAssessmentData?.crr?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.oracleCrr;
             }
         });
     });
@@ -2050,6 +2110,11 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             dismissed: 0,
             activating: 0
         },
+        oracleCrr: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
         oracleBinaryPlacement: {
             optimized: 0,
             dismissed: 0,
@@ -2176,7 +2241,8 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         oracleOperatingSystem: [],
         oracleFileSystemHeadroom: [],
         oracleOperatingSystemPatch: [],
-        oracleSwapSpace: []
+        oracleSwapSpace: [],
+        oracleCrr: []
     };
 
     const state = store.getState();

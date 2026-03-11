@@ -1172,6 +1172,17 @@
                                 }
                             ]
                         },
+                        "crr": {
+                            "name": "crr",
+                            "severity": "warning",
+                            "status": "optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": "4",
+                            "totalObjectsInViolation": "1",
+                            "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.",
+                            "tags": ["Reliability"],
+                            "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
+                        },
                         "lastAssessmentTimestamp": 1755629404593,
                         "fileSystemId": "fs-0d5efc3057c4f12cb",
                         "ec2InstanceId": "i-05fbc9747d558cf12",
@@ -2352,6 +2363,17 @@
                                     ]
                                 }
                             ]
+                        },
+                        "crr": {
+                            "name": "crr",
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": "4",
+                            "totalObjectsInViolation": "1",
+                            "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.",
+                            "tags": ["Reliability"],
+                            "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                         },
                         "lastAssessmentTimestamp": 1755629404593,
                         "fileSystemId": "fs-0d5efc3057c4f12cb",

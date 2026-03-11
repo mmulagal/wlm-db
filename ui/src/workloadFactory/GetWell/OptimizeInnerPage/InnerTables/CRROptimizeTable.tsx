@@ -3,8 +3,6 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './InnerTable.module.scss';
-
-import { GENERAL } from '../../../../utils/appConstants';
 import { getWadCellProps } from '../../GetWellUtils';
 
 const CRROptimizeTable = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: any) => {
@@ -19,14 +17,14 @@ const CRROptimizeTable = ({ type, data, lastColDetails, handleBulkAction, isWad 
     }, [data, isWad, t]);
     const TableColDefs: ColumnProps[] = [
         {
-            Header: 'Volume name',
+            Header: t('databases.well-architect.volume-name'),
             accessor: 'volumeName',
             id: '1',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
             width: 'auto',
-            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: any) => cellData || t('databases.general.not-available')
         },
 
         lastColDetails(type, {}, '230px')
@@ -49,8 +47,8 @@ const CRROptimizeTable = ({ type, data, lastColDetails, handleBulkAction, isWad 
             <TableTopBar
                 // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle="Impacted volumes"
-                singularTitle="Impacted volume"
+                pluralTitle={t('databases.well-architect.impacted-volumes')}
+                singularTitle={t('databases.well-architect.impacted-volume')}
             />
 
             <Table

@@ -93,7 +93,8 @@ export const handleDialog = (
         type === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
         type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
         (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
-            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED)
+            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) ||
+        (engineType === DBType.ORACLE && type === ASSESSMENT_CONFIG_NAMES.CRR)
     ) {
         setDialog(
             <DialogComponent

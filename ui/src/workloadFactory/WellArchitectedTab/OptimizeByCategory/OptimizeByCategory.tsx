@@ -144,7 +144,10 @@ const OptimizeByCategory = () => {
                                     {naCheck
                                         ? t('databases.general.not-available')
                                         : `${Math.round(
-                                              ((categoryData.resiliency || 0) / (categoryData.mssqlTotal || 1)) * 100
+                                              (((categoryData.mssqlResiliency || 0) +
+                                                  (categoryData.oracleResiliency || 0)) /
+                                                  (categoryData.mssqlTotal + categoryData.oracleTotal || 1)) *
+                                                  100
                                           )}%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}

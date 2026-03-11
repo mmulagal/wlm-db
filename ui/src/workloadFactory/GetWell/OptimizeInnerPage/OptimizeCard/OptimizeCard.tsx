@@ -344,7 +344,7 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                         description: data?.recommendation
                     }
                 };
-            case GENERAL.CRR:
+            case ASSESSMENT_CONFIG_NAMES.CRR:
                 return {
                     block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },

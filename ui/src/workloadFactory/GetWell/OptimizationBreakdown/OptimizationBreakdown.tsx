@@ -251,23 +251,13 @@ const OptimizationBreakdown = ({
 
                 <div className={styles.rightSide}>
                     <OptimizeComponent
-                        value={
-                            engineType === DBType.ORACLE ? (
-                                <ComingSoon />
-                            ) : (
-                                optimizationBreakDown?.resiliency?.percent || 0
-                            )
-                        }
-                        data={engineType === DBType.ORACLE ? undefined : optimizationBreakDown?.resiliency}
+                        value={optimizationBreakDown?.resiliency?.percent || 0}
+                        data={optimizationBreakDown?.resiliency}
                         text="Resiliency"
                         image={<Resiliency />}
-                        isComingSoon={engineType === DBType.ORACLE}
-                        allConfigurationsDismissed={
-                            engineType === DBType.ORACLE ? undefined : allConfigurationsDismissed
-                        }
-                        isDisabled={
-                            engineType !== DBType.ORACLE && (optimizationBreakDown?.resiliency?.total ?? 0) === 0
-                        }
+                        isComingSoon={false}
+                        allConfigurationsDismissed={allConfigurationsDismissed}
+                        isDisabled={(optimizationBreakDown?.resiliency?.total ?? 0) === 0}
                     />
                     <OptimizeComponent
                         value={

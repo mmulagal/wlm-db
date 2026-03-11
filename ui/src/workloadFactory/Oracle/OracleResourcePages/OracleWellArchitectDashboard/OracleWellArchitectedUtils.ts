@@ -530,6 +530,38 @@ export const oracleCardData: any = {
         },
         tags: ['Security', 'Reliability']
     },
+    crr: {
+        id: 'crr',
+        category: 'resiliency',
+        mapName: ASSESSMENT_CONFIG_NAMES.CRR,
+        block_one: {
+            value: ASSESSMENT_CONFIG_NAMES.CRR,
+            type: 'Resiliency'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted volumes',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Cross-Region Replication (CRR) recommendation',
+            description:
+                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.'
+        },
+        tags: ['Reliability']
+    },
     isASMManaged: false,
     storageProtocol: '',
     isStorageLayoutFra: false
@@ -688,6 +720,49 @@ export const formatOracleHostOsPatchConfig = (
         missingPatchList,
         objectsInViolation: hostOsPatchItem?.ec2InstancesToPatch?.map((instance: any) => instance.ec2InstanceId),
         dismissedObj: data?.dismissedConfigurations?.hostOsPatch
+    };
+};
+
+// Function to format CRR configuration for Oracle
+export const formatOracleCRRConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>
+): any => {
+    const crrItem = data?.crr;
+
+    const originalName = crrItem?.name || 'crr';
+    const status = optimizingData?.[originalName] || crrItem?.status || '';
+    const severity = crrItem?.severity || '';
+
+    return {
+        ...oracleCardData.crr,
+        block_two: {
+            ...oracleCardData.crr?.block_two,
+            value: formatValue(status)
+        },
+        block_four: {
+            ...oracleCardData.crr?.block_four,
+            value: formatValue(severity)
+        },
+        block_five: {
+            ...oracleCardData.crr?.block_five,
+            value: crrItem?.resourceType || ''
+        },
+        block_six: {
+            ...oracleCardData.crr?.block_six,
+            value: `${crrItem?.totalObjectsInViolation || 0} out of ${crrItem?.totalObjectsAssessed || 0}`,
+            count: {
+                totalObjectsAssessed: crrItem?.totalObjectsAssessed,
+                totalObjectsInViolation: crrItem?.totalObjectsInViolation
+            }
+        },
+        tags: crrItem?.tags,
+        id: crrItem?.name || 'crr',
+        category: 'resiliency',
+        errorMessage: crrItem?.errorMessage,
+        recommendationText: crrItem?.recommendation || oracleCardData.crr?.recommendation?.description,
+        objectsInViolation: crrItem?.objectsInViolation,
+        dismissedObj: data?.dismissedConfigurations?.crr
     };
 };
 
@@ -1104,7 +1179,8 @@ export const getOracleCardsData = (
             osTagsList,
             osDismissedObj
         ),
-        host_os_patch: formatOracleHostOsPatchConfig(data, optimizingData)
+        host_os_patch: formatOracleHostOsPatchConfig(data, optimizingData),
+        crr: formatOracleCRRConfig(data, optimizingData)
     };
 
     return {
@@ -1151,6 +1227,18 @@ export const formatOracleOptimizationBreakDown = (
     };
 
     const computeCount = {
+        hasDismissedOrPostponed: false,
+        total: 0,
+        critical: 0,
+        warning: 0,
+        optimized: 0,
+        notOptimized: 0,
+        dismissedOrPostponed: 0,
+        dismissedIds: [] as string[],
+        percent: 0
+    };
+
+    const resiliencyCount = {
         hasDismissedOrPostponed: false,
         total: 0,
         critical: 0,
@@ -1240,6 +1328,31 @@ export const formatOracleOptimizationBreakDown = (
                 else if (isWarning) computeCount.warning++;
             }
         }
+
+        if (cardItem?.category === 'resiliency') {
+            if (!cardItem?.block_two?.value) {
+                resiliencyCount.notOptimized++;
+                return;
+            }
+
+            const { isDismissed, isPostponed, isOptimizedViaDismissal, isOptimized, isCritical, isWarning } =
+                processStorageCardItem(cardItem);
+
+            if (isDismissed || isPostponed) {
+                resiliencyCount.dismissedOrPostponed++;
+                resiliencyCount.hasDismissedOrPostponed = true;
+                resiliencyCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+            } else if (isOptimized) {
+                resiliencyCount.optimized++;
+                if (isOptimizedViaDismissal) {
+                    resiliencyCount.hasDismissedOrPostponed = true;
+                }
+            } else {
+                resiliencyCount.notOptimized++;
+                if (isCritical) resiliencyCount.critical++;
+                else if (isWarning) resiliencyCount.warning++;
+            }
+        }
     });
 
     // Count sub-configurations from assessment data
@@ -1304,26 +1417,35 @@ export const formatOracleOptimizationBreakDown = (
             ? formatNumberWithCustomComma((computeCount.optimized / computeCount.total) * 100)
             : 0;
 
+    resiliencyCount.total = resiliencyCount.optimized + resiliencyCount.notOptimized;
+    resiliencyCount.percent =
+        resiliencyCount.optimized && resiliencyCount.total > 0
+            ? formatNumberWithCustomComma((resiliencyCount.optimized / resiliencyCount.total) * 100)
+            : 0;
+
+    const totalOptimized = storageCount.optimized + computeCount.optimized + resiliencyCount.optimized;
+    const totalAll = storageCount.total + computeCount.total + resiliencyCount.total;
+
     return {
         storage: storageCount,
         compute: computeCount,
+        resiliency: resiliencyCount,
         total: {
-            hasDismissedOrPostponed: storageCount.hasDismissedOrPostponed || computeCount.hasDismissedOrPostponed,
-            total: storageCount.total + computeCount.total,
-            critical: storageCount.critical + computeCount.critical,
-            warning: storageCount.warning + computeCount.warning,
-            optimized: storageCount.optimized + computeCount.optimized,
-            notOptimized: storageCount.notOptimized + computeCount.notOptimized,
-            dismissedOrPostponed: storageCount.dismissedOrPostponed + computeCount.dismissedOrPostponed,
-            dismissedIds: [...storageCount.dismissedIds, ...computeCount.dismissedIds],
-            percent:
-                storageCount.total + computeCount.total > 0
-                    ? Math.round(
-                          ((storageCount.optimized + computeCount.optimized) /
-                              (storageCount.total + computeCount.total)) *
-                              100
-                      )
-                    : 0
+            hasDismissedOrPostponed:
+                storageCount.hasDismissedOrPostponed ||
+                computeCount.hasDismissedOrPostponed ||
+                resiliencyCount.hasDismissedOrPostponed,
+            total: totalAll,
+            critical: storageCount.critical + computeCount.critical + resiliencyCount.critical,
+            warning: storageCount.warning + computeCount.warning + resiliencyCount.warning,
+            optimized: totalOptimized,
+            notOptimized: storageCount.notOptimized + computeCount.notOptimized + resiliencyCount.notOptimized,
+            dismissedOrPostponed:
+                storageCount.dismissedOrPostponed +
+                computeCount.dismissedOrPostponed +
+                resiliencyCount.dismissedOrPostponed,
+            dismissedIds: [...storageCount.dismissedIds, ...computeCount.dismissedIds, ...resiliencyCount.dismissedIds],
+            percent: totalAll > 0 ? Math.round((totalOptimized / totalAll) * 100) : 0
         }
     };
 };
@@ -1499,7 +1621,9 @@ export const getOracleCategoryData = () => ({
     ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
     os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
     // Compute Configuration cards
-    host_os_patch: { category: 'Compute', subCategory: 'Compute' }
+    host_os_patch: { category: 'Compute', subCategory: 'Compute' },
+    // Resiliency cards
+    crr: { category: 'Resiliency', subCategory: 'Protection' }
 });
 
 // Helper function to convert assessment configuration names to technical keys
@@ -1525,6 +1649,9 @@ export const getDynamicOracleCategoryData = (assessmentData?: any) => {
 
     // Always include host OS patch (Compute) so it appears in filters even when Unavailable
     categoryMapping.host_os_patch = { category: 'Compute', subCategory: 'Compute' };
+
+    // Always include CRR (Resiliency) so it appears in filters
+    categoryMapping.crr = { category: 'Resiliency', subCategory: 'Protection' };
 
     if (!assessmentData?.storage) {
         // If no assessment data, return static mapping as fallback
