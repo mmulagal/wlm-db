@@ -175,8 +175,8 @@ const SavingsCalculatorApi = () => {
         const payload: ONPREM_PAYLOAD = {
             snapshotInfo: {
                 snapshotFrequency: selectedSnapshotFrequency?.value || 'daily',
-                clonedCopiesCount: numberOfClonedCopies || 1,
-                monthlyChangeRatePercentage: monthlyChangeRate || 3
+                clonedCopiesCount: numberOfClonedCopies || 3,
+                monthlyChangeRatePercentage: monthlyChangeRate || 10
             },
             resources: []
         };

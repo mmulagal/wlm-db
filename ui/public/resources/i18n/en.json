@@ -1736,7 +1736,6 @@
             "mssql-single-instance": "Microsoft SQL Server EC2 instance",
             "onprem-create-template-disable": "This configuration is not supported by our deployment wizard. Manual deployment is possible.",
             "multi-fsx-disable-msg": "Deployment of Microsoft SQL Server over multiple FSx for ONTAP is currently not supported.",
-            "multi-fsx-disable-msg-oracle": "Deployment of Oracle Server over multiple FSx for ONTAP is currently not supported.",
             "create-template": "Create template",
             "savings-calculator": "Savings calculator",
             "mssql-on-ebs": "Microsoft SQL Server on EBS",

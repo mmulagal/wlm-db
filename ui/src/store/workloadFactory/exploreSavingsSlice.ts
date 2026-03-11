@@ -10,9 +10,9 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     },
     selectedCalculatorMode: TCO_CALCULATOR_MODE.OPTIMIZED,
     selectedSnapshotFrequency: null,
-    numberOfClonedCopies: 1,
+    numberOfClonedCopies: 3,
     selectedCloneRefresh: null,
-    monthlyChangeRate: 8,
+    monthlyChangeRate: 10,
     saveConfigName: '',
     loading: false,
     unmanagedExploreSavingsHost: [],
@@ -354,24 +354,8 @@ const exploreSavingsSlice = createSlice({
         setSavingsCalculatorFrom(state, action: PayloadAction<any>) {
             state.savingsCalculatorFrom = action.payload;
 
-            // Set defaults based on calculator mode
-            if (
-                action.payload === SAVINGS_CALC_MODE.AUTO_EBS ||
-                action.payload === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                action.payload === SAVINGS_CALC_MODE.ONPREM ||
-                action.payload === SAVINGS_CALC_MODE.ORACLE_ONPREM
-            ) {
-                // EBS defaults
-                state.numberOfClonedCopies = 3;
-                state.monthlyChangeRate = 10;
-            } else if (
-                action.payload === SAVINGS_CALC_MODE.AUTO_FSXW ||
-                action.payload === SAVINGS_CALC_MODE.MANUAL_FSXW
-            ) {
-                // FSxW and OnPrem defaults
-                state.numberOfClonedCopies = 1;
-                state.monthlyChangeRate = 3;
-            }
+            state.numberOfClonedCopies = 3;
+            state.monthlyChangeRate = 10;
         },
         setSelectedSnapshotFrequency(state, action: PayloadAction<any>) {
             state.selectedSnapshotFrequency = action.payload;
@@ -458,9 +442,9 @@ const exploreSavingsSlice = createSlice({
         },
         addExploreSavingsInitialData(state, action: PayloadAction<any>) {
             state.selectedSnapshotFrequency = null;
-            state.numberOfClonedCopies = 1;
+            state.numberOfClonedCopies = 3;
             state.selectedCloneRefresh = null;
-            state.monthlyChangeRate = 8;
+            state.monthlyChangeRate = 10;
             state.selectedInstanceId = '';
             state.selectedExCredId = '';
             state.selectedExCredId = '';

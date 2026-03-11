@@ -4420,7 +4420,7 @@ export const addHostHandlerSc = async (
     const dialogKey = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
     const currentState = store.getState();
     const state: any = currentState.snapCenter;
-    const orgId = currentState.auth.orgId;
+    const { orgId } = currentState.auth;
     const payload = {
         connectorId: state.selectedAgent[0]?.id,
         ec2InstanceIds: [rowData.ec2InstanceId],

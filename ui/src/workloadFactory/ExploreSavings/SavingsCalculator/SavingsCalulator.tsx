@@ -481,15 +481,20 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     {/* Text Area */}
 
                     <div className={setCSSForTextArea()}>
-                        <div>{isMutliFsx ? <SuggestionDisable /> : <Suggestion />}</div>
+                        <div>{isMutliFsx && !isOracleOnPrem ? <SuggestionDisable /> : <Suggestion />}</div>
                         <div className={styles.textContent}>
-                            <DsTypography variant="Semibold_16" className={isMutliFsx ? styles.textDisable : ''}>
+                            <DsTypography
+                                variant="Semibold_16"
+                                className={isMutliFsx && !isOracleOnPrem ? styles.textDisable : ''}
+                            >
                                 {t('databases.explore-savings.mssql-selection-based-text')}
                             </DsTypography>
                             <DsTypography
                                 variant="Regular_14"
                                 className={
-                                    isMutliFsx ? `${styles.secondText} ${styles.textDisable}` : styles.secondText
+                                    isMutliFsx && !isOracleOnPrem
+                                        ? `${styles.secondText} ${styles.textDisable}`
+                                        : styles.secondText
                                 }
                             >
                                 {isOracleOnPrem

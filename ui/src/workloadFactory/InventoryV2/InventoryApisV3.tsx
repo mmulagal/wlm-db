@@ -1940,8 +1940,8 @@ const InventoryApisV3 = () => {
         }
         let payload: any = {
             snapshotFrequency,
-            clonedCopiesCount: 1, // clonedCopiesCount default to 1 for dashboard potential
-            monthlyChangeRatePercentage: savingsCalculatorType === GENERAL.FSX_FOR_WINDOWS ? 3 : 8 // monthlyChangeRatePercentage default to 3 for FSxW and 8 for EBS
+            clonedCopiesCount: 3,
+            monthlyChangeRatePercentage: 10
         };
         if (savingsCalculatorType === GENERAL.EBS) {
             payload = {
