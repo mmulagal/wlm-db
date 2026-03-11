@@ -188,7 +188,7 @@ const HostOsPatchDriftResponse = Type.Intersect([
                             Type.Object({
                                 classification: Type.String(),
                                 kbId: Type.String(),
-                                severity: Type.String(),
+                                severity: Type.Optional(Type.String()),
                                 state: Type.String(),
                                 title: Type.String()
                             })
