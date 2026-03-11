@@ -33,16 +33,5 @@
 
     .topBarInstanceStyle {
         z-index: 4 !important;
-        .infoContainer {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-
-            .item {
-                display: flex;
-                align-items: center;
-                gap: 16px;
-            }
-        }
     }
 }

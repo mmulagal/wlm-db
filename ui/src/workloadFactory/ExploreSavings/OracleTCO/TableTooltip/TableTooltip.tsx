@@ -23,11 +23,10 @@ const TableTooltip = () => {
                     <DsTypography variant="Regular_14">
                         {t('databases.explore-savings.table-tooltip-content-two')}
                     </DsTypography>
-                    {selectedTCOHostType === DBType.MSSQL && (
-                        <DsTypography variant="Semibold_14">
-                            {t('databases.explore-savings.table-tooltip-content-three')}
-                        </DsTypography>
-                    )}
+
+                    <DsTypography variant="Semibold_14">
+                        {t('databases.explore-savings.table-tooltip-content-three')}
+                    </DsTypography>
                 </div>
             </div>
         </div>
