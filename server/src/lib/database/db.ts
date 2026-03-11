@@ -253,6 +253,7 @@ async function listResources(params: ListResourcesParams = {}) {
     let {
         accountId,
         resourceId,
+        resourceNames,
         credentialIds,
         region,
         resourceType,
@@ -296,6 +297,7 @@ async function listResources(params: ListResourcesParams = {}) {
         where: {
             ...(accountId && { account_id: accountId }),
             ...(resourceId && { resource_id: resourceId }),
+            ...(!isEmpty(resourceNames) && { resource_name: { in: resourceNames } }),
             ...(resourceType && { resource_type: { in: resourceType } }),
             ...(region && { region: { in: region } }),
             ...(credentialIds && { credentials_id: { in: credentialIds } }),

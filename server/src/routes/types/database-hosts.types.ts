@@ -366,6 +366,9 @@ type DatabaseHostSummaryPerStorageTypeListResponseType = Static<typeof DatabaseH
 
 const DatabasesResponse = Type.Object({
     name: Type.String({ minLength: 1 }),
+    databaseInstanceName: Type.Optional(
+        Type.String({ description: 'SQL Server instance name this database belongs to' })
+    ),
     status: Type.String({ minLength: 1 }),
     type: Type.String({ minLength: 1 }),
     size: Type.Number(),
@@ -556,7 +559,13 @@ const AoagClusterNodeDetailsResponse = Type.Array(
         node: Type.Optional(Type.String({ description: 'Windows cluster node name' })),
         ip: Type.Optional(Type.String({ description: 'Windows cluster node IP address' })),
         ec2InstanceId: Type.Optional(Type.String({ description: 'Mapped EC2 instance ID for this node' })),
-        ec2InstanceName: Type.Optional(Type.String({ description: 'Mapped EC2 instance Name for this node' }))
+        ec2InstanceName: Type.Optional(Type.String({ description: 'Mapped EC2 instance Name for this node' })),
+        databaseHostId: Type.Optional(
+            Type.String({ description: 'WLM-DB resource ID (databaseHostId) for this replica node' })
+        ),
+        databaseInstanceId: Type.Optional(
+            Type.String({ description: 'WLM-DB database instance ID for the AOAG instance on this replica node' })
+        )
     })
 );
 

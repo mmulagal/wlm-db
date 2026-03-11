@@ -153,6 +153,7 @@ type CountDatabaseInstanceConfigRecordsParams = Omit<
 interface ListResourcesParams {
     accountId?: string;
     resourceId?: string;
+    resourceNames?: string[];
     credentialIds?: string | string[];
     region?: string | string[];
     resourceType?: string | string[];
@@ -167,6 +168,7 @@ interface ListResourcesParams {
 interface GetResourcesParams {
     accountId?: string;
     resourceId?: string;
+    resourceNames?: string[];
     credentialsId?: string | string[];
     region?: string | string[];
     resourceType?: string | string[];

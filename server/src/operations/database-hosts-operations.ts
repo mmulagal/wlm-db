@@ -144,6 +144,27 @@ interface AoagGroup {
     replicas?: AoagReplica[];
 }
 
+interface WindowsClusterNode {
+    Node?: string;
+    Address?: string;
+}
+
+interface AoagInstanceData {
+    windowsClusterNodes?: WindowsClusterNode[];
+    aoagDetails?: {
+        availabilityGroups?: AoagGroup[];
+        [key: string]: unknown;
+    };
+    [key: string]: unknown;
+}
+
+interface AoagClusterLookupMaps {
+    aoagNodeToIp: Map<string, string>;
+    aoagIpToInstanceId: Map<string, string>;
+    aoagIpToInstanceName: Map<string, string>;
+    replicaHostToDbIds: Map<string, { databaseHostId: string; databaseInstanceId: string }>;
+}
+
 const logger = getLogger();
 
 async function getUniqueCrrDetails(
@@ -1152,6 +1173,9 @@ async function getDatabasesV2(
     }
 
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
+    const shouldIncludeAoag =
+        fieldsValues?.includes(DatabaseHostsQueryFields.AOAG.toLowerCase()) &&
+        newDatabaseInstanceDetails.database_deployment_type?.toUpperCase() === 'AOAG';
 
     const uniqueCrrConfigData = getProtection
         ? await getUniqueCrrDetails(accountId, credentialsId, region!, databaseHostId, databaseInstanceId)
@@ -1171,7 +1195,8 @@ async function getDatabasesV2(
             getProtection,
             [newDatabaseInstanceDetails],
             activeNodeInstanceId,
-            sqlAuthEnabled
+            sqlAuthEnabled,
+            shouldIncludeAoag
         );
         logger.debug('Database list response', response);
         const databases = response[savedInstanceName] || [];
@@ -1514,6 +1539,7 @@ async function getDatabaseDetails(
 
                     return {
                         name: databaseName,
+                        databaseInstanceName: instName,
                         size: databaseSize,
                         status: databaseStatus,
                         collation: collationName ?? '',
@@ -1582,6 +1608,123 @@ async function getDatabaseDetails(
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
+}
+
+/**
+ * Builds lookup maps for AOAG cluster nodes and replica DB identities in a single pass.
+ * Collects cluster node IPs (for EC2 resolution) and replica hostnames (for DB ID resolution)
+ * from aoagDetailsData, then performs both async lookups.
+ */
+async function buildAoagClusterLookupMaps(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    aoagDetailsData: Record<string, AoagInstanceData>
+): Promise<AoagClusterLookupMaps> {
+    logger.info('Building AOAG cluster lookup maps', { accountId, credentialsId, region });
+
+    const aoagNodeToIp = new Map<string, string>();
+    const aoagIpToInstanceId = new Map<string, string>();
+    const aoagIpToInstanceName = new Map<string, string>();
+    const replicaHostToDbIds = new Map<string, { databaseHostId: string; databaseInstanceId: string }>();
+
+    const allClusterNodeIps: string[] = [];
+    const replicaHostnames = new Set<string>();
+
+    for (const instanceData of Object.values(aoagDetailsData)) {
+        const { windowsClusterNodes, aoagDetails } = instanceData || {};
+
+        if (windowsClusterNodes && isArray(windowsClusterNodes)) {
+            windowsClusterNodes.forEach(({ Node, Address }: WindowsClusterNode) => {
+                if (Address) {
+                    allClusterNodeIps.push(Address);
+                    if (Node) {
+                        aoagNodeToIp.set(Node.toLowerCase(), Address);
+                    }
+                }
+            });
+        }
+
+        aoagDetails?.availabilityGroups?.forEach(({ replicas }: AoagGroup) => {
+            replicas?.forEach(({ replica }: AoagReplica) => {
+                if (replica) {
+                    const hostname = replica.includes('\\')
+                        ? replica.split('\\')[0].toLowerCase()
+                        : replica.toLowerCase();
+                    replicaHostnames.add(hostname);
+                }
+            });
+        });
+    }
+
+    try {
+        if (allClusterNodeIps.length > 0) {
+            const uniqueIps = [...new Set(allClusterNodeIps)];
+            const clusterNodeEc2Details = await getInstanceDetailsByPrivateIp(credentialsId, region, uniqueIps, {
+                useCache: true
+            });
+
+            clusterNodeEc2Details?.forEach(({ ec2InstancePrivateIpAddress, ec2InstanceId, ec2InstanceName }) => {
+                if (ec2InstancePrivateIpAddress) {
+                    if (ec2InstanceId) {
+                        aoagIpToInstanceId.set(ec2InstancePrivateIpAddress, ec2InstanceId);
+                    }
+                    if (ec2InstanceName) {
+                        aoagIpToInstanceName.set(ec2InstancePrivateIpAddress, ec2InstanceName);
+                    }
+                }
+            });
+
+            logger.debug('AOAG cluster node EC2 lookup maps built', {
+                nodeToIpCount: aoagNodeToIp.size,
+                ipToInstanceIdCount: aoagIpToInstanceId.size,
+                ipToInstanceNameCount: aoagIpToInstanceName.size
+            });
+        }
+    } catch (error) {
+        logger.error('Failed to get EC2 details for AOAG cluster nodes', error);
+    }
+
+    try {
+        if (replicaHostnames.size > 0) {
+            const { items: replicaResources } = await getResources({
+                accountId,
+                credentialsId,
+                region,
+                resourceNames: [...replicaHostnames],
+                resourceType: [RESOURCESTYPE.MSSQL],
+                includeDatabaseInstances: true,
+                allRecords: true
+            });
+
+            for (const resource of replicaResources) {
+                const resourceName = resource.resource_name?.toLowerCase();
+                if (resourceName && resource.database_instances?.length) {
+                    for (const instance of resource.database_instances) {
+                        const instName = instance.database_instance_name?.toUpperCase() || DEFAULT_INSTANCE_NAME;
+                        const key = `${resourceName}:${instName}`;
+                        replicaHostToDbIds.set(key, {
+                            databaseHostId: resource.resource_id,
+                            databaseInstanceId: instance.database_instance_id
+                        });
+                    }
+                }
+            }
+            logger.debug('AOAG replica host to DB IDs mapping built', {
+                replicaHostnames: [...replicaHostnames],
+                mappingCount: replicaHostToDbIds.size
+            });
+        }
+    } catch (error) {
+        logger.error('Failed to resolve database IDs for AOAG replica hosts', {
+            accountId,
+            credentialsId,
+            region,
+            error
+        });
+    }
+
+    return { aoagNodeToIp, aoagIpToInstanceId, aoagIpToInstanceName, replicaHostToDbIds };
 }
 
 async function getDatabaseInstancesSummary(
@@ -1809,59 +1952,16 @@ async function getDatabaseInstancesSummary(
         );
     }
 
-    // Pre-fetch EC2 details for all AOAG cluster nodes
-    // This allows us to map replica names to EC2 instance IDs via their IP addresses
-    const aoagIpToInstanceId = new Map<string, string>();
-    const aoagIpToInstanceName = new Map<string, string>();
-    const aoagNodeToIp = new Map<string, string>();
-
-    if (shouldQueryAoag && aoagDetailsData) {
-        try {
-            // Collect all cluster node IPs from all instances' windowsClusterNodes
-            const allClusterNodeIps: string[] = [];
-            for (const instanceData of Object.values(aoagDetailsData) as any[]) {
-                if (instanceData?.windowsClusterNodes && isArray(instanceData.windowsClusterNodes)) {
-                    instanceData.windowsClusterNodes.forEach((node: { Node?: string; Address?: string }) => {
-                        if (node.Address) {
-                            allClusterNodeIps.push(node.Address);
-                            if (node.Node) {
-                                aoagNodeToIp.set(node.Node.toLowerCase(), node.Address);
-                            }
-                        }
-                    });
-                }
-            }
-
-            // Get EC2 details for all cluster node IPs
-            if (allClusterNodeIps.length > 0) {
-                const uniqueIps = [...new Set(allClusterNodeIps)];
-                const clusterNodeEc2Details = await getInstanceDetailsByPrivateIp(credentialsId, region, uniqueIps, {
-                    useCache: true
-                });
-
-                // Build lookup maps: IP -> EC2 instance ID/Name
-                clusterNodeEc2Details?.forEach(node => {
-                    if (node.ec2InstancePrivateIpAddress) {
-                        if (node.ec2InstanceId) {
-                            aoagIpToInstanceId.set(node.ec2InstancePrivateIpAddress, node.ec2InstanceId);
-                        }
-                        if (node.ec2InstanceName) {
-                            aoagIpToInstanceName.set(node.ec2InstancePrivateIpAddress, node.ec2InstanceName);
-                        }
-                    }
-                });
-
-                logger.debug('AOAG cluster node EC2 lookup maps built', {
-                    nodeToIpCount: aoagNodeToIp.size,
-                    ipToInstanceIdCount: aoagIpToInstanceId.size,
-                    ipToInstanceNameCount: aoagIpToInstanceName.size
-                });
-            }
-        } catch (error) {
-            logger.error('Failed to get EC2 details for AOAG cluster nodes', error);
-            // Continue without EC2 details - aoagClusterNodeDetails will just have node names
-        }
-    }
+    // Pre-fetch EC2 details and DB identity maps for AOAG cluster nodes and replicas
+    const { aoagNodeToIp, aoagIpToInstanceId, aoagIpToInstanceName, replicaHostToDbIds } =
+        shouldQueryAoag && aoagDetailsData
+            ? await buildAoagClusterLookupMaps(accountId, credentialsId, region, aoagDetailsData)
+            : {
+                  aoagNodeToIp: new Map<string, string>(),
+                  aoagIpToInstanceId: new Map<string, string>(),
+                  aoagIpToInstanceName: new Map<string, string>(),
+                  replicaHostToDbIds: new Map<string, { databaseHostId: string; databaseInstanceId: string }>()
+              };
 
     return databaseInstances.map((databaseInstance: DatabaseInstance, index) => {
         const instanceName = instanceNames?.[index];
@@ -1956,6 +2056,8 @@ async function getDatabaseInstancesSummary(
                     ip?: string;
                     ec2InstanceId?: string;
                     ec2InstanceName?: string;
+                    databaseHostId?: string;
+                    databaseInstanceId?: string;
                 }> = [];
 
                 // Build FCI virtual name → owner IP map for FCI+AOAG
@@ -1973,8 +2075,8 @@ async function getDatabaseInstancesSummary(
 
                 // Extract unique replica names from all availability groups
                 const replicaNames = new Set<string>();
-                aoagDetails.availabilityGroups?.forEach((ag: any) => {
-                    ag.replicas?.forEach((replica: any) => {
+                aoagDetails.availabilityGroups?.forEach((ag: AoagGroup) => {
+                    ag.replicas?.forEach((replica: AoagReplica) => {
                         if (replica.replica) {
                             replicaNames.add(replica.replica);
                         }
@@ -1982,10 +2084,16 @@ async function getDatabaseInstancesSummary(
                 });
                 // Map replica names to EC2 instances using Windows Cluster node IPs
                 replicaNames.forEach((replicaName: string) => {
-                    const nodeDetail: { node: string; ip?: string; ec2InstanceId?: string; ec2InstanceName?: string } =
-                        {
-                            node: replicaName
-                        };
+                    const nodeDetail: {
+                        node: string;
+                        ip?: string;
+                        ec2InstanceId?: string;
+                        ec2InstanceName?: string;
+                        databaseHostId?: string;
+                        databaseInstanceId?: string;
+                    } = {
+                        node: replicaName
+                    };
                     // For named instances, replica name format is "HOSTNAME\INSTANCENAME" or "FCINAME\INSTANCENAME"
                     // Extract just the hostname/FCI name for Windows Cluster node lookup
                     const hostnameForLookup = replicaName.includes('\\')
@@ -2024,6 +2132,20 @@ async function getDatabaseInstancesSummary(
                             nodeDetail.ec2InstanceName = matchingEc2.name;
                         }
                     }
+
+                    // Resolve databaseHostId and databaseInstanceId from DB
+                    // For named instances: replica "HOSTNAME\INSTANCENAME" → instanceName = INSTANCENAME
+                    // For default instances: replica "HOSTNAME" → instanceName = MSSQLSERVER
+                    const instanceNameFromReplica = replicaName.includes('\\')
+                        ? replicaName.split('\\')[1].toUpperCase()
+                        : DEFAULT_INSTANCE_NAME;
+                    const dbIdLookupKey = `${hostnameForLookup}:${instanceNameFromReplica}`;
+                    const resolvedDbIds = replicaHostToDbIds.get(dbIdLookupKey);
+                    if (resolvedDbIds) {
+                        nodeDetail.databaseHostId = resolvedDbIds.databaseHostId;
+                        nodeDetail.databaseInstanceId = resolvedDbIds.databaseInstanceId;
+                    }
+
                     clusterNodeDetails.push(nodeDetail);
                 });
                 if (clusterNodeDetails.length > 0) {

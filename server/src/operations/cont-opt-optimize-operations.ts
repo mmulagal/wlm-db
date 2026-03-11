@@ -1156,7 +1156,8 @@ async function logDriveOptimization(
                         const hasPrimaryDatabases =
                             primaryDatabases.size > 0 && volumeDatabases.some(db => primaryDatabases.has(db));
                         const logPercentOfData = hasPrimaryDatabases ? 0.3 : 0.25;
-                        const requiredLogLunSizeBytes = convertToBytes(dataDriveTotalSizeMB * logPercentOfData, 'MiB') || 0;
+                        const requiredLogLunSizeBytes =
+                            convertToBytes(dataDriveTotalSizeMB * logPercentOfData, 'MiB') || 0;
                         const requiredLogVolumeSizeBytes = 1.1 * requiredLogLunSizeBytes;
 
                         const [matchingFsxVolumeId] =

@@ -348,6 +348,7 @@ interface IsAWSBackup {
 
 interface UserDatabase {
     name: string;
+    databaseInstanceName?: string;
     size: number;
     status: string;
     type: string;

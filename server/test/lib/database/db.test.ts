@@ -723,6 +723,66 @@ describe('Enhanced Database Functions - New Features Tests', () => {
         });
     });
 
+    describe('listResources with resourceNames filter', () => {
+        beforeAll(async () => {
+            await initializeDatabase();
+        });
+
+        it('should return only resources matching the provided resourceNames', async () => {
+            const resource1 = await createResource(ACCOUNT_ID, {
+                resourceId: 'rn-filter-resource-1',
+                resourceName: 'aoag-node1',
+                resourceType: 'MSSQL',
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                storageType: STORAGE_TYPE.FSXN,
+                region: DEFAULT_AWS_REGION
+            });
+
+            const resource2 = await createResource(ACCOUNT_ID, {
+                resourceId: 'rn-filter-resource-2',
+                resourceName: 'aoag-node2',
+                resourceType: 'MSSQL',
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                storageType: STORAGE_TYPE.FSXN,
+                region: DEFAULT_AWS_REGION
+            });
+
+            await createResource(ACCOUNT_ID, {
+                resourceId: 'rn-filter-resource-3',
+                resourceName: 'standalone-host',
+                resourceType: 'MSSQL',
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                storageType: STORAGE_TYPE.FSXN,
+                region: DEFAULT_AWS_REGION
+            });
+
+            const result = await listResources({
+                accountId: ACCOUNT_ID,
+                resourceNames: ['aoag-node1', 'aoag-node2']
+            });
+
+            expect(result).to.be.an('array');
+            expect(result.length).to.equal(2);
+            const names = result.map((r: any) => r.resource_name);
+            expect(names).to.include('aoag-node1');
+            expect(names).to.include('aoag-node2');
+
+            await deleteResource(ACCOUNT_ID, resource1.resource_id);
+            await deleteResource(ACCOUNT_ID, resource2.resource_id);
+            await deleteResource(ACCOUNT_ID, 'rn-filter-resource-3');
+        });
+
+        it('should return empty array when no resources match resourceNames', async () => {
+            const result = await listResources({
+                accountId: ACCOUNT_ID,
+                resourceNames: ['non-existent-host-1', 'non-existent-host-2']
+            });
+
+            expect(result).to.be.an('array');
+            expect(result.length).to.equal(0);
+        });
+    });
+
     describe('listResources with selectKeys', () => {
         beforeAll(async () => {
             await initializeDatabase();

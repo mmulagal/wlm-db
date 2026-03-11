@@ -281,6 +281,7 @@ async function getResources(
     const {
         accountId,
         resourceId,
+        resourceNames,
         credentialsId,
         region,
         resourceType: inputResourceType,
@@ -313,6 +314,7 @@ async function getResources(
         const recordsPromise = listResources({
             accountId,
             resourceId,
+            resourceNames,
             credentialIds: credentialsId,
             region,
             resourceType,
