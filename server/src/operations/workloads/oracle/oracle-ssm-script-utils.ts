@@ -959,15 +959,16 @@ const oracleUserAuthLoginCommand = `
 
         instanceCreds=$(aws ssm get-parameter --name "/netapp/wlmdb/$ec2InstanceId" --with-decryption --query "Parameter.Value"  --output text 2>/dev/null)
 
-        # Extract oracle array from JSON using grep -o instead of sed, because SSM returns single-line JSON and sed's line-based range patterns would match the entire line (including other sections).
-        oracle_section=$(echo "$instanceCreds" | grep -o '"oracle"[[:space:]]*:[[:space:]]*\\[[^]]*\\]')
-        
-        # Find matching oracle instance by oracleinstancename
+        # Find matching oracle instance by oracleinstancename.
+        # Use grep -o to isolate the single JSON object matching the SID, so that
+        # extract_json_value (which uses greedy sed) only sees ONE "username"/"password"
+        # on the line. The previous approach used sed range patterns (/start/,/end/p)
+        # which matched the entire single-line JSON, causing greedy sed to return the
+        # LAST credential entry instead of the matching one.
         username=""
         password=""
         
-        # Extract the specific oracle instance that matches the SID
-        matching_instance=$(echo "$oracle_section" | sed -n '/oracleinstancename.*'$oracleSid'/,/}/p')
+        matching_instance=$(echo "$instanceCreds" | grep -o '{"oracleinstancename":"'"$oracleSid"'"[^}]*}' | head -1)
         
         if [ -n "$matching_instance" ]; then
             username=$(extract_json_value "$matching_instance" "username")
