@@ -317,6 +317,7 @@ async function cronAssessmentCollection(initiatedBy: string) {
                 const response = await getPaginatedDatabaseInstances(undefined, {
                     databaseType: [DatabaseTypes.MS_SQL_SERVER, DatabaseTypes.ORACLE],
                     shouldIncludeResource: true,
+                    additionalResourceFields: ['assessment_data', 'configurations'],
                     pageSize: PAGE_SIZE,
                     nextToken,
                     selectKeys: INSTANCE_DEFAULT_SELECT_FIELDS
