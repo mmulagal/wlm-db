@@ -19,7 +19,7 @@ import {
     WorkloadInstance
 } from '../../../utils/common-types';
 import { AuditStatus, HttpErrorCodes, RESOURCESTYPE, DatabaseTypes, STORAGE_PROTOCOLS } from '../../../utils/consts';
-import { IS_DEMO_FLOW, sleep } from '../../../utils/utils';
+import { IS_DEMO_FLOW, sleep, validateWithSchema } from '../../../utils/utils';
 import { AssessmentCategoriesOracle, AssessmentTriggeredBy } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
@@ -42,7 +42,7 @@ import {
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoMockdata';
-import { getLatestInstanceAssessmentTime, validateAssessment } from '../assessment-utils';
+import { getLatestInstanceAssessmentTime } from '../assessment-utils';
 import {
     updateFieldsBasedOnDismissedConfigurations,
     processDismissedConfigurations,
@@ -749,7 +749,7 @@ async function fetchOracleDriftAssessment(
         driftAssessmentData = handleGetOracleAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
     }
 
-    const { isValid, errors: validationErrors } = validateAssessment(
+    const { isValid, errors: validationErrors } = validateWithSchema(
         OracleDriftAssessmentResponse,
         driftAssessmentData
     );

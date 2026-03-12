@@ -24,7 +24,8 @@ import {
     generateSqlResourceId,
     calculateRecommendedMaxDOP,
     IS_DEMO_FLOW,
-    parseAssessmentFileContent
+    parseAssessmentFileContent,
+    validateWithSchema
 } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
 import { HttpErrorCodes } from '../../../utils/consts';
@@ -45,7 +46,6 @@ import {
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import GOLDEN_CONFIG from './golden-config';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
-import { validateAssessment } from '../assessment-utils';
 import { loadAndModifyDemoFCIData } from '../../demo-operations';
 
 const logger = getLogger();
@@ -636,7 +636,7 @@ async function fetchMssqlOfflineAssessment(
         baseDeploymentType: baseDeploymentType ?? ''
     };
 
-    const { isValid, errors: validationErrors } = validateAssessment(MSSQLDriftAssessmentResponse, driftAssessmentData);
+    const { isValid, errors: validationErrors } = validateWithSchema(MSSQLDriftAssessmentResponse, driftAssessmentData);
     if (!isValid) {
         logger.error('Offline assessment data validation failed', {
             accountId,

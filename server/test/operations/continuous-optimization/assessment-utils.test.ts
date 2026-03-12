@@ -2,8 +2,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import {
     getMatchingAssessmentStatus,
-    handleOptimizeJobCreation,
-    validateAssessment
+    handleOptimizeJobCreation
 } from '../../../src/operations/continuous-optimization/assessment-utils';
 import { FINDING } from '../../../src/utils/consts';
 import { AssessmentStatus } from '../../../src/utils/continous-optimization-consts';
@@ -17,6 +16,7 @@ import {
     MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA
 } from '../../../src/utils/demo-utils/demoMockdata';
 import { createJob, deleteJobs } from '../../../src/lib/database/job';
+import { validateWithSchema } from '../../../src/utils/utils';
 
 describe('Assessment Utils', () => {
     const createdJobIds: string[] = [];
@@ -48,7 +48,7 @@ describe('Assessment Utils', () => {
     });
 
     it('Validate incorrect response', () => {
-        const { isValid, errors } = validateAssessment(MSSQLDriftAssessmentResponse, {
+        const { isValid, errors } = validateWithSchema(MSSQLDriftAssessmentResponse, {
             rssConfig: { rssConfigFinding: 'OPTIMIZED' }
         });
         expect(isValid).toBe(false);
@@ -56,7 +56,7 @@ describe('Assessment Utils', () => {
     });
 
     it('Validate correct response', () => {
-        const { isValid, errors } = validateAssessment(MSSQLDriftAssessmentResponse, {
+        const { isValid, errors } = validateWithSchema(MSSQLDriftAssessmentResponse, {
             ...MSSQL_ASSESMENT_CONFIG_DATA,
             ...ASSESSMENT_CRR_CONFIG_DATA,
             ...ASSESSMENT_AWS_BACKUP_DATA,

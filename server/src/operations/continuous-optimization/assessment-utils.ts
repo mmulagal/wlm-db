@@ -1,4 +1,3 @@
-import Ajv, { ValidateFunction } from 'ajv';
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS } from '@prisma/client';
 import createError from 'http-errors';
@@ -26,9 +25,6 @@ import { listResources } from '../../lib/database/db';
 import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
 
 const logger = getLogger();
-
-const ajv = new Ajv();
-const validatorCache = new WeakMap<object, ValidateFunction>();
 
 interface UnOptimizedDiskGroups {
     diskGroupName: string;
@@ -133,22 +129,6 @@ function getLatestInstanceAssessmentTime(
             const creationTime = new Date(currentCreationTime || 0);
             return creationTime > latest ? creationTime : latest;
         }, new Date(0));
-}
-
-function validateAssessment(schema: object, assessmentData: unknown) {
-    let validate = validatorCache.get(schema);
-
-    if (!validate) {
-        validate = ajv.compile(schema);
-        validatorCache.set(schema, validate);
-    }
-
-    const isValid = validate(assessmentData);
-
-    return {
-        isValid,
-        errors: validate.errors || []
-    };
 }
 
 async function checkForMissingOptimizePermissions(credentialsId: string, region: string, permissions: string[]) {
@@ -321,7 +301,6 @@ export {
     handleOptimizeJobCreation,
     hasNotOptimizedStatus,
     getLatestInstanceAssessmentTime,
-    validateAssessment,
     UnOptimizedDiskGroups,
     checkForMissingOptimizePermissions,
     activeSqlNodeDetails,

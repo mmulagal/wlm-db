@@ -15,7 +15,13 @@ import {
     PRICING_LICENSE_KEYS,
     HOURS_IN_MONTH
 } from '../../../utils/consts';
-import { convertGiBToBytes, convertToBytes, sizeInGigaBytes, IS_DEMO_FLOW } from '../../../utils/utils';
+import {
+    convertGiBToBytes,
+    convertToBytes,
+    sizeInGigaBytes,
+    IS_DEMO_FLOW,
+    validateWithSchema
+} from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
 import { registerJob } from '../../database/job-operations';
 import { NETWORK_PERF, ONPREM_TCO_CREDENTIALS_ID } from '../../../utils/continous-optimization-consts';
@@ -69,6 +75,7 @@ import {
     parseSqlVersion,
     getPowerOfTwoVcpuCount
 } from '../../../utils/onprem-tco/onprem-tco-utils';
+import { mssqlCollectionObjectSchema, windowsConfigSchema } from '../../../utils/onprem-tco/onprem-tco-schemas';
 import { isNonFreeEnterpriseEdition } from '../../recommendation-operations';
 import {
     ManualModeInstancesType,
@@ -120,31 +127,6 @@ interface MssqlPerResourceAssessment {
     recommendedLicenseCalculation: LicenseCalculationEntry;
     computeSavings: MssqlComputeSavingsEntry;
     licenseSavings: MssqlLicenseSavingsEntry;
-}
-
-function validateOnPremCollectionObject(data: OnPremCollectionObject): boolean {
-    if (!data) {
-        return false;
-    }
-    const { windowsConfig, sqlServerInfo, scriptVersion, timestamp } = data;
-    if (!windowsConfig || !sqlServerInfo || !scriptVersion || !timestamp) {
-        return false;
-    }
-    if (!Array.isArray(sqlServerInfo) || sqlServerInfo.length === 0) {
-        return false;
-    }
-    return true;
-}
-
-function validateWindowsConfig(windowsConfig: WindowsConfig): boolean {
-    if (!windowsConfig) {
-        return false;
-    }
-    const { windowsSystemName, nodeDetails } = windowsConfig;
-    if (!windowsSystemName || !Array.isArray(nodeDetails) || nodeDetails.length === 0) {
-        return false;
-    }
-    return nodeDetails.every(node => node.hostId && node.numberOfVcpus && node.ramSize);
 }
 
 function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
@@ -587,14 +569,19 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
         const originalJsonString = decompressCollectorPayload(fileContent);
         const data = JSON.parse(originalJsonString) as OnPremCollectionObject;
 
-        if (!validateOnPremCollectionObject(data)) {
-            const errorMessage = 'Invalid data format.';
+        const { isValid: isDataValid, errors: dataErrors } = validateWithSchema(mssqlCollectionObjectSchema, data);
+        if (!isDataValid) {
+            const errorMessage = `Invalid data format: ${JSON.stringify(dataErrors)}`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
         }
 
-        if (!validateWindowsConfig(data.windowsConfig)) {
-            const errorMessage = 'Invalid windowsConfig format.';
+        const { isValid: isConfigValid, errors: configErrors } = validateWithSchema(
+            windowsConfigSchema,
+            data.windowsConfig
+        );
+        if (!isConfigValid) {
+            const errorMessage = `Invalid windowsConfig format: ${JSON.stringify(configErrors)}`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
         }

@@ -8,7 +8,7 @@ import {
 } from '@prisma/client';
 import { compact, isEmpty, sumBy } from 'lodash-es';
 import { DEFAULT_AWS_REGION, HttpErrorCodes, ORACLE, OracleDeploymentModel } from '../../../utils/consts';
-import { IS_DEMO_FLOW, convertGiBToBytes, sizeInGigaBytes } from '../../../utils/utils';
+import { IS_DEMO_FLOW, convertGiBToBytes, sizeInGigaBytes, validateWithSchema } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
 import { registerJob } from '../../database/job-operations';
 import { updateJob } from '../../../lib/database/job';
@@ -62,43 +62,10 @@ import {
     getManualModeStorageSavingsCalculationMetrics
 } from '../../storage-savings-operations';
 import { generateUniqueId, getPowerOfTwoVcpuCount, convertToDate } from '../../../utils/onprem-tco/onprem-tco-utils';
+import { oracleCollectionObjectSchema, oracleHostInfoSchema } from '../../../utils/onprem-tco/onprem-tco-schemas';
 
 const logger = getLogger();
 const ORACLE_ALLOWED_INSTANCE_TYPES = ['r*', 'm*', 'x*'];
-
-function validateOracleCollectionObject(data: OracleCollectionObject): boolean {
-    if (!data) {
-        return false;
-    }
-    const { scriptInfo, hostInfo, databases } = data;
-    if (!scriptInfo || !hostInfo) {
-        return false;
-    }
-    if (isEmpty(databases)) {
-        return false;
-    }
-    // Validate each database entry
-    for (const entry of databases) {
-        if (!entry.databaseInfo || !entry.performanceSummary || !entry.storageInfo) {
-            return false;
-        }
-        if (!Array.isArray(entry.performanceSnapshots) || isEmpty(entry.performanceSnapshots)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-function validateOracleHostInfo(hostInfo: OracleCollectionObject['hostInfo']): boolean {
-    if (!hostInfo) {
-        return false;
-    }
-    const { hostname, cpuCount, totalRamBytes } = hostInfo;
-    if (!hostname || !cpuCount || !totalRamBytes) {
-        return false;
-    }
-    return true;
-}
 
 function getHostUniqueId(hostInfo: OracleCollectionObject['hostInfo']): string {
     const uid = hostInfo.uniqueHostId?.trim();
@@ -432,14 +399,19 @@ async function uploadOracleTcoData(accountId: string, fileName: string, fileCont
         const originalJsonString = decompressCollectorPayload(fileContent);
         const data = JSON.parse(originalJsonString) as OracleCollectionObject;
 
-        if (!validateOracleCollectionObject(data)) {
-            const errorMessage = 'Invalid Oracle data format.';
+        const { isValid: isDataValid, errors: dataErrors } = validateWithSchema(oracleCollectionObjectSchema, data);
+        if (!isDataValid) {
+            const errorMessage = `Invalid Oracle data format: ${JSON.stringify(dataErrors)}`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
         }
 
-        if (!validateOracleHostInfo(data.hostInfo)) {
-            const errorMessage = 'Invalid Oracle hostInfo format.';
+        const { isValid: isHostInfoValid, errors: hostInfoErrors } = validateWithSchema(
+            oracleHostInfoSchema,
+            data.hostInfo
+        );
+        if (!isHostInfoValid) {
+            const errorMessage = `Invalid Oracle hostInfo format: ${JSON.stringify(hostInfoErrors)}`;
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
         }
@@ -1311,8 +1283,6 @@ export {
     getOracleBulkResourceExploreSavings,
     deriveOracleInstanceType,
     analyzeOracleData,
-    validateOracleCollectionObject,
-    validateOracleHostInfo,
     getHostUniqueId,
     saveOracleReportInWlmdbDatabase,
     aggregateDatabaseEntries

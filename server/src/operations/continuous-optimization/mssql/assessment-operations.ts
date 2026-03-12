@@ -4,7 +4,7 @@ import throat from 'throat';
 import { compact, isEmpty, omit } from 'lodash-es';
 import createError from 'http-errors';
 import getLogger from '../../../utils/logger';
-import { extractSqlInstanceName, IS_DEMO_FLOW, sleep } from '../../../utils/utils';
+import { extractSqlInstanceName, IS_DEMO_FLOW, sleep, validateWithSchema } from '../../../utils/utils';
 import {
     getInstanceInfo,
     getResources,
@@ -64,7 +64,7 @@ import {
 } from './resilience-assessment-operation';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
-import { getLatestInstanceAssessmentTime, validateAssessment } from '../assessment-utils';
+import { getLatestInstanceAssessmentTime } from '../assessment-utils';
 import {
     updateFieldsBasedOnDismissedConfigurations,
     mergeDismissConfigurations,
@@ -451,7 +451,7 @@ async function fetchMssqlDriftAssessment(
         driftAssessmentData = handleGetMssqlAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
     }
 
-    const { isValid, errors: validationErrors } = validateAssessment(MSSQLDriftAssessmentResponse, driftAssessmentData);
+    const { isValid, errors: validationErrors } = validateWithSchema(MSSQLDriftAssessmentResponse, driftAssessmentData);
     if (!isValid) {
         logger.error('Assessment data validation failed for', { databaseHostId, databaseInstanceId, validationErrors });
         return {};
@@ -524,7 +524,7 @@ async function fetchMssqlDriftAssessmentPerHost(
             hostFieldsToQuery
         );
 
-        const { isValid, errors: validationErrors } = validateAssessment(MSSQLDriftAssessmentResponse, hostLevelData);
+        const { isValid, errors: validationErrors } = validateWithSchema(MSSQLDriftAssessmentResponse, hostLevelData);
         if (!isValid) {
             logger.error('Host level assessment validation failed for :', { databaseHostId, validationErrors });
             hostLevelData = {};

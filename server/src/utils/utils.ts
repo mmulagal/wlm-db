@@ -2,6 +2,7 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
+import Ajv, { ValidateFunction } from 'ajv';
 import { attempt, trimEnd, trimStart, camelCase, isEmpty, isObject } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -1576,6 +1577,25 @@ function compressSsmCommand(params: SendCommandCommandInput) {
     return params;
 }
 
+let ajvInstance: Ajv | undefined;
+const ajvValidatorCache = new WeakMap<object, ValidateFunction>();
+
+function validateWithSchema(
+    schema: object,
+    data: unknown
+): { isValid: boolean; errors: NonNullable<ValidateFunction['errors']> } {
+    if (!ajvInstance) {
+        ajvInstance = new Ajv();
+    }
+    let validate = ajvValidatorCache.get(schema);
+    if (!validate) {
+        validate = ajvInstance.compile(schema);
+        ajvValidatorCache.set(schema, validate);
+    }
+    const isValid = validate(data);
+    return { isValid, errors: validate.errors || [] };
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1664,5 +1684,6 @@ export {
     createStreamingZip,
     ASSESSMENT_SCRIPT_FILENAMES,
     compressSsmCommand,
-    parseAssessmentFileContent
+    parseAssessmentFileContent,
+    validateWithSchema
 };

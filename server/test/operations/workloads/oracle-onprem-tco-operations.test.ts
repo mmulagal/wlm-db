@@ -8,8 +8,6 @@ import {
     saveReportInReportingRegistry
 } from '../../../src/operations/onprem-tco-operations';
 import {
-    validateOracleCollectionObject,
-    validateOracleHostInfo,
     getHostUniqueId,
     saveOracleReportInWlmdbDatabase,
     getOnPremisesOracleDatabaseResources,
@@ -20,6 +18,8 @@ import {
     uploadOracleTcoData,
     aggregateDatabaseEntries
 } from '../../../src/operations/workloads/oracle/oracle-onprem-tco-operations';
+import { validateWithSchema } from '../../../src/utils/utils';
+import { oracleCollectionObjectSchema, oracleHostInfoSchema } from '../../../src/utils/onprem-tco/onprem-tco-schemas';
 import { ACCOUNT_ID, DEFAULT_AWS_REGION, OracleDeploymentModel } from '../../../src/utils/consts';
 import {
     OracleCollectionObject,
@@ -42,33 +42,33 @@ const loadJson = (filename: string): OracleCollectionObject => {
 describe('Oracle Validation Functions', () => {
     const standaloneData = loadJson('OracleDataResponse-DemoStandalone.json');
 
-    describe('validateOracleCollectionObject', () => {
+    describe('validateWithSchema (oracleCollectionObjectSchema)', () => {
         it('should return true for valid data', () => {
-            expect(validateOracleCollectionObject(standaloneData)).toBe(true);
+            expect(validateWithSchema(oracleCollectionObjectSchema, standaloneData).isValid).toBe(true);
         });
 
         it('should return false for null/undefined data', () => {
-            expect(validateOracleCollectionObject(null as any)).toBe(false);
-            expect(validateOracleCollectionObject(undefined as any)).toBe(false);
+            expect(validateWithSchema(oracleCollectionObjectSchema, null).isValid).toBe(false);
+            expect(validateWithSchema(oracleCollectionObjectSchema, undefined).isValid).toBe(false);
         });
 
         it('should return false when required top-level fields are missing', () => {
             const missingScriptInfo = { ...standaloneData, scriptInfo: undefined } as any;
-            expect(validateOracleCollectionObject(missingScriptInfo)).toBe(false);
+            expect(validateWithSchema(oracleCollectionObjectSchema, missingScriptInfo).isValid).toBe(false);
 
             const missingHostInfo = { ...standaloneData, hostInfo: undefined } as any;
-            expect(validateOracleCollectionObject(missingHostInfo)).toBe(false);
+            expect(validateWithSchema(oracleCollectionObjectSchema, missingHostInfo).isValid).toBe(false);
         });
 
         it('should return false when databases is not a non-empty array', () => {
             const missingDatabases = { ...standaloneData, databases: undefined } as any;
-            expect(validateOracleCollectionObject(missingDatabases)).toBe(false);
+            expect(validateWithSchema(oracleCollectionObjectSchema, missingDatabases).isValid).toBe(false);
 
             const emptyDatabases = { ...standaloneData, databases: [] } as any;
-            expect(validateOracleCollectionObject(emptyDatabases)).toBe(false);
+            expect(validateWithSchema(oracleCollectionObjectSchema, emptyDatabases).isValid).toBe(false);
 
             const notArray = { ...standaloneData, databases: 'not-an-array' } as any;
-            expect(validateOracleCollectionObject(notArray)).toBe(false);
+            expect(validateWithSchema(oracleCollectionObjectSchema, notArray).isValid).toBe(false);
         });
 
         it('should return false when a database entry is missing required fields', () => {
@@ -76,19 +76,19 @@ describe('Oracle Validation Functions', () => {
                 ...standaloneData,
                 databases: [{ ...standaloneData.databases[0], databaseInfo: undefined }]
             } as any;
-            expect(validateOracleCollectionObject(missingInstanceInfo)).toBe(false);
+            expect(validateWithSchema(oracleCollectionObjectSchema, missingInstanceInfo).isValid).toBe(false);
 
             const missingPerformanceSummary = {
                 ...standaloneData,
                 databases: [{ ...standaloneData.databases[0], performanceSummary: undefined }]
             } as any;
-            expect(validateOracleCollectionObject(missingPerformanceSummary)).toBe(false);
+            expect(validateWithSchema(oracleCollectionObjectSchema, missingPerformanceSummary).isValid).toBe(false);
 
             const missingStorageInfo = {
                 ...standaloneData,
                 databases: [{ ...standaloneData.databases[0], storageInfo: undefined }]
             } as any;
-            expect(validateOracleCollectionObject(missingStorageInfo)).toBe(false);
+            expect(validateWithSchema(oracleCollectionObjectSchema, missingStorageInfo).isValid).toBe(false);
         });
 
         it('should return false when a database entry has non-array performanceSnapshots', () => {
@@ -96,33 +96,33 @@ describe('Oracle Validation Functions', () => {
                 ...standaloneData,
                 databases: [{ ...standaloneData.databases[0], performanceSnapshots: 'not-an-array' }]
             } as any;
-            expect(validateOracleCollectionObject(invalidSnapshots)).toBe(false);
+            expect(validateWithSchema(oracleCollectionObjectSchema, invalidSnapshots).isValid).toBe(false);
         });
     });
 
-    describe('validateOracleHostInfo', () => {
+    describe('validateWithSchema (oracleHostInfoSchema)', () => {
         it('should return true for valid host info', () => {
-            expect(validateOracleHostInfo(standaloneData.hostInfo)).toBe(true);
+            expect(validateWithSchema(oracleHostInfoSchema, standaloneData.hostInfo).isValid).toBe(true);
         });
 
         it('should return false for null/undefined host info', () => {
-            expect(validateOracleHostInfo(null as any)).toBe(false);
-            expect(validateOracleHostInfo(undefined as any)).toBe(false);
+            expect(validateWithSchema(oracleHostInfoSchema, null).isValid).toBe(false);
+            expect(validateWithSchema(oracleHostInfoSchema, undefined).isValid).toBe(false);
         });
 
         it('should return false when hostname is missing', () => {
             const missingHostname = { ...standaloneData.hostInfo, hostname: '' };
-            expect(validateOracleHostInfo(missingHostname)).toBe(false);
+            expect(validateWithSchema(oracleHostInfoSchema, missingHostname).isValid).toBe(false);
         });
 
         it('should return false when cpuCount is missing', () => {
             const missingCpu = { ...standaloneData.hostInfo, cpuCount: 0 };
-            expect(validateOracleHostInfo(missingCpu)).toBe(false);
+            expect(validateWithSchema(oracleHostInfoSchema, missingCpu).isValid).toBe(false);
         });
 
         it('should return false when totalRamBytes is missing', () => {
             const missingRam = { ...standaloneData.hostInfo, totalRamBytes: 0 };
-            expect(validateOracleHostInfo(missingRam)).toBe(false);
+            expect(validateWithSchema(oracleHostInfoSchema, missingRam).isValid).toBe(false);
         });
     });
 });

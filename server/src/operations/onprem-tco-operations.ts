@@ -311,10 +311,13 @@ function aggregateVolumesByType(volumes: EbsVolumeType[]): EbsVolumeType[] {
         if (existing) {
             const hasIops = existing.volumeIops !== undefined || volume.volumeIops !== undefined;
             const hasThroughput = existing.throughput !== undefined || volume.throughput !== undefined;
+            const newVolumeNumber = existing.volumeNumber + volume.volumeNumber;
             volumeMap.set(volume.volumeType, {
                 volumeType: volume.volumeType,
-                volumeNumber: existing.volumeNumber + volume.volumeNumber,
-                storageAmount: existing.storageAmount + volume.storageAmount,
+                volumeNumber: newVolumeNumber,
+                storageAmount:
+                    (existing.storageAmount * existing.volumeNumber + volume.storageAmount * volume.volumeNumber) /
+                    newVolumeNumber,
                 volumeIops: hasIops ? Math.max(existing.volumeIops || 0, volume.volumeIops || 0) : undefined,
                 throughput: hasThroughput ? Math.max(existing.throughput || 0, volume.throughput || 0) : undefined
             });
