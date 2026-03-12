@@ -456,7 +456,7 @@ const GOLDEN_CONFIG = {
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
         recommendation:
-            'When Workload Factory detects that your database infrastructure is not using any of the commercial software license features you are paying for, a license is considered not optimized. A license that is not optimized might result in unnecessary additional costs.'
+            'The SQL Server license assessment is at the host level. A license is considered not optimized when Workload Factory detects that any instance running on the host is not using the enterprise license features you are paying for. A license that is not optimized might result in unnecessary additional costs.'
     },
     maxdop: {
         tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
@@ -474,7 +474,7 @@ const GOLDEN_CONFIG = {
         subCategory: 'application',
         focusWidgetName: 'Microsoft SQL Server patch',
         severity: SEVERITY.CRITICAL,
-        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE,
         recommendation:
             'Critical (criticalPatchesCount) and important (importantPatchesCount) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.'
     },

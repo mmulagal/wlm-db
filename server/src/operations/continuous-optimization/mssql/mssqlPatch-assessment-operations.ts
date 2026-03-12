@@ -92,7 +92,7 @@ function calculateMSSQLPatchDrift(
             recommendation: recommendationMessage,
             tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
             objectsInViolation,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
+            resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE
         };
     } catch (error: any) {
         errorMessage = `Error while calculating MSSQL patch drift. ${error.message}`;

@@ -745,15 +745,15 @@ export const cardDataDefault: any = {
                 {
                     title: 'Not optimized: ',
                     description:
-                        'A license is considered "not optimized" when Workload Factory detects that your database \ninfrastructure doesn\'t use any of the commercial software license features you\'re paying for. An unoptimized license \nmight result in unnecessary costs.'
+                        'The SQL Server license assessment is at the host level. A license is considered "not optimized" when \nWorkload Factory detects that any instance running on the host is not using the Enterprise license features you\'re \npaying for. An unoptimized license might result in unnecessary costs.'
                 },
                 {
                     title: 'Optimized: ',
                     description:
-                        'A license is considered "optimized" when the commercial software license for your databases meets your \nperformance requirements.'
+                        'A license is considered "optimized" when every instance on the host that uses an Enterprise license \nuses Enterprise features, or when the commercial software license for your databases meets your performance \nrequirements.'
                 }
             ],
-            info: 'The SQL Server license assessment and recommendation are provided at the host level.'
+            info: 'The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.'
         },
         tags: ['Cost optimization']
     },

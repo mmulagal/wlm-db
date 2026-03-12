@@ -52,8 +52,8 @@ function calculateLicenseDrift(
         const matchingLicenseAssessmentStatus = getMatchingAssessmentStatus(licenseFinding);
         const recommendationMessage =
             licenseFinding === FINDING.NOT_OPTIMIZED
-                ? 'When Workload Factory detects that your database infrastructure is not using any of the commercial software license features you are paying for, a license is considered not optimized. A license that is not optimized might result in unnecessary additional costs.'
-                : 'When the license for your commercial software database meets your performance requirements, the license is considered optimized';
+                ? 'The SQL Server license assessment is at the host level. A license is considered not optimized when Workload Factory detects that any instance running on the host is not using the Enterprise license features you are paying for. A license that is not optimized might result in unnecessary additional costs.'
+                : 'A license is considered optimized when every instance on the host that uses an Enterprise license uses Enterprise features, or when the license for your commercial software database meets your performance requirements.';
 
         return {
             name: 'sql-license',
