@@ -1,13 +1,14 @@
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
-import { TooltipInfo } from '@netapp/design-system';
+import { Popover } from '@netapp/design-system';
 import { CONFIG_STATES, GETWELL_STATUS } from '../../../../../utils/consts';
-import styles from './OracleCardComponent.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
+import styles from './OracleCardComponent.module.scss';
 import { ReactComponent as NotActive } from '../../../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../../../assets/under-provisioned.svg';
 import { ReactComponent as InProgress } from '../../../../../assets/In Progress.svg';
+import { ReactComponent as TooltipIcon } from '../../../../../assets/tooltipGrey.svg';
 
 const StatusSection = ({ cardData, loading, disableText }: any) => {
     const { t } = useTranslation();
@@ -41,10 +42,9 @@ const StatusSection = ({ cardData, loading, disableText }: any) => {
         );
     }
     if (cardData?.dismissedObj?.configState && cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVE) {
-        // Condition to show n/a if state is not active
         return (
             <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                {GENERAL.NOT_AVAILABLE}
+                {t('databases.general.not-available-table-columns')}
             </DsTypography>
         );
     }
@@ -82,22 +82,25 @@ const StatusSection = ({ cardData, loading, disableText }: any) => {
                     </span>
                 </>
             ) : (
-                <>
-                    {cardData?.errorMessage ? (
-                        <span className={styles.warningMsg}>
-                            <TooltipInfo trigger="hover">
-                                <DsTypography variant="Regular_14">{cardData?.errorMessage}</DsTypography>
-                            </TooltipInfo>
-                            <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                                {GENERAL.UNAVAILABLE}
-                            </DsTypography>
-                        </span>
-                    ) : (
+                <span className={styles.overProvisioned}>
+                    <span className={styles.tooltipLevel}>
+                        <Popover
+                            popoverClass=""
+                            children={
+                                cardData?.errorMessage || t('databases.general.assessment-unavailable-with-tooltip')
+                            }
+                            trigger="hover"
+                            isAppendedToBody={false}
+                            container={<TooltipIcon />}
+                            placement="bottom"
+                        />
+                    </span>
+                    <span style={{ marginLeft: '8px' }}>
                         <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                            {t('databases.general.not-available-table-columns')}
+                            {t('databases.well-architect.unavailable')}
                         </DsTypography>
-                    )}
-                </>
+                    </span>
+                </span>
             )}
         </DsTypography>
     );

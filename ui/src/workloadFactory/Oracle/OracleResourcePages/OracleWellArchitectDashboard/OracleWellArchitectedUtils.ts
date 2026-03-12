@@ -376,11 +376,11 @@ export const oracleCardData: any = {
         },
         block_four: {
             type: 'Severity',
-            value: 'Critical'
+            value: ''
         },
         block_five: {
             type: 'Resource type',
-            value: 'EC2 Instance'
+            value: ''
         },
         block_six: {
             type: 'Swap space',
@@ -417,11 +417,11 @@ export const oracleCardData: any = {
         },
         block_four: {
             type: 'Severity',
-            value: 'Critical'
+            value: ''
         },
         block_five: {
             type: 'Resource type',
-            value: 'File system'
+            value: ''
         },
         block_six: {
             type: 'File system headroom',

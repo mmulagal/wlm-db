@@ -1,8 +1,10 @@
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
+import { useTranslation } from 'react-i18next';
 import styles from './OracleCardComponent.module.scss';
-import { GENERAL } from '../../../../../utils/appConstants';
 
 const SectionFive = ({ cardData, loading, disableText }: any) => {
+    const { t } = useTranslation();
+
     if (loading) {
         return (
             <div className={styles.loadingSection}>
@@ -40,11 +42,11 @@ const SectionFive = ({ cardData, loading, disableText }: any) => {
     return (
         <DsTypography
             variant="Semibold_14"
-            title={cardData?.block_five?.value || GENERAL.NOT_AVAILABLE}
+            title={cardData?.block_five?.value || t('databases.general.not-available-table-columns')}
             isDisabled={disableText}
             className={styles.titleText}
         >
-            {cardData?.block_five?.value || GENERAL.NOT_AVAILABLE}
+            {cardData?.block_five?.value || t('databases.general.not-available-table-columns')}
         </DsTypography>
     );
 };

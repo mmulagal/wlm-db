@@ -22,6 +22,7 @@ import {
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM
 } from '../../../../../utils/consts';
+import { GENERAL } from '../../../../../utils/appConstants';
 import { formatOracleWellArchitectedData, callOptimizeOracleApi } from '../OracleWellArchitectedUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../../../../store/workloadFactory/inventoryV2Slice';
@@ -133,6 +134,14 @@ const OracleCardComponent = ({
 
     // Function to determine if dismissed style should be applied
     const shouldApplyDismissedStyle = () => {
+        if (
+            cardData?.block_two?.value === GENERAL.UNAVAILABLE ||
+            cardData?.errorMessage ||
+            !cardData?.block_four?.value
+        ) {
+            return true;
+        }
+
         // For ONTAP and OS cards: apply dismissed style if all sub-configs are activating
         if (
             cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
@@ -383,8 +392,16 @@ const OracleCardComponent = ({
                                 </div>
                             )}
                             {!loading && (
-                                <DsTypography variant="Semibold_14" className={styles.labelText}>
-                                    {cardData?.block_four?.value || '-'}
+                                <DsTypography
+                                    variant="Semibold_14"
+                                    className={styles.labelText}
+                                    isDisabled={disableText}
+                                    title={
+                                        cardData?.block_four?.value ||
+                                        t('databases.general.not-available-table-columns')
+                                    }
+                                >
+                                    {cardData?.block_four?.value || t('databases.general.not-available-table-columns')}
                                 </DsTypography>
                             )}
                         </div>

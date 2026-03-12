@@ -2,7 +2,6 @@ import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { Popover } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import styles from './OracleCardComponent.module.scss';
-import { GENERAL } from '../../../../../utils/appConstants';
 import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES } from '../../../../../utils/consts';
 import { ReactComponent as TooltipIcon } from '../../../../../assets/tooltipGrey.svg';
 
@@ -37,10 +36,9 @@ const SectionSix = ({ cardData, loading, disableText }: any) => {
     }
 
     if (cardData?.dismissedObj?.configState && cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVE) {
-        // Condition to show n/a if state is not active
         return (
             <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                {GENERAL.NOT_AVAILABLE}
+                {t('databases.general.not-available-table-columns')}
             </DsTypography>
         );
     }
@@ -95,14 +93,14 @@ const SectionSix = ({ cardData, loading, disableText }: any) => {
     if (cardData?.block_six?.smallFont || !cardData?.block_six?.value) {
         return (
             <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                {cardData?.block_six?.value || GENERAL.NOT_AVAILABLE}
+                {cardData?.block_six?.value || t('databases.general.not-available-table-columns')}
             </DsTypography>
         );
     }
 
     return (
         <DsTypography variant="Regular_24" style={{ lineHeight: 'unset' }} isDisabled={disableText}>
-            {cardData?.block_six?.value || GENERAL.NOT_AVAILABLE}
+            {cardData?.block_six?.value || t('databases.general.not-available-table-columns')}
         </DsTypography>
     );
 };
