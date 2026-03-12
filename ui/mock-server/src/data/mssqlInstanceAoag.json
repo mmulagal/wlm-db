@@ -1,0 +1,227 @@
+{
+    "databaseInstanceId": "111",
+    "databaseInstanceName": "MSSQLSERVER",
+    "status": "Up",
+    "databaseCount": 5,
+    "databaseServer": {
+        "operatingSystem": "Windows Server 2019",
+        "serverEdition": "SQL Server Standard Edition",
+        "serverVersion": "Microsoft SQL Server 2019",
+        "activeNode": "aoag1primary",
+        "nodeNames": ["aoag1primary", "aoag1standby"],
+        "activeConnections": 8,
+        "creationDate": "1731043090000",
+        "collation": "SQL_Latin1_General_CP1_CI_AS",
+        "clusterName": "aoag1.wlmqaauto.com"
+    },
+    "nodeTopology": {
+        "awsAccount": "971010719125",
+        "region": "US East (N. Virginia)",
+        "vpcId": "vpc-84b3ade6",
+        "vpcName": "VPC-1",
+        "vpcCidr": "172.30.0.0/20",
+        "keyPairName": "test_key",
+        "ec2Details": [
+            {
+                "id": "i-0db20e831d1ce41a1",
+                "ebsVolumeId": "vol-03a71f23f5a2f64f1",
+                "name": "aoag1primary",
+                "nodeStatus": "running",
+                "instanceType": "m5.xlarge",
+                "availabilityZone": "availability-zone-4",
+                "subnetId": "subnet-adda86fb"
+            },
+            {
+                "id": "i-0e6a7b54b2b5951a2",
+                "ebsVolumeId": "vol-03a70f23f5a2f64f1",
+                "name": "aoag1standby",
+                "nodeStatus": "running",
+                "instanceType": "m5.xlarge",
+                "availabilityZone": "availability-zone-3",
+                "subnetId": "subnet-adda86eb"
+            }
+        ],
+        "activeDirectoryDetails": {
+            "name": "wlm.com",
+            "address": "33.88.6.139, 148.56.215.111"
+        }
+    },
+    "databaseInstanceTopology": {
+        "serverType": "MSSQL",
+        "serverInstallationMode": "AOAG",
+        "fileSystemType": "FSx for ONTAP",
+        "fileSystemId": "fs-37449530",
+        "fileSystemName": "DBSFSX",
+        "fileSystemDeploymentMode": "MULTI_AZ_1",
+        "fileSystemStatus": "AVAILABLE",
+        "fileSystemStorageCapacity": 35840,
+        "fileSystemThroughputCapacity": 512,
+        "fileSystemStorageType": "SSD",
+        "storageSummary": {
+            "volumes": [
+                {
+                    "id": "vol-1234567890abcdef0",
+                    "name": "wlmdb-sqllog-17379880098676",
+                    "luns": [
+                        {
+                            "id": "5b2c3b-2bb-4acd-ba19-f987645151",
+                            "name": "/vol/wlmgb_sqllog_17379880098676/sqllog"
+                        }
+                    ]
+                },
+                {
+                    "id": "vol-0987654321fedcba0",
+                    "name": "wlmdb-sqldata-17379880098677",
+                    "luns": [
+                        {
+                            "id": "lun-0987654321fedcba0",
+                            "name": "/vol/wlmgb_sqldata_17379880098677/sqldata"
+                        }
+                    ]
+                }
+            ],
+            "totalVolumes": 2,
+            "totalLuns": 2
+        }
+    },
+    "performance": {
+        "assessment": "Excellent ( <=1 ms )",
+        "rwMetrics": {
+            "latency": {
+                "read": [
+                    { "timestamp": "2025-06-02T04:28:00.000Z", "value": 18 },
+                    { "timestamp": "2025-06-03T09:28:00.000Z", "value": 18 },
+                    { "timestamp": "2025-06-04T08:28:00.000Z", "value": 18 },
+                    { "timestamp": "2025-06-05T07:28:00.000Z", "value": 18 }
+                ],
+                "write": [
+                    { "timestamp": "2025-06-02T04:28:00.000Z", "value": 6 },
+                    { "timestamp": "2025-06-03T09:28:00.000Z", "value": 6 },
+                    { "timestamp": "2025-06-04T08:28:00.000Z", "value": 10 },
+                    { "timestamp": "2025-06-05T07:28:00.000Z", "value": 8 }
+                ]
+            },
+            "iops": {
+                "read": [
+                    { "timestamp": "2025-06-02T04:28:00.000Z", "value": 3 },
+                    { "timestamp": "2025-06-03T09:28:00.000Z", "value": 1 },
+                    { "timestamp": "2025-06-04T08:28:00.000Z", "value": 2.74 },
+                    { "timestamp": "2025-06-05T07:28:00.000Z", "value": 2.74 }
+                ],
+                "write": [
+                    { "timestamp": "2025-06-02T04:28:00.000Z", "value": 4.63 },
+                    { "timestamp": "2025-06-03T09:28:00.000Z", "value": 4.63 },
+                    { "timestamp": "2025-06-04T08:28:00.000Z", "value": 2 },
+                    { "timestamp": "2025-06-05T07:28:00.000Z", "value": 7 }
+                ]
+            },
+            "throughput": {
+                "read": [
+                    { "timestamp": "2025-06-02T04:28:00.000Z", "value": 2 },
+                    { "timestamp": "2025-06-03T09:28:00.000Z", "value": 2 },
+                    { "timestamp": "2025-06-04T08:28:00.000Z", "value": 16 },
+                    { "timestamp": "2025-06-05T07:28:00.000Z", "value": 16 }
+                ],
+                "write": [
+                    { "timestamp": "2025-06-02T04:28:00.000Z", "value": 19 },
+                    { "timestamp": "2025-06-03T09:28:00.000Z", "value": 21 },
+                    { "timestamp": "2025-06-04T08:28:00.000Z", "value": 3 },
+                    { "timestamp": "2025-06-05T07:28:00.000Z", "value": 6 }
+                ]
+            }
+        }
+    },
+    "storage": {
+        "fsxn": {
+            "size": 84389396480,
+            "used": 20690313216,
+            "physicalUsed": 3266818048,
+            "ssdUsed": 6618697728,
+            "capacityPoolUsed": 0,
+            "snapshotUsed": 411291648,
+            "protocol": ["iSCSI"]
+        }
+    },
+    "resourceUtilization": {
+        "cpu": [
+            { "timestamp": "2025-06-02T04:28:00.000Z", "value": 0 },
+            { "timestamp": "2025-06-03T09:28:00.000Z", "value": 39 },
+            { "timestamp": "2025-06-04T08:28:00.000Z", "value": 20 },
+            { "timestamp": "2025-06-05T07:28:00.000Z", "value": 11 }
+        ],
+        "memory": {
+            "percentUsed": "50",
+            "used": "8589934592",
+            "total": "17179869184",
+            "remaining": "8589934592"
+        },
+        "disk": {
+            "percentUsed": "25",
+            "used": "2473901162496",
+            "total": "9895604649984",
+            "remaining": "7421703487488",
+            "error": ""
+        }
+    },
+    "sqlServerDeploymentType": "AOAG",
+    "aoagDetails": {
+        "serverInfo": {
+            "serverName": "aoag1primary",
+            "isHadrEnabled": 1
+        },
+        "availabilityGroups": [
+            {
+                "agName": "sathishaoag",
+                "primaryReplica": "aoag1primary",
+                "readRoutingTargets": "aoag1primary -> aoag1standby",
+                "replicas": [
+                    {
+                        "replica": "aoag1primary",
+                        "role": "PRIMARY",
+                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                        "failoverMode": "MANUAL",
+                        "syncHealth": "HEALTHY",
+                        "connectedState": "CONNECTED",
+                        "isLocalReplica": false,
+                        "secondaryConnections": "NO",
+                        "primaryConnections": "ALL",
+                        "isReadReplica": 0,
+                        "isRoutableReadReplica": 0
+                    },
+                    {
+                        "replica": "aoag1standby",
+                        "role": "SECONDARY",
+                        "availabilityMode": "ASYNCHRONOUS_COMMIT",
+                        "failoverMode": "MANUAL",
+                        "syncHealth": "HEALTHY",
+                        "connectedState": "CONNECTED",
+                        "isLocalReplica": true,
+                        "secondaryConnections": "NO",
+                        "primaryConnections": "ALL",
+                        "isReadReplica": 1,
+                        "isRoutableReadReplica": 1
+                    }
+                ]
+            }
+        ],
+        "baseDeploymentType": "Standalone"
+    },
+    "aoagClusterNodeDetails": [
+        {
+            "node": "aoag1primary",
+            "ip": "10.0.141.2",
+            "ec2InstanceId": "i-0db20e831d1ce41a1",
+            "ec2InstanceName": "aoag1primary",
+            "databaseHostId": "resource-id-aoag1",
+            "databaseInstanceId": "111"
+        },
+        {
+            "node": "aoag1standby",
+            "ip": "10.0.142.19",
+            "ec2InstanceId": "i-0e6a7b54b2b5951a2",
+            "ec2InstanceName": "aoag1standby",
+            "databaseHostId": "resource-id-aoag2",
+            "databaseInstanceId": "121"
+        }
+    ]
+}

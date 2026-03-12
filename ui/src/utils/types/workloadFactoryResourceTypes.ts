@@ -41,6 +41,8 @@ export interface WorkloadFactoryResourceEntities {
     databaseListLoading: boolean;
     // eslint-disable-next-line no-use-before-define
     databaseList: WorkloadFactoryDatabaseItem[];
+    replicaDatabasesMap: Record<string, WorkloadFactoryDatabaseItem[]>;
+    replicaDatabasesLoading: boolean;
     selectedResourceId: string;
     selectedDatabaseInstance: string;
     selectedDatabaseInstanceName: string;
@@ -235,4 +237,21 @@ export interface WorkloadFactoryDatabaseItem {
         isSqlNativeEnabled: boolean;
     };
     collation?: string;
+    availabilityGroup?: string;
+    replicaRole?: string;
+    synchronizationState?: string;
+    isReadableSecondary?: boolean;
+    replicaDatabases?: WorkloadFactoryDatabaseItem[];
+    replicaHostName?: string;
+}
+
+export interface AoagClusterNode {
+    node?: string;
+    memberName?: string;
+    memberType?: number;
+    ip?: string;
+    ec2InstanceId?: string;
+    ec2InstanceName?: string;
+    databaseHostId?: string;
+    databaseInstanceId?: string;
 }

@@ -180,7 +180,13 @@ export const DATABASE_DEPLOYMENT_MODE = {
     STANDALONE: 'Standalone',
     AOAG: 'Always on availability group',
     DATAGUARD: 'Data Guard',
-    AOAG_CAPS: 'AOAG'
+    AOAG_CAPS: 'AOAG',
+    AOAG_FULL: 'ALWAYS ON AVAILABILITY GROUP'
+};
+
+export const DATABASE_STATUS = {
+    ONLINE: 'ONLINE',
+    OFFLINE: 'OFFLINE'
 };
 
 export const REPLICA_ROLES = {

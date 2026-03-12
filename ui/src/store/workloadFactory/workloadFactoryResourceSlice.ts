@@ -1,5 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { WorkloadFactoryResourceEntities } from '../../utils/types/workloadFactoryResourceTypes';
+import {
+    WorkloadFactoryDatabaseItem,
+    WorkloadFactoryResourceEntities
+} from '../../utils/types/workloadFactoryResourceTypes';
 
 const initialState: WorkloadFactoryResourceEntities = {
     resourceLoading: true,
@@ -137,6 +140,8 @@ const initialState: WorkloadFactoryResourceEntities = {
     },
     databaseListLoading: true,
     databaseList: [],
+    replicaDatabasesMap: {},
+    replicaDatabasesLoading: false,
     selectedResourceId: '',
     selectedDatabaseInstance: '',
     selectedDatabaseInstanceName: '',
@@ -203,9 +208,17 @@ const workloadFactoryResourceSlice = createSlice({
         setDatabaseList: (state, action: PayloadAction<any>) => {
             state.databaseList = action.payload;
         },
+        setReplicaDatabasesMap: (state, action: PayloadAction<Record<string, WorkloadFactoryDatabaseItem[]>>) => {
+            state.replicaDatabasesMap = action.payload;
+        },
+        setReplicaDatabasesLoading: (state, action: PayloadAction<boolean>) => {
+            state.replicaDatabasesLoading = action.payload;
+        },
         resetWorkloadFactoryResourceData: state => {
             state.resourceDetails = initialState.resourceDetails;
             state.databaseList = initialState.databaseList;
+            state.replicaDatabasesMap = {};
+            state.replicaDatabasesLoading = false;
         },
         setSelectedResourceId: (state, action: PayloadAction<any>) => {
             state.selectedResourceId = action.payload;
@@ -261,6 +274,8 @@ export const {
     setResourceDetails,
     setDatabaseListLoading,
     setDatabaseList,
+    setReplicaDatabasesMap,
+    setReplicaDatabasesLoading,
     resetWorkloadFactoryResourceData,
     setSelectedResourceId,
     setSelectedDatabaseInstance,

@@ -1,0 +1,95 @@
+{
+    "count": 5,
+    "items": [
+        {
+            "id": "1",
+            "name": "RetailBanking",
+            "status": "ONLINE",
+            "size": 566935683072,
+            "type": "User Database",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "databaseInstanceName": "MSSQLSERVER",
+            "availabilityGroup": "sathishaoag",
+            "replicaRole": "PRIMARY",
+            "synchronizationState": "SYNCHRONIZED",
+            "protection": {
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": false,
+                "isCRREnabled": false
+            }
+        },
+        {
+            "id": "2",
+            "name": "MFGSales",
+            "status": "ONLINE",
+            "size": 17179869184,
+            "type": "User Database",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "databaseInstanceName": "MSSQLSERVER",
+            "availabilityGroup": "sathishaoag",
+            "replicaRole": "PRIMARY",
+            "synchronizationState": "SYNCHRONIZED",
+            "protection": {
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": true
+            }
+        },
+        {
+            "id": "3",
+            "name": "AssetManagement",
+            "status": "ONLINE",
+            "size": 17179869184,
+            "type": "User Database",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "databaseInstanceName": "MSSQLSERVER",
+            "availabilityGroup": "sathishaoag",
+            "replicaRole": "PRIMARY",
+            "synchronizationState": "SYNCHRONIZED",
+            "protection": {
+                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": false
+            }
+        },
+        {
+            "id": "4",
+            "name": "ExpenseTracker",
+            "status": "ONLINE",
+            "size": 17179869184,
+            "type": "User Database",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "databaseInstanceName": "MSSQLSERVER",
+            "availabilityGroup": null,
+            "replicaRole": null,
+            "synchronizationState": null,
+            "protection": {
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": true
+            }
+        },
+        {
+            "id": "5",
+            "name": "master",
+            "status": "ONLINE",
+            "size": 8388608,
+            "type": "System Database",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "databaseInstanceName": "MSSQLSERVER",
+            "availabilityGroup": null,
+            "replicaRole": null,
+            "synchronizationState": null,
+            "protection": {
+                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": false,
+                "isCRREnabled": false
+            }
+        }
+    ]
+}

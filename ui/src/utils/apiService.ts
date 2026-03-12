@@ -438,11 +438,15 @@ export const workloadFactoryResourceApiV2 = createApi({
             })
         }),
         getDatabaseListV2: builder.query({
-            query: ({ credentialId, region, id, sqlInstanceId, fields = false }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}/databases${
-                    fields ? '?fields=protection' : ''
-                }`
-            })
+            query: ({ credentialId, region, id, sqlInstanceId, fields = false, includeAoag = false }) => {
+                const queryFields: string[] = [];
+                if (fields) queryFields.push('protection');
+                if (includeAoag) queryFields.push('aoag');
+                const queryString = queryFields.length ? `?fields=${queryFields.join(',')}` : '';
+                return {
+                    url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${id}/database-instances/${sqlInstanceId}/databases${queryString}`
+                };
+            }
         })
     })
 });

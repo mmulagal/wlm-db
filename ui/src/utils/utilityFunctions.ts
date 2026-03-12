@@ -41,7 +41,9 @@ import {
     SQL_DEPLOYMENT_MODE,
     STATUS_CONST,
     WLF_TABS,
-    severityOptions
+    severityOptions,
+    DATABASE_DEPLOYMENT_MODE,
+    REPLICA_ROLES
 } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
@@ -2977,3 +2979,17 @@ export const dashboardRedirectionToWellArchitected = () => {
         });
     }
 };
+
+export const isAoagDeploymentType = (deploymentType?: string): boolean => {
+    if (!deploymentType) return false;
+    const upper = deploymentType.toUpperCase();
+    return upper === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS || upper === DATABASE_DEPLOYMENT_MODE.AOAG_FULL;
+};
+
+export const hasAoagReplicas = (rowData?: WorkloadFactoryDatabaseItem): boolean =>
+    Boolean(
+        rowData?.availabilityGroup &&
+            rowData.replicaRole?.toUpperCase() === REPLICA_ROLES.PRIMARY &&
+            rowData.replicaDatabases &&
+            rowData.replicaDatabases.length > 0
+    );

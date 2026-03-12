@@ -1,0 +1,56 @@
+.replica {
+    position: sticky;
+    left: 0;
+    padding: 0 40px 40px 40px;
+
+    .replicaTopBar {
+        background-color: unset !important;
+        box-shadow: unset !important;
+    }
+
+    .statusCell {
+        display: flex;
+        gap: 8px;
+        flex-direction: row;
+        align-items: center;
+        .statusIcon {
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+        }
+        .onIcon {
+            background-color: var(--notification-success);
+        }
+        .offIcon {
+            background-color: var(--notification-error);
+        }
+    }
+
+    .colText {
+        display: flex;
+        gap: 8px;
+
+        .protection {
+            display: flex;
+            gap: 17px;
+        }
+    }
+
+    [class*='body'] {
+        [class*='cell'] {
+            background-color: var(--main-background) !important;
+            color: var(--text-primary) !important;
+            border-left: none !important;
+        }
+    }
+
+    [class*='_table'] {
+        [class*='_body'] {
+            [class*='_row'] {
+                > span:nth-last-of-type(2) {
+                    border-left: none !important;
+                }
+            }
+        }
+    }
+}

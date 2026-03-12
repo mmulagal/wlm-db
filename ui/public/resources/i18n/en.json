@@ -75,6 +75,10 @@
             "manage-analysis-state": "Manage Analysis State",
             "not-available": "n/a",
             "not-available-table-columns": "n/a",
+            "availability-group": "Availability Group",
+            "role": "Role",
+            "sync-state": "Sync State",
+            "failed-to-fetch-replica-databases": "Failed to fetch replica databases",
             "no-databases-online-msg": "No databases are online on the host.",
             "mssql-high-availability": "Microsoft SQL Server High Availability",
             "mtu": "MTU alignment",
@@ -110,7 +114,16 @@
             "well-architected-status": "Well-architected status",
             "databases": "Databases",
             "sandboxes": "Sandboxes",
-            "host": "Host"
+            "host": "Host",
+            "database-name": "Database name",
+            "instance-name": "Instance name",
+            "host-name": "Host name",
+            "protection-type": "Protection type",
+            "type": "Type",
+            "size": "Size",
+            "status": "Status",
+            "collation": "Collation",
+            "create-database": "Create database"
         },
         "banner": {
             "one-time-assessment": "One-time assessment",

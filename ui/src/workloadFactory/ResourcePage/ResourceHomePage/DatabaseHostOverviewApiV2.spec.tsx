@@ -29,6 +29,8 @@ vi.mock('../../../store/workloadFactory/workloadFactoryResourceSlice', () => ({
     setDatabaseListLoading: vi.fn((val: boolean) => ({ type: 'setDatabaseListLoading', payload: val })),
     setDiagramImageData: vi.fn((data: any) => ({ type: 'setDiagramImageData', payload: data })),
     setIsResourceRefresh: vi.fn((val: boolean) => ({ type: 'setIsResourceRefresh', payload: val })),
+    setReplicaDatabasesLoading: vi.fn((val: boolean) => ({ type: 'setReplicaDatabasesLoading', payload: val })),
+    setReplicaDatabasesMap: vi.fn((data: any) => ({ type: 'setReplicaDatabasesMap', payload: data })),
     setResourceDetails: vi.fn((data: any) => ({ type: 'setResourceDetails', payload: data })),
     setResourceLoading: vi.fn((val: boolean) => ({ type: 'setResourceLoading', payload: val }))
 }));

@@ -1,15 +1,16 @@
-import { Table, useTable, TableTopBar, Typography, TooltipInfo, Button } from '@netapp/design-system';
-import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { Button } from '@netapp/design-system';
+import { DsTypography } from '@tlveng/wlm-ds';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './DatabaseListTable.module.scss';
 import { WorkloadFactoryDatabaseItem } from '../../../utils/types/workloadFactoryResourceTypes';
 import { useAppSelector } from '../../../store/storeHooks';
-import { formatSize } from '../../../utils/utilityFunctions';
-import { GENERAL } from '../../../utils/appConstants';
-import { getProtectionText, isAwsBackupEnabledText } from '../../InventoryV2/InventoryUtilsV2';
-import { PROTECTION_TEXT_STATUS } from '../../../utils/consts';
+import { formatSize, expandTableRow, isAoagDeploymentType, hasAoagReplicas } from '../../../utils/utilityFunctions';
+import { getProtectionText } from '../../InventoryV2/InventoryUtilsV2';
+import { PROTECTION_TEXT_STATUS, DATABASE_STATUS, REPLICA_ROLES } from '../../../utils/consts';
 import DatabaseHostOverviewApiV2 from '../ResourceHomePage/DatabaseHostOverviewApiV2';
 import {
     addInitialDBCreateData,
@@ -18,14 +19,22 @@ import {
 } from '../../../store/workloadFactory/createNewDBSlice';
 import { updateResourceId } from '../../../store/authSlice';
 import ProtectionIcons from '../../../common/ProtectionIcons/ProtectionIcons';
+import { useTable } from '../../../common/Lib/Table/useTable';
+import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
+import { Table, ColumnProps } from '../../../common/Lib/Table/Table';
+import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
+import ResourcePageReplicaTable from './ResourcePageReplicaTable';
 
 const DatabaseListTable = () => {
-    const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
-    const databaseListLoading = useAppSelector(state => state.workloadFactoryResource.databaseListLoading);
+    const { t } = useTranslation();
     const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.getWellOptimize);
     const {
         resourceLoading: resourceLoadingState,
-
+        resourceDetails,
+        databaseList: data,
+        databaseListLoading,
+        replicaDatabasesMap,
+        replicaDatabasesLoading,
         selectedDatabaseInstance,
         selectedResourceId,
         selectedResourceCredId,
@@ -34,16 +43,41 @@ const DatabaseListTable = () => {
     const dispatch = useDispatch();
     DatabaseHostOverviewApiV2();
     const navigate = useNavigate();
+    const databaseTableRef = useRef<HTMLDivElement>(null);
+
+    const enrichedData = useMemo(() => {
+        if (!data?.length) return [];
+
+        const allReplicaDbs: WorkloadFactoryDatabaseItem[] = [];
+        Object.values(replicaDatabasesMap || {}).forEach(dbs => {
+            allReplicaDbs.push(...(dbs || []));
+        });
+
+        return data.map(db => {
+            if (!db.availabilityGroup || db.replicaRole?.toUpperCase() !== REPLICA_ROLES.PRIMARY) {
+                return db;
+            }
+
+            const matchingReplicas = allReplicaDbs.filter(
+                replicaDb => replicaDb.availabilityGroup === db.availabilityGroup && replicaDb.name === db.name
+            );
+
+            if (matchingReplicas.length === 0) return db;
+
+            return { ...db, replicaDatabases: matchingReplicas };
+        });
+    }, [data, replicaDatabasesMap]);
+
     const formatData = (tableData: WorkloadFactoryDatabaseItem[]) =>
         tableData?.map(perRow => {
             const protectionText = getProtectionText(perRow);
             let protectionVal = '';
             if (protectionText === PROTECTION_TEXT_STATUS.YES) {
-                protectionVal = GENERAL.PROTECTED;
+                protectionVal = t('databases.general.protected');
             } else if (protectionText === PROTECTION_TEXT_STATUS.NO) {
-                protectionVal = GENERAL.NOT_PROTECTED;
+                protectionVal = t('databases.general.not_protected');
             } else {
-                protectionVal = GENERAL.NOT_AVAILABLE;
+                protectionVal = t('databases.general.not-available-table-columns');
             }
             return {
                 ...perRow,
@@ -52,50 +86,95 @@ const DatabaseListTable = () => {
         });
 
     const notAvailable = () => (
-        <Typography variant="Regular_13" className={styles.colText}>
-            {GENERAL.NOT_AVAILABLE}
-        </Typography>
+        <DsTypography variant="Regular_13" className={styles.colText}>
+            {t('databases.general.not-available')}
+        </DsTypography>
     );
+
+    const isAoag = isAoagDeploymentType(resourceDetails?.sqlServerDeploymentType);
 
     const EncryptionColDefs: ColumnProps[] = [
         {
-            Header: GENERAL.DATABASE_NAME,
+            Header: t('databases.general.database-name'),
             accessor: 'name',
             isSortable: true,
             id: '1',
-            width: '19.3%'
+            width: isAoag ? '16%' : '19.3%'
         },
         {
-            Header: GENERAL.STATUS,
+            Header: t('databases.general.status'),
             accessor: 'status',
             filterOptions: 'auto',
             id: '2',
-            width: '11.2%',
+            width: isAoag ? '10%' : '11.2%',
             renderCell: (cellData: any) => (
                 <div className={styles.statusCell}>
                     <div
                         className={`${styles.statusIcon} ${
-                            cellData === 'ONLINE' ? styles.onIcon : cellData === 'OFFLINE' ? styles.offIcon : ''
+                            cellData === DATABASE_STATUS.ONLINE
+                                ? styles.onIcon
+                                : cellData === DATABASE_STATUS.OFFLINE
+                                ? styles.offIcon
+                                : ''
                         }`}
                     />
-                    <Typography variant="Regular_14">{cellData}</Typography>
+                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
                 </div>
             )
         },
+        ...(isAoag
+            ? [
+                  {
+                      Header: t('databases.general.availability-group'),
+                      accessor: 'availabilityGroup',
+                      filterOptions: 'auto' as const,
+                      id: '7',
+                      width: '16%',
+                      renderCell: (cellData: any, rowData: any) => {
+                          if (!cellData)
+                              return (
+                                  <DsTypography variant="Regular_14">
+                                      {t('databases.general.not-available')}
+                                  </DsTypography>
+                              );
+                          const roleLabel =
+                              rowData?.replicaRole?.toUpperCase() === REPLICA_ROLES.PRIMARY
+                                  ? `${t('databases.general.primary')} | ${rowData?.replicaDatabases?.length || 0} ${
+                                        (rowData?.replicaDatabases?.length || 0) !== 1
+                                            ? t('databases.general.replicas').toLowerCase()
+                                            : t('databases.general.replica').toLowerCase()
+                                    }`
+                                  : rowData?.replicaRole?.toUpperCase() === REPLICA_ROLES.SECONDARY
+                                  ? t('databases.general.secondary-replica')
+                                  : '';
+                          return (
+                              <div>
+                                  <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                                  {roleLabel && (
+                                      <DsTypography variant="Regular_12" className={styles.colText}>
+                                          {roleLabel}
+                                      </DsTypography>
+                                  )}
+                              </div>
+                          );
+                      }
+                  }
+              ]
+            : []),
         {
-            Header: GENERAL.SIZE,
+            Header: t('databases.general.size'),
             accessor: 'size',
             isSortable: true,
             id: '3',
-            width: '15%',
+            width: isAoag ? '10%' : '15%',
             renderCell: (cellData: any) => formatSize(cellData)
         },
         {
-            Header: GENERAL.DB_HOST_PROTECTION_TYPE,
+            Header: t('databases.general.protection-type'),
             accessor: 'isProtected',
             filterOptions: 'auto',
             id: '4',
-            width: '18%',
+            width: isAoag ? '15%' : '18%',
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
 
@@ -116,37 +195,72 @@ const DatabaseListTable = () => {
             }
         },
         {
-            Header: GENERAL.DB_HOST_TYPE,
+            Header: t('databases.general.type'),
             accessor: 'type',
             filterOptions: 'auto',
             id: '5',
-            width: '15%'
+            width: isAoag ? '12%' : '15%'
         },
         {
-            Header: GENERAL.DB_HOST_COLLATION,
+            Header: t('databases.general.collation'),
             accessor: 'collation',
             isSortable: true,
             id: '6',
-            width: '24.6%',
-            renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
+            width: isAoag ? '14%' : '24.6%',
+            renderCell: (cellData: any) => cellData || t('databases.general.not-available')
         }
     ];
 
+    const ExpandedRow = useCallback(
+        ({ rowData }: any) => (
+            <ResourcePageReplicaTable
+                width={databaseTableRef.current ? databaseTableRef.current.offsetWidth : 0}
+                replicaDatabases={rowData?.replicaDatabases || []}
+                isLoading={replicaDatabasesLoading}
+            />
+        ),
+        [databaseTableRef, replicaDatabasesLoading]
+    );
+
+    const tableComponentProps = {
+        ExpandedRow,
+        lazyLoadingText: 'Loading'
+    };
+
     const tableProps = useTable({
-        // @ts-ignore
-        selectAllProps: false,
-        // @ts-ignore
-        manageColumnsProps: false,
+        selectionType: 'none',
         isSorting: false,
         columns: EncryptionColDefs,
-        rows: formatData(data),
+        rows: formatData(enrichedData),
         pageSize: 50,
         isLazyLoading: databaseListLoading,
-        isHorizontalScroll: true
+        isHorizontalScroll: true,
+        isManagedColumns: isAoag,
+        ...(isAoag && {
+            manageColumnsProps: {
+                Header: () => null,
+                width: '56px',
+                renderCell: (_cellData: any, rowData: any, { updateRowState, rowsState }: any) => {
+                    const currentRowState = rowsState[rowData.id];
+                    if (!hasAoagReplicas(rowData)) return null;
+                    return (
+                        <div className={styles.arrowContainer}>
+                            <ArrowIcon
+                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                }}
+                            />
+                        </div>
+                    );
+                }
+            }
+        })
     });
 
     return (
-        <div className={styles.databaseListTable}>
+        <div className={styles.databaseListTable} ref={databaseTableRef}>
             <TableTopBar
                 // @ts-ignore
                 tableProps={tableProps}
@@ -175,14 +289,16 @@ const DatabaseListTable = () => {
                                 navigate('../create-new-user');
                             }}
                         >
-                            {GENERAL.JM_TYPE_CREATE_RESOURCE}
+                            {t('databases.general.create-database')}
                         </Button>
                     </div>
                 }
             />
             <Table
+                {...tableComponentProps}
                 // @ts-ignore
                 tableProps={tableProps}
+                isDoubleRow
             />
         </div>
     );

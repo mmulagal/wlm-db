@@ -2,7 +2,10 @@ import { BASE_URL, delay, generateResponse } from '../utils/appUtils';
 
 import ResourceDetails from '../data/resourceDetails.json';
 import DatabaseList from '../data/databaseList.json';
+import DatabaseListAoag from '../data/databaseListAoag.json';
+import DatabaseListAoagSecondary from '../data/databaseListAoagSecondary.json';
 import DatabaseHosts from '../data/databaseHosts.json';
+import MssqlInstanceAoagData from '../data/mssqlInstanceAoag.json';
 import JobsSummary from '../data/jobsSummary.json';
 import JobsSummaryTimeline from '../data/jobsSummaryTimeline.json';
 import Templates from '../data/template.json';
@@ -33,17 +36,30 @@ router.get(
 
 router.get(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:id/database-instances/:instanceId/databases`,
-    async (req: {}, res: any) => {
+    async (req: any, res: any) => {
+        const hostId = req.params.id;
+        let data;
+        if (hostId === 'resource-id-aoag1') {
+            data = DatabaseListAoag;
+        } else if (hostId === 'resource-id-aoag2') {
+            data = DatabaseListAoagSecondary;
+        } else {
+            data = DatabaseList;
+        }
         await delay(3000);
-        generateResponse(res, 200, DatabaseList);
+        generateResponse(res, 200, data);
     }
 );
 
 router.get(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:id/database-instances/:instanceId`,
-    async (req: {}, res: any) => {
+    async (req: any, res: any) => {
+        const hostId = req.params.id;
+        const data = (hostId === 'resource-id-aoag1' || hostId === 'resource-id-aoag2')
+            ? MssqlInstanceAoagData
+            : MssqlInstanceData;
         await delay(3000);
-        generateResponse(res, 200, MssqlInstanceData);
+        generateResponse(res, 200, data);
     }
 );
 

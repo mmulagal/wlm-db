@@ -1,0 +1,59 @@
+{
+    "count": 3,
+    "items": [
+        {
+            "id": "1",
+            "name": "RetailBanking",
+            "status": "ONLINE",
+            "size": 566935683072,
+            "type": "User Database",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "databaseInstanceName": "MSSQLSERVER",
+            "availabilityGroup": "sathishaoag",
+            "replicaRole": "SECONDARY",
+            "synchronizationState": "SYNCHRONIZED",
+            "protection": {
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": false,
+                "isCRREnabled": false
+            }
+        },
+        {
+            "id": "2",
+            "name": "MFGSales",
+            "status": "ONLINE",
+            "size": 17179869184,
+            "type": "User Database",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "databaseInstanceName": "MSSQLSERVER",
+            "availabilityGroup": "sathishaoag",
+            "replicaRole": "SECONDARY",
+            "synchronizationState": "SYNCHRONIZED",
+            "protection": {
+                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": true
+            }
+        },
+        {
+            "id": "3",
+            "name": "AssetManagement",
+            "status": "ONLINE",
+            "size": 17179869184,
+            "type": "User Database",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "databaseInstanceName": "MSSQLSERVER",
+            "availabilityGroup": "sathishaoag",
+            "replicaRole": "SECONDARY",
+            "synchronizationState": "SYNCHRONIZED",
+            "protection": {
+                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true,
+                "isCRREnabled": false
+            }
+        }
+    ]
+}
