@@ -125,22 +125,6 @@
         }
     }
 
-    .menuPointerDisabled {
-        font-weight: 600;
-        font-size: 22px;
-        width: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 9px;
-        height: 16px;
-        color: var(--text-disabled);
-
-        .menuPointer {
-            height: 40px;
-        }
-    }
-
     .detectManageDisable {
         width: 134px;
         height: 32px;

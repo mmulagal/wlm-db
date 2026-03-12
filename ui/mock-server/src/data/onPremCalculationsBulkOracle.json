@@ -1,308 +1,488 @@
 {
-    "resourceId": "oracle_account-aHP3esT5_b5d92f9106f840c18caf969540530159",
-    "resourceName": "scs001009529-2",
-    "deploymentModel": "Standalone",
-    "creationTime": 1770627349000,
     "region": "US East (N. Virginia)",
     "regionCode": "us-east-1",
     "calculations": {
-        "recommendedComputeCalculation": [{
-            "instanceType": "m7i-flex.xlarge",
-            "hostname": "scs001009529-2",
-            "computeHourlyPrice": 0.36632,
-            "computeMonthlyPrice": 267.4136,
-            "instanceMonthlyPrice": 267.4136,
-            "hoursInMonth": 730,
-            "machineDetails": [
-                {
-                    "instanceType": "m7i-flex.xlarge",
-                    "price": 0.36632,
-                    "basePrice": 0.36632,
-                    "computeMonthlyPrice": 267.4136,
-                    "instanceMonthlyPrice": 267.4136,
-                    "licenseMonthlyPrice": 0,
-                    "hoursInMonth": 730,
-                    "licenseIncluded": false
-                }
-            ]
-        }],
-        "existingComputeCalculation": [{
-            "instanceType": "m7i-flex.xlarge",
-            "computeHourlyPrice": 0.36632,
-            "hostname": "scs001009529-2",
-            "computeMonthlyPrice": 267.4136,
-            "instanceMonthlyPrice": 267.4136,
-            "hoursInMonth": 730,
-            "machineDetails": [
-                {
-                    "instanceType": "m7i-flex.xlarge",
-                    "price": 0.36632,
-                    "basePrice": 0.36632,
-                    "computeMonthlyPrice": 267.4136,
-                    "instanceMonthlyPrice": 267.4136,
-                    "licenseMonthlyPrice": 0,
-                    "hoursInMonth": 730,
-                    "licenseIncluded": false
-                }
-            ]
-        }],
+        "existingComputeCalculation": [
+            {
+                "resourceName": "ora-prod-standalone-01",
+                "deploymentType": "Standalone",
+                "instanceType": "m5a.large",
+                "computeHourlyPrice": 0.086,
+                "computeMonthlyPrice": 62.779999999999994,
+                "instanceMonthlyPrice": 62.779999999999994,
+                "hoursInMonth": 730,
+                "machineDetails": [
+                    {
+                        "instanceType": "m5a.large",
+                        "price": 0.086,
+                        "basePrice": 0.086,
+                        "computeMonthlyPrice": 62.779999999999994,
+                        "instanceMonthlyPrice": 62.779999999999994,
+                        "licenseMonthlyPrice": 0,
+                        "hoursInMonth": 730,
+                        "licenseIncluded": false
+                    }
+                ]
+            },
+            {
+                "resourceName": "ora-prod-dg-primary-01",
+                "deploymentType": "DG",
+                "instanceType": "m5a.large, m5a.large",
+                "computeHourlyPrice": 0.172,
+                "computeMonthlyPrice": 125.55999999999999,
+                "instanceMonthlyPrice": 125.55999999999999,
+                "hoursInMonth": 730,
+                "machineDetails": [
+                    {
+                        "instanceType": "m5a.large",
+                        "price": 0.086,
+                        "basePrice": 0.086,
+                        "computeMonthlyPrice": 62.779999999999994,
+                        "instanceMonthlyPrice": 62.779999999999994,
+                        "licenseMonthlyPrice": 0,
+                        "hoursInMonth": 730,
+                        "licenseIncluded": false
+                    },
+                    {
+                        "instanceType": "m5a.large",
+                        "price": 0.086,
+                        "basePrice": 0.086,
+                        "computeMonthlyPrice": 62.779999999999994,
+                        "instanceMonthlyPrice": 62.779999999999994,
+                        "licenseMonthlyPrice": 0,
+                        "hoursInMonth": 730,
+                        "licenseIncluded": false
+                    }
+                ]
+            }
+        ],
+        "existingLicenseCalculation": [],
+        "recommendedComputeCalculation": [
+            {
+                "resourceName": "ora-prod-standalone-01",
+                "deploymentType": "Standalone",
+                "instanceType": "m5a.large",
+                "computeHourlyPrice": 0.086,
+                "computeMonthlyPrice": 62.779999999999994,
+                "instanceMonthlyPrice": 62.779999999999994,
+                "hoursInMonth": 730,
+                "machineDetails": [
+                    {
+                        "instanceType": "m5a.large",
+                        "price": 0.086,
+                        "basePrice": 0.086,
+                        "computeMonthlyPrice": 62.779999999999994,
+                        "instanceMonthlyPrice": 62.779999999999994,
+                        "licenseMonthlyPrice": 0,
+                        "hoursInMonth": 730,
+                        "licenseIncluded": false
+                    }
+                ]
+            },
+            {
+                "resourceName": "ora-prod-dg-primary-01",
+                "deploymentType": "DG",
+                "instanceType": "m5a.large, m5a.large",
+                "computeHourlyPrice": 0.172,
+                "computeMonthlyPrice": 125.55999999999999,
+                "instanceMonthlyPrice": 125.55999999999999,
+                "hoursInMonth": 730,
+                "machineDetails": [
+                    {
+                        "instanceType": "m5a.large",
+                        "price": 0.086,
+                        "basePrice": 0.086,
+                        "computeMonthlyPrice": 62.779999999999994,
+                        "instanceMonthlyPrice": 62.779999999999994,
+                        "licenseMonthlyPrice": 0,
+                        "hoursInMonth": 730,
+                        "licenseIncluded": false
+                    },
+                    {
+                        "instanceType": "m5a.large",
+                        "price": 0.086,
+                        "basePrice": 0.086,
+                        "computeMonthlyPrice": 62.779999999999994,
+                        "instanceMonthlyPrice": 62.779999999999994,
+                        "licenseMonthlyPrice": 0,
+                        "hoursInMonth": 730,
+                        "licenseIncluded": false
+                    }
+                ]
+            }
+        ],
+        "recommendedLicenseCalculation": [],
         "ebsCalculation": {
-            "gp3": {
-                "numberOfVolumes": 1,
+            "io2": {
+                "numberOfVolumes": 2,
                 "instanceAvgDuration": 730,
                 "hoursInAMonth": 730,
                 "ebsCapacityPrice": {
-                    "price": 0.08,
+                    "price": 0.125,
                     "unit": "UsdPerGiB"
                 },
-                "storageAmountPerVol": 58701465518.08,
-                "totalInstanceHours": 730,
-                "ebsInstanceMonth": 1,
-                "ebsStorageCost": 4.373600000000001,
-                "billableIops": 0,
-                "totalBillableIops": 0,
-                "ebsIopsCost": 0,
+                "storageAmountPerVol": 25769803776000,
+                "totalInstanceHours": 1460,
+                "ebsInstanceMonth": 2,
+                "ebsStorageCost": 3000,
+                "billableIops": 147110.1,
+                "totalBillableIops": 147110.1,
+                "ebsIopsCost": 7680.656685,
                 "billableMbps": 0,
                 "billableThroughputMbps": 0,
                 "billableThroughputGbps": 0,
                 "ebsThroughputCost": 0,
-                "ebsTotalCostMonthly": 7.21644
+                "ebsTotalCostMonthly": 11310.656685
+            },
+            "io1": {
+                "numberOfVolumes": 1,
+                "instanceAvgDuration": 730,
+                "hoursInAMonth": 730,
+                "ebsCapacityPrice": {
+                    "price": 0.125,
+                    "unit": "UsdPerGiB"
+                },
+                "storageAmountPerVol": 17179869184000,
+                "totalInstanceHours": 730,
+                "ebsInstanceMonth": 1,
+                "ebsStorageCost": 2000,
+                "billableIops": 29420,
+                "totalBillableIops": 29420,
+                "ebsIopsCost": 1912.3,
+                "billableMbps": 0,
+                "billableThroughputMbps": 0,
+                "billableThroughputGbps": 0,
+                "ebsThroughputCost": 0,
+                "ebsTotalCostMonthly": 4752.3
             }
         },
         "ebsCloneCalculation": {
-            "gp3": {
-                "clonedCopiesCount": 1,
-                "capacity": 4.37,
-                "iops": 0,
+            "io1": {
+                "clonedCopiesCount": 3,
+                "capacity": 2000,
+                "iops": 1912.3,
                 "throughput": 0,
-                "totalCloneMonthlyCost": 4.37
+                "totalCloneMonthlyCost": 11736.900000000001
+            },
+            "io2": {
+                "clonedCopiesCount": 3,
+                "capacity": 1500,
+                "iops": 3840.33,
+                "throughput": 0,
+                "totalCloneMonthlyCost": 16020.99
             }
         },
         "ebsSnapshotCalculation": {
-            "gp3": {
-                "storageAmount": 58701465518.08,
+            "io1": {
+                "storageAmount": 17179869184000,
                 "numberOfVolumes": 1,
                 "ebsSnapshotPrice": {
                     "price": 0.05,
                     "unit": "UsdPerGiB"
                 },
-                "amountChangedPerSnapshot": 156537241.38154668,
-                "monthlyCostOfSnapshots": 0.007289333333333334,
-                "monthlyChangeRatePercentage": 8,
+                "amountChangedPerSnapshot": 57266230613.333336,
+                "monthlyCostOfSnapshots": 2.666666666666667,
+                "monthlyChangeRatePercentage": 10,
                 "ebsInstanceMonth": 1,
                 "totalSnapshots": 30,
-                "initialSnapshotCost": 2.7335000000000003,
-                "monthlyCostPerSnapshot": 0.007289333333333334,
-                "discountForPartialStorageMonth": 0.003644666666666667,
-                "incrementalSnapshotCost": 0.10934000000000002,
-                "totalSnapshotCost": 2.8428400000000003,
-                "totalEbsSnapshotCost": 2.8428400000000003,
-                "ebsSnapshotCost": 2.8428400000000003
+                "initialSnapshotCost": 800,
+                "monthlyCostPerSnapshot": 2.666666666666667,
+                "discountForPartialStorageMonth": 1.3333333333333335,
+                "incrementalSnapshotCost": 40.00000000000001,
+                "totalSnapshotCost": 840,
+                "totalEbsSnapshotCost": 840,
+                "ebsSnapshotCost": 840
+            },
+            "io2": {
+                "storageAmount": 12884901888000,
+                "numberOfVolumes": 1,
+                "ebsSnapshotPrice": {
+                    "price": 0.05,
+                    "unit": "UsdPerGiB"
+                },
+                "amountChangedPerSnapshot": 42949672960,
+                "monthlyCostOfSnapshots": 2,
+                "monthlyChangeRatePercentage": 10,
+                "ebsInstanceMonth": 1,
+                "totalSnapshots": 30,
+                "initialSnapshotCost": 600,
+                "monthlyCostPerSnapshot": 2,
+                "discountForPartialStorageMonth": 1,
+                "incrementalSnapshotCost": 30,
+                "totalSnapshotCost": 630,
+                "totalEbsSnapshotCost": 630,
+                "ebsSnapshotCost": 630
             }
         },
-        "single": {
+        "multi": {
             "fsxOntapCalculation": {
                 "numberOfVolumes": 1,
                 "percentageOfDataOnSSDStorage": 1,
                 "fsxnCapacityPrice": {
-                    "price": 0.0219,
+                    "price": 0.0438,
                     "unit": "UsdPerGiB"
                 },
                 "maxSsdTierSize": 211106232532992,
-                "suggestedFsxnThroughputCapacity": 128,
+                "suggestedFsxnThroughputCapacity": 4096,
                 "maxThroughput": 4096,
-                "fsxnThroughputPrice": 0.72,
-                "provisionedSsdIops": 3072,
+                "fsxnThroughputPrice": 1.2,
+                "provisionedSsdIops": 102975,
                 "includedIops": 3,
-                "maxSsdIops": 51200,
+                "maxSsdIops": 160000,
                 "fsxnStoragePrice": {
-                    "price": 0.125,
+                    "price": 0.25,
                     "unit": "UsdPerGiB"
                 },
-                "desiredStorageCapacity": 58701465518.08,
-                "ebsCapacity": 58701465518.08,
+                "desiredStorageCapacity": 30064771072000,
+                "ebsCapacity": 30064771072000,
                 "percentageOfDataOnSsdStorage": 1,
                 "savingsFromCompressionAndDeduplication": 0,
                 "storageSavingsFromCompressionAndDeduplication": 0,
-                "effectiveFsxnStorageCapacity": 58701465518.08,
-                "ssdStoragePerMonth": 58701465518.08,
-                "greaterOfSsdAndMinAllowedSsd": 1099511627776,
-                "ssdMonthlyCost": 128,
-                "totalMonthlyCostForFSxSsd": 128,
+                "effectiveFsxnStorageCapacity": 30064771072000,
+                "ssdStoragePerMonth": 30064771072000,
+                "greaterOfSsdAndMinAllowedSsd": 30064771072000,
+                "ssdMonthlyCost": 7000,
+                "totalMonthlyCostForFSxSsd": 7000,
                 "ratioAfterSavings": 1,
                 "dataOnCapacityPoolStorageFactor": 0,
                 "capacityPoolStorage": 0,
                 "capacityMonthlyCost": 0,
                 "totalMonthlyCostForCapacity": 0,
-                "totalMonthlyStorageCharge": 128,
-                "minFileSystemsNumForStorage": 0.005208333333333333,
-                "minFileSystemsNumForThroughputCapacity": 0.03125,
-                "minFileSystemsNumForSsdIops": 0.06,
-                "requiredNumOfFsxFractional": 0.06,
+                "totalMonthlyStorageCharge": 7000,
+                "minFileSystemsNumForStorage": 0.14241536458333334,
+                "minFileSystemsNumForThroughputCapacity": 1,
+                "minFileSystemsNumForSsdIops": 0.64359375,
+                "requiredNumOfFsxFractional": 1,
                 "requiredNumOfFsx": 1,
                 "minThroughputCapacityRequired": 128,
-                "provisionedThroughputCapacity": 128,
-                "totalMonthlyFsxnThroughputCapacityCost": 92.16,
-                "includedSsdIops": 3072,
-                "additionalSsdIops": 0,
-                "billedAdditionalSsdIops": 0,
-                "additionalBilledCostForSsdIops": 0,
-                "totalThroughputAndIopsMonthly": 92.16,
-                "fsxnIopsPrice": 0.017
+                "provisionedThroughputCapacity": 4096,
+                "totalMonthlyFsxnThroughputCapacityCost": 4915.2,
+                "includedSsdIops": 84000,
+                "additionalSsdIops": 18975,
+                "billedAdditionalSsdIops": 18975,
+                "additionalBilledCostForSsdIops": 645.1500000000001,
+                "totalThroughputAndIopsMonthly": 5560.35,
+                "fsxnIopsPrice": 0.034
             },
             "fsxOntapSnapshotCalculation": {
                 "fsxnSsdPrice": {
-                    "price": 0.125,
+                    "price": 0.25,
                     "unit": "UsdPerGiB"
                 },
                 "fsxnCapacityPrice": {
-                    "price": 0.0219,
+                    "price": 0.0438,
                     "unit": "UsdPerGiB"
                 },
-                "desiredStorageCapacity": 4696117241.446401,
+                "desiredStorageCapacity": 3006477107200.0005,
                 "percentageOfDataOnSsdStorage": 0.1,
                 "savingsFromCompressionAndDeduplication": 0,
                 "storageSavingsFromCompressionAndDeduplication": 0,
-                "effectiveFsxnStorageCapacity": 4696117241.446401,
-                "ssdStoragePerMonth": 469611724.1446401,
-                "ssdMonthlyCost": 128,
-                "totalSnapshotMonthlyCostForFsxSsd": 0.05467000000000001,
+                "effectiveFsxnStorageCapacity": 3006477107200.0005,
+                "ssdStoragePerMonth": 300647710720.00006,
+                "ssdMonthlyCost": 7000,
+                "totalSnapshotMonthlyCostForFsxSsd": 70.00000000000001,
                 "ratioAfterSavings": 1,
                 "dataOnCapacityPoolStorageFactor": 0.9,
-                "capacityPoolStorage": 4226505517.3017607,
-                "capacityMonthlyCost": 0.08620365600000002,
-                "totalMonthlyCostForCapacity": 0.08620365600000002,
-                "totalSnapshotMonthlyCost": 0.140873656
+                "capacityPoolStorage": 2705829396480.0005,
+                "capacityMonthlyCost": 110.37600000000002,
+                "totalMonthlyCostForCapacity": 110.37600000000002,
+                "totalSnapshotMonthlyCost": 180.37600000000003
             },
             "fsxCloneCalculation": {
-                "monthlyChangeRatePercentage": 8,
-                "clonedCopiesCount": 1,
-                "changeRateBetweenClones": 8,
-                "totalFsxnCapacity": 58701465518.08,
+                "monthlyChangeRatePercentage": 10,
+                "clonedCopiesCount": 3,
+                "changeRateBetweenClones": 10,
+                "totalFsxnCapacity": 30064771072000,
                 "fsxnSsdPrice": {
-                    "price": 0.125,
+                    "price": 0.25,
                     "unit": "UsdPerGiB"
                 },
-                "desiredStorageCapacity": 4696117241.446401,
+                "desiredStorageCapacity": 9019431321600.002,
                 "percentageOfDataOnSsdStorage": 1,
                 "savingsFromCompressionAndDeduplication": 0,
                 "storageSavingsFromCompressionAndDeduplication": 0,
-                "effectiveFsxnStorageCapacity": 4696117241.446401,
-                "ssdStoragePerMonth": 4696117241.446401,
-                "ssdMonthlyCost": 0.5467000000000001,
-                "totalCloneMonthlyCost": 0.5467000000000001
+                "effectiveFsxnStorageCapacity": 9019431321600.002,
+                "ssdStoragePerMonth": 9019431321600.002,
+                "ssdMonthlyCost": 2100.0000000000005,
+                "totalCloneMonthlyCost": 2100.0000000000005
             }
         },
         "totalSummary": {
-            "existing": 629.4035999999999,
-            "recommended": 617.8136
+            "existing": 44009.18,
+            "recommended": 15029.07
         }
     },
     "storageSavings": {
-        "compute": {
-            "existing": {
-                "instanceType": "m7i-flex.xlarge",
-                "computeHourlyPrice": 0.36632,
-                "computeMonthlyPrice": 267.4136,
-                "instanceMonthlyPrice": 267.4136,
-                "hoursInMonth": 730,
-                "machineDetails": [
-                    {
-                        "instanceType": "m7i-flex.xlarge",
-                        "price": 0.36632,
-                        "basePrice": 0.36632,
-                        "computeMonthlyPrice": 267.4136,
-                        "instanceMonthlyPrice": 267.4136,
-                        "licenseMonthlyPrice": 0,
-                        "hoursInMonth": 730,
-                        "licenseIncluded": false
-                    }
-                ]
+        "compute": [
+            {
+                "resourceName": "ora-prod-standalone-01",
+                "hostname": "ora-prod-standalone-01",
+                "deploymentType": "Standalone",
+                "existing": {
+                    "resourceName": "ora-prod-standalone-01",
+                    "deploymentType": "Standalone",
+                    "instanceType": "m5a.large",
+                    "computeHourlyPrice": 0.086,
+                    "computeMonthlyPrice": 62.779999999999994,
+                    "instanceMonthlyPrice": 62.779999999999994,
+                    "hoursInMonth": 730,
+                    "machineDetails": [
+                        {
+                            "instanceType": "m5a.large",
+                            "price": 0.086,
+                            "basePrice": 0.086,
+                            "computeMonthlyPrice": 62.779999999999994,
+                            "instanceMonthlyPrice": 62.779999999999994,
+                            "licenseMonthlyPrice": 0,
+                            "hoursInMonth": 730,
+                            "licenseIncluded": false
+                        }
+                    ]
+                },
+                "recommended": {
+                    "resourceName": "ora-prod-standalone-01",
+                    "deploymentType": "Standalone",
+                    "instanceType": "m5a.large",
+                    "computeHourlyPrice": 0.086,
+                    "computeMonthlyPrice": 62.779999999999994,
+                    "instanceMonthlyPrice": 62.779999999999994,
+                    "hoursInMonth": 730,
+                    "machineDetails": [
+                        {
+                            "instanceType": "m5a.large",
+                            "price": 0.086,
+                            "basePrice": 0.086,
+                            "computeMonthlyPrice": 62.779999999999994,
+                            "instanceMonthlyPrice": 62.779999999999994,
+                            "licenseMonthlyPrice": 0,
+                            "hoursInMonth": 730,
+                            "licenseIncluded": false
+                        }
+                    ]
+                }
             },
-            "recommended": {
-                "instanceType": "m7i-flex.xlarge",
-                "computeHourlyPrice": 0.36632,
-                "computeMonthlyPrice": 267.4136,
-                "instanceMonthlyPrice": 267.4136,
-                "hoursInMonth": 730,
-                "machineDetails": [
-                    {
-                        "instanceType": "m7i-flex.xlarge",
-                        "price": 0.36632,
-                        "basePrice": 0.36632,
-                        "computeMonthlyPrice": 267.4136,
-                        "instanceMonthlyPrice": 267.4136,
-                        "licenseMonthlyPrice": 0,
-                        "hoursInMonth": 730,
-                        "licenseIncluded": false
-                    }
-                ]
+            {
+                "resourceName": "ora-prod-dg-primary-01",
+                "hostname": "ora-prod-dg-primary-01",
+                "deploymentType": "DG",
+                "existing": {
+                    "resourceName": "ora-prod-dg-primary-01",
+                    "deploymentType": "DG",
+                    "instanceType": "m5a.large, m5a.large",
+                    "computeHourlyPrice": 0.172,
+                    "computeMonthlyPrice": 125.55999999999999,
+                    "instanceMonthlyPrice": 125.55999999999999,
+                    "hoursInMonth": 730,
+                    "machineDetails": [
+                        {
+                            "instanceType": "m5a.large",
+                            "price": 0.086,
+                            "basePrice": 0.086,
+                            "computeMonthlyPrice": 62.779999999999994,
+                            "instanceMonthlyPrice": 62.779999999999994,
+                            "licenseMonthlyPrice": 0,
+                            "hoursInMonth": 730,
+                            "licenseIncluded": false
+                        },
+                        {
+                            "instanceType": "m5a.large",
+                            "price": 0.086,
+                            "basePrice": 0.086,
+                            "computeMonthlyPrice": 62.779999999999994,
+                            "instanceMonthlyPrice": 62.779999999999994,
+                            "licenseMonthlyPrice": 0,
+                            "hoursInMonth": 730,
+                            "licenseIncluded": false
+                        }
+                    ]
+                },
+                "recommended": {
+                    "resourceName": "ora-prod-dg-primary-01",
+                    "deploymentType": "DG",
+                    "instanceType": "m5a.large, m5a.large",
+                    "computeHourlyPrice": 0.172,
+                    "computeMonthlyPrice": 125.55999999999999,
+                    "instanceMonthlyPrice": 125.55999999999999,
+                    "hoursInMonth": 730,
+                    "machineDetails": [
+                        {
+                            "instanceType": "m5a.large",
+                            "price": 0.086,
+                            "basePrice": 0.086,
+                            "computeMonthlyPrice": 62.779999999999994,
+                            "instanceMonthlyPrice": 62.779999999999994,
+                            "licenseMonthlyPrice": 0,
+                            "hoursInMonth": 730,
+                            "licenseIncluded": false
+                        },
+                        {
+                            "instanceType": "m5a.large",
+                            "price": 0.086,
+                            "basePrice": 0.086,
+                            "computeMonthlyPrice": 62.779999999999994,
+                            "instanceMonthlyPrice": 62.779999999999994,
+                            "licenseMonthlyPrice": 0,
+                            "hoursInMonth": 730,
+                            "licenseIncluded": false
+                        }
+                    ]
+                }
             }
-        },
-        "license": {
-            "existing": {
-                "licenseHourlyPrice": 0,
-                "licenseIncluded": false,
-                "licenseMonthlyPrice": 0,
-                "hoursInMonth": 730,
-                "sqlServerEdition": "Standard Edition"
-            },
-            "recommended": {
-                "licenseHourlyPrice": 0,
-                "licenseIncluded": false,
-                "licenseMonthlyPrice": 0,
-                "hoursInMonth": 730,
-                "sqlServerEdition": "Standard Edition"
-            }
-        },
+        ],
+        "license": [],
         "ebs": {
-            "capacity": 4.37,
-            "iops": 0,
+            "capacity": 5000,
+            "iops": 9592.96,
             "throughput": 0,
-            "snapshots": 2.84,
-            "total": 11.59,
-            "clones": 4.37
+            "snapshots": 1470,
+            "total": 43820.840000000004,
+            "clones": 27757.89
         },
         "fsx": {
-            "capacity": 128,
-            "iops": 0,
-            "throughput": 92.16,
-            "total": 220.85,
-            "snapshots": 0.14,
-            "clones": 0.55
+            "capacity": 7000,
+            "iops": 645.15,
+            "throughput": 4915.2,
+            "total": 14840.73,
+            "snapshots": 180.38,
+            "clones": 2100
         },
-        "single": {
+        "multi": {
             "fsxCalculation": {
-                "deploymentType": "Single",
+                "deploymentType": "Multi",
                 "numberOfVolumes": 1,
-                "throughput": 125,
-                "totalStorageCapacity": 58701465518.08,
+                "throughput": 0,
+                "totalStorageCapacity": 30064771072000,
                 "percentageSsd": 100,
                 "savings": 0,
-                "effectiveCapacity": 58701465518.08,
-                "ssdTierReqCapacity": 58701465518.08,
+                "effectiveCapacity": 30064771072000,
+                "ssdTierReqCapacity": 30064771072000,
                 "capacityPoolTier": 0,
-                "ssdIop": 3072,
-                "throughputCapacity": 128,
+                "ssdIop": 102975,
+                "throughputCapacity": 4096,
                 "useCase": "Low-latency",
                 "regionName": "US East (N. Virginia)",
-                "monthlySnapshotCapacity": 4696117241.446401,
-                "desiredStorageCapacity": 58701465518.08,
-                "ebsCapacity": 58701465518.08
+                "monthlySnapshotCapacity": 3006477107200.0005,
+                "desiredStorageCapacity": 30064771072000,
+                "ebsCapacity": 30064771072000
             },
             "fsxBreakdown": {
-                "fsxDataLunSize": 473186907781,
-                "fsxDataVolumeSize": 520505598560,
-                "fsxLogVolumeSize": 130126399640,
-                "fsxTempDbVolumeSize": 52050559856,
+                "fsxDataLunSize": 13151583297509,
+                "fsxDataVolumeSize": 14466741627260,
+                "fsxLogVolumeSize": 3616685406815,
+                "fsxTempDbVolumeSize": 1446674162726,
                 "fsxQuorumVolumeSize": 12000000000,
-                "fsxBufferVolumeSize": 384829069722,
-                "fsxStorageCapacity": 1099511627776
+                "fsxBufferVolumeSize": 10522669875200,
+                "fsxStorageCapacity": 30064771072000
             }
         },
         "totalSummary": {
-            "existing": 279.0035999999999,
-            "recommended": 488.2636
+            "existing": 44009.18,
+            "recommended": 15029.07
         }
+    },
+    "snapshotInfo": {
+        "snapshotFrequency": "Daily",
+        "clonedCopiesCount": 3,
+        "monthlyChangeRatePercentage": 10
     }
 }

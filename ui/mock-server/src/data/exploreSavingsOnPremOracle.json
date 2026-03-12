@@ -1,40 +1,148 @@
 {
-    "count": 1,
+    "count": 3,
     "items": [
         {
-            "resourceId": "oracle_account-aHP3esT5_b5d92f9106f840c18caf969540530159",
-            "resourceName": "scs001009529-2",
+            "resourceId": "eeab44248412ba7f",
+            "resourceName": "ora-prod-standalone-01",
             "deploymentModel": "Standalone",
-            "creationTime": 1770627349000,
+            "creationTime": 1764568800000,
             "oracleDatabases": [
                 {
-                    "databaseId": "1171943441",
-                    "databaseName": "PDBNAS1",
-                    "sid": "pdbnas1",
-                    "oracleVersion": "19.0.0.0.0",
+                    "databaseId": "1928374650",
+                    "databaseName": "FINDB",
+                    "sid": "findb1",
+                    "oracleVersion": "19.21.0.0.0",
                     "oracleEdition": "Enterprise Edition",
                     "deploymentModel": "Standalone",
                     "isRacEnabled": false,
                     "isDataGuardEnabled": false,
                     "databaseRole": "PRIMARY",
                     "isCDB": false,
-                    "vCPUs": 4,
+                    "vCPUs": 48,
                     "pdbCount": 0,
-                    "totalIops": 11,
-                    "totalThroughput": 0.17,
-                    "totalStorage": 58701465518.08,
-                    "memory": 7.71,
+                    "totalIops": 29420,
+                    "totalThroughput": 23.58,
+                    "totalStorage": 17179869184000,
+                    "memory": 274877906944,
                     "networkPerformance": "upTo10"
                 }
             ],
             "hostInfo": {
-                "hostname": "scs001009529-2",
-                "cpuCount": 4,
-                "totalRamGB": 15.391769409179688,
+                "hostname": "ora-prod-standalone-01",
+                "cpuCount": 48,
+                "totalRamGB": 512,
                 "storageProtocol": "NFS"
             },
-            "onPremisesNodes": ["scs001009529-2"],
-            "totalAllocatedCapacityGB": 54.67
+            "onPremisesNodes": ["ora-prod-standalone-01"],
+            "totalAllocatedCapacityGB": 16000
+        },
+        {
+            "resourceId": "e5d358c29df1d6ae",
+            "resourceName": "ora-prod-dg-primary-01",
+            "deploymentModel": "Data Guard",
+            "creationTime": 1764568800000,
+            "oracleDatabases": [
+                {
+                    "databaseId": "2847561039",
+                    "databaseName": "ERPDB",
+                    "sid": "erpdb1",
+                    "oracleVersion": "19.21.0.0.0",
+                    "oracleEdition": "Enterprise Edition",
+                    "deploymentModel": "Data Guard",
+                    "isRacEnabled": false,
+                    "isDataGuardEnabled": true,
+                    "databaseRole": "PRIMARY",
+                    "isCDB": true,
+                    "vCPUs": 16,
+                    "pdbCount": 2,
+                    "totalIops": 73555.05,
+                    "totalThroughput": 59.05,
+                    "totalStorage": 12884901888000,
+                    "memory": 3758096384,
+                    "networkPerformance": "upTo10"
+                }
+            ],
+            "hostInfo": {
+                "hostname": "ora-prod-dg-primary-01",
+                "cpuCount": 16,
+                "totalRamGB": 4,
+                "storageProtocol": "iSCSI"
+            },
+            "onPremisesNodes": ["ora-prod-dg-primary-01", "ora-prod-dg-standby-host-01"],
+            "totalAllocatedCapacityGB": 12000
+        },
+        {
+            "resourceId": "54105a49eb022e3e",
+            "resourceName": "ora-prod-multidb-01",
+            "deploymentModel": "Standalone",
+            "creationTime": 1764568800000,
+            "oracleDatabases": [
+                {
+                    "databaseId": "3948271605",
+                    "databaseName": "CDBPROD",
+                    "sid": "cdbprod1",
+                    "oracleVersion": "19.21.0.0.0",
+                    "oracleEdition": "Standard Edition",
+                    "deploymentModel": "Standalone",
+                    "isRacEnabled": false,
+                    "isDataGuardEnabled": false,
+                    "databaseRole": "PRIMARY",
+                    "isCDB": true,
+                    "vCPUs": 48,
+                    "pdbCount": 5,
+                    "totalIops": 26420,
+                    "totalThroughput": 284.34,
+                    "totalStorage": 13355200806912,
+                    "memory": 137438953472,
+                    "networkPerformance": "upTo10"
+                },
+                {
+                    "databaseId": "1726394850",
+                    "databaseName": "HRDB",
+                    "sid": "hrdb1",
+                    "oracleVersion": "19.21.0.0.0",
+                    "oracleEdition": "Enterprise Edition",
+                    "deploymentModel": "Standalone",
+                    "isRacEnabled": false,
+                    "isDataGuardEnabled": false,
+                    "databaseRole": "PRIMARY",
+                    "isCDB": false,
+                    "vCPUs": 8,
+                    "pdbCount": 0,
+                    "totalIops": 3990,
+                    "totalThroughput": 33.5,
+                    "totalStorage": 880468295680,
+                    "memory": 12884901888,
+                    "networkPerformance": "upTo10"
+                },
+                {
+                    "databaseId": "5092847163",
+                    "databaseName": "ANALYTDB",
+                    "sid": "analytdb1",
+                    "oracleVersion": "19.21.0.0.0",
+                    "oracleEdition": "Standard Edition",
+                    "deploymentModel": "Standalone",
+                    "isRacEnabled": false,
+                    "isDataGuardEnabled": false,
+                    "databaseRole": "PRIMARY",
+                    "isCDB": true,
+                    "vCPUs": 16,
+                    "pdbCount": 2,
+                    "totalIops": 15820,
+                    "totalThroughput": 195.1,
+                    "totalStorage": 3435973836800,
+                    "memory": 34359738368,
+                    "networkPerformance": "upTo10"
+                }
+            ],
+            "hostInfo": {
+                "hostname": "ora-prod-multidb-01",
+                "cpuCount": 48,
+                "totalRamGB": 128,
+                "storageProtocol": "NFS"
+            },
+            "onPremisesNodes": ["ora-prod-multidb-01"],
+            "totalAllocatedCapacityGB": 16458
         }
     ]
 }

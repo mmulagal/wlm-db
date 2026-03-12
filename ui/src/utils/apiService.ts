@@ -1253,8 +1253,8 @@ export const exploreSavingsApi = createApi({
             })
         }),
         deleteOnPremTco: builder.mutation({
-            query: ({ resourceId }) => ({
-                url: `v1/mssql/onprem-tco/resources/${resourceId}`,
+            query: ({ resourceId, type = 'mssql' }) => ({
+                url: `v1/${type}/onprem-tco/resources/${resourceId}`,
                 method: 'DELETE'
             })
         }),

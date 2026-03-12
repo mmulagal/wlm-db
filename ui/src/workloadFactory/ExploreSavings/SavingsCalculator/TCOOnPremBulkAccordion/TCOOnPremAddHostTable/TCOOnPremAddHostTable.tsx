@@ -39,7 +39,9 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
     const { selectedRowsForExploreSavingsOnPremBulk, selectedRowsForExploreSavingsOracleOnPremBulk } = useAppSelector(
         state => state.exploreSavingsBulk
     );
-    const { onPremiseData, onPremiseOracleData, savingsCalculatorFrom } = useAppSelector(state => state.exploreSavings);
+    const { onPremiseData, onPremiseOracleData, savingsCalculatorFrom, onPremStorageAndComputeInfo } = useAppSelector(
+        state => state.exploreSavings
+    );
 
     const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
     const activeSelectedRows = isOracleOnPrem
@@ -55,6 +57,7 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
                     resourceName: item.resourceName,
                     resourceId: item.resourceId,
                     deploymentModel: item.deploymentModel,
+                    oracleEdition: item.oracleEdition,
                     instanceCount: item.oracleDatabases?.length || 0,
                     nodeCount: item.onPremisesNodes?.length || 0,
                     nameForSorting: item.resourceName?.toLowerCase(),
@@ -192,7 +195,8 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
                 if (rowData?.oracleDatabases?.length) {
                     rowData.oracleDatabases.forEach((db: any) => {
                         const uniqueKey = `${rowData.resourceId}_${db.databaseName}`;
-                        storagePerfAndCompute[uniqueKey] = {
+                        const existing = onPremStorageAndComputeInfo?.[uniqueKey];
+                        storagePerfAndCompute[uniqueKey] = existing || {
                             totalStorage: formatFractionalNumber(Number(db?.totalStorage || 0) / GIB_IN_BYTE, 3),
                             totalIops: formatFractionalNumber(db?.totalIops, 3),
                             totalThroughput: formatFractionalNumber(db?.totalThroughput, 3),
@@ -216,7 +220,8 @@ const TCOOnPremAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOOnPremAd
                 if (rowData?.sqlServerInstances?.length) {
                     rowData.sqlServerInstances.forEach((instance: any) => {
                         const uniqueKey = `${rowData.resourceId}_${instance.sqlInstanceName}`;
-                        storagePerfAndCompute[uniqueKey] = {
+                        const existing = onPremStorageAndComputeInfo?.[uniqueKey];
+                        storagePerfAndCompute[uniqueKey] = existing || {
                             totalStorage: formatFractionalNumber(Number(instance?.totalStorage || 0) / GIB_IN_BYTE, 3),
                             totalIops: formatFractionalNumber(instance?.totalIops, 3),
                             totalThroughput: formatFractionalNumber(instance?.totalThroughput, 3),

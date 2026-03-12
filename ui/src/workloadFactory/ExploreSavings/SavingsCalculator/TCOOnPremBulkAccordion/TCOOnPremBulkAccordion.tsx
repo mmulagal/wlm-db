@@ -62,7 +62,8 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
         storageSavingsLoading,
         viewCalculationsResponse,
         savingsCalculatorFrom,
-        selectedOnPremHostDetails
+        selectedOnPremHostDetails,
+        onPremStorageAndComputeInfo
     } = useAppSelector(state => state.exploreSavings);
     const { setDialog, closeDialog } = useDialog();
 
@@ -132,28 +133,6 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
                     })
                 );
             }
-
-            const storagePerfAndCompute: any = {};
-            updatedHosts.forEach((rowData: any) => {
-                if (rowData?.oracleDatabases?.length) {
-                    rowData.oracleDatabases.forEach((db: any) => {
-                        const uniqueKey = `${rowData.resourceId}_${db.databaseName}`;
-                        storagePerfAndCompute[uniqueKey] = {
-                            totalStorage: formatFractionalNumber(Number(db?.totalStorage || 0) / GIB_IN_BYTE, 3),
-                            totalIops: formatFractionalNumber(db?.totalIops, 3),
-                            totalThroughput: formatFractionalNumber(db?.totalThroughput, 3),
-                            noOfVcpusInUse: db?.vCPUs || 0,
-                            memory: formatFractionalNumber(Number(db?.memory || 0) / GIB_IN_BYTE, 3),
-                            databaseName: db?.databaseName,
-                            databaseId: db?.databaseId,
-                            networkPerformance: rowData?.networkPerformance || 'upTo10',
-                            monthlyOracleCost: db?.monthlyOracleCost || '',
-                            hostResourceName: rowData?.resourceName
-                        };
-                    });
-                }
-            });
-            dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
         } else {
             const updatedHosts = selectedRowsForExploreSavingsOnPremBulk.filter(
                 (host: any) => host.resourceId !== hostToRemove.resourceId
@@ -174,28 +153,18 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
                     })
                 );
             }
+        }
 
-            const storagePerfAndCompute: any = {};
-            updatedHosts.forEach((rowData: any) => {
-                if (rowData?.sqlServerInstances?.length) {
-                    rowData.sqlServerInstances.forEach((instance: any) => {
-                        const uniqueKey = `${rowData.resourceId}_${instance.sqlInstanceName}`;
-                        storagePerfAndCompute[uniqueKey] = {
-                            totalStorage: formatFractionalNumber(Number(instance?.totalStorage || 0) / GIB_IN_BYTE, 3),
-                            totalIops: formatFractionalNumber(instance?.totalIops, 3),
-                            totalThroughput: formatFractionalNumber(instance?.totalThroughput, 3),
-                            noOfVcpusInUse: instance?.noOfVcpusInUse,
-                            memory: formatFractionalNumber(Number(instance?.memory || 0) / GIB_IN_BYTE, 3),
-                            sqlInstanceName: instance?.sqlInstanceName,
-                            sqlInstanceId: instance?.sqlInstanceId,
-                            networkPerformance: instance?.networkPerformance,
-                            hostResourceName: rowData?.resourceName
-                        };
-                    });
+        const filteredStorageAndCompute: any = {};
+        const removedResourceId = hostToRemove.resourceId;
+        if (onPremStorageAndComputeInfo) {
+            Object.keys(onPremStorageAndComputeInfo).forEach(key => {
+                if (!key.startsWith(`${removedResourceId}_`)) {
+                    filteredStorageAndCompute[key] = onPremStorageAndComputeInfo[key];
                 }
             });
-            dispatch(setOnPremStorageAndComputeInfoFull(storagePerfAndCompute));
         }
+        dispatch(setOnPremStorageAndComputeInfoFull(filteredStorageAndCompute));
 
         dispatch(setStorageSavingsResponse(null));
         dispatch(setTriggerBulkDataFetch(true));

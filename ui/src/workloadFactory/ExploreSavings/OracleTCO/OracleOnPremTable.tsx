@@ -26,6 +26,7 @@ import AssessmentDialog from './AssessmentDialog/AssessmentDialog';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
+    useDeleteOnPremTcoMutation,
     useGetOracleOnPremTCODownloadScriptMutation,
     useGetUploadScriptMutation,
     useLazyGetSubTaskListQuery
@@ -34,8 +35,14 @@ import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import TableTooltip from './TableTooltip/TableTooltip';
 import { useOnPremData } from '../ExploreSavingsOnPremiseTable/useOnPremData';
 import { formatDateWithTime, getTruncatedItems } from '../../../utils/utilityFunctions';
-import { onClickESHostOracleOnPrem, onClickESHostOracleOnPremBulk } from '../ExploreSavingsUtils';
+import {
+    handleDeleteOnPremTco,
+    onClickESHostOracleOnPrem,
+    onClickESHostOracleOnPremBulk
+} from '../ExploreSavingsUtils';
 import { setSelectedRowsForExploreSavingsOracleOnPremBulk } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
+import { setOnPremiseOracleData } from '../../../store/workloadFactory/exploreSavingsSlice';
+import DeleteMenuCell from '../DeleteMenuCell/DeleteMenuCell';
 
 const OracleOnPremTable = () => {
     const dispatch = useDispatch();
@@ -52,6 +59,23 @@ const OracleOnPremTable = () => {
     const [getUploadScript] = useGetUploadScriptMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [getOracleOnPremTCODownloadScript] = useGetOracleOnPremTCODownloadScriptMutation();
+    const [deleteOnPremTco] = useDeleteOnPremTcoMutation();
+    const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
+    const menuOpenedRowDetail: any = useRef(null);
+
+
+    const handleDelete = (rowData: any) => {
+        handleDeleteOnPremTco({
+            deleteOnPremTco,
+            rowData,
+            currentData: onPremiseOracleData,
+            setDataAction: setOnPremiseOracleData,
+            dispatch,
+            type: 'oracle',
+            successMessage: t('databases.explore-savings.on-prem-delete-success'),
+            errorMessage: t('databases.explore-savings.on-prem-delete-error')
+        });
+    };
 
     useEffect(() => {
         fetchOracleOnPremData();
@@ -315,6 +339,16 @@ const OracleOnPremTable = () => {
                             {t('databases.explore-savings.table-tooltip-content-three')}
                         </DsTypography>
                     </div>
+
+                    <DeleteMenuCell
+                        isDemoMode={isDemoMode}
+                        isBulkSelected={selectedRowsForExploreSavingsOracleOnPremBulk.length > 0}
+                        rowData={rowData}
+                        menuOpenedRow={menuOpenedRow}
+                        menuOpenedRowDetail={menuOpenedRowDetail}
+                        setOpenedRow={setOpenedRow}
+                        onDelete={handleDelete}
+                    />
                 </div>
             )
         }

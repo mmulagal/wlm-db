@@ -9,7 +9,7 @@ import styles from './ExploreSavingsOnPremiseTable.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { onClickESHostOnPrem, onClickESHostOnPremBulk } from '../ExploreSavingsUtils';
+import { handleDeleteOnPremTco, onClickESHostOnPrem, onClickESHostOnPremBulk } from '../ExploreSavingsUtils';
 import { formatDateWithTime, getFilterOptions, getTruncatedItems } from '../../../utils/utilityFunctions';
 import tcoScript from '../../../script/SQLServerDataCollector.ps1?raw';
 
@@ -25,7 +25,7 @@ import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 
 import { useOnPremData } from './useOnPremData';
 import useResize from '../../../common/hooks/useResize';
-import MenuPopover from '../../../common/MenuPopover/MenuPopover';
+import DeleteMenuCell from '../DeleteMenuCell/DeleteMenuCell';
 import BulkActionContainer from '../../../common/BulkAction/BulkActionContainer';
 import { setSelectedRowsForExploreSavingsOnPremBulk } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import { setOnPremiseData } from '../../../store/workloadFactory/exploreSavingsSlice';
@@ -54,17 +54,10 @@ const ExploreSavingsOnPremiseTable = () => {
 
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
-    const [menuOpenedRow, setOpenedRow] = useState(null);
+    const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
     const menuOpenedRowDetail: any = useRef(null);
 
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
-
-    const menuItems = (row: any) => [
-        {
-            id: 'delete',
-            displayName: 'Delete'
-        }
-    ];
 
     const updatedTableData = useMemo(() => {
         if (!onPremiseData || onPremiseData.length === 0) {
@@ -264,36 +257,16 @@ const ExploreSavingsOnPremiseTable = () => {
         }
     };
 
-    // Delete function
     const handleDelete = (rowData: any) => {
-        deleteOnPremTco({ resourceId: rowData.resourceId })
-            .then((res: any) => {
-                if (res && res?.data?.count === 1) {
-                    const updatedData = onPremiseData.filter((item: any) => item.uniqueId !== rowData.uniqueId);
-                    dispatch(setOnPremiseData(updatedData));
-                    dispatch(
-                        addNotification({
-                            notificationType: NOTIFICATION_TYPES.SUCCESS,
-                            message: 'Deleted successfully.'
-                        })
-                    );
-                } else {
-                    dispatch(
-                        addNotification({
-                            notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: res?.error?.message || res?.data?.message
-                        })
-                    );
-                }
-            })
-            .catch((err: any) => {
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: err || 'Error deleting the resource.'
-                    })
-                );
-            });
+        handleDeleteOnPremTco({
+            deleteOnPremTco,
+            rowData,
+            currentData: onPremiseData,
+            setDataAction: setOnPremiseData,
+            dispatch,
+            successMessage: t('databases.explore-savings.on-prem-delete-success'),
+            errorMessage: t('databases.explore-savings.on-prem-delete-error')
+        });
     };
 
     const openAssessmentDialog = () => {
@@ -336,42 +309,15 @@ const ExploreSavingsOnPremiseTable = () => {
                     </Typography>
                 </div>
 
-                <div className={styles.deleteMenu}>
-                    {!isDemoMode && selectedRowsForExploreSavingsOnPremBulk.length === 0 && (
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems(rowData)}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-
-                                    switch (menuId) {
-                                        case 'delete':
-                                            handleDelete(rowData);
-                                            break;
-                                    }
-                                }
-                            }}
-                            isDisabled={rowData?.menuDisable}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
-                    )}
-
-                    {(isDemoMode || selectedRowsForExploreSavingsOnPremBulk.length > 0) && (
-                        <div className={styles.menuPointerDisabled}>
-                            <span className={styles.menuPointer}>...</span>
-                        </div>
-                    )}
-                </div>
+                <DeleteMenuCell
+                    isDemoMode={isDemoMode}
+                    isBulkSelected={selectedRowsForExploreSavingsOnPremBulk.length > 0}
+                    rowData={rowData}
+                    menuOpenedRow={menuOpenedRow}
+                    menuOpenedRowDetail={menuOpenedRowDetail}
+                    setOpenedRow={setOpenedRow}
+                    onDelete={handleDelete}
+                />
             </div>
         )
     });

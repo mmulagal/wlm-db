@@ -137,6 +137,8 @@ export const onClickESHostOracleOnPrem = (
         navigate
     );
 
+    dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk([rowData]));
+
     buildStoragePerfAndCompute(
         dispatch,
         rowData,
@@ -442,6 +444,59 @@ export const onClickESHostOnPremBulk = (
     dispatch(setSelectedOnPremHostId(firstHost?.resourceId));
     dispatch(setSelectedServerName(`${selectedHosts.length} hosts selected`));
     setESInstanceOnPremData(firstHost, dispatch);
+};
+
+export const handleDeleteOnPremTco = ({
+    deleteOnPremTco,
+    rowData,
+    currentData,
+    setDataAction,
+    dispatch,
+    type,
+    successMessage,
+    errorMessage
+}: {
+    deleteOnPremTco: any;
+    rowData: any;
+    currentData: any[];
+    setDataAction: any;
+    dispatch: Dispatch;
+    type?: string;
+    successMessage: string;
+    errorMessage: string;
+}) => {
+    const params: any = { resourceId: rowData.resourceId };
+    if (type) {
+        params.type = type;
+    }
+    deleteOnPremTco(params)
+        .then((res: any) => {
+            if (res && res?.data?.count === 1) {
+                const updatedData = currentData.filter((item: any) => item.uniqueId !== rowData.uniqueId);
+                dispatch(setDataAction(updatedData));
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: successMessage
+                    })
+                );
+            } else {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: res?.error?.message || res?.data?.message
+                    })
+                );
+            }
+        })
+        .catch((err: any) => {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: err || errorMessage
+                })
+            );
+        });
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {
