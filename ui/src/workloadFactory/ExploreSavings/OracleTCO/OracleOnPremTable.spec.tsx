@@ -1,12 +1,14 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import OracleOnPremTable from './OracleOnPremTable';
 import exploreSavingsSlice from '../../../store/workloadFactory/exploreSavingsSlice';
-import exploreSavingsBulkSlice from '../../../store/workloadFactory/exploreSavingsBulkSlice';
+import exploreSavingsBulkSlice, {
+    setSelectedRowsForExploreSavingsOracleOnPremBulk
+} from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import notificationSlice from '../../../store/notificationSlice';
 import authSlice from '../../../store/authSlice';
 
@@ -104,6 +106,9 @@ vi.mock('../../../common/BulkAction/BulkActionContainer', () => ({
 
 vi.mock('./AssessmentDialog/AssessmentDialog', () => ({ default: () => <div /> }));
 vi.mock('./TableTooltip/TableTooltip', () => ({ default: () => <div /> }));
+vi.mock('../DeleteMenuCell/DeleteMenuCell', () => ({
+    default: () => <div data-testid="delete-menu-cell" />
+}));
 
 const mockFetchOracleOnPremData = vi.fn();
 vi.mock('../ExploreSavingsOnPremiseTable/useOnPremData', () => ({
@@ -116,7 +121,8 @@ const mockOnClickSingle = vi.fn();
 const mockOnClickBulk = vi.fn();
 vi.mock('../ExploreSavingsUtils', () => ({
     onClickESHostOracleOnPrem: (...args: any[]) => mockOnClickSingle(...args),
-    onClickESHostOracleOnPremBulk: (...args: any[]) => mockOnClickBulk(...args)
+    onClickESHostOracleOnPremBulk: (...args: any[]) => mockOnClickBulk(...args),
+    handleDeleteOnPremTco: vi.fn()
 }));
 
 vi.mock('../../../utils/utilityFunctions', () => ({
@@ -127,10 +133,12 @@ vi.mock('../../../utils/utilityFunctions', () => ({
 const mockGetUploadScript = vi.fn();
 const mockGetJobDetailApi = vi.fn();
 const mockGetDownloadScript = vi.fn();
+const mockDeleteOnPremTco = vi.fn();
 vi.mock('../../../utils/apiService', () => ({
     useGetUploadScriptMutation: () => [mockGetUploadScript, { isLoading: false }],
     useLazyGetSubTaskListQuery: () => [mockGetJobDetailApi, { isLoading: false }],
-    useGetOracleOnPremTCODownloadScriptMutation: () => [mockGetDownloadScript, { isLoading: false }]
+    useGetOracleOnPremTCODownloadScriptMutation: () => [mockGetDownloadScript, { isLoading: false }],
+    useDeleteOnPremTcoMutation: () => [mockDeleteOnPremTco, { isLoading: false }]
 }));
 
 // ---- Helpers ----
@@ -349,6 +357,54 @@ describe('OracleOnPremTable', () => {
 
             const state = store.getState();
             expect(state.exploreSavingsBulk.selectedRowsForExploreSavingsOracleOnPremBulk).toHaveLength(0);
+        });
+
+        it('should clear stale Redux selection on mount', () => {
+            const hosts = [makeHost(1), makeHost(2)];
+            setMockSelection([]);
+            const { store } = renderComponent({
+                oracleData: hosts,
+                selectedOracleRows: [hosts[0], hosts[1]]
+            });
+
+            const state = store.getState();
+            expect(state.exploreSavingsBulk.selectedRowsForExploreSavingsOracleOnPremBulk).toHaveLength(0);
+        });
+
+        it('should not call toggleRowSelection on initial mount even with stale Redux selections', () => {
+            const hosts = [makeHost(1), makeHost(2)];
+            setMockSelection([]);
+            renderComponent({ oracleData: hosts, selectedOracleRows: [hosts[0]] });
+
+            expect(mockToggleRowSelection).not.toHaveBeenCalled();
+        });
+
+        it('should call toggleRowSelection when Redux diverges from table after initial mount', () => {
+            const hosts = [makeHost(1), makeHost(2)];
+            setMockSelection([]);
+            const { store } = renderComponent({ oracleData: hosts });
+
+            mockToggleRowSelection.mockClear();
+
+            act(() => {
+                store.dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk([hosts[0]]));
+            });
+
+            expect(mockToggleRowSelection).toHaveBeenCalledWith('1');
+        });
+
+        it('should not call toggleRowSelection when Redux and table are already in sync', () => {
+            const hosts = [makeHost(1), makeHost(2)];
+            setMockSelection([1]);
+            const { store } = renderComponent({ oracleData: hosts, selectedOracleRows: [hosts[0]] });
+
+            mockToggleRowSelection.mockClear();
+
+            act(() => {
+                store.dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk([hosts[0]]));
+            });
+
+            expect(mockToggleRowSelection).not.toHaveBeenCalled();
         });
     });
 });

@@ -63,7 +63,6 @@ const OracleOnPremTable = () => {
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
     const menuOpenedRowDetail: any = useRef(null);
 
-
     const handleDelete = (rowData: any) => {
         handleDeleteOnPremTco({
             deleteOnPremTco,
@@ -78,6 +77,7 @@ const OracleOnPremTable = () => {
     };
 
     useEffect(() => {
+        dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk([]));
         fetchOracleOnPremData();
     }, []);
 
@@ -368,6 +368,8 @@ const OracleOnPremTable = () => {
         isLoading: onPremiseOracleDataLoading || isUploadLoading
     });
 
+    const isInitialMountRef = useRef(true);
+
     // Sync table selection state to Redux
     useEffect(() => {
         if (onPremiseOracleData && onPremiseOracleData.length > 0) {
@@ -385,6 +387,10 @@ const OracleOnPremTable = () => {
 
     // Sync Redux selection state back to table when rows are removed externally
     useEffect(() => {
+        if (isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+            return;
+        }
         if (!onPremiseOracleData || onPremiseOracleData.length === 0) return;
 
         const currentTableSelectedIds = new Set(
@@ -394,14 +400,19 @@ const OracleOnPremTable = () => {
             selectedRowsForExploreSavingsOracleOnPremBulk.map((row: any) => String(row.id))
         );
 
-        // Deselect rows that are selected in the table but not in Redux
+        // Only toggle if there is an actual mismatch to avoid unnecessary re-renders
+        const hasDiff =
+            [...currentTableSelectedIds].some(id => !reduxSelectedIds.has(id)) ||
+            [...reduxSelectedIds].some(id => !currentTableSelectedIds.has(id));
+
+        if (!hasDiff) return;
+
         currentTableSelectedIds.forEach(id => {
             if (!reduxSelectedIds.has(id)) {
                 tableProps.toggleRowSelection(id)(false);
             }
         });
 
-        // Select rows that are in Redux but not selected in the table
         reduxSelectedIds.forEach(id => {
             if (!currentTableSelectedIds.has(id)) {
                 tableProps.toggleRowSelection(id)(true);

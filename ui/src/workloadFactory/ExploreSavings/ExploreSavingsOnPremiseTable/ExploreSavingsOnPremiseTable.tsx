@@ -100,6 +100,7 @@ const ExploreSavingsOnPremiseTable = () => {
     }, [onPremiseData, selectedRowsForExploreSavingsOnPremBulk]);
 
     useEffect(() => {
+        dispatch(setSelectedRowsForExploreSavingsOnPremBulk([]));
         fetchOnPremData();
     }, []);
 
@@ -489,6 +490,8 @@ const ExploreSavingsOnPremiseTable = () => {
         isLazyLoading: onPremiseDataLoading || isUploadLoading
     });
 
+    const isInitialMountRef = useRef(true);
+
     // Sync table selection state to Redux
     useEffect(() => {
         if (onPremiseData && onPremiseData.length > 0) {
@@ -506,6 +509,10 @@ const ExploreSavingsOnPremiseTable = () => {
 
     // Sync Redux selection state back to table when rows are removed externally
     useEffect(() => {
+        if (isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+            return;
+        }
         if (!onPremiseData || onPremiseData.length === 0) return;
 
         const currentTableSelectedIds = new Set(
@@ -515,14 +522,18 @@ const ExploreSavingsOnPremiseTable = () => {
             selectedRowsForExploreSavingsOnPremBulk.map((row: any) => String(row.id))
         );
 
-        // Deselect rows that are selected in the table but not in Redux
+        const hasDiff =
+            [...currentTableSelectedIds].some(id => !reduxSelectedIds.has(id)) ||
+            [...reduxSelectedIds].some((id: string) => !currentTableSelectedIds.has(id));
+
+        if (!hasDiff) return;
+
         currentTableSelectedIds.forEach(id => {
             if (!reduxSelectedIds.has(id)) {
                 tableProps.toggleRowSelection(id)(false);
             }
         });
 
-        // Select rows that are in Redux but not selected in the table
         reduxSelectedIds.forEach((id: string) => {
             if (!currentTableSelectedIds.has(id)) {
                 tableProps.toggleRowSelection(id)(true);
