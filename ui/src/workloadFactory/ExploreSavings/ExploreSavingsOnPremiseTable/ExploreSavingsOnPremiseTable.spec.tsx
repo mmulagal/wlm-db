@@ -32,7 +32,11 @@ vi.mock('@netapp/design-system', () => ({
     Typography: ({ children, ...props }: any) => <span {...props}>{children}</span>,
     DsTypography: ({ children, ...props }: any) => <span {...props}>{children}</span>,
     Popover: ({ children }: any) => <div>{children}</div>,
-    DsSpinner: (props: any) => <div data-testid="spinner" {...props}>Loading...</div>,
+    DsSpinner: (props: any) => (
+        <div data-testid="spinner" {...props}>
+            Loading...
+        </div>
+    ),
     DsButton: ({ children, onClick, ...props }: any) => (
         <button onClick={onClick} {...props}>
             {children}
@@ -156,11 +160,7 @@ const setMockSelection = (selectedIds: number[]) => {
     mockSelectionState.count = selectedIds.length;
 };
 
-const createStore = ({
-    onPremData = null as any,
-    onPremDataLoading = false,
-    selectedOnPremRows = [] as any[]
-} = {}) =>
+const createStore = ({ onPremData = null as any, onPremDataLoading = false, selectedOnPremRows = [] as any[] } = {}) =>
     configureStore({
         reducer: {
             exploreSavings: exploreSavingsSlice.reducer,

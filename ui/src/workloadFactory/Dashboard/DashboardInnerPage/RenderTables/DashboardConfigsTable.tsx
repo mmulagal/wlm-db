@@ -43,7 +43,7 @@ import { GwSqlServerInstanceInterface, RSSConfigAdapterInterface } from '../../.
 import { bulkFixDisableCheck, sortOptimizeDashboardInnerTable } from '../DashboardInnerPageHelper';
 import { engineTypeBasedResourceStr } from '../../../WellArchitectedTab/WellArchitectedTabUtils';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import ImpactedDriveDialog from './ImpactedDriveDialog/ImpactedDriveDialog';
+import ImpactedResourceDialog from './ImpactedResourceDialog/ImpactedResourceDialog';
 import { GENERAL } from '../../../../utils/appConstants';
 
 interface ConfigTableRowData {
@@ -55,7 +55,7 @@ interface ConfigTableRowData {
     [key: string]: any;
 }
 
-type HandleImpactedDriveDialog = (rowData: ConfigTableRowData) => void;
+type HandleImpactedResourceDialog = (rowData: ConfigTableRowData) => void;
 
 interface DashboardConfigsTableProps {
     configType: string;
@@ -126,12 +126,12 @@ const CONFIG_MAPPING: Record<string, any> = {
                     cellData: string,
                     rowData: ConfigTableRowData,
                     t: TFunction,
-                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
                 ) => (
                     <div className={CommonStyles.impactedDrivesCell}>
                         {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
                         {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
                                 {t('databases.dashboard.view')}
                             </Button>
                         )}
@@ -183,12 +183,12 @@ const CONFIG_MAPPING: Record<string, any> = {
                     cellData: string,
                     rowData: ConfigTableRowData,
                     t: TFunction,
-                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
                 ) => (
                     <div className={CommonStyles.impactedDrivesCell}>
                         {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
                         {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
                                 {t('databases.dashboard.view')}
                             </Button>
                         )}
@@ -240,12 +240,12 @@ const CONFIG_MAPPING: Record<string, any> = {
                     cellData: string,
                     rowData: ConfigTableRowData,
                     t: TFunction,
-                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
                 ) => (
                     <div className={CommonStyles.impactedDrivesCell}>
                         {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
                         {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
                                 {t('databases.dashboard.view')}
                             </Button>
                         )}
@@ -276,12 +276,12 @@ const CONFIG_MAPPING: Record<string, any> = {
                     cellData: string,
                     rowData: ConfigTableRowData,
                     t: TFunction,
-                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
                 ) => (
                     <div className={CommonStyles.impactedDrivesCell}>
                         {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
                         {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
                                 {t('databases.dashboard.view')}
                             </Button>
                         )}
@@ -532,12 +532,12 @@ const CONFIG_MAPPING: Record<string, any> = {
                     cellData: string,
                     rowData: ConfigTableRowData,
                     t: TFunction,
-                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
                 ) => (
                     <div className={CommonStyles.impactedDrivesCell}>
                         {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
                         {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
                                 {t('databases.dashboard.view')}
                             </Button>
                         )}
@@ -568,12 +568,12 @@ const CONFIG_MAPPING: Record<string, any> = {
                     cellData: string,
                     rowData: ConfigTableRowData,
                     t: TFunction,
-                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
                 ) => (
                     <div className={CommonStyles.impactedDrivesCell}>
                         {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
                         {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
                                 {t('databases.dashboard.view')}
                             </Button>
                         )}
@@ -604,12 +604,12 @@ const CONFIG_MAPPING: Record<string, any> = {
                     cellData: string,
                     rowData: ConfigTableRowData,
                     t: TFunction,
-                    handleImpactedDriveDialog: HandleImpactedDriveDialog
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
                 ) => (
                     <div className={CommonStyles.impactedDrivesCell}>
                         {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
                         {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedDriveDialog(rowData)}>
+                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
                                 {t('databases.dashboard.view')}
                             </Button>
                         )}
@@ -678,7 +678,7 @@ const createOraclePlacementConfig = (configName: string, isFixSupported: boolean
                 cellData: string,
                 rowData: ConfigTableRowData,
                 t: TFunction,
-                handleImpactedDriveDialog: HandleImpactedDriveDialog
+                handleImpactedResourceDialog: HandleImpactedResourceDialog
             ) => {
                 if (PLACEMENT_CONFIGS_WITH_VIEW.has(configName)) {
                     const newObj = { ...rowData, name: configName };
@@ -686,7 +686,7 @@ const createOraclePlacementConfig = (configName: string, isFixSupported: boolean
                         <div className={CommonStyles.impactedDrivesCell}>
                             {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
                             {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                                <Button variant="text" onClick={() => handleImpactedDriveDialog(newObj)}>
+                                <Button variant="text" onClick={() => handleImpactedResourceDialog(newObj)}>
                                     {t('databases.dashboard.view')}
                                 </Button>
                             )}
@@ -1045,11 +1045,11 @@ const DashboardConfigsTable = ({
 
     const { setDialog } = useDialog();
 
-    const handleImpactedDriveDialog: HandleImpactedDriveDialog = rowData => {
+    const handleImpactedResourceDialog: HandleImpactedResourceDialog = rowData => {
         setDialog(
             <DialogComponent
                 header={t('databases.well-architect.impacted-resources')}
-                content={<ImpactedDriveDialog data={rowData} />}
+                content={<ImpactedResourceDialog data={rowData} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
             />
@@ -1177,7 +1177,7 @@ const DashboardConfigsTable = ({
                               </div>
                           );
                       }
-                      return col.renderCell(cellData, rowData, t, handleImpactedDriveDialog);
+                      return col.renderCell(cellData, rowData, t, handleImpactedResourceDialog);
                   }
                 : undefined
         })),

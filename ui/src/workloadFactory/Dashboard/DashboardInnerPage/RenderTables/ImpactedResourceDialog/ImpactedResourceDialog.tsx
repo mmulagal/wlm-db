@@ -1,6 +1,6 @@
 import { DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
-import styles from './ImpactedDriveDialog.module.scss';
+import styles from './ImpactedResourceDialog.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, DBType } from '../../../../../utils/consts';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
@@ -309,7 +309,7 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
     }
 };
 
-const ImpactedDriveDialog = ({ data }: { data: AssessmentData }) => {
+const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
     const { t } = useTranslation();
     const { configEngineType } = useAppSelector(state => state.getWellOptimize);
 
@@ -360,4 +360,4 @@ const ImpactedDriveDialog = ({ data }: { data: AssessmentData }) => {
     );
 };
 
-export default ImpactedDriveDialog;
+export default ImpactedResourceDialog;

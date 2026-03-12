@@ -247,8 +247,8 @@ vi.mock('../../../../../utils/CommonStyles.module.scss', () => ({
     default: { impactedDrivesCell: 'impactedDrivesCell' }
 }));
 
-vi.mock('../ImpactedDriveDialog/ImpactedDriveDialog', () => ({
-    default: ({ data }: any) => <div data-testid="impacted-drive-dialog">{data?.configurationName}</div>
+vi.mock('../ImpactedResourceDialog/ImpactedResourceDialog', () => ({
+    default: ({ data }: any) => <div data-testid="impacted-resource-dialog">{data?.configurationName}</div>
 }));
 
 const makeStore = (overrides: any = {}) =>
@@ -863,7 +863,7 @@ describe('DashboardConfigsTable', () => {
                 <DashboardConfigsTable {...defaultProps} />
             </Provider>
         );
-        // Row 1 (DISMISSED) and Row 2 (POSTPONED) should show N/A text, not the impacted-drives cell
+        // Row 1 (DISMISSED) and Row 2 (POSTPONED) should show N/A text, not the impacted-resource cell
         const dismissedCell = screen.getByTestId('cell-4-1');
         expect(dismissedCell.textContent).toContain('databases.general.not-available-table-columns');
         expect(dismissedCell.querySelector('[data-testid="button-text"]')).toBeNull();
@@ -885,7 +885,7 @@ describe('DashboardConfigsTable', () => {
         expect(mockSetDialog).toHaveBeenCalledTimes(1);
     });
 
-    it('passes ImpactedDriveDialog as dialog content when View is clicked', () => {
+    it('passes ImpactedResourceDialog as dialog content when View is clicked', () => {
         mockSetDialog.mockClear();
         render(
             <Provider store={makeStore()}>

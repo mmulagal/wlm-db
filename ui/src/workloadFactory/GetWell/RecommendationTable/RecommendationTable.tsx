@@ -15,7 +15,7 @@ import Tag from '../../../common/Tag/Tag';
 import RecommendationTooltip from '../RecommendationTooltip/RecommendationTooltip';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
-import ImpactedDriveDialog from '../../Dashboard/DashboardInnerPage/RenderTables/ImpactedDriveDialog/ImpactedDriveDialog';
+import ImpactedResourceDialog from '../../Dashboard/DashboardInnerPage/RenderTables/ImpactedResourceDialog/ImpactedResourceDialog';
 import { DismissDialog } from '../StorageCardComponent/DismissDialog/DismissDialog';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import {
@@ -901,18 +901,18 @@ const RecommendationTable = ({
         </div>
     );
 
-    const handleImpactedDriveDialog = (rowData: any) => {
+    const handleImpactedResourceDialog = (rowData: any) => {
         setDialog(
             <DialogComponent
                 header={t('databases.well-architect.impacted-resources')}
-                content={<ImpactedDriveDialog data={rowData} />}
+                content={<ImpactedResourceDialog data={rowData} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
             />
         );
     };
 
-    const impactedDriveDialogCheck = (rowData: any) => {
+    const impactedResourceDialogCheck = (rowData: any) => {
         if (
             from === WLF_TABS.DASHBOARD &&
             ((engineType === DBType.MSSQL && MSSQL_IMPACTED_DRIVE_CONFIGS.includes(rowData?.name)) ||
@@ -1086,7 +1086,8 @@ const RecommendationTable = ({
                                     rowData?.name !== ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_TIMEOUT) ||
                                 engineType === DBType.ORACLE ? (
                                     <div>
-                                        {impactedDriveDialogCheck(rowData) && rowData?.totalObjectsInViolation > 0 ? (
+                                        {impactedResourceDialogCheck(rowData) &&
+                                        rowData?.totalObjectsInViolation > 0 ? (
                                             <div className={CommonStyles.impactedDrivesCell}>
                                                 <DsTypography variant="Regular_13" className={`${styles.colText}`}>
                                                     {`${rowData?.totalObjectsInViolation || 0} out of ${
@@ -1095,7 +1096,7 @@ const RecommendationTable = ({
                                                 </DsTypography>
                                                 <Button
                                                     variant="text"
-                                                    onClick={() => handleImpactedDriveDialog(rowData)}
+                                                    onClick={() => handleImpactedResourceDialog(rowData)}
                                                 >
                                                     {t('databases.dashboard.view')}
                                                 </Button>
