@@ -11,10 +11,10 @@ import RecommendationTable from '../../../../GetWell/RecommendationTable/Recomme
 import {
     areAllOntapSubConfigurationsActivating,
     areAllOsSubConfigurationsActivating,
-    ActivatingInfo,
-    PostponeInfo,
-    calculatePostponeInfo
+    ActivatingInfo
 } from '../../../../GetWell/GetWellHelper';
+import useOraclePostponeInfo from '../OraclePostponeActivatingInfo';
+import { OracleCategorySectionProps } from '../../../../GetWell/GetWellUtils';
 
 const StorageConfigurationSection = ({
     styles,
@@ -28,9 +28,10 @@ const StorageConfigurationSection = ({
     showDismissedConfigurations,
     setShowDismissedConfigurations,
     driftAssessmentData
-}: any) => {
+}: OracleCategorySectionProps) => {
     const { t } = useTranslation();
-    const { ontapConfigTableData, osConfigTableData, cardData } = useAppSelector(state => state.getWellOptimize);
+    const { ontapConfigTableData, osConfigTableData } = useAppSelector(state => state.getWellOptimize);
+    const { renderPostponeActivatingInfo } = useOraclePostponeInfo();
 
     // Memoize sub-configuration activation states to avoid redundant computation
     const areAllOntapActivating = useMemo(
@@ -41,22 +42,6 @@ const StorageConfigurationSection = ({
     const areAllOsActivating = useMemo(
         () => areAllOsSubConfigurationsActivating(driftAssessmentData),
         [driftAssessmentData]
-    );
-
-    // Get postpone info for each config
-    const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
-
-    // Helper function to render PostponeInfo/ActivatingInfo based on showDismissedConfigurations
-    const renderPostponeActivatingInfo = (configKey: string) => (
-        <>
-            {showDismissedConfigurations && (
-                <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} translation={t} />
-            )}
-
-            {!showDismissedConfigurations && (
-                <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
-            )}
-        </>
     );
 
     // Helper function to render sub-config activating info
@@ -131,7 +116,7 @@ const StorageConfigurationSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('ontap_configuration')}
+                                    {renderPostponeActivatingInfo('ontap_configuration', showDismissedConfigurations)}
 
                                     {/* Show full ActivatingInfo if all sub-configs are activating */}
                                     {areAllOntapActivating &&
@@ -212,7 +197,7 @@ const StorageConfigurationSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('os_configuration')}
+                                    {renderPostponeActivatingInfo('os_configuration', showDismissedConfigurations)}
 
                                     {/* Show full ActivatingInfo if all sub-configs are activating */}
                                     {areAllOsActivating &&

@@ -74,6 +74,33 @@ const SectionSix = ({ cardData, loading, disableText }: any) => {
         );
     }
 
+    if (
+        cardData?.oracleSecurityPatchMissingPatches &&
+        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH
+    ) {
+        const listObj = [{ key: 'Critical ', value: cardData?.oracleSecurityPatchMissingPatches?.critical }];
+        return (
+            <div className={styles.tooltipContainer}>
+                {cardData?.block_six?.value > 0 && (
+                    <div className={styles.tooltip}>
+                        <Popover
+                            popoverClass=""
+                            trigger="hover"
+                            isAppendedToBody={false}
+                            container={<TooltipIcon />}
+                            placement="bottom"
+                        >
+                            {tooltipListSection(listObj, '30px')}
+                        </Popover>
+                    </div>
+                )}
+                <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                    {cardData?.block_six?.value || t('databases.general.not-available-table-columns')}
+                </DsTypography>
+            </div>
+        );
+    }
+
     if (cardData?.block_six?.count) {
         return (
             <div className={styles.warningMsg}>

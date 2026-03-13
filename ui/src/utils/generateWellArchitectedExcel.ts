@@ -147,6 +147,7 @@ function getOrderedConfigurationKeys(data: ComprehensiveAssessmentData, database
     const topLevelConfigs = [
         { data: data.compute, name: 'compute-rightsizing' },
         { data: data.hostOsPatch, name: 'host-os-patch' },
+        { data: data.oracleSecurityPatch, name: 'oracle-security-patch' },
         { data: data.rssConfig, name: 'rss-config' },
         { data: data.mtuAlignment, name: 'mtu-alignment' },
         { data: data.license, name: 'sql-license' },
@@ -217,6 +218,7 @@ interface AssessmentItem {
     ec2InterfacesToFix?: any[];
     missingPatchesInEc2Instances?: any[];
     ec2InstancesToPatch?: any[];
+    missingPatchDetails?: any[];
     sqlServerInstances?: any[];
     rssAdapters?: any[];
     recommendedAdapterSettings?: any;
@@ -243,6 +245,7 @@ interface ComprehensiveAssessmentData {
     awsBackup?: AssessmentItem;
     license?: AssessmentItem;
     hostOsPatch?: AssessmentItem;
+    oracleSecurityPatch?: AssessmentItem;
     rssConfig?: AssessmentItem;
     mssqlPatch?: AssessmentItem;
     mtuAlignment?: AssessmentItem;
@@ -281,6 +284,7 @@ const MULTI_TABLE_CONFIGS = [
     'mtu-alignment',
     'mssql-patch',
     'host-os-patch',
+    'oracle-security-patch',
     'sql-license',
     'rss-config',
     'log-drive-size',
@@ -513,6 +517,10 @@ function generateConfigurationStatusData(data: ComprehensiveAssessmentData, data
                 case 'host-os-patch':
                     if (data.hostOsPatch) processItems([data.hostOsPatch], 'Compute', 'Compute');
                     break;
+                case 'oracle-security-patch':
+                    if (data.oracleSecurityPatch)
+                        processItems([data.oracleSecurityPatch], 'Application', 'Application');
+                    break;
                 case 'rss-config':
                     if (data.rssConfig) processItems([data.rssConfig], 'Compute', 'Compute');
                     break;
@@ -589,22 +597,49 @@ const createPatchData = (
         details.push({}, {});
 
         const isOracle = databaseType === DBType.ORACLE;
-        const idColumnName = isOracle ? 'CVE' : 'KB';
+        const idColumnName = isOracle ? 'CVE ID' : 'KB';
 
-        details.push({
-            [idColumnName]: headerText,
-            Name: '',
-            Classification: ''
-        });
+        if (config.name === 'oracle-security-patch') {
+            details.push({
+                [idColumnName]: headerText,
+                Component: '',
+                Description: '',
+                'Published Date': ''
+            });
 
-        details.push({
-            [idColumnName]: idColumnName,
-            Name: 'Name',
-            Classification: 'Classification'
-        });
+            details.push({
+                [idColumnName]: idColumnName,
+                Component: 'Component',
+                Description: 'Description',
+                'Published Date': 'Published Date'
+            });
+        } else {
+            details.push({
+                [idColumnName]: headerText,
+                Name: '',
+                Classification: ''
+            });
+
+            details.push({
+                [idColumnName]: idColumnName,
+                Name: 'Name',
+                Classification: 'Classification'
+            });
+        }
 
         instances.forEach((instanceData: any) => {
-            if (instanceData.missingPatchDetails && instanceData.missingPatchDetails.length > 0) {
+            if (config.name === 'oracle-security-patch') {
+                if (instanceData.missingPatches && instanceData.missingPatches.length > 0) {
+                    instanceData.missingPatches.forEach((patch: any) => {
+                        details.push({
+                            [idColumnName]: patch.cveId || 'N/A',
+                            Component: patch.component || 'N/A',
+                            Description: patch.description || 'N/A',
+                            'Published Date': patch.releaseDate || 'N/A'
+                        });
+                    });
+                }
+            } else if (instanceData.missingPatchDetails && instanceData.missingPatchDetails.length > 0) {
                 instanceData.missingPatchDetails.forEach((patch: any) => {
                     details.push({
                         [idColumnName]: isOracle ? patch.cveIds || 'N/A' : patch.kbId || 'N/A',
@@ -1025,6 +1060,8 @@ function generateDetailedConfigurationData(
             createPatchData(config, details, 'missingPatchesInEc2Instances', 'Impacted resources', databaseType),
         'host-os-patch': () =>
             createPatchData(config, details, 'ec2InstancesToPatch', 'Impacted resources', databaseType),
+        'oracle-security-patch': () =>
+            createPatchData(config, details, 'missingPatchDetails', 'Impacted resources', databaseType),
         'sql-license': () => createSQLLicenseData(config, details),
         'rss-config': () => createRSSConfigData(config, details),
         'log-drive-size': () =>
@@ -1702,6 +1739,7 @@ const applySpecialConfigurationStyling = (
             'mtu-alignment': 4,
             'mssql-patch': 3,
             'host-os-patch': 3,
+            'oracle-security-patch': 4,
             'sql-license': 6,
             'rss-config': 2,
             'log-drive-size': 7,

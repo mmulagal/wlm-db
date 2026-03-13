@@ -1903,6 +1903,30 @@ const processOracleConfigurationData = (
                     ? 1
                     : 0;
 
+                const isSecurityPatchOptimized = isOptimizedDashInner(
+                    instanceAssessmentData?.oracleSecurityPatch?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
+                );
+                setConfigState(
+                    configState,
+                    'oracleSecurityPatch',
+                    instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
+                );
+                getAssessmentGroupedByConfigurations.oracleSecurityPatch.optimized += isSecurityPatchOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.oracleSecurityPatch.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleSecurityPatch.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleSecurityPatch =
+                    GETWELL_VALUES[instanceAssessmentData?.oracleSecurityPatch?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.oracleSecurityPatch;
+
                 const isCrrOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.crr?.status,
                     instanceAssessmentData?.dismissedConfigurations?.crr?.configState
@@ -2110,6 +2134,11 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             dismissed: 0,
             activating: 0
         },
+        oracleSecurityPatch: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
         oracleCrr: {
             optimized: 0,
             dismissed: 0,
@@ -2242,6 +2271,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         oracleFileSystemHeadroom: [],
         oracleOperatingSystemPatch: [],
         oracleSwapSpace: [],
+        oracleSecurityPatch: [],
         oracleCrr: []
     };
 

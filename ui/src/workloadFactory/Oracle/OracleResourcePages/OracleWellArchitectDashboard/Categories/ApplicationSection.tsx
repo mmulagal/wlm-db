@@ -9,7 +9,7 @@ import { ReactComponent as LightDisabled } from '../../../../../assets/Light-Dis
 import useOraclePostponeInfo from '../OraclePostponeActivatingInfo';
 import { getOracleCardStates, getShouldShowHeader, OracleCategorySectionProps } from '../../../../GetWell/GetWellUtils';
 
-const ComputeSection = ({
+const ApplicationSection = ({
     styles,
     isAccordionExpanded,
     setClickedAccordionId,
@@ -26,11 +26,14 @@ const ComputeSection = ({
 
     const { renderPostponeActivatingInfo } = useOraclePostponeInfo();
 
-    const computeCardStates = useMemo(() => getOracleCardStates(oracleCardData, ['host_os_patch']), [oracleCardData]);
+    const applicationCardStates = useMemo(
+        () => getOracleCardStates(oracleCardData, ['oracle_security_patch']),
+        [oracleCardData]
+    );
 
     const shouldShowHeader = useMemo(
-        () => getShouldShowHeader(showDismissedConfigurations, computeCardStates),
-        [showDismissedConfigurations, computeCardStates]
+        () => getShouldShowHeader(showDismissedConfigurations, applicationCardStates),
+        [showDismissedConfigurations, applicationCardStates]
     );
 
     return (
@@ -43,53 +46,54 @@ const ComputeSection = ({
                         }}
                         variant="Semibold_16"
                     >
-                        {t('databases.oracle-inner-page.compute')}
+                        {t('databases.well-architect.application-oracle-server')}
                     </DsTypography>
                 </div>
             )}
 
             <div className={styles.accordionGroups}>
-                {/* Host OS Patch Card */}
-                {oracleCardData?.host_os_patch && (
+                {oracleCardData?.oracle_security_patch && (
                     <div>
                         <OracleCardComponent
-                            cardData={oracleCardData.host_os_patch}
+                            cardData={oracleCardData.oracle_security_patch}
                             showDismissedConfigurations={showDismissedConfigurations}
                             setShowDismissedConfigurations={setShowDismissedConfigurations}
                             driftAssessmentData={driftAssessmentData}
                         />
                         <DsAccordion
-                            id="host-os-patch-1"
+                            id="oracle-security-patch-1"
                             variant="Default"
                             isDisabled={
                                 loading ||
                                 showDismissedConfigurations ||
-                                !oracleCardData?.host_os_patch?.block_two?.value
+                                !oracleCardData?.oracle_security_patch?.block_two?.value
                             }
-                            isExpanded={isAccordionExpanded('host-os-patch-1', optimizePrintState)}
+                            isExpanded={isAccordionExpanded('oracle-security-patch-1', optimizePrintState)}
                             onExpandChange={isExpanded => {
-                                handleAccordionExpanded('host-os-patch-1', isExpanded);
+                                handleAccordionExpanded('oracle-security-patch-1', isExpanded);
                             }}
-                            onClick={() => setClickedAccordionId('host-os-patch-1')}
+                            onClick={() => setClickedAccordionId('oracle-security-patch-1')}
                             title={
                                 <div className={styles.tagPlacement}>
-                                    {oracleCardData.host_os_patch?.tags?.map((perTag: string, index: number) => (
-                                        <div
-                                            key={index}
-                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
-                                        >
-                                            <Tag text={perTag} />
-                                        </div>
-                                    ))}
+                                    {oracleCardData.oracle_security_patch?.tags?.map(
+                                        (perTag: string, index: number) => (
+                                            <div
+                                                key={index}
+                                                className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                            >
+                                                <Tag text={perTag} />
+                                            </div>
+                                        )
+                                    )}
                                 </div>
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('host_os_patch', showDismissedConfigurations)}
+                                    {renderPostponeActivatingInfo('oracle_security_patch', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
-                                        !oracleCardData?.host_os_patch?.block_two?.value ? (
+                                        !oracleCardData?.oracle_security_patch?.block_two?.value ? (
                                             <LightDisabled />
                                         ) : (
                                             <Light />
@@ -100,7 +104,7 @@ const ComputeSection = ({
                                             color:
                                                 loading ||
                                                 showDismissedConfigurations ||
-                                                !oracleCardData?.host_os_patch?.block_two?.value
+                                                !oracleCardData?.oracle_security_patch?.block_two?.value
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -109,7 +113,9 @@ const ComputeSection = ({
                                     </div>
                                 </div>
                             ]}
-                            children={<RecommendationText data={oracleCardData?.host_os_patch?.recommendation} />}
+                            children={
+                                <RecommendationText data={oracleCardData?.oracle_security_patch?.recommendation} />
+                            }
                         />
                     </div>
                 )}
@@ -118,4 +124,4 @@ const ComputeSection = ({
     );
 };
 
-export default ComputeSection;
+export default ApplicationSection;

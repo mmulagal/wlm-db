@@ -61,6 +61,7 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     ]);
                     break;
                 case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
+                case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
                     setTagData([
                         { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
                         {

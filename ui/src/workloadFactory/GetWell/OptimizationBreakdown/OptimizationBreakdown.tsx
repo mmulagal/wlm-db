@@ -225,27 +225,16 @@ const OptimizationBreakdown = ({
                         isDisabled={(optimizationBreakDown?.compute?.total ?? 0) === 0}
                     />
                     <OptimizeComponent
-                        value={
-                            engineType === DBType.ORACLE ? (
-                                <ComingSoon />
-                            ) : (
-                                optimizationBreakDown?.application?.percent || 0
-                            )
-                        }
-                        data={engineType === DBType.ORACLE ? undefined : optimizationBreakDown?.application}
+                        value={optimizationBreakDown?.application?.percent || 0}
+                        data={optimizationBreakDown?.application}
                         text={
                             engineType === DBType.ORACLE
                                 ? t('databases.well-architect.application-oracle-server')
                                 : GENERAL.APPLICATION
                         }
                         image={<Applications />}
-                        isComingSoon={engineType === DBType.ORACLE}
-                        allConfigurationsDismissed={
-                            engineType === DBType.ORACLE ? undefined : allConfigurationsDismissed
-                        }
-                        isDisabled={
-                            engineType !== DBType.ORACLE && (optimizationBreakDown?.application?.total ?? 0) === 0
-                        }
+                        allConfigurationsDismissed={allConfigurationsDismissed}
+                        isDisabled={(optimizationBreakDown?.application?.total ?? 0) === 0}
                     />
                 </div>
 

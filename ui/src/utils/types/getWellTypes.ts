@@ -82,6 +82,16 @@ export interface PerConfigInterface {
             kbId?: string;
         }>;
     }>;
+    missingPatchDetails?: Array<{
+        missingPatchesCount?: number;
+        missingPatches?: Array<{
+            cveId?: string;
+            component?: string;
+            description?: string;
+            releaseDate?: string;
+            releaseName?: string;
+        }>;
+    }>;
     rssAdapters?: Array<RSSConfigAdapterInterface>;
     tcpOffloadState?: string;
     recommendedAdapterSettings?: {
@@ -133,6 +143,7 @@ export interface AssessmentResponseInterface {
     awsBackup?: PerConfigInterface;
     highAvailability?: Array<{ [Key: string]: PerConfigInterface }>;
     crr?: PerConfigInterface;
+    oracleSecurityPatch?: PerConfigInterface;
     clone?: PerConfigInterface;
     isWad?: boolean;
 }

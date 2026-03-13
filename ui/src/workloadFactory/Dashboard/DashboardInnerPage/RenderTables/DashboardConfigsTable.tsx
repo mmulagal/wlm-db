@@ -788,13 +788,45 @@ const oracleComputeConfigs = {
     [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: createOracleHostOsPatchConfig()
 };
 
+const createOracleSecurityPatchConfig = () => ({
+    assessmentPath: [],
+    configName: 'oracleSecurityPatch',
+    dismissConfigName: 'oracleSecurityPatch',
+    isFixSupported: false,
+    dataMapping: (obj: any) => {
+        let totalMissing = 0;
+        obj?.missingPatchDetails?.forEach((detail: any) => {
+            totalMissing += detail?.missingPatchesCount || 0;
+        });
+        return {
+            current: `${totalMissing}`,
+            missingPatchList: obj?.missingPatchDetails || []
+        };
+    },
+    customColumns: [
+        {
+            Header: 'databases.well-architect.dashboard-table-headers.missing-patches',
+            accessor: 'current',
+            id: '4',
+            width: '200px',
+            renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
+                cellData || t('databases.general.not-available-table-columns')
+        }
+    ]
+});
+
+// Oracle APPLICATION configurations mapping
+const oracleApplicationConfigs = {
+    [ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH]: createOracleSecurityPatchConfig()
+};
+
 // Merge all configurations
 const FULL_CONFIG_MAPPING = {
     ...CONFIG_MAPPING,
     ...oraclePlacementConfigs,
     ...oracleStorageSizingConfigs,
-    ...oracleComputeConfigs
-    // Add more configurations as needed
+    ...oracleComputeConfigs,
+    ...oracleApplicationConfigs
 };
 
 const DashboardConfigsTable = ({

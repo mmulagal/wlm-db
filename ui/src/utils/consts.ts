@@ -1004,6 +1004,7 @@ export const ASSESSMENT_CONFIG_NAMES = {
     OPERATING_SYSTEM_PATCH: 'Operating system patch',
     MICROSOFT_SQL_SERVER_PATCH: 'Microsoft SQL Server patch',
     CRR: 'Cross-Region Replication (CRR)',
+    ORACLE_SECURITY_PATCH: 'Oracle critical patch updates',
     ONTAP: 'ontap',
     OS: 'os',
     HA: 'ha',
@@ -1219,6 +1220,7 @@ export const CONFIG_NAMES = {
     sql_licenses: ASSESSMENT_CONFIG_NAMES.LICENSE,
     microsoft_sql_patch: ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
     maxdop: ASSESSMENT_CONFIG_NAMES.MAXDOP,
+    oracle_security_patch: ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH,
 
     // Resiliency configurations
     scheduled_local_snapshot: ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
@@ -1256,6 +1258,7 @@ export const CONFIG_NAMES = {
     'backup-configuration': ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
     'mssql-patch': ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
     'host-os-patch': ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+    'oracle-security-patch': ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH,
     'sql-license': ASSESSMENT_CONFIG_NAMES.LICENSE,
     'mtu-alignment': ASSESSMENT_CONFIG_NAMES.MTU
 };
@@ -1411,6 +1414,7 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: 'mssqlPatch',
         [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'hostOsPatch',
         [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
+        [ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH]: 'oracleSecurityPatch',
         [ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]: 'mssqlHighAvailability',
         [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'
     },

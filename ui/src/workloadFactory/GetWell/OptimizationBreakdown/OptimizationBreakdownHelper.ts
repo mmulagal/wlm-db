@@ -96,7 +96,8 @@ export const getOracleDisplayNameToTechnicalKeyMapping = () => ({
     [ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT]: 'dnfs-enabled',
     [ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE]: 'dnfs-configuration-file',
     [ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE]: 'dnfs-no-shared-cache',
-    [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr'
+    [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
+    [ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH]: 'oracle_security_patch'
 });
 
 // Helper function to get technical key to display name mapping for MSSQL

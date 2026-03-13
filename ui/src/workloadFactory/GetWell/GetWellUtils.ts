@@ -55,6 +55,7 @@ import {
 import { groupByType, mapDismissedValues } from '../../utils/resourceUtils';
 import {
     AssessmentResponseInterface,
+    GwCardDataInterface,
     GwSqlServerInstanceInterface,
     PerConfigInterface,
     RSSConfigAdapterInterface
@@ -5161,6 +5162,7 @@ export const updateConfigStatePerInstance = (
         'mssql-patch': 'mssqlPatch',
         'host-os-patch': 'hostOsPatch',
         crr: 'crr',
+        'oracle-security-patch': 'oracleSecurityPatch',
         'sql-license': 'license'
     };
 
@@ -5807,6 +5809,9 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
             configKey = 'oracleSwapSpace';
             break;
+        case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
+            configKey = 'oracleSecurityPatch';
+            break;
     }
     const optimizedInstances = configData?.[configKey]?.optimized || 0;
     const dismissedInstances = configData?.[configKey]?.dismissed || 0;
@@ -6228,3 +6233,59 @@ export const getWadCellProps = (
     //     };
     // }
     fallbackCellProps;
+
+export interface OracleCategorySectionProps {
+    styles: Record<string, string>;
+    isAccordionExpanded: (id: string, printState: boolean) => boolean;
+    setClickedAccordionId: (id: string) => void;
+    loading: boolean | null;
+    handleAccordionExpanded: (id: string, isExpanded: boolean) => void;
+    isDarkTheme: boolean;
+    optimizePrintState: boolean;
+    oracleCardData: GwCardDataInterface;
+    showDismissedConfigurations: boolean;
+    setShowDismissedConfigurations: (value: boolean) => void;
+    driftAssessmentData: AssessmentResponseInterface | null;
+}
+
+export const getOracleCardStates = (
+    oracleCardData: Record<string, any> | null | undefined,
+    cardKeys: string[]
+): { hasActiveCards: boolean; hasDismissedCards: boolean } => {
+    if (!oracleCardData) return { hasActiveCards: false, hasDismissedCards: false };
+
+    let hasActiveCards = false;
+    let hasDismissedCards = false;
+
+    cardKeys.forEach(key => {
+        const card = oracleCardData[key];
+        if (!card) return;
+
+        const configState = card.dismissedObj?.configState;
+        const hasValidAssessment = card.block_two?.value;
+
+        if (!hasValidAssessment && configState !== CONFIG_STATES.DISMISSED) {
+            hasActiveCards = true;
+        }
+
+        if (!hasValidAssessment) return;
+
+        if (!configState || configState === CONFIG_STATES.ACTIVE || configState === CONFIG_STATES.ACTIVATING) {
+            hasActiveCards = true;
+        } else if (configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED) {
+            hasDismissedCards = true;
+        }
+    });
+
+    return { hasActiveCards, hasDismissedCards };
+};
+
+export const getShouldShowHeader = (
+    showDismissedConfigurations: boolean,
+    cardStates: { hasActiveCards: boolean; hasDismissedCards: boolean }
+): boolean => {
+    if (showDismissedConfigurations) {
+        return cardStates.hasDismissedCards;
+    }
+    return cardStates.hasActiveCards;
+};

@@ -562,6 +562,43 @@ export const oracleCardData: any = {
         },
         tags: ['Reliability']
     },
+    oracle_security_patch: {
+        id: 'oracle-security-patch',
+        category: 'application',
+        mapName: ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH,
+        block_one: {
+            value: ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH,
+            type: 'Application'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_three: {
+            type: 'Missing patches',
+            value: '',
+            smallFont: true
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Missing patches',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Oracle patch recommendation',
+            description:
+                'Critical Patch Updates provide security patches for supported Oracle self-managed database installations.\nApplying the latest patch helps protect your Oracle database from vulnerabilities and significantly improves overall system reliability.'
+        },
+        tags: ['Security', 'Reliability']
+    },
     isASMManaged: false,
     storageProtocol: '',
     isStorageLayoutFra: false
@@ -763,6 +800,67 @@ export const formatOracleCRRConfig = (
         recommendationText: crrItem?.recommendation || oracleCardData.crr?.recommendation?.description,
         objectsInViolation: crrItem?.objectsInViolation,
         dismissedObj: data?.dismissedConfigurations?.crr
+    };
+};
+
+// Function to format Oracle Security Patch configuration
+export const formatOracleSecurityPatchConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>
+): any => {
+    const securityPatchItem = data?.oracleSecurityPatch;
+
+    const originalName = securityPatchItem?.name || 'oracle-security-patch';
+    const status = optimizingData?.[originalName] || securityPatchItem?.status || '';
+    const severity = securityPatchItem?.severity || '';
+
+    const missingPatchDetails = securityPatchItem?.missingPatchDetails || [];
+    let totalMissingPatches = 0;
+    const missingPatchList: any[] = [];
+
+    missingPatchDetails.forEach((detail: any) => {
+        totalMissingPatches += detail?.missingPatchesCount || 0;
+        if (detail?.missingPatches) {
+            detail.missingPatches.forEach((patch: any) => {
+                missingPatchList.push(patch);
+            });
+        }
+    });
+
+    return {
+        ...oracleCardData.oracle_security_patch,
+        block_two: {
+            ...oracleCardData.oracle_security_patch?.block_two,
+            value: formatValue(status)
+        },
+        block_three: {
+            ...oracleCardData.oracle_security_patch?.block_three,
+            value: String(totalMissingPatches)
+        },
+        block_four: {
+            ...oracleCardData.oracle_security_patch?.block_four,
+            value: formatValue(severity)
+        },
+        block_five: {
+            ...oracleCardData.oracle_security_patch?.block_five,
+            value: securityPatchItem?.resourceType || ''
+        },
+        block_six: {
+            ...oracleCardData.oracle_security_patch?.block_six,
+            value: String(totalMissingPatches)
+        },
+        oracleSecurityPatchMissingPatches: {
+            critical: totalMissingPatches
+        },
+        tags: securityPatchItem?.tags,
+        id: securityPatchItem?.name || 'oracle-security-patch',
+        category: 'application',
+        errorMessage: securityPatchItem?.errorMessage,
+        recommendationText:
+            securityPatchItem?.recommendation || oracleCardData.oracle_security_patch?.recommendation?.description,
+        objectsInViolation: securityPatchItem?.objectsInViolation,
+        missingPatchList,
+        dismissedObj: data?.dismissedConfigurations?.oracleSecurityPatch
     };
 };
 
@@ -1180,7 +1278,8 @@ export const getOracleCardsData = (
             osDismissedObj
         ),
         host_os_patch: formatOracleHostOsPatchConfig(data, optimizingData),
-        crr: formatOracleCRRConfig(data, optimizingData)
+        crr: formatOracleCRRConfig(data, optimizingData),
+        oracle_security_patch: formatOracleSecurityPatchConfig(data, optimizingData)
     };
 
     return {
@@ -1227,6 +1326,18 @@ export const formatOracleOptimizationBreakDown = (
     };
 
     const computeCount = {
+        hasDismissedOrPostponed: false,
+        total: 0,
+        critical: 0,
+        warning: 0,
+        optimized: 0,
+        notOptimized: 0,
+        dismissedOrPostponed: 0,
+        dismissedIds: [] as string[],
+        percent: 0
+    };
+
+    const applicationCount = {
         hasDismissedOrPostponed: false,
         total: 0,
         critical: 0,
@@ -1329,6 +1440,31 @@ export const formatOracleOptimizationBreakDown = (
             }
         }
 
+        if (cardItem?.category === 'application') {
+            if (!cardItem?.block_two?.value) {
+                applicationCount.notOptimized++;
+                return;
+            }
+
+            const { isDismissed, isPostponed, isOptimizedViaDismissal, isOptimized, isCritical, isWarning } =
+                processStorageCardItem(cardItem);
+
+            if (isDismissed || isPostponed) {
+                applicationCount.dismissedOrPostponed++;
+                applicationCount.hasDismissedOrPostponed = true;
+                applicationCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+            } else if (isOptimized) {
+                applicationCount.optimized++;
+                if (isOptimizedViaDismissal) {
+                    applicationCount.hasDismissedOrPostponed = true;
+                }
+            } else {
+                applicationCount.notOptimized++;
+                if (isCritical) applicationCount.critical++;
+                else if (isWarning) applicationCount.warning++;
+            }
+        }
+
         if (cardItem?.category === 'resiliency') {
             if (!cardItem?.block_two?.value) {
                 resiliencyCount.notOptimized++;
@@ -1423,28 +1559,48 @@ export const formatOracleOptimizationBreakDown = (
             ? formatNumberWithCustomComma((resiliencyCount.optimized / resiliencyCount.total) * 100)
             : 0;
 
-    const totalOptimized = storageCount.optimized + computeCount.optimized + resiliencyCount.optimized;
-    const totalAll = storageCount.total + computeCount.total + resiliencyCount.total;
+    applicationCount.total = applicationCount.optimized + applicationCount.notOptimized;
+    applicationCount.percent =
+        applicationCount.optimized && applicationCount.total > 0
+            ? formatNumberWithCustomComma((applicationCount.optimized / applicationCount.total) * 100)
+            : 0;
+
+    const totalOptimized =
+        storageCount.optimized + computeCount.optimized + applicationCount.optimized + resiliencyCount.optimized;
+    const totalAll = storageCount.total + computeCount.total + applicationCount.total + resiliencyCount.total;
 
     return {
         storage: storageCount,
         compute: computeCount,
+        application: applicationCount,
         resiliency: resiliencyCount,
         total: {
             hasDismissedOrPostponed:
                 storageCount.hasDismissedOrPostponed ||
                 computeCount.hasDismissedOrPostponed ||
+                applicationCount.hasDismissedOrPostponed ||
                 resiliencyCount.hasDismissedOrPostponed,
             total: totalAll,
-            critical: storageCount.critical + computeCount.critical + resiliencyCount.critical,
-            warning: storageCount.warning + computeCount.warning + resiliencyCount.warning,
+            critical:
+                storageCount.critical + computeCount.critical + applicationCount.critical + resiliencyCount.critical,
+            warning: storageCount.warning + computeCount.warning + applicationCount.warning + resiliencyCount.warning,
             optimized: totalOptimized,
-            notOptimized: storageCount.notOptimized + computeCount.notOptimized + resiliencyCount.notOptimized,
+            notOptimized:
+                storageCount.notOptimized +
+                computeCount.notOptimized +
+                applicationCount.notOptimized +
+                resiliencyCount.notOptimized,
             dismissedOrPostponed:
                 storageCount.dismissedOrPostponed +
                 computeCount.dismissedOrPostponed +
+                applicationCount.dismissedOrPostponed +
                 resiliencyCount.dismissedOrPostponed,
-            dismissedIds: [...storageCount.dismissedIds, ...computeCount.dismissedIds, ...resiliencyCount.dismissedIds],
+            dismissedIds: [
+                ...storageCount.dismissedIds,
+                ...computeCount.dismissedIds,
+                ...applicationCount.dismissedIds,
+                ...resiliencyCount.dismissedIds
+            ],
             percent: totalAll > 0 ? Math.round((totalOptimized / totalAll) * 100) : 0
         }
     };
@@ -1622,6 +1778,8 @@ export const getOracleCategoryData = () => ({
     os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
     // Compute Configuration cards
     host_os_patch: { category: 'Compute', subCategory: 'Compute' },
+    // Application cards
+    oracle_security_patch: { category: 'Application', subCategory: 'Application' },
     // Resiliency cards
     crr: { category: 'Resiliency', subCategory: 'Protection' }
 });
@@ -1649,6 +1807,9 @@ export const getDynamicOracleCategoryData = (assessmentData?: any) => {
 
     // Always include host OS patch (Compute) so it appears in filters even when Unavailable
     categoryMapping.host_os_patch = { category: 'Compute', subCategory: 'Compute' };
+
+    // Always include Oracle Security Patch (Application) so it appears in filters
+    categoryMapping.oracle_security_patch = { category: 'Application', subCategory: 'Application' };
 
     // Always include CRR (Resiliency) so it appears in filters
     categoryMapping.crr = { category: 'Resiliency', subCategory: 'Protection' };

@@ -9,6 +9,7 @@ import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import StorageLayoutSection from './Categories/StorageLayoutSection';
 import StorageSizingSection from './Categories/StorageSizingSection';
 import ComputeSection from './Categories/ComputeSection';
+import ApplicationSection from './Categories/ApplicationSection';
 import ResiliencySection from './Categories/ResiliencySection';
 import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 import useOracleWellArchitectApi from './OracleWellArchitectApi';
@@ -340,6 +341,26 @@ const OracleWellArchitectDashboard = () => {
                             <div className={styles.sectionTwo}>
                                 <div className={styles.sectionClass}>
                                     <ComputeSection
+                                        styles={styles}
+                                        isAccordionExpanded={isAccordionExpanded}
+                                        setClickedAccordionId={setClickedAccordionId}
+                                        loading={loading}
+                                        handleAccordionExpanded={handleAccordionExpanded}
+                                        isDarkTheme={isDarkTheme}
+                                        optimizePrintState={optimizePrintState}
+                                        oracleCardData={filteredCardData}
+                                        showDismissedConfigurations={showDismissedConfigurations}
+                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
+                                        driftAssessmentData={driftAssessmentData}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {filteredCardData?.oracle_security_patch && (
+                            <div className={styles.sectionTwo}>
+                                <div className={styles.sectionClass}>
+                                    <ApplicationSection
                                         styles={styles}
                                         isAccordionExpanded={isAccordionExpanded}
                                         setClickedAccordionId={setClickedAccordionId}

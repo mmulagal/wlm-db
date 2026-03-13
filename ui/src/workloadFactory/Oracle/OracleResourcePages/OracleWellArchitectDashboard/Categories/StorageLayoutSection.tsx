@@ -6,9 +6,9 @@ import Tag from '../../../../../common/Tag/Tag';
 import RecommendationText from '../../../../GetWell/RecommendationText/RecommendationText';
 import { ReactComponent as Light } from '../../../../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../../../../assets/Light-Disabled.svg';
-import { useAppSelector } from '../../../../../store/storeHooks';
-import { ActivatingInfo, PostponeInfo, calculatePostponeInfo } from '../../../../GetWell/GetWellHelper';
-import { CONFIG_STATES, FSXN_STORAGE_PROTOCOLS } from '../../../../../utils/consts';
+import useOraclePostponeInfo from '../OraclePostponeActivatingInfo';
+import { getOracleCardStates, getShouldShowHeader, OracleCategorySectionProps } from '../../../../GetWell/GetWellUtils';
+import { FSXN_STORAGE_PROTOCOLS } from '../../../../../utils/consts';
 
 const StorageLayoutSection = ({
     styles,
@@ -22,88 +22,36 @@ const StorageLayoutSection = ({
     showDismissedConfigurations,
     setShowDismissedConfigurations,
     driftAssessmentData
-}: any) => {
+}: OracleCategorySectionProps) => {
     const { t } = useTranslation();
 
-    const { cardData } = useAppSelector(state => state.getWellOptimize);
+    const { cardData, renderPostponeActivatingInfo } = useOraclePostponeInfo();
 
     const isASMManaged = useMemo(() => cardData?.isASMManaged, [cardData]);
     const isIscsi = useMemo(() => cardData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI, [cardData]);
     const isStorageLayoutFra = useMemo(() => cardData?.isStorageLayoutFra, [cardData]);
 
-    // Helper function to calculate postpone information for configurations
-    const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
-
-    // Helper function to render PostponeInfo/ActivatingInfo based on showDismissedConfigurations
-    const renderPostponeActivatingInfo = (configKey: string) => (
-        <>
-            {showDismissedConfigurations && (
-                <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} translation={t} />
-            )}
-
-            {!showDismissedConfigurations && (
-                <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
-            )}
-        </>
+    const storageLayoutCardStates = useMemo(
+        () =>
+            getOracleCardStates(oracleCardData, [
+                'oracle_binary_placement',
+                'datafiles_placement',
+                'controlfiles_placement',
+                'redologs_placement',
+                'templogs_placement',
+                'archive_placement',
+                'data_dg_lun_layout',
+                'log_dg_lun_layout',
+                'fra_dg_lun_layout',
+                'archivelog_dg_lun_layout'
+            ]),
+        [oracleCardData]
     );
 
-    // Helper function to check storage layout card states
-    const storageLayoutCardStates = useMemo(() => {
-        if (!oracleCardData) return { hasActiveCards: false, hasDismissedCards: false };
-
-        // Define all storage layout card keys
-        const storageLayoutKeys = [
-            'oracle_binary_placement',
-            'datafiles_placement',
-            'controlfiles_placement',
-            'redologs_placement',
-            'templogs_placement',
-            'archive_placement',
-            'data_dg_lun_layout',
-            'log_dg_lun_layout',
-            'fra_dg_lun_layout',
-            'archivelog_dg_lun_layout'
-        ];
-
-        let hasActiveCards = false;
-        let hasDismissedCards = false;
-
-        storageLayoutKeys.forEach(key => {
-            const card = oracleCardData[key];
-            if (!card) return;
-
-            const configState = card.dismissedObj?.configState;
-            const hasValidAssessment = card.block_two?.value; // Check if card has actual assessment data
-
-            if (!hasValidAssessment && configState !== CONFIG_STATES.DISMISSED) {
-                hasActiveCards = true;
-            }
-            if (!hasValidAssessment) return;
-
-            // Check for active/activating cards (normal view)
-            // If dismissedObj is null/undefined or configState is ACTIVE/ACTIVATING, it's an active card
-            if (!configState || configState === CONFIG_STATES.ACTIVE || configState === CONFIG_STATES.ACTIVATING) {
-                hasActiveCards = true;
-            }
-
-            // Check for dismissed/postponed cards (dismissed view)
-            if (configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED) {
-                hasDismissedCards = true;
-            }
-        });
-
-        return { hasActiveCards, hasDismissedCards };
-    }, [oracleCardData]);
-
-    // Determine if header should be shown based on current view mode
-    const shouldShowHeader = useMemo(() => {
-        if (showDismissedConfigurations) {
-            // In dismissed view, show header if there are dismissed/postponed cards
-            return storageLayoutCardStates.hasDismissedCards;
-        }
-        // In normal view, show header if there are active/activating cards
-        return storageLayoutCardStates.hasActiveCards;
-    }, [showDismissedConfigurations, storageLayoutCardStates]);
+    const shouldShowHeader = useMemo(
+        () => getShouldShowHeader(showDismissedConfigurations, storageLayoutCardStates),
+        [showDismissedConfigurations, storageLayoutCardStates]
+    );
 
     return (
         <div>
@@ -158,7 +106,10 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('oracle_binary_placement')}
+                                    {renderPostponeActivatingInfo(
+                                        'oracle_binary_placement',
+                                        showDismissedConfigurations
+                                    )}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
@@ -224,7 +175,7 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('datafiles_placement')}
+                                    {renderPostponeActivatingInfo('datafiles_placement', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
@@ -290,7 +241,10 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('controlfiles_placement')}
+                                    {renderPostponeActivatingInfo(
+                                        'controlfiles_placement',
+                                        showDismissedConfigurations
+                                    )}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
@@ -356,7 +310,7 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('redologs_placement')}
+                                    {renderPostponeActivatingInfo('redologs_placement', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
@@ -420,7 +374,7 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('templogs_placement')}
+                                    {renderPostponeActivatingInfo('templogs_placement', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
@@ -484,7 +438,7 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('archive_placement')}
+                                    {renderPostponeActivatingInfo('archive_placement', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
@@ -548,7 +502,7 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('data_dg_lun_layout')}
+                                    {renderPostponeActivatingInfo('data_dg_lun_layout', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
@@ -612,7 +566,7 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('log_dg_lun_layout')}
+                                    {renderPostponeActivatingInfo('log_dg_lun_layout', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
@@ -676,7 +630,7 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('fra_dg_lun_layout')}
+                                    {renderPostponeActivatingInfo('fra_dg_lun_layout', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
@@ -742,7 +696,10 @@ const StorageLayoutSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('archivelog_dg_lun_layout')}
+                                    {renderPostponeActivatingInfo(
+                                        'archivelog_dg_lun_layout',
+                                        showDismissedConfigurations
+                                    )}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||

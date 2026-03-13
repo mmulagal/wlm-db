@@ -6,9 +6,8 @@ import Tag from '../../../../../common/Tag/Tag';
 import RecommendationText from '../../../../GetWell/RecommendationText/RecommendationText';
 import { ReactComponent as Light } from '../../../../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../../../../assets/Light-Disabled.svg';
-import { useAppSelector } from '../../../../../store/storeHooks';
-import { ActivatingInfo, PostponeInfo, calculatePostponeInfo } from '../../../../GetWell/GetWellHelper';
-import { CONFIG_STATES } from '../../../../../utils/consts';
+import useOraclePostponeInfo from '../OraclePostponeActivatingInfo';
+import { getOracleCardStates, getShouldShowHeader, OracleCategorySectionProps } from '../../../../GetWell/GetWellUtils';
 
 const ResiliencySection = ({
     styles,
@@ -22,62 +21,17 @@ const ResiliencySection = ({
     showDismissedConfigurations,
     setShowDismissedConfigurations,
     driftAssessmentData
-}: any) => {
+}: OracleCategorySectionProps) => {
     const { t } = useTranslation();
 
-    const { cardData } = useAppSelector(state => state.getWellOptimize);
+    const { renderPostponeActivatingInfo } = useOraclePostponeInfo();
 
-    const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
+    const resiliencyCardStates = useMemo(() => getOracleCardStates(oracleCardData, ['crr']), [oracleCardData]);
 
-    const renderPostponeActivatingInfo = (configKey: string) => (
-        <>
-            {showDismissedConfigurations && (
-                <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} translation={t} />
-            )}
-
-            {!showDismissedConfigurations && (
-                <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
-            )}
-        </>
+    const shouldShowHeader = useMemo(
+        () => getShouldShowHeader(showDismissedConfigurations, resiliencyCardStates),
+        [showDismissedConfigurations, resiliencyCardStates]
     );
-
-    const resiliencyCardStates = useMemo(() => {
-        if (!oracleCardData) return { hasActiveCards: false, hasDismissedCards: false };
-
-        const resiliencyKeys = ['crr'];
-
-        let hasActiveCards = false;
-        let hasDismissedCards = false;
-
-        resiliencyKeys.forEach(key => {
-            const card = oracleCardData[key];
-            if (!card) return;
-
-            const configState = card.dismissedObj?.configState;
-            const hasValidAssessment = card.block_two?.value;
-
-            if (!hasValidAssessment && configState !== CONFIG_STATES.DISMISSED) {
-                hasActiveCards = true;
-            }
-
-            if (!hasValidAssessment) return;
-
-            if (!configState || configState === CONFIG_STATES.ACTIVE || configState === CONFIG_STATES.ACTIVATING) {
-                hasActiveCards = true;
-            } else if (configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED) {
-                hasDismissedCards = true;
-            }
-        });
-
-        return { hasActiveCards, hasDismissedCards };
-    }, [oracleCardData]);
-
-    const shouldShowHeader = useMemo(() => {
-        if (showDismissedConfigurations) {
-            return resiliencyCardStates.hasDismissedCards;
-        }
-        return resiliencyCardStates.hasActiveCards;
-    }, [showDismissedConfigurations, resiliencyCardStates]);
 
     return (
         <div>
@@ -128,7 +82,8 @@ const ResiliencySection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('crr')}
+                                    {renderPostponeActivatingInfo('crr', showDismissedConfigurations)}
+
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||

@@ -6,9 +6,8 @@ import Tag from '../../../../../common/Tag/Tag';
 import RecommendationText from '../../../../GetWell/RecommendationText/RecommendationText';
 import { ReactComponent as Light } from '../../../../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../../../../assets/Light-Disabled.svg';
-import { useAppSelector } from '../../../../../store/storeHooks';
-import { ActivatingInfo, PostponeInfo, calculatePostponeInfo } from '../../../../GetWell/GetWellHelper';
-import { CONFIG_STATES } from '../../../../../utils/consts';
+import useOraclePostponeInfo from '../OraclePostponeActivatingInfo';
+import { getOracleCardStates, getShouldShowHeader, OracleCategorySectionProps } from '../../../../GetWell/GetWellUtils';
 
 const StorageSizingSection = ({
     styles,
@@ -22,71 +21,20 @@ const StorageSizingSection = ({
     showDismissedConfigurations,
     setShowDismissedConfigurations,
     driftAssessmentData
-}: any) => {
+}: OracleCategorySectionProps) => {
     const { t } = useTranslation();
 
-    const { cardData } = useAppSelector(state => state.getWellOptimize);
+    const { renderPostponeActivatingInfo } = useOraclePostponeInfo();
 
-    // Helper function to calculate postpone information for configurations
-    const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
-
-    // Helper function to render PostponeInfo/ActivatingInfo based on showDismissedConfigurations
-    const renderPostponeActivatingInfo = (configKey: string) => (
-        <>
-            {showDismissedConfigurations && (
-                <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} translation={t} />
-            )}
-
-            {!showDismissedConfigurations && (
-                <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
-            )}
-        </>
+    const storageSizingCardStates = useMemo(
+        () => getOracleCardStates(oracleCardData, ['file_system_headroom', 'swap_space']),
+        [oracleCardData]
     );
 
-    // Helper function to check storage sizing card states
-    const storageSizingCardStates = useMemo(() => {
-        if (!oracleCardData) return { hasActiveCards: false, hasDismissedCards: false };
-
-        // Define storage sizing card keys
-        const storageSizingKeys = ['file_system_headroom', 'swap_space'];
-
-        let hasActiveCards = false;
-        let hasDismissedCards = false;
-
-        storageSizingKeys.forEach(key => {
-            const card = oracleCardData[key];
-            if (!card) return;
-
-            const configState = card.dismissedObj?.configState;
-            const hasValidAssessment = card.block_two?.value; // Check if card has actual assessment data
-
-            if (!hasValidAssessment && configState !== CONFIG_STATES.DISMISSED) {
-                hasActiveCards = true;
-            }
-            if (!hasValidAssessment) return;
-
-            // Check for active/activating cards (normal view)
-            // If dismissedObj is null/undefined or configState is ACTIVE/ACTIVATING, it's an active card
-            if (!configState || configState === CONFIG_STATES.ACTIVE || configState === CONFIG_STATES.ACTIVATING) {
-                hasActiveCards = true;
-            } else if (configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED) {
-                // Check for dismissed/postponed cards (dismissed view)
-                hasDismissedCards = true;
-            }
-        });
-
-        return { hasActiveCards, hasDismissedCards };
-    }, [oracleCardData]);
-
-    // Determine if header should be shown based on current view mode
-    const shouldShowHeader = useMemo(() => {
-        if (showDismissedConfigurations) {
-            // In dismissed view, show header if there are dismissed/postponed cards
-            return storageSizingCardStates.hasDismissedCards;
-        }
-        // In normal view, show header if there are active/activating cards
-        return storageSizingCardStates.hasActiveCards;
-    }, [showDismissedConfigurations, storageSizingCardStates]);
+    const shouldShowHeader = useMemo(
+        () => getShouldShowHeader(showDismissedConfigurations, storageSizingCardStates),
+        [showDismissedConfigurations, storageSizingCardStates]
+    );
 
     return (
         <div>
@@ -140,7 +88,7 @@ const StorageSizingSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('file_system_headroom')}
+                                    {renderPostponeActivatingInfo('file_system_headroom', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||
@@ -205,7 +153,7 @@ const StorageSizingSection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('swap_space')}
+                                    {renderPostponeActivatingInfo('swap_space', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading ||
                                         showDismissedConfigurations ||

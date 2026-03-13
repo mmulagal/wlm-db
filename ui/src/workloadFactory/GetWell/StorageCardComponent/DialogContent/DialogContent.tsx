@@ -47,6 +47,7 @@ import StorageConfigOSOracleDialog from './StorageConfigOSOracleDialog';
 import StorageSizingOracleDialog from './StorageSizingOracleDialog';
 import ComputeOracleDialog from './ComputeOracleDialog';
 import ResiliencyOracleDialog from './ResiliencyOracleDialog';
+import ApplicationOracleDialog from './ApplicationOracleDialog';
 
 interface SavingsOpportunity {
     savingsOpportunityPercentage?: number;
@@ -227,6 +228,10 @@ const DialogContent = ({
                 // oracle compute cards
                 case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
                     return <ComputeOracleDialog missingPatchList={missingPatchList} />;
+
+                // oracle application cards
+                case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
+                    return <ApplicationOracleDialog missingPatchList={missingPatchList} type={type} />;
 
                 // oracle resiliency cards
                 case ASSESSMENT_CONFIG_NAMES.CRR:

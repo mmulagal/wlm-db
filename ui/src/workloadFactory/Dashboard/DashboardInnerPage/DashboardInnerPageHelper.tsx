@@ -80,6 +80,9 @@ const getPayloadType = (type: string) => {
         case ASSESSMENT_CONFIG_NAMES.CRR:
             type = 'crr';
             break;
+        case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
+            type = 'oracle-security-patch';
+            break;
         case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
             type = 'clone-management';
             break;
