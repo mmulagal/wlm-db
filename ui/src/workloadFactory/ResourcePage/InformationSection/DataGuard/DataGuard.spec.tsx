@@ -40,7 +40,8 @@ vi.mock('@netapp/design-system', () => ({
             {children}
         </button>
     ),
-    useDialog: () => ({ setDialog: mockSetDialog })
+    useDialog: () => ({ setDialog: mockSetDialog }),
+    TooltipInfo: ({ children }: any) => <div data-testid="tooltip-info">{children}</div>
 }));
 
 vi.mock('../../DatabaseOverviewLayout/DBAccordion/DBAccordion', () => ({
@@ -83,7 +84,8 @@ const primaryResourceDetails = {
         protectionLevel: 'MAXIMUM_PERFORMANCE',
         openMode: 'READ_WRITE',
         isActiveDataguard: true,
-        status: { transportLag: '0', applyLag: '0' }
+        status: { transportLag: '0', applyLag: '0' },
+        associatedHosts: ['host1']
     }
 };
 

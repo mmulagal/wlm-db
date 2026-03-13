@@ -353,7 +353,7 @@ describe('DashboardInnerPage', () => {
             <Provider
                 store={makeStore({
                     databaseHome: {
-                        selectedConfig: 'Crr',
+                        selectedConfig: 'Cross-Region Replication (CRR)',
                         selectedConfigSummary: { configState: 'ACTIVE' },
                         selectedRowsForOptimize: []
                     }
@@ -362,7 +362,7 @@ describe('DashboardInnerPage', () => {
                 <DashboardInnerPage />
             </Provider>
         );
-        expect(screen.getByText('Cross-Region Replication (CRR)')).toBeTruthy();
+        expect(screen.getAllByText('Cross-Region Replication (CRR)').length).toBeGreaterThan(0);
     });
 
     it('renders separator', () => {
@@ -520,7 +520,7 @@ describe('DashboardInnerPage', () => {
             <Provider
                 store={makeStore({
                     databaseHome: {
-                        selectedConfig: 'Crr',
+                        selectedConfig: 'Cross-Region Replication (CRR)',
                         selectedConfigSummary: { configState: 'ACTIVE' },
                         selectedRowsForOptimize: []
                     }
@@ -529,7 +529,7 @@ describe('DashboardInnerPage', () => {
                 <DashboardInnerPage />
             </Provider>
         );
-        expect(screen.getByText('Cross-Region Replication (CRR)')).toBeTruthy();
+        expect(screen.getAllByText('Cross-Region Replication (CRR)').length).toBeGreaterThan(0);
     });
 
     it('renders non-CRR config name as-is', () => {

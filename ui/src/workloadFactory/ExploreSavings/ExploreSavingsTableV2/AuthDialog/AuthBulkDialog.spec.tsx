@@ -126,18 +126,26 @@ const createMockStore = (opts: BulkStoreOptions = {}) => {
         bulkAuthStatus = {}
     } = opts;
 
+    // Define state objects outside reducers so they hold stable references.
+    // Using `() => ({...})` would return a new object on every dispatch, causing
+    // useSelector to trigger re-renders every cycle and creating an infinite loop
+    // with the useEffect that depends on rowsToRender.
+    const exploreSavingsState = {
+        selectedAuthenticationType,
+        serverDetails: { userName: '', password: '' }
+    };
+    const dialogComponentState = { actionsDisabled };
+    const exploreSavingsBulkState = {
+        selectedRowsForExploreSavingsEBSBulk,
+        rowsRequiringAuthBulk,
+        bulkAuthStatus
+    };
+
     return configureStore({
         reducer: {
-            exploreSavings: () => ({
-                selectedAuthenticationType,
-                serverDetails: { userName: '', password: '' }
-            }),
-            dialogComponent: () => ({ actionsDisabled }),
-            exploreSavingsBulk: () => ({
-                selectedRowsForExploreSavingsEBSBulk,
-                rowsRequiringAuthBulk,
-                bulkAuthStatus
-            })
+            exploreSavings: (state = exploreSavingsState) => state,
+            dialogComponent: (state = dialogComponentState) => state,
+            exploreSavingsBulk: (state = exploreSavingsBulkState) => state
         }
     });
 };
@@ -929,18 +937,21 @@ describe('AuthBulkDialog', () => {
         });
 
         it('should handle bulkAuthStatus being undefined', () => {
+            const exploreSavingsState = {
+                selectedAuthenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
+                serverDetails: { userName: '', password: '' }
+            };
+            const dialogComponentState = { actionsDisabled: false };
+            const exploreSavingsBulkState = {
+                selectedRowsForExploreSavingsEBSBulk: [{ id: 1, name: 'host-1' }],
+                rowsRequiringAuthBulk: [],
+                bulkAuthStatus: undefined
+            };
             const store = configureStore({
                 reducer: {
-                    exploreSavings: () => ({
-                        selectedAuthenticationType: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
-                        serverDetails: { userName: '', password: '' }
-                    }),
-                    dialogComponent: () => ({ actionsDisabled: false }),
-                    exploreSavingsBulk: () => ({
-                        selectedRowsForExploreSavingsEBSBulk: [{ id: 1, name: 'host-1' }],
-                        rowsRequiringAuthBulk: [],
-                        bulkAuthStatus: undefined
-                    })
+                    exploreSavings: (state = exploreSavingsState) => state,
+                    dialogComponent: (state = dialogComponentState) => state,
+                    exploreSavingsBulk: (state = exploreSavingsBulkState) => state
                 }
             });
 

@@ -457,7 +457,7 @@ describe('DashboardConfigsTable', () => {
         'Microsoft SQL Server patch',
         'MAXDOP',
         'Scheduled local snapshot',
-        'Crr',
+        'Cross-Region Replication (CRR)',
         'Backup Configuration',
         'Clone cleanup'
     ];

@@ -12,26 +12,57 @@ import { formatSize } from '../../../utils/utilityFunctions';
 const mockUseTable = vi.fn(() => ({ rows: [], columns: [] }));
 
 vi.mock('@netapp/design-system', () => ({
-    Table: ({ tableProps }: any) => <div data-testid="table">{JSON.stringify(tableProps?.rows?.length ?? 0)}</div>,
-    useTable: (...args: any[]) => mockUseTable(...args),
+    Button: ({ children, onClick, isDisabled, 'data-testid': testId, variant, isThin, className }: any) => (
+        <button data-testid={testId || 'button'} onClick={onClick} disabled={isDisabled} data-variant={variant}>
+            {children}
+        </button>
+    ),
+    TooltipInfo: ({ children }: any) => <div data-testid="tooltip-info">{children}</div>,
+    SearchInput: (props: any) => <input data-testid="search-input" />,
+    DsFlashingDotsLoader: () => <div data-testid="loader" />,
+    Typography: ({ children, variant, className }: any) => (
+        <span data-testid="typography" data-variant={variant} className={className}>
+            {children}
+        </span>
+    )
+}));
+
+// --- Mock @tlveng/wlm-ds ---
+vi.mock('@tlveng/wlm-ds', () => ({
+    DsTypography: ({ children, variant, className, ...rest }: any) => (
+        <span data-testid={rest['data-testid'] || 'ds-typography'} data-variant={variant} className={className}>
+            {children}
+        </span>
+    )
+}));
+
+// --- Mock local Table modules ---
+vi.mock('../../../common/Lib/Table/useTable', () => ({
+    useTable: (...args: any[]) => mockUseTable(...args)
+}));
+
+vi.mock('../../../common/Lib/Table/TableTopBar', () => ({
     TableTopBar: ({ tableProps, pluralTitle, singularTitle, actionsRight }: any) => (
         <div data-testid="table-top-bar">
             <span data-testid="plural-title">{pluralTitle}</span>
             <span data-testid="singular-title">{singularTitle}</span>
             <div data-testid="actions-right">{actionsRight}</div>
         </div>
-    ),
-    Typography: ({ children, variant, className }: any) => (
-        <span data-testid="typography" data-variant={variant} className={className}>
-            {children}
-        </span>
-    ),
-    TooltipInfo: ({ children }: any) => <div data-testid="tooltip-info">{children}</div>,
-    Button: ({ children, onClick, isDisabled, 'data-testid': testId, variant, isThin, className }: any) => (
-        <button data-testid={testId || 'button'} onClick={onClick} disabled={isDisabled} data-variant={variant}>
-            {children}
-        </button>
     )
+}));
+
+vi.mock('../../../common/Lib/Table/Table', () => ({
+    Table: ({ tableProps }: any) => <div data-testid="table">{JSON.stringify(tableProps?.rows?.length ?? 0)}</div>
+}));
+
+// --- Mock SVG assets ---
+vi.mock('../../../assets/row_arrow.svg', () => ({
+    ReactComponent: () => <span data-testid="arrow-icon" />
+}));
+
+// --- Mock ResourcePageReplicaTable ---
+vi.mock('./ResourcePageReplicaTable', () => ({
+    default: () => <div data-testid="replica-table" />
 }));
 
 // --- Mock react-router-dom ---
@@ -53,7 +84,11 @@ vi.mock('../../../store/storeHooks', () => ({
 
 // --- Mock utility functions ---
 vi.mock('../../../utils/utilityFunctions', () => ({
-    formatSize: vi.fn((val: number) => (val ? `${val} GB` : 'N/A'))
+    formatSize: vi.fn((val: number) => (val ? `${val} GB` : 'N/A')),
+    isAoagDeploymentType: vi.fn(() => false),
+    expandTableRow: vi.fn(),
+    hasAoagReplicas: vi.fn(() => false),
+    getStickyClass: vi.fn(() => '')
 }));
 
 // --- Mock appConstants ---
@@ -78,7 +113,20 @@ vi.mock('../../../utils/consts', () => ({
     PROTECTION_TEXT_STATUS: {
         YES: 'Yes',
         NO: 'No'
+    },
+    DATABASE_STATUS: {
+        ONLINE: 'ONLINE',
+        OFFLINE: 'OFFLINE'
+    },
+    REPLICA_ROLES: {
+        PRIMARY: 'PRIMARY',
+        SECONDARY: 'SECONDARY'
     }
+}));
+
+// --- Mock react-i18next ---
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: (key: string) => key })
 }));
 
 // --- Mock InventoryUtilsV2 ---
@@ -139,12 +187,14 @@ const setupSelectors = (overrides: Record<string, any> = {}) => {
         'state.workloadFactoryResource.selectedDatabaseInstance': 'db1',
         'state.workloadFactoryResource.selectedResourceId': 'res1',
         'state.workloadFactoryResource.selectedResourceCredId': 'cred1',
-        'state.workloadFactoryResource.selectedResourceRegionId': 'region1'
+        'state.workloadFactoryResource.selectedResourceRegionId': 'region1',
+        'state.workloadFactoryResource.replicaDatabasesMap': {},
+        'state.workloadFactoryResource.replicaDatabasesLoading': false,
+        'state.workloadFactoryResource.resourceDetails': {}
     };
 
     const merged = { ...defaults, ...overrides };
 
-    const callIndex = 0;
     (useAppSelector as any).mockImplementation((selector: any) => {
         // Call selector with a proxy to intercept the path
         const state = {
@@ -155,7 +205,10 @@ const setupSelectors = (overrides: Record<string, any> = {}) => {
                 selectedDatabaseInstance: merged['state.workloadFactoryResource.selectedDatabaseInstance'],
                 selectedResourceId: merged['state.workloadFactoryResource.selectedResourceId'],
                 selectedResourceCredId: merged['state.workloadFactoryResource.selectedResourceCredId'],
-                selectedResourceRegionId: merged['state.workloadFactoryResource.selectedResourceRegionId']
+                selectedResourceRegionId: merged['state.workloadFactoryResource.selectedResourceRegionId'],
+                replicaDatabasesMap: merged['state.workloadFactoryResource.replicaDatabasesMap'],
+                replicaDatabasesLoading: merged['state.workloadFactoryResource.replicaDatabasesLoading'],
+                resourceDetails: merged['state.workloadFactoryResource.resourceDetails']
             },
             getWellOptimize: {
                 selectedHostname: merged['state.getWellOptimize.selectedHostname'],
@@ -192,7 +245,9 @@ describe('DatabaseListTable', () => {
     it('should render the Create New Database button', () => {
         render(<DatabaseListTable />);
         expect(screen.getByTestId('wlm-db-create-new-database-button')).toBeTruthy();
-        expect(screen.getByTestId('wlm-db-create-new-database-button').textContent).toBe('Create New Database');
+        expect(screen.getByTestId('wlm-db-create-new-database-button').textContent).toBe(
+            'databases.general.create-database'
+        );
     });
 
     it('should disable create button when resourceLoading is true', () => {
@@ -273,7 +328,7 @@ describe('DatabaseListTable', () => {
         setupSelectors({ 'state.workloadFactoryResource.databaseList': dbList });
         render(<DatabaseListTable />);
         const callArgs = mockUseTable.mock.calls[0][0];
-        expect(callArgs.rows[0].isProtected).toBe('Protected');
+        expect(callArgs.rows[0].isProtected).toBe('databases.general.protected');
     });
 
     it('should set isProtected to Not Protected when getProtectionText returns No', async () => {
@@ -283,7 +338,7 @@ describe('DatabaseListTable', () => {
         setupSelectors({ 'state.workloadFactoryResource.databaseList': dbList });
         render(<DatabaseListTable />);
         const callArgs = mockUseTable.mock.calls[0][0];
-        expect(callArgs.rows[0].isProtected).toBe('Not Protected');
+        expect(callArgs.rows[0].isProtected).toBe('databases.general.not_protected');
     });
 
     it('should set isProtected to N/A when getProtectionText returns something else', async () => {
@@ -293,7 +348,7 @@ describe('DatabaseListTable', () => {
         setupSelectors({ 'state.workloadFactoryResource.databaseList': dbList });
         render(<DatabaseListTable />);
         const callArgs = mockUseTable.mock.calls[0][0];
-        expect(callArgs.rows[0].isProtected).toBe('N/A');
+        expect(callArgs.rows[0].isProtected).toBe('databases.general.not-available-table-columns');
     });
 
     it('should have 6 column definitions in useTable call', () => {
@@ -325,7 +380,7 @@ describe('DatabaseListTable', () => {
         const rendered = protectionColDef.renderCell(null, { protection: null });
         const { render: localRender, screen: localScreen } = require('@testing-library/react');
         const { unmount } = localRender(<div>{rendered}</div>);
-        expect(localScreen.getByText('N/A')).toBeTruthy();
+        expect(localScreen.getByText('databases.general.not-available')).toBeTruthy();
         unmount();
     });
 
@@ -381,7 +436,7 @@ describe('DatabaseListTable', () => {
         render(<DatabaseListTable />);
         const callArgs = mockUseTable.mock.calls[0][0];
         const collationColDef = callArgs.columns.find((c: any) => c.id === '6');
-        expect(collationColDef.renderCell(null)).toBe('N/A');
+        expect(collationColDef.renderCell(null)).toBe('databases.general.not-available');
     });
 
     it('should call DatabaseHostOverviewApiV2 as a hook on mount', async () => {
@@ -401,6 +456,6 @@ describe('DatabaseListTable', () => {
         setupSelectors({ 'state.workloadFactoryResource.databaseList': null });
         render(<DatabaseListTable />);
         const callArgs = mockUseTable.mock.calls[0][0];
-        expect(callArgs.rows).toBeUndefined();
+        expect(callArgs.rows).toEqual([]);
     });
 });

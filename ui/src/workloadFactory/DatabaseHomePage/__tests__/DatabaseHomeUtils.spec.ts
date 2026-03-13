@@ -2024,7 +2024,7 @@ describe('getAssessmentGroupedByCategory (extended)', () => {
     it('increments resiliency for snapshot + crr + awsBackup all optimized (non-HA)', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByCategory([host], []);
-        expect(result.resiliency).toBe(1);
+        expect(result.mssqlResiliency).toBe(1);
     });
 
     it('increments cloning for clone optimized', () => {

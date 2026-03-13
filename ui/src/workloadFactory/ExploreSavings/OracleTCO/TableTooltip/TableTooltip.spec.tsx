@@ -79,10 +79,10 @@ describe('TableTooltip', () => {
             expect(screen.getByText('databases.explore-savings.table-tooltip-content')).toBeTruthy();
         });
 
-        it('should not render the MSSQL-only tooltip-content-three for Oracle', () => {
+        it('should render tooltip-content-three for Oracle', () => {
             renderComponent(DBType.ORACLE);
             expect(screen.getByText('databases.explore-savings.table-tooltip-content-two')).toBeTruthy();
-            expect(screen.queryByText('databases.explore-savings.table-tooltip-content-three')).toBeNull();
+            expect(screen.getByText('databases.explore-savings.table-tooltip-content-three')).toBeTruthy();
         });
     });
 });

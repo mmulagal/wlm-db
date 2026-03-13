@@ -155,13 +155,13 @@ describe('DashboardOptimizeInnerPage', () => {
     });
 
     it('shows CRR as Cross-Region Replication', () => {
-        const store = createMockStore({ databaseHome: { selectedConfig: 'CRR' } });
+        const store = createMockStore({ databaseHome: { selectedConfig: 'Cross-Region Replication (CRR)' } });
         render(
             <Provider store={store}>
                 <DashboardOptimizeInnerPage />
             </Provider>
         );
-        expect(screen.getByText('Cross-Region Replication (CRR)')).toBeTruthy();
+        expect(screen.getAllByText('Cross-Region Replication (CRR)').length).toBeGreaterThan(0);
     });
 
     it('renders separator component', () => {

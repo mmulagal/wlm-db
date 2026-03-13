@@ -274,7 +274,7 @@ describe('TagComponent', () => {
     });
 
     it('renders CRR for MSSQL', () => {
-        renderWithStore({ tagHeight: '100px', type: 'Crr', engineType: 'MSSQL' });
+        renderWithStore({ tagHeight: '100px', type: 'Cross-Region Replication (CRR)', engineType: 'MSSQL' });
         expect(screen.getByText('databases.well-architect.tags.reliability')).toBeTruthy();
     });
 
