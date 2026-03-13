@@ -108,56 +108,95 @@ async function getDatabaseVolumes(accountId: string, pageSize = 500, nextToken?:
 //     severity: "medium"
 //   }
 // ]
-function getLimitedItems(
-    objects: GroupedDatabaseInstancesBySeverityResult[],
-    limit = 0
-): Array<{ name: string; count: number }> {
+interface FocusItem {
+    key: string;
+    label: string;
+    description: string;
+    count: number;
+    resources: { name: string }[];
+}
+
+interface FocusStatusResponseItem {
+    description: string;
+    label?: string;
+    key?: string;
+    resources?: { name: string }[];
+}
+
+interface FocusStatusResponse {
+    severity: 'low' | 'medium' | 'high' | 'info';
+    totalItems: number;
+    noAnalysis?: boolean;
+    items: FocusStatusResponseItem[];
+}
+
+function getLimitedItems(objects: GroupedDatabaseInstancesBySeverityResult[], limit = 0): FocusItem[] {
     const mapped = objects.map(obj => {
-        const focusWidgetName = focusWidgetNameMap.get(obj.name?.toString() || '') || obj.name;
-        // Convert hyphenated names to Pascal case with spaces for display
-        const displayName =
-            typeof focusWidgetName === 'string' && focusWidgetName.includes('-')
-                ? hyphenatedToPascalCaseWithSpace(focusWidgetName)
-                : focusWidgetName;
+        const originalName = obj.name?.toString() || '';
+        const recommendation = focusWidgetNameMap.get(originalName) || '';
+        const displayLabel = originalName.includes('-') ? hyphenatedToPascalCaseWithSpace(originalName) : originalName;
+
         return {
-            ...obj,
-            name: displayName
+            key: originalName,
+            label: displayLabel,
+            description: recommendation || displayLabel,
+            count: obj.count,
+            rawResourceNames: obj.resourceNames
         };
     });
 
-    // Group by name and sum counts
-    const grouped: Record<string, { name: string; count: number }> = {};
+    const grouped: Record<
+        string,
+        { key: string; label: string; description: string; count: number; resources: Set<string> }
+    > = {};
     mapped.forEach(obj => {
-        const name = obj.name?.toString() || '';
-        if (name) {
-            if (!grouped[name]) {
-                grouped[name] = { name, count: 0 };
+        if (obj.key) {
+            if (!grouped[obj.key]) {
+                grouped[obj.key] = {
+                    key: obj.key,
+                    label: obj.label,
+                    description: obj.description,
+                    count: 0,
+                    resources: new Set()
+                };
             }
-            grouped[name].count += Number(obj.count) || 0;
+            grouped[obj.key].count += Number(obj.count) || 0;
+            if (obj.rawResourceNames) {
+                obj.rawResourceNames.split(',').forEach(rn => grouped[obj.key].resources.add(rn));
+            }
         }
     });
 
-    const uniqueItems = Object.values(grouped).sort((a, b) => b.count - a.count);
+    const uniqueItems = Object.values(grouped)
+        .map(({ key, label, description, count, resources }) => ({
+            key,
+            label,
+            description,
+            count,
+            resources: [...resources].sort().map(name => ({ name }))
+        }))
+        .sort((a, b) => b.count - a.count);
 
-    if (!limit) {
-        return uniqueItems;
-    }
-
-    if (uniqueItems.length <= limit) {
+    if (!limit || uniqueItems.length <= limit) {
         return uniqueItems;
     }
 
     return uniqueItems.slice(0, limit);
 }
 
-function formatDescription(items: Array<{ name: string; count: number }>) {
-    return items.map(({ name }) => ({ description: `${name}` }));
+function formatDescription(items: FocusItem[]) {
+    return items.map(({ key, label, description, resources }) => ({ description, label, key, resources }));
 }
 
-async function getFocusStatus(accountId: string, credentialsIds?: string, regions?: string, limit?: number) {
+async function getFocusStatus(
+    accountId: string,
+    credentialsIds?: string,
+    regions?: string,
+    limit?: number
+): Promise<FocusStatusResponse> {
     logger.info('Getting focus status for account.', accountId, credentialsIds, regions, limit);
     // Always send only one severity. Sort the documents based on severity and send the top ones.
-    // Priority is high > medium > low > warning (assessment not run)
+    // Priority is high > medium > low > info (assessment not run)
     // limit is applied on the number of items to be sent in the response not on the totalItems
     // e.g., if there are 10 high severity items and limit is 5, send only 5 high severity items, totalItems will be 10
 
@@ -196,11 +235,15 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
         };
     }
 
-    // Check if assessment has not been run (no instances with assessment_results)
     if (assessedInstanceCount?._count?.id === 0) {
         return {
-            items: [{ description: 'No databases well-architected issues analysis performed' }],
-            severity: 'warning',
+            items: [
+                {
+                    description: 'No databases well-architected issues analysis performed'
+                }
+            ],
+            severity: 'info',
+            noAnalysis: true,
             totalItems: 0
         };
     }
@@ -208,11 +251,36 @@ async function getFocusStatus(accountId: string, credentialsIds?: string, region
     if (IS_DEMO_FLOW) {
         return {
             items: [
-                { description: 'Enable thin provisioning for optimal storage efficiency' },
-                { description: 'Enable volume autogrow to prevent storage capacity issues' },
-                { description: 'Disable fractional reserve to maximize usable capacity' },
-                { description: 'Enable space allocation for write failure notification' },
-                { description: 'Enable Multipath I/O for iSCSI storage resilience' }
+                {
+                    label: 'Enable thin provisioning',
+                    description: 'Enable thin provisioning for optimal storage efficiency',
+                    key: 'thin-provisioning',
+                    resources: [{ name: 'sqlnode1' }, { name: 'sqlnode2' }]
+                },
+                {
+                    label: 'Enable volume autogrow',
+                    description: 'Enable volume autogrow to prevent storage capacity issues',
+                    key: 'volume-autogrow',
+                    resources: [{ name: 'sqlnode1' }, { name: 'oraclenode1' }]
+                },
+                {
+                    label: 'Disable fractional reserve',
+                    description: 'Disable fractional reserve to maximize usable capacity',
+                    key: 'fractional-reserve',
+                    resources: [{ name: 'sqlnode2' }]
+                },
+                {
+                    label: 'Enable space allocation',
+                    description: 'Enable space allocation for write failure notification',
+                    key: 'space-allocation',
+                    resources: [{ name: 'oraclenode1' }, { name: 'oraclenode2' }]
+                },
+                {
+                    label: 'Enable Multipath I/O',
+                    description: 'Enable Multipath I/O for iSCSI storage resilience',
+                    key: 'multipath-io',
+                    resources: [{ name: 'sqlnode1' }]
+                }
             ],
             severity: 'medium',
             totalItems: 5

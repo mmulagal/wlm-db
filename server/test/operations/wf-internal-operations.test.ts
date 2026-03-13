@@ -76,17 +76,20 @@ describe('Homepage status operations', () => {
             {
                 name: 'autosize-mode',
                 severity: 'critical',
-                count: 2
+                count: 2,
+                resourceNames: 'test-resource-1,test-resource-2'
             },
             {
                 name: 'autosize',
                 severity: 'critical',
-                count: 4
+                count: 4,
+                resourceNames: 'test-resource-3,test-resource-4'
             },
             {
                 name: 'tiering-policy',
                 severity: 'warning',
-                count: 7
+                count: 7,
+                resourceNames: 'test-resource-5'
             }
         ]);
     });
@@ -124,9 +127,12 @@ describe('Homepage status operations', () => {
         expect(items?.length).toBeGreaterThan(0);
         expect(totalItems).toEqual(6);
         expect(severity).toEqual('high');
-        // Verify each item has focusWidgetName (deduplicated items)
         items.forEach(item => {
             expect(item.description).toBeTruthy();
+            expect(item.label).toBeTruthy();
+            expect(item.key).toBeTruthy();
+            expect(Array.isArray(item.resources)).toBe(true);
+            item.resources!.forEach(r => expect(r.name).toBeTruthy());
         });
     });
 
@@ -134,9 +140,11 @@ describe('Homepage status operations', () => {
         const { items, totalItems, severity } = await getFocusStatus(ACCOUNTID, undefined, undefined, 7);
         expect(totalItems).toEqual(6);
         expect(severity).toEqual('high');
-        // Since we have fewer unique items than limit, should return all unique items
         items.forEach(item => {
             expect(item.description).toBeTruthy();
+            expect(item.label).toBeTruthy();
+            expect(item.key).toBeTruthy();
+            expect(Array.isArray(item.resources)).toBe(true);
         });
     });
 
@@ -144,13 +152,14 @@ describe('Homepage status operations', () => {
         const { items, totalItems, severity } = await getFocusStatus(ACCOUNTID, undefined, undefined, 5);
         expect(totalItems).toEqual(6);
         expect(severity).toEqual('high');
-        // When limit is applied, should return unique items up to the limit (no duplicates)
         expect(items.length).toBeLessThanOrEqual(5);
-        // Verify all items are unique
-        const uniqueDescriptions = new Set(items.map(item => item.description));
-        expect(uniqueDescriptions.size).toEqual(items.length);
+        const uniqueKeys = new Set(items.map(item => item.key));
+        expect(uniqueKeys.size).toEqual(items.length);
         items.forEach(item => {
             expect(item.description).toBeTruthy();
+            expect(item.label).toBeTruthy();
+            expect(item.key).toBeTruthy();
+            expect(Array.isArray(item.resources)).toBe(true);
         });
     });
 });
@@ -198,11 +207,14 @@ describe('getFocusStatus - assessment not run warning', () => {
         await deleteDatabaseInstance(TEST_ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, TEST_RESOURCE_ID, [TEST_INSTANCE_ID]);
     });
 
-    test('should return warning severity when database instances exist but no assessment results', async () => {
-        const { items, totalItems, severity } = await getFocusStatus(TEST_ACCOUNT_ID);
-        expect(severity).toEqual('warning');
+    test('should return info severity when database instances exist but no assessment results', async () => {
+        const { items, totalItems, severity, noAnalysis } = await getFocusStatus(TEST_ACCOUNT_ID);
+        expect(severity).toEqual('info');
+        expect(noAnalysis).toBe(true);
         expect(totalItems).toEqual(0);
         expect(items.length).toEqual(1);
         expect(items[0].description).toContain('well-architected');
+        expect(items[0].label).toBeUndefined();
+        expect(items[0].resources).toBeUndefined();
     });
 });

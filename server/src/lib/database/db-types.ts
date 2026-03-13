@@ -217,6 +217,7 @@ interface GroupedDatabaseInstancesBySeverityResult {
     name: string;
     severity: string;
     count: number;
+    resourceNames: string | null;
 }
 
 export {

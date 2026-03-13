@@ -37,15 +37,17 @@ const HomepageStatusQueryParams = Type.Object({
 });
 
 const HomepageFocusStatusResponse = Type.Object({
+    severity: Type.String({ enum: ['low', 'medium', 'high', 'info'] }),
+    totalItems: Type.Number(),
+    noAnalysis: Type.Optional(Type.Boolean()),
     items: Type.Array(
-        Type.Optional(
-            Type.Object({
-                description: Type.String()
-            })
-        )
-    ),
-    severity: Type.String({ enum: ['high', 'low'] }),
-    totalItems: Type.Number()
+        Type.Object({
+            description: Type.String(),
+            label: Type.Optional(Type.String()),
+            key: Type.Optional(Type.String()),
+            resources: Type.Optional(Type.Array(Type.Object({ name: Type.String() })))
+        })
+    )
 });
 
 const dataItem = Type.Object({

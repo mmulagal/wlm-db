@@ -995,7 +995,8 @@ async function getGroupedDatabaseInstancesBySeverity({
             : Prisma.empty;
 
     // Using raw SQL query to perform recursive JSON traversal and aggregation
-    // Getting tag and severity from nested assessment_results JSON where status is not 'optimized'
+    // Getting tag, severity, and resource names (prioritizing database_instance_name over resource_name)
+    // from nested assessment_results JSON where status is not 'optimized'
     return prisma.client.$queryRaw`WITH RECURSIVE walk AS (
         SELECT
             di.id,
@@ -1039,10 +1040,12 @@ async function getGroupedDatabaseInstancesBySeverity({
         SELECT
             labeled.default_label AS name,
             labeled.severity,
-            COUNT(*) AS count
+            COUNT(*) AS count,
+            GROUP_CONCAT(DISTINCT labeled.resource_name ORDER BY labeled.resource_name SEPARATOR ',') AS resourceNames
         FROM (
             SELECT
                 w.node,
+                w.id AS di_id,
                 JSON_UNQUOTE(JSON_EXTRACT(w.node, '$.severity')) AS severity,
                 CASE
                     WHEN JSON_EXTRACT(w.node, '$.name') IS NOT NULL
@@ -1051,8 +1054,14 @@ async function getGroupedDatabaseInstancesBySeverity({
                         JSON_UNQUOTE(JSON_EXTRACT(w.node, '$.name'))
                     )
                     ELSE REGEXP_REPLACE(SUBSTRING(w.jpath, 3), '\\[[0-9]+\\]', '')
-                END AS default_label
+                END AS default_label,
+                COALESCE(NULLIF(di.database_instance_name, ''), r.resource_name, di.resource_id) AS resource_name
             FROM walk w
+            JOIN database_instances di ON di.id = w.id
+            LEFT JOIN resource r ON r.account_id = di.account_id
+                AND r.credentials_id = di.credentials_id
+                AND r.region = di.region
+                AND r.resource_id = di.resource_id
         ) AS labeled
         WHERE labeled.severity IS NOT NULL
             AND TRIM(labeled.severity) <> ''
