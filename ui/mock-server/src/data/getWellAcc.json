@@ -1050,7 +1050,23 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1
+                                    "otherNonCompliantCount": 1,
+                                    "missingPatchDetails": [
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5051979",
+                                            "severity": "Critical",
+                                            "state": "Missing",
+                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
+                                        },
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5050187",
+                                            "severity": "Important",
+                                            "state": "Missing",
+                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
+                                        }
+                                    ]
                                 }
                             ],
                             "resourceType": "Instance"
@@ -1590,7 +1606,23 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1
+                                    "otherNonCompliantCount": 1,
+                                    "missingPatchDetails": [
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5051979",
+                                            "severity": "Critical",
+                                            "state": "Missing",
+                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
+                                        },
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5050187",
+                                            "severity": "Important",
+                                            "state": "Missing",
+                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
+                                        }
+                                    ]
                                 }
                             ],
                             "resourceType": "Instance"
@@ -3013,7 +3045,23 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1
+                                    "otherNonCompliantCount": 1,
+                                    "missingPatchDetails": [
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5051979",
+                                            "severity": "Critical",
+                                            "state": "Missing",
+                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
+                                        },
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5050187",
+                                            "severity": "Important",
+                                            "state": "Missing",
+                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
+                                        }
+                                    ]
                                 }
                             ],
                             "resourceType": "Instance"
@@ -4449,7 +4497,23 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1
+                                    "otherNonCompliantCount": 1,
+                                    "missingPatchDetails": [
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5051979",
+                                            "severity": "Critical",
+                                            "state": "Missing",
+                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
+                                        },
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5050187",
+                                            "severity": "Important",
+                                            "state": "Missing",
+                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
+                                        }
+                                    ]
                                 }
                             ],
                             "resourceType": "Instance"
@@ -5872,7 +5936,23 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1
+                                    "otherNonCompliantCount": 1,
+                                    "missingPatchDetails": [
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5051979",
+                                            "severity": "Critical",
+                                            "state": "Missing",
+                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
+                                        },
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5050187",
+                                            "severity": "Important",
+                                            "state": "Missing",
+                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
+                                        }
+                                    ]
                                 }
                             ],
                             "resourceType": "Instance"
@@ -7295,7 +7375,23 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1
+                                    "otherNonCompliantCount": 1,
+                                    "missingPatchDetails": [
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5051979",
+                                            "severity": "Critical",
+                                            "state": "Missing",
+                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
+                                        },
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5050187",
+                                            "severity": "Important",
+                                            "state": "Missing",
+                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
+                                        }
+                                    ]
                                 }
                             ],
                             "resourceType": "Instance"
@@ -8667,7 +8763,23 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1
+                                    "otherNonCompliantCount": 1,
+                                    "missingPatchDetails": [
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5051979",
+                                            "severity": "Critical",
+                                            "state": "Missing",
+                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
+                                        },
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5050187",
+                                            "severity": "Important",
+                                            "state": "Missing",
+                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
+                                        }
+                                    ]
                                 }
                             ],
                             "resourceType": "Instance"
@@ -10028,7 +10140,23 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1
+                                    "otherNonCompliantCount": 1,
+                                    "missingPatchDetails": [
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5051979",
+                                            "severity": "Critical",
+                                            "state": "Missing",
+                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
+                                        },
+                                        {
+                                            "classification": "SecurityUpdates",
+                                            "kbId": "KB5050187",
+                                            "severity": "Important",
+                                            "state": "Missing",
+                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
+                                        }
+                                    ]
                                 }
                             ],
                             "resourceType": "Instance"

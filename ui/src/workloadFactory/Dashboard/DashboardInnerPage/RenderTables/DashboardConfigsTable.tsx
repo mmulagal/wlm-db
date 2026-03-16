@@ -102,6 +102,34 @@ interface DashboardConfigsTableProps {
  * }
  */
 
+const renderCountWithView = (
+    configNameOverride: string,
+    cellData: string,
+    rowData: ConfigTableRowData,
+    t: TFunction,
+    handleImpactedResourceDialog: HandleImpactedResourceDialog
+) => {
+    const count = Number(cellData) || 0;
+    return (
+        <div className={CommonStyles.impactedDrivesCell}>
+            {cellData != null && String(cellData) !== '' ? cellData : t('databases.general.not-available-table-columns')}
+            {count > 0 && (
+                <Button
+                    variant="text"
+                    onClick={() =>
+                        handleImpactedResourceDialog({
+                            ...rowData,
+                            configurationName: configNameOverride
+                        })
+                    }
+                >
+                    {t('databases.dashboard.view')}
+                </Button>
+            )}
+        </div>
+    );
+};
+
 // Configuration mapping for different assessment types
 const CONFIG_MAPPING: Record<string, any> = {
     [ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]: {
@@ -338,7 +366,8 @@ const CONFIG_MAPPING: Record<string, any> = {
         dismissConfigName: 'hostOsPatch', // Direct property name
         isFixSupported: false, // Fix is not supported for OS patch configurations
         dataMapping: (obj: any) => ({
-            current: `${obj?.objectsInViolation?.length || 0}`
+            current: `${obj?.objectsInViolation?.length || 0}`,
+            missingPatchList: obj?.ec2InstancesToPatch || []
         }),
         customColumns: [
             {
@@ -346,8 +375,19 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'current',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    cellData || t('databases.general.not-available-table-columns')
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
+                ) =>
+                    renderCountWithView(
+                        ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+                        cellData,
+                        rowData,
+                        t,
+                        handleImpactedResourceDialog
+                    )
             }
         ]
     },
@@ -451,31 +491,15 @@ const CONFIG_MAPPING: Record<string, any> = {
         isFixSupported: false, // Fix is not supported for SQL Server patch configurations
         dataMapping: (obj: any) => {
             let totalPatches = 0;
-            let criticalPatches = 0;
-            let importantPatches = 0;
-            let missingPatchList: any = [];
-            obj?.missingPatchesInEc2Instances?.map(
-                (perInstance: {
-                    criticalMissingPatchesCount: any;
-                    importantMissingPatchesCount: any;
-                    missingPatchDetails: any;
-                    ec2InstanceName: any;
-                }) => {
+            obj?.missingPatchesInEc2Instances?.forEach(
+                (perInstance: { criticalMissingPatchesCount: any; importantMissingPatchesCount: any }) => {
                     totalPatches += perInstance?.criticalMissingPatchesCount || 0;
                     totalPatches += perInstance?.importantMissingPatchesCount || 0;
-                    criticalPatches += perInstance?.criticalMissingPatchesCount || 0;
-                    importantPatches += perInstance?.importantMissingPatchesCount || 0;
-                    missingPatchList = [
-                        ...missingPatchList,
-                        ...(perInstance?.missingPatchDetails || []).map((patch: any) => ({
-                            ...patch,
-                            instanceName: perInstance.ec2InstanceName
-                        }))
-                    ];
                 }
             );
             return {
-                current: totalPatches
+                current: totalPatches,
+                missingPatchList: obj?.missingPatchesInEc2Instances || []
             };
         },
         customColumns: [
@@ -484,8 +508,19 @@ const CONFIG_MAPPING: Record<string, any> = {
                 accessor: 'current',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    cellData || t('databases.general.not-available-table-columns')
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
+                ) =>
+                    renderCountWithView(
+                        ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+                        cellData,
+                        rowData,
+                        t,
+                        handleImpactedResourceDialog
+                    )
             }
         ]
     },
@@ -769,7 +804,7 @@ const createOracleHostOsPatchConfig = () => ({
     isFixSupported: false, // Fix is not supported for Oracle OS patch configurations
     dataMapping: (obj: any) => ({
         current: `${obj?.objectsInViolation?.length || 0}`,
-        missingPatchList: obj?.missingPatchesInEc2Instances || []
+        missingPatchList: obj?.ec2InstancesToPatch || []
     }),
     customColumns: [
         {
@@ -777,8 +812,19 @@ const createOracleHostOsPatchConfig = () => ({
             accessor: 'current',
             id: '4',
             width: '200px',
-            renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                cellData || t('databases.general.not-available-table-columns')
+            renderCell: (
+                cellData: string,
+                rowData: ConfigTableRowData,
+                t: TFunction,
+                handleImpactedResourceDialog: HandleImpactedResourceDialog
+            ) =>
+                renderCountWithView(
+                    ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+                    cellData,
+                    rowData,
+                    t,
+                    handleImpactedResourceDialog
+                )
         }
     ]
 });
@@ -809,8 +855,19 @@ const createOracleSecurityPatchConfig = () => ({
             accessor: 'current',
             id: '4',
             width: '200px',
-            renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                cellData || t('databases.general.not-available-table-columns')
+            renderCell: (
+                cellData: string,
+                rowData: ConfigTableRowData,
+                t: TFunction,
+                handleImpactedResourceDialog: HandleImpactedResourceDialog
+            ) =>
+                renderCountWithView(
+                    ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH,
+                    cellData,
+                    rowData,
+                    t,
+                    handleImpactedResourceDialog
+                )
         }
     ]
 });
@@ -1078,9 +1135,11 @@ const DashboardConfigsTable = ({
     const { setDialog } = useDialog();
 
     const handleImpactedResourceDialog: HandleImpactedResourceDialog = rowData => {
+        const viewColumnHeader = config?.customColumns?.[0]?.Header;
+        const headerText = viewColumnHeader ? t(viewColumnHeader) : t('databases.well-architect.impacted-resources');
         setDialog(
             <DialogComponent
-                header={t('databases.well-architect.impacted-resources')}
+                header={headerText}
                 content={<ImpactedResourceDialog data={rowData} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}

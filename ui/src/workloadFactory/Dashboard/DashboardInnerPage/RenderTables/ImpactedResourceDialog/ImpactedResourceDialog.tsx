@@ -36,6 +36,31 @@ interface SizingViolations {
     underProvisionedDrives?: SizingDrive[];
 }
 
+interface PatchDetail {
+    kbId?: string;
+    title?: string;
+    classification?: string;
+    severity?: string;
+    cveIds?: string;
+    state?: string;
+}
+
+interface OracleSecurityPatchDetail {
+    missingPatchesCount?: number;
+    missingPatches?: {
+        cveId?: string;
+        component?: string;
+        description?: string;
+        releaseDate?: string;
+    }[];
+}
+
+interface PatchInstance {
+    ec2InstanceId?: string;
+    ec2InstanceName?: string;
+    missingPatchDetails?: PatchDetail[];
+}
+
 interface AssessmentData {
     violationDetails?: ViolationDetail[];
     objectsInViolation?: ObjectInViolation[];
@@ -43,6 +68,7 @@ interface AssessmentData {
     configurationName?: string;
     configObj?: { configurationName?: string };
     name?: string;
+    missingPatchList?: (PatchInstance | OracleSecurityPatchDetail)[];
 }
 
 interface ImpactedResourcesResult {
@@ -203,6 +229,23 @@ const getMssqlImpactedResources = (configName: string, data: AssessmentData, na:
             return ensureRows(columns, rows, na);
         }
 
+        case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
+        case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH: {
+            const columns = ['KB', 'Name', 'Classification', 'Severity'];
+            const rows: string[][] = [];
+            data?.missingPatchList?.forEach((instance) => {
+                (instance as PatchInstance)?.missingPatchDetails?.forEach((patch) => {
+                    rows.push([
+                        patch?.kbId || na,
+                        patch?.title || na,
+                        patch?.classification || na,
+                        patch?.severity || na
+                    ]);
+                });
+            });
+            return ensureRows(columns, rows, na);
+        }
+
         default:
             return { columns: [], rows: [] };
     }
@@ -286,7 +329,40 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
             return ensureRows(columns, rows, na);
         }
 
-        // Placement configs use internal API names, not ASSESSMENT_CONFIG_NAMES display names
+        case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH: {
+            const columns = ['Component', 'Package name', 'Update type', 'Severity'];
+            const rows: string[][] = [];
+            data?.missingPatchList?.forEach((instance) => {
+                (instance as PatchInstance)?.missingPatchDetails?.forEach((patch) => {
+                    rows.push([
+                        patch?.cveIds || na,
+                        patch?.title || na,
+                        patch?.classification || na,
+                        patch?.severity || na
+                    ]);
+                });
+            });
+            return ensureRows(columns, rows, na);
+        }
+
+        case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH: {
+            const columns = ['CVE ID', 'Component', 'Description', 'Published Date'];
+            const rows: string[][] = [];
+            data?.missingPatchList?.forEach((detail) => {
+                (detail as OracleSecurityPatchDetail)?.missingPatches?.forEach((patch) => {
+                    rows.push([
+                        patch?.cveId || na,
+                        patch?.component || na,
+                        patch?.description || na,
+                        patch?.releaseDate || na
+                    ]);
+                });
+            });
+            return ensureRows(columns, rows, na);
+        }
+
+        //placement configs use internal API names, not ASSESSMENT_CONFIG_NAMES display names
+        case 'crr':
         case 'oracle-binary-placement':
         case 'datafiles-placement':
         case 'controlfiles-placement':

@@ -613,17 +613,33 @@ const createPatchData = (
                 Description: 'Description',
                 'Published Date': 'Published Date'
             });
+        } else if (isOracle && config.name === 'host-os-patch') {
+            details.push({
+                Component: headerText,
+                'Package name': '',
+                'Update type': '',
+                Severity: ''
+            });
+
+            details.push({
+                Component: 'Component',
+                'Package name': 'Package name',
+                'Update type': 'Update type',
+                Severity: 'Severity'
+            });
         } else {
             details.push({
                 [idColumnName]: headerText,
                 Name: '',
-                Classification: ''
+                Classification: '',
+                Severity: ''
             });
 
             details.push({
                 [idColumnName]: idColumnName,
                 Name: 'Name',
-                Classification: 'Classification'
+                Classification: 'Classification',
+                Severity: 'Severity'
             });
         }
 
@@ -639,12 +655,22 @@ const createPatchData = (
                         });
                     });
                 }
+            } else if (isOracle && config.name === 'host-os-patch' && instanceData.missingPatchDetails && instanceData.missingPatchDetails.length > 0) {
+                instanceData.missingPatchDetails.forEach((patch: any) => {
+                    details.push({
+                        Component: patch.cveIds || 'N/A',
+                        'Package name': patch.title || 'N/A',
+                        'Update type': patch.classification || 'N/A',
+                        Severity: patch.severity || 'N/A'
+                    });
+                });
             } else if (instanceData.missingPatchDetails && instanceData.missingPatchDetails.length > 0) {
                 instanceData.missingPatchDetails.forEach((patch: any) => {
                     details.push({
-                        [idColumnName]: isOracle ? patch.cveIds || 'N/A' : patch.kbId || 'N/A',
+                        [idColumnName]: patch.kbId || 'N/A',
                         Name: patch.title || 'N/A',
-                        Classification: patch.classification || 'N/A'
+                        Classification: patch.classification || 'N/A',
+                        Severity: patch.severity || 'N/A'
                     });
                 });
             }
@@ -1718,7 +1744,8 @@ const applySpecialConfigurationStyling = (
     configName: string,
     configDetails: any[],
     impactedResourcesRowIndex: number,
-    filterHeaderRowIndex: number
+    filterHeaderRowIndex: number,
+    databaseType?: string
 ) => {
     const violationTableEndRow = configDetails.length + 1;
 
@@ -1738,7 +1765,7 @@ const applySpecialConfigurationStyling = (
         const specialConfigs = {
             'mtu-alignment': 4,
             'mssql-patch': 3,
-            'host-os-patch': 3,
+            'host-os-patch': databaseType === DBType.ORACLE ? 4 : 3,
             'oracle-security-patch': 4,
             'sql-license': 6,
             'rss-config': 2,
@@ -2081,7 +2108,8 @@ async function generateProperXlsxWorkbook(
                     internalName,
                     configDetails,
                     impactedResourcesRowIndex,
-                    filterHeaderRowIndex
+                    filterHeaderRowIndex,
+                    databaseType
                 );
             }
 
