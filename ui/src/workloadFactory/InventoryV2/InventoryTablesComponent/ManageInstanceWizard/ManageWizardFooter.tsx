@@ -12,11 +12,7 @@ import {
     useManageBulkV2OracleInstanceMutation,
     useRegisterResourceCredentialsBulkMutation
 } from '../../../../utils/apiService';
-import {
-    createAuthOnlyPayload,
-    createDetectHostPayload,
-    createFsxOnlyPayload
-} from '../../../../utils/utilityFunctions';
+import { createAuthOnlyPayload, createFsxOnlyPayload } from '../../../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import {
     setInventoryTableData,
@@ -26,6 +22,8 @@ import {
     setSelectedMultiDetectInstances,
     setFsxAuthStatus,
     setInstanceAuthStatus,
+    setInstanceAuthError,
+    clearInstanceAuthErrors,
     setDetectCredentialErrors,
     clearDetectCredentialErrors
 } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -35,7 +33,8 @@ import {
     createBulkAuthPayload,
     validateBulkInstanceCredentials,
     createOracleBulkAuthPayload,
-    validateOracleBulkInstanceCredentials
+    validateOracleBulkInstanceCredentials,
+    generateInstanceUniqueKey
 } from './SelectInstancesStep/AuthenticateBulkUtils';
 import {
     areAllFsxAuthenticated,
@@ -412,11 +411,16 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
                             // Update instanceAuthStatus for the primary instance so isInstanceAuthenticated can find it
                             const primaryInstanceId = manageSingleInstanceData?.databaseInstanceName;
+                            const primaryEc2InstanceId = manageSingleInstanceData?.ec2InstanceId || '';
 
                             if (primaryInstanceId) {
+                                const primaryUniqueKey = generateInstanceUniqueKey(
+                                    primaryEc2InstanceId,
+                                    primaryInstanceId
+                                );
                                 dispatch(
                                     setInstanceAuthStatus({
-                                        instanceId: primaryInstanceId,
+                                        instanceId: primaryUniqueKey,
                                         status: RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success'
                                     })
                                 );
@@ -645,6 +649,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         }
 
         dispatch(setIsDetectHostLoading(true));
+        dispatch(clearInstanceAuthErrors());
 
         // Notify user that authentication may take time
         dispatch(
@@ -692,25 +697,33 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
                     resultItems.forEach((resultItem: any) => {
                         const registerDetails = resultItem?.registerDetails || [];
+                        const ec2InstanceId = resultItem?.ec2InstanceId || '';
 
                         registerDetails.forEach((detail: any) => {
                             const resourceId = detail?.resourceId;
                             if (!resourceId) return;
 
-                            // Check for errors to determine success/failure
-                            const hasError = !!(
+                            const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, resourceId);
+                            const errorMessage =
                                 detail?.databaseServerError ||
                                 detail?.oracleAsmError ||
-                                detail?.requiredModuleError
-                            );
+                                detail?.requiredModuleError ||
+                                detail?.error ||
+                                '';
+                            const hasError = !!errorMessage;
 
-                            authStatusUpdates[resourceId] = hasError
+                            authStatusUpdates[uniqueKey] = hasError
                                 ? (RESPONSE_STATUS.FAILED.toLowerCase() as 'failed')
                                 : (RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success');
 
+                            // Store per-instance error using unique key for precise matching
+                            if (hasError && ec2InstanceId) {
+                                dispatch(setInstanceAuthError({ instanceId: uniqueKey, error: errorMessage }));
+                            }
+
                             // Track manageReadiness for successful instances
                             if (!hasError && detail?.manageReadiness) {
-                                manageReadinessUpdates[resourceId] = detail.manageReadiness;
+                                manageReadinessUpdates[uniqueKey] = detail.manageReadiness;
                             }
                         });
                     });
@@ -718,7 +731,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     // API call failed - mark all instances in batch as failed
                     batchPayload.items.forEach(item => {
                         item.credentials.forEach((cred: { resourceId: string }) => {
-                            authStatusUpdates[cred.resourceId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                            const uniqueKey = generateInstanceUniqueKey(item.ec2InstanceId, cred.resourceId);
+                            authStatusUpdates[uniqueKey] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
                         });
                     });
 
@@ -732,8 +746,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             }
 
             // Update Redux state with auth status updates
-            Object.entries(authStatusUpdates).forEach(([instanceId, status]) => {
-                dispatch(setInstanceAuthStatus({ instanceId, status }));
+            Object.entries(authStatusUpdates).forEach(([uniqueKey, status]) => {
+                dispatch(setInstanceAuthStatus({ instanceId: uniqueKey, status }));
             });
 
             // Update inventoryTableData and selectedMultiDetectInstances for successful instances
@@ -743,8 +757,10 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 selectedMultiDetectInstances.forEach((instance: any) => {
                     const instanceData = instance.data || instance;
                     const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+                    const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+                    const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
-                    if (instanceId && manageReadinessUpdates[instanceId]) {
+                    if (uniqueKey && manageReadinessUpdates[uniqueKey]) {
                         // Also save FSx credential status for successful instances with FSx storage
                         const fsxId = instanceData?.fsxId;
                         if (fsxId) {
@@ -761,22 +777,24 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 const updatedInstances = selectedMultiDetectInstances.map((instance: any) => {
                     const instanceData = instance.data || instance;
                     const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+                    const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+                    const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
-                    if (instanceId && manageReadinessUpdates[instanceId]) {
-                        // Update the instance with new manageReadiness
+                    if (uniqueKey && manageReadinessUpdates[uniqueKey]) {
+                        const manageReadiness = manageReadinessUpdates[uniqueKey];
                         if (instance?.data) {
                             return {
                                 ...instance,
-                                manageReadiness: manageReadinessUpdates[instanceId],
+                                manageReadiness,
                                 data: {
                                     ...instance.data,
-                                    manageReadiness: manageReadinessUpdates[instanceId]
+                                    manageReadiness
                                 }
                             };
                         }
                         return {
                             ...instance,
-                            manageReadiness: manageReadinessUpdates[instanceId]
+                            manageReadiness
                         };
                     }
                     return instance;
@@ -872,6 +890,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
         }
 
         dispatch(setIsDetectHostLoading(true));
+        dispatch(clearInstanceAuthErrors());
 
         // Notify user that authentication may take time
         dispatch(
@@ -918,25 +937,33 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
                     resultItems.forEach((resultItem: any) => {
                         const registerDetails = resultItem?.registerDetails || [];
+                        const ec2InstanceId = resultItem?.ec2InstanceId || '';
 
                         registerDetails.forEach((detail: any) => {
                             const resourceId = detail?.resourceId;
                             if (!resourceId) return;
 
-                            // Check for errors to determine success/failure
-                            const hasError = !!(
+                            const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, resourceId);
+                            const errorMessage =
                                 detail?.databaseServerError ||
                                 detail?.oracleAsmError ||
-                                detail?.requiredModuleError
-                            );
+                                detail?.requiredModuleError ||
+                                detail?.error ||
+                                '';
+                            const hasError = !!errorMessage;
 
-                            authStatusUpdates[resourceId] = hasError
+                            authStatusUpdates[uniqueKey] = hasError
                                 ? (RESPONSE_STATUS.FAILED.toLowerCase() as 'failed')
                                 : (RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success');
 
+                            // Store per-instance error using unique key for precise matching
+                            if (hasError && ec2InstanceId) {
+                                dispatch(setInstanceAuthError({ instanceId: uniqueKey, error: errorMessage }));
+                            }
+
                             // Track manageReadiness for successful databases
                             if (!hasError && detail?.manageReadiness) {
-                                manageReadinessUpdates[resourceId] = detail.manageReadiness;
+                                manageReadinessUpdates[uniqueKey] = detail.manageReadiness;
                             }
                         });
                     });
@@ -944,7 +971,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     // API call failed - mark all databases in batch as failed
                     batchPayload.items.forEach(item => {
                         item.credentials.forEach((cred: { resourceId: string }) => {
-                            authStatusUpdates[cred.resourceId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                            const uniqueKey = generateInstanceUniqueKey(item.ec2InstanceId, cred.resourceId);
+                            authStatusUpdates[uniqueKey] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
                         });
                     });
 
@@ -958,8 +986,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             }
 
             // Update Redux state with auth status updates
-            Object.entries(authStatusUpdates).forEach(([instanceId, status]) => {
-                dispatch(setInstanceAuthStatus({ instanceId, status }));
+            Object.entries(authStatusUpdates).forEach(([uniqueKey, status]) => {
+                dispatch(setInstanceAuthStatus({ instanceId: uniqueKey, status }));
             });
 
             // Update inventoryTableData and selectedMultiDetectInstances for successful databases
@@ -967,9 +995,10 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 selectedMultiDetectInstances.forEach((instance: any) => {
                     const instanceData = instance.data || instance;
                     const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+                    const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+                    const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
-                    if (instanceId && manageReadinessUpdates[instanceId]) {
-                        // Also save FSx credential status for successful databases with FSx storage
+                    if (uniqueKey && manageReadinessUpdates[uniqueKey]) {
                         const fsxId = instanceData?.fsxId;
                         if (fsxId) {
                             saveFsxInCredRegisteredObj(fsxId, dispatch, registerHostType);
@@ -985,9 +1014,11 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 const updatedInstances = selectedMultiDetectInstances.map((instance: any) => {
                     const instanceData = instance.data || instance;
                     const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+                    const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+                    const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
-                    if (instanceId && manageReadinessUpdates[instanceId]) {
-                        const manageReadiness = manageReadinessUpdates[instanceId];
+                    if (uniqueKey && manageReadinessUpdates[uniqueKey]) {
+                        const manageReadiness = manageReadinessUpdates[uniqueKey];
                         if (instance.data) {
                             return {
                                 ...instance,

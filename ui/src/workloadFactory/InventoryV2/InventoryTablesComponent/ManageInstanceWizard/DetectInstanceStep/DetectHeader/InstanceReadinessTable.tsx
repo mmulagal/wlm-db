@@ -7,7 +7,7 @@ import { useAppSelector } from '../../../../../../store/storeHooks';
 import DotComponent from '../../../../../../common/DotComponent/DotComponent';
 import { DBType, MANAGE_STATES } from '../../../../../../utils/consts';
 import { BulkDetectedInstance, ManageReadinessData } from '../../../../../../utils/types/registerTypes';
-import { isInstanceAuthenticated } from '../../SelectInstancesStep/AuthenticateBulkUtils';
+import { isInstanceAuthenticated, generateInstanceUniqueKey } from '../../SelectInstancesStep/AuthenticateBulkUtils';
 import { getPermissionState } from '../../ManageInstanceUtils';
 
 // Render status cell with icon
@@ -37,8 +37,10 @@ const InstanceReadinessTable = () => {
 
     // Prepare rows with proper data mapping
     const tableRows = dataSource.map((item: BulkDetectedInstance) => {
-        const instanceId = item?.id ?? '';
-        const isAuthenticated = isInstanceAuthenticated(instanceId, item, instanceAuthStatus, registerHostType);
+        const instanceId = item?.data?.databaseInstanceName || item?.databaseInstanceName || item?.id || '';
+        const ec2InstanceId = item?.data?.ec2InstanceId || item?.ec2InstanceId || '';
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
+        const isAuthenticated = isInstanceAuthenticated(uniqueKey, item, instanceAuthStatus, registerHostType);
 
         // Get manageReadiness data - check both item level and data level
         const manageReadinessData: ManageReadinessData = item?.manageReadiness || item?.data?.manageReadiness || {};

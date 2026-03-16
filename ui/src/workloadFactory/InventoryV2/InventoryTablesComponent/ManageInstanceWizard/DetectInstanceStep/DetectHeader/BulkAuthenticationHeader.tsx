@@ -8,7 +8,7 @@ import { useAppSelector } from '../../../../../../store/storeHooks';
 import { BulkDetectedInstance } from '../../../../../../utils/types/registerTypes';
 import { getInstanceHeaderContent } from '../DetectInstanceHelper';
 import { DBType } from '../../../../../../utils/consts';
-import { isInstanceAuthenticated } from '../../SelectInstancesStep/AuthenticateBulkUtils';
+import { isInstanceAuthenticated, generateInstanceUniqueKey } from '../../SelectInstancesStep/AuthenticateBulkUtils';
 
 export interface CountSummary {
     total: number;
@@ -48,10 +48,12 @@ const BulkAuthenticationHeader = ({ engineType }: { engineType: string }) => {
             // Get instance data for auth check
             const instanceData = item?.data || item;
             const instanceId = instanceData?.databaseInstanceName || item?.databaseInstanceName || '';
+            const ec2InstanceId = instanceData?.ec2InstanceId || item?.ec2InstanceId || '';
+            const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
             // Check if instance is authenticated using the utility function
             // This checks BOTH pre-authentication status AND wizard auth status
-            const isAuthenticated = isInstanceAuthenticated(instanceId, instanceData, instanceAuthStatus, engineType);
+            const isAuthenticated = isInstanceAuthenticated(uniqueKey, instanceData, instanceAuthStatus, engineType);
 
             if (isAuthenticated) {
                 newCountSummary.success += 1;

@@ -963,25 +963,26 @@ export const handleReplicaAuthenticationAndDialog = async (
 
                         resultItems.forEach((resultItem: any) => {
                             const registerDetails = resultItem?.registerDetails || [];
+                            const ec2InstanceId = resultItem?.ec2InstanceId || '';
 
                             registerDetails.forEach((detail: any) => {
                                 const resourceId = detail?.resourceId;
                                 if (!resourceId) return;
 
                                 // Check for errors to determine success/failure
+                                const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, resourceId);
                                 const hasError = !!(
                                     detail?.databaseServerError ||
                                     detail?.oracleAsmError ||
                                     detail?.requiredModuleError
                                 );
 
-                                authStatusUpdates[resourceId] = hasError
+                                authStatusUpdates[uniqueKey] = hasError
                                     ? (RESPONSE_STATUS.FAILED.toLowerCase() as 'failed')
                                     : (RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success');
 
-                                // Track manageReadiness for successful instances
                                 if (!hasError && detail?.manageReadiness) {
-                                    manageReadinessUpdates[resourceId] = detail.manageReadiness;
+                                    manageReadinessUpdates[uniqueKey] = detail.manageReadiness;
                                 }
                             });
                         });
@@ -989,7 +990,8 @@ export const handleReplicaAuthenticationAndDialog = async (
                         // API call failed - mark all instances in batch as failed
                         batchPayload.items.forEach(item => {
                             item.credentials.forEach((cred: { resourceId: string }) => {
-                                authStatusUpdates[cred.resourceId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                                const uniqueKey = generateInstanceUniqueKey(item.ec2InstanceId, cred.resourceId);
+                                authStatusUpdates[uniqueKey] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
                             });
                         });
 
@@ -1003,8 +1005,8 @@ export const handleReplicaAuthenticationAndDialog = async (
                 }
 
                 // Update Redux state with auth status updates
-                Object.entries(authStatusUpdates).forEach(([instanceId, status]) => {
-                    dispatch(setInstanceAuthStatus({ instanceId, status }));
+                Object.entries(authStatusUpdates).forEach(([uniqueKey, status]) => {
+                    dispatch(setInstanceAuthStatus({ instanceId: uniqueKey, status }));
                 });
 
                 // Update inventoryTableData and replicaSelectedRowsForManage for successful instances
@@ -1014,9 +1016,11 @@ export const handleReplicaAuthenticationAndDialog = async (
                     replicaSelectedRowsForManage.forEach((instance: any) => {
                         const instanceData = instance.data || instance;
                         const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+                        const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+                        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
-                        if (instanceId && manageReadinessUpdates[instanceId]) {
-                            // Update inventory table data for this instance
+                        if (uniqueKey && manageReadinessUpdates[uniqueKey]) {
+                            // Update inventoryTableData for each successful instance
                             const updatedInventoryTableData = updateInstanceStatus(
                                 'detect',
                                 instanceData,
@@ -1030,12 +1034,16 @@ export const handleReplicaAuthenticationAndDialog = async (
                     const updatedInstances = replicaSelectedRowsForManage.map((instance: any) => {
                         const instanceData = instance.data || instance;
                         const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+                        const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+                        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
                         // Check if this instance was successfully authenticated
                         const isSuccessfullyAuthenticated =
-                            authStatusUpdates[instanceId]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
+                            authStatusUpdates[uniqueKey]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
 
-                        if (instanceId && manageReadinessUpdates[instanceId]) {
+                        if (uniqueKey && manageReadinessUpdates[uniqueKey]) {
+                            const manageReadiness = manageReadinessUpdates[uniqueKey];
+
                             // Update the instance with new manageReadiness and authorized flag
                             // Set manageReadiness at top level (for consistency with updateDetectBulkResponse)
                             // and inside data (for backward compatibility)
@@ -1043,17 +1051,17 @@ export const handleReplicaAuthenticationAndDialog = async (
                                 return {
                                     ...instance,
                                     authorized: isSuccessfullyAuthenticated,
-                                    manageReadiness: manageReadinessUpdates[instanceId],
+                                    manageReadiness,
                                     data: {
                                         ...instance.data,
-                                        manageReadiness: manageReadinessUpdates[instanceId]
+                                        manageReadiness
                                     }
                                 };
                             }
                             return {
                                 ...instance,
                                 authorized: isSuccessfullyAuthenticated,
-                                manageReadiness: manageReadinessUpdates[instanceId]
+                                manageReadiness
                             };
                         }
                         // Even if no manageReadiness update, still update authorized flag if authenticated
@@ -1075,8 +1083,10 @@ export const handleReplicaAuthenticationAndDialog = async (
                         const updatedInstances = replicaSelectedRowsForManage.map((instance: any) => {
                             const instanceData = instance.data || instance;
                             const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName;
+                            const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+                            const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
                             const isSuccessfullyAuthenticated =
-                                authStatusUpdates[instanceId]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
+                                authStatusUpdates[uniqueKey]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
 
                             if (isSuccessfullyAuthenticated) {
                                 return {
@@ -1182,9 +1192,15 @@ export const handleReplicaAuthenticationAndDialog = async (
                                                 const instanceData = inst.data || inst;
                                                 const instanceId =
                                                     instanceData?.databaseInstanceName || inst.databaseInstanceName;
+                                                const ec2InstanceId =
+                                                    instanceData?.ec2InstanceId || inst.ec2InstanceId || '';
+                                                const instUniqueKey = generateInstanceUniqueKey(
+                                                    ec2InstanceId,
+                                                    instanceId
+                                                );
                                                 return (
                                                     instanceId &&
-                                                    updatedAuthStatus[instanceId]?.toLowerCase() ===
+                                                    updatedAuthStatus[instUniqueKey]?.toLowerCase() ===
                                                         RESPONSE_STATUS.SUCCESS.toLowerCase()
                                                 );
                                             }

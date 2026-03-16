@@ -74,6 +74,7 @@ const initialInventoryV2State: InventorySliceData = {
     detectOntapCredentialsByFsx: {} as Record<string, { username: string; password: string }>,
     fsxAuthStatus: {} as FsxAuthStatusMap,
     instanceAuthStatus: {} as InstanceAuthStatusMap,
+    instanceAuthErrors: {} as Record<string, string>,
     detectWindowsAuthentication: {
         username: '',
         password: ''
@@ -439,6 +440,7 @@ const inventoryV2Slice = createSlice({
         },
         resetInstanceAuthStatus: state => {
             state.instanceAuthStatus = {};
+            state.instanceAuthErrors = {};
             // Also reset instance authentication credentials for fresh state on next wizard
             state.detectManageUserName = '';
             state.detectManagePassword = '';
@@ -463,6 +465,12 @@ const inventoryV2Slice = createSlice({
                 fsxnError: '',
                 oracleAsmError: ''
             };
+        },
+        setInstanceAuthError: (state, action: PayloadAction<{ instanceId: string; error: string }>) => {
+            state.instanceAuthErrors[action.payload.instanceId] = action.payload.error;
+        },
+        clearInstanceAuthErrors: state => {
+            state.instanceAuthErrors = {};
         },
         setDetectWindowsAuthentication: (
             state,
@@ -759,6 +767,8 @@ export const {
     resetFsxAuthStatus,
     setInstanceAuthStatus,
     resetInstanceAuthStatus,
+    setInstanceAuthError,
+    clearInstanceAuthErrors,
     setResetManagedData,
     setRemoveSecNodeDiscoveredList,
     setUnManagedPerfInstanceIdsList,

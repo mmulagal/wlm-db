@@ -113,14 +113,15 @@ export const areAllInstancesAuthenticated = (
     return selectedInstances.every(instance => {
         const instanceData = instance.data || instance;
         const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
+        const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
         // First check if instance is already authenticated based on data fields
         if (!isAuthRequiredForInstance(instanceData, hostType)) {
             return true;
         }
-
         // If auth is required, check if wizard auth attempt was successful
-        const status = instanceAuthStatus?.[instanceId];
+        const status = instanceAuthStatus?.[uniqueKey];
         return status?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
     });
 };
@@ -151,13 +152,19 @@ export const hasPartialInstanceAuthSuccess = (
     if (!instanceAuthStatus || Object.keys(instanceAuthStatus).length === 0) return false;
 
     const successCount = instancesNeedingAuth.filter(instance => {
-        const instanceId = instance.data?.databaseInstanceName || instance.databaseInstanceName || '';
-        return instanceAuthStatus[instanceId]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
+        const instanceData = instance.data || instance;
+        const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
+        const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
+        return instanceAuthStatus[uniqueKey]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
     }).length;
 
     const failedCount = instancesNeedingAuth.filter(instance => {
-        const instanceId = instance.data?.databaseInstanceName || instance.databaseInstanceName || '';
-        return instanceAuthStatus[instanceId]?.toLowerCase() === RESPONSE_STATUS.FAILED.toLowerCase();
+        const instanceData = instance.data || instance;
+        const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
+        const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
+        return instanceAuthStatus[uniqueKey]?.toLowerCase() === RESPONSE_STATUS.FAILED.toLowerCase();
     }).length;
 
     // First landing - no attempts yet, enable radio buttons
@@ -188,14 +195,15 @@ export const getInstancesNeedingAuth = (
     const instancesRequiringAuth = selectedInstances.filter(instance => {
         const instanceData = instance.data || instance;
         const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
+        const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
         // If already authenticated based on data fields, skip
         if (!isAuthRequiredForInstance(instanceData, hostType)) {
             return false;
         }
-
         // If wizard auth attempt was successful, skip
-        const status = instanceAuthStatus?.[instanceId];
+        const status = instanceAuthStatus?.[uniqueKey];
         if (status?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) {
             return false;
         }
@@ -232,43 +240,49 @@ export const haveAllInstancesFailed = (
 
     // Check if we have any auth attempts for instances that need auth
     const attemptedInstances = instancesNeedingAuth.filter(instance => {
-        const instanceId = instance.data?.databaseInstanceName || instance.databaseInstanceName || '';
-        return instanceAuthStatus[instanceId];
+        const instanceData = instance.data || instance;
+        const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
+        const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
+        return instanceAuthStatus[uniqueKey];
     });
 
     if (attemptedInstances.length === 0) return false;
 
     // Check if all attempted instances have failed
     return attemptedInstances.every(instance => {
-        const instanceId = instance.data?.databaseInstanceName || instance.databaseInstanceName || '';
-        return instanceAuthStatus[instanceId]?.toLowerCase() === RESPONSE_STATUS.FAILED.toLowerCase();
+        const instanceData = instance.data || instance;
+        const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
+        const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
+        return instanceAuthStatus[uniqueKey]?.toLowerCase() === RESPONSE_STATUS.FAILED.toLowerCase();
     });
 };
 
 /**
  * Get auth status for a specific instance
- * @param instanceId - The instance ID to check
- * @param instanceAuthStatus - Map of instance IDs to auth status
+ * @param uniqueKey - The unique key (ec2InstanceId::databaseInstanceName) to check
+ * @param instanceAuthStatus - Map of unique keys to auth status
  * @returns The auth status or undefined
  */
 export const getInstanceAuthStatus = (
-    instanceId: string,
+    uniqueKey: string,
     instanceAuthStatus: InstanceAuthStatusMap | undefined
 ): InstanceAuthStatus | undefined => {
     if (!instanceAuthStatus) return undefined;
-    return instanceAuthStatus[instanceId] as InstanceAuthStatus;
+    return instanceAuthStatus[uniqueKey] as InstanceAuthStatus;
 };
 
 /**
  * Check if a specific instance is authenticated (either already authenticated or wizard auth success)
- * @param instanceId - The instance ID to check
+ * @param uniqueKey - The unique key (ec2InstanceId::databaseInstanceName) to check
  * @param instanceData - The instance data object
- * @param instanceAuthStatus - Map of instance IDs to auth status from wizard attempts
+ * @param instanceAuthStatus - Map of unique keys to auth status from wizard attempts
  * @param hostType - The host type (MSSQL, ORACLE, etc.)
  * @returns true if authenticated
  */
 export const isInstanceAuthenticated = (
-    instanceId: string,
+    uniqueKey: string,
     instanceData: any,
     instanceAuthStatus: InstanceAuthStatusMap | undefined,
     hostType: string = DBType.MSSQL
@@ -280,22 +294,21 @@ export const isInstanceAuthenticated = (
         return true;
     }
 
-    // Check wizard auth attempt status
-    const status = getInstanceAuthStatus(instanceId, instanceAuthStatus);
+    const status = getInstanceAuthStatus(uniqueKey, instanceAuthStatus);
     return status?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase();
 };
 
 /**
  * Check if a specific instance authentication has failed
- * @param instanceId - The instance ID to check
- * @param instanceAuthStatus - Map of instance IDs to auth status
+ * @param uniqueKey - The unique key (ec2InstanceId::databaseInstanceName) to check
+ * @param instanceAuthStatus - Map of unique keys to auth status
  * @returns true if failed
  */
 export const hasInstanceFailed = (
-    instanceId: string,
+    uniqueKey: string,
     instanceAuthStatus: InstanceAuthStatusMap | undefined
 ): boolean => {
-    const status = getInstanceAuthStatus(instanceId, instanceAuthStatus);
+    const status = getInstanceAuthStatus(uniqueKey, instanceAuthStatus);
     return status?.toLowerCase() === RESPONSE_STATUS.FAILED.toLowerCase();
 };
 
@@ -336,8 +349,7 @@ export const createBulkAuthPayload = (
         // Skip instances that don't need authentication
         if (!isAuthRequiredForInstance(instanceData, hostType)) return;
 
-        // Skip instances that are already successfully authenticated in wizard
-        if (instanceAuthStatus?.[instanceId]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return;
+        if (instanceAuthStatus?.[uniqueKey]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return;
 
         // Get credentials based on credential option
         let authMode: string;
@@ -421,10 +433,12 @@ export const validateBulkInstanceCredentials = (
     const instancesNeedingAuth = selectedInstances.filter(instance => {
         const instanceData = instance.data || instance;
         const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
+        const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
         // Skip already authenticated instances
         if (!isAuthRequiredForInstance(instanceData, hostType)) return false;
-        if (instanceAuthStatus?.[instanceId]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return false;
+        if (instanceAuthStatus?.[uniqueKey]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return false;
 
         return true;
     });
@@ -510,7 +524,7 @@ export const createOracleBulkAuthPayload = (
         if (!isAuthRequiredForInstance(instanceData, DBType.ORACLE)) return;
 
         // Skip instances that are already successfully authenticated in wizard
-        if (instanceAuthStatus?.[instanceId]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return;
+        if (instanceAuthStatus?.[uniqueKey]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return;
 
         // Get credentials based on credential option
         let username: string;
@@ -586,10 +600,12 @@ export const validateOracleBulkInstanceCredentials = (
     const instancesNeedingAuth = selectedInstances.filter(instance => {
         const instanceData = instance.data || instance;
         const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
+        const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
+        const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
         // Skip already authenticated instances
         if (!isAuthRequiredForInstance(instanceData, DBType.ORACLE)) return false;
-        if (instanceAuthStatus?.[instanceId]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return false;
+        if (instanceAuthStatus?.[uniqueKey]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return false;
 
         return true;
     });

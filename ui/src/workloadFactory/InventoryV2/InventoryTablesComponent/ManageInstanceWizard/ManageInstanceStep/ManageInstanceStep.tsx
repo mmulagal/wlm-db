@@ -51,7 +51,7 @@ import {
 import BulkAuthenticationHeader from '../DetectInstanceStep/DetectHeader/BulkAuthenticationHeader';
 import AuthenticationTabsForBulk from './AuthenticationTabsForBulk/AuthenticationTabsForBulk';
 import InstanceReadinessTable from '../DetectInstanceStep/DetectHeader/InstanceReadinessTable';
-import { isInstanceAuthenticated } from '../SelectInstancesStep/AuthenticateBulkUtils';
+import { isInstanceAuthenticated, generateInstanceUniqueKey } from '../SelectInstancesStep/AuthenticateBulkUtils';
 
 export const Content = () => {
     const { t } = useTranslation();
@@ -331,7 +331,9 @@ export const Content = () => {
 
             // Check authentication using both pre-auth and wizard auth status
             const instanceId = item?.data?.databaseInstanceName || item?.databaseInstanceName || item?.id || '';
-            const isAuthenticated = isInstanceAuthenticated(instanceId, item, instanceAuthStatus, hostType);
+            const ec2InstanceId = item?.data?.ec2InstanceId || item?.ec2InstanceId || '';
+            const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
+            const isAuthenticated = isInstanceAuthenticated(uniqueKey, item, instanceAuthStatus, hostType);
 
             newTableData.push({
                 ...item,

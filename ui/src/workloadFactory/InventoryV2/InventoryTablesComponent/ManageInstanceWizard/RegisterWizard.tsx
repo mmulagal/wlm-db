@@ -1,6 +1,5 @@
 import { useAppSelector } from '../../../../store/storeHooks';
-import { ACTION_TYPE, DBType } from '../../../../utils/consts';
-import ManageInstanceWizard from './ManageInstanceWizard';
+import { ACTION_TYPE } from '../../../../utils/consts';
 import RegisterBulkWizard from './RegisterBulkWizard';
 import RegisterNewWizard from './RegisterNewWizard';
 

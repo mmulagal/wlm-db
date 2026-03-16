@@ -118,6 +118,7 @@ export const Content = () => {
     const instanceCredentials = useAppSelector(state => state.inventoryV2.instanceCredentials);
     const selectedMultiDetectInstances = useAppSelector(state => state.inventoryV2.selectedMultiDetectInstances);
     const instanceAuthStatus = useAppSelector(state => state.inventoryV2.instanceAuthStatus);
+    const instanceAuthErrors = useAppSelector(state => state.inventoryV2.instanceAuthErrors);
     const { selectedHostType } = useAppSelector(state => state.inventoryV2);
 
     // Get loading state from msSqlAction slice to disable inputs during API calls
@@ -150,6 +151,13 @@ export const Content = () => {
         [selectedMultiDetectInstances, instanceAuthStatus, hostType]
     );
 
+    // Check if all auth errors are identical (used to decide staying in "same for all" vs switching to manual)
+    const allErrorsSame = useMemo(() => {
+        const errors = Object.values(instanceAuthErrors || {});
+        if (errors.length === 0) return true;
+        return errors.every(e => e === errors[0]);
+    }, [instanceAuthErrors]);
+
     // Calculate number of authenticated instances for notification
     const authenticatedCount = useMemo(
         () =>
@@ -160,7 +168,7 @@ export const Content = () => {
                     return generateInstanceUniqueKey(ec2Id, dbInstanceName) === instance.uniqueKey;
                 });
                 const instanceData = originalInstance?.data || originalInstance;
-                return isInstanceAuthenticated(instance.instanceId, instanceData, instanceAuthStatus, hostType);
+                return isInstanceAuthenticated(instance.uniqueKey, instanceData, instanceAuthStatus, hostType);
             }).length,
         [instances, selectedMultiDetectInstances, instanceAuthStatus, hostType]
     );
@@ -189,7 +197,15 @@ export const Content = () => {
         if (hasPartialSuccess) {
             dispatch(setCredentialOption(CREDENTIAL_OPTIONS.MANUAL));
         }
-    }, [hasPartialSuccess, dispatch]);
+    }, [hasPartialSuccess]);
+
+    // Auto-switch to manual mode when all fail with different errors
+    // so each instance shows its own specific error message
+    useEffect(() => {
+        if (allFailed && !allErrorsSame) {
+            dispatch(setCredentialOption(CREDENTIAL_OPTIONS.MANUAL));
+        }
+    }, [allFailed, allErrorsSame]);
 
     // Track the previous credential option to detect switches
     const prevCredentialOptionRef = useRef(credentialOption);
@@ -210,7 +226,7 @@ export const Content = () => {
                 });
                 const instanceData = originalInstance?.data || originalInstance;
                 const authenticated = isInstanceAuthenticated(
-                    instance.instanceId,
+                    instance.uniqueKey,
                     instanceData,
                     instanceAuthStatus,
                     hostType
@@ -455,7 +471,7 @@ export const Content = () => {
                                     );
                                     const instanceData = originalInstance?.data || originalInstance;
                                     const authenticated = isInstanceAuthenticated(
-                                        instance.instanceId,
+                                        instance.uniqueKey,
                                         instanceData,
                                         instanceAuthStatus,
                                         hostType
@@ -517,11 +533,14 @@ export const Content = () => {
                             }`}
                             className={styles.textField}
                             isDisabled={isDetectHostLoading}
-                            {...(allFailed
+                            {...(allFailed && allErrorsSame
                                 ? {
                                       message: {
                                           type: 'error',
-                                          value: t('databases.register-flow.authentication-failed') || ''
+                                          value:
+                                              (Object.values(instanceAuthErrors || {})[0] as string) ||
+                                              t('databases.register-flow.authentication-failed') ||
+                                              ''
                                       }
                                   }
                                 : {})}
@@ -535,7 +554,12 @@ export const Content = () => {
                             }
                             placeholder={t('databases.general.enter-password')}
                             className={styles.passwordField}
-                            error={allFailed ? t('databases.register-flow.authentication-failed') : ''}
+                            error={
+                                allFailed && allErrorsSame
+                                    ? (Object.values(instanceAuthErrors || {})[0] as string) ||
+                                      t('databases.register-flow.authentication-failed')
+                                    : ''
+                            }
                             isDisabled={isDetectHostLoading}
                         />
                     </div>
@@ -555,12 +579,13 @@ export const Content = () => {
                         });
                         const instanceData = originalInstance?.data || originalInstance;
                         const authenticated = isInstanceAuthenticated(
-                            instance.instanceId,
+                            instance.uniqueKey,
                             instanceData,
                             instanceAuthStatus,
                             hostType
                         );
-                        const failed = hasInstanceFailed(instance.instanceId, instanceAuthStatus);
+                        const failed = hasInstanceFailed(instance.uniqueKey, instanceAuthStatus);
+                        const instanceError = instanceAuthErrors?.[instance.uniqueKey] || '';
 
                         return (
                             <div
@@ -614,7 +639,10 @@ export const Content = () => {
                                             ? {
                                                   message: {
                                                       type: 'error',
-                                                      value: t('databases.register-flow.authentication-failed') || ''
+                                                      value:
+                                                          instanceError ||
+                                                          t('databases.register-flow.authentication-failed') ||
+                                                          ''
                                                   }
                                               }
                                             : {})}
@@ -629,7 +657,11 @@ export const Content = () => {
                                         placeholder={t('databases.general.enter-password')}
                                         className={styles.instancePasswordField}
                                         isDisabled={authenticated || isDetectHostLoading}
-                                        error={failed ? t('databases.register-flow.authentication-failed') : ''}
+                                        error={
+                                            failed
+                                                ? instanceError || t('databases.register-flow.authentication-failed')
+                                                : ''
+                                        }
                                     />
 
                                     {/* Reserve space for close button to prevent layout shift */}

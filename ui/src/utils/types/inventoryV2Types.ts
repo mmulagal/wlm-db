@@ -157,6 +157,7 @@ export interface InventorySliceData {
     registerHostType: string;
     fsxAuthStatus: FsxAuthStatusMap;
     instanceAuthStatus: InstanceAuthStatusMap;
+    instanceAuthErrors: Record<string, string>;
     bulkWizardStartAtFsxStep: boolean;
     mssqlInstancesTabVisitCount: number;
     isUploadLoading: boolean;
