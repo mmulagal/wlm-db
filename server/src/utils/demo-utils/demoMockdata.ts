@@ -5746,6 +5746,30 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
     filesystemId: 'fs-07a22f282fd4f5a20'
 };
 
+const ORACLE_ASSESSMENT_CRR_CONFIG_DATA = {
+    errors: '',
+    crrDetails: [
+        {
+            volumeName: 'oracledata2',
+            peerSVMName: ['wlmdb_sqlsvm_1737955690776'],
+            isCRREnabled: true,
+            sourceSvmName: 'wlmdb_sqlsvm_1733286308083',
+            isSnapMirrored: true,
+            peerClusterName: ['FsxId01d9727eb6a7d3e9a'],
+            peerClusterFsxId: ['fs-01d9727eb6a7d3e9a']
+        },
+        {
+            volumeName: 'oraclearch2',
+            peerSVMName: ['wlmdb_sqlsvm_1737955690776'],
+            isCRREnabled: true,
+            sourceSvmName: 'wlmdb_sqlsvm_1733286308083',
+            isSnapMirrored: true,
+            peerClusterName: ['FsxId01d9727eb6a7d3e9a'],
+            peerClusterFsxId: ['fs-01d9727eb6a7d3e9a']
+        }
+    ]
+};
+
 const ORACLE_STORAGE_ASSESSMENT_DATA = {
     layout: [
         {
@@ -6694,6 +6718,7 @@ export {
     ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
     AOAG_STANDALONE_HIGH_AVAILABILITY_CONFIG_DATA,
     ORACLE_STORAGE_ASSESSMENT_DATA,
+    ORACLE_ASSESSMENT_CRR_CONFIG_DATA,
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     PDB_DETAILS,
     createAssessmentData,

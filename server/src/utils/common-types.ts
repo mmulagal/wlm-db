@@ -97,7 +97,12 @@ interface CrrDetails {
     volumeName: string;
     isCRREnabled: boolean;
     isSnapMirrored: boolean;
-    sourceSvmUuid: string;
+    sourceSvmUuid?: string;
+    sourceSvmName?: string;
+    peerClusterFsxId?: string | string[];
+    peerSVMName?: string[];
+    destinationPath?: string[];
+    peerClusterName?: string[];
 }
 interface CrrAssessment {
     crrDetails: CrrDetails[];
@@ -557,6 +562,7 @@ interface WorkloadInstance {
     databaseInstanceObject?: DatabaseInstance;
     storageProtocol?: string;
     isASMManaged?: boolean;
+    redoVolumeNames?: string[];
 }
 interface LogDriveDetails {
     lunUuid: string;

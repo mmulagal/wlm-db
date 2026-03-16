@@ -47,6 +47,7 @@ import {
     enableMPIOJobData,
     createAssessmentData,
     ORACLE_STORAGE_ASSESSMENT_DATA,
+    ORACLE_ASSESSMENT_CRR_CONFIG_DATA,
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     createAssessmentDataWithRetry
 } from '../utils/demo-utils/demoMockdata';
@@ -1030,8 +1031,17 @@ async function createAssessmentDataForOracle(
         config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
         config_data: ORACLE_MAPPED_ONTAP_VOLUMES_DATA(fsxId, storageProtocol, databaseInstanceId, false)
     };
+    const instanceCRRConfigDataRecord = {
+        ...baseConfig,
+        config_data_type: AssessmentCategories.CRR,
+        config_data: ORACLE_ASSESSMENT_CRR_CONFIG_DATA
+    };
 
-    const configDataRecords = [instanceConfigDataRecord, instanceConfigMappedOntapDataRecord];
+    const configDataRecords = [
+        instanceConfigDataRecord,
+        instanceConfigMappedOntapDataRecord,
+        instanceCRRConfigDataRecord
+    ];
 
     await createAssessmentDataWithRetry(
         configDataRecords,

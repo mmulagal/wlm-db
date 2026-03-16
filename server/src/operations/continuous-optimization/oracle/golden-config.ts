@@ -788,6 +788,18 @@ const GOLDEN_CONFIG = {
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
         recommendation:
             'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.'
+    },
+    resiliency: {
+        crr: {
+            tags: [AwsWellArchitecturedPillars.RELIABILITY],
+            category: 'resiliency',
+            subCategory: 'resiliency',
+            focusWidgetName: 'Cross-Region Replication (CRR)',
+            severity: SEVERITY.WARNING,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            recommendation:
+                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.'
+        }
     }
 };
 

@@ -11,6 +11,7 @@ import {
 import {
     OntapVolume,
     GenericViolationResponse,
+    GenericParameterDriftResponse,
     ErrorResponse,
     DismissedConfigurationsResponse
 } from './continuous-optimization.types';
@@ -83,6 +84,7 @@ type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
 const OracleDriftAssessmentResponse = Type.Object({
     storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
+    crr: Type.Optional(Type.Union([GenericParameterDriftResponse, ErrorResponse])),
     dismissedConfigurations: Type.Optional(DismissedConfigurationsResponse),
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
     fileSystemId: Type.Optional(Type.String()),

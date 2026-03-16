@@ -150,7 +150,8 @@ async function processAccountInstancesBatch(
                         case DatabaseTypes.ORACLE:
                             await triggerOracleAssessment(instance, parentJobId, [
                                 AssessmentCategoriesOracle.STORAGE,
-                                AssessmentCategoriesOracle.HOST_OS_PATCH
+                                AssessmentCategoriesOracle.HOST_OS_PATCH,
+                                AssessmentCategoriesOracle.CRR
                             ]);
                             break;
                         default:

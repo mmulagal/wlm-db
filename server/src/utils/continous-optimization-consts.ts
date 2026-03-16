@@ -23,7 +23,8 @@ enum AssessmentCategories {
 enum AssessmentCategoriesOracle {
     STORAGE = 'storage',
     MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes',
-    HOST_OS_PATCH = 'host-os-patch'
+    HOST_OS_PATCH = 'host-os-patch',
+    CRR = 'crr'
 }
 
 enum AssessmentTriggeredBy {
