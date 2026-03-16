@@ -6,6 +6,7 @@ import {
     type onprem_tco_reports as OnPremTcoReport
 } from '@prisma/client';
 import { compact, isEmpty, sumBy } from 'lodash-es';
+import throat from 'throat';
 import { GetInstanceTypesFromInstanceRequirementsCommandInput } from '@aws-sdk/client-ec2';
 import {
     DEFAULT_AWS_REGION,
@@ -15,13 +16,7 @@ import {
     PRICING_LICENSE_KEYS,
     HOURS_IN_MONTH
 } from '../../../utils/consts';
-import {
-    convertGiBToBytes,
-    convertToBytes,
-    sizeInGigaBytes,
-    IS_DEMO_FLOW,
-    validateWithSchema
-} from '../../../utils/utils';
+import { convertGiBToBytes, convertToBytes, sizeInGigaBytes, IS_DEMO_FLOW } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
 import { registerJob } from '../../database/job-operations';
 import { NETWORK_PERF, ONPREM_TCO_CREDENTIALS_ID } from '../../../utils/continous-optimization-consts';
@@ -52,12 +47,18 @@ import {
     buildInstanceRequirements,
     buildCombinedEc2Instances,
     fetchPricingForResourcesGeneric,
-    buildMachineDetailsForNodes,
-    buildComputeCalculationEntry,
-    ComputeCalculationEntry,
+    buildComputeCalculationsForResources,
+    ComputeCalculation,
+    LicenseCalculation,
+    ResourceComputeInput,
     PricingDetails,
+    getPricePerUnit,
+    validateOrThrow,
+    resolveSnapshotDefaults,
     EBSClassification,
-    EbsVolumeType
+    EbsVolumeType,
+    SavedAssessmentData,
+    isSavedAssessmentData
 } from '../../onprem-tco-operations';
 import {
     getManualModeStorageSavingsCalculationMetrics,
@@ -73,7 +74,8 @@ import {
     parseStorageDetailsByDb,
     parseAoagReadReplica,
     parseSqlVersion,
-    getPowerOfTwoVcpuCount
+    getPowerOfTwoVcpuCount,
+    hasComputeOverrides
 } from '../../../utils/onprem-tco/onprem-tco-utils';
 import { mssqlCollectionObjectSchema, windowsConfigSchema } from '../../../utils/onprem-tco/onprem-tco-schemas';
 import { isNonFreeEnterpriseEdition } from '../../recommendation-operations';
@@ -94,39 +96,42 @@ const ENTERPRISE_EDITION = 'Enterprise Edition';
 const STANDARD_EDITION = 'Standard Edition';
 const MSSQL_ALLOWED_INSTANCE_TYPES = ['m*', 'c*', 'r*'];
 
-interface LicenseCalculationEntry {
-    resourceName: string;
-    deploymentType: string;
-    sqlServerEdition: string;
-    licenseHourlyPrice: number;
-    licenseIncluded: boolean;
-    licenseMonthlyPrice: number;
-    hoursInMonth: number;
-}
-
 interface MssqlComputeSavingsEntry {
     resourceName: string;
     deploymentType: string;
-    existing: ComputeCalculationEntry;
-    recommended: ComputeCalculationEntry;
+    existing: ComputeCalculation;
+    recommended: ComputeCalculation;
 }
 
 interface MssqlLicenseSavingsEntry {
     resourceName: string;
     deploymentType: string;
-    existing: Omit<LicenseCalculationEntry, 'resourceName' | 'deploymentType'>;
-    recommended: Omit<LicenseCalculationEntry, 'resourceName' | 'deploymentType'>;
+    existing: Omit<LicenseCalculation, 'resourceName' | 'deploymentType'>;
+    recommended: Omit<LicenseCalculation, 'resourceName' | 'deploymentType'>;
     finding: string;
 }
 
 interface MssqlPerResourceAssessment {
     resourceId: string;
-    existingComputeCalculation: ComputeCalculationEntry;
-    existingLicenseCalculation: LicenseCalculationEntry;
-    recommendedComputeCalculation: ComputeCalculationEntry;
-    recommendedLicenseCalculation: LicenseCalculationEntry;
+    existingComputeCalculation: ComputeCalculation;
+    existingLicenseCalculation: LicenseCalculation;
+    recommendedComputeCalculation: ComputeCalculation;
+    recommendedLicenseCalculation: LicenseCalculation;
     computeSavings: MssqlComputeSavingsEntry;
     licenseSavings: MssqlLicenseSavingsEntry;
+}
+
+interface HybridExploreSavingsParams {
+    accountId: string;
+    resourceId: string;
+    resourceName: string;
+    deploymentType: string;
+    reportCreationTime: Date;
+    regionCode: string;
+    savedAssessmentData: SavedAssessmentData;
+    rawSqlInstanceDetails: SqlInstanceDetails[];
+    windowsConfig: WindowsConfig;
+    snapshotInfo?: StorageSavingsRequestBodyType;
 }
 
 function formatSqlInstanceDetails(sqlInstances: SqlInstanceDetails[]) {
@@ -249,11 +254,17 @@ async function saveReportInWlmdbDatabase(
 
         await createOnPremTcoReportData(filteredReports);
 
-        return filteredReports.map(r => ({
+        const savedResources = filteredReports.map(r => ({
             resourceId: r.resource_id,
             deploymentType: r.database_deployment_type,
             instances: r.database_instances_data
         }));
+
+        computeAndSaveComputeLicenseData(accountId, data, savedResources).catch(error =>
+            logger.error('Failed to compute and save compute/license data', { accountId, error })
+        );
+
+        return savedResources;
     }
     throw createError(
         HttpErrorCodes.INTERNAL_SERVER_ERROR,
@@ -267,7 +278,8 @@ async function getStorageSavingsResponse(
     sqlServerDeploymentType: string,
     windowsConfig: WindowsConfig,
     instances: SqlInstanceDetails[],
-    snapshotInfo?: StorageSavingsRequestBodyType
+    snapshotInfo?: StorageSavingsRequestBodyType,
+    hasUserOverrides: boolean = false
 ) {
     logger.info('Getting Storage Savings Response', {
         accountId,
@@ -275,16 +287,19 @@ async function getStorageSavingsResponse(
         sqlServerDeploymentType,
         windowsConfig,
         instances,
-        snapshotInfo
+        snapshotInfo,
+        hasUserOverrides
     });
     const { currentLicenseEdition, recommendedLicenseEdition, finding } = getOnpremLicenseRecommendations(instances);
 
-    const currentInstanceType = await deriveHostConfigBasedInstanceType(
-        region,
-        windowsConfig,
-        isNonFreeEnterpriseEdition(currentLicenseEdition) ? ENTERPRISE_EDITION : STANDARD_EDITION
-    ); // Instance type here is based on the host config; considered as existing instance type
-    const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region, instances, recommendedLicenseEdition); // Instance type here is based on the current usage as per the report; considered as recommended instance type
+    const currentInstanceType = hasUserOverrides
+        ? await deriveSqlUsageBasedInstanceType(region, instances, currentLicenseEdition)
+        : await deriveHostConfigBasedInstanceType(
+              region,
+              windowsConfig,
+              isNonFreeEnterpriseEdition(currentLicenseEdition) ? ENTERPRISE_EDITION : STANDARD_EDITION
+          );
+    const recommendedInstanceType = await deriveSqlUsageBasedInstanceType(region, instances, recommendedLicenseEdition);
 
     if (!currentInstanceType || !recommendedInstanceType) {
         throw createError(
@@ -296,7 +311,7 @@ async function getStorageSavingsResponse(
     const ec2Instances = deriveEc2InstanceListForMarketing(region, instances, currentInstanceType);
     const ec2InstancesRecommended = deriveEc2InstanceListForMarketing(region, instances, recommendedInstanceType);
 
-    const { clonedCopiesCount = 1, monthlyChangeRatePercentage = 8, snapshotFrequency = 'Daily' } = snapshotInfo || {};
+    const { clonedCopiesCount, monthlyChangeRatePercentage, snapshotFrequency } = resolveSnapshotDefaults(snapshotInfo);
 
     const params = {
         clonedCopiesCount,
@@ -467,8 +482,7 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
             : undefined
     });
 
-    const licenseType =
-        licenseEdition === ENTERPRISE_EDITION ? PRICING_LICENSE_KEYS.SQL_ENT : PRICING_LICENSE_KEYS.SQL_STD;
+    const licenseType = resolveLicenseType(licenseEdition);
     return fetchInstanceTypesByRetryWithPricing(region, instanceRequirements, 'windows', licenseType);
 }
 
@@ -484,8 +498,7 @@ async function deriveSqlUsageBasedInstanceType(
     });
 
     const instanceRequirements = deriveInstanceRequirements(sqlInstancesDetails);
-    const licenseType =
-        licenseEdition === ENTERPRISE_EDITION ? PRICING_LICENSE_KEYS.SQL_ENT : PRICING_LICENSE_KEYS.SQL_STD;
+    const licenseType = resolveLicenseType(licenseEdition);
     return fetchInstanceTypesByRetryWithPricing(region, instanceRequirements, 'windows', licenseType);
 }
 
@@ -494,31 +507,26 @@ async function analyzeOnpremData(
     data: OnPremCollectionObject,
     snapshotInfo?: StorageSavingsRequestBodyType,
     region?: string,
-    adHocRequest: boolean = false,
-    savedResources?: { resourceId: string; deploymentType: string; instances: SqlInstanceDetails[] }[]
+    hasUserOverrides: boolean = false
 ) {
-    logger.info('Analyzing OnPrem Data', { accountId, snapshotInfo, region, adHocRequest });
+    logger.info('Analyzing OnPrem Data', { accountId, snapshotInfo, region, hasUserOverrides });
 
     const { windowsConfig, sqlServerInfo } = data;
     if (!region || IS_DEMO_FLOW) {
         region = DEFAULT_AWS_REGION;
     }
 
-    const resourceGroups =
-        savedResources ??
-        (() => {
-            const hostIds = windowsConfig.nodeDetails.map(({ hostId }) => hostId);
-            const grouped = groupSqlServerInstancesByDeploymentType(sqlServerInfo);
-            return Object.entries(grouped).map(([deploymentType, instances]) => ({
-                resourceId: generateUniqueId(
-                    accountId,
-                    instances.map(i => i.instanceGuid),
-                    hostIds
-                ),
-                deploymentType,
-                instances
-            }));
-        })();
+    const hostIds = windowsConfig.nodeDetails.map(({ hostId }) => hostId);
+    const grouped = groupSqlServerInstancesByDeploymentType(sqlServerInfo);
+    const resourceGroups = Object.entries(grouped).map(([deploymentType, instances]) => ({
+        resourceId: generateUniqueId(
+            accountId,
+            instances.map(i => i.instanceGuid),
+            hostIds
+        ),
+        deploymentType,
+        instances
+    }));
 
     const response: Array<{
         accountId: string;
@@ -534,17 +542,103 @@ async function analyzeOnpremData(
                 deploymentType,
                 windowsConfig,
                 instances,
-                snapshotInfo
+                snapshotInfo,
+                hasUserOverrides
             );
             response.push({ accountId, resourceId, storageSavings, calculations });
-            if (!adHocRequest) {
-                await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, {
-                    assessment_data: { storageSavings, calculations }
-                });
-            }
         })
     );
     return response;
+}
+
+async function computeAndSaveComputeLicenseData(
+    accountId: string,
+    data: OnPremCollectionObject,
+    savedResources: { resourceId: string; deploymentType: string; instances: SqlInstanceDetails[] }[]
+) {
+    logger.info('Computing and saving compute/license data', { accountId, resourceCount: savedResources.length });
+
+    const { windowsConfig } = data;
+    const regionCode = DEFAULT_AWS_REGION;
+
+    await Promise.all(
+        savedResources.map(
+            throat(5, async ({ resourceId, deploymentType, instances }) => {
+                try {
+                    const { currentLicenseEdition, recommendedLicenseEdition, finding } =
+                        getOnpremLicenseRecommendations(instances);
+
+                    const [existingInstanceType, recommendedInstanceType] = await Promise.all([
+                        deriveHostConfigBasedInstanceType(
+                            regionCode,
+                            windowsConfig,
+                            isNonFreeEnterpriseEdition(currentLicenseEdition) ? ENTERPRISE_EDITION : STANDARD_EDITION
+                        ),
+                        deriveSqlUsageBasedInstanceType(regionCode, instances, recommendedLicenseEdition)
+                    ]);
+
+                    if (!existingInstanceType || !recommendedInstanceType) {
+                        logger.warn('Could not derive instance types, skipping compute/license caching', {
+                            accountId,
+                            resourceId
+                        });
+                        return;
+                    }
+
+                    const existingNodeCount = windowsConfig.nodeDetails.length;
+                    const recommendedNodeCount = deploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ? 1 : 2;
+                    const resourceName = windowsConfig.windowsSystemName;
+
+                    const individualResourceInfo: IndividualResourceInfo[] = [
+                        {
+                            resourceId,
+                            resourceName,
+                            deploymentType,
+                            existingNodeCount,
+                            recommendedNodeCount,
+                            currentLicenseEdition,
+                            recommendedLicenseEdition,
+                            finding,
+                            currentInstanceType: existingInstanceType,
+                            recommendedInstanceType
+                        }
+                    ];
+
+                    const [resourceWithPricing] = await fetchPricingForResources(individualResourceInfo, regionCode);
+
+                    const {
+                        existingComputeCalculation: [existingComputeCalc],
+                        existingLicenseCalculation: [existingLicenseCalc],
+                        recommendedComputeCalculation: [recommendedComputeCalc],
+                        recommendedLicenseCalculation: [recommendedLicenseCalc]
+                    } = buildPerResourceCalculations([resourceWithPricing]);
+
+                    const cachedData: SavedAssessmentData = {
+                        regionCode,
+                        existingInstanceType,
+                        recommendedInstanceType,
+                        existingComputeCalculation: existingComputeCalc,
+                        recommendedComputeCalculation: recommendedComputeCalc,
+                        existingLicenseCalculation: existingLicenseCalc,
+                        recommendedLicenseCalculation: recommendedLicenseCalc,
+                        licenseFinding: finding
+                    };
+
+                    await updateOnPremTcoReportRecord(accountId, resourceId, MSSQL, {
+                        assessment_data: cachedData
+                    });
+
+                    logger.info('Saved compute/license data for resource', { accountId, resourceId });
+                } catch (error) {
+                    logger.error('Failed to compute compute/license data for resource', {
+                        accountId,
+                        resourceId,
+                        error
+                    });
+                }
+            })
+        )
+    );
 }
 
 async function handleOnpremTcoDataUpload(
@@ -569,22 +663,8 @@ async function uploadOnpremTcoData(accountId: string, databaseType: string, file
         const originalJsonString = decompressCollectorPayload(fileContent);
         const data = JSON.parse(originalJsonString) as OnPremCollectionObject;
 
-        const { isValid: isDataValid, errors: dataErrors } = validateWithSchema(mssqlCollectionObjectSchema, data);
-        if (!isDataValid) {
-            const errorMessage = `Invalid data format: ${JSON.stringify(dataErrors)}`;
-            logger.error(errorMessage);
-            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
-        }
-
-        const { isValid: isConfigValid, errors: configErrors } = validateWithSchema(
-            windowsConfigSchema,
-            data.windowsConfig
-        );
-        if (!isConfigValid) {
-            const errorMessage = `Invalid windowsConfig format: ${JSON.stringify(configErrors)}`;
-            logger.error(errorMessage);
-            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
-        }
+        validateOrThrow(mssqlCollectionObjectSchema, data, 'Invalid data format');
+        validateOrThrow(windowsConfigSchema, data.windowsConfig, 'Invalid windowsConfig format');
 
         // in OnPremises analysis, credentials ID is irrelevant, so using a dummy UUID
         const { id: jobId } = await registerJob(accountId, ONPREM_TCO_CREDENTIALS_ID, DEFAULT_AWS_REGION, {
@@ -946,6 +1026,151 @@ async function getOnPremDatabaseResources(
     };
 }
 
+async function buildHybridExploreSavingsResponse(params: HybridExploreSavingsParams) {
+    const {
+        accountId,
+        resourceId,
+        resourceName,
+        deploymentType,
+        reportCreationTime,
+        regionCode,
+        savedAssessmentData,
+        rawSqlInstanceDetails,
+        windowsConfig,
+        snapshotInfo
+    } = params;
+
+    logger.info('Building hybrid explore savings from saved compute/license data', { accountId, resourceId });
+
+    try {
+        const {
+            existingInstanceType,
+            recommendedInstanceType,
+            existingComputeCalculation,
+            recommendedComputeCalculation,
+            existingLicenseCalculation,
+            recommendedLicenseCalculation,
+            licenseFinding
+        } = savedAssessmentData;
+
+        const ec2Instances = deriveEc2InstanceListForMarketing(regionCode, rawSqlInstanceDetails, existingInstanceType);
+        const ec2InstancesRecommended = deriveEc2InstanceListForMarketing(
+            regionCode,
+            rawSqlInstanceDetails,
+            recommendedInstanceType
+        );
+
+        const { clonedCopiesCount, monthlyChangeRatePercentage, snapshotFrequency } =
+            resolveSnapshotDefaults(snapshotInfo);
+        const existingNodeCount = windowsConfig.nodeDetails.length;
+        const recommendedNodeCount = deploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ? 1 : 2;
+
+        const existingLicenseEdition = existingLicenseCalculation?.sqlServerEdition || STANDARD_EDITION;
+        const recommendedLicenseEdition = recommendedLicenseCalculation?.sqlServerEdition || STANDARD_EDITION;
+
+        const { existingConfigData, existingConfigCalculations, recommendedConfigData, recommendedConfigCalculations } =
+            await fetchStorageSavingsFromMarketingApi({
+                accountId,
+                regionCode,
+                baseParams: {
+                    clonedCopiesCount,
+                    snapshotFrequency,
+                    monthlyChangeRatePercentage,
+                    sqlServerDeploymentType: deploymentType
+                },
+                existingEc2Instances: ec2Instances,
+                recommendedEc2Instances: ec2InstancesRecommended,
+                existingEdition: existingLicenseEdition,
+                recommendedEdition: recommendedLicenseEdition,
+                existingNodeCount,
+                recommendedNodeCount
+            });
+
+        const { ebs, fsx, single, multi } = (existingConfigData || {}) as Partial<StorageSavingsResponseType>;
+        const { fsx: recommendedFsx } = (recommendedConfigData || {}) as Partial<StorageSavingsResponseType>;
+
+        const storageSavingsCompute = {
+            existing: {
+                instanceType: existingComputeCalculation.instanceType,
+                computeMonthlyPrice: existingComputeCalculation.computeMonthlyPrice,
+                machineDetails: existingComputeCalculation.machineDetails
+            },
+            recommended: {
+                instanceType: recommendedComputeCalculation.instanceType,
+                computeMonthlyPrice: recommendedComputeCalculation.computeMonthlyPrice,
+                machineDetails: recommendedComputeCalculation.machineDetails
+            }
+        };
+
+        const existingLicenseMonthlyPrice = existingLicenseCalculation?.licenseMonthlyPrice || 0;
+        const recommendedLicenseMonthlyPrice = recommendedLicenseCalculation?.licenseMonthlyPrice || 0;
+
+        const storageSavingsLicense = {
+            existing: existingLicenseCalculation
+                ? {
+                      sqlServerEdition: existingLicenseEdition,
+                      licenseMonthlyPrice: existingLicenseMonthlyPrice
+                  }
+                : undefined,
+            recommended: recommendedLicenseCalculation
+                ? {
+                      sqlServerEdition: recommendedLicenseEdition,
+                      licenseMonthlyPrice: recommendedLicenseMonthlyPrice
+                  }
+                : undefined,
+            ...(licenseFinding !== undefined && { finding: licenseFinding })
+        };
+
+        const ebsTotal = Number((ebs as { total?: number })?.total || 0);
+        const fsxTotal = Number(((recommendedFsx || fsx) as { total?: number })?.total || 0);
+
+        const existingTotalSummary =
+            ebsTotal + existingComputeCalculation.computeMonthlyPrice + existingLicenseMonthlyPrice;
+        const recommendedTotalSummary =
+            fsxTotal + recommendedComputeCalculation.computeMonthlyPrice + recommendedLicenseMonthlyPrice;
+
+        const storageSavings = {
+            compute: storageSavingsCompute,
+            license: storageSavingsLicense,
+            ebs,
+            fsx: recommendedFsx || fsx,
+            single,
+            multi,
+            totalSummary: { existing: existingTotalSummary, recommended: recommendedTotalSummary }
+        } as StorageSavingsResponseType;
+
+        const calculations = {
+            ...existingConfigCalculations,
+            existingComputeCalculation,
+            existingLicenseCalculation,
+            recommendedComputeCalculation,
+            recommendedLicenseCalculation,
+            ...(recommendedConfigCalculations && {
+                single: (recommendedConfigCalculations as Record<string, unknown>).single,
+                multi: (recommendedConfigCalculations as Record<string, unknown>).multi
+            }),
+            totalSummary: { existing: existingTotalSummary, recommended: recommendedTotalSummary }
+        } as StorageSavingsMetricsCalculationsResponseType;
+
+        return {
+            resourceId,
+            resourceName,
+            deploymentModel: deploymentType,
+            creationTime: new Date(reportCreationTime).getTime(),
+            regionCode,
+            calculations,
+            storageSavings,
+            ...(snapshotInfo && { snapShotInfo: snapshotInfo })
+        };
+    } catch (error) {
+        logger.error('Failed to build hybrid assessment from cached data', { accountId, resourceId, error });
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Failed to fetch assessment data for the selected resource'
+        );
+    }
+}
+
 async function getOnPremResourceExploreSavings(
     accountId: string,
     onPrmResourceId: string,
@@ -970,7 +1195,7 @@ async function getOnPremResourceExploreSavings(
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
-    const region = validateAndGetRegion(regionCode);
+    validateAndGetRegion(regionCode);
 
     const {
         resource_id: resourceId,
@@ -986,56 +1211,31 @@ async function getOnPremResourceExploreSavings(
 
     const { windowsSystemName: resourceName } = hostConfig as unknown as WindowsConfig;
 
-    if (sqlInstanceData || snapshotInfo) {
+    if (sqlInstanceData) {
         try {
-            const updatedSqlDetailsBasedOnRequest = rawSqlInstanceDetails.map(detail => {
-                try {
-                    const {
-                        numDatabases: { primary: numDatabases, secondary: numDatabasesSecondary }
-                    } = parseSqlUsageParams(detail);
-                    const instanceData = sqlInstanceData?.find(
-                        (data: { sqlInstanceId: string }) => data.sqlInstanceId === detail.instanceGuid
-                    );
-                    if (instanceData) {
-                        const {
-                            noOfVcpusInUse,
-                            memory,
-                            networkPerformance,
-                            totalIops,
-                            totalThroughput,
-                            totalStorage: incomingTotalStorage
-                        } = instanceData;
-
-                        const totalDbCount = numDatabases + numDatabasesSecondary;
-                        const primaryDbRatio = totalDbCount > 0 ? numDatabases / totalDbCount : 0;
-                        const secondaryDbRatio = totalDbCount > 0 ? numDatabasesSecondary / totalDbCount : 0;
-                        return {
-                            ...detail,
-                            ...(noOfVcpusInUse && { noOfVcpusInUse }),
-                            ...(networkPerformance && { networkPerformance }),
-                            ...(memory && { memory }),
-                            ...(totalIops && { totalIops }),
-                            ...(totalThroughput && { totalThroughput }),
-                            ...(numDatabases &&
-                                incomingTotalStorage && {
-                                    totalStorage: sizeInGigaBytes(incomingTotalStorage, 'B') * primaryDbRatio
-                                }),
-                            ...(numDatabasesSecondary &&
-                                incomingTotalStorage && {
-                                    totalSecondaryStorage: sizeInGigaBytes(incomingTotalStorage, 'B') * secondaryDbRatio
-                                }),
-                            deploymentType
-                        };
-                    }
+            const hasUserOverrides = hasComputeOverrides(
+                sqlInstanceData.map(inst => ({
+                    id: inst.sqlInstanceId,
+                    vcpus: inst.noOfVcpusInUse,
+                    memoryBytes: inst.memory,
+                    networkPerformance: inst.networkPerformance
+                })),
+                (rawSqlInstanceDetails ?? []).map(stored => {
+                    const [memDetails] = parseMemoryUtilization(stored.memUtilization || '') || [];
                     return {
-                        ...detail,
-                        deploymentType
+                        id: stored.instanceGuid,
+                        vcpus: stored.noOfVcpusInUse ?? parseInt(stored.vcpusPerInstance, 10),
+                        memoryBytes: memDetails?.used ?? stored.memory ?? 0,
+                        networkPerformance: stored.networkPerformance ?? NETWORK_PERF.UP_TO_10
                     };
-                } catch (error) {
-                    logger.warn('Error updating SQL instance details based on request', { detail, error });
-                    return undefined;
-                }
-            });
+                })
+            );
+
+            const updatedSqlDetailsBasedOnRequest = applySqlInstanceOverrides(
+                rawSqlInstanceDetails,
+                sqlInstanceData,
+                deploymentType
+            );
 
             const data: OnPremCollectionObject = {
                 windowsConfig: hostConfig as unknown as WindowsConfig,
@@ -1043,7 +1243,7 @@ async function getOnPremResourceExploreSavings(
                 scriptVersion,
                 timestamp: new Date(reportCreationTime).toISOString()
             };
-            const analysisResult = await analyzeOnpremData(accountId, data, snapshotInfo, regionCode, true);
+            const analysisResult = await analyzeOnpremData(accountId, data, snapshotInfo, regionCode, hasUserOverrides);
 
             if (isEmpty(analysisResult)) {
                 const errorMessage = 'No analysis result found for the input provided.';
@@ -1055,7 +1255,6 @@ async function getOnPremResourceExploreSavings(
                 resourceName,
                 deploymentModel: deploymentType,
                 creationTime: new Date(reportCreationTime).getTime(),
-                region,
                 regionCode,
                 calculations: calculations as StorageSavingsMetricsCalculationsResponseType,
                 storageSavings: storageSavings as StorageSavingsResponseType,
@@ -1070,21 +1269,45 @@ async function getOnPremResourceExploreSavings(
         }
     }
 
-    // If no user input is provided, return the persisted report data
+    if (isSavedAssessmentData(assessmentData) && assessmentData.regionCode === regionCode) {
+        return buildHybridExploreSavingsResponse({
+            accountId,
+            resourceId,
+            resourceName,
+            deploymentType,
+            reportCreationTime,
+            regionCode,
+            savedAssessmentData: assessmentData,
+            rawSqlInstanceDetails,
+            windowsConfig: hostConfig as unknown as WindowsConfig,
+            snapshotInfo
+        });
+    }
+
+    // Fallback: no cached data available, recompute everything
     try {
-        const { calculations, storageSavings } = assessmentData as {
-            calculations: StorageSavingsMetricsCalculationsResponseType;
-            storageSavings: StorageSavingsResponseType;
+        const data: OnPremCollectionObject = {
+            windowsConfig: hostConfig as unknown as WindowsConfig,
+            sqlServerInfo: rawSqlInstanceDetails,
+            scriptVersion,
+            timestamp: new Date(reportCreationTime).toISOString()
         };
+        const analysisResult = await analyzeOnpremData(accountId, data, snapshotInfo, regionCode);
+
+        if (isEmpty(analysisResult)) {
+            const errorMessage = 'No analysis result found for the selected resource.';
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+        const [{ storageSavings, calculations }] = analysisResult;
         return {
             resourceId,
             resourceName,
             deploymentModel: deploymentType,
             creationTime: new Date(reportCreationTime).getTime(),
-            region,
             regionCode,
-            calculations,
-            storageSavings
+            calculations: calculations as StorageSavingsMetricsCalculationsResponseType,
+            storageSavings: storageSavings as StorageSavingsResponseType,
+            ...(snapshotInfo && { snapShotInfo: snapshotInfo })
         };
     } catch (error) {
         logger.error('Failed to fetch assessment data for the selected resource', { accountId, resourceId, error });
@@ -1122,6 +1345,7 @@ type IndividualResourceInfo = {
     finding: string;
     currentInstanceType?: string;
     recommendedInstanceType?: string;
+    savedAssessmentData?: SavedAssessmentData;
 };
 
 type ResourceWithPricing = IndividualResourceInfo & {
@@ -1130,6 +1354,58 @@ type ResourceWithPricing = IndividualResourceInfo & {
     currentPricing: PricingDetails;
     recommendedPricing: PricingDetails;
 };
+
+function applySqlInstanceOverrides(
+    rawSqlInstanceDetails: SqlInstanceDetails[],
+    sqlInstanceData: SqlInstanceDetailsRequestObjectType[],
+    deploymentType: DATABASE_DEPLOYMENT_TYPE | null
+) {
+    return rawSqlInstanceDetails.map(detail => {
+        try {
+            const {
+                numDatabases: { primary: numDatabases, secondary: numDatabasesSecondary }
+            } = parseSqlUsageParams(detail);
+            const instanceData = sqlInstanceData.find(
+                (data: { sqlInstanceId: string }) => data.sqlInstanceId === detail.instanceGuid
+            );
+            if (instanceData) {
+                const {
+                    noOfVcpusInUse,
+                    memory,
+                    networkPerformance,
+                    totalIops,
+                    totalThroughput,
+                    totalStorage: incomingTotalStorage
+                } = instanceData;
+
+                const totalDbCount = numDatabases + numDatabasesSecondary;
+                const primaryDbRatio = totalDbCount > 0 ? numDatabases / totalDbCount : 0;
+                const secondaryDbRatio = totalDbCount > 0 ? numDatabasesSecondary / totalDbCount : 0;
+                return {
+                    ...detail,
+                    ...(noOfVcpusInUse && { noOfVcpusInUse }),
+                    ...(networkPerformance && { networkPerformance }),
+                    ...(memory && { memory }),
+                    ...(totalIops && { totalIops }),
+                    ...(totalThroughput && { totalThroughput }),
+                    ...(numDatabases &&
+                        incomingTotalStorage && {
+                            totalStorage: sizeInGigaBytes(incomingTotalStorage, 'B') * primaryDbRatio
+                        }),
+                    ...(numDatabasesSecondary &&
+                        incomingTotalStorage && {
+                            totalSecondaryStorage: sizeInGigaBytes(incomingTotalStorage, 'B') * secondaryDbRatio
+                        }),
+                    deploymentType
+                };
+            }
+            return { ...detail, deploymentType };
+        } catch (error) {
+            logger.warn('Error applying SQL instance overrides', { instanceGuid: detail.instanceGuid, error });
+            return undefined;
+        }
+    });
+}
 
 function prepareResourceData(
     onPremDatabaseResource: OnPremTcoReport,
@@ -1151,51 +1427,11 @@ function prepareResourceData(
 
     let sqlInstanceDetailsToUse: SqlInstanceDetails[];
     if (sqlInstanceData) {
-        const updatedSqlDetailsBasedOnRequest = rawSqlInstanceDetails.map(detail => {
-            try {
-                const {
-                    numDatabases: { primary: numDatabases, secondary: numDatabasesSecondary }
-                } = parseSqlUsageParams(detail);
-                const instanceData = sqlInstanceData.find(
-                    (data: { sqlInstanceId: string }) => data.sqlInstanceId === detail.instanceGuid
-                );
-                if (instanceData) {
-                    const {
-                        noOfVcpusInUse,
-                        memory,
-                        networkPerformance,
-                        totalIops,
-                        totalThroughput,
-                        totalStorage: incomingTotalStorage
-                    } = instanceData;
-
-                    const totalDbCount = numDatabases + numDatabasesSecondary;
-                    const primaryDbRatio = totalDbCount > 0 ? numDatabases / totalDbCount : 0;
-                    const secondaryDbRatio = totalDbCount > 0 ? numDatabasesSecondary / totalDbCount : 0;
-                    return {
-                        ...detail,
-                        ...(noOfVcpusInUse && { noOfVcpusInUse }),
-                        ...(networkPerformance && { networkPerformance }),
-                        ...(memory && { memory }),
-                        ...(totalIops && { totalIops }),
-                        ...(totalThroughput && { totalThroughput }),
-                        ...(numDatabases &&
-                            incomingTotalStorage && {
-                                totalStorage: sizeInGigaBytes(incomingTotalStorage, 'B') * primaryDbRatio
-                            }),
-                        ...(numDatabasesSecondary &&
-                            incomingTotalStorage && {
-                                totalSecondaryStorage: sizeInGigaBytes(incomingTotalStorage, 'B') * secondaryDbRatio
-                            }),
-                        deploymentType
-                    };
-                }
-                return { ...detail, deploymentType };
-            } catch (error) {
-                logger.warn('Error updating SQL instance details', { detail, error });
-                return undefined;
-            }
-        });
+        const updatedSqlDetailsBasedOnRequest = applySqlInstanceOverrides(
+            rawSqlInstanceDetails,
+            sqlInstanceData,
+            deploymentType
+        );
         sqlInstanceDetailsToUse = compact(updatedSqlDetailsBasedOnRequest) as SqlInstanceDetails[];
     } else {
         sqlInstanceDetailsToUse = compact(rawSqlInstanceDetails) as SqlInstanceDetails[];
@@ -1218,16 +1454,19 @@ function prepareResourceData(
 
 async function deriveInstanceTypesForResource(
     prepData: ResourcePrepData,
-    regionCode: string
+    regionCode: string,
+    hasUserOverrides: boolean
 ): Promise<ResourceDataWithInstanceTypes> {
     const { windowsConfig, sqlInstanceDetails, currentLicenseEdition, recommendedLicenseEdition } = prepData;
 
     const [currentInstanceType, recommendedInstanceType] = await Promise.all([
-        deriveHostConfigBasedInstanceType(
-            regionCode,
-            windowsConfig,
-            isNonFreeEnterpriseEdition(currentLicenseEdition) ? ENTERPRISE_EDITION : STANDARD_EDITION
-        ),
+        hasUserOverrides
+            ? deriveSqlUsageBasedInstanceType(regionCode, sqlInstanceDetails, currentLicenseEdition)
+            : deriveHostConfigBasedInstanceType(
+                  regionCode,
+                  windowsConfig,
+                  isNonFreeEnterpriseEdition(currentLicenseEdition) ? ENTERPRISE_EDITION : STANDARD_EDITION
+              ),
         deriveSqlUsageBasedInstanceType(regionCode, sqlInstanceDetails, recommendedLicenseEdition)
     ]);
 
@@ -1318,153 +1557,129 @@ async function fetchPricingForResources(
 }
 
 function buildPerResourceCalculations(resourcesWithPricing: ResourceWithPricing[], monthlySqlByolCost?: number) {
-    const existingComputeCalculation: ComputeCalculationEntry[] = [];
-    const existingLicenseCalculation: LicenseCalculationEntry[] = [];
-    const recommendedComputeCalculation: ComputeCalculationEntry[] = [];
-    const recommendedLicenseCalculation: LicenseCalculationEntry[] = [];
-    const computeSavings: MssqlComputeSavingsEntry[] = [];
-    const licenseSavings: MssqlLicenseSavingsEntry[] = [];
-    const perResourceAssessmentData: MssqlPerResourceAssessment[] = [];
+    const isUsingByol = monthlySqlByolCost && monthlySqlByolCost > 0;
 
-    for (const resourceInfo of resourcesWithPricing) {
-        const {
+    const inputs: ResourceComputeInput[] = resourcesWithPricing.map(
+        ({
+            currentPricing,
+            currentInstanceType,
+            currentLicenseType,
+            recommendedPricing,
+            recommendedInstanceType,
+            recommendedLicenseType,
             resourceId,
             resourceName,
             deploymentType,
             existingNodeCount,
-            recommendedNodeCount,
-            currentLicenseEdition,
-            recommendedLicenseEdition,
-            finding,
-            currentInstanceType,
-            recommendedInstanceType,
-            currentLicenseType,
-            recommendedLicenseType,
-            currentPricing,
-            recommendedPricing
-        } = resourceInfo;
+            recommendedNodeCount
+        }) => {
+            const currentPrice = getPricePerUnit(currentPricing, currentInstanceType, currentLicenseType);
+            const currentBasePrice = getPricePerUnit(currentPricing, currentInstanceType, 'NA');
+            const currentLicensePrice = currentPrice - currentBasePrice;
 
-        const currentPrice = currentPricing?.[currentInstanceType!]?.[currentLicenseType]?.pricePerUnit || 0;
-        const currentBasePrice = currentPricing?.[currentInstanceType!]?.NA?.pricePerUnit || 0;
-        const currentLicensePrice = currentPrice - currentBasePrice;
+            const recommendedPrice = getPricePerUnit(
+                recommendedPricing,
+                recommendedInstanceType,
+                recommendedLicenseType
+            );
+            const recommendedBasePrice = getPricePerUnit(recommendedPricing, recommendedInstanceType, 'NA');
 
-        const recommendedPrice =
-            recommendedPricing?.[recommendedInstanceType!]?.[recommendedLicenseType]?.pricePerUnit || 0;
-        const recommendedBasePrice = recommendedPricing?.[recommendedInstanceType!]?.NA?.pricePerUnit || 0;
-        const recommendedLicensePrice = recommendedPrice - recommendedBasePrice;
+            const existingLicenseIncluded = isUsingByol ? false : currentLicensePrice > 0;
 
-        const isUsingByol = monthlySqlByolCost && monthlySqlByolCost > 0;
-        const existingLicenseIncluded = isUsingByol ? false : currentLicensePrice > 0;
+            return {
+                resourceId,
+                resourceName,
+                deploymentType,
+                existingNodeCount,
+                recommendedNodeCount,
+                currentInstanceType,
+                recommendedInstanceType,
+                existing: {
+                    basePrice: currentBasePrice,
+                    fullPrice: currentPrice,
+                    licenseIncluded: existingLicenseIncluded
+                },
+                recommended: { basePrice: recommendedBasePrice, fullPrice: recommendedPrice, licenseIncluded: true }
+            };
+        }
+    );
 
-        const { machineDetails: currentMachineDetails, instanceTypeDisplay: existingInstanceTypeDisplay } =
-            buildMachineDetailsForNodes({
-                instanceType: currentInstanceType!,
-                basePrice: currentBasePrice,
-                fullPrice: currentPrice,
-                licenseIncluded: existingLicenseIncluded,
-                nodeCount: existingNodeCount
-            });
-        const { machineDetails: recommendedMachineDetails, instanceTypeDisplay: recommendedInstanceTypeDisplay } =
-            buildMachineDetailsForNodes({
-                instanceType: recommendedInstanceType!,
-                basePrice: recommendedBasePrice,
-                fullPrice: recommendedPrice,
-                licenseIncluded: true,
-                nodeCount: recommendedNodeCount
-            });
+    const computeResult = buildComputeCalculationsForResources(inputs);
 
-        const existingEntry = buildComputeCalculationEntry({
-            resourceName,
-            deploymentType,
-            instanceType: existingInstanceTypeDisplay,
-            basePrice: currentBasePrice,
-            fullPrice: currentPrice,
-            nodeCount: existingNodeCount,
-            machineDetails: currentMachineDetails
-        });
-        existingComputeCalculation.push(existingEntry);
+    const existingLicenseCalculation: LicenseCalculation[] = [];
+    const recommendedLicenseCalculation: LicenseCalculation[] = [];
+    const licenseSavings: MssqlLicenseSavingsEntry[] = [];
+    const perResourceAssessmentData: MssqlPerResourceAssessment[] = [];
 
-        const recommendedEntry = buildComputeCalculationEntry({
-            resourceName,
-            deploymentType,
-            instanceType: recommendedInstanceTypeDisplay,
-            basePrice: recommendedBasePrice,
-            fullPrice: recommendedPrice,
-            nodeCount: recommendedNodeCount,
-            machineDetails: recommendedMachineDetails
-        });
-        recommendedComputeCalculation.push(recommendedEntry);
+    for (let i = 0; i < resourcesWithPricing.length; i += 1) {
+        const r = resourcesWithPricing[i];
+        const input = inputs[i];
 
-        const existingLicenseMonthlyPrice = currentLicensePrice * HOURS_IN_MONTH * existingNodeCount;
-        const recommendedLicenseMonthlyPrice = recommendedLicensePrice * HOURS_IN_MONTH * recommendedNodeCount;
-        const existingLicenseHourlyPrice = currentLicensePrice * existingNodeCount;
-        const recommendedLicenseHourlyPrice = recommendedLicensePrice * recommendedNodeCount;
+        const currentLicensePrice = input.existing.fullPrice - input.existing.basePrice;
+        const recommendedLicensePrice = input.recommended.fullPrice - input.recommended.basePrice;
+
+        const existingLicenseMonthlyPrice = currentLicensePrice * HOURS_IN_MONTH * r.existingNodeCount;
+        const recommendedLicenseMonthlyPrice = recommendedLicensePrice * HOURS_IN_MONTH * r.recommendedNodeCount;
+        const existingLicenseHourlyPrice = currentLicensePrice * r.existingNodeCount;
+        const recommendedLicenseHourlyPrice = recommendedLicensePrice * r.recommendedNodeCount;
 
         existingLicenseCalculation.push({
-            resourceName,
-            deploymentType,
-            sqlServerEdition: currentLicenseEdition,
+            resourceName: r.resourceName,
+            deploymentType: r.deploymentType,
+            sqlServerEdition: r.currentLicenseEdition,
             licenseHourlyPrice: existingLicenseHourlyPrice,
-            licenseIncluded: existingLicenseIncluded,
+            licenseIncluded: input.existing.licenseIncluded,
             licenseMonthlyPrice: existingLicenseMonthlyPrice,
             hoursInMonth: HOURS_IN_MONTH
         });
 
         recommendedLicenseCalculation.push({
-            resourceName,
-            deploymentType,
-            sqlServerEdition: recommendedLicenseEdition,
+            resourceName: r.resourceName,
+            deploymentType: r.deploymentType,
+            sqlServerEdition: r.recommendedLicenseEdition,
             licenseHourlyPrice: recommendedLicenseHourlyPrice,
             licenseIncluded: true,
             licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
             hoursInMonth: HOURS_IN_MONTH
         });
 
-        computeSavings.push({
-            resourceName,
-            deploymentType,
-            existing: existingEntry,
-            recommended: recommendedEntry
-        });
-
         licenseSavings.push({
-            resourceName,
-            deploymentType,
+            resourceName: r.resourceName,
+            deploymentType: r.deploymentType,
             existing: {
-                sqlServerEdition: currentLicenseEdition,
+                sqlServerEdition: r.currentLicenseEdition,
                 licenseHourlyPrice: existingLicenseHourlyPrice,
-                licenseIncluded: existingLicenseIncluded,
+                licenseIncluded: input.existing.licenseIncluded,
                 licenseMonthlyPrice: existingLicenseMonthlyPrice,
                 hoursInMonth: HOURS_IN_MONTH
             },
             recommended: {
-                sqlServerEdition: recommendedLicenseEdition,
+                sqlServerEdition: r.recommendedLicenseEdition,
                 licenseHourlyPrice: recommendedLicenseHourlyPrice,
                 licenseIncluded: true,
                 licenseMonthlyPrice: recommendedLicenseMonthlyPrice,
                 hoursInMonth: HOURS_IN_MONTH
             },
-            finding
+            finding: r.finding
         });
 
-        // Build per-resource assessment data for DB storage
         perResourceAssessmentData.push({
-            resourceId,
-            existingComputeCalculation: existingComputeCalculation[existingComputeCalculation.length - 1],
-            existingLicenseCalculation: existingLicenseCalculation[existingLicenseCalculation.length - 1],
-            recommendedComputeCalculation: recommendedComputeCalculation[recommendedComputeCalculation.length - 1],
-            recommendedLicenseCalculation: recommendedLicenseCalculation[recommendedLicenseCalculation.length - 1],
-            computeSavings: computeSavings[computeSavings.length - 1],
-            licenseSavings: licenseSavings[licenseSavings.length - 1]
+            resourceId: r.resourceId,
+            existingComputeCalculation: computeResult.existingComputeCalculation[i],
+            existingLicenseCalculation: existingLicenseCalculation[i],
+            recommendedComputeCalculation: computeResult.recommendedComputeCalculation[i],
+            recommendedLicenseCalculation: recommendedLicenseCalculation[i],
+            computeSavings: computeResult.computeSavings[i],
+            licenseSavings: licenseSavings[i]
         });
     }
 
     return {
-        existingComputeCalculation,
+        existingComputeCalculation: computeResult.existingComputeCalculation,
         existingLicenseCalculation,
-        recommendedComputeCalculation,
+        recommendedComputeCalculation: computeResult.recommendedComputeCalculation,
         recommendedLicenseCalculation,
-        computeSavings,
+        computeSavings: computeResult.computeSavings,
         licenseSavings,
         perResourceAssessmentData
     };
@@ -1483,7 +1698,7 @@ async function getOnPremBulkResourceExploreSavings(
         snapshotInfo
     });
 
-    const region = validateAndGetRegion(regionCode);
+    validateAndGetRegion(regionCode);
 
     const resourceIds = compact(resources.map(r => r.resourceId));
     const onPremDatabaseResources = await listOnPremDatabaseResources(
@@ -1514,13 +1729,69 @@ async function getOnPremBulkResourceExploreSavings(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
 
-        // Step 2: Derive instance types for all resources in parallel
+        // Step 2: Derive instance types — skip for resources with valid saved assessment data
+        // (same region, no user overrides). Those resources reuse saved compute/license calculations
+        // directly instead of re-deriving instance types and re-fetching pricing.
+        //
+        // Iterate over resourcePrepDataList (post-compact) rather than deduplicatedResources so that
+        // index i always corresponds to the correct prepData. compact() removes null entries and shifts
+        // indices, so indexing into resourcePrepDataList[i] via deduplicatedResources[i] would silently
+        // pair the wrong rawRecord with a prepData after any null is removed.
         const resourceDataWithInstanceTypes = await Promise.all(
-            resourcePrepDataList.map(prepData => deriveInstanceTypesForResource(prepData, regionCode))
+            resourcePrepDataList.map(async prepData => {
+                const rawRecord = deduplicatedResources.find(r => r.resource_id === prepData.resourceId);
+                if (!rawRecord) {
+                    return Promise.resolve(null);
+                }
+
+                const requestResource = resources.find(r => r.resourceId === prepData.resourceId);
+                const savedData = rawRecord.assessment_data;
+
+                // Only bypass the cache if compute-affecting fields (vCPUs, memory, network) differ
+                // from what was used to generate the saved assessment. Storage/IOPS/throughput overrides
+                // only affect EBS sizing and do not require re-deriving instance types.
+                const persistedInstances = rawRecord.database_instances_data as unknown as SqlInstanceDetails[];
+                const hasOverrides = hasComputeOverrides(
+                    requestResource?.sqlInstanceData?.map(inst => ({
+                        id: inst.sqlInstanceId,
+                        vcpus: inst.noOfVcpusInUse,
+                        memoryBytes: inst.memory,
+                        networkPerformance: inst.networkPerformance
+                    })),
+                    (persistedInstances ?? []).map(stored => {
+                        const [memDetails] = parseMemoryUtilization(stored.memUtilization || '') || [];
+                        return {
+                            id: stored.instanceGuid,
+                            vcpus: stored.noOfVcpusInUse ?? parseInt(stored.vcpusPerInstance, 10),
+                            memoryBytes: memDetails?.used ?? stored.memory ?? 0,
+                            networkPerformance: stored.networkPerformance ?? NETWORK_PERF.UP_TO_10
+                        };
+                    })
+                );
+
+                if (!hasOverrides && isSavedAssessmentData(savedData) && savedData.regionCode === regionCode) {
+                    logger.info('Using saved assessment data for bulk resource (no compute overrides)', {
+                        accountId,
+                        resourceId: prepData.resourceId
+                    });
+                    return {
+                        ...prepData,
+                        currentInstanceType: savedData.existingInstanceType,
+                        recommendedInstanceType: savedData.recommendedInstanceType,
+                        savedAssessmentData: savedData
+                    };
+                }
+
+                const result = await deriveInstanceTypesForResource(prepData, regionCode, hasOverrides);
+                return {
+                    ...result,
+                    savedAssessmentData: undefined as SavedAssessmentData | undefined
+                };
+            })
         );
 
         // Filter out resources where instance types could not be derived
-        const validResourceDataList = resourceDataWithInstanceTypes.filter(data => {
+        const validResourceDataList = compact(resourceDataWithInstanceTypes).filter(data => {
             if (!data.currentInstanceType || !data.recommendedInstanceType) {
                 logger.warn(`Could not derive instance types for resource ${data.resourceId}, skipping`);
                 return false;
@@ -1548,7 +1819,8 @@ async function getOnPremBulkResourceExploreSavings(
                 recommendedLicenseEdition,
                 finding,
                 currentInstanceType,
-                recommendedInstanceType
+                recommendedInstanceType,
+                savedAssessmentData
             }) => ({
                 resourceId,
                 resourceName,
@@ -1560,7 +1832,8 @@ async function getOnPremBulkResourceExploreSavings(
                 recommendedLicenseEdition,
                 finding,
                 currentInstanceType,
-                recommendedInstanceType
+                recommendedInstanceType,
+                savedAssessmentData
             })
         );
 
@@ -1579,12 +1852,8 @@ async function getOnPremBulkResourceExploreSavings(
         const combinedExistingLicenseEdition = hasEnterpriseEdition ? ENTERPRISE_EDITION : STANDARD_EDITION;
 
         // Step 7: Prepare base params for marketing API calls
-        const {
-            clonedCopiesCount = 1,
-            monthlyChangeRatePercentage = 8,
-            snapshotFrequency = 'Daily',
-            monthlySqlByolCost
-        } = snapshotInfo || {};
+        const { clonedCopiesCount, monthlyChangeRatePercentage, snapshotFrequency, monthlySqlByolCost } =
+            resolveSnapshotDefaults(snapshotInfo);
 
         // Determine combined deployment type: if any resource is FCI or AOAG, use that for Multi-AZ FSx pricing
         const hasMultiAzDeployment = individualResourceInfo.some(
@@ -1603,10 +1872,14 @@ async function getOnPremBulkResourceExploreSavings(
             sqlServerDeploymentType: combinedDeploymentType
         };
 
-        // Step 8: Call marketing APIs AND fetch pricing in parallel (independent operations)
+        // Step 8: Call marketing APIs AND fetch pricing in parallel (independent operations).
+        // For resources with saved assessment data, pricing is not re-fetched — saved
+        // compute/license calculations are used directly instead.
         // The recommended marketing API call is intentionally omitted: recommendedTotalSummary is
         // derived from per-resource pricing data (more accurate, avoids an extra API round-trip).
-        const [existingConfigData, existingConfigCalculations, resourcesWithPricing] = await Promise.all([
+        const resourcesNeedingPricing = individualResourceInfo.filter(info => !info.savedAssessmentData);
+
+        const [existingConfigData, existingConfigCalculations, pricedResources] = await Promise.all([
             performManualModeStorageSavingsCalculations(
                 accountId,
                 regionCode,
@@ -1616,6 +1889,7 @@ async function getOnPremBulkResourceExploreSavings(
                     sqlServerEdition: combinedExistingLicenseEdition
                 },
                 totalNodeCount,
+                true,
                 true
             ),
             getManualModeStorageSavingsCalculationMetrics(
@@ -1627,20 +1901,114 @@ async function getOnPremBulkResourceExploreSavings(
                     sqlServerEdition: combinedExistingLicenseEdition
                 },
                 totalNodeCount,
+                true,
                 true
             ),
-            fetchPricingForResources(individualResourceInfo, regionCode)
+            fetchPricingForResources(resourcesNeedingPricing, regionCode)
         ]);
 
-        // Step 9: Build per-resource calculations
+        // Step 9: Build per-resource calculations in original order.
+        // Resources with saved assessment data use their stored calculations directly;
+        // the rest go through buildPerResourceCalculations with fresh pricing.
         const {
-            existingComputeCalculation,
-            existingLicenseCalculation,
-            recommendedComputeCalculation,
-            recommendedLicenseCalculation,
-            computeSavings,
-            licenseSavings
-        } = buildPerResourceCalculations(resourcesWithPricing, monthlySqlByolCost);
+            existingComputeCalculation: pricedExisting,
+            existingLicenseCalculation: pricedExistingLicense,
+            recommendedComputeCalculation: pricedRecommended,
+            recommendedLicenseCalculation: pricedRecommendedLicense,
+            computeSavings: pricedComputeSavings,
+            licenseSavings: pricedLicenseSavings,
+            perResourceAssessmentData: pricedPerResourceAssessment
+        } = buildPerResourceCalculations(pricedResources, monthlySqlByolCost);
+
+        const pricedByResourceId = new Map(
+            pricedPerResourceAssessment.map((entry, idx) => [
+                entry.resourceId,
+                {
+                    existingCompute: pricedExisting[idx],
+                    existingLicense: pricedExistingLicense[idx],
+                    recommendedCompute: pricedRecommended[idx],
+                    recommendedLicense: pricedRecommendedLicense[idx],
+                    computeSaving: pricedComputeSavings[idx],
+                    licenseSaving: pricedLicenseSavings[idx]
+                }
+            ])
+        );
+
+        const existingComputeCalculation: ComputeCalculation[] = [];
+        const existingLicenseCalculation: LicenseCalculation[] = [];
+        const recommendedComputeCalculation: ComputeCalculation[] = [];
+        const recommendedLicenseCalculation: LicenseCalculation[] = [];
+        const computeSavings: MssqlComputeSavingsEntry[] = [];
+        const licenseSavings: MssqlLicenseSavingsEntry[] = [];
+
+        for (const {
+            resourceId,
+            resourceName,
+            deploymentType,
+            currentLicenseEdition,
+            recommendedLicenseEdition,
+            finding,
+            savedAssessmentData: saved
+        } of individualResourceInfo) {
+            if (saved) {
+                const existingLic = saved.existingLicenseCalculation ?? ({} as LicenseCalculation);
+                const recommendedLic = saved.recommendedLicenseCalculation ?? ({} as LicenseCalculation);
+
+                existingComputeCalculation.push(saved.existingComputeCalculation);
+                recommendedComputeCalculation.push(saved.recommendedComputeCalculation);
+                existingLicenseCalculation.push({
+                    resourceName,
+                    deploymentType,
+                    sqlServerEdition: existingLic.sqlServerEdition || currentLicenseEdition,
+                    licenseHourlyPrice: existingLic.licenseHourlyPrice || 0,
+                    licenseIncluded: existingLic.licenseIncluded ?? false,
+                    licenseMonthlyPrice: existingLic.licenseMonthlyPrice || 0,
+                    hoursInMonth: existingLic.hoursInMonth || HOURS_IN_MONTH
+                });
+                recommendedLicenseCalculation.push({
+                    resourceName,
+                    deploymentType,
+                    sqlServerEdition: recommendedLic.sqlServerEdition || recommendedLicenseEdition,
+                    licenseHourlyPrice: recommendedLic.licenseHourlyPrice || 0,
+                    licenseIncluded: recommendedLic.licenseIncluded ?? true,
+                    licenseMonthlyPrice: recommendedLic.licenseMonthlyPrice || 0,
+                    hoursInMonth: recommendedLic.hoursInMonth || HOURS_IN_MONTH
+                });
+                computeSavings.push({
+                    resourceName,
+                    deploymentType,
+                    existing: saved.existingComputeCalculation,
+                    recommended: saved.recommendedComputeCalculation
+                });
+                licenseSavings.push({
+                    resourceName,
+                    deploymentType,
+                    existing: {
+                        sqlServerEdition: existingLic.sqlServerEdition || currentLicenseEdition,
+                        licenseHourlyPrice: existingLic.licenseHourlyPrice || 0,
+                        licenseIncluded: existingLic.licenseIncluded ?? false,
+                        licenseMonthlyPrice: existingLic.licenseMonthlyPrice || 0,
+                        hoursInMonth: existingLic.hoursInMonth || HOURS_IN_MONTH
+                    },
+                    recommended: {
+                        sqlServerEdition: recommendedLic.sqlServerEdition || recommendedLicenseEdition,
+                        licenseHourlyPrice: recommendedLic.licenseHourlyPrice || 0,
+                        licenseIncluded: recommendedLic.licenseIncluded ?? true,
+                        licenseMonthlyPrice: recommendedLic.licenseMonthlyPrice || 0,
+                        hoursInMonth: recommendedLic.hoursInMonth || HOURS_IN_MONTH
+                    },
+                    finding: saved.licenseFinding || finding
+                });
+            } else {
+                const priced = pricedByResourceId.get(resourceId)!;
+                existingComputeCalculation.push(priced.existingCompute);
+                existingLicenseCalculation.push(priced.existingLicense);
+                recommendedComputeCalculation.push(priced.recommendedCompute);
+                recommendedLicenseCalculation.push(priced.recommendedLicense);
+                computeSavings.push(priced.computeSaving);
+                licenseSavings.push(priced.licenseSaving);
+            }
+        }
 
         // Step 10: Extract shared storage data from existing config API response
         const { ebs, fsx, single, multi } = existingConfigData || {};
@@ -1686,7 +2054,6 @@ async function getOnPremBulkResourceExploreSavings(
         };
 
         return {
-            region,
             regionCode,
             calculations: aggregatedCalculations,
             storageSavings: aggregatedStorageSavings,

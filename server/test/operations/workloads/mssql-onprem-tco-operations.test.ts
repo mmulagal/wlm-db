@@ -21,6 +21,7 @@ import {
 import { processEbsDisks, EbsVolumeType } from '../../../src/operations/onprem-tco-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_REGION, MSSQL } from '../../../src/utils/consts';
 import { convertGiBToBytes } from '../../../src/utils/utils';
+import { hasComputeOverrides } from '../../../src/utils/onprem-tco/onprem-tco-utils';
 import { OnPremCollectionObject, SqlInstanceDetails } from '../../../src/utils/onprem-tco/onprem-tco-generic.types';
 
 const loadJson = (filename: string): OnPremCollectionObject => {
@@ -592,5 +593,96 @@ describe('Explore Savings', () => {
         await expect(
             getOnPremResourceExploreSavings(ACCOUNT_ID, 'nonexistent-resource-id', DEFAULT_AWS_REGION)
         ).rejects.toThrow('No On-premises');
+    });
+});
+
+// ============================================================================
+// Suite 7: Compute override cache-bypass (MSSQL bulk)
+// ============================================================================
+
+describe('MSSQL bulk compute override cache-bypass', () => {
+    const stdData = loadJson('SQLServerDataResponse-DemoSTD.json');
+
+    afterEach(async () => {
+        await removeOnPremTcoReportData(undefined, ACCOUNT_ID, undefined, DATABASE_TYPE.mssql);
+    });
+
+    it('uses cache when compute fields are unchanged (only storage changed)', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+        const resources = await getOnPremDatabaseResources(ACCOUNT_ID);
+        const { resourceId } = resources.items[0];
+
+        // Populate assessment_data cache
+        await getOnPremBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [{ resourceId }]);
+
+        // Build override from the raw fixture — compute fields identical, only totalStorage changed.
+        // sqlInstanceId maps to instanceGuid as stored by the server.
+        const [rawInstance] = stdData.sqlServerInfo as SqlInstanceDetails[];
+        const vcpus = rawInstance.noOfVcpusInUse ?? parseInt(rawInstance.vcpusPerInstance, 10);
+        const memoryBytes = rawInstance.memory ?? 0;
+        const networkPerformance = rawInstance.networkPerformance ?? 'upTo10';
+
+        // Verify the decision function sees no compute override — only storage differs.
+        expect(
+            hasComputeOverrides(
+                [{ id: rawInstance.instanceGuid, vcpus, memoryBytes, networkPerformance }],
+                [{ id: rawInstance.instanceGuid, vcpus, memoryBytes, networkPerformance }]
+            )
+        ).toBe(false);
+
+        const storageOnlyOverride = [
+            {
+                sqlInstanceId: rawInstance.instanceGuid,
+                noOfVcpusInUse: vcpus,
+                memory: memoryBytes,
+                networkPerformance,
+                totalStorage: convertGiBToBytes(9999)
+            }
+        ];
+
+        const result = await getOnPremBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [
+            { resourceId, sqlInstanceData: storageOnlyOverride }
+        ]);
+
+        expect(result).toBeDefined();
+        expect(result.calculations).toBeDefined();
+    });
+
+    it('bypasses cache and re-derives instance type when vCPU count changes', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+        const resources = await getOnPremDatabaseResources(ACCOUNT_ID);
+        const { resourceId } = resources.items[0];
+
+        // Populate cache first
+        await getOnPremBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [{ resourceId }]);
+
+        const [rawInstance] = stdData.sqlServerInfo as SqlInstanceDetails[];
+        const baseVcpus = rawInstance.noOfVcpusInUse ?? parseInt(rawInstance.vcpusPerInstance, 10);
+        const memoryBytes = rawInstance.memory ?? 0;
+        const networkPerformance = rawInstance.networkPerformance ?? 'upTo10';
+
+        // Verify the decision function detects the vCPU change as a compute override.
+        expect(
+            hasComputeOverrides(
+                [{ id: rawInstance.instanceGuid, vcpus: baseVcpus * 2, memoryBytes, networkPerformance }],
+                [{ id: rawInstance.instanceGuid, vcpus: baseVcpus, memoryBytes, networkPerformance }]
+            )
+        ).toBe(true);
+
+        const vcpuOverride = [
+            {
+                sqlInstanceId: rawInstance.instanceGuid,
+                noOfVcpusInUse: baseVcpus * 2,
+                memory: memoryBytes,
+                networkPerformance
+            }
+        ];
+
+        const result = await getOnPremBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [
+            { resourceId, sqlInstanceData: vcpuOverride }
+        ]);
+
+        expect(result).toBeDefined();
+        expect(result.calculations).toBeDefined();
     });
 });

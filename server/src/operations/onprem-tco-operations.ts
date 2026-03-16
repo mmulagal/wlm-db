@@ -17,7 +17,7 @@ import {
     IO2_AVAILABLE_REGIONS,
     WLMDB
 } from '../utils/consts';
-import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes } from '../utils/utils';
+import { convertGiBToBytes, getArtifactsRegionBucketName, sizeInGigaBytes, validateWithSchema } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { removeOnPremTcoReportData } from '../lib/database/onprem-tco';
 import { updateJob } from '../lib/database/job';
@@ -33,7 +33,7 @@ import {
     performManualModeStorageSavingsCalculations,
     getManualModeStorageSavingsCalculationMetrics
 } from './storage-savings-operations';
-import { ManualModeInstancesType } from '../routes/types/storage-savings.types';
+import { ManualModeInstancesType, StorageSavingsRequestBodyType } from '../routes/types/storage-savings.types';
 
 const { getPreSignedUrl } = preSignedUrl;
 
@@ -78,6 +78,67 @@ interface StorageSavingsConfigCalculations {
     recommendedComputeCalculation?: unknown;
     recommendedLicenseCalculation?: unknown;
     [key: string]: unknown;
+}
+
+interface StorageSavingsMarketingApiParams {
+    accountId: string;
+    regionCode: string;
+    baseParams: {
+        clonedCopiesCount: number;
+        snapshotFrequency: string;
+        monthlyChangeRatePercentage: number;
+        sqlServerDeploymentType: string;
+        monthlySqlByolCost?: number;
+    };
+    existingEc2Instances: ManualModeInstancesType;
+    recommendedEc2Instances: ManualModeInstancesType;
+    existingEdition: string;
+    recommendedEdition: string;
+    existingNodeCount: number;
+    recommendedNodeCount: number;
+}
+
+interface MachineDetail {
+    instanceType: string;
+    price: number;
+    basePrice: number;
+    computeMonthlyPrice: number;
+    instanceMonthlyPrice: number;
+    licenseMonthlyPrice: number;
+    hoursInMonth: number;
+    licenseIncluded: boolean;
+}
+
+interface ComputeCalculation {
+    resourceName: string;
+    deploymentType: string;
+    instanceType: string;
+    computeHourlyPrice: number;
+    computeMonthlyPrice: number;
+    instanceMonthlyPrice: number;
+    hoursInMonth: number;
+    machineDetails: MachineDetail[];
+}
+
+interface LicenseCalculation {
+    resourceName: string;
+    deploymentType: string;
+    sqlServerEdition: string;
+    licenseHourlyPrice: number;
+    licenseIncluded: boolean;
+    licenseMonthlyPrice: number;
+    hoursInMonth: number;
+}
+
+interface SavedAssessmentData {
+    regionCode: string;
+    existingInstanceType: string;
+    recommendedInstanceType: string;
+    existingComputeCalculation: ComputeCalculation;
+    recommendedComputeCalculation: ComputeCalculation;
+    existingLicenseCalculation?: LicenseCalculation;
+    recommendedLicenseCalculation?: LicenseCalculation;
+    licenseFinding?: string;
 }
 
 function uint8ArrayToBase64(uint8Array: Uint8Array): string {
@@ -414,24 +475,6 @@ function validateAndGetRegion(regionCode: string): string {
     return region;
 }
 
-interface StorageSavingsMarketingApiParams {
-    accountId: string;
-    regionCode: string;
-    baseParams: {
-        clonedCopiesCount: number;
-        snapshotFrequency: string;
-        monthlyChangeRatePercentage: number;
-        sqlServerDeploymentType: string;
-        monthlySqlByolCost?: number;
-    };
-    existingEc2Instances: ManualModeInstancesType;
-    recommendedEc2Instances: ManualModeInstancesType;
-    existingEdition: string;
-    recommendedEdition: string;
-    existingNodeCount: number;
-    recommendedNodeCount: number;
-}
-
 async function fetchStorageSavingsFromMarketingApi(params: StorageSavingsMarketingApiParams) {
     const {
         accountId,
@@ -551,6 +594,32 @@ type PricingCacheKeyInfo = {
 
 type PricingDetails = Record<string, Record<string, { pricePerUnit: number }>>;
 
+function getPricePerUnit(
+    pricing: PricingDetails | undefined,
+    instanceType: string | undefined,
+    licenseType: string
+): number {
+    return pricing?.[instanceType!]?.[licenseType]?.pricePerUnit || 0;
+}
+
+function validateOrThrow(schema: object, data: unknown, label: string): void {
+    const { isValid, errors } = validateWithSchema(schema, data);
+    if (!isValid) {
+        const errorMessage = `${label}: ${JSON.stringify(errors)}`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+    }
+}
+
+function resolveSnapshotDefaults(snapshotInfo?: StorageSavingsRequestBodyType) {
+    return {
+        clonedCopiesCount: snapshotInfo?.clonedCopiesCount ?? 1,
+        monthlyChangeRatePercentage: snapshotInfo?.monthlyChangeRatePercentage ?? 8,
+        snapshotFrequency: snapshotInfo?.snapshotFrequency ?? 'Daily',
+        monthlySqlByolCost: snapshotInfo?.monthlySqlByolCost
+    };
+}
+
 async function fetchPricingForResourcesGeneric<TResource, TEnriched>(
     resources: TResource[],
     regionCode: string,
@@ -614,28 +683,6 @@ async function fetchPricingForResourcesGeneric<TResource, TEnriched>(
     });
 }
 
-interface MachineDetail {
-    instanceType: string;
-    price: number;
-    basePrice: number;
-    computeMonthlyPrice: number;
-    instanceMonthlyPrice: number;
-    licenseMonthlyPrice: number;
-    hoursInMonth: number;
-    licenseIncluded: boolean;
-}
-
-interface ComputeCalculationEntry {
-    resourceName: string;
-    deploymentType: string;
-    instanceType: string;
-    computeHourlyPrice: number;
-    computeMonthlyPrice: number;
-    instanceMonthlyPrice: number;
-    hoursInMonth: number;
-    machineDetails: MachineDetail[];
-}
-
 function buildMachineDetailsForNodes(params: {
     instanceType: string;
     basePrice: number;
@@ -661,7 +708,7 @@ function buildMachineDetailsForNodes(params: {
     };
 }
 
-function buildComputeCalculationEntry(params: {
+function buildComputeCalculation(params: {
     resourceName: string;
     deploymentType: string;
     instanceType: string;
@@ -669,7 +716,7 @@ function buildComputeCalculationEntry(params: {
     fullPrice: number;
     nodeCount: number;
     machineDetails: MachineDetail[];
-}): ComputeCalculationEntry {
+}): ComputeCalculation {
     const { resourceName, deploymentType, instanceType, basePrice, fullPrice, nodeCount, machineDetails } = params;
     return {
         resourceName,
@@ -702,6 +749,133 @@ function buildInstanceRequirements(params: {
             ...(networkBandwidthGbps && { NetworkBandwidthGbps: networkBandwidthGbps })
         }
     };
+}
+
+interface ResourceComputeInput {
+    resourceId: string;
+    resourceName: string;
+    deploymentType: string;
+    existingNodeCount: number;
+    recommendedNodeCount: number;
+    currentInstanceType?: string;
+    recommendedInstanceType?: string;
+    existing: { basePrice: number; fullPrice: number; licenseIncluded: boolean };
+    recommended: { basePrice: number; fullPrice: number; licenseIncluded: boolean };
+}
+
+interface ComputeSavings {
+    resourceName: string;
+    deploymentType: string;
+    existing: ComputeCalculation;
+    recommended: ComputeCalculation;
+}
+
+interface ComputeCalculationsResult {
+    existingComputeCalculation: ComputeCalculation[];
+    recommendedComputeCalculation: ComputeCalculation[];
+    computeSavings: ComputeSavings[];
+    perResourceAssessmentData: Array<{
+        resourceId: string;
+        existingComputeCalculation: ComputeCalculation;
+        recommendedComputeCalculation: ComputeCalculation;
+        computeSavings: ComputeSavings;
+    }>;
+}
+
+function buildComputeCalculationsForResources(resources: ResourceComputeInput[]): ComputeCalculationsResult {
+    const existingComputeCalculation: ComputeCalculation[] = [];
+    const recommendedComputeCalculation: ComputeCalculation[] = [];
+    const computeSavings: ComputeSavings[] = [];
+    const perResourceAssessmentData: ComputeCalculationsResult['perResourceAssessmentData'] = [];
+
+    for (const resource of resources) {
+        const {
+            resourceId,
+            resourceName,
+            deploymentType,
+            existingNodeCount,
+            recommendedNodeCount,
+            currentInstanceType,
+            recommendedInstanceType,
+            existing,
+            recommended
+        } = resource;
+
+        const { machineDetails: currentMachineDetails, instanceTypeDisplay: existingInstanceTypeDisplay } =
+            buildMachineDetailsForNodes({
+                instanceType: currentInstanceType!,
+                basePrice: existing.basePrice,
+                fullPrice: existing.fullPrice,
+                licenseIncluded: existing.licenseIncluded,
+                nodeCount: existingNodeCount
+            });
+        const { machineDetails: recommendedMachineDetails, instanceTypeDisplay: recommendedInstanceTypeDisplay } =
+            buildMachineDetailsForNodes({
+                instanceType: recommendedInstanceType!,
+                basePrice: recommended.basePrice,
+                fullPrice: recommended.fullPrice,
+                licenseIncluded: recommended.licenseIncluded,
+                nodeCount: recommendedNodeCount
+            });
+
+        const existingEntry = buildComputeCalculation({
+            resourceName,
+            deploymentType,
+            instanceType: existingInstanceTypeDisplay,
+            basePrice: existing.basePrice,
+            fullPrice: existing.fullPrice,
+            nodeCount: existingNodeCount,
+            machineDetails: currentMachineDetails
+        });
+        existingComputeCalculation.push(existingEntry);
+
+        const recommendedEntry = buildComputeCalculation({
+            resourceName,
+            deploymentType,
+            instanceType: recommendedInstanceTypeDisplay,
+            basePrice: recommended.basePrice,
+            fullPrice: recommended.fullPrice,
+            nodeCount: recommendedNodeCount,
+            machineDetails: recommendedMachineDetails
+        });
+        recommendedComputeCalculation.push(recommendedEntry);
+
+        const savings: ComputeSavings = {
+            resourceName,
+            deploymentType,
+            existing: existingEntry,
+            recommended: recommendedEntry
+        };
+        computeSavings.push(savings);
+
+        perResourceAssessmentData.push({
+            resourceId,
+            existingComputeCalculation: existingEntry,
+            recommendedComputeCalculation: recommendedEntry,
+            computeSavings: savings
+        });
+    }
+
+    return {
+        existingComputeCalculation,
+        recommendedComputeCalculation,
+        computeSavings,
+        perResourceAssessmentData
+    };
+}
+
+function isSavedAssessmentData(data: unknown): data is SavedAssessmentData {
+    if (!data || typeof data !== 'object') {
+        return false;
+    }
+    const record = data as Record<string, unknown>;
+    return (
+        typeof record.regionCode === 'string' &&
+        typeof record.existingInstanceType === 'string' &&
+        typeof record.recommendedInstanceType === 'string' &&
+        !!record.existingComputeCalculation &&
+        !!record.recommendedComputeCalculation
+    );
 }
 
 function buildCombinedEc2Instances(
@@ -766,12 +940,20 @@ export {
     buildInstanceRequirements,
     buildCombinedEc2Instances,
     fetchPricingForResourcesGeneric,
-    buildMachineDetailsForNodes,
-    buildComputeCalculationEntry,
+    buildComputeCalculation,
     MachineDetail,
-    ComputeCalculationEntry,
+    ComputeCalculation,
+    LicenseCalculation,
     PricingDetails,
-    PricingCacheKeyInfo,
+    getPricePerUnit,
+    validateOrThrow,
+    resolveSnapshotDefaults,
     EBSClassification,
-    EbsVolumeType
+    EbsVolumeType,
+    SavedAssessmentData,
+    isSavedAssessmentData,
+    StorageSavingsConfigData,
+    StorageSavingsConfigCalculations,
+    buildComputeCalculationsForResources,
+    ResourceComputeInput
 };

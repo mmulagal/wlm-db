@@ -661,8 +661,10 @@ function parsePgSqlInstanceInfo(instanceInfo: string) {
     }
 }
 
+const BYTES_PER_GIB = 1024 * 1024 * 1024;
+
 function convertGiBToBytes(sizeInGiB: number) {
-    return sizeInGiB * 1024 * 1024 * 1024;
+    return sizeInGiB * BYTES_PER_GIB;
 }
 
 function splitDomainUsername(input: string) {

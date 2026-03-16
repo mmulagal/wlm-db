@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import moment from 'moment';
 import getLogger from '../logger';
-import { generateHash } from '../utils';
+import { sizeInGigaBytes, generateHash } from '../utils';
 
 const logger = getLogger();
 
@@ -177,6 +177,53 @@ function getPowerOfTwoVcpuCount(maxVcpuCount: number) {
     return maxVcpuCount;
 }
 
+interface ComputeOverrideRequest {
+    id: string;
+    vcpus: number | null | undefined;
+    memoryBytes: number | null | undefined;
+    networkPerformance: string | null | undefined;
+}
+
+interface StoredComputeEntry {
+    id: string;
+    vcpus: number;
+    memoryBytes: number;
+    networkPerformance: string;
+}
+
+/**
+ * Determines whether any request-level compute overrides (vCPUs, memory, network)
+ * differ from what is persisted, which would require re-deriving instance types
+ * instead of using the cached assessment.
+ *
+ * Both MSSQL and Oracle callers normalise their workload-specific shapes into the
+ * generic {@link ComputeOverrideRequest} / {@link StoredComputeEntry} before calling.
+ *
+ * Memory is compared at GiB granularity (floor) so sub-MiB floating-point drift
+ * from the UI round-trip never causes a false cache bypass.
+ */
+function hasComputeOverrides(
+    requestEntries: ComputeOverrideRequest[] | undefined,
+    storedEntries: StoredComputeEntry[]
+): boolean {
+    if (!requestEntries?.length) {
+        return false;
+    }
+    return requestEntries.some(req => {
+        const stored = storedEntries.find(s => s.id === req.id);
+        if (!stored) {
+            return true;
+        }
+        return (
+            (req.vcpus && req.vcpus !== stored.vcpus) ||
+            (req.memoryBytes &&
+                Math.floor(sizeInGigaBytes(req.memoryBytes, 'B')) !==
+                    Math.floor(sizeInGigaBytes(stored.memoryBytes, 'B'))) ||
+            (req.networkPerformance && req.networkPerformance !== stored.networkPerformance)
+        );
+    });
+}
+
 export {
     parseCpuUtilization,
     parseMemoryUtilization,
@@ -187,5 +234,6 @@ export {
     parseAoagReadReplica,
     convertToDate,
     generateUniqueId,
-    getPowerOfTwoVcpuCount
+    getPowerOfTwoVcpuCount,
+    hasComputeOverrides
 };

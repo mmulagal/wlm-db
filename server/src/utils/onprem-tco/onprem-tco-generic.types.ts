@@ -130,6 +130,7 @@ interface OracleHostInfo {
     storageProtocol: string;
     storageDetails: string;
     nfsMounts: string;
+    nicSpeedMbps?: number;
 }
 
 interface OracleDatabaseInfo {

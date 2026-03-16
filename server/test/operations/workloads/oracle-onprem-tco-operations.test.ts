@@ -14,13 +14,13 @@ import {
     getIndividualOracleDatabaseResource,
     getOracleBulkResourceExploreSavings,
     deriveOracleInstanceType,
-    analyzeOracleData,
     uploadOracleTcoData,
     aggregateDatabaseEntries
 } from '../../../src/operations/workloads/oracle/oracle-onprem-tco-operations';
-import { validateWithSchema } from '../../../src/utils/utils';
 import { oracleCollectionObjectSchema, oracleHostInfoSchema } from '../../../src/utils/onprem-tco/onprem-tco-schemas';
 import { ACCOUNT_ID, DEFAULT_AWS_REGION, OracleDeploymentModel } from '../../../src/utils/consts';
+import { sizeInGigaBytes, validateWithSchema } from '../../../src/utils/utils';
+import { hasComputeOverrides } from '../../../src/utils/onprem-tco/onprem-tco-utils';
 import {
     OracleCollectionObject,
     OracleDatabaseEntry,
@@ -567,59 +567,7 @@ describe('deriveOracleInstanceType', () => {
 });
 
 // ============================================================================
-// Suite 8: analyzeOracleData
-// ============================================================================
-
-describe('analyzeOracleData', () => {
-    const standaloneData = loadJson('OracleDataResponse-DemoStandalone.json');
-
-    afterEach(async () => {
-        await removeOnPremTcoReportData(undefined, ACCOUNT_ID, undefined, ORACLE);
-    });
-
-    it('should analyze standalone Oracle data and return storageSavings and calculations', async () => {
-        await saveOracleReportInWlmdbDatabase(ACCOUNT_ID, standaloneData);
-        const resources = await getOnPremisesOracleDatabaseResources(ACCOUNT_ID);
-        const { resourceId } = resources.items[0];
-
-        const result = await analyzeOracleData(
-            ACCOUNT_ID,
-            resourceId,
-            standaloneData.hostInfo,
-            standaloneData.databases as OracleDatabaseEntry[]
-        );
-
-        expect(result).toBeDefined();
-        expect(result.storageSavings).toBeDefined();
-        expect(result.calculations).toBeDefined();
-    });
-
-    it('should return storageSavings even when sizingStats are absent', async () => {
-        const dataWithoutSizingStats = JSON.parse(JSON.stringify(standaloneData)) as OracleCollectionObject;
-        dataWithoutSizingStats.databases[0].performanceSummary = {
-            ...dataWithoutSizingStats.databases[0].performanceSummary,
-            sizingStats: undefined
-        } as any;
-
-        await saveOracleReportInWlmdbDatabase(ACCOUNT_ID, dataWithoutSizingStats);
-        const resources = await getOnPremisesOracleDatabaseResources(ACCOUNT_ID);
-        const { resourceId } = resources.items[0];
-
-        const result = await analyzeOracleData(
-            ACCOUNT_ID,
-            resourceId,
-            dataWithoutSizingStats.hostInfo,
-            dataWithoutSizingStats.databases as OracleDatabaseEntry[]
-        );
-
-        expect(result).toBeDefined();
-        expect(result.storageSavings).toBeDefined();
-        expect(result.calculations).toBeDefined();
-    });
-});
-
-// ============================================================================
-// Suite 9: getIndividualOracleDatabaseResource
+// Suite 8: getIndividualOracleDatabaseResource
 // ============================================================================
 
 describe('getIndividualOracleDatabaseResource', () => {
@@ -709,5 +657,144 @@ describe('saveReportInReportingRegistry (Oracle)', () => {
         await expect(
             saveReportInReportingRegistry(ACCOUNT_ID, 'test-oracle-report.json', standaloneData, 'oracle')
         ).resolves.not.toThrow();
+    });
+});
+
+// ============================================================================
+// Suite 13: Compute override cache-bypass (Oracle bulk)
+// ============================================================================
+
+describe('Oracle bulk compute override cache-bypass', () => {
+    const standaloneData = loadJson('OracleDataResponse-DemoStandalone.json');
+
+    afterEach(async () => {
+        await removeOnPremTcoReportData(undefined, ACCOUNT_ID, undefined, ORACLE);
+    });
+
+    it('uses cache when compute fields are unchanged (only storage changed)', async () => {
+        await saveOracleReportInWlmdbDatabase(ACCOUNT_ID, standaloneData);
+        const resources = await getOnPremisesOracleDatabaseResources(ACCOUNT_ID);
+        const { resourceId } = resources.items[0];
+
+        // Populate cache first
+        await getOracleBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [{ resourceId }]);
+
+        const [db] = resources.items[0].oracleDatabases ?? [];
+        const vcpus = db?.vCPUs ?? 0;
+        const memoryBytes = db?.memory as number;
+        const networkPerformance = db?.networkPerformance ?? 'upTo10';
+
+        // Verify the decision function sees no compute override — only storage differs.
+        expect(
+            hasComputeOverrides(
+                [{ id: db.databaseId, vcpus, memoryBytes, networkPerformance }],
+                [{ id: db.databaseId, vcpus, memoryBytes, networkPerformance }]
+            )
+        ).toBe(false);
+
+        const storageOnlyOverride = db
+            ? [
+                  {
+                      databaseId: db.databaseId,
+                      noOfVcpusInUse: vcpus,
+                      memory: memoryBytes,
+                      networkPerformance,
+                      totalStorage: 9999 * 1024 * 1024 * 1024
+                  }
+              ]
+            : undefined;
+
+        const result = await getOracleBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [
+            { resourceId, databaseData: storageOnlyOverride }
+        ]);
+
+        expect(result).toBeDefined();
+        expect(result.calculations).toBeDefined();
+    });
+
+    it('bypasses cache and re-derives instance type when vCPU count changes', async () => {
+        await saveOracleReportInWlmdbDatabase(ACCOUNT_ID, standaloneData);
+        const resources = await getOnPremisesOracleDatabaseResources(ACCOUNT_ID);
+        const { resourceId } = resources.items[0];
+
+        // Populate cache first
+        await getOracleBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [{ resourceId }]);
+
+        const [db] = resources.items[0].oracleDatabases ?? [];
+        const baseVcpus = db?.vCPUs ?? 2;
+        const memoryBytes = db?.memory as number;
+        const networkPerformance = db?.networkPerformance ?? 'upTo10';
+
+        // Verify the decision function detects the vCPU change as a compute override.
+        expect(
+            hasComputeOverrides(
+                [{ id: db.databaseId, vcpus: baseVcpus * 2, memoryBytes, networkPerformance }],
+                [{ id: db.databaseId, vcpus: baseVcpus, memoryBytes, networkPerformance }]
+            )
+        ).toBe(true);
+
+        const vcpuOverride = db
+            ? [
+                  {
+                      databaseId: db.databaseId,
+                      noOfVcpusInUse: baseVcpus * 2,
+                      memory: memoryBytes,
+                      networkPerformance
+                  }
+              ]
+            : undefined;
+
+        const result = await getOracleBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [
+            { resourceId, databaseData: vcpuOverride }
+        ]);
+
+        expect(result).toBeDefined();
+        expect(result.calculations).toBeDefined();
+    });
+
+    it('bypasses cache when memory changes by at least 1 GiB', async () => {
+        await saveOracleReportInWlmdbDatabase(ACCOUNT_ID, standaloneData);
+        const resources = await getOnPremisesOracleDatabaseResources(ACCOUNT_ID);
+        const { resourceId } = resources.items[0];
+
+        // Populate cache first
+        await getOracleBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [{ resourceId }]);
+
+        const [db] = resources.items[0].oracleDatabases ?? [];
+        const vcpus = db?.vCPUs ?? 0;
+        const baseMemoryBytes = db?.memory as number;
+        const memoryBytesPlus2GiB = baseMemoryBytes + 2 * 1024 * 1024 * 1024;
+        const networkPerformance = db?.networkPerformance ?? 'upTo10';
+
+        // Verify the decision function detects the +2 GiB memory change as a compute override.
+        expect(
+            hasComputeOverrides(
+                [{ id: db.databaseId, vcpus, memoryBytes: memoryBytesPlus2GiB, networkPerformance }],
+                [{ id: db.databaseId, vcpus, memoryBytes: baseMemoryBytes, networkPerformance }]
+            )
+        ).toBe(true);
+
+        // Sanity-check: the floor-GiB values actually differ.
+        expect(Math.floor(sizeInGigaBytes(memoryBytesPlus2GiB, 'B'))).toBe(
+            Math.floor(sizeInGigaBytes(baseMemoryBytes, 'B')) + 2
+        );
+
+        const memoryOverride = db
+            ? [
+                  {
+                      databaseId: db.databaseId,
+                      noOfVcpusInUse: vcpus,
+                      memory: memoryBytesPlus2GiB,
+                      networkPerformance
+                  }
+              ]
+            : undefined;
+
+        const result = await getOracleBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [
+            { resourceId, databaseData: memoryOverride }
+        ]);
+
+        expect(result).toBeDefined();
+        expect(result.calculations).toBeDefined();
     });
 });

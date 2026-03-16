@@ -77,7 +77,6 @@ const BulkOnPremTcoExploreSavingsRequestBody = Type.Object({
 });
 
 const BulkTcoExploreSavingsResponse = Type.Object({
-    region: Type.String(),
     regionCode: Type.String(),
     calculations: BulkStorageSavingsCalculationsMetricsResponse,
     storageSavings: BulkStorageSavingsResponse
@@ -88,7 +87,6 @@ type BulkResourcesType = Static<typeof BulkResources>;
 const OnPremTcoExploreSavingsResponse = Type.Intersect([
     OnPremTcoResourceObject,
     Type.Object({
-        region: Type.String(),
         regionCode: Type.String(),
         calculations: StorageSavingsCalculationsMetricsResponse,
         storageSavings: StorageSavingsResponse

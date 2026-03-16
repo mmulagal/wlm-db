@@ -3,7 +3,9 @@ import {
     processEbsDisks,
     EbsVolumeType,
     buildCombinedEc2Instances,
-    buildComputeCalculationEntry,
+    buildComputeCalculation,
+    buildComputeCalculationsForResources,
+    ResourceComputeInput,
     fetchPricingForResourcesGeneric,
     PricingDetails,
     MachineDetail,
@@ -480,14 +482,14 @@ describe('onPrem TCO operations', () => {
 
 const HOURS_IN_MONTH = 730;
 
-describe('buildComputeCalculationEntry', () => {
+describe('buildComputeCalculation', () => {
     it('should compute aggregated prices for a multi-node deployment', () => {
         const machineDetails = [
             { instanceType: 'r5.xlarge', price: 0.4 },
             { instanceType: 'r5.xlarge', price: 0.4 }
         ] as MachineDetail[];
 
-        const result = buildComputeCalculationEntry({
+        const result = buildComputeCalculation({
             resourceName: 'TestDB',
             deploymentType: 'AOAG',
             instanceType: 'r5.xlarge',
@@ -510,7 +512,7 @@ describe('buildComputeCalculationEntry', () => {
     it('should handle single-node deployment', () => {
         const machineDetails = [{ instanceType: 'm5.large', price: 0.1 }] as MachineDetail[];
 
-        const result = buildComputeCalculationEntry({
+        const result = buildComputeCalculation({
             resourceName: 'SingleDB',
             deploymentType: 'Standalone',
             instanceType: 'm5.large',
@@ -1052,5 +1054,97 @@ describe('Bulk Explore Savings Operations', () => {
             expect(instance.deploymentType).toBeDefined();
             expect(instance.storageDetailsByDb).toBeDefined();
         });
+    });
+});
+
+// ============================================================================
+// buildComputeCalculationsForResources
+// ============================================================================
+
+describe('buildComputeCalculationsForResources', () => {
+    const makeInput = (overrides: Partial<ResourceComputeInput> = {}): ResourceComputeInput => ({
+        resourceId: 'res-1',
+        resourceName: 'TestDB',
+        deploymentType: 'Standalone',
+        existingNodeCount: 1,
+        recommendedNodeCount: 1,
+        currentInstanceType: 'r5.xlarge',
+        recommendedInstanceType: 'r5.large',
+        existing: { basePrice: 0.25, fullPrice: 0.4, licenseIncluded: true },
+        recommended: { basePrice: 0.15, fullPrice: 0.15, licenseIncluded: false },
+        ...overrides
+    });
+
+    it('returns parallel arrays of compute calculations, savings, and assessment data', () => {
+        const result = buildComputeCalculationsForResources([makeInput()]);
+
+        expect(result.existingComputeCalculation).toHaveLength(1);
+        expect(result.recommendedComputeCalculation).toHaveLength(1);
+        expect(result.computeSavings).toHaveLength(1);
+        expect(result.perResourceAssessmentData).toHaveLength(1);
+    });
+
+    it('uses basePrice for computeMonthlyPrice and fullPrice for instanceMonthlyPrice', () => {
+        const result = buildComputeCalculationsForResources([makeInput()]);
+        const existing = result.existingComputeCalculation[0];
+
+        expect(existing.computeMonthlyPrice).toBeCloseTo(0.25 * HOURS_IN_MONTH, 2);
+        expect(existing.instanceMonthlyPrice).toBeCloseTo(0.4 * HOURS_IN_MONTH, 2);
+    });
+
+    it('scales prices by node count for multi-node deployments', () => {
+        const result = buildComputeCalculationsForResources([
+            makeInput({ existingNodeCount: 2, recommendedNodeCount: 2, deploymentType: 'AOAG' })
+        ]);
+        const existing = result.existingComputeCalculation[0];
+
+        expect(existing.computeHourlyPrice).toBeCloseTo(0.25 * 2, 4);
+        expect(existing.computeMonthlyPrice).toBeCloseTo(0.25 * HOURS_IN_MONTH * 2, 2);
+        expect(existing.machineDetails).toHaveLength(2);
+    });
+
+    it('builds compute savings that reference existing and recommended entries', () => {
+        const result = buildComputeCalculationsForResources([makeInput()]);
+        const savings = result.computeSavings[0];
+
+        expect(savings.resourceName).toBe('TestDB');
+        expect(savings.deploymentType).toBe('Standalone');
+        expect(savings.existing).toBe(result.existingComputeCalculation[0]);
+        expect(savings.recommended).toBe(result.recommendedComputeCalculation[0]);
+    });
+
+    it('builds per-resource assessment data matching compute entries', () => {
+        const result = buildComputeCalculationsForResources([makeInput()]);
+        const assessment = result.perResourceAssessmentData[0];
+
+        expect(assessment.resourceId).toBe('res-1');
+        expect(assessment.existingComputeCalculation).toBe(result.existingComputeCalculation[0]);
+        expect(assessment.recommendedComputeCalculation).toBe(result.recommendedComputeCalculation[0]);
+        expect(assessment.computeSavings).toBe(result.computeSavings[0]);
+    });
+
+    it('handles multiple resources, maintaining order', () => {
+        const result = buildComputeCalculationsForResources([
+            makeInput({ resourceId: 'res-1', resourceName: 'DB1' }),
+            makeInput({ resourceId: 'res-2', resourceName: 'DB2' })
+        ]);
+
+        expect(result.existingComputeCalculation).toHaveLength(2);
+        expect(result.perResourceAssessmentData[0].resourceId).toBe('res-1');
+        expect(result.perResourceAssessmentData[1].resourceId).toBe('res-2');
+        expect(result.computeSavings[0].resourceName).toBe('DB1');
+        expect(result.computeSavings[1].resourceName).toBe('DB2');
+    });
+
+    it('handles zero-price resources without errors', () => {
+        const result = buildComputeCalculationsForResources([
+            makeInput({
+                existing: { basePrice: 0, fullPrice: 0, licenseIncluded: false },
+                recommended: { basePrice: 0, fullPrice: 0, licenseIncluded: false }
+            })
+        ]);
+
+        expect(result.existingComputeCalculation[0].computeMonthlyPrice).toBe(0);
+        expect(result.recommendedComputeCalculation[0].computeMonthlyPrice).toBe(0);
     });
 });

@@ -1,10 +1,14 @@
 ---
 alwaysApply: true
-description: All coding instructions from .github/instructions/
+description: Load coding instructions from .github/instructions/ before any code edits
 ---
 
 # WLMDB Coding Instructions
 
-All coding rules and patterns are defined in `.github/instructions/`. The instruction files contain their own `applyTo` metadata that controls which files they apply to.
+**MANDATORY — only when the task involves writing, editing, or reviewing code:**
 
-@.github/instructions/*
+1. Use the **Glob** tool with pattern `*.md` in `.github/instructions/` to discover all instruction files.
+2. Use the **Read** tool to read every file returned by the Glob search.
+3. Do NOT start coding until every instruction file has been read. This applies to every new chat session.
+
+Skip this step for non-coding tasks such as answering questions, explaining concepts, or general conversation.

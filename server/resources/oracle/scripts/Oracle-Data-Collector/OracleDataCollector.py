@@ -223,6 +223,49 @@ def get_unique_host_id():
     return get_hostname()
 
 
+def get_nic_speed_mbps():
+    """Get the speed of the default-route NIC in Mbps. Returns -1 if not detectable."""
+    try:
+        rc, out, _, _ = run_cmd_with_timeout(["ip", "route", "show", "default"], timeout_sec=5)
+        if rc != 0 or not out.strip():
+            return -1
+        iface = None
+        for token in out.split():
+            if token == "dev":
+                # next token is the interface name
+                parts = out.split()
+                idx = parts.index("dev")
+                if idx + 1 < len(parts):
+                    iface = parts[idx + 1]
+                break
+        if not iface:
+            return -1
+
+        # Read speed from sysfs (no root required)
+        sysfs_path = "/sys/class/net/%s/speed" % iface
+        if os.path.isfile(sysfs_path):
+            try:
+                with open(sysfs_path, "r") as f:
+                    speed = int(f.read().strip())
+                    if speed > 0:
+                        return speed
+            except (IOError, OSError, ValueError):
+                pass
+
+        # Fallback: ethtool
+        try:
+            rc, out, _, _ = run_cmd_with_timeout(["ethtool", iface], timeout_sec=5)
+            if rc == 0:
+                m = re.search(r"Speed:\s*(\d+)", out)
+                if m:
+                    return int(m.group(1))
+        except (OSError, IOError):
+            pass
+    except Exception:
+        pass
+    return -1
+
+
 def get_ip_addresses():
     """Get all configured IP addresses."""
     # Try hostname -I
@@ -455,6 +498,7 @@ def collect_host_info(storage_info):
     host_info["storageProtocol"] = storage_info["protocol"]
     host_info["storageDetails"] = storage_info["details"]
     host_info["nfsMounts"] = storage_info["nfs_mounts"]
+    host_info["nicSpeedMbps"] = get_nic_speed_mbps()
     return host_info
 
 

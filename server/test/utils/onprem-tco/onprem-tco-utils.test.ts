@@ -8,8 +8,10 @@ import {
     convertToDate,
     generateUniqueId,
     parseAoagReadReplica,
-    getPowerOfTwoVcpuCount
+    getPowerOfTwoVcpuCount,
+    hasComputeOverrides
 } from '../../../src/utils/onprem-tco/onprem-tco-utils';
+import { convertGiBToBytes } from '../../../src/utils/utils';
 
 describe('onprem-tco-utils', () => {
     it('should parse valid number string', () => {
@@ -140,6 +142,103 @@ describe('onprem-tco-utils', () => {
 
     it('should update maxVcpuCount to the next power of 2 if it is not a power of 2', () => {
         expect(getPowerOfTwoVcpuCount(10)).toBe(16);
+    });
+});
+
+// ============================================================================
+// hasComputeOverrides
+// ============================================================================
+
+describe('hasComputeOverrides', () => {
+    const GIB = convertGiBToBytes(1);
+
+    const stored = [
+        {
+            id: 'inst-1',
+            vcpus: 8,
+            memoryBytes: 16 * GIB,
+            networkPerformance: 'upTo10'
+        }
+    ];
+
+    it('returns false when requestEntries is undefined', () => {
+        expect(hasComputeOverrides(undefined, stored)).toBe(false);
+    });
+
+    it('returns false when requestEntries is empty', () => {
+        expect(hasComputeOverrides([], stored)).toBe(false);
+    });
+
+    it('returns true when a request entry has no matching stored entry', () => {
+        const req = [{ id: 'unknown-id', vcpus: 8, memoryBytes: 16 * GIB, networkPerformance: 'upTo10' }];
+        expect(hasComputeOverrides(req, stored)).toBe(true);
+    });
+
+    it('returns false when all compute fields match exactly', () => {
+        const req = [{ id: 'inst-1', vcpus: 8, memoryBytes: 16 * GIB, networkPerformance: 'upTo10' }];
+        expect(hasComputeOverrides(req, stored)).toBe(false);
+    });
+
+    it('returns true when vcpus differ', () => {
+        const req = [{ id: 'inst-1', vcpus: 16, memoryBytes: 16 * GIB, networkPerformance: 'upTo10' }];
+        expect(hasComputeOverrides(req, stored)).toBe(true);
+    });
+
+    it('returns true when networkPerformance differs', () => {
+        const req = [{ id: 'inst-1', vcpus: 8, memoryBytes: 16 * GIB, networkPerformance: 'above10' }];
+        expect(hasComputeOverrides(req, stored)).toBe(true);
+    });
+
+    it('returns false when memory differs by less than 1 GiB (float drift absorbed)', () => {
+        const driftBytes = 2 * 1024 * 1024; // 2 MiB -- sub-GiB drift from UI roundtrip
+        const req = [
+            { id: 'inst-1', vcpus: 8, memoryBytes: 16 * GIB + driftBytes, networkPerformance: 'upTo10' }
+        ];
+        expect(hasComputeOverrides(req, stored)).toBe(false);
+    });
+
+    it('returns true when memory differs by a full GiB', () => {
+        const req = [{ id: 'inst-1', vcpus: 8, memoryBytes: 17 * GIB, networkPerformance: 'upTo10' }];
+        expect(hasComputeOverrides(req, stored)).toBe(true);
+    });
+
+    it('returns false when vcpus is null (field not provided by caller)', () => {
+        const req = [{ id: 'inst-1', vcpus: null, memoryBytes: 16 * GIB, networkPerformance: 'upTo10' }];
+        expect(hasComputeOverrides(req, stored)).toBe(false);
+    });
+
+    it('returns false when memoryBytes is null (field not provided by caller)', () => {
+        const req = [{ id: 'inst-1', vcpus: 8, memoryBytes: null, networkPerformance: 'upTo10' }];
+        expect(hasComputeOverrides(req, stored)).toBe(false);
+    });
+
+    it('returns false when networkPerformance is null (field not provided by caller)', () => {
+        const req = [{ id: 'inst-1', vcpus: 8, memoryBytes: 16 * GIB, networkPerformance: null }];
+        expect(hasComputeOverrides(req, stored)).toBe(false);
+    });
+
+    it('returns true when any one entry in a multi-instance request differs', () => {
+        const multiStored = [
+            { id: 'inst-1', vcpus: 8, memoryBytes: 16 * GIB, networkPerformance: 'upTo10' },
+            { id: 'inst-2', vcpus: 4, memoryBytes: 8 * GIB, networkPerformance: 'upTo10' }
+        ];
+        const req = [
+            { id: 'inst-1', vcpus: 8, memoryBytes: 16 * GIB, networkPerformance: 'upTo10' },
+            { id: 'inst-2', vcpus: 8, memoryBytes: 8 * GIB, networkPerformance: 'upTo10' } // vcpus changed
+        ];
+        expect(hasComputeOverrides(req, multiStored)).toBe(true);
+    });
+
+    it('returns false when all entries in a multi-instance request match', () => {
+        const multiStored = [
+            { id: 'inst-1', vcpus: 8, memoryBytes: 16 * GIB, networkPerformance: 'upTo10' },
+            { id: 'inst-2', vcpus: 4, memoryBytes: 8 * GIB, networkPerformance: 'upTo10' }
+        ];
+        const req = [
+            { id: 'inst-1', vcpus: 8, memoryBytes: 16 * GIB, networkPerformance: 'upTo10' },
+            { id: 'inst-2', vcpus: 4, memoryBytes: 8 * GIB, networkPerformance: 'upTo10' }
+        ];
+        expect(hasComputeOverrides(req, multiStored)).toBe(false);
     });
 });
 /* eslint-enable no-useless-escape */

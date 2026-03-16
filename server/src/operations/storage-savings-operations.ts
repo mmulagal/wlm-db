@@ -54,6 +54,7 @@ interface CalculationResponse {
     fsx?: StorageSummary;
     fsxw?: StorageSummary;
 }
+
 function fetchSqlVolumeIdsByType(type: string, sqlServerInstances: SqlServerInstanceInfoType[]) {
     logger.debug('Retrieving specific volume type volume ids from sql server instances', { type, sqlServerInstances });
 
@@ -1093,20 +1094,22 @@ async function performManualModeStorageSavingsCalculations(
     region: string,
     params: ManualStorageSavingsRequestBodyType,
     nodeCount: number = 2,
-    isOnpremTcoFlow: boolean = false
+    isOnpremTcoFlow: boolean = false,
+    skipComputeLicense: boolean = false
 ) {
     logger.info('Getting manual mode storage savings calculations ', {
         accountId,
         region,
         params,
         nodeCount,
-        isOnpremTcoFlow
+        isOnpremTcoFlow,
+        skipComputeLicense
     });
     if (!isEmpty(params?.ec2Instances[0]?.volumes)) {
         // EBS flow
-        return handleEbsWorkflow(accountId, region, params, nodeCount, isOnpremTcoFlow);
+        return handleEbsWorkflow(accountId, region, params, nodeCount, isOnpremTcoFlow, skipComputeLicense);
     }
-    return handleFsxwWorkflow(region, params, accountId, nodeCount);
+    return handleFsxwWorkflow(region, params, accountId, nodeCount, skipComputeLicense);
 }
 
 async function handleEbsWorkflow(
@@ -1114,14 +1117,16 @@ async function handleEbsWorkflow(
     region: string,
     params: ManualStorageSavingsRequestBodyType,
     nodeCount: number,
-    isOnpremTcoFlow: boolean
+    isOnpremTcoFlow: boolean,
+    skipComputeLicense: boolean = false
 ) {
     logger.info('Handling EBS workflow for manual mode storage savings calculation', {
         accountId,
         region,
         params,
         nodeCount,
-        isOnpremTcoFlow
+        isOnpremTcoFlow,
+        skipComputeLicense
     });
 
     const { sqlServerDeploymentType } = params;
@@ -1133,7 +1138,9 @@ async function handleEbsWorkflow(
         fsx_calculation: fsxCalculation,
         fsx_cost_calculation_no_snapshot: fsxCostCalculationNoSnapshot
     } = await getEbsManualModeStorageSavings<ManualModeEbsComparisonV2Response>(accountId, ebsMarketingRequestBody);
-    const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow);
+    const { compute, license } = skipComputeLicense
+        ? { compute: undefined, license: undefined }
+        : await manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow);
 
     const isMultiAz = isMultiAzDeployment(sqlServerDeploymentType);
 
@@ -1179,7 +1186,8 @@ async function handleFsxwWorkflow(
     region: string,
     params: ManualStorageSavingsRequestBodyType,
     accountId: string,
-    nodeCount: number
+    nodeCount: number,
+    skipComputeLicense: boolean = false
 ) {
     const fsxwMarketingRequestBody = getFsxwMarketingApiManualModeRequestBody(region, params);
     if (!fsxwMarketingRequestBody) {
@@ -1203,7 +1211,9 @@ async function handleFsxwWorkflow(
         ? handleMarketingApiFsxCalculationObject(fsxCalculation, fsxCalculationDataNoSnapshot)
         : undefined;
 
-    const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount);
+    const { compute, license } = skipComputeLicense
+        ? { compute: undefined, license: undefined }
+        : await manualModeComputeLicenseDetails(region, params, nodeCount);
 
     return {
         compute,
@@ -1237,17 +1247,21 @@ async function getManualModeStorageSavingsCalculationMetrics(
     region: string,
     params: ManualStorageSavingsRequestBodyType,
     nodeCount: number = 2,
-    isOnpremTcoFlow: boolean = false
+    isOnpremTcoFlow: boolean = false,
+    skipComputeLicense: boolean = false
 ): Promise<StorageSavingsMetricsCalculationsResponseType> {
     logger.info('Getting manual mode storage savings calculation metrics ', {
         accountId,
         region,
         params,
         nodeCount,
-        isOnpremTcoFlow
+        isOnpremTcoFlow,
+        skipComputeLicense
     });
 
-    const { compute, license } = await manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow);
+    const computeLicense = skipComputeLicense
+        ? undefined
+        : await manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow);
 
     const resp = await formatManualStorageSavingsCalculationMetrics(accountId, region, params);
 
@@ -1255,10 +1269,12 @@ async function getManualModeStorageSavingsCalculationMetrics(
         const { single, multi, fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation, fsx, fsxw } =
             resp as CalculationResponse;
         return {
-            recommendedComputeCalculation: compute.recommended,
-            recommendedLicenseCalculation: license.recommended,
-            existingComputeCalculation: compute.existing,
-            existingLicenseCalculation: license.existing,
+            ...(computeLicense && {
+                recommendedComputeCalculation: computeLicense.compute.recommended,
+                recommendedLicenseCalculation: computeLicense.license.recommended,
+                existingComputeCalculation: computeLicense.compute.existing,
+                existingLicenseCalculation: computeLicense.license.existing
+            }),
             ...(single && { single }),
             ...(multi && { multi }),
             fsxwCalculation,
@@ -1267,23 +1283,25 @@ async function getManualModeStorageSavingsCalculationMetrics(
             totalSummary: {
                 existing:
                     Number(fsxw?.total || 0) +
-                    Number(compute?.existing?.computeMonthlyPrice || 0) +
-                    Number(license?.existing?.licenseMonthlyPrice || 0),
+                    Number(computeLicense?.compute?.existing?.computeMonthlyPrice || 0) +
+                    Number(computeLicense?.license?.existing?.licenseMonthlyPrice || 0),
                 recommended:
                     Number(fsx?.total || 0) +
-                    Number(compute?.recommended?.computeMonthlyPrice || 0) +
-                    Number(license?.recommended?.licenseMonthlyPrice || 0)
+                    Number(computeLicense?.compute?.recommended?.computeMonthlyPrice || 0) +
+                    Number(computeLicense?.license?.recommended?.licenseMonthlyPrice || 0)
             }
-        };
+        } as unknown as StorageSavingsMetricsCalculationsResponseType;
     }
 
     const { ebsCalculation, ebsCloneCalculation, ebsSnapshotCalculation, single, multi, ebs, fsx } =
         resp as CalculationResponse;
     return {
-        recommendedComputeCalculation: compute.recommended,
-        recommendedLicenseCalculation: license.recommended,
-        existingComputeCalculation: compute.existing,
-        existingLicenseCalculation: license.existing,
+        ...(computeLicense && {
+            recommendedComputeCalculation: computeLicense.compute.recommended,
+            recommendedLicenseCalculation: computeLicense.license.recommended,
+            existingComputeCalculation: computeLicense.compute.existing,
+            existingLicenseCalculation: computeLicense.license.existing
+        }),
         ebsCalculation,
         ebsCloneCalculation,
         ebsSnapshotCalculation,
@@ -1292,14 +1310,14 @@ async function getManualModeStorageSavingsCalculationMetrics(
         totalSummary: {
             existing:
                 Number(ebs?.total || 0) +
-                Number(compute?.existing?.computeMonthlyPrice || 0) +
-                Number(license?.existing?.licenseMonthlyPrice || 0),
+                Number(computeLicense?.compute?.existing?.computeMonthlyPrice || 0) +
+                Number(computeLicense?.license?.existing?.licenseMonthlyPrice || 0),
             recommended:
                 Number(fsx?.total || 0) +
-                Number(compute?.recommended?.computeMonthlyPrice || 0) +
-                Number(license?.recommended?.licenseMonthlyPrice || 0)
+                Number(computeLicense?.compute?.recommended?.computeMonthlyPrice || 0) +
+                Number(computeLicense?.license?.recommended?.licenseMonthlyPrice || 0)
         }
-    };
+    } as unknown as StorageSavingsMetricsCalculationsResponseType;
 }
 
 function returnAoagStorageSavingsResponse({
