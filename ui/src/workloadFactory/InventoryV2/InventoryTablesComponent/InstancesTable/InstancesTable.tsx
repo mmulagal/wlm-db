@@ -1219,7 +1219,11 @@ const InstancesTable = () => {
     const openWADDialog = () => {
         setDialog(
             <DialogComponent
-                header={t('databases.inventory.one-time-wad-dialog-heading-final')}
+                header={
+                    selectedHostType === DBType.MSSQL
+                        ? t('databases.inventory.one-time-wad-dialog-heading-final')
+                        : t('databases.inventory.one-time-wad-dialog-heading-oracle')
+                }
                 content={<OneTimeWADDialogContent />}
                 secondaryButton={GENERAL.CLOSE}
                 closeCallback={() => {}}
