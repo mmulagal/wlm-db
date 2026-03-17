@@ -32,6 +32,7 @@
             "replicas": "Replicas",
             "replica": "Replica",
             "primary": "Primary",
+            "secondary": "Secondary",
             "standby": "Standby",
             "secondary-replica": "Secondary Replica",
             "dismiss": "Dismiss",

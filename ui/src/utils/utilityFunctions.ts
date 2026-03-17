@@ -43,8 +43,7 @@ import {
     STATUS_CONST,
     WLF_TABS,
     severityOptions,
-    DATABASE_DEPLOYMENT_MODE,
-    REPLICA_ROLES
+    DATABASE_DEPLOYMENT_MODE
 } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
@@ -2992,9 +2991,4 @@ export const isAoagDeploymentType = (deploymentType?: string): boolean => {
 };
 
 export const hasAoagReplicas = (rowData?: WorkloadFactoryDatabaseItem): boolean =>
-    Boolean(
-        rowData?.availabilityGroup &&
-            rowData.replicaRole?.toUpperCase() === REPLICA_ROLES.PRIMARY &&
-            rowData.replicaDatabases &&
-            rowData.replicaDatabases.length > 0
-    );
+    Boolean(rowData?.availabilityGroup && rowData.replicaDatabases && rowData.replicaDatabases.length > 0);

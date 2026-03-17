@@ -27,7 +27,9 @@ import ResourcePageReplicaTable from './ResourcePageReplicaTable';
 
 const DatabaseListTable = () => {
     const { t } = useTranslation();
-    const { selectedHostname, selectedDatabaseInstanceName } = useAppSelector(state => state.getWellOptimize);
+    const { selectedHostname, selectedDatabaseInstanceName, selectedDatabaseStorageType } = useAppSelector(
+        state => state.getWellOptimize
+    );
     const {
         resourceLoading: resourceLoadingState,
         resourceDetails,
@@ -54,7 +56,7 @@ const DatabaseListTable = () => {
         });
 
         return data.map(db => {
-            if (!db.availabilityGroup || db.replicaRole?.toUpperCase() !== REPLICA_ROLES.PRIMARY) {
+            if (!db.availabilityGroup) {
                 return db;
             }
 
@@ -91,7 +93,9 @@ const DatabaseListTable = () => {
         </DsTypography>
     );
 
-    const isAoag = isAoagDeploymentType(resourceDetails?.sqlServerDeploymentType);
+    const isAoag =
+        isAoagDeploymentType(selectedDatabaseStorageType) ||
+        isAoagDeploymentType(resourceDetails?.sqlServerDeploymentType);
 
     const EncryptionColDefs: ColumnProps[] = [
         {
@@ -137,15 +141,20 @@ const DatabaseListTable = () => {
                                       {t('databases.general.not-available')}
                                   </DsTypography>
                               );
+                          const replicaCount = rowData?.replicaDatabases?.length || 0;
                           const roleLabel =
                               rowData?.replicaRole?.toUpperCase() === REPLICA_ROLES.PRIMARY
-                                  ? `${t('databases.general.primary')} | ${rowData?.replicaDatabases?.length || 0} ${
-                                        (rowData?.replicaDatabases?.length || 0) !== 1
+                                  ? `${t('databases.general.primary')} | ${replicaCount} ${
+                                        replicaCount !== 1
                                             ? t('databases.general.replicas').toLowerCase()
                                             : t('databases.general.replica').toLowerCase()
                                     }`
                                   : rowData?.replicaRole?.toUpperCase() === REPLICA_ROLES.SECONDARY
-                                  ? t('databases.general.secondary-replica')
+                                  ? `${t('databases.general.secondary')} | ${replicaCount} ${
+                                        replicaCount !== 1
+                                            ? t('databases.general.replicas').toLowerCase()
+                                            : t('databases.general.replica').toLowerCase()
+                                    }`
                                   : '';
                           return (
                               <div>
