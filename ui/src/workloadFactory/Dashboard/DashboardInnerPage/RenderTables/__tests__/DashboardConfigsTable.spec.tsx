@@ -207,10 +207,17 @@ vi.mock('../../../../DatabaseHomePage/DatabaseHomeUtils', () => ({
 vi.mock('../../../../GetWell/GetWellUtils', () => ({
     disableOptimizeCheckBoxForErrCase: vi.fn((data: any) => data),
     disableOptimizeCheckBoxForOptimizeCase: vi.fn((data: any) => data),
-    isConfigSkippedForAoag: vi.fn(() => false)
+    isConfigSkippedForAoag: vi.fn(() => false),
+    isWadExcludedConfig: vi.fn(() => false)
 }));
 
 vi.mock('../../DashboardInnerPageHelper', () => ({
+    bulkDismissPostponeDisableCheck: vi.fn(() => ({
+        isDismissDisabled: false,
+        dismissDisableMsg: '',
+        isPostponeDisabled: false,
+        postponeDisableMsg: ''
+    })),
     bulkFixDisableCheck: vi.fn(() => ({ isFixDisabled: false, fixDisableMsg: '' })),
     sortOptimizeDashboardInnerTable: vi.fn((data: any) => data)
 }));
@@ -896,7 +903,7 @@ describe('DashboardConfigsTable', () => {
         fireEvent.click(viewButtons[0]);
 
         const dialogElement = mockSetDialog.mock.calls[0][0];
-        expect(dialogElement.props.header).toBe('databases.well-architect.impacted-resources');
+        expect(dialogElement.props.header).toBe('databases.well-architect.dashboard-table-headers.impacted-volumes');
         expect(dialogElement.props.content).toBeTruthy();
         expect(dialogElement.props.callback).toBeTypeOf('function');
     });

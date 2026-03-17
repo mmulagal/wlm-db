@@ -221,7 +221,8 @@ vi.mock('../../../GetWell/GetWellUtils', () => ({
         crr: { recommendation: { description: 'desc' } }
     },
     setOptimizeInnerpageSummary: vi.fn(),
-    updateConfigStateStatus: vi.fn()
+    updateConfigStateStatus: vi.fn(),
+    isWadExcludedConfig: vi.fn(() => false)
 }));
 
 vi.mock('../../../DatabaseHomePage/DatabaseHomeUtils', () => ({

@@ -124,10 +124,19 @@ const InventoryV2 = () => {
                 if (inventoryTableData[key]?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
                     return;
                 }
-                if (
-                    (!headerSelectedMultiCredIdsList.includes(inventoryTableData[key]?.credentialId) ||
-                        !headerSelectedMultiRegionIdsList.includes(inventoryTableData[key]?.regionId)) &&
-                    !inventoryTableData[key]?.isWad
+                if (inventoryTableData[key]?.isWad) {
+                    // For offline (WAD) rows, filter by credential and region only if those values are present
+                    const credId = inventoryTableData[key]?.credentialId;
+                    const regionId = inventoryTableData[key]?.regionId;
+                    if (
+                        (credId && !headerSelectedMultiCredIdsList.includes(credId)) ||
+                        (regionId && !headerSelectedMultiRegionIdsList.includes(regionId))
+                    ) {
+                        return;
+                    }
+                } else if (
+                    !headerSelectedMultiCredIdsList.includes(inventoryTableData[key]?.credentialId) ||
+                    !headerSelectedMultiRegionIdsList.includes(inventoryTableData[key]?.regionId)
                 ) {
                     return;
                 }

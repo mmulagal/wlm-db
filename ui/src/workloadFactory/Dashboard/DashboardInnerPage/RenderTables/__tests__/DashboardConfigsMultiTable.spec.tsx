@@ -220,6 +220,7 @@ vi.mock('../../../../GetWell/GetWellUtils', () => ({
     disableOptimizeCheckBoxForErrCase: vi.fn((data: any) => data),
     disableOptimizeCheckBoxForOptimizeCase: vi.fn((data: any) => data),
     isMssqlHaDeployment: vi.fn(() => true),
+    isWadExcludedConfig: vi.fn(() => false),
     cardDataDefault: {
         deploymentType: '',
         isWad: false,
@@ -236,6 +237,12 @@ vi.mock('../../../../GetWell/GetWellUtils', () => ({
 }));
 
 vi.mock('../../DashboardInnerPageHelper', () => ({
+    bulkDismissPostponeDisableCheck: vi.fn(() => ({
+        isDismissDisabled: false,
+        dismissDisableMsg: '',
+        isPostponeDisabled: false,
+        postponeDisableMsg: ''
+    })),
     calculatePostponeInfo: vi.fn(() => ({ postponeDate: '2026-04-01', daysLeft: 30 })),
     sortOptimizeDashboardInnerTable: vi.fn((data: any) => data)
 }));
