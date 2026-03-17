@@ -118,7 +118,9 @@ const renderCountWithView = (
     const count = Number(cellData) || 0;
     return (
         <div className={CommonStyles.impactedDrivesCell}>
-            {cellData != null && String(cellData) !== '' ? cellData : t('databases.general.not-available-table-columns')}
+            {cellData != null && String(cellData) !== ''
+                ? cellData
+                : t('databases.general.not-available-table-columns')}
             {count > 0 && (
                 <Button
                     variant="text"

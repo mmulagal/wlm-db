@@ -233,8 +233,8 @@ const getMssqlImpactedResources = (configName: string, data: AssessmentData, na:
         case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH: {
             const columns = ['KB', 'Name', 'Classification', 'Severity'];
             const rows: string[][] = [];
-            data?.missingPatchList?.forEach((instance) => {
-                (instance as PatchInstance)?.missingPatchDetails?.forEach((patch) => {
+            data?.missingPatchList?.forEach(instance => {
+                (instance as PatchInstance)?.missingPatchDetails?.forEach(patch => {
                     rows.push([
                         patch?.kbId || na,
                         patch?.title || na,
@@ -332,8 +332,8 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
         case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH: {
             const columns = ['Component', 'Package name', 'Update type', 'Severity'];
             const rows: string[][] = [];
-            data?.missingPatchList?.forEach((instance) => {
-                (instance as PatchInstance)?.missingPatchDetails?.forEach((patch) => {
+            data?.missingPatchList?.forEach(instance => {
+                (instance as PatchInstance)?.missingPatchDetails?.forEach(patch => {
                     rows.push([
                         patch?.cveIds || na,
                         patch?.title || na,
@@ -348,8 +348,8 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
         case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH: {
             const columns = ['CVE ID', 'Component', 'Description', 'Published Date'];
             const rows: string[][] = [];
-            data?.missingPatchList?.forEach((detail) => {
-                (detail as OracleSecurityPatchDetail)?.missingPatches?.forEach((patch) => {
+            data?.missingPatchList?.forEach(detail => {
+                (detail as OracleSecurityPatchDetail)?.missingPatches?.forEach(patch => {
                     rows.push([
                         patch?.cveId || na,
                         patch?.component || na,
@@ -361,7 +361,7 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
             return ensureRows(columns, rows, na);
         }
 
-        //placement configs use internal API names, not ASSESSMENT_CONFIG_NAMES display names
+        // placement configs use internal API names, not ASSESSMENT_CONFIG_NAMES display names
         case 'crr':
         case 'oracle-binary-placement':
         case 'datafiles-placement':

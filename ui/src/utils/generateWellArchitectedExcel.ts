@@ -655,7 +655,12 @@ const createPatchData = (
                         });
                     });
                 }
-            } else if (isOracle && config.name === 'host-os-patch' && instanceData.missingPatchDetails && instanceData.missingPatchDetails.length > 0) {
+            } else if (
+                isOracle &&
+                config.name === 'host-os-patch' &&
+                instanceData.missingPatchDetails &&
+                instanceData.missingPatchDetails.length > 0
+            ) {
                 instanceData.missingPatchDetails.forEach((patch: any) => {
                     details.push({
                         Component: patch.cveIds || 'N/A',
