@@ -1879,6 +1879,13 @@ const TEMP_DIRECTORY = '/tmp';
 // Limit is 64KB, use a slightly smaller threshold to account for parameter and document overhead
 const SSM_COMMAND_COMPRESSION_THRESHOLD = 62 * 1024;
 
+const ORACLE_CPU_CATALOG_LOOKBACK_YEARS = 2;
+const ORACLE_CPU_CATALOG_FILE_PATH = join(TEMP_DIRECTORY, 'oracle-cpu-catalog.json');
+const ORACLE_CPU_CATALOG_QUEUE = 'WLMDB-OracleCpuCatalogQueue';
+// runs at 3:00 AM on the 24th of January, April, July, and October. That's ~2-10 days after each CPU release (3rd Tuesday).
+// const ORACLE_CPU_CATALOG_CRON_PATTERN = '0 3 24 1,4,7,10 *';
+const ORACLE_CPU_CATALOG_CRON_PATTERN = '0 3 1 * *'; // for testing, runs every day at 3:00 AM
+
 export {
     TEMP_DIRECTORY,
     WLMDB,
@@ -2248,6 +2255,10 @@ export {
     WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_CRON_PATTERN,
     DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN,
     AWSDAC_MODULE_DIR,
+    ORACLE_CPU_CATALOG_LOOKBACK_YEARS,
+    ORACLE_CPU_CATALOG_FILE_PATH,
+    ORACLE_CPU_CATALOG_QUEUE,
+    ORACLE_CPU_CATALOG_CRON_PATTERN,
     DEMO_ENTERPRISE_INSTANCES,
     AWS_CLI_LINUX_RELATIVE_PATH,
     JQ_LINUX_RELATIVE_PATH,

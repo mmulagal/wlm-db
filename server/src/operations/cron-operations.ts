@@ -14,6 +14,8 @@ import {
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
     INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE,
+    ORACLE_CPU_CATALOG_CRON_PATTERN,
+    ORACLE_CPU_CATALOG_QUEUE,
     TCO_FEATURE,
     WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_CRON_PATTERN,
     WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_QUEUE
@@ -45,6 +47,7 @@ import { Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import { triggerInstancePerformanceAssessment } from './database-hosts-operations';
 import processWellArchitectedAssessmentNotifications from './continuous-optimization/notification';
+import { refreshOracleCpuCatalog } from './continuous-optimization/oracle/cpu-catalog-operations';
 import { deleteAllButLatestRecordPerConfigDataType } from '../lib/database/database-instance-config';
 import { listAllManagedInstances, listTrackedEc2Operation } from './database/database-operations';
 
@@ -482,6 +485,16 @@ async function initiateCronOperations() {
                     await processWellArchitectedAssessmentNotifications(AssessmentTriggeredBy.SYSTEM);
                 },
                 onJobErrorMessage: 'Error processing well-architected assessment notification job:'
+            });
+            // schedule Oracle CPU catalog refresh
+            scheduleCronJob({
+                queueName: ORACLE_CPU_CATALOG_QUEUE,
+                jobName: 'ORACLE_CPU_CATALOG_REFRESH',
+                cronPattern: ORACLE_CPU_CATALOG_CRON_PATTERN,
+                workerProcessor: async () => {
+                    await refreshOracleCpuCatalog();
+                },
+                onJobErrorMessage: 'Error refreshing Oracle CPU catalog'
             });
             purgeOlderDeployments();
         }
