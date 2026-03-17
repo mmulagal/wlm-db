@@ -6,10 +6,18 @@ import {
     OFFLINE_ASSESSMENT_SCRIPT_VERSION
 } from './continuous-optimization/mssql/ssm-scripts/offline-assessment';
 import { uploadMssqlOfflineAssessment } from './continuous-optimization/mssql/offline-assessment-operations';
+import { uploadOracleOfflineAssessment } from './continuous-optimization/oracle/offline-assessment-operations';
+import {
+    oracleOneTimeWadPythonScript,
+    ORACLE_ONETIMEWAD_SCRIPT_VERSION
+} from './continuous-optimization/oracle/ssm-scripts/one-time-wad/oracle-onetimewad';
 import { createStreamingZip, ASSESSMENT_SCRIPT_FILENAMES } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { DatabaseTypes, HttpErrorCodes } from '../utils/consts';
-import { MSSQL_ONE_TIME_ASSESSMENT_README } from './continuous-optimization/one-time-assessment-consts';
+import {
+    MSSQL_ONE_TIME_ASSESSMENT_README,
+    ORACLE_ONE_TIME_ASSESSMENT_README
+} from './continuous-optimization/one-time-assessment-consts';
 
 const logger = getLogger();
 
@@ -70,6 +78,8 @@ async function uploadOfflineAssessment(
     switch (databaseType.toLowerCase()) {
         case DatabaseTypes.MS_SQL_SERVER.toLowerCase():
             return uploadMssqlOfflineAssessment(accountId, decodedContent, fileName, credentialsId, region);
+        case DatabaseTypes.ORACLE.toLowerCase():
+            return uploadOracleOfflineAssessment(accountId, decodedContent, fileName, credentialsId, region);
         default:
             throw createError(
                 HttpErrorCodes.BAD_REQUEST,
@@ -100,6 +110,11 @@ async function downloadOfflineAssessmentScript(accountId: string, databaseType: 
                 version = OFFLINE_ASSESSMENT_SCRIPT_VERSION;
                 readmeContent = MSSQL_ONE_TIME_ASSESSMENT_README;
                 break;
+            case DatabaseTypes.ORACLE.toLowerCase():
+                scriptContent = oracleOneTimeWadPythonScript;
+                version = ORACLE_ONETIMEWAD_SCRIPT_VERSION;
+                readmeContent = ORACLE_ONE_TIME_ASSESSMENT_README;
+                break;
             default:
                 throw createError(
                     HttpErrorCodes.BAD_REQUEST,
@@ -115,9 +130,10 @@ async function downloadOfflineAssessmentScript(accountId: string, databaseType: 
         });
 
         return { archive, filename };
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         logger.error('Failed to generate offline assessment script ZIP', {
-            error: error.message,
+            error: errorMessage,
             accountId,
             databaseType
         });

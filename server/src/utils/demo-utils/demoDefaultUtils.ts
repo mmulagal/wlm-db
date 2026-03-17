@@ -25,9 +25,12 @@ import {
     saveStandaloneConfigurationData,
     offlineAssessmentStdUploadObject,
     offlineAssessmentFCIUploadObject,
-    offlineAssessmentAOAGUploadObject
+    offlineAssessmentAOAGUploadObject,
+    offlineAssessmentOracleNFSUploadObject,
+    offlineAssessmentOracleISCSIUploadObject
 } from './demoMockdata';
 import { parseAssessmentFileContent, generateSqlResourceId } from '../utils';
+import { uploadOracleOfflineAssessment } from '../../operations/continuous-optimization/oracle/offline-assessment-operations';
 import {
     createAssessmentJobMockData,
     createDeploymentMockDataInDB,
@@ -670,6 +673,34 @@ async function prepopulateOfflineAssessmentData(accountId: string) {
             accountId,
             recordCount: allRecords.length
         });
+    }
+
+    // Prepopulate Oracle data
+    const oracleOfflineAssessments = await listOfflineAssessments({
+        accountId,
+        databaseType: DATABASE_TYPE.oracle,
+        pageSize: 1
+    });
+    if (oracleOfflineAssessments.length === 0) {
+        // Upload both NFS and iSCSI demo data
+        try {
+            await uploadOracleOfflineAssessment(
+                accountId,
+                offlineAssessmentOracleISCSIUploadObject.fileContent,
+                offlineAssessmentOracleISCSIUploadObject.fileName
+            );
+            await uploadOracleOfflineAssessment(
+                accountId,
+                offlineAssessmentOracleNFSUploadObject.fileContent,
+                offlineAssessmentOracleNFSUploadObject.fileName
+            );
+            logger.info('Successfully prepopulated Oracle offline assessment data', { accountId });
+        } catch (error) {
+            logger.error('Failed to prepopulate Oracle offline assessment data', {
+                accountId,
+                error: error instanceof Error ? error.message : String(error)
+            });
+        }
     }
 }
 

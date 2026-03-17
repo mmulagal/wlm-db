@@ -126,7 +126,87 @@ def get_nfs_mount_options():
         return {"nfs-mount-options": None, "error": error_msg}
 `;
 
+const GET_MOUNT_OPTIONS_FOR_MOUNT_POINT = `
+def get_mount_options_for_mount_point(mount_point):
+    """Get mount options for a specific mount point"""
+    log("Getting mount options for mount point: {}".format(mount_point))
+    options_info = {
+        "mount-point": mount_point,
+        "filesystem-type": None,
+        "mount-options": None,
+        "error": None
+    }
+    
+    try:
+        # Combine mount and grep in single subprocess call
+        grep_result = subprocess.run('mount | grep "{}"'.format(mount_point), 
+                                   shell=True,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                                   timeout=10)
+        
+        stdout_text = grep_result.stdout
+        if isinstance(stdout_text, bytes):
+            stdout_text = stdout_text.decode("utf-8", errors="replace")
+
+        if grep_result.returncode != 0 or not stdout_text.strip():
+            options_info["error"] = "Mount point {} not found".format(mount_point)
+            return options_info
+        
+        mount_line = stdout_text.strip().split('\\n')[0]  # Take first match
+        
+        # Parse mount line: device on /mountpoint type filesystem (options)
+        match = re.match(r'^(\\S+)\\s+on\\s+(\\S+)\\s+type\\s+(\\w+)(?:\\s+\\(([^)]+)\\))?$', mount_line)
+        if not match:
+            options_info["error"] = "Could not parse mount line: {}".format(mount_line)
+            return options_info
+        
+        device, mp, fs_type, options = match.groups()
+        options_info["filesystem-type"] = fs_type
+        
+        # Parse options into dictionary
+        option_dict = {}
+        if options:
+            for opt in options.split(','):
+                if '=' in opt:
+                    key, value = opt.split('=', 1)
+                    option_dict[key] = value
+                else:
+                    option_dict[opt] = True
+
+        # Check fstab for additional mount options
+        try:
+            with open('/etc/fstab', 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        parts = line.split()
+                        if len(parts) >= 4 and parts[0] == mount_point:
+                            # Parse and merge fstab options
+                            if 'bg' in parts[3]:
+                                option_dict['bg'] = True
+                                break
+                            break
+        except Exception as e:
+            log("Error reading fstab: {}".format(str(e)))
+        
+        # Ensure bg has boolean values if not set
+        if 'bg' not in option_dict:
+            option_dict['bg'] = False
+        options_info["mount-options"] = option_dict
+
+    except subprocess.TimeoutExpired:
+        options_info["error"] = "mount command timed out"
+        log("Timeout expired while getting mount options for {}".format(mount_point))
+    except Exception as e:
+        options_info["error"] = "Exception getting mount options: {}".format(str(e))
+        log("Exception while getting mount options for {}: {}".format(mount_point, str(e)))
+    
+    return options_info
+`;
+
 const ADR_HOME = `
+${GET_MOUNT_OPTIONS_FOR_MOUNT_POINT}
+
 def get_adr_info():
     sqlplus_cmd = os.environ.get('SQLPLUS_CMD', '')
     oracle_sid = os.environ.get('ORACLE_SID', '')
@@ -222,78 +302,6 @@ EXIT;
         else:
             result["adr-home-mount-info"] = mount_options
     return result
-
-def get_mount_options_for_mount_point(mount_point):
-    """Get mount options for a specific mount point"""
-    log(f'Getting mount options for mount point: {mount_point}')
-    options_info = {
-        "mount-point": mount_point,
-        "filesystem-type": None,
-        "mount-options": None,
-        "error": None
-    }
-    
-    try:
-        # Combine mount and grep in single subprocess call
-        grep_result = subprocess.run(f'mount | grep "{mount_point}"', 
-                                   shell=True,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
-                                   universal_newlines=True, timeout=10)
-        
-        if grep_result.returncode != 0 or not grep_result.stdout.strip():
-            options_info["error"] = f"Mount point {mount_point} not found"
-            return options_info
-        
-        mount_line = grep_result.stdout.strip().split('\\n')[0]  # Take first match
-        
-        # Parse mount line: device on /mountpoint type filesystem (options)
-        match = re.match(r'^(\\S+)\\s+on\\s+(\\S+)\\s+type\\s+(\\w+)(?:\\s+\\(([^)]+)\\))?$', mount_line)
-        if not match:
-            options_info["error"] = f"Could not parse mount line: {mount_line}"
-            return options_info
-        
-        device, mp, fs_type, options = match.groups()
-        options_info["filesystem-type"] = fs_type
-        
-        # Parse options into dictionary
-        option_dict = {}
-        if options:
-            for opt in options.split(','):
-                if '=' in opt:
-                    key, value = opt.split('=', 1)
-                    option_dict[key] = value
-                else:
-                    option_dict[opt] = True
-
-        # Check fstab for additional mount options
-        try:
-            with open('/etc/fstab', 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#'):
-                        parts = line.split()
-                        if len(parts) >= 4 and parts[0] == mount_point:
-                            # Parse and merge fstab options
-                            if 'bg' in parts[3]:
-                                option_dict['bg'] = True
-                                break
-                            break
-        except Exception as e:
-            log(f"Error reading fstab: {str(e)}")
-        
-        # Ensure bg has boolean values if not set
-        if 'bg' not in option_dict:
-            option_dict['bg'] = False
-        options_info["mount-options"] = option_dict
-
-    except subprocess.TimeoutExpired:
-        options_info["error"] = "mount command timed out"
-        log(f"Timeout expired while getting mount options for {mount_point}")
-    except Exception as e:
-        options_info["error"] = f"Exception getting mount options: {str(e)}"
-        log(f"Exception while getting mount options for {mount_point}: {str(e)}")
-    
-    return options_info
 `;
 
 const IDMAPD_DOMAIN_CONFIG = `
@@ -309,10 +317,10 @@ def get_idmapd_domain_config():
     }
     
     try:
-        config_path = Path("/etc/idmapd.conf")
+        config_path = "/etc/idmapd.conf"
         
         # Check if file exists
-        if not config_path.exists():
+        if not os.path.exists(config_path):
             result["error"] = "idmapd.conf file does not exist"
             log("idmapd.conf file not found")
             return result
@@ -323,7 +331,7 @@ def get_idmapd_domain_config():
         with open(config_path, 'r') as f:
             content = f.read()
         
-        log(f"Successfully read idmapd.conf file ({len(content)} characters)")
+        log("Successfully read idmapd.conf file ({} characters)".format(len(content)))
         
         # Parse configuration to find domain setting
         domain_value = None
@@ -358,7 +366,7 @@ def get_idmapd_domain_config():
                 if key.lower() == 'domain':
                     if in_general_section or domain_value is None:
                         domain_value = value
-                        log(f"Found domain setting at line {line_num}: {domain_value}")
+                        log("Found domain setting at line {}: {}".format(line_num, domain_value))
                         
                         # If found in General section, prefer it and break
                         if in_general_section:
@@ -366,17 +374,17 @@ def get_idmapd_domain_config():
         
         if domain_value:
             result["domain"] = domain_value
-            log(f"Successfully extracted domain: {domain_value}")
+            log("Successfully extracted domain: {}".format(domain_value))
         else:
             result["error"] = "No domain configuration found in idmapd.conf"
             log("No domain configuration found in idmapd.conf")
             
-    except PermissionError:
+    except OSError:
         error_msg = "Permission denied reading /etc/idmapd.conf"
         result["error"] = error_msg
         log(error_msg)
     except Exception as e:
-        error_msg = f"Exception while reading idmapd.conf: {str(e)}"
+        error_msg = "Exception while reading idmapd.conf: {}".format(e)
         result["error"] = error_msg
         log(error_msg)
     
@@ -676,4 +684,17 @@ ORACLE_SHELL
 echo "$assessment_result"
 `;
 
-export { NFS_OS_ASSESSMENT, KERNEL_TCP_SLOT_PARAMETERS };
+export {
+    NFS_OS_ASSESSMENT,
+    KERNEL_TCP_SLOT_PARAMETERS,
+    NFS_MOUNT_OPTIONS,
+    ADR_HOME,
+    GET_MOUNT_OPTIONS_FOR_MOUNT_POINT,
+    IDMAPD_DOMAIN_CONFIG,
+    HOSTNAME_DOMAIN,
+    PARSE_ORANFSTAB,
+    RESOLVE_HOSTNAMES,
+    IS_IP_ADDRESS,
+    GET_DNS_RESOLUTION,
+    GET_NFS_EXPORTS
+};

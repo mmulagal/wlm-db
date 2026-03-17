@@ -1,6 +1,20 @@
 import { Static, Type } from 'typebox';
 import { API_DESCRIPTION } from '../../utils/schema-description-consts';
 import { MSSQLDriftAssessmentResponse } from './mssql-continuous-optimisation.types';
+import { OracleDriftAssessmentResponse } from './oracle-continuous-optimization.types';
+
+const DataGuardDetails = Type.Object({
+    dbUniqueName: Type.Optional(Type.String()),
+    dbName: Type.Optional(Type.String()),
+    isPrimaryNode: Type.Optional(Type.Boolean()),
+    role: Type.Optional(Type.String())
+});
+
+const PluggableDatabase = Type.Object({
+    pdbName: Type.String(),
+    pdbId: Type.Optional(Type.String()),
+    pdbStatus: Type.Optional(Type.String())
+});
 
 // Upload file body schema (similar to onprem-tco)
 const UploadOfflineAssessmentFileBody = Type.Object({
@@ -33,7 +47,9 @@ type OfflineAssessmentPathParamsType = Static<typeof OfflineAssessmentPathParams
 
 // Query parameters for listing WAD assessments
 const OfflineAssessmentListQueryParams = Type.Object({
-    pageSize: Type.Optional(Type.Number({ description: 'Number of items per page', default: 50 })),
+    pageSize: Type.Optional(
+        Type.Integer({ description: 'Number of items per page', minimum: 1, maximum: 100, default: 50 })
+    ),
     nextToken: Type.Optional(Type.String({ description: 'Pagination token' })),
     credentialsId: Type.Optional(Type.String({ description: API_DESCRIPTION.CREDENTIALS_ID_DESC })),
     region: Type.Optional(Type.String({ description: API_DESCRIPTION.AWS_REGION_CODE_DESC }))
@@ -52,6 +68,7 @@ const OfflineAssessmentListResponse = Type.Object({
             region: Type.Optional(Type.String()),
             regionName: Type.Optional(Type.String()),
             vmName: Type.Optional(Type.String()),
+            vmPlatform: Type.Optional(Type.String()),
             vmInstanceId: Type.Optional(Type.String()),
             virtualNetworkId: Type.Optional(Type.String()),
             virtualNetworkName: Type.Optional(Type.String()),
@@ -66,7 +83,10 @@ const OfflineAssessmentListResponse = Type.Object({
                     })
                 )
             ),
-            assessments: Type.Optional(MSSQLDriftAssessmentResponse),
+            pluggableDatabases: Type.Optional(Type.Array(PluggableDatabase)),
+            isDataGuardDeployed: Type.Optional(Type.Boolean()),
+            dataguardDetails: Type.Optional(DataGuardDetails),
+            assessments: Type.Optional(Type.Union([MSSQLDriftAssessmentResponse, OracleDriftAssessmentResponse])),
             error: Type.Optional(Type.String())
         })
     ),
@@ -112,18 +132,6 @@ const OfflineAssessmentDownloadPathParams = Type.Object({
 
 type OfflineAssessmentDownloadPathParamsType = Static<typeof OfflineAssessmentDownloadPathParams>;
 
-// Download script query params
-const OfflineAssessmentDownloadQueryParams = Type.Object({
-    databaseType: Type.Optional(
-        Type.String({
-            description: 'Database type for the assessment script (mssql, oracle, pgsql). Defaults to mssql.',
-            default: 'mssql'
-        })
-    )
-});
-
-type OfflineAssessmentDownloadQueryParamsType = Static<typeof OfflineAssessmentDownloadQueryParams>;
-
 export {
     OfflineAssessmentUploadPathParams,
     OfflineAssessmentUploadPathParamsType,
@@ -143,8 +151,8 @@ export {
     OfflineAssessmentGetByIdQueryParamsType,
     OfflineAssessmentDownloadPathParams,
     OfflineAssessmentDownloadPathParamsType,
-    OfflineAssessmentDownloadQueryParams,
-    OfflineAssessmentDownloadQueryParamsType,
     UploadOfflineAssessmentFileBody,
-    UploadOfflineAssessmentFileBodyType
+    UploadOfflineAssessmentFileBodyType,
+    DataGuardDetails,
+    PluggableDatabase
 };

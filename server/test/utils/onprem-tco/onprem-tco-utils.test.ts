@@ -191,9 +191,7 @@ describe('hasComputeOverrides', () => {
 
     it('returns false when memory differs by less than 1 GiB (float drift absorbed)', () => {
         const driftBytes = 2 * 1024 * 1024; // 2 MiB -- sub-GiB drift from UI roundtrip
-        const req = [
-            { id: 'inst-1', vcpus: 8, memoryBytes: 16 * GIB + driftBytes, networkPerformance: 'upTo10' }
-        ];
+        const req = [{ id: 'inst-1', vcpus: 8, memoryBytes: 16 * GIB + driftBytes, networkPerformance: 'upTo10' }];
         expect(hasComputeOverrides(req, stored)).toBe(false);
     });
 

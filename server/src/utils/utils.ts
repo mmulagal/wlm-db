@@ -1519,7 +1519,7 @@ async function createStreamingZip(options: {
  */
 const ASSESSMENT_SCRIPT_FILENAMES: Record<string, string> = {
     mssql: 'NetApp_WF_MSSQL_Assessment.ps1',
-    oracle: 'NetApp_WF_Oracle_Assessment.sh',
+    oracle: 'NetApp_WF_Oracle_Assessment.py',
     pgsql: 'NetApp_WF_PostgreSQL_Assessment.sh'
 };
 

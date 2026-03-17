@@ -12,6 +12,7 @@ import {
     UploadOfflineAssessmentFileBody
 } from '../types/offline-assessment.types';
 import { MSSQLDriftAssessmentResponse } from '../types/mssql-continuous-optimisation.types';
+import { OracleDriftAssessmentResponse } from '../types/oracle-continuous-optimization.types';
 import { RouteTags, DatabaseTypes } from '../../utils/consts';
 
 /**
@@ -45,25 +46,25 @@ const OfflineAssessmentUploadSchema = (databaseType?: string) => ({
 
 const OfflineAssessmentGetByIdSchema = (databaseType?: string) => ({
     summary: `Get ${databaseType} offline assessment results`,
-    description: `Get one-time WAD assessment by resource ID and database instance ID with drift assessment results for ${databaseType} `,
+    description: `Get one-time WAD assessment by resource ID and database instance ID with drift assessment results for ${databaseType}`,
     tags: getOfflineAssessmentTags(databaseType),
     params: OfflineAssessmentGetByIdParams,
     querystring: OfflineAssessmentGetByIdQueryParams,
     response: {
-        200: MSSQLDriftAssessmentResponse
+        200: databaseType === DatabaseTypes.ORACLE ? OracleDriftAssessmentResponse : MSSQLDriftAssessmentResponse
     }
 });
 
 const OfflineAssessmentDownloadSchema = (databaseType?: string) => ({
     summary: `Download ${databaseType} assessment script`,
-    description: `Download offline assessment script as ZIP file for ${databaseType} `,
+    description: `Download offline assessment script as ZIP file for ${databaseType}`,
     tags: getOfflineAssessmentTags(databaseType),
     params: OfflineAssessmentDownloadPathParams
     // No response schema for binary content
 });
 
 const OfflineAssessmentListSchema = (databaseType?: string) => ({
-    summary: `List ${databaseType}  offline assessments`,
+    summary: `List ${databaseType} offline assessments`,
     description: `List all ${databaseType} offline assessments in an account with optional filtering and pagination`,
     tags: getOfflineAssessmentTags(databaseType),
     params: OfflineAssessmentPathParams,
@@ -73,10 +74,10 @@ const OfflineAssessmentListSchema = (databaseType?: string) => ({
     }
 });
 
-const DeleteOfflineAssessment = {
-    tags: [RouteTags.MSSQL_ASSESSMENT],
-    summary: 'Delete offline assessment record',
-    description: 'Delete offline assessment record',
+const DeleteOfflineAssessment = (databaseType?: string) => ({
+    tags: getOfflineAssessmentTags(databaseType),
+    summary: `Delete ${databaseType} offline assessment record`,
+    description: `Delete ${databaseType} offline assessment record`,
     params: Type.Object({
         accountId: Type.String({ description: 'The account ID' }),
         databaseHostIds: Type.String({ description: 'The resource IDs for the offline assessment record' })
@@ -86,7 +87,7 @@ const DeleteOfflineAssessment = {
             count: Type.Number()
         })
     }
-};
+});
 
 export {
     OfflineAssessmentUploadSchema,

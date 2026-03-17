@@ -1949,7 +1949,8 @@ async function getStorageSizingDrift(
     ec2InstanceId: string,
     databaseInstanceName: string,
     storageAssessmentData: StorageAssessment,
-    fsxFileSystemId: string
+    fsxFileSystemId: string,
+    skipHeadroom: boolean = false
 ) {
     logger.info('Fetching storage sizing drift', { accountId, ec2InstanceId, databaseInstanceName });
 
@@ -1970,6 +1971,10 @@ async function getStorageSizingDrift(
                 break;
 
             case 'headroom':
+                if (skipHeadroom) {
+                    logger.info('Skipping headroom calculation for one-time WAD assessment');
+                    break;
+                }
                 // Headroom we wont be fetching from the database as it's a calculated field
                 asyncAssessments.push(
                     getOracleHeadroomDrift(
@@ -2007,7 +2012,8 @@ async function calculateStorageDrift(
     deploymentType: string,
     fsxFileSystemId: string,
     mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>,
-    storageAssessmentData: StorageAssessment
+    storageAssessmentData: StorageAssessment,
+    skipHeadroom: boolean = false
 ) {
     logger.info('Calculating storage drift', {
         accountId,
@@ -2071,7 +2077,8 @@ async function calculateStorageDrift(
         ec2InstanceId,
         databaseInstanceName,
         storageAssessmentData,
-        fsxFileSystemId
+        fsxFileSystemId,
+        skipHeadroom
     );
 
     return storageDriftData;

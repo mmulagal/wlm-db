@@ -8,6 +8,8 @@ import path from 'path';
 import { offlineAssessmentDemoSTD } from './offlineAssessmentRecords/offlineAssessmentDemoSTD';
 import { offlineAssessmentDemoFCI } from './offlineAssessmentRecords/offlineAssessmentDemoFCI';
 import { offlineAssessmentDemoAOAG } from './offlineAssessmentRecords/offlineAssessmentDemoAOAG';
+import { offlineAssessmentDemoOracleNFS } from './offlineAssessmentRecords/offlineAssessmentDemoOracleNFS';
+import { offlineAssessmentDemoOracleISCSI } from './offlineAssessmentRecords/offlineAssessmentDemoOracleISCSI';
 import {
     AWS_REGIONS,
     DatabaseTypes,
@@ -3331,6 +3333,20 @@ const offlineAssessmentAOAGBase64Content = generateBase64FromData(offlineAssessm
 const offlineAssessmentAOAGUploadObject = {
     fileContent: offlineAssessmentAOAGBase64Content,
     fileName: 'OfflineAssessment-DemoAOAG.json'
+};
+
+const offlineAssessmentOracleNFSBase64Content = generateBase64FromData(offlineAssessmentDemoOracleNFS);
+
+const offlineAssessmentOracleNFSUploadObject = {
+    fileContent: offlineAssessmentOracleNFSBase64Content,
+    fileName: 'Oracle_Assessment-DemoNFS.json'
+};
+
+const offlineAssessmentOracleISCSIBase64Content = generateBase64FromData(offlineAssessmentDemoOracleISCSI);
+
+const offlineAssessmentOracleISCSIUploadObject = {
+    fileContent: offlineAssessmentOracleISCSIBase64Content,
+    fileName: 'Oracle_Assessment-DemoISCSI.json'
 };
 
 const oracleStandaloneBase64 = generateBase64ForOnPrem('OracleDataResponse-DemoStandalone.json');
@@ -6703,6 +6719,10 @@ export {
     offlineAssessmentStdUploadObject,
     offlineAssessmentFCIUploadObject,
     offlineAssessmentAOAGUploadObject,
+    offlineAssessmentOracleNFSUploadObject,
+    offlineAssessmentOracleISCSIUploadObject,
+    offlineAssessmentDemoOracleNFS,
+    offlineAssessmentDemoOracleISCSI,
     DEMO_REGISTER_RESPONSE,
     demoFsxId,
     ASSESMENT_CONFIG_DATA,

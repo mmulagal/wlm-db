@@ -16,12 +16,12 @@ def coerce_value(val):
     low = s.lower()
     if low == "infinity":
         return s
-    if re.fullmatch(r'-?\\d+', s):
+    if re.match(r'^-?\\d+$', s):
         try: return int(s)
-        except: pass
-    if re.fullmatch(r'-?\\d+\\.\\d+', s):
+        except Exception: pass
+    if re.match(r'^-?\\d+\\.\\d+$', s):
         try: return float(s)
-        except: pass
+        except Exception: pass
     return s
 
 section_start = re.compile(r'^\\s*([^\\s{]+)\\s*\\{\\s*$')
@@ -114,11 +114,11 @@ def find_oracle_home(oracle_sid):
                         result["oracle-home-path"] = home
                         return result
         if oracle_sid:
-            result["error"] = f"Oracle Home not found for SID '{oracle_sid}' in /etc/oratab"
+            result["error"] = "Oracle Home not found for SID '{}' in /etc/oratab".format(oracle_sid)
         else:
             result["error"] = "No valid Oracle Home found in /etc/oratab"
     except Exception as e:
-        result["error"] = f"Error reading /etc/oratab: {str(e)}"
+        result["error"] = "Error reading /etc/oratab: {}".format(e)
     return result
 `;
 
@@ -202,19 +202,17 @@ EXIT;
                         
                         break
                         
-                    except json.JSONDecodeError as e:
-                        result["error"] = f"JSON parse error: {str(e)}"
+                    except (ValueError, Exception) as e:
+                        result["error"] = "JSON parse error: {}".format(e)
                         break
             else:
-                result["error"] = f"No valid JSON found in output: {output}"
+                result["error"] = "No valid JSON found in output: {}".format(output)
                 
         else:
-            result["error"] = f"SQL query failed: {spfile_result.stderr.strip()}"
+            result["error"] = "SQL query failed: {}".format(spfile_result.stderr.strip())
             
-    except subprocess.TimeoutExpired:
-        result["error"] = "SQL query timed out"
     except Exception as e:
-        result["error"] = f"Error running SQL query: {str(e)}"
+        result["error"] = "Error running SQL query: {}".format(e)
     
     return result
 `;
@@ -255,8 +253,8 @@ def check_init_ora_parameters():
         else:
             # Oracle is using pfile, check traditional init files
             files_to_check = [
-                (f"{oracle_home}/dbs/init{oracle_sid}.ora", "pfile"),
-                (f"{oracle_home}/dbs/init.ora", "pfile")
+                ("{}/dbs/init{}.ora".format(oracle_home, oracle_sid), "pfile"),
+                ("{}/dbs/init.ora".format(oracle_home), "pfile")
             ]
         
         for init_path, file_type in files_to_check:
@@ -294,12 +292,10 @@ def check_init_ora_parameters():
                                 file_info["parameter-found"] = False
                                 file_info["parameter-value"] = "Parameter not found in SPFile"
                         
-                        except subprocess.TimeoutExpired:
-                            file_info["error"] = "SPFile search timed out"
-                        except FileNotFoundError:
-                            file_info["error"] = "grep command not available"
+                        except OSError:
+                            file_info["error"] = "SPFile search timed out or grep not available"
                         except Exception as e:
-                            file_info["error"] = f"Error searching SPFile: {str(e)}"
+                            file_info["error"] = "Error searching SPFile: {}".format(e)
                     
                     else:  # pfile
                         try:
@@ -327,10 +323,10 @@ def check_init_ora_parameters():
                                 file_info["parameter-found"] = False
                                 file_info["parameter-value"] = "Parameter not found or is commented out"
                         except Exception as e:
-                            file_info["error"] = f"Error reading pfile: {str(e)}"
+                            file_info["error"] = "Error reading pfile: {}".format(e)
                     
                 except Exception as e:
-                    file_info["error"] = f"Error processing file: {str(e)}"
+                    file_info["error"] = "Error processing file: {}".format(e)
                 
                 # Add file info to the list
                 result["db-file-multiblock-read-count-in-init"].append(file_info)
@@ -342,7 +338,7 @@ def check_init_ora_parameters():
         # If no files were found or checked
         if not result["db-file-multiblock-read-count-in-init"]:
             if spfile_info.get("spfile-path"):
-                result["error"] = f"SPFile path found but file does not exist: {spfile_info['spfile-path']}"
+                result["error"] = "SPFile path found but file does not exist: {}".format(spfile_info["spfile-path"])
             else:
                 result["error"] = "No initialization files found"
             
@@ -418,16 +414,16 @@ EXIT;
 
                         break
                         
-                    except json.JSONDecodeError as e:
-                        result["error"] = f"JSON parse error: {str(e)}"
+                    except (ValueError, Exception) as e:
+                        result["error"] = "JSON parse error: {}".format(e)
                         break
             else:
-                result["error"] = f"No valid JSON found in output: {output}"
+                result["error"] = "No valid JSON found in output: {}".format(output)
         else:
-            result["error"] = f"sqlplus command failed while getting parameters"
+            result["error"] = "sqlplus command failed while getting parameters"
             
     except Exception as e:
-        result["error"] = f"Error: {str(e)}"
+        result["error"] = "Error: {}".format(e)
 
     return result
 `;
@@ -445,7 +441,7 @@ def check_multipath_io():
         is_active = len(output_lines) > 0 and output_lines[0] == 'active'
         is_enabled = len(output_lines) > 1 and output_lines[1] == 'enabled'
         
-        log(f'multipathd active: {is_active}, enabled: {is_enabled}')
+        log('multipathd active: {}, enabled: {}'.format(is_active, is_enabled))
         return {
             "multipath-io-is-active": is_active, 
             "multipath-io-is-enabled": is_enabled,
@@ -455,7 +451,7 @@ def check_multipath_io():
         }
         
     except Exception as e:
-        log(f'Exception while checking multipath I/O status: {str(e)}')
+        log('Exception while checking multipath I/O status: {}'.format(e))
         return {
             "multipath-io-is-active": False, 
             "multipath-io-is-enabled": False,
@@ -487,7 +483,7 @@ def get_os_info():
             if id_result.returncode == 0 and id_result.stdout.strip():
                 os_id = id_result.stdout.strip().split('=')[1].strip('"').strip("'")
         except Exception as e:
-            log(f'Error reading ID from /etc/os-release: {str(e)}')
+            log('Error reading ID from /etc/os-release: {}'.format(e))
 
         # Use grep to extract VERSION_ID
         try:
@@ -501,18 +497,18 @@ def get_os_info():
             if version_result.returncode == 0 and version_result.stdout.strip():
                 version_id = version_result.stdout.strip().split('=')[1].strip('"').strip("'")
         except Exception as e:
-            log(f'Error reading VERSION_ID from /etc/os-release: {str(e)}')
+            log('Error reading VERSION_ID from /etc/os-release: {}'.format(e))
 
         if os_id and version_id:
             major_version = version_id.split('.')[0]
-            code = f'{os_id}{major_version}'
+            code = '{}{}'.format(os_id, major_version)
             return {'os': os_id, 'version': version_id, 'code': code, 'error': None}
         else:
-            error_msg = f'Could not determine OS distro. ID={os_id}, VERSION_ID={version_id}'
+            error_msg = 'Could not determine OS distro. ID={}, VERSION_ID={}'.format(os_id, version_id)
             log(error_msg)
             return {'os': None, 'version': None, 'code': None, 'error': error_msg}
     except Exception as e:
-        error_msg = f'Error reading /etc/os-release: {str(e)}'
+        error_msg = 'Error reading /etc/os-release: {}'.format(e)
         log(error_msg)
         return {'os': None, 'version': None, 'code': None, 'error': error_msg}
 `;
@@ -527,14 +523,14 @@ def check_sanlun():
     # Handle case where OS detection failed
     if not os_code or os_error:
         error_msg = os_error or "Could not determine OS information"
-        log(f'Failed to detect OS: {error_msg}')
+        log('Failed to detect OS: {}'.format(error_msg))
 
     if os_code not in ${JSON.stringify(supportedOracleOsVersions)}:
-        log(f'ONTAP sanlun not supported on {os_code}')
+        log('ONTAP sanlun not supported on {}'.format(os_code))
         return {
             "sanlun-installed": False,
             "sanlun-version": None,
-            "error": f"sanlun not supported on {os_code}",
+            "error": "sanlun not supported on {}".format(os_code),
             "os-version": os_code
         }
 
@@ -551,7 +547,7 @@ def check_sanlun():
 
         if result.returncode == 0:
             version_output = result.stdout.strip()
-            log(f'ONTAP sanlun version: {version_output}')
+            log('ONTAP sanlun version: {}'.format(version_output))
             return {
                 "sanlun-installed": True,
                 "sanlun-version": version_output,
@@ -559,7 +555,7 @@ def check_sanlun():
                 "os-version": os_code
             }
         else:
-            log(f'sanlun command failed: {result.stderr.strip()}')
+            log('sanlun command failed: {}'.format(result.stderr.strip()))
             return {
                 "sanlun-installed": False,
                 "sanlun-version": None,
@@ -567,7 +563,7 @@ def check_sanlun():
                 "os-version": os_code
             }
             
-    except FileNotFoundError:
+    except OSError:
         log('sanlun command not found')
         return {
             "sanlun-installed": False,
@@ -576,7 +572,7 @@ def check_sanlun():
             "os-version": os_code
         }
     except Exception as e:
-        log(f'Exception while checking sanlun: {str(e)}')
+        log('Exception while checking sanlun: {}'.format(e))
         return {
             "sanlun-installed": False,
             "sanlun-version": None,
@@ -596,7 +592,7 @@ def check_iscsi_targets_sessions():
 
         # Get configured targets (use the IP as the target_name)
         try:
-            targets_result = subprocess.run(['iscsiadm', '-m', 'node'],
+            targets_result = subprocess.run(['sudo', 'iscsiadm', '-m', 'node'],
                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
 
             if targets_result.returncode == 0 and targets_result.stdout.strip():
@@ -615,12 +611,12 @@ def check_iscsi_targets_sessions():
                         if ip not in target_sessions:
                             target_sessions[ip] = 0
         except Exception as e:
-            log(f'Exception while checking iSCSI targets: {str(e)}')
+            log('Exception while checking iSCSI targets: {}'.format(e))
             pass
 
         # Count active sessions per IP (session lines may contain the portal IP)
         try:
-            sessions_result = subprocess.run(['iscsiadm', '-m', 'session'],
+            sessions_result = subprocess.run(['sudo', 'iscsiadm', '-m', 'session'],
                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
 
             if sessions_result.returncode == 0 and sessions_result.stdout.strip():
@@ -632,16 +628,17 @@ def check_iscsi_targets_sessions():
                         ip = m.group(1)
                         target_sessions[ip] = target_sessions.get(ip, 0) + 1
         except Exception as e:
-            log(f'Exception while checking iSCSI sessions: {str(e)}')
+            log('Exception while checking iSCSI sessions: {}'.format(e))
             pass
 
         # Update active sessions count on targets list
         for target in targets:
             target["active_sessions"] = target_sessions.get(target["target_name"], 0)
 
-        log(f'iSCSI targets found: {len(set(t["target_name"] for t in targets))}')
+        unique_count = len(set(t["target_name"] for t in targets))
+        log('iSCSI targets found: {}'.format(unique_count))
         return {
-            "iscsi-targets-found": len(set(t["target_name"] for t in targets)),
+            "iscsi-targets-found": unique_count,
             "iscsi-targets": targets,
             "iscsi-sessions-per-target": target_sessions,
             "total-active-sessions": sum(target_sessions.values()),
@@ -649,7 +646,7 @@ def check_iscsi_targets_sessions():
         }
 
     except Exception as e:
-        log(f'Exception while checking iSCSI targets and sessions: {str(e)}')
+        log('Exception while checking iSCSI targets and sessions: {}'.format(e))
         return {
             "iscsi-targets-found": 0,
             "iscsi-targets": [],
@@ -665,10 +662,10 @@ const CHECK_TRANSPARENT_HUGEPAGE = `
 def check_thp():
     log('Checking Transparent Hugepages status')
     try:
-        content = Path('/sys/kernel/mm/transparent_hugepage/enabled').read_text()
-        disabled = '[never]' in content  # This is correct - disabled when [never]
-        
-        # Fix the status logic
+        with open('/sys/kernel/mm/transparent_hugepage/enabled', 'r') as fh:
+            content = fh.read()
+        disabled = '[never]' in content
+
         if '[never]' in content:
             status = "disabled"
         elif '[always]' in content:
@@ -678,10 +675,10 @@ def check_thp():
         else:
             status = "unknown"
 
-        log(f'Transparent Hugepages status: {status}, disabled: {disabled}')
+        log('Transparent Hugepages status: {}, disabled: {}'.format(status, disabled))
         return {"thp-disabled": disabled, "thp-value": status, "error": None}
     except Exception as e:
-        log(f'Exception while checking Transparent Hugepages: {str(e)}')
+        log('Exception while checking Transparent Hugepages: {}'.format(e))
         return {"thp-disabled": False, "thp-value": "unknown", "error": str(e)}
 
 `;
@@ -702,8 +699,8 @@ def check_selinux():
                     return {"selinux-disabled": False, "selinux-value": "enforcing", "error": None}
                 elif status == 'permissive':
                     return {"selinux-disabled": True, "selinux-value": "permissive", "error": None}
-        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            log(f'Exception while checking SELinux status: {str(e)}')
+        except (OSError, Exception) as e:
+            log('Exception while checking SELinux status: {}'.format(e))
             pass
         
         # If no methods work, SELinux is likely not installed/available
@@ -711,7 +708,7 @@ def check_selinux():
         return {"selinux-disabled": True, "selinux-value": "not_available", "error": None}
 
     except Exception as e:
-        log(f'Exception while checking SELinux: {str(e)}')
+        log('Exception while checking SELinux: {}'.format(e))
         return {"selinux-disabled": False, "selinux-value": "unknown", "error": str(e)}
 `;
 
@@ -720,7 +717,19 @@ const CHECK_ISCSI_REPLACEMENT_TIMEOUT = `
 def check_iscsi_replacement_timeout():
     log('Checking iSCSI replacement timeout')
     try:
-        config = Path('/etc/iscsi/iscsid.conf').read_text()
+        result = subprocess.run(
+            ['sudo', 'cat', '/etc/iscsi/iscsid.conf'],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            timeout=10
+        )
+        if result.returncode != 0:
+            stderr_out = result.stderr
+            if isinstance(stderr_out, binary_type):
+                stderr_out = stderr_out.decode('utf-8', errors='replace')
+            raise Exception('Failed to read /etc/iscsi/iscsid.conf: {}'.format(stderr_out.strip()))
+        config = result.stdout
+        if isinstance(config, binary_type):
+            config = config.decode('utf-8', errors='replace')
         for line in config.split('\\n'):
             if 'node.session.timeo.replacement_timeout' in line and not line.strip().startswith('#'):
                 timeout_value = int(line.split('=')[1].strip())
@@ -728,7 +737,7 @@ def check_iscsi_replacement_timeout():
         log('replacement_timeout not found in config')
         return {"replacement-timeout": None, "error": "replacement_timeout not found in config"}
     except Exception as e:
-        log(f'Exception while checking iSCSI replacement timeout: {str(e)}')
+        log('Exception while checking iSCSI replacement timeout: {}'.format(e))
         return {"replacement-timeout": None, "error": str(e)}
 `;
 
@@ -741,54 +750,54 @@ def check_tcp_features():
         
         # Check TCP timestamps
         try:
-            result = subprocess.run(['sysctl', '-n', 'net.ipv4.tcp_timestamps'], 
+            result = subprocess.run(['sudo','sysctl', '-n', 'net.ipv4.tcp_timestamps'], 
                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
             if(result.returncode != 0):
-                raise Exception(f'sysctl command failed: {result.stderr.strip()}')
+                raise Exception('sysctl command failed: {}'.format(result.stderr.strip()))
             tcp_timestamps = result.stdout.strip()
             results["tcp-timestamps-enabled"] = tcp_timestamps == "1"
             results["tcp-timestamps-value"] = tcp_timestamps
         except Exception as e:
-            log(f'Exception while checking TCP timestamps: {str(e)}')
+            log('Exception while checking TCP timestamps: {}'.format(e))
             results["tcp-timestamps-enabled"] = None
             results["tcp-timestamps-value"] = None
             results["tcp-timestamps-error"] = str(e)
 
         # Check TCP SACK
         try:
-            result = subprocess.run(['sysctl', '-n', 'net.ipv4.tcp_sack'], 
+            result = subprocess.run(['sudo','sysctl', '-n', 'net.ipv4.tcp_sack'], 
                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
             if(result.returncode != 0):
-                raise Exception(f'sysctl command failed: {result.stderr.strip()}')
+                raise Exception('sysctl command failed: {}'.format(result.stderr.strip()))
             tcp_sack = result.stdout.strip()
             results["tcp-sack-enabled"] = tcp_sack == "1"
             results["tcp-sack-value"] = tcp_sack
         except Exception as e:
-            log(f'Exception while checking TCP SACK: {str(e)}')
+            log('Exception while checking TCP SACK: {}'.format(e))
             results["tcp-sack-enabled"] = None
             results["tcp-sack-value"] = None
             results["tcp-sack-error"] = str(e)
 
         # Check TCP window scaling
         try:
-            result = subprocess.run(['sysctl', '-n', 'net.ipv4.tcp_window_scaling'], 
+            result = subprocess.run(['sudo','sysctl', '-n', 'net.ipv4.tcp_window_scaling'], 
                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
             if(result.returncode != 0):
-                raise Exception(f'sysctl command failed: {result.stderr.strip()}')
+                raise Exception('sysctl command failed: {}'.format(result.stderr.strip()))
             tcp_window_scaling = result.stdout.strip()
             results["tcp-window-scaling-enabled"] = tcp_window_scaling == "1"
             results["tcp-window-scaling-value"] = tcp_window_scaling
         except Exception as e:
-            log(f'Exception while checking TCP window scaling: {str(e)}')
+            log('Exception while checking TCP window scaling: {}'.format(e))
             results["tcp-window-scaling-enabled"] = None
             results["tcp-window-scaling-value"] = None
             results["tcp-window-scaling-error"] = str(e)
 
-        log(f'TCP advanced features status: {results}')
+        log('TCP advanced features status: {}'.format(results))
         return {"tcp-features": results, "error": None}
         
     except Exception as e:
-        log(f'Exception while checking TCP features: {str(e)}')
+        log('Exception while checking TCP features: {}'.format(e))
         return {"tcp-features": None, "error": str(e)}
 `;
 
@@ -800,9 +809,9 @@ ${CONVERT_TO_JSON}
 def check_multipath_configuration():
     log('Checking multipath configuration')
     try:
-        response = subprocess.run(['multipathd', 'show', 'config'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
+        response = subprocess.run(['sudo','multipathd', 'show', 'config'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10)
         if response.returncode != 0:
-            log(f'multipathd command failed or not found: {response.stderr.strip()}')
+            log('multipathd command failed or not found: {}'.format(response.stderr.strip()))
             return {"multipath-config-found": False, "error": "multipathd not found", "config": None}
 
         text = response.stdout
@@ -857,7 +866,7 @@ def check_multipath_configuration():
             netapp_match = dev
             break
 
-        log(f'Multipath configuration found: {netapp_found}, defaults: {defaults}, netapp device: {netapp_match}')
+        log('Multipath configuration found: {}, defaults: {}, netapp device: {}'.format(netapp_found, defaults, netapp_match))
 
         return {
             "multipath-config-found": True,
@@ -869,11 +878,11 @@ def check_multipath_configuration():
             },
             "netapp-device": netapp_match
         }
-    except FileNotFoundError:
+    except OSError:
         log('multipathd not found')
         return {"multipath-config-found": False, "error": "multipathd not found", "defaults": None, "netapp-device": None}
     except Exception as e:
-        log(f'Exception while checking multipath configuration: {str(e)}')
+        log('Exception while checking multipath configuration: {}'.format(e))
         return {"multipath-config-found": False, "error": "multipathd not found", "defaults": None, "netapp-device": None}
 
 `;
@@ -943,7 +952,7 @@ EXIT;
                     instanceLevelRedundancy = instanceLevelRedundancy and False
                     result['asm-external-redundancy']['assessment']['violations'].append(dg)
             else:
-                result['asm-external-redundancy']['error'] = f"sqlplus failed: {result_proc.stderr}"
+                result['asm-external-redundancy']['error'] = "sqlplus failed: {}".format(result_proc.stderr)
                 break;
         if result['asm-external-redundancy']['error'] == '':
             if instanceLevelRedundancy:
@@ -951,7 +960,7 @@ EXIT;
             else:
                 result['asm-external-redundancy']['assessment']['result'] = 'false'
     except Exception as e:
-        result['asm-external-redundancy']['error'] = f"Error: {str(e)}"
+        result['asm-external-redundancy']['error'] = "Error: {}".format(e)
 
     
     # AFD logical block size check
@@ -967,11 +976,11 @@ EXIT;
             if afdBlockSizeCmdOutput.returncode == 0 and afdBlockSizeCmdOutput.stdout.strip():
                 result['afd-logical-block-size']['assessment']['result'] = afdBlockSizeCmdOutput.stdout.strip()
             else:
-                result['afd-logical-block-size']['error'] = f"Command failed: {afdBlockSizeCmdOutput.stderr.strip()}"
+                result['afd-logical-block-size']['error'] = "Command failed: {}".format(afdBlockSizeCmdOutput.stderr.strip())
         elif result_proc.returncode != 0:
             result['afd-logical-block-size'] = {}
     except Exception as e:
-        result['afd-logical-block-size']['error'] = f"Error checking AFD module: {str(e)}"
+        result['afd-logical-block-size']['error'] = "Error checking AFD module: {}".format(e)
     
     # ASMLib logical block size check
     try:
@@ -986,11 +995,11 @@ EXIT;
             if asmLibBlockSizeCmdOutput.returncode == 0 and asmLibBlockSizeCmdOutput.stdout.strip():
                 result['asmlib-logical-block-size']['assessment']['result'] = asmLibBlockSizeCmdOutput.stdout.strip()
             else:
-                result['asmlib-logical-block-size']['error'] = f"Command failed: {asmLibBlockSizeCmdOutput.stderr.strip()}"
+                result['asmlib-logical-block-size']['error'] = "Command failed: {}".format(asmLibBlockSizeCmdOutput.stderr.strip())
         elif result_proc.returncode != 0:
             result['asmlib-logical-block-size'] = {}
     except Exception as e:
-        result['asmlib-logical-block-size']['error'] = f"Error checking ASMLib module: {str(e)}"
+        result['asmlib-logical-block-size']['error'] = "Error checking ASMLib module: {}".format(e)
 
     return result
 `;
@@ -1013,7 +1022,6 @@ import json
 import subprocess
 import re
 import datetime
-from pathlib import Path
 
 ${pythonLogger('storageOsAssessment.log')}
 
@@ -1120,8 +1128,8 @@ try:
 
     print(json.dumps(os_results))
 except Exception as e:
-    log(f'Exception while combining results: {str(e)}')
-    print(json.dumps({"error": f"Failed to combine results: {str(e)}"}))
+    log('Exception while combining results: {}'.format(e))
+    print(json.dumps({"error": "Failed to combine results: {}".format(e)}))
 
 PYTHON
 
@@ -1136,8 +1144,10 @@ export {
     CHECK_ISCSI_TARGETS_SESSIONS,
     CHECK_TRANSPARENT_HUGEPAGE,
     CHECK_MULTIPATH_IO_STATUS,
+    CHECK_MULTIPATH_CONFIGURATION,
     CHECK_SELINUX,
     CHECK_INIT_ORA_PARAMETERS,
     GET_ORACLE_SPFILE,
-    ORACLE_HOME
+    ORACLE_HOME,
+    CONVERT_TO_JSON
 };

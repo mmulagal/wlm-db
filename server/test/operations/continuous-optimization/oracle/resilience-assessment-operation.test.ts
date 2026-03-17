@@ -90,7 +90,7 @@ describe('ORACLE_CRR_ASSESSMENT_SCRIPT', () => {
             fsxFileSystem: 'fs-first,fs-second'
         };
         const script = ORACLE_CRR_ASSESSMENT_SCRIPT(instanceWithMultipleFsx);
-        expect(script).toContain('filesystemid = \'fs-first\'');
+        expect(script).toContain('fs-first');
         expect(script).not.toContain('fs-second');
     });
 

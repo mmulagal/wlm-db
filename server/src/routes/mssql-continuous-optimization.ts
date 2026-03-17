@@ -615,7 +615,7 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
         )
         .delete(
             '/v1/mssql/offline-assessment/database-hosts/:databaseHostIds',
-            { schema: DeleteOfflineAssessment },
+            { schema: DeleteOfflineAssessment(DatabaseTypes.MS_SQL_SERVER) },
             async (request, reply) => {
                 const {
                     params: { accountId, databaseHostIds }

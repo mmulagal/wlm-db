@@ -58,6 +58,7 @@ import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cl
 import { describeFSxVolumes } from '../lib/aws/fsx';
 import { AssessmentCategories, AssessmentStatus } from '../utils/continous-optimization-consts';
 import { offlineAssessmentDemoFCI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoFCI';
+import { offlineAssessmentDemoOracleISCSI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoOracleISCSI';
 import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
 import {
     mockResourceAssessmentData,
@@ -1314,6 +1315,45 @@ function loadAndModifyDemoFCIData() {
     return assessmentData;
 }
 
+function loadAndModifyDemoOracleISCSIData() {
+    const assessmentData = parseAssessmentFileContent(JSON.stringify(offlineAssessmentDemoOracleISCSI)) as {
+        metadata?: Record<string, unknown>;
+        rawdata?: Record<string, unknown>;
+    };
+
+    // Generate unique identifiers for this upload
+    const uniqueId = randomUUID().substring(0, 8);
+    const timestamp = new Date().toISOString();
+
+    // Modify metadata with unique identifiers
+    if (assessmentData.metadata) {
+        assessmentData.metadata.ec2InstanceId = `demo-oracle-iscsi-${uniqueId}`;
+        assessmentData.metadata.hostname = `ORACLE-ISCSI-${uniqueId}`;
+        assessmentData.metadata.vmName = `ORACLE-ISCSI-${uniqueId}`;
+        assessmentData.metadata.assessmentTimestamp = timestamp;
+        assessmentData.metadata.storageEndpoint = `fs-${uniqueId}`;
+        assessmentData.metadata.fsxId = `fs-${uniqueId}`;
+    }
+
+    // Modify instance-level details with unique identifiers
+    if (assessmentData.rawdata?.instanceLevelDetails) {
+        const instanceLevelDetails = assessmentData.rawdata.instanceLevelDetails as Record<
+            string,
+            Record<string, unknown>
+        >;
+        const instanceKeys = Object.keys(instanceLevelDetails);
+        instanceKeys.forEach(instanceName => {
+            const instanceData = instanceLevelDetails[instanceName];
+            if (instanceData?.instanceDetails) {
+                const instanceDetails = instanceData.instanceDetails as Record<string, unknown>;
+                instanceDetails.sid = `ORCL${uniqueId.substring(0, 4).toUpperCase()}`;
+            }
+        });
+    }
+
+    return assessmentData;
+}
+
 function handleGetOracleAssessmentForDemo(
     accountId: string,
     instanceDetail: DatabaseInstance,
@@ -1438,5 +1478,6 @@ export {
     createAssessmentDataForOracle,
     updateAllOptimizedClonesDemoFlow,
     getMssqlStorageDataForDemo,
-    loadAndModifyDemoFCIData
+    loadAndModifyDemoFCIData,
+    loadAndModifyDemoOracleISCSIData
 };

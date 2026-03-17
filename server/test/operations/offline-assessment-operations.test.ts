@@ -136,9 +136,9 @@ describe('Generic Offline Assessment Operations', () => {
             );
         });
 
-        it('should throw error for oracle (not yet implemented)', async () => {
-            await expect(downloadOfflineAssessmentScript(ACCOUNT_ID, 'oracle')).rejects.toThrow(
-                'Script generation not yet implemented for database type: oracle'
+        it('should throw error for pgsql (not yet implemented)', async () => {
+            await expect(downloadOfflineAssessmentScript(ACCOUNT_ID, 'pgsql')).rejects.toThrow(
+                'Script generation not yet implemented for database type: pgsql'
             );
         });
 

@@ -806,4 +806,4 @@ ${logFileCheck(false)}
 ${pythonScriptInit(storageSizingAssessmentTemplate, 'wlmdb-storage-sizing-assessment.log')}
 `;
 
-export { VOLUME_LUN_CONFIGURATION, ORACLE_STORAGE_SIZING_ASSESSMENT };
+export { VOLUME_LUN_CONFIGURATION, ORACLE_STORAGE_SIZING_ASSESSMENT, CHECK_SWAP_SPACE };
