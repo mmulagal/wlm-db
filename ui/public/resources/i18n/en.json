@@ -128,6 +128,7 @@
         "banner": {
             "one-time-assessment": "One-time assessment",
             "one-time-assessment-content": " Perform a one-time assessment to determine the well-architected status of your Microsoft SQL Server instances without credentials or instance registration.",
+            "one-time-assessment-content-oracle": "Perform a one-time assessment to determine the well-architected status of your Oracle databases without credentials or instance registration.",
             "one-time-assessment-content-2": "Simply download our secure script, run it locally, upload the results, and find out the well-architected score of your instance. Optimization insights are included with the results.",
             "close": "Close",
             "pgsql-deployment": "Deployment",
@@ -533,6 +534,8 @@
             "bulk-fix-disable-for-asm": "Bulk fix is not supported for ASM configurations.",
             "fix-disabled": "Fix is not supported for this configuration.",
             "bulk-fix-disabled": "Fix is not supported for optimized rows.",
+            "bulk-dismiss-disabled-wad": "Dismiss is not supported for one-time assessment rows.",
+            "bulk-postpone-disabled-wad": "Postpone is not supported for one-time assessment rows.",
             "mixed-selection-fix-not-supported": "Fix is not supported for current selections.",
             "multi-instance-selection-for-same-host": "You can select multiple instances associated with the same host.",
             "fci-recommendations": "Expand instances to view FCI configuration recommendations.",
@@ -1274,6 +1277,8 @@
             "one-time-wad-dialog-heading-final": "Learn about one-time assessment for SQL Server instances",
             "one-time-wad-upload-inprogress": "Uploading one-time assessment results.",
             "one-time-wad-upload-success": "Uploaded one-time assessment results.",
+            "one-time-wad-upload-success-with-resource": "Uploaded one-time assessment results for {{resourceName}}",
+            "one-time-wad-upload-success-with-resource-region": "Uploaded one-time assessment results for {{resourceName}} in {{regionName}} region.",
             "one-time-wad-download-success": "Downloaded script for the one-time assessment.",
             "one-time-assessment": "One-time assessment",
             "download-script": "Download script",
@@ -1310,7 +1315,32 @@
             "wad-accordion-three-point-five-option-one": "AWS Secrets Manager",
             "wad-accordion-three-point-five-option-two": "Windows Credential Manager",
             "wad-accordion-three-point-five-option-three": "Interactive prompt ",
+
+
+            "oracle-wad-accordion-one-point-two": "Copy the script to your Oracle Server host.",
+            "oracle-wad-accordion-one-point-three": "Run the Python script. One script collects metadata from the database.",
+            "oracle-wad-accordion-one-point-five": "First upload creates a database entry; later uploads update the existing assessment.",
+
+            "oracle-wad-accordion-two-point-one": "Oracle server information (version, edition, OS configuration settings, Automatic Storage Management (ASM) configuration)",
+            "oracle-wad-accordion-two-point-two": "Database metadata (name, size, Pluggable Database (PDB) details, deployment model information, Oracle configuration settings FRA/RMAN status - no actual data)",
+            "oracle-wad-accordion-two-point-three": "Storage configuration (drives, FSx for ONTAP volume information)",
+
+            "oracle-wad-accordion-three-point-one-bold": "Linux/Unix server with Oracle database",
+            "oracle-wad-accordion-three-point-one": "installed",
+            "oracle-wad-accordion-three-point-two-bold": "Python 2.7 or later",
+            "oracle-wad-accordion-three-point-three-bold": "sqlplus utility",
+            "oracle-wad-accordion-three-point-three": "must be installed and accessible in the system PATH",
+            "oracle-wad-accordion-three-point-four-bold": "Network connectivity -",
+            "oracle-wad-accordion-three-point-four": "Access to the FSx for ONTAP management endpoint",
+            "oracle-wad-accordion-three-point-five-bold": "Oracle database access -",
+            "oracle-wad-accordion-three-point-five": "SYSDBA or appropriate database credentials for the Oracle instance",
+            "oracle-wad-accordion-three-point-six-bold": "ONTAP storage credentials -",
+            "oracle-wad-accordion-three-point-six": "Credentials for accessing the FSx for ONTAP storage system. Can be provided via:",
+            "oracle-wad-accordion-three-point-six-option-one": "AWS Secrets Manager",
+            "oracle-wad-accordion-three-point-six-option-two": "Interactive prompt",
+
             "sql-server-instance-information": "SQL Server instance information (version, edition, configuration settings)",
+            "one-time-wad-dialog-content-oracle": "Assess your Oracle databases without ongoing SSM access. You don't need to provide credentials, register instances, or set up external connections. You'll receive a well-architected score and optimization recommendations to align with AWS and NetApp best practices for performance, security, and cost. Download now and get your score in minutes. Register for the full experience.",
             "one-time-wad-dialog-content": "Assess your SQL Server instances without ongoing SSM access. You don't need to provide credentials, register instances, or set up external connections. You'll receive a well-architected score and optimization recommendations to align with AWS and NetApp best practices for performance, security, and cost. Download now and get your score in minutes. Register for the full experience. ",
             "authentication-failed-msg": "Authentication failed. Please check the credentials and try again.",
             "database-table-upper-text": "This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates.",
@@ -1959,6 +1989,7 @@
             "jm-type-register-resource": "Register resource"
         },
         "wad": {
+            "tab-disabled-message-oracle": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
             "tab-disabled-message": "The one-time assessment provides only well-architected status and recommendations. Register instances to unlock more features.",
             "register-disabled-no-credentials": "Registration requires AWS credentials. Add database credentials to register this instance."
         }

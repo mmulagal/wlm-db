@@ -18,7 +18,7 @@ import {
     dashboardRedirectionToWellArchitected,
     sortListOfDict
 } from '../../utils/utilityFunctions';
-import { mapHostStatusToAssessmentData } from '../DatabaseHomePage/DatabaseHomeUtils';
+import { mapHostStatusToAssessmentData, shouldSkipDatabaseHost } from '../DatabaseHomePage/DatabaseHomeUtils';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
 import { sortAnalyzedResourceData } from '../InventoryV2/InventoryUtilsV2';
 import {
@@ -36,13 +36,15 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
 
     assessmentData.map((databaseHost: any) => {
         if (
-            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceList.includes(databaseHost?.databaseHostId)
+            shouldSkipDatabaseHost(
+                databaseHost,
+                headerSelectedMultiCredIdsList,
+                headerSelectedMultiRegionIdsList,
+                uniqueResourceList
+            )
         ) {
             return;
         }
-        uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
@@ -62,7 +64,8 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
                     instanceId: instance?.databaseInstanceId,
                     credentialId: databaseHost?.credentialId,
                     regionId: databaseHost?.regionId,
-                    type: DBType.MSSQL
+                    type: DBType.MSSQL,
+                    isWad: databaseHost?.isWad
                 };
                 tableData.push(perTableData);
             }
@@ -71,13 +74,15 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
 
     oracleAssessmentData.map((databaseHost: any) => {
         if (
-            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceList.includes(databaseHost?.databaseHostId)
+            shouldSkipDatabaseHost(
+                databaseHost,
+                headerSelectedMultiCredIdsList,
+                headerSelectedMultiRegionIdsList,
+                uniqueResourceList
+            )
         ) {
             return;
         }
-        uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
@@ -97,7 +102,8 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
                     instanceId: instance?.databaseInstanceId,
                     credentialId: databaseHost?.credentialId,
                     regionId: databaseHost?.regionId,
-                    type: DBType.ORACLE
+                    type: DBType.ORACLE,
+                    isWad: databaseHost?.isWad
                 };
                 tableData.push(perTableData);
             }
@@ -134,7 +140,8 @@ export const redirectToGetWellPage = (dispatch: any, selectedAssessmentRow: any)
             instanceName: selectedAssessmentRow?.serverInstanceName,
             credId: selectedAssessmentRow?.credentialId,
             regionId: selectedAssessmentRow?.regionId,
-            storageType: selectedAssessmentRow?.sqlServerDeploymentType
+            storageType: selectedAssessmentRow?.sqlServerDeploymentType,
+            isWad: selectedAssessmentRow?.isWad
         })
     );
 
@@ -152,7 +159,8 @@ export const redirectToGetWellPage = (dispatch: any, selectedAssessmentRow: any)
     dispatch(
         setFSXId({
             fsxId: selectedAssessmentRow?.fsxId,
-            ec2InstanceId: selectedAssessmentRow?.ec2InstanceId
+            ec2InstanceId: selectedAssessmentRow?.ec2InstanceId,
+            isInstanceStorageAsmManaged: selectedAssessmentRow?.isInstanceStorageAsmManaged
         })
     );
 };

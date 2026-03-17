@@ -7,6 +7,7 @@ import { useAppSelector } from '../../store/storeHooks';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
 import SeparatorComponent from '../SeparatorComponent/SeparatorComponent';
 import TooltipComponent from '../TooltipComponent/TooltipComponent';
+import { DBType } from '../../utils/consts';
 
 interface AssessmentContainerProps {
     onClick: () => void;
@@ -15,6 +16,7 @@ interface AssessmentContainerProps {
     gwAdhocError: string;
     optimizePageLoading: boolean;
     isWad?: boolean;
+    dbType?: string;
 }
 
 const AssessmentContainer = ({
@@ -23,10 +25,18 @@ const AssessmentContainer = ({
     gwTimestamp,
     gwAdhocError,
     optimizePageLoading,
-    isWad = false
+    isWad = false,
+    dbType
 }: AssessmentContainerProps) => {
     const { t } = useTranslation();
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
+
+    // Get the appropriate tooltip message based on dbType
+    const wadTooltipMessage =
+        dbType === DBType.ORACLE
+            ? t('databases.wad.tab-disabled-message-oracle')
+            : t('databases.wad.tab-disabled-message');
+
     return (
         <div className={styles.assessment}>
             <div className={styles.leftSide}>
@@ -71,7 +81,7 @@ const AssessmentContainer = ({
             </div>
             <div className={styles.rightSide}>
                 {isWad ? (
-                    <TooltipComponent placement="bottom" title={t('databases.wad.tab-disabled-message')} width={300}>
+                    <TooltipComponent placement="bottom" title={wadTooltipMessage} width={300}>
                         <Button variant="secondary" data-testid="wlm-db-analyze-now" isThin isDisabled>
                             {t('databases.general.assess-now')}
                         </Button>

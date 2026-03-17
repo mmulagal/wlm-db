@@ -12,6 +12,10 @@ type BulkActionContainerProps = {
     isFixDisabled?: boolean;
     fixDisableMsg?: string;
     hideFixButton?: boolean;
+    isDismissDisabled?: boolean;
+    dismissDisableMsg?: string;
+    isPostponeDisabled?: boolean;
+    postponeDisableMsg?: string;
 };
 
 const BulkCombineActionController = ({
@@ -21,7 +25,11 @@ const BulkCombineActionController = ({
     showDismissed,
     isFixDisabled,
     fixDisableMsg,
-    hideFixButton = false
+    hideFixButton = false,
+    isDismissDisabled = false,
+    dismissDisableMsg = '',
+    isPostponeDisabled = false,
+    postponeDisableMsg = ''
 }: BulkActionContainerProps) => {
     const { t } = useTranslation();
     return (
@@ -38,12 +46,28 @@ const BulkCombineActionController = ({
                             </div>
                         </TooltipComponent>
                     )}
-                    <DsButton type="text" onClick={() => handleStateOperation(CONFIG_STATE_ACTIONS.DISMISS)}>
-                        {t('databases.dismiss.dismiss')}
-                    </DsButton>
-                    <DsButton type="text" onClick={() => handleStateOperation(CONFIG_STATE_ACTIONS.POSTPONED)}>
-                        {t('databases.dismiss.postpone')}
-                    </DsButton>
+                    <TooltipComponent title={dismissDisableMsg} placement="bottom" width="260px" height="auto">
+                        <div>
+                            <DsButton
+                                type="text"
+                                onClick={() => handleStateOperation(CONFIG_STATE_ACTIONS.DISMISS)}
+                                isDisabled={isDismissDisabled}
+                            >
+                                {t('databases.dismiss.dismiss')}
+                            </DsButton>
+                        </div>
+                    </TooltipComponent>
+                    <TooltipComponent title={postponeDisableMsg} placement="bottom" width="260px" height="auto">
+                        <div>
+                            <DsButton
+                                type="text"
+                                onClick={() => handleStateOperation(CONFIG_STATE_ACTIONS.POSTPONED)}
+                                isDisabled={isPostponeDisabled}
+                            >
+                                {t('databases.dismiss.postpone')}
+                            </DsButton>
+                        </div>
+                    </TooltipComponent>
                 </>
             )}
             {showDismissed && (

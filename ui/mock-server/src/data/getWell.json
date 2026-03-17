@@ -1241,8 +1241,8 @@
         "severity": "warning",
         "status": "not-optimized",
         "resourceType": "Volume",
-        "totalObjectsAssessed": "4",
-        "totalObjectsInViolation": "1",
+        "totalObjectsAssessed": 4,
+        "totalObjectsInViolation": 1,
         "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements.",
         "tags": ["Reliability"],
         "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]

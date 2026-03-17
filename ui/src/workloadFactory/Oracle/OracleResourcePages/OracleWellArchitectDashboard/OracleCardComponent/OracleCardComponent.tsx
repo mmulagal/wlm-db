@@ -22,7 +22,6 @@ import {
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM
 } from '../../../../../utils/consts';
-import { GENERAL } from '../../../../../utils/appConstants';
 import { formatOracleWellArchitectedData, callOptimizeOracleApi } from '../OracleWellArchitectedUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../../../../store/workloadFactory/inventoryV2Slice';
@@ -36,6 +35,7 @@ import {
     areSubConfigurationsNotActive,
     areAllSubConfigurationsActivating as areAllSubConfigurationsActivatingHelper
 } from '../../../../GetWell/StorageCardComponent/StorageCardComponentHelper';
+import { GENERAL } from '../../../../../utils/appConstants';
 
 export const fixingProcessNotification = (type: string, dispatch: any, isWorkloadFactory: boolean, t: any) => {
     dispatch(
@@ -116,6 +116,9 @@ const OracleCardComponent = ({
         driftAssessmentData
     } = useAppSelector(state => state.getWellOptimize);
 
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = cardDataFromStore?.isWad || false;
+
     const [dismissOracleAssessment] = useDismissOracleAssessmentMutation();
     const [optimizeOracleOs] = useOptimizeOracleOperatingSystemMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -134,7 +137,10 @@ const OracleCardComponent = ({
 
     // Function to determine if dismissed style should be applied
     const shouldApplyDismissedStyle = () => {
+        // WAD excluded configs should have disabled/dismissed style
+        // If the configuration data is not available, show the disabled/dismissed style
         if (
+            cardData?.isWadExcluded ||
             cardData?.block_two?.value === GENERAL.UNAVAILABLE ||
             cardData?.errorMessage ||
             !cardData?.block_four?.value
@@ -336,7 +342,7 @@ const OracleCardComponent = ({
 
     // Dismiss button component
     const renderDismissButton = () => {
-        if (!showDismissButton || !cardData?.block_two?.value) return null;
+        if (isWad || !showDismissButton || !cardData?.block_two?.value) return null;
 
         return (
             <div className={styles.buttonSection}>
@@ -463,6 +469,7 @@ const OracleCardComponent = ({
                                 cardData={cardData}
                                 loading={loading ?? undefined}
                                 callOptimizeApi={callOracleOptimizeApi}
+                                isWad={isWad}
                             />
                         </div>
                     )}

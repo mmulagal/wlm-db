@@ -12,6 +12,7 @@ import { useLazyGetSubTaskListQuery, useTriggerOracleInstanceAssessmentMutation 
 import AssessmentContainer from '../../../../common/AssessmentContainer/AssessmentContainer';
 import { handleTriggerAssessment, useWellArchitectRefresh } from '../../../../utils/resourceUtils';
 import { resetGwValuesOnRefresh } from '../../../GetWell/GetWellUtils';
+import { DBType } from '../../../../utils/consts';
 
 const OracleWellArchitectBanner = () => {
     const dispatch = useDispatch();
@@ -19,10 +20,13 @@ const OracleWellArchitectBanner = () => {
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { selectedResourceId, selectedDatabaseInstance, selectedResourceCredId, selectedResourceRegionId } =
         useAppSelector(state => state.workloadFactoryResource);
-    const { isInnerPageOptimize, gwTimestamp, gwAdhocError, optimizePageLoading } = useAppSelector(
+    const { isInnerPageOptimize, gwTimestamp, gwAdhocError, optimizePageLoading, cardData } = useAppSelector(
         state => state.getWellOptimize
     );
     const [triggerAssessmentInProgress, setTriggerAssessmentInProgress] = useState(false);
+
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = cardData?.isWad || false;
 
     const [triggerAssessmentApi] = useTriggerOracleInstanceAssessmentMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -79,6 +83,8 @@ const OracleWellArchitectBanner = () => {
             gwTimestamp={gwTimestamp || ''}
             gwAdhocError={gwAdhocError || ''}
             optimizePageLoading={optimizePageLoading || false}
+            isWad={isWad}
+            dbType={DBType.ORACLE}
         />
     );
 };

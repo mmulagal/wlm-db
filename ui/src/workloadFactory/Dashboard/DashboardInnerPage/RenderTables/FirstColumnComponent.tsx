@@ -9,7 +9,7 @@ const FirstColumnComponent = ({ rowData, showDismissed = false }: any) => (
             {rowData?.serverInstanceName || GENERAL.NOT_AVAILABLE}
         </DsTypography>
         {rowData?.loadingStatus && <DsFlashingDotsLoader />}
-        {!rowData?.loadingStatus && (
+        {!rowData?.loadingStatus && !rowData?.isWad && (
             <div className={styles.statusContainer}>
                 {(rowData?.status === INVENTORY_STATUS.RUNNING ||
                     rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (

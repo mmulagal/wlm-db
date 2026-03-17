@@ -29,16 +29,21 @@ import {
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import {
     addOfflineMssqlHostAssessmentData,
+    addOfflineOracleHostAssessmentData,
     setBreadCrumbSelectedFrom,
     setInventoryTableData,
     setOfflineMssqlHostAssessmentLoading,
+    setOfflineOracleHostAssessmentLoading,
     setRegisterHostType,
     setSelectedFilterValue,
     setSelectedHeaderTab,
     setSelectedInventoryTab,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
-import { formatOfflineAssessmentToInventoryData } from '../../InventoryUtilsV2';
+import {
+    formatOfflineAssessmentToInventoryData,
+    formatOracleOfflineAssessmentToInventoryData
+} from '../../InventoryUtilsV2';
 import store from '../../../../store/store';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { updateResourceId } from '../../../../store/authSlice';
@@ -57,7 +62,12 @@ import {
     setNotRegisteredOracleDatabasesView,
     setNotRegisteredSQLView
 } from '../../../../store/workloadFactory/inventorybannerSlice';
-import { createSandboxNavigation, formatDateWithTime } from '../../../../utils/utilityFunctions';
+import {
+    createSandboxNavigation,
+    formatDateWithTime,
+    generateMultipleOptionType
+} from '../../../../utils/utilityFunctions';
+import { setHeaderSelectedMultiRegion } from '../../../../store/workloadFactory/headersSlice';
 import { ReactComponent as NotActiveNotificationIcon } from '../../../../assets/NotActiveNotificationIcon.svg';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import tooltipStyles from './InstanceTableHelper.module.scss';
@@ -1221,6 +1231,87 @@ export const refreshOfflineAssessmentData = async (
 };
 
 /**
+ * Refreshes offline Oracle assessment data by calling the API and updating Redux store.
+ * This is called after a successful Oracle WAD upload to refresh the inventory data
+ * and updates the inventory table data same as WADApis.tsx.
+ *
+ * @param getAllOfflineOracleAssessmentAPI - The lazy query function from useLazyGetAllOfflineOracleHostsAssessmentDataQuery
+ * @param dispatch - Redux dispatch function
+ * @param assessmentData - Accumulated assessment data from previous calls (for pagination)
+ * @param nextToken - Pagination token for next batch of data
+ */
+export const refreshOfflineOracleAssessmentData = async (
+    getAllOfflineOracleAssessmentAPI: any,
+    dispatch: Dispatch,
+    assessmentData: any[],
+    nextToken: string | null
+) => {
+    try {
+        dispatch(setOfflineOracleHostAssessmentLoading(true));
+
+        const result: any = await getAllOfflineOracleAssessmentAPI({
+            credentialId: null,
+            regionId: null,
+            nextToken
+        });
+
+        if (result && !result?.error && result?.data) {
+            const newAssessmentData = [
+                ...assessmentData,
+                ...(Array.isArray(result?.data?.items)
+                    ? result.data.items.map((assessment: any) => ({
+                          ...assessment,
+                          isWad: true // Mark as WAD (offline) data
+                      }))
+                    : [])
+            ];
+
+            if (result?.data?.nextToken) {
+                // Continue fetching with pagination
+                refreshOfflineOracleAssessmentData(
+                    getAllOfflineOracleAssessmentAPI,
+                    dispatch,
+                    newAssessmentData,
+                    result?.data?.nextToken
+                );
+            } else {
+                // All data fetched, update store
+                dispatch(setOfflineOracleHostAssessmentLoading(false));
+                dispatch(addOfflineOracleHostAssessmentData(newAssessmentData));
+
+                // Format and merge with existing inventory data
+                const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
+                const formattedOfflineData = formatOracleOfflineAssessmentToInventoryData(newAssessmentData);
+                const mergedInventoryData = {
+                    ...currentInventoryTableData,
+                    ...formattedOfflineData
+                };
+                dispatch(setInventoryTableData(mergedInventoryData));
+            }
+        } else {
+            dispatch(setOfflineOracleHostAssessmentLoading(false));
+            if (assessmentData.length > 0) {
+                dispatch(addOfflineOracleHostAssessmentData(assessmentData));
+
+                // Format and merge with existing inventory data
+                const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
+                const formattedOfflineData = formatOracleOfflineAssessmentToInventoryData(assessmentData);
+                const mergedInventoryData = {
+                    ...currentInventoryTableData,
+                    ...formattedOfflineData
+                };
+                dispatch(setInventoryTableData(mergedInventoryData));
+            }
+        }
+    } catch (error) {
+        dispatch(setOfflineOracleHostAssessmentLoading(false));
+        if (assessmentData.length > 0) {
+            dispatch(addOfflineOracleHostAssessmentData(assessmentData));
+        }
+    }
+};
+
+/**
  * Handler for WAD (offline assessment) optimize action.
  * Sets isWad flag and navigates to the Well-Architected page.
  * The offline assessment API is called in GetWellApi.tsx based on isWad flag.
@@ -1271,4 +1362,94 @@ export const handleWadOptimizeAction = (rowData: any, dispatch: Dispatch) => {
         })
     );
     dispatch(resetEiData({}));
+};
+
+/**
+ * Handler for Oracle WAD (offline assessment) optimize action.
+ * Sets isWad flag and navigates to the Oracle resource page.
+ * The offline assessment API is called based on isWad flag.
+ *
+ * @param rowData - The Oracle database row data
+ * @param dispatch - Redux dispatch function
+ */
+export const handleOracleWadOptimizeAction = (rowData: any, dispatch: Dispatch) => {
+    // Get databaseHostId and instanceId from rowData
+    const databaseHostId = rowData?.databaseHostId || rowData?.hostRow?.id || rowData?.hostRow?.resourceId;
+    const instanceId = rowData?.databaseInstanceId;
+    const credentialId = rowData?.credentialId || rowData?.hostRow?.credentialId;
+    const regionId = rowData?.regionId || rowData?.hostRow?.regionId;
+
+    // Set FSX ID for Oracle (includes isInstanceStorageAsmManaged)
+    dispatch(
+        setFSXId({
+            fsxId: rowData?.fsxId,
+            ec2InstanceId: rowData?.ec2InstanceId,
+            isInstanceStorageAsmManaged: rowData?.isInstanceStorageAsmManaged
+        })
+    );
+
+    // Navigate to Oracle Well-Architected page
+    dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+    dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+    dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+    dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+
+    // Set page load instance data with isWad: true
+    dispatch(
+        setGwPageLoadInstanceData({
+            hostname: rowData?.name || rowData?.hostRow?.name,
+            resourceId: databaseHostId,
+            instanceId,
+            instanceName: rowData?.databaseInstanceName,
+            credId: credentialId,
+            regionId,
+            storageType: rowData?.sqlServerDeploymentType,
+            isWad: true
+        })
+    );
+
+    // For overview and database
+    dispatch(resetWorkloadFactoryResourceData());
+    dispatch(setSelectedHostname(rowData?.name || rowData?.hostRow?.name));
+    dispatch(
+        setSelectedResourcePageHostData({
+            resourceId: databaseHostId,
+            databaseInstanceId: instanceId,
+            databaseInstanceName: rowData?.databaseInstanceName,
+            credentialId,
+            regionId
+        })
+    );
+    dispatch(resetEiData({}));
+};
+
+/**
+ * Auto-select a region in the header filter if it's not already selected.
+ * Used after a successful WAD upload to ensure the new resource's region is visible.
+ */
+export const autoSelectRegionInHeaderFilter = (
+    regionCode: string,
+    headerSelectedMultiRegionIdsList: string[] | undefined,
+    getRegions: any,
+    headerSelectedMultiRegion: any[] | undefined,
+    dispatch: Dispatch
+) => {
+    if (regionCode && !headerSelectedMultiRegionIdsList?.includes(regionCode)) {
+        // Find the region data from available regions list
+        const regionsData = getRegions?.regionsData;
+        const matchedRegion = regionsData?.regions?.find((r: any) => r.regionCode === regionCode);
+        if (matchedRegion) {
+            const regionValue = `${matchedRegion.regionCode} | ${matchedRegion.regionName}`;
+            const newOption = generateMultipleOptionType(
+                regionValue,
+                regionValue,
+                matchedRegion.regionCode as string,
+                false,
+                '',
+                matchedRegion
+            );
+            const updatedRegions = [...(headerSelectedMultiRegion || []), newOption];
+            dispatch(setHeaderSelectedMultiRegion(updatedRegions));
+        }
+    }
 };

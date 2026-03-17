@@ -846,16 +846,16 @@ export const inventoryApiV2 = createApi({
     refetchOnMountOrArgChange: true,
     endpoints: builder => ({
         getOneTimeWADUploadScript: builder.mutation({
-            query: ({ payload }) => ({
-                url: 'v1/mssql/offline-assessment/upload',
+            query: ({ payload, type }) => ({
+                url: `v1/${type}/offline-assessment/upload`,
                 method: 'POST',
                 body: payload
             })
         }),
         getOneTimeWADDownloadScript: builder.mutation({
-            queryFn: async (_arg, _queryApi, _extraOptions, baseQuery) => {
+            queryFn: async ({ type }, _queryApi, _extraOptions, baseQuery) => {
                 const result: any = await baseQuery({
-                    url: 'v1/mssql/offline-assessment/collector',
+                    url: `v1/${type}/offline-assessment/collector`,
                     responseHandler: (response: Response) => response.blob()
                 });
 
@@ -903,6 +903,16 @@ export const inventoryApiV2 = createApi({
                 if (nextToken) params.append('nextToken', nextToken);
                 const queryString = params.toString();
                 return queryString ? `v1/mssql/offline-assessment?${queryString}` : 'v1/mssql/offline-assessment';
+            }
+        }),
+        getAllOfflineOracleHostsAssessmentData: builder.query({
+            query: ({ credentialId = null, regionId = null, nextToken = null }) => {
+                const params = new URLSearchParams();
+                if (credentialId) params.append('credentialsId', credentialId);
+                if (regionId) params.append('region', regionId);
+                if (nextToken) params.append('nextToken', nextToken);
+                const queryString = params.toString();
+                return queryString ? `v1/oracle/offline-assessment?${queryString}` : 'v1/oracle/offline-assessment';
             }
         }),
         getDatabaseHostsFullDataV2: builder.query({
@@ -1355,6 +1365,17 @@ export const getWellApi = createApi({
                     : `v1/mssql/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment`;
             }
         }),
+        getOfflineOracleAssessmentData: builder.query({
+            query: ({ databaseHostId, instanceId, credentialId = null, regionId = null }) => {
+                const params = new URLSearchParams();
+                if (credentialId) params.append('credentialsId', credentialId);
+                if (regionId) params.append('region', regionId);
+                const queryString = params.toString();
+                return queryString
+                    ? `v1/oracle/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment?${queryString}`
+                    : `v1/oracle/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment`;
+            }
+        }),
         getOracleAssessmentData: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
                 url: `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
@@ -1700,6 +1721,7 @@ export const {
     useLazyGetAllMssqlHostsAssessmentDataQuery,
     useLazyGetAllOracleHostsAssessmentDataQuery,
     useLazyGetAllOfflineMssqlHostsAssessmentDataQuery,
+    useLazyGetAllOfflineOracleHostsAssessmentDataQuery,
     useManageBulkV2MssqlInstanceMutation,
     useManageBulkV2OracleInstanceMutation,
     useGetOneTimeWADUploadScriptMutation,
@@ -1761,6 +1783,7 @@ export const {
     useOptimizeMaxdopConfigForBulkMutation,
     useLazyGetSnapshotPoliciesQuery,
     useLazyGetOfflineMssqlAssessmentDataQuery,
+    useLazyGetOfflineOracleAssessmentDataQuery,
     useOptimizeResiliencyMutation,
     useOptimizeAwsBackupMutation,
     useOptimizeCloneCleanupMutation,

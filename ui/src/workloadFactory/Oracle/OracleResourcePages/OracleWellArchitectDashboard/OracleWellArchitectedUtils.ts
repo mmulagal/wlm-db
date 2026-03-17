@@ -37,7 +37,8 @@ import {
     areAllSubcategoryConfigurationsDismissed,
     getConfigurationDisplayName,
     shouldShowOntapOsCard,
-    handleOptimizeStorageJob
+    handleOptimizeStorageJob,
+    isWadExcludedConfig
 } from '../../../GetWell/GetWellUtils';
 import { createFailedOptimizationMessage, fixingProcessNotification } from './OracleCardComponent/OracleCardComponent';
 
@@ -1279,7 +1280,8 @@ export const getOracleCardsData = (
         ),
         host_os_patch: formatOracleHostOsPatchConfig(data, optimizingData),
         crr: formatOracleCRRConfig(data, optimizingData),
-        oracle_security_patch: formatOracleSecurityPatchConfig(data, optimizingData)
+        oracle_security_patch: formatOracleSecurityPatchConfig(data, optimizingData),
+        isWad: data?.isWad || false
     };
 
     return {
@@ -1361,9 +1363,17 @@ export const formatOracleOptimizationBreakDown = (
         percent: 0
     };
 
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = cardsData?.isWad || false;
+
     Object.values(cardsData).forEach((cardItem: any) => {
         if (WA_FLAG_SKIP.includes(cardItem)) {
             return; // Skip WA_FLAG_SKIP as they are not cards
+        }
+
+        // Skip WAD excluded configurations - they should not be counted in optimization breakdown
+        if (isWadExcludedConfig(cardItem?.mapName, isWad, DBType.ORACLE)) {
+            return;
         }
 
         if (cardItem?.category === 'storage') {
@@ -1663,9 +1673,27 @@ export const oracleApplyFilter = (
 
     const categoryData = getDynamicOracleCategoryData(driftAssessmentData);
 
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = cardData?.isWad || false;
+
     Object.keys(cardData)?.forEach((key: any) => {
         if (WA_FLAG_SKIP.includes(key)) {
             return; // Skip deploymentType, isASMManaged and isStorageLayoutFra as they are not cards
+        }
+
+        // Check if this config is excluded for WAD instances
+        const isWadExcluded = isWadExcludedConfig(cardData[key]?.mapName, isWad, DBType.ORACLE);
+
+        // WAD excluded configs should not be shown in dismissed view as they have no dismiss functionality
+        if (isWadExcluded && showDismissedConfigurations) {
+            return;
+        }
+
+        // For WAD excluded configs, include them with isWadExcluded flag but skip filter checks
+        if (isWadExcluded) {
+            filteredCardData[key] = { ...cardData[key], isWadExcluded: true };
+            // Do NOT count WAD excluded configs as they are not part of the assessment
+            return;
         }
 
         const categoryInfo = categoryData[key as keyof typeof categoryData];

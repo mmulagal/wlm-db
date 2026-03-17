@@ -52,6 +52,9 @@ const OracleWellArchitectDashboard = () => {
         selectedDatabaseStorageType
     } = useAppSelector(state => state.getWellOptimize);
 
+    // Check if this is a WAD (offline assessment) instance
+    const isWad = cardData?.isWad || false;
+
     const [showChartArea, setShowChartArea] = useState(true);
 
     useOracleWellArchitectApi();
@@ -171,6 +174,7 @@ const OracleWellArchitectDashboard = () => {
                                 optimizationBreakDown={optimizationBreakDown}
                                 isAssessmentAvailable={isAssessmentAvailable}
                                 allConfigurationsDismissed={allConfigurationsDismissed}
+                                isWad={isWad}
                             />
                             <OptimizationBreakdown
                                 allConfigurationsDismissed={allConfigurationsDismissed}
@@ -208,14 +212,19 @@ const OracleWellArchitectDashboard = () => {
                                                 {!hasDismissedConfigurations ? (
                                                     <DsPopover
                                                         trigger="hover"
-                                                        title={t(
-                                                            'databases.well-architect.dismiss.no-dismissed-configurations'
-                                                        )}
+                                                        title={
+                                                            isWad
+                                                                ? t('databases.wad.tab-disabled-message-oracle')
+                                                                : t(
+                                                                      'databases.well-architect.dismiss.no-dismissed-configurations'
+                                                                  )
+                                                        }
                                                         monitorPosition="all"
                                                         placement="bottom"
                                                     >
                                                         <DsToggleSwitch
                                                             id="dismissed-configuration-toggle"
+                                                            data-testid="dismissed-configuration-toggle"
                                                             onClick={() => {}}
                                                             title="Dismissed configuration"
                                                             isDisabled
@@ -224,9 +233,13 @@ const OracleWellArchitectDashboard = () => {
                                                 ) : allConfigurationsDismissed ? (
                                                     <DsPopover
                                                         trigger="hover"
-                                                        title={t(
-                                                            'databases.well-architect.dismiss.all-configurations-dismissed-tooltip'
-                                                        )}
+                                                        title={
+                                                            isWad
+                                                                ? t('databases.wad.tab-disabled-message-oracle')
+                                                                : t(
+                                                                      'databases.well-architect.dismiss.all-configurations-dismissed-tooltip'
+                                                                  )
+                                                        }
                                                         monitorPosition="all"
                                                         placement="bottom"
                                                     >
@@ -242,6 +255,7 @@ const OracleWellArchitectDashboard = () => {
                                                 ) : (
                                                     <DsToggleSwitch
                                                         id="dismissed-configuration-toggle"
+                                                        data-testid="dismissed-configuration-toggle"
                                                         onClick={
                                                             loading || !isAssessmentAvailable
                                                                 ? () => {}

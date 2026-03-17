@@ -794,8 +794,8 @@
                                                 "recommended": "4"
                                             }
                                         ],
-                                        "totalObjectsAssessed": "1",
-                                        "totalObjectsInViolation": "1"
+                                        "totalObjectsAssessed": 1,
+                                        "totalObjectsInViolation": 1
                                     },
                                     {
                                         "parameter": "asm-external-redundancy",
@@ -815,8 +815,8 @@
                                                 "objectType": "Disk Group"
                                             }
                                         ],
-                                        "totalObjectsAssessed": "1",
-                                        "totalObjectsInViolation": "1"
+                                        "totalObjectsAssessed": 1,
+                                        "totalObjectsInViolation": 1
                                     },
                                     {
                                         "parameter": "afd-logical-block-size",
@@ -836,8 +836,8 @@
                                                 "recommended": "4"
                                             }
                                         ],
-                                        "totalObjectsAssessed": "1",
-                                        "totalObjectsInViolation": "1"
+                                        "totalObjectsAssessed": 1,
+                                        "totalObjectsInViolation": 1
                                     },
                                     {
                                         "parameter": "asmlib-logical-block-size",
@@ -857,8 +857,8 @@
                                                 "recommended": "4"
                                             }
                                         ],
-                                        "totalObjectsAssessed": "1",
-                                        "totalObjectsInViolation": "1"
+                                        "totalObjectsAssessed": 1,
+                                        "totalObjectsInViolation": 1
                                     },
                                     {
                                         "parameter": "dnfs-consistent-ip-resolution",
@@ -1177,8 +1177,8 @@
                             "severity": "warning",
                             "status": "optimized",
                             "resourceType": "Volume",
-                            "totalObjectsAssessed": "4",
-                            "totalObjectsInViolation": "1",
+                            "totalObjectsAssessed": 4,
+                            "totalObjectsInViolation": 1,
                             "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.",
                             "tags": ["Reliability"],
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
@@ -2012,8 +2012,8 @@
                                                 "recommended": "4"
                                             }
                                         ],
-                                        "totalObjectsAssessed": "1",
-                                        "totalObjectsInViolation": "1"
+                                        "totalObjectsAssessed": 1,
+                                        "totalObjectsInViolation": 1
                                     },
                                     {
                                         "parameter": "asm-external-redundancy",
@@ -2033,8 +2033,8 @@
                                                 "recommendation": "4"
                                             }
                                         ],
-                                        "totalObjectsAssessed": "1",
-                                        "totalObjectsInViolation": "1"
+                                        "totalObjectsAssessed": 1,
+                                        "totalObjectsInViolation": 1
                                     },
                                     {
                                         "parameter": "afd-logical-block-size",
@@ -2054,8 +2054,8 @@
                                                 "recommended": "4"
                                             }
                                         ],
-                                        "totalObjectsAssessed": "1",
-                                        "totalObjectsInViolation": "1"
+                                        "totalObjectsAssessed": 1,
+                                        "totalObjectsInViolation": 1
                                     },
                                     {
                                         "parameter": "asmlib-logical-block-size",
@@ -2075,8 +2075,8 @@
                                                 "recommended": "4"
                                             }
                                         ],
-                                        "totalObjectsAssessed": "1",
-                                        "totalObjectsInViolation": "1"
+                                        "totalObjectsAssessed": 1,
+                                        "totalObjectsInViolation": 1
                                     },
                                     {
                                         "parameter": "dnfs-consistent-ip-resolution",
@@ -2395,8 +2395,8 @@
                             "severity": "warning",
                             "status": "not-optimized",
                             "resourceType": "Volume",
-                            "totalObjectsAssessed": "4",
-                            "totalObjectsInViolation": "1",
+                            "totalObjectsAssessed": 4,
+                            "totalObjectsInViolation": 1,
                             "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.",
                             "tags": ["Reliability"],
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]

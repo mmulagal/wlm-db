@@ -23,6 +23,7 @@ import {
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FROM_DIALOG,
     GETWELL_STATUS,
+    INVENTORY_STATUS,
     WLF_TABS
 } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -1141,9 +1142,11 @@ const DashboardInnerPage = () => {
             dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_OPTIMIZE_INNER_PAGE));
         } else {
             const assessmentStatusConsistent = getAssessmentStatusConsistency(rowData);
-            // Check if any row is a WAD (offline assessment) instance
-            // For single: check rowData?.isWad, for bulk: check if any row has isWad
-            const isWad = Array.isArray(rowData) ? rowData.some((row: any) => row?.isWad) : rowData?.isWad;
+            // Check if ALL rows are WAD (offline assessment) instances - only disable if there are no fixable rows
+            // A row is fixable if it's online (!isWad, status='Up') and not already optimized
+            const allRowsAreWad = Array.isArray(rowData)
+                ? rowData.every((row: any) => row?.isWad || row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP)
+                : rowData?.isWad || rowData?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP;
 
             setDialog(
                 <DialogComponent
@@ -1171,8 +1174,8 @@ const DashboardInnerPage = () => {
                         closeDialog();
                     }}
                     customClass={type !== ASSESSMENT_CONFIG_NAMES.MAXDOP ? 'innerPage' : ''}
-                    primaryButtonDisabled={isWad}
-                    primaryButtonTooltip={isWad ? t('databases.wad.tab-disabled-message') : ''}
+                    primaryButtonDisabled={allRowsAreWad}
+                    primaryButtonTooltip={allRowsAreWad ? t('databases.wad.tab-disabled-message') : ''}
                     hidePrimaryButton={
                         (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
                             type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
@@ -1718,7 +1721,8 @@ const DashboardInnerPage = () => {
                     name,
                     rowData,
                     t,
-                    selectedRowsForOptimize
+                    selectedRowsForOptimize,
+                    configEngineType
                 ));
             }
 
@@ -1776,6 +1780,17 @@ const DashboardInnerPage = () => {
         configEngineType?: string
     ) => {
         const dismissApi = configEngineType === DBType.ORACLE ? dismissOracleAssessment : dismissMssqlAssessment;
+        // Filter out WAD (offline assessment) rows for dismiss and postpone operations
+        const filteredRowData =
+            operationType === CONFIG_STATE_ACTIONS.DISMISS || operationType === CONFIG_STATE_ACTIONS.POSTPONED
+                ? rowData?.filter((row: any) => row?.isWad !== true)
+                : rowData;
+
+        // If no rows left after filtering, don't proceed
+        if (!filteredRowData?.length) {
+            return;
+        }
+
         if (operationType === CONFIG_STATE_ACTIONS.DISMISS) {
             setDialog(
                 <DialogComponent
@@ -1787,7 +1802,7 @@ const DashboardInnerPage = () => {
                     content={
                         <div className={styles.dismissDialog}>
                             <DsTypography variant="Regular_14">
-                                {t('databases.dismiss.dialog-bulk-text-1')} {rowData?.length}{' '}
+                                {t('databases.dismiss.dialog-bulk-text-1')} {filteredRowData?.length}{' '}
                                 {engineTypeBasedResourceStr(
                                     configEngineType,
                                     t('databases.dismiss.selected-instances'),
@@ -1802,7 +1817,7 @@ const DashboardInnerPage = () => {
                     callback={() => {
                         callDashboardDismissApi(
                             type,
-                            rowData,
+                            filteredRowData,
                             operationType,
                             dismissApi,
                             dispatch,
@@ -1827,7 +1842,7 @@ const DashboardInnerPage = () => {
                     content={
                         <div className={styles.dismissDialog}>
                             <DsTypography variant="Regular_14">
-                                {t('databases.dismiss.postpone-bulk-line-1')} {rowData?.length}{' '}
+                                {t('databases.dismiss.postpone-bulk-line-1')} {filteredRowData?.length}{' '}
                                 {engineTypeBasedResourceStr(
                                     configEngineType,
                                     t('databases.dismiss.selected-instances'),
@@ -1842,7 +1857,7 @@ const DashboardInnerPage = () => {
                     callback={() => {
                         callDashboardDismissApi(
                             type,
-                            rowData,
+                            filteredRowData,
                             operationType,
                             dismissApi,
                             dispatch,

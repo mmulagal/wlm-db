@@ -39,12 +39,17 @@ import { ReactComponent as UnderProvisioned } from '../../../../assets/under-pro
 import { ReactComponent as InProgress } from '../../../../assets/In Progress.svg';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkCombineActionController from '../../../../common/BulkAction/BulkCombineActionController';
-import { calculatePostponeInfo, sortOptimizeDashboardInnerTable } from '../DashboardInnerPageHelper';
+import {
+    bulkDismissPostponeDisableCheck,
+    calculatePostponeInfo,
+    sortOptimizeDashboardInnerTable
+} from '../DashboardInnerPageHelper';
 import { ButtonWithDropdown } from '../../../../common/ButtonWithDropdown/ButtonWithDropdown';
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase,
-    isMssqlHaDeployment
+    isMssqlHaDeployment,
+    isWadExcludedConfig
 } from '../../../GetWell/GetWellUtils';
 import { GENERAL } from '../../../../utils/appConstants';
 
@@ -84,8 +89,8 @@ const DashboardMultiTableConfig = ({
         }
         assessmentRows?.map((hostData: any) => {
             if (
-                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
-                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                (!hostData?.isWad && !headerSelectedMultiCredIdsList.includes(hostData?.credentialId)) ||
+                (!hostData?.isWad && !headerSelectedMultiRegionIdsList.includes(hostData?.regionId)) ||
                 uniqueResourceList.includes(hostData?.databaseHostId)
             ) {
                 return;
@@ -143,6 +148,11 @@ const DashboardMultiTableConfig = ({
                         return;
                     }
 
+                    // Skip WAD-excluded configurations for WAD (offline assessment) instances
+                    if (isWadExcludedConfig(configType, hostData?.isWad, configEngineType)) {
+                        return;
+                    }
+
                     const errorCase =
                         (instanceData?.assessments?.storage?.configuration?.luns?.[0]?.errorMessage &&
                             instanceData?.assessments?.storage?.configuration?.volumes?.[0]?.errorMessage) ||
@@ -192,7 +202,8 @@ const DashboardMultiTableConfig = ({
                             configEngineType,
                             fullData
                         ),
-                        instanceAssessments: instanceData?.assessments
+                        instanceAssessments: instanceData?.assessments,
+                        isWad: hostData?.isWad
                     });
                 }
             });
@@ -323,6 +334,10 @@ const DashboardMultiTableConfig = ({
         checkBoxHandle(tableProps.selectionState, selectedRowsForOptimize, dispatch);
     };
 
+    // Determine if dismiss/postpone buttons should be disabled (for optimized rows)
+    const { isDismissDisabled, dismissDisableMsg, isPostponeDisabled, postponeDisableMsg } =
+        bulkDismissPostponeDisableCheck(selectedRowsForOptimize, t);
+
     const lastColDetails = () => ({
         id: '8',
         Header: '',
@@ -335,12 +350,25 @@ const DashboardMultiTableConfig = ({
                 rowData?.configStateList?.length === 1 && rowData?.configStateList.includes(CONFIG_STATES.POSTPONED);
             const startTime = rowData?.configObj?.startTime || rowData?.fullData?.[0]?.dismissedObj?.startTime;
             const endTime = rowData?.configObj?.endTime || rowData?.fullData?.[0]?.dismissedObj?.endTime;
+            const isWadRow = rowData?.isWad;
+            const wadDisabledMessage =
+                configEngineType === DBType.ORACLE
+                    ? t('databases.wad.tab-disabled-message-oracle')
+                    : t('databases.wad.tab-disabled-message');
+
             return (
                 <div className={styles.menuContainer}>
-                    {selectedRowsForOptimize?.length > 0 ? (
-                        <div className={styles.menuPointerDisabled}>
-                            <span className={styles.menuPointer}>...</span>
-                        </div>
+                    {selectedRowsForOptimize?.length > 0 || isWadRow ? (
+                        <TooltipComponent
+                            placement="left"
+                            title={isWadRow ? wadDisabledMessage : ''}
+                            width="280px"
+                            height="auto"
+                        >
+                            <div className={styles.menuPointerDisabled}>
+                                <span className={styles.menuPointer}>...</span>
+                            </div>
+                        </TooltipComponent>
                     ) : !showDismissed ? (
                         <div className={styles.jobMenuPopover}>
                             <ButtonWithDropdown
@@ -536,9 +564,9 @@ const DashboardMultiTableConfig = ({
                     return <InProgress />;
                 }
                 return (
-                    <div className={isDisable ? styles.disabled : ''}>
+                    <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
                         {cellData || t('databases.general.not-available-table-columns')}
-                    </div>
+                    </DsTypography>
                 );
             }
         },
@@ -553,7 +581,11 @@ const DashboardMultiTableConfig = ({
                     showDismissed ||
                     (rowData?.configStateList?.length === 1 &&
                         rowData?.configStateList[0] === CONFIG_STATES.ACTIVATING);
-                return <div className={isDisable ? styles.disabled : ''}>{cellData}</div>;
+                return (
+                    <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
+                        {cellData}
+                    </DsTypography>
+                );
             }
         },
         {
@@ -569,15 +601,15 @@ const DashboardMultiTableConfig = ({
                         rowData?.configStateList[0] === CONFIG_STATES.ACTIVATING);
                 if (isDisable) {
                     return (
-                        <div className={isDisable ? styles.disabled : ''}>
+                        <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
                             {t('databases.general.not-available-table-columns')}
-                        </div>
+                        </DsTypography>
                     );
                 }
                 return (
-                    <div className={isDisable ? styles.disabled : ''}>
+                    <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
                         {cellData || t('databases.general.not-available-table-columns')}
-                    </div>
+                    </DsTypography>
                 );
             }
         },
@@ -592,7 +624,11 @@ const DashboardMultiTableConfig = ({
                     showDismissed ||
                     (rowData?.configStateList?.length === 1 &&
                         rowData?.configStateList[0] === CONFIG_STATES.ACTIVATING);
-                return <div className={isDisable ? styles.disabled : ''}>{cellData}</div>;
+                return (
+                    <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
+                        {cellData || t('databases.general.not-available-table-columns')}
+                    </DsTypography>
+                );
             }
         },
         {
@@ -606,7 +642,11 @@ const DashboardMultiTableConfig = ({
                     showDismissed ||
                     (rowData?.configStateList?.length === 1 &&
                         rowData?.configStateList[0] === CONFIG_STATES.ACTIVATING);
-                return <div className={isDisable ? styles.disabled : ''}>{cellData}</div>;
+                return (
+                    <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
+                        {cellData || t('databases.general.not-available-table-columns')}
+                    </DsTypography>
+                );
             }
         },
         {
@@ -620,7 +660,11 @@ const DashboardMultiTableConfig = ({
                     showDismissed ||
                     (rowData?.configStateList?.length === 1 &&
                         rowData?.configStateList[0] === CONFIG_STATES.ACTIVATING);
-                return <div className={isDisable ? styles.disabled : ''}>{cellData}</div>;
+                return (
+                    <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
+                        {cellData || t('databases.general.not-available-table-columns')}
+                    </DsTypography>
+                );
             }
         },
         lastColDetails()
@@ -823,6 +867,10 @@ const DashboardMultiTableConfig = ({
                     isFixDisabled
                     fixDisableMsg=""
                     hideFixButton
+                    isDismissDisabled={isDismissDisabled}
+                    dismissDisableMsg={dismissDisableMsg}
+                    isPostponeDisabled={isPostponeDisabled}
+                    postponeDisableMsg={postponeDisableMsg}
                 />
             )}
             <Table

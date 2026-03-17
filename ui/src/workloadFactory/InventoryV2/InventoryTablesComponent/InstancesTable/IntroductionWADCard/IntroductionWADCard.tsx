@@ -6,11 +6,12 @@ import { ReactComponent as StorageCredentials } from '../../../../../assets/WAD.
 import styles from './IntroductionWADCard.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { setMssqlInstancesTabVisitCount } from '../../../../../store/workloadFactory/inventoryV2Slice';
-import { STAGING } from '../../../../../utils/consts';
+import { DBType, STAGING } from '../../../../../utils/consts';
 
 const MAX_WAD_CARD_VISITS = 3;
 
 const IntroductionWADCard = ({ buttonRef, setIsCardOpen }: any) => {
+    const { selectedHostType } = useAppSelector(state => state.inventoryV2);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -44,7 +45,9 @@ const IntroductionWADCard = ({ buttonRef, setIsCardOpen }: any) => {
                 </DsTypography>
 
                 <DsTypography variant="Regular_14" className={styles.text}>
-                    {t('databases.banner.one-time-assessment-content')}
+                    {selectedHostType === DBType.MSSQL
+                        ? t('databases.banner.one-time-assessment-content')
+                        : t('databases.banner.one-time-assessment-content-oracle')}
                 </DsTypography>
 
                 <DsTypography variant="Regular_14" className={styles.text}>

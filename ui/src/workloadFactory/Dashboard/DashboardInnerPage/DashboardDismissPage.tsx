@@ -16,7 +16,12 @@ import {
 import { useAppSelector } from '../../../store/storeHooks';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
-import { cardDataDefault, setOptimizeInnerpageSummary, updateConfigStateStatus } from '../../GetWell/GetWellUtils';
+import {
+    cardDataDefault,
+    isWadExcludedConfig,
+    setOptimizeInnerpageSummary,
+    updateConfigStateStatus
+} from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
@@ -702,8 +707,8 @@ const DashboardDismissPage = () => {
         const uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData?.map((hostData: any) => {
             if (
-                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
-                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                (!hostData?.isWad && !headerSelectedMultiCredIdsList.includes(hostData?.credentialId)) ||
+                (!hostData?.isWad && !headerSelectedMultiRegionIdsList.includes(hostData?.regionId)) ||
                 uniqueResourceList.includes(hostData?.databaseHostId)
             ) {
                 return;
@@ -718,6 +723,11 @@ const DashboardDismissPage = () => {
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
+                    // Skip WAD-excluded configurations for WAD (offline assessment) instances
+                    if (isWadExcludedConfig(type, hostData?.isWad)) {
+                        return;
+                    }
+
                     const configObj: any = getConfigObj(type, instanceData);
 
                     newAssessmentData.push({
@@ -732,7 +742,8 @@ const DashboardDismissPage = () => {
                         configState: configObj?.configState || CONFIG_STATES.ACTIVE,
                         credentialName: matchingCredEntry?.name,
                         regionName: matchingRegionEntry?.regionName,
-                        accountId: matchingCredEntry?.providerAccountId
+                        accountId: matchingCredEntry?.providerAccountId,
+                        isWad: hostData?.isWad
                     });
                 }
             });

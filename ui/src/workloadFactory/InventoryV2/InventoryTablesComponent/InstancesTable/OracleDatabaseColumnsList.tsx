@@ -18,7 +18,7 @@ import {
 } from '../../../../utils/consts';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
-import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
+import { formatSize, getFilterOptions, formatDateWithTime } from '../../../../utils/utilityFunctions';
 import { instanceNameHyperLink, optimizeAction, protectionTooltipText } from './InstanceTableColumnsHelper';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import DotComponent from '../../../../common/DotComponent/DotComponent';
@@ -35,7 +35,7 @@ import {
 import { manageActionCol } from '../../InventoryUtilsV2';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 import { setFSXId } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { logAnalyzerStatusCol, notAvailableWithTooltip } from './InstanceTableHelper';
+import { logAnalyzerStatusCol, handleOracleWadOptimizeAction, notAvailableWithTooltip } from './InstanceTableHelper';
 
 export function getOracleDatabaseColumnsList({
     t,
@@ -101,7 +101,7 @@ export function getOracleDatabaseColumnsList({
                                 return rowData?.status;
                             })()}
                             {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                            {!rowData?.status && !rowData?.loading && INVENTORY_STATUS.UNKNOWN}
+                            {!rowData?.status && !rowData?.loading && !rowData?.isWad && INVENTORY_STATUS.UNKNOWN}
                         </DsTypography>
                     </div>
                 </div>
@@ -273,6 +273,37 @@ export function getOracleDatabaseColumnsList({
                 if (rowData?.optimizationStatusLoading) {
                     return <DsFlashingDotsLoader />;
                 }
+
+                // For WAD (offline assessment) rows with valid optimization status, show tooltip and View link
+                if (rowData?.isWad && cellData) {
+                    return (
+                        <div className={styles.naContainer}>
+                            <Popover
+                                popoverClass=""
+                                trigger="hover"
+                                isAppendedToBody
+                                placement="bottom"
+                                container={<TooltipIcon />}
+                            >
+                                <div>
+                                    <DsTypography variant="Regular_13">
+                                        {t('databases.inventory.one-time-assessment')}
+                                    </DsTypography>
+                                    {rowData?.optimizationLastTimestamp && (
+                                        <DsTypography variant="Semibold_13">
+                                            {formatDateWithTime(rowData.optimizationLastTimestamp)}
+                                        </DsTypography>
+                                    )}
+                                </div>
+                            </Popover>
+                            <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                            <DsButton type="text" onClick={() => handleOracleWadOptimizeAction(rowData, dispatch)}>
+                                {t('databases.general.view')}
+                            </DsButton>
+                        </div>
+                    );
+                }
+
                 return (
                     <div className={styles.statusCol}>
                         <DsTypography variant="Regular_14">{cellData}</DsTypography>

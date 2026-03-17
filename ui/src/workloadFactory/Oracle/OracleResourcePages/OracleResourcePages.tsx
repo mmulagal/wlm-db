@@ -43,7 +43,7 @@ const OracleResourcePages = () => {
     const { selectedOracleInnerPageTab, visitedTabs, resourceDetails, refreshTimes } = useAppSelector(
         state => state.oracleSlice
     );
-    const { selectedHostname, selectedDatabaseInstanceName, innerPageDetails } = useAppSelector(
+    const { selectedHostname, selectedDatabaseInstanceName, innerPageDetails, isWad } = useAppSelector(
         state => state.getWellOptimize
     );
     const { selectedResourceCredId, selectedResourceRegionId, selectedResourceId } = useAppSelector(
@@ -175,7 +175,7 @@ const OracleResourcePages = () => {
                         }
                     />
 
-                    {selectedOracleInnerPageTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && (
+                    {selectedOracleInnerPageTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && !isWad && (
                         <div className={styles.buttonContainer}>
                             <ButtonWithDropdown
                                 variant="icon"

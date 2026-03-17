@@ -1287,6 +1287,52 @@ export const WAD_EXCLUDED_CONFIGS_MSSQL = [
     ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
 ];
 
+/**
+ * List of Oracle configuration names that are excluded for WAD (offline assessment) instances.
+ * These configurations require online connectivity and are not available for WAD instances.
+ * If a config is removed from this list, it will be shown normally for isWad=true cases.
+ */
+export const WAD_EXCLUDED_CONFIGS_ORACLE = [
+    ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+    ASSESSMENT_CONFIG_NAMES.CRR
+];
+
+/**
+ * Mapping of internal config keys to ASSESSMENT_CONFIG_NAMES display names.
+ * Used for generic WAD exclusion checks based on config key.
+ */
+export const CONFIG_KEY_TO_DISPLAY_NAME: Record<string, string> = {
+    // MSSQL config keys
+    computeRightsizing: ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
+    operatingSystemPatch: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+    mtuConfiguration: ASSESSMENT_CONFIG_NAMES.MTU,
+    applicationSqlServer: ASSESSMENT_CONFIG_NAMES.LICENSE,
+    mssqlPatch: ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
+    scheduledLocalSnapshot: ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
+    crr: ASSESSMENT_CONFIG_NAMES.CRR,
+    scheduledawsBackup: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+    clone: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+    // Oracle config keys
+    oracleOperatingSystemPatch: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
+    oracleCrr: ASSESSMENT_CONFIG_NAMES.CRR
+};
+
+/**
+ * Checks if a config key is WAD-excluded for the given database type.
+ * @param configKey - Internal config key (e.g., 'computeRightsizing', 'oracleCrr')
+ * @param dbType - Database type (DBType.MSSQL or DBType.ORACLE)
+ * @returns true if the config is WAD-excluded
+ */
+export const isConfigKeyWadExcluded = (configKey: string, dbType?: string): boolean => {
+    const displayName = CONFIG_KEY_TO_DISPLAY_NAME[configKey];
+    if (!displayName) return false;
+
+    if (dbType === DBType.ORACLE) {
+        return WAD_EXCLUDED_CONFIGS_ORACLE.includes(displayName);
+    }
+    return WAD_EXCLUDED_CONFIGS_MSSQL.includes(displayName);
+};
+
 export const categoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];
 export const severityOptions = ['Critical', 'Warning'];
 

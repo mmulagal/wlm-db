@@ -30,7 +30,8 @@ import {
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase,
-    isConfigSkippedForAoag
+    isConfigSkippedForAoag,
+    isWadExcludedConfig
 } from '../../../GetWell/GetWellUtils';
 import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
 import { useTable } from '../../../../common/Lib/Table/useTable';
@@ -40,9 +41,14 @@ import { ButtonWithDropdown } from '../../../../common/ButtonWithDropdown/Button
 import FirstColumnComponent from './FirstColumnComponent';
 import BulkCombineActionController from '../../../../common/BulkAction/BulkCombineActionController';
 import { GwSqlServerInstanceInterface, RSSConfigAdapterInterface } from '../../../../utils/types/getWellTypes';
-import { bulkFixDisableCheck, sortOptimizeDashboardInnerTable } from '../DashboardInnerPageHelper';
+import {
+    bulkDismissPostponeDisableCheck,
+    bulkFixDisableCheck,
+    sortOptimizeDashboardInnerTable
+} from '../DashboardInnerPageHelper';
 import { engineTypeBasedResourceStr } from '../../../WellArchitectedTab/WellArchitectedTabUtils';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
+import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import ImpactedResourceDialog from './ImpactedResourceDialog/ImpactedResourceDialog';
 import { GENERAL } from '../../../../utils/appConstants';
 
@@ -927,8 +933,8 @@ const DashboardConfigsTable = ({
 
         engineTypeAssessmentData?.map((hostData: any) => {
             if (
-                !headerSelectedMultiCredIdsList.includes(hostData?.credentialId) ||
-                !headerSelectedMultiRegionIdsList.includes(hostData?.regionId) ||
+                (!hostData?.isWad && !headerSelectedMultiCredIdsList.includes(hostData?.credentialId)) ||
+                (!hostData?.isWad && !headerSelectedMultiRegionIdsList.includes(hostData?.regionId)) ||
                 uniqueResourceList.includes(hostData?.databaseHostId)
             ) {
                 return;
@@ -981,6 +987,11 @@ const DashboardConfigsTable = ({
                         return;
                     }
 
+                    // Skip WAD-excluded configurations for WAD (offline assessment) instances
+                    if (isWadExcludedConfig(configType, hostData?.isWad, configEngineType)) {
+                        return;
+                    }
+
                     assessmentData.push({
                         credentialId: hostData?.credentialId,
                         configState: configStateObj?.configState,
@@ -996,6 +1007,7 @@ const DashboardConfigsTable = ({
                         credentialName: matchingCredEntry?.name,
                         regionName: matchingRegionEntry?.regionName,
                         accountId: matchingCredEntry?.providerAccountId,
+                        isWad: hostData?.isWad,
                         ...customData
                     });
                 }
@@ -1129,8 +1141,13 @@ const DashboardConfigsTable = ({
         configType,
         isFixNotSupported,
         selectedRowsForOptimize,
-        t
+        t,
+        configEngineType
     );
+
+    // Determine if dismiss/postpone buttons should be disabled (for optimized rows)
+    const { isDismissDisabled, dismissDisableMsg, isPostponeDisabled, postponeDisableMsg } =
+        bulkDismissPostponeDisableCheck(selectedRowsForOptimize, t);
 
     const { setDialog } = useDialog();
 
@@ -1281,7 +1298,11 @@ const DashboardConfigsTable = ({
             width: '220px',
             renderCell: (cellData: string, rowData: any) => {
                 const isDisable = showDismissed || rowData?.configState === CONFIG_STATES.ACTIVATING;
-                return <div className={isDisable ? styles.disabled : ''}>{cellData}</div>;
+                return (
+                    <div className={isDisable ? styles.disabled : ''}>
+                        {cellData || t('databases.general.not-available')}
+                    </div>
+                );
             }
         },
         {
@@ -1292,7 +1313,11 @@ const DashboardConfigsTable = ({
             width: '180px',
             renderCell: (cellData: string, rowData: any) => {
                 const isDisable = showDismissed || rowData?.configState === CONFIG_STATES.ACTIVATING;
-                return <div className={isDisable ? styles.disabled : ''}>{cellData}</div>;
+                return (
+                    <div className={isDisable ? styles.disabled : ''}>
+                        {cellData || t('databases.general.not-available')}
+                    </div>
+                );
             }
         },
         {
@@ -1303,7 +1328,11 @@ const DashboardConfigsTable = ({
             width: '180px',
             renderCell: (cellData: string, rowData: any) => {
                 const isDisable = showDismissed || rowData?.configState === CONFIG_STATES.ACTIVATING;
-                return <div className={isDisable ? styles.disabled : ''}>{cellData}</div>;
+                return (
+                    <div className={isDisable ? styles.disabled : ''}>
+                        {cellData || t('databases.general.not-available')}
+                    </div>
+                );
             }
         },
         // Last column with actions
@@ -1338,12 +1367,25 @@ const DashboardConfigsTable = ({
                     return null;
                 }
 
+                const isWadRow = rowData?.isWad === true;
+                const wadDisabledMessage =
+                    configEngineType === DBType.ORACLE
+                        ? t('databases.wad.tab-disabled-message-oracle')
+                        : t('databases.wad.tab-disabled-message');
+
                 return (
                     <>
-                        {selectedRowsForOptimize?.length > 0 ? (
-                            <div className={styles.menuPointerDisabled}>
-                                <span className={styles.menuPointer}>...</span>
-                            </div>
+                        {selectedRowsForOptimize?.length > 0 || isWadRow ? (
+                            <TooltipComponent
+                                placement="left"
+                                title={isWadRow ? wadDisabledMessage : ''}
+                                width="280px"
+                                height="auto"
+                            >
+                                <div className={styles.menuPointerDisabled}>
+                                    <span className={styles.menuPointer}>...</span>
+                                </div>
+                            </TooltipComponent>
                         ) : (
                             <div className={styles.jobMenuPopover}>
                                 <ButtonWithDropdown
@@ -1458,6 +1500,10 @@ const DashboardConfigsTable = ({
                     showDismissed={showDismissed}
                     isFixDisabled={isFixDisabled}
                     fixDisableMsg={fixDisableMsg}
+                    isDismissDisabled={isDismissDisabled}
+                    dismissDisableMsg={dismissDisableMsg}
+                    isPostponeDisabled={isPostponeDisabled}
+                    postponeDisableMsg={postponeDisableMsg}
                 />
             )}
             <Table

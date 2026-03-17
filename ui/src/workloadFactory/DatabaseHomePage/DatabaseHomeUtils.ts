@@ -128,8 +128,8 @@ export const getManagedHostCountFromInventory = (
     Object.keys(inventoryTableData)?.forEach((key: any) => {
         const item = inventoryTableData[key];
         if (
-            !headerSelectedMultiCredIdsList.includes(item?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(item?.regionId) ||
+            (!item?.isWad && !headerSelectedMultiCredIdsList.includes(item?.credentialId)) ||
+            (!item?.isWad && !headerSelectedMultiRegionIdsList.includes(item?.regionId)) ||
             uniqueResourceList.includes(item?.resourceId || '') ||
             item?.managedInstance === 0 ||
             item?.hostType !== type
@@ -538,6 +538,28 @@ export const isActivating = (dismissState?: string) => dismissState === CONFIG_S
 export const isDismissed = (dismissState?: string) =>
     dismissState === CONFIG_STATES.DISMISSED || dismissState === CONFIG_STATES.POSTPONED;
 
+/**
+ * Checks if a database host should be skipped during assessment data processing.
+ * Filters out hosts based on credential/region header selections and deduplicates by host ID.
+ * If the host should NOT be skipped, it is added to the uniqueResourceList to prevent future duplicates.
+ */
+export const shouldSkipDatabaseHost = (
+    databaseHost: any,
+    headerSelectedMultiCredIdsList: string[],
+    headerSelectedMultiRegionIdsList: string[],
+    uniqueResourceList: string[]
+): boolean => {
+    if (
+        (!databaseHost?.isWad && !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId)) ||
+        (!databaseHost?.isWad && !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId)) ||
+        uniqueResourceList.includes(databaseHost?.databaseHostId)
+    ) {
+        return true;
+    }
+    uniqueResourceList.push(databaseHost?.databaseHostId);
+    return false;
+};
+
 export const hasPostponedOrDismissed = (obj: any): boolean => {
     const checkState = (item: any): boolean => {
         if (typeof item !== 'object' || item === null) return false;
@@ -567,13 +589,15 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
 
     assessmentData?.map((databaseHost: any) => {
         if (
-            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceList.includes(databaseHost?.databaseHostId)
+            shouldSkipDatabaseHost(
+                databaseHost,
+                headerSelectedMultiCredIdsList,
+                headerSelectedMultiRegionIdsList,
+                uniqueResourceList
+            )
         ) {
             return;
         }
-        uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
@@ -946,13 +970,15 @@ const processMSSQLAssessmentData = (assessmentData: any, headerFilters: any, uni
 
     assessmentData?.map((databaseHost: any) => {
         if (
-            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceList.includes(databaseHost?.databaseHostId)
+            shouldSkipDatabaseHost(
+                databaseHost,
+                headerSelectedMultiCredIdsList,
+                headerSelectedMultiRegionIdsList,
+                uniqueResourceList
+            )
         ) {
             return;
         }
-        uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
@@ -1128,13 +1154,15 @@ const processOracleAssessmentData = (
 
     oracleAssessmentData?.map((databaseHost: any) => {
         if (
-            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceList.includes(databaseHost?.databaseHostId)
+            shouldSkipDatabaseHost(
+                databaseHost,
+                headerSelectedMultiCredIdsList,
+                headerSelectedMultiRegionIdsList,
+                uniqueResourceList
+            )
         ) {
             return;
         }
-        uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
@@ -1371,13 +1399,15 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
 
     assessmentData.map((databaseHost: any) => {
         if (
-            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceList.includes(databaseHost?.databaseHostId)
+            shouldSkipDatabaseHost(
+                databaseHost,
+                headerSelectedMultiCredIdsList,
+                headerSelectedMultiRegionIdsList,
+                uniqueResourceList
+            )
         ) {
             return;
         }
-        uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
@@ -1520,13 +1550,15 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
 
     oracleAssessmentData.map((databaseHost: any) => {
         if (
-            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceList.includes(databaseHost?.databaseHostId)
+            shouldSkipDatabaseHost(
+                databaseHost,
+                headerSelectedMultiCredIdsList,
+                headerSelectedMultiRegionIdsList,
+                uniqueResourceList
+            )
         ) {
             return;
         }
-        uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
@@ -1669,13 +1701,15 @@ const processOracleConfigurationData = (
 ) => {
     oracleAssessmentData?.map((databaseHost: any) => {
         if (
-            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceList.includes(databaseHost?.databaseHostId)
+            shouldSkipDatabaseHost(
+                databaseHost,
+                headerSelectedMultiCredIdsList,
+                headerSelectedMultiRegionIdsList,
+                uniqueResourceList
+            )
         ) {
             return;
         }
-        uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
@@ -1711,7 +1745,6 @@ const processOracleConfigurationData = (
 
                 // Process Oracle storage layout configurations
                 const oracleLayoutConfigs = [
-                    { configName: 'oracle-binary-placement', resultKey: 'oracleBinaryPlacement' },
                     { configName: 'datafiles-placement', resultKey: 'datafilesPlacement' },
                     { configName: 'controlfiles-placement', resultKey: 'controlfilesPlacement' },
                     { configName: 'redologs-placement', resultKey: 'redoLogsPlacement' },
@@ -1732,6 +1765,17 @@ const processOracleConfigurationData = (
                         getAssessmentGroupedByConfigurations
                     );
                 });
+
+                // Skip oracleBinaryPlacement counting for WAD instances (WAD-excluded config for Oracle)
+                if (!databaseHost?.isWad) {
+                    processStorageLayoutConfig(
+                        instanceAssessmentData,
+                        'oracle-binary-placement',
+                        'oracleBinaryPlacement',
+                        configState,
+                        getAssessmentGroupedByConfigurations
+                    );
+                }
 
                 // Process Oracle storage sizing configurations
                 const headroomObj = instanceAssessmentData?.storage?.sizing?.find(
@@ -1781,28 +1825,36 @@ const processOracleConfigurationData = (
                     getAssessmentGroupedByConfigurations?.severityObj?.oracleSwapSpace;
 
                 // Process Oracle Compute configurations
-                const operatingSystemPatchObj = instanceAssessmentData?.hostOsPatch;
-                const operatingSystemPatchStateObj = instanceAssessmentData?.dismissedConfigurations?.hostOsPatch;
-                const isOperatingSystemPatchOptimized = isOptimizedDashInner(
-                    operatingSystemPatchObj?.status,
-                    operatingSystemPatchStateObj?.configState
-                );
-                setConfigState(configState, 'oracleOperatingSystemPatch', operatingSystemPatchStateObj?.configState);
-                getAssessmentGroupedByConfigurations.oracleOperatingSystemPatch.optimized +=
-                    isOperatingSystemPatchOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.oracleOperatingSystemPatch.dismissed += isDismissed(
-                    operatingSystemPatchStateObj?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.oracleOperatingSystemPatch.activating += isActivating(
-                    operatingSystemPatchStateObj?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.oracleOperatingSystemPatch =
-                    GETWELL_VALUES[operatingSystemPatchObj?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.oracleOperatingSystemPatch;
+                // Skip oracleOperatingSystemPatch counting for WAD instances (WAD-excluded config for Oracle)
+                if (!databaseHost?.isWad) {
+                    const operatingSystemPatchObj = instanceAssessmentData?.hostOsPatch;
+                    const operatingSystemPatchStateObj = instanceAssessmentData?.dismissedConfigurations?.hostOsPatch;
+                    const isOperatingSystemPatchOptimized = isOptimizedDashInner(
+                        operatingSystemPatchObj?.status,
+                        operatingSystemPatchStateObj?.configState
+                    );
+                    setConfigState(
+                        configState,
+                        'oracleOperatingSystemPatch',
+                        operatingSystemPatchStateObj?.configState
+                    );
+                    getAssessmentGroupedByConfigurations.oracleOperatingSystemPatch.total++;
+                    getAssessmentGroupedByConfigurations.oracleOperatingSystemPatch.optimized +=
+                        isOperatingSystemPatchOptimized ? 1 : 0;
+                    getAssessmentGroupedByConfigurations.oracleOperatingSystemPatch.dismissed += isDismissed(
+                        operatingSystemPatchStateObj?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.oracleOperatingSystemPatch.activating += isActivating(
+                        operatingSystemPatchStateObj?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.oracleOperatingSystemPatch =
+                        GETWELL_VALUES[operatingSystemPatchObj?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.oracleOperatingSystemPatch;
+                }
 
                 const isOntapConfigurationOptimized =
                     instanceAssessmentData?.storage &&
@@ -1927,29 +1979,33 @@ const processOracleConfigurationData = (
                     GETWELL_VALUES[instanceAssessmentData?.oracleSecurityPatch?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.oracleSecurityPatch;
 
-                const isCrrOptimized = isOptimizedDashInner(
-                    instanceAssessmentData?.crr?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
-                );
-                setConfigState(
-                    configState,
-                    'oracleCrr',
-                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
-                );
-                getAssessmentGroupedByConfigurations.oracleCrr.optimized += isCrrOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.oracleCrr.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.oracleCrr.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.oracleCrr =
-                    GETWELL_VALUES[instanceAssessmentData?.crr?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.oracleCrr;
+                // Skip oracleCrr counting for WAD instances (WAD-excluded config for Oracle)
+                if (!databaseHost?.isWad) {
+                    const isCrrOptimized = isOptimizedDashInner(
+                        instanceAssessmentData?.crr?.status,
+                        instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                    );
+                    setConfigState(
+                        configState,
+                        'oracleCrr',
+                        instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                    );
+                    getAssessmentGroupedByConfigurations.oracleCrr.total++;
+                    getAssessmentGroupedByConfigurations.oracleCrr.optimized += isCrrOptimized ? 1 : 0;
+                    getAssessmentGroupedByConfigurations.oracleCrr.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.oracleCrr.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.oracleCrr =
+                        GETWELL_VALUES[instanceAssessmentData?.crr?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.oracleCrr;
+                }
             }
         });
     });
@@ -2072,11 +2128,13 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             partiallyDismissed: 0
         },
         computeRightsizing: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
         },
         operatingSystemPatch: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
@@ -2087,6 +2145,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             activating: 0
         },
         mtuConfiguration: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
@@ -2098,6 +2157,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             activating: 0
         },
         mssqlPatch: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
@@ -2108,11 +2168,13 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             activating: 0
         },
         scheduledLocalSnapshot: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
         },
         scheduledawsBackup: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
@@ -2125,11 +2187,13 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             partiallyDismissed: 0
         },
         clone: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
         },
         crr: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
@@ -2140,6 +2204,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             activating: 0
         },
         oracleCrr: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
@@ -2216,6 +2281,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             activating: 0
         },
         oracleOperatingSystemPatch: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
@@ -2281,13 +2347,15 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
 
     assessmentData.map((databaseHost: any) => {
         if (
-            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceList.includes(databaseHost?.databaseHostId)
+            shouldSkipDatabaseHost(
+                databaseHost,
+                headerSelectedMultiCredIdsList,
+                headerSelectedMultiRegionIdsList,
+                uniqueResourceList
+            )
         ) {
             return;
         }
-        uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
@@ -2702,38 +2770,45 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
 
                 getAssessmentGroupedByConfigurations.severityObj.operatingSystem = 'Critical';
 
-                getAssessmentGroupedByConfigurations.computeRightsizing.optimized += isComputeRightsizingOptimized
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.computeRightsizing.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.compute?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.computeRightsizing.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.compute?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.computeRightsizing =
-                    GETWELL_VALUES[instanceAssessmentData?.compute?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.computeRightsizing;
-                getAssessmentGroupedByConfigurations.operatingSystemPatch.optimized += isOperatingSystemPatchOptimized
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.operatingSystemPatch.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.operatingSystemPatch.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.operatingSystemPatch =
-                    GETWELL_VALUES[instanceAssessmentData?.hostOsPatch?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.operatingSystemPatch;
+                // Skip computeRightsizing counting for WAD instances (WAD-excluded config)
+                if (!databaseHost?.isWad) {
+                    getAssessmentGroupedByConfigurations.computeRightsizing.total++;
+                    getAssessmentGroupedByConfigurations.computeRightsizing.optimized += isComputeRightsizingOptimized
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.computeRightsizing.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.compute?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.computeRightsizing.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.compute?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.computeRightsizing =
+                        GETWELL_VALUES[instanceAssessmentData?.compute?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.computeRightsizing;
+                }
+                // Skip operatingSystemPatch counting for WAD instances (WAD-excluded config)
+                if (!databaseHost?.isWad) {
+                    getAssessmentGroupedByConfigurations.operatingSystemPatch.total++;
+                    getAssessmentGroupedByConfigurations.operatingSystemPatch.optimized +=
+                        isOperatingSystemPatchOptimized ? 1 : 0;
+                    getAssessmentGroupedByConfigurations.operatingSystemPatch.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.operatingSystemPatch.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.operatingSystemPatch =
+                        GETWELL_VALUES[instanceAssessmentData?.hostOsPatch?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.operatingSystemPatch;
+                }
                 getAssessmentGroupedByConfigurations.rssConfiguration.optimized += isRssConfigurationOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.rssConfiguration.dismissed += isDismissed(
                     instanceAssessmentData?.dismissedConfigurations?.rssConfig?.configState
@@ -2748,22 +2823,28 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                 getAssessmentGroupedByConfigurations.severityObj.rssConfiguration =
                     GETWELL_VALUES[instanceAssessmentData?.rssConfig?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.rssConfiguration;
-                getAssessmentGroupedByConfigurations.mtuConfiguration.optimized += isMtuConfigurationOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.mtuConfiguration.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.mtuConfiguration.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.mtuConfiguration =
-                    GETWELL_VALUES[instanceAssessmentData?.mtuAlignment?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.mtuConfiguration;
-                // Skip license (applicationSqlServer) counting for AOAG deployments - not supported
-                if (!isAoagInstanceDeployment) {
+                // Skip mtuConfiguration counting for WAD instances (WAD-excluded config)
+                if (!databaseHost?.isWad) {
+                    getAssessmentGroupedByConfigurations.mtuConfiguration.total++;
+                    getAssessmentGroupedByConfigurations.mtuConfiguration.optimized += isMtuConfigurationOptimized
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.mtuConfiguration.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.mtuConfiguration.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.mtuConfiguration =
+                        GETWELL_VALUES[instanceAssessmentData?.mtuAlignment?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.mtuConfiguration;
+                }
+                // Skip license (applicationSqlServer) counting for AOAG deployments and WAD instances
+                if (!isAoagInstanceDeployment && !databaseHost?.isWad) {
                     getAssessmentGroupedByConfigurations.applicationSqlServer.total++;
                     getAssessmentGroupedByConfigurations.applicationSqlServer.optimized +=
                         isApplicationSqlServerOptimized ? 1 : 0;
@@ -2781,20 +2862,24 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                         GETWELL_VALUES[instanceAssessmentData?.license?.severity] ||
                         getAssessmentGroupedByConfigurations?.severityObj?.applicationSqlServer;
                 }
-                getAssessmentGroupedByConfigurations.mssqlPatch.optimized += isMicrosoftSqlPatchOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.mssqlPatch.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.mssqlPatch.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.mssqlPatch =
-                    GETWELL_VALUES[instanceAssessmentData?.mssqlPatch?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.mssqlPatch;
+                // Skip mssqlPatch counting for WAD instances (WAD-excluded config)
+                if (!databaseHost?.isWad) {
+                    getAssessmentGroupedByConfigurations.mssqlPatch.total++;
+                    getAssessmentGroupedByConfigurations.mssqlPatch.optimized += isMicrosoftSqlPatchOptimized ? 1 : 0;
+                    getAssessmentGroupedByConfigurations.mssqlPatch.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.mssqlPatch.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.mssqlPatch =
+                        GETWELL_VALUES[instanceAssessmentData?.mssqlPatch?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.mssqlPatch;
+                }
                 getAssessmentGroupedByConfigurations.maxdopPatch.optimized += isMaxdopPatchOptimized ? 1 : 0;
                 getAssessmentGroupedByConfigurations.maxdopPatch.dismissed += isDismissed(
                     instanceAssessmentData?.dismissedConfigurations?.maxDOP?.configState
@@ -2809,69 +2894,84 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                 getAssessmentGroupedByConfigurations.severityObj.maxdopPatch =
                     GETWELL_VALUES[instanceAssessmentData?.maxDOP?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.maxdopPatch;
-                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.optimized +=
-                    isScheduledLocalSnapshotOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
-                )
-                    ? 1
-                    : 0;
+                // Skip scheduledLocalSnapshot counting for WAD instances (WAD-excluded config)
+                if (!databaseHost?.isWad) {
+                    getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.total++;
+                    getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.optimized +=
+                        isScheduledLocalSnapshotOptimized ? 1 : 0;
+                    getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.scheduledLocalSnapshot =
+                        GETWELL_VALUES[instanceAssessmentData?.snapshotPolicy?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.scheduledLocalSnapshot;
+                }
 
-                getAssessmentGroupedByConfigurations.severityObj.scheduledLocalSnapshot =
-                    GETWELL_VALUES[instanceAssessmentData?.snapshotPolicy?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.scheduledLocalSnapshot;
+                // Skip scheduledawsBackup counting for WAD instances (WAD-excluded config)
+                if (!databaseHost?.isWad) {
+                    getAssessmentGroupedByConfigurations.scheduledawsBackup.total++;
+                    getAssessmentGroupedByConfigurations.scheduledawsBackup.optimized += isScheduledawsBackupOptimized
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.scheduledawsBackup.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.scheduledawsBackup.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.scheduledawsBackup =
+                        GETWELL_VALUES[instanceAssessmentData?.awsBackup?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.scheduledawsBackup;
+                }
 
-                getAssessmentGroupedByConfigurations.scheduledawsBackup.optimized += isScheduledawsBackupOptimized
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.scheduledawsBackup.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.scheduledawsBackup.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.scheduledawsBackup =
-                    GETWELL_VALUES[instanceAssessmentData?.awsBackup?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.scheduledawsBackup;
+                // Skip clone counting for WAD instances (WAD-excluded config)
+                if (!databaseHost?.isWad) {
+                    getAssessmentGroupedByConfigurations.clone.total++;
+                    getAssessmentGroupedByConfigurations.clone.optimized += isCloneOptimized ? 1 : 0;
+                    getAssessmentGroupedByConfigurations.clone.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.clone?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.clone.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.clone?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.clone =
+                        GETWELL_VALUES[instanceAssessmentData?.clone?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.clone;
+                }
 
-                getAssessmentGroupedByConfigurations.clone.optimized += isCloneOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.clone.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.clone?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.clone.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.clone?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.clone =
-                    GETWELL_VALUES[instanceAssessmentData?.clone?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.clone;
-
-                getAssessmentGroupedByConfigurations.crr.optimized += isCrrOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.crr.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.crr.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.crr =
-                    GETWELL_VALUES[instanceAssessmentData?.crr?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.crr;
+                // Skip crr counting for WAD instances (WAD-excluded config)
+                if (!databaseHost?.isWad) {
+                    getAssessmentGroupedByConfigurations.crr.total++;
+                    getAssessmentGroupedByConfigurations.crr.optimized += isCrrOptimized ? 1 : 0;
+                    getAssessmentGroupedByConfigurations.crr.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.crr.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.crr?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.crr =
+                        GETWELL_VALUES[instanceAssessmentData?.crr?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.crr;
+                }
 
                 if (isMssqlHaDeployment(instance?.assessments?.deploymentType)) {
                     getAssessmentGroupedByConfigurations.isHaMssqlEnable = true;
@@ -2940,13 +3040,15 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, orac
 
     assessmentData.map((databaseHost: any) => {
         if (
-            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceList.includes(databaseHost?.databaseHostId)
+            shouldSkipDatabaseHost(
+                databaseHost,
+                headerSelectedMultiCredIdsList,
+                headerSelectedMultiRegionIdsList,
+                uniqueResourceList
+            )
         ) {
             return;
         }
-        uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
@@ -2976,13 +3078,15 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, orac
 
     oracleAssessmentData.map((databaseHost: any) => {
         if (
-            !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId) ||
-            !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId) ||
-            uniqueResourceList.includes(databaseHost?.databaseHostId)
+            shouldSkipDatabaseHost(
+                databaseHost,
+                headerSelectedMultiCredIdsList,
+                headerSelectedMultiRegionIdsList,
+                uniqueResourceList
+            )
         ) {
             return;
         }
-        uniqueResourceList.push(databaseHost?.databaseHostId);
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
@@ -3391,4 +3495,94 @@ export const createLogAnalyzerActiveInstance = (tableData: any[]) => {
     });
 
     return newTableData;
+};
+
+/**
+ * Formats offline (WAD) assessment data to match the assessment data format used by
+ * allmssqlHostAssessmentData and allOracleHostAssessmentData.
+ *
+ * Offline data structure (flat instance-level):
+ * { resourceId, databaseInstanceId, databaseInstanceName, credentialsId, region, regionName,
+ *   vmName, virtualNetworkId, virtualNetworkName, clusterNodes, assessments, isWad }
+ *
+ * Target assessment data structure (hierarchical host-level):
+ * { credentialId, databaseHostId, databaseHostName, regionId, isWad,
+ *   instancesAssessment: [{ databaseInstanceId, databaseInstanceName, assessments }] }
+ *
+ * @param offlineData - The flat offline assessment data array
+ * @param dbType - The database type ('mssql' or 'oracle')
+ * @returns Formatted assessment data array matching the hierarchical structure
+ */
+export const formatOfflineDataToAssessmentFormat = (offlineData: any[], dbType: 'mssql' | 'oracle'): any[] => {
+    if (!offlineData || offlineData.length === 0) {
+        return [];
+    }
+
+    // Group items by host (resourceId + credentialId + regionId)
+    const hostGroups: { [key: string]: any[] } = {};
+
+    offlineData.forEach((instanceData: any) => {
+        // Use resourceId as host identifier, fallback to vmName
+        const hostId =
+            instanceData?.resourceId ||
+            (dbType === 'oracle' ? `wad-oracle-${instanceData?.vmName}` : `wad-${instanceData?.vmName}`);
+        const credId = instanceData?.credentialId || instanceData?.credentialsId || '';
+        const regionId = instanceData?.regionId || instanceData?.region || '';
+
+        // Create a unique key for grouping instances by host
+        const groupKey = `${hostId}_${credId}_${regionId}`;
+
+        if (!hostGroups[groupKey]) {
+            hostGroups[groupKey] = [];
+        }
+        hostGroups[groupKey].push(instanceData);
+    });
+
+    // Create assessment data entries for each host group
+    const result: any[] = [];
+
+    Object.keys(hostGroups).forEach((groupKey: string) => {
+        const instances = hostGroups[groupKey];
+        const firstInstance = instances[0]; // Use first instance for host-level data
+
+        const hostId =
+            firstInstance?.resourceId ||
+            (dbType === 'oracle' ? `wad-oracle-${firstInstance?.vmName}` : `wad-${firstInstance?.vmName}`);
+        const credId = firstInstance?.credentialId || firstInstance?.credentialsId || '';
+        const regionId = firstInstance?.regionId || firstInstance?.region || '';
+
+        // Format instancesAssessment array from the grouped instances
+        const instancesAssessment: any[] = instances.map((instanceData: any) => ({
+            databaseInstanceId: instanceData?.databaseInstanceId,
+            databaseInstanceName: instanceData?.databaseInstanceName,
+            assessments: instanceData?.assessments
+                ? {
+                      ...instanceData.assessments,
+                      lastAssessmentTimestamp: instanceData.assessments?.lastAssessmentTimestamp || Date.now()
+                  }
+                : null,
+            error: instanceData?.error || null
+        }));
+
+        // Create host-level assessment data entry
+        const hostAssessmentData: any = {
+            databaseHostId: hostId,
+            databaseHostName: firstInstance?.vmName || hostId,
+            credentialId: credId,
+            regionId,
+            region: firstInstance?.region || '',
+            regionName: firstInstance?.regionName || '',
+            virtualNetworkId: firstInstance?.virtualNetworkId || '',
+            virtualNetworkName: firstInstance?.virtualNetworkName || '',
+            vmInstanceId: firstInstance?.vmInstanceId || '',
+            vmName: firstInstance?.vmName || '',
+            numberOfDatabaseInstances: instances.length,
+            isWad: true,
+            instancesAssessment
+        };
+
+        result.push(hostAssessmentData);
+    });
+
+    return result;
 };

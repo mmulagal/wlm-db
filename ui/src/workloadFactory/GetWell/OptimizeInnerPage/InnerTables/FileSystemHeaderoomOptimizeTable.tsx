@@ -38,6 +38,7 @@ const FileSystemHeadroomOptimizeTable = ({ type, lastColDetails, handleBulkActio
         () =>
             data.map((row: any) => ({
                 ...row,
+                isWad,
                 cellProps: getWadCellProps(isWad, t, { ...row.cellProps, isDisabled: true })
             })),
         [data, isWad, t]

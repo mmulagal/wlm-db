@@ -35,18 +35,19 @@ const ComputeSection = ({
 
     return (
         <div>
-            {shouldShowHeader && (
-                <div className={styles['header-buttons']}>
-                    <DsTypography
-                        style={{
-                            padding: '0 0 8px'
-                        }}
-                        variant="Semibold_16"
-                    >
-                        {t('databases.oracle-inner-page.compute')}
-                    </DsTypography>
-                </div>
-            )}
+            {shouldShowHeader ||
+                (oracleCardData?.isWad && (
+                    <div className={styles['header-buttons']}>
+                        <DsTypography
+                            style={{
+                                padding: '0 0 8px'
+                            }}
+                            variant="Semibold_16"
+                        >
+                            {t('databases.oracle-inner-page.compute')}
+                        </DsTypography>
+                    </div>
+                ))}
 
             <div className={styles.accordionGroups}>
                 {/* Host OS Patch Card */}

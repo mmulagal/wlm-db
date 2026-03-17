@@ -469,7 +469,8 @@ export const bulkFixDisableCheck = (
     configType: string,
     isFixNotSupported: boolean,
     selectedRowsForOptimize: any,
-    t: any
+    t: any,
+    configEngineType?: string
 ) => {
     let isFixDisabled = false;
     let fixDisableMsg = '';
@@ -487,6 +488,9 @@ export const bulkFixDisableCheck = (
 
     const checkIfAllRowNotOnline = (selectedRows: any[]) =>
         selectedRows.every((row: any) => row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP);
+
+    // Function to check if all rows are WAD (offline assessment) rows
+    const checkIfAllRowsAreWad = (selectedRows: any[]) => selectedRows.every((row: any) => row?.isWad === true);
 
     // Function to check if all selected rows has same host
     const checkIfAllRowsSameHost = (selectedRows: any[]) =>
@@ -537,7 +541,15 @@ export const bulkFixDisableCheck = (
         fixDisableMsg = `${configType} ${t('databases.well-architect.assessment-not-available')}`;
     } else if (checkIfAllRowNotOnline(selectedRowsForOptimize)) {
         isFixDisabled = true;
-        fixDisableMsg = t('databases.well-architect.only-online-resource-fix');
+        // Use specific WAD message if all rows are WAD (offline assessment) rows
+        if (checkIfAllRowsAreWad(selectedRowsForOptimize)) {
+            fixDisableMsg =
+                configEngineType === DBType.ORACLE
+                    ? t('databases.wad.tab-disabled-message-oracle')
+                    : t('databases.wad.tab-disabled-message');
+        } else {
+            fixDisableMsg = t('databases.well-architect.only-online-resource-fix');
+        }
     } else if (
         configType === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING &&
         !checkIfAllRowsSameHost(selectedRowsForOptimize)
@@ -578,6 +590,29 @@ export const bulkFixDisableCheck = (
     return { isFixDisabled, fixDisableMsg };
 };
 
+/**
+ * Check if Dismiss and Postpone buttons should be disabled for bulk actions.
+ * Dismiss and Postpone are disabled when all selected rows are WAD (offline assessment) rows.
+ */
+export const bulkDismissPostponeDisableCheck = (selectedRowsForOptimize: any, t: any) => {
+    let isDismissDisabled = false;
+    let dismissDisableMsg = '';
+    let isPostponeDisabled = false;
+    let postponeDisableMsg = '';
+
+    // Function to check if all selected rows are WAD (offline assessment) rows
+    const checkIfAllRowsAreWad = (selectedRows: any[]) => selectedRows.every((row: any) => row?.isWad === true);
+
+    if (selectedRowsForOptimize?.length > 0 && checkIfAllRowsAreWad(selectedRowsForOptimize)) {
+        isDismissDisabled = true;
+        dismissDisableMsg = t('databases.well-architect.bulk-dismiss-disabled-wad');
+        isPostponeDisabled = true;
+        postponeDisableMsg = t('databases.well-architect.bulk-postpone-disabled-wad');
+    }
+
+    return { isDismissDisabled, dismissDisableMsg, isPostponeDisabled, postponeDisableMsg };
+};
+
 export const sortOptimizeDashboardInnerTable = (data: any) => {
     if (!data || data.length < 2) {
         return data;
@@ -604,6 +639,7 @@ export const sortOptimizeDashboardInnerTable = (data: any) => {
 export const filterNotOptimizedRows = (data: any[]) =>
     data.filter(
         row =>
+            !row?.isWad && // Exclude WAD (offline assessment) rows
             row?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP &&
             row.assessmentStatus &&
             row.assessmentStatus !== GETWELL_STATUS.OPTIMIZED

@@ -128,6 +128,8 @@ export interface InventorySliceData {
     allLogAnalysisOracleLoading: boolean;
     offlineMssqlHostAssessmentData: any;
     offlineMssqlHostAssessmentLoading: boolean;
+    offlineOracleHostAssessmentData: any;
+    offlineOracleHostAssessmentLoading: boolean;
     potentialSavingsHostData: {
         [key: string]: any;
     };

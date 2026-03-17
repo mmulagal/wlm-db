@@ -23,10 +23,11 @@ interface ViewAndFixButtonProps {
     };
     loading?: boolean;
     callOptimizeApi?: (type: string) => void;
+    isWad?: boolean;
 }
 
 // For oracle assessment and optimization
-const ViewAndFixButton = ({ cardData, loading, callOptimizeApi }: ViewAndFixButtonProps) => {
+const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }: ViewAndFixButtonProps) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { setDialog, closeDialog } = useDialog();
@@ -60,7 +61,8 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi }: ViewAndFixButt
                 cardData,
                 '',
                 {},
-                DBType.ORACLE
+                DBType.ORACLE,
+                isWad
             );
         }
     };

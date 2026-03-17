@@ -49,6 +49,8 @@ import {
     SQL_DEPLOYMENT_MODE,
     STATUS_CONST,
     WAD_EXCLUDED_CONFIGS_MSSQL,
+    WAD_EXCLUDED_CONFIGS_ORACLE,
+    isConfigKeyWadExcluded,
     WA_FLAG_SKIP,
     WLF_TABS
 } from '../../utils/consts';
@@ -121,12 +123,22 @@ export const getCategoryData = () => ({
 });
 
 /**
- * Checks if a configuration is excluded for WAD (offline assessment) MSSQL instances.
+ * Checks if a configuration is excluded for WAD (offline assessment) instances.
  * These configurations require online connectivity and are not available for WAD instances.
- * If a config is removed from WAD_EXCLUDED_CONFIGS_MSSQL, it will be shown normally.
+ * If a config is removed from WAD_EXCLUDED_CONFIGS_MSSQL or WAD_EXCLUDED_CONFIGS_ORACLE, it will be shown normally.
+ *
+ * @param configMapName - The configuration map name to check
+ * @param isWad - Whether this is a WAD (offline assessment) instance
+ * @param dbType - Optional database type (DBType.MSSQL, DBType.ORACLE). Defaults to MSSQL if not provided.
  */
-export const isWadExcludedConfig = (configMapName: string | undefined, isWad: boolean): boolean => {
+export const isWadExcludedConfig = (configMapName: string | undefined, isWad: boolean, dbType?: string): boolean => {
     if (!isWad || !configMapName) return false;
+
+    if (dbType === DBType.ORACLE) {
+        return WAD_EXCLUDED_CONFIGS_ORACLE.includes(configMapName);
+    }
+
+    // Default to MSSQL for backward compatibility
     return WAD_EXCLUDED_CONFIGS_MSSQL.includes(configMapName);
 };
 
@@ -5467,7 +5479,8 @@ export const checkIfDisableForOptimize = (
     name: string,
     rowData: any,
     translation: TFunction,
-    selectedRowsForOptimize?: any
+    selectedRowsForOptimize?: any,
+    dbType?: string
 ) => {
     let isDisabled = false;
     let errorMessage = '';
@@ -5476,7 +5489,15 @@ export const checkIfDisableForOptimize = (
         errorMessage = translation('databases.well-architect.optimization-in-progress-for-host');
     } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
         isDisabled = true;
-        errorMessage = translation('databases.well-architect.only-online-resource-fix');
+        // Use specific WAD message if this is a WAD (offline assessment) row
+        if (rowData?.isWad) {
+            errorMessage =
+                dbType === DBType.ORACLE
+                    ? translation('databases.wad.tab-disabled-message-oracle')
+                    : translation('databases.wad.tab-disabled-message');
+        } else {
+            errorMessage = translation('databases.well-architect.only-online-resource-fix');
+        }
     } else if (rowData?.configState && rowData?.configState === CONFIG_STATES.ACTIVATING) {
         isDisabled = true;
         errorMessage = '';
@@ -5836,13 +5857,13 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
     }
     if (dbType === DBType.ORACLE) {
         let totalDb = 0;
-        if (
-            configKey === 'dataDgLunLayout' ||
-            configKey === 'logDgLunLayout' ||
-            configKey === 'fraDgLunLayout' ||
-            configKey === 'archiveLogDgLunLayout'
-        ) {
-            // For above configs we need to calculate dynamic total database as all database might not be asm.
+        // Configs that have dynamic total (ASM filtering)
+        const oracleAsmConfigs = ['dataDgLunLayout', 'logDgLunLayout', 'fraDgLunLayout', 'archiveLogDgLunLayout'];
+        // Check if config should use dynamic total (ASM configs OR WAD-excluded configs)
+        const usesDynamicTotal =
+            oracleAsmConfigs.includes(configKey) || isConfigKeyWadExcluded(configKey, DBType.ORACLE);
+        if (usesDynamicTotal) {
+            // For above configs we need to calculate dynamic total database (ASM or WAD exclusion).
             totalDb = configData?.[configKey]?.total || 0;
         } else {
             totalDb = configData?.oracleTotal || 0;
@@ -5863,9 +5884,13 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         );
     } else {
         let totalInstance = 0;
-        if (configKey === 'mssqlhighAvailability' || configKey === 'applicationSqlServer') {
-            // For mssqlhighAvailability we need to calculate dynamic total instance as only FCI and AOAG instances support HA.
-            // For applicationSqlServer (License) we need to exclude AOAG instances as License is not supported for AOAG.
+        // Configs that have dynamic total for non-WAD reasons (FCI/AOAG filtering)
+        const specialMssqlConfigs = ['mssqlhighAvailability', 'applicationSqlServer'];
+        // Check if config should use dynamic total (special configs OR WAD-excluded configs)
+        const usesDynamicTotal =
+            specialMssqlConfigs.includes(configKey) || isConfigKeyWadExcluded(configKey, DBType.MSSQL);
+        if (usesDynamicTotal) {
+            // Use config-specific total for configs that need WAD/AOAG/FCI exclusion
             totalInstance = configData?.[configKey]?.total || 0;
         } else {
             totalInstance = configData?.total || 0;
@@ -6236,7 +6261,7 @@ export const getWadCellProps = (
 
 export interface OracleCategorySectionProps {
     styles: Record<string, string>;
-    isAccordionExpanded: (id: string, printState: boolean) => boolean;
+    isAccordionExpanded: (id: string, printState: boolean) => boolean | undefined;
     setClickedAccordionId: (id: string) => void;
     loading: boolean | null;
     handleAccordionExpanded: (id: string, isExpanded: boolean) => void;

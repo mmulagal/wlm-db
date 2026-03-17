@@ -103,6 +103,8 @@ const initialInventoryV2State: InventorySliceData = {
     allLogAnalysisOracleLoading: false,
     offlineMssqlHostAssessmentData: [],
     offlineMssqlHostAssessmentLoading: false,
+    offlineOracleHostAssessmentData: [],
+    offlineOracleHostAssessmentLoading: false,
     potentialSavingsHostData: {},
     selectedInventoryTab: 'Instances',
     selectedOptimizeConfig: {
@@ -545,6 +547,12 @@ const inventoryV2Slice = createSlice({
         setOfflineMssqlHostAssessmentLoading: (state, action: PayloadAction<any>) => {
             state.offlineMssqlHostAssessmentLoading = action.payload;
         },
+        addOfflineOracleHostAssessmentData: (state, action: PayloadAction<any>) => {
+            state.offlineOracleHostAssessmentData = action.payload;
+        },
+        setOfflineOracleHostAssessmentLoading: (state, action: PayloadAction<any>) => {
+            state.offlineOracleHostAssessmentLoading = action.payload;
+        },
         setPotentialSavingsHostData: (state, action: PayloadAction<any>) => {
             state.potentialSavingsHostData = action.payload;
         },
@@ -652,6 +660,7 @@ const inventoryV2Slice = createSlice({
             state.allOracleHostAssessmentData = [];
             state.allLogAnalysisData = [];
             state.offlineMssqlHostAssessmentData = [];
+            state.offlineOracleHostAssessmentData = [];
             state.dashSandboxList.data = [];
             state.dashSandboxSavings.data = [];
             state.hostTableRows = [];
@@ -787,6 +796,8 @@ export const {
     setAllLogAnalysisOracleLoading,
     addOfflineMssqlHostAssessmentData,
     setOfflineMssqlHostAssessmentLoading,
+    addOfflineOracleHostAssessmentData,
+    setOfflineOracleHostAssessmentLoading,
     setPotentialSavingsHostData,
     resetPerComboData,
     setTableManageColumnState,

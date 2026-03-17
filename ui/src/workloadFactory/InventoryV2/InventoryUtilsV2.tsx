@@ -172,7 +172,8 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
             const aoagDetails =
                 assessments?.deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS
                     ? {
-                          baseDeploymentType: assessments?.baseDeploymentType
+                          baseDeploymentType: assessments?.baseDeploymentType,
+                          ...(instanceData?.agName ? { availabilityGroups: [{ agName: instanceData.agName }] } : {})
                       }
                     : undefined;
 
@@ -218,6 +219,135 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
             resourceId: hostId,
             name: firstInstance?.assessments?.databaseHostName || `${hostId}`,
             hostType: DBType.MSSQL, // WAD data is for MSSQL
+            ec2InstanceId: firstInstance?.vmInstanceId,
+            ec2InstanceName: firstInstance?.vmName,
+            totalInstance: firstInstance?.numberOfDatabaseInstances || formattedInstances.length,
+            managedInstance: 0,
+            vpcId: firstInstance?.virtualNetworkId,
+            vpcName: firstInstance?.virtualNetworkName,
+            action: '', // No actions available for WAD data
+            actionDisable: true,
+            isManagedHost: false,
+            loading: false,
+            isDetected: false,
+            storageType: GENERAL.FSX_FOR_ONTAP,
+            sqlServerInstances: formattedInstances,
+            hasInstanceData: formattedInstances.length > 0,
+            credentialId: credId !== 'wad' ? credId : undefined,
+            regionId: regionId !== 'wad' ? regionId : undefined,
+            credentialName: credentialMapping?.[credId]?.name,
+            accountId: credentialMapping?.[credId]?.providerAccountId,
+            regionName: firstInstance?.regionName,
+            isWad: true, // Mark as WAD (offline assessment) data
+            ec2Details: ec2Details.length > 0 ? ec2Details : undefined,
+            statusColText: INVENTORY_STATUS.UNMANAGED // Hardcoded until status is available from API
+        };
+
+        result[groupKey] = inventoryEntry;
+    });
+
+    return result;
+};
+
+/**
+ * Formats offline Oracle assessment data (WAD data) to match the InventoryTableData structure.
+ * This data comes from the getAllOfflineOracleHostsAssessmentData API.
+ * All data is marked with isWad: true to indicate it's offline assessment data.
+ *
+ * Similar structure to MSSQL WAD data but formatted for Oracle inventory.
+ */
+export const formatOracleOfflineAssessmentToInventoryData = (
+    offlineData: any[]
+): { [key: string]: InventoryTableData } => {
+    const result: { [key: string]: InventoryTableData } = {};
+
+    if (!offlineData || offlineData.length === 0) {
+        return result;
+    }
+
+    // Get credential mapping from state to resolve credentialName and accountId
+    const state = store.getState();
+    const { credentialMapping } = state?.headers;
+
+    // Group items by host (resourceId + vmName) since each item is now a single instance
+    const hostGroups: { [key: string]: any[] } = {};
+
+    offlineData.forEach((instanceData: any) => {
+        // Use resourceId as host identifier, fallback to vmName
+        const hostId = instanceData?.resourceId || `wad-oracle-${instanceData?.vmName}`;
+        const credId = instanceData?.credentialId || instanceData?.credentialsId || 'wad';
+        const regionId = instanceData?.regionId || instanceData?.region || 'wad';
+
+        // Create a unique key for grouping instances by host
+        const groupKey = `${hostId}_${credId}_${regionId}`;
+
+        if (!hostGroups[groupKey]) {
+            hostGroups[groupKey] = [];
+        }
+        hostGroups[groupKey].push(instanceData);
+    });
+
+    // Create inventory entries for each host group
+    Object.keys(hostGroups).forEach((groupKey: string) => {
+        const instances = hostGroups[groupKey];
+        const firstInstance = instances[0]; // Use first instance for host-level data
+
+        const hostId = firstInstance?.resourceId || `wad-oracle-${firstInstance?.vmName}`;
+        const credId = firstInstance?.credentialId || firstInstance?.credentialsId || 'wad';
+        const regionId = firstInstance?.regionId || firstInstance?.region || 'wad';
+
+        // Format instances from the grouped data
+        const formattedInstances: InventoryTableInstanceDatInterface[] = [];
+
+        instances.forEach((instanceData: any) => {
+            const assessments = instanceData?.assessments;
+
+            // Build storage array from assessments.storage.fileSystems for instance level
+            const instanceStorageArray: DiscoveredStorageObj[] = [];
+            const instanceFileSystems =
+                assessments?.storage?.fileSystems ||
+                (assessments?.storageEndpoint ? [assessments?.storageEndpoint] : []);
+            if (instanceFileSystems && Array.isArray(instanceFileSystems)) {
+                instanceFileSystems.forEach((fsId: string) => {
+                    instanceStorageArray.push({
+                        id: fsId,
+                        protocol: '',
+                        svmId: '', // Not available in WAD assessment data
+                        type: DETECT_HOST_VAR.FSXN
+                    });
+                });
+            }
+
+            formattedInstances.push({
+                databaseInstanceId: instanceData?.databaseInstanceId,
+                databaseInstanceName: instanceData?.databaseInstanceName,
+                databaseHostId: hostId, // Added for WAD API calls
+                statusColText: INVENTORY_STATUS.UNMANAGED,
+                sqlServerDeploymentType: assessments?.deploymentType,
+                fsxId: assessments?.storageEndpoint,
+                isDetected: false,
+                isManaged: false,
+                isWad: true,
+                wadAssessmentData: assessments,
+                storage: instanceStorageArray.length > 0 ? instanceStorageArray : undefined
+            });
+        });
+
+        // Get VM details
+        const ec2Details: EC2DetailsInterface[] = [];
+        if (firstInstance?.vmName || firstInstance?.vmInstanceId) {
+            ec2Details.push({
+                id: firstInstance?.vmInstanceId,
+                name: firstInstance?.vmName
+            });
+        }
+
+        // Create the inventory table data entry for Oracle
+        const inventoryEntry: InventoryTableData = {
+            id: hostId,
+            resourceId: hostId,
+            name: firstInstance?.assessments?.databaseHostName || `${hostId}`,
+            hostType: DBType.ORACLE, // WAD data is for Oracle
             ec2InstanceId: firstInstance?.vmInstanceId,
             ec2InstanceName: firstInstance?.vmName,
             totalInstance: firstInstance?.numberOfDatabaseInstances || formattedInstances.length,
@@ -3567,6 +3697,35 @@ export const getWadOptimizationStatus = (wadAssessmentData: any) => {
         const assessmentDataWithWadFlag = { ...wadAssessmentData, isWad: true };
         const { cardsData } = getCardsData(assessmentDataWithWadFlag, {});
         const optBreakDown = formatOptimizationBreakDown(cardsData, assessmentDataWithWadFlag);
+        optimizationStatus =
+            optBreakDown?.total?.notOptimized !== 0
+                ? optBreakDown?.total?.notOptimized === 1
+                    ? `${optBreakDown?.total?.notOptimized} issue`
+                    : `${optBreakDown?.total?.notOptimized} issues`
+                : ACTION_CTA.WELL_ARCHITECTED;
+    } else if (wadAssessmentData && !wadAssessmentData?.lastAssessmentTimestamp) {
+        optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
+    }
+    return optimizationStatus;
+};
+
+/**
+ * Returns the optimization status string for Oracle WAD (offline assessment) assessment data.
+ * Similar to getWadOptimizationStatus but uses Oracle-specific card data functions.
+ * @param wadAssessmentData - The WAD assessment data for Oracle
+ * @returns string -
+ *          - "X issue(s)" if there are optimization issues
+ *          - "Well-Architected" if fully optimized
+ *          - "In Progress" if assessment is still running
+ *          - Empty string if no assessment data available
+ */
+export const getOracleWadOptimizationStatus = (wadAssessmentData: any) => {
+    let optimizationStatus = '';
+    if (wadAssessmentData && wadAssessmentData?.lastAssessmentTimestamp) {
+        // Ensure isWad flag is set for WAD assessment data so that WAD excluded configs are properly filtered
+        const assessmentDataWithWadFlag = { ...wadAssessmentData, isWad: true };
+        const { cardsData } = getOracleCardsData(assessmentDataWithWadFlag, {});
+        const optBreakDown = formatOracleOptimizationBreakDown(cardsData, assessmentDataWithWadFlag);
         optimizationStatus =
             optBreakDown?.total?.notOptimized !== 0
                 ? optBreakDown?.total?.notOptimized === 1

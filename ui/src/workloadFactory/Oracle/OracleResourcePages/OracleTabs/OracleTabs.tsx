@@ -22,9 +22,13 @@ const OracleTabs = () => {
         selectedGwInstanceRegionId,
         selectedGwInstanceCredId,
         selectedDatabaseInstance,
-        selectedResourceId: waSelectedResourceId
+        selectedResourceId: waSelectedResourceId,
+        isWad
     } = useAppSelector(state => state.getWellOptimize);
     const { allLogAnalysisData } = useAppSelector(state => state.inventoryV2);
+
+    // WAD tooltip message for disabled tabs (Oracle specific)
+    const wadDisabledMessage = t('databases.wad.tab-disabled-message-oracle');
 
     const isSingleTenant = useMemo(() => {
         if (!selectedResourceId || !selectedDatabaseInstanceName || !inventoryTableData) {
@@ -75,25 +79,37 @@ const OracleTabs = () => {
 
     return (
         <div className={styles['oracle-tabs']}>
-            <div
-                className={
-                    selectedTab === WELL_ARCHITECTED_TABS.OVERVIEW
-                        ? `${styles.headers} ${styles.headerWidthFirst} ${styles.active}`
-                        : `${styles.headers} ${styles.headerWidthFirst}`
-                }
-            >
-                <DsTypography
-                    variant="Semibold_14"
+            {/* Overview Tab - disabled for WAD */}
+            {isWad ? (
+                <TooltipComponent placement="bottom" title={wadDisabledMessage} width={300}>
+                    <div className={`${styles.headers} ${styles.headerWidthFirst}`}>
+                        <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
+                            {t('databases.oracle-inner-page.overview')}
+                        </DsTypography>
+                    </div>
+                </TooltipComponent>
+            ) : (
+                <div
                     className={
                         selectedTab === WELL_ARCHITECTED_TABS.OVERVIEW
-                            ? `${styles.headerPart1} ${styles.activeText}`
-                            : `${styles.headerPart1}`
+                            ? `${styles.headers} ${styles.headerWidthFirst} ${styles.active}`
+                            : `${styles.headers} ${styles.headerWidthFirst}`
                     }
-                    onClick={() => handleClick(WELL_ARCHITECTED_TABS.OVERVIEW)}
                 >
-                    {t('databases.oracle-inner-page.overview')}
-                </DsTypography>
-            </div>
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={
+                            selectedTab === WELL_ARCHITECTED_TABS.OVERVIEW
+                                ? `${styles.headerPart1} ${styles.activeText}`
+                                : `${styles.headerPart1}`
+                        }
+                        onClick={() => handleClick(WELL_ARCHITECTED_TABS.OVERVIEW)}
+                        data-testid="wlm-db-oracle-overview-tab"
+                    >
+                        {t('databases.oracle-inner-page.overview')}
+                    </DsTypography>
+                </div>
+            )}
             <div
                 className={
                     selectedTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS
@@ -115,10 +131,11 @@ const OracleTabs = () => {
                 </DsTypography>
             </div>
 
-            {!isBedrockSupportedForRegion && (
+            {/* Error Investigation Tab - disabled for WAD or when Bedrock not supported */}
+            {(isWad || !isBedrockSupportedForRegion) && (
                 <TooltipComponent
                     placement="bottom"
-                    title={t('databases.log-analyzer.bedrock-in-region-not-supported')}
+                    title={isWad ? wadDisabledMessage : t('databases.log-analyzer.bedrock-in-region-not-supported')}
                     width={300}
                 >
                     <div className={`${styles.headers} ${styles.headerWidthSecond}`}>
@@ -131,7 +148,7 @@ const OracleTabs = () => {
                     </div>
                 </TooltipComponent>
             )}
-            {isBedrockSupportedForRegion && (
+            {!isWad && isBedrockSupportedForRegion && (
                 <div
                     className={
                         selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION
@@ -150,7 +167,7 @@ const OracleTabs = () => {
                             updateLogAnalyzerCheck();
                             handleClick(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION);
                         }}
-                        data-testid="wlm-db-mssql-error-investigation-tab"
+                        data-testid="wlm-db-oracle-error-investigation-tab"
                     >
                         {t('databases.log-analyzer.error-investigation')}
                     </DsTypography>
@@ -160,38 +177,50 @@ const OracleTabs = () => {
                 </div>
             )}
 
-            <div
-                className={
-                    selectedTab === WELL_ARCHITECTED_TABS.PDB && !isSingleTenant
-                        ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
-                        : `${styles.headers} ${styles.headerWidthThird} ${isSingleTenant ? styles.disabled : ''}`
-                }
-            >
-                {isSingleTenant ? (
-                    <Popover
-                        trigger="hover"
-                        container={
-                            <DsTypography variant="Semibold_14" className={styles.headerPart1}>
-                                {t('databases.oracle-inner-page.pdb')}
-                            </DsTypography>
-                        }
-                    >
-                        {t('databases.oracle-inner-page.single-tenant-tooltip')}
-                    </Popover>
-                ) : (
-                    <DsTypography
-                        variant="Semibold_14"
-                        className={
-                            selectedTab === WELL_ARCHITECTED_TABS.PDB
-                                ? `${styles.headerPart1} ${styles.activeText}`
-                                : `${styles.headerPart1}`
-                        }
-                        onClick={() => handleClick(WELL_ARCHITECTED_TABS.PDB)}
-                    >
-                        {t('databases.oracle-inner-page.pdb')}
-                    </DsTypography>
-                )}
-            </div>
+            {/* PDB Tab - disabled for WAD or Single Tenant */}
+            {isWad ? (
+                <TooltipComponent placement="bottom" title={wadDisabledMessage} width={300}>
+                    <div className={`${styles.headers} ${styles.headerWidthThird}`}>
+                        <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
+                            {t('databases.oracle-inner-page.pdb')}
+                        </DsTypography>
+                    </div>
+                </TooltipComponent>
+            ) : (
+                <div
+                    className={
+                        selectedTab === WELL_ARCHITECTED_TABS.PDB && !isSingleTenant
+                            ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
+                            : `${styles.headers} ${styles.headerWidthThird} ${isSingleTenant ? styles.disabled : ''}`
+                    }
+                >
+                    {isSingleTenant ? (
+                        <Popover
+                            trigger="hover"
+                            container={
+                                <DsTypography variant="Semibold_14" className={styles.headerPart1}>
+                                    {t('databases.oracle-inner-page.pdb')}
+                                </DsTypography>
+                            }
+                        >
+                            {t('databases.oracle-inner-page.single-tenant-tooltip')}
+                        </Popover>
+                    ) : (
+                        <DsTypography
+                            variant="Semibold_14"
+                            className={
+                                selectedTab === WELL_ARCHITECTED_TABS.PDB
+                                    ? `${styles.headerPart1} ${styles.activeText}`
+                                    : `${styles.headerPart1}`
+                            }
+                            onClick={() => handleClick(WELL_ARCHITECTED_TABS.PDB)}
+                            data-testid="wlm-db-oracle-pdb-tab"
+                        >
+                            {t('databases.oracle-inner-page.pdb')}
+                        </DsTypography>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

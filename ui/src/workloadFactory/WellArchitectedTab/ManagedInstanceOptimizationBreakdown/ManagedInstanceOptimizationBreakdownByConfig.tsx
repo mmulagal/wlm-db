@@ -14,6 +14,7 @@ import {
     CONFIG_STATES,
     CONFIG_STATES_UI,
     DBType,
+    isConfigKeyWadExcluded,
     severityOptions,
     oracleSeverityOptions,
     WLF_TABS
@@ -355,12 +356,15 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         let total = 0;
         let afterOutOfTotal = 0;
         if (type === DBType.ORACLE) {
-            if (
-                headingText === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
-                headingText === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
-                headingText === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
-                headingText === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
-            ) {
+            // Oracle ASM configs that need dynamic total
+            const oracleAsmConfigs = [
+                ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
+                ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
+                ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
+                ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
+            ];
+            // Use config-specific total for ASM configs OR WAD-excluded configs
+            if (oracleAsmConfigs.includes(headingText) || isConfigKeyWadExcluded(key, DBType.ORACLE)) {
                 total = configData?.[key]?.total || 1;
                 afterOutOfTotal = configData?.[key]?.total;
             } else {
@@ -369,10 +373,12 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
             }
         } else if (
             headingText === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY ||
-            headingText === ASSESSMENT_CONFIG_NAMES.LICENSE
+            headingText === ASSESSMENT_CONFIG_NAMES.LICENSE ||
+            isConfigKeyWadExcluded(key, DBType.MSSQL)
         ) {
             // For MSSQL High Availability, total is calculated dynamically as only FCI and AOAG instances support HA.
             // For License, total is calculated dynamically as License is not supported for AOAG deployments.
+            // For WAD-excluded configs, use config-specific total to exclude WAD instances.
             total = configData?.[key]?.total || 1;
             afterOutOfTotal = configData?.[key]?.total;
         } else {

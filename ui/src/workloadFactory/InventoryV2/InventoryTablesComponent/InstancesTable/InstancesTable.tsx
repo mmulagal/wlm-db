@@ -26,6 +26,7 @@ import {
     useGetSCCrendentialsMutation,
     useGetWorkSpaceIDMutation,
     useLazyGetAllOfflineMssqlHostsAssessmentDataQuery,
+    useLazyGetAllOfflineOracleHostsAssessmentDataQuery,
     useLazyGetSubTaskListQuery,
     useListAllDirectoriesMutation,
     useListExistingHostsMutation,
@@ -53,6 +54,7 @@ import {
 } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
+
 import {
     setInProgressInstances,
     setInventoryTableData,
@@ -66,7 +68,7 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 
 import { updateOrgId } from '../../../../store/authSlice';
-import { NOTIFICATION_TYPES, addNotification } from '../../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../store/notificationSlice';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
     resetWorkloadFactoryResourceData,
@@ -123,7 +125,10 @@ import {
     MAX_BULK_REGISTER_SELECTION,
     isOracleDataGuard,
     refreshOfflineAssessmentData,
-    handleWadOptimizeAction
+    refreshOfflineOracleAssessmentData,
+    handleWadOptimizeAction,
+    handleOracleWadOptimizeAction,
+    autoSelectRegionInHeaderFilter
 } from './InstanceTableHelper';
 
 import IntroductionWADCard from './IntroductionWADCard/IntroductionWADCard';
@@ -155,7 +160,8 @@ const InstancesTable = () => {
         selectedInventoryTab,
         selectedFilterValue
     } = useAppSelector(state => state.inventoryV2);
-    const { multiDataLoading, regionMapping } = useAppSelector(state => state.headers);
+    const { multiDataLoading, regionMapping, headerSelectedMultiRegion, headerSelectedMultiRegionIdsList, getRegions } =
+        useAppSelector(state => state.headers);
     const { instanceProtection } = useAppSelector(state => state.snapCenter);
     const orgId = useAppSelector(state => state.auth?.orgId);
     const {
@@ -206,6 +212,7 @@ const InstancesTable = () => {
     const [getOneTimeWADUploadScript] = useGetOneTimeWADUploadScriptMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [getAllOfflineAssessmentAPI] = useLazyGetAllOfflineMssqlHostsAssessmentDataQuery();
+    const [getAllOfflineOracleAssessmentAPI] = useLazyGetAllOfflineOracleHostsAssessmentDataQuery();
 
     const { title, exportToCsvFileName, buttonText } = getInstableTableTopMenuOptions(selectedHostType, t);
 
@@ -960,12 +967,22 @@ const InstancesTable = () => {
                     });
                 }
 
+                // For WAD (offline assessment) Oracle rows, add Well-Architected option only
+                const isWadOracleRow = rowData?.isWad && selectedHostType === DBType.ORACLE;
+                if (isWadOracleRow) {
+                    menu.push({
+                        id: 'oracle-optimize-wad',
+                        displayName: t('databases.instance-table.menu-options.well-architected')
+                    });
+                }
+
                 // Use shared utility for disabling logic
                 const disableResult = isInstanceActionDisabled(rowData, selectedHostType, t);
                 // For menu, also disable if status is unmanaged/undetected/in-progress or bulk selection is active
-                // Exception: WAD MSSQL rows should have the menu enabled
+                // Exception: WAD MSSQL and Oracle rows should have the menu enabled
+                const isWadRow = isWadMssqlRow || isWadOracleRow;
                 const shouldDisableMenu =
-                    !isWadMssqlRow &&
+                    !isWadRow &&
                     (isBulkActionVisible ||
                         rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
                         rowData.statusColText === INVENTORY_STATUS.UNDETECTED ||
@@ -1008,6 +1025,8 @@ const InstancesTable = () => {
                                             // Handle WAD optimize action separately
                                             if (menuId === 'mssql-optimize-wad') {
                                                 handleWadOptimizeAction(rowData, dispatch);
+                                            } else if (menuId === 'oracle-optimize-wad') {
+                                                handleOracleWadOptimizeAction(rowData, dispatch);
                                             } else {
                                                 handleInstanceMenuSelection({
                                                     menuId,
@@ -1212,7 +1231,9 @@ const InstancesTable = () => {
 
     const downloadWADScript = async () => {
         try {
-            const response: any = await getOneTimeWADDownloadScript({});
+            const response: any = await getOneTimeWADDownloadScript({
+                type: selectedHostType === DBType.MSSQL ? 'mssql' : 'oracle'
+            });
 
             if (response?.data?.blob) {
                 const { blob, fileName } = response.data;
@@ -1303,6 +1324,7 @@ const InstancesTable = () => {
 
                 if (compressedBase64) {
                     const result = await getOneTimeWADUploadScript({
+                        type: selectedHostType === DBType.MSSQL ? 'mssql' : 'oracle',
                         payload: {
                             fileContent: compressedBase64,
                             fileName: selectedFile.name
@@ -1315,15 +1337,63 @@ const InstancesTable = () => {
                                 const status = jobRes?.data?.status;
 
                                 if (status === JOB_MONITORING_STATUS.COMPLETED) {
+                                    dispatch(clearNotifications());
+
+                                    const resourceName = jobRes?.data?.resourceName || '';
+                                    const regionCode = jobRes?.data?.region?.code || '';
+                                    const regionNameFromResponse = jobRes?.data?.region?.name || '';
+                                    // Get region name from response or fallback to regionMapping
+                                    const regionName =
+                                        regionNameFromResponse ||
+                                        (regionCode && regionMapping?.[regionCode]?.regionName) ||
+                                        '';
+                                    let message = t('databases.inventory.one-time-wad-upload-success');
+
+                                    if (resourceName) {
+                                        // Manually construct message to avoid HTML entity encoding from i18next interpolation
+                                        if (regionName) {
+                                            const template = t(
+                                                'databases.inventory.one-time-wad-upload-success-with-resource-region'
+                                            );
+                                            message = template
+                                                .replace('{{resourceName}}', resourceName)
+                                                .replace('{{regionName}}', regionName);
+                                        } else {
+                                            const template = t(
+                                                'databases.inventory.one-time-wad-upload-success-with-resource'
+                                            );
+                                            message = template.replace('{{resourceName}}', resourceName);
+                                        }
+                                    }
+
                                     dispatch(
                                         addNotification({
                                             notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                            message: t('databases.inventory.one-time-wad-upload-success')
+                                            message
                                         })
                                     );
+
+                                    // Auto-select region in header filter if not already selected
+                                    autoSelectRegionInHeaderFilter(
+                                        regionCode,
+                                        headerSelectedMultiRegionIdsList,
+                                        getRegions,
+                                        headerSelectedMultiRegion,
+                                        dispatch
+                                    );
+
                                     clearInterval(jobInterval);
-                                    // Refresh offline assessment data after successful upload
-                                    refreshOfflineAssessmentData(getAllOfflineAssessmentAPI, dispatch, [], null);
+                                    // Refresh offline assessment data after successful upload based on host type
+                                    if (selectedHostType === DBType.ORACLE) {
+                                        refreshOfflineOracleAssessmentData(
+                                            getAllOfflineOracleAssessmentAPI,
+                                            dispatch,
+                                            [],
+                                            null
+                                        );
+                                    } else {
+                                        refreshOfflineAssessmentData(getAllOfflineAssessmentAPI, dispatch, [], null);
+                                    }
                                 } else if (status === JOB_MONITORING_STATUS.FAILED) {
                                     dispatch(
                                         addNotification({
@@ -1380,13 +1450,13 @@ const InstancesTable = () => {
                     pluralTitle={title}
                     singularTitle={title}
                     className={styles.topBarInstanceStyle}
-                    {...(selectedHostType !== DBType.MSSQL && {
+                    {...(selectedHostType === DBType.POSTGRESQL && {
                         exportToCsvOptions: { fileName: exportToCsvFileName }
                     })}
                     subTitle="This table might show the same resource multiple times if it's linked to different credentials. Filter by AWS credentials to remove duplicates."
                     actionsRight={
                         <>
-                            {selectedHostType === DBType.MSSQL && (
+                            {selectedHostType !== DBType.POSTGRESQL && (
                                 <div>
                                     <DsButton
                                         ref={buttonRef}

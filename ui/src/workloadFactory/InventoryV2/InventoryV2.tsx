@@ -35,7 +35,8 @@ import {
     getDiscoveredHostDeploymentAtHostLevel,
     getAvailabilityGroupListForAoag,
     getAoagTotalReplicaCountPerDatabase,
-    getDgTotalReplicaCountPerInstance
+    getDgTotalReplicaCountPerInstance,
+    getOracleWadOptimizationStatus
 } from './InventoryUtilsV2';
 import { setFullInventoryTablesRows, setInventoryTablesRows } from '../../store/workloadFactory/inventoryV2Slice';
 import store from '../../store/store';
@@ -214,8 +215,11 @@ const InventoryV2 = () => {
                         let optimizationStatus = '';
                         let optimizationLastTimestamp = '';
                         // For WAD (offline assessment) data, use getWadOptimizationStatus
-                        if (perRow?.isWad) {
+                        if (perRow?.isWad && inventoryTableData?.[key]?.hostType === DBType.MSSQL) {
                             optimizationStatus = getWadOptimizationStatus(perRow?.wadAssessmentData);
+                            optimizationLastTimestamp = perRow?.wadAssessmentData?.lastAssessmentTimestamp;
+                        } else if (perRow?.isWad && inventoryTableData?.[key]?.hostType === DBType.ORACLE) {
+                            optimizationStatus = getOracleWadOptimizationStatus(perRow?.wadAssessmentData);
                             optimizationLastTimestamp = perRow?.wadAssessmentData?.lastAssessmentTimestamp;
                         } else {
                             optimizationStatus = getOptimizationStatus(
