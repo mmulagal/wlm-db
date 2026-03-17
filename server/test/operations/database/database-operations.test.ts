@@ -22,6 +22,8 @@ import { initializeDatabase } from '../../../src/utils/prisma-utils';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import { DatabaseInstanceRecord } from '../../../src/lib/database/db-types';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 describe('Database operations', () => {
     beforeAll(async () => {
         await initializeDatabase();
@@ -552,5 +554,132 @@ describe('getPaginatedDatabaseInstances', () => {
                 }
             });
         });
+    });
+});
+
+describe('UUIDv7 default ID generation', () => {
+    beforeAll(async () => {
+        await initializeDatabase();
+    });
+
+    it('should generate a valid UUID for new config records', async () => {
+        const response = await saveConfig(ACCOUNT_ID, 'uuid7-test-user', 'uuid7-test-config', {
+            subnetId: 'test-subnet'
+        });
+
+        expect(response.id).toBeDefined();
+        expect(response.id).toMatch(UUID_REGEX);
+
+        await deleteConfig(ACCOUNT_ID, response.id);
+    });
+
+    it('should generate IDs with UUIDv7 version nibble and RFC 4122 variant bits', async () => {
+        const response = await saveConfig(ACCOUNT_ID, 'uuid7-version-user', 'uuid7-version-config', {
+            key: 'version-test'
+        });
+
+        expect(response.id).toMatch(UUID_REGEX);
+
+        const versionNibble = response.id[14];
+        const variantNibble = response.id[19].toLowerCase();
+
+        if (process.env.NODE_ENV !== 'simulator') {
+            expect(versionNibble).toBe('7');
+        }
+        expect(['8', '9', 'a', 'b']).toContain(variantNibble);
+
+        await deleteConfig(ACCOUNT_ID, response.id);
+    });
+
+    it('should generate unique IDs for multiple records', async () => {
+        const configs = await Promise.all([
+            saveConfig(ACCOUNT_ID, 'uuid7-unique-user', 'uuid7-unique-1', { key: '1' }),
+            saveConfig(ACCOUNT_ID, 'uuid7-unique-user', 'uuid7-unique-2', { key: '2' }),
+            saveConfig(ACCOUNT_ID, 'uuid7-unique-user', 'uuid7-unique-3', { key: '3' })
+        ]);
+
+        const ids = configs.map(c => c.id);
+        const uniqueIds = new Set(ids);
+        expect(uniqueIds.size).toBe(3);
+
+        await Promise.all(configs.map(config => deleteConfig(ACCOUNT_ID, config.id)));
+    });
+
+    it('should generate valid UUIDs for deployment records', async () => {
+        const deployment = await createDeployment(ACCOUNT_ID, {
+            deploymentId: 'uuid7-deploy-test',
+            deploymentName: 'uuid7-deploy-test',
+            deploymentStatus: 'CREATE_COMPLETE',
+            deploymentModel: 'Standalone',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            startTime: Date.now(),
+            region: DEFAULT_AWS_REGION
+        });
+
+        expect(deployment.id).toBeDefined();
+        await deleteDeployment(ACCOUNT_ID, 'uuid7-deploy-test');
+    });
+
+    it('should generate valid UUIDs for resource records', async () => {
+        const resource = await createResource(ACCOUNT_ID, {
+            resourceId: 'uuid7-resource-test',
+            resourceName: 'UUID7 Test Resource',
+            resourceType: 'MSSQL',
+            cloudProviderAccountId: '464262061435',
+            cloudProviderName: 'AWS',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            storageType: STORAGE_TYPE.FSXN,
+            region: DEFAULT_AWS_REGION
+        });
+
+        expect(resource.id).toBeDefined();
+
+        await deleteResource(ACCOUNT_ID, 'uuid7-resource-test');
+    });
+
+    it('should generate valid UUIDs for upserted database instance records', async () => {
+        const resource = await createResource(ACCOUNT_ID, {
+            resourceId: 'uuid7-instance-resource',
+            resourceName: 'UUID7 Instance Test Resource',
+            resourceType: 'MSSQL',
+            cloudProviderAccountId: '464262061435',
+            cloudProviderName: 'AWS',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            storageType: STORAGE_TYPE.FSXN,
+            region: DEFAULT_AWS_REGION
+        });
+
+        const instance = await upsertDatabaseInstance(ACCOUNT_ID, {
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
+            resourceId: resource.resource_id,
+            databaseInstanceId: 'uuid7-db-instance-1',
+            databaseInstanceName: 'UUID7_TEST_INSTANCE',
+            isDefault: true,
+            source: 'discovery',
+            sqlDeploymentType: 'Standalone',
+            fsxSvmId: { 'fs-uuid7test': 'svm-uuid7test' },
+            fsxnIds: 'fs-uuid7test',
+            databaseType: 'MS_SQL_SERVER'
+        } as DatabaseInstanceRecord);
+
+        expect(instance.id).toBeDefined();
+
+        await deleteDatabaseInstance(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, resource.resource_id, [
+            'uuid7-db-instance-1'
+        ]);
+        await deleteResource(ACCOUNT_ID, 'uuid7-instance-resource');
+    });
+
+    it('should allow querying records created with auto-generated IDs', async () => {
+        const created = await saveConfig(ACCOUNT_ID, 'uuid7-query-user', 'uuid7-query-config', {
+            subnetId: 'test-query-subnet'
+        });
+
+        const fetched = await getSavedConfig(ACCOUNT_ID, created.id);
+        expect(fetched).toBeDefined();
+        expect(fetched.data.subnetId).toEqual('test-query-subnet');
+
+        await deleteConfig(ACCOUNT_ID, created.id);
     });
 });

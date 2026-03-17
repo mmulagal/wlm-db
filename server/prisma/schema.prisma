@@ -12,7 +12,7 @@ datasource db {
 }
 
 model deployment {
-  id                        String            @id @default(uuid())
+  id                        String            @id @default(uuid(7))
   deployment_id             String            @db.VarChar(255)
   parent_deployment_id      String?           @db.VarChar(255)
   deployment_name           String            @db.VarChar(255)
@@ -35,7 +35,7 @@ model deployment {
 }
 
 model event {
-  id                  String            @id @default(uuid())
+  id                  String            @id @default(uuid(7))
   event_id            String            @db.VarChar(255)
   account_id          String            @db.VarChar(64)
   deployment_id       String            @db.VarChar(255)
@@ -55,7 +55,7 @@ model event {
 }
 
 model resource {
-  id                        String  @id @default(uuid())
+  id                        String  @id @default(uuid(7))
   account_id                String  @db.VarChar(64)
   credentials_id            String  @db.VarChar(80) @default("")
   storage_type              STORAGE_TYPE  @default(FSXN)
@@ -80,7 +80,7 @@ model resource {
 }
 
 model config {
-  id            String   @id @default(uuid())
+  id            String   @id @default(uuid(7))
   account_id    String   @db.VarChar(64)
   name          String   @db.VarChar(255)
   user          String   @db.VarChar(255)
@@ -95,7 +95,7 @@ model config {
 }
 
 model job {
-  id                        String    @id @default(uuid())@db.VarChar(40)
+  id                        String    @id @default(uuid(7))@db.VarChar(40)
   account_id                String    @db.VarChar(64)
   credentials_id            String    @db.VarChar(80)
   region                    String    @db.VarChar(30)
@@ -121,7 +121,7 @@ model job {
 }
 
 model database_instances {
-  id                                String            @id @default(uuid())
+  id                                String            @id @default(uuid(7))
   account_id                        String            @db.VarChar(64)
   credentials_id                    String            @db.VarChar(80)
   region                            String            @db.VarChar(30)
@@ -156,7 +156,7 @@ model database_instances {
 }
 
 model tracked_ec2 {
-  id                        String   @id @default(uuid()) @db.VarChar(40)
+  id                        String   @id @default(uuid(7)) @db.VarChar(40)
   instance_id               String   @db.VarChar(30)
   account_id                String   @db.VarChar(64)
   credentials_id            String   @db.VarChar(80)
@@ -171,7 +171,7 @@ model tracked_ec2 {
 }
 
 model database_instance_config_data{
-  id                        String   @id @default(uuid()) @db.VarChar(40)
+  id                        String   @id @default(uuid(7)) @db.VarChar(40)
   account_id                String   @db.VarChar(64)
   credentials_id            String   @db.VarChar(80)
   region                    String   @db.VarChar(30)
@@ -191,7 +191,7 @@ model database_instance_config_data{
 }
 
 model onprem_tco_reports {
-  id                       String                   @id @default(uuid()) @db.VarChar(40)
+  id                       String                   @id @default(uuid(7)) @db.VarChar(40)
   resource_id              String                   @db.VarChar(255)
   account_id               String                   @db.VarChar(64)
   database_type            DATABASE_TYPE            @default(mssql)
@@ -209,7 +209,7 @@ model onprem_tco_reports {
 }
 
 model logs_analysis_reports {
-  id                   String        @id @default(uuid()) @db.VarChar(40)
+  id                   String        @id @default(uuid(7)) @db.VarChar(40)
   credentials_id       String        @db.VarChar(80)
   resource_id          String        @db.VarChar(255)
   database_instance_id String        @db.VarChar(36)
@@ -232,7 +232,7 @@ model logs_analysis_reports {
 }
 
 model offline_assessment {
-  id                   String        @id @default(uuid()) @db.VarChar(40)
+  id                   String        @id @default(uuid(7)) @db.VarChar(40)
   account_id           String        @db.VarChar(64)
   credentials_id       String?       @db.VarChar(80)
   region               String?       @db.VarChar(30)
