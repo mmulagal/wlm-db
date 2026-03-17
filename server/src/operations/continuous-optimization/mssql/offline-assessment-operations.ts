@@ -28,7 +28,7 @@ import {
     validateWithSchema
 } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
-import { HttpErrorCodes } from '../../../utils/consts';
+import { AWS_REGIONS, HttpErrorCodes } from '../../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentStatus,
@@ -72,6 +72,10 @@ interface MSSQLDatabaseInstanceData {
     assessmentTimestamp: string;
     databaseInstanceName: string;
     ec2InstanceId?: string;
+    availabilityGroups?: Array<{
+        agName?: string;
+        [key: string]: unknown;
+    }>;
 }
 
 interface OneTimeWADHeadroomData {
@@ -195,6 +199,7 @@ interface MSSQLOfflineAssessmentMetadataType {
         ec2InstanceId?: string;
     }>;
     fciName?: string;
+    agName?: string;
 }
 
 /**
@@ -301,8 +306,11 @@ async function processOfflineAssessmentUpload(
                     isHadrEnabled,
                     windowsClusterName,
                     databaseVersion,
-                    databaseEdition
+                    databaseEdition,
+                    availabilityGroups
                 } = instanceDetails;
+
+                const agName = availabilityGroups?.[0]?.agName;
 
                 // Determine if FCI nodes should be used for resource ID
                 // FCI: direct FCI deployment
@@ -365,7 +373,8 @@ async function processOfflineAssessmentUpload(
                         windowsClusterNodes,
                         databaseVersion,
                         databaseEdition,
-                        ...(fciName && { fciName })
+                        ...(fciName && { fciName }),
+                        ...(agName && { agName })
                     }
                 } as OfflineAssessmentRecord;
             });
@@ -439,7 +448,7 @@ async function uploadMssqlOfflineAssessment(
 
     const databaseInstanceName = Object.keys(instanceLevelDetails)[0];
 
-    const { id: jobId } = await registerJob(accountId, '', '', {
+    const { id: jobId } = await registerJob(accountId, credentialsId || '', metadataRegion || '', {
         name: `Microsoft SQL Server offline assessment data upload for ${hostname}/${databaseInstanceName}`,
         description: fileName
             ? `Upload from file: ${fileName} - Database instance: ${databaseInstanceName}`
@@ -694,7 +703,8 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                     ec2InstanceId: vmInstanceId,
                     virtualNetworkId,
                     virtualNetworkName,
-                    numberOfDatabaseInstances
+                    numberOfDatabaseInstances,
+                    agName
                 } = metadata as unknown as MSSQLOfflineAssessmentMetadataType;
                 const clusterNodes = windowsClusterNodes?.map(node => ({
                     vmInstanceId: node.ec2InstanceId || '',
@@ -704,20 +714,20 @@ async function fetchMssqlOfflineAssessmentPerAccount(
 
                 const recordCredentialsId = itemCredentialsId || credentialsId || '';
                 const recordRegion = itemRegion || region || '';
-                // Until PM figures how to filter records by region, we'll keep the regionName as empty string
-                // const regionName = recordRegion && AWS_REGIONS.has(recordRegion) ? AWS_REGIONS.get(recordRegion) : '';
+                const regionName = recordRegion && AWS_REGIONS.has(recordRegion) ? AWS_REGIONS.get(recordRegion) : '';
                 const response = {
                     resourceId,
                     databaseInstanceId,
                     databaseInstanceName,
                     credentialsId: recordCredentialsId,
-                    region: '',
-                    regionName: '',
+                    region: recordRegion,
+                    regionName,
                     vmName,
                     vmInstanceId,
                     virtualNetworkId,
                     virtualNetworkName,
                     numberOfDatabaseInstances,
+                    agName,
                     clusterNodes
                 };
 

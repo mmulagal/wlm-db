@@ -56,6 +56,7 @@ const OfflineAssessmentListResponse = Type.Object({
             virtualNetworkId: Type.Optional(Type.String()),
             virtualNetworkName: Type.Optional(Type.String()),
             numberOfDatabaseInstances: Type.Optional(Type.Number()),
+            agName: Type.Optional(Type.String()),
             clusterNodes: Type.Optional(
                 Type.Array(
                     Type.Object({
