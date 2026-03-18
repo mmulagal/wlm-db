@@ -1250,9 +1250,9 @@ const DashboardConfigsTable = ({
                     return <InProgress />;
                 }
                 return (
-                    <div className={isDisable ? styles.disabled : ''}>
+                    <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
                         {cellData || t('databases.general.not-available-table-columns')}
-                    </div>
+                    </DsTypography>
                 );
             }
         },
@@ -1264,7 +1264,11 @@ const DashboardConfigsTable = ({
             filterOptions: 'auto',
             renderCell: (cellData: string, rowData: any) => {
                 const isDisable = showDismissed || rowData?.configState === CONFIG_STATES.ACTIVATING;
-                return <div className={isDisable ? styles.disabled : ''}>{cellData}</div>;
+                return (
+                    <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
+                        {cellData}
+                    </DsTypography>
+                );
             }
         },
         // Custom columns specific to each config type
@@ -1282,12 +1286,16 @@ const DashboardConfigsTable = ({
                           rowData?.configState === CONFIG_STATES.ACTIVATING
                       ) {
                           return (
-                              <div className={isDisable ? styles.disabled : ''}>
+                              <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
                                   {t('databases.general.not-available-table-columns')}
-                              </div>
+                              </DsTypography>
                           );
                       }
-                      return col.renderCell(cellData, rowData, t, handleImpactedResourceDialog);
+                      return (
+                          <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
+                              {col.renderCell(cellData, rowData, t, handleImpactedResourceDialog)}
+                          </DsTypography>
+                      );
                   }
                 : undefined
         })),
@@ -1301,9 +1309,9 @@ const DashboardConfigsTable = ({
             renderCell: (cellData: string, rowData: any) => {
                 const isDisable = showDismissed || rowData?.configState === CONFIG_STATES.ACTIVATING;
                 return (
-                    <div className={isDisable ? styles.disabled : ''}>
+                    <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
                         {cellData || t('databases.general.not-available')}
-                    </div>
+                    </DsTypography>
                 );
             }
         },
@@ -1316,9 +1324,9 @@ const DashboardConfigsTable = ({
             renderCell: (cellData: string, rowData: any) => {
                 const isDisable = showDismissed || rowData?.configState === CONFIG_STATES.ACTIVATING;
                 return (
-                    <div className={isDisable ? styles.disabled : ''}>
+                    <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
                         {cellData || t('databases.general.not-available')}
-                    </div>
+                    </DsTypography>
                 );
             }
         },
@@ -1331,9 +1339,9 @@ const DashboardConfigsTable = ({
             renderCell: (cellData: string, rowData: any) => {
                 const isDisable = showDismissed || rowData?.configState === CONFIG_STATES.ACTIVATING;
                 return (
-                    <div className={isDisable ? styles.disabled : ''}>
+                    <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
                         {cellData || t('databases.general.not-available')}
-                    </div>
+                    </DsTypography>
                 );
             }
         },

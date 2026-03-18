@@ -63,11 +63,7 @@ const ApplicationSection = ({
                         <DsAccordion
                             id="oracle-security-patch-1"
                             variant="Default"
-                            isDisabled={
-                                loading ||
-                                showDismissedConfigurations ||
-                                !oracleCardData?.oracle_security_patch?.block_two?.value
-                            }
+                            isDisabled={loading || showDismissedConfigurations}
                             isExpanded={isAccordionExpanded('oracle-security-patch-1', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('oracle-security-patch-1', isExpanded);
@@ -91,20 +87,12 @@ const ApplicationSection = ({
                                 <div className={styles.headerAction}>
                                     {renderPostponeActivatingInfo('oracle_security_patch', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ||
-                                        showDismissedConfigurations ||
-                                        !oracleCardData?.oracle_security_patch?.block_two?.value ? (
-                                            <LightDisabled />
-                                        ) : (
-                                            <Light />
-                                        )}
+                                        {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
                                     </div>
                                     <div
                                         style={{
                                             color:
-                                                loading ||
-                                                showDismissedConfigurations ||
-                                                !oracleCardData?.oracle_security_patch?.block_two?.value
+                                                loading || showDismissedConfigurations
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}

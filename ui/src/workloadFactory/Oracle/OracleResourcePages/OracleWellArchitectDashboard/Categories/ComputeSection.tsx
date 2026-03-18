@@ -35,19 +35,18 @@ const ComputeSection = ({
 
     return (
         <div>
-            {shouldShowHeader ||
-                (oracleCardData?.isWad && (
-                    <div className={styles['header-buttons']}>
-                        <DsTypography
-                            style={{
-                                padding: '0 0 8px'
-                            }}
-                            variant="Semibold_16"
-                        >
-                            {t('databases.oracle-inner-page.compute')}
-                        </DsTypography>
-                    </div>
-                ))}
+            {shouldShowHeader && (
+                <div className={styles['header-buttons']}>
+                    <DsTypography
+                        style={{
+                            padding: '0 0 8px'
+                        }}
+                        variant="Semibold_16"
+                    >
+                        {t('databases.oracle-inner-page.compute')}
+                    </DsTypography>
+                </div>
+            )}
 
             <div className={styles.accordionGroups}>
                 {/* Host OS Patch Card */}
@@ -62,11 +61,7 @@ const ComputeSection = ({
                         <DsAccordion
                             id="host-os-patch-1"
                             variant="Default"
-                            isDisabled={
-                                loading ||
-                                showDismissedConfigurations ||
-                                !oracleCardData?.host_os_patch?.block_two?.value
-                            }
+                            isDisabled={loading || showDismissedConfigurations}
                             isExpanded={isAccordionExpanded('host-os-patch-1', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('host-os-patch-1', isExpanded);
@@ -88,20 +83,12 @@ const ComputeSection = ({
                                 <div className={styles.headerAction}>
                                     {renderPostponeActivatingInfo('host_os_patch', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ||
-                                        showDismissedConfigurations ||
-                                        !oracleCardData?.host_os_patch?.block_two?.value ? (
-                                            <LightDisabled />
-                                        ) : (
-                                            <Light />
-                                        )}
+                                        {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
                                     </div>
                                     <div
                                         style={{
                                             color:
-                                                loading ||
-                                                showDismissedConfigurations ||
-                                                !oracleCardData?.host_os_patch?.block_two?.value
+                                                loading || showDismissedConfigurations
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}

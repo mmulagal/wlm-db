@@ -96,7 +96,7 @@ const StorageConfigurationSection = ({
                         <DsAccordion
                             id="10"
                             variant="Default"
-                            isDisabled={loading || !oracleCardData?.ontap_configuration?.block_two?.value}
+                            isDisabled={loading || false}
                             isExpanded={isAccordionExpanded('10', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('10', isExpanded);
@@ -127,19 +127,13 @@ const StorageConfigurationSection = ({
                                     {(!areAllOntapActivating || showDismissedConfigurations) && (
                                         <>
                                             <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                                {loading || !oracleCardData?.ontap_configuration?.block_two?.value ? (
-                                                    <LightDisabled />
-                                                ) : (
-                                                    <Light />
-                                                )}
+                                                {loading ? <LightDisabled /> : <Light />}
                                             </div>
                                             <div
                                                 style={{
-                                                    color:
-                                                        loading ||
-                                                        !oracleCardData?.ontap_configuration?.block_two?.value
-                                                            ? 'var(--text-disabled)'
-                                                            : 'var(--text-button-primary)'
+                                                    color: loading
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-button-primary)'
                                                 }}
                                             >
                                                 {t('databases.oracle-inner-page.view-recommendations-optimizations')}
@@ -177,7 +171,7 @@ const StorageConfigurationSection = ({
                         <DsAccordion
                             id="11"
                             variant="Default"
-                            isDisabled={loading || !oracleCardData?.os_configuration?.block_two?.value}
+                            isDisabled={loading || false}
                             isExpanded={isAccordionExpanded('11', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('11', isExpanded);
@@ -208,18 +202,13 @@ const StorageConfigurationSection = ({
                                     {(!areAllOsActivating || showDismissedConfigurations) && (
                                         <>
                                             <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                                {loading || !oracleCardData?.os_configuration?.block_two?.value ? (
-                                                    <LightDisabled />
-                                                ) : (
-                                                    <Light />
-                                                )}
+                                                {loading ? <LightDisabled /> : <Light />}
                                             </div>
                                             <div
                                                 style={{
-                                                    color:
-                                                        loading || !oracleCardData?.os_configuration?.block_two?.value
-                                                            ? 'var(--text-disabled)'
-                                                            : 'var(--text-button-primary)'
+                                                    color: loading
+                                                        ? 'var(--text-disabled)'
+                                                        : 'var(--text-button-primary)'
                                                 }}
                                             >
                                                 {t('databases.oracle-inner-page.view-recommendations-optimizations')}

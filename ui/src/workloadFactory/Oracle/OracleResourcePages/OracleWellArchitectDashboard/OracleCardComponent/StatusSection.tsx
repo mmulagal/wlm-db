@@ -1,6 +1,6 @@
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
-import { Popover } from '@netapp/design-system';
+import { DsPopover, Popover } from '@netapp/design-system';
 import { CONFIG_STATES, GETWELL_STATUS } from '../../../../../utils/consts';
 import { GENERAL } from '../../../../../utils/appConstants';
 import styles from './OracleCardComponent.module.scss';
@@ -46,6 +46,27 @@ const StatusSection = ({ cardData, loading, disableText }: any) => {
             <DsTypography variant="Semibold_14" isDisabled={disableText}>
                 {t('databases.general.not-available-table-columns')}
             </DsTypography>
+        );
+    }
+    // WAD excluded configurations show Unavailable with tooltip
+    if (cardData?.isWadExcluded) {
+        return (
+            <span className={styles.overProvisioned}>
+                <span className={styles.tooltipLevel}>
+                    <DsPopover
+                        title={t('databases.wad.tab-disabled-message-oracle')}
+                        trigger="hover"
+                        placement="bottom"
+                    >
+                        <TooltipIcon />
+                    </DsPopover>
+                </span>
+                <span style={{ marginLeft: '8px' }}>
+                    <DsTypography variant="Semibold_14" isDisabled>
+                        {t('databases.well-architect.unavailable')}
+                    </DsTypography>
+                </span>
+            </span>
         );
     }
     return (

@@ -64,11 +64,7 @@ const StorageSizingSection = ({
                         <DsAccordion
                             id="storage-sizing-1"
                             variant="Default"
-                            isDisabled={
-                                loading ||
-                                showDismissedConfigurations ||
-                                !oracleCardData?.file_system_headroom?.block_two?.value
-                            }
+                            isDisabled={loading || showDismissedConfigurations}
                             isExpanded={isAccordionExpanded('storage-sizing-1', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('storage-sizing-1', isExpanded);
@@ -90,20 +86,12 @@ const StorageSizingSection = ({
                                 <div className={styles.headerAction}>
                                     {renderPostponeActivatingInfo('file_system_headroom', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ||
-                                        showDismissedConfigurations ||
-                                        !oracleCardData?.file_system_headroom?.block_two?.value ? (
-                                            <LightDisabled />
-                                        ) : (
-                                            <Light />
-                                        )}
+                                        {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
                                     </div>
                                     <div
                                         style={{
                                             color:
-                                                loading ||
-                                                showDismissedConfigurations ||
-                                                !oracleCardData?.file_system_headroom?.block_two?.value
+                                                loading || showDismissedConfigurations
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -131,9 +119,7 @@ const StorageSizingSection = ({
                         <DsAccordion
                             id="storage-sizing-2"
                             variant="Default"
-                            isDisabled={
-                                loading || showDismissedConfigurations || !oracleCardData?.swap_space?.block_two?.value
-                            }
+                            isDisabled={loading || showDismissedConfigurations}
                             isExpanded={isAccordionExpanded('storage-sizing-2', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('storage-sizing-2', isExpanded);
@@ -155,20 +141,12 @@ const StorageSizingSection = ({
                                 <div className={styles.headerAction}>
                                     {renderPostponeActivatingInfo('swap_space', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ||
-                                        showDismissedConfigurations ||
-                                        !oracleCardData?.swap_space?.block_two?.value ? (
-                                            <LightDisabled />
-                                        ) : (
-                                            <Light />
-                                        )}
+                                        {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
                                     </div>
                                     <div
                                         style={{
                                             color:
-                                                loading ||
-                                                showDismissedConfigurations ||
-                                                !oracleCardData?.swap_space?.block_two?.value
+                                                loading || showDismissedConfigurations
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}

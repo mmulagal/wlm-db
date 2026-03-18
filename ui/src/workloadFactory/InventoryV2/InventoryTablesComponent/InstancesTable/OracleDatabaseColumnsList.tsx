@@ -149,94 +149,6 @@ export function getOracleDatabaseColumnsList({
             )
         },
         {
-            Header: t('databases.databases-table.oracle.headers.deployment-model'),
-            accessor: 'serverInstallationMode',
-            id: '8',
-            width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'serverInstallationMode'),
-            renderCell: (cellData: string, rowData: any) => {
-                let loading = rowData?.loading || rowData?.subLoading;
-                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
-                    loading = true;
-                }
-                if (loading && !cellData) {
-                    return <DsFlashingDotsLoader />;
-                }
-                if (cellData === DATABASE_DEPLOYMENT_MODE.DATAGUARD) {
-                    return (
-                        <div className={styles.firstColumnClass}>
-                            <DsTypography variant="Regular_13" className={styles.colText}>
-                                {cellData}
-                            </DsTypography>
-
-                            <div className={styles.firstColText}>
-                                {rowData.totalDgReplicaCount > 0 && rowData?.dataguardDetails?.isPrimaryNode && (
-                                    <DsTypography variant="Regular_13" className={styles.colText}>
-                                        {`${t('databases.general.primary')} | ${rowData.totalDgReplicaCount || 0} ${
-                                            rowData.totalDgReplicaCount <= 1
-                                                ? t('databases.general.replica')
-                                                : t('databases.general.replicas')
-                                        }`}
-                                    </DsTypography>
-                                )}
-                                {rowData.totalDgReplicaCount === 0 && rowData?.dataguardDetails?.isPrimaryNode && (
-                                    <DsTypography variant="Regular_13" className={styles.colText}>
-                                        {`${t('databases.general.primary')}`}
-                                    </DsTypography>
-                                )}
-                            </div>
-
-                            {!rowData?.dataguardDetails?.isPrimaryNode && (
-                                <div className={styles.firstColText}>
-                                    <DsTypography variant="Regular_13" className={styles.colText}>
-                                        {`${t('databases.general.standby')}`}
-                                    </DsTypography>
-                                </div>
-                            )}
-                        </div>
-                    );
-                }
-                if (!cellData) {
-                    return notAvailableWithTooltip(
-                        t,
-                        'databases.databases-table.oracle.unlock-deployment-model',
-                        rowData,
-                        'databases.databases-table.oracle.offline-deployment-model'
-                    );
-                }
-                return (
-                    <DsTypography variant="Regular_13" className={styles.colText}>
-                        {cellData}
-                    </DsTypography>
-                );
-            }
-        },
-        {
-            Header: t('databases.databases-table.oracle.headers.registration-status'),
-            accessor: 'managementStatus',
-            id: '4',
-            isSortable: false,
-            width: '213px',
-            filterOptions: getFilterOptions(updatedTableData, 'managementStatus'),
-            renderCell: (cellData: string) => {
-                if (cellData === INVENTORY_STATUS.NOT_REGISTERED) {
-                    return <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />;
-                }
-                if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
-                    return (
-                        <div className={styles.inProgress}>
-                            <DsFlashingDotsLoader />
-                            <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
-                        </div>
-                    );
-                }
-                if (cellData === INVENTORY_STATUS.REGISTERED) {
-                    return <DotComponent color="var(--success)" value={t('databases.general.registered')} />;
-                }
-                return <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />;
-            }
-        },
-        {
             Header: t('databases.instance-table.headers.error-analyzer'),
             accessor: 'logAnalyzer.status',
             id: '17',
@@ -308,6 +220,94 @@ export function getOracleDatabaseColumnsList({
                     <div className={styles.statusCol}>
                         <DsTypography variant="Regular_14">{cellData}</DsTypography>
                     </div>
+                );
+            }
+        },
+        {
+            Header: t('databases.databases-table.oracle.headers.registration-status'),
+            accessor: 'managementStatus',
+            id: '4',
+            isSortable: false,
+            width: '213px',
+            filterOptions: getFilterOptions(updatedTableData, 'managementStatus'),
+            renderCell: (cellData: string) => {
+                if (cellData === INVENTORY_STATUS.NOT_REGISTERED) {
+                    return <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />;
+                }
+                if (cellData === INVENTORY_STATUS.IN_PROGRESS) {
+                    return (
+                        <div className={styles.inProgress}>
+                            <DsFlashingDotsLoader />
+                            <DsTypography variant="Regular_14">{INVENTORY_STATUS.IN_PROGRESS}</DsTypography>
+                        </div>
+                    );
+                }
+                if (cellData === INVENTORY_STATUS.REGISTERED) {
+                    return <DotComponent color="var(--success)" value={t('databases.general.registered')} />;
+                }
+                return <DotComponent color="var(--toggle-off-bg)" value={t('databases.general.not_registered')} />;
+            }
+        },
+        {
+            Header: t('databases.databases-table.oracle.headers.deployment-model'),
+            accessor: 'serverInstallationMode',
+            id: '8',
+            width: '213px',
+            filterOptions: getFilterOptions(updatedTableData, 'serverInstallationMode'),
+            renderCell: (cellData: string, rowData: any) => {
+                let loading = rowData?.loading || rowData?.subLoading;
+                if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+                    loading = true;
+                }
+                if (loading && !cellData) {
+                    return <DsFlashingDotsLoader />;
+                }
+                if (cellData === DATABASE_DEPLOYMENT_MODE.DATAGUARD) {
+                    return (
+                        <div className={styles.firstColumnClass}>
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {cellData}
+                            </DsTypography>
+
+                            <div className={styles.firstColText}>
+                                {rowData.totalDgReplicaCount > 0 && rowData?.dataguardDetails?.isPrimaryNode && (
+                                    <DsTypography variant="Regular_13" className={styles.colText}>
+                                        {`${t('databases.general.primary')} | ${rowData.totalDgReplicaCount || 0} ${
+                                            rowData.totalDgReplicaCount <= 1
+                                                ? t('databases.general.replica')
+                                                : t('databases.general.replicas')
+                                        }`}
+                                    </DsTypography>
+                                )}
+                                {rowData.totalDgReplicaCount === 0 && rowData?.dataguardDetails?.isPrimaryNode && (
+                                    <DsTypography variant="Regular_13" className={styles.colText}>
+                                        {`${t('databases.general.primary')}`}
+                                    </DsTypography>
+                                )}
+                            </div>
+
+                            {!rowData?.dataguardDetails?.isPrimaryNode && (
+                                <div className={styles.firstColText}>
+                                    <DsTypography variant="Regular_13" className={styles.colText}>
+                                        {`${t('databases.general.standby')}`}
+                                    </DsTypography>
+                                </div>
+                            )}
+                        </div>
+                    );
+                }
+                if (!cellData) {
+                    return notAvailableWithTooltip(
+                        t,
+                        'databases.databases-table.oracle.unlock-deployment-model',
+                        rowData,
+                        'databases.databases-table.oracle.offline-deployment-model'
+                    );
+                }
+                return (
+                    <DsTypography variant="Regular_13" className={styles.colText}>
+                        {cellData}
+                    </DsTypography>
                 );
             }
         },

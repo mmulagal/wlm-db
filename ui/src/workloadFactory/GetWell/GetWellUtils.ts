@@ -5572,11 +5572,21 @@ export const checkIfDisableForDismiss = (rowData: any, selectedRowsForDismiss?: 
 
 export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string, translation: TFunction) => {
     const state = store.getState();
-    const { inProgressHostData } = state.getWellOptimize;
+    const { inProgressHostData, configEngineType } = state.getWellOptimize;
 
     // If no rows are selected, reset `isDisabled` for all rows
     return tableData.map((row: any) => {
-        const { isDisabled, errorMessage } = checkIfDisableFullRow(inProgressHostData, type, row, translation);
+        let { isDisabled, errorMessage } = checkIfDisableFullRow(inProgressHostData, type, row, translation);
+
+        // Disable checkbox for WAD (offline assessment) rows
+        if (!isDisabled && row?.isWad) {
+            isDisabled = true;
+            errorMessage =
+                configEngineType === DBType.ORACLE
+                    ? translation('databases.wad.tab-disabled-message-oracle')
+                    : translation('databases.wad.tab-disabled-message');
+        }
+
         return {
             ...row,
             cellProps: {
@@ -5656,7 +5666,7 @@ export const disableOptimizeCheckBoxForOptimizeCase = (
     translation: TFunction
 ) => {
     const state = store.getState();
-    const { inProgressHostData, inProgressOptimizationData } = state.getWellOptimize;
+    const { inProgressHostData, inProgressOptimizationData, configEngineType } = state.getWellOptimize;
 
     // Extract IDs of rows currently selected for optimization
     const selectedInstanceIds = selectedRowsForOptimize.map((row: any) => row.id);
@@ -5673,6 +5683,15 @@ export const disableOptimizeCheckBoxForOptimizeCase = (
         let errorMessage = '';
         if (!isDisabled) {
             ({ isDisabled, errorMessage } = checkIfDisableFullRow(inProgressHostData, type, row, translation));
+        }
+
+        // Disable checkbox for WAD (offline assessment) rows
+        if (!isDisabled && row?.isWad) {
+            isDisabled = true;
+            errorMessage =
+                configEngineType === DBType.ORACLE
+                    ? translation('databases.wad.tab-disabled-message-oracle')
+                    : translation('databases.wad.tab-disabled-message');
         }
 
         return {

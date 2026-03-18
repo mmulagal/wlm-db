@@ -1095,11 +1095,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="1"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.storage_tier?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('1', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('1', isExpanded);
@@ -1135,9 +1131,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.storage_tier?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -1146,9 +1140,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.storage_tier?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -1180,11 +1172,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="2"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.file_system_headroom?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('2', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('2', isExpanded);
@@ -1220,9 +1208,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.file_system_headroom?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -1231,10 +1217,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.file_system_headroom?.block_two
-                                                                            ?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -1268,11 +1251,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="3"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.transaction_log_drive_size?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('3', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('3', isExpanded);
@@ -1307,10 +1286,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.transaction_log_drive_size?.block_two
-                                                                    ?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -1319,10 +1295,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.transaction_log_drive_size?.block_two
-                                                                            ?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -1357,11 +1330,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="4"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.tempdb_drive_size?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('4', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('4', isExpanded);
@@ -1396,9 +1365,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.tempdb_drive_size?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -1407,9 +1374,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.tempdb_drive_size?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -1461,11 +1426,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="5"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.user_data_files?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('5', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('5', isExpanded);
@@ -1500,9 +1461,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.user_data_files?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -1511,9 +1470,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.user_data_files?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -1563,11 +1520,7 @@ const GetWell = () => {
                                                             )}
                                                         </div>
                                                     }
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.transaction_log_files?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('6', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('6', isExpanded);
@@ -1584,9 +1537,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.transaction_log_files?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -1595,10 +1546,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.transaction_log_files?.block_two
-                                                                            ?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -1632,11 +1580,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="7"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.tempdb_files?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('7', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('7', isExpanded);
@@ -1671,9 +1615,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.tempdb_files?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -1682,9 +1624,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.tempdb_files?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -1734,9 +1674,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="9"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading || !cardData?.ontap_configuration?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || false}
                                                     isExpanded={isAccordionExpanded('9', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('9', isExpanded);
@@ -1780,22 +1718,13 @@ const GetWell = () => {
                                                                                 : ''
                                                                         }
                                                                     >
-                                                                        {loading ||
-                                                                        !cardData?.ontap_configuration?.block_two
-                                                                            ?.value ? (
-                                                                            <LightDisabled />
-                                                                        ) : (
-                                                                            <Light />
-                                                                        )}
+                                                                        {loading ? <LightDisabled /> : <Light />}
                                                                     </div>
                                                                     <div
                                                                         style={{
-                                                                            color:
-                                                                                loading ||
-                                                                                !cardData?.ontap_configuration
-                                                                                    ?.block_two?.value
-                                                                                    ? 'var(--text-disabled)'
-                                                                                    : 'var(--text-button-primary)'
+                                                                            color: loading
+                                                                                ? 'var(--text-disabled)'
+                                                                                : 'var(--text-button-primary)'
                                                                         }}
                                                                     >
                                                                         {t(
@@ -1834,9 +1763,7 @@ const GetWell = () => {
                                                 />
                                                 <DsAccordion
                                                     id="10"
-                                                    isDisabled={
-                                                        loading || !cardData?.os_configuration?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || false}
                                                     isExpanded={isAccordionExpanded('10', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('10', isExpanded);
@@ -1880,22 +1807,13 @@ const GetWell = () => {
                                                                                 : ''
                                                                         }
                                                                     >
-                                                                        {loading ||
-                                                                        !cardData?.os_configuration?.block_two
-                                                                            ?.value ? (
-                                                                            <LightDisabled />
-                                                                        ) : (
-                                                                            <Light />
-                                                                        )}
+                                                                        {loading ? <LightDisabled /> : <Light />}
                                                                     </div>
                                                                     <div
                                                                         style={{
-                                                                            color:
-                                                                                loading ||
-                                                                                !cardData?.os_configuration?.block_two
-                                                                                    ?.value
-                                                                                    ? 'var(--text-disabled)'
-                                                                                    : 'var(--text-button-primary)'
+                                                                            color: loading
+                                                                                ? 'var(--text-disabled)'
+                                                                                : 'var(--text-button-primary)'
                                                                         }}
                                                                     >
                                                                         {t(
@@ -1959,7 +1877,6 @@ const GetWell = () => {
                                                     isDisabled={
                                                         loading ||
                                                         showDismissedConfigurations ||
-                                                        !cardData?.compute_rightsizing?.block_two?.value ||
                                                         filteredCardData?.compute_rightsizing?.isMissingPermissions
                                                     }
                                                     onClick={() => setClickedAccordionId('11')}
@@ -2027,9 +1944,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.compute_rightsizing?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2038,9 +1953,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.compute_rightsizing?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -2090,11 +2003,7 @@ const GetWell = () => {
                                                             )}
                                                         </div>
                                                     }
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.host_os_patch?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('12', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('12', isExpanded);
@@ -2111,9 +2020,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.host_os_patch?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2122,9 +2029,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.host_os_patch?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -2174,11 +2079,7 @@ const GetWell = () => {
                                                             )}
                                                         </div>
                                                     }
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.rss_config?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('13', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('13', isExpanded);
@@ -2195,9 +2096,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.rss_config?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2206,9 +2105,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.rss_config?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -2257,11 +2154,7 @@ const GetWell = () => {
                                                             )}
                                                         </div>
                                                     }
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.mtu?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('21', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('21', isExpanded);
@@ -2278,9 +2171,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.mtu?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2289,9 +2180,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.mtu?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -2344,11 +2233,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="14"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.sql_licenses?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('14', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('14', isExpanded);
@@ -2383,9 +2268,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.sql_licenses?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2394,9 +2277,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.sql_licenses?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -2428,11 +2309,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="15"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.microsoft_sql_patch?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('15', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('15', isExpanded);
@@ -2467,9 +2344,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.microsoft_sql_patch?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2478,9 +2353,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.microsoft_sql_patch?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -2512,11 +2385,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="16"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.maxdop?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('16', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('16', isExpanded);
@@ -2551,9 +2420,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.maxdop?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2562,9 +2429,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.maxdop?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -2618,11 +2483,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="17"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.scheduled_local_snapshot?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('17', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('17', isExpanded);
@@ -2657,10 +2518,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.scheduled_local_snapshot?.block_two
-                                                                    ?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2669,10 +2527,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.scheduled_local_snapshot?.block_two
-                                                                            ?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -2706,11 +2561,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="18"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.crr?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('18', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('18', isExpanded);
@@ -2745,9 +2596,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.crr?.block_two?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2756,9 +2605,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.crr?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -2790,11 +2637,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="19"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        !cardData?.scheduled_fsx_for_ontap_backups?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || showDismissedConfigurations}
                                                     isExpanded={isAccordionExpanded('19', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('19', isExpanded);
@@ -2831,10 +2674,7 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                showDismissedConfigurations ||
-                                                                !cardData?.scheduled_fsx_for_ontap_backups?.block_two
-                                                                    ?.value ? (
+                                                                {loading || showDismissedConfigurations ? (
                                                                     <LightDisabled />
                                                                 ) : (
                                                                     <Light />
@@ -2843,10 +2683,7 @@ const GetWell = () => {
                                                             <div
                                                                 style={{
                                                                     color:
-                                                                        loading ||
-                                                                        showDismissedConfigurations ||
-                                                                        !cardData?.scheduled_fsx_for_ontap_backups
-                                                                            ?.block_two?.value
+                                                                        loading || showDismissedConfigurations
                                                                             ? 'var(--text-disabled)'
                                                                             : 'var(--text-button-primary)'
                                                                 }}
@@ -2885,10 +2722,7 @@ const GetWell = () => {
                                                     <DsAccordion
                                                         id="22"
                                                         variant="Default"
-                                                        isDisabled={
-                                                            loading ||
-                                                            !cardData?.mssql_high_availability?.block_two?.value
-                                                        }
+                                                        isDisabled={loading || false}
                                                         isExpanded={isAccordionExpanded('22', optimizePrintState)}
                                                         onExpandChange={isExpanded => {
                                                             handleAccordionExpanded('22', isExpanded);
@@ -2938,22 +2772,13 @@ const GetWell = () => {
                                                                                     : ''
                                                                             }
                                                                         >
-                                                                            {loading ||
-                                                                            !cardData?.mssql_high_availability
-                                                                                ?.block_two?.value ? (
-                                                                                <LightDisabled />
-                                                                            ) : (
-                                                                                <Light />
-                                                                            )}
+                                                                            {loading ? <LightDisabled /> : <Light />}
                                                                         </div>
                                                                         <div
                                                                             style={{
-                                                                                color:
-                                                                                    loading ||
-                                                                                    !cardData?.mssql_high_availability
-                                                                                        ?.block_two?.value
-                                                                                        ? 'var(--text-disabled)'
-                                                                                        : 'var(--text-button-primary)'
+                                                                                color: loading
+                                                                                    ? 'var(--text-disabled)'
+                                                                                    : 'var(--text-button-primary)'
                                                                             }}
                                                                         >
                                                                             {t(
@@ -3012,9 +2837,7 @@ const GetWell = () => {
                                                 <DsAccordion
                                                     id="20"
                                                     variant="Default"
-                                                    isDisabled={
-                                                        loading || !cardData?.clone_management?.block_two?.value
-                                                    }
+                                                    isDisabled={loading || false}
                                                     isExpanded={isAccordionExpanded('20', optimizePrintState)}
                                                     onExpandChange={isExpanded => {
                                                         handleAccordionExpanded('20', isExpanded);
@@ -3042,20 +2865,13 @@ const GetWell = () => {
                                                                         : ''
                                                                 }
                                                             >
-                                                                {loading ||
-                                                                !cardData?.clone_management?.block_two?.value ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
+                                                                {loading ? <LightDisabled /> : <Light />}
                                                             </div>
                                                             <div
                                                                 style={{
-                                                                    color:
-                                                                        loading ||
-                                                                        !cardData?.clone_management?.block_two?.value
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
+                                                                    color: loading
+                                                                        ? 'var(--text-disabled)'
+                                                                        : 'var(--text-button-primary)'
                                                                 }}
                                                             >
                                                                 {t(

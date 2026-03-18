@@ -60,9 +60,7 @@ const ResiliencySection = ({
                         <DsAccordion
                             id="crr-1"
                             variant="Default"
-                            isDisabled={
-                                loading || showDismissedConfigurations || !oracleCardData?.crr?.block_two?.value
-                            }
+                            isDisabled={loading || showDismissedConfigurations}
                             isExpanded={isAccordionExpanded('crr-1', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('crr-1', isExpanded);
@@ -85,20 +83,12 @@ const ResiliencySection = ({
                                     {renderPostponeActivatingInfo('crr', showDismissedConfigurations)}
 
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ||
-                                        showDismissedConfigurations ||
-                                        !oracleCardData?.crr?.block_two?.value ? (
-                                            <LightDisabled />
-                                        ) : (
-                                            <Light />
-                                        )}
+                                        {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
                                     </div>
                                     <div
                                         style={{
                                             color:
-                                                loading ||
-                                                showDismissedConfigurations ||
-                                                !oracleCardData?.crr?.block_two?.value
+                                                loading || showDismissedConfigurations
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}

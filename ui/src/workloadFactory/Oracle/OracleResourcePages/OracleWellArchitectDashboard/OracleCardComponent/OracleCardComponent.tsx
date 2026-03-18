@@ -162,6 +162,11 @@ const OracleCardComponent = ({
 
     // Function to determine if dismissed style should be applied
     const shouldRemoveActivatingPointer = () => {
+        // WAD excluded configs should not be clickable
+        if (cardData?.isWadExcluded) {
+            return true;
+        }
+
         // For ONTAP, OS, and HA cards: apply dismissed style if all sub-configs are activating
         if (
             cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
