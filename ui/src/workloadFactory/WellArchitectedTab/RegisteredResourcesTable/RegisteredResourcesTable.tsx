@@ -130,12 +130,12 @@ const RegisteredResourcesTable = () => {
             filterOptions: 'auto',
             renderFilterPanelLabel: (value: string) => formatDateWithTime(value),
             renderCell: (cellData: any, rowData: any) => (
-                <>
+                <div>
                     <DsTypography variant="Regular_14">{cellData ? formatDateWithTime(cellData) : ''}</DsTypography>
                     {rowData?.isWad && (
                         <DsTypography variant="Regular_13">{t('databases.inventory.one-time-assessment')}</DsTypography>
                     )}
-                </>
+                </div>
             )
         },
         {

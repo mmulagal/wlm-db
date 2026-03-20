@@ -1304,7 +1304,7 @@ const DashboardConfigsTable = ({
             renderCell: (cellData: string, rowData: any) => {
                 const isDisable = showDismissed || rowData?.configState === CONFIG_STATES.ACTIVATING;
                 return (
-                    <>
+                    <div>
                         <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
                             {cellData ? formatDateWithTime(cellData) : ''}
                         </DsTypography>
@@ -1313,7 +1313,7 @@ const DashboardConfigsTable = ({
                                 {t('databases.inventory.one-time-assessment')}
                             </DsTypography>
                         )}
-                    </>
+                    </div>
                 );
             }
         },

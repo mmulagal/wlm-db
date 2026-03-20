@@ -589,7 +589,7 @@ const DashboardMultiTableConfig = ({
                     (rowData?.configStateList?.length === 1 &&
                         rowData?.configStateList[0] === CONFIG_STATES.ACTIVATING);
                 return (
-                    <>
+                    <div>
                         <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
                             {cellData ? formatDateWithTime(cellData) : ''}
                         </DsTypography>
@@ -598,7 +598,7 @@ const DashboardMultiTableConfig = ({
                                 {t('databases.inventory.one-time-assessment')}
                             </DsTypography>
                         )}
-                    </>
+                    </div>
                 );
             }
         },
