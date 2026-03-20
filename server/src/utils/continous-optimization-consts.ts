@@ -24,7 +24,8 @@ enum AssessmentCategoriesOracle {
     STORAGE = 'storage',
     MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes',
     HOST_OS_PATCH = 'host-os-patch',
-    CRR = 'crr'
+    CRR = 'crr',
+    SNAPCENTER_SNAPSHOT = 'snapcenter-snapshot'
 }
 
 enum AssessmentTriggeredBy {
@@ -544,6 +545,7 @@ const ASSESSMENT_CONFIGS = {
     awsBackup: 'backup-configuration',
     clone: 'clone-management',
     mtuAlignment: 'mtu-alignment',
+    snapcenterSnapshot: 'snapcenter-snapshot',
     highAvailability: {
         heartbeatSettings: 'heartbeat-settings',
         clusterQuorum: 'cluster-quorum',
@@ -596,6 +598,7 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     // Expand Oracle storage assessment configs map
     ...ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP.sizing,
     'clone-management',
+    'snapcenter-snapshot',
     // Oracle layout configurations
     'archive-placement',
     'datafiles-placement',

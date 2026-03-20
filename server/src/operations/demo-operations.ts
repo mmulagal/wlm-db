@@ -82,6 +82,7 @@ import {
 import { OracleDeploymentTenacy, STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS } from './workloads/oracle/consts';
 import {
     OracleDriftAssessmentResponseType,
+    OracleGenericParameterDriftResponseType,
     HostOsPatchDriftResponseType as OracleHostOsPatchDriftResponseType
 } from '../routes/types/oracle-continuous-optimization.types';
 
@@ -1435,6 +1436,18 @@ function handleGetOracleAssessmentForDemo(
     }
 
     assessmentData.storage = storageAssessmentResponse;
+
+    const snapcenterConfigsOptimized =
+        (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SNAPCENTER_SNAPSHOT || [];
+    if (assessmentData.snapcenterSnapshot && snapcenterConfigsOptimized.length > 0) {
+        const snapcenterData = assessmentData.snapcenterSnapshot as OracleGenericParameterDriftResponseType;
+        if (snapcenterConfigsOptimized.includes(snapcenterData.name)) {
+            snapcenterData.status = AssessmentStatus.OPTIMIZED;
+            snapcenterData.objectsInViolation = [];
+            snapcenterData.totalObjectsInViolation = 0;
+        }
+        assessmentData.snapcenterSnapshot = snapcenterData;
+    }
 
     return assessmentData;
 }

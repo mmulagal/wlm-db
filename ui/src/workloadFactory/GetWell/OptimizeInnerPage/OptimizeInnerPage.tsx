@@ -212,6 +212,7 @@ const OptimizeInnerPage = () => {
                 });
                 break;
             case ASSESSMENT_CONFIG_NAMES.CRR:
+            case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
                 setCardHeight({
                     recommendationSection: '160px',
                     tagSection: '256px'
@@ -301,6 +302,25 @@ const OptimizeInnerPage = () => {
                     container={
                         <DsButton variant="secondary" isDisabled isThin>
                             {GENERAL.OPTIMIZE}
+                        </DsButton>
+                    }
+                />
+            );
+        }
+        if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT &&
+            selectedOptimizeConfig?.engineType === DBType.ORACLE
+        ) {
+            return (
+                <Popover
+                    isAppendedToBody
+                    children={
+                        <DsTypography variant="Regular_14">{t('databases.well-architect.coming-soon')}</DsTypography>
+                    }
+                    trigger="hover"
+                    container={
+                        <DsButton variant="secondary" isDisabled isThin>
+                            {t('databases.well-architect.fix')}
                         </DsButton>
                     }
                 />
@@ -873,6 +893,7 @@ const OptimizeInnerPage = () => {
                     />
                 );
             case ASSESSMENT_CONFIG_NAMES.CRR:
+            case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
                 return (
                     <CRROptimizeTable
                         type={selectedOptimizeConfig?.type}

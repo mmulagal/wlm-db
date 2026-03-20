@@ -95,7 +95,8 @@ export const handleDialog = (
         type === ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH ||
         (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
             cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) ||
-        (engineType === DBType.ORACLE && type === ASSESSMENT_CONFIG_NAMES.CRR)
+        (engineType === DBType.ORACLE && type === ASSESSMENT_CONFIG_NAMES.CRR) ||
+        (engineType === DBType.ORACLE && type === ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT)
     ) {
         setDialog(
             <DialogComponent

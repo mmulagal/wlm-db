@@ -729,6 +729,14 @@ const defaultAuthDetectModule = `
         # dual requires the database to be OPEN and fails with ORA-01219 on MOUNTED instances.
         result=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
                 export ORACLE_SID="$1"
+                # Resolve ORACLE_HOME from /etc/oratab for this SID.
+                # The oracle user profile may set a default ORACLE_HOME that differs
+                # from the home used by this specific SID, causing ORA-01034.
+                oratab_home=$(grep "^\${ORACLE_SID}:" /etc/oratab 2>/dev/null | cut -d: -f2)
+                if [ -n "$oratab_home" ] && [ -d "$oratab_home" ]; then
+                    export ORACLE_HOME="$oratab_home"
+                    export PATH="$ORACLE_HOME/bin:$PATH"
+                fi
                 sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET HEADING OFF
@@ -758,6 +766,12 @@ EOF
         local open_mode
         open_mode=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
                 export ORACLE_SID="$1"
+                # Resolve ORACLE_HOME from /etc/oratab for this SID.
+                oratab_home=$(grep "^\${ORACLE_SID}:" /etc/oratab 2>/dev/null | cut -d: -f2)
+                if [ -n "$oratab_home" ] && [ -d "$oratab_home" ]; then
+                    export ORACLE_HOME="$oratab_home"
+                    export PATH="$ORACLE_HOME/bin:$PATH"
+                fi
                 sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET HEADING OFF
@@ -1995,6 +2009,8 @@ const isASMManagedCheck = `
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF;
             SET FEEDBACK OFF;

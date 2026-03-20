@@ -48,7 +48,8 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }:
             type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
             type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
             type === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
-            type === ASSESSMENT_CONFIG_NAMES.CRR
+            type === ASSESSMENT_CONFIG_NAMES.CRR ||
+            type === ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT
         ) {
             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
             dispatch(setSelectedOptimizeConfig({ type, data: cardData, engineType: DBType.ORACLE }));
@@ -83,6 +84,7 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }:
             type === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
             type === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
             type === ASSESSMENT_CONFIG_NAMES.CRR ||
+            type === ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT ||
             (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && status === GETWELL_STATUS.OVER_PROVISIONED)
         ) {
             return t('databases.oracle-inner-page.view');

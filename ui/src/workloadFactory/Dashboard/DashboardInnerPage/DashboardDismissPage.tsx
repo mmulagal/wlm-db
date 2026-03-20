@@ -117,6 +117,9 @@ const DashboardDismissPage = () => {
             case ASSESSMENT_CONFIG_NAMES.CRR:
                 type = 'crr';
                 break;
+            case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
+                type = 'snapcenter-snapshot';
+                break;
             case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
                 type = 'clone-management';
                 break;
@@ -696,6 +699,8 @@ const DashboardDismissPage = () => {
                 return instanceData?.assessments?.dismissedConfigurations?.clone;
             case ASSESSMENT_CONFIG_NAMES.CRR:
                 return instanceData?.assessments?.dismissedConfigurations?.crr;
+            case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
+                return instanceData?.assessments?.dismissedConfigurations?.snapcenterSnapshot;
             case ASSESSMENT_CONFIG_NAMES.MTU:
                 return instanceData?.assessments?.dismissedConfigurations?.mtuAlignment;
             default:

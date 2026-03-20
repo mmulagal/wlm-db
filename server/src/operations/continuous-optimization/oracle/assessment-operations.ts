@@ -35,6 +35,11 @@ import {
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { calculateHostOsPatchDrift, managedHostOsPatchAssessment } from './hostOsPatch-assessment-operations';
+import {
+    calculateSnapCenterDrift,
+    initiateSnapCenterAssessmentCollection,
+    SnapcenterAssessmentData
+} from './snapcenter-assessment-operations';
 
 import {
     DriftAssessmentResponsePerAccountType,
@@ -223,7 +228,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
             instanceVolumeMapping =
                 allInstanceVolumeMappings.find(mapping => mapping[databaseInstanceName])?.[databaseInstanceName] || {};
         }
-        const { ontapVolumes = {}, isCDB = false } = instanceVolumeMapping || {};
+        const { ontapVolumes = {}, isCDB = false, error: mappedVolumeError } = instanceVolumeMapping || {};
         const extractVolumeData = (
             volumes: Record<string, OracleVolumeRecord[]> | Record<string, Record<string, OracleVolumeRecord[]>>,
             storageProtocol: string
@@ -276,9 +281,21 @@ async function initiateInstanceLevelAssessmentDataCollection(
         databaseInstanceRecord.svmOntapName = [...new Set(volumeData.map(vol => vol.svmName))].filter(Boolean);
         databaseInstanceRecord.mappedVolumesUuids = [...new Set(volumeData.map(vol => vol.id))];
         databaseInstanceRecord.mappedVolumeNames = [...new Set(volumeData.map(vol => vol.name))];
+        databaseInstanceRecord.mappedVolumeError = mappedVolumeError;
         databaseInstanceRecord.mappedDiskGroups = [...new Set(volumeData.map(vol => vol.diskGroup).filter(dg => !!dg))];
         databaseInstanceRecord.storageProtocol = protocol;
         databaseInstanceRecord.redoVolumeNames = [...new Set(redoVolumeNames)];
+
+        if (mappedVolumeError) {
+            logger.error('Oracle mapped volume discovery returned an instance-level error', {
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                mappedVolumeError
+            });
+        }
 
         if (protocol === 'iSCSI') {
             databaseInstanceRecord.mappedLunUuids = [...new Set(volumeData.map(volume => volume.lunId))];
@@ -333,6 +350,15 @@ async function initiateInstanceLevelAssessmentDataCollection(
             ),
         [AssessmentCategoriesOracle.CRR]: async () =>
             initiateCrossRegionResiliencyAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceLevelAssessmentJobId,
+                databaseInstanceRecord
+            ),
+        [AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT]: async () =>
+            initiateSnapCenterAssessmentCollection(
                 accountId,
                 credentialsId,
                 region,
@@ -439,9 +465,11 @@ async function triggerOracleAssessment(
         };
 
         const shouldRunInstanceLevelAssessment = fields.some(field =>
-            [AssessmentCategoriesOracle.STORAGE, AssessmentCategoriesOracle.CRR].includes(
-                field.toLowerCase() as AssessmentCategoriesOracle
-            )
+            [
+                AssessmentCategoriesOracle.STORAGE,
+                AssessmentCategoriesOracle.CRR,
+                AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT
+            ].includes(field.toLowerCase() as AssessmentCategoriesOracle)
         );
 
         const shouldRunHostLevelAssessment = fields.some(field =>
@@ -721,12 +749,36 @@ async function fetchOracleDriftAssessment(
     const assessmentFlags = {
         storage: fieldsValues.includes(AssessmentCategoriesOracle.STORAGE.toLowerCase()),
         hostOsPatch: fieldsValues.includes(AssessmentCategoriesOracle.HOST_OS_PATCH.toLowerCase()),
-        crr: fieldsValues.includes(AssessmentCategoriesOracle.CRR.toLowerCase())
+        crr: fieldsValues.includes(AssessmentCategoriesOracle.CRR.toLowerCase()),
+        snapcenterSnapshot: fieldsValues.includes(AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT.toLowerCase())
     };
 
     const crrAssessmentData = assessmentDataMap[AssessmentCategoriesOracle.CRR] as unknown as CrrAssessment;
 
-    const [storageDriftData, hostLevelData, crrData] = await Promise.all([
+    const volumeMappings = mappedOntapVolumes?.[fileSystemId]?.volumeMappings || [];
+    const instanceVolumeMapping = volumeMappings.find(
+        (m: Record<string, OracleMappedOntapVolumeRecord>) => m[databaseInstanceName]
+    )?.[databaseInstanceName];
+    const { ontapVolumes: instanceOntapVolumes = {}, isCDB: instanceIsCDB = false } = instanceVolumeMapping || {};
+
+    const snapcenterRelevantFileTypes = [OracleSysFileTypes.DATA_FILES, OracleSysFileTypes.CONTROL_FILES];
+    const dataFileVolumeIds: string[] = [
+        ...new Set(
+            instanceIsCDB
+                ? Object.values(instanceOntapVolumes).flatMap(pdb =>
+                      snapcenterRelevantFileTypes.flatMap(fileType =>
+                          ((pdb as Record<string, OracleVolumeRecord[]>)[fileType] || []).map(vol => vol.volumeId)
+                      )
+                  )
+                : snapcenterRelevantFileTypes.flatMap(fileType =>
+                      ((instanceOntapVolumes as Record<string, OracleVolumeRecord[]>)[fileType] || []).map(
+                          vol => vol.volumeId
+                      )
+                  )
+        )
+    ];
+
+    const [storageDriftData, hostLevelData, crrData, snapcenterDriftData] = await Promise.all([
         assessmentFlags.storage
             ? calculateStorageDrift(
                   accountId,
@@ -767,6 +819,14 @@ async function fetchOracleDriftAssessment(
                       crrAssessmentData
                   )
               )
+            : Promise.resolve(undefined),
+        assessmentFlags.snapcenterSnapshot
+            ? Promise.resolve(
+                  calculateSnapCenterDrift(
+                      assessmentDataMap[AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT] as SnapcenterAssessmentData,
+                      dataFileVolumeIds
+                  )
+              )
             : Promise.resolve(undefined)
     ]);
 
@@ -774,6 +834,7 @@ async function fetchOracleDriftAssessment(
         storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),
         hostOsPatch: isEmpty(hostLevelData.hostOsPatch) ? undefined : hostLevelData.hostOsPatch,
         crr: crrData,
+        snapcenterSnapshot: snapcenterDriftData || undefined,
         dismissedConfigurations,
         fileSystemId,
         databaseInstanceName,
@@ -888,7 +949,8 @@ async function fetchOracleDriftAssessmentPerHost(
     const assessmentFields = [
         AssessmentCategoriesOracle.STORAGE,
         AssessmentCategoriesOracle.HOST_OS_PATCH,
-        AssessmentCategoriesOracle.CRR
+        AssessmentCategoriesOracle.CRR,
+        AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT
     ].join(',');
 
     const driftAssessments = await Promise.all(

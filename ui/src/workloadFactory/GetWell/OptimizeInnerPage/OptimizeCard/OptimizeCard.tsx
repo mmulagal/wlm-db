@@ -345,6 +345,7 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                     }
                 };
             case ASSESSMENT_CONFIG_NAMES.CRR:
+            case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
                 return {
                     block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },

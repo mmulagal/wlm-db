@@ -1,5 +1,6 @@
 import {
     ASSESSMENT_RESOURCE_TYPE,
+    AssessmentStatus,
     AwsWellArchitecturedPillars,
     MIN_OPTIMIZED_HEADROOM_PERCENTAGE,
     SEVERITY
@@ -778,18 +779,19 @@ const GOLDEN_CONFIG = {
             resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
         }
     ],
-    hostOsPatch: {
-        name: 'host-os-patch',
-        tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-        category: 'compute',
-        subCategory: 'compute',
-        focusWidgetName: 'Operating system patch',
-        severity: SEVERITY.CRITICAL,
-        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-        recommendation:
-            'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.'
-    },
     resiliency: {
+        snapcenterSnapshot: {
+            name: 'snapcenter-snapshot',
+            tags: [AwsWellArchitecturedPillars.RELIABILITY],
+            category: 'resiliency',
+            subCategory: 'protection',
+            focusWidgetName: 'SnapCenter snapshot',
+            severity: SEVERITY.WARNING,
+            recommended: AssessmentStatus.OPTIMIZED,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            recommendation:
+                'Workload Factory recommends protecting Oracle databases with SnapCenter snapshots for application-consistent backup and recovery. SnapCenter integrates with ONTAP to create crash-consistent snapshots, enabling rapid backup and restore operations for Oracle databases running on FSx for ONTAP. Ensure SnapCenter is configured for all database volumes to maintain data protection and compliance.'
+        },
         crr: {
             tags: [AwsWellArchitecturedPillars.RELIABILITY],
             category: 'resiliency',
@@ -800,6 +802,17 @@ const GOLDEN_CONFIG = {
             recommendation:
                 'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.'
         }
+    },
+    hostOsPatch: {
+        name: 'host-os-patch',
+        tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
+        category: 'compute',
+        subCategory: 'compute',
+        focusWidgetName: 'Operating system patch',
+        severity: SEVERITY.CRITICAL,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+        recommendation:
+            'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.'
     }
 };
 

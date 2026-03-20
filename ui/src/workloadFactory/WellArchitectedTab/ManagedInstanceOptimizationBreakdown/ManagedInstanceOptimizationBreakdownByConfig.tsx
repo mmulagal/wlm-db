@@ -676,7 +676,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
@@ -707,7 +706,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
@@ -737,7 +735,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
@@ -767,7 +764,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
@@ -796,7 +792,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF, 'Log files (.ldf)', 'logFiles')}
@@ -821,7 +816,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
@@ -850,7 +844,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.ONTAP) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.ONTAP, 'ONTAP', 'ontapConfiguration')}
@@ -872,7 +865,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.OS) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.OS, 'Operating system', 'operatingSystem')}
@@ -894,7 +886,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
@@ -925,7 +916,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL &&
                     shouldShowTile(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH) && (
                         <div className={styles.tile}>
@@ -957,7 +947,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </div>
                     )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
@@ -1043,7 +1032,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL &&
                     shouldShowTile(ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH) && (
                         <div className={styles.tile}>
@@ -1074,7 +1062,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </div>
                     )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.MAXDOP) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
@@ -1104,7 +1091,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL &&
                     shouldShowTile(ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) && (
                         <div className={styles.tile}>
@@ -1136,7 +1122,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </div>
                     )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.CRR) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.CRR, ASSESSMENT_CONFIG_NAMES.CRR, 'crr')}
@@ -1166,7 +1151,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.MSSQL &&
                     shouldShowTile(ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) && (
                         <div className={styles.tile}>
@@ -1231,7 +1215,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                             </div>
                         </div>
                     )}
-
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) && (
                     <div className={styles.tile}>
                         {renderOptimizationBar(
@@ -1261,7 +1244,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         </div>
                     </div>
                 )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
@@ -1271,7 +1253,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.SWAP_SPACE,
@@ -1281,7 +1262,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.SWAP_SPACE,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
@@ -1291,7 +1271,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
@@ -1301,7 +1280,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
@@ -1311,7 +1289,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
@@ -1321,7 +1298,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
@@ -1331,7 +1307,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
@@ -1341,7 +1316,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     configData?.isAsmEnable &&
                     renderOracleConfigTile(
@@ -1352,7 +1326,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     configData?.isAsmEnable &&
                     renderOracleConfigTile(
@@ -1363,7 +1336,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     configData?.isAsmEnable &&
                     configData?.isFraEnable &&
@@ -1375,7 +1347,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     configData?.isAsmEnable &&
                     configData?.isArchiveEnable &&
@@ -1387,7 +1358,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.ONTAP,
@@ -1397,7 +1367,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.OS,
@@ -1407,7 +1376,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
@@ -1417,7 +1385,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH,
@@ -1427,7 +1394,6 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH,
                         false
                     )}
-
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.CRR,
@@ -1435,6 +1401,15 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         'wlm-db-optimize-oracle-crr',
                         ASSESSMENT_CONFIG_NAMES.CRR,
                         ASSESSMENT_CONFIG_NAMES.CRR,
+                        false
+                    )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
+                        'oracleSnapcenterSnapshot',
+                        'wlm-db-optimize-oracle-snapcenter-snapshot',
+                        ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
+                        ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
                         false
                     )}
             </div>

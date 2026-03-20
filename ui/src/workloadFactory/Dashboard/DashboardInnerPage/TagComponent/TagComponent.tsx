@@ -109,6 +109,7 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     ]);
                     break;
                 case ASSESSMENT_CONFIG_NAMES.CRR:
+                case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
                     setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
                     break;
                 case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
@@ -244,6 +245,7 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     ]);
                     break;
                 case ASSESSMENT_CONFIG_NAMES.CRR:
+                case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
                     setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
                     break;
                 case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:

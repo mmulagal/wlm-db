@@ -5174,6 +5174,7 @@ export const updateConfigStatePerInstance = (
         'mssql-patch': 'mssqlPatch',
         'host-os-patch': 'hostOsPatch',
         crr: 'crr',
+        'snapcenter-snapshot': 'snapcenterSnapshot',
         'oracle-security-patch': 'oracleSecurityPatch',
         'sql-license': 'license'
     };
@@ -5800,6 +5801,9 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             break;
         case ASSESSMENT_CONFIG_NAMES.CRR:
             configKey = dbType === DBType.ORACLE ? 'oracleCrr' : 'crr';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
+            configKey = 'oracleSnapcenterSnapshot';
             break;
         case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
             configKey = 'scheduledawsBackup';

@@ -52,6 +52,7 @@ interface OracleVolumeRecord {
 }
 interface OracleMappedOntapVolumeRecord {
     isCDB?: boolean;
+    error?: string;
     ontapVolumes?: Record<string, OracleVolumeRecord[]> | Record<string, Record<string, OracleVolumeRecord[]>>;
 }
 interface OracleMappedOntapVolumesResponse {

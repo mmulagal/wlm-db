@@ -625,6 +625,43 @@ const CONFIG_MAPPING: Record<string, any> = {
             }
         ]
     },
+    [ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT]: {
+        assessmentPath: [],
+        configName: 'snapcenterSnapshot',
+        dismissConfigName: 'snapcenterSnapshot',
+        dataMapping: (obj: any) => ({
+            current: obj?.current,
+            totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
+            totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
+            objectsInViolation: obj?.objectsInViolation || [],
+            violationDetails: obj?.violationDetails || [],
+            configurationName: 'snapcenter-snapshot'
+        }),
+        isFixSupported: false,
+        customColumns: [
+            {
+                Header: 'databases.well-architect.dashboard-table-headers.impacted-volumes',
+                accessor: 'totalObjectsInViolation',
+                id: '4',
+                width: '200px',
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
+                ) => (
+                    <div className={CommonStyles.impactedDrivesCell}>
+                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
+                                {t('databases.dashboard.view')}
+                            </Button>
+                        )}
+                    </div>
+                )
+            }
+        ]
+    },
     [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: {
         assessmentPath: [], // Nested path navigation
         configName: 'awsBackup', // Configuration name

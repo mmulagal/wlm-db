@@ -363,6 +363,7 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
 
         // placement configs use internal API names, not ASSESSMENT_CONFIG_NAMES display names
         case 'crr':
+        case 'snapcenter-snapshot':
         case 'oracle-binary-placement':
         case 'datafiles-placement':
         case 'controlfiles-placement':
@@ -375,7 +376,7 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
                 return ensureRows(columns, rows, na);
             }
             const rows = objects.map((item: ObjectInViolation) => [
-                typeof item === 'string' ? item : item?.objectName || na
+                typeof item === 'string' ? item : (item as ViolationVolume)?.ontapVolumeName || item?.objectName || na
             ]);
             return ensureRows(columns, rows, na);
         }

@@ -28,6 +28,27 @@ const ResiliencyOracleDialog = ({ type }: { type: string }) => {
                         )}
                     </>
                 );
+            case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
+                return (
+                    <>
+                        {createSection(
+                            t('databases.well-architect.action-summary'),
+                            t('databases.well-architect.oracle-snapcenter-action-summary')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                            t('databases.well-architect.oracle-snapcenter-step1'),
+                            t('databases.well-architect.oracle-snapcenter-step2'),
+                            t('databases.well-architect.oracle-snapcenter-step3'),
+                            t('databases.well-architect.oracle-snapcenter-step4'),
+                            t('databases.well-architect.oracle-snapcenter-step5'),
+                            t('databases.well-architect.oracle-snapcenter-step6')
+                        ])}
+                        {createSection(
+                            t('databases.well-architect.notes'),
+                            t('databases.well-architect.oracle-snapcenter-notes')
+                        )}
+                    </>
+                );
             default:
                 break;
         }

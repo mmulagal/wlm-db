@@ -8,6 +8,7 @@ import {
 
 import {
     ContinuousOptimizationQueryString,
+    OracleContinuousOptimizationQueryString,
     AssessmentQueryStringPerAccount
 } from '../types/continuous-optimization.types';
 import {
@@ -76,7 +77,8 @@ const TriggerOracleDriftAssessmentSchema = {
     ...BaseTriggerDriftAssessmentSchema,
     summary: 'Trigger assessment for a Oracle database instance',
     description: 'Trigger assessment for best practice misalignments on a managed Oracle database instance',
-    tags: [RouteTags.ORACLE_ASSESSMENT]
+    tags: [RouteTags.ORACLE_ASSESSMENT],
+    querystring: OracleContinuousOptimizationQueryString
 };
 
 const OptimizeStorageSchemaDescription =

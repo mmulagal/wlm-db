@@ -85,6 +85,7 @@ const OracleDriftAssessmentResponse = Type.Object({
     storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
     crr: Type.Optional(Type.Union([GenericParameterDriftResponse, ErrorResponse])),
+    snapcenterSnapshot: Type.Optional(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse])),
     dismissedConfigurations: Type.Optional(DismissedConfigurationsResponse),
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
     fileSystemId: Type.Optional(Type.String()),

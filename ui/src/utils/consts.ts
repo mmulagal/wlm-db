@@ -1004,6 +1004,7 @@ export const ASSESSMENT_CONFIG_NAMES = {
     OPERATING_SYSTEM_PATCH: 'Operating system patch',
     MICROSOFT_SQL_SERVER_PATCH: 'Microsoft SQL Server patch',
     CRR: 'Cross-Region Replication (CRR)',
+    SNAPCENTER_SNAPSHOT: 'SnapCenter Snapshot',
     ORACLE_SECURITY_PATCH: 'Oracle critical patch updates',
     ONTAP: 'ontap',
     OS: 'os',
@@ -1225,6 +1226,8 @@ export const CONFIG_NAMES = {
     // Resiliency configurations
     scheduled_local_snapshot: ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
     crr: ASSESSMENT_CONFIG_NAMES.CRR,
+    snapcenter_snapshot: ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
+    'snapcenter-snapshot': ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
     scheduled_fsx_for_ontap_backups: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
     mssql_high_availability: ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY,
 
@@ -1462,6 +1465,7 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: 'mssqlPatch',
         [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'hostOsPatch',
         [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
+        [ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT]: 'snapcenterSnapshot',
         [ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH]: 'oracleSecurityPatch',
         [ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY]: 'mssqlHighAvailability',
         [ASSESSMENT_CONFIG_NAMES.LICENSE]: 'license'

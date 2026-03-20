@@ -2024,7 +2024,16 @@ async function calculateStorageDrift(
         deploymentType
     });
 
+    const mappedVolumeError = mappedOntapVolumes?.[fsxFileSystemId]?.volumeMappings?.find(
+        mapping => mapping[databaseInstanceName]?.error
+    )?.[databaseInstanceName]?.error;
+
     if (isEmpty(storageAssessmentData)) {
+        if (mappedVolumeError) {
+            return {
+                errorMessage: `Mapped ONTAP volume discovery failed for ${databaseInstanceName}: ${mappedVolumeError}`
+            };
+        }
         const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
         return { errorMessage };
     }
@@ -2143,6 +2152,7 @@ async function initiateStorageAssessmentCollection(
         name: databaseInstanceName,
         activeNodeInstanceid,
         mappedVolumesUuids,
+        mappedVolumeError,
         fsxFileSystem,
         storageProtocol,
         isASMManaged = false,
@@ -2151,7 +2161,9 @@ async function initiateStorageAssessmentCollection(
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
 
     if (isEmpty(mappedVolumesUuids)) {
-        errorMessage = `Found no FSx for ONTAP volumes for the database ${databaseInstanceName}.`;
+        errorMessage = mappedVolumeError
+            ? `Found no FSx for ONTAP volumes for the database ${databaseInstanceName}. Oracle mount discovery failed: ${mappedVolumeError}`
+            : `Found no FSx for ONTAP volumes for the database ${databaseInstanceName}.`;
         logger.error(errorMessage);
         jobStatus = JOBSTATUS.FAILED;
         await registerAssessmentJobs(

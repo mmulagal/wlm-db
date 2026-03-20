@@ -1500,6 +1500,18 @@ const DashboardInnerPage = () => {
                     }
                 }));
                 break;
+            case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
+                setValueCardData((prev: any) => ({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.snapcenterSnapshot?.recommendation?.description
+                    }
+                }));
+                break;
             case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
                 setValueCardData((prev: any) => ({
                     ...selectedConfigSummary,
@@ -1897,6 +1909,7 @@ const DashboardInnerPage = () => {
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
             case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
             case ASSESSMENT_CONFIG_NAMES.CRR:
+            case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
                 return (
                     <DashboardConfigsTable
                         configType={selectedConfig}

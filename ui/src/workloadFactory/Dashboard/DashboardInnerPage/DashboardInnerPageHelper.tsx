@@ -80,6 +80,9 @@ const getPayloadType = (type: string) => {
         case ASSESSMENT_CONFIG_NAMES.CRR:
             type = 'crr';
             break;
+        case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
+            type = 'snapcenter-snapshot';
+            break;
         case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
             type = 'oracle-security-patch';
             break;
@@ -532,7 +535,10 @@ export const bulkFixDisableCheck = (
         fixDisableMsg = t('databases.well-architect.bulk-fix-disable-for-asm');
     } else if (isFixNotSupported) {
         isFixDisabled = true;
-        fixDisableMsg = t('databases.well-architect.fix-disabled');
+        fixDisableMsg =
+            configType === ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT
+                ? t('databases.well-architect.coming-soon')
+                : t('databases.well-architect.fix-disabled');
     } else if (!checkIfAnyRowNotOptimized(selectedRowsForOptimize)) {
         isFixDisabled = true;
         fixDisableMsg = t('databases.well-architect.bulk-fix-disabled');

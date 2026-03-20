@@ -228,6 +228,7 @@ echo "$resultObject"
 `;
 
 const loadStorageDetectionModules = `
+    ${parseSqlplusOutput}
 
     # Function to find mount point details for a given file or directory.
     find_mountpoint() {
@@ -267,6 +268,8 @@ const loadStorageDetectionModules = `
         local isASMManaged="$4"
         local matching="NOT LIKE"
         local alter_cmd=""
+        local sqlplus_output=""
+        local parsed_output=""
         if [ "$isCDB" == "YES" ]; then
             alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;"
         fi
@@ -275,9 +278,11 @@ const loadStorageDetectionModules = `
             matching="LIKE"
         fi
 
-        sudo -i -u oracle bash <<EOF
+        sqlplus_output=$(sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            $sqlplus_command <<'EOSQL'
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
+            sqlplus_output=\\$($sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SET FEEDBACK OFF
@@ -387,7 +392,17 @@ const loadStorageDetectionModules = `
             AS json_output
             FROM dual;
 EOSQL
+)
+            echo "\\$sqlplus_output"
 EOF
+)
+        parsed_output=$(parse_sqlplus_output "$sqlplus_output")
+        if [ $? -ne 0 ]; then
+            jq -nc --arg error "$parsed_output" '{"error": $error}'
+            return 1
+        fi
+
+        echo "$parsed_output"
     }
 
     get_data_file_paths() {
@@ -968,10 +983,15 @@ get_multipath_mount_details() {
         local pdbName="$3"
         
         # Get Oracle DB file paths
-        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "NO" | tr -d '\n' | tr -d ' ')
+        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "NO" | tr -d '\n')
         # Validate JSON (e.g., ORA- error messages from ALTER SESSION failures in Data Guard can produce malformed output)
         if ! echo "$db_paths_json" | jq empty 2>/dev/null; then
-            echo "{}"
+            jq -nc --arg error "Failed to parse Oracle file paths for SID $ORACLE_SID." '{"error": $error}'
+            return 1
+        fi
+        db_paths_error=$(echo "$db_paths_json" | jq -r '.error // empty')
+        if [ -n "$db_paths_error" ]; then
+            jq -nc --arg error "$db_paths_error" '{"error": $error}'
             return 1
         fi
         oracleMountDetails="{"
@@ -1016,10 +1036,15 @@ get_multipath_mount_details() {
         local pdbName="$3"
 
         # Get Oracle DB file paths
-        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "YES" | tr -d '\n' | tr -d ' ')
+        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "YES" | tr -d '\n')
         # Validate JSON (e.g., ORA- error messages from ALTER SESSION failures in Data Guard can produce malformed output)
         if ! echo "$db_paths_json" | jq empty 2>/dev/null; then
-            echo "{}"
+            jq -nc --arg error "Failed to parse Oracle file paths for SID $ORACLE_SID." '{"error": $error}'
+            return 1
+        fi
+        db_paths_error=$(echo "$db_paths_json" | jq -r '.error // empty')
+        if [ -n "$db_paths_error" ]; then
+            jq -nc --arg error "$db_paths_error" '{"error": $error}'
             return 1
         fi
         local isAsmLibSetup=$(is_asmlib_setup)
@@ -1187,6 +1212,8 @@ const loadDatabaseDetectionModules = `
                 # Cross-join works because both v$instance and v$database are single-row views
                 sudo -i -u oracle bash <<EOF
                     export ORACLE_SID="$ORACLE_SID"
+                    export ORACLE_HOME="$ORACLE_HOME"
+                    export PATH="$ORACLE_HOME/bin:\\$PATH"
                     $sqlplus_command <<'EOSQL'
                         SET HEADING OFF
                         SET LINESIZE 500
@@ -1206,6 +1233,8 @@ EOF
                 # For non-MOUNTED (OPEN) instances, STATUS from v$instance is correct
                 sudo -i -u oracle bash <<EOF
                     export ORACLE_SID="$ORACLE_SID"
+                    export ORACLE_HOME="$ORACLE_HOME"
+                    export PATH="$ORACLE_HOME/bin:\\$PATH"
                     $sqlplus_command <<'EOSQL'
                         SET HEADING OFF
                         SET LINESIZE 500
@@ -1252,6 +1281,8 @@ EOF
         jsonRes=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
             $sqlplus_command <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET HEADING OFF
@@ -1279,6 +1310,8 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
@@ -1298,6 +1331,8 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
@@ -1315,6 +1350,8 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
@@ -1328,6 +1365,8 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
@@ -1351,6 +1390,8 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
@@ -1363,6 +1404,8 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 500
             SELECT NAME FROM V\\$PDBS
@@ -1376,6 +1419,8 @@ EOF
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 500
             SELECT NAME FROM V\\$PDBS
@@ -1848,6 +1893,12 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
 
         isDefaultAuth=$(is_default_auth "$sid")
 
+        export ORACLE_HOME="$oracle_home"
+        export PATH="$oracle_home/bin:$PATH"
+        if [ "$isDefaultAuth" == "true" ]; then
+            sqlplus_command="$oracle_home/bin/sqlplus -S / as sysdba"
+        fi
+
         {
             INSTANCE_DETAILS=$(get_instance_details "$sid")
             DATABASE_DETAILS=$(get_database_details "$sid")
@@ -1891,6 +1942,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
             if [ "$isASMManaged" == "TRUE" ]; then
                 if [ "$is_cdb" == "YES" ]; then
                     mountDetailsFailed=false
+                    mountDetailsError=""
                     finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": true, \\"mountedPdbs\\": $mountedPdbsJson, \\"pdbMountDetails\\": {"
                     firstPdb=true
                     
@@ -1903,19 +1955,33 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                         
                         # Get mount details for this PDB
                         pdbMountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "$pdb_name")
-                        if [ $? -ne 0 ]; then mountDetailsFailed=true; fi
+                        if [ $? -ne 0 ]; then
+                            mountDetailsFailed=true
+                            if [ -z "$mountDetailsError" ]; then
+                                mountDetailsError=$(echo "$pdbMountDetails" | jq -r '.error // empty' 2>/dev/null)
+                                if [ -z "$mountDetailsError" ]; then
+                                    mountDetailsError="Mount detail retrieval failed for PDB $pdb_name."
+                                fi
+                            fi
+                        fi
                         finalResult+="\\"$pdb_name\\": $pdbMountDetails"
                     done
                     
                     if [ "$mountDetailsFailed" = true ]; then
-                        finalResult+="}, \\"error\\": true}"
+                        escapedMountDetailsError=$(jq -Rn --arg error "$mountDetailsError" '$error')
+                        finalResult+="}, \\"error\\": $escapedMountDetailsError}"
                     else
                         finalResult+="}}"
                     fi
                 else
                     mountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "")
                     if [ $? -ne 0 ]; then
-                        finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": true, \\"error\\": true}"
+                        mountDetailsError=$(echo "$mountDetails" | jq -r '.error // empty' 2>/dev/null)
+                        if [ -z "$mountDetailsError" ]; then
+                            mountDetailsError="Mount detail retrieval failed for SID $sid."
+                        fi
+                        escapedMountDetailsError=$(jq -Rn --arg error "$mountDetailsError" '$error')
+                        finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": true, \\"error\\": $escapedMountDetailsError}"
                     else
                         finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": true, \\"mountDetails\\": $mountDetails}"
                     fi
@@ -1924,6 +1990,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                 if [ "$is_cdb" == "YES" ]; then
                     # Handle CDB with PDBs
                     mountDetailsFailed=false
+                    mountDetailsError=""
                     finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": false, \\"mountedPdbs\\": $mountedPdbsJson, \\"pdbMountDetails\\": {"
                     firstPdb=true
                     
@@ -1936,12 +2003,21 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                         
                         # Get mount details for this PDB
                         pdbMountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "$pdb_name")
-                        if [ $? -ne 0 ]; then mountDetailsFailed=true; fi
+                        if [ $? -ne 0 ]; then
+                            mountDetailsFailed=true
+                            if [ -z "$mountDetailsError" ]; then
+                                mountDetailsError=$(echo "$pdbMountDetails" | jq -r '.error // empty' 2>/dev/null)
+                                if [ -z "$mountDetailsError" ]; then
+                                    mountDetailsError="Mount detail retrieval failed for PDB $pdb_name."
+                                fi
+                            fi
+                        fi
                         finalResult+="\\"$pdb_name\\": $pdbMountDetails"
                     done
                     
                     if [ "$mountDetailsFailed" = true ]; then
-                        finalResult+="}, \\"error\\": true}"
+                        escapedMountDetailsError=$(jq -Rn --arg error "$mountDetailsError" '$error')
+                        finalResult+="}, \\"error\\": $escapedMountDetailsError}"
                     else
                         finalResult+="}}"
                     fi
@@ -1949,7 +2025,12 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                     # Handle single instance DB
                     mountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "")
                     if [ $? -ne 0 ]; then
-                        finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": false, \\"error\\": true}"
+                        mountDetailsError=$(echo "$mountDetails" | jq -r '.error // empty' 2>/dev/null)
+                        if [ -z "$mountDetailsError" ]; then
+                            mountDetailsError="Mount detail retrieval failed for SID $sid."
+                        fi
+                        escapedMountDetailsError=$(jq -Rn --arg error "$mountDetailsError" '$error')
+                        finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": false, \\"error\\": $escapedMountDetailsError}"
                     else
                         finalResult+="\\"$sid\\": {\\"isCDB\\": false, \\"isASMManaged\\": false, \\"mountDetails\\": $mountDetails}"
                     fi
@@ -1961,7 +2042,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
         }
     done <<< "$oratab_entries"
     finalResult+="}"
-    mountPointData=$(echo "$finalResult" | tr -d '\n' | tr -d ' ')
+    mountPointData=$(echo "$finalResult" | tr -d '\n')
 `;
 
 const getMappedOntapDataVolumeForInstance = (
@@ -1978,6 +2059,8 @@ const getMappedOntapDataVolumeForInstance = (
     log "Starting getMappedOntapDataVolumeForInstance"
     log "Parameters: ec2InstanceId=${ec2InstanceId}, oracleSids=${oracleSids.join()}, fsxnId=${fsxnId}, region=${region}"
 
+    # Redirect stderr to log file to prevent Oracle/sqlplus noise from polluting SSM StandardErrorContent
+    exec 2>>${LINUX_LOG_DIRECTORY}/mappedontapvolumes.log
 
     ${getOracleDbMountDetails(ec2InstanceId, oracleSids)}
     processMountDetail() {
@@ -2057,11 +2140,10 @@ const getMappedOntapDataVolumeForInstance = (
         log "Processing SID: $sid"
         sidData=$(echo "$mountPointData" | jq -r --arg sid "$sid" '.[$sid]')
 
-        # Check if mount detail retrieval failed for this SID
-        hasError=$(echo "$sidData" | jq -r '.error // false')
-        if [ "$hasError" == "true" ]; then
-            log "Mount detail retrieval failed for SID: $sid, skipping volume mapping"
-            sidMapping="{\\"$sid\\": {\\"error\\": true}}"
+        errorMessage=$(echo "$sidData" | jq -r 'if .error == null or .error == false then "" elif (.error | type) == "string" then .error else "Mount detail retrieval failed for Oracle instance." end')
+        if [ -n "$errorMessage" ]; then
+            log "Mount detail retrieval failed for SID: $sid, skipping volume mapping. Error: $errorMessage"
+            sidMapping=$(jq -nc --arg sid "$sid" --arg error "$errorMessage" '{($sid): {error: $error}}')
             volumeMappings=$(echo "$volumeMappings" | jq --argjson sm "$sidMapping" '. += [$sm]')
             continue
         fi
@@ -2160,7 +2242,7 @@ const getMappedOntapDataVolumeForInstance = (
     log "Final result created with protocol: $protocol, ASM managed: $isASMManaged, volume mappings count: $(echo "$volumeMappings" | jq 'length'), LUN records count: $(echo "$lunRecords" | jq 'length')"
     log "getMappedOntapDataVolumeForInstance completed successfully"
     
-    echo "$result" | tr -d '\n' | tr -d ' '
+    echo "$result" | tr -d '\n'
 
 `;
 

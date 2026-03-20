@@ -2,8 +2,8 @@ import { RouteTags } from '../../utils/consts';
 import { DatabaseHostOptionalInstanceSummaryParams, DatabaseHostSummaryParams } from '../types/database-hosts.types';
 
 import {
-    AssessmentQueryStringPerAccount,
-    ContinuousOptimizationQueryString
+    OracleAssessmentQueryStringPerAccount,
+    OracleContinuousOptimizationQueryString
 } from '../types/continuous-optimization.types';
 import {
     DriftAssessmentResponsePerAccount,
@@ -21,7 +21,7 @@ const DriftAssessmentDataCollection = {
     description: 'Get Oracle database instance parameters drift from recommended settings',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
-    querystring: ContinuousOptimizationQueryString,
+    querystring: OracleContinuousOptimizationQueryString,
     response: {
         200: OracleDriftAssessmentResponse
     }
@@ -64,7 +64,7 @@ const DriftAssessmentPerHost = {
     description: 'Get Oracle database parameters drift from recommended settings for all instances on a host',
     params: DatabaseHostSummaryParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
-    querystring: ContinuousOptimizationQueryString,
+    querystring: OracleContinuousOptimizationQueryString,
     response: {
         200: DriftAssessmentResponsePerHost
     }
@@ -77,7 +77,7 @@ const DriftAssessmentPerAccount = {
         'Get Oracle database parameter drift from recommended settings for all registered instances on an account',
     params: CredentialsIdParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
-    querystring: AssessmentQueryStringPerAccount,
+    querystring: OracleAssessmentQueryStringPerAccount,
     response: {
         200: DriftAssessmentResponsePerAccount
     }

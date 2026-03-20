@@ -1183,6 +1183,17 @@
                             "tags": ["Reliability"],
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
                         },
+                        "snapcenterSnapshot": {
+                            "name": "snapcenter-snapshot",
+                            "severity": "warning",
+                            "status": "optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": "4",
+                            "totalObjectsInViolation": "0",
+                            "recommendation": "Application-consistent snapshots with NetApp SnapCenter enable you to capture precise, reliable point-in-time images of your data volumes, ensuring that your applications remain fully operational and data integrity is maintained. Use SnapCenter to streamline backup processes and facilitate rapid, accurate restores—minimizing downtime and safeguarding your business-critical workloads.",
+                            "tags": ["Reliability"],
+                            "objectsInViolation": []
+                        },
                         "oracleSecurityPatch": {
                             "name": "oracle-security-patch",
                             "status": "not-optimized",
@@ -2400,6 +2411,17 @@
                             "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.",
                             "tags": ["Reliability"],
                             "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"]
+                        },
+                        "snapcenterSnapshot": {
+                            "name": "snapcenter-snapshot",
+                            "severity": "warning",
+                            "status": "not-optimized",
+                            "resourceType": "Volume",
+                            "totalObjectsAssessed": "4",
+                            "totalObjectsInViolation": "2",
+                            "recommendation": "Application-consistent snapshots with NetApp SnapCenter enable you to capture precise, reliable point-in-time images of your data volumes, ensuring that your applications remain fully operational and data integrity is maintained. Use SnapCenter to streamline backup processes and facilitate rapid, accurate restores—minimizing downtime and safeguarding your business-critical workloads.",
+                            "tags": ["Reliability"],
+                            "objectsInViolation": ["vol_data_01", "vol_log_01"]
                         },
                         "oracleSecurityPatch": {
                             "name": "oracle-security-patch",

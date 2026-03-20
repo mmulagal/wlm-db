@@ -531,6 +531,38 @@ export const oracleCardData: any = {
         },
         tags: ['Security', 'Reliability']
     },
+    snapcenterSnapshot: {
+        id: 'snapcenterSnapshot',
+        category: 'resiliency',
+        mapName: ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
+        block_one: {
+            value: ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
+            type: 'Resiliency'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted volumes',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'SnapCenter Snapshot recommendation',
+            description:
+                'Application-consistent snapshots with NetApp SnapCenter enable you to capture precise, reliable point-in-time images of your data volumes, ensuring that your applications remain fully operational and data integrity is maintained. Use SnapCenter to streamline backup processes and facilitate rapid, accurate restores—minimizing downtime and safeguarding your business-critical workloads.'
+        },
+        tags: ['Reliability']
+    },
     crr: {
         id: 'crr',
         category: 'resiliency',
@@ -758,6 +790,53 @@ export const formatOracleHostOsPatchConfig = (
         missingPatchList,
         objectsInViolation: hostOsPatchItem?.ec2InstancesToPatch?.map((instance: any) => instance.ec2InstanceId),
         dismissedObj: data?.dismissedConfigurations?.hostOsPatch
+    };
+};
+
+export const formatOracleSnapCenterConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>
+): any => {
+    const snapcenterItem = data?.snapcenterSnapshot;
+    if (!snapcenterItem) return null;
+
+    const originalName = snapcenterItem?.name || 'snapcenter-snapshot';
+    const status = optimizingData?.[originalName] || snapcenterItem?.status || '';
+    const severity = snapcenterItem?.severity || '';
+
+    return {
+        ...oracleCardData.snapcenterSnapshot,
+        block_two: {
+            ...oracleCardData.snapcenterSnapshot?.block_two,
+            value: formatValue(status)
+        },
+        block_four: {
+            ...oracleCardData.snapcenterSnapshot?.block_four,
+            value: formatValue(severity)
+        },
+        block_five: {
+            ...oracleCardData.snapcenterSnapshot?.block_five,
+            value: snapcenterItem?.resourceType || ''
+        },
+        block_six: {
+            ...oracleCardData.snapcenterSnapshot?.block_six,
+            value: `${snapcenterItem?.totalObjectsInViolation || 0} out of ${
+                snapcenterItem?.totalObjectsAssessed || 0
+            }`,
+            count: {
+                totalObjectsAssessed: snapcenterItem?.totalObjectsAssessed,
+                totalObjectsInViolation: snapcenterItem?.totalObjectsInViolation
+            }
+        },
+        tags: snapcenterItem?.tags,
+        id: snapcenterItem?.name || 'snapcenter-snapshot',
+        mapName: ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
+        category: 'resiliency',
+        errorMessage: snapcenterItem?.errorMessage,
+        recommendationText:
+            snapcenterItem?.recommendation || oracleCardData.snapcenterSnapshot?.recommendation?.description,
+        objectsInViolation: snapcenterItem?.objectsInViolation,
+        dismissedObj: data?.dismissedConfigurations?.snapcenterSnapshot
     };
 };
 
@@ -1280,6 +1359,7 @@ export const getOracleCardsData = (
         ),
         host_os_patch: formatOracleHostOsPatchConfig(data, optimizingData),
         crr: formatOracleCRRConfig(data, optimizingData),
+        snapcenterSnapshot: formatOracleSnapCenterConfig(data, optimizingData),
         oracle_security_patch: formatOracleSecurityPatchConfig(data, optimizingData),
         isWad: data?.isWad || false
     };
@@ -1809,7 +1889,8 @@ export const getOracleCategoryData = () => ({
     // Application cards
     oracle_security_patch: { category: 'Application', subCategory: 'Application' },
     // Resiliency cards
-    crr: { category: 'Resiliency', subCategory: 'Protection' }
+    crr: { category: 'Resiliency', subCategory: 'Protection' },
+    snapcenterSnapshot: { category: 'Resiliency', subCategory: 'Protection' }
 });
 
 // Helper function to convert assessment configuration names to technical keys
@@ -1839,8 +1920,9 @@ export const getDynamicOracleCategoryData = (assessmentData?: any) => {
     // Always include Oracle Security Patch (Application) so it appears in filters
     categoryMapping.oracle_security_patch = { category: 'Application', subCategory: 'Application' };
 
-    // Always include CRR (Resiliency) so it appears in filters
+    // Always include CRR and SnapCenter Snapshot (Resiliency) so they appear in filters
     categoryMapping.crr = { category: 'Resiliency', subCategory: 'Protection' };
+    categoryMapping.snapcenterSnapshot = { category: 'Resiliency', subCategory: 'Protection' };
 
     if (!assessmentData?.storage) {
         // If no assessment data, return static mapping as fallback

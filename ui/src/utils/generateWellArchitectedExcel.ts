@@ -54,6 +54,7 @@ const MSSQL_CONFIG_ORDER = [
     'snapshot-policy',
     'backup-configuration',
     'crr',
+    'snapcenter-snapshot',
     // High Availability
     'shared-storage',
     'drive-letter',
@@ -156,6 +157,7 @@ function getOrderedConfigurationKeys(data: ComprehensiveAssessmentData, database
         { data: data.snapshotPolicy, name: 'snapshot-policy' },
         { data: data.awsBackup, name: 'backup-configuration' },
         { data: data.crr, name: 'crr' },
+        { data: data.snapcenterSnapshot, name: 'snapcenter-snapshot' },
         { data: data.clone, name: 'clone-management' }
     ];
 
@@ -242,6 +244,7 @@ interface ComprehensiveAssessmentData {
     compute?: AssessmentItem;
     snapshotPolicy?: AssessmentItem;
     crr?: AssessmentItem;
+    snapcenterSnapshot?: AssessmentItem;
     awsBackup?: AssessmentItem;
     license?: AssessmentItem;
     hostOsPatch?: AssessmentItem;
@@ -544,6 +547,9 @@ function generateConfigurationStatusData(data: ComprehensiveAssessmentData, data
                     break;
                 case 'crr':
                     if (data.crr) processItems([data.crr], 'Resiliency', 'Protection');
+                    break;
+                case 'snapcenter-snapshot':
+                    if (data.snapcenterSnapshot) processItems([data.snapcenterSnapshot], 'Resiliency', 'Protection');
                     break;
                 case 'clone-management':
                     if (data.clone) processItems([data.clone], 'Cloning', 'Cloning');

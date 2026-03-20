@@ -391,7 +391,7 @@ const OracleWellArchitectDashboard = () => {
                             </div>
                         )}
 
-                        {filteredCardData?.crr && (
+                        {(filteredCardData?.crr || filteredCardData?.snapcenterSnapshot) && (
                             <div className={styles.sectionTwo}>
                                 <div className={styles.sectionClass}>
                                     <ResiliencySection

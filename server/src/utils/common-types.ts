@@ -552,6 +552,7 @@ interface WorkloadInstance {
     activeNodeInstanceid: string;
     mappedVolumeNames?: string[];
     mappedVolumesUuids?: string[];
+    mappedVolumeError?: string;
     mappedLunNames?: string[];
     mappedLunUuids?: string[];
     mappedDiskGroups?: string[];
@@ -835,6 +836,7 @@ interface DatabaseInstanceDismissConfigs {
     license?: InstanceDismissParams;
     hostOsPatch?: InstanceDismissParams;
     mtuAlignment?: InstanceDismissParams;
+    snapcenterSnapshot?: InstanceDismissParams;
     highAvailability?: InstanceDismissParams[];
 }
 

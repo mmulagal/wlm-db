@@ -5,7 +5,6 @@ import { GENERAL } from '../../utils/appConstants';
 import {
     CONFIG_STATES,
     COSTING_TYPES,
-    DATABASE_DEPLOYMENT_MODE,
     DBType,
     ERROR_ANALYZER_STATUS,
     FINDINGS,
@@ -21,8 +20,6 @@ import {
 import {
     formatFractionalNumber,
     formatSizeOnePrecision,
-    formatSizeSplit,
-    getByteVal,
     isAwsBackupEnabled,
     roundOffNumber,
     sortListOfDict
@@ -1118,21 +1115,31 @@ const checkOracleConfigurationSeverities = (
         });
     }
 
-    // Check Oracle CRR severity
+    // Check Oracle CRR and SnapCenter Snapshot severity independently
     if (!isOracleResiliencyOptimized) {
         const crrItem = instanceAssessmentData?.crr;
-        if (crrItem) {
-            const configState = instanceAssessmentData?.dismissedConfigurations?.crr?.configState;
-            if (!isOptimized(crrItem?.status, configState)) {
-                if (crrItem?.severity?.toLowerCase() === 'critical') {
-                    hasCriticalIssue = true;
-                } else {
-                    hasWarningIssue = true;
-                }
+        const snapcenterItem = instanceAssessmentData?.snapcenterSnapshot;
+
+        const isCrrNotOptimized =
+            crrItem && !isOptimized(crrItem?.status, instanceAssessmentData?.dismissedConfigurations?.crr?.configState);
+        const isSnapcenterNotOptimized =
+            snapcenterItem &&
+            !isOptimized(
+                snapcenterItem?.status,
+                instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+            );
+
+        if (isCrrNotOptimized || isSnapcenterNotOptimized) {
+            if (
+                (isCrrNotOptimized && crrItem?.severity?.toLowerCase() === 'critical') ||
+                (isSnapcenterNotOptimized && snapcenterItem?.severity?.toLowerCase() === 'critical')
+            ) {
+                hasCriticalIssue = true;
+            } else {
+                hasWarningIssue = true;
             }
         }
     }
-
     return { hasCriticalIssue, hasWarningIssue };
 };
 
@@ -1203,11 +1210,18 @@ const processOracleAssessmentData = (
                     instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
                 );
 
-                // Check if Oracle Resiliency (CRR) is optimized
-                const isOracleResiliencyOptimized = isOptimized(
+                // Check if Oracle Resiliency (CRR + SnapCenter Snapshot) is optimized
+                const isOracleCrrOptimized = isOptimized(
                     instanceAssessmentData?.crr?.status,
                     instanceAssessmentData?.dismissedConfigurations?.crr?.configState
                 );
+                const isOracleSnapcenterSnapshotOptimized = instanceAssessmentData?.snapcenterSnapshot
+                    ? isOptimized(
+                          instanceAssessmentData?.snapcenterSnapshot?.status,
+                          instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                      )
+                    : true;
+                const isOracleResiliencyOptimized = isOracleCrrOptimized && isOracleSnapcenterSnapshotOptimized;
 
                 // Check if Oracle instance is fully optimized
                 const isOracleInstanceOptimized =
@@ -1603,8 +1617,14 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
                     instanceAssessmentData?.crr?.status,
                     instanceAssessmentData?.dismissedConfigurations?.crr?.configState
                 );
+                const isOracleSnapcenterOptimized = instanceAssessmentData?.snapcenterSnapshot
+                    ? isOptimized(
+                          instanceAssessmentData?.snapcenterSnapshot?.status,
+                          instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                      )
+                    : true;
 
-                if (isOracleCRROptimized) {
+                if (isOracleCRROptimized && isOracleSnapcenterOptimized) {
                     assessmentGroupedByCategory.oracleResiliency++;
                 }
             }
@@ -2006,6 +2026,32 @@ const processOracleConfigurationData = (
                         GETWELL_VALUES[instanceAssessmentData?.crr?.severity] ||
                         getAssessmentGroupedByConfigurations?.severityObj?.oracleCrr;
                 }
+
+                const isSnapcenterSnapshotOptimized = isOptimizedDashInner(
+                    instanceAssessmentData?.snapcenterSnapshot?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                );
+                setConfigState(
+                    configState,
+                    'oracleSnapcenterSnapshot',
+                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                );
+                getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.optimized += isSnapcenterSnapshotOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleSnapcenterSnapshot =
+                    GETWELL_VALUES[instanceAssessmentData?.snapcenterSnapshot?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.oracleSnapcenterSnapshot;
             }
         });
     });
@@ -2209,6 +2255,11 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             dismissed: 0,
             activating: 0
         },
+        oracleSnapcenterSnapshot: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
         oracleBinaryPlacement: {
             optimized: 0,
             dismissed: 0,
@@ -2338,7 +2389,8 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         oracleOperatingSystemPatch: [],
         oracleSwapSpace: [],
         oracleSecurityPatch: [],
-        oracleCrr: []
+        oracleCrr: [],
+        oracleSnapcenterSnapshot: []
     };
 
     const state = store.getState();

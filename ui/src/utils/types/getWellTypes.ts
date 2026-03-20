@@ -143,6 +143,7 @@ export interface AssessmentResponseInterface {
     awsBackup?: PerConfigInterface;
     highAvailability?: Array<{ [Key: string]: PerConfigInterface }>;
     crr?: PerConfigInterface;
+    snapcenterSnapshot?: PerConfigInterface;
     oracleSecurityPatch?: PerConfigInterface;
     clone?: PerConfigInterface;
     isWad?: boolean;

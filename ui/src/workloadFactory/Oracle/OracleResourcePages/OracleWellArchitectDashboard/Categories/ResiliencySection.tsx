@@ -26,7 +26,10 @@ const ResiliencySection = ({
 
     const { renderPostponeActivatingInfo } = useOraclePostponeInfo();
 
-    const resiliencyCardStates = useMemo(() => getOracleCardStates(oracleCardData, ['crr']), [oracleCardData]);
+    const resiliencyCardStates = useMemo(
+        () => getOracleCardStates(oracleCardData, ['crr', 'snapcenterSnapshot']),
+        [oracleCardData]
+    );
 
     const shouldShowHeader = useMemo(
         () => getShouldShowHeader(showDismissedConfigurations, resiliencyCardStates),
@@ -98,6 +101,69 @@ const ResiliencySection = ({
                                 </div>
                             ]}
                             children={<RecommendationText data={oracleCardData?.crr?.recommendation} />}
+                        />
+                    </div>
+                )}
+                {oracleCardData?.snapcenterSnapshot && (
+                    <div>
+                        <OracleCardComponent
+                            cardData={oracleCardData.snapcenterSnapshot}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
+                        <DsAccordion
+                            id="snapcenterSnapshot-1"
+                            variant="Default"
+                            isDisabled={
+                                loading ||
+                                showDismissedConfigurations ||
+                                !oracleCardData?.snapcenterSnapshot?.block_two?.value
+                            }
+                            isExpanded={isAccordionExpanded('snapcenterSnapshot-1', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('snapcenterSnapshot-1', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('snapcenterSnapshot-1')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData.snapcenterSnapshot?.tags?.map((perTag: string, index: number) => (
+                                        <div
+                                            key={index}
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                        >
+                                            <Tag text={perTag} />
+                                        </div>
+                                    ))}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('snapcenterSnapshot', showDismissedConfigurations)}
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading ||
+                                        showDismissedConfigurations ||
+                                        !oracleCardData?.snapcenterSnapshot?.block_two?.value ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
+                                    </div>
+                                    <div
+                                        style={{
+                                            color:
+                                                loading ||
+                                                showDismissedConfigurations ||
+                                                !oracleCardData?.snapcenterSnapshot?.block_two?.value
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
+                                </div>
+                            ]}
+                            children={<RecommendationText data={oracleCardData?.snapcenterSnapshot?.recommendation} />}
                         />
                     </div>
                 )}

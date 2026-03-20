@@ -1,6 +1,7 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import {
     AssessmentCategories,
+    AssessmentCategoriesOracle,
     AssessmentStatus,
     AwsWellArchitecturedPillars
 } from '../../utils/continous-optimization-consts';
@@ -19,8 +20,28 @@ const ContinuousOptimizationQueryString = Type.Object({
     nextToken: Type.Optional(Type.String())
 });
 
+const oracleAllowedFields = [...new Set([...allowedFields, ...Object.values(AssessmentCategoriesOracle)])];
+const OracleContinuousOptimizationQueryString = Type.Object({
+    fields: Type.Optional(
+        Type.String({
+            description: `Comma separated list of fields to include in the response. Allowed fields: ${oracleAllowedFields.join(
+                ', '
+            )}`,
+            pattern: `^(${oracleAllowedFields.join('|')})(,(${oracleAllowedFields.join('|')}))*$`
+        })
+    ),
+    nextToken: Type.Optional(Type.String())
+});
+
 const AssessmentQueryStringPerAccount = Type.Intersect([
     ContinuousOptimizationQueryString,
+    Type.Object({
+        pageSize: Type.Optional(Type.Integer())
+    })
+]);
+
+const OracleAssessmentQueryStringPerAccount = Type.Intersect([
+    OracleContinuousOptimizationQueryString,
     Type.Object({
         pageSize: Type.Optional(Type.Integer())
     })
@@ -98,6 +119,7 @@ const DismissedConfigurationsResponse = Type.Object({
     snapshotPolicy: Type.Optional(InstanceDismissResponse),
     awsBackup: Type.Optional(InstanceDismissResponse),
     mtuAlignment: Type.Optional(InstanceDismissResponse),
+    snapcenterSnapshot: Type.Optional(InstanceDismissResponse),
     highAvailability: Type.Optional(Type.Array(Type.Optional(InstanceDismissResponse)))
 });
 type DismissedConfigurationsResponseType = Static<typeof DismissedConfigurationsResponse>;
@@ -110,7 +132,9 @@ export {
     GenericAssessmentResponse,
     GenericAssessmentResponseType,
     ContinuousOptimizationQueryString,
+    OracleContinuousOptimizationQueryString,
     AssessmentQueryStringPerAccount,
+    OracleAssessmentQueryStringPerAccount,
     GenericParameterDriftResponse,
     ErrorResponse,
     ErrorResponseType,
