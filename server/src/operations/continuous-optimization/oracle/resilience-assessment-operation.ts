@@ -116,11 +116,20 @@ async function initiateCrossRegionResiliencyAssessment(
             );
         }
 
+        const volumeNameToUuid = new Map<string, string>();
+        const { mappedVolumeNames = [], mappedVolumesUuids = [] } = instanceRecord;
+        mappedVolumeNames.forEach((name, idx) => {
+            if (name && mappedVolumesUuids[idx]) {
+                volumeNameToUuid.set(name, mappedVolumesUuids[idx]);
+            }
+        });
+
         crrDetails.forEach(crrDetail => {
             const peerIds = (
                 Array.isArray(crrDetail.peerClusterFsxId) ? crrDetail.peerClusterFsxId : [crrDetail.peerClusterFsxId]
             ).filter((id): id is string => !!id);
             crrDetail.isCRREnabled = peerIds.some(id => crossRegionPeerIds.has(id));
+            crrDetail.volumeUuid = volumeNameToUuid.get(crrDetail.volumeName);
         });
 
         await createDatabaseInstanceConfigData([
@@ -181,7 +190,9 @@ function getCrrDriftData(
             recommendation: storageGoldenConfigData.resiliency.crr.recommendation,
             objectsInViolation: allVolumesOptimized
                 ? []
-                : crrDetails.filter(detail => !detail.isCRREnabled).map(detail => detail.volumeName),
+                : crrDetails
+                      .filter(detail => !detail.isCRREnabled)
+                      .map(detail => ({ ontapVolumeName: detail.volumeName, ontapVolumeUuid: detail.volumeUuid })),
             totalObjectsAssessed: crrDetails.length,
             totalObjectsInViolation: allVolumesOptimized ? 0 : crrDetails.filter(detail => !detail.isCRREnabled).length,
             tags: [AwsWellArchitecturedPillars.RELIABILITY],
