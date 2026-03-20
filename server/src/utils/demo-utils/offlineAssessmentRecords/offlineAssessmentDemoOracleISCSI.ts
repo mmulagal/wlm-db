@@ -15,7 +15,8 @@ export const offlineAssessmentDemoOracleISCSI = {
         oracleSid: 'ORCL',
         oracleHome: '/u01/app/oracle/product/19c/db_1',
         deploymentType: 'Standalone',
-        fsxId: 'fs-0d5efc3057c4f12cb'
+        fsxId: 'fs-0d5efc3057c4f12cb',
+        region: 'ap-southeast-1'
     },
     rawdata: {
         hostLevelDetails: {
@@ -29,12 +30,12 @@ export const offlineAssessmentDemoOracleISCSI = {
             }
         },
         instanceLevelDetails: {
-            ORCL: {
+            'oracle-prod-iscsi-001': {
                 instanceDetails: {
-                    databaseInstanceId: 'ORCL',
-                    databaseInstanceName: 'ORCL',
+                    databaseInstanceId: 'oracle-prod-iscsi-001',
+                    databaseInstanceName: 'oracle-prod-iscsi-001',
                     oracleHome: '/u01/app/oracle/product/19c/db_1',
-                    hostname: 'ORACLE-PROD-ISCSI-01',
+                    hostname: 'ip-171-30-40-178.ap-southeast-1.compute.internal',
                     databaseVersion: '19.0.0.0.0',
                     databaseName: 'ORCL',
                     isCDB: true,

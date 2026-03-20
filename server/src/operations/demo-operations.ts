@@ -1294,6 +1294,7 @@ function loadAndModifyDemoFCIData() {
         assessmentData.metadata.ontapHostName = [`management.fs-${uniqueId}.fsx.ap-southeast-1.amazonaws.com`];
         assessmentData.metadata.storageEndpoint = `fs-${uniqueId}`;
         assessmentData.metadata.fsxId = `fs-${uniqueId}`;
+        assessmentData.metadata.region = 'ap-southeast-1';
     }
 
     // Modify instance-level details with unique identifiers
@@ -1334,6 +1335,7 @@ function loadAndModifyDemoOracleISCSIData() {
         assessmentData.metadata.assessmentTimestamp = timestamp;
         assessmentData.metadata.storageEndpoint = `fs-${uniqueId}`;
         assessmentData.metadata.fsxId = `fs-${uniqueId}`;
+        assessmentData.metadata.region = 'ap-southeast-1';
     }
 
     // Modify instance-level details with unique identifiers

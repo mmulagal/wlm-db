@@ -30,7 +30,6 @@ import {
     offlineAssessmentOracleISCSIUploadObject
 } from './demoMockdata';
 import { parseAssessmentFileContent, generateSqlResourceId } from '../utils';
-import { uploadOracleOfflineAssessment } from '../../operations/continuous-optimization/oracle/offline-assessment-operations';
 import {
     createAssessmentJobMockData,
     createDeploymentMockDataInDB,
@@ -676,32 +675,57 @@ async function prepopulateOfflineAssessmentData(accountId: string) {
     }
 
     // Prepopulate Oracle data
-    const oracleOfflineAssessments = await listOfflineAssessments({
-        accountId,
-        databaseType: DATABASE_TYPE.oracle,
-        pageSize: 1
-    });
-    if (oracleOfflineAssessments.length === 0) {
-        // Upload both NFS and iSCSI demo data
-        try {
-            await uploadOracleOfflineAssessment(
-                accountId,
-                offlineAssessmentOracleISCSIUploadObject.fileContent,
-                offlineAssessmentOracleISCSIUploadObject.fileName
-            );
-            await uploadOracleOfflineAssessment(
-                accountId,
-                offlineAssessmentOracleNFSUploadObject.fileContent,
-                offlineAssessmentOracleNFSUploadObject.fileName
-            );
-            logger.info('Successfully prepopulated Oracle offline assessment data', { accountId });
-        } catch (error) {
-            logger.error('Failed to prepopulate Oracle offline assessment data', {
-                accountId,
-                error: error instanceof Error ? error.message : String(error)
+
+    const allRecords = [offlineAssessmentOracleISCSIUploadObject, offlineAssessmentOracleNFSUploadObject].flatMap(
+        demoFile => {
+            const assessmentData = parseAssessmentFileContent(decodeBase64FileContent(demoFile.fileContent)) as any;
+            const { metadata, rawdata } = assessmentData;
+            const { hostLevelDetails, instanceLevelDetails } = rawdata;
+            const { ec2InstanceId } = metadata;
+
+            return Object.entries(instanceLevelDetails).map(([instanceName, instanceData]: [string, any]) => {
+                const {
+                    instanceDetails,
+                    mappedOntapVolumes,
+                    storage,
+                    os,
+                    pluggableDatabases,
+                    isDataGuardDeployed,
+                    dataguardDetails
+                } = instanceData;
+                const databaseInstanceId = instanceDetails?.sid || instanceName;
+                const resourceId = generateSqlResourceId(ec2InstanceId);
+
+                return {
+                    accountId,
+                    resourceId,
+                    databaseInstanceId,
+                    databaseType: DATABASE_TYPE.oracle,
+                    rawdata: {
+                        instanceLevelAssessment: storage || {},
+                        hostLevelDetails: hostLevelDetails || {},
+                        os: os || {},
+                        errors: rawdata.errors || [],
+                        pluggableDatabases: pluggableDatabases || [],
+                        isDataGuardDeployed: isDataGuardDeployed || false,
+                        dataguardDetails: dataguardDetails || {}
+                    },
+                    mappedOntapVolumes: mappedOntapVolumes || {},
+                    metadata: {
+                        ...metadata,
+                        ...instanceDetails,
+                        databaseInstanceName: instanceName
+                    }
+                } as OfflineAssessmentRecord;
             });
         }
-    }
+    );
+
+    await bulkUpsertOfflineAssessments(allRecords);
+    logger.info('Successfully prepopulated Oracle offline assessment data', {
+        accountId,
+        recordCount: allRecords.length
+    });
 }
 
 export {
