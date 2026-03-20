@@ -508,6 +508,8 @@
             "postpone-bulk-line-1": "Are you sure you want to postpone for 30 days the"
         },
         "well-architect": {
+            "well-architected-configurations": "Well-architected configurations",
+            "not-optimized-configurations": "Not optimized configurations",
             "impacted-resources": "Impacted resources",
             "log-drive-over-provisioned-error": "Over provisioned log drive size can not be optimized",
             "tempdb-drive-over-provisioned-error": "Over provisioned tempDB drive size can not be optimized",
@@ -1327,7 +1329,6 @@
             "wad-accordion-three-point-five-option-one": "AWS Secrets Manager",
             "wad-accordion-three-point-five-option-two": "Windows Credential Manager",
             "wad-accordion-three-point-five-option-three": "Interactive prompt ",
-
 
             "oracle-wad-accordion-one-point-two": "Copy the script to your Oracle Server host.",
             "oracle-wad-accordion-one-point-three": "Run the Python script. One script collects metadata from the database.",

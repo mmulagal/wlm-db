@@ -40,7 +40,7 @@ const OptimizeByCategory = () => {
         if (showNA) {
             return true;
         }
-        if (!loading && categoryData.mssqlTotal + categoryData.oracleTotal === 0) {
+        if (!loading && categoryData.totalInstances === 0) {
             return true;
         }
         return false;
@@ -68,11 +68,14 @@ const OptimizeByCategory = () => {
                                 >
                                     {naCheck
                                         ? t('databases.general.not-available')
-                                        : `${Math.round(
-                                              ((categoryData.mssqlStorage + categoryData.oracleStorage || 0) /
-                                                  (categoryData.mssqlTotal + categoryData.oracleTotal || 1)) *
-                                                  100
-                                          )}%`}
+                                        : `${
+                                              categoryData.storage.total > 0
+                                                  ? Math.round(
+                                                        (categoryData.storage.optimized / categoryData.storage.total) *
+                                                            100
+                                                    )
+                                                  : 0
+                                          }%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
@@ -93,11 +96,14 @@ const OptimizeByCategory = () => {
                                 >
                                     {naCheck
                                         ? t('databases.general.not-available')
-                                        : `${Math.round(
-                                              ((categoryData.mssqlCompute + categoryData.oracleCompute || 0) /
-                                                  (categoryData.mssqlTotal + categoryData.oracleTotal || 1)) *
-                                                  100
-                                          )}%`}
+                                        : `${
+                                              categoryData.compute.total > 0
+                                                  ? Math.round(
+                                                        (categoryData.compute.optimized / categoryData.compute.total) *
+                                                            100
+                                                    )
+                                                  : 0
+                                          }%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
@@ -117,9 +123,15 @@ const OptimizeByCategory = () => {
                                 >
                                     {naCheck
                                         ? t('databases.general.not-available')
-                                        : `${Math.round(
-                                              ((categoryData.application || 0) / (categoryData.mssqlTotal || 1)) * 100
-                                          )}%`}
+                                        : `${
+                                              categoryData.application.total > 0
+                                                  ? Math.round(
+                                                        (categoryData.application.optimized /
+                                                            categoryData.application.total) *
+                                                            100
+                                                    )
+                                                  : 0
+                                          }%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
@@ -143,12 +155,15 @@ const OptimizeByCategory = () => {
                                 >
                                     {naCheck
                                         ? t('databases.general.not-available')
-                                        : `${Math.round(
-                                              (((categoryData.mssqlResiliency || 0) +
-                                                  (categoryData.oracleResiliency || 0)) /
-                                                  (categoryData.mssqlTotal + categoryData.oracleTotal || 1)) *
-                                                  100
-                                          )}%`}
+                                        : `${
+                                              categoryData.resiliency.total > 0
+                                                  ? Math.round(
+                                                        (categoryData.resiliency.optimized /
+                                                            categoryData.resiliency.total) *
+                                                            100
+                                                    )
+                                                  : 0
+                                          }%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>
@@ -168,9 +183,14 @@ const OptimizeByCategory = () => {
                                 >
                                     {naCheck
                                         ? t('databases.general.not-available')
-                                        : `${Math.round(
-                                              ((categoryData.cloning || 0) / (categoryData.mssqlTotal || 1)) * 100
-                                          )}%`}
+                                        : `${
+                                              categoryData.cloning.total > 0
+                                                  ? Math.round(
+                                                        (categoryData.cloning.optimized / categoryData.cloning.total) *
+                                                            100
+                                                    )
+                                                  : 0
+                                          }%`}
                                 </DsTypography>
                                 {loading && <DsFlashingDotsLoader />}
                             </div>

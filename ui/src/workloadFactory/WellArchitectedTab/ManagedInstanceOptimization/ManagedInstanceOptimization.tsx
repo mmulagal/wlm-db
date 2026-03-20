@@ -86,10 +86,10 @@ const ManagedInstanceOptimization = () => {
                             value={
                                 naCheck
                                     ? t('databases.general.not-available')
-                                    : String(instanceOptimizationSummary?.optimizedInstances)
+                                    : String(instanceOptimizationSummary?.optimizedConfigurations)
                             }
                             color="var(--chart-4)"
-                            text="Well-architected resources"
+                            text={t('databases.well-architect.well-architected-configurations')}
                             isLoading={false}
                             loadingInFirstRow={loading}
                             showNA={naCheck}
@@ -100,10 +100,10 @@ const ManagedInstanceOptimization = () => {
                             value={
                                 naCheck
                                     ? t('databases.general.not-available')
-                                    : String(instanceOptimizationSummary?.notOptimizedInstances)
+                                    : String(instanceOptimizationSummary?.notOptimizedConfigurations)
                             }
                             color="var(--chart-disabled)"
-                            text="Not optimized resources"
+                            text={t('databases.well-architect.not-optimized-configurations')}
                             isLoading={false}
                             loadingInFirstRow={loading}
                             showNA={naCheck}

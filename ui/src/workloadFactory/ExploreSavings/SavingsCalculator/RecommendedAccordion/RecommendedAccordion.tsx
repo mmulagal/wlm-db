@@ -399,21 +399,15 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx }: any) => 
                     selectedHostDetails?.loading ||
                     disableState ||
                     viewCalculationsLoading ||
-                    isMutliFsx ||
+                    (isMutliFsx && !isOracleOnPrem) ||
                     !storageSavingsResponse
                 }
                 disabledReason={
-                    isMutliFsx
-                        ? t(
-                              isOracleOnPrem
-                                  ? 'databases.explore-savings.multi-fsx-disable-msg-oracle'
-                                  : 'databases.explore-savings.multi-fsx-disable-msg'
-                          )
-                        : ''
+                    isMutliFsx && !isOracleOnPrem ? t('databases.explore-savings.multi-fsx-disable-msg') : ''
                 }
                 isExpanded={printState}
                 headerActions={[
-                    isMutliFsx ? (
+                    isMutliFsx && !isOracleOnPrem ? (
                         <Popover
                             popoverClass={styles.popover}
                             children={t('databases.explore-savings.save-error')}

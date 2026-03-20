@@ -804,6 +804,7 @@ export const PARTNER_NODE = 'partner node';
 export const FINDINGS = {
     OPTIMIZED: 'OPTIMIZED',
     NOT_OPTIMIZED: 'NOT_OPTIMIZED',
+    NOT_OPTIMIZED_STATUS: 'NOT-OPTIMIZED',
     INSUFFICIENT_DATA: 'INSUFFICIENT_DATA',
     UNDER_PROVISIONED: 'UNDER_PROVISIONED',
     INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS',
@@ -1298,6 +1299,7 @@ export const WAD_EXCLUDED_CONFIGS_MSSQL = [
 export const WAD_EXCLUDED_CONFIGS_ORACLE = [
     ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
     ASSESSMENT_CONFIG_NAMES.CRR,
+    ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
     ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH
 ];
 
@@ -1319,6 +1321,7 @@ export const CONFIG_KEY_TO_DISPLAY_NAME: Record<string, string> = {
     // Oracle config keys
     oracleOperatingSystemPatch: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
     oracleCrr: ASSESSMENT_CONFIG_NAMES.CRR,
+    oracleSnapcenterSnapshot: ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
     oracleSecurityPatch: ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH
 };
 
@@ -1336,6 +1339,57 @@ export const isConfigKeyWadExcluded = (configKey: string, dbType?: string): bool
         return WAD_EXCLUDED_CONFIGS_ORACLE.includes(displayName);
     }
     return WAD_EXCLUDED_CONFIGS_MSSQL.includes(displayName);
+};
+
+/**
+ * WAD-excluded API assessment field names, keyed by the raw field names in assessment data.
+ * Keep in sync with WAD_EXCLUDED_CONFIGS_MSSQL / WAD_EXCLUDED_CONFIGS_ORACLE above.
+ */
+export const WAD_EXCLUDED_API_FIELDS_MSSQL = new Set([
+    'compute',
+    'hostOsPatch',
+    'mtuAlignment',
+    'license',
+    'mssqlPatch',
+    'snapshotPolicy',
+    'crr',
+    'awsBackup',
+    'clone'
+]);
+
+export const WAD_EXCLUDED_API_FIELDS_ORACLE = new Set([
+    'hostOsPatch',
+    'crr',
+    'oracleSecurityPatch',
+    'snapcenterSnapshot'
+]);
+
+/**
+ * Maps API assessment field names to their Well-Architected category.
+ * Used for counting configurations by category in dashboard summaries.
+ */
+export type WellArchitectedCategory = 'storage' | 'compute' | 'application' | 'resiliency' | 'cloning';
+
+export const MSSQL_API_FIELD_TO_CATEGORY: Record<string, WellArchitectedCategory> = {
+    compute: 'compute',
+    hostOsPatch: 'compute',
+    mtuAlignment: 'compute',
+    rssConfig: 'compute',
+    license: 'application',
+    mssqlPatch: 'application',
+    maxDOP: 'application',
+    clone: 'cloning',
+    snapshotPolicy: 'resiliency',
+    crr: 'resiliency',
+    awsBackup: 'resiliency',
+    highAvailability: 'resiliency'
+};
+
+export const ORACLE_API_FIELD_TO_CATEGORY: Record<string, WellArchitectedCategory> = {
+    hostOsPatch: 'compute',
+    oracleSecurityPatch: 'application',
+    crr: 'resiliency',
+    snapcenterSnapshot: 'resiliency'
 };
 
 export const categoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];

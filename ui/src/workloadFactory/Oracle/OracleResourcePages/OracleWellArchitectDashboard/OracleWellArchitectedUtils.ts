@@ -1761,6 +1761,11 @@ export const oracleApplyFilter = (
             return; // Skip deploymentType, isASMManaged and isStorageLayoutFra as they are not cards
         }
 
+        // Skip if cardData[key] is null/undefined
+        if (!cardData[key]) {
+            return;
+        }
+
         // Check if this config is excluded for WAD instances
         const isWadExcluded = isWadExcludedConfig(cardData[key]?.mapName, isWad, DBType.ORACLE);
 
@@ -1999,6 +2004,11 @@ export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploy
         }
 
         const config = cardData[key];
+        // Skip if config is null/undefined
+        if (!config) {
+            return;
+        }
+
         const categoryInfo = categoryData[key as keyof typeof categoryData];
 
         if (categoryInfo) {

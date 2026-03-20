@@ -214,7 +214,7 @@ const WellArchitectedScore = () => {
                             <DsTypography variant="Semibold_16" className={showNA ? CommonStyles.notAvailable : ''}>
                                 {showNA
                                     ? t('databases.general.not-available')
-                                    : instanceOptimizationSummary?.optimizedInstances}
+                                    : instanceOptimizationSummary?.optimizedConfigurations}
                             </DsTypography>
                         </div>
                     </div>
@@ -229,7 +229,7 @@ const WellArchitectedScore = () => {
                             <DsTypography variant="Semibold_16" className={showNA ? CommonStyles.notAvailable : ''}>
                                 {showNA
                                     ? t('databases.general.not-available')
-                                    : String(instanceOptimizationSummary?.criticalNotOptimizedInstances)}
+                                    : String(instanceOptimizationSummary?.criticalConfigurations)}
                             </DsTypography>
                         </div>
                     </div>
@@ -244,7 +244,7 @@ const WellArchitectedScore = () => {
                             <DsTypography variant="Semibold_16" className={showNA ? CommonStyles.notAvailable : ''}>
                                 {showNA
                                     ? t('databases.general.not-available')
-                                    : String(instanceOptimizationSummary?.warningNotOptimizedInstances)}
+                                    : String(instanceOptimizationSummary?.warningConfigurations)}
                             </DsTypography>
                         </div>
                     </div>
@@ -259,7 +259,7 @@ const WellArchitectedScore = () => {
                             <DsTypography variant="Semibold_16" className={showNA ? CommonStyles.notAvailable : ''}>
                                 {showNA
                                     ? t('databases.general.not-available')
-                                    : instanceOptimizationSummary?.totalInstances}
+                                    : instanceOptimizationSummary?.totalConfigurations}
                             </DsTypography>
                         </div>
                     </div>

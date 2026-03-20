@@ -13,8 +13,13 @@ import {
     GETWELL_STATUS,
     GETWELL_VALUES,
     INVENTORY_STATUS,
+    MSSQL_API_FIELD_TO_CATEGORY,
+    ORACLE_API_FIELD_TO_CATEGORY,
     ORACLE_DATABASES_COMPONENTS,
     STATUS_CONST,
+    WAD_EXCLUDED_API_FIELDS_MSSQL,
+    WAD_EXCLUDED_API_FIELDS_ORACLE,
+    WellArchitectedCategory,
     WIZARD_TYPE
 } from '../../utils/consts';
 import {
@@ -35,6 +40,36 @@ import {
     formatOracleOptimizationBreakDown,
     getOracleCardsData
 } from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+
+type CategoryCounters = {
+    [Category in WellArchitectedCategory]: { optimized: number; total: number };
+};
+
+interface ConfigCounters {
+    totalConfigurations: number;
+    optimizedConfigurations: number;
+    criticalConfigurations: number;
+    warningConfigurations: number;
+    dismissedConfigurations: number;
+    hasDismissedOrPostponed: boolean;
+    categories: CategoryCounters;
+}
+
+const createEmptyCounters = (): ConfigCounters => ({
+    totalConfigurations: 0,
+    optimizedConfigurations: 0,
+    criticalConfigurations: 0,
+    warningConfigurations: 0,
+    dismissedConfigurations: 0,
+    hasDismissedOrPostponed: false,
+    categories: {
+        storage: { optimized: 0, total: 0 },
+        compute: { optimized: 0, total: 0 },
+        application: { optimized: 0, total: 0 },
+        resiliency: { optimized: 0, total: 0 },
+        cloning: { optimized: 0, total: 0 }
+    }
+});
 
 export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZARD_TYPE.MSSQL) => {
     let totalDatabases = 0;
@@ -699,273 +734,335 @@ export const getManagedInstanceOptimizationSummary = (assessmentData: any) => {
 };
 
 /**
- * Helper function to check if MSSQL instance configurations are optimized
+ * Counts a single configuration and accumulates into the provided counters.
+ * Dismissed/postponed configs are excluded from the active total.
+ * Optionally tracks per-category counts when category is provided.
  */
-const checkMSSQLConfigurationsOptimized = (instanceAssessmentData: any) => {
-    const isComputeOptimized = isOptimized(
-        instanceAssessmentData?.compute?.status,
-        instanceAssessmentData?.dismissedConfigurations?.compute?.configState
-    );
-    const isRssConfigOptimized = isOptimized(
-        instanceAssessmentData?.rssConfig?.status,
-        instanceAssessmentData?.dismissedConfigurations?.rssConfig?.configState
-    );
-    const isOperatingSystemOptimized = isOptimized(
-        instanceAssessmentData?.hostOsPatch?.status,
-        instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
-    );
-    const isMTUConfigurationOptimized = isOptimized(
-        instanceAssessmentData?.mtuAlignment?.status,
-        instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
-    );
-    // License is not supported for AOAG deployments, so always consider it optimized for AOAG
-    const isLicenseOptimized = isAoagDeployment(instanceAssessmentData?.deploymentType)
-        ? true
-        : isOptimized(
-              instanceAssessmentData?.license?.status,
-              instanceAssessmentData?.dismissedConfigurations?.license?.configState
-          );
-    const isMicrosoftSqlPatchOptimized = isOptimized(
-        instanceAssessmentData?.mssqlPatch?.status,
-        instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
-    );
-    const isMaxdopPatchOptimized = isOptimized(
-        instanceAssessmentData?.maxDOP?.status,
-        instanceAssessmentData?.dismissedConfigurations?.maxDOP?.configState
-    );
-    const isCloneOptimized = isOptimized(
-        instanceAssessmentData?.clone?.status,
-        instanceAssessmentData?.dismissedConfigurations?.clone?.configState
-    );
-    const isScheduledLocalSnapshot = isOptimized(
-        instanceAssessmentData?.snapshotPolicy?.status,
-        instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
-    );
-    const isCrr = isOptimized(
-        instanceAssessmentData?.crr?.status,
-        instanceAssessmentData?.dismissedConfigurations?.crr?.configState
-    );
-    const isAwsBackup = isOptimized(
-        instanceAssessmentData?.awsBackup?.status,
-        instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
-    );
-
-    return {
-        isComputeOptimized,
-        isRssConfigOptimized,
-        isOperatingSystemOptimized,
-        isMTUConfigurationOptimized,
-        isLicenseOptimized,
-        isMicrosoftSqlPatchOptimized,
-        isMaxdopPatchOptimized,
-        isCloneOptimized,
-        isScheduledLocalSnapshot,
-        isCrr,
-        isAwsBackup
-    };
-};
-
-/**
- * Helper function to check if MSSQL storage configurations are optimized
- */
-const checkMSSQLStorageOptimized = (instanceAssessmentData: any) => {
-    const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) => {
-        const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
-            (config: any) => config.configurationName === item.name
-        )?.configState;
-        return isOptimized(item?.status, configState);
-    });
-
-    const isAllStorageSizingPresent =
-        instanceAssessmentData?.storage?.sizing?.length === 4 &&
-        instanceAssessmentData?.storage.sizing.every((item: any) =>
-            ['headroom', 'tempdb-drive-size', 'log-drive-size', 'performance-tier'].includes(item?.name)
-        );
-
-    const isStorageSizingOptimized = instanceAssessmentData?.storage?.sizing?.every((item: any) => {
-        const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
-            (config: any) => config.configurationName === item.name
-        )?.configState;
-        return isOptimized(item?.status, configState);
-    });
-
-    const isStorageConfigOptimized =
-        instanceAssessmentData &&
-        instanceAssessmentData?.storage &&
-        instanceAssessmentData?.storage?.configuration &&
-        Object.values(instanceAssessmentData?.storage?.configuration).every((item: any) =>
-            item?.every((subItem: any) => {
-                const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[
-                    item
-                ]?.find((config: any) => config.configurationName === subItem.name)?.configState;
-                return isOptimized(subItem?.status, configState);
-            })
-        );
-
-    return {
-        isStorageLayoutOptimized,
-        isAllStorageSizingPresent,
-        isStorageSizingOptimized,
-        isStorageConfigOptimized
-    };
-};
-
-/**
- * Helper function to check MSSQL configuration severities
- */
-const checkMSSQLConfigurationSeverities = (
-    instanceAssessmentData: any,
-    configOptimization: any,
-    storageOptimization: any
+const countSingleConfig = (
+    counters: ConfigCounters,
+    status?: string,
+    dismissState?: string,
+    severity?: string,
+    category?: WellArchitectedCategory
 ) => {
-    let hasCriticalIssue = false;
-    let hasWarningIssue = false;
-
-    // Check compute configurations
-    const configChecks = [
-        {
-            isOptimized: configOptimization.isComputeOptimized,
-            config: instanceAssessmentData?.compute,
-            severity: GETWELL_STATUS.WARNING
-        },
-        {
-            isOptimized: configOptimization.isRssConfigOptimized,
-            config: instanceAssessmentData?.rssConfig,
-            severity: GETWELL_STATUS.WARNING
-        },
-        {
-            isOptimized: configOptimization.isOperatingSystemOptimized,
-            config: instanceAssessmentData?.hostOsPatch,
-            severity: GETWELL_STATUS.CRITICAL
-        },
-        {
-            isOptimized: configOptimization.isMTUConfigurationOptimized,
-            config: instanceAssessmentData?.mtuAlignment,
-            severity: GETWELL_STATUS.CRITICAL
-        },
-        {
-            isOptimized: configOptimization.isLicenseOptimized,
-            config: instanceAssessmentData?.license,
-            severity: GETWELL_STATUS.WARNING
-        },
-        {
-            isOptimized: configOptimization.isMicrosoftSqlPatchOptimized,
-            config: instanceAssessmentData?.mssqlPatch,
-            severity: GETWELL_STATUS.WARNING
-        },
-        {
-            isOptimized: configOptimization.isMaxdopPatchOptimized,
-            config: instanceAssessmentData?.maxDOP,
-            severity: GETWELL_STATUS.WARNING
-        },
-        {
-            isOptimized: configOptimization.isCloneOptimized,
-            config: instanceAssessmentData?.clone,
-            severity: GETWELL_STATUS.WARNING
-        },
-        {
-            isOptimized: configOptimization.isScheduledLocalSnapshot,
-            config: instanceAssessmentData?.snapshotPolicy,
-            severity: GETWELL_STATUS.WARNING
-        },
-        {
-            isOptimized: configOptimization.isCrr,
-            config: instanceAssessmentData?.crr,
-            severity: GETWELL_STATUS.WARNING
-        },
-        {
-            isOptimized: configOptimization.isAwsBackup,
-            config: instanceAssessmentData?.awsBackup,
-            severity: GETWELL_STATUS.WARNING
+    if (dismissState === CONFIG_STATES.DISMISSED || dismissState === CONFIG_STATES.POSTPONED) {
+        counters.dismissedConfigurations++;
+        counters.hasDismissedOrPostponed = true;
+        return;
+    }
+    counters.totalConfigurations++;
+    if (category) {
+        counters.categories[category].total++;
+    }
+    if (
+        dismissState === CONFIG_STATES.ACTIVATING ||
+        status?.toLowerCase() === FINDINGS.OPTIMIZED.toLowerCase() ||
+        status?.toLowerCase() === FINDINGS.ANALYZING.toLowerCase()
+    ) {
+        counters.optimizedConfigurations++;
+        if (category) {
+            counters.categories[category].optimized++;
         }
-    ];
-
-    configChecks.forEach(({ isOptimized, config, severity }) => {
-        if (!isOptimized) {
-            if (config?.severity?.toLowerCase() === 'critical') {
-                hasCriticalIssue = true;
-            } else if (config?.severity?.toLowerCase() === 'warning') {
-                hasWarningIssue = true;
-            } else if (severity === GETWELL_STATUS.CRITICAL) {
-                hasCriticalIssue = true;
-            } else if (severity === GETWELL_STATUS.WARNING) {
-                hasWarningIssue = true;
-            }
-        }
-    });
-
-    // Check storage layout severities
-    if (!storageOptimization.isStorageLayoutOptimized) {
-        instanceAssessmentData?.storage?.layout?.forEach((item: any) => {
-            const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
-                (config: any) => config.configurationName === item.name
-            )?.configState;
-            if (!isOptimized(item?.status, configState)) {
-                if (item?.severity?.toLowerCase() === 'critical') {
-                    hasCriticalIssue = true;
-                } else if (item?.severity?.toLowerCase() === 'warning') {
-                    hasWarningIssue = true;
-                } else {
-                    hasCriticalIssue = true;
-                }
-            }
-        });
+        if (dismissState === CONFIG_STATES.ACTIVATING) counters.hasDismissedOrPostponed = true;
+    } else if (severity?.toLowerCase() === 'critical') {
+        counters.criticalConfigurations++;
+    } else {
+        counters.warningConfigurations++;
     }
-
-    // Check storage sizing severities
-    if (!storageOptimization.isStorageSizingOptimized) {
-        instanceAssessmentData?.storage?.sizing?.forEach((item: any) => {
-            const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
-                (config: any) => config.configurationName === item.name
-            )?.configState;
-            if (!isOptimized(item?.status, configState)) {
-                if (item?.severity?.toLowerCase() === 'critical') {
-                    hasCriticalIssue = true;
-                } else if (item?.severity?.toLowerCase() === 'warning') {
-                    hasWarningIssue = true;
-                } else {
-                    hasCriticalIssue = true;
-                }
-            }
-        });
-    }
-
-    // Check storage configuration severities
-    if (!storageOptimization.isStorageConfigOptimized && instanceAssessmentData?.storage?.configuration) {
-        Object.values(instanceAssessmentData?.storage?.configuration).forEach((configArray: any) => {
-            configArray?.forEach((subItem: any) => {
-                const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[
-                    configArray
-                ]?.find((config: any) => config.configurationName === subItem.name)?.configState;
-                if (!isOptimized(subItem?.status, configState)) {
-                    if (subItem?.severity?.toLowerCase() === 'critical') {
-                        hasCriticalIssue = true;
-                    } else if (subItem?.severity?.toLowerCase() === 'warning') {
-                        hasWarningIssue = true;
-                    } else {
-                        hasCriticalIssue = true;
-                    }
-                }
-            });
-        });
-    }
-
-    return { hasCriticalIssue, hasWarningIssue };
 };
 
 /**
- * Helper function to process MSSQL assessment data
+ * Counts a top-level config if it exists on the instance and is not WAD-excluded.
+ * Skips configs whose API field name appears in the wadExcludedFields set when isWad is true.
+ * Uses the provided categoryMap to determine which category the config belongs to.
+ */
+const countTopLevelConfig = (
+    fieldName: string,
+    instanceAssessment: any,
+    dismissedConfigs: any,
+    counters: ConfigCounters,
+    isWad: boolean,
+    wadExcludedFields: Set<string>,
+    categoryMap: Record<string, WellArchitectedCategory>
+) => {
+    if (isWad && wadExcludedFields.has(fieldName)) return;
+    if (!instanceAssessment?.[fieldName]) return;
+    countSingleConfig(
+        counters,
+        instanceAssessment[fieldName].status,
+        dismissedConfigs?.[fieldName]?.configState,
+        instanceAssessment[fieldName].severity,
+        categoryMap[fieldName]
+    );
+};
+
+/**
+ * Counts all individual MSSQL configurations for an instance into the provided counters.
+ * WAD-excluded configs are driven by WAD_EXCLUDED_API_FIELDS_MSSQL from consts.
+ * Also tracks per-category counts (storage, compute, application, resiliency, cloning).
+ */
+const countMSSQLInstanceConfigs = (instanceAssessment: any, counters: ConfigCounters, isWad = false) => {
+    const dismissedConfigs = instanceAssessment?.dismissedConfigurations;
+    const excluded = WAD_EXCLUDED_API_FIELDS_MSSQL;
+    const categoryMap = MSSQL_API_FIELD_TO_CATEGORY;
+
+    // Compute category
+    countTopLevelConfig('compute', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+    countTopLevelConfig('hostOsPatch', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+    countTopLevelConfig('mtuAlignment', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+    countTopLevelConfig('rssConfig', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+
+    // Application category (license also not supported for AOAG deployments)
+    if (!isAoagDeployment(instanceAssessment?.deploymentType)) {
+        countTopLevelConfig('license', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+    }
+    countTopLevelConfig('mssqlPatch', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+    countTopLevelConfig('maxDOP', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+
+    // Cloning category
+    countTopLevelConfig('clone', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+
+    // Resiliency category
+    countTopLevelConfig('snapshotPolicy', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+    countTopLevelConfig('crr', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+    countTopLevelConfig('awsBackup', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+
+    // High Availability - count as ONE config (like ONTAP/OS) if it exists
+    if (isMssqlHaDeployment(instanceAssessment?.deploymentType) && instanceAssessment?.highAvailability) {
+        const haConfigs = instanceAssessment.highAvailability;
+
+        const hasNotOptimized = haConfigs.some(
+            (item: any) =>
+                item?.status?.toLowerCase() !== FINDINGS.OPTIMIZED.toLowerCase() &&
+                item?.status?.toLowerCase() !== FINDINGS.ANALYZING.toLowerCase()
+        );
+        const worstSeverity = haConfigs.reduce((worst: string, item: any) => {
+            if (item?.severity?.toLowerCase() === 'critical') return 'critical';
+            if (worst !== 'critical' && item?.severity?.toLowerCase() === 'warning') return 'warning';
+            return worst;
+        }, '');
+
+        // Check if HA config is dismissed/postponed at the parent level
+        const haDismissedState =
+            dismissedConfigs?.highAvailability_configuration?.configState ||
+            dismissedConfigs?.mssql_high_availability?.configState;
+
+        countSingleConfig(
+            counters,
+            hasNotOptimized ? FINDINGS.NOT_OPTIMIZED_STATUS.toLowerCase() : FINDINGS.OPTIMIZED.toLowerCase(),
+            haDismissedState,
+            worstSeverity,
+            categoryMap.highAvailability
+        );
+    }
+
+    // Storage - layout
+    instanceAssessment?.storage?.layout?.forEach((item: any) => {
+        const configState = dismissedConfigs?.storage?.layout?.find(
+            (config: any) => config.configurationName === item.name
+        )?.configState;
+        countSingleConfig(counters, item?.status, configState, item?.severity, 'storage');
+    });
+
+    // Storage - sizing
+    instanceAssessment?.storage?.sizing?.forEach((item: any) => {
+        const configState = dismissedConfigs?.storage?.sizing?.find(
+            (config: any) => config.configurationName === item.name
+        )?.configState;
+        countSingleConfig(counters, item?.status, configState, item?.severity, 'storage');
+    });
+
+    // Storage - configuration (volumes, luns, os)
+    // Count ONTAP (volumes + LUNs) as ONE config, and OS as ONE config
+    // This matches the card-level counting in formatOptimizationBreakDown
+    if (instanceAssessment?.storage?.configuration) {
+        const volumes = instanceAssessment.storage.configuration.volumes || [];
+        const luns = instanceAssessment.storage.configuration.luns || [];
+        const osConfigs = instanceAssessment.storage.configuration.os || [];
+
+        // Count ONTAP configuration (volumes + LUNs combined) as 1 config if either exists
+        if (volumes.length > 0 || luns.length > 0) {
+            // Determine overall ONTAP status: if any volume/LUN is not optimized, ONTAP is not optimized
+            const allOntapConfigs = [...volumes, ...luns];
+            const hasNotOptimized = allOntapConfigs.some(
+                (item: any) =>
+                    item?.status?.toLowerCase() !== FINDINGS.OPTIMIZED.toLowerCase() &&
+                    item?.status?.toLowerCase() !== FINDINGS.ANALYZING.toLowerCase()
+            );
+            const worstSeverity = allOntapConfigs.reduce((worst: string, item: any) => {
+                if (item?.severity?.toLowerCase() === 'critical') return 'critical';
+                if (worst !== 'critical' && item?.severity?.toLowerCase() === 'warning') return 'warning';
+                return worst;
+            }, '');
+
+            // Check if ONTAP config is dismissed/postponed at the parent level
+            const ontapDismissedState = dismissedConfigs?.storage?.configuration?.ontap_configuration?.configState;
+
+            countSingleConfig(
+                counters,
+                hasNotOptimized ? FINDINGS.NOT_OPTIMIZED_STATUS.toLowerCase() : FINDINGS.OPTIMIZED.toLowerCase(),
+                ontapDismissedState,
+                worstSeverity,
+                'storage'
+            );
+        }
+
+        // Count OS configuration as 1 config if it exists
+        if (osConfigs.length > 0) {
+            // Determine overall OS status: if any OS config is not optimized, OS is not optimized
+            const hasNotOptimized = osConfigs.some(
+                (item: any) =>
+                    item?.status?.toLowerCase() !== FINDINGS.OPTIMIZED.toLowerCase() &&
+                    item?.status?.toLowerCase() !== FINDINGS.ANALYZING.toLowerCase()
+            );
+            const worstSeverity = osConfigs.reduce((worst: string, item: any) => {
+                if (item?.severity?.toLowerCase() === 'critical') return 'critical';
+                if (worst !== 'critical' && item?.severity?.toLowerCase() === 'warning') return 'warning';
+                return worst;
+            }, '');
+
+            // Check if OS config is dismissed/postponed at the parent level
+            const osDismissedState = dismissedConfigs?.storage?.configuration?.os_configuration?.configState;
+
+            countSingleConfig(
+                counters,
+                hasNotOptimized ? FINDINGS.NOT_OPTIMIZED_STATUS.toLowerCase() : FINDINGS.OPTIMIZED.toLowerCase(),
+                osDismissedState,
+                worstSeverity,
+                'storage'
+            );
+        }
+    }
+};
+
+/**
+ * Counts all individual Oracle configurations for an instance into the provided counters.
+ * WAD-excluded configs are driven by WAD_EXCLUDED_API_FIELDS_ORACLE from consts.
+ * Also tracks per-category counts (storage, compute, application, resiliency, cloning).
+ */
+const countOracleInstanceConfigs = (instanceAssessment: any, counters: ConfigCounters, isWad = false) => {
+    const dismissedConfigs = instanceAssessment?.dismissedConfigurations;
+    const excluded = WAD_EXCLUDED_API_FIELDS_ORACLE;
+    const categoryMap = ORACLE_API_FIELD_TO_CATEGORY;
+
+    // Compute category
+    countTopLevelConfig('hostOsPatch', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+
+    // Application category
+    countTopLevelConfig(
+        'oracleSecurityPatch',
+        instanceAssessment,
+        dismissedConfigs,
+        counters,
+        isWad,
+        excluded,
+        categoryMap
+    );
+
+    // Resiliency category
+    countTopLevelConfig('crr', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+    countTopLevelConfig(
+        'snapcenterSnapshot',
+        instanceAssessment,
+        dismissedConfigs,
+        counters,
+        isWad,
+        excluded,
+        categoryMap
+    );
+
+    // Storage - layout
+    instanceAssessment?.storage?.layout?.forEach((item: any) => {
+        if (!item?.name) return;
+        const configState = dismissedConfigs?.storage?.layout?.find(
+            (config: any) => config.configurationName === item.name
+        )?.configState;
+        countSingleConfig(counters, item?.status, configState, item?.severity, 'storage');
+    });
+
+    // Storage - sizing
+    instanceAssessment?.storage?.sizing?.forEach((item: any) => {
+        if (!item?.name) return;
+        const configState = dismissedConfigs?.storage?.sizing?.find(
+            (config: any) => config.configurationName === item.name
+        )?.configState;
+        countSingleConfig(counters, item?.status, configState, item?.severity, 'storage');
+    });
+
+    // Storage - configuration (volumes, luns, os)
+    // Count ONTAP (volumes + LUNs) as ONE config, and OS as ONE config
+    // This matches the card-level counting in formatOptimizationBreakDown
+    if (instanceAssessment?.storage?.configuration) {
+        const volumes = instanceAssessment.storage.configuration.volumes || [];
+        const luns = instanceAssessment.storage.configuration.luns || [];
+        const osConfigs = instanceAssessment.storage.configuration.os || [];
+
+        // Count ONTAP configuration (volumes + LUNs combined) as 1 config if either exists
+        if (volumes.length > 0 || luns.length > 0) {
+            // Determine overall ONTAP status: if any volume/LUN is not optimized, ONTAP is not optimized
+            const allOntapConfigs = [...volumes, ...luns];
+            const hasNotOptimized = allOntapConfigs.some(
+                (item: any) =>
+                    item?.status?.toLowerCase() !== FINDINGS.OPTIMIZED.toLowerCase() &&
+                    item?.status?.toLowerCase() !== FINDINGS.ANALYZING.toLowerCase()
+            );
+            const worstSeverity = allOntapConfigs.reduce((worst: string, item: any) => {
+                if (item?.severity?.toLowerCase() === 'critical') return 'critical';
+                if (worst !== 'critical' && item?.severity?.toLowerCase() === 'warning') return 'warning';
+                return worst;
+            }, '');
+
+            // Check if ONTAP config is dismissed/postponed at the parent level
+            const ontapDismissedState = dismissedConfigs?.storage?.configuration?.ontap_configuration?.configState;
+
+            countSingleConfig(
+                counters,
+                hasNotOptimized ? FINDINGS.NOT_OPTIMIZED_STATUS.toLowerCase() : FINDINGS.OPTIMIZED.toLowerCase(),
+                ontapDismissedState,
+                worstSeverity,
+                'storage'
+            );
+        }
+
+        // Count OS configuration as 1 config if it exists
+        if (osConfigs.length > 0) {
+            // Determine overall OS status: if any OS config is not optimized, OS is not optimized
+            const hasNotOptimized = osConfigs.some(
+                (item: any) =>
+                    item?.status?.toLowerCase() !== FINDINGS.OPTIMIZED.toLowerCase() &&
+                    item?.status?.toLowerCase() !== FINDINGS.ANALYZING.toLowerCase()
+            );
+            const worstSeverity = osConfigs.reduce((worst: string, item: any) => {
+                if (item?.severity?.toLowerCase() === 'critical') return 'critical';
+                if (worst !== 'critical' && item?.severity?.toLowerCase() === 'warning') return 'warning';
+                return worst;
+            }, '');
+
+            // Check if OS config is dismissed/postponed at the parent level
+            const osDismissedState = dismissedConfigs?.storage?.configuration?.os_configuration?.configState;
+
+            countSingleConfig(
+                counters,
+                hasNotOptimized ? FINDINGS.NOT_OPTIMIZED_STATUS.toLowerCase() : FINDINGS.OPTIMIZED.toLowerCase(),
+                osDismissedState,
+                worstSeverity,
+                'storage'
+            );
+        }
+    }
+};
+
+/**
+ * Process MSSQL assessment data counting individual configurations (not instances).
  */
 const processMSSQLAssessmentData = (assessmentData: any, headerFilters: any, uniqueResourceList: Array<string>) => {
+    const counters = createEmptyCounters();
     let totalInstances = 0;
-    let optimizedInstances = 0;
-    let criticalNotOptimizedInstances = 0;
-    let warningNotOptimizedInstances = 0;
-    let isDismissedConfig = false;
+    let mssqlTotal = 0;
 
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = headerFilters;
 
-    assessmentData?.map((databaseHost: any) => {
+    assessmentData?.forEach((databaseHost: any) => {
         if (
             shouldSkipDatabaseHost(
                 databaseHost,
@@ -977,189 +1074,33 @@ const processMSSQLAssessmentData = (assessmentData: any, headerFilters: any, uni
             return;
         }
 
-        databaseHost?.instancesAssessment?.map((instance: any) => {
+        databaseHost?.instancesAssessment?.forEach((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
                 totalInstances++;
-                const instanceAssessmentData = instance?.assessments;
-
-                // Check configurations
-                const configOptimization = checkMSSQLConfigurationsOptimized(instanceAssessmentData);
-                const storageOptimization = checkMSSQLStorageOptimized(instanceAssessmentData);
-
-                // Check if instance is fully optimized
-                const isInstanceOptimized =
-                    configOptimization.isComputeOptimized &&
-                    configOptimization.isRssConfigOptimized &&
-                    configOptimization.isOperatingSystemOptimized &&
-                    configOptimization.isMTUConfigurationOptimized &&
-                    configOptimization.isLicenseOptimized &&
-                    storageOptimization.isStorageLayoutOptimized &&
-                    storageOptimization.isAllStorageSizingPresent &&
-                    storageOptimization.isStorageSizingOptimized &&
-                    storageOptimization.isStorageConfigOptimized &&
-                    configOptimization.isMicrosoftSqlPatchOptimized &&
-                    configOptimization.isMaxdopPatchOptimized &&
-                    configOptimization.isCloneOptimized &&
-                    configOptimization.isScheduledLocalSnapshot &&
-                    configOptimization.isCrr &&
-                    configOptimization.isAwsBackup;
-
-                if (isInstanceOptimized) {
-                    optimizedInstances += 1;
-                } else {
-                    // Check severity levels
-                    const { hasCriticalIssue, hasWarningIssue } = checkMSSQLConfigurationSeverities(
-                        instanceAssessmentData,
-                        configOptimization,
-                        storageOptimization
-                    );
-
-                    // Prioritize critical over warning
-                    if (hasCriticalIssue) {
-                        criticalNotOptimizedInstances += 1;
-                    } else if (hasWarningIssue) {
-                        warningNotOptimizedInstances += 1;
-                    }
-                }
-
-                const isDismissedInstance = hasPostponedOrDismissed(instanceAssessmentData?.dismissedConfigurations);
-                if (isDismissedInstance) {
-                    isDismissedConfig = true;
-                }
+                mssqlTotal++;
+                countMSSQLInstanceConfigs(instance.assessments, counters, !!databaseHost?.isWad);
             }
         });
     });
 
-    return {
-        totalInstances,
-        optimizedInstances,
-        criticalNotOptimizedInstances,
-        warningNotOptimizedInstances,
-        isDismissedConfig
-    };
+    return { ...counters, totalInstances, mssqlTotal };
 };
 
 /**
- * Helper function to check Oracle configuration severities
- */
-const checkOracleConfigurationSeverities = (
-    instanceAssessmentData: any,
-    isOracleStorageLayoutOptimized: boolean,
-    isOracleStorageConfigOptimized: boolean,
-    isOracleComputeConfigOptimized: boolean,
-    isOracleResiliencyOptimized?: boolean
-) => {
-    let hasCriticalIssue = false;
-    let hasWarningIssue = false;
-
-    // Check Oracle Compute Configuration severity
-    if (!isOracleComputeConfigOptimized) {
-        const hostOsPatchItem = instanceAssessmentData?.hostOsPatch;
-        if (hostOsPatchItem) {
-            const configState = instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState;
-
-            if (!isOptimized(hostOsPatchItem?.status, configState)) {
-                if (hostOsPatchItem?.severity?.toLowerCase() === 'critical') {
-                    hasCriticalIssue = true;
-                } else {
-                    hasWarningIssue = true;
-                }
-            }
-        }
-    }
-
-    // Check Oracle storage layout severities
-    if (!isOracleStorageLayoutOptimized) {
-        instanceAssessmentData?.storage?.layout?.forEach((item: any) => {
-            if (!item?.name) return; // Skip incomplete items
-
-            const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
-                (config: any) => config.configurationName === item.name
-            )?.configState;
-
-            if (!isOptimized(item?.status, configState)) {
-                if (item?.severity?.toLowerCase() === 'critical') {
-                    hasCriticalIssue = true;
-                } else if (item?.severity?.toLowerCase() === 'warning') {
-                    hasWarningIssue = true;
-                } else {
-                    hasWarningIssue = true;
-                }
-            }
-        });
-    }
-
-    // Check Oracle storage configuration severities
-    if (!isOracleStorageConfigOptimized && instanceAssessmentData?.storage?.configuration) {
-        ['volumes', 'luns', 'os'].forEach((configType: string) => {
-            const configArray = instanceAssessmentData?.storage?.configuration[configType];
-            if (!configArray || !Array.isArray(configArray)) return;
-
-            configArray.forEach((item: any) => {
-                if (!item?.name) return; // Skip incomplete items
-
-                const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[
-                    configType
-                ]?.find((config: any) => config.configurationName === item.name)?.configState;
-
-                if (!isOptimized(item?.status, configState)) {
-                    if (item?.severity?.toLowerCase() === 'critical') {
-                        hasCriticalIssue = true;
-                    } else if (item?.severity?.toLowerCase() === 'warning') {
-                        hasWarningIssue = true;
-                    } else {
-                        hasCriticalIssue = true;
-                    }
-                }
-            });
-        });
-    }
-
-    // Check Oracle CRR and SnapCenter Snapshot severity independently
-    if (!isOracleResiliencyOptimized) {
-        const crrItem = instanceAssessmentData?.crr;
-        const snapcenterItem = instanceAssessmentData?.snapcenterSnapshot;
-
-        const isCrrNotOptimized =
-            crrItem && !isOptimized(crrItem?.status, instanceAssessmentData?.dismissedConfigurations?.crr?.configState);
-        const isSnapcenterNotOptimized =
-            snapcenterItem &&
-            !isOptimized(
-                snapcenterItem?.status,
-                instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
-            );
-
-        if (isCrrNotOptimized || isSnapcenterNotOptimized) {
-            if (
-                (isCrrNotOptimized && crrItem?.severity?.toLowerCase() === 'critical') ||
-                (isSnapcenterNotOptimized && snapcenterItem?.severity?.toLowerCase() === 'critical')
-            ) {
-                hasCriticalIssue = true;
-            } else {
-                hasWarningIssue = true;
-            }
-        }
-    }
-    return { hasCriticalIssue, hasWarningIssue };
-};
-
-/**
- * Helper function to process Oracle assessment data
+ * Process Oracle assessment data counting individual configurations (not instances).
  */
 const processOracleAssessmentData = (
     oracleAssessmentData: any,
     headerFilters: any,
     uniqueResourceList: Array<string>
 ) => {
+    const counters = createEmptyCounters();
     let totalInstances = 0;
-    let optimizedInstances = 0;
-    let criticalNotOptimizedInstances = 0;
-    let warningNotOptimizedInstances = 0;
-    let isDismissedConfig = false;
+    let oracleTotal = 0;
 
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = headerFilters;
 
-    oracleAssessmentData?.map((databaseHost: any) => {
+    oracleAssessmentData?.forEach((databaseHost: any) => {
         if (
             shouldSkipDatabaseHost(
                 databaseHost,
@@ -1171,107 +1112,22 @@ const processOracleAssessmentData = (
             return;
         }
 
-        databaseHost?.instancesAssessment?.map((instance: any) => {
+        databaseHost?.instancesAssessment?.forEach((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
                 totalInstances++;
-                const instanceAssessmentData = instance?.assessments;
-
-                // Check if Oracle storage layout is optimized
-                const isOracleStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) => {
-                    if (!item?.name) return true; // Skip incomplete data
-
-                    const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
-                        (config: any) => config.configurationName === item.name
-                    )?.configState;
-                    return isOptimized(item?.status, configState);
-                });
-
-                // Check if Oracle storage configuration is optimized
-                const isOracleStorageConfigOptimized =
-                    instanceAssessmentData?.storage?.configuration &&
-                    ['volumes', 'luns', 'os'].every((configType: string) => {
-                        const configArray = instanceAssessmentData?.storage?.configuration[configType];
-                        if (!configArray || !Array.isArray(configArray)) return true;
-
-                        return configArray.every((item: any) => {
-                            if (!item?.name) return true; // Skip incomplete data
-
-                            const configState =
-                                instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[
-                                    configType
-                                ]?.find((config: any) => config.configurationName === item.name)?.configState;
-                            return isOptimized(item?.status, configState);
-                        });
-                    });
-
-                // Check if Oracle Compute Configuration is optimized
-                const isOracleComputeConfigOptimized = isOptimized(
-                    instanceAssessmentData?.hostOsPatch?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
-                );
-
-                // Check if Oracle Resiliency (CRR + SnapCenter Snapshot) is optimized
-                const isOracleCrrOptimized = isOptimized(
-                    instanceAssessmentData?.crr?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
-                );
-                const isOracleSnapcenterSnapshotOptimized = instanceAssessmentData?.snapcenterSnapshot
-                    ? isOptimized(
-                          instanceAssessmentData?.snapcenterSnapshot?.status,
-                          instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
-                      )
-                    : true;
-                const isOracleResiliencyOptimized = isOracleCrrOptimized && isOracleSnapcenterSnapshotOptimized;
-
-                // Check if Oracle instance is fully optimized
-                const isOracleInstanceOptimized =
-                    isOracleStorageLayoutOptimized &&
-                    isOracleStorageConfigOptimized &&
-                    isOracleComputeConfigOptimized &&
-                    isOracleResiliencyOptimized;
-
-                if (isOracleInstanceOptimized) {
-                    optimizedInstances += 1;
-                } else {
-                    // Check severity levels
-                    const { hasCriticalIssue, hasWarningIssue } = checkOracleConfigurationSeverities(
-                        instanceAssessmentData,
-                        isOracleStorageLayoutOptimized,
-                        isOracleStorageConfigOptimized,
-                        isOracleComputeConfigOptimized,
-                        isOracleResiliencyOptimized
-                    );
-
-                    // Prioritize critical over warning
-                    if (hasCriticalIssue) {
-                        criticalNotOptimizedInstances += 1;
-                    } else if (hasWarningIssue) {
-                        warningNotOptimizedInstances += 1;
-                    }
-                }
-
-                // Check for dismissed configurations
-                const isOracleDismissedInstance = hasPostponedOrDismissed(
-                    instanceAssessmentData?.dismissedConfigurations
-                );
-                if (isOracleDismissedInstance) {
-                    isDismissedConfig = true;
-                }
+                oracleTotal++;
+                countOracleInstanceConfigs(instance.assessments, counters, !!databaseHost?.isWad);
             }
         });
     });
 
-    return {
-        totalInstances,
-        optimizedInstances,
-        criticalNotOptimizedInstances,
-        warningNotOptimizedInstances,
-        isDismissedConfig
-    };
+    return { ...counters, totalInstances, oracleTotal };
 };
 
 /**
- * Main function to get managed optimization summary for both MSSQL and Oracle
+ * Main function to get managed optimization summary for both MSSQL and Oracle.
+ * Calculates score based on individual configurations across the entire estate,
+ * not based on fully-optimized instances.
  */
 export const getManagedOptimizationSummary = (assessmentData: any, oracleAssessmentData: any) => {
     const state = store.getState();
@@ -1281,29 +1137,22 @@ export const getManagedOptimizationSummary = (assessmentData: any, oracleAssessm
     };
     const uniqueResourceList: Array<string> = [];
 
-    // Process MSSQL data
     const mssqlResults = processMSSQLAssessmentData(assessmentData, headerFilters, uniqueResourceList);
-
-    // Process Oracle data
     const oracleResults = processOracleAssessmentData(oracleAssessmentData, headerFilters, uniqueResourceList);
 
-    // Combine results
-    const totalInstances = mssqlResults.totalInstances + oracleResults.totalInstances;
-    const optimizedInstances = mssqlResults.optimizedInstances + oracleResults.optimizedInstances;
-    const criticalNotOptimizedInstances =
-        mssqlResults.criticalNotOptimizedInstances + oracleResults.criticalNotOptimizedInstances;
-    const warningNotOptimizedInstances =
-        mssqlResults.warningNotOptimizedInstances + oracleResults.warningNotOptimizedInstances;
-    const isDismissedConfig = mssqlResults.isDismissedConfig || oracleResults.isDismissedConfig;
+    const totalConfigurations = mssqlResults.totalConfigurations + oracleResults.totalConfigurations;
+    const optimizedConfigurations = mssqlResults.optimizedConfigurations + oracleResults.optimizedConfigurations;
 
     return {
-        totalInstances,
-        optimizedInstances,
-        notOptimizedInstances: totalInstances - optimizedInstances,
-        criticalNotOptimizedInstances,
-        warningNotOptimizedInstances,
-        optimizedPercent: totalInstances > 0 ? Math.round((optimizedInstances / totalInstances) * 100) : 0,
-        hasDismissedOrPostponed: isDismissedConfig
+        totalConfigurations,
+        optimizedConfigurations,
+        notOptimizedConfigurations: totalConfigurations - optimizedConfigurations,
+        criticalConfigurations: mssqlResults.criticalConfigurations + oracleResults.criticalConfigurations,
+        warningConfigurations: mssqlResults.warningConfigurations + oracleResults.warningConfigurations,
+        optimizedPercent:
+            totalConfigurations > 0 ? Math.round((optimizedConfigurations / totalConfigurations) * 100) : 0,
+        hasDismissedOrPostponed: mssqlResults.hasDismissedOrPostponed || oracleResults.hasDismissedOrPostponed,
+        totalInstances: mssqlResults.totalInstances + oracleResults.totalInstances
     };
 };
 
@@ -1392,245 +1241,50 @@ export const getErrorInvestigationSummary = (allLogAnalysisData: any) => {
     };
 };
 
+/**
+ * Groups assessment data by category, counting individual optimized configurations
+ * (not fully-optimized instances) per category.
+ */
+/**
+ * Returns assessment data grouped by category (storage, compute, application, resiliency, cloning).
+ * Reuses the same counting logic as getManagedOptimizationSummary to ensure consistency.
+ */
 export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssessmentData: any) => {
-    const assessmentGroupedByCategory: any = {
-        mssqlStorage: 0,
-        oracleStorage: 0,
-        mssqlCompute: 0,
-        oracleCompute: 0,
-        application: 0,
-        mssqlResiliency: 0,
-        oracleResiliency: 0,
-        cloning: 0,
-        total: 0,
-        mssqlTotal: 0,
-        oracleTotal: 0
-    };
-
     const state = store.getState();
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+    const headerFilters = {
+        headerSelectedMultiCredIdsList: state.headers.headerSelectedMultiCredIdsList,
+        headerSelectedMultiRegionIdsList: state.headers.headerSelectedMultiRegionIdsList
+    };
     const uniqueResourceList: Array<string> = [];
 
-    assessmentData.map((databaseHost: any) => {
-        if (
-            shouldSkipDatabaseHost(
-                databaseHost,
-                headerSelectedMultiCredIdsList,
-                headerSelectedMultiRegionIdsList,
-                uniqueResourceList
-            )
-        ) {
-            return;
-        }
+    const mssqlResults = processMSSQLAssessmentData(assessmentData, headerFilters, uniqueResourceList);
+    const oracleResults = processOracleAssessmentData(oracleAssessmentData, headerFilters, uniqueResourceList);
 
-        databaseHost?.instancesAssessment?.map((instance: any) => {
-            if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
-                assessmentGroupedByCategory.mssqlTotal++;
-                const instanceAssessmentData = instance?.assessments;
-                const isComputeOptimized = isOptimized(
-                    instanceAssessmentData?.compute?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.compute?.configState
-                );
-                const isOperatingSystemPatchOptimized = isOptimized(
-                    instanceAssessmentData?.hostOsPatch?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
-                );
-                const isRssConfigurationOptimized = isOptimized(
-                    instanceAssessmentData?.rssConfig?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.rssConfig?.configState
-                );
-                const isMTUConfigurationOptimized = isOptimized(
-                    instanceAssessmentData?.mtuAlignment?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.mtuAlignment?.configState
-                );
-                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) => {
-                    const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
-                        (config: any) => config.configurationName === item.name
-                    )?.configState;
-                    return isOptimized(item?.status, configState);
-                });
-                const isStorageSizingOptimized = instanceAssessmentData?.storage?.sizing?.every((item: any) => {
-                    const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.sizing?.find(
-                        (config: any) => config.configurationName === item.name
-                    )?.configState;
-                    return isOptimized(item?.status, configState);
-                });
-                const isAllStorageSizingPresent =
-                    instanceAssessmentData?.storage?.sizing?.length === 4 &&
-                    instanceAssessmentData?.storage.sizing.every((item: any) =>
-                        ['headroom', 'tempdb-drive-size', 'log-drive-size', 'performance-tier'].includes(item?.name)
-                    );
-                const isStorageConfigOptimized =
-                    instanceAssessmentData &&
-                    instanceAssessmentData?.storage &&
-                    instanceAssessmentData?.storage?.configuration &&
-                    Object.values(instanceAssessmentData?.storage?.configuration).every((item: any) =>
-                        item?.every((subItem: any) => {
-                            const configState =
-                                instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[item]?.find(
-                                    (config: any) => config.configurationName === subItem.name
-                                )?.configState;
-                            return isOptimized(subItem?.status, configState);
-                        })
-                    );
-                // License is not supported for AOAG deployments, so always consider it optimized for AOAG
-                const isApplicationOptimized = isAoagDeployment(instanceAssessmentData?.deploymentType)
-                    ? true
-                    : isOptimized(
-                          instanceAssessmentData?.license?.status,
-                          instanceAssessmentData?.dismissedConfigurations?.license?.configState
-                      );
-                const isMicrosoftSqlPatchOptimized = isOptimized(
-                    instanceAssessmentData?.mssqlPatch?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.mssqlPatch?.configState
-                );
-                const isMaxdopPatchOptimized = isOptimized(
-                    instanceAssessmentData?.maxDOP?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.maxDOP?.configState
-                );
-                const isScheduledLoclaSnapshotOptimized = isOptimized(
-                    instanceAssessmentData?.snapshotPolicy?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
-                );
-                const isScheduledAWSBackUpOptimized = isOptimized(
-                    instanceAssessmentData?.awsBackup?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
-                );
-                const isAllMssqlHighAvailability =
-                    instanceAssessmentData?.highAvailability?.length === 5 &&
-                    instanceAssessmentData?.highAvailability.every((item: any) =>
-                        [
-                            'shared-storage',
-                            'drive-letter',
-                            'cluster-quorum',
-                            'heartbeat-settings',
-                            'sqlServer-service'
-                        ].includes(item?.name)
-                    );
-
-                const isMssqlHighAvailabilityOptimized = instanceAssessmentData?.highAvailability?.every(
-                    (item: any) => {
-                        const configState = instanceAssessmentData?.dismissedConfigurations?.highAvailability?.find(
-                            (config: any) => config.configurationName === item.name
-                        )?.configState;
-                        return isOptimized(item?.status, configState);
-                    }
-                );
-
-                const isCloneOptimized = isOptimized(
-                    instanceAssessmentData?.clone?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.clone?.configState
-                );
-                const isCRROptimized = isOptimized(
-                    instanceAssessmentData?.crr?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
-                );
-
-                if (
-                    isComputeOptimized &&
-                    isOperatingSystemPatchOptimized &&
-                    isRssConfigurationOptimized &&
-                    isMTUConfigurationOptimized
-                ) {
-                    assessmentGroupedByCategory.mssqlCompute++;
-                }
-                if (
-                    isStorageLayoutOptimized &&
-                    isAllStorageSizingPresent &&
-                    isStorageSizingOptimized &&
-                    isStorageConfigOptimized
-                ) {
-                    assessmentGroupedByCategory.mssqlStorage++;
-                }
-                if (isApplicationOptimized && isMicrosoftSqlPatchOptimized && isMaxdopPatchOptimized) {
-                    assessmentGroupedByCategory.application++;
-                }
-                if (
-                    isScheduledLoclaSnapshotOptimized &&
-                    isCRROptimized &&
-                    isScheduledAWSBackUpOptimized &&
-                    (!isMssqlHaDeployment(instance?.assessments?.deploymentType) ||
-                        (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability))
-                ) {
-                    assessmentGroupedByCategory.mssqlResiliency++;
-                }
-
-                if (isCloneOptimized) {
-                    assessmentGroupedByCategory.cloning++;
-                }
-            }
-        });
-    });
-
-    oracleAssessmentData.map((databaseHost: any) => {
-        if (
-            shouldSkipDatabaseHost(
-                databaseHost,
-                headerSelectedMultiCredIdsList,
-                headerSelectedMultiRegionIdsList,
-                uniqueResourceList
-            )
-        ) {
-            return;
-        }
-
-        databaseHost?.instancesAssessment?.map((instance: any) => {
-            if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
-                assessmentGroupedByCategory.oracleTotal++;
-                const instanceAssessmentData = instance?.assessments;
-
-                // Check Oracle Compute Configuration for compute category
-                const isOracleComputeOptimized = isOptimized(
-                    instanceAssessmentData?.hostOsPatch?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.hostOsPatch?.configState
-                );
-
-                if (isOracleComputeOptimized) {
-                    assessmentGroupedByCategory.oracleCompute++;
-                }
-
-                const isStorageLayoutOptimized = instanceAssessmentData?.storage?.layout?.every((item: any) => {
-                    const configState = instanceAssessmentData?.dismissedConfigurations?.storage?.layout?.find(
-                        (config: any) => config.configurationName === item.name
-                    )?.configState;
-                    return isOptimized(item?.status, configState);
-                });
-                const isStorageConfigOptimized =
-                    instanceAssessmentData &&
-                    instanceAssessmentData?.storage &&
-                    instanceAssessmentData?.storage?.configuration &&
-                    Object.values(instanceAssessmentData?.storage?.configuration).every((item: any) =>
-                        item?.every((subItem: any) => {
-                            const configState =
-                                instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.[item]?.find(
-                                    (config: any) => config.configurationName === subItem.name
-                                )?.configState;
-                            return isOptimized(subItem?.status, configState);
-                        })
-                    );
-
-                if (isStorageLayoutOptimized && isStorageConfigOptimized) {
-                    assessmentGroupedByCategory.oracleStorage++;
-                }
-
-                const isOracleCRROptimized = isOptimized(
-                    instanceAssessmentData?.crr?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.crr?.configState
-                );
-                const isOracleSnapcenterOptimized = instanceAssessmentData?.snapcenterSnapshot
-                    ? isOptimized(
-                          instanceAssessmentData?.snapcenterSnapshot?.status,
-                          instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
-                      )
-                    : true;
-
-                if (isOracleCRROptimized && isOracleSnapcenterOptimized) {
-                    assessmentGroupedByCategory.oracleResiliency++;
-                }
-            }
-        });
-    });
-    return assessmentGroupedByCategory;
+    return {
+        storage: {
+            optimized: mssqlResults.categories.storage.optimized + oracleResults.categories.storage.optimized,
+            total: mssqlResults.categories.storage.total + oracleResults.categories.storage.total
+        },
+        compute: {
+            optimized: mssqlResults.categories.compute.optimized + oracleResults.categories.compute.optimized,
+            total: mssqlResults.categories.compute.total + oracleResults.categories.compute.total
+        },
+        application: {
+            optimized: mssqlResults.categories.application.optimized + oracleResults.categories.application.optimized,
+            total: mssqlResults.categories.application.total + oracleResults.categories.application.total
+        },
+        resiliency: {
+            optimized: mssqlResults.categories.resiliency.optimized + oracleResults.categories.resiliency.optimized,
+            total: mssqlResults.categories.resiliency.total + oracleResults.categories.resiliency.total
+        },
+        cloning: {
+            optimized: mssqlResults.categories.cloning.optimized + oracleResults.categories.cloning.optimized,
+            total: mssqlResults.categories.cloning.total + oracleResults.categories.cloning.total
+        },
+        totalInstances: mssqlResults.totalInstances + oracleResults.totalInstances,
+        mssqlTotal: mssqlResults.mssqlTotal,
+        oracleTotal: oracleResults.oracleTotal
+    };
 };
 
 export const setConfigState = (configState: any, configName: string, state: string) => {
@@ -1975,29 +1629,34 @@ const processOracleConfigurationData = (
                     ? 1
                     : 0;
 
-                const isSecurityPatchOptimized = isOptimizedDashInner(
-                    instanceAssessmentData?.oracleSecurityPatch?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
-                );
-                setConfigState(
-                    configState,
-                    'oracleSecurityPatch',
-                    instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
-                );
-                getAssessmentGroupedByConfigurations.oracleSecurityPatch.optimized += isSecurityPatchOptimized ? 1 : 0;
-                getAssessmentGroupedByConfigurations.oracleSecurityPatch.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.oracleSecurityPatch.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.oracleSecurityPatch =
-                    GETWELL_VALUES[instanceAssessmentData?.oracleSecurityPatch?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.oracleSecurityPatch;
+                // Skip oracleSecurityPatch counting for WAD instances (WAD-excluded config for Oracle)
+                if (!databaseHost?.isWad) {
+                    const isSecurityPatchOptimized = isOptimizedDashInner(
+                        instanceAssessmentData?.oracleSecurityPatch?.status,
+                        instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
+                    );
+                    setConfigState(
+                        configState,
+                        'oracleSecurityPatch',
+                        instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
+                    );
+                    getAssessmentGroupedByConfigurations.oracleSecurityPatch.optimized += isSecurityPatchOptimized
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.oracleSecurityPatch.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.oracleSecurityPatch.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.oracleSecurityPatch =
+                        GETWELL_VALUES[instanceAssessmentData?.oracleSecurityPatch?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.oracleSecurityPatch;
+                }
 
                 // Skip oracleCrr counting for WAD instances (WAD-excluded config for Oracle)
                 if (!databaseHost?.isWad) {
@@ -2027,31 +1686,34 @@ const processOracleConfigurationData = (
                         getAssessmentGroupedByConfigurations?.severityObj?.oracleCrr;
                 }
 
-                const isSnapcenterSnapshotOptimized = isOptimizedDashInner(
-                    instanceAssessmentData?.snapcenterSnapshot?.status,
-                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
-                );
-                setConfigState(
-                    configState,
-                    'oracleSnapcenterSnapshot',
-                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
-                );
-                getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.optimized += isSnapcenterSnapshotOptimized
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.dismissed += isDismissed(
-                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.activating += isActivating(
-                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
-                )
-                    ? 1
-                    : 0;
-                getAssessmentGroupedByConfigurations.severityObj.oracleSnapcenterSnapshot =
-                    GETWELL_VALUES[instanceAssessmentData?.snapcenterSnapshot?.severity] ||
-                    getAssessmentGroupedByConfigurations?.severityObj?.oracleSnapcenterSnapshot;
+                // Skip oracleSnapcenterSnapshot counting for WAD instances (WAD-excluded config for Oracle)
+                if (!databaseHost?.isWad) {
+                    const isSnapcenterSnapshotOptimized = isOptimizedDashInner(
+                        instanceAssessmentData?.snapcenterSnapshot?.status,
+                        instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                    );
+                    setConfigState(
+                        configState,
+                        'oracleSnapcenterSnapshot',
+                        instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                    );
+                    getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.total++;
+                    getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.optimized +=
+                        isSnapcenterSnapshotOptimized ? 1 : 0;
+                    getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.oracleSnapcenterSnapshot =
+                        GETWELL_VALUES[instanceAssessmentData?.snapcenterSnapshot?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.oracleSnapcenterSnapshot;
+                }
             }
         });
     });

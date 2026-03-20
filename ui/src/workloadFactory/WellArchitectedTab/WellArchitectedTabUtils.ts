@@ -48,8 +48,9 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
-                const { cardsData } = getCardsData(instance?.assessments, {});
-                const optBreakDown = formatOptimizationBreakDown(cardsData, instance?.assessments);
+                const assessmentWithWadFlag = { ...instance?.assessments, isWad: !!databaseHost?.isWad };
+                const { cardsData } = getCardsData(assessmentWithWadFlag, {});
+                const optBreakDown = formatOptimizationBreakDown(cardsData, assessmentWithWadFlag);
                 let score = '';
                 score = `${optBreakDown?.total?.percent || 0}`;
                 const optimized = optBreakDown?.total?.optimized || 0;
@@ -87,8 +88,9 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
             if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
-                const { cardsData } = getOracleCardsData(instance?.assessments, {});
-                const optBreakDown = formatOracleOptimizationBreakDown(cardsData, instance?.assessments);
+                const assessmentWithWadFlag = { ...instance?.assessments, isWad: !!databaseHost?.isWad };
+                const { cardsData } = getOracleCardsData(assessmentWithWadFlag, {});
+                const optBreakDown = formatOracleOptimizationBreakDown(cardsData, assessmentWithWadFlag);
                 let score = '';
                 score = `${optBreakDown?.total?.percent || 0}`;
                 const optimized = optBreakDown?.total?.optimized || 0;
