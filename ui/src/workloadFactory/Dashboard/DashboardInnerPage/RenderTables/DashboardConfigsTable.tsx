@@ -16,7 +16,7 @@ import {
     filterDatabaseRowsForNonAsm,
     mapHostStatusToAssessmentData
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
-import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
+import { checkBoxHandle, formatDateWithTime, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -1040,6 +1040,7 @@ const DashboardConfigsTable = ({
                         serverInstanceName: instanceData?.databaseInstanceName,
                         id: `${hostData?.databaseHostId}_${instanceData?.databaseInstanceId}`,
                         hostName: hostData?.databaseHostName,
+                        lastAssessmentTimestamp: instanceData?.assessments?.lastAssessmentTimestamp,
                         assessmentStatus: GETWELL_VALUES[configObj?.status] || '',
                         data: instanceData,
                         configObj: configStateObj,
@@ -1290,6 +1291,29 @@ const DashboardConfigsTable = ({
                     <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
                         {cellData || t('databases.general.not-available-table-columns')}
                     </DsTypography>
+                );
+            }
+        },
+        {
+            Header: `${t('databases.well-architected-tab.collection-time')}`,
+            accessor: 'lastAssessmentTimestamp',
+            id: '10',
+            width: '250px',
+            filterOptions: 'auto',
+            renderFilterPanelLabel: (value: string) => formatDateWithTime(value),
+            renderCell: (cellData: string, rowData: any) => {
+                const isDisable = showDismissed || rowData?.configState === CONFIG_STATES.ACTIVATING;
+                return (
+                    <>
+                        <DsTypography variant="Regular_14" className={isDisable ? styles.disabled : ''}>
+                            {cellData ? formatDateWithTime(cellData) : ''}
+                        </DsTypography>
+                        {rowData?.isWad && (
+                            <DsTypography variant="Regular_13" className={isDisable ? styles.disabled : ''}>
+                                {t('databases.inventory.one-time-assessment')}
+                            </DsTypography>
+                        )}
+                    </>
                 );
             }
         },

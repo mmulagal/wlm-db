@@ -11,6 +11,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { getAllAssessmentResources, redirectToGetWellPage } from '../WellArchitectedTabUtils';
 import FirstColumnComponent from '../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnComponent';
 import { INVENTORY_STATUS } from '../../../utils/consts';
+import { formatDateWithTime } from '../../../utils/utilityFunctions';
 
 const RegisteredResourcesTable = () => {
     const dispatch = useDispatch();
@@ -118,21 +119,37 @@ const RegisteredResourcesTable = () => {
             Header: t('databases.well-architected-tab.engine-type'),
             accessor: 'type',
             id: '2',
-            width: '267px',
+            width: '220px',
             filterOptions: 'auto'
+        },
+        {
+            Header: t('databases.well-architected-tab.collection-time'),
+            accessor: 'lastAssessmentTimestamp',
+            id: '3',
+            width: '250px',
+            filterOptions: 'auto',
+            renderFilterPanelLabel: (value: string) => formatDateWithTime(value),
+            renderCell: (cellData: any, rowData: any) => (
+                <>
+                    <DsTypography variant="Regular_14">{cellData ? formatDateWithTime(cellData) : ''}</DsTypography>
+                    {rowData?.isWad && (
+                        <DsTypography variant="Regular_13">{t('databases.inventory.one-time-assessment')}</DsTypography>
+                    )}
+                </>
+            )
         },
         {
             Header: t('databases.well-architected-tab.hostname'),
             accessor: 'hostName',
-            id: '3',
-            width: '267px',
+            id: '4',
+            width: '220px',
             filterOptions: 'auto',
             isSortable: true
         },
         {
             Header: t('databases.well-architected-tab.optimization-score'),
             accessor: 'scoreForSorting',
-            id: '4',
+            id: '5',
             width: '347px',
             isSortable: true,
             renderCell: (cellData: string) => (
@@ -148,7 +165,7 @@ const RegisteredResourcesTable = () => {
         {
             Header: '',
             accessor: '',
-            id: '5',
+            id: '6',
             width: '248px',
             isSortable: false,
             renderCell: (_: any, rowData: any) => {

@@ -65,7 +65,8 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
                     credentialId: databaseHost?.credentialId,
                     regionId: databaseHost?.regionId,
                     type: DBType.MSSQL,
-                    isWad: databaseHost?.isWad
+                    isWad: databaseHost?.isWad,
+                    lastAssessmentTimestamp: instance?.assessments?.lastAssessmentTimestamp
                 };
                 tableData.push(perTableData);
             }
@@ -103,7 +104,8 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
                     credentialId: databaseHost?.credentialId,
                     regionId: databaseHost?.regionId,
                     type: DBType.ORACLE,
-                    isWad: databaseHost?.isWad
+                    isWad: databaseHost?.isWad,
+                    lastAssessmentTimestamp: instance?.assessments?.lastAssessmentTimestamp
                 };
                 tableData.push(perTableData);
             }
