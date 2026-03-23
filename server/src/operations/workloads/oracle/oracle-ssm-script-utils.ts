@@ -57,12 +57,50 @@ parse_sqlplus_output() {
 }
 `;
 
+const getOracleHomePath = (dbSid: string) => `
+    # Check if oratab exists
+    if [ ! -f /etc/oratab ]; then
+        echo "[]"
+        exit 0
+    fi
+    dbsid="${dbSid}"
+    oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
+    if [ -z "$oratab_entries" ]; then
+        echo "No entries found in /etc/oratab."
+        exit 0
+    fi 
+
+    while IFS=: read -r sid home; do
+        if [ "$sid" == "$dbsid" ]; then
+            if [ -z "$home" ] || [ ! -d "$home" ]; then
+                exit 1;
+            fi
+            echo "$home"
+            exit 0;
+            break
+        fi
+    done <<< "$oratab_entries"
+    exit 1
+`;
+
+const bashExportOracleHomeFromOratab = (sidForOratab: string, escapePathVariable = false, includePath = true) => {
+    const pathInner = escapePathVariable ? String.raw`$ORACLE_HOME/bin:\$PATH` : '$ORACLE_HOME/bin:$PATH';
+    if (!includePath) {
+        return `oracle_home=$(${getOracleHomePath(sidForOratab)})
+export ORACLE_HOME="$oracle_home"`;
+    }
+    return `oracle_home=$(${getOracleHomePath(sidForOratab)})
+export ORACLE_HOME="$oracle_home"
+export PATH="${pathInner}"`;
+};
+
 const getOracleInstanceOpenMode = `
     get_open_mode() {
         local ORACLE_SID="$1"
         local open_mode=""
         open_mode=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
             export ORACLE_SID="$1"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             sqlplus_cmd="$2"
             sqlplus_output=$($sqlplus_cmd <<'EOSQL'
                 ${sqlplusOutputFormatSettings}
@@ -90,32 +128,6 @@ const checkCommandStatus = `
         exit 0;
         fi
     }
-`;
-
-const getOracleHomePath = (dbSid: string) => `
-    # Check if oratab exists
-    if [ ! -f /etc/oratab ]; then
-        echo "[]"
-        exit 0
-    fi
-    dbsid="${dbSid}"
-    oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
-    if [ -z "$oratab_entries" ]; then
-        echo "No entries found in /etc/oratab."
-        exit 0
-    fi 
-
-    while IFS=: read -r sid home; do
-        if [ "$sid" == "$dbsid" ]; then
-            if [ -z "$home" ] || [ ! -d "$home" ]; then
-                exit 1;
-            fi
-            echo "$home"
-            exit 0;
-            break
-        fi
-    done <<< "$oratab_entries"
-    exit 1
 `;
 
 const getMappedOntapDataVolume = (
@@ -268,6 +280,7 @@ ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
 result=$(sudo -i -u oracle bash <<EOF
     set -e
     export ORACLE_SID="$oracleSid"
+${bashExportOracleHomeFromOratab('$ORACLE_SID')}
     $sqlplus_command
     WHENEVER SQLERROR EXIT SQL.SQLCODE
     SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -388,6 +401,7 @@ EOF
         local ORACLE_SID="$1"
         dataguard_role=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
             export ORACLE_SID="$1"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             sqlplus_cmd="$2"
             sqlplus_output=$($sqlplus_cmd <<'EOSQL'
                 ${sqlplusOutputFormatSettings}
@@ -444,6 +458,7 @@ EOF
         local protection_mode=""
         protection_mode=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
             export ORACLE_SID="$1"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             sqlplus_cmd="$2"
             sqlplus_output=$($sqlplus_cmd <<'EOSQL'
                 ${sqlplusOutputFormatSettings}
@@ -468,6 +483,7 @@ EOF
         local db_name_and_db_unique_name=""
         db_name_and_db_unique_name=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
             export ORACLE_SID="$1"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             sqlplus_cmd="$2"
             sqlplus_output=$($sqlplus_cmd <<'EOSQL'
             ${sqlplusOutputFormatSettings}
@@ -502,6 +518,7 @@ EOF
         # First EOF > EOSQL: Get sync status action
         instance_sync_status=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$isCDB" "$pdbNameArg" "$sqlplus_command" <<'EOF'
             export ORACLE_SID="$1"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             isCDB="$2"
             pdbName="$3"
             sqlplus_cmd="$4"
@@ -532,6 +549,7 @@ EOF
         # Second EOF > EOSQL: Get standby lag stats (only for non-primary)
         standby_sqlplus_output=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$isCDB" "$pdbNameArg" "$sqlplus_command" <<'EOF'
             export ORACLE_SID="$1"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             isCDB="$2"
             pdbName="$3"
             sqlplus_cmd="$4"
@@ -579,6 +597,7 @@ EOF
             local sqlplus_cmd="$2"
             sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_cmd" <<'EOF'
                 export ORACLE_SID="$1"
+                ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
                 sqlplus_cmd="$2"
                 result=$($sqlplus_cmd <<EOSQL
 ${sqlplusOutputFormatSettings}
@@ -729,14 +748,7 @@ const defaultAuthDetectModule = `
         # dual requires the database to be OPEN and fails with ORA-01219 on MOUNTED instances.
         result=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
                 export ORACLE_SID="$1"
-                # Resolve ORACLE_HOME from /etc/oratab for this SID.
-                # The oracle user profile may set a default ORACLE_HOME that differs
-                # from the home used by this specific SID, causing ORA-01034.
-                oratab_home=$(grep "^\${ORACLE_SID}:" /etc/oratab 2>/dev/null | cut -d: -f2)
-                if [ -n "$oratab_home" ] && [ -d "$oratab_home" ]; then
-                    export ORACLE_HOME="$oratab_home"
-                    export PATH="$ORACLE_HOME/bin:$PATH"
-                fi
+                ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
                 sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET HEADING OFF
@@ -766,12 +778,7 @@ EOF
         local open_mode
         open_mode=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
                 export ORACLE_SID="$1"
-                # Resolve ORACLE_HOME from /etc/oratab for this SID.
-                oratab_home=$(grep "^\${ORACLE_SID}:" /etc/oratab 2>/dev/null | cut -d: -f2)
-                if [ -n "$oratab_home" ] && [ -d "$oratab_home" ]; then
-                    export ORACLE_HOME="$oratab_home"
-                    export PATH="$ORACLE_HOME/bin:$PATH"
-                fi
+                ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
                 sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET HEADING OFF
@@ -1038,10 +1045,10 @@ const getOracleInstanceData = (ec2InstanceId: string) => `
         exit 0
     fi
 
-    # Parse /etc/oratab, ignoring comment lines (#), lines starting with (+) and blank lines
-    SIDS=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1}')
+    # Parse /etc/oratab (sid:home lines) so we can export ORACLE_HOME per instance before sqlplus.
+    oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
 
-    if [ -z "$SIDS" ]; then
+    if [ -z "$oratab_entries" ]; then
         echo "No SIDs found in /etc/oratab."
         exit 0
     fi
@@ -1059,6 +1066,8 @@ const getOracleInstanceData = (ec2InstanceId: string) => `
             if [[ "$isMounted" == "true" ]]; then
                 sudo -i -u oracle bash <<EOF
                     export ORACLE_SID="$ORACLE_SID"
+                    export ORACLE_HOME="$ORACLE_HOME"
+                    export PATH="$ORACLE_HOME/bin:\\$PATH"
                     instance_info=$($sqlplus_command <<'EOSQL'
                         SET HEADING OFF
                         SET LINESIZE 500
@@ -1092,6 +1101,8 @@ EOF
                 # For non-MOUNTED instances, STATUS from v$instance is correct
                 sudo -i -u oracle bash <<EOF
                     export ORACLE_SID="$ORACLE_SID"
+                    export ORACLE_HOME="$ORACLE_HOME"
+                    export PATH="$ORACLE_HOME/bin:\\$PATH"
                     $sqlplus_command
                         SET HEADING OFF
                         SET LINESIZE 500
@@ -1114,6 +1125,7 @@ EOF
             if [[ "$isMounted" == "true" ]]; then
                 open_mode_result=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
                     export ORACLE_SID="$1"
+                    ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
                     sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
                         SET HEADING OFF
                         SET FEEDBACK OFF
@@ -1136,11 +1148,18 @@ EOF
 
     RESULTS="["  # start of the JSON array
     FIRST=1      # flag to determine the first object
-    for sid in $SIDS; do
+    while IFS=: read -r sid oracle_home; do
         # Check if the instance is running by checking for its PMON process.
         if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
             continue
         fi
+
+        if [ -z "$oracle_home" ] || [ ! -d "$oracle_home" ]; then
+            continue
+        fi
+
+        export ORACLE_HOME="$oracle_home"
+        export PATH="$oracle_home/bin:$PATH"
 
         isDefaultAuth=$(is_default_auth "$sid")
         isMounted=$(is_mounted_instance "$sid")
@@ -1169,7 +1188,7 @@ EOF
         else
             RESULTS+=", $JSON_OBJ"
         fi
-    done
+    done <<< "$oratab_entries"
     RESULTS+="]"  # end of the JSON array
     echo "$RESULTS"
 `;
@@ -1184,6 +1203,7 @@ const isOracleNativeProtectionEnabled = (ec2InstanceId: string, dbSid: string) =
     areBackupSetsAvailable () {
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$oracleSid"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             $sqlplus_command
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             select case 
@@ -1197,6 +1217,7 @@ EOF
     areBackupPiecesAvailable () {
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="${dbSid}"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             $sqlplus_command
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             select case 
@@ -1250,6 +1271,7 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
             sudo -i -u oracle bash <<EOF
                 set -e
                 export ORACLE_SID="$oracleSid"
+                ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
                 $cmd
 EOF
         }
@@ -1259,6 +1281,7 @@ EOF
             sudo -i -u oracle bash <<EOF
                 set -e
                 export ORACLE_SID="$oracleSid"
+                ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
                 $sqlplus_command
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1643,6 +1666,7 @@ const trendGraphCreateScriptForOracle = (dbSid: string, ec2InstanceId: string) =
     jsonPayload=$(sudo -i -u oracle bash <<EOF
         set -e
         export ORACLE_SID="$oracleSid"
+${bashExportOracleHomeFromOratab('$ORACLE_SID')}
         $sqlplus_command
         WHENEVER SQLERROR EXIT SQL.SQLCODE
         SET HEADING OFF FEEDBACK OFF PAGESIZE 0 VERIFY OFF ECHO OFF TRIMSPOOL ON
@@ -1820,6 +1844,7 @@ const loadOracleUserPermissionsDetectionModule = `
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1835,6 +1860,7 @@ EOF
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1851,6 +1877,7 @@ EOF
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1869,6 +1896,7 @@ EOF
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1884,6 +1912,7 @@ EOF
         local result=$(sudo -i -u oracle bash <<EOF
                 set -e
                 export ORACLE_SID="$oracleSid"
+                ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
                 $sqlplus_command
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1900,6 +1929,7 @@ EOF
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1919,6 +1949,7 @@ EOF
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -2009,8 +2040,7 @@ const isASMManagedCheck = `
         local ORACLE_SID="$1"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            export ORACLE_HOME="$ORACLE_HOME"
-            export PATH="$ORACLE_HOME/bin:\\$PATH"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID', true)}
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF;
             SET FEEDBACK OFF;
@@ -2072,6 +2102,7 @@ ${isStorageASMmanaged('$oracleSid')}
     # Execute all SQL queries in a single connection
     sqlResults=$(sudo -i -u oracle bash <<EOF 2>/dev/null
     export ORACLE_SID="$oracleSid"
+${bashExportOracleHomeFromOratab('$ORACLE_SID')}
     $sqlplus_command <<'EOSQL'
     SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
     SELECT REGEXP_SUBSTR(BANNER, '(Standard|Enterprise) Edition') AS edition, 
@@ -2391,5 +2422,6 @@ export {
     parseSpfileProperties,
     dataguardDeploymentUtilities,
     defaultAuthDetectModule,
-    BASH_DECOMPRESS_TEMPLATE
+    BASH_DECOMPRESS_TEMPLATE,
+    bashExportOracleHomeFromOratab
 };

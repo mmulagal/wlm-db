@@ -1,6 +1,7 @@
 import { WorkloadInstance } from '../../../../utils/common-types';
 import { debugLog } from '../../../workloads/oracle/oracle-discover-scripts';
 import {
+    bashExportOracleHomeFromOratab,
     getOracleDefaultOrUserAuthCommand,
     checkCommandStatus,
     ontapRestApi,
@@ -17,6 +18,7 @@ const CHECK_ORACLE_FRA_RMAN_STATUS = () => `
         fra_rman_result=$(sudo -i -u oracle bash <<EOF
         set -e
         export ORACLE_SID="$oracleSid"
+${bashExportOracleHomeFromOratab('$ORACLE_SID')}
         $sqlplus_command <<'EOSQL'
         SET HEADING OFF
         SET LINESIZE 500
@@ -55,6 +57,7 @@ const CHECK_ORACLE_DNFS_SERVERS = () => `
         dnfs_servers_result=$(sudo -i -u oracle bash <<EOF
         set -e
         export ORACLE_SID="$oracleSid"
+${bashExportOracleHomeFromOratab('$ORACLE_SID')}
         $sqlplus_command <<'EOSQL'
         SET HEADING OFF
         SET LINESIZE 500

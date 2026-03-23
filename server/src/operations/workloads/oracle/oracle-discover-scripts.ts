@@ -1,5 +1,6 @@
 import { LINUX_LOG_DIRECTORY } from '../../continuous-optimization/oracle/consts';
 import {
+    bashExportOracleHomeFromOratab,
     checkOracleModuleAvailability,
     getMappedOntapDataVolume,
     getOracleDefaultOrUserAuthCommand,
@@ -417,6 +418,7 @@ EOF
 
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID', true)}
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
@@ -438,6 +440,7 @@ EOF
         local diskgroupName="$2"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID', true)}
             $sqlplus_command << 'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
@@ -454,6 +457,7 @@ EOF
         local diskName="$2"
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID', true)}
             $sqlplus_command << 'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
@@ -478,6 +482,7 @@ EOF
 
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID', true)}
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
@@ -1255,6 +1260,7 @@ EOF
             if [[ "$isMounted" == "true" ]]; then
                 open_mode_result=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" <<'EOF'
                     export ORACLE_SID="$1"
+                    ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
                     sqlplus -S / as sysdba 2>/dev/null <<'EOSQL'
                         SET HEADING OFF
                         SET FEEDBACK OFF
@@ -1552,6 +1558,13 @@ const discoverOracleHosts = `
             continue
         fi
 
+        if [ -z "$oracle_home" ] || [ ! -d "$oracle_home" ]; then
+            continue
+        fi
+
+        export ORACLE_HOME="$oracle_home"
+        export PATH="$oracle_home/bin:$PATH"
+
         isDefaultAuth=$(is_default_auth "$sid")
         if [ $? -ne 0 ]; then
             InstanceDiscoverErrorMsg="failed to retrieve authentication details for instance '$sid'"
@@ -1677,6 +1690,13 @@ const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: s
             continue
         fi
 
+        if [ -z "$oracle_home" ] || [ ! -d "$oracle_home" ]; then
+            continue
+        fi
+
+        export ORACLE_HOME="$oracle_home"
+        export PATH="$oracle_home/bin:$PATH"
+
         if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
             if [ "$(is_cdb_instance)" == "true" ]; then
                 is_cdb="YES"
@@ -1754,6 +1774,13 @@ const fetchOracleDatabasesCount = (ec2InstanceId: string, dbSid: string) => `
             continue
         fi
 
+        if [ -z "$oracle_home" ] || [ ! -d "$oracle_home" ]; then
+            continue
+        fi
+
+        export ORACLE_HOME="$oracle_home"
+        export PATH="$oracle_home/bin:$PATH"
+
         isDefaultAuth=$(is_default_auth "$sid")
 
         DATABASE_DETAILS=$(get_database_details "$sid")
@@ -1813,6 +1840,15 @@ const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
         if [ "$sid" != "$dbSid" ]; then
             continue
         fi
+
+        if [ -z "$oracle_home" ] || [ ! -d "$oracle_home" ]; then
+            errorMessage="Invalid ORACLE_HOME '$oracle_home' for SID '$sid' from /etc/oratab"
+            results="{\\"error\\": \\"$errorMessage\\"}"
+            continue
+        fi
+
+        export ORACLE_HOME="$oracle_home"
+        export PATH="$oracle_home/bin:$PATH"
 
         isDefaultAuth=$(is_default_auth "$sid")
         
@@ -1887,6 +1923,11 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
         if ! pgrep -f "ora_pmon_$sid" > /dev/null 2>&1; then
             continue
         fi
+
+        if [ -z "$oracle_home" ] || [ ! -d "$oracle_home" ]; then
+            continue
+        fi
+
         ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, '$sid')}
         ${loadDatabaseDetectionModules}
         ${loadStorageDetectionModules}
