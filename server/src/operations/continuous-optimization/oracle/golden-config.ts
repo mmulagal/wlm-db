@@ -813,6 +813,17 @@ const GOLDEN_CONFIG = {
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
         recommendation:
             'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.'
+    },
+    oracleSecurityPatch: {
+        name: 'oracle-security-patch',
+        tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
+        category: 'compute',
+        subCategory: 'compute',
+        focusWidgetName: 'Oracle security patch',
+        severity: SEVERITY.CRITICAL,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+        recommendation:
+            'Critical Patch Updates provide security patches for supported Oracle self-managed database installations. Applying the latest patch helps protect your Oracle database from vulnerabilities and significantly improves overall system reliability.'
     }
 };
 

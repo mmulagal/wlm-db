@@ -36,6 +36,10 @@ import { listDatabaseInstanceConfigData } from '../../../lib/database/database-i
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { calculateHostOsPatchDrift, managedHostOsPatchAssessment } from './hostOsPatch-assessment-operations';
 import {
+    calculateOracleSecurityPatchDrift,
+    initiateOracleSecurityPatchAssessmentCollection
+} from './security-patch-assessment-operations';
+import {
     calculateSnapCenterDrift,
     initiateSnapCenterAssessmentCollection,
     SnapcenterAssessmentData
@@ -57,7 +61,7 @@ import {
     mergeDismissConfigurations
 } from '../assessment-dismiss-operations';
 import { handleGetOracleAssessmentForDemo } from '../../demo-operations';
-import { StorageAssessment } from './common-types';
+import { OracleSecurityPatchSsmResponse, StorageAssessment } from './common-types';
 import { listJobs } from '../../../lib/database/job';
 
 const logger = getLogger();
@@ -365,6 +369,15 @@ async function initiateInstanceLevelAssessmentDataCollection(
                 databaseHostId,
                 instanceLevelAssessmentJobId,
                 databaseInstanceRecord
+            ),
+        [AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH]: async () =>
+            initiateOracleSecurityPatchAssessmentCollection(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceRecord,
+                instanceLevelAssessmentJobId
             )
     };
     await Promise.allSettled(
@@ -468,7 +481,8 @@ async function triggerOracleAssessment(
             [
                 AssessmentCategoriesOracle.STORAGE,
                 AssessmentCategoriesOracle.CRR,
-                AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT
+                AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT,
+                AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH
             ].includes(field.toLowerCase() as AssessmentCategoriesOracle)
         );
 
@@ -750,7 +764,8 @@ async function fetchOracleDriftAssessment(
         storage: fieldsValues.includes(AssessmentCategoriesOracle.STORAGE.toLowerCase()),
         hostOsPatch: fieldsValues.includes(AssessmentCategoriesOracle.HOST_OS_PATCH.toLowerCase()),
         crr: fieldsValues.includes(AssessmentCategoriesOracle.CRR.toLowerCase()),
-        snapcenterSnapshot: fieldsValues.includes(AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT.toLowerCase())
+        snapcenterSnapshot: fieldsValues.includes(AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT.toLowerCase()),
+        oracleSecurityPatch: fieldsValues.includes(AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH.toLowerCase())
     };
 
     const crrAssessmentData = assessmentDataMap[AssessmentCategoriesOracle.CRR] as unknown as CrrAssessment;
@@ -778,7 +793,7 @@ async function fetchOracleDriftAssessment(
         )
     ];
 
-    const [storageDriftData, hostLevelData, crrData, snapcenterDriftData] = await Promise.all([
+    const [storageDriftData, hostLevelData, crrData, snapcenterDriftData, oracleSecurityPatchData] = await Promise.all([
         assessmentFlags.storage
             ? calculateStorageDrift(
                   accountId,
@@ -827,12 +842,21 @@ async function fetchOracleDriftAssessment(
                       dataFileVolumeIds
                   )
               )
+            : Promise.resolve(undefined),
+        assessmentFlags.oracleSecurityPatch
+            ? calculateOracleSecurityPatchDrift(
+                  databaseInstanceName,
+                  assessmentDataMap[AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH] as
+                      | OracleSecurityPatchSsmResponse
+                      | undefined
+              )
             : Promise.resolve(undefined)
     ]);
 
     let driftAssessmentData: OracleDriftAssessmentResponseType = {
         storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),
         hostOsPatch: isEmpty(hostLevelData.hostOsPatch) ? undefined : hostLevelData.hostOsPatch,
+        oracleSecurityPatch: oracleSecurityPatchData,
         crr: crrData,
         snapcenterSnapshot: snapcenterDriftData || undefined,
         dismissedConfigurations,
@@ -950,7 +974,8 @@ async function fetchOracleDriftAssessmentPerHost(
         AssessmentCategoriesOracle.STORAGE,
         AssessmentCategoriesOracle.HOST_OS_PATCH,
         AssessmentCategoriesOracle.CRR,
-        AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT
+        AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT,
+        AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH
     ].join(',');
 
     const driftAssessments = await Promise.all(

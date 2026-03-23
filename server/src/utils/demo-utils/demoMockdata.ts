@@ -6710,6 +6710,59 @@ async function createAssessmentDataWithRetry(
     }
 }
 
+const DEMO_ORACLE_CPU_CATALOG = [
+    {
+        cveId: 'CVE-2026-21975',
+        component: 'Java VM',
+        description:
+            'Vulnerability in the Java VM component of Oracle Database Server. Supported versions that are affected are 19.3-19.29 and 21.3-21.20. Easily exploitable vulnerability allows high privileged attacker having Create Session privilege with network access via Oracle Net to compromise Java VM. Successful attacks require human interaction from a person other than the attacker. Successful attacks of this vulnerability can result in unauthorized ability to cause a hang or frequently repeatable crash (complete DOS) of Java VM. CVSS 3.1 Base Score 4.5 (Availability impacts).',
+        releaseDate: '2026-01-20',
+        releaseName: 'January 2026',
+        affectedVersions: ['21.3-21.20', '19.3-19.29'],
+        additionalCvesAddressed: []
+    },
+    {
+        cveId: 'CVE-2025-67735',
+        component: 'Oracle Graal Development Kit for Micronaut',
+        description:
+            'Vulnerability in the Oracle Graal Development Kit for Micronaut (Nimbus JOSE+JWT) component of Oracle Database Server. Supported versions that are affected are 19.3-19.29 and 23.4.0-23.26.0. Easily exploitable vulnerability allows unauthenticated attacker with network access via Oracle Net to compromise Oracle Graal Development Kit for Micronaut. CVSS 3.1 Base Score 6.5 (Confidentiality and Integrity impacts).',
+        releaseDate: '2026-01-20',
+        releaseName: 'January 2026',
+        affectedVersions: ['19.3-19.29', '23.4.0-23.26.0'],
+        additionalCvesAddressed: []
+    },
+    {
+        cveId: 'CVE-2022-26345',
+        component: 'Oracle Database Data Mining',
+        description:
+            'Vulnerability in the Oracle Database Data Mining (Intel oneAPI Toolkit OpenMP) component of Oracle Database Server. Supported versions that are affected are 19.3-19.25 and 21.3-21.16. Difficult to exploit vulnerability allows low privileged attacker with logon to the infrastructure to compromise Oracle Database Data Mining. CVSS 3.1 Base Score 6.7 (Confidentiality, Integrity and Availability impacts).',
+        releaseDate: '2025-02-11',
+        releaseName: 'January 2025',
+        affectedVersions: ['21.3-21.16', '19.3-19.25'],
+        additionalCvesAddressed: []
+    },
+    {
+        cveId: 'CVE-2024-21247',
+        component: 'Oracle Database Core',
+        description:
+            'Vulnerability in the Oracle Database Core component of Oracle Database Server. Supported versions that are affected are 19.3-19.24 and 21.3-21.15. Easily exploitable vulnerability allows low privileged attacker having Create Session privilege with network access via Oracle Net to compromise Oracle Database Core. CVSS 3.1 Base Score 3.5 (Confidentiality impacts).',
+        releaseDate: '2024-10-15',
+        releaseName: 'October 2024',
+        affectedVersions: ['19.3-19.24', '21.3-21.15'],
+        additionalCvesAddressed: ['CVE-2024-21248']
+    },
+    {
+        cveId: 'CVE-2024-21248',
+        component: 'Oracle Database Core',
+        description:
+            'Vulnerability in the Oracle Database Core component of Oracle Database Server. Supported versions that are affected are 19.3-19.24. Additional CVE addressed by the patch for CVE-2024-21247.',
+        releaseDate: '2024-10-15',
+        releaseName: 'October 2024',
+        affectedVersions: ['19.3-19.24'],
+        additionalCvesAddressed: []
+    }
+];
+
 export {
     masterStackData,
     validationStack1Data,
@@ -6763,5 +6816,6 @@ export {
     createAssessmentDataWithRetry,
     oracleStandaloneUploadObject,
     oracleDataGuardUploadObject,
-    oracleMultiDBUploadObject
+    oracleMultiDBUploadObject,
+    DEMO_ORACLE_CPU_CATALOG
 };

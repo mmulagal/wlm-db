@@ -267,6 +267,17 @@ interface OptimizeOSParams {
     instanceMetadata: unknown;
 }
 
+interface AppliedPatch {
+    patchId: string;
+    description: string;
+}
+
+interface OracleSecurityPatchSsmResponse {
+    version: string;
+    appliedPatches: AppliedPatch[];
+    error?: string;
+}
+
 export {
     ISCIOSAssessment,
     NFSOSAssessment,
@@ -276,5 +287,7 @@ export {
     defaultMultipathExpected,
     netappMultipathExpected,
     nfsMountOptionExpected,
-    OptimizeOSParams
+    OptimizeOSParams,
+    AppliedPatch,
+    OracleSecurityPatchSsmResponse
 };

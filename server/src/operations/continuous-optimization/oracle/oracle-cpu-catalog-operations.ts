@@ -68,6 +68,8 @@ import { compact } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { gotInstanceForExternalRequest } from '../../../utils/got';
 import { ORACLE_CPU_CATALOG_FILE_PATH, ORACLE_CPU_CATALOG_LOOKBACK_YEARS } from '../../../utils/consts';
+import { IS_DEMO_FLOW } from '../../../utils/utils';
+import { DEMO_ORACLE_CPU_CATALOG } from '../../../utils/demo-utils/demoMockdata';
 
 const logger = getLogger();
 
@@ -360,5 +362,26 @@ async function refreshOracleCpuCatalog(): Promise<void> {
     }
 }
 
-export { refreshOracleCpuCatalog };
+async function loadCpuCatalog(): Promise<CPUCatalogEntry[]> {
+    if (IS_DEMO_FLOW) {
+        return DEMO_ORACLE_CPU_CATALOG as CPUCatalogEntry[];
+    }
+
+    const existing = await loadCatalog();
+    if (existing && existing.patches.length > 0) {
+        return existing.patches;
+    }
+
+    logger.info('CPU catalog is empty or missing, triggering refresh');
+    try {
+        await refreshOracleCpuCatalog();
+        return (await loadCatalog())?.patches ?? [];
+    } catch (error) {
+        logger.error('Failed to refresh Oracle CPU catalog on demand', { error });
+    }
+
+    return [];
+}
+
+export { refreshOracleCpuCatalog, loadCpuCatalog };
 export type { CPUCatalogEntry, CPUCatalog };

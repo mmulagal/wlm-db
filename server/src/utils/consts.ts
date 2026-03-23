@@ -1840,6 +1840,7 @@ enum WF_NOTIFICATION_PRIORITY {
 const AWSDAC_MODULE_DIR = `${process.cwd()}/resources/packages`;
 const INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE = 'WLMDB-InstancePerformanceAssessmentQueue';
 const WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_QUEUE = 'WLMDB-WellArchitectedAssessmentNotificationQueue';
+
 enum NOTIFICATION_TYPE {
     DEPLOYMENT = 'Deployment',
     WELL_ARCHITECTED = 'Well-architected'
@@ -1884,7 +1885,7 @@ const ORACLE_CPU_CATALOG_FILE_PATH = join(TEMP_DIRECTORY, 'oracle-cpu-catalog.js
 const ORACLE_CPU_CATALOG_QUEUE = 'WLMDB-OracleCpuCatalogQueue';
 // runs at 3:00 AM on the 24th of January, April, July, and October. That's ~2-10 days after each CPU release (3rd Tuesday).
 // const ORACLE_CPU_CATALOG_CRON_PATTERN = '0 3 24 1,4,7,10 *';
-const ORACLE_CPU_CATALOG_CRON_PATTERN = '0 3 1 * *'; // for testing, runs every day at 3:00 AM
+const ORACLE_CPU_CATALOG_CRON_PATTERN = '0 3 * * *'; // for testing, runs every day at 3:00 AM
 
 export {
     TEMP_DIRECTORY,

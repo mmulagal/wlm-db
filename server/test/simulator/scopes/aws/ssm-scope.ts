@@ -988,6 +988,8 @@ ssmMock
     .resolves(getSampleCommandResponse('oracleStorageAssessment'))
     .on(SendCommandCommand, params => params.Comment === 'Get OS Configuration Assessment for Oracle instance')
     .resolves(getSampleCommandResponse('oracleStorageAssessment'))
+    .on(SendCommandCommand, params => params.Comment?.startsWith('Oracle security patch assessment for'))
+    .resolves(getSampleCommandResponse('oracleSecurityPatchAssessment'))
     .on(SendCommandCommand, params => {
         return /# Get SQL Server services/.test(params.Parameters.commands?.[0]);
     })
@@ -1641,6 +1643,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'oracleStorageAssessment',
             JSON.stringify(getCommandInvocationResponse.getOracleStorageAssessmentData)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oracleSecurityPatchAssessment'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'oracleSecurityPatchAssessment',
+            JSON.stringify(getCommandInvocationResponse.oracleSecurityPatchAssessmentData)
         )
     )
     .on(GetCommandInvocationCommand, {

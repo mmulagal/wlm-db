@@ -47,7 +47,7 @@ import { Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import { triggerInstancePerformanceAssessment } from './database-hosts-operations';
 import processWellArchitectedAssessmentNotifications from './continuous-optimization/notification';
-import { refreshOracleCpuCatalog } from './continuous-optimization/oracle/cpu-catalog-operations';
+import { refreshOracleCpuCatalog } from './continuous-optimization/oracle/oracle-cpu-catalog-operations';
 import { deleteAllButLatestRecordPerConfigDataType } from '../lib/database/database-instance-config';
 import { listAllManagedInstances, listTrackedEc2Operation } from './database/database-operations';
 

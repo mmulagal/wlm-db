@@ -4172,6 +4172,19 @@
     "disableSelinuxResponse": {
         "status": "optimized"
     },
+    "oracleSecurityPatchAssessmentData": {
+        "version": "19.22.0.0.0",
+        "appliedPatches": [
+            {
+                "patchId": "35943157",
+                "description": "Database Release Update : 19.22.0.0.240116 (35943157)"
+            },
+            {
+                "patchId": "29585399",
+                "description": "OCW RELEASE UPDATE 19.3.0.0.0 (29585399)"
+            }
+        ]
+    },
     "checkLinuxRepoConnectivityResponse": {
         "status": "success",
         "packageManager": "dnf",

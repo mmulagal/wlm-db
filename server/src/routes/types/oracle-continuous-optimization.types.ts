@@ -81,9 +81,28 @@ const HostOsPatchDriftResponse = Type.Intersect([
 ]);
 type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
 
+const OracleSecurityPatchDriftResponse = Type.Intersect([
+    OracleGenericParameterDriftResponse,
+    Type.Object({
+        missingPatchDetails: Type.Optional(
+            Type.Array(
+                Type.Object({
+                    cveId: Type.String(),
+                    component: Type.String(),
+                    description: Type.String(),
+                    releaseDate: Type.String(),
+                    releaseName: Type.String()
+                })
+            )
+        )
+    })
+]);
+type OracleSecurityPatchDriftResponseType = Static<typeof OracleSecurityPatchDriftResponse>;
+
 const OracleDriftAssessmentResponse = Type.Object({
     storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
+    oracleSecurityPatch: Type.Optional(Type.Union([OracleSecurityPatchDriftResponse, ErrorResponse])),
     crr: Type.Optional(Type.Union([GenericParameterDriftResponse, ErrorResponse])),
     snapcenterSnapshot: Type.Optional(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse])),
     dismissedConfigurations: Type.Optional(DismissedConfigurationsResponse),
@@ -181,6 +200,8 @@ export {
     StorageParameterDriftResponseType,
     HostOsPatchDriftResponse,
     HostOsPatchDriftResponseType,
+    OracleSecurityPatchDriftResponse,
+    OracleSecurityPatchDriftResponseType,
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerHostType,
     DriftAssessmentResponsePerAccount,

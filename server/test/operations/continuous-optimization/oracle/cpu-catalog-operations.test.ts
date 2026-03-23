@@ -1,6 +1,6 @@
 import nock from 'nock';
 import { vi, describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
-import { refreshOracleCpuCatalog } from '../../../../src/operations/continuous-optimization/oracle/cpu-catalog-operations';
+import { refreshOracleCpuCatalog } from '../../../../src/operations/continuous-optimization/oracle/oracle-cpu-catalog-operations';
 
 const mockReadFile = vi.fn();
 const mockWriteFile = vi.fn().mockResolvedValue(undefined);

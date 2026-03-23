@@ -835,6 +835,7 @@ interface DatabaseInstanceDismissConfigs {
     compute?: InstanceDismissParams;
     license?: InstanceDismissParams;
     hostOsPatch?: InstanceDismissParams;
+    oracleSecurityPatch?: InstanceDismissParams;
     mtuAlignment?: InstanceDismissParams;
     snapcenterSnapshot?: InstanceDismissParams;
     highAvailability?: InstanceDismissParams[];

@@ -17,7 +17,8 @@ enum AssessmentCategories {
     AWS_BACKUP = 'aws-backup',
     CRR = 'crr',
     HIGH_AVAILABILITY = 'high-availability',
-    MTU_ALIGNMENT = 'mtu-alignment'
+    MTU_ALIGNMENT = 'mtu-alignment',
+    ORACLE_SECURITY_PATCH = 'oracle-security-patch'
 }
 
 enum AssessmentCategoriesOracle {
@@ -25,7 +26,8 @@ enum AssessmentCategoriesOracle {
     MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes',
     HOST_OS_PATCH = 'host-os-patch',
     CRR = 'crr',
-    SNAPCENTER_SNAPSHOT = 'snapcenter-snapshot'
+    SNAPCENTER_SNAPSHOT = 'snapcenter-snapshot',
+    ORACLE_SECURITY_PATCH = 'oracle-security-patch'
 }
 
 enum AssessmentTriggeredBy {

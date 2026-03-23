@@ -111,6 +111,7 @@ const DismissedConfigurationsResponse = Type.Object({
     compute: Type.Optional(InstanceDismissResponse),
     license: Type.Optional(InstanceDismissResponse),
     hostOsPatch: Type.Optional(InstanceDismissResponse),
+    oracleSecurityPatch: Type.Optional(InstanceDismissResponse),
     rssConfig: Type.Optional(InstanceDismissResponse),
     maxDOP: Type.Optional(InstanceDismissResponse),
     mssqlPatch: Type.Optional(InstanceDismissResponse),
