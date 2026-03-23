@@ -21,7 +21,7 @@ import { MappedOnTapVolumeResponse } from '../utils/common-types';
 import { paginateListInstanceConfigData } from './database/instance-config-operations';
 import { countDatabaseInstances, getGroupedDatabaseInstancesBySeverity, groupResources } from '../lib/database/db';
 import { GroupedDatabaseInstancesBySeverityResult } from '../lib/database/db-types';
-import { IS_DEMO_FLOW, hyphenatedToPascalCaseWithSpace } from '../utils/utils';
+import { IS_DEMO_FLOW, isDemoFlow, hyphenatedToPascalCaseWithSpace } from '../utils/utils';
 import { generateFocusWidgetNameMap } from '../utils/golden-config-utils';
 
 const logger = getLogger();
@@ -235,7 +235,7 @@ async function getFocusStatus(
         };
     }
 
-    if (assessedInstanceCount?._count?.id === 0) {
+    if (!isDemoFlow() && assessedInstanceCount?._count?.id === 0) {
         return {
             items: [
                 {

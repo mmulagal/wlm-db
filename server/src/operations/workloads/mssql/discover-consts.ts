@@ -851,8 +851,8 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
 
       try {
         $sqlServiceBinaryPath = ($sqlService.PathName  -Replace "-s.*", "").Trim().Trim('"')
-        If (Test-Path $sqlServiceBinaryPath) {
-          $info = (Get-Item $sqlServiceBinaryPath).VersionInfo
+        If (Test-Path -LiteralPath $sqlServiceBinaryPath) {
+          $info = (Get-Item -LiteralPath $sqlServiceBinaryPath).VersionInfo
           $responseObject['sqlServerMajorVersion'] = $info.ProductMajorPart
           $responseObject['sqlServerVersion'] = $info.ProductVersion
         } Else {

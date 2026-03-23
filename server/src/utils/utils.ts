@@ -1399,6 +1399,8 @@ function getFsxNameFromTags(tags?: Tag[]) {
 
 const IS_DEMO_FLOW = process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
 const IS_PROD = process.env.NODE_ENV === 'production';
+// The existing IS_DEMO_FLOW is static, we need a runtime variable for UT
+const isDemoFlow = () => process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
 
 function isMultiAzDeployment(deploymentType: string) {
     return [SqlServerDeploymentModel.SQL_AOAG_SHORT, SqlServerDeploymentModel.SQL_FCI_SHORT, 'DG'].includes(
@@ -1687,5 +1689,6 @@ export {
     ASSESSMENT_SCRIPT_FILENAMES,
     compressSsmCommand,
     parseAssessmentFileContent,
-    validateWithSchema
+    validateWithSchema,
+    isDemoFlow
 };

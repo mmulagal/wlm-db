@@ -170,8 +170,11 @@ describe('getFocusStatus - assessment not run warning', () => {
     const TEST_INSTANCE_ID = 'i-assessment-warning-test';
     let queryRawSpy: MockInstance;
     let aggregateSpy: MockInstance;
+    let nodeEnvironment: string;
 
     beforeAll(async () => {
+        nodeEnvironment = process.env.NODE_ENV || 'demo';
+        process.env.NODE_ENV = 'local_dev';
         // Create a database instance without any assessment results
         await upsertDatabaseInstance(TEST_ACCOUNT_ID, {
             databaseInstanceId: TEST_INSTANCE_ID,
@@ -205,6 +208,8 @@ describe('getFocusStatus - assessment not run warning', () => {
         aggregateSpy.mockRestore();
         // Clean up test data
         await deleteDatabaseInstance(TEST_ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, TEST_RESOURCE_ID, [TEST_INSTANCE_ID]);
+        // Reset the node environemnt variable
+        process.env.NODE_ENV = nodeEnvironment;
     });
 
     test('should return info severity when database instances exist but no assessment results', async () => {
