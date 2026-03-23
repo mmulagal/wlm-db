@@ -367,7 +367,10 @@ const InventoryV2 = () => {
                             availabilityGroupList,
                             managementStatus,
                             ...(perHost?.hostType === DBType.ORACLE && {
-                                protocol: perHost?.sqlServerInstances?.[0]?.protocol || GENERAL.NOT_AVAILABLE,
+                                protocol:
+                                    perRow?.protocol ||
+                                    perHost?.sqlServerInstances?.[0]?.protocol ||
+                                    GENERAL.NOT_AVAILABLE,
                                 sizeRange: perRow?.databases?.[0]?.size
                                     ? categorizeStorageSize(formatSize(perRow?.databases?.[0]?.size))
                                     : GENERAL.NOT_AVAILABLE,

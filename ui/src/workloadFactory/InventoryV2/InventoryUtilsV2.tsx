@@ -304,15 +304,14 @@ export const formatOracleOfflineAssessmentToInventoryData = (
 
             // Build storage array from assessments.storage.fileSystems for instance level
             const instanceStorageArray: DiscoveredStorageObj[] = [];
-            const instanceFileSystems =
-                assessments?.storage?.fileSystems ||
-                (assessments?.storageEndpoint ? [assessments?.storageEndpoint] : []);
+            const fsxIdValue = assessments?.fileSystemId || assessments?.storageEndpoint;
+            const instanceFileSystems = assessments?.storage?.fileSystems || (fsxIdValue ? [fsxIdValue] : []);
             if (instanceFileSystems && Array.isArray(instanceFileSystems)) {
                 instanceFileSystems.forEach((fsId: string) => {
                     instanceStorageArray.push({
                         id: fsId,
-                        protocol: '',
-                        svmId: '', // Not available in WAD assessment data
+                        protocol: assessments?.storageProtocol || '',
+                        svmId: '',
                         type: DETECT_HOST_VAR.FSXN
                     });
                 });
@@ -321,10 +320,11 @@ export const formatOracleOfflineAssessmentToInventoryData = (
             formattedInstances.push({
                 databaseInstanceId: instanceData?.databaseInstanceId,
                 databaseInstanceName: instanceData?.databaseInstanceName,
-                databaseHostId: hostId, // Added for WAD API calls
+                databaseHostId: hostId,
                 statusColText: INVENTORY_STATUS.UNMANAGED,
                 sqlServerDeploymentType: assessments?.deploymentType,
-                fsxId: assessments?.storageEndpoint,
+                fsxId: fsxIdValue,
+                protocol: assessments?.storageProtocol || '',
                 isDetected: false,
                 isManaged: false,
                 isWad: true,
