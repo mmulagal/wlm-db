@@ -10,9 +10,9 @@ const CRROptimizeTable = ({ type, data, lastColDetails, handleBulkAction, isWad 
     const tableData = useMemo(() => {
         let id = 0;
         return data?.objectsInViolation?.map((row: any) => ({
-            volumeName: row,
+            volumeName: typeof row === 'string' ? row : row?.ontapVolumeName,
             id: String(id++),
-            cellProps: getWadCellProps(isWad, t, { ...row.cellProps, isDisabled: true })
+            cellProps: getWadCellProps(isWad, t, { ...row?.cellProps, isDisabled: true })
         }));
     }, [data, isWad, t]);
     const TableColDefs: ColumnProps[] = [

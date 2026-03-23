@@ -1128,7 +1128,8 @@ function generateDetailedConfigurationData(
         'shared-storage': () => createObjectsInViolationData(config, details, 'LUN Names'),
         'tempdb-files-location': () => createObjectsInViolationData(config, details, 'Databases'),
         'data-files-location': () => createObjectsInViolationData(config, details, 'Databases'),
-        'log-files-location': () => createObjectsInViolationData(config, details, 'Databases')
+        'log-files-location': () => createObjectsInViolationData(config, details, 'Databases'),
+        crr: () => createObjectsInViolationData(config, details, 'Volume Names')
     };
 
     const handler = specialHandlers[config.name];
