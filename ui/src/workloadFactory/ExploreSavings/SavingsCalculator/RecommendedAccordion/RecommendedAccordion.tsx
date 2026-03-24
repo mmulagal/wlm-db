@@ -286,11 +286,16 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx }: any) => 
                 editionUpgradeCheck
             };
         } else {
+            const isFsxw =
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW;
             mssqlInstanceData = {
                 serverInstallationMode: selectedHostDetails?.recommendedInstance?.serverInstallationMode,
                 actualServerInstallationMode: selectedHostDetails?.serverInstallationMode,
                 serverEdition,
-                serverVersion: selectedHostDetails?.recommendedInstance?.serverVersion,
+                serverVersion: isFsxw
+                    ? windowsServer || selectedHostDetails?.recommendedInstance?.serverVersion
+                    : selectedHostDetails?.recommendedInstance?.serverVersion,
                 instanceType,
                 windowsServer
             };
