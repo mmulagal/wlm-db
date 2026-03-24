@@ -1,8 +1,8 @@
-import { Button } from '@netapp/design-system';
-import { DsTypography } from '@tlveng/wlm-ds';
+import { Button, TooltipInfo } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './DatabaseListTable.module.scss';
@@ -46,6 +46,19 @@ const DatabaseListTable = () => {
     DatabaseHostOverviewApiV2();
     const navigate = useNavigate();
     const databaseTableRef = useRef<HTMLDivElement>(null);
+    const [tableWidth, setTableWidth] = useState(0);
+
+    useEffect(() => {
+        const element = databaseTableRef.current;
+        if (!element) return;
+        setTableWidth(element.offsetWidth);
+        const observer = new ResizeObserver(entries => {
+            const newWidth = entries[0]?.contentRect.width ?? 0;
+            setTableWidth(prev => (prev !== newWidth ? newWidth : prev));
+        });
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, []);
 
     const enrichedData = useMemo(() => {
         if (!data?.length) return [];
@@ -137,31 +150,39 @@ const DatabaseListTable = () => {
                       renderCell: (cellData: any, rowData: any) => {
                           if (!cellData)
                               return (
-                                  <DsTypography variant="Regular_14">
-                                      {t('databases.general.not-available')}
-                                  </DsTypography>
+                                  <div className={styles.naWithTooltip}>
+                                      <TooltipInfo trigger="hover">
+                                          <div>
+                                              <DsTypography variant="Regular_13">
+                                                  {t('databases.general.availability-group-na-tooltip')}
+                                              </DsTypography>
+                                          </div>
+                                      </TooltipInfo>
+                                      <DsTypography variant="Regular_14">
+                                          {t('databases.general.not-available')}
+                                      </DsTypography>
+                                  </div>
                               );
-                          const replicaCount = rowData?.replicaDatabases?.length || 0;
-                          const roleLabel =
-                              rowData?.replicaRole?.toUpperCase() === REPLICA_ROLES.PRIMARY
-                                  ? `${t('databases.general.primary')} | ${replicaCount} ${
-                                        replicaCount !== 1
-                                            ? t('databases.general.replicas').toLowerCase()
-                                            : t('databases.general.replica').toLowerCase()
-                                    }`
-                                  : rowData?.replicaRole?.toUpperCase() === REPLICA_ROLES.SECONDARY
-                                  ? `${t('databases.general.secondary')} | ${replicaCount} ${
-                                        replicaCount !== 1
-                                            ? t('databases.general.replicas').toLowerCase()
-                                            : t('databases.general.replica').toLowerCase()
-                                    }`
+                          const role = rowData?.replicaRole?.toUpperCase();
+                          const roleText =
+                              role === REPLICA_ROLES.PRIMARY
+                                  ? t('databases.general.primary')
+                                  : role === REPLICA_ROLES.SECONDARY
+                                  ? t('databases.general.secondary')
                                   : '';
+                          const replicaCount = rowData?.replicaDatabases?.length || 0;
+                          const replicaLabel = `${replicaCount} ${
+                              replicaCount !== 1
+                                  ? t('databases.general.replicas').toLowerCase()
+                                  : t('databases.general.replica').toLowerCase()
+                          }`;
                           return (
                               <div>
                                   <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                                  {roleLabel && (
+                                  {roleText && (
                                       <DsTypography variant="Regular_12" className={styles.colText}>
-                                          {roleLabel}
+                                          {`${roleText} | `}
+                                          {replicaDatabasesLoading ? <DsFlashingDotsLoader /> : replicaLabel}
                                       </DsTypography>
                                   )}
                               </div>
@@ -223,12 +244,12 @@ const DatabaseListTable = () => {
     const ExpandedRow = useCallback(
         ({ rowData }: any) => (
             <ResourcePageReplicaTable
-                width={databaseTableRef.current ? databaseTableRef.current.offsetWidth : 0}
+                width={tableWidth}
                 replicaDatabases={rowData?.replicaDatabases || []}
                 isLoading={replicaDatabasesLoading}
             />
         ),
-        [databaseTableRef, replicaDatabasesLoading]
+        [tableWidth, replicaDatabasesLoading]
     );
 
     const tableComponentProps = {

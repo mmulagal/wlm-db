@@ -32,6 +32,12 @@
         }
     }
 
+    .naWithTooltip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
     [class*='last-col']:not([class*='header-cell']) {
         position: relative !important;
     }

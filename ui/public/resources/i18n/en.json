@@ -78,6 +78,7 @@
             "not-available": "n/a",
             "not-available-table-columns": "n/a",
             "availability-group": "Availability Group",
+            "availability-group-na-tooltip": "Database is not part of an Availability Group",
             "role": "Role",
             "sync-state": "Sync State",
             "failed-to-fetch-replica-databases": "Failed to fetch replica databases",

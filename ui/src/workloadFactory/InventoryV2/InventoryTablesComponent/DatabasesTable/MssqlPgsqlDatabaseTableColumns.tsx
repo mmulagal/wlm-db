@@ -135,9 +135,18 @@ export function MssqlPgsqlDatabaseTableColDefs({
                               );
                           }
                           return (
-                              <DsTypography variant="Regular_13" className={styles.colText}>
-                                  {cellData || t('databases.general.not-available-table-columns')}
-                              </DsTypography>
+                              <div className={styles.naWithTooltip}>
+                                  <TooltipInfo trigger="hover">
+                                      <div>
+                                          <DsTypography variant="Regular_13">
+                                              {t('databases.general.availability-group-na-tooltip')}
+                                          </DsTypography>
+                                      </div>
+                                  </TooltipInfo>
+                                  <DsTypography variant="Regular_13" className={styles.colText}>
+                                      {t('databases.general.not-available-table-columns')}
+                                  </DsTypography>
+                              </div>
                           );
                       }
                   }

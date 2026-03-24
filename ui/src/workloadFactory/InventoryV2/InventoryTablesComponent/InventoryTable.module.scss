@@ -88,6 +88,16 @@
         padding: 12px 0 16px 0;
     }
 
+    .tooltip-icon {
+        span:hover {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+    }
+
     .tooltipContainer {
         display: flex;
         gap: 8px;
