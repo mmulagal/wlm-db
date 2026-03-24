@@ -1118,7 +1118,7 @@ ${pythonLogger('storageOsAssessment.log')}
 log('Combining OS and Oracle results')
 
 try:
-    os_results = json.loads('$OS_RESULTS')
+    os_results = json.loads("""$OS_RESULTS""")
     oracle_results = json.loads("""$ORACLE_RESULTS""")
     
     # Add oracle-parameters to the os section

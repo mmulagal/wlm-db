@@ -57,13 +57,17 @@ parse_sqlplus_output() {
 }
 `;
 
-const getOracleHomePath = (dbSid: string) => `
+const getOracleHomePath = (dbSid: string) => {
+    // If the caller passes a shell variable reference (e.g. '$ORACLE_SID'),
+    // escape the '$' so it survives expansion in unquoted heredocs.
+    const safeSid = dbSid.startsWith('$') ? `\\${dbSid}` : dbSid;
+    return `
     # Check if oratab exists
     if [ ! -f /etc/oratab ]; then
         echo "[]"
         exit 0
     fi
-    dbsid="${dbSid}"
+    dbsid="${safeSid}"
     oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
     if [ -z "$oratab_entries" ]; then
         echo "No entries found in /etc/oratab."
@@ -82,6 +86,7 @@ const getOracleHomePath = (dbSid: string) => `
     done <<< "$oratab_entries"
     exit 1
 `;
+};
 
 const bashExportOracleHomeFromOratab = (sidForOratab: string, escapePathVariable = false, includePath = true) => {
     const pathInner = escapePathVariable ? String.raw`$ORACLE_HOME/bin:\$PATH` : '$ORACLE_HOME/bin:$PATH';

@@ -174,9 +174,9 @@ async function calculateOracleSecurityPatchDrift(
             };
         }
 
-        const missingPatchDetails = findMissingPatches(version, appliedPatches, catalog);
+        const missingPatches = findMissingPatches(version, appliedPatches, catalog);
 
-        const status = !isEmpty(missingPatchDetails) ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        const status = !isEmpty(missingPatches) ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
 
         const objectsInViolation = status === AssessmentStatus.NOT_OPTIMIZED ? [databaseInstanceName] : [];
 
@@ -187,7 +187,13 @@ async function calculateOracleSecurityPatchDrift(
             objectsInViolation,
             totalObjectsAssessed: 1,
             totalObjectsInViolation: objectsInViolation.length,
-            ...(status === AssessmentStatus.NOT_OPTIMIZED && !isEmpty(missingPatchDetails) && { missingPatchDetails })
+            ...(status === AssessmentStatus.NOT_OPTIMIZED &&
+                !isEmpty(missingPatches) && {
+                    missingPatchDetails: {
+                        missingPatchesCount: missingPatches.length,
+                        missingPatches
+                    }
+                })
         };
     } catch (error) {
         const errorMessage = `Error calculating Oracle security patch drift: ${error}`;

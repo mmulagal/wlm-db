@@ -85,15 +85,18 @@ const OracleSecurityPatchDriftResponse = Type.Intersect([
     OracleGenericParameterDriftResponse,
     Type.Object({
         missingPatchDetails: Type.Optional(
-            Type.Array(
-                Type.Object({
-                    cveId: Type.String(),
-                    component: Type.String(),
-                    description: Type.String(),
-                    releaseDate: Type.String(),
-                    releaseName: Type.String()
-                })
-            )
+            Type.Object({
+                missingPatchesCount: Type.Number(),
+                missingPatches: Type.Array(
+                    Type.Object({
+                        cveId: Type.String(),
+                        component: Type.String(),
+                        description: Type.String(),
+                        releaseDate: Type.String(),
+                        releaseName: Type.String()
+                    })
+                )
+            })
         )
     })
 ]);

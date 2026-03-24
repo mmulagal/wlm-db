@@ -49,6 +49,7 @@ import {
     ORACLE_STORAGE_ASSESSMENT_DATA,
     ORACLE_ASSESSMENT_CRR_CONFIG_DATA,
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
+    ORACLE_SECURITY_PATCH_ASSESSMENT_DATA,
     createAssessmentDataWithRetry
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP, summarizeFirstLevel, parseAssessmentFileContent } from '../utils/utils';
@@ -56,7 +57,7 @@ import { FSXConfigurationType } from '../routes/types/deployment.types';
 import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
 import { describeFSxVolumes } from '../lib/aws/fsx';
-import { AssessmentCategories, AssessmentStatus } from '../utils/continous-optimization-consts';
+import { AssessmentCategories, AssessmentCategoriesOracle, AssessmentStatus } from '../utils/continous-optimization-consts';
 import { offlineAssessmentDemoFCI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoFCI';
 import { offlineAssessmentDemoOracleISCSI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoOracleISCSI';
 import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
@@ -1039,10 +1040,17 @@ async function createAssessmentDataForOracle(
         config_data: ORACLE_ASSESSMENT_CRR_CONFIG_DATA
     };
 
+    const instanceSecurityPatchConfigDataRecord = {
+        ...baseConfig,
+        config_data_type: AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
+        config_data: ORACLE_SECURITY_PATCH_ASSESSMENT_DATA
+    };
+
     const configDataRecords = [
         instanceConfigDataRecord,
         instanceConfigMappedOntapDataRecord,
-        instanceCRRConfigDataRecord
+        instanceCRRConfigDataRecord,
+        instanceSecurityPatchConfigDataRecord
     ];
 
     await createAssessmentDataWithRetry(
