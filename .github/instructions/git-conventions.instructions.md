@@ -1,6 +1,6 @@
 ---
-description: Git workflow - branch naming, commit messages, PR titles, pre-push validation
-applyTo: "**/*"
+description: Git workflow - branch naming, commit messages, pull requests, pre-push validation
+applyTo: '**/*'
 ---
 
 # Git Workflow & Conventions
@@ -20,18 +20,23 @@ npm run apidoc                  # No OpenAPI violations
 
 **Default Branch:** `master`
 
-- **Pattern:** `copilot/GH-<issue-number>-<description>`
-- **Regex:** `^copilot/GH-[0-9]+-[a-zA-Z0-9-_]+$`
-- If no issue number is available, ask the user to create an issue first.
+-   **Pattern:** `copilot/GH-<issue-number>-<description>`
+-   **Regex:** `^copilot/GH-[0-9]+-[a-zA-Z0-9-_]+$`
+-   If no issue number is available, ask the user to create an issue first.
 
 ## Commit Messages
 
-- **Pattern:** `GH-<issue-number>: <description>` (space after colon)
-- **Regex:** `^GH-[0-9]+:\s.*$`
+-   **Pattern:** `GH-<issue-number>: <description>` (space after colon)
+-   **Regex:** `^GH-[0-9]+:\s.*$`
 
-## PR Titles
+## Pull Requests
 
-Same format as commit messages: `GH-<issue-number>: <description>`
+When you open a PR for a GitHub issue, the **PR title must reference that issue** using the same rules as [commit messages](#commit-messages).
+
+-   **Pattern:** `GH-<issue-number>: <description>` (space after colon)
+-   **Regex:** `^GH-[0-9]+:\s.*$`
+
+Do not use a title with no `GH-<issue-number>:` prefix; non-compliant titles are rejected by repository rules. See **Examples** below for valid and invalid titles (same format as commits).
 
 ## Examples
 

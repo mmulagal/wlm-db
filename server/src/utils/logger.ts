@@ -62,6 +62,46 @@ function hideSecretsValues(obj: any, depth = 0) {
     return obj;
 }
 
+/** Expand nested Errors to plain objects, then mask secrets so cause chains and error fields are covered. */
+function serializeErrorsThenMaskSecrets(safeLog: any): any {
+    const prepared = safeLog instanceof Error ? safeLog : serializeErrors(safeLog);
+    return hideSecretsValues(prepared);
+}
+
+function serializeErrors(obj: unknown, depth = 0): unknown {
+    if (depth > MAX_PROTOTYPE_DEPTH || obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+    if (obj instanceof Error) {
+        const err = obj as Error & { cause?: unknown };
+        const serialized: Record<string, unknown> = {
+            name: obj.name,
+            message: obj.message,
+            stack: obj.stack
+        };
+        if ('cause' in err && err.cause !== undefined) {
+            serialized.cause = serializeErrors(err.cause, depth + 1);
+        }
+        for (const key of Object.keys(obj)) {
+            if (key !== 'name' && key !== 'message' && key !== 'stack' && key !== 'cause') {
+                serialized[key] = serializeErrors((obj as unknown as Record<string, unknown>)[key], depth + 1);
+            }
+        }
+        return serialized;
+    }
+    if (isArray(obj)) {
+        return (obj as unknown[]).map(item => serializeErrors(item, depth + 1));
+    }
+    if (isPlainObject(obj)) {
+        const result: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(obj)) {
+            result[key] = serializeErrors(value, depth + 1);
+        }
+        return result;
+    }
+    return obj;
+}
+
 function getTraceData() {
     const activeCtx = context?.active();
     const span = trace?.getSpan(activeCtx);
@@ -124,7 +164,7 @@ function initialize() {
                                                 type: 'uncloneable_object'
                                             };
                                         }
-                                        return stringifyObject(hideSecretsValues(safeLog));
+                                        return stringifyObject(serializeErrorsThenMaskSecrets(safeLog));
                                     }
                                     return log;
                                 } catch (error) {
@@ -210,4 +250,4 @@ export default function getLogger(category: 'server' | 'got' | 'simulator' | 'ac
     return log4js.getLogger(category);
 }
 
-export { hideSecretsValues, getTraceData };
+export { hideSecretsValues, getTraceData, serializeErrors };
