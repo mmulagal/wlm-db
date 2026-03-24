@@ -84,19 +84,17 @@ type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
 const OracleSecurityPatchDriftResponse = Type.Intersect([
     OracleGenericParameterDriftResponse,
     Type.Object({
+        missingPatchesCount: Type.Number(),
         missingPatchDetails: Type.Optional(
-            Type.Object({
-                missingPatchesCount: Type.Number(),
-                missingPatches: Type.Array(
-                    Type.Object({
-                        cveId: Type.String(),
-                        component: Type.String(),
-                        description: Type.String(),
-                        releaseDate: Type.String(),
-                        releaseName: Type.String()
-                    })
-                )
-            })
+            Type.Array(
+                Type.Object({
+                    cveId: Type.String(),
+                    component: Type.String(),
+                    description: Type.String(),
+                    releaseDate: Type.String(),
+                    releaseName: Type.String()
+                })
+            )
         )
     })
 ]);

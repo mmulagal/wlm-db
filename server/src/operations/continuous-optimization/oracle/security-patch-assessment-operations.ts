@@ -187,12 +187,10 @@ async function calculateOracleSecurityPatchDrift(
             objectsInViolation,
             totalObjectsAssessed: 1,
             totalObjectsInViolation: objectsInViolation.length,
+            missingPatchesCount: missingPatches.length,
             ...(status === AssessmentStatus.NOT_OPTIMIZED &&
                 !isEmpty(missingPatches) && {
-                    missingPatchDetails: {
-                        missingPatchesCount: missingPatches.length,
-                        missingPatches
-                    }
+                    missingPatchDetails: missingPatches
                 })
         };
     } catch (error) {
