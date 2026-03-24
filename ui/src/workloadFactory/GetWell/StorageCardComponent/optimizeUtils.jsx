@@ -1,13 +1,19 @@
 import i18next from 'i18next';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
-import { ASSESSMENT_CONFIG_NAMES, DBType, FROM_DIALOG, GETWELL_STATUS } from '../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    DBType,
+    FROM_DIALOG,
+    GETWELL_STATUS,
+    MSSQL_UNSUPPORTED_FIX_TYPES,
+    ORACLE_UNSUPPORTED_FIX_TYPES,
+    OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES,
+    UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES
+} from '../../../utils/consts';
 import DialogContent from './DialogContent/DialogContent';
 import store from '../../../store/store';
 import { setDialogErrorWithTooltip } from '../../../store/workloadFactory/dialogComponentSlice';
-
-// WAD disabled message for primary button tooltip
-const WAD_DISABLED_MESSAGE = 'databases.wad.tab-disabled-message';
 
 // Check if linked config acknowledgment is required and show error if not acknowledged
 export const checkLinkedConfigAcknowledge = () => {
@@ -21,22 +27,6 @@ export const checkLinkedConfigAcknowledge = () => {
                 tooltipText: i18next.t('databases.well-architect.linked-config.acknowledge-error')
             })
         );
-        return true;
-    }
-    return false;
-};
-
-const primaryButtonDisable = (engineType, type) => {
-    // oracle storage layout 6 configs fix are disabled
-    if (
-        engineType === DBType.ORACLE &&
-        (type === ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT ||
-            type === ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT ||
-            type === ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT ||
-            type === ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT ||
-            type === ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT ||
-            type === ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT)
-    ) {
         return true;
     }
     return false;
@@ -57,6 +47,7 @@ export const handleDialog = (
     // Oracle FILE_SYSTEM_HEADROOM with permissions and under provisioned status - show enabled Continue button
     if (
         engineType === DBType.ORACLE &&
+        !isWad &&
         type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
         (!cardData?.missingPermissions || cardData?.missingPermissions.length === 0) &&
         cardData?.block_two?.value === GETWELL_STATUS.UNDER_PROVISIONED
@@ -72,6 +63,7 @@ export const handleDialog = (
                         recommendedSizeInGib={cardData?.recommendedSizeInGib}
                         engineType={engineType}
                         status={cardData?.block_two?.value}
+                        isWad={isWad}
                     />
                 }
                 primaryButton={GENERAL.CONTINUE}
@@ -83,20 +75,18 @@ export const handleDialog = (
                     closeDialog();
                 }}
                 customClass="innerPage"
-                primaryButtonDisabled={isWad}
-                primaryButtonTooltip={isWad ? i18next.t(WAD_DISABLED_MESSAGE) : ''}
             />
         );
     } else if (
-        type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
-        type === ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH ||
-        type === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
-        type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
-        type === ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH ||
-        (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
+        isWad ||
+        MSSQL_UNSUPPORTED_FIX_TYPES.has(type) ||
+        ORACLE_UNSUPPORTED_FIX_TYPES.has(type) ||
+        (OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(type) &&
             cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) ||
-        (engineType === DBType.ORACLE && type === ASSESSMENT_CONFIG_NAMES.CRR) ||
-        (engineType === DBType.ORACLE && type === ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT)
+        (UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(type) &&
+            cardData?.block_two?.value === GETWELL_STATUS.UNDER_PROVISIONED &&
+            cardData?.missingPermissions &&
+            cardData?.missingPermissions.length > 0)
     ) {
         setDialog(
             <DialogComponent
@@ -110,6 +100,7 @@ export const handleDialog = (
                         missingPatchList={cardData?.missingPatchList}
                         engineType={engineType}
                         status={cardData?.block_two?.value}
+                        isWad={isWad}
                     />
                 }
                 primaryButton="Close"
@@ -133,6 +124,7 @@ export const handleDialog = (
                         missingPermissions={cardData?.missingPermissions}
                         recommendedSizeInGib={cardData?.recommendedSizeInGib}
                         engineType={engineType}
+                        isWad={isWad}
                     />
                 }
                 primaryButton={GENERAL.CONTINUE}
@@ -148,46 +140,9 @@ export const handleDialog = (
                     closeDialog();
                 }}
                 customClass="innerPage"
-                primaryButtonDisabled={isWad || primaryButtonDisable(engineType, type)}
-                primaryButtonTooltip={isWad ? i18next.t(WAD_DISABLED_MESSAGE) : ''}
-                hidePrimaryButton={
-                    (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
-                        type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
-                        type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) &&
-                    cardData?.missingPermissions &&
-                    cardData?.missingPermissions.length > 0
-                }
             />
         );
     }
-};
-
-const isDialogPrimaryBtnDisabled = rowData => {
-    if (
-        rowData?.engineType === DBType.MSSQL &&
-        (rowData?.data?.name === 'OS type' || rowData?.data?.name === 'NTFS allocation unit size')
-    ) {
-        return true;
-    }
-    if (
-        rowData?.engineType === DBType.ORACLE &&
-        (rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.SELINUX ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS ||
-            rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME)
-    ) {
-        return true;
-    }
-    return false;
 };
 
 export const handleOntapDialog = (
@@ -200,16 +155,17 @@ export const handleOntapDialog = (
     isWad = false
 ) => {
     // Check if this is an ASM configuration that should only have a Close button
-    const isCloseButton =
-        rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
-        rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
-        rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
-        rowData?.data?.name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE;
+    const isOracleWithUnsupportedFix =
+        rowData?.engineType === DBType.ORACLE && ORACLE_UNSUPPORTED_FIX_TYPES.has(rowData?.data?.name);
+    const isMssqlWithUnsupportedFix =
+        rowData?.engineType === DBType.MSSQL && MSSQL_UNSUPPORTED_FIX_TYPES.has(rowData?.data?.name);
+
+    const isCloseButton = isWad || isOracleWithUnsupportedFix || isMssqlWithUnsupportedFix;
     if (isCloseButton) {
         setDialog(
             <DialogComponent
                 header={`${rowData?.data?.name} `}
-                content={<DialogContent type={rowData?.data?.name} engineType={rowData?.engineType} />}
+                content={<DialogContent type={rowData?.data?.name} engineType={rowData?.engineType} isWad={isWad} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {
                     closeDialog();
@@ -221,18 +177,10 @@ export const handleOntapDialog = (
             />
         );
     } else {
-        // Determine primary button disabled state: isWad takes precedence, then check dialog-specific disabling
-        const isPrimaryDisabled = isWad || isDialogPrimaryBtnDisabled(rowData);
-        // Determine tooltip: isWad message takes precedence over "coming soon"
-        const primaryTooltip = isWad
-            ? i18next.t(WAD_DISABLED_MESSAGE)
-            : isDialogPrimaryBtnDisabled(rowData)
-            ? GENERAL.COMING_SOON
-            : '';
         setDialog(
             <DialogComponent
                 header={`${rowData?.data?.name} `}
-                content={<DialogContent type={rowData?.data?.name} engineType={rowData?.engineType} />}
+                content={<DialogContent type={rowData?.data?.name} engineType={rowData?.engineType} isWad={isWad} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -245,8 +193,6 @@ export const handleOntapDialog = (
                     closeDialog();
                 }}
                 customClass="innerPage"
-                primaryButtonDisabled={isPrimaryDisabled}
-                primaryButtonTooltip={primaryTooltip}
             />
         );
     }

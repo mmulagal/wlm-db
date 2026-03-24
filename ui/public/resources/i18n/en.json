@@ -513,6 +513,7 @@
             "impacted-resources": "Impacted resources",
             "log-drive-over-provisioned-error": "Over provisioned log drive size can not be optimized",
             "tempdb-drive-over-provisioned-error": "Over provisioned tempDB drive size can not be optimized",
+            "tempdb-drive-under-provisioned-missing-permissions-error": "Under provisioned tempDB drive size with missing permissions can not be optimized.",
             "file-system-headroom-over-provisioned-error": "Over provisioned headroom can not be optimized",
             "not-optimized-shared-drive": "Drive size optimization isn’t possible because data is on the same shared drive. You’ll need to change the storage layout before resizing the drive.",
             "dismiss-msg": {
@@ -538,6 +539,8 @@
             "bulk-fix-disable-for-asm": "Bulk fix is not supported for ASM configurations.",
             "coming-soon": "Coming soon",
             "fix-disabled": "Fix is not supported for this configuration.",
+            "over-provisioned-fix-disabled": "Over provisioned {{configName}} with missing permissions can not be optimized.",
+            "under-provisioned-missing-permissions-fix-disabled": "Under provisioned {{configName}} with missing permissions can not be optimized.",
             "bulk-fix-disabled": "Fix is not supported for optimized rows.",
             "bulk-dismiss-disabled-wad": "Dismiss is not supported for one-time assessment rows.",
             "bulk-postpone-disabled-wad": "Postpone is not supported for one-time assessment rows.",

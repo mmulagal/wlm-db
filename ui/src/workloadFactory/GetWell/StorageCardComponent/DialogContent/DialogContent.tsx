@@ -20,7 +20,11 @@ import {
     DATABASE_DEPLOYMENT_MODE,
     DBType,
     GETWELL_STATUS,
-    SQL_DEPLOYMENT_MODE
+    SQL_DEPLOYMENT_MODE,
+    MSSQL_UNSUPPORTED_FIX_TYPES,
+    ORACLE_UNSUPPORTED_FIX_TYPES,
+    OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES,
+    UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES
 } from '../../../../utils/consts';
 import { engineTypeText, ontapConfigTextSet } from '../../../../utils/dialogContentUtils';
 import MSSQLPatchDialog from './MSSQLPatchDialog';
@@ -48,6 +52,7 @@ import StorageSizingOracleDialog from './StorageSizingOracleDialog';
 import ComputeOracleDialog from './ComputeOracleDialog';
 import ResiliencyOracleDialog from './ResiliencyOracleDialog';
 import ApplicationOracleDialog from './ApplicationOracleDialog';
+import { ReactComponent as InfoIcon } from '../../../../assets/info.svg';
 
 interface SavingsOpportunity {
     savingsOpportunityPercentage?: number;
@@ -89,6 +94,50 @@ type DialogType = {
     engineType?: string;
     assessmentStatus?: boolean;
     status?: string;
+    isWad?: boolean;
+};
+
+type BannerConfig = { key: string; params?: Record<string, string> };
+
+const shouldShowUnsupportedFixBanner = (
+    type: string,
+    engineType: string,
+    isWad: boolean,
+    status?: string,
+    missingPermissions?: string[]
+): BannerConfig | '' => {
+    const isOracle = engineType === DBType.ORACLE;
+    const wadKey = isOracle ? 'databases.wad.tab-disabled-message-oracle' : 'databases.wad.tab-disabled-message';
+    const isOverProvisioned =
+        OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(type) && status === GETWELL_STATUS.OVER_PROVISIONED;
+    const isUnderProvisionedWithMissingPerms =
+        UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(type) &&
+        status === GETWELL_STATUS.UNDER_PROVISIONED &&
+        !!missingPermissions?.length;
+    const unsupportedFixSet = isOracle ? ORACLE_UNSUPPORTED_FIX_TYPES : MSSQL_UNSUPPORTED_FIX_TYPES;
+
+    const configNameLower = type.toLowerCase();
+
+    const rules: [boolean, BannerConfig][] = [
+        [isWad, { key: wadKey }],
+        [
+            isOverProvisioned,
+            { key: 'databases.well-architect.over-provisioned-fix-disabled', params: { configName: configNameLower } }
+        ],
+        [
+            isUnderProvisionedWithMissingPerms && type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
+            { key: 'databases.well-architect.tempdb-drive-under-provisioned-missing-permissions-error' }
+        ],
+        [
+            isUnderProvisionedWithMissingPerms,
+            {
+                key: 'databases.well-architect.under-provisioned-missing-permissions-fix-disabled',
+                params: { configName: configNameLower }
+            }
+        ],
+        [unsupportedFixSet.has(type), { key: 'databases.well-architect.fix-disabled' }]
+    ];
+    return rules.find(([condition]) => condition)?.[1] ?? '';
 };
 
 const DialogContent = ({
@@ -102,7 +151,8 @@ const DialogContent = ({
     objectsInViolation = [],
     engineType = DBType.MSSQL,
     assessmentStatus = false,
-    status
+    status,
+    isWad = false
 }: DialogType) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
@@ -112,7 +162,13 @@ const DialogContent = ({
         selectedDatabaseAoagStorageType,
         recommendedInstanceInBulk
     } = useAppSelector(state => state.getWellOptimize);
-
+    const showUnsupportedFixBanner = shouldShowUnsupportedFixBanner(
+        type,
+        engineType,
+        isWad,
+        status,
+        missingPermissions
+    );
     const generateRecommendedInstanceTypes = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         recommendationOptions?.forEach((option: RecommendationOption) => {
@@ -920,7 +976,19 @@ const DialogContent = ({
         }
     };
 
-    return <div className={styles.dialogContent}>{setContent()}</div>;
+    return (
+        <div className={styles.dialogContent}>
+            {showUnsupportedFixBanner && (
+                <div className={styles.unsupportedFixBanner}>
+                    <InfoIcon />
+                    <DsTypography variant="Regular_14">
+                        {t(showUnsupportedFixBanner.key, showUnsupportedFixBanner.params)}
+                    </DsTypography>
+                </div>
+            )}
+            {setContent()}
+        </div>
+    );
 };
 
 export default DialogContent;

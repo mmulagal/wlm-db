@@ -64,7 +64,11 @@ import {
     GW_CONFIG_OPTIMIZE_NA,
     MSSQL_IMPACTED_DRIVE_CONFIGS,
     ORACLE_IMPACTED_DRIVE_CONFIGS,
-    WLF_TABS
+    WLF_TABS,
+    MSSQL_UNSUPPORTED_FIX_TYPES,
+    ORACLE_UNSUPPORTED_FIX_TYPES,
+    OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES,
+    UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES
 } from '../../../utils/consts';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
@@ -119,7 +123,7 @@ const RecommendationTable = ({
     const { selectedHeaderTab } = useAppSelector(state => state.inventoryV2);
     // Get the full card data to check dismissed configurations count
     const fullCardData = useAppSelector(state => state.getWellOptimize.cardData);
-    const isWad = fullCardData?.isWad || false;
+    const isWad = (from === WLF_TABS.DASHBOARD ? dashboardInstanceData?.isWad : fullCardData?.isWad) || false;
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOracleStorageConfig] = useOptimizeOracleStorageConfigMutation();
@@ -129,11 +133,6 @@ const RecommendationTable = ({
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
     const [dismissOracleAssessment] = useDismissOracleAssessmentMutation();
-
-    const isDialogPrimaryBtnDisabled = (rowData: any) =>
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.OS_TYPE ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.NTFS_ALLOCATION_UNIT_SIZE ||
-        rowData?.name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER;
 
     const getHaPayload = (configurationName: string) => ({
         hostsToOptimize: [
@@ -543,22 +542,22 @@ const RecommendationTable = ({
         isTableRowConfigurationActivating(rowData, fullCardData, driftAssessmentData);
 
     const handleOntapDialog = (rowData: any) => {
-        // Check if this is an ASM configuration that should only have a Close button
-        const isCloseButton =
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE;
+        // Oracle configs in ORACLE_UNSUPPORTED_FIX_TYPES should show Close button (includes placement, ASM, NFS, patches, etc.)
+        const isOracleWithUnsupportedFix =
+            engineType === DBType.ORACLE && ORACLE_UNSUPPORTED_FIX_TYPES.has(rowData?.name);
+        const isMssqlWithUnsupportedFix = engineType === DBType.MSSQL && MSSQL_UNSUPPORTED_FIX_TYPES.has(rowData?.name);
 
+        // Check if this is a configuration that should only have a Close button
+        const isCloseButton =
+            isWad ||
+            isOracleWithUnsupportedFix ||
+            isMssqlWithUnsupportedFix ||
+            (OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(rowData?.name) &&
+                rowData?.status === GETWELL_STATUS.OVER_PROVISIONED) ||
+            (UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(rowData?.name) &&
+                rowData?.status === GETWELL_STATUS.UNDER_PROVISIONED &&
+                rowData?.missingPermissions &&
+                rowData?.missingPermissions.length > 0);
         if (isCloseButton) {
             setDialog(
                 <DialogComponent
@@ -568,6 +567,9 @@ const RecommendationTable = ({
                             type={rowData?.name}
                             objectsInViolation={rowData?.objectsInViolation}
                             engineType={engineType}
+                            isWad={isWad}
+                            status={rowData?.status}
+                            missingPermissions={rowData?.missingPermissions}
                         />
                     }
                     primaryButton={t('databases.general.close')}
@@ -581,14 +583,6 @@ const RecommendationTable = ({
                 />
             );
         } else {
-            // Determine primary button disabled state: isWad takes precedence, then check dialog-specific disabling
-            const isPrimaryDisabled = isWad || isDialogPrimaryBtnDisabled(rowData);
-            // Determine tooltip: isWad message takes precedence over "coming soon"
-            const primaryTooltip = isWad
-                ? t('databases.wad.tab-disabled-message')
-                : isDialogPrimaryBtnDisabled(rowData)
-                ? t('databases.general.coming-soon')
-                : '';
             setDialog(
                 <DialogComponent
                     header={`${rowData?.name}`}
@@ -597,6 +591,7 @@ const RecommendationTable = ({
                             type={rowData?.name}
                             objectsInViolation={rowData?.objectsInViolation}
                             engineType={engineType}
+                            isWad={isWad}
                         />
                     }
                     primaryButton={t('databases.general.continue')}
@@ -611,8 +606,6 @@ const RecommendationTable = ({
                         closeDialog();
                     }}
                     customClass="innerPage"
-                    primaryButtonDisabled={isPrimaryDisabled}
-                    primaryButtonTooltip={primaryTooltip}
                 />
             );
         }

@@ -1,4 +1,22 @@
 .dialogContent {
+    .unsupportedFixBanner {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        max-width: 712px;
+        min-height: 56px;
+        padding: 16px 24px;
+        margin-bottom: 24px;
+        background-color: var(--notification-warning-bg);
+        box-shadow: 2px 2px 6px 0px var(--border);
+
+        svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+    }
     .storage-tier-block {
         display: flex;
         flex-direction: column;
