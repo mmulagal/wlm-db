@@ -57,13 +57,11 @@ parse_sqlplus_output() {
 }
 `;
 
-const getOracleHomePath = (dbSid: string) => `
-    # Check if oratab exists
+const ORATAB_LOOKUP_BODY = `
     if [ ! -f /etc/oratab ]; then
         echo "[]"
         exit 0
     fi
-    dbsid="${dbSid}"
     oratab_entries=$(grep -Ev '^(#|\\+)' /etc/oratab | awk -F: '{if ($1 != "" && $2 != "") print $1":"$2}')
     if [ -z "$oratab_entries" ]; then
         echo "No entries found in /etc/oratab."
@@ -83,6 +81,39 @@ const getOracleHomePath = (dbSid: string) => `
     exit 1
 `;
 
+/**
+ * Returns a bash snippet that echoes the ORACLE_HOME for a given SID by looking up /etc/oratab.
+ * Use inside quoted heredocs (<<'EOF') where shell variables are NOT expanded by the parent.
+ */
+const getOracleHomePath = (dbSid: string) => `
+    dbsid="${dbSid}"
+    ${ORATAB_LOOKUP_BODY}
+`;
+
+/**
+ * Same as getOracleHomePath but for use inside unquoted heredocs (<<EOF).
+ * The caller must ensure `sidVariable` is a bash variable that is set in the PARENT shell scope.
+ * The returned snippet resolves oracle_home in the parent via $(...) and assigns to a variable
+ * whose name is returned — the caller can then use it inside the heredoc.
+ *
+ * Example:
+ *   ${resolveOracleHomeInParent('$oracleSid', 'oracle_home_resolved')}
+ *   sudo -i -u oracle bash <<EOF
+ *       export ORACLE_HOME="$oracle_home_resolved"
+ *       export PATH="$oracle_home_resolved/bin:\\$PATH"
+ *   EOF
+ */
+const resolveOracleHomeInParent = (sidVariable: string, varName = '_wlm_oracle_home') =>
+    `${varName}=$(
+    dbsid="${sidVariable}"
+    ${ORATAB_LOOKUP_BODY}
+)`;
+
+/**
+ * Exports ORACLE_HOME and PATH inside a quoted heredoc (<<'EOF').
+ * All variable resolution happens inside the child shell — safe for quoted heredocs only.
+ * Do NOT use inside unquoted heredocs (<<EOF) — use resolveOracleHomeInParent instead.
+ */
 const bashExportOracleHomeFromOratab = (sidForOratab: string, escapePathVariable = false, includePath = true) => {
     const pathInner = escapePathVariable ? String.raw`$ORACLE_HOME/bin:\$PATH` : '$ORACLE_HOME/bin:$PATH';
     if (!includePath) {
@@ -277,10 +308,12 @@ ec2InstanceId="${ec2InstanceId}"
 
 ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
 
+${resolveOracleHomeInParent('$oracleSid', 'oracle_home_resolved')}
 result=$(sudo -i -u oracle bash <<EOF
     set -e
     export ORACLE_SID="$oracleSid"
-${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+    export ORACLE_HOME="$oracle_home_resolved"
+    export PATH="$oracle_home_resolved/bin:\\$PATH"
     $sqlplus_command
     WHENEVER SQLERROR EXIT SQL.SQLCODE
     SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1200,10 +1233,13 @@ const isOracleNativeProtectionEnabled = (ec2InstanceId: string, dbSid: string) =
 
     ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
 
+    ${resolveOracleHomeInParent('$oracleSid', 'oracle_home_resolved')}
+
     areBackupSetsAvailable () {
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$oracleSid"
-            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+            export ORACLE_HOME="$oracle_home_resolved"
+            export PATH="$oracle_home_resolved/bin:\\$PATH"
             $sqlplus_command
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             select case 
@@ -1216,8 +1252,9 @@ EOF
 
     areBackupPiecesAvailable () {
         sudo -i -u oracle bash <<EOF
-            export ORACLE_SID="${dbSid}"
-            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+            export ORACLE_SID="$oracleSid"
+            export ORACLE_HOME="$oracle_home_resolved"
+            export PATH="$oracle_home_resolved/bin:\\$PATH"
             $sqlplus_command
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             select case 
@@ -1262,6 +1299,7 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
     isReplicaInfoRequired="${isReplicaInfoRequired}"
 
     ${oracleUserAuthLoginCommand}
+    ${resolveOracleHomeInParent('$oracleSid', 'oracle_home_resolved')}
     if [ "$isAwsCliInstalled" == "true" ] && [ "$isJqInstalled" == "true" ]; then
         result=$(get_oracle_user_auth_login_command "$oracleSid_temp" "$ec2InstanceId")
         sqlplus_command=$(echo "$result" | cut -d'|' -f1)
@@ -1271,7 +1309,8 @@ const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string
             sudo -i -u oracle bash <<EOF
                 set -e
                 export ORACLE_SID="$oracleSid"
-                ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+                export ORACLE_HOME="$oracle_home_resolved"
+                export PATH="$oracle_home_resolved/bin:\\$PATH"
                 $cmd
 EOF
         }
@@ -1281,7 +1320,8 @@ EOF
             sudo -i -u oracle bash <<EOF
                 set -e
                 export ORACLE_SID="$oracleSid"
-                ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+                export ORACLE_HOME="$oracle_home_resolved"
+                export PATH="$oracle_home_resolved/bin:\\$PATH"
                 $sqlplus_command
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1662,11 +1702,13 @@ const trendGraphCreateScriptForOracle = (dbSid: string, ec2InstanceId: string) =
     ec2InstanceId="${ec2InstanceId}"
 
     ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
+    ${resolveOracleHomeInParent('$oracleSid', 'oracle_home_resolved')}
 
     jsonPayload=$(sudo -i -u oracle bash <<EOF
         set -e
         export ORACLE_SID="$oracleSid"
-${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+        export ORACLE_HOME="$oracle_home_resolved"
+        export PATH="$oracle_home_resolved/bin:\\$PATH"
         $sqlplus_command
         WHENEVER SQLERROR EXIT SQL.SQLCODE
         SET HEADING OFF FEEDBACK OFF PAGESIZE 0 VERIFY OFF ECHO OFF TRIMSPOOL ON
@@ -1840,11 +1882,14 @@ EOF
 // • SET CONTAINER_DATA = ALL CONTAINER = CURRENT — required to get storage details & protection details for PDBs
 
 const loadOracleUserPermissionsDetectionModule = `
+    ${resolveOracleHomeInParent('$oracleSid', 'permissions_oracle_home')}
+
     is_create_session_granted() {
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
-            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+            export ORACLE_HOME="$permissions_oracle_home"
+            export PATH="$permissions_oracle_home/bin:\\$PATH"
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1860,7 +1905,8 @@ EOF
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
-            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+            export ORACLE_HOME="$permissions_oracle_home"
+            export PATH="$permissions_oracle_home/bin:\\$PATH"
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1877,7 +1923,8 @@ EOF
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
-            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+            export ORACLE_HOME="$permissions_oracle_home"
+            export PATH="$permissions_oracle_home/bin:\\$PATH"
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1890,13 +1937,12 @@ EOF
         echo "$result" | grep -q "true" && echo "true" || echo "false"
 }
 
-    # returns true if the permission SET CONTAINER_DATA = ALL CONTAINER = CURRENT is granted to the user.
-    # this is used to check if the user has permission to access data in all containers (i.e pdbs) in a CDB instance.
     check_for_container_data_permission() {
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
-            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+            export ORACLE_HOME="$permissions_oracle_home"
+            export PATH="$permissions_oracle_home/bin:\\$PATH"
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1912,7 +1958,8 @@ EOF
         local result=$(sudo -i -u oracle bash <<EOF
                 set -e
                 export ORACLE_SID="$oracleSid"
-                ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+                export ORACLE_HOME="$permissions_oracle_home"
+                export PATH="$permissions_oracle_home/bin:\\$PATH"
                 $sqlplus_command
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1929,7 +1976,8 @@ EOF
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
-            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+            export ORACLE_HOME="$permissions_oracle_home"
+            export PATH="$permissions_oracle_home/bin:\\$PATH"
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -1942,14 +1990,12 @@ EOF
         echo "$result" | grep -q "true" && echo "true" || echo "false"
 }
 
-    # Checks if there is more than one PDB in READ WRITE or READ ONLY state.
-    # Note: PDB$SEED is always in READ ONLY state and is included in the count.
-    # This function effectively checks if there is at least one user-created PDB in READ WRITE or READ ONLY state.
     check_for_pdb_read_write_state() {
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
-            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+            export ORACLE_HOME="$permissions_oracle_home"
+            export PATH="$permissions_oracle_home/bin:\\$PATH"
             $sqlplus_command
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
@@ -2038,9 +2084,11 @@ const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string
 const isASMManagedCheck = `
     check_asm_managed() {
         local ORACLE_SID="$1"
+        ${resolveOracleHomeInParent('$ORACLE_SID', 'local oracle_home_for_sid')}
         sudo -i -u oracle bash <<EOF
             export ORACLE_SID="$ORACLE_SID"
-            ${bashExportOracleHomeFromOratab('$ORACLE_SID', true)}
+            export ORACLE_HOME="$oracle_home_for_sid"
+            export PATH="$oracle_home_for_sid/bin:\\$PATH"
             $sqlplus_command <<'EOSQL'
             SET HEADING OFF;
             SET FEEDBACK OFF;
@@ -2100,9 +2148,11 @@ ${isStorageASMmanaged('$oracleSid')}
     osVersion=$(grep ^VERSION= /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
 
     # Execute all SQL queries in a single connection
+    ${resolveOracleHomeInParent('$oracleSid', 'server_details_oracle_home')}
     sqlResults=$(sudo -i -u oracle bash <<EOF 2>/dev/null
     export ORACLE_SID="$oracleSid"
-${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+    export ORACLE_HOME="$server_details_oracle_home"
+    export PATH="$server_details_oracle_home/bin:\\$PATH"
     $sqlplus_command <<'EOSQL'
     SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
     SELECT REGEXP_SUBSTR(BANNER, '(Standard|Enterprise) Edition') AS edition, 
@@ -2423,5 +2473,6 @@ export {
     dataguardDeploymentUtilities,
     defaultAuthDetectModule,
     BASH_DECOMPRESS_TEMPLATE,
-    bashExportOracleHomeFromOratab
+    bashExportOracleHomeFromOratab,
+    resolveOracleHomeInParent
 };

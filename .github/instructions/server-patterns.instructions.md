@@ -69,6 +69,37 @@ Scripts are embedded as template literals and executed via AWS SSM.
 - Use Python heredocs for complex logic. Output JSON via `json.dumps()`.
 - Use `subprocess.run()` with `timeout`. Run as appropriate user (`sudo -i -u oracle`).
 
+### Heredoc Rules for `sudo -i -u oracle bash` Blocks
+
+**Prefer quoted heredocs** (`<<'EOF'`) for all `sudo -i -u oracle bash` blocks. Pass variables as positional arguments via `bash -s --`.
+
+```bash
+# GOOD — quoted heredoc, variables passed as arguments
+sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" <<'EOF'
+    export ORACLE_SID="$1"
+    sqlplus_cmd="$2"
+    # $ORACLE_SID and $sqlplus_cmd are evaluated inside the child shell
+EOF
+
+# BAD — unquoted heredoc, parent expands all $variables before child sees them
+sudo -i -u oracle bash <<EOF
+    export ORACLE_SID="$ORACLE_SID"
+    $sqlplus_command  # expanded by parent, not child
+EOF
+```
+
+**Why:** In unquoted heredocs (`<<EOF`), the parent shell expands ALL `$var` and `$(cmd)` references *before* the text reaches the child shell. This silently breaks intermediate variables — e.g., `oracle_home=$(lookup)` on line 1 does NOT set a parent variable that `$oracle_home` on line 2 can reference; both are expanded independently.
+
+**Oracle home resolution utilities** (`oracle-ssm-script-utils.ts`):
+
+| Function | Heredoc Type | Usage |
+|---|---|---|
+| `bashExportOracleHomeFromOratab(sid)` | Quoted (`<<'EOF'`) | Resolves ORACLE_HOME from `/etc/oratab` inside the child shell |
+| `getOracleHomePath(sid)` | Quoted (`<<'EOF'`) | Returns the oracle home path for a SID from `/etc/oratab` |
+| `resolveOracleHomeInParent(sidVar, varName)` | Unquoted (`<<EOF`) | Resolves oracle home in the **parent** scope before the heredoc. Use when converting to quoted heredocs is not feasible. |
+
+If you must use an unquoted heredoc, resolve oracle home in the parent scope first using `resolveOracleHomeInParent`, then pass the resolved literal value into the heredoc. Never use `bashExportOracleHomeFromOratab` or `getOracleHomePath` inside unquoted heredocs — their intermediate `$variables` will expand to empty.
+
 ### TypeScript Templates
 
 - Use template literals with proper escaping. Define reusable script fragments as constants.

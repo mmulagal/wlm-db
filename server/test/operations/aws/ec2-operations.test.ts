@@ -225,5 +225,4 @@ describe('validateVpcEndpoints – security group CIDR matching', () => {
             ])
         ).resolves.not.toThrow();
     });
-
 });

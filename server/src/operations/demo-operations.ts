@@ -57,7 +57,11 @@ import { FSXConfigurationType } from '../routes/types/deployment.types';
 import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
 import { describeFSxVolumes } from '../lib/aws/fsx';
-import { AssessmentCategories, AssessmentCategoriesOracle, AssessmentStatus } from '../utils/continous-optimization-consts';
+import {
+    AssessmentCategories,
+    AssessmentCategoriesOracle,
+    AssessmentStatus
+} from '../utils/continous-optimization-consts';
 import { offlineAssessmentDemoFCI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoFCI';
 import { offlineAssessmentDemoOracleISCSI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoOracleISCSI';
 import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';

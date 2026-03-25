@@ -1,12 +1,12 @@
 import { WorkloadInstance } from '../../../../utils/common-types';
 import { debugLog } from '../../../workloads/oracle/oracle-discover-scripts';
 import {
-    bashExportOracleHomeFromOratab,
     getOracleDefaultOrUserAuthCommand,
     checkCommandStatus,
     ontapRestApi,
     logFileCheck,
-    pythonScriptInit
+    pythonScriptInit,
+    resolveOracleHomeInParent
 } from '../../../workloads/oracle/oracle-ssm-script-utils';
 import { LINUX_LOG_DIRECTORY } from '../consts';
 
@@ -14,11 +14,13 @@ const CHECK_ORACLE_FRA_RMAN_STATUS = () => `
     check_oracle_fra_rman_status() {
         local ec2InstanceId="$1"
         local oracleSid="$2"
+        ${resolveOracleHomeInParent('$oracleSid', 'local fra_oracle_home')}
         local fra_rman_result
         fra_rman_result=$(sudo -i -u oracle bash <<EOF
         set -e
         export ORACLE_SID="$oracleSid"
-${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+        export ORACLE_HOME="$fra_oracle_home"
+        export PATH="$fra_oracle_home/bin:\\$PATH"
         $sqlplus_command <<'EOSQL'
         SET HEADING OFF
         SET LINESIZE 500
@@ -52,12 +54,14 @@ const CHECK_ORACLE_DNFS_SERVERS = () => `
     check_oracle_dnfs_servers() {
         local ec2InstanceId="$1"
         local oracleSid="$2"
+        ${resolveOracleHomeInParent('$oracleSid', 'local dnfs_oracle_home')}
 
         local dnfs_servers_result
         dnfs_servers_result=$(sudo -i -u oracle bash <<EOF
         set -e
         export ORACLE_SID="$oracleSid"
-${bashExportOracleHomeFromOratab('$ORACLE_SID')}
+        export ORACLE_HOME="$dnfs_oracle_home"
+        export PATH="$dnfs_oracle_home/bin:\\$PATH"
         $sqlplus_command <<'EOSQL'
         SET HEADING OFF
         SET LINESIZE 500

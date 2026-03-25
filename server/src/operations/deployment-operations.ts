@@ -222,11 +222,7 @@ async function getSubnetsCidr(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
-    if (
-        sqlDeploymentMode === FCI &&
-        !isEmpty(networkConfiguration.privateSubnet2Id) &&
-        isEmpty(privateSubnet2Cidr)
-    ) {
+    if (sqlDeploymentMode === FCI && !isEmpty(networkConfiguration.privateSubnet2Id) && isEmpty(privateSubnet2Cidr)) {
         const errorMessage = `Failed to determine CIDR block for subnet ${networkConfiguration.privateSubnet2Id}`;
         logger.error(errorMessage, {
             credentialsId,
