@@ -122,7 +122,7 @@ const Home = () => {
                         <Route path="/databases" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
                         <Route path="/databases/dashboard" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
                         <Route
-                            path="/databases/inventory/cred/:credId/region/:regionId/databaseHost/:hostId/databaseInstance/:instanceId/logAnalyzerStatus/:status"
+                            path="/databases/inventory/cred/:credId/region/:regionId/databaseHost/:hostId/databaseInstance/:instanceId/logAnalyzerStatus/:status/engineType/:engineType/hostname/:hostname/dbInstanceName/:dbInstanceName"
                             element={<ErrorAnalysisDeepLink />}
                         />
                         <Route path="/databases/inventory" element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
@@ -195,11 +195,11 @@ const Home = () => {
                             <Route path="/fsxdb" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
                             <Route path="/fsxdb/dashboard" element={<HeaderComponent tab={WLF_TABS.DASHBOARD} />} />
                             <Route
-                                path="/databases/inventory/cred/:credId/region/:regionId/databaseHost/:hostId/databaseInstance/:instanceId/logAnalyzerStatus/:status"
+                                path="/databases/inventory/cred/:credId/region/:regionId/databaseHost/:hostId/databaseInstance/:instanceId/logAnalyzerStatus/:status/engineType/:engineType/hostname/:hostname/dbInstanceName/:dbInstanceName"
                                 element={<ErrorAnalysisDeepLink />}
                             />
                             <Route
-                                path="/fsxdb/inventory/cred/:credId/region/:regionId/databaseHost/:hostId/databaseInstance/:instanceId/logAnalyzerStatus/:status"
+                                path="/fsxdb/inventory/cred/:credId/region/:regionId/databaseHost/:hostId/databaseInstance/:instanceId/logAnalyzerStatus/:status/engineType/:engineType/hostname/:hostname/dbInstanceName/:dbInstanceName"
                                 element={<ErrorAnalysisDeepLink />}
                             />
                             <Route path="/databases/inventory" element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
