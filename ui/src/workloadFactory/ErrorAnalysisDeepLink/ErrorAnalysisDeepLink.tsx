@@ -27,7 +27,7 @@ const ErrorAnalysisDeepLink = () => {
     useEffect(() => {
         if (!credId || !regionId || !hostId || !instanceId) return;
         if (status) {
-            dispatch(setLogAnalyzerState(status));
+            dispatch(setLogAnalyzerState(status.charAt(0).toUpperCase() + status.slice(1)));
         }
 
         dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
