@@ -153,14 +153,14 @@ async function endpointsValidationResults(
     const subnetDetails = [
         {
             subnetId: networkConfiguration.privateSubnet1Id,
-            cidr: privateSubnet1Cidr as string,
+            cidr: privateSubnet1Cidr,
             routeTableId: routeTable1Id
         },
         ...(deploymentMode === FCI && networkConfiguration.privateSubnet2Id
             ? [
                   {
                       subnetId: networkConfiguration.privateSubnet2Id,
-                      cidr: privateSubnet2Cidr as string,
+                      cidr: privateSubnet2Cidr,
                       routeTableId: routeTable2Id
                   }
               ]
@@ -203,13 +203,38 @@ async function getSubnetsCidr(
             : [networkConfiguration.privateSubnet1Id!, networkConfiguration.privateSubnet2Id!];
     const { Subnets } = await describeSubnets(credentialsId!, region!, { SubnetIds: subnetIds });
     const subnetCidrs = Subnets?.map(({ SubnetId: subnetId, CidrBlock: cidrBlock }) => ({ subnetId, cidrBlock }));
-    const privateSubnet1Cidr = subnetCidrs
-        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet1Id)
-        .map(subnet => subnet.cidrBlock);
-    const privateSubnet2Cidr = subnetCidrs
-        ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet2Id)
-        .map(subnet => subnet.cidrBlock);
+    const [privateSubnet1Cidr = ''] =
+        subnetCidrs
+            ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet1Id)
+            .map(subnet => subnet.cidrBlock) ?? [];
+    const [privateSubnet2Cidr = ''] =
+        subnetCidrs
+            ?.filter(subnet => subnet.subnetId === networkConfiguration.privateSubnet2Id)
+            .map(subnet => subnet.cidrBlock) ?? [];
 
+    if (isEmpty(privateSubnet1Cidr)) {
+        const errorMessage = `Failed to determine CIDR block for subnet ${networkConfiguration.privateSubnet1Id}`;
+        logger.error(errorMessage, {
+            credentialsId,
+            region,
+            subnetId: networkConfiguration.privateSubnet1Id
+        });
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+    }
+
+    if (
+        sqlDeploymentMode === FCI &&
+        !isEmpty(networkConfiguration.privateSubnet2Id) &&
+        isEmpty(privateSubnet2Cidr)
+    ) {
+        const errorMessage = `Failed to determine CIDR block for subnet ${networkConfiguration.privateSubnet2Id}`;
+        logger.error(errorMessage, {
+            credentialsId,
+            region,
+            subnetId: networkConfiguration.privateSubnet2Id
+        });
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
+    }
     return { privateSubnet1Cidr, privateSubnet2Cidr };
 }
 
@@ -259,8 +284,8 @@ async function formatTemplateParameters(
                   region,
                   networkConfiguration,
                   sqlConfiguration.sqlDeploymentMode,
-                  privateSubnet1Cidr as string,
-                  privateSubnet2Cidr as string
+                  privateSubnet1Cidr,
+                  privateSubnet2Cidr
               )
             : {};
 
@@ -275,8 +300,8 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
         { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics },
         { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() },
-        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr?.toString() || '' },
-        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
+        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr }
     ];
 
     if (fsxConfiguration.fsxPassword) {
@@ -1205,8 +1230,8 @@ async function createCloudFormationTemplateForUserDeployment(
                   region,
                   networkConfiguration,
                   sqlConfiguration.sqlDeploymentMode,
-                  privateSubnet1Cidr as string,
-                  privateSubnet2Cidr as string
+                  privateSubnet1Cidr,
+                  privateSubnet2Cidr
               )
             : {};
 
@@ -1220,8 +1245,8 @@ async function createCloudFormationTemplateForUserDeployment(
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
         { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() },
-        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr?.toString() || '' },
-        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
+        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr }
     ];
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${VALIDATION_NODE_INSTANCETYPE}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
@@ -1934,8 +1959,8 @@ async function formatPgSqlTemplateParameters(
                   region,
                   networkConfiguration,
                   sqlConfiguration.sqlDeploymentMode,
-                  privateSubnet1Cidr as string,
-                  privateSubnet2Cidr as string
+                  privateSubnet1Cidr,
+                  privateSubnet2Cidr
               )
             : {};
     const templateParams: Array<Parameter> = [
@@ -1949,8 +1974,8 @@ async function formatPgSqlTemplateParameters(
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
         { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() },
-        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr?.toString() || '' },
-        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
+        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr }
     ];
 
     if (fsxConfiguration.fsxPassword) {
@@ -2125,8 +2150,8 @@ async function createCfTemplateForPgsqlDeployment(
                   region,
                   networkConfiguration,
                   sqlConfiguration.sqlDeploymentMode,
-                  privateSubnet1Cidr as string,
-                  privateSubnet2Cidr as string
+                  privateSubnet1Cidr,
+                  privateSubnet2Cidr
               )
             : {};
 
@@ -2140,8 +2165,8 @@ async function createCfTemplateForPgsqlDeployment(
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
         { ParameterKey: TEMPLATE_S3GATEWAY_ROUTETABLES, ParameterValue: missingRoutesInS3.toString() },
-        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr?.toString() || '' },
-        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr?.toString() || '' }
+        { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr },
+        { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr }
     ];
 
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${VALIDATION_NODE_INSTANCETYPE}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
@@ -2254,5 +2279,6 @@ export {
     deployPgSql,
     getTerraformSetup,
     getPgSqlCfTemplate,
-    getPGSQLTerraformSetup
+    getPGSQLTerraformSetup,
+    getSubnetsCidr
 };

@@ -657,7 +657,7 @@ async function validateVpcEndpoints(
                                 ) || []
                     );
 
-                const missingCidrs = securityGroupCidrs.includes(vpcCidrBlock)
+                const missingCidrs = securityGroupCidrs.some(cidr => isCidrContained(cidr, vpcCidrBlock))
                     ? []
                     : subnetDetails
                           .filter(

@@ -186,7 +186,7 @@ Parameters:
         Description: User name for the account that will be used as Domain Administrator.
             This is separate from the default "Administrator" account.
         MaxLength: '25'
-        MinLength: '5'
+        MinLength: '1'
         Type: String
     DomainDNSName:
         AllowedPattern: '[a-zA-Z0-9\-]+\..+'

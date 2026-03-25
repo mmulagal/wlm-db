@@ -56,6 +56,54 @@
                 "EnableResourceNameDnsARecord": false,
                 "EnableResourceNameDnsAAAARecord": false
             }
+        },
+        {
+            "AvailabilityZone": "us-east-1a",
+            "AvailabilityZoneId": "use1-az1",
+            "AvailableIpAddressCount": 251,
+            "CidrBlock": "172.31.0.0/20",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": false,
+            "MapCustomerOwnedIpOnLaunch": false,
+            "State": "available",
+            "SubnetId": "subnet-f4484e80",
+            "VpcId": "vpc-84b3afe6",
+            "OwnerId": "210811600188",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [{ "Key": "Name", "Value": "Private-Subnet-1" }],
+            "SubnetArn": "arn:aws:ec2:us-east-1:210811600188:subnet/subnet-f4484e80",
+            "EnableDns64": false,
+            "Ipv6Native": false,
+            "PrivateDnsNameOptionsOnLaunch": {
+                "HostnameType": "ip-name",
+                "EnableResourceNameDnsARecord": false,
+                "EnableResourceNameDnsAAAARecord": false
+            }
+        },
+        {
+            "AvailabilityZone": "us-east-1b",
+            "AvailabilityZoneId": "use1-az2",
+            "AvailableIpAddressCount": 251,
+            "CidrBlock": "172.31.16.0/20",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": false,
+            "MapCustomerOwnedIpOnLaunch": false,
+            "State": "available",
+            "SubnetId": "subnet-4cdd3b29",
+            "VpcId": "vpc-84b3afe6",
+            "OwnerId": "210811600188",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [{ "Key": "Name", "Value": "Private-Subnet-2" }],
+            "SubnetArn": "arn:aws:ec2:us-east-1:210811600188:subnet/subnet-4cdd3b29",
+            "EnableDns64": false,
+            "Ipv6Native": false,
+            "PrivateDnsNameOptionsOnLaunch": {
+                "HostnameType": "ip-name",
+                "EnableResourceNameDnsARecord": false,
+                "EnableResourceNameDnsAAAARecord": false
+            }
         }
     ]
 }

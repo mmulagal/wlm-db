@@ -56,7 +56,7 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
             description:
                 'User name for the account that will be added as Domain Administrator. This is separate from the  "default Windows Administrator" account. Note: This user will always default to "Admin" when using AWS Directory Service regardless of the value provided.',
             type: 'String',
-            minLength: 5,
+            minLength: 1,
             maxLength: 20,
             pattern: '([a-zA-Z0-9]+(\\.|_|-|@)*)+'
         },
@@ -107,7 +107,7 @@ function getConfigParameters(databaseType: DatabaseTypes.MS_SQL_SERVER | Databas
             name: 'SQLServiceAccountName',
             description: `User name for the ${dbEngineType} Server Service Account. This Account is a Domain User.`,
             type: 'String',
-            minLength: 5,
+            minLength: 1,
             maxLength: 20,
             pattern: '([a-zA-Z0-9]+(\\.|_|-|@)*)+'
         },

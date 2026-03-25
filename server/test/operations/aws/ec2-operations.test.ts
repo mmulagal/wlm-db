@@ -18,6 +18,7 @@ import {
     getAmazonLinux2023AmiList,
     validateVpcEndpoints
 } from '../../../src/operations/aws/ec2-operations';
+import * as ec2Lib from '../../../src/lib/aws/ec2';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import {
     DEFAULT_AWS_CREDENTIALS_ID,
@@ -95,7 +96,7 @@ describe('EC2 Operations', () => {
             DEFAULT_AWS_REGION,
             { vpcId: 'vpc-84b3afe6', vpcCidr: '172.31.0.0/16' },
 
-            [{ subnetId: 'subnet-f4484e80', cidr: '172.31.0.0/16', routeTableId: 'rtb-1' }]
+            [{ subnetId: 'subnet-f4484e80', cidr: '172.31.0.0/20', routeTableId: 'rtb-1' }]
         );
         expect(response).toBeDefined();
     });
@@ -174,4 +175,55 @@ describe('EC2 Operations', () => {
         expect(Array.isArray(amiList)).toBeTruthy();
         expect(amiList).toBeDefined();
     });
+});
+
+describe('validateVpcEndpoints – security group CIDR matching', () => {
+    // The endpoint mock (vpce-0583307c1aea1a02b) links to network interface eni-0f536a2c38e431a6a
+    // which belongs to security group sg-ad2b38d1. We control its ipPermissions per test.
+    const VPC_ID = 'vpc-84b3afe6';
+    const VPC_CIDR = '172.31.0.0/16';
+    const SUBNET1 = { subnetId: 'subnet-f4484e80', cidr: '172.31.0.0/20', routeTableId: 'rtb-1' };
+    const SUBNET2 = { subnetId: 'subnet-4cdd3b29', cidr: '172.31.16.0/20', routeTableId: 'rtb-2' };
+
+    function mockSgWith(ipPermissions: object[]) {
+        vi.spyOn(ec2Lib, 'describeSecurityGroups').mockResolvedValueOnce({
+            SecurityGroups: [{ GroupId: 'sg-ad2b38d1', IpPermissions: ipPermissions }],
+            $metadata: {}
+        });
+    }
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('passes when a single port-443 rule covers the VPC CIDR', async () => {
+        mockSgWith([{ FromPort: 443, ToPort: 443, IpProtocol: 'tcp', IpRanges: [{ CidrIp: VPC_CIDR }] }]);
+
+        await expect(
+            validateVpcEndpoints(credentialsId, DEFAULT_AWS_REGION, { vpcId: VPC_ID, vpcCidr: VPC_CIDR }, [SUBNET1])
+        ).resolves.not.toThrow();
+    });
+
+    it('passes when a port-443 rule uses a broad CIDR that contains the VPC', async () => {
+        mockSgWith([{ FromPort: 443, ToPort: 443, IpProtocol: 'tcp', IpRanges: [{ CidrIp: '0.0.0.0/0' }] }]);
+
+        await expect(
+            validateVpcEndpoints(credentialsId, DEFAULT_AWS_REGION, { vpcId: VPC_ID, vpcCidr: VPC_CIDR }, [SUBNET1])
+        ).resolves.not.toThrow();
+    });
+
+    it('passes when multiple port-443 rules each cover a different deployment subnet', async () => {
+        mockSgWith([
+            { FromPort: 443, ToPort: 443, IpProtocol: 'tcp', IpRanges: [{ CidrIp: SUBNET1.cidr }] },
+            { FromPort: 443, ToPort: 443, IpProtocol: 'tcp', IpRanges: [{ CidrIp: SUBNET2.cidr }] }
+        ]);
+
+        await expect(
+            validateVpcEndpoints(credentialsId, DEFAULT_AWS_REGION, { vpcId: VPC_ID, vpcCidr: VPC_CIDR }, [
+                SUBNET1,
+                SUBNET2
+            ])
+        ).resolves.not.toThrow();
+    });
+
 });
