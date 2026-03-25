@@ -69,7 +69,8 @@ function generateDemoResources() {
                 { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-ProdPROD-ProductCatalog' }
             ],
             databaseType: DatabaseTypes.MS_SQL_SERVER,
-            deploymentType: 'Standalone'
+            deploymentType: 'Standalone',
+            ec2InstanceId: 'i-0c1d2e3f4a5b6c701'
         },
         {
             resourceId: randomUUID(),
@@ -80,7 +81,9 @@ function generateDemoResources() {
                 { sqlInstanceId: randomUUID(), sqlInstanceName: 'SQL-Managed-Host-DEVDEV-ProjectManagement' }
             ],
             databaseType: DatabaseTypes.MS_SQL_SERVER,
-            deploymentType: 'FCI'
+            deploymentType: 'FCI',
+            ec2InstanceId: 'i-0c1d2e3f4a5b6c702',
+            partnerEc2InstanceId: 'i-0c1d2e3f4a5b6c703'
         },
         {
             resourceId: randomUUID(),

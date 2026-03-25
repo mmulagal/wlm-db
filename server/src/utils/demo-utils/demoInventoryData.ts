@@ -36,7 +36,7 @@ const ORACLE_DISCOVERY_RES: DiscoverOracleResponseBodyType = { count: 0, items: 
 
 function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlResponseBodyType {
     return {
-        count: 13,
+        count: 18,
         items: [
             // no windows auth
             {
@@ -318,6 +318,304 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                             }
                         ],
                         manageReadiness: MANAGE_READINESS
+                    }
+                ]
+            },
+            // ============================================================
+            // Managed Standalone Instance (SQL-Managed-Host-Prod)
+            // ============================================================
+            {
+                ec2InstanceId: 'i-0c1d2e3f4a5b6c701',
+                ec2InstanceType: 'm5.xlarge',
+                ec2UsageOperation: 'RunInstances:0006',
+                ssmState: 'connected',
+                ec2InstanceName: 'SQL-Managed-Host-Prod',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'PROD-MarketingCampaigns',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-mp01',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4095.4',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2022',
+                        sqlServerName: 'SQL-Managed-Host-Prod',
+                        sqlServerNodes: ['EC2WIN-MP01'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-1', 'availability-zone-2']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    },
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'PROD-SupplierManagement',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-mp02',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4095.4',
+                        databaseCount: 6,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2022',
+                        sqlServerName: 'SQL-Managed-Host-Prod',
+                        sqlServerNodes: ['EC2WIN-MP01'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-1', 'availability-zone-2']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    },
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'PROD-ProductCatalog',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-mp03',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4095.4',
+                        databaseCount: 5,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2022',
+                        sqlServerName: 'SQL-Managed-Host-Prod',
+                        sqlServerNodes: ['EC2WIN-MP01'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-1', 'availability-zone-2']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    },
+                    {
+                        sqlServerEdition: 'Enterprise Edition (64-bit)',
+                        sqlServerEngineEdition: 3,
+                        sqlServerProductYear: 2022,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-mp04',
+                        isDefaultInstance: true,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4095.4',
+                        databaseCount: 4,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2022',
+                        sqlServerName: 'SQL-Managed-Host-Prod',
+                        sqlServerNodes: ['EC2WIN-MP01'],
+                        sqlServerDeploymentType: 'Standalone',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-1', 'availability-zone-2']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS
+                    }
+                ]
+            },
+            // ============================================================
+            // Managed FCI Instance (SQL-Managed-Host-DEV)
+            // ============================================================
+            {
+                ec2InstanceId: 'i-0c1d2e3f4a5b6c702',
+                ec2InstanceType: 'm5.large',
+                ec2UsageOperation: 'RunInstances:0006',
+                ssmState: 'connected',
+                ec2InstanceName: 'SQL-Managed-Host-DEV',
+                vpc: {
+                    id: 'vpc-84b3afe6',
+                    name: 'wlmdb-vpc',
+                    cidrBlock: '172.31.0.0/16'
+                },
+                sqlServerInstances: [
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2017,
+                        sqlServerInstance: 'DEV-SalesAnalytics',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-md01',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.1000.6',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQL-Managed-Host-DEV',
+                        sqlServerNodes: ['EC2WIN-MD01', 'EC2WIN-MD02'],
+                        nodeIps: ['10.0.8.50', '10.0.24.50'],
+                        sqlServerDeploymentType: 'FCI',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-1', 'availability-zone-2']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS,
+                        windowsClusterNodes: [
+                            {
+                                Node: 'EC2WIN-MD01',
+                                Address: '10.0.8.50'
+                            },
+                            {
+                                Node: 'EC2WIN-MD02',
+                                Address: '10.0.24.50'
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2017,
+                        sqlServerInstance: 'DEV-ProjectManagement',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-md02',
+                        isDefaultInstance: false,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.1000.6',
+                        databaseCount: 6,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQL-Managed-Host-DEV',
+                        sqlServerNodes: ['EC2WIN-MD01', 'EC2WIN-MD02'],
+                        nodeIps: ['10.0.8.50', '10.0.24.50'],
+                        sqlServerDeploymentType: 'FCI',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-1', 'availability-zone-2']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS,
+                        windowsClusterNodes: [
+                            {
+                                Node: 'EC2WIN-MD01',
+                                Address: '10.0.8.50'
+                            },
+                            {
+                                Node: 'EC2WIN-MD02',
+                                Address: '10.0.24.50'
+                            }
+                        ]
+                    },
+                    {
+                        sqlServerEdition: 'Standard Edition (64-bit)',
+                        sqlServerEngineEdition: 2,
+                        sqlServerProductYear: 2019,
+                        sqlServerInstance: 'MSSQLSERVER',
+                        serverGuid: 'f4b7c5d3-e1f6-4g2a-md03',
+                        isDefaultInstance: true,
+                        sqlServerState: 'Running',
+                        sqlServerVersion: '16.0.4095.4',
+                        databaseCount: 8,
+                        windowsAuthentication: true,
+                        sqlServerAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        windowsOsVersion: 'Microsoft Windows Server 2019',
+                        sqlServerName: 'SQL-Managed-Host-DEV',
+                        sqlServerNodes: ['EC2WIN-MD01', 'EC2WIN-MD02'],
+                        nodeIps: ['10.0.8.50', '10.0.24.50'],
+                        sqlServerDeploymentType: 'FCI',
+                        storage: [
+                            {
+                                type: 'FSXN',
+                                id: fsxId,
+                                protocol: 'iSCSI',
+                                fileSystemStorageType: 'SSD'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'MULTI_AZ_1',
+                                zones: ['availability-zone-1', 'availability-zone-2']
+                            }
+                        ],
+                        manageReadiness: MANAGE_READINESS,
+                        windowsClusterNodes: [
+                            {
+                                Node: 'EC2WIN-MD01',
+                                Address: '10.0.8.50'
+                            },
+                            {
+                                Node: 'EC2WIN-MD02',
+                                Address: '10.0.24.50'
+                            }
+                        ]
                     }
                 ]
             },
