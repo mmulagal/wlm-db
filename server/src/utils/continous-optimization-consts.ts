@@ -548,6 +548,7 @@ const ASSESSMENT_CONFIGS = {
     clone: 'clone-management',
     mtuAlignment: 'mtu-alignment',
     snapcenterSnapshot: 'snapcenter-snapshot',
+    oracleSecurityPatch: 'oracle-security-patch',
     highAvailability: {
         heartbeatSettings: 'heartbeat-settings',
         clusterQuorum: 'cluster-quorum',
@@ -601,6 +602,7 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     ...ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP.sizing,
     'clone-management',
     'snapcenter-snapshot',
+    'oracle-security-patch',
     // Oracle layout configurations
     'archive-placement',
     'datafiles-placement',
