@@ -1,5 +1,6 @@
 export const offlineAssessmentDemoAOAG = {
     metadata: {
+        databaseType: 'MSSQL',
         storageEndpoint: 'fs-0f06b4d3901153300',
         virtualNetworkId: 'vpc-046f7e26255458373',
         ontapHostName: ['management.fs-0f06b4d3901153300.fsx.ap-southeast-1.amazonaws.com'],

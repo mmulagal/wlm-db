@@ -915,6 +915,7 @@ $FSxRegion = $vmRegion
 
 $FinalResponse = @{}
 $FinalResponse['metadata'] = @{
+    databaseType = "MSSQL"
     ec2InstanceId = $ec2InstanceId
     ec2InstanceType = $ec2InstanceType
     ec2UsageOperation = $ec2UsageOperation

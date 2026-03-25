@@ -151,9 +151,7 @@ describe('getCrrDriftData', () => {
 
         const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
-        expect(result.objectsInViolation).toEqual([
-            { ontapVolumeName: 'log_vol', ontapVolumeUuid: 'uuid-log' }
-        ]);
+        expect(result.objectsInViolation).toEqual([{ ontapVolumeName: 'log_vol', ontapVolumeUuid: 'uuid-log' }]);
         expect(result.totalObjectsInViolation).toBe(1);
         expect(result.totalObjectsAssessed).toBe(2);
     });
@@ -203,14 +201,14 @@ describe('getCrrDriftData', () => {
 
     it('should handle single volume assessment', () => {
         const crrData: CrrAssessment = {
-            crrDetails: [{ volumeName: 'data_vol', volumeUuid: 'uuid-data', isCRREnabled: false, isSnapMirrored: false }]
+            crrDetails: [
+                { volumeName: 'data_vol', volumeUuid: 'uuid-data', isCRREnabled: false, isSnapMirrored: false }
+            ]
         };
 
         const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
-        expect(result.objectsInViolation).toEqual([
-            { ontapVolumeName: 'data_vol', ontapVolumeUuid: 'uuid-data' }
-        ]);
+        expect(result.objectsInViolation).toEqual([{ ontapVolumeName: 'data_vol', ontapVolumeUuid: 'uuid-data' }]);
         expect(result.totalObjectsAssessed).toBe(1);
         expect(result.totalObjectsInViolation).toBe(1);
     });
@@ -221,9 +219,7 @@ describe('getCrrDriftData', () => {
         };
 
         const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
-        expect(result.objectsInViolation).toEqual([
-            { ontapVolumeName: 'data_vol', ontapVolumeUuid: undefined }
-        ]);
+        expect(result.objectsInViolation).toEqual([{ ontapVolumeName: 'data_vol', ontapVolumeUuid: undefined }]);
     });
 
     it('should handle empty crrDetails array', () => {

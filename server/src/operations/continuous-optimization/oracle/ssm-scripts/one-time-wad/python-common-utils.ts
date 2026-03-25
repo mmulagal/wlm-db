@@ -496,8 +496,7 @@ def get_fsx_credentials(storage_endpoint, region=None,
         candidates = [secret_name]
     else:
         candidates = [
-            "netapp-wf/ontap/{}".format(storage_endpoint),
-            "netapp-wf/fsx/credentials"
+            "ontap/{}".format(storage_endpoint)
         ]
 
     secret, matched = _try_secrets(candidates, region)
@@ -516,8 +515,9 @@ def get_fsx_credentials(storage_endpoint, region=None,
 
 
 def get_oracle_credentials(oracle_sid, oracle_home=None,
-                           region=None, secret_name=None):
-    # type: (str, str, str, str) -> tuple
+                           region=None, secret_name=None,
+                           ec2_instance_id=None):
+    # type: (str, str, str, str, str) -> tuple
     if not oracle_home:
         oracle_home = get_oracle_home(oracle_sid)
 
@@ -534,9 +534,8 @@ def get_oracle_credentials(oracle_sid, oracle_home=None,
         candidates = [secret_name]
     else:
         candidates = [
-            "netapp-wf/oracle/{}".format(oracle_sid),
-            "netapp-wf/oracle/credentials"
-        ]
+            "oracle/{}/{}".format(ec2_instance_id, oracle_sid)
+        ] if ec2_instance_id else []
 
     secret, matched = _try_secrets(candidates, region)
     if secret:

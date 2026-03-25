@@ -9,7 +9,10 @@ import {
     removeOfflineAssessmentData,
     OfflineAssessmentRecord
 } from '../../../lib/database/offline-assessment';
-import { OfflineAssessmentUploadResponseType } from '../../../routes/types/offline-assessment.types';
+import {
+    DataGuardDetailsType,
+    OfflineAssessmentUploadResponseType
+} from '../../../routes/types/offline-assessment.types';
 import {
     OracleDriftAssessmentResponse,
     OracleDriftAssessmentResponseType,
@@ -70,7 +73,7 @@ interface OracleStoredRawData {
     errors?: string[];
     pluggableDatabases?: Array<{ pdbName: string; pdbId?: string; pdbStatus?: string }>;
     isDataGuardDeployed?: boolean;
-    dataguardDetails?: Record<string, unknown>;
+    dataguardDetails?: DataGuardDetailsType;
 }
 
 /** Oracle instance-level metadata (version, home, SID, CDB flag) nested inside each entry of `instanceLevelDetails`. */
@@ -94,7 +97,7 @@ interface OracleOfflineAssessmentInstanceData {
     os?: ISCIOSAssessment | NFSOSAssessment;
     pluggableDatabases?: Array<{ pdbName: string; pdbId?: string; pdbStatus?: string }>;
     isDataGuardDeployed?: boolean;
-    dataguardDetails?: Record<string, unknown>;
+    dataguardDetails?: DataGuardDetailsType;
 }
 
 /** Top-level `rawdata` block from the uploaded assessment JSON — maps SID keys to per-instance data plus host-level details. */
@@ -181,6 +184,7 @@ async function processOracleOfflineAssessmentUpload(
         virtualNetworkId,
         virtualNetworkName,
         vmPlatform,
+        region: metadataRegion,
         oracleHome,
         deploymentType
     } = metadata;
@@ -246,6 +250,7 @@ async function processOracleOfflineAssessmentUpload(
                     osVersion,
                     vmName,
                     ec2InstanceId,
+                    region: metadataRegion || region,
                     virtualNetworkId,
                     virtualNetworkName,
                     vmPlatform,
@@ -299,6 +304,7 @@ async function uploadOracleOfflineAssessment(
     }
 
     const {
+        databaseType,
         ec2InstanceId,
         hostname,
         storageEndpoint,
@@ -316,6 +322,13 @@ async function uploadOracleOfflineAssessment(
         pdbCount,
         region: metadataRegion
     } = metadata as unknown as OracleOfflineAssessmentMetadataType;
+
+    if (!databaseType || databaseType.toLowerCase() !== DATABASE_TYPE.oracle.toLowerCase()) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            'Please upload an Oracle Onetime assessment file. This file appears to be for a different database type.'
+        );
+    }
 
     if (!ec2InstanceId) {
         throw createError(HttpErrorCodes.BAD_REQUEST, 'EC2 instance ID is required in metadata');
@@ -362,6 +375,7 @@ async function uploadOracleOfflineAssessment(
             virtualNetworkId,
             virtualNetworkName,
             vmPlatform,
+            region: metadataRegion,
             oracleSid,
             oracleHome,
             deploymentType,
@@ -559,7 +573,8 @@ async function fetchOracleOfflineAssessmentPerAccount(
                     virtualNetworkId,
                     virtualNetworkName,
                     numberOfDatabaseInstances,
-                    vmPlatform
+                    vmPlatform,
+                    isCDB
                 } = (metadata as unknown as OracleOfflineAssessmentMetadataType) || {};
 
                 const storedRawdata = (itemRawdata as OracleStoredRawData) || {};
@@ -580,6 +595,7 @@ async function fetchOracleOfflineAssessmentPerAccount(
                     virtualNetworkName,
                     numberOfDatabaseInstances,
                     vmPlatform,
+                    tenancyType: isCDB ? 'multi_tenant' : 'single_tenant',
                     pluggableDatabases: storedRawdata.pluggableDatabases || [],
                     isDataGuardDeployed: storedRawdata.isDataGuardDeployed || false,
                     dataguardDetails: storedRawdata.dataguardDetails || {}

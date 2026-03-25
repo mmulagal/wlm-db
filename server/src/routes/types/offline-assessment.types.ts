@@ -7,8 +7,19 @@ const DataGuardDetails = Type.Object({
     dbUniqueName: Type.Optional(Type.String()),
     dbName: Type.Optional(Type.String()),
     isPrimaryNode: Type.Optional(Type.Boolean()),
-    role: Type.Optional(Type.String())
+    role: Type.Optional(Type.String()),
+    associatedHosts: Type.Optional(
+        Type.Array(
+            Type.Object({
+                serviceName: Type.Optional(Type.String()),
+                sidName: Type.Optional(Type.String()),
+                role: Type.Optional(Type.String())
+            })
+        )
+    )
 });
+
+type DataGuardDetailsType = Static<typeof DataGuardDetails>;
 
 const PluggableDatabase = Type.Object({
     pdbName: Type.String(),
@@ -86,6 +97,7 @@ const OfflineAssessmentListResponse = Type.Object({
             pluggableDatabases: Type.Optional(Type.Array(PluggableDatabase)),
             isDataGuardDeployed: Type.Optional(Type.Boolean()),
             dataguardDetails: Type.Optional(DataGuardDetails),
+            tenancyType: Type.Optional(Type.String()),
             assessments: Type.Optional(Type.Union([MSSQLDriftAssessmentResponse, OracleDriftAssessmentResponse])),
             error: Type.Optional(Type.String())
         })
@@ -154,5 +166,6 @@ export {
     UploadOfflineAssessmentFileBody,
     UploadOfflineAssessmentFileBodyType,
     DataGuardDetails,
-    PluggableDatabase
+    PluggableDatabase,
+    DataGuardDetailsType
 };

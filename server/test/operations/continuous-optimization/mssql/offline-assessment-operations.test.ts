@@ -27,7 +27,8 @@ const createValidAssessmentData = (ec2InstanceId: string = TEST_RESOURCE_ID) => 
         hostname: TEST_HOSTNAME,
         fsxId: TEST_FSX_ID,
         assessmentTimestamp: new Date().toISOString(),
-        osVersion: 'Windows Server 2019'
+        osVersion: 'Windows Server 2019',
+        databaseType: 'MSSQL'
     },
     rawdata: {
         hostLevelDetails: {
@@ -95,7 +96,8 @@ const createFCIAssessmentData = () => ({
         hostname: 'fci-sql-host',
         fsxId: TEST_FSX_ID,
         assessmentTimestamp: new Date().toISOString(),
-        osVersion: 'Windows Server 2019'
+        osVersion: 'Windows Server 2019',
+        databaseType: 'MSSQL'
     },
     rawdata: {
         hostLevelDetails: {

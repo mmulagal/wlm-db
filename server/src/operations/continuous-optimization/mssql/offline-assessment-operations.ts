@@ -28,7 +28,7 @@ import {
     validateWithSchema
 } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
-import { AWS_REGIONS, HttpErrorCodes } from '../../../utils/consts';
+import { AWS_REGIONS, HttpErrorCodes, SqlServerDeploymentModel } from '../../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentStatus,
@@ -178,6 +178,7 @@ interface MSSQLInstanceLevelAssessment {
  * Interface for MSSQL offline assessment metadata
  */
 interface MSSQLOfflineAssessmentMetadataType {
+    databaseType?: string;
     hostname: string;
     storageEndpoint: string;
     fsxId?: string;
@@ -272,6 +273,7 @@ async function processOfflineAssessmentUpload(
     const { hostLevelDetails, instanceLevelDetails } = rawdata;
     const { rssConfig, headroom, highAvailability: hostLevelHighAvailability, errors } = hostLevelDetails || {};
     const {
+        databaseType,
         ec2InstanceId,
         hostname,
         storageEndpoint,
@@ -354,6 +356,7 @@ async function processOfflineAssessmentUpload(
                     },
                     mappedOntapVolumes: mappedVolumes || {},
                     metadata: {
+                        databaseType,
                         databaseInstanceName: instanceName,
                         hostname,
                         storageEndpoint,
@@ -422,6 +425,8 @@ async function uploadMssqlOfflineAssessment(
     }
 
     const {
+        databaseType,
+        deploymentType,
         ec2InstanceId,
         hostname,
         storageEndpoint,
@@ -435,6 +440,21 @@ async function uploadMssqlOfflineAssessment(
         region: metadataRegion,
         fciName
     } = metadata as unknown as MSSQLOfflineAssessmentMetadataType;
+
+    const isMssql = databaseType
+        ? databaseType.toLowerCase() === DATABASE_TYPE.mssql.toLowerCase()
+        : [
+              SqlServerDeploymentModel.SQL_STANDALONE_SHORT,
+              SqlServerDeploymentModel.SQL_AOAG_SHORT,
+              SqlServerDeploymentModel.SQL_FCI_SHORT
+          ].includes(deploymentType as SqlServerDeploymentModel);
+
+    if (!isMssql) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            'Please upload a Microsoft SQL Server Onetime assessment file. This file appears to be for a different database type.'
+        );
+    }
 
     if (!ec2InstanceId) {
         throw createError(HttpErrorCodes.BAD_REQUEST, 'EC2 instance ID is required in metadata');
@@ -463,6 +483,7 @@ async function uploadMssqlOfflineAssessment(
         accountId,
         jobId,
         {
+            databaseType,
             ec2InstanceId,
             hostname,
             storageEndpoint,

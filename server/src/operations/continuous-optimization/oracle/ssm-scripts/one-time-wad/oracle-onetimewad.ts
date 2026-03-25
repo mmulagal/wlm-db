@@ -201,7 +201,7 @@ def main():
     log_info("Validating Oracle credentials...")
     oracle_username, oracle_password, use_sysdba = \\
         get_oracle_credentials(
-            ORACLE_SID, oracle_home=_oracle_home_preflight, region=region)
+            ORACLE_SID, oracle_home=_oracle_home_preflight, region=region, ec2_instance_id=ec2["instance_id"])
 
     # -------------------------------------------------------
     # Pre-flight Check 3: Validate ONTAP Credentials
@@ -242,6 +242,7 @@ def main():
     result = {
         "metadata": {
             "hostname": socket.gethostname(),
+            "region": region,
             "storageEndpoint": STORAGE_ENDPOINT,
             "assessmentTimestamp": datetime.datetime.utcnow().isoformat() + "Z",
             "scriptVersion": SCRIPT_VERSION,

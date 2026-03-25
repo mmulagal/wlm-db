@@ -1058,7 +1058,7 @@ EXIT;"""
         output = run_sqlplus(config, sql)
 
         vals = {}
-        dg_member_count = 0
+        dg_members = []
 
         for line in output.strip().split('\\n'):
             line = line.strip()
@@ -1067,7 +1067,14 @@ EXIT;"""
             if 'ORA-' in line or 'SP2-' in line:
                 continue
             if line.startswith('DGMEMBER='):
-                dg_member_count += 1
+                member_val = line[len('DGMEMBER='):]
+                parts = member_val.split('|', 1)
+                if len(parts) == 2:
+                    dg_members.append({
+                        "serviceName": parts[0].strip(),
+                        "sidName": parts[0].strip(),
+                        "role": parts[1].strip()
+                    })
                 continue
             idx = line.find('=')
             if idx > 0:
@@ -1079,7 +1086,7 @@ EXIT;"""
             return result
 
         # Determine if DG is configured: multiple DGMEMBER rows or FAL parameters set
-        if dg_member_count <= 1:
+        if len(dg_members) <= 1:
             fal_server = vals.get("FAL_SERVER", "")
             fal_client = vals.get("FAL_CLIENT", "")
             lac = vals.get("LOG_ARCHIVE_CONFIG", "").upper()
@@ -1100,7 +1107,8 @@ EXIT;"""
             "dbUniqueName": vals.get("DBUNIQUE", ""),
             "dbName": vals.get("DBNAME", ""),
             "isPrimaryNode": is_primary,
-            "role": db_role
+            "role": db_role,
+            "associatedHosts": dg_members
         }
 
         log_info("DataGuard detected: role={}, isPrimary={}".format(db_role, is_primary))
