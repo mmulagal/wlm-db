@@ -31,7 +31,7 @@ interface CRRLoadingDialogContentProps {
 const CRRLoadingDialogContent = ({ rowData }: CRRLoadingDialogContentProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const { fsxDetails, selectedExistingLink } = useAppSelector(state => state.crrRedirection);
+    const { selectedExistingLink } = useAppSelector(state => state.crrRedirection);
     const { selectedGwInstanceCredId, selectedRowFsxId, selectedGwInstanceRegionId } = useAppSelector(
         state => state.getWellOptimize
     );
@@ -51,7 +51,7 @@ const CRRLoadingDialogContent = ({ rowData }: CRRLoadingDialogContentProps) => {
 
     const handleNavigation = async () => {
         const state = store.getState();
-        const { selectedLinkOption } = state.crrRedirection;
+        const { selectedLinkOption, fsxDetails } = state.crrRedirection;
         if (selectedLinkOption === 'createNewLink') {
             postBlueXPMessage({
                 type: BlueXPListeners.navigate,
