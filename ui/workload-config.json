@@ -21,7 +21,7 @@
             "dataUrl": "/wlmdb/v1/focus-status",
             "primaryCtaTo": "/databases/well-architected",
             "primaryCtaBluexpTo": "/fsxdb/well-architected",
-            "primaryCtaLabel": "Databases",
+            "primaryCtaLabel": "Go to Well-architected",
             "resourcesLabelSingular": "database",
             "resourcesLabelPlural": "databases"
         }
