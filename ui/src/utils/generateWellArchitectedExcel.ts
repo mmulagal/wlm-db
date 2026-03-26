@@ -651,16 +651,12 @@ const createPatchData = (
 
         instances.forEach((instanceData: any) => {
             if (config.name === 'oracle-security-patch') {
-                if (instanceData.missingPatches && instanceData.missingPatches.length > 0) {
-                    instanceData.missingPatches.forEach((patch: any) => {
-                        details.push({
-                            [idColumnName]: patch.cveId || 'N/A',
-                            Component: patch.component || 'N/A',
-                            Description: patch.description || 'N/A',
-                            'Published Date': patch.releaseDate || 'N/A'
-                        });
-                    });
-                }
+                details.push({
+                    [idColumnName]: instanceData.cveId || 'N/A',
+                    Component: instanceData.component || 'N/A',
+                    Description: instanceData.description || 'N/A',
+                    'Published Date': instanceData.releaseDate || 'N/A'
+                });
             } else if (
                 isOracle &&
                 config.name === 'host-os-patch' &&

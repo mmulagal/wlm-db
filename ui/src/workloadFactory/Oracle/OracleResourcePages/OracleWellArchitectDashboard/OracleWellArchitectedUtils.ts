@@ -895,17 +895,8 @@ export const formatOracleSecurityPatchConfig = (
     const severity = securityPatchItem?.severity || '';
 
     const missingPatchDetails = securityPatchItem?.missingPatchDetails || [];
-    let totalMissingPatches = 0;
-    const missingPatchList: any[] = [];
-
-    missingPatchDetails.forEach((detail: any) => {
-        totalMissingPatches += detail?.missingPatchesCount || 0;
-        if (detail?.missingPatches) {
-            detail.missingPatches.forEach((patch: any) => {
-                missingPatchList.push(patch);
-            });
-        }
-    });
+    const totalMissingPatches = securityPatchItem?.missingPatchesCount || 0;
+    const missingPatchList: any[] = missingPatchDetails;
 
     return {
         ...oracleCardData.oracle_security_patch,

@@ -1640,6 +1640,7 @@ const processOracleConfigurationData = (
                         'oracleSecurityPatch',
                         instanceAssessmentData?.dismissedConfigurations?.oracleSecurityPatch?.configState
                     );
+                    getAssessmentGroupedByConfigurations.oracleSecurityPatch.total++;
                     getAssessmentGroupedByConfigurations.oracleSecurityPatch.optimized += isSecurityPatchOptimized
                         ? 1
                         : 0;
@@ -1907,6 +1908,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             activating: 0
         },
         oracleSecurityPatch: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0

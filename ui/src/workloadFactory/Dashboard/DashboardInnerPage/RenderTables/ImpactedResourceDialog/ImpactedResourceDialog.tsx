@@ -46,13 +46,11 @@ interface PatchDetail {
 }
 
 interface OracleSecurityPatchDetail {
-    missingPatchesCount?: number;
-    missingPatches?: {
-        cveId?: string;
-        component?: string;
-        description?: string;
-        releaseDate?: string;
-    }[];
+    cveId?: string;
+    component?: string;
+    description?: string;
+    releaseDate?: string;
+    releaseName?: string;
 }
 
 interface PatchInstance {
@@ -349,14 +347,13 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
             const columns = ['CVE ID', 'Component', 'Description', 'Published Date'];
             const rows: string[][] = [];
             data?.missingPatchList?.forEach(detail => {
-                (detail as OracleSecurityPatchDetail)?.missingPatches?.forEach(patch => {
-                    rows.push([
-                        patch?.cveId || na,
-                        patch?.component || na,
-                        patch?.description || na,
-                        patch?.releaseDate || na
-                    ]);
-                });
+                const patch = detail as OracleSecurityPatchDetail;
+                rows.push([
+                    patch?.cveId || na,
+                    patch?.component || na,
+                    patch?.description || na,
+                    patch?.releaseDate || na
+                ]);
             });
             return ensureRows(columns, rows, na);
         }

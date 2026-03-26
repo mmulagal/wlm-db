@@ -1,5 +1,6 @@
 import { Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { DsButton } from '@tlveng/wlm-ds';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
@@ -62,6 +63,11 @@ const ApplicationOracleDialog = ({ missingPatchList = [], type }: ApplicationOra
         pageSize: 50
     });
 
+    const openSecurityAlertsTab = () => {
+        const url = 'https://www.oracle.com/security-alerts/';
+        window.open(url, '_blank', 'noopener');
+    };
+
     const setContent = () => {
         switch (type) {
             case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
@@ -80,20 +86,43 @@ const ApplicationOracleDialog = ({ missingPatchList = [], type }: ApplicationOra
                             </div>
                         )}
 
-                        {createActionOptionSection(
+                        {createSection(
                             t('databases.well-architect.oracle-critical-patch-action-required'),
-                            [
-                                t('databases.well-architect.oracle-critical-patch-step1'),
-                                t('databases.well-architect.oracle-critical-patch-step2'),
-                                t('databases.well-architect.oracle-critical-patch-step3'),
-                                t('databases.well-architect.oracle-critical-patch-step4'),
-                                t('databases.well-architect.oracle-critical-patch-step5'),
-                                t('databases.well-architect.oracle-critical-patch-step6'),
-                                t('databases.well-architect.oracle-critical-patch-step7'),
-                                t('databases.well-architect.oracle-critical-patch-step8'),
-                                t('databases.well-architect.oracle-critical-patch-step9')
-                            ]
+                            t('databases.well-architect.oracle-critical-patch-line1')
                         )}
+
+                        {createActionOptionSection('', [
+                            <span className={styles['step-with-link']}>
+                                {t('databases.well-architect.oracle-critical-patch-step1')}
+                                <DsButton type="link" onClick={openSecurityAlertsTab}>
+                                    {t('databases.well-architect.oracle-critical-patch-step1-link')}
+                                </DsButton>
+                            </span>,
+                            t('databases.well-architect.oracle-critical-patch-step2'),
+                            t('databases.well-architect.oracle-critical-patch-step3'),
+                            t('databases.well-architect.oracle-critical-patch-step4'),
+                            <>
+                                {t('databases.well-architect.oracle-critical-patch-step5-before')}
+                                <span className={styles['medium-weight']}>
+                                    {t('databases.well-architect.oracle-critical-patch-step5-command')}
+                                </span>
+                                {t('databases.well-architect.oracle-critical-patch-step5-after')}
+                            </>,
+                            t('databases.well-architect.oracle-critical-patch-step6'),
+                            <>
+                                {t('databases.well-architect.oracle-critical-patch-step7-before')}
+                                <span className={styles['medium-weight']}>
+                                    {t('databases.well-architect.oracle-critical-patch-step7-command')}
+                                </span>
+                            </>,
+                            <>
+                                {t('databases.well-architect.oracle-critical-patch-step8-before')}
+                                <span className={styles['medium-weight']}>
+                                    {t('databases.well-architect.oracle-critical-patch-step8-command')}
+                                </span>
+                            </>,
+                            t('databases.well-architect.oracle-critical-patch-step9')
+                        ])}
 
                         {createSection(
                             t('databases.well-architect.note'),

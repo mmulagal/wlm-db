@@ -1,4 +1,14 @@
 .dialogContent {
+    .medium-weight {
+        font-weight: 500;
+    }
+
+    .step-with-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
     .unsupportedFixBanner {
         display: flex;
         align-items: flex-start;

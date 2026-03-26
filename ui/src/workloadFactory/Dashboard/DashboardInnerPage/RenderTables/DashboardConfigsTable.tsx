@@ -884,16 +884,10 @@ const createOracleSecurityPatchConfig = () => ({
     configName: 'oracleSecurityPatch',
     dismissConfigName: 'oracleSecurityPatch',
     isFixSupported: false,
-    dataMapping: (obj: any) => {
-        let totalMissing = 0;
-        obj?.missingPatchDetails?.forEach((detail: any) => {
-            totalMissing += detail?.missingPatchesCount || 0;
-        });
-        return {
-            current: `${totalMissing}`,
-            missingPatchList: obj?.missingPatchDetails || []
-        };
-    },
+    dataMapping: (obj: any) => ({
+        current: `${obj?.missingPatchesCount || 0}`,
+        missingPatchList: obj?.missingPatchDetails || []
+    }),
     customColumns: [
         {
             Header: 'databases.well-architect.dashboard-table-headers.missing-patches',

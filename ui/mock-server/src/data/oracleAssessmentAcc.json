@@ -1210,22 +1210,18 @@
                             "severity": "critical",
                             "recommendation": "Critical Patch Updates provide security patches for supported Oracle self-managed database installations. Applying the latest patch helps protect your Oracle database from vulnerabilities and significantly improves overall system reliability.",
                             "tags": ["Security", "Reliability"],
+                            "missingPatchesCount": 1,
                             "objectsInViolation": ["oracleSid"],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
                             "resourceType": "Database",
                             "missingPatchDetails": [
                                 {
-                                    "missingPatchesCount": 1,
-                                    "missingPatches": [
-                                        {
-                                            "cveId": "CVE-2026-21975",
-                                            "component": "Java VM",
-                                            "description": "Vulnerability in the Java VM component of Oracle Database Server.",
-                                            "releaseDate": "2026-01-20",
-                                            "releaseName": "January 2026"
-                                        }
-                                    ]
+                                    "cveId": "CVE-2026-21975",
+                                    "component": "Java VM",
+                                    "description": "Vulnerability in the Java VM component of Oracle Database Server. Supported versions that are affected are 19.3-19.29 and 21.3-21.20. Easily exploitable vulnerability allows high privileged attacker having Create Session privilege with network access via Oracle Net to compromise Java VM. Successful attacks require human interaction from a person other than the attacker. Successful attacks of this vulnerability can result in unauthorized ability to cause a hang or frequently repeatable crash (complete DOS) of Java VM. CVSS 3.1 Base Score 4.5 (Availability impacts).",
+                                    "releaseDate": "2026-01-20",
+                                    "releaseName": "January 2026"
                                 }
                             ]
                         },
@@ -2448,22 +2444,18 @@
                             "severity": "critical",
                             "recommendation": "Critical Patch Updates provide security patches for supported Oracle self-managed database installations. Applying the latest patch helps protect your Oracle database from vulnerabilities and significantly improves overall system reliability.",
                             "tags": ["Security", "Reliability"],
+                            "missingPatchesCount": 1,
                             "objectsInViolation": ["oracleSid"],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
                             "resourceType": "Database",
                             "missingPatchDetails": [
                                 {
-                                    "missingPatchesCount": 1,
-                                    "missingPatches": [
-                                        {
-                                            "cveId": "CVE-2026-21975",
-                                            "component": "Java VM",
-                                            "description": "Vulnerability in the Java VM component of Oracle Database Server.",
-                                            "releaseDate": "2026-01-20",
-                                            "releaseName": "January 2026"
-                                        }
-                                    ]
+                                    "cveId": "CVE-2026-21975",
+                                    "component": "Java VM",
+                                    "description": "Vulnerability in the Java VM component of Oracle Database Server. Supported versions that are affected are 19.3-19.29 and 21.3-21.20. Easily exploitable vulnerability allows high privileged attacker having Create Session privilege with network access via Oracle Net to compromise Java VM. Successful attacks require human interaction from a person other than the attacker. Successful attacks of this vulnerability can result in unauthorized ability to cause a hang or frequently repeatable crash (complete DOS) of Java VM. CVSS 3.1 Base Score 4.5 (Availability impacts).",
+                                    "releaseDate": "2026-01-20",
+                                    "releaseName": "January 2026"
                                 }
                             ]
                         },

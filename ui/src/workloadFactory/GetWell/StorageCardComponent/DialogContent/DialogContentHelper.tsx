@@ -1,5 +1,6 @@
 import { DsTypography } from '@tlveng/wlm-ds';
 import { TFunction } from 'i18next';
+import React from 'react';
 import styles from './DialogContent.module.scss';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -212,7 +213,7 @@ export const createDriveSizeMissingPermissionsDialog = (t: any, missingPermissio
 );
 
 // Helper function to create numbered action steps
-export const createNumberedActionSteps = (steps: string[]) => (
+export const createNumberedActionSteps = (steps: React.ReactNode[]) => (
     <div className={styles['action-section']}>
         {steps.map((step, index) => (
             <div key={`step-${index}`} className={styles.row}>
@@ -225,7 +226,7 @@ export const createNumberedActionSteps = (steps: string[]) => (
 );
 
 // Helper function to create action option section with numbered steps
-export const createActionOptionSection = (title: string, steps: string[]) => (
+export const createActionOptionSection = (title: string, steps: React.ReactNode[]) => (
     <div className={styles['first-section']}>
         <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
             {title}

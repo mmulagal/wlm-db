@@ -82,15 +82,13 @@ export interface PerConfigInterface {
             kbId?: string;
         }>;
     }>;
+    missingPatchesCount?: number;
     missingPatchDetails?: Array<{
-        missingPatchesCount?: number;
-        missingPatches?: Array<{
-            cveId?: string;
-            component?: string;
-            description?: string;
-            releaseDate?: string;
-            releaseName?: string;
-        }>;
+        cveId?: string;
+        component?: string;
+        description?: string;
+        releaseDate?: string;
+        releaseName?: string;
     }>;
     rssAdapters?: Array<RSSConfigAdapterInterface>;
     tcpOffloadState?: string;
