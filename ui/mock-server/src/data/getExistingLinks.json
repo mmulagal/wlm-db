@@ -1,0 +1,57 @@
+{
+    "count": 3,
+    "items": [
+        {
+            "id": "839a2c89-49d3-4d3f-8868-ada14d474f14",
+            "type": "lambda",
+            "name": "auto-generated-lambda-1774255302974",
+            "creationTime": 1774255302974,
+            "awsAccountId": "464262061435",
+            "region": "ap-southeast-1",
+            "vpcId": "vpc-84b3afe6",
+            "subnetIds": ["subnet-0ef4f90e95f375a84"],
+            "securityGroupIds": ["sg-3924c15c"],
+            "state": {
+                "status": "PENDING"
+            },
+            "features": []
+        },
+        {
+            "id": "7acecaa2-63e3-4855-8919-1db77da911b5",
+            "type": "lambda",
+            "name": "fsx3",
+            "creationTime": 1773982433530,
+            "awsAccountId": "464262061435",
+            "region": "ap-southeast-1",
+            "cloudResourceId": "arn:aws:lambda:ap-southeast-1:464262061435:function:lambda-SzIPY4W",
+            "vpcId": "vpc-046f7e26255458373",
+            "subnetIds": ["subnet-03dc0032136f7e0f5"],
+            "securityGroupIds": ["sg-03b58e3cee7d169df"],
+            "state": {
+                "status": "FAILED",
+                "reason": "No permissions to access AWS resource link Lambda. Either it was deleted or invoke permission was removed.",
+                "reasonCode": "NoPermissionToInvokeLambda"
+            },
+            "features": ["https"]
+        },
+        {
+            "id": "e516aa47-b6a8-4844-913f-970b16653169",
+            "type": "lambda",
+            "name": "fsx2",
+            "creationTime": 1773982398526,
+            "awsAccountId": "464262061435",
+            "region": "ap-southeast-1",
+            "cloudResourceId": "arn:aws:lambda:ap-southeast-1:464262061435:function:lambda-8MCU0As",
+            "vpcId": "vpc-84b3afe6",
+            "subnetIds": ["subnet-0ef4f90e95f375a84"],
+            "securityGroupIds": ["sg-3924c15c"],
+            "state": {
+                "status": "FAILED",
+                "reason": "No permissions to access AWS resource link Lambda. Either it was deleted or invoke permission was removed.",
+                "reasonCode": "NoPermissionToInvokeLambda"
+            },
+            "features": ["https"]
+        }
+    ],
+    "nextToken": null
+}

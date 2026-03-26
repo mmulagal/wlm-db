@@ -136,7 +136,8 @@ export const FROM_DIALOG = {
     LOADER: '',
     EXPLORE_SAVINGS: 'explore_savings',
     WINDOWS_AUTH: 'windows_auth',
-    MANAGE_WIZARD: 'manage_wizard'
+    MANAGE_WIZARD: 'manage_wizard',
+    CRR_REDIRECTION: 'crrRedirection'
 };
 
 export const DBType = {

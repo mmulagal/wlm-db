@@ -1,0 +1,26 @@
+{
+    "count": 1,
+    "items": [
+        {
+            "id": "6a453c77-5eae-4f8d-9ccf-a344126c84af",
+            "type": "lambda",
+            "name": "fsx-link23",
+            "creationTime": 1774330535807,
+            "awsAccountId": "464262061435",
+            "region": "ap-south-1",
+            "cloudResourceId": "arn:aws:lambda:ap-south-1:464262061435:function:lambda-0aoiq92",
+            "vpcId": "vpc-075ecf35aaafc2a4f",
+            "subnetIds": ["subnet-08a8cf2819768bfef"],
+            "securityGroupIds": ["sg-0a724cd98595a9576"],
+            "associatedTargets": {
+                "count": 1,
+                "items": ["fs-01d9727eb6a7d3e9a"]
+            },
+            "state": {
+                "status": "CONNECTED"
+            },
+            "features": []
+        }
+    ],
+    "nextToken": null
+}

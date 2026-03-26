@@ -48,6 +48,7 @@ import dialogComponentSlice from './workloadFactory/dialogComponentSlice';
 import oracleSlice from './workloadFactory/oracleSlice';
 import inventoryBannerSlice from './workloadFactory/inventorybannerSlice';
 import exploreSavingsBulkSlice from './workloadFactory/exploreSavingsBulkSlice';
+import crrRedirectionSlice from './workloadFactory/crrRedirectionSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -88,7 +89,8 @@ const rootReducer = combineReducers({
     [agenticAISlice.name]: agenticAISlice.reducer,
     [oracleSlice.name]: oracleSlice.reducer,
     [errorInvestigationApi.reducerPath]: errorInvestigationApi.reducer,
-    [dialogComponentSlice.name]: dialogComponentSlice.reducer
+    [dialogComponentSlice.name]: dialogComponentSlice.reducer,
+    [crrRedirectionSlice.name]: crrRedirectionSlice.reducer
     // [postgressSlice.name]: postgressSlice.reducer
 });
 

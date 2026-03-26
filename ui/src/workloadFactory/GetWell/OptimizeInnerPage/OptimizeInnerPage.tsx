@@ -30,7 +30,6 @@ import {
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import {
     formatAssessmentData,
-    formatGetWellData,
     handleOptimizeStorageJob,
     instanceBreadCrumbSelectedFrom,
     selectHeaderTabFromBreadCrumb
@@ -64,6 +63,9 @@ import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagCom
 import MTUOptimizeTable from './InnerTables/MTUOptimizeTable';
 import StorageLayoutOracleTable from './InnerTables/StorageLayoutOracleTable';
 
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import CRRLoadingDialogContent from './CRRRedirectionContent/CRRLoadingDialogContent';
+
 const OptimizeInnerPage = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -89,6 +91,7 @@ const OptimizeInnerPage = () => {
         selectedGwInstanceRegionId,
         cloneIsOptimizedRows
     } = useAppSelector(state => state.getWellOptimize);
+
     const fullCardData = useAppSelector(state => state.getWellOptimize.cardData);
     const isWad = fullCardData?.isWad || false;
 
@@ -234,7 +237,46 @@ const OptimizeInnerPage = () => {
         }
     }, [selectedOptimizeConfig]);
 
+    const handleCRRRedirectionDialog = (rowData: any) => {
+        const dialogHeader = (
+            <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <DsTypography variant="Regular_16">{t('databases.well-architect.associate-link')}</DsTypography>
+                <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                    {t('databases.inventory.step-1-out-of')}
+                </DsTypography>
+            </div>
+        );
+
+        setDialog(
+            <DialogComponent
+                header={dialogHeader}
+                content={<CRRLoadingDialogContent rowData={rowData} />}
+                secondaryButton={t('databases.general.close')}
+                hidePrimaryButton
+                closeCallback={() => {
+                    closeDialog();
+                }}
+            />
+        );
+    };
+
     const buttonComponent = (rowData: any) => {
+        if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CRR &&
+            selectedOptimizeConfig?.engineType === DBType.ORACLE
+        ) {
+            return (
+                <DsButton
+                    isThin
+                    variant="secondary"
+                    onClick={() => {
+                        handleCRRRedirectionDialog(rowData);
+                    }}
+                >
+                    {GENERAL.OPTIMIZE}
+                </DsButton>
+            );
+        }
         if (
             selectedOptimizeConfig?.type === 'Data files' ||
             selectedOptimizeConfig?.type === 'Log files' ||
@@ -333,9 +375,7 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.MTU ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT ||
-            (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CRR &&
-                selectedOptimizeConfig?.engineType === DBType.ORACLE)
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
         ) {
             return (
                 <DsButton

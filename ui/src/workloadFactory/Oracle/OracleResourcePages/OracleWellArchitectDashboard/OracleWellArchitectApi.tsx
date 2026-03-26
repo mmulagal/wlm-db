@@ -10,6 +10,7 @@ import { formatOracleWellArchitectedData, oracleCardData } from './OracleWellArc
 import {
     setCardData,
     setDriftAssessmentData,
+    setGwSelectedRowFsxId,
     setIsAssessmentAvailable,
     setLandingFromInnerPage,
     setOptimizePageLoading
@@ -64,6 +65,7 @@ const useOracleWellArchitectApi = () => {
                 formatOracleWellArchitectedData(dispatch, assessmentData, false, true);
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
+                dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));
             } else {
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(false));
@@ -97,6 +99,7 @@ const useOracleWellArchitectApi = () => {
                 formatOracleWellArchitectedData(dispatch, result.data, false, true);
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
+                dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));
             } else {
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(false));

@@ -19,6 +19,7 @@ app.use('', routers.createUserDb);
 app.use('', routers.exploreSavings);
 app.use('', routers.inventory);
 app.use('', routers.snapcenter);
+app.use('', routers.crrRedirection);
 app.use('', routers.getwell);
 app.use('', routers.errorInvestigation);
 

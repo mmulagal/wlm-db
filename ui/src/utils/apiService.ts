@@ -113,6 +113,17 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
         }
         return isDevMode ? import.meta.env.VITE_APP_LOCAL_SERVER : import.meta.env.VITE_APP_BXP_URL;
     }
+    // Skip wlmdb prefix for endpoints that target the BlueXP base path directly
+    if (
+        api.endpoint === 'getAssociatedLinks' ||
+        api.endpoint === 'getExistingLinks' ||
+        api.endpoint === 'checkExistingLink' ||
+        api.endpoint === 'deleteExistingLink' ||
+        api.endpoint === 'associateSelectedLink' ||
+        api.endpoint === 'getFsxDetailsForLinkRedirect'
+    ) {
+        return `${apiHost}/accounts/${accountId}`;
+    }
     return `${apiHost}/accounts/${accountId}/wlmdb`;
 };
 
@@ -1349,6 +1360,39 @@ export const getWellApi = createApi({
     baseQuery: dynamicBaseQuery,
     refetchOnMountOrArgChange: true,
     endpoints: builder => ({
+        getAssociatedLinks: builder.mutation({
+            query: ({ fsxId }) => ({
+                url: `links/v1/links?filter=associatedTarget eq '${fsxId}'&include=associatedTargets,state&onlyConnectedStatus=true`
+            })
+        }),
+        getFsxDetailsForLinkRedirect: builder.mutation({
+            query: ({ credentialId, region, fsxId }) => ({
+                url: `fsx/v2/credentials/${credentialId}/regions/${region}/file-systems/${fsxId}?include=vpcInfo,securityGroups,subnets`
+            })
+        }),
+        getExistingLinks: builder.mutation({
+            query: ({}) => ({
+                url: 'links/v1/links?include=associatedTarget,state,features'
+            })
+        }),
+        checkExistingLink: builder.mutation({
+            query: ({ fsxId }) => ({
+                url: `links/v1/links?include=associatedTargets,state&filter=associatedTarget eq '${fsxId}'`
+            })
+        }),
+        deleteExistingLink: builder.mutation({
+            query: ({ credentialId, region, fsxId, linkId }) => ({
+                url: `fsx/v2/credentials/${credentialId}/regions/${region}/file-systems/${fsxId}/links/${linkId}`,
+                method: 'DELETE'
+            })
+        }),
+        associateSelectedLink: builder.mutation({
+            query: ({ credentialId, region, fsxId, payload }) => ({
+                url: `fsx/v2/credentials/${credentialId}/regions/${region}/file-systems/${fsxId}/links`,
+                method: 'POST',
+                body: payload
+            })
+        }),
         getMssqlAssessmentData: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
                 url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
@@ -1767,6 +1811,12 @@ export const {
     useGetOracleAssessmentDataMutation,
     useTriggerOracleInstanceAssessmentMutation,
     useGetMssqlAssessmentDataForHostMutation,
+    useGetAssociatedLinksMutation,
+    useGetFsxDetailsForLinkRedirectMutation,
+    useCheckExistingLinkMutation,
+    useGetExistingLinksMutation,
+    useDeleteExistingLinkMutation,
+    useAssociateSelectedLinkMutation,
     useOptimizeStorageConfigMutation,
     useOptimizeOracleStorageConfigMutation,
     useOptimizeOracleStorageLayoutAsmMutation,

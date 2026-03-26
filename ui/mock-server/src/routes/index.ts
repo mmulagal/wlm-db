@@ -12,6 +12,7 @@ import inventory from './inventory';
 import getwell from './getwell';
 import errorInvestigation from './errorInvestigation';
 import snapcenter from './snapcenter';
+import crrRedirection from './crrRedirection';
 
 const routes = {
     credentials,
@@ -27,6 +28,7 @@ const routes = {
     inventory,
     getwell,
     errorInvestigation,
-    snapcenter
+    snapcenter,
+    crrRedirection
 };
 export default routes;

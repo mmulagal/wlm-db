@@ -67,6 +67,8 @@ const DialogComponent = ({
     const { selectedOptimizeConfig } = useAppSelector(state => state.inventoryV2);
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const detectReplicaHostLoading = useAppSelector(state => state.msSqlAction.isDetectReplicaHostLoading);
+    const associateLinkLoading = useAppSelector(state => state.crrRedirection.associateLinkLoading);
+
     const {
         durationCustomAnalysis,
         selectedCustomAnalysisTime,
@@ -149,7 +151,8 @@ const DialogComponent = ({
         (dialogFrom === FROM_DIALOG.SQLSERVER && passwordResetLoading) ||
         (dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS && actionsDisabled) ||
         (dialogFrom === FROM_DIALOG.WINDOWS_AUTH && authVerification) ||
-        (dialogFrom === FROM_DIALOG.SINGLE_AGENT && actionsDisabled))();
+        (dialogFrom === FROM_DIALOG.SINGLE_AGENT && actionsDisabled) ||
+        (dialogFrom === FROM_DIALOG.CRR_REDIRECTION && associateLinkLoading))();
 
     // Load and save config dialog will be closed once data is available. So closeDialog is taken care in LoadConfiguration.ts file.
     const primaryButtonClick = () => {
@@ -164,7 +167,8 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.SINGLE_AGENT &&
             dialogFrom !== FROM_DIALOG.EXPLORE_SAVINGS &&
             dialogFrom !== FROM_DIALOG.WINDOWS_AUTH &&
-            dialogFrom !== FROM_DIALOG.MANAGE_WIZARD
+            dialogFrom !== FROM_DIALOG.MANAGE_WIZARD &&
+            dialogFrom !== FROM_DIALOG.CRR_REDIRECTION
         ) {
             closeDialog();
         }

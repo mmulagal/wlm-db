@@ -1,0 +1,78 @@
+{
+    "id": "fs-0367868fe7100ff1f",
+    "name": "wlmdb-fsx-1",
+    "region": "ap-southeast-1",
+    "deploymentType": "MULTI_AZ",
+    "status": {
+        "status": "AVAILABLE"
+    },
+    "awsDeploymentType": "MULTI_AZ_2",
+    "awsAccountId": "464262061435",
+    "storageCapacity": 1099511627776,
+    "throughputCapacity": 402653184,
+    "storageType": "SSD",
+    "vpcId": "vpc-84b3afe6",
+    "subnetIds": {
+        "primary": "subnet-0ef4f90e95f375a84",
+        "secondary": "subnet-f4484e80"
+    },
+    "networkInterfaceIds": ["eni-0d6752c260edf7fa4", "eni-05274ffab992b9f78"],
+    "arn": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-0367868fe7100ff1f",
+    "tags": [
+        {
+            "key": "Name",
+            "value": "wlmdb-fsx-1"
+        }
+    ],
+    "endpointIpAddressRange": "172.31.255.192/26",
+    "endpoints": {
+        "intercluster": {
+            "dnsName": "intercluster.fs-0367868fe7100ff1f.fsx.ap-southeast-1.amazonaws.com",
+            "ipAddresses": ["172.31.48.78", "172.31.18.230"]
+        },
+        "management": {
+            "dnsName": "management.fs-0367868fe7100ff1f.fsx.ap-southeast-1.amazonaws.com",
+            "ipAddresses": ["172.31.255.239"]
+        }
+    },
+    "minimumSsdIops": 3072,
+    "routeTableIds": ["rtb-65aeb107"],
+    "diskIopsConfiguration": {
+        "mode": "AUTOMATIC",
+        "iops": 3072
+    },
+    "weeklyMaintenanceStartTime": "2:18:00",
+    "haPairs": 1,
+    "throughputCapacityPerHAPair": 402653184,
+    "creationTime": 1774230362393,
+    "automaticBackupRetentionDays": 30,
+    "dailyAutomaticBackupStartTime": "17:00",
+    "propertiesPendingUpdate": {},
+    "securityGroups": [
+        {
+            "name": "default",
+            "id": "sg-3924c15c"
+        }
+    ],
+    "subnets": [
+        {
+            "id": "subnet-0ef4f90e95f375a84",
+            "tags": [
+                {
+                    "key": "Name",
+                    "value": "RDS-Pvt-subnet-1"
+                }
+            ],
+            "state": "available",
+            "vpcId": "vpc-84b3afe6",
+            "cidrBlock": "172.31.48.0/25",
+            "availabilityZone": "ap-southeast-1c",
+            "availableIps": 64,
+            "name": "RDS-Pvt-subnet-1"
+        }
+    ],
+    "vpcInfo": {
+        "vpcName": "wlmdb-vpc",
+        "vpcCidr": "172.31.0.0/16"
+    }
+}
