@@ -125,6 +125,10 @@ const Home = () => {
                             path="/databases/inventory/cred/:credId/region/:regionId/databaseHost/:hostId/databaseInstance/:instanceId/logAnalyzerStatus/:status/engineType/:engineType/hostname/:hostname/dbInstanceName/:dbInstanceName"
                             element={<ErrorAnalysisDeepLink />}
                         />
+                        <Route
+                            path="/databases/inventory/:credId/:regionId/:fsxId/:tab"
+                            element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
+                        />
                         <Route path="/databases/inventory" element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
                         <Route path="/databases/sandboxes" element={<HeaderComponent tab={WLF_TABS.SANDBOXES} />} />
                         {/* Routes For Explore savings */}
@@ -201,6 +205,11 @@ const Home = () => {
                             <Route
                                 path="/fsxdb/inventory/cred/:credId/region/:regionId/databaseHost/:hostId/databaseInstance/:instanceId/logAnalyzerStatus/:status/engineType/:engineType/hostname/:hostname/dbInstanceName/:dbInstanceName"
                                 element={<ErrorAnalysisDeepLink />}
+                            />
+
+                            <Route
+                                path="/fsxdb/inventory/:credId/:regionId/:fsxId/:tab"
+                                element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
                             />
                             <Route path="/databases/inventory" element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
                             <Route path="/fsxdb/inventory" element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />

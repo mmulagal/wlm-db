@@ -31,10 +31,11 @@ interface CRRLoadingDialogContentProps {
 const CRRLoadingDialogContent = ({ rowData }: CRRLoadingDialogContentProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const { selectedExistingLink } = useAppSelector(state => state.crrRedirection);
+
     const { selectedGwInstanceCredId, selectedRowFsxId, selectedGwInstanceRegionId } = useAppSelector(
         state => state.getWellOptimize
     );
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
     const { setDialog, closeDialog } = useDialog();
     const [getAssociatedLinksApi] = useGetAssociatedLinksMutation();
     const [getFsxDetailsForLinkRedirectApi] = useGetFsxDetailsForLinkRedirectMutation();
@@ -51,12 +52,20 @@ const CRRLoadingDialogContent = ({ rowData }: CRRLoadingDialogContentProps) => {
 
     const handleNavigation = async () => {
         const state = store.getState();
-        const { selectedLinkOption, fsxDetails } = state.crrRedirection;
+        const { selectedLinkOption, fsxDetails, selectedExistingLink } = state.crrRedirection;
         if (selectedLinkOption === 'createNewLink') {
             postBlueXPMessage({
                 type: BlueXPListeners.navigate,
                 payload: {
-                    pathname: `../../administration/links/create?awsAccount=${fsxDetails?.awsAccountId}&from=/databases/inventory/${selectedGwInstanceCredId}/${fsxDetails?.region}/${fsxDetails?.id}/overview&region=${fsxDetails?.region}&securityGroupId=${fsxDetails?.securityGroups[0]?.id}&securityGroupName=${fsxDetails?.securityGroups[0]?.name}&subnetCidr=${fsxDetails?.subnets[0]?.cidrBlock}&subnetId=${fsxDetails?.subnets[0]?.id}&vpcCidr=${fsxDetails?.vpcInfo?.vpcCidr}&vpcId=${fsxDetails?.subnets[0]?.vpcId}&vpcName=${fsxDetails?.vpcInfo?.vpcName}`,
+                    pathname: `../../administration/links/create?awsAccount=${fsxDetails?.awsAccountId}&from=${
+                        isWorkloadFactory ? '/databases' : '/fsxdb'
+                    }/inventory/${selectedGwInstanceCredId}/${fsxDetails?.region}/${fsxDetails?.id}/overview&region=${
+                        fsxDetails?.region
+                    }&securityGroupId=${fsxDetails?.securityGroups[0]?.id}&securityGroupName=${
+                        fsxDetails?.securityGroups[0]?.name
+                    }&subnetCidr=${fsxDetails?.subnets[0]?.cidrBlock}&subnetId=${fsxDetails?.subnets[0]?.id}&vpcCidr=${
+                        fsxDetails?.vpcInfo?.vpcCidr
+                    }&vpcId=${fsxDetails?.subnets[0]?.vpcId}&vpcName=${fsxDetails?.vpcInfo?.vpcName}`,
                     replace: true
                 }
             });
