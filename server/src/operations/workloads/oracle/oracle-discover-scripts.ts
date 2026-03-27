@@ -1120,28 +1120,40 @@ const getInstanceStorageDetails = `
     if [ "$isASMManaged" == "TRUE" ]; then
         # If multiple PDBs are present, loop through each PDB. As underlying storage & protocol can differ for each PDB.
         if [ "$is_cdb" == "YES" ]; then
-            for pdb_name in $pdb_names; do
-                pdbStorageDetails=$(get_diskgroup_mappings "$sid" "$is_cdb" "$pdb_name")
-                if [ "$storageDetails" == "[" ]; then
-                    storageDetails+="$pdbStorageDetails"
-                else
-                    storageDetails+=", $pdbStorageDetails"
-                fi
-            done
+            if [ -n "$(echo "$pdb_names" | xargs)" ]; then
+                for pdb_name in $pdb_names; do
+                    pdbStorageDetails=$(get_diskgroup_mappings "$sid" "$is_cdb" "$pdb_name")
+                    if [ "$storageDetails" == "[" ]; then
+                        storageDetails+="$pdbStorageDetails"
+                    else
+                        storageDetails+=", $pdbStorageDetails"
+                    fi
+                done
+            else
+                # No open PDBs - fall back to CDB root storage paths.
+                singleInstanceDbStorageDetails=$(get_diskgroup_mappings "$sid" "NO" "null")
+                storageDetails+="$singleInstanceDbStorageDetails"
+            fi
         else
             singleInstanceDbStorageDetails=$(get_diskgroup_mappings "$sid" "$is_cdb" "null")
             storageDetails+="$singleInstanceDbStorageDetails"
         fi
     else
         if [ "$is_cdb" == "YES" ]; then
-            for pdb_name in $pdb_names; do
-                pdbStorageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "$is_cdb" "$pdb_name" "true" "$oracle_home")
-                if [ "$storageDetails" == "[" ]; then
-                    storageDetails+="$pdbStorageDetails"
-                else
-                    storageDetails+=", $pdbStorageDetails"
-                fi
-            done
+            if [ -n "$(echo "$pdb_names" | xargs)" ]; then
+                for pdb_name in $pdb_names; do
+                    pdbStorageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "$is_cdb" "$pdb_name" "true" "$oracle_home")
+                    if [ "$storageDetails" == "[" ]; then
+                        storageDetails+="$pdbStorageDetails"
+                    else
+                        storageDetails+=", $pdbStorageDetails"
+                    fi
+                done
+            else
+                # No open PDBs - include CDB root datafiles so storage is not empty.
+                singleInstanceDbStorageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "NO" "null" "true" "$oracle_home")
+                storageDetails+="$singleInstanceDbStorageDetails"
+            fi
         else
             singleInstanceDbStorageDetails=$(get_non_asm_nfs_or_iscsi_storage_details "$sid" "$is_cdb" "null" "true" "$oracle_home")
             storageDetails+="$singleInstanceDbStorageDetails"
@@ -1714,7 +1726,7 @@ const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: s
             mounted_pdb_names=""
         fi
 
-        if [ -n "$pdb_names" ]; then
+        if [ -n "$(echo "$pdb_names" | xargs)" ]; then
             pdb_names_json=$(echo "$pdb_names" | awk '{for(i=1;i<=NF;i++) printf "\\"%s\\"%s", $i, (i<NF?",":"") }')
             pdb_names="[$pdb_names_json]"
         else
@@ -1984,35 +1996,48 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                 if [ "$is_cdb" == "YES" ]; then
                     mountDetailsFailed=false
                     mountDetailsError=""
-                    finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": true, \\"mountedPdbs\\": $mountedPdbsJson, \\"pdbMountDetails\\": {"
-                    firstPdb=true
-                    
-                    for pdb_name in $pdb_names; do
-                        if [ "$firstPdb" = true ]; then
-                            firstPdb=false
-                        else
-                            finalResult+=","
-                        fi
+                    if [ -n "$(echo "$pdb_names" | xargs)" ]; then
+                        finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": true, \\"mountedPdbs\\": $mountedPdbsJson, \\"pdbMountDetails\\": {"
+                        firstPdb=true
                         
-                        # Get mount details for this PDB
-                        pdbMountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "$pdb_name")
-                        if [ $? -ne 0 ]; then
-                            mountDetailsFailed=true
-                            if [ -z "$mountDetailsError" ]; then
-                                mountDetailsError=$(echo "$pdbMountDetails" | jq -r '.error // empty' 2>/dev/null)
+                        for pdb_name in $pdb_names; do
+                            if [ "$firstPdb" = true ]; then
+                                firstPdb=false
+                            else
+                                finalResult+=","
+                            fi
+                            
+                            pdbMountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "$pdb_name")
+                            if [ $? -ne 0 ]; then
+                                mountDetailsFailed=true
                                 if [ -z "$mountDetailsError" ]; then
-                                    mountDetailsError="Mount detail retrieval failed for PDB $pdb_name."
+                                    mountDetailsError=$(echo "$pdbMountDetails" | jq -r '.error // empty' 2>/dev/null)
+                                    if [ -z "$mountDetailsError" ]; then
+                                        mountDetailsError="Mount detail retrieval failed for PDB $pdb_name."
+                                    fi
                                 fi
                             fi
+                            finalResult+="\\"$pdb_name\\": $pdbMountDetails"
+                        done
+                        
+                        if [ "$mountDetailsFailed" = true ]; then
+                            escapedMountDetailsError=$(jq -Rn --arg error "$mountDetailsError" '$error')
+                            finalResult+="}, \\"error\\": $escapedMountDetailsError}"
+                        else
+                            finalResult+="}}"
                         fi
-                        finalResult+="\\"$pdb_name\\": $pdbMountDetails"
-                    done
-                    
-                    if [ "$mountDetailsFailed" = true ]; then
-                        escapedMountDetailsError=$(jq -Rn --arg error "$mountDetailsError" '$error')
-                        finalResult+="}, \\"error\\": $escapedMountDetailsError}"
                     else
-                        finalResult+="}}"
+                        mountDetails=$(get_oracle_db_asm_mount_details "$sid" "NO" "")
+                        if [ $? -ne 0 ]; then
+                            mountDetailsError=$(echo "$mountDetails" | jq -r '.error // empty' 2>/dev/null)
+                            if [ -z "$mountDetailsError" ]; then
+                                mountDetailsError="Mount detail retrieval failed for SID $sid."
+                            fi
+                            escapedMountDetailsError=$(jq -Rn --arg error "$mountDetailsError" '$error')
+                            finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": true, \\"mountedPdbs\\": $mountedPdbsJson, \\"error\\": $escapedMountDetailsError}"
+                        else
+                            finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": true, \\"mountedPdbs\\": $mountedPdbsJson, \\"mountDetails\\": $mountDetails}"
+                        fi
                     fi
                 else
                     mountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "")
@@ -2029,38 +2054,50 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                 fi
             else
                 if [ "$is_cdb" == "YES" ]; then
-                    # Handle CDB with PDBs
                     mountDetailsFailed=false
                     mountDetailsError=""
-                    finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": false, \\"mountedPdbs\\": $mountedPdbsJson, \\"pdbMountDetails\\": {"
-                    firstPdb=true
-                    
-                    for pdb_name in $pdb_names; do
-                        if [ "$firstPdb" = true ]; then
-                            firstPdb=false
-                        else
-                            finalResult+=","
-                        fi
+                    if [ -n "$(echo "$pdb_names" | xargs)" ]; then
+                        finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": false, \\"mountedPdbs\\": $mountedPdbsJson, \\"pdbMountDetails\\": {"
+                        firstPdb=true
                         
-                        # Get mount details for this PDB
-                        pdbMountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "$pdb_name")
-                        if [ $? -ne 0 ]; then
-                            mountDetailsFailed=true
-                            if [ -z "$mountDetailsError" ]; then
-                                mountDetailsError=$(echo "$pdbMountDetails" | jq -r '.error // empty' 2>/dev/null)
+                        for pdb_name in $pdb_names; do
+                            if [ "$firstPdb" = true ]; then
+                                firstPdb=false
+                            else
+                                finalResult+=","
+                            fi
+                            
+                            pdbMountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "$pdb_name")
+                            if [ $? -ne 0 ]; then
+                                mountDetailsFailed=true
                                 if [ -z "$mountDetailsError" ]; then
-                                    mountDetailsError="Mount detail retrieval failed for PDB $pdb_name."
+                                    mountDetailsError=$(echo "$pdbMountDetails" | jq -r '.error // empty' 2>/dev/null)
+                                    if [ -z "$mountDetailsError" ]; then
+                                        mountDetailsError="Mount detail retrieval failed for PDB $pdb_name."
+                                    fi
                                 fi
                             fi
+                            finalResult+="\\"$pdb_name\\": $pdbMountDetails"
+                        done
+                        
+                        if [ "$mountDetailsFailed" = true ]; then
+                            escapedMountDetailsError=$(jq -Rn --arg error "$mountDetailsError" '$error')
+                            finalResult+="}, \\"error\\": $escapedMountDetailsError}"
+                        else
+                            finalResult+="}}"
                         fi
-                        finalResult+="\\"$pdb_name\\": $pdbMountDetails"
-                    done
-                    
-                    if [ "$mountDetailsFailed" = true ]; then
-                        escapedMountDetailsError=$(jq -Rn --arg error "$mountDetailsError" '$error')
-                        finalResult+="}, \\"error\\": $escapedMountDetailsError}"
                     else
-                        finalResult+="}}"
+                        mountDetails=$(get_oracle_db_mount_details "$sid" "NO" "")
+                        if [ $? -ne 0 ]; then
+                            mountDetailsError=$(echo "$mountDetails" | jq -r '.error // empty' 2>/dev/null)
+                            if [ -z "$mountDetailsError" ]; then
+                                mountDetailsError="Mount detail retrieval failed for SID $sid."
+                            fi
+                            escapedMountDetailsError=$(jq -Rn --arg error "$mountDetailsError" '$error')
+                            finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": false, \\"mountedPdbs\\": $mountedPdbsJson, \\"error\\": $escapedMountDetailsError}"
+                        else
+                            finalResult+="\\"$sid\\": {\\"isCDB\\": true, \\"isASMManaged\\": false, \\"mountedPdbs\\": $mountedPdbsJson, \\"mountDetails\\": $mountDetails}"
+                        fi
                     fi
                 else
                     # Handle single instance DB
@@ -2225,26 +2262,60 @@ const getMappedOntapDataVolumeForInstance = (
             log "Added single tenant SID mapping for: $sid"
             
         else
-            log "Processing CDB-PDB instance for SID: $sid"
-            # CDB-PDB instance
-            pdbVolumes='{}'
-            
-            for pdb in $(echo "$sidData" | jq -r '.pdbMountDetails | keys[]'); do
-                log "Processing PDB: $pdb for SID: $sid"
-                pdbOntapVolumes='{}'
+            log "Processing CDB instance for SID: $sid"
+            hasPdbMountDetails=$(echo "$sidData" | jq 'has("pdbMountDetails") and (.pdbMountDetails | keys | length > 0)')
+
+            if [ "$hasPdbMountDetails" == "true" ]; then
+                log "CDB has pdbMountDetails, processing per-PDB volumes"
+                pdbVolumes='{}'
                 
-                for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
-                    log "Processing file type: $fileType for PDB: $pdb"
-                    fileTypeVolumes="[]"
-                    mountDetails=$(echo "$sidData" | jq -c --arg pdb "$pdb" --arg ft "$fileType" '.pdbMountDetails[$pdb][$ft] // []')
+                for pdb in $(echo "$sidData" | jq -r '.pdbMountDetails | keys[]'); do
+                    log "Processing PDB: $pdb for SID: $sid"
+                    pdbOntapVolumes='{}'
                     
-                    # Check if mountDetails is empty
+                    for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
+                        log "Processing file type: $fileType for PDB: $pdb"
+                        fileTypeVolumes="[]"
+                        mountDetails=$(echo "$sidData" | jq -c --arg pdb "$pdb" --arg ft "$fileType" '.pdbMountDetails[$pdb][$ft] // []')
+                        
+                        if [ "$(echo "$mountDetails" | jq 'length')" -eq 0 ]; then
+                            log "No mount details found for file type: $fileType in PDB: $pdb"
+                            pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" '.[$ft] = []')
+                            continue
+                        else
+                            log "Processing mount details for file type: $fileType in PDB: $pdb"
+                            for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
+                                volMappings=$(processMountDetail "$mountDetail")
+                                if [ -z "$protocol" ]; then
+                                    protocol=$(echo "$mountDetail" | jq -r '.protocol')
+                                fi
+                                fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
+                            done
+                            
+                            pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+                            log "Completed processing file type: $fileType for PDB: $pdb with $(echo "$fileTypeVolumes" | jq 'length') volumes"
+                        fi
+                    done
+                    
+                    pdbVolumes=$(echo "$pdbVolumes" | jq --arg pdb "$pdb" --argjson pov "$pdbOntapVolumes" '.[$pdb] = $pov')
+                    log "Completed processing PDB: $pdb"
+                done
+                sidMapping="{\\"$sid\\": {\\"isCDB\\": true, \\"ontapVolumes\\": $pdbVolumes}}"
+                volumeMappings=$(echo "$volumeMappings" | jq --argjson sm "$sidMapping" '. += [$sm]')
+                log "Added CDB-PDB SID mapping for: $sid"
+            else
+                log "CDB has no pdbMountDetails, using CDB root mountDetails"
+                ontapVolumes='{}'
+                for fileType in "REDO_LOGS" "ARCHIVE_LOGS" "CONTROL_FILES" "TEMP_FILES" "DATA_FILES" "FRA"; do
+                    log "Processing file type: $fileType for CDB root SID: $sid"
+                    fileTypeVolumes="[]"
+                    mountDetails=$(echo "$sidData" | jq -c --arg ft "$fileType" '.mountDetails[$ft] // []')
                     if [ "$(echo "$mountDetails" | jq 'length')" -eq 0 ]; then
-                        log "No mount details found for file type: $fileType in PDB: $pdb"
-                        pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" '.[$ft] = []')
+                        log "No mount details found for file type: $fileType"
+                        ontapVolumes=$(echo "$ontapVolumes" | jq --arg ft "$fileType" '.[$ft] = []')
                         continue
                     else
-                        log "Processing $mountDetailsCount mount details for file type: $fileType in PDB: $pdb"
+                        log "Processing mount details for file type: $fileType"
                         for mountDetail in $(echo "$mountDetails" | jq -c '.[]'); do
                             volMappings=$(processMountDetail "$mountDetail")
                             if [ -z "$protocol" ]; then
@@ -2253,17 +2324,14 @@ const getMappedOntapDataVolumeForInstance = (
                             fileTypeVolumes=$(echo "$fileTypeVolumes" | jq --argjson r "$volMappings" '. += $r')
                         done
                         
-                        pdbOntapVolumes=$(echo "$pdbOntapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
-                        log "Completed processing file type: $fileType for PDB: $pdb with $(echo "$fileTypeVolumes" | jq 'length') volumes"
+                        ontapVolumes=$(echo "$ontapVolumes" | jq --arg ft "$fileType" --argjson ftv "$fileTypeVolumes" '.[$ft] = $ftv')
+                        log "Completed processing file type: $fileType with $(echo "$fileTypeVolumes" | jq 'length') volumes"
                     fi
                 done
-                
-                pdbVolumes=$(echo "$pdbVolumes" | jq --arg pdb "$pdb" --argjson pov "$pdbOntapVolumes" '.[$pdb] = $pov')
-                log "Completed processing PDB: $pdb"
-            done
-            sidMapping="{\\"$sid\\": {\\"isCDB\\": true, \\"ontapVolumes\\": $pdbVolumes}}"
-            volumeMappings=$(echo "$volumeMappings" | jq --argjson sm "$sidMapping" '. += [$sm]')
-            log "Added CDB-PDB SID mapping for: $sid"
+                sidMapping="{\\"$sid\\": {\\"isCDB\\": true, \\"ontapVolumes\\": $ontapVolumes}}"
+                volumeMappings=$(echo "$volumeMappings" | jq --argjson sm "$sidMapping" '. += [$sm]')
+                log "Added CDB root SID mapping for: $sid"
+            fi
         fi
     done
 
