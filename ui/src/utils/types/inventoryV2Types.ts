@@ -205,6 +205,24 @@ export interface InventoryTableData {
     storage?: Array<DiscoveredStorageObj>;
 }
 
+export interface OraclePluggableDatabase {
+    pdbName?: string;
+    pdbId?: string;
+    pdbStatus?: string;
+    pdbSizeInBytes?: number;
+    pdbCreationTime?: string;
+    serviceName?: string;
+}
+
+export interface InstanceDatabaseEntry {
+    name?: string;
+    size?: number;
+    status?: string;
+    type?: string;
+    service?: string;
+    created?: string;
+}
+
 export interface InventoryTableInstanceDatInterface {
     databaseInstanceId?: string;
     databaseInstanceName?: string;
@@ -278,6 +296,7 @@ export interface InventoryTableInstanceDatInterface {
     wadAssessmentData?: any;
     oracleServerDeploymentType?: string; // will get for Oracle databases
     dataguardDetails?: any; // will get for Oracle databases
+    databases?: Array<InstanceDatabaseEntry>;
 }
 
 export interface StorageInterface {
@@ -618,11 +637,7 @@ export interface OracleInstancesDiscovered {
         databaseId?: string;
         openMode?: string;
     };
-    pluggableDatabases?: Array<{
-        pdbName?: string;
-        pdbId?: string;
-        pdbStatus?: string;
-    }>;
+    pluggableDatabases?: Array<OraclePluggableDatabase>;
     defaultAuth?: boolean;
     storage?: Array<{
         type?: string;

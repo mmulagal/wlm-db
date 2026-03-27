@@ -30,15 +30,21 @@ const OracleTabs = () => {
     // WAD tooltip message for disabled tabs (Oracle specific)
     const wadDisabledMessage = t('databases.wad.tab-disabled-message-oracle');
 
-    const isSingleTenant = useMemo(() => {
+    const { isSingleTenant, hasWadPdbData } = useMemo(() => {
         if (!selectedResourceId || !selectedDatabaseInstanceName || !inventoryTableData) {
-            return false;
+            return { isSingleTenant: false, hasWadPdbData: false };
         }
         const hostData = Object.values(inventoryTableData).find(host => host?.resourceId === selectedResourceId);
         const instanceData = hostData?.sqlServerInstances?.find(
             instance => instance?.databaseInstanceName?.toLowerCase() === selectedDatabaseInstanceName?.toLowerCase()
         );
-        return instanceData?.instanceType === ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT;
+        return {
+            isSingleTenant: instanceData?.instanceType === ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT,
+            hasWadPdbData:
+                !!instanceData?.isWad &&
+                Array.isArray(instanceData?.databases) &&
+                instanceData.databases.some(db => db?.type === ORACLE_DATABASES_COMPONENTS.PDB)
+        };
     }, [selectedResourceId, selectedDatabaseInstanceName, inventoryTableData]);
 
     useEffect(() => {
@@ -177,8 +183,8 @@ const OracleTabs = () => {
                 </div>
             )}
 
-            {/* PDB Tab - disabled for WAD or Single Tenant */}
-            {isWad ? (
+            {/* PDB Tab - disabled for WAD without PDB data or Single Tenant */}
+            {isWad && !hasWadPdbData ? (
                 <TooltipComponent placement="bottom" title={wadDisabledMessage} width={300}>
                     <div className={`${styles.headers} ${styles.headerWidthThird}`}>
                         <DsTypography variant="Semibold_14" className={styles.headerDisabled}>

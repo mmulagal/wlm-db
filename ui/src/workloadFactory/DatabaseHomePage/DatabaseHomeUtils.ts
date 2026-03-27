@@ -3271,7 +3271,7 @@ export const formatOfflineDataToAssessmentFormat = (offlineData: any[], dbType: 
         // Create host-level assessment data entry
         const hostAssessmentData: any = {
             databaseHostId: hostId,
-            databaseHostName: firstInstance?.vmName || hostId,
+            databaseHostName: firstInstance?.assessments?.databaseHostName,
             credentialId: credId,
             regionId,
             region: firstInstance?.region || '',

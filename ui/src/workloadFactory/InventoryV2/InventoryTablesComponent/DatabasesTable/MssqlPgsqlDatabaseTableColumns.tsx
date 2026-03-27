@@ -1,9 +1,9 @@
 import { TFunction } from 'i18next';
-import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
+import { DsTypography } from '@tlveng/wlm-ds';
 import { Popover, TooltipInfo } from '@netapp/design-system';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
-import { DBType, INVENTORY_STATUS, REPLICA_ROLES } from '../../../../utils/consts';
+import { DBType, REPLICA_ROLES } from '../../../../utils/consts';
 import {
     createNACustomFilter,
     formatSize,
@@ -14,6 +14,7 @@ import ProtectionIcons from '../../../../common/ProtectionIcons/ProtectionIcons'
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 
 export function MssqlPgsqlDatabaseTableColDefs({
     t,
@@ -40,24 +41,7 @@ export function MssqlPgsqlDatabaseTableColDefs({
                             {name || t('databases.general.not-available-table-columns')}
                         </DsTypography>
                         <div className={styles.firstColText}>
-                            {rowData?.status === 'ONLINE' && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
-                            )}
-                            {rowData?.status === 'OFFLINE' && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
-                            )}
-                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
-                            )}
-                            <DsTypography variant="Regular_13">
-                                {rowData?.status === 'ONLINE'
-                                    ? INVENTORY_STATUS.ONLINE
-                                    : rowData?.status === 'OFFLINE'
-                                    ? INVENTORY_STATUS.OFFLINE
-                                    : rowData?.status}
-                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && 'Unknown'}
-                            </DsTypography>
+                            <InventoryStatusIndicator status={rowData?.status} loading={rowData?.loading} />
                         </div>
                     </div>
                 );

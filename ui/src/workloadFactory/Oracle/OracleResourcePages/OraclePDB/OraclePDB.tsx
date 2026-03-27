@@ -9,7 +9,7 @@ import inventoryStyles from '../../../InventoryV2/InventoryTablesComponent/Inven
 import { useAppSelector } from '../../../../store/storeHooks';
 import { formatSize, categorizeStorageSize } from '../../../../utils/utilityFunctions';
 import { getProtectionText } from '../../../InventoryV2/InventoryUtilsV2';
-import { PROTECTION_TEXT_STATUS, STATUS_CONST } from '../../../../utils/consts';
+import { ORACLE_DATABASES_COMPONENTS, PROTECTION_TEXT_STATUS, STATUS_CONST } from '../../../../utils/consts';
 import useOracleResourceOverview from '../OracleOverview/OracleResourceOverviewApi';
 import ProtectionIcons from '../../../../common/ProtectionIcons/ProtectionIcons';
 
@@ -26,17 +26,30 @@ interface ProtectionData {
 
 interface OracleDatabase {
     name: string;
-    size: number;
+    size?: number;
     status: string;
-    type: 'PDB' | 'CDB' | 'Single tenant';
+    type: string;
     service?: string;
     created?: string;
     protection?: ProtectionData;
 }
 
+interface PdbTableRow extends OracleDatabase {
+    id: string;
+    isProtected: string;
+    protectionData?: ProtectionData;
+    sizeRange: string;
+    serviceKey: string;
+    isWad: boolean;
+}
+
 const OraclePDB = () => {
     const { t } = useTranslation();
     const { resourceLoading: oracleResourceLoading, resourceDetails } = useAppSelector(state => state.oracleSlice);
+    const { isWad } = useAppSelector(state => state.getWellOptimize);
+    const { selectedResourceId, selectedDatabaseInstanceName } = useAppSelector(state => state.workloadFactoryResource);
+    const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
+
     useOracleResourceOverview();
     const EXCLUDE_ICONS = {
         SQL_NATIVE: t('databases.general.sql-native-backup')
@@ -44,34 +57,48 @@ const OraclePDB = () => {
     const COMING_SOON_ICONS = {
         APP_CONSISTENT: t('databases.general.local-snapshots-application-consistent')
     };
-    const pdbData = resourceDetails?.databases?.filter(
-        (database: OracleDatabase) => database.type === t('databases.oracle-inner-page.pdb')
-    );
 
-    const formattedData = useMemo(() => {
-        const formatData = (tableData: OracleDatabase[]) =>
-            tableData?.map((perRow, index) => {
-                const protectionText = getProtectionText(perRow);
-                let protectionVal = '';
-                if (protectionText === PROTECTION_TEXT_STATUS.YES) {
-                    protectionVal = t('databases.general.protected');
-                } else if (protectionText === PROTECTION_TEXT_STATUS.NO) {
-                    protectionVal = t('databases.general.not_protected');
-                } else {
-                    protectionVal = t('databases.general.not-available-table-columns');
-                }
-                return {
-                    ...perRow,
-                    id: `${perRow.name}-${index}`,
-                    isProtected: protectionVal,
-                    protectionData: perRow.protection,
-                    sizeRange: categorizeStorageSize(formatSize(perRow?.size)),
-                    serviceKey: perRow.service || t('databases.general.not-available-table-columns')
-                };
-            });
+    const wadPdbData = useMemo(() => {
+        if (!isWad || !inventoryTableData) return undefined;
+        const hostData = Object.values(inventoryTableData).find(host => host?.resourceId === selectedResourceId);
+        const instanceData = hostData?.sqlServerInstances?.find(
+            instance => instance?.databaseInstanceName?.toLowerCase() === selectedDatabaseInstanceName?.toLowerCase()
+        );
+        return instanceData?.databases?.filter(db => db?.type === ORACLE_DATABASES_COMPONENTS.PDB);
+    }, [isWad, inventoryTableData, selectedResourceId, selectedDatabaseInstanceName]);
 
-        return formatData(pdbData);
-    }, [pdbData, t]);
+    const pdbData: OracleDatabase[] | undefined = isWad
+        ? wadPdbData
+        : resourceDetails?.databases?.filter(
+              (database: OracleDatabase) => database.type === t('databases.oracle-inner-page.pdb')
+          );
+
+    const formattedData: PdbTableRow[] = useMemo(() => {
+        if (!pdbData) return [];
+
+        return pdbData.map((perRow, index) => {
+            const protectionText = getProtectionText(perRow);
+            let protectionVal = '';
+            if (protectionText === PROTECTION_TEXT_STATUS.YES) {
+                protectionVal = t('databases.general.protected');
+            } else if (protectionText === PROTECTION_TEXT_STATUS.NO) {
+                protectionVal = t('databases.general.not_protected');
+            } else {
+                protectionVal = t('databases.general.not-available-table-columns');
+            }
+            return {
+                ...perRow,
+                id: `${perRow.name}-${index}`,
+                isProtected: protectionVal,
+                protectionData: perRow.protection,
+                sizeRange: perRow.size
+                    ? categorizeStorageSize(formatSize(perRow.size))
+                    : t('databases.general.not-available-table-columns'),
+                serviceKey: perRow.service || t('databases.general.not-available-table-columns'),
+                isWad: !!isWad
+            };
+        });
+    }, [pdbData, t, isWad]);
 
     const PDBColDefs: ColumnProps[] = [
         {
@@ -96,7 +123,11 @@ const OraclePDB = () => {
             width: '15%',
             isSortable: true,
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
+                if (rowData?.isWad) {
+                    return t('databases.general.not-available-table-columns');
+                }
+
                 let statusIconClass = '';
                 if (cellData?.toUpperCase() === STATUS_CONST.ONLINE.toUpperCase()) {
                     statusIconClass = styles.onIcon;
@@ -128,7 +159,7 @@ const OraclePDB = () => {
                 { label: '5 TiB+', value: '5 TiB+' }
             ],
             renderCell: (cellData: any, rowData: any) =>
-                formatSize(rowData.size) || t('databases.general.not-available-table-columns')
+                rowData?.size ? formatSize(rowData.size) : t('databases.general.not-available-table-columns')
         },
         {
             Header: t('databases.pdb-table.headers.protection-status'),
@@ -185,7 +216,7 @@ const OraclePDB = () => {
         columns: PDBColDefs,
         rows: formattedData,
         pageSize: 50,
-        isLazyLoading: oracleResourceLoading,
+        isLazyLoading: isWad ? false : oracleResourceLoading,
         isHorizontalScroll: false
     });
 

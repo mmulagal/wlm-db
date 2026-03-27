@@ -125,12 +125,13 @@ const InventoryV2 = () => {
                     return;
                 }
                 if (inventoryTableData[key]?.isWad) {
-                    // For offline (WAD) rows, filter by credential and region only if those values are present
                     const credId = inventoryTableData[key]?.credentialId;
                     const regionId = inventoryTableData[key]?.regionId;
                     if (
                         (credId && !headerSelectedMultiCredIdsList.includes(credId)) ||
-                        (regionId && !headerSelectedMultiRegionIdsList.includes(regionId))
+                        (regionId &&
+                            headerSelectedMultiRegionIdsList.length > 0 &&
+                            !headerSelectedMultiRegionIdsList.includes(regionId))
                     ) {
                         return;
                     }
@@ -370,13 +371,13 @@ const InventoryV2 = () => {
                                 protocol:
                                     perRow?.protocol ||
                                     perHost?.sqlServerInstances?.[0]?.protocol ||
-                                    GENERAL.NOT_AVAILABLE,
+                                    t('databases.general.not-available'),
                                 sizeRange: perRow?.databases?.[0]?.size
                                     ? categorizeStorageSize(formatSize(perRow?.databases?.[0]?.size))
-                                    : GENERAL.NOT_AVAILABLE,
+                                    : t('databases.general.not-available'),
                                 'Database size': perRow?.databases?.[0]?.size
                                     ? formatSize(perRow?.databases?.[0]?.size)
-                                    : GENERAL.NOT_AVAILABLE
+                                    : t('databases.general.not-available')
                             }),
                             totalDgReplicaCount
                         };
@@ -425,12 +426,17 @@ const InventoryV2 = () => {
                                 credentialName: perHost?.credentialName,
                                 accountId: perHost?.accountId,
                                 regionName: perHost?.regionName,
-                                sizeRange: categorizeStorageSize(formatSize(perDatabase?.size)),
-                                'Database size': formatSize(perDatabase?.size),
+                                sizeRange: perDatabase?.size
+                                    ? categorizeStorageSize(formatSize(perDatabase?.size))
+                                    : t('databases.general.not-available'),
+                                'Database size': perDatabase?.size
+                                    ? formatSize(perDatabase?.size)
+                                    : t('databases.general.not-available'),
                                 resourceId: perHost?.resourceId,
                                 ec2InstanceId: perHost?.ec2InstanceId,
                                 serverInstallationMode,
-                                totalReplicaCount
+                                totalReplicaCount,
+                                isWad: perRow?.isWad
                             };
                             // Only add Oracle PDB databases or all non-Oracle databases
                             if (

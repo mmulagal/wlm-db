@@ -98,9 +98,19 @@ const HostTable = () => {
     const getMenuItems = (disableOptionDatabase: boolean, disableMessageDatabase: string, rowData: any) => {
         if (selectedHostType === DBType.ORACLE) {
             const hasNoDatabases = !rowData?.sqlServerInstances || rowData?.sqlServerInstances?.length === 0;
-            const disableOracle = disableOptionDatabase || hasNoDatabases;
+            const hasWadPdbData =
+                rowData?.isWad &&
+                rowData?.sqlServerInstances?.some(
+                    (inst: any) => Array.isArray(inst?.databases) && inst.databases.length > 0
+                );
+            const isWadWithoutPdbData = rowData?.isWad && !hasWadPdbData;
+            const disableOracle = hasWadPdbData ? false : disableOptionDatabase || hasNoDatabases;
 
-            const disableMessageOracle = hasNoDatabases
+            const disableMessageOracle = hasWadPdbData
+                ? ''
+                : isWadWithoutPdbData
+                ? t('databases.inventory.no-pdb-available-wad')
+                : hasNoDatabases
                 ? t('databases.general.no-databases-online-msg')
                 : disableOptionDatabase
                 ? disableMessageDatabase

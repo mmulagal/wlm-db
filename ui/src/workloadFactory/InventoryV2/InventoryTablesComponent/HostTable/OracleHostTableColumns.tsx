@@ -1,9 +1,10 @@
 import { TFunction } from 'i18next';
-import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
+import { DsTypography } from '@tlveng/wlm-ds';
 import { Button, Popover, Typography } from '@netapp/design-system';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
 import { INVENTORY_STATUS, SSM_TROUBLESHOOTING_LINK } from '../../../../utils/consts';
+import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 import { createNACustomFilter, getFilterOptions, getFilterOptionsWithNA } from '../../../../utils/utilityFunctions';
 import { renderCellData, renderEstimatedCost, renderInstanceListText, renderVpcText } from '../../InventoryUtilsV2';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
@@ -30,45 +31,11 @@ export function OracleHostTableColDefs({ t, hostTableRows }: { t: TFunction; hos
                             {name || t('databases.general.not-available-table-columns')}
                         </DsTypography>
                         <div className={styles.firstColText}>
-                            {(rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP ||
-                                rowData?.status === INVENTORY_STATUS.ONLINE) && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
-                            )}
-                            {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||
-                                rowData?.status === INVENTORY_STATUS.OFFLINE) && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
-                            )}
-                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
-                            )}
-                            <DsTypography variant="Regular_13">
-                                {(() => {
-                                    if (
-                                        rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                        rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                    ) {
-                                        return INVENTORY_STATUS.ONLINE;
-                                    }
-                                    if (
-                                        rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                        rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                    ) {
-                                        return INVENTORY_STATUS.OFFLINE;
-                                    }
-                                    if (rowData?.status) {
-                                        return rowData?.status;
-                                    }
-                                    if (rowData?.loading) {
-                                        return <DsFlashingDotsLoader />;
-                                    }
-                                    if (rowData?.isWad) {
-                                        return '';
-                                    }
-                                    return INVENTORY_STATUS.UNKNOWN;
-                                })()}
-                            </DsTypography>
+                            <InventoryStatusIndicator
+                                status={rowData?.status}
+                                loading={rowData?.loading}
+                                isWad={rowData?.isWad}
+                            />
                         </div>
                     </div>
                 );

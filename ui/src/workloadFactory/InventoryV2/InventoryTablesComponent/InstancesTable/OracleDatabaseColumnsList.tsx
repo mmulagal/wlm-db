@@ -36,6 +36,7 @@ import { manageActionCol } from '../../InventoryUtilsV2';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 import { setFSXId } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { logAnalyzerStatusCol, handleOracleWadOptimizeAction, notAvailableWithTooltip } from './InstanceTableHelper';
+import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 
 export function getOracleDatabaseColumnsList({
     t,
@@ -73,36 +74,11 @@ export function getOracleDatabaseColumnsList({
                         {!cellData && t('databases.general.not-available-table-columns')}
                     </DsTypography>
                     <div className={styles.firstColText}>
-                        {(rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
-                            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                            <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
-                        )}
-                        {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                            rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                            <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
-                        )}
-                        {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                            <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
-                        )}
-                        <DsTypography variant="Regular_13">
-                            {(() => {
-                                if (
-                                    rowData?.status?.toLowerCase() === INVENTORY_STATUS.RUNNING_LOWER ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                ) {
-                                    return INVENTORY_STATUS.ONLINE;
-                                }
-                                if (
-                                    rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                ) {
-                                    return INVENTORY_STATUS.OFFLINE;
-                                }
-                                return rowData?.status;
-                            })()}
-                            {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                            {!rowData?.status && !rowData?.loading && !rowData?.isWad && INVENTORY_STATUS.UNKNOWN}
-                        </DsTypography>
+                        <InventoryStatusIndicator
+                            status={rowData?.status}
+                            loading={rowData?.loading}
+                            isWad={rowData?.isWad}
+                        />
                     </div>
                 </div>
             )

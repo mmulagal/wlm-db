@@ -20,7 +20,8 @@ const useOracleResourceOverview = () => {
         credIdFromJM,
         regionFromJM,
         selectedResourceId: getWellResourceId,
-        selectedDatabaseInstance: getWellSelectedDatabaseInstance
+        selectedDatabaseInstance: getWellSelectedDatabaseInstance,
+        isWad
     } = useAppSelector(state => state.getWellOptimize);
 
     const { visitedTabs, refreshOverview } = useAppSelector(state => state.oracleSlice);
@@ -28,6 +29,7 @@ const useOracleResourceOverview = () => {
     const [getOracleOverviewDetails] = useGetOracleOverviewDetailsMutation();
 
     useEffect(() => {
+        if (isWad) return;
         if (!visitedTabs.Overview && !visitedTabs.PDB) {
             dispatch(setOracleRefreshTimes({ overviewRefreshTime: getCurrentDateTime() }));
             viewResourceAction();
@@ -38,6 +40,7 @@ const useOracleResourceOverview = () => {
     // To do enable when refresh enable
 
     useEffect(() => {
+        if (isWad) return;
         if (refreshOverview) {
             viewResourceAction();
             dispatch(setRefreshOracleOverview(false));

@@ -1,0 +1,21 @@
+.statusIcon {
+    width: 10px;
+    height: 10px;
+    align-self: center;
+
+    &.circle {
+        border-radius: 50%;
+    }
+
+    &.online {
+        background-color: var(--green-60);
+    }
+
+    &.offline {
+        background-color: var(--red-30);
+    }
+
+    &.unknown {
+        background-color: var(--grey-25);
+    }
+}

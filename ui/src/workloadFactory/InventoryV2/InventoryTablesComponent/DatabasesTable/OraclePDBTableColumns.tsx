@@ -1,16 +1,15 @@
 import { TFunction } from 'i18next';
-import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
+import { DsTypography } from '@tlveng/wlm-ds';
 import { Popover, TooltipInfo } from '@netapp/design-system';
 import { ColumnProps } from '../../../../common/Lib/Table/Table';
 import styles from '../InventoryTable.module.scss';
-import { INVENTORY_STATUS } from '../../../../utils/consts';
 import { formatSize, getFilterOptions } from '../../../../utils/utilityFunctions';
-import { GENERAL } from '../../../../utils/appConstants';
 import ProtectionIcons from '../../../../common/ProtectionIcons/ProtectionIcons';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
+import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 
 export function OraclePDBTableColDefs({
     t,
@@ -34,26 +33,11 @@ export function OraclePDBTableColDefs({
                         <DsTypography variant="Semibold_14">
                             {name || t('databases.general.not-available-table-columns')}
                         </DsTypography>
-                        <div className={styles.firstColText}>
-                            {rowData?.status?.toLowerCase() === 'online' && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
-                            )}
-                            {rowData?.status?.toLowerCase() === 'offline' && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
-                            )}
-                            {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
-                            )}
-                            <DsTypography variant="Regular_13">
-                                {rowData?.status?.toLowerCase() === 'online'
-                                    ? INVENTORY_STATUS.ONLINE
-                                    : rowData?.status?.toLowerCase() === 'offline'
-                                    ? INVENTORY_STATUS.OFFLINE
-                                    : rowData?.status}
-                                {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                {!rowData?.status && !rowData?.loading && 'Unknown'}
-                            </DsTypography>
-                        </div>
+                        {!rowData?.isWad && (
+                            <div className={styles.firstColText}>
+                                <InventoryStatusIndicator status={rowData?.status} loading={rowData?.loading} />
+                            </div>
+                        )}
                     </div>
                 );
             }
@@ -64,7 +48,7 @@ export function OraclePDBTableColDefs({
             id: '2',
             width: '200px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: string, rowData: any) => cellData || t('databases.general.not-available')
         },
         {
             Header: t('databases.pdb-table.headers.host-name'),
@@ -72,7 +56,7 @@ export function OraclePDBTableColDefs({
             id: '3',
             width: '200px',
             filterOptions: getFilterOptions(databaseTableRows, 'hostName'),
-            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: string, rowData: any) => cellData || t('databases.general.not-available')
         },
         {
             Header: t('databases.pdb-table.headers.protection-status'),
@@ -94,7 +78,7 @@ export function OraclePDBTableColDefs({
                                 </div>
                             </div>
                         )}
-                        {!protectionData && GENERAL.NOT_AVAILABLE}
+                        {!protectionData && t('databases.general.not-available')}
                     </>
                 );
             }
@@ -112,7 +96,8 @@ export function OraclePDBTableColDefs({
                 { label: '10 GiB - 5 TiB', value: '10 GiB - 5 TiB' },
                 { label: '5 TiB+', value: '5 TiB+' }
             ],
-            renderCell: (cellData: any, rowData: any) => formatSize(rowData?.size)
+            renderCell: (cellData: any, rowData: any) =>
+                rowData?.size ? formatSize(rowData?.size) : t('databases.general.not-available')
         },
         {
             id: '6',
@@ -121,54 +106,54 @@ export function OraclePDBTableColDefs({
             isSortable: false,
             filterOptions: getFilterOptions(databaseTableRows, 'instanceRow.fileSystemName'),
             width: '213px',
-            renderCell: (cellData: any, rowData: any) => (
-                <>
-                    {cellData && rowData?.instanceRow?.fsxId ? (
-                        <div className={styles.fsxNameContainer}>
-                            <div className={styles.ssmOffline}>
-                                <Popover
-                                    popoverClass=""
-                                    children={
-                                        <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
-                                            <DsTypography variant="Regular_13">
-                                                {rowData?.instanceRow?.fsxId}
-                                            </DsTypography>
-                                            <Popover
-                                                popoverClass={styles['copy-popover']}
-                                                children="Copied"
-                                                container={
-                                                    <CopyToClipboardCommon
-                                                        value={rowData?.instanceRow?.fsxId}
-                                                        iconProvided={<CopyIcon fill="#A7A7A7" />}
-                                                    />
-                                                }
-                                            />
-                                        </div>
-                                    }
-                                    trigger="hover"
-                                    delayHide={200}
-                                    interactive
-                                    isAppendedToBody={false}
-                                    container={<TooltipIcon />}
-                                />
+            renderCell: (cellData: any, rowData: any) => {
+                const fsxId = rowData?.instanceRow?.fsxId;
+                const displayName = cellData || fsxId;
+                return (
+                    <>
+                        {displayName && fsxId ? (
+                            <div className={styles.fsxNameContainer}>
+                                <div className={styles.ssmOffline}>
+                                    <Popover
+                                        popoverClass=""
+                                        children={
+                                            <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
+                                                <DsTypography variant="Regular_13">{fsxId}</DsTypography>
+                                                <Popover
+                                                    popoverClass={styles['copy-popover']}
+                                                    children="Copied"
+                                                    container={
+                                                        <CopyToClipboardCommon
+                                                            value={fsxId}
+                                                            iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                                        />
+                                                    }
+                                                />
+                                            </div>
+                                        }
+                                        trigger="hover"
+                                        isAppendedToBody={false}
+                                        container={<TooltipIcon />}
+                                    />
+                                </div>
+                                <div className={styles.fsxName}>
+                                    <DsTypography
+                                        className={styles.fsxNameText}
+                                        variant="Regular_13"
+                                        title={displayName}
+                                    >
+                                        {displayName}
+                                    </DsTypography>
+                                </div>
                             </div>
-                            <div className={styles.fsxName}>
-                                <DsTypography
-                                    className={styles.fsxNameText}
-                                    variant="Regular_13"
-                                    title={cellData || GENERAL.NOT_AVAILABLE}
-                                >
-                                    {cellData || GENERAL.NOT_AVAILABLE}
-                                </DsTypography>
-                            </div>
-                        </div>
-                    ) : (
-                        <DsTypography variant="Regular_13" className={styles.colText}>
-                            {GENERAL.NOT_AVAILABLE}
-                        </DsTypography>
-                    )}
-                </>
-            )
+                        ) : (
+                            <DsTypography variant="Regular_13" className={styles.colText}>
+                                {t('databases.general.not-available')}
+                            </DsTypography>
+                        )}
+                    </>
+                );
+            }
         },
         {
             Header: t('databases.databases-table.headers.aws-credentials'),
@@ -177,7 +162,7 @@ export function OraclePDBTableColDefs({
             width: '184px',
             isSortable: true,
             filterOptions: getFilterOptions(databaseTableRows, 'credentialName'),
-            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: string, rowData: any) => cellData || t('databases.general.not-available')
         },
         {
             Header: t('databases.databases-table.headers.aws-account'),
@@ -186,7 +171,7 @@ export function OraclePDBTableColDefs({
             width: '184px',
             filterOptions: getFilterOptions(databaseTableRows, 'accountId'),
             isSortable: true,
-            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: string, rowData: any) => cellData || t('databases.general.not-available')
         },
         {
             Header: t('databases.databases-table.headers.region'),
@@ -195,7 +180,7 @@ export function OraclePDBTableColDefs({
             width: '184px',
             isSortable: true,
             filterOptions: getFilterOptions(databaseTableRows, 'regionName'),
-            renderCell: (cellData: string, rowData: any) => cellData || GENERAL.NOT_AVAILABLE
+            renderCell: (cellData: string, rowData: any) => cellData || t('databases.general.not-available')
         }
     ];
 

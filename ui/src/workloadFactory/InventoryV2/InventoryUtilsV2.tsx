@@ -49,6 +49,7 @@ import {
     InventoryTableInstanceDatInterface,
     ManagedHostsRowInterface,
     OracleInstancesDiscovered,
+    OraclePluggableDatabase,
     PgsqlInstancesDiscovered,
     SQLServerInstancesDiscovered,
     StatusObjInterface
@@ -217,7 +218,7 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
         const inventoryEntry: InventoryTableData = {
             id: hostId,
             resourceId: hostId,
-            name: firstInstance?.assessments?.databaseHostName || `${hostId}`,
+            name: firstInstance?.assessments?.databaseHostName,
             hostType: DBType.MSSQL, // WAD data is for MSSQL
             ec2InstanceId: firstInstance?.vmInstanceId,
             ec2InstanceName: firstInstance?.vmName,
@@ -317,19 +318,40 @@ export const formatOracleOfflineAssessmentToInventoryData = (
                 });
             }
 
+            // Map pluggableDatabases to the databases array format expected by the PDB table
+            const databases = Array.isArray(instanceData?.pluggableDatabases)
+                ? instanceData.pluggableDatabases.map((pdb: OraclePluggableDatabase) => ({
+                      name: pdb?.pdbName,
+                      type: ORACLE_DATABASES_COMPONENTS.PDB,
+                      status: pdb?.pdbStatus || '',
+                      size: pdb?.pdbSizeInBytes,
+                      service: pdb?.serviceName,
+                      created: pdb?.pdbCreationTime
+                  }))
+                : undefined;
+
             formattedInstances.push({
                 databaseInstanceId: instanceData?.databaseInstanceId,
                 databaseInstanceName: instanceData?.databaseInstanceName,
                 databaseHostId: hostId,
                 statusColText: INVENTORY_STATUS.UNMANAGED,
                 sqlServerDeploymentType: assessments?.deploymentType,
+                oracleServerDeploymentType: instanceData?.isDataGuardDeployed
+                    ? DATABASE_DEPLOYMENT_MODE.DATAGUARD
+                    : assessments?.deploymentType || DATABASE_DEPLOYMENT_MODE.STANDALONE,
+                dataguardDetails: instanceData?.isDataGuardDeployed ? instanceData?.dataguardDetails : undefined,
+                instanceType:
+                    instanceData?.tenancyType?.toUpperCase() === ORACLE_DATABASES_COMPONENTS.MULTI_TENANT_API_RESPONSE
+                        ? ORACLE_DATABASES_COMPONENTS.MULTI_TENANT
+                        : ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT,
                 fsxId: fsxIdValue,
                 protocol: assessments?.storageProtocol || '',
                 isDetected: false,
                 isManaged: false,
                 isWad: true,
                 wadAssessmentData: assessments,
-                storage: instanceStorageArray.length > 0 ? instanceStorageArray : undefined
+                storage: instanceStorageArray.length > 0 ? instanceStorageArray : undefined,
+                databases: databases && databases.length > 0 ? databases : undefined
             });
         });
 
@@ -346,7 +368,7 @@ export const formatOracleOfflineAssessmentToInventoryData = (
         const inventoryEntry: InventoryTableData = {
             id: hostId,
             resourceId: hostId,
-            name: firstInstance?.assessments?.databaseHostName || `${hostId}`,
+            name: firstInstance?.assessments?.databaseHostName,
             hostType: DBType.ORACLE, // WAD data is for Oracle
             ec2InstanceId: firstInstance?.vmInstanceId,
             ec2InstanceName: firstInstance?.vmName,
@@ -367,6 +389,7 @@ export const formatOracleOfflineAssessmentToInventoryData = (
             credentialName: credentialMapping?.[credId]?.name,
             accountId: credentialMapping?.[credId]?.providerAccountId,
             regionName: firstInstance?.regionName,
+            platform: firstInstance?.vmPlatform,
             isWad: true, // Mark as WAD (offline assessment) data
             ec2Details: ec2Details.length > 0 ? ec2Details : undefined,
             statusColText: INVENTORY_STATUS.UNMANAGED // Hardcoded until status is available from API
@@ -5651,7 +5674,11 @@ export const getDgTotalReplicaCountPerInstance = (perRow: any, serverInstallatio
         return 0;
     }
 
-    if (isAuthRequiredForInstance(perRow, DBType.ORACLE) && perRow?.statusColText !== INVENTORY_STATUS.MANAGED) {
+    if (
+        !perRow?.isWad &&
+        isAuthRequiredForInstance(perRow, DBType.ORACLE) &&
+        perRow?.statusColText !== INVENTORY_STATUS.MANAGED
+    ) {
         return 0;
     }
 

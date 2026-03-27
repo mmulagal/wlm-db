@@ -7,6 +7,7 @@ import styles from './ActivateErrorInvestigation.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import { INVENTORY_STATUS } from '../../../../../../utils/consts';
 import { setSelectedErrorInvestigationRow } from '../../../../../../store/workloadFactory/agenticAISlice';
+import InventoryStatusIndicator from '../../../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 
 const ActivateErrorInvestigation = ({ tableData }: { tableData: any }) => {
     const dispatch = useDispatch();
@@ -30,28 +31,7 @@ const ActivateErrorInvestigation = ({ tableData }: { tableData: any }) => {
                         {rowData?.loadingStatus && <DsFlashingDotsLoader />}
                         {!rowData?.loadingStatus && (
                             <div className={styles.firstColText}>
-                                {(rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                    <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
-                                )}
-                                {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                    <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
-                                )}
-                                {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                    <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
-                                )}
-                                <DsTypography variant="Regular_13">
-                                    {rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                        ? INVENTORY_STATUS.ONLINE
-                                        : rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                          rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                        ? INVENTORY_STATUS.OFFLINE
-                                        : rowData?.status}
-                                    {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                    {!rowData?.status && !rowData?.loading && 'Unknown'}
-                                </DsTypography>
+                                <InventoryStatusIndicator status={rowData?.status} loading={rowData?.loading} />
                             </div>
                         )}
                     </div>

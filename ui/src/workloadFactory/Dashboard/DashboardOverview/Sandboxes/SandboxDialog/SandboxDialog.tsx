@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import styles from './SandboxDialog.module.scss';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { INVENTORY_STATUS } from '../../../../../utils/consts';
+import InventoryStatusIndicator from '../../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 import { setSelectedSandboxRow } from '../../../../../store/workloadFactory/sandboxSlice';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
@@ -29,28 +30,7 @@ const SandboxDialog = ({ tableData }: { tableData: any }) => {
                         {rowData?.loadingStatus && <DsFlashingDotsLoader />}
                         {!rowData?.loadingStatus && (
                             <div className={styles.firstColText}>
-                                {(rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP) && (
-                                    <div className={`${styles.statusIcon} ${styles.circle} ${styles.online}`} />
-                                )}
-                                {(rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN) && (
-                                    <div className={`${styles.statusIcon} ${styles.circle} ${styles.offline}`} />
-                                )}
-                                {rowData?.status === INVENTORY_STATUS.UNKNOWN && (
-                                    <div className={`${styles.statusIcon} ${styles.circle} ${styles.unknown}`} />
-                                )}
-                                <DsTypography variant="Regular_13">
-                                    {rowData?.status === INVENTORY_STATUS.RUNNING ||
-                                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP
-                                        ? INVENTORY_STATUS.ONLINE
-                                        : rowData?.status === INVENTORY_STATUS.STOPPED ||
-                                          rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                                        ? INVENTORY_STATUS.OFFLINE
-                                        : rowData?.status}
-                                    {!rowData?.status && rowData?.loading && <DsFlashingDotsLoader />}
-                                    {!rowData?.status && !rowData?.loading && 'Unknown'}
-                                </DsTypography>
+                                <InventoryStatusIndicator status={rowData?.status} loading={rowData?.loading} />
                             </div>
                         )}
                     </div>

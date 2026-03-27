@@ -17,16 +17,23 @@
                 {
                     "pdbName": "PDB1",
                     "pdbId": "3",
-                    "pdbStatus": "NORMAL"
+                    "pdbStatus": "NORMAL",
+                    "pdbSizeInBytes": 791674880,
+                    "pdbCreationTime": "2026-03-27T02:30:16",
+                    "serviceName": "PDB1"
                 },
                 {
                     "pdbName": "PDB$SEED",
                     "pdbId": "2",
-                    "pdbStatus": "NORMAL"
+                    "pdbStatus": "NORMAL",
+                    "pdbSizeInBytes": 419430400,
+                    "pdbCreationTime": "2026-01-15T08:12:45",
+                    "serviceName": "PDB$SEED"
                 }
             ],
             "isDataGuardDeployed": false,
             "dataguardDetails": {},
+            "tenancyType": "multi_tenant",
             "clusterNodes": [],
             "assessments": {
                 "storage": {
@@ -1403,24 +1410,53 @@
                 {
                     "pdbName": "PDB1",
                     "pdbId": "3",
-                    "pdbStatus": "NORMAL"
+                    "pdbStatus": "NORMAL",
+                    "pdbSizeInBytes": 1073741824,
+                    "pdbCreationTime": "2026-02-10T14:22:33",
+                    "serviceName": "PDB1"
                 },
                 {
                     "pdbName": "PDB$SEED",
                     "pdbId": "2",
-                    "pdbStatus": "NORMAL"
+                    "pdbStatus": "NORMAL",
+                    "pdbSizeInBytes": 419430400,
+                    "pdbCreationTime": "2026-01-15T08:12:45",
+                    "serviceName": "PDB$SEED"
                 },
                 {
                     "pdbName": "PDB2",
                     "pdbId": "4",
-                    "pdbStatus": "NORMAL"
+                    "pdbStatus": "NORMAL",
+                    "pdbSizeInBytes": 536870912,
+                    "pdbCreationTime": "2026-03-01T10:45:00",
+                    "serviceName": "PDB2"
                 }
             ],
             "isDataGuardDeployed": true,
             "dataguardDetails": {
-                "primaryDatabase": "ORCL",
-                "standbyDatabase": "ORCLSTBY"
+                "dbUniqueName": "ORCL",
+                "dbName": "ORCL",
+                "isPrimaryNode": true,
+                "role": "PRIMARY",
+                "associatedHosts": [
+                    {
+                        "serviceName": "ORCL",
+                        "sidName": "ORCL",
+                        "role": "PRIMARY DATABASE"
+                    },
+                    {
+                        "serviceName": "ORCLSTBY",
+                        "sidName": "ORCLSTBY",
+                        "role": "PHYSICAL STANDBY"
+                    },
+                    {
+                        "serviceName": "ORCLSTBY2",
+                        "sidName": "ORCLSTBY2",
+                        "role": "PHYSICAL STANDBY"
+                    }
+                ]
             },
+            "tenancyType": "multi_tenant",
             "clusterNodes": [
                 {
                     "vmInstanceId": "i-0d6abe8f18172c509",
@@ -2807,6 +2843,7 @@
             "pluggableDatabases": [],
             "isDataGuardDeployed": false,
             "dataguardDetails": {},
+            "tenancyType": "single_tenant",
             "clusterNodes": [
                 {
                     "vmInstanceId": "i-015dfe89614dcf2c4",
@@ -4194,29 +4231,56 @@
                 {
                     "pdbName": "PDB1",
                     "pdbId": "3",
-                    "pdbStatus": "NORMAL"
+                    "pdbStatus": "NORMAL",
+                    "pdbSizeInBytes": 2147483648,
+                    "pdbCreationTime": "2025-12-05T09:15:22",
+                    "serviceName": "PDB1"
                 },
                 {
                     "pdbName": "PDB$SEED",
                     "pdbId": "2",
-                    "pdbStatus": "NORMAL"
+                    "pdbStatus": "NORMAL",
+                    "pdbSizeInBytes": 419430400,
+                    "pdbCreationTime": "2025-11-20T06:30:00",
+                    "serviceName": "PDB$SEED"
                 },
                 {
                     "pdbName": "PDB2",
                     "pdbId": "4",
-                    "pdbStatus": "NORMAL"
+                    "pdbStatus": "NORMAL",
+                    "pdbSizeInBytes": 1610612736,
+                    "pdbCreationTime": "2026-01-18T11:00:45",
+                    "serviceName": "PDB2"
                 },
                 {
                     "pdbName": "PDB3",
                     "pdbId": "5",
-                    "pdbStatus": "NORMAL"
+                    "pdbStatus": "NORMAL",
+                    "pdbSizeInBytes": 858993459,
+                    "pdbCreationTime": "2026-02-25T16:40:10",
+                    "serviceName": "PDB3"
                 }
             ],
             "isDataGuardDeployed": true,
             "dataguardDetails": {
-                "primaryDatabase": "ORCL2",
-                "standbyDatabase": "ORCLSTBY2"
+                "dbUniqueName": "ORCL2STBY",
+                "dbName": "ORCL2",
+                "isPrimaryNode": false,
+                "role": "PHYSICAL STANDBY",
+                "associatedHosts": [
+                    {
+                        "serviceName": "ORCL2",
+                        "sidName": "ORCL2",
+                        "role": "PRIMARY DATABASE"
+                    },
+                    {
+                        "serviceName": "ORCL2STBY",
+                        "sidName": "ORCL2STBY",
+                        "role": "PHYSICAL STANDBY"
+                    }
+                ]
             },
+            "tenancyType": "multi_tenant",
             "clusterNodes": [],
             "assessments": {
                 "storage": {

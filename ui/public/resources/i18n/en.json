@@ -1300,6 +1300,7 @@
         "inventory": {
             "no-databases-available": "Databases are available for registered instances only.",
             "no-pdb-available": "PDBs are available for registered databases only.",
+            "no-pdb-available-wad": "PDBs are not available for this host.",
             "one-time-wad-dialog-heading-final": "Learn about one-time assessment for SQL Server instances",
             "one-time-wad-dialog-heading-oracle": "Learn about one-time assessment for Oracle Database",
             "one-time-wad-upload-inprogress": "Uploading one-time assessment results.",
