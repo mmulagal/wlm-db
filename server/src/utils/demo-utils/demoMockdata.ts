@@ -6727,6 +6727,33 @@ const ORACLE_SECURITY_PATCH_ASSESSMENT_DATA = {
     ]
 };
 
+const ORACLE_SNAPCENTER_ASSESSMENT_DATA = {
+    isDataguardPrimary: false,
+    volumes: [
+        {
+            svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+            svmName: 'wlmdb_sqlsvm_1735809893269',
+            volumeId: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+            volumeName: 'oracledata2',
+            hasSnapcenterSnapshot: false,
+            foundInSnapcenterLogs: false
+        },
+        {
+            svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
+            svmName: 'wlmdb_sqlsvm_1735809893269',
+            volumeId: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
+            volumeName: 'oraclearch2',
+            hasSnapcenterSnapshot: false,
+            foundInSnapcenterLogs: false
+        }
+    ],
+    standaloneCheck: {
+        pluginServiceRunning: false,
+        sidFoundInLogs: false
+    },
+    errorMessage: ''
+};
+
 const DEMO_ORACLE_CPU_CATALOG = [
     {
         cveId: 'CVE-2026-21975',
@@ -6829,6 +6856,7 @@ export {
     ORACLE_ASSESSMENT_CRR_CONFIG_DATA,
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     ORACLE_SECURITY_PATCH_ASSESSMENT_DATA,
+    ORACLE_SNAPCENTER_ASSESSMENT_DATA,
     PDB_DETAILS,
     createAssessmentData,
     createAssessmentDataWithRetry,

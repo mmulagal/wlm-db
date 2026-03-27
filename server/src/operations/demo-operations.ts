@@ -50,6 +50,7 @@ import {
     ORACLE_ASSESSMENT_CRR_CONFIG_DATA,
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     ORACLE_SECURITY_PATCH_ASSESSMENT_DATA,
+    ORACLE_SNAPCENTER_ASSESSMENT_DATA,
     createAssessmentDataWithRetry
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP, summarizeFirstLevel, parseAssessmentFileContent } from '../utils/utils';
@@ -1050,11 +1051,18 @@ async function createAssessmentDataForOracle(
         config_data: ORACLE_SECURITY_PATCH_ASSESSMENT_DATA
     };
 
+    const instanceSnapcenterConfigDataRecord = {
+        ...baseConfig,
+        config_data_type: AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT,
+        config_data: ORACLE_SNAPCENTER_ASSESSMENT_DATA
+    };
+
     const configDataRecords = [
         instanceConfigDataRecord,
         instanceConfigMappedOntapDataRecord,
         instanceCRRConfigDataRecord,
-        instanceSecurityPatchConfigDataRecord
+        instanceSecurityPatchConfigDataRecord,
+        instanceSnapcenterConfigDataRecord
     ];
 
     await createAssessmentDataWithRetry(

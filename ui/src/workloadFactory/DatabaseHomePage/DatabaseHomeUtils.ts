@@ -1920,6 +1920,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             activating: 0
         },
         oracleSnapcenterSnapshot: {
+            total: 0,
             optimized: 0,
             dismissed: 0,
             activating: 0
