@@ -2192,6 +2192,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                 const isMssqlHighAvailabilityOptimized =
                     instanceAssessmentData &&
                     instanceAssessmentData?.highAvailability &&
+                    instanceAssessmentData?.highAvailability?.length > 0 &&
                     instanceAssessmentData?.highAvailability?.every((item: any) => {
                         const configStateVal = instanceAssessmentData?.dismissedConfigurations?.highAvailability?.find(
                             (config: any) => config?.configurationName === item.name
@@ -2199,17 +2200,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                         setConfigState(configState, 'mssqlhighAvailability', configStateVal);
                         return isOptimizedDashInner(item?.status, configStateVal);
                     });
-                const isAllMssqlHighAvailability =
-                    instanceAssessmentData?.highAvailability?.length === 5 &&
-                    instanceAssessmentData?.highAvailability.every((item: any) =>
-                        [
-                            'shared-storage',
-                            'drive-letter',
-                            'cluster-quorum',
-                            'heartbeat-settings',
-                            'sqlServer-service'
-                        ].includes(item?.name)
-                    );
+
                 const isComputeRightsizingOptimized = isOptimizedDashInner(
                     instanceAssessmentData?.compute?.status,
                     instanceAssessmentData?.dismissedConfigurations?.compute?.configState
@@ -2693,10 +2684,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                     getAssessmentGroupedByConfigurations.isHaMssqlEnable = true;
                     getAssessmentGroupedByConfigurations.mssqlhighAvailability.total++;
                     getAssessmentGroupedByConfigurations.mssqlhighAvailability.optimized +=
-                        !isMssqlHaDeployment(instance?.assessments?.deploymentType) ||
-                        (isMssqlHighAvailabilityOptimized && isAllMssqlHighAvailability)
-                            ? 1
-                            : 0;
+                        isMssqlHighAvailabilityOptimized ? 1 : 0;
                     const hsStateList = getConfigStateList(
                         [...(instanceAssessmentData?.highAvailability || [])],
                         [...(instanceAssessmentData?.dismissedConfigurations?.highAvailability || [])],

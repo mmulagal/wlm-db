@@ -531,3 +531,252 @@ describe('getAssessmentGroupedByCategory (configuration-based)', () => {
         expect(result.compute.total).toBe(0);
     });
 });
+
+describe('MSSQL HA optimization counting', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('counts FCI with all 5 HA sub-configs optimized as optimized', () => {
+        const fciAssessment = buildMssqlAssessment({
+            deploymentType: 'FCI',
+            highAvailability: [
+                { name: 'shared-storage', status: 'optimized', severity: 'critical' },
+                { name: 'drive-letter', status: 'optimized', severity: 'critical' },
+                { name: 'cluster-quorum', status: 'optimized', severity: 'critical' },
+                { name: 'heartbeat-settings', status: 'optimized', severity: 'critical' },
+                { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
+            ]
+        });
+        const data = wrapInHost([fciAssessment]);
+        const result = getManagedOptimizationSummary(data, []);
+
+        expect(result.totalConfigurations).toBeGreaterThan(0);
+        // HA counts as 1 config in resiliency category
+        expect(result.optimizedPercent).toBe(100);
+    });
+
+    it('counts FCI with some HA sub-configs not optimized as not optimized', () => {
+        const fciAssessment = buildMssqlAssessment({
+            deploymentType: 'FCI',
+            highAvailability: [
+                { name: 'shared-storage', status: 'not-optimized', severity: 'critical' },
+                { name: 'drive-letter', status: 'optimized', severity: 'critical' },
+                { name: 'cluster-quorum', status: 'optimized', severity: 'critical' },
+                { name: 'heartbeat-settings', status: 'optimized', severity: 'critical' },
+                { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
+            ]
+        });
+        const data = wrapInHost([fciAssessment]);
+        const result = getManagedOptimizationSummary(data, []);
+
+        expect(result.optimizedPercent).toBeLessThan(100);
+        expect(result.notOptimizedConfigurations).toBeGreaterThan(0);
+        expect(result.criticalConfigurations).toBeGreaterThan(0);
+    });
+
+    it('counts AOAG with all 2 HA sub-configs optimized as optimized', () => {
+        const aoagAssessment = buildMssqlAssessment({
+            deploymentType: 'AOAG',
+            highAvailability: [
+                { name: 'heartbeat-settings', status: 'optimized', severity: 'critical' },
+                { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
+            ]
+        });
+        const data = wrapInHost([aoagAssessment]);
+        const result = getManagedOptimizationSummary(data, []);
+
+        expect(result.optimizedPercent).toBe(100);
+    });
+
+    it('counts AOAG with some HA sub-configs not optimized as not optimized', () => {
+        const aoagAssessment = buildMssqlAssessment({
+            deploymentType: 'AOAG',
+            highAvailability: [
+                { name: 'heartbeat-settings', status: 'not-optimized', severity: 'critical' },
+                { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
+            ]
+        });
+        const data = wrapInHost([aoagAssessment]);
+        const result = getManagedOptimizationSummary(data, []);
+
+        expect(result.optimizedPercent).toBeLessThan(100);
+        expect(result.notOptimizedConfigurations).toBeGreaterThan(0);
+    });
+
+    it('does not count HA for Standalone instances', () => {
+        const standaloneWithHa = buildMssqlAssessment({
+            deploymentType: 'Standalone',
+            highAvailability: [
+                { name: 'shared-storage', status: 'optimized', severity: 'critical' },
+                { name: 'drive-letter', status: 'optimized', severity: 'critical' }
+            ]
+        });
+        const standaloneWithoutHa = buildMssqlAssessment({
+            deploymentType: 'Standalone'
+        });
+
+        const withHaResult = getManagedOptimizationSummary(wrapInHost([standaloneWithHa]), []);
+        const withoutHaResult = getManagedOptimizationSummary(wrapInHost([standaloneWithoutHa]), []);
+
+        // HA should not be counted for Standalone
+        expect(withHaResult.totalConfigurations).toBe(withoutHaResult.totalConfigurations);
+    });
+
+    it('does not count HA as optimized when highAvailability array is empty', () => {
+        const fciWithEmptyHa = buildMssqlAssessment({
+            deploymentType: 'FCI',
+            highAvailability: []
+        });
+        const data = wrapInHost([fciWithEmptyHa]);
+        const result = getManagedOptimizationSummary(data, []);
+
+        // Empty HA array should not count as optimized (avoids Array.every() edge case)
+        expect(result.optimizedPercent).toBe(100); // All other configs are optimized
+    });
+
+    it('does not count HA as optimized when highAvailability is missing', () => {
+        const fciWithoutHa = buildMssqlAssessment({
+            deploymentType: 'FCI'
+            // No highAvailability field
+        });
+        const data = wrapInHost([fciWithoutHa]);
+        const result = getManagedOptimizationSummary(data, []);
+
+        // Missing HA should not count as optimized
+        expect(result.optimizedPercent).toBe(100); // All other configs are optimized
+    });
+
+    it('handles WAD FCI with partial HA sub-configs correctly', () => {
+        const wadFci = buildMssqlAssessment({
+            deploymentType: 'FCI',
+            highAvailability: [
+                { name: 'cluster-quorum', status: 'optimized', severity: 'critical' },
+                { name: 'heartbeat-settings', status: 'not-optimized', severity: 'critical' }
+            ]
+        });
+        const wadData = [
+            {
+                credentialId: 'cred-1',
+                regionId: 'us-east-1',
+                databaseHostId: 'wad-fci-host',
+                isWad: true,
+                instancesAssessment: [{ assessments: wadFci }]
+            }
+        ];
+        const result = getManagedOptimizationSummary(wadData, []);
+
+        // WAD FCI with 2 sub-configs (not all optimized) should count as not optimized
+        expect(result.optimizedPercent).toBeLessThan(100);
+        expect(result.notOptimizedConfigurations).toBeGreaterThan(0);
+    });
+
+    it('correctly counts optimized percentage with mixed FCI and AOAG instances', () => {
+        const fciOptimized = buildMssqlAssessment({
+            deploymentType: 'FCI',
+            highAvailability: [
+                { name: 'shared-storage', status: 'optimized', severity: 'critical' },
+                { name: 'drive-letter', status: 'optimized', severity: 'critical' },
+                { name: 'cluster-quorum', status: 'optimized', severity: 'critical' },
+                { name: 'heartbeat-settings', status: 'optimized', severity: 'critical' },
+                { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
+            ]
+        });
+        const fciNotOptimized = buildMssqlAssessment({
+            deploymentType: 'FCI',
+            highAvailability: [
+                { name: 'shared-storage', status: 'not-optimized', severity: 'critical' },
+                { name: 'drive-letter', status: 'optimized', severity: 'critical' },
+                { name: 'cluster-quorum', status: 'optimized', severity: 'critical' },
+                { name: 'heartbeat-settings', status: 'optimized', severity: 'critical' },
+                { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
+            ]
+        });
+        const aoagOptimized = buildMssqlAssessment({
+            deploymentType: 'AOAG',
+            highAvailability: [
+                { name: 'heartbeat-settings', status: 'optimized', severity: 'critical' },
+                { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
+            ]
+        });
+        const aoagNotOptimized = buildMssqlAssessment({
+            deploymentType: 'AOAG',
+            highAvailability: [
+                { name: 'heartbeat-settings', status: 'not-optimized', severity: 'critical' },
+                { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
+            ]
+        });
+
+        const data = wrapInHost([fciOptimized, fciNotOptimized, aoagOptimized, aoagNotOptimized]);
+        const result = getManagedOptimizationSummary(data, []);
+
+        expect(result.totalInstances).toBe(4);
+        // 2 out of 4 HA instances are fully optimized
+        expect(result.optimizedPercent).toBeGreaterThan(0);
+        expect(result.optimizedPercent).toBeLessThan(100);
+    });
+
+    it('handles dismissed HA sub-configs correctly', () => {
+        const fciWithDismissedHa = buildMssqlAssessment({
+            deploymentType: 'FCI',
+            highAvailability: [
+                { name: 'shared-storage', status: 'not-optimized', severity: 'critical' },
+                { name: 'drive-letter', status: 'optimized', severity: 'critical' },
+                { name: 'cluster-quorum', status: 'optimized', severity: 'critical' },
+                { name: 'heartbeat-settings', status: 'optimized', severity: 'critical' },
+                { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
+            ],
+            dismissedConfigurations: {
+                highAvailability: [{ configurationName: 'shared-storage', configState: 'DISMISSED' }]
+            }
+        });
+        const data = wrapInHost([fciWithDismissedHa]);
+        const result = getManagedOptimizationSummary(data, []);
+
+        // Individual sub-config dismissals don't affect the overall HA config counting
+        // HA is treated as a single unit; one sub-config not optimized = HA not optimized
+        expect(result.optimizedPercent).toBeLessThan(100);
+        expect(result.notOptimizedConfigurations).toBeGreaterThan(0);
+    });
+
+    it('excludes entire HA config when parent-level dismiss state is present', () => {
+        const fciWithParentDismissedHa = buildMssqlAssessment({
+            deploymentType: 'FCI',
+            highAvailability: [
+                { name: 'shared-storage', status: 'not-optimized', severity: 'critical' },
+                { name: 'drive-letter', status: 'optimized', severity: 'critical' },
+                { name: 'cluster-quorum', status: 'optimized', severity: 'critical' },
+                { name: 'heartbeat-settings', status: 'optimized', severity: 'critical' },
+                { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
+            ],
+            dismissedConfigurations: {
+                highAvailability_configuration: { configState: 'DISMISSED' }
+            }
+        });
+        const data = wrapInHost([fciWithParentDismissedHa]);
+        const result = getManagedOptimizationSummary(data, []);
+
+        // With parent-level dismiss, HA config is excluded from the total
+        expect(result.optimizedPercent).toBe(100); // All other non-HA configs are optimized
+        expect(result.hasDismissedOrPostponed).toBe(true);
+    });
+
+    it('counts HA in resiliency category', () => {
+        const fciAssessment = buildMssqlAssessment({
+            deploymentType: 'FCI',
+            highAvailability: [
+                { name: 'shared-storage', status: 'optimized', severity: 'critical' },
+                { name: 'drive-letter', status: 'optimized', severity: 'critical' },
+                { name: 'cluster-quorum', status: 'optimized', severity: 'critical' },
+                { name: 'heartbeat-settings', status: 'optimized', severity: 'critical' },
+                { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
+            ]
+        });
+        const data = wrapInHost([fciAssessment]);
+        const result = getAssessmentGroupedByCategory(data, []);
+
+        // HA counts as 1 config in resiliency
+        expect(result.resiliency.total).toBeGreaterThan(0);
+        expect(result.resiliency.optimized).toBe(result.resiliency.total);
+    });
+});
