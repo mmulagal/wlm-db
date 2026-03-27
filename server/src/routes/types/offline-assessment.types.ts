@@ -24,7 +24,10 @@ type DataGuardDetailsType = Static<typeof DataGuardDetails>;
 const PluggableDatabase = Type.Object({
     pdbName: Type.String(),
     pdbId: Type.Optional(Type.String()),
-    pdbStatus: Type.Optional(Type.String())
+    pdbStatus: Type.Optional(Type.String()),
+    pdbSizeInBytes: Type.Optional(Type.Number()),
+    pdbCreationTime: Type.Optional(Type.String()),
+    serviceName: Type.Optional(Type.String())
 });
 
 // Upload file body schema (similar to onprem-tco)

@@ -458,22 +458,26 @@ export const offlineAssessmentDemoOracleISCSI = {
                     {
                         pdbName: 'PDB1',
                         pdbId: '3',
-                        pdbStatus: 'NORMAL'
-                    },
-                    {
-                        pdbName: 'PDB$SEED',
-                        pdbId: '2',
-                        pdbStatus: 'NORMAL'
+                        pdbStatus: 'NORMAL',
+                        pdbSizeInBytes: 161061273600,
+                        pdbCreationTime: '2024-01-10T08:15:00',
+                        serviceName: 'PDB1'
                     },
                     {
                         pdbName: 'PDB2',
                         pdbId: '4',
-                        pdbStatus: 'NORMAL'
+                        pdbStatus: 'NORMAL',
+                        pdbSizeInBytes: 128849018880,
+                        pdbCreationTime: '2024-01-10T08:20:00',
+                        serviceName: 'PDB2'
                     },
                     {
                         pdbName: 'PDB3',
                         pdbId: '5',
-                        pdbStatus: 'NORMAL'
+                        pdbStatus: 'NORMAL',
+                        pdbSizeInBytes: 96636764160,
+                        pdbCreationTime: '2024-01-10T08:25:00',
+                        serviceName: 'PDB3'
                     }
                 ],
                 isDataGuardDeployed: false,

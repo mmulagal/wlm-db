@@ -28,7 +28,7 @@ import {
     validateWithSchema
 } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
-import { AWS_REGIONS, HttpErrorCodes, SqlServerDeploymentModel } from '../../../utils/consts';
+import { AWS_REGIONS, HttpErrorCodes } from '../../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentStatus,
@@ -426,7 +426,6 @@ async function uploadMssqlOfflineAssessment(
 
     const {
         databaseType,
-        deploymentType,
         ec2InstanceId,
         hostname,
         storageEndpoint,
@@ -443,11 +442,7 @@ async function uploadMssqlOfflineAssessment(
 
     const isMssql = databaseType
         ? databaseType.toLowerCase() === DATABASE_TYPE.mssql.toLowerCase()
-        : [
-              SqlServerDeploymentModel.SQL_STANDALONE_SHORT,
-              SqlServerDeploymentModel.SQL_AOAG_SHORT,
-              SqlServerDeploymentModel.SQL_FCI_SHORT
-          ].includes(deploymentType as SqlServerDeploymentModel);
+        : osVersion.toLowerCase().includes('windows'); // For existing collected files since databaseType was not included then
 
     if (!isMssql) {
         throw createError(

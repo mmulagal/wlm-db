@@ -992,9 +992,12 @@ EXIT;'''
 
 
 def get_pluggable_databases(config):
-    """Collect pluggable database details (pdbName, pdbId, pdbStatus) for CDB databases.
+    """Collect pluggable database details (pdbName, pdbId, pdbStatus, pdbSizeInBytes, pdbCreationTime, serviceName) for CDB databases.
 
-    Queries DBA_PDBS for PDB_ID, PDB_NAME, and STATUS.
+    Queries DBA_PDBS joined with aggregated CDB_DATA_FILES to fetch
+    PDB_ID, PDB_NAME, STATUS, total datafile size in bytes, CREATION_TIME,
+    and service name (falls back to PDB name when no explicit service exists).
+    Excludes PDB$SEED.
     Returns a list of dicts or empty list if not a CDB.
     """
     if not is_cdb_database(config):
@@ -1006,7 +1009,28 @@ SET VERIFY OFF
 SET HEADING OFF
 SET ECHO OFF
 SET LINESIZE 500
-SELECT PDB_ID || '|' || PDB_NAME || '|' || STATUS FROM DBA_PDBS;
+SELECT
+    JSON_OBJECT(
+        'pdbId' VALUE TO_CHAR(p.PDB_ID),
+        'pdbName' VALUE p.PDB_NAME,
+        'pdbStatus' VALUE p.STATUS,
+        'pdbSizeInBytes' VALUE NVL(df.SIZE_BYTES, 0),
+        'pdbCreationTime' VALUE TO_CHAR(p.CREATION_TIME, 'YYYY-MM-DD"T"HH24:MI:SS'),
+        'serviceName' VALUE NVL((
+            SELECT MIN(s.NAME)
+            FROM CDB_SERVICES s
+            WHERE s.PDB = p.PDB_NAME
+              AND s.NAME NOT LIKE 'SYS$%'
+        ), p.PDB_NAME)
+        RETURNING VARCHAR2(4000)
+    )
+FROM DBA_PDBS p
+LEFT JOIN (
+    SELECT CON_ID, SUM(BYTES) AS SIZE_BYTES
+    FROM CDB_DATA_FILES
+    GROUP BY CON_ID
+) df ON p.PDB_ID = df.CON_ID
+WHERE p.PDB_NAME <> 'PDB$SEED';
 EXIT;"""
     output = run_sqlplus(config, sql)
     pdbs = []
@@ -1014,13 +1038,12 @@ EXIT;"""
         line = line.strip()
         if not line or line.startswith('SQL') or 'ORA-' in line or 'SP2-' in line:
             continue
-        parts = line.split('|')
-        if len(parts) >= 3:
-            pdbs.append({
-                "pdbName": parts[1].strip(),
-                "pdbId": parts[0].strip(),
-                "pdbStatus": parts[2].strip()
-            })
+        try:
+            pdb_data = json.loads(line)
+            if isinstance(pdb_data, dict) and pdb_data.get("pdbName"):
+                pdbs.append(pdb_data)
+        except Exception:
+            log("Skipping unparsable PDB row: {}".format(line))
     log_info("Pluggable databases found: {}".format(len(pdbs)))
     return pdbs
 

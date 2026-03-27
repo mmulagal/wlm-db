@@ -669,13 +669,17 @@ SubprocessResult = namedtuple(
 
 
 def run_subprocess(cmd, shell=False, stdout=None, stderr=None, timeout=None,
-                   input_data=None, env=None):
+                   input_data=None, input=None, env=None, universal_newlines=None,
+                   **kwargs):
     """Python 2.7 compatible subprocess.run replacement.
 
     Uses communicate() for safe I/O and threading.Timer for timeout
     handling to avoid race conditions between input and timeout.
     DEVNULL file descriptors are properly closed in a finally block.
     """
+    # Accept 'input' kwarg like the real subprocess.run
+    if input is not None and input_data is None:
+        input_data = input
 
     # Handle DEVNULL for Python 2.7
     devnull_fds = []

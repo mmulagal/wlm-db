@@ -11,7 +11,7 @@ def check_sunrpc_tcp_slot_entries():
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
         
         if result.returncode != 0:
-            error_msg = f'sysctl command failed: {result.stderr.strip()}'
+            error_msg = 'sysctl command failed: {}'.format(result.stderr.strip())
             log(error_msg)
             return {"sunrpc-tcp-slot-entries": None, "error": error_msg}
         
@@ -27,11 +27,11 @@ def check_sunrpc_tcp_slot_entries():
             else:
                 results[param] = None
 
-        log(f'sunrpc TCP slot table entries status: {results}')
+        log('sunrpc TCP slot table entries status: {}'.format(results))
         return {"sunrpc-tcp-slot-entries": results, "error": None}
         
     except Exception as e:
-        error_msg = f'Exception while checking sunrpc TCP slot entries: {str(e)}'
+        error_msg = 'Exception while checking sunrpc TCP slot entries: {}'.format(e)
         log(error_msg)
         return {"sunrpc-tcp-slot-entries": None, "error": error_msg}
 `;
@@ -46,7 +46,7 @@ def get_nfs_mount_options():
                               universal_newlines=True, timeout=10)
         
         if result.returncode != 0:
-            error_msg = f'mount command failed: {result.stderr.strip()}'
+            error_msg = 'mount command failed: {}'.format(result.stderr.strip())
             return {"nfs-mount-options": None, "error": error_msg}
         
         mount_info = []
@@ -118,11 +118,12 @@ def get_nfs_mount_options():
             "error": None
         }
         
-    except subprocess.TimeoutExpired:
-        error_msg = 'mount command timed out'
-        return {"nfs-mount-options": None, "error": error_msg}
     except Exception as e:
-        error_msg = f'Exception while checking NFS mount options: {str(e)}'
+        err_str = str(e)
+        if 'timed out' in err_str.lower() or 'timeout' in err_str.lower():
+            error_msg = 'mount command timed out'
+        else:
+            error_msg = 'Exception while checking NFS mount options: {}'.format(e)
         return {"nfs-mount-options": None, "error": error_msg}
 `;
 
@@ -194,12 +195,14 @@ def get_mount_options_for_mount_point(mount_point):
             option_dict['bg'] = False
         options_info["mount-options"] = option_dict
 
-    except subprocess.TimeoutExpired:
-        options_info["error"] = "mount command timed out"
-        log("Timeout expired while getting mount options for {}".format(mount_point))
     except Exception as e:
-        options_info["error"] = "Exception getting mount options: {}".format(str(e))
-        log("Exception while getting mount options for {}: {}".format(mount_point, str(e)))
+        err_str = str(e)
+        if 'timed out' in err_str.lower() or 'timeout' in err_str.lower():
+            options_info["error"] = "mount command timed out"
+            log("Timeout expired while getting mount options for {}".format(mount_point))
+        else:
+            options_info["error"] = "Exception getting mount options: {}".format(e)
+            log("Exception while getting mount options for {}: {}".format(mount_point, e))
     
     return options_info
 `;
@@ -264,16 +267,16 @@ EXIT;
                             result["adr-home"] = adr_info['adr_home']
                         break
                         
-                    except json.JSONDecodeError as e:
-                        result["error"] = f"JSON parse error: {str(e)}"
+                    except (ValueError, Exception) as e:
+                        result["error"] = "JSON parse error: {}".format(e)
                         break
             else:
-                result["error"] = f"No valid JSON found in output: {output}"
+                result["error"] = "No valid JSON found in output: {}".format(output)
         else:
-            result["error"] = f"sqlplus failed: {result_proc.stderr}"
+            result["error"] = "sqlplus failed: {}".format(result_proc.stderr)
             
     except Exception as e:
-        result["error"] = f"Error: {str(e)}"
+        result["error"] = "Error: {}".format(e)
     
     # If ADR Home found, check its filesystem type
     if result["adr-home"]:
@@ -293,7 +296,7 @@ EXIT;
                     mountpoint = parts[0]
                     result["adr-home-mount"] = mountpoint
         else:
-            result["error"] = f"df command failed: {result_df.stderr}"
+            result["error"] = "df command failed: {}".format(result_df.stderr)
 
     if result["adr-home-mount"]: 
         mount_options = get_mount_options_for_mount_point(result["adr-home-mount"])
@@ -414,19 +417,19 @@ def get_hostname_domain():
             hostname_domain = hostname_result.stdout.strip()
             if hostname_domain:
                 result["domain"] = hostname_domain
-                log(f"Successfully retrieved hostname domain: {hostname_domain}")
+                log("Successfully retrieved hostname domain: {}".format(hostname_domain))
             else:
                 log("hostname -d returned empty string")
         else:
-            error_msg = f"hostname -d command failed: {hostname_result.stderr.strip()}"
+            error_msg = "hostname -d command failed: {}".format(hostname_result.stderr.strip())
             result["error"] = error_msg
             log(error_msg)
-    except subprocess.TimeoutExpired:
-        error_msg = "hostname -d command timed out"
-        result["error"] = error_msg
-        log(error_msg)
     except Exception as e:
-        error_msg = f"Exception while running hostname -d: {str(e)}"
+        err_str = str(e)
+        if 'timed out' in err_str.lower() or 'timeout' in err_str.lower():
+            error_msg = "hostname -d command timed out"
+        else:
+            error_msg = "Exception while running hostname -d: {}".format(e)
         result["error"] = error_msg
         log(error_msg)
     
@@ -474,12 +477,12 @@ def parse_oranfstab(path='/etc/oranfstab'):
                         cur['options'][l] = True
             if cur:
                 servers.append(cur)
-        log(f"oranfstab data collected: {len(servers)} servers")
-    except FileNotFoundError:
-        error = f"File not found: {path}"
+        log("oranfstab data collected: {} servers".format(len(servers)))
+    except (IOError, OSError):
+        error = "File not found: {}".format(path)
         log(error)
     except Exception as e:
-        error = f"Error parsing oranfstab: {str(e)}"
+        error = "Error parsing oranfstab: {}".format(e)
         log(error)
     return {'oranfstab_servers': servers, 'error': error}
 `;
@@ -539,7 +542,7 @@ def get_dns_resolution():
                     hostnames.add(p)
         
         dns_resolution = resolve_hostnames(hostnames)
-        log(f"DNS resolution collected for {len(hostnames)} hostnames")
+        log("DNS resolution collected for {} hostnames".format(len(hostnames)))
         
         return {
             'dns_resolution': dns_resolution,
@@ -547,7 +550,7 @@ def get_dns_resolution():
         }
         
     except Exception as e:
-        error_msg = f"Exception while collecting DNS resolution: {str(e)}"
+        error_msg = "Exception while collecting DNS resolution: {}".format(e)
         log(error_msg)
         return {
             'dns_resolution': {},
@@ -577,17 +580,17 @@ def get_nfs_exports():
                         line.split()[0] for line in result.stdout.strip().split('\\n')
                         if line.strip() and line.split()
                     ]
-                    log(f"showmount -e {server}: found {len(exports_by_server[server])} exports")
+                    log("showmount -e {}: found {} exports".format(server, len(exports_by_server[server])))
                 else:
-                    log(f"showmount -e {server} failed: {result.stderr.strip()}")
+                    log("showmount -e {} failed: {}".format(server, result.stderr.strip()))
                     exports_by_server[server] = []
-            except (subprocess.TimeoutExpired, Exception) as e:
-                log(f"showmount -e {server} error: {str(e)}")
+            except Exception as e:
+                log("showmount -e {} error: {}".format(server, e))
                 exports_by_server[server] = []
         
         return {'nfs-exports': exports_by_server, 'error': None}
     except Exception as e:
-        log(f"Exception collecting NFS exports: {str(e)}")
+        log("Exception collecting NFS exports: {}".format(e))
         return {'nfs-exports': {}, 'error': str(e)}
 `;
 
@@ -614,8 +617,6 @@ import subprocess
 import re
 import datetime
 import socket
-import ipaddress
-from pathlib import Path
 
 ${pythonLogger('storageOsAssessment.log')}
 
@@ -675,8 +676,8 @@ try:
     log('All checks completed successfully')
     print(json.dumps(all_results))
 except Exception as e:
-    log(f'Exception during assessment: {str(e)}')
-    print(json.dumps({"error": f"Assessment failed: {str(e)}"}))
+    log('Exception during assessment: {}'.format(e))
+    print(json.dumps({"error": "Assessment failed: {}".format(e)}))
 
 PYTHON
 ORACLE_SHELL

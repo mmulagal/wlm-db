@@ -602,7 +602,10 @@ def main():
                         stderr=subprocess.PIPE,
                         timeout=5
                     )
-                    fs_type = proc.stdout.decode().strip().lower()
+                    stdout_data = proc.stdout
+                    if isinstance(stdout_data, binary_type):
+                        stdout_data = stdout_data.decode('utf-8', errors='replace')
+                    fs_type = (stdout_data or '').strip().lower()
                     if fs_type in ['nfs', 'nfs4']:
                         binary_vol_info["isNfsMount"] = True
                         df_proc = subprocess.run(
@@ -611,7 +614,10 @@ def main():
                             stderr=subprocess.PIPE,
                             timeout=10
                         )
-                        df_lines = df_proc.stdout.decode().strip().split('\\n')
+                        df_out = df_proc.stdout
+                        if isinstance(df_out, binary_type):
+                            df_out = df_out.decode('utf-8', errors='replace')
+                        df_lines = (df_out or '').strip().split('\\n')
                         if len(df_lines) >= 2:
                             parts = df_lines[-1].split()
                             if len(parts) >= 6:
@@ -656,7 +662,7 @@ def main():
                     total_used += space.get("used", 0)
                     total_available += space.get("available", 0)
                 
-                headroom_percent = int(math.ceil(((total_size - total_used) / total_size) * 100)) if total_size > 0 else 0
+                headroom_percent = int(math.ceil((float(total_size - total_used) / total_size) * 100)) if total_size > 0 else 0
                 
                 result["rawdata"]["hostLevelDetails"]["headroom"] = {
                     "ssdStorageCapacityInBytes": total_size,

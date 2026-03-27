@@ -363,12 +363,10 @@ export const offlineAssessmentDemoOracleNFS = {
                     {
                         pdbName: 'PDB1',
                         pdbId: '3',
-                        pdbStatus: 'NORMAL'
-                    },
-                    {
-                        pdbName: 'PDB$SEED',
-                        pdbId: '2',
-                        pdbStatus: 'NORMAL'
+                        pdbStatus: 'NORMAL',
+                        pdbSizeInBytes: 150323855360,
+                        pdbCreationTime: '2024-01-12T10:30:00',
+                        serviceName: 'PDB1'
                     }
                 ],
                 isDataGuardDeployed: false,

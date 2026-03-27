@@ -71,7 +71,14 @@ interface OracleStoredRawData {
     hostLevelDetails?: Record<string, unknown>;
     os?: ISCIOSAssessment | NFSOSAssessment;
     errors?: string[];
-    pluggableDatabases?: Array<{ pdbName: string; pdbId?: string; pdbStatus?: string }>;
+    pluggableDatabases?: Array<{
+        pdbName: string;
+        pdbId?: string;
+        pdbStatus?: string;
+        pdbSizeInBytes?: number;
+        pdbCreationTime?: string;
+        serviceName?: string;
+    }>;
     isDataGuardDeployed?: boolean;
     dataguardDetails?: DataGuardDetailsType;
 }
@@ -95,7 +102,14 @@ interface OracleOfflineAssessmentInstanceData {
     mappedOntapVolumes?: OracleMappedOntapVolumesResponse;
     storage?: StorageAssessment;
     os?: ISCIOSAssessment | NFSOSAssessment;
-    pluggableDatabases?: Array<{ pdbName: string; pdbId?: string; pdbStatus?: string }>;
+    pluggableDatabases?: Array<{
+        pdbName: string;
+        pdbId?: string;
+        pdbStatus?: string;
+        pdbSizeInBytes?: number;
+        pdbCreationTime?: string | null;
+        serviceName?: string | null;
+    }>;
     isDataGuardDeployed?: boolean;
     dataguardDetails?: DataGuardDetailsType;
 }

@@ -783,7 +783,7 @@ def check_swap_space():
                 elif line.startswith('Hugetlb:'):
                     hugepagesSizeInKb = value
 
-    except FileNotFoundError:
+    except (IOError, OSError):
         err = "File /proc/meminfo not found"
     except Exception as e:
         err = str(e)

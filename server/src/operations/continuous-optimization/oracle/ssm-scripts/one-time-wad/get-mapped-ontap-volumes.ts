@@ -59,23 +59,43 @@ def get_management_ip_from_aws(filesystem_id, region):
 
 def download_certificate(url, cert_path):
     """Download SSL certificate bundle for ONTAP FQDN connections."""
+    req = urllib_request.Request(url)
+
+    # Attempt 1: verified download using system CA store
     try:
-        if PYTHON3 and ssl:
+        if ssl and hasattr(ssl, 'create_default_context'):
             context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            req = urllib_request.Request(url)
-            response = urllib_request.urlopen(req, context=context,
-                                              timeout=10)
-            with open(cert_path, 'wb') as f:
-                f.write(response.read())
-            return True
-        elif ssl:
-            req = urllib_request.Request(url)
+            response = urllib_request.urlopen(req, context=context, timeout=10)
+        else:
             response = urllib_request.urlopen(req, timeout=10)
-            with open(cert_path, 'wb') as f:
-                f.write(response.read())
-            return True
+        with open(cert_path, 'wb') as f:
+            f.write(response.read())
+        return True
+    except Exception as e:
+        log_warning("Verified certificate download failed: {}. "
+                    "Retrying without verification.".format(e))
+
+    # Attempt 2: unverified fallback (system CA store may be outdated)
+    try:
+        if ssl:
+            if PYTHON3:
+                context = ssl.create_default_context()
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+            elif hasattr(ssl, '_create_unverified_context'):
+                context = ssl._create_unverified_context()
+            else:
+                context = None
+            if context:
+                response = urllib_request.urlopen(req, context=context, timeout=10)
+            else:
+                response = urllib_request.urlopen(req, timeout=10)
+        else:
+            response = urllib_request.urlopen(req, timeout=10)
+        with open(cert_path, 'wb') as f:
+            f.write(response.read())
+        log_warning("Certificate bundle downloaded without SSL verification.")
+        return True
     except Exception as e:
         log("Failed to download certificate: {}".format(e))
     return False
@@ -226,7 +246,18 @@ def ontap_request(config, method, endpoint, body=None):
         req = urllib_request.Request(url, data=data, headers=headers)
         req.get_method = lambda: method.upper()
         try:
-            response = urllib_request.urlopen(req, timeout=30)
+            # Build SSL context for Python 2.7+ (which added ssl.create_default_context)
+            context = None
+            if ssl:
+                if config["use_insecure"] and hasattr(ssl, '_create_unverified_context'):
+                    context = ssl._create_unverified_context()
+                elif config["cert_path"] and os.path.exists(config["cert_path"]) and hasattr(ssl, 'create_default_context'):
+                    context = ssl.create_default_context()
+                    context.load_verify_locations(config["cert_path"])
+            if context:
+                response = urllib_request.urlopen(req, context=context, timeout=30)
+            else:
+                response = urllib_request.urlopen(req, timeout=30)
             return json.loads(response.read())
         except urllib_error.HTTPError as e:
             log("HTTP Error: {} {}".format(e.code, e.reason))
