@@ -66,6 +66,29 @@ import { listJobs } from '../../../lib/database/job';
 
 const logger = getLogger();
 
+function getOntapVolumeIdsByFileType(
+    instanceVolumeMapping: OracleMappedOntapVolumeRecord | undefined,
+    fileTypes: OracleSysFileTypes[]
+): Record<string, string[]> {
+    const { ontapVolumes = {}, isCDB = false } = instanceVolumeMapping || {};
+    return Object.fromEntries(
+        fileTypes.map(fileType => [
+            fileType,
+            [
+                ...new Set(
+                    isCDB
+                        ? Object.values(ontapVolumes).flatMap(pdb =>
+                              ((pdb as Record<string, OracleVolumeRecord[]>)[fileType] || []).map(vol => vol.volumeId)
+                          )
+                        : ((ontapVolumes as Record<string, OracleVolumeRecord[]>)[fileType] || []).map(
+                              vol => vol.volumeId
+                          )
+                )
+            ]
+        ])
+    );
+}
+
 function hostLevelDriftData(
     accountId: string,
     credentialsId: string,
@@ -774,24 +797,14 @@ async function fetchOracleDriftAssessment(
     const instanceVolumeMapping = volumeMappings.find(
         (m: Record<string, OracleMappedOntapVolumeRecord>) => m[databaseInstanceName]
     )?.[databaseInstanceName];
-    const { ontapVolumes: instanceOntapVolumes = {}, isCDB: instanceIsCDB = false } = instanceVolumeMapping || {};
-
-    const snapcenterRelevantFileTypes = [OracleSysFileTypes.DATA_FILES, OracleSysFileTypes.CONTROL_FILES];
-    const dataFileVolumeIds: string[] = [
-        ...new Set(
-            instanceIsCDB
-                ? Object.values(instanceOntapVolumes).flatMap(pdb =>
-                      snapcenterRelevantFileTypes.flatMap(fileType =>
-                          ((pdb as Record<string, OracleVolumeRecord[]>)[fileType] || []).map(vol => vol.volumeId)
-                      )
-                  )
-                : snapcenterRelevantFileTypes.flatMap(fileType =>
-                      ((instanceOntapVolumes as Record<string, OracleVolumeRecord[]>)[fileType] || []).map(
-                          vol => vol.volumeId
-                      )
-                  )
-        )
-    ];
+    const snapcenterVolumeIds = getOntapVolumeIdsByFileType(instanceVolumeMapping, [
+        OracleSysFileTypes.DATA_FILES,
+        OracleSysFileTypes.CONTROL_FILES,
+        OracleSysFileTypes.ARCHIVE_LOGS
+    ]);
+    const dataFileVolumeIds = snapcenterVolumeIds[OracleSysFileTypes.DATA_FILES] ?? [];
+    const controlFileVolumeIds = snapcenterVolumeIds[OracleSysFileTypes.CONTROL_FILES] ?? [];
+    const archiveLogVolumeIds = snapcenterVolumeIds[OracleSysFileTypes.ARCHIVE_LOGS] ?? [];
 
     const [storageDriftData, hostLevelData, crrData, snapcenterDriftData, oracleSecurityPatchData] = await Promise.all([
         assessmentFlags.storage
@@ -839,7 +852,7 @@ async function fetchOracleDriftAssessment(
             ? Promise.resolve(
                   calculateSnapCenterDrift(
                       assessmentDataMap[AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT] as SnapcenterAssessmentData,
-                      dataFileVolumeIds
+                      { dataFileVolumeIds, controlFileVolumeIds, archiveLogVolumeIds }
                   )
               )
             : Promise.resolve(undefined),

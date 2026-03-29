@@ -39,6 +39,12 @@ interface SnapcenterAssessmentData {
     errorMessage: string;
 }
 
+interface SnapcenterRelevantVolumeIds {
+    dataFileVolumeIds: string[];
+    controlFileVolumeIds: string[];
+    archiveLogVolumeIds: string[];
+}
+
 async function initiateSnapCenterAssessmentCollection(
     accountId: string,
     credentialsId: string,
@@ -165,7 +171,7 @@ async function initiateSnapCenterAssessmentCollection(
 
 function calculateSnapCenterDrift(
     assessmentData: SnapcenterAssessmentData,
-    dataFileVolumeIds: string[]
+    volumeIds: SnapcenterRelevantVolumeIds
 ): OracleGenericParameterDriftResponseType | { errorMessage: string } | undefined {
     if (!assessmentData || isEmpty(assessmentData)) {
         return undefined;
@@ -182,6 +188,8 @@ function calculateSnapCenterDrift(
         return { errorMessage };
     }
 
+    const { dataFileVolumeIds = [], controlFileVolumeIds = [], archiveLogVolumeIds = [] } = volumeIds || {};
+
     const dataFileSet = new Set(dataFileVolumeIds);
     const dataFileVolumes = dataFileSet.size > 0 ? volumes.filter(v => dataFileSet.has(v.volumeId)) : volumes;
 
@@ -190,18 +198,24 @@ function calculateSnapCenterDrift(
     const isVolumeProtected = (v: SnapcenterVolumeResult) =>
         v.hasSnapcenterSnapshot || (pluginServiceRunning && sidFoundInLogs && v.foundInSnapcenterLogs);
 
-    const allProtected = dataFileVolumes.length > 0 && dataFileVolumes.every(isVolumeProtected);
-    const unprotectedVolumes = dataFileVolumes.filter(v => !isVolumeProtected(v));
+    const areDataFileVolumesProtected = dataFileVolumes.length > 0 && dataFileVolumes.every(isVolumeProtected);
+    const shouldEvaluateFallbackFileTypes = dataFileSet.size > 0 && !areDataFileVolumesProtected;
+    const fallbackVolumeSet = new Set([...dataFileVolumeIds, ...controlFileVolumeIds, ...archiveLogVolumeIds]);
+    const volumesToAssess = shouldEvaluateFallbackFileTypes
+        ? volumes.filter(v => fallbackVolumeSet.has(v.volumeId))
+        : dataFileVolumes;
+    const unprotectedVolumes = volumesToAssess.filter(v => !isVolumeProtected(v));
+    const isOptimized = volumesToAssess.length > 0 && unprotectedVolumes.length === 0;
 
     return {
         name: goldenConfig.name,
-        status: allProtected ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+        status: isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
         recommended: goldenConfig.recommended,
         severity: goldenConfig.severity,
         recommendation: goldenConfig.recommendation,
         tags: goldenConfig.tags as AwsWellArchitecturedPillars[],
         resourceType: goldenConfig.resourceType,
-        totalObjectsAssessed: dataFileVolumes.length,
+        totalObjectsAssessed: volumesToAssess.length,
         totalObjectsInViolation: unprotectedVolumes.length,
         objectsInViolation: unprotectedVolumes.map(v => ({
             ontapVolumeName: v.volumeName,
