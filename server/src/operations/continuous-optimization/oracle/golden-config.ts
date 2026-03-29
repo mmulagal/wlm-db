@@ -785,12 +785,12 @@ const GOLDEN_CONFIG = {
             tags: [AwsWellArchitecturedPillars.RELIABILITY],
             category: 'resiliency',
             subCategory: 'protection',
-            focusWidgetName: 'SnapCenter snapshot',
+            focusWidgetName: 'Application-consistent snapshots',
             severity: SEVERITY.WARNING,
             recommended: AssessmentStatus.OPTIMIZED,
             resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             recommendation:
-                'Workload Factory recommends protecting Oracle databases with SnapCenter snapshots for application-consistent backup and recovery. SnapCenter integrates with ONTAP to create crash-consistent snapshots, enabling rapid backup and restore operations for Oracle databases running on FSx for ONTAP. Ensure SnapCenter is configured for all database volumes to maintain data protection and compliance.'
+                'Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.'
         },
         crr: {
             tags: [AwsWellArchitecturedPillars.RELIABILITY],

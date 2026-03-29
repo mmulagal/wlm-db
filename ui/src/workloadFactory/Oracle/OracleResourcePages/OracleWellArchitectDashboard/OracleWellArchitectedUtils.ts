@@ -557,9 +557,9 @@ export const oracleCardData: any = {
             smallFont: true
         },
         recommendation: {
-            title: 'SnapCenter Snapshot recommendation',
+            title: 'Application-consistent snapshots recommendation',
             description:
-                'Application-consistent snapshots with NetApp SnapCenter enable you to capture precise, reliable point-in-time images of your data volumes, ensuring that your applications remain fully operational and data integrity is maintained. Use SnapCenter to streamline backup processes and facilitate rapid, accurate restores—minimizing downtime and safeguarding your business-critical workloads.'
+                'Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.'
         },
         tags: ['Reliability']
     },
