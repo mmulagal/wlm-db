@@ -1679,7 +1679,7 @@ const readSsmParameter = (instance: string) =>
         ${validateSQLInstanceCredentials}
     `;
 
-// All the queries using the following template must respond in json format (use FOR JSON PATH), else the conversion will fail.
+// All the queries using the following template must respond in JSON format (use FOR JSON PATH), else the conversion will fail.
 const sqlQueryExecution = (
     instanceName: string = DEFAULT_INSTANCE_NAME,
     executableInstanceName: string = DEFAULT_MSSQL_INSTANCE_NAME,
@@ -1702,7 +1702,14 @@ const sqlQueryExecution = (
         Write-Information "Failed to compress the response because the response is either null or empty. $queryResponse"
         return $queryResponse
     }
-    $queryResponse = $queryResponse | ConvertFrom-Json
+    $normalizedResponse = ($queryResponse -join "\`n")
+    try {
+        $queryResponse = $normalizedResponse | ConvertFrom-Json
+    } catch {
+        $preview = $normalizedResponse
+        if ($preview.Length -gt 200) { $preview = $preview.Substring(0, 200) }
+        throw "SQL query returned invalid JSON response. Response: $preview. Error: $($_.Exception.Message)"
+    }
     $queryResponse = $queryResponse | ConvertTo-Json -Depth 5
     
     ${compressResponse}
@@ -1918,9 +1925,16 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
                     Write-Information $errorMessage
                     throw $errorMessage
                 }
-                $responseObject[$serverInstanceName] = $sqlResponse | ConvertFrom-Json
+                try {
+                    $normalizedResponse = ($sqlResponse -join "\`n")
+                    $responseObject[$serverInstanceName] = $normalizedResponse | ConvertFrom-Json
+                } catch {
+                    $preview = $normalizedResponse
+                    if ($preview.Length -gt 200) { $preview = $preview.Substring(0, 200) }
+                    throw "SQL query for instance $serverInstanceName returned invalid JSON response. Response: $preview. Error: $($_.Exception.Message)"
+                }
             } catch {
-                $responseObject[$serverInstanceName] = "error: $_.Exception.Message"
+                $responseObject[$serverInstanceName] = "error: $($_.Exception.Message)"
             }
         }
         # disableCredSSP is removed as most of machines will be part of domain and we are enabling CredSSP at domain level.
