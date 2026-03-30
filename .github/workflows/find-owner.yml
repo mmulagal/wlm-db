@@ -1,0 +1,226 @@
+name: Find Owner For Error-Agent Issue
+
+on:
+    issues:
+        types: [labeled]
+
+permissions:
+    contents: read
+    issues: write
+
+jobs:
+    find-owner:
+        if: github.event.label.name == 'error-agent'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Find owner from stack trace and assign (no checkout)
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  ISSUE_NUMBER: ${{ github.event.issue.number }}
+                  ISSUE_BODY: ${{ github.event.issue.body }}
+                  REPO: ${{ github.repository }}
+                  RUNTIME_PREFIX: '/opt/netapp/wlmdb/'
+                  REPO_SRC_PREFIX: 'server/src/'
+                  MAX_FRAMES: '30'
+                  SKIP_ASSIGNEES: 'rranganath,ranganathar'
+                  FALLBACK_ASSIGNEE: 'mmulagal' # Murali Mulagalapati
+              run: |
+                  set -euo pipefail
+
+                  tmp_result="$(mktemp)"
+                  python3 - <<'PY' > "$tmp_result"
+                  import datetime as dt
+                  import json
+                  import os
+                  import re
+                  import subprocess
+                  from typing import Optional, Tuple
+
+                  body = os.environ.get("ISSUE_BODY", "") or ""
+                  repo_full = os.environ.get("REPO", "")
+                  runtime_prefix = os.environ.get("RUNTIME_PREFIX", "/opt/netapp/wlmdb/")
+                  repo_src_prefix = os.environ.get("REPO_SRC_PREFIX", "server/src/")
+                  max_frames = int(os.environ.get("MAX_FRAMES", "30"))
+
+                  owner, repo = repo_full.split("/", 1)
+
+                  stack_pattern = re.compile(r"^\s*at\s+.*\(([^:\s)]+):(\d+):(\d+)\)\s*$")
+                  frames = []
+                  for line in body.splitlines():
+                      match = stack_pattern.match(line)
+                      if match:
+                          frames.append((match.group(1), int(match.group(2))))
+
+                  def normalize_path(runtime_path: str) -> Optional[str]:
+                      if runtime_path.startswith(runtime_prefix):
+                          trimmed = runtime_path[len(runtime_prefix):]
+                      elif runtime_path.startswith(repo_src_prefix):
+                          trimmed = runtime_path[len(repo_src_prefix):]
+                      else:
+                          return None
+
+                      trimmed = trimmed.lstrip("/")
+                      if not trimmed:
+                          return None
+                      if re.match(r"^[A-Za-z]:[\\/]", trimmed):
+                          return None
+
+                      if trimmed.endswith(".js"):
+                          trimmed = trimmed[:-3] + ".ts"
+                      return f"{repo_src_prefix}{trimmed}"
+
+                  def to_epoch_seconds(iso_timestamp: str) -> int:
+                      normalized = iso_timestamp.replace("Z", "+00:00")
+                      return int(dt.datetime.fromisoformat(normalized).timestamp())
+
+                  def to_login(name: str) -> str:
+                      return re.sub(r"\s+", "-", name.strip().lower())
+
+                  def query_blame(path: str, start_line: int, end_line: int) -> Optional[Tuple[str, str, int]]:
+                      expr = f"HEAD:{path}"
+                      query = """
+                      query($owner: String!, $repo: String!, $expr: String!, $startLine: Int!, $endLine: Int!) {
+                        repository(owner: $owner, name: $repo) {
+                          object(expression: $expr) {
+                            ... on Blob {
+                              blame(range: {startLine: $startLine, endLine: $endLine}) {
+                                ranges {
+                                  commit {
+                                    committedDate
+                                    author {
+                                      name
+                                      user { login }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      """
+
+                      cmd = [
+                          "gh", "api", "graphql",
+                          "-f", f"query={query}",
+                          "-f", f"owner={owner}",
+                          "-f", f"repo={repo}",
+                          "-f", f"expr={expr}",
+                          "-F", f"startLine={start_line}",
+                          "-F", f"endLine={end_line}",
+                      ]
+                      try:
+                          proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
+                      except Exception:
+                          return None
+
+                      if proc.returncode != 0:
+                          return None
+
+                      try:
+                          payload = json.loads(proc.stdout)
+                      except json.JSONDecodeError:
+                          return None
+
+                      ranges = (
+                          (payload.get("data") or {})
+                          .get("repository", {})
+                          .get("object") or {}
+                      ).get("blame", {}).get("ranges", [])
+                      if not ranges:
+                          return None
+
+                      best = None
+                      best_time = 0
+                      for blame_range in ranges:
+                          commit = blame_range.get("commit") or {}
+                          committed_date = commit.get("committedDate")
+                          if not committed_date:
+                              continue
+                          try:
+                              commit_time = to_epoch_seconds(committed_date)
+                          except Exception:
+                              continue
+
+                          author = commit.get("author") or {}
+                          name = (author.get("name") or "").strip()
+                          if not name:
+                              continue
+                          user = author.get("user") or {}
+                          login = (user.get("login") or "").strip() or to_login(name)
+                          if commit_time > best_time:
+                              best_time = commit_time
+                              best = (name, login, commit_time)
+
+                      return best
+
+                  filtered_frames = []
+                  seen = set()
+                  for runtime_file, runtime_line in frames:
+                      if not runtime_file or runtime_line <= 0:
+                          continue
+
+                      repo_file = normalize_path(runtime_file)
+                      if not repo_file:
+                          continue
+                      key = (repo_file, runtime_line)
+                      if key in seen:
+                          continue
+                      seen.add(key)
+                      filtered_frames.append(key)
+                      if len(filtered_frames) >= max_frames:
+                          break
+
+                  best_author_name = ""
+                  best_author_login = ""
+                  best_time = 0
+                  best_source = ""
+
+                  for repo_file, runtime_line in filtered_frames:
+                      start = max(1, runtime_line - 5)
+                      end = runtime_line + 5
+                      candidate = query_blame(repo_file, start, end)
+                      if candidate is None:
+                          continue
+
+                      author_name, author_login, author_time = candidate
+                      if author_time > best_time:
+                          best_author_name = author_name
+                          best_author_login = author_login
+                          best_time = author_time
+                          best_source = f"{repo_file}:{runtime_line}"
+
+                  print(json.dumps({
+                      "bestAuthorName": best_author_name,
+                      "bestAuthorLogin": best_author_login,
+                      "bestTime": best_time,
+                      "bestSource": best_source,
+                  }))
+                  PY
+
+                  best_author_name="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("bestAuthorName",""))' "$tmp_result")"
+                  best_author_login="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("bestAuthorLogin",""))' "$tmp_result")"
+                  best_source="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("bestSource",""))' "$tmp_result")"
+
+                  if [ -z "$best_author_login" ]; then
+                    gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-assignee "$FALLBACK_ASSIGNEE"
+                    gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
+                      "Could not derive owner from stack frames via GitHub blame API; assigned fallback @${FALLBACK_ASSIGNEE}."
+                    exit 0
+                  fi
+
+                  skip_csv="$(echo "$SKIP_ASSIGNEES" | tr '[:upper:]' '[:lower:]')"
+                  cand_lc="$(echo "$best_author_login" | tr '[:upper:]' '[:lower:]')"
+                  chosen="$best_author_login"
+
+                  if echo ",$skip_csv," | grep -q ",$cand_lc,"; then
+                    chosen="$FALLBACK_ASSIGNEE"
+                  fi
+
+                  if ! gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-assignee "$chosen"; then
+                    chosen="$FALLBACK_ASSIGNEE"
+                    gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-assignee "$chosen"
+                  fi
+
+                  gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
+                    "Owner attribution: selected @${chosen} from GitHub blame API (most recent author: \`${best_author_name}\`, source: \`${best_source}\`)."
