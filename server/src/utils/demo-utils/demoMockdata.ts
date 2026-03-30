@@ -6807,6 +6807,11 @@ const DEMO_ORACLE_CPU_CATALOG = [
     }
 ];
 
+const ORACLE_DATAGUARD_INSTANCES = {
+    primary: ['dataguard-primary'],
+    standby: ['dataguard-standby']
+};
+
 export {
     masterStackData,
     validationStack1Data,
@@ -6863,5 +6868,6 @@ export {
     oracleStandaloneUploadObject,
     oracleDataGuardUploadObject,
     oracleMultiDBUploadObject,
-    DEMO_ORACLE_CPU_CATALOG
+    DEMO_ORACLE_CPU_CATALOG,
+    ORACLE_DATAGUARD_INSTANCES
 };

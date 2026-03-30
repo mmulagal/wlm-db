@@ -51,7 +51,8 @@ import {
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     ORACLE_SECURITY_PATCH_ASSESSMENT_DATA,
     ORACLE_SNAPCENTER_ASSESSMENT_DATA,
-    createAssessmentDataWithRetry
+    createAssessmentDataWithRetry,
+    ORACLE_DATAGUARD_INSTANCES
 } from '../utils/demo-utils/demoMockdata';
 import { generateRandomIP, summarizeFirstLevel, parseAssessmentFileContent } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
@@ -1469,6 +1470,12 @@ function handleGetOracleAssessmentForDemo(
             snapcenterData.totalObjectsInViolation = 0;
         }
         assessmentData.snapcenterSnapshot = snapcenterData;
+    }
+
+    // Dataguard primary instances are currently excluded  from Snapcenter snapshot assesssment
+    // since the data related to a dataguard node isn't available in assessment flow, we're handling it here
+    if (ORACLE_DATAGUARD_INSTANCES.primary.includes(instanceDetail.database_instance_id)) {
+        assessmentData.snapcenterSnapshot = undefined;
     }
 
     return assessmentData;

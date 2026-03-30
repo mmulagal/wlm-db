@@ -185,10 +185,7 @@ describe('calculateSnapCenterDrift', () => {
     });
 
     it('returns NOT_OPTIMIZED when volumes array is empty and volume IDs are provided', () => {
-        const drift = calculateSnapCenterDrift(
-            { ...BASE_ASSESSMENT_DATA, volumes: [] },
-            BASE_VOLUME_IDS
-        );
+        const drift = calculateSnapCenterDrift({ ...BASE_ASSESSMENT_DATA, volumes: [] }, BASE_VOLUME_IDS);
 
         assertSuccessfulDrift(drift);
         expect(drift.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
