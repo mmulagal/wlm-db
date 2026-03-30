@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { Routes, Route, useNavigate } from 'react-router-dom';
@@ -88,6 +88,23 @@ const Home = () => {
             clearEBSBulkSelections(dispatch);
         }
     }, [navigationPath]);
+
+    // only for BXP back button handling
+    const isHandlingPopState = useRef(false);
+    useEffect(() => {
+        if (!isWorkloadFactory) {
+            const handlePopState = () => {
+                if (isHandlingPopState.current) {
+                    isHandlingPopState.current = false;
+                    return;
+                }
+                isHandlingPopState.current = true;
+                window.history.go(-1);
+            };
+            window.addEventListener('popstate', handlePopState);
+            return () => window.removeEventListener('popstate', handlePopState);
+        }
+    }, [isWorkloadFactory]);
 
     // To set dashboard highlight
     useEffect(() => {
