@@ -451,6 +451,49 @@ def main():
         log_info("Volume extraction summary: {} total file types, {} empty, {} volumes found".format(
             total_file_types, empty_file_types, len(volume_uuids)))
 
+        # -------------------------------------------------------
+        # Abort if no ONTAP volumes were mapped at all.
+        # This is the strongest signal that Oracle data files are
+        # NOT stored on FSxN — they may be on EBS, local disk,
+        # FSx for Windows, or another storage system entirely.
+        # -------------------------------------------------------
+        if not volume_uuids and not lun_uuids:
+            log_error("")
+            log_error("=" * 60)
+            log_error("FATAL: No ONTAP Volumes Mapped for Oracle SID '{}'".format(ORACLE_SID))
+            log_error("=" * 60)
+            log_error("")
+            log_error("The assessment connected to ONTAP successfully but could")
+            log_error("not map ANY Oracle data files to ONTAP volumes or LUNs.")
+            log_error("")
+            log_error("Most likely cause:")
+            log_error("  Oracle data files are NOT stored on FSxN (FSx for")
+            log_error("  NetApp ONTAP). This script only supports Oracle")
+            log_error("  databases whose data files reside on FSxN storage.")
+            log_error("")
+            log_error("Other possible causes:")
+            log_error("  - Wrong --StorageManagementAddress: the ONTAP system")
+            log_error("    specified does not serve Oracle's data directories.")
+            log_error("  - Oracle files are on EBS, local disk, FSx for")
+            log_error("    Windows, or another non-FSxN storage backend.")
+            log_error("  - Mount points could not be resolved to ONTAP")
+            log_error("    junction paths (check NFS/iSCSI connectivity).")
+            log_error("")
+            log_error("Diagnostic summary:")
+            log_error("  Storage endpoint : {}".format(STORAGE_ENDPOINT))
+            log_error("  Detected protocol: {}".format(storage_protocol or "unknown"))
+            log_error("  File types found : {}".format(total_file_types))
+            log_error("  Empty file types : {}".format(empty_file_types))
+            mount_summary = mount_point_data.get("mountDetails") or mount_point_data.get("pdbMountDetails")
+            if not mount_summary:
+                log_error("  Mount points     : none collected (mount detection failed)")
+            log_error("")
+            log_error("To confirm whether Oracle is on FSxN, run:")
+            log_error("  mount | grep nfs")
+            log_error("  sudo iscsiadm -m session")
+            log_error("=" * 60)
+            sys.exit(1)
+
         # Collect storage data
         storage = {
             "volumes": {"error": "", "data": [], "filesystemId": result["metadata"].get("fsxId") or STORAGE_ENDPOINT},
@@ -570,15 +613,6 @@ def main():
                 storage["errors"]["volumes"] = str(vol_err)
                 storage["volumes"]["error"] = str(vol_err)
                 errors.append("Volume config: {}".format(vol_err))
-        else:
-            # Provide more detailed error message
-            if total_file_types > 0 and empty_file_types == total_file_types:
-                storage["volumes"]["error"] = "No volume UUIDs found in mapped volumes. All {} file types have empty volume mappings. This may indicate that mount points were found but could not be mapped to ONTAP volumes, or that no Oracle file paths were discovered.".format(total_file_types)
-            elif total_file_types == 0:
-                storage["volumes"]["error"] = "No volume UUIDs found in mapped volumes. No file types were processed, which may indicate that mount point collection failed."
-            else:
-                storage["volumes"]["error"] = "No volume UUIDs found in mapped volumes. {} of {} file types have empty volume mappings.".format(empty_file_types, total_file_types)
-            log_warning(storage["volumes"]["error"])
         
         # Collect binary volumes
         log_info("Collecting Oracle binary volumes...")
@@ -636,7 +670,7 @@ def main():
                 for key, value in iscsi_assessment["os"].items():
                     os_results[key] = value
             if "oracle-parameters" in iscsi_assessment:
-                os_results["oracle-iscsi-parameters"] = iscsi_assessment["oracle-parameters"]
+                os_results["oracle-parameters"] = iscsi_assessment["oracle-parameters"]
             if "oracle-init-parameters" in iscsi_assessment:
                 os_results["oracle-parameters-from-init"] = iscsi_assessment["oracle-init-parameters"]
             if "asm-os-config" in iscsi_assessment:

@@ -376,8 +376,8 @@ Allows the script to automatically retrieve Oracle and ONTAP credentials from AW
 \`\`\`
 
 **Secret Naming Convention:**
-- Oracle credentials: \`<Hostname>/<OracleSid>\`
-- ONTAP credentials: Use the StorageManagementAddress (FQDN, Management IP, or FSx ID) as the secret name
+- Oracle credentials: \`oracle/<EC2InstanceId>/<OracleSid>\`
+- ONTAP credentials: \`ontap/<StorageManagementAddress>\`
 
 ### EC2 Metadata Access (Recommended)
 Allows the script to automatically detect EC2 instance metadata:

@@ -413,7 +413,7 @@ export const offlineAssessmentDemoOracleISCSI = {
                             user_friendly_names: 'no'
                         }
                     },
-                    'oracle-iscsi-parameters': {
+                    'oracle-parameters': {
                         'filesystemio-options': {
                             found: true,
                             value: 'none'

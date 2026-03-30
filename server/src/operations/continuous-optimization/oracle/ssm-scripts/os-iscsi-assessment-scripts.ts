@@ -720,16 +720,11 @@ def check_iscsi_replacement_timeout():
         result = subprocess.run(
             ['sudo', 'cat', '/etc/iscsi/iscsid.conf'],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            timeout=10
+            universal_newlines=True, timeout=10
         )
         if result.returncode != 0:
-            stderr_out = result.stderr
-            if isinstance(stderr_out, binary_type):
-                stderr_out = stderr_out.decode('utf-8', errors='replace')
-            raise Exception('Failed to read /etc/iscsi/iscsid.conf: {}'.format(stderr_out.strip()))
+            raise Exception('Failed to read /etc/iscsi/iscsid.conf: {}'.format(result.stderr.strip()))
         config = result.stdout
-        if isinstance(config, binary_type):
-            config = config.decode('utf-8', errors='replace')
         for line in config.split('\\n'):
             if 'node.session.timeo.replacement_timeout' in line and not line.strip().startswith('#'):
                 timeout_value = int(line.split('=')[1].strip())
