@@ -1852,7 +1852,7 @@ const WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_CRON_PATTERN: string = config.has
     : '0 5 */7 * *'; // Default to every 7 days at 5 AM if not set in config
 const DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN: string = config.has('daily-drift-assessment-trigger')
     ? config.get('daily-drift-assessment-trigger')
-    : '0 0 0 * * *'; // Default to every 12 midnight everyday not set in config
+    : '0 0 0 * * *'; // Fallback only when config key is missing (midnight UTC)
 
 const DEMO_ENTERPRISE_INSTANCES = ['i-cb05c810a74426184', 'i-0ab2e12971d543c14', 'i-cb05c810a74426187'];
 

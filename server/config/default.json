@@ -133,5 +133,5 @@
             "ttl": "5m"
         }
     },
-    "daily-drift-assessment-trigger": "0 0 0 * * *"
+    "daily-drift-assessment-trigger": "0 30 7 * * *"
 }
