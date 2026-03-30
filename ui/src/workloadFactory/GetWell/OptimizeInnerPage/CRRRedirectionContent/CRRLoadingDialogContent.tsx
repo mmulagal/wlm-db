@@ -153,7 +153,7 @@ const CRRLoadingDialogContent = ({ rowData }: CRRLoadingDialogContentProps) => {
                     postBlueXPMessage({
                         type: BlueXPListeners.navigate,
                         payload: {
-                            pathname: `../../wlmfsx/fsx/clusters/${selectedGwInstanceCredId}/${fsxDetails?.region}/${fsxDetails?.id}/replication/create?selectedSrcVolumeIds=${fsxVolumeId}&from=../../${isWorkloadFactory ? 'databases' : 'fsxdb'}/inventory`,
+                            pathname: `../../wlmfsx/fsx/clusters/${selectedGwInstanceCredId}/${fsxDetails?.region}/${fsxDetails?.id}/replication/create?selectedSrcVolumeIds=${fsxVolumeId}&fromParent=/${isWorkloadFactory ? 'databases' : 'fsxdb'}/inventory`,
                             replace: true
                         }
                     });
