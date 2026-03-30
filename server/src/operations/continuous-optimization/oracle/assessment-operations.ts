@@ -392,15 +392,6 @@ async function initiateInstanceLevelAssessmentDataCollection(
                 databaseHostId,
                 instanceLevelAssessmentJobId,
                 databaseInstanceRecord
-            ),
-        [AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH]: async () =>
-            initiateOracleSecurityPatchAssessmentCollection(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                databaseInstanceRecord,
-                instanceLevelAssessmentJobId
             )
     };
     await Promise.allSettled(
@@ -513,6 +504,12 @@ async function triggerOracleAssessment(
             [AssessmentCategoriesOracle.HOST_OS_PATCH].includes(field.toLowerCase() as AssessmentCategoriesOracle)
         );
 
+        const shouldRunOracleSecurityPatchAssessment = fields.some(field =>
+            [AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH].includes(
+                field.toLowerCase() as AssessmentCategoriesOracle
+            )
+        );
+
         // Run host-level and instance-level assessments concurrently
         const assessmentPromises: Promise<void>[] = [];
 
@@ -540,6 +537,19 @@ async function triggerOracleAssessment(
                     instanceRecord,
                     parentJobId,
                     fields
+                )
+            );
+        }
+
+        if (shouldRunOracleSecurityPatchAssessment) {
+            assessmentPromises.push(
+                initiateOracleSecurityPatchAssessmentCollection(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    instanceRecord,
+                    parentJobId
                 )
             );
         }

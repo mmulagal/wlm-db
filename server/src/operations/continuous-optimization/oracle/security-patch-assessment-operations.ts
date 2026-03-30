@@ -99,7 +99,11 @@ function findMissingPatches(
         return [];
     }
 
-    const { patchLevel, releaseDate: lastRUDate } = parseLatestReleaseUpdate(appliedPatches);
+    const { patchLevel: ruPatchLevel, releaseDate: lastRUDate } = parseLatestReleaseUpdate(appliedPatches);
+    // Prefer the minor version from applied patches (patchLevel > 0 means a real RU was found).
+    // Fall back to the minor from the version string when no RU patch is present
+    const versionStringMinor = parseInt(oracleVersion.split('.')?.[1] ?? '0', 10);
+    const patchLevel = ruPatchLevel > 0 ? ruPatchLevel : Number.isNaN(versionStringMinor) ? 0 : versionStringMinor;
 
     const applicableCves = catalog.filter(entry =>
         entry.affectedVersions.some(av => isVersionAffected(majorVersion, patchLevel, av))
