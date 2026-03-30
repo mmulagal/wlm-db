@@ -144,14 +144,28 @@ describe('getCrrDriftData', () => {
     it('should return NOT_OPTIMIZED when some volumes lack CRR', () => {
         const crrData: CrrAssessment = {
             crrDetails: [
-                { volumeName: 'data_vol', volumeUuid: 'uuid-data', isCRREnabled: true, isSnapMirrored: true },
-                { volumeName: 'log_vol', volumeUuid: 'uuid-log', isCRREnabled: false, isSnapMirrored: false }
+                {
+                    volumeName: 'data_vol',
+                    volumeUuid: 'uuid-data',
+                    fsxVolumeId: 'fsvol-data',
+                    isCRREnabled: true,
+                    isSnapMirrored: true
+                },
+                {
+                    volumeName: 'log_vol',
+                    volumeUuid: 'uuid-log',
+                    fsxVolumeId: 'fsvol-log',
+                    isCRREnabled: false,
+                    isSnapMirrored: false
+                }
             ]
         };
 
         const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
-        expect(result.objectsInViolation).toEqual([{ ontapVolumeName: 'log_vol', ontapVolumeUuid: 'uuid-log' }]);
+        expect(result.objectsInViolation).toEqual([
+            { ontapVolumeName: 'log_vol', ontapVolumeUuid: 'uuid-log', fsxVolumeId: 'fsvol-log' }
+        ]);
         expect(result.totalObjectsInViolation).toBe(1);
         expect(result.totalObjectsAssessed).toBe(2);
     });
@@ -159,16 +173,28 @@ describe('getCrrDriftData', () => {
     it('should return NOT_OPTIMIZED when all volumes lack CRR', () => {
         const crrData: CrrAssessment = {
             crrDetails: [
-                { volumeName: 'data_vol', volumeUuid: 'uuid-data', isCRREnabled: false, isSnapMirrored: false },
-                { volumeName: 'log_vol', volumeUuid: 'uuid-log', isCRREnabled: false, isSnapMirrored: false }
+                {
+                    volumeName: 'data_vol',
+                    volumeUuid: 'uuid-data',
+                    fsxVolumeId: 'fsvol-data',
+                    isCRREnabled: false,
+                    isSnapMirrored: false
+                },
+                {
+                    volumeName: 'log_vol',
+                    volumeUuid: 'uuid-log',
+                    fsxVolumeId: 'fsvol-log',
+                    isCRREnabled: false,
+                    isSnapMirrored: false
+                }
             ]
         };
 
         const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
         expect(result.objectsInViolation).toEqual([
-            { ontapVolumeName: 'data_vol', ontapVolumeUuid: 'uuid-data' },
-            { ontapVolumeName: 'log_vol', ontapVolumeUuid: 'uuid-log' }
+            { ontapVolumeName: 'data_vol', ontapVolumeUuid: 'uuid-data', fsxVolumeId: 'fsvol-data' },
+            { ontapVolumeName: 'log_vol', ontapVolumeUuid: 'uuid-log', fsxVolumeId: 'fsvol-log' }
         ]);
         expect(result.totalObjectsInViolation).toBe(2);
     });
@@ -202,24 +228,34 @@ describe('getCrrDriftData', () => {
     it('should handle single volume assessment', () => {
         const crrData: CrrAssessment = {
             crrDetails: [
-                { volumeName: 'data_vol', volumeUuid: 'uuid-data', isCRREnabled: false, isSnapMirrored: false }
+                {
+                    volumeName: 'data_vol',
+                    volumeUuid: 'uuid-data',
+                    fsxVolumeId: 'fsvol-data',
+                    isCRREnabled: false,
+                    isSnapMirrored: false
+                }
             ]
         };
 
         const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
-        expect(result.objectsInViolation).toEqual([{ ontapVolumeName: 'data_vol', ontapVolumeUuid: 'uuid-data' }]);
+        expect(result.objectsInViolation).toEqual([
+            { ontapVolumeName: 'data_vol', ontapVolumeUuid: 'uuid-data', fsxVolumeId: 'fsvol-data' }
+        ]);
         expect(result.totalObjectsAssessed).toBe(1);
         expect(result.totalObjectsInViolation).toBe(1);
     });
 
-    it('should include undefined volumeUuid when not provided in crrDetails', () => {
+    it('should include undefined fields when volumeUuid and fsxVolumeId are not provided', () => {
         const crrData: CrrAssessment = {
             crrDetails: [{ volumeName: 'data_vol', isCRREnabled: false, isSnapMirrored: false }]
         };
 
         const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
-        expect(result.objectsInViolation).toEqual([{ ontapVolumeName: 'data_vol', ontapVolumeUuid: undefined }]);
+        expect(result.objectsInViolation).toEqual([
+            { ontapVolumeName: 'data_vol', ontapVolumeUuid: undefined, fsxVolumeId: undefined }
+        ]);
     });
 
     it('should handle empty crrDetails array', () => {

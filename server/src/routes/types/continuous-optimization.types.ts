@@ -60,7 +60,8 @@ type GenericViolationResponseType = Static<typeof GenericViolationResponse>;
 
 const OntapVolume = Type.Object({
     ontapVolumeName: Type.Optional(Type.String()),
-    ontapVolumeUuid: Type.Optional(Type.String())
+    ontapVolumeUuid: Type.Optional(Type.String()),
+    fsxVolumeId: Type.Optional(Type.String())
 });
 type OntapVolumeType = Static<typeof OntapVolume>;
 

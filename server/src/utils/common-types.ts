@@ -96,6 +96,7 @@ interface MaxDOPAssesment {
 interface CrrDetails {
     volumeName: string;
     volumeUuid?: string;
+    fsxVolumeId?: string;
     isCRREnabled: boolean;
     isSnapMirrored: boolean;
     sourceSvmUuid?: string;

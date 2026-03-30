@@ -5768,6 +5768,7 @@ const ORACLE_ASSESSMENT_CRR_CONFIG_DATA = {
         {
             volumeName: 'oracledata2',
             volumeUuid: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+            fsxVolumeId: 'fsvol-0a1b2c3d4e5f67890',
             peerSVMName: ['wlmdb_sqlsvm_1737955690776'],
             isCRREnabled: true,
             sourceSvmName: 'wlmdb_sqlsvm_1733286308083',
@@ -5779,6 +5780,7 @@ const ORACLE_ASSESSMENT_CRR_CONFIG_DATA = {
         {
             volumeName: 'oraclearch2',
             volumeUuid: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
+            fsxVolumeId: 'fsvol-0b2c3d4e5f6a78901',
             peerSVMName: ['wlmdb_sqlsvm_1737955690776'],
             isCRREnabled: true,
             sourceSvmName: 'wlmdb_sqlsvm_1733286308083',
@@ -5790,6 +5792,7 @@ const ORACLE_ASSESSMENT_CRR_CONFIG_DATA = {
         {
             volumeName: 'oraclefra2',
             volumeUuid: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
+            fsxVolumeId: 'fsvol-0c3d4e5f6a7b89012',
             isCRREnabled: false,
             sourceSvmName: 'wlmdb_sqlsvm_1733286308083',
             isSnapMirrored: false
@@ -5797,6 +5800,7 @@ const ORACLE_ASSESSMENT_CRR_CONFIG_DATA = {
         {
             volumeName: 'oraclebinaries2',
             volumeUuid: 'd4e5f6a7-b8c9-0123-defa-234567890123',
+            fsxVolumeId: 'fsvol-0d4e5f6a7b8c90123',
             isCRREnabled: false,
             sourceSvmName: 'wlmdb_sqlsvm_1733286308083',
             isSnapMirrored: false

@@ -14,6 +14,7 @@ import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes } from '../../../utils
 import { sqlResponseParsing } from '../../../utils/utils';
 import { CrrAssessment, CrrDetails, WorkloadInstance } from '../../../utils/common-types';
 import { describeFSx } from '../../../lib/aws/fsx';
+import { getFsxnVolIdsFromOntapVolIds } from '../../aws/fsx-operations';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { ORACLE_CRR_ASSESSMENT_SCRIPT } from './ssm-scripts/resiliency-assessment-scripts';
@@ -124,12 +125,31 @@ async function initiateCrossRegionResiliencyAssessment(
             }
         });
 
+        // Resolve ONTAP volume UUIDs → FSx volume IDs via AWS DescribeVolumes
+        let ontapUuidToFsxVolId = new Map<string, string>();
+        if (!isEmpty(mappedVolumesUuids)) {
+            try {
+                const fsxId = instanceRecord.fsxFileSystem.split(',')[0];
+                const { fsxVolumeIdUuidMap } = await getFsxnVolIdsFromOntapVolIds(
+                    credentialsId,
+                    region,
+                    fsxId,
+                    mappedVolumesUuids,
+                    accountId
+                );
+                ontapUuidToFsxVolId = fsxVolumeIdUuidMap;
+            } catch (error) {
+                logger.error('Error resolving FSx volume IDs for CRR details:', error);
+            }
+        }
+
         crrDetails.forEach(crrDetail => {
             const peerIds = (
                 Array.isArray(crrDetail.peerClusterFsxId) ? crrDetail.peerClusterFsxId : [crrDetail.peerClusterFsxId]
             ).filter((id): id is string => !!id);
             crrDetail.isCRREnabled = peerIds.some(id => crossRegionPeerIds.has(id));
             crrDetail.volumeUuid = volumeNameToUuid.get(crrDetail.volumeName);
+            crrDetail.fsxVolumeId = crrDetail.volumeUuid ? ontapUuidToFsxVolId.get(crrDetail.volumeUuid) : undefined;
         });
 
         await createDatabaseInstanceConfigData([
@@ -192,7 +212,11 @@ function getCrrDriftData(
                 ? []
                 : crrDetails
                       .filter(detail => !detail.isCRREnabled)
-                      .map(detail => ({ ontapVolumeName: detail.volumeName, ontapVolumeUuid: detail.volumeUuid })),
+                      .map(detail => ({
+                          ontapVolumeName: detail.volumeName,
+                          ontapVolumeUuid: detail.volumeUuid,
+                          fsxVolumeId: detail.fsxVolumeId
+                      })),
             totalObjectsAssessed: crrDetails.length,
             totalObjectsInViolation: allVolumesOptimized ? 0 : crrDetails.filter(detail => !detail.isCRREnabled).length,
             tags: [AwsWellArchitecturedPillars.RELIABILITY],
