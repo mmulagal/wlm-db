@@ -1142,9 +1142,11 @@
         "objectsInViolation": [
             {
                 "ontapVolumeName": "oraclefra2",
-                "ontapVolumeUuid": "c3d4e5f6-a7b8-9012-cdef-123456789012"
+                "ontapVolumeUuid": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+                "fsxVolumeId": "fsvol-08c26bf83c7f76d80"
             },
             {
+                "fsxVolumeId": "fsvol-08c981a6605d0c871",
                 "ontapVolumeName": "oraclebinaries2",
                 "ontapVolumeUuid": "d4e5f6a7-b8c9-0123-defa-234567890123"
             }

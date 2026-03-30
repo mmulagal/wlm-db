@@ -149,10 +149,11 @@ const CRRLoadingDialogContent = ({ rowData }: CRRLoadingDialogContentProps) => {
                 } else {
                     const state = store.getState();
                     const { fsxDetails } = state.crrRedirection;
+                    const fsxVolumeId = btoa(JSON.stringify([rowData?.volumeId]))
                     postBlueXPMessage({
                         type: BlueXPListeners.navigate,
                         payload: {
-                            pathname: `../../wlmfsx/fsx/clusters/${selectedGwInstanceCredId}/ap-southeast-1/${fsxDetails?.id}/replication/create?selectedSrcVolumeIds=${rowData?.volumeId}&from=/databases/inventory`,
+                            pathname: `../../wlmfsx/fsx/clusters/${selectedGwInstanceCredId}/ap-southeast-1/${fsxDetails?.id}/replication/create?selectedSrcVolumeIds=${fsxVolumeId}&from=/databases/inventory`,
                             replace: true
                         }
                     });

@@ -12,7 +12,7 @@ const CRROptimizeTable = ({ type, data, lastColDetails, handleBulkAction, isWad 
         return data?.objectsInViolation?.map((row: any) => ({
             volumeName: typeof row === 'string' ? row : row?.ontapVolumeName,
             id: String(id++),
-            volumeId: row?.ontapVolumeUuid || '',
+            volumeId: row?.fsxVolumeId || '',
             cellProps: getWadCellProps(isWad, t, { ...row?.cellProps, isDisabled: true })
         }));
     }, [data, isWad, t]);
