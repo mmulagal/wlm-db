@@ -100,6 +100,10 @@ const Home = () => {
                 }
                 isHandlingPopState.current = true;
                 window.history.go(-1);
+
+                setTimeout(() => {
+                    isHandlingPopState.current = false;
+                }, 200);
             };
             window.addEventListener('popstate', handlePopState);
             return () => window.removeEventListener('popstate', handlePopState);
