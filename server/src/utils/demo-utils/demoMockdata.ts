@@ -5,6 +5,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { compressSync } from 'fflate';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { offlineAssessmentDemoSTD } from './offlineAssessmentRecords/offlineAssessmentDemoSTD';
 import { offlineAssessmentDemoFCI } from './offlineAssessmentRecords/offlineAssessmentDemoFCI';
 import { offlineAssessmentDemoAOAG } from './offlineAssessmentRecords/offlineAssessmentDemoAOAG';
@@ -3257,7 +3258,7 @@ function enableMPIOJobData(
 }
 
 function generateBase64FromJsonFile(directory: string, fileName: string) {
-    const __dirname = path.dirname(new URL(import.meta.url).pathname);
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const JsonFilePath = path.join(__dirname, `${directory}/${fileName}`);
     const jsonData = fs.readFileSync(JsonFilePath, 'utf8');
     const jsonString = jsonData as string;

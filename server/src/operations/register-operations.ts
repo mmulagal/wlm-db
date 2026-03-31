@@ -2015,12 +2015,18 @@ async function registerResourceCredentials(
                         region,
                         error: error.message
                     });
+                    const errorMessage = error?.message || 'Failed to register credentials';
+                    const failedRegisterDetails = (credentials || []).map(credential => ({
+                        resourceId: credential.resourceId,
+                        resourceType: credential.resourceType,
+                        databaseServerError: errorMessage
+                    }));
                     response.items.push({
                         ec2InstanceId,
                         credentialsId,
                         region,
-                        errorMessage: error?.message || 'Failed to register credentials',
-                        registerDetails: []
+                        errorMessage,
+                        registerDetails: failedRegisterDetails
                     });
                 }
             })
