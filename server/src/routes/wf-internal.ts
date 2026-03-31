@@ -3,13 +3,15 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyRequest } from 'fastify';
 import {
     GetDatabaseVolumesSchema,
-    GetFocusStatusSchema,
+    GetFocusEventStatusSchema,
+    GetFocusWadStatusSchema,
     GetSystemStatusSchema,
     GetWidgetStatusSchema
 } from './schemas/wf-internal-schema';
 import {
     getDatabaseVolumes,
-    getFocusStatus,
+    getFocusWadStatus,
+    getLogsAnalysisStatus,
     getSystemStatus,
     getWidgetStatus
 } from '../operations/wf-internal-operations';
@@ -31,12 +33,19 @@ export default function systemRoutes(fastify: FastifyInstance) {
             } = castRequest(request);
             return getDatabaseVolumes(accountId, instancePagesize, nextToken, fsxId);
         })
-        .get('/v1/focus-status', { schema: GetFocusStatusSchema }, async (request: FastifyRequest) => {
+        .get('/v1/focus-wad-status', { schema: GetFocusWadStatusSchema }, async (request: FastifyRequest) => {
             const {
                 params: { accountId },
                 query: { credentialsIds, regions, limit }
             } = castRequest(request);
-            return getFocusStatus(accountId, credentialsIds, regions, limit);
+            return getFocusWadStatus(accountId, credentialsIds, regions, limit);
+        })
+        .get('/v1/focus-event-status', { schema: GetFocusEventStatusSchema }, async (request: FastifyRequest) => {
+            const {
+                params: { accountId },
+                query: { credentialsIds, regions, limit }
+            } = castRequest(request);
+            return getLogsAnalysisStatus(accountId, credentialsIds, regions, limit);
         })
         .get('/v1/widget-status', { schema: GetWidgetStatusSchema }, async (request: FastifyRequest) => {
             const {

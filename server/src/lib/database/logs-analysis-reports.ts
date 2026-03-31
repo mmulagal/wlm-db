@@ -1,8 +1,24 @@
-import { DATABASE_TYPE } from '@prisma/client';
+import { DATABASE_TYPE, Prisma } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from './db';
+
+interface WidgetReportRow {
+    database_instance_id: string;
+    resource_id: string;
+    database_type: string;
+    database_instance_name: string;
+    credentials_id: string;
+    region: string;
+    hostname: string;
+    recommendations: Array<{
+        uniqueErrorKey?: string;
+        error: string;
+        errorCode?: string;
+        severity?: string;
+    }>;
+}
 
 const logger = getLogger();
 
@@ -159,10 +175,81 @@ async function countLogsAnalysisReports(accountId: string, credentialsId?: strin
     });
 }
 
+async function getLatestReportsForWidget(
+    accountId: string,
+    credentialsIdList?: string[],
+    regionList?: string[]
+): Promise<WidgetReportRow[]> {
+    logger.info('Getting latest logs analysis reports for widget', { accountId, credentialsIdList, regionList });
+
+    const checkedAccountId = checkAccount(accountId);
+
+    const credentialsFilter =
+        !isEmpty(credentialsIdList) && credentialsIdList
+            ? Prisma.sql`AND di.credentials_id IN (${Prisma.join(credentialsIdList)})`
+            : Prisma.empty;
+
+    const regionFilter =
+        !isEmpty(regionList) && regionList ? Prisma.sql`AND di.region IN (${Prisma.join(regionList)})` : Prisma.empty;
+
+    return prisma.client.$queryRaw<WidgetReportRow[]>`
+        SELECT
+            lar.database_instance_id,
+            lar.resource_id,
+            lar.database_type,
+            di.database_instance_name,
+            lar.credentials_id,
+            di.region,
+            r.resource_name AS hostname,
+            JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'uniqueErrorKey', rec.uniqueErrorKey,
+                    'error',          rec.error,
+                    'errorCode',      rec.errorCode,
+                    'severity',       rec.severity
+                )
+            ) AS recommendations
+        FROM logs_analysis_reports lar
+        JOIN database_instances di
+          ON  di.account_id           = lar.account_id
+          AND di.credentials_id       = lar.credentials_id
+          AND di.resource_id          = lar.resource_id
+          AND di.database_instance_id = lar.database_instance_id
+        JOIN resource r
+          ON  r.account_id     = lar.account_id
+          AND r.credentials_id = lar.credentials_id
+          AND r.region         = di.region
+          AND r.resource_id    = lar.resource_id
+        LEFT JOIN JSON_TABLE(
+            lar.logs_analysis_data,
+            '$[*].data.remediationRecommendation[*]'
+            COLUMNS (
+                uniqueErrorKey VARCHAR(255) PATH '$.uniqueErrorKey',
+                error          TEXT        PATH '$.error',
+                errorCode      VARCHAR(64) PATH '$.errorCode',
+                severity       VARCHAR(32) PATH '$.severity'
+            )
+        ) rec ON TRUE
+        WHERE lar.account_id = ${checkedAccountId}
+          AND lar.creation_time = (
+                SELECT MAX(lar2.creation_time)
+                FROM logs_analysis_reports lar2
+                WHERE lar2.account_id           = lar.account_id
+                  AND lar2.database_instance_id = lar.database_instance_id
+                  AND lar2.credentials_id       = lar.credentials_id
+                  AND lar2.resource_id          = lar.resource_id
+          )
+          ${credentialsFilter}
+          ${regionFilter}
+        GROUP BY lar.database_instance_id, lar.resource_id, lar.database_type, di.database_instance_name, lar.credentials_id, di.region, r.resource_name
+    `;
+}
+
 export {
     createLogsAnalysisReports,
     removeLogsAnalysisReports,
     listLogsAnalysisReports,
     LogsAnalysisReportObject,
-    countLogsAnalysisReports
+    countLogsAnalysisReports,
+    getLatestReportsForWidget
 };

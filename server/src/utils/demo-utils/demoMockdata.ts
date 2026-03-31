@@ -6816,6 +6816,101 @@ const ORACLE_DATAGUARD_INSTANCES = {
     standby: ['dataguard-standby']
 };
 
+const DEMO_FOCUS_EVENT_ITEMS = [
+    {
+        label: 'Error: 605, Severity: 21, State: 3.',
+        description: 'Error: 605, Severity: 21, State: 3.',
+        key: 'Error: 605, Severity: 21, State: 3.',
+        resources: [
+            {
+                name: 'MSSQLSERVER',
+                href: '/databases/inventory/cred/demo-cred/region/us-east-1/databaseHost/demo-host-1/databaseInstance/demo-instance-1/logAnalyzerStatus/active/engineType/mssql/hostname/sqlnode1.demo.local/dbInstanceName/MSSQLSERVER'
+            }
+        ]
+    },
+    {
+        label: 'Error: 823, Severity: 24, State: 2.',
+        description: 'Error: 823, Severity: 24, State: 2.',
+        key: 'Error: 823, Severity: 24, State: 2.',
+        resources: [
+            {
+                name: 'MSSQLSERVER',
+                href: '/databases/inventory/cred/demo-cred/region/us-east-1/databaseHost/demo-host-2/databaseInstance/demo-instance-2/logAnalyzerStatus/active/engineType/mssql/hostname/sqlnode2.demo.local/dbInstanceName/MSSQLSERVER'
+            }
+        ]
+    },
+    {
+        label: 'Error: 9001, Severity: 21, State: 1.',
+        description: 'Error: 9001, Severity: 21, State: 1.',
+        key: 'Error: 9001, Severity: 21, State: 1.',
+        resources: [
+            {
+                name: 'MSSQLSERVER',
+                href: '/databases/inventory/cred/demo-cred/region/us-east-1/databaseHost/demo-host-1/databaseInstance/demo-instance-1/logAnalyzerStatus/active/engineType/mssql/hostname/sqlnode1.demo.local/dbInstanceName/MSSQLSERVER'
+            }
+        ]
+    },
+    {
+        label: 'oracle-instance-termination',
+        description: 'Instance termination due to critical errors',
+        key: 'oracle-instance-termination',
+        resources: [
+            {
+                name: 'ORDBSDL',
+                href: '/databases/inventory/cred/demo-cred/region/us-east-1/databaseHost/demo-host-3/databaseInstance/demo-instance-3/logAnalyzerStatus/active/engineType/oracle/hostname/oraclenode1.demo.local/dbInstanceName/ORDBSDL'
+            }
+        ]
+    },
+    {
+        label: 'oracle-temp-tablespace-empty',
+        description: 'Empty temporary tablespace after database creation',
+        key: 'oracle-temp-tablespace-empty',
+        resources: [
+            {
+                name: 'ORDBSDL',
+                href: '/databases/inventory/cred/demo-cred/region/us-east-1/databaseHost/demo-host-3/databaseInstance/demo-instance-3/logAnalyzerStatus/active/engineType/oracle/hostname/oraclenode1.demo.local/dbInstanceName/ORDBSDL'
+            },
+            {
+                name: 'ORDBPRD',
+                href: '/databases/inventory/cred/demo-cred/region/us-east-1/databaseHost/demo-host-4/databaseInstance/demo-instance-4/logAnalyzerStatus/active/engineType/oracle/hostname/oraclenode2.demo.local/dbInstanceName/ORDBPRD'
+            }
+        ]
+    }
+];
+
+const DEMO_FOCUS_WAD_ITEMS = [
+    {
+        label: 'Enable thin provisioning',
+        description: 'Enable thin provisioning for optimal storage efficiency',
+        key: 'thin-provisioning',
+        resources: [{ name: 'sqlnode1' }, { name: 'sqlnode2' }]
+    },
+    {
+        label: 'Enable volume autogrow',
+        description: 'Enable volume autogrow to prevent storage capacity issues',
+        key: 'volume-autogrow',
+        resources: [{ name: 'sqlnode1' }, { name: 'oraclenode1' }]
+    },
+    {
+        label: 'Disable fractional reserve',
+        description: 'Disable fractional reserve to maximize usable capacity',
+        key: 'fractional-reserve',
+        resources: [{ name: 'sqlnode2' }]
+    },
+    {
+        label: 'Enable space allocation',
+        description: 'Enable space allocation for write failure notification',
+        key: 'space-allocation',
+        resources: [{ name: 'oraclenode1' }, { name: 'oraclenode2' }]
+    },
+    {
+        label: 'Enable Multipath I/O',
+        description: 'Enable Multipath I/O for iSCSI storage resilience',
+        key: 'multipath-io',
+        resources: [{ name: 'sqlnode1' }]
+    }
+];
+
 export {
     masterStackData,
     validationStack1Data,
@@ -6873,5 +6968,7 @@ export {
     oracleDataGuardUploadObject,
     oracleMultiDBUploadObject,
     DEMO_ORACLE_CPU_CATALOG,
-    ORACLE_DATAGUARD_INSTANCES
+    ORACLE_DATAGUARD_INSTANCES,
+    DEMO_FOCUS_WAD_ITEMS,
+    DEMO_FOCUS_EVENT_ITEMS
 };
