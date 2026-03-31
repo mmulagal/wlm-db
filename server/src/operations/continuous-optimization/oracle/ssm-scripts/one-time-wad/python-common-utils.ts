@@ -10,8 +10,6 @@
  * Compatible with Python 2.7+
  */
 
-import { LINUX_LOG_DIRECTORY } from '../../consts';
-
 /**
  * Common Python imports used across scripts.
  * Python 2.7+ compatible with fallbacks for Python 3.
@@ -80,25 +78,15 @@ if not PYTHON3:
 
 /**
  * Python logging setup utilities.
- * Uses the standard LINUX_LOG_DIRECTORY for log files.
  * DEBUG logs go to file only, INFO/ERROR go to console and file.
  */
 const pythonLoggingSetup = (logFileName: string) => `
 # ========================================
 # Logging Setup
 # ========================================
-LOG_DIR = "${LINUX_LOG_DIRECTORY}"
-LOG_FILE = os.path.join(LOG_DIR, "${logFileName}")
+LOG_FILE = os.path.join(os.getcwd(), "${logFileName}")
 
 def setup_logging():
-    global LOG_FILE
-    # Create log directory if it doesn't exist
-    try:
-        if not os.path.exists(LOG_DIR):
-            os.makedirs(LOG_DIR)
-    except (OSError, IOError):
-        LOG_FILE = os.path.join(os.getcwd(), "${logFileName}")
-    
     # Create root logger
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)

@@ -259,7 +259,7 @@ def check_sanlun():
         env = os.environ.copy()
         env["PATH"] = env.get("PATH", "") + ":/usr/sbin:/usr/bin:/opt/netapp:/opt/netapp/sanlun/bin"
         result = subprocess.run(
-            ['sanlun', 'version'], env=env,
+            ['sudo', 'env', 'PATH=' + env["PATH"], 'sanlun', 'version'],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10
         )
         if result.returncode == 0:
