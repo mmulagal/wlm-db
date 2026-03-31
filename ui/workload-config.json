@@ -15,13 +15,26 @@
     ],
     "focus": [
         {
+            "id": "fsx-events-summary",
+            "suffixPlural": "events",
+            "suffixSingular": "event",
+            "dataUrl": "/wlmdb/v1/focus-error-status",
+            "primaryCtaTo": "/databases/dashboard",
+            "primaryCtaBluexpTo": "/fsxdb/dashboard",
+            "primaryCtaLabel": "Go to Overview",
+            "label": "Databases",
+            "resourcesLabelPlural": "Impacted resources",
+            "resourcesLabelSingular": "Impacted resource"
+        },
+        {
             "id": "database",
             "suffixPlural": "well-architected issues",
             "suffixSingular": "well-architected issue",
-            "dataUrl": "/wlmdb/v1/focus-status",
+            "dataUrl": "/wlmdb/v1/focus-wad-status",
             "primaryCtaTo": "/databases/well-architected",
             "primaryCtaBluexpTo": "/fsxdb/well-architected",
             "primaryCtaLabel": "Go to Well-architected",
+            "label": "Databases",
             "resourcesLabelSingular": "database",
             "resourcesLabelPlural": "databases"
         }
