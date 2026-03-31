@@ -39,6 +39,8 @@ import HeaderComponentApi from './HeaderComponentApis';
 import WADApis from './WADApis';
 import {
     setDashboardRefresh,
+    setDeepLinkCredId,
+    setDeepLinkRegionId,
     setHeaderSelectedCredSandbox,
     setHeaderSelectedMultiCred,
     setHeaderSelectedMultiRegion,
@@ -152,7 +154,9 @@ const HeaderComponent = ({ tab }: Tab) => {
         headerSelectedRegionSandbox,
         multiDataStatus,
         multiDataLoading,
-        showNA
+        showNA,
+        deepLinkCredId,
+        deepLinkRegionId
     } = useAppSelector(state => state.headers);
     const {
         isManagedHostListLoading,
@@ -340,7 +344,20 @@ const HeaderComponent = ({ tab }: Tab) => {
             options.push(option);
         });
         if (options.length > 0 && !headerSelectedMultiCred) {
-            if (localStorage.getItem('selectedCred')) {
+            // Deep-link: if a specific credId was requested via URL, find its
+            // full option object and select it; fall back to localStorage/default.
+            if (deepLinkCredId) {
+                const matchedOption = options.find(
+                    (opt: any) => opt?.data?.credentialsId === deepLinkCredId
+                );
+                const selectedOption = matchedOption || options[0];
+                dispatch(setHeaderSelectedMultiCred([selectedOption]));
+                dispatch(setDeepLinkCredId(null));
+                localStorage.setItem(
+                    `occm.fsx.lastCredentialIdMultiple.${userMetadata?.sub}.${accountId}`,
+                    JSON.stringify([{ value: selectedOption?.data?.credentialsId, label: selectedOption?.data?.name }])
+                );
+            } else if (localStorage.getItem('selectedCred')) {
                 // @ts-ignore
                 const value = JSON.parse(localStorage.getItem('selectedCred'));
 
@@ -366,7 +383,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             }
         }
         return options;
-    }, [credentialData]);
+    }, [credentialData, deepLinkCredId]);
 
     // Function to generate the options for Multi Select Field
     const generateRegionsForMultiSelect = useMemo<optionTypeMulti[]>((): optionTypeMulti[] => {
@@ -380,7 +397,20 @@ const HeaderComponent = ({ tab }: Tab) => {
         });
         if (options.length > 0 && !headerSelectedMultiRegion) {
             const defaultOption: any = options[0];
-            if (localStorage.getItem('selectedRegion')) {
+            // Deep-link: if a specific regionId was requested via URL, find its
+            // full option object and select it; fall back to localStorage/default.
+            if (deepLinkRegionId) {
+                const matchedOption = options.find(
+                    (opt: any) => opt?.data?.regionCode === deepLinkRegionId
+                );
+                const selectedOption = matchedOption || defaultOption;
+                dispatch(setHeaderSelectedMultiRegion([selectedOption]));
+                dispatch(setDeepLinkRegionId(null));
+                localStorage.setItem(
+                    `occm.fsx.lastRegionCodeMultiple.${userMetadata?.sub}.${accountId}`,
+                    JSON.stringify([{ value: selectedOption?.data?.regionCode, label: selectedOption?.label }])
+                );
+            } else if (localStorage.getItem('selectedRegion')) {
                 // @ts-ignore
                 const regionValue = JSON.parse(localStorage.getItem('selectedRegion'));
 
@@ -406,7 +436,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             }
         }
         return options;
-    }, [regionsData]);
+    }, [regionsData, deepLinkRegionId]);
 
     const generateSandboxRegionsData = useMemo<optionType[]>((): optionType[] => {
         // To avoid Create resource API call when tab is not Sandboxes
