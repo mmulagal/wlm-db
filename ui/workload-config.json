@@ -18,7 +18,7 @@
             "id": "fsx-events-summary",
             "suffixPlural": "events",
             "suffixSingular": "event",
-            "dataUrl": "/wlmdb/v1/focus-error-status",
+            "dataUrl": "/wlmdb/v1/focus-event-status",
             "primaryCtaTo": "/databases/dashboard",
             "primaryCtaBluexpTo": "/fsxdb/dashboard",
             "primaryCtaLabel": "Go to Overview",
