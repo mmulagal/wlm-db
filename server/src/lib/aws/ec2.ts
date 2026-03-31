@@ -218,7 +218,6 @@ async function describeInstanceTypes(region: string, credentialsId?: string) {
         { client, pageSize: 100 },
         {
             Filters: [
-                { Name: 'current-generation', Values: ['true'] },
                 { Name: 'processor-info.supported-architecture', Values: ['x86_64'] },
                 { Name: 'supported-usage-class', Values: ['on-demand'] },
                 { Name: 'supported-virtualization-type', Values: ['hvm'] },
