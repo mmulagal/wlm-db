@@ -160,11 +160,10 @@ export const getManagedHostCountFromInventory = (
     Object.keys(inventoryTableData)?.forEach((key: any) => {
         const item = inventoryTableData[key];
         if (
-            (!item?.isWad && !headerSelectedMultiCredIdsList.includes(item?.credentialId)) ||
-            (!item?.isWad && !headerSelectedMultiRegionIdsList.includes(item?.regionId)) ||
             uniqueResourceList.includes(item?.resourceId || '') ||
             item?.managedInstance === 0 ||
-            item?.hostType !== type
+            item?.hostType !== type ||
+            shouldSkipByHeaderFilters(item, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList)
         ) {
             return;
         }
@@ -571,6 +570,35 @@ export const isDismissed = (dismissState?: string) =>
     dismissState === CONFIG_STATES.DISMISSED || dismissState === CONFIG_STATES.POSTPONED;
 
 /**
+ * Checks if a host should be filtered out based on credential/region header selections.
+ * WAD (offline assessment) hosts are only filtered when they have a matching credential/region;
+ * WAD hosts without credentials or regions always pass through.
+ * Non-WAD hosts are strictly filtered by both credential and region.
+ */
+export const shouldSkipByHeaderFilters = (
+    host: { isWad?: boolean; credentialId?: string; regionId?: string },
+    headerSelectedMultiCredIdsList: string[],
+    headerSelectedMultiRegionIdsList: string[]
+): boolean => {
+    if (host?.isWad) {
+        if (
+            (host?.credentialId && !headerSelectedMultiCredIdsList.includes(host.credentialId)) ||
+            (host?.regionId &&
+                headerSelectedMultiRegionIdsList.length > 0 &&
+                !headerSelectedMultiRegionIdsList.includes(host.regionId))
+        ) {
+            return true;
+        }
+        return false;
+    }
+
+    return (
+        !headerSelectedMultiCredIdsList.includes(host?.credentialId || '') ||
+        !headerSelectedMultiRegionIdsList.includes(host?.regionId || '')
+    );
+};
+
+/**
  * Checks if a database host should be skipped during assessment data processing.
  * Filters out hosts based on credential/region header selections and deduplicates by host ID.
  * If the host should NOT be skipped, it is added to the uniqueResourceList to prevent future duplicates.
@@ -581,13 +609,14 @@ export const shouldSkipDatabaseHost = (
     headerSelectedMultiRegionIdsList: string[],
     uniqueResourceList: string[]
 ): boolean => {
-    if (
-        (!databaseHost?.isWad && !headerSelectedMultiCredIdsList.includes(databaseHost?.credentialId)) ||
-        (!databaseHost?.isWad && !headerSelectedMultiRegionIdsList.includes(databaseHost?.regionId)) ||
-        uniqueResourceList.includes(databaseHost?.databaseHostId)
-    ) {
+    if (uniqueResourceList.includes(databaseHost?.databaseHostId)) {
         return true;
     }
+
+    if (shouldSkipByHeaderFilters(databaseHost, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList)) {
+        return true;
+    }
+
     uniqueResourceList.push(databaseHost?.databaseHostId);
     return false;
 };

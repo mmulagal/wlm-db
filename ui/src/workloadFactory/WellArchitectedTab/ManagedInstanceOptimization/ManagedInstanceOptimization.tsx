@@ -39,14 +39,14 @@ const ManagedInstanceOptimization = () => {
     );
 
     const naCheck = useMemo(() => {
-        if (showNA) {
+        if (showNA && instanceOptimizationSummary?.totalInstances === 0) {
             return true;
         }
         if (!loading && instanceOptimizationSummary?.totalInstances === 0) {
             return true;
         }
         return false;
-    }, [instanceOptimizationSummary, showNA]);
+    }, [instanceOptimizationSummary, showNA, loading]);
 
     const ChartComponent = useMemo(() => {
         const setColor = () => '#68C6B3';

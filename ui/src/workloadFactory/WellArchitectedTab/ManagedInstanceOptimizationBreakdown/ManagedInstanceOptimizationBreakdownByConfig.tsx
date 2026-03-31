@@ -332,14 +332,14 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         if (configData?.total === 0 && configData?.oracleTotal !== 0) {
             dispatch(setSelectedConfigEngineType(DBType.ORACLE));
         }
-        if (showNA) {
+        if (showNA && configData?.oracleTotal + configData?.total === 0) {
             return true;
         }
         if (!loading && configData?.oracleTotal + configData?.total === 0) {
             return true;
         }
         return false;
-    }, [configData, showNA]);
+    }, [configData, showNA, loading]);
 
     const renderOptimizationBar = (
         assessmentKey: string,

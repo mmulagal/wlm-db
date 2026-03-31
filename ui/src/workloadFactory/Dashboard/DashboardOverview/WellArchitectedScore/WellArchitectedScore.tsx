@@ -64,25 +64,35 @@ const WellArchitectedScore = () => {
         [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading, multiDataLoading]
     );
 
+    const naCheck = useMemo(() => {
+        if (showNA && instanceOptimizationSummary?.totalInstances === 0) {
+            return true;
+        }
+        if (!loading && instanceOptimizationSummary?.totalInstances === 0) {
+            return true;
+        }
+        return false;
+    }, [instanceOptimizationSummary, showNA, loading]);
+
     const ChartComponent = useMemo(
         () => () =>
             (
                 <WellArchitectChart
                     color1="#68C6B3"
                     color2="#E0E0E0"
-                    data1={showNA ? 0 : instanceOptimizationSummary?.optimizedPercent}
-                    data2={showNA ? 100 : 100 - instanceOptimizationSummary?.optimizedPercent}
+                    data1={naCheck ? 0 : instanceOptimizationSummary?.optimizedPercent}
+                    data2={naCheck ? 100 : 100 - instanceOptimizationSummary?.optimizedPercent}
                     centerText="Total score"
                     centerValue={
-                        showNA
+                        naCheck
                             ? t('databases.general.not-available')
                             : `${instanceOptimizationSummary?.optimizedPercent || 0}%`
                     }
                     loading={loading}
-                    isDisabled={showNA}
+                    isDisabled={naCheck}
                 />
             ),
-        [instanceOptimizationSummary, loading, showNA]
+        [instanceOptimizationSummary, loading, naCheck]
     );
 
     const redirectToGetWellPage = () => {
@@ -184,7 +194,7 @@ const WellArchitectedScore = () => {
                             container={
                                 <DsButton
                                     variant="secondary"
-                                    isDisabled={loading || showNA}
+                                    isDisabled={loading || naCheck}
                                     data-testid="wlm-db-optimize-instances-by-category"
                                     isThin
                                     onClick={() => dashboardRedirectionToWellArchitected()}
@@ -205,14 +215,14 @@ const WellArchitectedScore = () => {
                 <div className={styles.textSection}>
                     <SeparatorComponent variant="horizontal" />
                     <div className={styles.row}>
-                        <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                        <DsTypography variant="Regular_14" className={naCheck ? CommonStyles.notAvailable : ''}>
                             {t('databases.dashboard.well-architected-configurations')}
                         </DsTypography>
 
                         <div className={styles.rightSection}>
                             {loading && <DsFlashingDotsLoader />}
-                            <DsTypography variant="Semibold_16" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA
+                            <DsTypography variant="Semibold_16" className={naCheck ? CommonStyles.notAvailable : ''}>
+                                {naCheck
                                     ? t('databases.general.not-available')
                                     : instanceOptimizationSummary?.optimizedConfigurations}
                             </DsTypography>
@@ -221,13 +231,13 @@ const WellArchitectedScore = () => {
 
                     <SeparatorComponent variant="horizontal" />
                     <div className={styles.row}>
-                        <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                        <DsTypography variant="Regular_14" className={naCheck ? CommonStyles.notAvailable : ''}>
                             {t('databases.dashboard.non-optimal-config-critical')}
                         </DsTypography>
                         <div className={styles.rightSection}>
                             {loading && <DsFlashingDotsLoader />}
-                            <DsTypography variant="Semibold_16" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA
+                            <DsTypography variant="Semibold_16" className={naCheck ? CommonStyles.notAvailable : ''}>
+                                {naCheck
                                     ? t('databases.general.not-available')
                                     : String(instanceOptimizationSummary?.criticalConfigurations)}
                             </DsTypography>
@@ -236,13 +246,13 @@ const WellArchitectedScore = () => {
 
                     <SeparatorComponent variant="horizontal" />
                     <div className={styles.row}>
-                        <DsTypography variant="Regular_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                        <DsTypography variant="Regular_14" className={naCheck ? CommonStyles.notAvailable : ''}>
                             {t('databases.dashboard.non-optimal-config-warning')}
                         </DsTypography>
                         <div className={styles.rightSection}>
                             {loading && <DsFlashingDotsLoader />}
-                            <DsTypography variant="Semibold_16" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA
+                            <DsTypography variant="Semibold_16" className={naCheck ? CommonStyles.notAvailable : ''}>
+                                {naCheck
                                     ? t('databases.general.not-available')
                                     : String(instanceOptimizationSummary?.warningConfigurations)}
                             </DsTypography>
@@ -251,13 +261,13 @@ const WellArchitectedScore = () => {
 
                     <SeparatorComponent variant="horizontal" />
                     <div className={styles.row}>
-                        <DsTypography variant="Semibold_14" className={showNA ? CommonStyles.notAvailable : ''}>
+                        <DsTypography variant="Semibold_14" className={naCheck ? CommonStyles.notAvailable : ''}>
                             {t('databases.dashboard.total')}
                         </DsTypography>
                         <div className={styles.rightSection}>
                             {loading && <DsFlashingDotsLoader />}
-                            <DsTypography variant="Semibold_16" className={showNA ? CommonStyles.notAvailable : ''}>
-                                {showNA
+                            <DsTypography variant="Semibold_16" className={naCheck ? CommonStyles.notAvailable : ''}>
+                                {naCheck
                                     ? t('databases.general.not-available')
                                     : instanceOptimizationSummary?.totalConfigurations}
                             </DsTypography>

@@ -28,7 +28,8 @@ import {
     disableOfflineRows,
     formatAssessmentTableData,
     getConfigStateList,
-    mapHostStatusToAssessmentData
+    mapHostStatusToAssessmentData,
+    shouldSkipDatabaseHost
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import { setGwPageLoadInstanceData } from '../../../../store/workloadFactory/getWellOptimizeSlice';
@@ -94,13 +95,15 @@ const DashboardMultiTableConfig = ({
         }
         assessmentRows?.map((hostData: any) => {
             if (
-                (!hostData?.isWad && !headerSelectedMultiCredIdsList.includes(hostData?.credentialId)) ||
-                (!hostData?.isWad && !headerSelectedMultiRegionIdsList.includes(hostData?.regionId)) ||
-                uniqueResourceList.includes(hostData?.databaseHostId)
+                shouldSkipDatabaseHost(
+                    hostData,
+                    headerSelectedMultiCredIdsList,
+                    headerSelectedMultiRegionIdsList,
+                    uniqueResourceList
+                )
             ) {
                 return;
             }
-            uniqueResourceList.push(hostData?.databaseHostId);
 
             const matchingCredEntry =
                 credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);

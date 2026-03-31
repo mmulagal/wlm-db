@@ -37,14 +37,14 @@ const OptimizeByCategory = () => {
     );
 
     const naCheck = useMemo(() => {
-        if (showNA) {
+        if (showNA && categoryData.totalInstances === 0) {
             return true;
         }
         if (!loading && categoryData.totalInstances === 0) {
             return true;
         }
         return false;
-    }, [categoryData, showNA]);
+    }, [categoryData, showNA, loading]);
 
     return (
         <div className={`${styles.optimizeByCategory} ${naCheck ? CommonStyles.notAvailable : ''}`}>
@@ -59,7 +59,7 @@ const OptimizeByCategory = () => {
             <div className={styles.mainSection}>
                 <div className={styles.topSection}>
                     <div className={styles.tile1}>
-                        <div className={styles.section1}>{showNA ? <StorageDisabled /> : <Storage />}</div>
+                        <div className={styles.section1}>{naCheck ? <StorageDisabled /> : <Storage />}</div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
@@ -87,7 +87,7 @@ const OptimizeByCategory = () => {
                         <div className={styles.section3} />
                     </div>
                     <div className={styles.tile1}>
-                        <div className={styles.section1}>{showNA ? <ComputeDisabled /> : <Compute />}</div>
+                        <div className={styles.section1}>{naCheck ? <ComputeDisabled /> : <Compute />}</div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
@@ -114,7 +114,7 @@ const OptimizeByCategory = () => {
                         <div className={styles.section3} />
                     </div>
                     <div className={styles.tile2}>
-                        <div className={styles.section1}>{showNA ? <ApplicationsDisabled /> : <Applications />}</div>
+                        <div className={styles.section1}>{naCheck ? <ApplicationsDisabled /> : <Applications />}</div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
@@ -146,7 +146,7 @@ const OptimizeByCategory = () => {
 
                 <div className={styles.topSection}>
                     <div className={styles.tile1}>
-                        <div className={styles.section1}>{showNA ? <ResiliencyDisabled /> : <Resiliency />}</div>
+                        <div className={styles.section1}>{naCheck ? <ResiliencyDisabled /> : <Resiliency />}</div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography
@@ -174,7 +174,7 @@ const OptimizeByCategory = () => {
                         <div className={styles.section3} />
                     </div>
                     <div className={styles.tile1}>
-                        <div className={styles.section1}>{showNA ? <CloningDisabled /> : <Cloning />}</div>
+                        <div className={styles.section1}>{naCheck ? <CloningDisabled /> : <Cloning />}</div>
                         <div className={styles.section2}>
                             <div className={styles.valueArea}>
                                 <DsTypography

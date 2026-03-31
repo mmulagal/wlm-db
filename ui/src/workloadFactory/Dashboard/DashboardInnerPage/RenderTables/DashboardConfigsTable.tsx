@@ -14,7 +14,8 @@ import { ReactComponent as UnderProvisioned } from '../../../../assets/under-pro
 import { ReactComponent as InProgress } from '../../../../assets/In Progress.svg';
 import {
     filterDatabaseRowsForNonAsm,
-    mapHostStatusToAssessmentData
+    mapHostStatusToAssessmentData,
+    shouldSkipDatabaseHost
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { checkBoxHandle, formatDateWithTime, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
@@ -966,13 +967,15 @@ const DashboardConfigsTable = ({
 
         engineTypeAssessmentData?.map((hostData: any) => {
             if (
-                (!hostData?.isWad && !headerSelectedMultiCredIdsList.includes(hostData?.credentialId)) ||
-                (!hostData?.isWad && !headerSelectedMultiRegionIdsList.includes(hostData?.regionId)) ||
-                uniqueResourceList.includes(hostData?.databaseHostId)
+                shouldSkipDatabaseHost(
+                    hostData,
+                    headerSelectedMultiCredIdsList,
+                    headerSelectedMultiRegionIdsList,
+                    uniqueResourceList
+                )
             ) {
                 return;
             }
-            uniqueResourceList.push(hostData?.databaseHostId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {

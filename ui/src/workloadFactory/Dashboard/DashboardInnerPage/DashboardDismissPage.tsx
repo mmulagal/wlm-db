@@ -28,7 +28,8 @@ import { GENERAL } from '../../../utils/appConstants';
 import {
     categorizeStateInstances,
     getAssessmentGroupedByConfigurations,
-    mapHostStatusToAssessmentData
+    mapHostStatusToAssessmentData,
+    shouldSkipDatabaseHost
 } from '../../DatabaseHomePage/DatabaseHomeUtils';
 
 import DismissTable from './DismissTables/DismissTable';
@@ -712,13 +713,15 @@ const DashboardDismissPage = () => {
         const uniqueResourceList: Array<string> = [];
         allmssqlHostAssessmentData?.map((hostData: any) => {
             if (
-                (!hostData?.isWad && !headerSelectedMultiCredIdsList.includes(hostData?.credentialId)) ||
-                (!hostData?.isWad && !headerSelectedMultiRegionIdsList.includes(hostData?.regionId)) ||
-                uniqueResourceList.includes(hostData?.databaseHostId)
+                shouldSkipDatabaseHost(
+                    hostData,
+                    headerSelectedMultiCredIdsList,
+                    headerSelectedMultiRegionIdsList,
+                    uniqueResourceList
+                )
             ) {
                 return;
             }
-            uniqueResourceList.push(hostData?.databaseHostId);
 
             const matchingCredEntry =
                 credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
