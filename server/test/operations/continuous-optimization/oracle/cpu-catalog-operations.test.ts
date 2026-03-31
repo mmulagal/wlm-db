@@ -40,7 +40,7 @@ function buildCsafFixture(releaseDate: string) {
                                     branches: [
                                         { product: { product_id: 'P-5(Java VM)V-19.3-19.26' } },
                                         { product: { product_id: 'P-5(RDBMS)V-23.4-23.7' } },
-                                        { product: { product_id: 'P-5(Oracle Database)V-23.4-23.7' } }
+                                        { product: { product_id: 'P-5(Oracle Database Core)V-23.4-23.7' } }
                                     ]
                                 }
                             ]
@@ -90,11 +90,11 @@ function buildCsafFixture(releaseDate: string) {
                 notes: [
                     {
                         category: 'description',
-                        text: 'Vulnerability in the Oracle Database (OpenSSL) component of Oracle Database Server. Versions 23.4-23.7.'
+                        text: 'Vulnerability in the Oracle Database Core (OpenSSL) component of Oracle Database Server. Versions 23.4-23.7.'
                     }
                 ],
-                product_status: { known_affected: ['P-5(Oracle Database)V-23.4-23.7'] },
-                scores: [{ cvss_v3: { baseScore: 4.3 }, products: ['P-5(Oracle Database)V-23.4-23.7'] }]
+                product_status: { known_affected: ['P-5(Oracle Database Core)V-23.4-23.7'] },
+                scores: [{ cvss_v3: { baseScore: 4.3 }, products: ['P-5(Oracle Database Core)V-23.4-23.7'] }]
             },
             {
                 cve: 'CVE-2024-99999',
@@ -102,11 +102,11 @@ function buildCsafFixture(releaseDate: string) {
                 notes: [
                     {
                         category: 'description',
-                        text: 'Vulnerability in the Oracle Database (OpenSSL) component of Oracle Database Server. Versions 23.4-23.7.'
+                        text: 'Vulnerability in the Oracle Database Core (OpenSSL) component of Oracle Database Server. Versions 23.4-23.7.'
                     }
                 ],
-                product_status: { known_affected: ['P-5(Oracle Database)V-23.4-23.7'] },
-                scores: [{ cvss_v3: { baseScore: 4.3 }, products: ['P-5(Oracle Database)V-23.4-23.7'] }]
+                product_status: { known_affected: ['P-5(Oracle Database Core)V-23.4-23.7'] },
+                scores: [{ cvss_v3: { baseScore: 4.3 }, products: ['P-5(Oracle Database Core)V-23.4-23.7'] }]
             },
             // Non-DB CVE — should be excluded
             {

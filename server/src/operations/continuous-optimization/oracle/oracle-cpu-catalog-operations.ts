@@ -75,6 +75,16 @@ const logger = getLogger();
 
 const CSAF_BASE_URL = 'https://www.oracle.com/a/tech/docs/security-alerts';
 const DB_FAMILY = 'Oracle Database Server';
+const ALLOWED_COMPONENTS = [
+    'Oracle Database Core',
+    'RDBMS',
+    'Java VM',
+    'OJVM',
+    'XML DB',
+    'XDB',
+    'Database Security',
+    'Oracle Text'
+];
 const MAX_CONCURRENT_FETCHES = 4;
 
 const CPU_QUARTERS = [
@@ -93,8 +103,9 @@ interface CSAFDocument {
             branches: Array<{
                 name: string;
                 branches?: Array<{
+                    name?: string;
                     product?: { product_id: string };
-                    branches?: Array<{ product?: { product_id: string } }>;
+                    branches?: Array<{ name?: string; product?: { product_id: string } }>;
                 }>;
             }>;
         }>;
@@ -150,30 +161,39 @@ function primaryFirst(a: DbVulnEntry, b: DbVulnEntry): number {
     return bY !== aY ? bY - aY : bS - aS;
 }
 
-function extractComponent(productId: string, description: string): string {
-    const fromId = productId.match(/\(([^)]+)\)/);
-    if (fromId) {
-        return fromId[1];
-    }
-    const fromDesc = description.match(/Vulnerability in the (.+?) component of Oracle Database Server/);
-    return fromDesc?.[1] ?? 'Unknown';
-}
-
 function extractVersion(productId: string): string {
     return productId.match(/V-(.+)$/)?.[1] ?? '';
 }
 
-function isDbProduct(pid: string, dbProductIds: Set<string>): boolean {
-    return dbProductIds.has(pid);
+function componentNameFromBranch(name: string): string {
+    // "Oracle Text Version 19.3-19.21" → "Oracle Text"
+    return name.replace(/\s+Version\s+\S+$/i, '').trim();
 }
 
-// Product-tree: collect product_ids for Oracle Database Server family
-function buildDbProductIds(productTree: CSAFDocument['product_tree']): Set<string> {
-    const dbFamily = productTree.branches[0]?.branches?.find(f => f.name === DB_FAMILY);
+function isAllowedComponent(name: string): boolean {
+    const lower = name.toLowerCase();
+    return ALLOWED_COMPONENTS.some(kw => lower.includes(kw.toLowerCase()));
+}
 
-    return (dbFamily?.branches ?? [])
-        .flatMap(product => product.branches ?? [])
-        .reduce((ids, version) => (version.product ? ids.add(version.product.product_id) : ids), new Set<string>());
+// Product-tree: map product_ids → component names for allowed Oracle Database Server components
+function buildDbProductMap(productTree: CSAFDocument['product_tree']): Map<string, string> {
+    const dbFamily = productTree.branches[0]?.branches?.find(f => f.name === DB_FAMILY);
+    return (dbFamily?.branches ?? []).reduce((map, product) => {
+        const parentName = product.name ?? '';
+        (product.branches ?? []).forEach(version => {
+            if (version.product) {
+                const id = version.product.product_id;
+                const fromId = id.match(/\(([^)]+)\)/)?.[1];
+                const fromVersionName = version.name ? componentNameFromBranch(version.name) : '';
+                const fromParentName = parentName ? componentNameFromBranch(parentName) : '';
+                const component = fromId || fromVersionName || fromParentName || 'Unknown';
+                if (component !== 'Unknown' && isAllowedComponent(component)) {
+                    map.set(id, component);
+                }
+            }
+        });
+        return map;
+    }, new Map<string, string>());
 }
 
 // Release schedule — CPU quarters in the lookback window, starting after lastExtracted
@@ -215,20 +235,18 @@ async function fetchCSAF(url: string): Promise<CSAFDocument | null> {
 
 // Parse a single CSAF → catalog entries for Oracle Database Server
 function buildCatalogEntries(csaf: CSAFDocument, releaseName: string, releaseDate: string): CPUCatalogEntry[] {
-    const dbProductIds = buildDbProductIds(csaf.product_tree);
+    const dbProductMap = buildDbProductMap(csaf.product_tree);
 
     // Extract only vulnerabilities affecting Oracle Database Server
     const dbVulns = compact(
         csaf.vulnerabilities.map(vuln => {
-            const dbProducts = (vuln.product_status?.known_affected ?? []).filter(pid =>
-                isDbProduct(pid, dbProductIds)
-            );
+            const dbProducts = (vuln.product_status?.known_affected ?? []).filter(pid => dbProductMap.has(pid));
             if (dbProducts.length === 0) {
                 return null;
             }
             const bugIds = (vuln.ids ?? []).map(id => id.text);
             const maxScore = (vuln.scores ?? []).reduce((max, s) => {
-                const relevant = s.products.some(pid => isDbProduct(pid, dbProductIds));
+                const relevant = s.products.some(pid => dbProductMap.has(pid));
                 return relevant && (s.cvss_v3?.baseScore ?? 0) > max ? s.cvss_v3!.baseScore : max;
             }, 0);
             const note = (vuln.notes ?? []).find(
@@ -267,7 +285,7 @@ function buildCatalogEntries(csaf: CSAFDocument, releaseName: string, releaseDat
         const primary = group[0];
         return {
             cveId: primary.cve,
-            component: extractComponent(primary.dbProducts[0], primary.description),
+            component: dbProductMap.get(primary.dbProducts[0]) ?? 'Unknown',
             description: primary.description,
             releaseDate,
             releaseName,
@@ -294,7 +312,8 @@ async function loadCatalog(): Promise<CPUCatalog | undefined> {
 }
 
 // Public API — refresh the Oracle CPU catalog (delta-aware)
-async function refreshOracleCpuCatalog(): Promise<void> {
+async function refreshOracleCpuCatalog(caller?: string): Promise<void> {
+    logger.info('Refreshing Oracle CPU catalog', { caller });
     try {
         const existing = await loadCatalog();
         const releasesToFetch = buildAllReleases(existing?.lastMonthExtracted ?? '');
@@ -374,7 +393,7 @@ async function loadCpuCatalog(): Promise<CPUCatalogEntry[]> {
 
     logger.info('CPU catalog is empty or missing, triggering refresh');
     try {
-        await refreshOracleCpuCatalog();
+        await refreshOracleCpuCatalog('loadCpuCatalog');
         return (await loadCatalog())?.patches ?? [];
     } catch (error) {
         logger.error('Failed to refresh Oracle CPU catalog on demand', { error });

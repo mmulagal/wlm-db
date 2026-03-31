@@ -492,7 +492,7 @@ async function initiateCronOperations() {
                 jobName: 'ORACLE_CPU_CATALOG_REFRESH',
                 cronPattern: ORACLE_CPU_CATALOG_CRON_PATTERN,
                 workerProcessor: async () => {
-                    await refreshOracleCpuCatalog();
+                    await refreshOracleCpuCatalog('cron');
                 },
                 onJobErrorMessage: 'Error refreshing Oracle CPU catalog'
             });

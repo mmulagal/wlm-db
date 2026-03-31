@@ -823,7 +823,7 @@ const GOLDEN_CONFIG = {
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
         recommendation:
-            'Critical Patch Updates provide security patches for supported Oracle self-managed database installations. Applying the latest patch helps protect your Oracle database from vulnerabilities and significantly improves overall system reliability.'
+            'Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.'
     }
 };
 

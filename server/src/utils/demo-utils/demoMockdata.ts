@@ -6772,9 +6772,9 @@ const DEMO_ORACLE_CPU_CATALOG = [
     },
     {
         cveId: 'CVE-2025-67735',
-        component: 'Oracle Graal Development Kit for Micronaut',
+        component: 'Oracle Database Security',
         description:
-            'Vulnerability in the Oracle Graal Development Kit for Micronaut (Nimbus JOSE+JWT) component of Oracle Database Server. Supported versions that are affected are 19.3-19.29 and 23.4.0-23.26.0. Easily exploitable vulnerability allows unauthenticated attacker with network access via Oracle Net to compromise Oracle Graal Development Kit for Micronaut. CVSS 3.1 Base Score 6.5 (Confidentiality and Integrity impacts).',
+            'Vulnerability in the Oracle Database Security component of Oracle Database Server. Supported versions that are affected are 19.3-19.29 and 23.4.0-23.26.0. Easily exploitable vulnerability allows unauthenticated attacker with network access via Oracle Net to compromise Oracle Database Security. CVSS 3.1 Base Score 6.5 (Confidentiality and Integrity impacts).',
         releaseDate: '2026-01-20',
         releaseName: 'January 2026',
         affectedVersions: ['19.3-19.29', '23.4.0-23.26.0'],
@@ -6782,9 +6782,9 @@ const DEMO_ORACLE_CPU_CATALOG = [
     },
     {
         cveId: 'CVE-2022-26345',
-        component: 'Oracle Database Data Mining',
+        component: 'Oracle Text',
         description:
-            'Vulnerability in the Oracle Database Data Mining (Intel oneAPI Toolkit OpenMP) component of Oracle Database Server. Supported versions that are affected are 19.3-19.25 and 21.3-21.16. Difficult to exploit vulnerability allows low privileged attacker with logon to the infrastructure to compromise Oracle Database Data Mining. CVSS 3.1 Base Score 6.7 (Confidentiality, Integrity and Availability impacts).',
+            'Vulnerability in the Oracle Text component of Oracle Database Server. Supported versions that are affected are 19.3-19.25 and 21.3-21.16. Difficult to exploit vulnerability allows low privileged attacker with logon to the infrastructure to compromise Oracle Text. CVSS 3.1 Base Score 6.7 (Confidentiality, Integrity and Availability impacts).',
         releaseDate: '2025-02-11',
         releaseName: 'January 2025',
         affectedVersions: ['21.3-21.16', '19.3-19.25'],
