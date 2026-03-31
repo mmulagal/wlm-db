@@ -35,6 +35,6 @@ export interface HeaderTypeEntities {
     multiDataStatus: any;
     multiDataLoading: boolean;
     showNA: boolean; // Flag to show N/A when no credentials are available
-    deepLinkCredId: string | null;
-    deepLinkRegionId: string | null;
+    deepLinkCredId: string[] | null;
+    deepLinkRegionId: string[] | null;
 }

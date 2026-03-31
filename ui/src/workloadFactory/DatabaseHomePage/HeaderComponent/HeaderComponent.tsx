@@ -347,15 +347,15 @@ const HeaderComponent = ({ tab }: Tab) => {
             // Deep-link: if a specific credId was requested via URL, find its
             // full option object and select it; fall back to localStorage/default.
             if (deepLinkCredId) {
-                const matchedOption = options.find(
-                    (opt: any) => opt?.data?.credentialsId === deepLinkCredId
+                const matchedOptions = options.filter(
+                    (opt: any) => deepLinkCredId.includes(opt?.data?.credentialsId)
                 );
-                const selectedOption = matchedOption || options[0];
-                dispatch(setHeaderSelectedMultiCred([selectedOption]));
+                const selectedOptions = matchedOptions.length > 0 ? matchedOptions : [options[0]];
+                dispatch(setHeaderSelectedMultiCred(selectedOptions));
                 dispatch(setDeepLinkCredId(null));
                 localStorage.setItem(
                     `occm.fsx.lastCredentialIdMultiple.${userMetadata?.sub}.${accountId}`,
-                    JSON.stringify([{ value: selectedOption?.data?.credentialsId, label: selectedOption?.data?.name }])
+                    JSON.stringify(selectedOptions.map((opt: any) => ({ value: opt?.data?.credentialsId, label: opt?.data?.name })))
                 );
             } else if (localStorage.getItem('selectedCred')) {
                 // @ts-ignore
@@ -400,15 +400,15 @@ const HeaderComponent = ({ tab }: Tab) => {
             // Deep-link: if a specific regionId was requested via URL, find its
             // full option object and select it; fall back to localStorage/default.
             if (deepLinkRegionId) {
-                const matchedOption = options.find(
-                    (opt: any) => opt?.data?.regionCode === deepLinkRegionId
+                const matchedOptions = options.filter(
+                    (opt: any) => deepLinkRegionId.includes(opt?.data?.regionCode)
                 );
-                const selectedOption = matchedOption || defaultOption;
-                dispatch(setHeaderSelectedMultiRegion([selectedOption]));
+                const selectedOptions = matchedOptions.length > 0 ? matchedOptions : [defaultOption];
+                dispatch(setHeaderSelectedMultiRegion(selectedOptions));
                 dispatch(setDeepLinkRegionId(null));
                 localStorage.setItem(
                     `occm.fsx.lastRegionCodeMultiple.${userMetadata?.sub}.${accountId}`,
-                    JSON.stringify([{ value: selectedOption?.data?.regionCode, label: selectedOption?.label }])
+                    JSON.stringify(selectedOptions.map((opt: any) => ({ value: opt?.data?.regionCode, label: opt?.label })))
                 );
             } else if (localStorage.getItem('selectedRegion')) {
                 // @ts-ignore

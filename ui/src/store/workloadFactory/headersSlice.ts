@@ -112,10 +112,10 @@ const headersSlice = createSlice({
         setShowNA: (state, action: PayloadAction<boolean>) => {
             state.showNA = action.payload;
         },
-        setDeepLinkCredId: (state, action: PayloadAction<string | null>) => {
+        setDeepLinkCredId: (state, action: PayloadAction<string[] | null>) => {
             state.deepLinkCredId = action.payload;
         },
-        setDeepLinkRegionId: (state, action: PayloadAction<string | null>) => {
+        setDeepLinkRegionId: (state, action: PayloadAction<string[] | null>) => {
             state.deepLinkRegionId = action.payload;
         }
     }

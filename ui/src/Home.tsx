@@ -192,7 +192,7 @@ const Home = () => {
                             element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
                         />
                         <Route
-                            path="/databases/well-architected/cred/:credId/region/:regionId/configName/:configName/engineType/:engineType"
+                            path="/databases/well-architected/configName/:configName/engineType/:engineType"
                             element={<WellArchitectedConfigDeepLink />}
                         />
                         <Route
@@ -250,8 +250,8 @@ const Home = () => {
                                 element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
                             />
                             <Route
-                                path="/fsxdb/well-architected/cred/:credId/region/:regionId/configName/:configName/engineType/:engineType"
-                                element={<WellArchitectedConfigDeepLink />}
+                            path="/fsxdb/well-architected/configName/:configName/engineType/:engineType"
+                            element={<WellArchitectedConfigDeepLink />}
                             />
                             <Route
                                 path="/fsxdb/well-architected"
