@@ -628,7 +628,7 @@ export const oracleCardData: any = {
         recommendation: {
             title: 'Oracle patch recommendation',
             description:
-                'Critical Patch Updates provide security patches for supported Oracle self-managed database installations.\nApplying the latest patch helps protect your Oracle database from vulnerabilities and significantly improves overall system reliability.'
+                'Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases.\nInstalling the latest patch helps protect your database from vulnerabilities and improves system reliability.'
         },
         tags: ['Security', 'Reliability']
     },

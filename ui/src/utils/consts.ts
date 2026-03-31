@@ -1007,7 +1007,7 @@ export const ASSESSMENT_CONFIG_NAMES = {
     MICROSOFT_SQL_SERVER_PATCH: 'Microsoft SQL Server patch',
     CRR: 'Cross-Region Replication (CRR)',
     SNAPCENTER_SNAPSHOT: 'Application-consistent snapshots',
-    ORACLE_SECURITY_PATCH: 'Oracle critical patch updates',
+    ORACLE_SECURITY_PATCH: 'Oracle Critical Patch Updates',
     ONTAP: 'ontap',
     OS: 'os',
     HA: 'ha',
