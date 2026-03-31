@@ -27,6 +27,7 @@ import {
 import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 import Marketing from './Marketing/Marketing';
 import ErrorAnalysisDeepLink from './workloadFactory/ErrorAnalysisDeepLink/ErrorAnalysisDeepLink';
+import WellArchitectedConfigDeepLink from './workloadFactory/WellArchitectedConfigDeepLink/WellArchitectedConfigDeepLink';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -191,6 +192,10 @@ const Home = () => {
                             element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
                         />
                         <Route
+                            path="/databases/well-architected/cred/:credId/region/:regionId/configName/:configName/engineType/:engineType"
+                            element={<WellArchitectedConfigDeepLink />}
+                        />
+                        <Route
                             path="/databases/well-architected"
                             element={<HeaderComponent tab={WLF_TABS.WELL_ARCHITECTED_TAB} />}
                         />
@@ -243,6 +248,10 @@ const Home = () => {
                             <Route
                                 path="/fsxdb/job-monitoring"
                                 element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
+                            />
+                            <Route
+                                path="/fsxdb/well-architected/cred/:credId/region/:regionId/configName/:configName/engineType/:engineType"
+                                element={<WellArchitectedConfigDeepLink />}
                             />
                             <Route
                                 path="/fsxdb/well-architected"
