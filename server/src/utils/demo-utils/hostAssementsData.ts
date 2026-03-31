@@ -1141,7 +1141,7 @@ const mockAoagResourceAssessmentDataAllOptimized = {
 };
 
 const optimizedResourceName = ['SQL-Managed-Host-DEV'];
-const aoagPrimaryHostName = 'PRD-SQL-CRM-AG3';
+const aoagPrimaryHostName = 'prd-sql-crm-ag3';
 
 export {
     mockResourceAssessmentData,

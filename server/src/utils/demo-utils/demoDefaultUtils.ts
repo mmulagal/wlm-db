@@ -111,7 +111,7 @@ function generateDemoResources() {
         },
         {
             resourceId: randomUUID(),
-            hostName: 'PRD-SQL-CRM-AG3',
+            hostName: 'prd-sql-crm-ag3',
             protocol: STORAGE_PROTOCOLS.ISCSI,
             sqlInstances: [],
             databaseType: DatabaseTypes.MS_SQL_SERVER,
@@ -121,7 +121,7 @@ function generateDemoResources() {
         },
         {
             resourceId: randomUUID(),
-            hostName: 'PRD-SQL-CRM-AG4',
+            hostName: 'prd-sql-crm-ag4',
             protocol: STORAGE_PROTOCOLS.ISCSI,
             sqlInstances: [],
             databaseType: DatabaseTypes.MS_SQL_SERVER,
