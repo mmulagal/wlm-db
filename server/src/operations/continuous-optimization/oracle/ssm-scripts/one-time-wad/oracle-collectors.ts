@@ -360,21 +360,24 @@ def collect_mount_details(config):
 
     result = {"isCDB": is_cdb, "isASMManaged": is_asm}
 
+    # Read /proc/mounts once and reuse across all file types and PDBs
+    proc_mounts = load_proc_mounts()
+
     if is_cdb:
         pdb_names = get_pdb_names(config)
         result["pdbMountDetails"] = {}
         for pdb_name in pdb_names:
             if pdb_name == "PDB$SEED":
                 continue
-            pdb_mounts = get_mount_details(config, is_cdb, pdb_name, is_asm)
+            pdb_mounts = get_mount_details(config, is_cdb, pdb_name, is_asm, proc_mounts)
             result["pdbMountDetails"][pdb_name] = pdb_mounts
     else:
-        result["mountDetails"] = get_mount_details(config, is_cdb, None, is_asm)
+        result["mountDetails"] = get_mount_details(config, is_cdb, None, is_asm, proc_mounts)
 
     return result
 
 
-def get_mount_details(config, is_cdb, pdb_name, is_asm_managed):
+def get_mount_details(config, is_cdb, pdb_name, is_asm_managed, proc_mounts):
     """Collect mount info for each file type by querying file paths and resolving mounts."""
     mount_details = {}
 
@@ -393,7 +396,7 @@ def get_mount_details(config, is_cdb, pdb_name, is_asm_managed):
                         mount_counts[mount_key] = 0
                     mount_counts[mount_key] += 1
             else:
-                mount_info = find_mount_point(file_path, is_asm_managed)
+                mount_info = find_mount_point(file_path, is_asm_managed, proc_mounts)
                 if mount_info:
                     mount_key = (mount_info.get('mountIP', ''), mount_info.get('mountPoint', ''))
                     if mount_key not in mount_map:
@@ -464,8 +467,22 @@ SET ECHO OFF
     return paths
 
 
-def find_mount_point(file_path, is_asm_managed):
-    """Resolve a file path to its NFS/iSCSI/ASM mount point via /proc/mounts."""
+def load_proc_mounts():
+    entries = []
+    try:
+        with open('/proc/mounts', 'r') as f:
+            for line in f:
+                parts = line.split()
+                if len(parts) >= 4:
+                    entries.append((parts[1], parts[0], parts[2], parts[3]))
+        entries.sort(key=lambda x: len(x[0]), reverse=True)
+    except Exception as e:
+        log("Error reading /proc/mounts: {}".format(e))
+    return entries
+
+
+def find_mount_point(file_path, is_asm_managed, proc_mounts):
+    """Resolve a file path to its NFS/iSCSI/ASM mount point using pre-loaded mount entries."""
     if not file_path:
         return None
 
@@ -480,34 +497,16 @@ def find_mount_point(file_path, is_asm_managed):
             "diskGroup": disk_group
         }
 
-    # Find mount point from /proc/mounts
-    try:
-        with open('/proc/mounts', 'r') as f:
-            mounts = []
-            for line in f:
-                parts = line.split()
-                if len(parts) >= 4:
-                    device = parts[0]
-                    mount_point = parts[1]
-                    fs_type = parts[2]
-                    options = parts[3]
-                    if (file_path.startswith(mount_point) or
-                            mount_point == '/'):
-                        mounts.append((mount_point, device, fs_type,
-                                     options))
-
-            # Find longest matching mount point
-            mounts.sort(key=lambda x: len(x[0]), reverse=True)
-
-            for mount_point, device, fs_type, options in mounts:
-                if file_path.startswith(mount_point):
-                    mount_info = parse_mount_info(
-                        mount_point, device, fs_type, options)
-                    if mount_info:
-                        return mount_info
-                    break
-    except Exception as e:
-        log("Error finding mount point: {}".format(e))
+    # Find best matching mount point from pre-loaded entries (already sorted longest-first)
+    for mount_point, device, fs_type, options in proc_mounts:
+        if (file_path == mount_point or
+                mount_point == '/' or
+                file_path.startswith(mount_point + '/')):
+            mount_info = parse_mount_info(
+                mount_point, device, fs_type, options)
+            if mount_info:
+                return mount_info
+            break
 
     return None
 

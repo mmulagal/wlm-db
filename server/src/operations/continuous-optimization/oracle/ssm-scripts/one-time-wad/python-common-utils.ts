@@ -91,12 +91,13 @@ LOG_DIR = "${LINUX_LOG_DIRECTORY}"
 LOG_FILE = os.path.join(LOG_DIR, "${logFileName}")
 
 def setup_logging():
+    global LOG_FILE
     # Create log directory if it doesn't exist
     try:
         if not os.path.exists(LOG_DIR):
             os.makedirs(LOG_DIR)
     except (OSError, IOError):
-        pass  # Will fail gracefully if can't create dir
+        LOG_FILE = os.path.join(os.getcwd(), "${logFileName}")
     
     # Create root logger
     logger = logging.getLogger()
