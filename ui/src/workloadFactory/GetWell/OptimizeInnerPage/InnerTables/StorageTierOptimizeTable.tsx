@@ -45,7 +45,7 @@ const StorageTierOptimizeTable = ({ type, data, lastColDetails, handleBulkAction
             Header: 'SSD storage tier',
             accessor: 'value',
             id: '3',
-            width: windowSize.width >= 1920 ? 'auto' : '481px',
+            width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: string) => (cellData ? `${cellData}%` : GENERAL.NOT_AVAILABLE)
         },
