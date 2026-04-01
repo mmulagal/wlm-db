@@ -183,7 +183,9 @@ function getCrrDriftData(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    crrAssessmentData: CrrAssessment
+    crrAssessmentData: CrrAssessment,
+    controlFileVolumeIds: string[] = [],
+    controlFileOnlyVolumeIds: string[] = []
 ): OracleGenericParameterDriftResponseType & { errorMessage?: string } {
     logger.info('Calculate Oracle CRR drift data for:', {
         accountId,
@@ -201,24 +203,38 @@ function getCrrDriftData(
     const { crrDetails } = crrAssessmentData;
 
     try {
-        const allVolumesOptimized: boolean = crrDetails.every((detail: CrrDetails) => detail.isCRREnabled);
+        const controlFileIdSet = new Set(controlFileVolumeIds);
+        const controlFileOnlyIdSet = new Set(controlFileOnlyVolumeIds);
+
+        const hasReplicatedControlFile = crrDetails.some(
+            detail => detail.isCRREnabled && detail.volumeUuid && controlFileIdSet.has(detail.volumeUuid)
+        );
+
+        const isVolumeInViolation = (detail: CrrDetails): boolean => {
+            if (detail.isCRREnabled) {
+                return false;
+            }
+            if (hasReplicatedControlFile && detail.volumeUuid && controlFileOnlyIdSet.has(detail.volumeUuid)) {
+                return false;
+            }
+            return true;
+        };
+
+        const volumesInViolation = crrDetails.filter(isVolumeInViolation);
+        const allVolumesOptimized = volumesInViolation.length === 0;
 
         const response: OracleGenericParameterDriftResponseType = {
             name: 'crr',
             status: allVolumesOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
             severity: SEVERITY.WARNING,
             recommendation: storageGoldenConfigData.resiliency.crr.recommendation,
-            objectsInViolation: allVolumesOptimized
-                ? []
-                : crrDetails
-                      .filter(detail => !detail.isCRREnabled)
-                      .map(detail => ({
-                          ontapVolumeName: detail.volumeName,
-                          ontapVolumeUuid: detail.volumeUuid,
-                          fsxVolumeId: detail.fsxVolumeId
-                      })),
+            objectsInViolation: volumesInViolation.map(detail => ({
+                ontapVolumeName: detail.volumeName,
+                ontapVolumeUuid: detail.volumeUuid,
+                fsxVolumeId: detail.fsxVolumeId
+            })),
             totalObjectsAssessed: crrDetails.length,
-            totalObjectsInViolation: allVolumesOptimized ? 0 : crrDetails.filter(detail => !detail.isCRREnabled).length,
+            totalObjectsInViolation: volumesInViolation.length,
             tags: [AwsWellArchitecturedPillars.RELIABILITY],
             resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             recommended: 'crr-enabled'

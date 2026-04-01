@@ -304,6 +304,19 @@ async function initiateInstanceLevelAssessmentDataCollection(
                   vol => vol.volumeName
               );
 
+        const nonRedoVolumeNames = new Set<string>(
+            isCDB
+                ? Object.values(ontapVolumes).flatMap(pdb =>
+                      Object.entries(pdb as Record<string, OracleVolumeRecord[]>)
+                          .filter(([fileType]) => fileType !== OracleSysFileTypes.REDO_LOGS)
+                          .flatMap(([, volumes]) => volumes.map(vol => vol.volumeName))
+                  )
+                : Object.entries(ontapVolumes as Record<string, OracleVolumeRecord[]>)
+                      .filter(([fileType]) => fileType !== OracleSysFileTypes.REDO_LOGS)
+                      .flatMap(([, volumes]) => volumes.map(vol => vol.volumeName))
+        );
+        const redoOnlyVolumeNames = redoVolumeNames.filter(name => !nonRedoVolumeNames.has(name));
+
         databaseInstanceRecord.svmOntapUuid = [...new Set(volumeData.map(vol => vol.svmId))].filter(Boolean);
         databaseInstanceRecord.svmOntapName = [...new Set(volumeData.map(vol => vol.svmName))].filter(Boolean);
         databaseInstanceRecord.mappedVolumesUuids = [...new Set(volumeData.map(vol => vol.id))];
@@ -311,7 +324,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
         databaseInstanceRecord.mappedVolumeError = mappedVolumeError;
         databaseInstanceRecord.mappedDiskGroups = [...new Set(volumeData.map(vol => vol.diskGroup).filter(dg => !!dg))];
         databaseInstanceRecord.storageProtocol = protocol;
-        databaseInstanceRecord.redoVolumeNames = [...new Set(redoVolumeNames)];
+        databaseInstanceRecord.redoVolumeNames = [...new Set(redoOnlyVolumeNames)];
 
         if (mappedVolumeError) {
             logger.error('Oracle mapped volume discovery returned an instance-level error', {
@@ -807,14 +820,24 @@ async function fetchOracleDriftAssessment(
     const instanceVolumeMapping = volumeMappings.find(
         (m: Record<string, OracleMappedOntapVolumeRecord>) => m[databaseInstanceName]
     )?.[databaseInstanceName];
-    const snapcenterVolumeIds = getOntapVolumeIdsByFileType(instanceVolumeMapping, [
+    const volumeIdsByFileType = getOntapVolumeIdsByFileType(instanceVolumeMapping, [
         OracleSysFileTypes.DATA_FILES,
         OracleSysFileTypes.CONTROL_FILES,
-        OracleSysFileTypes.ARCHIVE_LOGS
+        OracleSysFileTypes.ARCHIVE_LOGS,
+        OracleSysFileTypes.TEMP_FILES,
+        OracleSysFileTypes.FRA
     ]);
-    const dataFileVolumeIds = snapcenterVolumeIds[OracleSysFileTypes.DATA_FILES] ?? [];
-    const controlFileVolumeIds = snapcenterVolumeIds[OracleSysFileTypes.CONTROL_FILES] ?? [];
-    const archiveLogVolumeIds = snapcenterVolumeIds[OracleSysFileTypes.ARCHIVE_LOGS] ?? [];
+    const dataFileVolumeIds = volumeIdsByFileType[OracleSysFileTypes.DATA_FILES] ?? [];
+    const controlFileVolumeIds = volumeIdsByFileType[OracleSysFileTypes.CONTROL_FILES] ?? [];
+    const archiveLogVolumeIds = volumeIdsByFileType[OracleSysFileTypes.ARCHIVE_LOGS] ?? [];
+
+    const nonControlFileVolumeIds = new Set([
+        ...dataFileVolumeIds,
+        ...archiveLogVolumeIds,
+        ...(volumeIdsByFileType[OracleSysFileTypes.TEMP_FILES] ?? []),
+        ...(volumeIdsByFileType[OracleSysFileTypes.FRA] ?? [])
+    ]);
+    const controlFileOnlyVolumeIds = controlFileVolumeIds.filter(id => !nonControlFileVolumeIds.has(id));
 
     const [storageDriftData, hostLevelData, crrData, snapcenterDriftData, oracleSecurityPatchData] = await Promise.all([
         assessmentFlags.storage
@@ -854,7 +877,9 @@ async function fetchOracleDriftAssessment(
                       region,
                       databaseHostId,
                       databaseInstanceId,
-                      crrAssessmentData
+                      crrAssessmentData,
+                      controlFileVolumeIds,
+                      controlFileOnlyVolumeIds
                   )
               )
             : Promise.resolve(undefined),
