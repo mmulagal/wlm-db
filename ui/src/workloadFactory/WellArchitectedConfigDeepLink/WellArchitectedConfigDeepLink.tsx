@@ -39,14 +39,18 @@ const WellArchitectedConfigDeepLink = () => {
         const regionKey = `occm.fsx.lastRegionCodeMultiple.${userMetadata.sub}.${accountId}`;
         const savedRegions = localStorage.getItem(regionKey);
         const regionIds: string[] = savedRegions
-            ? JSON.parse(savedRegions).map((r: any) => r.value).filter(Boolean)
+            ? JSON.parse(savedRegions)
+                  .map((r: any) => r.value)
+                  .filter(Boolean)
             : [];
 
         // Read selected cred IDs from localStorage (multiple credentials supported)
         const credKey = `occm.fsx.lastCredentialIdMultiple.${userMetadata.sub}.${accountId}`;
         const savedCreds = localStorage.getItem(credKey);
         const credIds: string[] = savedCreds
-            ? JSON.parse(savedCreds).map((c: any) => c.value).filter(Boolean)
+            ? JSON.parse(savedCreds)
+                  .map((c: any) => c.value)
+                  .filter(Boolean)
             : [];
 
         // Reset the header selections to null so HeaderComponent's guard

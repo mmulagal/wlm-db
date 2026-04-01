@@ -347,15 +347,15 @@ const HeaderComponent = ({ tab }: Tab) => {
             // Deep-link: if a specific credId was requested via URL, find its
             // full option object and select it; fall back to localStorage/default.
             if (deepLinkCredId) {
-                const matchedOptions = options.filter(
-                    (opt: any) => deepLinkCredId.includes(opt?.data?.credentialsId)
-                );
+                const matchedOptions = options.filter((opt: any) => deepLinkCredId.includes(opt?.data?.credentialsId));
                 const selectedOptions = matchedOptions.length > 0 ? matchedOptions : [options[0]];
                 dispatch(setHeaderSelectedMultiCred(selectedOptions));
                 dispatch(setDeepLinkCredId(null));
                 localStorage.setItem(
                     `occm.fsx.lastCredentialIdMultiple.${userMetadata?.sub}.${accountId}`,
-                    JSON.stringify(selectedOptions.map((opt: any) => ({ value: opt?.data?.credentialsId, label: opt?.data?.name })))
+                    JSON.stringify(
+                        selectedOptions.map((opt: any) => ({ value: opt?.data?.credentialsId, label: opt?.data?.name }))
+                    )
                 );
             } else if (localStorage.getItem('selectedCred')) {
                 // @ts-ignore
@@ -400,15 +400,15 @@ const HeaderComponent = ({ tab }: Tab) => {
             // Deep-link: if a specific regionId was requested via URL, find its
             // full option object and select it; fall back to localStorage/default.
             if (deepLinkRegionId) {
-                const matchedOptions = options.filter(
-                    (opt: any) => deepLinkRegionId.includes(opt?.data?.regionCode)
-                );
+                const matchedOptions = options.filter((opt: any) => deepLinkRegionId.includes(opt?.data?.regionCode));
                 const selectedOptions = matchedOptions.length > 0 ? matchedOptions : [defaultOption];
                 dispatch(setHeaderSelectedMultiRegion(selectedOptions));
                 dispatch(setDeepLinkRegionId(null));
                 localStorage.setItem(
                     `occm.fsx.lastRegionCodeMultiple.${userMetadata?.sub}.${accountId}`,
-                    JSON.stringify(selectedOptions.map((opt: any) => ({ value: opt?.data?.regionCode, label: opt?.label })))
+                    JSON.stringify(
+                        selectedOptions.map((opt: any) => ({ value: opt?.data?.regionCode, label: opt?.label }))
+                    )
                 );
             } else if (localStorage.getItem('selectedRegion')) {
                 // @ts-ignore
@@ -691,7 +691,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             dispatch(setIsRefreshed(false));
 
             dispatch(setMultiDataStatus({}));
-            const total = headerSelectedMultiCred.length * headerSelectedMultiRegion.length;
+            const total = headerSelectedMultiCred?.length * headerSelectedMultiRegion?.length;
             setPendingQueriesCounter(total);
             dispatch(
                 setSingleComboCredAndRegion({
@@ -714,7 +714,7 @@ const HeaderComponent = ({ tab }: Tab) => {
             headerSelectedMultiRegion.length > 0
         ) {
             if (headerSelectedMultiCred[0] !== undefined && headerSelectedMultiRegion[0] !== undefined) {
-                const total = headerSelectedMultiCred.length * headerSelectedMultiRegion.length;
+                const total = headerSelectedMultiCred?.length * headerSelectedMultiRegion?.length;
                 setPendingQueriesCounter(total);
                 const queueLength = queue?.length;
                 const newQueue: any = [...queue];
