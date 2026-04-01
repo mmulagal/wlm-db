@@ -710,6 +710,20 @@ async function getHostAndSqlInfoFromPsOutput(
                         ...featureReadiness
                     };
 
+                    // VIEW ANY DEFINITION and VIEW SERVER STATE are minimum prerequisites for all
+                    // management operations. If either is missing, the Windows login connected but
+                    // lacks sufficient permissions, so Windows authentication should not be considered available.
+                    if (
+                        windowsAuthentication &&
+                        Object.values(featureReadiness).some(
+                            r =>
+                                r.missingSqlPermissions.includes('VIEW ANY DEFINITION') ||
+                                r.missingSqlPermissions.includes('VIEW SERVER STATE')
+                        )
+                    ) {
+                        windowsAuthentication = false;
+                    }
+
                     // Build AOAG node→EC2 mapping when applicable (use pre-fetched maps)
                     let aoagClusterNodeDetails:
                         | Array<{ node?: string; ip?: string; ec2InstanceId?: string; ec2InstanceName?: string }>
