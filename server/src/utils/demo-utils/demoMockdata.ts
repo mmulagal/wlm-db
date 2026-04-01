@@ -6841,17 +6841,6 @@ const DEMO_FOCUS_EVENT_ITEMS = [
         ]
     },
     {
-        label: 'Error: 9001, Severity: 21, State: 1.',
-        description: 'Error: 9001, Severity: 21, State: 1.',
-        key: 'Error: 9001, Severity: 21, State: 1.',
-        resources: [
-            {
-                name: 'MSSQLSERVER',
-                href: '/databases/inventory/cred/demo-cred/region/us-east-1/databaseHost/demo-host-1/databaseInstance/demo-instance-1/logAnalyzerStatus/active/engineType/mssql/hostname/sqlnode1.demo.local/dbInstanceName/MSSQLSERVER'
-            }
-        ]
-    },
-    {
         label: 'oracle-instance-termination',
         description: 'Instance termination due to critical errors',
         key: 'oracle-instance-termination',
@@ -6884,30 +6873,28 @@ const DEMO_FOCUS_WAD_ITEMS = [
         label: 'Enable thin provisioning',
         description: 'Enable thin provisioning for optimal storage efficiency',
         key: 'thin-provisioning',
+        path: '/databases/well-architected/configName/thin-provisioning/engineType/mssql',
         resources: [{ name: 'sqlnode1' }, { name: 'sqlnode2' }]
     },
     {
         label: 'Enable volume autogrow',
         description: 'Enable volume autogrow to prevent storage capacity issues',
         key: 'volume-autogrow',
+        path: '/databases/well-architected/configName/volume-autogrow/engineType/mssql',
         resources: [{ name: 'sqlnode1' }, { name: 'oraclenode1' }]
-    },
-    {
-        label: 'Disable fractional reserve',
-        description: 'Disable fractional reserve to maximize usable capacity',
-        key: 'fractional-reserve',
-        resources: [{ name: 'sqlnode2' }]
     },
     {
         label: 'Enable space allocation',
         description: 'Enable space allocation for write failure notification',
         key: 'space-allocation',
+        path: '/databases/well-architected/configName/space-allocation/engineType/oracle',
         resources: [{ name: 'oraclenode1' }, { name: 'oraclenode2' }]
     },
     {
         label: 'Enable Multipath I/O',
         description: 'Enable Multipath I/O for iSCSI storage resilience',
         key: 'multipath-io',
+        path: '/databases/well-architected/configName/multipath-io/engineType/mssql',
         resources: [{ name: 'sqlnode1' }]
     }
 ];

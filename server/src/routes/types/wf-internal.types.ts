@@ -45,6 +45,7 @@ const HomepageFocusStatusResponse = Type.Object({
             description: Type.String(),
             label: Type.Optional(Type.String()),
             key: Type.Optional(Type.String()),
+            path: Type.Optional(Type.String()),
             resources: Type.Optional(
                 Type.Array(
                     Type.Object({

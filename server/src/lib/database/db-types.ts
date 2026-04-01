@@ -216,6 +216,7 @@ interface AccountIdCredRegionParams {
 interface GroupedDatabaseInstancesBySeverityResult {
     name: string;
     severity: string;
+    engineType: string;
     count: number;
     resourceNames: string | null;
 }

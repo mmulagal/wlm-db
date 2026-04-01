@@ -1040,6 +1040,7 @@ async function getGroupedDatabaseInstancesBySeverity({
         SELECT
             labeled.default_label AS name,
             labeled.severity,
+            labeled.database_type AS engineType,
             COUNT(*) AS count,
             GROUP_CONCAT(DISTINCT labeled.resource_name ORDER BY labeled.resource_name SEPARATOR ',') AS resourceNames
         FROM (
@@ -1047,6 +1048,7 @@ async function getGroupedDatabaseInstancesBySeverity({
                 w.node,
                 w.id AS di_id,
                 JSON_UNQUOTE(JSON_EXTRACT(w.node, '$.severity')) AS severity,
+                di.database_type,
                 CASE
                     WHEN JSON_EXTRACT(w.node, '$.name') IS NOT NULL
                     THEN CONCAT(
@@ -1066,7 +1068,7 @@ async function getGroupedDatabaseInstancesBySeverity({
         WHERE labeled.severity IS NOT NULL
             AND TRIM(labeled.severity) <> ''
             AND JSON_UNQUOTE(JSON_EXTRACT(labeled.node, '$.status')) <> 'optimized'
-        GROUP BY labeled.default_label, labeled.severity
+        GROUP BY labeled.default_label, labeled.severity, labeled.database_type
         ORDER BY labeled.severity, count DESC;
     `;
 }

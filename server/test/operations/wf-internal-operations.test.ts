@@ -10,7 +10,8 @@ import {
     getFocusWadStatus,
     getLogsAnalysisStatus,
     getSystemStatus,
-    getWidgetStatus
+    getWidgetStatus,
+    DEFAULT_WIDGET_LIMIT
 } from '../../src/operations/wf-internal-operations';
 import { DEMO_FOCUS_EVENT_ITEMS, DEMO_FOCUS_WAD_ITEMS } from '../../src/utils/demo-utils/demoMockdata';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
@@ -86,19 +87,22 @@ describe('Homepage status operations', () => {
                 name: 'autosize-mode',
                 severity: 'critical',
                 count: 2,
-                resourceNames: 'test-resource-1,test-resource-2'
+                resourceNames: 'test-resource-1,test-resource-2',
+                engineType: 'MSSQL'
             },
             {
                 name: 'autosize',
                 severity: 'critical',
                 count: 4,
-                resourceNames: 'test-resource-3,test-resource-4'
+                resourceNames: 'test-resource-3,test-resource-4',
+                engineType: 'ORACLE'
             },
             {
                 name: 'tiering-policy',
                 severity: 'warning',
                 count: 7,
-                resourceNames: 'test-resource-5'
+                resourceNames: 'test-resource-5',
+                engineType: 'PGSQL'
             }
         ]);
     });
@@ -170,6 +174,32 @@ describe('Homepage status operations', () => {
             expect(item.label).toBeTruthy();
             expect(item.key).toBeTruthy();
             expect(Array.isArray(item.resources)).toBe(true);
+        });
+    });
+
+    test('Get homepage focus status should include path field', async () => {
+        const { items } = await getFocusWadStatus(ACCOUNTID);
+        expect(items.length).toBeGreaterThan(0);
+        items.forEach(item => {
+            expect(item.path).toBeTruthy();
+            expect(item.path).toMatch(/^\/databases\/well-architected\/configName\/.*\/engineType\//);
+        });
+    });
+
+    test('Get homepage focus status path should contain configName and engineType', async () => {
+        const { items } = await getFocusWadStatus(ACCOUNTID);
+        items.forEach(item => {
+            expect(item.path).toBeDefined();
+            const pathParts = item.path!.split('/');
+            const configNameIndex = pathParts.indexOf('configName');
+            const engineTypeIndex = pathParts.indexOf('engineType');
+            expect(configNameIndex).toBeGreaterThan(-1);
+            expect(engineTypeIndex).toBeGreaterThan(-1);
+            expect(engineTypeIndex).toBeGreaterThan(configNameIndex);
+            // Verify there's a value after configName
+            expect(pathParts[configNameIndex + 1]).toBeTruthy();
+            // Verify there's a value after engineType
+            expect(pathParts[engineTypeIndex + 1]).toBeTruthy();
         });
     });
 });
@@ -512,11 +542,11 @@ describe('getLogsAnalysisStatus - analysis ran with no errors', () => {
 });
 
 describe('getFocusWadStatus - demo flow demoLimit branch', () => {
-    test('should return demo items with default limit of 5 when no limit is provided', async () => {
+    test('should return demo items with default limit when no limit is provided', async () => {
         const { items, totalItems, severity } = await getFocusWadStatus('demo-account');
         expect(severity).toEqual('medium');
-        expect(items.length).toEqual(5);
-        expect(totalItems).toEqual(5);
+        expect(items.length).toEqual(DEFAULT_WIDGET_LIMIT);
+        expect(totalItems).toEqual(DEFAULT_WIDGET_LIMIT);
         items.forEach(item => {
             expect(item.description).toBeTruthy();
             expect(item.key).toBeTruthy();

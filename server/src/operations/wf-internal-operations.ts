@@ -31,7 +31,7 @@ import { getLatestReportsForWidget } from '../lib/database/logs-analysis-reports
 
 const logger = getLogger();
 const focusWidgetNameMap = generateFocusWidgetNameMap();
-const DEMO_LIMIT = 5;
+const DEFAULT_WIDGET_LIMIT = 4;
 
 async function getSystemStatus(accountId: string) {
     logger.info('Getting system status for account.', accountId);
@@ -119,6 +119,7 @@ interface FocusItem {
     label: string;
     description: string;
     count: number;
+    engineType: string;
     resources: { name: string }[];
 }
 
@@ -126,6 +127,7 @@ interface FocusStatusResponseItem {
     description: string;
     label?: string;
     key?: string;
+    path?: string;
     resources?: Array<{ name: string; href?: string }>;
 }
 
@@ -147,13 +149,14 @@ function getLimitedItems(objects: GroupedDatabaseInstancesBySeverityResult[], li
             label: displayLabel,
             description: recommendation || displayLabel,
             count: obj.count,
+            engineType: obj.engineType || '',
             rawResourceNames: obj.resourceNames
         };
     });
 
     const grouped: Record<
         string,
-        { key: string; label: string; description: string; count: number; resources: Set<string> }
+        { key: string; label: string; description: string; count: number; engineType: string; resources: Set<string> }
     > = {};
     mapped.forEach(obj => {
         if (obj.key) {
@@ -163,6 +166,7 @@ function getLimitedItems(objects: GroupedDatabaseInstancesBySeverityResult[], li
                     label: obj.label,
                     description: obj.description,
                     count: 0,
+                    engineType: obj.engineType,
                     resources: new Set()
                 };
             }
@@ -174,11 +178,12 @@ function getLimitedItems(objects: GroupedDatabaseInstancesBySeverityResult[], li
     });
 
     const uniqueItems = Object.values(grouped)
-        .map(({ key, label, description, count, resources }) => ({
+        .map(({ key, label, description, count, engineType, resources }) => ({
             key,
             label,
             description,
             count,
+            engineType,
             resources: [...resources].sort().map(name => ({ name }))
         }))
         .sort((a, b) => b.count - a.count);
@@ -191,7 +196,13 @@ function getLimitedItems(objects: GroupedDatabaseInstancesBySeverityResult[], li
 }
 
 function formatDescription(items: FocusItem[]) {
-    return items.map(({ key, label, description, resources }) => ({ description, label, key, resources }));
+    return items.map(({ key, label, description, engineType, resources }) => ({
+        description,
+        label,
+        key,
+        path: `/databases/well-architected/configName/${encodeURIComponent(key)}/engineType/${engineType}`,
+        resources
+    }));
 }
 
 async function getFocusWadStatus(
@@ -210,7 +221,7 @@ async function getFocusWadStatus(
     const regionList = regions?.split(',').map(region => region.trim());
 
     if (isDemoFlow()) {
-        const demoLimit = limit || DEMO_LIMIT;
+        const demoLimit = limit || DEFAULT_WIDGET_LIMIT;
         const items = DEMO_FOCUS_WAD_ITEMS.slice(0, demoLimit);
         return {
             items,
@@ -327,28 +338,33 @@ function buildErrorKey(databaseType: string, error: string, errorCode?: string):
             const { errorCode: code, severity, state } = match.groups;
             return `Error: ${code}, Severity: ${severity}, State: ${state}`;
         }
+        if (match?.groups?.keyword && match?.groups?.message) {
+            const { keyword, message } = match.groups;
+            const capitalised = keyword.charAt(0).toUpperCase() + keyword.slice(1);
+            return `${capitalised}: ${message.trim()}`;
+        }
     }
-    return errorCode ?? undefined;
+    return errorCode;
 }
 
 function normalizeSeverity(rawSeverity?: string): string {
     if (!rawSeverity) {
         return SEVERITIES.IMPORTANT;
     }
-    const lower = rawSeverity.toLowerCase();
+    const lowerCaseSeverity = rawSeverity.toLowerCase();
 
     // Oracle or already-named severities
-    if ([SEVERITIES.CRITICAL, SEVERITIES.SEVERE, SEVERITIES.IMPORTANT].includes(lower)) {
-        return lower;
+    if ([SEVERITIES.CRITICAL, SEVERITIES.SEVERE, SEVERITIES.IMPORTANT].includes(lowerCaseSeverity)) {
+        return lowerCaseSeverity;
     }
 
     // MSSQL: numeric string — use MSSQL_SEVERITY_RANGE thresholds
-    const num = Number(rawSeverity);
-    if (!Number.isNaN(num)) {
-        if (num >= MSSQL_SEVERITY_RANGE[SEVERITIES.CRITICAL].start) {
+    const severityToNumber = Number(rawSeverity);
+    if (!Number.isNaN(severityToNumber)) {
+        if (severityToNumber >= MSSQL_SEVERITY_RANGE[SEVERITIES.CRITICAL].start) {
             return SEVERITIES.CRITICAL;
         }
-        if (num >= MSSQL_SEVERITY_RANGE[SEVERITIES.SEVERE].start) {
+        if (severityToNumber >= MSSQL_SEVERITY_RANGE[SEVERITIES.SEVERE].start) {
             return SEVERITIES.SEVERE;
         }
         return SEVERITIES.IMPORTANT;
@@ -369,7 +385,7 @@ async function getLogsAnalysisStatus(
     const regionList = compact(regions?.split(',').map(r => r.trim()));
 
     if (isDemoFlow()) {
-        const demoLimit = limit || DEMO_LIMIT;
+        const demoLimit = limit || DEFAULT_WIDGET_LIMIT;
         const items = DEMO_FOCUS_EVENT_ITEMS.slice(0, demoLimit);
         return {
             items,
@@ -412,37 +428,47 @@ async function getLogsAnalysisStatus(
     >();
 
     for (const row of rows) {
-        const recommendations = row.recommendations ?? [];
+        const {
+            recommendations = [],
+            database_type: engineType,
+            database_instance_id: instanceId,
+            credentials_id: credentialsId,
+            region,
+            resource_id: hostId,
+            database_instance_name: dbInstanceName,
+            hostname
+        } = row;
 
         const validRecommendations = recommendations.filter(rec => rec.uniqueErrorKey || rec.error || rec.errorCode);
 
         for (const rec of validRecommendations) {
-            const mapKey = rec.uniqueErrorKey ?? rec.errorCode ?? rec.error;
+            const { uniqueErrorKey, errorCode, error, severity, cause } = rec;
+            const mapKey = uniqueErrorKey ?? errorCode ?? error;
             const existing = errorMap.get(mapKey);
-            const normalizedSeverity = normalizeSeverity(rec.severity);
-            const key = buildErrorKey(row.database_type, rec.error, rec.errorCode);
+            const normalizedSeverity = normalizeSeverity(severity);
+            const key = buildErrorKey(engineType, error, errorCode);
 
             const resourceContext = {
-                credentialsId: row.credentials_id,
-                region: row.region,
-                hostId: row.resource_id,
-                instanceId: row.database_instance_id,
-                engineType: row.database_type,
-                hostname: row.hostname,
-                dbInstanceName: row.database_instance_name
+                credentialsId,
+                region,
+                hostId,
+                instanceId,
+                engineType,
+                hostname,
+                dbInstanceName
             };
 
             if (!existing) {
                 errorMap.set(mapKey, {
-                    description: rec.error,
+                    description: cause || error,
                     key,
                     count: 1,
                     severity: normalizedSeverity,
-                    resources: new Map([[row.database_instance_id, resourceContext]])
+                    resources: new Map([[instanceId, resourceContext]])
                 });
             } else {
                 existing.count += 1;
-                existing.resources.set(row.database_instance_id, resourceContext);
+                existing.resources.set(instanceId, resourceContext);
             }
         }
     }
@@ -462,9 +488,12 @@ async function getLogsAnalysisStatus(
 
     const topSeverity =
         SEVERITY_PRIORITY.find(level => uniqueErrors.some(e => e.severity === level)) ?? SEVERITIES.IMPORTANT;
-    const focusSeverity = LOGS_SEVERITY_TO_FOCUS_SEVERITY[topSeverity] ?? 'low';
+    const focusSeverity = LOGS_SEVERITY_TO_FOCUS_SEVERITY[topSeverity] ?? 'medium';
 
-    const sortedErrors = uniqueErrors.sort((a, b) => b.count - a.count);
+    const sortedErrors = uniqueErrors.sort((a, b) => {
+        const severityDiff = SEVERITY_PRIORITY.indexOf(a.severity) - SEVERITY_PRIORITY.indexOf(b.severity);
+        return severityDiff !== 0 ? severityDiff : b.count - a.count;
+    });
     const limitedErrors = limit && limit > 0 ? sortedErrors.slice(0, limit) : sortedErrors;
 
     const items = limitedErrors.map(({ description, key, resources }) => ({
@@ -473,19 +502,25 @@ async function getLogsAnalysisStatus(
         key,
         resources: [...resources.values()]
             .sort((a, b) => a.dbInstanceName.localeCompare(b.dbInstanceName))
-            .map(context => ({
-                name: context.dbInstanceName,
-                href: `/databases/inventory/cred/${context.credentialsId}/region/${context.region}/databaseHost/${
-                    context.hostId
-                }/databaseInstance/${context.instanceId}/logAnalyzerStatus/active/engineType/${
-                    context.engineType
-                }/hostname/${encodeURIComponent(context.hostname)}/dbInstanceName/${encodeURIComponent(
-                    context.dbInstanceName
-                )}`
-            }))
+            .map(context => {
+                const { credentialsId, region, hostId, instanceId, engineType, hostname, dbInstanceName } = context;
+                return {
+                    name: dbInstanceName,
+                    href: `/databases/inventory/cred/${credentialsId}/region/${region}/databaseHost/${hostId}/databaseInstance/${instanceId}/logAnalyzerStatus/active/engineType/${engineType}/hostname/${encodeURIComponent(
+                        hostname
+                    )}/dbInstanceName/${encodeURIComponent(dbInstanceName)}`
+                };
+            })
     }));
 
     return { severity: focusSeverity as FocusStatusResponse['severity'], totalItems, items };
 }
 
-export { getSystemStatus, getDatabaseVolumes, getFocusWadStatus, getLogsAnalysisStatus, getWidgetStatus };
+export {
+    getSystemStatus,
+    getDatabaseVolumes,
+    getFocusWadStatus,
+    getLogsAnalysisStatus,
+    getWidgetStatus,
+    DEFAULT_WIDGET_LIMIT
+};

@@ -17,6 +17,7 @@ interface WidgetReportRow {
         error: string;
         errorCode?: string;
         severity?: string;
+        cause?: string;
     }>;
 }
 
@@ -206,7 +207,8 @@ async function getLatestReportsForWidget(
                     'uniqueErrorKey', rec.uniqueErrorKey,
                     'error',          rec.error,
                     'errorCode',      rec.errorCode,
-                    'severity',       rec.severity
+                    'severity',       rec.severity,
+                    'cause',          rec.cause
                 )
             ) AS recommendations
         FROM logs_analysis_reports lar
@@ -227,7 +229,8 @@ async function getLatestReportsForWidget(
                 uniqueErrorKey VARCHAR(255) PATH '$.uniqueErrorKey',
                 error          TEXT        PATH '$.error',
                 errorCode      VARCHAR(64) PATH '$.errorCode',
-                severity       VARCHAR(32) PATH '$.severity'
+                severity       VARCHAR(32) PATH '$.severity',
+                cause          TEXT        PATH '$.cause'
             )
         ) rec ON TRUE
         WHERE lar.account_id = ${checkedAccountId}
