@@ -163,45 +163,45 @@
                 }
             },
             "storageInfo": {
-                "totalDatabaseSizeGB": 12000,
+                "totalDatabaseSizeGB": 4128.9,
                 "tempTablespaceSizeGB": 20,
                 "redoLogCount": 8,
                 "totalRedoSizeMB": 8192,
                 "tablespaces": [
                     {
                         "name": "SYSTEM",
-                        "sizeGB": 35,
-                        "usedGB": 26
+                        "sizeGB": 12.2,
+                        "usedGB": 9.05
                     },
                     {
                         "name": "SYSAUX",
-                        "sizeGB": 50,
-                        "usedGB": 38
+                        "sizeGB": 17.4,
+                        "usedGB": 13.2
                     },
                     {
                         "name": "UNDOTBS1",
-                        "sizeGB": 300,
-                        "usedGB": 125
+                        "sizeGB": 104.4,
+                        "usedGB": 43.5
                     },
                     {
                         "name": "ERP_DATA",
-                        "sizeGB": 7500,
-                        "usedGB": 6200
+                        "sizeGB": 2598.9,
+                        "usedGB": 2157.6
                     },
                     {
                         "name": "ERP_INDEX",
-                        "sizeGB": 2500,
-                        "usedGB": 1950
+                        "sizeGB": 870,
+                        "usedGB": 678.6
                     },
                     {
                         "name": "ERP_LOB",
-                        "sizeGB": 1500,
-                        "usedGB": 1100
+                        "sizeGB": 522,
+                        "usedGB": 382.8
                     },
                     {
                         "name": "USERS",
-                        "sizeGB": 11.5,
-                        "usedGB": 3.2
+                        "sizeGB": 4,
+                        "usedGB": 1.11
                     }
                 ]
             },

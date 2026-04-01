@@ -153,50 +153,50 @@
                 }
             },
             "storageInfo": {
-                "totalDatabaseSizeGB": 12438,
+                "totalDatabaseSizeGB": 4303.6,
                 "tempTablespaceSizeGB": 120,
                 "redoLogCount": 12,
                 "totalRedoSizeMB": 24576,
                 "tablespaces": [
                     {
                         "name": "SYSTEM",
-                        "sizeGB": 5,
-                        "usedGB": 3.8
+                        "sizeGB": 1.73,
+                        "usedGB": 1.31
                     },
                     {
                         "name": "SYSAUX",
-                        "sizeGB": 8,
-                        "usedGB": 6.2
+                        "sizeGB": 2.77,
+                        "usedGB": 2.14
                     },
                     {
                         "name": "UNDOTBS1",
-                        "sizeGB": 310,
-                        "usedGB": 137
+                        "sizeGB": 107.3,
+                        "usedGB": 47.4
                     },
                     {
                         "name": "APP_DATA1",
-                        "sizeGB": 3100,
-                        "usedGB": 2580
+                        "sizeGB": 1072.6,
+                        "usedGB": 892.7
                     },
                     {
                         "name": "APP_DATA2",
-                        "sizeGB": 3100,
-                        "usedGB": 2475
+                        "sizeGB": 1072.6,
+                        "usedGB": 855.8
                     },
                     {
                         "name": "APP_INDEX",
-                        "sizeGB": 2500,
-                        "usedGB": 1930
+                        "sizeGB": 865,
+                        "usedGB": 667.8
                     },
                     {
                         "name": "APP_LOB",
-                        "sizeGB": 1900,
-                        "usedGB": 1400
+                        "sizeGB": 657.4,
+                        "usedGB": 484.4
                     },
                     {
                         "name": "USERS",
-                        "sizeGB": 1515,
-                        "usedGB": 530
+                        "sizeGB": 524.2,
+                        "usedGB": 183.4
                     }
                 ]
             },
@@ -1562,45 +1562,45 @@
                 }
             },
             "storageInfo": {
-                "totalDatabaseSizeGB": 820,
+                "totalDatabaseSizeGB": 284,
                 "tempTablespaceSizeGB": 15,
                 "redoLogCount": 6,
                 "totalRedoSizeMB": 6144,
                 "tablespaces": [
                     {
                         "name": "SYSTEM",
-                        "sizeGB": 2.5,
-                        "usedGB": 1.9
+                        "sizeGB": 0.87,
+                        "usedGB": 0.66
                     },
                     {
                         "name": "SYSAUX",
-                        "sizeGB": 3.5,
-                        "usedGB": 2.7
+                        "sizeGB": 1.21,
+                        "usedGB": 0.93
                     },
                     {
                         "name": "UNDOTBS1",
-                        "sizeGB": 50,
-                        "usedGB": 22
+                        "sizeGB": 17.3,
+                        "usedGB": 7.61
                     },
                     {
                         "name": "HR_DATA",
-                        "sizeGB": 450,
-                        "usedGB": 375
+                        "sizeGB": 155.7,
+                        "usedGB": 129.75
                     },
                     {
                         "name": "HR_INDEX",
-                        "sizeGB": 180,
-                        "usedGB": 142
+                        "sizeGB": 62.3,
+                        "usedGB": 49.13
                     },
                     {
                         "name": "HR_LOB",
-                        "sizeGB": 120,
-                        "usedGB": 88
+                        "sizeGB": 41.5,
+                        "usedGB": 30.45
                     },
                     {
                         "name": "USERS",
-                        "sizeGB": 14,
-                        "usedGB": 5.2
+                        "sizeGB": 4.84,
+                        "usedGB": 1.8
                     }
                 ]
             },
@@ -1878,50 +1878,50 @@
                 }
             },
             "storageInfo": {
-                "totalDatabaseSizeGB": 3200,
+                "totalDatabaseSizeGB": 1107.2,
                 "tempTablespaceSizeGB": 50,
                 "redoLogCount": 8,
                 "totalRedoSizeMB": 8192,
                 "tablespaces": [
                     {
                         "name": "SYSTEM",
-                        "sizeGB": 4,
-                        "usedGB": 3.1
+                        "sizeGB": 1.38,
+                        "usedGB": 1.07
                     },
                     {
                         "name": "SYSAUX",
-                        "sizeGB": 6,
-                        "usedGB": 4.5
+                        "sizeGB": 2.08,
+                        "usedGB": 1.56
                     },
                     {
                         "name": "UNDOTBS1",
-                        "sizeGB": 80,
-                        "usedGB": 35
+                        "sizeGB": 27.7,
+                        "usedGB": 12.11
                     },
                     {
                         "name": "ANALYT_FACT",
-                        "sizeGB": 1800,
-                        "usedGB": 1520
+                        "sizeGB": 622.8,
+                        "usedGB": 525.9
                     },
                     {
                         "name": "ANALYT_DIM",
-                        "sizeGB": 600,
-                        "usedGB": 475
+                        "sizeGB": 207.6,
+                        "usedGB": 164.35
                     },
                     {
                         "name": "ANALYT_INDEX",
-                        "sizeGB": 500,
-                        "usedGB": 390
+                        "sizeGB": 173,
+                        "usedGB": 134.94
                     },
                     {
                         "name": "ANALYT_STAGE",
-                        "sizeGB": 200,
-                        "usedGB": 85
+                        "sizeGB": 69.2,
+                        "usedGB": 29.41
                     },
                     {
                         "name": "USERS",
-                        "sizeGB": 10,
-                        "usedGB": 3.8
+                        "sizeGB": 3.46,
+                        "usedGB": 1.31
                     }
                 ]
             },

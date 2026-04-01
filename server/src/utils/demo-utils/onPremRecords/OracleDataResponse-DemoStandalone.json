@@ -153,35 +153,35 @@
                 }
             },
             "storageInfo": {
-                "totalDatabaseSizeGB": 16000,
+                "totalDatabaseSizeGB": 5536.3,
                 "tempTablespaceSizeGB": 32,
                 "redoLogCount": 6,
                 "totalRedoSizeMB": 12288,
                 "tablespaces": [
                     {
                         "name": "SYSTEM",
-                        "sizeGB": 2.5,
-                        "usedGB": 1.8
+                        "sizeGB": 0.87,
+                        "usedGB": 0.62
                     },
                     {
                         "name": "SYSAUX",
-                        "sizeGB": 3,
-                        "usedGB": 2.2
+                        "sizeGB": 1.04,
+                        "usedGB": 0.76
                     },
                     {
                         "name": "UNDOTBS1",
-                        "sizeGB": 450,
-                        "usedGB": 135
+                        "sizeGB": 156,
+                        "usedGB": 46.8
                     },
                     {
                         "name": "USERS",
-                        "sizeGB": 0.5,
-                        "usedGB": 0.1
+                        "sizeGB": 0.17,
+                        "usedGB": 0.03
                     },
                     {
                         "name": "FIN_DATA",
-                        "sizeGB": 15544,
-                        "usedGB": 12800
+                        "sizeGB": 5378.22,
+                        "usedGB": 4435.2
                     }
                 ]
             },
