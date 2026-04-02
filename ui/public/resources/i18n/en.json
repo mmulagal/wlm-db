@@ -544,7 +544,7 @@
             "bulk-fix-disable-for-asm": "Bulk fix is not supported for ASM configurations.",
             "coming-soon": "Coming soon",
             "fix-disabled": "Fix is not supported for this configuration.",
-            "over-provisioned-fix-disabled": "Over provisioned {{configName}} with missing permissions can not be optimized.",
+            "over-provisioned-fix-disabled": "Over provisioned {{configName}} can not be optimized.",
             "under-provisioned-missing-permissions-fix-disabled": "Under provisioned {{configName}} with missing permissions can not be optimized.",
             "bulk-fix-disabled": "Fix is not supported for optimized rows.",
             "bulk-dismiss-disabled-wad": "Dismiss is not supported for one-time assessment rows.",
