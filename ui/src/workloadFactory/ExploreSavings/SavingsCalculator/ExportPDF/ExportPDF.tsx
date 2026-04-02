@@ -11,7 +11,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 
-const ExportPDF = ({ printDocument, disableState, sendEmail, emailStatus }: any) => {
+const ExportPDF = ({ printDocument, disableState, sendEmail, emailStatus, width }: any) => {
     const {
         storageSavingsLoading,
         selectedHostDetails,
@@ -53,7 +53,7 @@ const ExportPDF = ({ printDocument, disableState, sendEmail, emailStatus }: any)
     };
 
     return (
-        <div className={setCSSForExportPDF()}>
+        <div className={setCSSForExportPDF()} style={width !== undefined ? { width } : undefined}>
             <div
                 className={
                     loading || disableState || !viewCalculationsResponse

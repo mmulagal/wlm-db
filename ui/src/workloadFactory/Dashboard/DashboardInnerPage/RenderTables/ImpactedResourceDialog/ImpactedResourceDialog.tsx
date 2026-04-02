@@ -317,7 +317,8 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
             return ensureRows(columns, rows, na);
         }
 
-        case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE: {
+        case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
+        case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES: {
             const columns = ['NFS mount', 'Current mount options', 'Recommended mount options'];
             const rows = details.map(detail => [
                 detail?.objectName || detail?.nfsMount || na,

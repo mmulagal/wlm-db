@@ -62,6 +62,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const [isMutliFsx, setIsMutliFsx] = useState(false);
     const buttonRef: any = useRef(null);
     const [isCardOpen, setIsCardOpen] = useState(false);
+    const savingsHeadingRef = useRef<HTMLDivElement>(null);
+    const [headingWidth, setHeadingWidth] = useState<number | undefined>(undefined);
     const { statusData } = useAppSelector(state => state.headers.getStatus);
 
     const [getSendEmail] = useGetSendEmailMutation();
@@ -127,6 +129,18 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             setIsMutliFsx(false);
         }
     }, [viewCalculationsResponse]);
+
+    useEffect(() => {
+        const el = savingsHeadingRef.current;
+        if (!el) return;
+        const observer = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                setHeadingWidth(entry.contentRect.width);
+            }
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
 
     const setEmailSubject = () => {
         if (
@@ -342,6 +356,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     )}
 
                     <div
+                        ref={savingsHeadingRef}
                         className={
                             isOnPremMode
                                 ? `${styles.savingsHeading} ${styles.savingsHeadingOnPremise}`
@@ -480,7 +495,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
                     {/* Text Area */}
 
-                    <div className={setCSSForTextArea()}>
+                    <div className={setCSSForTextArea()} style={headingWidth !== undefined ? { width: headingWidth } : undefined}>
                         <div>{isMutliFsx && !isOracleOnPrem ? <SuggestionDisable /> : <Suggestion />}</div>
                         <div className={styles.textContent}>
                             <DsTypography
@@ -506,7 +521,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
                     {/* Accordion here - RecommendedAccordion handles both MSSQL and Oracle */}
 
-                    <RecommendedAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} />
+                    <RecommendedAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} width={headingWidth} />
                 </div>
 
                 {/* last section */}
@@ -516,6 +531,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     isMutliFsx={isMutliFsx}
                     sendEmail={sendEmail}
                     emailStatus={printState}
+                    width={headingWidth}
                 />
             </div>
 

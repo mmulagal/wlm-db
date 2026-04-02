@@ -52,7 +52,7 @@ const TableLayout = ({ data, type }: any) => (
     </Grid>
 );
 
-const RecommendedAccordion = ({ printState, disableState, isMutliFsx }: any) => {
+const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [saveConfigData] = useSaveConfigDataMutation();
@@ -392,7 +392,7 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx }: any) => 
     };
 
     return (
-        <div className={setCSS()} id="recommended-accordion">
+        <div className={setCSS()} id="recommended-accordion" style={width !== undefined ? { width } : undefined}>
             <DsAccordion
                 id="1"
                 title={getAccordionTitle()}
