@@ -342,11 +342,7 @@ async function runCloneAssessment(
                     isFlexClone
                 };
 
-                // Calculate the number of days since the data volume was created only if the volume type is 'data'
                 const cloneAge = calculateDaysSince(cloneVolumeCreateTime);
-                if (cloneAge > CLONE_AGE) {
-                    oldClones += 1;
-                }
 
                 databaseObject.clonedVolumeDetails?.push(clonedVolumeInfo);
                 if (cloneAge !== undefined) {
@@ -358,6 +354,7 @@ async function runCloneAssessment(
                 clonedBy: 'netapp_wf'
             };
             if (databaseObject.cloneAge !== undefined && databaseObject.cloneAge > CLONE_AGE) {
+                oldClones += 1;
                 oldCloneDetails.push(modifiedDatabaseObject);
                 oldCloneDatabaseNames.push(sandboxName);
             }
