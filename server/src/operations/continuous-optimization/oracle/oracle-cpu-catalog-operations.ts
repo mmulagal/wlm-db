@@ -76,7 +76,7 @@ const logger = getLogger();
 const CSAF_BASE_URL = 'https://www.oracle.com/a/tech/docs/security-alerts';
 const DB_FAMILY = 'Oracle Database Server';
 const ALLOWED_COMPONENTS = [
-    'Oracle Database Core',
+    'Oracle Database',
     'RDBMS',
     'Java VM',
     'OJVM',
@@ -172,6 +172,9 @@ function componentNameFromBranch(name: string): string {
 
 function isAllowedComponent(name: string): boolean {
     const lower = name.toLowerCase();
+    if (lower.includes('cluster')) {
+        return false;
+    }
     return ALLOWED_COMPONENTS.some(kw => lower.includes(kw.toLowerCase()));
 }
 

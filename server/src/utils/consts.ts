@@ -1880,7 +1880,7 @@ const TEMP_DIRECTORY = '/tmp';
 // Limit is 64KB, use a slightly smaller threshold to account for parameter and document overhead
 const SSM_COMMAND_COMPRESSION_THRESHOLD = 62 * 1024;
 
-const ORACLE_CPU_CATALOG_LOOKBACK_YEARS = 2;
+const ORACLE_CPU_CATALOG_LOOKBACK_YEARS = 3;
 const ORACLE_CPU_CATALOG_FILE_PATH = join(TEMP_DIRECTORY, 'oracle-cpu-catalog.json');
 const ORACLE_CPU_CATALOG_QUEUE = 'WLMDB-OracleCpuCatalogQueue';
 // runs at 3:00 AM on the 24th of January, April, July, and October. That's ~2-10 days after each CPU release (3rd Tuesday).
