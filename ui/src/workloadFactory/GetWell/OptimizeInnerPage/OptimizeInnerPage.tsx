@@ -261,22 +261,22 @@ const OptimizeInnerPage = () => {
     };
 
     const buttonComponent = (rowData: any) => {
-        if (
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CRR &&
-            selectedOptimizeConfig?.engineType === DBType.ORACLE
-        ) {
-            return (
-                <DsButton
-                    isThin
-                    variant="secondary"
-                    onClick={() => {
-                        handleCRRRedirectionDialog(rowData);
-                    }}
-                >
-                    {GENERAL.OPTIMIZE}
-                </DsButton>
-            );
-        }
+        // if (
+        //     selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CRR &&
+        //     selectedOptimizeConfig?.engineType === DBType.ORACLE
+        // ) {
+        //     return (
+        //         <DsButton
+        //             isThin
+        //             variant="secondary"
+        //             onClick={() => {
+        //                 handleCRRRedirectionDialog(rowData);
+        //             }}
+        //         >
+        //             {GENERAL.OPTIMIZE}
+        //         </DsButton>
+        //     );
+        // }
         if (
             selectedOptimizeConfig?.type === 'Data files' ||
             selectedOptimizeConfig?.type === 'Log files' ||
@@ -375,7 +375,9 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.MTU ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT || 
+            (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CRR &&
+                selectedOptimizeConfig?.engineType === DBType.ORACLE)
         ) {
             return (
                 <DsButton
