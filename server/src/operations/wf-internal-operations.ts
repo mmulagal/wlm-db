@@ -265,11 +265,7 @@ async function getFocusWadStatus(
 
     if (assessedInstanceCount?._count?.id === 0) {
         return {
-            items: [
-                {
-                    description: 'No databases well-architected issues analysis performed'
-                }
-            ],
+            items: [],
             severity: 'info',
             noAnalysis: true,
             totalItems: 0
@@ -277,7 +273,7 @@ async function getFocusWadStatus(
     }
 
     return {
-        items: [{ description: 'All systems operational' }],
+        items: [],
         severity: 'low',
         totalItems: 0
     };
@@ -398,7 +394,7 @@ async function getLogsAnalysisStatus(
 
     if (isEmpty(rows)) {
         return {
-            items: [{ description: 'No databases log analysis performed' }],
+            items: [],
             severity: 'info',
             noAnalysis: true,
             totalItems: 0
@@ -478,7 +474,7 @@ async function getLogsAnalysisStatus(
     // If no errors found after filtering, return "analysis ran with no errors" response
     if (isEmpty(uniqueErrors)) {
         return {
-            items: [{ description: 'Log analysis ran successfully with no errors detected' }],
+            items: [],
             severity: 'low',
             totalItems: 0
         };

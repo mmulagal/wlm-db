@@ -257,10 +257,7 @@ describe('getFocusStatus - assessment not run warning', () => {
         expect(severity).toEqual('info');
         expect(noAnalysis).toBe(true);
         expect(totalItems).toEqual(0);
-        expect(items.length).toEqual(1);
-        expect(items[0].description).toContain('well-architected');
-        expect(items[0].label).toBeUndefined();
-        expect(items[0].resources).toBeUndefined();
+        expect(items.length).toEqual(0);
     });
 });
 
@@ -431,10 +428,7 @@ describe('getLogsAnalysisStatus - no logs analysis performed', () => {
         expect(severity).toEqual('info');
         expect(noAnalysis).toBe(true);
         expect(totalItems).toEqual(0);
-        expect(items.length).toEqual(1);
-        expect(items[0].description).toContain('log analysis');
-        expect(items[0].label).toBeUndefined();
-        expect(items[0].resources).toBeUndefined();
+        expect(items.length).toEqual(0);
     });
 });
 
@@ -534,10 +528,7 @@ describe('getLogsAnalysisStatus - analysis ran with no errors', () => {
         const { items, totalItems, severity } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
         expect(severity).toEqual('low');
         expect(totalItems).toEqual(0);
-        expect(items.length).toEqual(1);
-        expect(items[0].description).toContain('no errors detected');
-        expect(items[0].label).toBeUndefined();
-        expect(items[0].resources).toBeUndefined();
+        expect(items.length).toEqual(0);
     });
 });
 

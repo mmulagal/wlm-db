@@ -6820,7 +6820,7 @@ const ORACLE_DATAGUARD_INSTANCES = {
 const DEMO_FOCUS_EVENT_ITEMS = [
     {
         label: 'Error: 605, Severity: 21, State: 3.',
-        description: 'Error: 605, Severity: 21, State: 3.',
+        description: 'Instance termination due to critical errors',
         key: 'Error: 605, Severity: 21, State: 3.',
         resources: [
             {
@@ -6831,7 +6831,7 @@ const DEMO_FOCUS_EVENT_ITEMS = [
     },
     {
         label: 'Error: 823, Severity: 24, State: 2.',
-        description: 'Error: 823, Severity: 24, State: 2.',
+        description: 'Database instance is running out of space',
         key: 'Error: 823, Severity: 24, State: 2.',
         resources: [
             {
