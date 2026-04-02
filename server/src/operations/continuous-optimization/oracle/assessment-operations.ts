@@ -319,8 +319,14 @@ async function initiateInstanceLevelAssessmentDataCollection(
 
         databaseInstanceRecord.svmOntapUuid = [...new Set(volumeData.map(vol => vol.svmId))].filter(Boolean);
         databaseInstanceRecord.svmOntapName = [...new Set(volumeData.map(vol => vol.svmName))].filter(Boolean);
-        databaseInstanceRecord.mappedVolumesUuids = [...new Set(volumeData.map(vol => vol.id))];
-        databaseInstanceRecord.mappedVolumeNames = [...new Set(volumeData.map(vol => vol.name))];
+        const uniqueVolumesById = new Map<string, string>();
+        volumeData.forEach(({ id, name }) => {
+            if (!isEmpty(id) && !isEmpty(name) && !uniqueVolumesById.has(id)) {
+                uniqueVolumesById.set(id, name);
+            }
+        });
+        databaseInstanceRecord.mappedVolumesUuids = [...uniqueVolumesById.keys()];
+        databaseInstanceRecord.mappedVolumeNames = [...uniqueVolumesById.values()];
         databaseInstanceRecord.mappedVolumeError = mappedVolumeError;
         databaseInstanceRecord.mappedDiskGroups = [...new Set(volumeData.map(vol => vol.diskGroup).filter(dg => !!dg))];
         databaseInstanceRecord.storageProtocol = protocol;
