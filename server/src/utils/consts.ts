@@ -1884,8 +1884,7 @@ const ORACLE_CPU_CATALOG_LOOKBACK_YEARS = 3;
 const ORACLE_CPU_CATALOG_FILE_PATH = join(TEMP_DIRECTORY, 'oracle-cpu-catalog.json');
 const ORACLE_CPU_CATALOG_QUEUE = 'WLMDB-OracleCpuCatalogQueue';
 // runs at 3:00 AM on the 24th of January, April, July, and October. That's ~2-10 days after each CPU release (3rd Tuesday).
-// const ORACLE_CPU_CATALOG_CRON_PATTERN = '0 3 24 1,4,7,10 *';
-const ORACLE_CPU_CATALOG_CRON_PATTERN = '0 3 * * *'; // for testing, runs every day at 3:00 AM
+const ORACLE_CPU_CATALOG_CRON_PATTERN = '0 3 24 1,4,7,10 *';
 
 export {
     TEMP_DIRECTORY,

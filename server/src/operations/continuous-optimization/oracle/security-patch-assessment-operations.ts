@@ -95,7 +95,7 @@ function findMissingPatches(
     const majorVersion = parseInt(oracleVersion.split('.')?.[0], 10);
 
     if (Number.isNaN(majorVersion)) {
-        logger.error('Could not parse Oracle version for security patch assessment', { oracleVersion });
+        logger.error('Could not parse Oracle version for Critical Patch Updates assessment', { oracleVersion });
         return [];
     }
 
@@ -139,7 +139,7 @@ async function collectSecurityPatchData(
         region,
         commands: [ORACLE_SECURITY_PATCH_ASSESSMENT(databaseInstanceName, ec2InstanceId)],
         ec2InstanceId,
-        comment: `Oracle security patch assessment for ${databaseInstanceName}`,
+        comment: `Oracle Critical Patch Updates assessment for ${databaseInstanceName}`,
         accountId,
         executionTimeout: ASSESSMENT_SSM_EXECUTION_TIMEOUT,
         shouldReadFromCloudWatchLogs: true,
@@ -174,7 +174,8 @@ async function calculateOracleSecurityPatchDrift(
         const catalog = await loadCpuCatalog();
         if (isEmpty(catalog)) {
             return {
-                errorMessage: 'Oracle CPU security patch catalog is unavailable. Unable to determine missing patches.'
+                errorMessage:
+                    'Oracle Critical Patch Updates catalog is unavailable. Unable to determine missing patches.'
             };
         }
 
@@ -198,7 +199,7 @@ async function calculateOracleSecurityPatchDrift(
                 })
         };
     } catch (error) {
-        const errorMessage = `Error calculating Oracle security patch drift: ${error}`;
+        const errorMessage = `Error calculating Oracle Critical Patch Updates assessment drift: ${error}`;
         logger.error(errorMessage, { databaseInstanceName });
         return { errorMessage };
     }
@@ -221,7 +222,7 @@ async function initiateOracleSecurityPatchAssessmentCollection(
 
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
 
-    logger.info('Initiate oracle security patch assessment collection', {
+    logger.info('Initiating Oracle Critical Patch Updates assessment data collection', {
         accountId,
         credentialsId,
         region,
@@ -232,8 +233,8 @@ async function initiateOracleSecurityPatchAssessmentCollection(
     });
 
     const { id: assessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Oracle security patch assessment for ${resourceWithInstanceName}`,
-        description: `Oracle security patch assessment for database ${resourceWithInstanceName}`,
+        name: `Oracle Critical Patch Updates assessment for ${resourceWithInstanceName}`,
+        description: `Oracle Critical Patch Updates assessment for database ${resourceWithInstanceName}`,
         resourceName: resourceWithInstanceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -266,7 +267,7 @@ async function initiateOracleSecurityPatchAssessmentCollection(
             }
         ]);
     } catch (error) {
-        errorMessage = `Error during Oracle security patch assessment: ${error}`;
+        errorMessage = `Error during Oracle Critical Patch Updates assessment: ${error}`;
         logger.error(errorMessage, {
             accountId,
             credentialsId,
