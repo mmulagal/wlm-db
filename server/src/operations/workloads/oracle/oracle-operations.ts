@@ -927,7 +927,7 @@ async function getOracleDatabaseInstancesSummary(
                             serverEdition: `Oracle ${nodeDetails?.serverEdition}`,
                             serverVersion: nodeDetails?.serverVersion,
                             activeNode: nodeDetails?.activeNode,
-                            nodeNames: [nodeDetails?.nodeNames],
+                            nodeNames: [resourceDetails?.resource_name || nodeDetails?.nodeNames],
                             activeConnections: nodeDetails?.activeConnections,
                             creationDate: nodeDetails?.creationDate
                         };
