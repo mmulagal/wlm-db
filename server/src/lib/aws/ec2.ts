@@ -238,7 +238,7 @@ async function describeInstanceTypes(region: string, credentialsId?: string) {
                 },
                 {
                     Name: 'instance-type',
-                    Values: ['m5*', 'm6*', 'm7*', 'c5*', 'c6*', 'c7*', 'r4*', 'r5*', 'r6*']
+                    Values: ['m5*', 'm6*', 'm7*', 'm8*', 'c5*', 'c6*', 'c7*', 'c8*', 'r5*', 'r6*', 'r7*', 'r8*']
                 }
             ]
         }
