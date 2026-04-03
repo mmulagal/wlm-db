@@ -6843,7 +6843,7 @@ const DEMO_FOCUS_EVENT_ITEMS = [
     {
         label: 'oracle-instance-termination',
         description: 'Instance termination due to critical errors',
-        key: 'oracle-instance-termination',
+        key: 'ORA-121954',
         resources: [
             {
                 name: 'ORDBSDL',
@@ -6854,7 +6854,7 @@ const DEMO_FOCUS_EVENT_ITEMS = [
     {
         label: 'oracle-temp-tablespace-empty',
         description: 'Empty temporary tablespace after database creation',
-        key: 'oracle-temp-tablespace-empty',
+        key: 'ORA-095435',
         resources: [
             {
                 name: 'ORDBSDL',
@@ -6872,29 +6872,29 @@ const DEMO_FOCUS_WAD_ITEMS = [
     {
         label: 'Enable thin provisioning',
         description: 'Enable thin provisioning for optimal storage efficiency',
-        key: 'thin-provisioning',
-        path: '/databases/well-architected/configName/thin-provisioning/engineType/mssql',
+        key: 'Thin Provisioning',
+        path: '/databases/well-architected/configName/Thin%20Provisioning/engineType/mssql',
         resources: [{ name: 'sqlnode1' }, { name: 'sqlnode2' }]
     },
     {
         label: 'Enable volume autogrow',
         description: 'Enable volume autogrow to prevent storage capacity issues',
-        key: 'volume-autogrow',
-        path: '/databases/well-architected/configName/volume-autogrow/engineType/mssql',
+        key: 'Volume Autogrow',
+        path: '/databases/well-architected/configName/Volume%20Autogrow/engineType/mssql',
         resources: [{ name: 'sqlnode1' }, { name: 'oraclenode1' }]
     },
     {
         label: 'Enable space allocation',
         description: 'Enable space allocation for write failure notification',
-        key: 'space-allocation',
-        path: '/databases/well-architected/configName/space-allocation/engineType/oracle',
+        key: 'Space Allocation',
+        path: '/databases/well-architected/configName/Space%20Allocation/engineType/oracle',
         resources: [{ name: 'oraclenode1' }, { name: 'oraclenode2' }]
     },
     {
         label: 'Enable Multipath I/O',
         description: 'Enable Multipath I/O for iSCSI storage resilience',
-        key: 'multipath-io',
-        path: '/databases/well-architected/configName/multipath-io/engineType/mssql',
+        key: 'Multipath IO',
+        path: '/databases/well-architected/configName/Multipath%20IO/engineType/mssql',
         resources: [{ name: 'sqlnode1' }]
     }
 ];

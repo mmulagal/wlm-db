@@ -486,13 +486,80 @@ describe('getLogsAnalysisStatus - deduplication across instances', () => {
 
     test('should deduplicate the same error across multiple instances and accumulate count', async () => {
         const { items, totalItems, severity } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
-        expect(severity).toEqual('medium');
+        expect(severity).toEqual('high');
         expect(totalItems).toEqual(1);
         expect(items.length).toEqual(1);
         expect(items[0].resources!.length).toEqual(2);
         const resourceNames = items[0].resources!.map(r => r.name);
         expect(resourceNames).toContain('INSTANCE1');
         expect(resourceNames).toContain('INSTANCE2');
+    });
+});
+
+describe('getLogsAnalysisStatus - description precedence (error over cause)', () => {
+    const TEST_ACCOUNT_ID = 'account-logs-desc-precedence-test';
+    let queryRawSpy: MockInstance;
+    let nodeEnvironment: string;
+
+    beforeAll(() => {
+        nodeEnvironment = process.env.NODE_ENV || 'demo';
+        process.env.NODE_ENV = 'local_dev';
+
+        queryRawSpy = vi.spyOn(prisma.client, '$queryRaw').mockResolvedValue([
+            {
+                database_instance_id: 'db-instance-desc-1',
+                resource_id: 'resource-desc-1',
+                database_type: DATABASE_TYPE.mssql,
+                database_instance_name: 'INSTANCE1',
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                hostname: 'host-desc.example.com',
+                recommendations: [
+                    {
+                        error: 'Original error message',
+                        cause: 'AI explanation cause text',
+                        errorCode: '605',
+                        severity: '21',
+                        uniqueErrorKey: '605'
+                    }
+                ]
+            }
+        ]);
+    });
+
+    afterAll(() => {
+        queryRawSpy.mockRestore();
+        process.env.NODE_ENV = nodeEnvironment;
+    });
+
+    test('should use cause for MSSQL description when both error and cause present', async () => {
+        const { items } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
+        expect(items[0].description).toEqual('AI explanation cause text');
+    });
+
+    test('should fall back to cause when error is missing', async () => {
+        queryRawSpy.mockResolvedValueOnce([
+            {
+                database_instance_id: 'db-instance-desc-2',
+                resource_id: 'resource-desc-2',
+                database_type: DATABASE_TYPE.mssql,
+                database_instance_name: 'INSTANCE2',
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                hostname: 'host-desc.example.com',
+                recommendations: [
+                    {
+                        error: '',
+                        cause: 'AI explanation cause text',
+                        errorCode: '605',
+                        severity: '21',
+                        uniqueErrorKey: '605'
+                    }
+                ]
+            }
+        ]);
+        const { items } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
+        expect(items[0].description).toEqual('AI explanation cause text');
     });
 });
 
@@ -615,5 +682,258 @@ describe('getLogsAnalysisStatus - demo flow demoLimit branch', () => {
         const { items } = await getLogsAnalysisStatus('demo-account', undefined, undefined, 2);
         const expectedSlice = DEMO_FOCUS_EVENT_ITEMS.slice(0, 2);
         expect(items).toEqual(expectedSlice);
+    });
+});
+
+describe('getLogsAnalysisStatus - Oracle description handling', () => {
+    const TEST_ACCOUNT_ID = 'account-logs-oracle-desc-test';
+    let queryRawSpy: MockInstance;
+    let nodeEnvironment: string;
+
+    beforeAll(() => {
+        nodeEnvironment = process.env.NODE_ENV || 'demo';
+        process.env.NODE_ENV = 'local_dev';
+
+        queryRawSpy = vi.spyOn(prisma.client, '$queryRaw').mockResolvedValue([
+            {
+                database_instance_id: 'db-instance-oracle-1',
+                resource_id: 'resource-oracle-1',
+                database_type: DATABASE_TYPE.oracle,
+                database_instance_name: 'ORACLE1',
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                hostname: 'host-oracle.example.com',
+                recommendations: [
+                    {
+                        error: 'ORA-00313: open failed for members of log group 3 of thread 1',
+                        cause: 'AI explanation about log group failure',
+                        errorCode: 'ORA-00313',
+                        severity: 'IMPORTANT',
+                        uniqueErrorKey: 'ORA-00313'
+                    },
+                    {
+                        error: 'ORA-19625: error identifying file /path/to/users01.dbf',
+                        cause: 'AI explanation about missing datafile',
+                        errorCode: 'ORA-19625',
+                        severity: 'IMPORTANT',
+                        uniqueErrorKey: 'ORA-19625'
+                    },
+                    {
+                        error: 'WARNING: Heavy swapping observed on system in last 5 mins',
+                        cause: 'AI explanation about memory pressure',
+                        severity: 'IMPORTANT',
+                        uniqueErrorKey: 'warning-heavy-swapping-dummy'
+                    }
+                ]
+            }
+        ]);
+    });
+
+    afterAll(() => {
+        queryRawSpy.mockRestore();
+        process.env.NODE_ENV = nodeEnvironment;
+    });
+
+    test('should strip ORA prefix and capitalize first letter for Oracle description', async () => {
+        const { items } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
+        const oraItems = items.filter(item => item.key?.startsWith('ORA-'));
+        expect(oraItems.length).toBeGreaterThan(0);
+
+        const oraItem = oraItems[0];
+        expect(oraItem.description).not.toMatch(/^ORA-\d+:/);
+        expect(oraItem.description).toMatch(/^[A-Z]/);
+    });
+
+    test('should ignore cause for Oracle and use error description', async () => {
+        const { items } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
+        const oraItem = items.find(item => item.key === 'ORA-00313');
+        expect(oraItem).toBeDefined();
+        expect(oraItem!.description).toEqual('Open failed for members of log group 3 of thread 1');
+    });
+
+    test('should extract ORA code as key when errorCode is present', async () => {
+        const { items } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
+        const oraItem = items.find(item => item.key === 'ORA-00313');
+        expect(oraItem).toBeDefined();
+        expect(oraItem!.label).toEqual('ORA-00313');
+    });
+
+    test('should handle non-ORA Oracle errors with capitalized description', async () => {
+        const { items } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
+        const warningItem = items.find(item => item.description?.startsWith('WARNING'));
+        expect(warningItem).toBeDefined();
+        expect(warningItem!.description).toEqual('WARNING: Heavy swapping observed on system in last 5 mins');
+    });
+});
+
+describe('getLogsAnalysisStatus - severity mapping', () => {
+    const TEST_ACCOUNT_ID = 'account-logs-severity-map-test';
+    let queryRawSpy: MockInstance;
+    let nodeEnvironment: string;
+
+    beforeAll(() => {
+        nodeEnvironment = process.env.NODE_ENV || 'demo';
+        process.env.NODE_ENV = 'local_dev';
+
+        queryRawSpy = vi.spyOn(prisma.client, '$queryRaw').mockResolvedValue([
+            {
+                database_instance_id: 'db-instance-sev-1',
+                resource_id: 'resource-sev-1',
+                database_type: DATABASE_TYPE.mssql,
+                database_instance_name: 'INSTANCE_CRITICAL',
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                hostname: 'host-sev.example.com',
+                recommendations: [
+                    {
+                        error: 'Error: 999, Severity: 24, State: 1.',
+                        errorCode: '999',
+                        severity: '24',
+                        uniqueErrorKey: '999'
+                    }
+                ]
+            },
+            {
+                database_instance_id: 'db-instance-sev-2',
+                resource_id: 'resource-sev-2',
+                database_type: DATABASE_TYPE.mssql,
+                database_instance_name: 'INSTANCE_SEVERE',
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                hostname: 'host-sev.example.com',
+                recommendations: [
+                    {
+                        error: 'Error: 888, Severity: 18, State: 1.',
+                        errorCode: '888',
+                        severity: '18',
+                        uniqueErrorKey: '888'
+                    }
+                ]
+            },
+            {
+                database_instance_id: 'db-instance-sev-3',
+                resource_id: 'resource-sev-3',
+                database_type: DATABASE_TYPE.mssql,
+                database_instance_name: 'INSTANCE_IMPORTANT',
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                hostname: 'host-sev.example.com',
+                recommendations: [
+                    {
+                        error: 'Error: 777, Severity: 16, State: 1.',
+                        errorCode: '777',
+                        severity: '16',
+                        uniqueErrorKey: '777'
+                    }
+                ]
+            }
+        ]);
+    });
+
+    afterAll(() => {
+        queryRawSpy.mockRestore();
+        process.env.NODE_ENV = nodeEnvironment;
+    });
+
+    test('should map critical (severity 24) to high', async () => {
+        const { severity } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
+        expect(severity).toEqual('high');
+    });
+
+    test('should map severe (severity 18) to high', async () => {
+        // Mock with only severe severity
+        queryRawSpy.mockResolvedValueOnce([
+            {
+                database_instance_id: 'db-instance-severe-only',
+                resource_id: 'resource-severe-only',
+                database_type: DATABASE_TYPE.mssql,
+                database_instance_name: 'INSTANCE_SEVERE_ONLY',
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                hostname: 'host.example.com',
+                recommendations: [
+                    {
+                        error: 'Error: 100, Severity: 17, State: 1.',
+                        errorCode: '100',
+                        severity: '17',
+                        uniqueErrorKey: '100'
+                    }
+                ]
+            }
+        ]);
+        const { severity } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
+        expect(severity).toEqual('high');
+    });
+
+    test('should map important (severity 16) to medium', async () => {
+        // Mock with only important severity
+        queryRawSpy.mockResolvedValueOnce([
+            {
+                database_instance_id: 'db-instance-important-only',
+                resource_id: 'resource-important-only',
+                database_type: DATABASE_TYPE.mssql,
+                database_instance_name: 'INSTANCE_IMPORTANT_ONLY',
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                hostname: 'host.example.com',
+                recommendations: [
+                    {
+                        error: 'Error: 200, Severity: 16, State: 1.',
+                        errorCode: '200',
+                        severity: '16',
+                        uniqueErrorKey: '200'
+                    }
+                ]
+            }
+        ]);
+        const { severity } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
+        expect(severity).toEqual('medium');
+    });
+
+    test('should map Oracle CRITICAL to high', async () => {
+        queryRawSpy.mockResolvedValueOnce([
+            {
+                database_instance_id: 'db-instance-oracle-critical',
+                resource_id: 'resource-oracle-critical',
+                database_type: DATABASE_TYPE.oracle,
+                database_instance_name: 'ORACLE_CRITICAL',
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                hostname: 'host.example.com',
+                recommendations: [
+                    {
+                        error: 'ORA-00600: internal error code',
+                        errorCode: 'ORA-00600',
+                        severity: 'CRITICAL',
+                        uniqueErrorKey: 'ORA-00600'
+                    }
+                ]
+            }
+        ]);
+        const { severity } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
+        expect(severity).toEqual('high');
+    });
+
+    test('should map Oracle IMPORTANT to medium', async () => {
+        queryRawSpy.mockResolvedValueOnce([
+            {
+                database_instance_id: 'db-instance-oracle-important',
+                resource_id: 'resource-oracle-important',
+                database_type: DATABASE_TYPE.oracle,
+                database_instance_name: 'ORACLE_IMPORTANT',
+                credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                hostname: 'host.example.com',
+                recommendations: [
+                    {
+                        error: 'WARNING: db_recovery_file_dest space low',
+                        severity: 'IMPORTANT',
+                        uniqueErrorKey: 'warning-recovery-dummy'
+                    }
+                ]
+            }
+        ]);
+        const { severity } = await getLogsAnalysisStatus(TEST_ACCOUNT_ID);
+        expect(severity).toEqual('medium');
     });
 });

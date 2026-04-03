@@ -145,7 +145,7 @@ function getLimitedItems(objects: GroupedDatabaseInstancesBySeverityResult[], li
         const displayLabel = originalName.includes('-') ? hyphenatedToPascalCaseWithSpace(originalName) : originalName;
 
         return {
-            key: originalName,
+            key: displayLabel,
             label: displayLabel,
             description: recommendation || displayLabel,
             count: obj.count,
@@ -323,9 +323,14 @@ const SEVERITY_PRIORITY = [SEVERITIES.CRITICAL, SEVERITIES.SEVERE, SEVERITIES.IM
 
 const LOGS_SEVERITY_TO_FOCUS_SEVERITY: Record<string, string> = {
     [SEVERITIES.CRITICAL]: 'high',
-    [SEVERITIES.SEVERE]: 'medium',
-    [SEVERITIES.IMPORTANT]: 'low'
+    [SEVERITIES.SEVERE]: 'high',
+    [SEVERITIES.IMPORTANT]: 'medium'
 };
+
+function buildOracleDescription(error: string): string {
+    const stripped = error.replace(/^ORA-\d+:\s*/, '');
+    return stripped.charAt(0).toUpperCase() + stripped.slice(1);
+}
 
 function buildErrorKey(databaseType: string, error: string, errorCode?: string): string | undefined {
     if (databaseType === DATABASE_TYPE.mssql) {
@@ -339,6 +344,10 @@ function buildErrorKey(databaseType: string, error: string, errorCode?: string):
             const capitalised = keyword.charAt(0).toUpperCase() + keyword.slice(1);
             return `${capitalised}: ${message.trim()}`;
         }
+    }
+    if (databaseType === DATABASE_TYPE.oracle) {
+        const oraMatch = /^(ORA-\d+)/.exec(error);
+        return errorCode ?? oraMatch?.[1];
     }
     return errorCode;
 }
@@ -456,7 +465,10 @@ async function getLogsAnalysisStatus(
 
             if (!existing) {
                 errorMap.set(mapKey, {
-                    description: cause || error,
+                    description:
+                        engineType === DATABASE_TYPE.mssql
+                            ? cause || error
+                            : ((buildOracleDescription(error) || cause) as string),
                     key,
                     count: 1,
                     severity: normalizedSeverity,

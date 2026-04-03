@@ -1464,10 +1464,34 @@ function camelCaseToHyphenated(str: string): string {
     return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
+const UPPERCASE_ACRONYMS = new Set([
+    'io',
+    'nfs',
+    'iscsi',
+    'mpio',
+    'ntfs',
+    'os',
+    'asm',
+    'afd',
+    'asmlib',
+    'tcp',
+    'dg',
+    'dnfs',
+    'sql',
+    'lun',
+    'fra'
+]);
+
 function hyphenatedToPascalCaseWithSpace(str: string): string {
     return str
         .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .map(word => {
+            const lowerWord = word.toLowerCase();
+            if (UPPERCASE_ACRONYMS.has(lowerWord)) {
+                return lowerWord.toUpperCase();
+            }
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        })
         .join(' ');
 }
 
