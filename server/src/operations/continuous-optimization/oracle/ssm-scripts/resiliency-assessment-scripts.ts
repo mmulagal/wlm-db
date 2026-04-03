@@ -129,9 +129,12 @@ for vol_name in volume_names:
                 dp = dest.get('destination', {}).get('path', '')
                 if dp:
                     all_destination_paths.append(dp)
-            all_peer_svm_names.extend(mapping['peerSvmNames'])
-            all_peer_cluster_names.extend(mapping['peerClusterNames'])
-            all_peer_cluster_ids.extend(mapping['peerClusterIds'])
+                dest_svm = dest.get('destination', {}).get('svm', {}).get('name', '')
+                if dest_svm in mapping['peerSvmNames']:
+                    idx = mapping['peerSvmNames'].index(dest_svm)
+                    all_peer_svm_names.append(dest_svm)
+                    all_peer_cluster_names.append(mapping['peerClusterNames'][idx])
+                    all_peer_cluster_ids.append(mapping['peerClusterIds'][idx])
 
         if found_snapmirror:
             obj['isSnapMirrored'] = True

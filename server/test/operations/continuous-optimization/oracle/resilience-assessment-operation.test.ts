@@ -124,6 +124,12 @@ describe('ORACLE_CRR_ASSESSMENT_SCRIPT', () => {
         expect(script).toContain('snapmirror/relationships/?list_destinations_only=true');
     });
 
+    it('should match peer info from SnapMirror destination SVM, not all peers', () => {
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
+        expect(script).toContain('dest_svm = dest.get(\'destination\', {}).get(\'svm\', {}).get(\'name\', \'\')');
+        expect(script).toContain('if dest_svm in mapping[\'peerSvmNames\']');
+    });
+
     it('should not contain inline ontap_request bash function or manual credential parsing', () => {
         const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
         expect(script).not.toContain('ontap_request ()');
@@ -279,6 +285,35 @@ describe('getCrrDriftData', () => {
         expect(result.status).toBe(AssessmentStatus.OPTIMIZED);
         expect(result.totalObjectsAssessed).toBe(0);
         expect(result.totalObjectsInViolation).toBe(0);
+    });
+
+    it('should return NOT_OPTIMIZED when volumes are SnapMirrored locally but not cross-region', () => {
+        const crrData: CrrAssessment = {
+            crrDetails: [
+                {
+                    volumeName: 'data_vol',
+                    volumeUuid: 'uuid-data',
+                    fsxVolumeId: 'fsvol-data',
+                    isCRREnabled: false,
+                    isSnapMirrored: true
+                },
+                {
+                    volumeName: 'log_vol',
+                    volumeUuid: 'uuid-log',
+                    fsxVolumeId: 'fsvol-log',
+                    isCRREnabled: false,
+                    isSnapMirrored: true
+                }
+            ]
+        };
+
+        const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
+        expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+        expect(result.totalObjectsInViolation).toBe(2);
+        expect(result.objectsInViolation).toEqual([
+            { ontapVolumeName: 'data_vol', ontapVolumeUuid: 'uuid-data', fsxVolumeId: 'fsvol-data' },
+            { ontapVolumeName: 'log_vol', ontapVolumeUuid: 'uuid-log', fsxVolumeId: 'fsvol-log' }
+        ]);
     });
 
     describe('control file multiplexing exemption', () => {
