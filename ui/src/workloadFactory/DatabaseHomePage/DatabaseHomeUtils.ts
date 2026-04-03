@@ -1456,7 +1456,8 @@ const processOracleConfigurationData = (
                     { configName: 'data-dg-lun-layout', resultKey: 'dataDgLunLayout' },
                     { configName: 'redolog-dg-lun-layout', resultKey: 'logDgLunLayout' },
                     { configName: 'fra-dg-lun-layout', resultKey: 'fraDgLunLayout' },
-                    { configName: 'archivelog-dg-lun-layout', resultKey: 'archiveLogDgLunLayout' }
+                    { configName: 'archivelog-dg-lun-layout', resultKey: 'archiveLogDgLunLayout' },
+                    { configName: 'oracle-binary-placement', resultKey: 'oracleBinaryPlacement' }
                 ];
 
                 oracleLayoutConfigs.forEach(({ configName, resultKey }) => {
@@ -1468,17 +1469,6 @@ const processOracleConfigurationData = (
                         getAssessmentGroupedByConfigurations
                     );
                 });
-
-                // Skip oracleBinaryPlacement counting for WAD instances (WAD-excluded config for Oracle)
-                if (!databaseHost?.isWad) {
-                    processStorageLayoutConfig(
-                        instanceAssessmentData,
-                        'oracle-binary-placement',
-                        'oracleBinaryPlacement',
-                        configState,
-                        getAssessmentGroupedByConfigurations
-                    );
-                }
 
                 // Process Oracle storage sizing configurations
                 const headroomObj = instanceAssessmentData?.storage?.sizing?.find(

@@ -495,7 +495,10 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
                     {/* Text Area */}
 
-                    <div className={setCSSForTextArea()} style={headingWidth !== undefined ? { width: headingWidth } : undefined}>
+                    <div
+                        className={setCSSForTextArea()}
+                        style={headingWidth !== undefined ? { width: headingWidth } : undefined}
+                    >
                         <div>{isMutliFsx && !isOracleOnPrem ? <SuggestionDisable /> : <Suggestion />}</div>
                         <div className={styles.textContent}>
                             <DsTypography
@@ -521,7 +524,12 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
                     {/* Accordion here - RecommendedAccordion handles both MSSQL and Oracle */}
 
-                    <RecommendedAccordion printState={printState} disableState={disableState} isMutliFsx={isMutliFsx} width={headingWidth} />
+                    <RecommendedAccordion
+                        printState={printState}
+                        disableState={disableState}
+                        isMutliFsx={isMutliFsx}
+                        width={headingWidth}
+                    />
                 </div>
 
                 {/* last section */}
