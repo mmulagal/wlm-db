@@ -54,7 +54,7 @@ import {
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoMockdata';
-import { getLatestInstanceAssessmentTime } from '../assessment-utils';
+import { getLatestInstanceAssessmentTime, isPdbGroupedVolumes } from '../assessment-utils';
 import {
     updateFieldsBasedOnDismissedConfigurations,
     processDismissedConfigurations,
@@ -71,12 +71,13 @@ function getOntapVolumeIdsByFileType(
     fileTypes: OracleSysFileTypes[]
 ): Record<string, string[]> {
     const { ontapVolumes = {}, isCDB = false } = instanceVolumeMapping || {};
+    const hasPdbGroupedVolumes = isPdbGroupedVolumes(isCDB, ontapVolumes);
     return Object.fromEntries(
         fileTypes.map(fileType => [
             fileType,
             [
                 ...new Set(
-                    isCDB
+                    hasPdbGroupedVolumes
                         ? Object.values(ontapVolumes).flatMap(pdb =>
                               ((pdb as Record<string, OracleVolumeRecord[]>)[fileType] || []).map(vol => vol.volumeId)
                           )
@@ -280,7 +281,9 @@ async function initiateInstanceLevelAssessmentDataCollection(
                 )
             );
 
-        const volumeData = isCDB
+        const hasPdbGroupedVolumes = isPdbGroupedVolumes(isCDB, ontapVolumes);
+
+        const volumeData = hasPdbGroupedVolumes
             ? extractVolumeData(ontapVolumes, protocol!)
             : Object.values(ontapVolumes).flatMap(volumes =>
                   volumes.map((vol: any) => ({
@@ -298,7 +301,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
                   }))
               );
 
-        const redoVolumeNames: string[] = isCDB
+        const redoVolumeNames: string[] = hasPdbGroupedVolumes
             ? Object.values(ontapVolumes).flatMap(pdb =>
                   ((pdb as Record<string, OracleVolumeRecord[]>)[OracleSysFileTypes.REDO_LOGS] || []).map(
                       vol => vol.volumeName
@@ -309,7 +312,7 @@ async function initiateInstanceLevelAssessmentDataCollection(
               );
 
         const nonRedoVolumeNames = new Set<string>(
-            isCDB
+            hasPdbGroupedVolumes
                 ? Object.values(ontapVolumes).flatMap(pdb =>
                       Object.entries(pdb as Record<string, OracleVolumeRecord[]>)
                           .filter(([fileType]) => fileType !== OracleSysFileTypes.REDO_LOGS)

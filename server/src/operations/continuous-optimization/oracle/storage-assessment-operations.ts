@@ -44,7 +44,7 @@ import { OS_ASSESSMENT } from './ssm-scripts/os-iscsi-assessment-scripts';
 import { NFS_OS_ASSESSMENT } from './ssm-scripts/os-nfs-assessment-scripts';
 import { ORACLE_STORAGE_SIZING_ASSESSMENT, VOLUME_LUN_CONFIGURATION } from './ssm-scripts/storage-assessment-scripts';
 import { getHeadroomDrift } from '../headroom-assessment';
-import { normalizeNfsVersion } from '../assessment-utils';
+import { normalizeNfsVersion, isPdbGroupedVolumes } from '../assessment-utils';
 
 const logger = getLogger();
 
@@ -108,8 +108,9 @@ function mapVolumeTypesToIdName(
 
     const isCDB = instanceVolumeMappings?.isCDB || false;
     const volumeRecords = instanceVolumeMappings?.ontapVolumes || {};
+    const hasPdbGroupedVolumes = isPdbGroupedVolumes(isCDB, volumeRecords);
 
-    const flattenedRecords = isCDB
+    const flattenedRecords = hasPdbGroupedVolumes
         ? Object.values(volumeRecords).flatMap(pdb =>
               Object.entries(pdb).flatMap(([type, volumes]) =>
                   Array.isArray(volumes) ? volumes.map(vol => ({ type, volume: vol })) : []

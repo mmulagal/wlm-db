@@ -16,6 +16,7 @@ import type {
     ResourceDetails
 } from '../../utils/common-types';
 import { OracleJobMetadata } from './oracle/consts';
+import { OracleMappedOntapVolumeRecordType } from '../workloads/oracle/common-types';
 import getMissingPermissionsList from '../aws/iam-operations';
 import { DatabaseTypes, HttpErrorCodes } from '../../utils/consts';
 import { getInstanceInfo, updateDatabaseHostAssessmentData } from '../database/database-operations';
@@ -296,6 +297,16 @@ async function updatePatchBaselineStatusForHost(
     }
 }
 
+/**
+ * Determines if ontapVolumes uses PDB-grouped structure (pdbName -> fileType -> volumes[])
+ * vs flat structure (fileType -> volumes[]).
+ * CDB instances without pdbMountDetails will have isCDB=true but flat ontapVolumes.
+ */
+function isPdbGroupedVolumes(isCDB: boolean, ontapVolumes: OracleMappedOntapVolumeRecordType['ontapVolumes']): boolean {
+    const values = Object.values(ontapVolumes || {});
+    return isCDB && values.length > 0 && !Array.isArray(values[0]);
+}
+
 export {
     getMatchingAssessmentStatus,
     handleOptimizeJobCreation,
@@ -307,5 +318,6 @@ export {
     normalizeNfsVersion,
     checkIfPatchBaselineInProgress,
     updatePatchBaselineStatusForHost,
+    isPdbGroupedVolumes,
     JobMetadata
 };

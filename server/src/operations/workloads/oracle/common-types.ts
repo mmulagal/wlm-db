@@ -57,6 +57,9 @@ interface OracleMappedOntapVolumeRecord {
     error?: string;
     ontapVolumes?: Record<string, OracleVolumeRecord[]> | Record<string, Record<string, OracleVolumeRecord[]>>;
 }
+
+type OracleMappedOntapVolumeRecordType = OracleMappedOntapVolumeRecord;
+
 interface OracleMappedOntapVolumesResponse {
     isASMManaged?: boolean;
     protocol?: string;
@@ -143,5 +146,6 @@ export {
     DataguardStatusResponse,
     OracleDataguardDiscoveryDetails,
     DataguardDetailsResponseType,
-    OracleDataguardDiscoveryDetailsType
+    OracleDataguardDiscoveryDetailsType,
+    OracleMappedOntapVolumeRecordType
 };
