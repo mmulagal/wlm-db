@@ -88,7 +88,12 @@ async function initiateCrossRegionResiliencyAssessment(
 
         // Determine cross-region status at the instance level (once per peer FSx ID),
         // then apply to all volumes that reference that peer.
-        const peerFileSystemIds = [...new Set(compact(crrDetails.map(d => d.peerClusterFsxId).flat()) as string[])];
+        // Exclude peer IDs that match the source FSx — same file system with a different
+        // vserver is NOT cross-region replication.
+        const sourceFsxIds = new Set(instanceRecord.fsxFileSystem.split(',').map(id => id.trim()));
+        const peerFileSystemIds = [
+            ...new Set(compact(crrDetails.map(d => d.peerClusterFsxId).flat()) as string[])
+        ].filter(id => !sourceFsxIds.has(id));
         const crossRegionPeerIds = new Set<string>();
 
         if (!isEmpty(peerFileSystemIds)) {
@@ -102,8 +107,8 @@ async function initiateCrossRegionResiliencyAssessment(
                             accountId,
                             { useCache: true }
                         );
-                        const resourceArn = fsxInfo?.FileSystems?.[0]?.ResourceARN;
-                        if (!resourceArn?.includes(region)) {
+                        const peerRegion = fsxInfo?.FileSystems?.[0]?.ResourceARN?.split(':')[3];
+                        if (peerRegion && peerRegion !== region) {
                             crossRegionPeerIds.add(peerFileSystemId);
                         }
                     } catch (error: any) {
