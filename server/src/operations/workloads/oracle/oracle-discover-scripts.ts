@@ -2181,7 +2181,7 @@ const getMappedOntapDataVolumeForInstance = (
         if [ "$mountProtocol" == "iSCSI" ]; then
             # For iSCSI, extract LUN details
             lunName=$(echo "$response" | jq -r '.records[0].name')
-            volumeEntry="{\\"volumeName\\": \\"$volumeName\\",\\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\", \\"svmId\\": \\"$svmId\\", \\"lunName\\": \\"$lunName\\", \\"lunId\\": \\"$lunId\\", \\"copiesCount\\": $copiesCount}"
+            volumeEntry="{\\"volumeName\\": \\"$volumeName\\",\\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\", \\"svmId\\": \\"$svmId\\", \\"lunName\\": \\"$lunName\\", \\"lunId\\": \\"$lunId\\", \\"lunPath\\": \\"$lunName\\", \\"copiesCount\\": $copiesCount}"
 
             lunExists=$(echo "$lunRecords" | jq --arg serial "$mountPoint" --arg name "$response" '.[] | select(.serial == $serial)')
             if [ -z "$lunExists" ]; then
@@ -2192,7 +2192,7 @@ const getMappedOntapDataVolumeForInstance = (
         else
             # For NFS
             log "Processing NFS protocol"
-            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\",\\"svmId\\": \\"$svmId\\", \\"copiesCount\\": $copiesCount}"
+            volumeEntry="{\\"volumeName\\": \\"$volumeName\\", \\"volumeId\\": \\"$volumeId\\", \\"svmName\\": \\"$svmName\\",\\"svmId\\": \\"$svmId\\", \\"junctionPath\\": \\"$mountPoint\\", \\"copiesCount\\": $copiesCount}"
             log "LUN record already exists for serial: $mountPoint"
         fi
         

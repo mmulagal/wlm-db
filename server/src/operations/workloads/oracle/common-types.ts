@@ -46,6 +46,8 @@ interface OracleVolumeRecord {
     svmName?: string;
     lunName?: string;
     lunId?: string;
+    junctionPath?: string;
+    lunPath?: string;
     diskName?: string;
     diskGroup?: string;
     copiesCount?: number;

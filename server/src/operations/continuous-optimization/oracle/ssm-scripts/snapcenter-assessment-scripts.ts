@@ -18,7 +18,8 @@ const snapcenterPythonTemplate = (
     region: string,
     instanceName: string,
     volumeNames: string[],
-    volumeUuids: string[]
+    volumeUuids: string[],
+    volumeLogKeys: string[]
 ) => `
 ${getFsxCredentials}
 ${ontapRestApiScript}
@@ -28,10 +29,12 @@ region = '${region}'
 instance_name = '${instanceName}'
 volume_names = json.loads('${JSON.stringify(volumeNames)}')
 volume_uuids = json.loads('${JSON.stringify(volumeUuids)}')
+volume_log_keys = json.loads('${JSON.stringify(volumeLogKeys)}')
 
 log("Starting SnapCenter snapshot assessment")
 log(f"FSx ID: {filesystemid}, Region: {region}, Instance: {instance_name}")
 log(f"Volume names: {volume_names}, Volume UUIDs: {volume_uuids}")
+log(f"Volume log keys: {volume_log_keys}")
 
 uuid_filter = '|'.join(volume_uuids)
 volume_info_url = f'storage/volumes?uuid={uuid_filter}&fields=svm'
@@ -52,6 +55,7 @@ for rec in volume_info_data.get('records', []):
 volumes = []
 for i, vol_uuid in enumerate(volume_uuids):
     vol_name = volume_names[i] if i < len(volume_names) else ''
+    vol_log_key = volume_log_keys[i] if i < len(volume_log_keys) else ''
     log(f"Checking SnapCenter snapshots for volume: {vol_name} ({vol_uuid})")
 
     svm_info = svm_lookup.get(vol_uuid, {})
@@ -79,7 +83,8 @@ for i, vol_uuid in enumerate(volume_uuids):
         'volumeId': vol_uuid,
         'volumeName': vol_name,
         'hasSnapcenterSnapshot': has_snapcenter,
-        'foundInSnapcenterLogs': False
+        'foundInSnapcenterLogs': False,
+        'logKey': vol_log_key
     })
 
 log("Checking standalone SnapCenter plugin service")
@@ -120,17 +125,21 @@ if plugin_running and os.path.isdir(sc_log_path):
 
             if sid_found_in_logs:
                 for vol in volumes:
-                    vname = vol['volumeName']
-                    vol_grep = subprocess.run(['grep', '-l', vname] + recent_logs,
+                    log_key = vol.get('logKey', '')
+                    search_key = log_key if log_key else vol['volumeName']
+                    vol_grep = subprocess.run(['grep', '-l', search_key] + recent_logs,
                                               capture_output=True, text=True, timeout=30)
                     vol['foundInSnapcenterLogs'] = vol_grep.returncode == 0
-                    log(f"Volume '{vname}' {'found' if vol['foundInSnapcenterLogs'] else 'not found'} in recent logs")
+                    log(f"Volume '{vol['volumeName']}' (search_key='{search_key}') {'found' if vol['foundInSnapcenterLogs'] else 'not found'} in recent logs")
         else:
             log("No SnapCenter log files modified in last 48h")
     except Exception as e:
         log(f"Error during SnapCenter log check: {e}")
 else:
     log(f"Skipping log check: plugin_running={plugin_running}, log_path_exists={os.path.isdir(sc_log_path)}")
+
+for vol in volumes:
+    vol.pop('logKey', None)
 
 output = {
     'isDataguardPrimary': False,
@@ -200,6 +209,10 @@ const SNAPCENTER_ASSESSMENT_SCRIPT = (instanceRecord: WorkloadInstance) => {
     const fsxId = instanceRecord.fsxFileSystem.split(',')[0];
     const volumeNames = instanceRecord.mappedVolumeNames || [];
     const volumeUuids = instanceRecord.mappedVolumesUuids || [];
+    const volumeLogKeys =
+        instanceRecord.storageProtocol === 'iSCSI'
+            ? instanceRecord.mappedVolumeLunPaths || []
+            : instanceRecord.mappedVolumeJunctionPaths || [];
 
     return `#!/bin/bash
 set -euo pipefail
@@ -214,7 +227,14 @@ ${checkCommandStatus}
 ${dataguardPrimaryCheck(instanceRecord.name)}
 
 scResult=$(${pythonScriptInit(
-        snapcenterPythonTemplate(fsxId, instanceRecord.region, instanceRecord.name, volumeNames, volumeUuids),
+        snapcenterPythonTemplate(
+            fsxId,
+            instanceRecord.region,
+            instanceRecord.name,
+            volumeNames,
+            volumeUuids,
+            volumeLogKeys
+        ),
         SNAPCENTER_LOG_FILE_NAME
     )})
 

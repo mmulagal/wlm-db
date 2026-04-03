@@ -269,6 +269,8 @@ async function initiateInstanceLevelAssessmentDataCollection(
                               diskGroup: vol?.diskGroup ?? null,
                               svmId: vol.svmId,
                               svmName: vol.svmName,
+                              junctionPath: vol.junctionPath,
+                              lunPath: vol.lunPath,
                               ...(storageProtocol === 'iSCSI' && {
                                   lunId: vol.lunId,
                                   lunName: vol.lunName
@@ -287,6 +289,8 @@ async function initiateInstanceLevelAssessmentDataCollection(
                       diskGroup: vol?.diskGroup ?? null,
                       svmId: vol.svmId,
                       svmName: vol.svmName,
+                      junctionPath: vol.junctionPath,
+                      lunPath: vol.lunPath,
                       ...(protocol === 'iSCSI' && {
                           lunId: vol.lunId,
                           lunName: vol.lunName
@@ -319,14 +323,18 @@ async function initiateInstanceLevelAssessmentDataCollection(
 
         databaseInstanceRecord.svmOntapUuid = [...new Set(volumeData.map(vol => vol.svmId))].filter(Boolean);
         databaseInstanceRecord.svmOntapName = [...new Set(volumeData.map(vol => vol.svmName))].filter(Boolean);
-        const uniqueVolumesById = new Map<string, string>();
-        volumeData.forEach(({ id, name }) => {
+        const uniqueVolumesById = new Map<string, { name: string; junctionPath?: string; lunPath?: string }>();
+        volumeData.forEach(({ id, name, junctionPath, lunPath }) => {
             if (!isEmpty(id) && !isEmpty(name) && !uniqueVolumesById.has(id)) {
-                uniqueVolumesById.set(id, name);
+                uniqueVolumesById.set(id, { name, junctionPath, lunPath });
             }
         });
         databaseInstanceRecord.mappedVolumesUuids = [...uniqueVolumesById.keys()];
-        databaseInstanceRecord.mappedVolumeNames = [...uniqueVolumesById.values()];
+        databaseInstanceRecord.mappedVolumeNames = [...uniqueVolumesById.values()].map(v => v.name);
+        databaseInstanceRecord.mappedVolumeJunctionPaths = [...uniqueVolumesById.values()].map(
+            v => v.junctionPath ?? ''
+        );
+        databaseInstanceRecord.mappedVolumeLunPaths = [...uniqueVolumesById.values()].map(v => v.lunPath ?? '');
         databaseInstanceRecord.mappedVolumeError = mappedVolumeError;
         databaseInstanceRecord.mappedDiskGroups = [...new Set(volumeData.map(vol => vol.diskGroup).filter(dg => !!dg))];
         databaseInstanceRecord.storageProtocol = protocol;

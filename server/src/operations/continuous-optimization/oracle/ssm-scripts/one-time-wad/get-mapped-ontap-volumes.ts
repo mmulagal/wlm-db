@@ -350,6 +350,7 @@ def get_nfs_volume_mapping(ontap_config, mount_ip, junction_path,
         "volumeId": volume.get('uuid'),
         "svmName": svm_name,
         "svmId": svm_id,
+        "junctionPath": junction_path,
         "copiesCount": 0
     }
 
@@ -390,6 +391,7 @@ def get_iscsi_volume_mapping(ontap_config, serial_number, lun_records,
         "svmId": svm.get('uuid'),
         "lunName": lun.get('name'),
         "lunId": lun.get('uuid'),
+        "lunPath": lun.get('name'),
         "copiesCount": 0
     }
 

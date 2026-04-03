@@ -556,6 +556,8 @@ interface WorkloadInstance {
     mappedVolumeError?: string;
     mappedLunNames?: string[];
     mappedLunUuids?: string[];
+    mappedVolumeJunctionPaths?: string[];
+    mappedVolumeLunPaths?: string[];
     mappedDiskGroups?: string[];
     cloudProviderAccountId?: string; // Refers to AWS account ID
     resourceName: string;
