@@ -115,11 +115,7 @@ const ResiliencySection = ({
                         <DsAccordion
                             id="snapcenterSnapshot-1"
                             variant="Default"
-                            isDisabled={
-                                loading ||
-                                showDismissedConfigurations ||
-                                !oracleCardData?.snapcenterSnapshot?.block_two?.value
-                            }
+                            isDisabled={loading || showDismissedConfigurations}
                             isExpanded={isAccordionExpanded('snapcenterSnapshot-1', optimizePrintState)}
                             onExpandChange={isExpanded => {
                                 handleAccordionExpanded('snapcenterSnapshot-1', isExpanded);
@@ -141,20 +137,12 @@ const ResiliencySection = ({
                                 <div className={styles.headerAction}>
                                     {renderPostponeActivatingInfo('snapcenterSnapshot', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading ||
-                                        showDismissedConfigurations ||
-                                        !oracleCardData?.snapcenterSnapshot?.block_two?.value ? (
-                                            <LightDisabled />
-                                        ) : (
-                                            <Light />
-                                        )}
+                                        {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
                                     </div>
                                     <div
                                         style={{
                                             color:
-                                                loading ||
-                                                showDismissedConfigurations ||
-                                                !oracleCardData?.snapcenterSnapshot?.block_two?.value
+                                                loading || showDismissedConfigurations
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}

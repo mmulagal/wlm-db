@@ -139,6 +139,15 @@ const renderCountWithView = (
     );
 };
 
+// Helper function to count total missing patches across all EC2 instances
+const countMissingPatches = (ec2InstancesToPatch: any[] | undefined): number => {
+    let totalPatches = 0;
+    ec2InstancesToPatch?.forEach((instance: any) => {
+        totalPatches += instance?.missingPatchDetails?.length || 0;
+    });
+    return totalPatches;
+};
+
 // Configuration mapping for different assessment types
 const CONFIG_MAPPING: Record<string, any> = {
     [ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]: {
@@ -375,7 +384,7 @@ const CONFIG_MAPPING: Record<string, any> = {
         dismissConfigName: 'hostOsPatch', // Direct property name
         isFixSupported: false, // Fix is not supported for OS patch configurations
         dataMapping: (obj: any) => ({
-            current: `${obj?.objectsInViolation?.length || 0}`,
+            current: `${countMissingPatches(obj?.ec2InstancesToPatch)}`,
             missingPatchList: obj?.ec2InstancesToPatch || []
         }),
         customColumns: [
@@ -849,7 +858,7 @@ const createOracleHostOsPatchConfig = () => ({
     dismissConfigName: 'hostOsPatch',
     isFixSupported: false, // Fix is not supported for Oracle OS patch configurations
     dataMapping: (obj: any) => ({
-        current: `${obj?.objectsInViolation?.length || 0}`,
+        current: `${countMissingPatches(obj?.ec2InstancesToPatch)}`,
         missingPatchList: obj?.ec2InstancesToPatch || []
     }),
     customColumns: [
@@ -886,7 +895,7 @@ const createOracleSecurityPatchConfig = () => ({
     dismissConfigName: 'oracleSecurityPatch',
     isFixSupported: false,
     dataMapping: (obj: any) => ({
-        current: `${obj?.missingPatchesCount || 0}`,
+        current: `${obj?.missingPatchDetails?.length || 0}`,
         missingPatchList: obj?.missingPatchDetails || []
     }),
     customColumns: [

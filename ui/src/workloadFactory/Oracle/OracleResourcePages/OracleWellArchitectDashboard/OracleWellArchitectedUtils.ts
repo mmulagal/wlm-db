@@ -798,7 +798,6 @@ export const formatOracleSnapCenterConfig = (
     optimizingData: Record<string, string>
 ): any => {
     const snapcenterItem = data?.snapcenterSnapshot;
-    if (!snapcenterItem) return null;
 
     const originalName = snapcenterItem?.name || 'snapcenter-snapshot';
     const status = optimizingData?.[originalName] || snapcenterItem?.status || '';

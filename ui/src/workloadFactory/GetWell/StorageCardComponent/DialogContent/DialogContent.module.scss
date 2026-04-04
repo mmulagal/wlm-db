@@ -102,11 +102,26 @@
 
             .table {
                 min-height: 100px;
+                max-height: 280px;
+                display: flex;
+                flex-direction: column;
 
-                [class*='Table-module_innerTable'] > [class*='Table-module_table'] {
-                    min-height: 100px !important;
-                    max-height: 224px !important;
+                [class*='Table-module_innerTable'] {
+                    display: flex;
+                    flex-direction: column;
+                    flex: 1;
+                    min-height: 0;
+                    overflow: hidden;
+                }
+
+                [class*='Table-module_table'] {
+                    flex: 1;
+                    min-height: 0;
                     overflow: auto !important;
+                }
+
+                [class*='Pagination'] {
+                    flex-shrink: 0;
                 }
 
                 ::-webkit-scrollbar {
