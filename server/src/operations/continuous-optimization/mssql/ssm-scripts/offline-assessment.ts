@@ -469,6 +469,7 @@ Function Get-SqlCredentials {
     )
     
     $serverInstanceName = $InstanceName
+    $instanceNameOnly = if ($serverInstanceName -match '^[^\\\\]+\\\\(.+)$') { $Matches[1] } else { $serverInstanceName }
     
     # Determine initial executable instance based on serverInstanceName
     if ($serverInstanceName -eq 'MSSQLSERVER') {
@@ -486,7 +487,7 @@ Function Get-SqlCredentials {
     # If test-connection fails and this is a named instance (not MSSQLSERVER), try with COMPUTERNAME\\serverInstanceName format
     if (-not $windowsAuthResult.Success -and $serverInstanceName -ne 'MSSQLSERVER') {
         Write-Log -Level "DEBUG" -Message "Initial connection test failed for named instance, trying with COMPUTERNAME\\serverInstanceName format"
-        $executableInstance = "$env:COMPUTERNAME\\$serverInstanceName"
+        $executableInstance = "$env:COMPUTERNAME\\$instanceNameOnly"
         $windowsAuthResult = Test-SqlConnection -ExecutableInstance $executableInstance
         Write-Log -Level "DEBUG" -Message "Retry Windows Authentication test result: Success=$($windowsAuthResult.Success), ErrorMessage=$($windowsAuthResult.ErrorMessage)"
     }
@@ -512,7 +513,7 @@ Function Get-SqlCredentials {
         $execInstancesToTry = @($env:COMPUTERNAME)
     } else {
         if ($InstanceName -match '\\\\') {
-            $execInstancesToTry = @($InstanceName)
+            $execInstancesToTry = @($InstanceName, "$env:COMPUTERNAME\\$instanceNameOnly")
         } else {
             $execInstancesToTry = @($InstanceName, "$env:COMPUTERNAME\\$InstanceName")
         }
