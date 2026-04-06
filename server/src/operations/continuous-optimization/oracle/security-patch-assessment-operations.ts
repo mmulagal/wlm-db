@@ -17,41 +17,49 @@ import { OracleSecurityPatchDriftResponseType } from '../../../routes/types/orac
 
 const logger = getLogger();
 
+// Oracle "c"-release suffix (e.g. 19c, 21c) corresponds to minor version 3
+const C_SUFFIX_MINOR = 3;
+
+function readVersion(versionStr: string): { major: number; minor: number } {
+    const cMatch = versionStr.match(/^(\d+)c$/);
+    if (cMatch) {
+        return { major: parseInt(cMatch[1], 10), minor: C_SUFFIX_MINOR };
+    }
+    const parts = versionStr.split('.');
+    return { major: parseInt(parts[0], 10), minor: parseInt(parts[1] ?? '0', 10) };
+}
+
 function isVersionAffected(majorVersion: number, minorVersion: number, entry: string): boolean {
-    // affected versions are in the format e.g. 23.4-23.7 (range) or 19.0 (single version)
     if (!entry.includes('-')) {
-        const parts = entry.split('.');
-        const entryMajor = parseInt(parts[0], 10);
-        const entryMinor = parseInt(parts[1], 10);
-        return majorVersion === entryMajor && minorVersion === entryMinor;
+        // exact version match
+        const { major, minor } = readVersion(entry);
+        return majorVersion === major && minorVersion === minor;
     }
 
     const [startStr, endStr] = entry.split('-');
-    const startParts = startStr.split('.');
-    const endParts = endStr.split('.');
-    const startMajor = parseInt(startParts[0], 10);
-    const startMinor = parseInt(startParts[1], 10);
-    const endMajor = parseInt(endParts[0], 10);
-    const endMinor = parseInt(endParts[1], 10);
+    const start = readVersion(startStr);
+    const end = readVersion(endStr);
+    const inOrder = start.major < end.major || (start.major === end.major && start.minor <= end.minor);
+    const [lo, hi] = inOrder ? [start, end] : [end, start];
 
-    if (majorVersion < startMajor || majorVersion > endMajor) {
+    if (majorVersion < lo.major || majorVersion > hi.major) {
         return false;
     }
 
     // An unpatched base install (no RU applied, minorVersion === 0) is inherently
     // affected by all CVEs in this major version family regardless of range start.
-    if (majorVersion === startMajor && minorVersion === 0) {
+    if (majorVersion === lo.major && minorVersion === 0) {
         return true;
     }
 
-    if (majorVersion === startMajor && majorVersion === endMajor) {
-        return minorVersion >= startMinor && minorVersion <= endMinor;
+    if (majorVersion === lo.major && majorVersion === hi.major) {
+        return minorVersion >= lo.minor && minorVersion <= hi.minor;
     }
-    if (majorVersion === startMajor) {
-        return minorVersion >= startMinor;
+    if (majorVersion === lo.major) {
+        return minorVersion >= lo.minor;
     }
-    if (majorVersion === endMajor) {
-        return minorVersion <= endMinor;
+    if (majorVersion === hi.major) {
+        return minorVersion <= hi.minor;
     }
 
     return true;
