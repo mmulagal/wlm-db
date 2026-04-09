@@ -24,18 +24,8 @@ Specialized agents are available in `.github/agents/`:
 
 ## Error-agent issues
 
-For issues labeled **`error-agent`**, apply this compact checklist first (for GitHub cloud agent reliability), then follow `.github/instructions/error-agent.instructions.md` for full details:
+**MANDATORY — before doing any work on an issue labeled `error-agent`:**
 
-This checklist is the mandatory minimum. `.github/instructions/error-agent.instructions.md` is the authoritative detailed procedure; if wording differs, follow that file.
-
--   Start at the crash site: use stack trace file/function first; if no stack trace, search exact error text/variable.
--   Do root-cause analysis by tracing data flow backward from THROW site to data producer (DB write/API mapper/cache/source).
--   Fix at the source (producer) first; add only a minimal guard at the crash site as belt-and-suspenders.
--   Keep scope minimal and on-path only; avoid refactors, alternative architectures, and unrelated logging/message changes.
--   Use one coherent fix strategy (no competing alternative fixes in the same PR).
--   Add/update a unit test for the failing type/shape/missing-data case.
--   Exclude unintended/incidental file changes from the PR (for example `package-lock.json` drift from exploratory installs) unless directly required by the fix.
--   If no safe in-repo fix exists, do not open a PR; comment on the issue with investigation, finding, and next steps.
--   If opening a PR with a real fix, include: Root Cause, Fix Approach, Changes, and Alternatives Considered.
--   Before the final `report_progress` call, replace `prDescription` with the required 4-section PR description; do **not** leave a progress checklist as the PR body.
--   For additional reviewer clarity, you may post the same 4-section description as an issue comment, but keep the PR body as the authoritative final content.
+1. Read `.github/instructions/error-agent.instructions.md` in full.
+2. Do **not** begin investigation, coding, or PR creation until that file has been read.
+3. For error-agent RCA and fix workflow, treat that file as the authoritative procedure for RCA flow, fix strategy, quality gates, PR/issue write-up format, and scope constraints. Apply it in addition to all repo-wide instructions (for example, `git-conventions.instructions.md`), not instead of them.

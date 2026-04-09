@@ -22,7 +22,7 @@ jobs:
                   RUNTIME_PREFIX: '/opt/netapp/wlmdb/'
                   REPO_SRC_PREFIX: 'server/src/'
                   MAX_FRAMES: '30'
-                  SKIP_ASSIGNEES: 'rranganath,ranganathar'
+                  SKIP_ASSIGNEES: 'copilot-swe-agent'
                   FALLBACK_ASSIGNEE: 'mmulagal' # Murali Mulagalapati
               run: |
                   set -euo pipefail
@@ -64,6 +64,15 @@ jobs:
                           return None
                       if re.match(r"^[A-Za-z]:[\\/]", trimmed):
                           return None
+
+                      # Strip any leading repo_src_prefix that may have survived inside the
+                      # runtime path (e.g. /opt/netapp/wlmdb/server/src/foo.js → after
+                      # runtime strip → server/src/foo.js) so we never double-prefix.
+                      if trimmed.startswith(repo_src_prefix):
+                          trimmed = trimmed[len(repo_src_prefix):]
+                          trimmed = trimmed.lstrip("/")
+                          if not trimmed:
+                              return None
 
                       if trimmed.endswith(".js"):
                           trimmed = trimmed[:-3] + ".ts"
@@ -202,8 +211,23 @@ jobs:
                   best_author_login="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("bestAuthorLogin",""))' "$tmp_result")"
                   best_source="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("bestSource",""))' "$tmp_result")"
 
+                  is_assignable_user() {
+                    local login="$1"
+                    [ -n "$login" ] || return 1
+                    gh api "repos/$REPO/assignees/$login" >/dev/null 2>&1
+                  }
+
                   if [ -z "$best_author_login" ]; then
-                    gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-assignee "$FALLBACK_ASSIGNEE"
+                    if ! is_assignable_user "$FALLBACK_ASSIGNEE"; then
+                      gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
+                        "Could not derive owner from stack frames via GitHub blame API; fallback \`${FALLBACK_ASSIGNEE}\` is not assignable. Please assign manually."
+                      exit 0
+                    fi
+                    if ! gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-assignee "$FALLBACK_ASSIGNEE"; then
+                      gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
+                        "Could not derive owner from stack frames via GitHub blame API; failed to assign fallback \`${FALLBACK_ASSIGNEE}\`. Please assign manually."
+                      exit 0
+                    fi
                     gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
                       "Could not derive owner from stack frames via GitHub blame API; assigned fallback @${FALLBACK_ASSIGNEE}."
                     exit 0
@@ -217,9 +241,29 @@ jobs:
                     chosen="$FALLBACK_ASSIGNEE"
                   fi
 
+                  if ! is_assignable_user "$chosen"; then
+                    chosen="$FALLBACK_ASSIGNEE"
+                  fi
+
+                  if ! is_assignable_user "$chosen"; then
+                    gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
+                      "Owner attribution failed: resolved login \`${best_author_login}\` is not assignable and fallback \`${FALLBACK_ASSIGNEE}\` is also not assignable. Please assign manually."
+                    exit 0
+                  fi
+
                   if ! gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-assignee "$chosen"; then
                     chosen="$FALLBACK_ASSIGNEE"
-                    gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-assignee "$chosen"
+                    if is_assignable_user "$chosen"; then
+                      if ! gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-assignee "$chosen"; then
+                        gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
+                          "Owner attribution failed: could not assign \`${best_author_login}\`, and fallback \`${FALLBACK_ASSIGNEE}\` also failed to be assigned. Please assign manually."
+                        exit 0
+                      fi
+                    else
+                      gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
+                        "Owner attribution failed: could not assign \`${best_author_login}\`, and fallback \`${FALLBACK_ASSIGNEE}\` is not assignable. Please assign manually."
+                      exit 0
+                    fi
                   fi
 
                   gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
