@@ -119,7 +119,8 @@ if plugin_running and os.path.isdir(sc_log_path):
         if recent_logs:
             log(f"Found {len(recent_logs)} SnapCenter log files modified in last 48h")
             sid_grep = subprocess.run(['grep', '-l', instance_name] + recent_logs,
-                                      capture_output=True, text=True, timeout=30)
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                      universal_newlines=True, timeout=30)
             sid_found_in_logs = sid_grep.returncode == 0
             log(f"SID '{instance_name}' {'found' if sid_found_in_logs else 'not found'} in recent logs")
 
@@ -128,7 +129,8 @@ if plugin_running and os.path.isdir(sc_log_path):
                     log_key = vol.get('logKey', '')
                     search_key = log_key if log_key else vol['volumeName']
                     vol_grep = subprocess.run(['grep', '-l', search_key] + recent_logs,
-                                              capture_output=True, text=True, timeout=30)
+                                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                              universal_newlines=True, timeout=30)
                     vol['foundInSnapcenterLogs'] = vol_grep.returncode == 0
                     log(f"Volume '{vol['volumeName']}' (search_key='{search_key}') {'found' if vol['foundInSnapcenterLogs'] else 'not found'} in recent logs")
         else:
