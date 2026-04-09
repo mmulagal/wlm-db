@@ -4092,7 +4092,7 @@ const updateAssessmentWithWarningJobs = (
     engineType?: string | undefined
 ) => {
     const state = store.getState();
-    const { allmssqlHostAssessmentData } = state.inventoryV2;
+    const { allmssqlHostAssessmentData, allOracleHostAssessmentData } = state.inventoryV2;
     const {
         jobToInstanceMap,
         jobToInstanceMapForBulk,
@@ -4100,7 +4100,11 @@ const updateAssessmentWithWarningJobs = (
         inProgressHostData,
         optimizingData
     } = state.getWellOptimize;
-    dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+    if (engineType === DBType.ORACLE) {
+        dispatch(addAllOracleHostAssessmentData(allOracleHostAssessmentData));
+    } else {
+        dispatch(addAllMssqlHostAssessmentData(allmssqlHostAssessmentData));
+    }
 
     if (operation === 'bulk') {
         updateProgressForBulk(
@@ -4756,8 +4760,11 @@ export const updateConfigStateStatus = (
     }
 
     const state = store.getState();
-    const { allmssqlHostAssessmentData } = state.inventoryV2;
-    let updatedAsessmentData = [...allmssqlHostAssessmentData]; // Clone the original data
+    const isOracle = engineType === DBType.ORACLE;
+    const assessmentSource = isOracle
+        ? state.inventoryV2.allOracleHostAssessmentData
+        : state.inventoryV2.allmssqlHostAssessmentData;
+    let updatedAsessmentData = [...assessmentSource];
 
     rowList?.forEach((rowData: any) => {
         // Special handling for MSSQL HA card-level operations
@@ -5102,7 +5109,57 @@ export const updateConfigStateStatus = (
             return hostData;
         });
     });
-    dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
+    if (engineType === DBType.ORACLE) {
+        dispatch(addAllOracleHostAssessmentData(updatedAsessmentData));
+    } else {
+        dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
+    }
+};
+
+export const updateAccountLevelAssessmentData = (
+    dispatch: any,
+    freshAssessmentData: any,
+    identifiers: {
+        databaseHostId: string;
+        databaseInstanceId: string;
+        credentialId: string;
+        regionId: string;
+    },
+    engineType?: string
+) => {
+    const state = store.getState();
+    const isOracle = engineType === DBType.ORACLE;
+    const assessmentData = isOracle
+        ? state.inventoryV2.allOracleHostAssessmentData
+        : state.inventoryV2.allmssqlHostAssessmentData;
+
+    if (!assessmentData?.length) return;
+
+    const updatedData = assessmentData.map((hostData: any) => {
+        if (
+            hostData?.databaseHostId === identifiers.databaseHostId &&
+            hostData?.credentialId === identifiers.credentialId &&
+            hostData?.regionId === identifiers.regionId
+        ) {
+            const updatedInstances = hostData?.instancesAssessment?.map((instance: any) => {
+                if (instance?.databaseInstanceId === identifiers.databaseInstanceId) {
+                    return {
+                        ...instance,
+                        assessments: freshAssessmentData
+                    };
+                }
+                return instance;
+            });
+            return { ...hostData, instancesAssessment: updatedInstances };
+        }
+        return hostData;
+    });
+
+    if (isOracle) {
+        dispatch(addAllOracleHostAssessmentData(updatedData));
+    } else {
+        dispatch(addAllMssqlHostAssessmentData(updatedData));
+    }
 };
 
 export const updateConfigStatePerInstance = (

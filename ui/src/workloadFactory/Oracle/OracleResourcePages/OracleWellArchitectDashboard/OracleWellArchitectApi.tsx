@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
 import { useEffect } from 'react';
-import { WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
+import { DBType, WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     useGetOracleAssessmentDataMutation,
@@ -17,7 +17,7 @@ import {
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { setRefreshOracleWellArchitect, setOracleRefreshTimes } from '../../../../store/workloadFactory/oracleSlice';
 import { getCurrentDateTime } from '../../../../utils/utilityFunctions';
-import { generateDynamicOracleStorageMockData } from '../../../GetWell/GetWellUtils';
+import { generateDynamicOracleStorageMockData, updateAccountLevelAssessmentData } from '../../../GetWell/GetWellUtils';
 
 const useOracleWellArchitectApi = () => {
     const dispatch = useDispatch();
@@ -63,6 +63,17 @@ const useOracleWellArchitectApi = () => {
                 }
                 dispatch(setDriftAssessmentData(assessmentData));
                 formatOracleWellArchitectedData(dispatch, assessmentData, false, true);
+                updateAccountLevelAssessmentData(
+                    dispatch,
+                    assessmentData,
+                    {
+                        databaseHostId: selectedResourceId || getWellResourceId,
+                        databaseInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance,
+                        credentialId: selectedResourceCredId || credIdFromJM || '',
+                        regionId: selectedResourceRegionId || regionFromJM || ''
+                    },
+                    DBType.ORACLE
+                );
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
                 dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));
@@ -97,6 +108,17 @@ const useOracleWellArchitectApi = () => {
                 }
                 dispatch(setDriftAssessmentData(result.data));
                 formatOracleWellArchitectedData(dispatch, result.data, false, true);
+                updateAccountLevelAssessmentData(
+                    dispatch,
+                    result.data,
+                    {
+                        databaseHostId: selectedResourceId || getWellResourceId,
+                        databaseInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance,
+                        credentialId: selectedResourceCredId || credIdFromJM,
+                        regionId: selectedResourceRegionId || regionFromJM
+                    },
+                    DBType.ORACLE
+                );
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
                 dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));

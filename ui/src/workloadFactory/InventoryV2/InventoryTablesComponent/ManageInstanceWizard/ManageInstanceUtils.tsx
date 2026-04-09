@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { BlueXPListeners, Button, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import { TFunction } from 'i18next';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../store/notificationSlice';
+import { setIsDetectHostLoading } from '../../../../store/mssql/msSqlActionSlice';
 import {
     setInProgressInstances,
     setInventoryTableData,
@@ -196,9 +197,11 @@ export const callManageSingleInstanceApi = async (
             }
         ]
     };
+    dispatch(setIsDetectHostLoading(true));
     manageBulkV2InstanceApi({
         payload
     }).then((result: any) => {
+        dispatch(setIsDetectHostLoading(false));
         if (result.data.jobId) {
             // Update the in-progress instances state
             const updatedState = store.getState();
@@ -536,9 +539,11 @@ export const callManageMultiInstanceApi = async (
     const payload: ManageApiPayload = { items };
 
     // Call the manage API with the constructed payload
+    dispatch(setIsDetectHostLoading(true));
     manageBulkV2InstanceApi({
         payload
     }).then((result: any) => {
+        dispatch(setIsDetectHostLoading(false));
         if (result.data.jobId) {
             const updatedState = store.getState();
             const { inProgressInstances } = updatedState.inventoryV2;

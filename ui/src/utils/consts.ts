@@ -10,7 +10,7 @@ export const WIZARD_TYPE = {
     PGSQL: 'pgsql',
     MSSQL: 'mssql',
     ORACLE: 'oracle'
-};
+} as const;
 
 export const POLICIES_PERMISSIONS = {
     VIEW_POLICY: 'View, planning, and analysis',

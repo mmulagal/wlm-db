@@ -1276,6 +1276,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             isThin
                             onClick={handleManage}
                             variant="primary"
+                            isLoading={detectHostLoading}
                             {...rest}
                         >
                             {t('databases.register-flow.register')}
@@ -1315,6 +1316,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             isThin
                             onClick={handleManage}
                             variant="primary"
+                            isLoading={detectHostLoading}
                             {...rest}
                         >
                             {t('databases.register-flow.register')}

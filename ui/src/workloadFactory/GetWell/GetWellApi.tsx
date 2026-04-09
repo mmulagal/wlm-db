@@ -10,7 +10,12 @@ import {
     setGwSelectedRowFsxId
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { useGetMssqlAssessmentDataMutation, useLazyGetOfflineMssqlAssessmentDataQuery } from '../../utils/apiService';
-import { formatGetWellData, resetGwValuesOnRefresh, storageMockData } from './GetWellUtils';
+import {
+    formatGetWellData,
+    resetGwValuesOnRefresh,
+    storageMockData,
+    updateAccountLevelAssessmentData
+} from './GetWellUtils';
 import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
@@ -67,6 +72,12 @@ const GetWellApi = () => {
                 }
                 dispatch(setDriftAssessmentData(assessmentData));
                 formatGetWellData(dispatch, assessmentData, false, isRefresh);
+                updateAccountLevelAssessmentData(dispatch, assessmentData, {
+                    databaseHostId: selectedResourceId,
+                    databaseInstanceId: selectedDatabaseInstance,
+                    credentialId: selectedGwInstanceCredId || '',
+                    regionId: selectedGwInstanceRegionId || ''
+                });
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
                 dispatch(setGwSelectedRowFsxId(assessmentData?.fileSystemId));
@@ -98,6 +109,12 @@ const GetWellApi = () => {
                 }
                 dispatch(setDriftAssessmentData(result.data));
                 formatGetWellData(dispatch, result.data, false, isRefresh);
+                updateAccountLevelAssessmentData(dispatch, result.data, {
+                    databaseHostId: selectedResourceId,
+                    databaseInstanceId: selectedDatabaseInstance,
+                    credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
+                    regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM
+                });
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
                 dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));

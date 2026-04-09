@@ -8,7 +8,7 @@ const FirstColumnComponent = ({ rowData, showDismissed = false }: any) => (
         <DsTypography variant="Semibold_14" className={showDismissed ? styles.disabled : ''}>
             {rowData?.serverInstanceName || GENERAL.NOT_AVAILABLE}
         </DsTypography>
-        {rowData?.loadingStatus && <DsFlashingDotsLoader />}
+        {rowData?.loadingStatus && !rowData?.isWad && <DsFlashingDotsLoader />}
         {!rowData?.loadingStatus && !rowData?.isWad && (
             <div className={styles.statusContainer}>
                 <InventoryStatusIndicator

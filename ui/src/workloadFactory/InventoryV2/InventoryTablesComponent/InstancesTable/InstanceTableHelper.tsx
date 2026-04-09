@@ -14,6 +14,7 @@ import {
     SQL_DEPLOYMENT_MODE,
     STORAGE_TYPES,
     WELL_ARCHITECTED_TABS,
+    WIZARD_TYPE,
     WLF_TABS
 } from '../../../../utils/consts';
 import {
@@ -28,6 +29,8 @@ import {
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import {
+    addAllMssqlHostAssessmentData,
+    addAllOracleHostAssessmentData,
     addOfflineMssqlHostAssessmentData,
     addOfflineOracleHostAssessmentData,
     setBreadCrumbSelectedFrom,
@@ -44,6 +47,7 @@ import {
     formatOfflineAssessmentToInventoryData,
     formatOracleOfflineAssessmentToInventoryData
 } from '../../InventoryUtilsV2';
+import { formatOfflineDataToAssessmentFormat } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import store from '../../../../store/store';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { updateResourceId } from '../../../../store/authSlice';
@@ -1150,6 +1154,26 @@ export const shouldEnableHeaderCheckbox = (
 };
 
 /**
+ * Merges offline assessment data into the "all assessment" store so the
+ * Well-Architected tab's Analyzed Resources table picks it up immediately
+ * (mirrors addOfflineDataToAllAssessment in WADApis.tsx).
+ */
+const addOfflineDataToAllAssessment = (dispatch: Dispatch, offlineData: any[], dbType: 'mssql' | 'oracle') => {
+    const state = store.getState();
+    const formattedAssessmentData = formatOfflineDataToAssessmentFormat(offlineData, dbType);
+
+    if (dbType === WIZARD_TYPE.MSSQL) {
+        const existingAllData = state.inventoryV2.allmssqlHostAssessmentData || [];
+        const nonWadData = existingAllData.filter((item: any) => !item?.isWad);
+        dispatch(addAllMssqlHostAssessmentData([...nonWadData, ...formattedAssessmentData]));
+    } else {
+        const existingAllData = state.inventoryV2.allOracleHostAssessmentData || [];
+        const nonWadData = existingAllData.filter((item: any) => !item?.isWad);
+        dispatch(addAllOracleHostAssessmentData([...nonWadData, ...formattedAssessmentData]));
+    }
+};
+
+/**
  * Refreshes the offline WAD assessment data after upload completes.
  * This function fetches all offline assessment data with pagination
  * and updates the inventory table data same as WADApis.tsx.
@@ -1197,6 +1221,7 @@ export const refreshOfflineAssessmentData = async (
                 // All data fetched, update store
                 dispatch(setOfflineMssqlHostAssessmentLoading(false));
                 dispatch(addOfflineMssqlHostAssessmentData(newAssessmentData));
+                addOfflineDataToAllAssessment(dispatch, newAssessmentData, WIZARD_TYPE.MSSQL);
 
                 // Format and merge with existing inventory data
                 const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
@@ -1211,6 +1236,7 @@ export const refreshOfflineAssessmentData = async (
             dispatch(setOfflineMssqlHostAssessmentLoading(false));
             if (assessmentData.length > 0) {
                 dispatch(addOfflineMssqlHostAssessmentData(assessmentData));
+                addOfflineDataToAllAssessment(dispatch, assessmentData, WIZARD_TYPE.MSSQL);
 
                 // Format and merge with existing inventory data
                 const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
@@ -1226,6 +1252,7 @@ export const refreshOfflineAssessmentData = async (
         dispatch(setOfflineMssqlHostAssessmentLoading(false));
         if (assessmentData.length > 0) {
             dispatch(addOfflineMssqlHostAssessmentData(assessmentData));
+            addOfflineDataToAllAssessment(dispatch, assessmentData, WIZARD_TYPE.MSSQL);
         }
     }
 };
@@ -1278,6 +1305,7 @@ export const refreshOfflineOracleAssessmentData = async (
                 // All data fetched, update store
                 dispatch(setOfflineOracleHostAssessmentLoading(false));
                 dispatch(addOfflineOracleHostAssessmentData(newAssessmentData));
+                addOfflineDataToAllAssessment(dispatch, newAssessmentData, WIZARD_TYPE.ORACLE);
 
                 // Format and merge with existing inventory data
                 const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
@@ -1292,6 +1320,7 @@ export const refreshOfflineOracleAssessmentData = async (
             dispatch(setOfflineOracleHostAssessmentLoading(false));
             if (assessmentData.length > 0) {
                 dispatch(addOfflineOracleHostAssessmentData(assessmentData));
+                addOfflineDataToAllAssessment(dispatch, assessmentData, WIZARD_TYPE.ORACLE);
 
                 // Format and merge with existing inventory data
                 const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
@@ -1307,6 +1336,7 @@ export const refreshOfflineOracleAssessmentData = async (
         dispatch(setOfflineOracleHostAssessmentLoading(false));
         if (assessmentData.length > 0) {
             dispatch(addOfflineOracleHostAssessmentData(assessmentData));
+            addOfflineDataToAllAssessment(dispatch, assessmentData, WIZARD_TYPE.ORACLE);
         }
     }
 };

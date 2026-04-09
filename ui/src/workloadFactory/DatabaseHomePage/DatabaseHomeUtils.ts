@@ -1552,7 +1552,7 @@ const processOracleConfigurationData = (
                 const isOntapConfigurationOptimized =
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
-                    instanceAssessmentData?.storage?.configuration?.luns?.every((item: any) => {
+                    (instanceAssessmentData?.storage?.configuration?.luns || []).every((item: any) => {
                         const configStateVal =
                             instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.luns?.find(
                                 (config: any) => config?.configurationName === item.name
@@ -1560,7 +1560,7 @@ const processOracleConfigurationData = (
                         setConfigState(configState, 'oracleOntapConfiguration', configStateVal);
                         return isOptimizedDashInner(item?.status, configStateVal);
                     }) &&
-                    instanceAssessmentData?.storage?.configuration?.volumes?.every((item: any) => {
+                    (instanceAssessmentData?.storage?.configuration?.volumes || []).every((item: any) => {
                         const configStateVal =
                             instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.volumes?.find(
                                 (config: any) => config?.configurationName === item.name
@@ -1572,7 +1572,7 @@ const processOracleConfigurationData = (
                     instanceAssessmentData &&
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
-                    instanceAssessmentData?.storage?.configuration?.os?.every((item: any) => {
+                    (instanceAssessmentData?.storage?.configuration?.os || []).every((item: any) => {
                         const configStateVal =
                             instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.os?.find(
                                 (config: any) => config?.configurationName === item.name
@@ -2180,7 +2180,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                 const isOntapConfigurationOptimized =
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
-                    instanceAssessmentData?.storage?.configuration?.luns?.every((item: any) => {
+                    (instanceAssessmentData?.storage?.configuration?.luns || []).every((item: any) => {
                         const configStateVal =
                             instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.luns?.find(
                                 (config: any) => config?.configurationName === item.name
@@ -2188,7 +2188,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                         setConfigState(configState, 'ontapConfiguration', configStateVal);
                         return isOptimizedDashInner(item?.status, configStateVal);
                     }) &&
-                    instanceAssessmentData?.storage?.configuration?.volumes?.every((item: any) => {
+                    (instanceAssessmentData?.storage?.configuration?.volumes || []).every((item: any) => {
                         const configStateVal =
                             instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.volumes?.find(
                                 (config: any) => config?.configurationName === item.name
@@ -2200,7 +2200,7 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                     instanceAssessmentData &&
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
-                    instanceAssessmentData?.storage?.configuration?.os?.every((item: any) => {
+                    (instanceAssessmentData?.storage?.configuration?.os || []).every((item: any) => {
                         const configStateVal =
                             instanceAssessmentData?.dismissedConfigurations?.storage?.configuration?.os?.find(
                                 (config: any) => config?.configurationName === item.name
