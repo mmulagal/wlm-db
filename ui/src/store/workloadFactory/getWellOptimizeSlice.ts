@@ -59,7 +59,8 @@ const initialState: GetWellSliceInterface = {
         isInstanceStorageAsmManaged: false
     },
     configEngineType: DBType.MSSQL,
-    isWad: false
+    isWad: false,
+    instanceStatus: ''
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -228,6 +229,7 @@ const getWellOptimizeSlice = createSlice({
             state.selectedDatabaseStorageType = action.payload.storageType;
             state.selectedDatabaseAoagStorageType = action.payload.storageAoagType;
             state.isWad = action.payload.isWad || false;
+            state.instanceStatus = action.payload.instanceStatus || '';
         },
         setLandingFromInnerPage: (state, action: PayloadAction<any>) => {
             state.landingFromInnerPage = action.payload;

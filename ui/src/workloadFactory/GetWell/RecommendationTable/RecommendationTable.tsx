@@ -63,6 +63,7 @@ import {
     GETWELL_STATUS,
     GW_CONFIG_OPTIMIZE_NA,
     MSSQL_IMPACTED_DRIVE_CONFIGS,
+    ONLINE_INSTANCE_STATUSES,
     ORACLE_IMPACTED_DRIVE_CONFIGS,
     WLF_TABS,
     MSSQL_UNSUPPORTED_FIX_TYPES,
@@ -84,6 +85,28 @@ import store from '../../../store/store';
 import { checkLinkedConfigAcknowledge } from '../StorageCardComponent/optimizeUtils';
 import { callDashboardDismissApi } from '../../Dashboard/DashboardInnerPage/DashboardInnerPageHelper';
 import { GENERAL } from '../../../utils/appConstants';
+
+const CellWrapper = ({
+    children,
+    isDisabled,
+    onMouseEnter,
+    onMouseLeave
+}: {
+    children: React.ReactNode;
+    isDisabled: boolean;
+    onMouseEnter?: (event?: React.MouseEvent) => void;
+    onMouseLeave?: (event?: React.MouseEvent) => void;
+}) => (
+    <div
+        onMouseEnter={isDisabled ? undefined : onMouseEnter}
+        onMouseLeave={isDisabled ? undefined : onMouseLeave}
+        role="button"
+        tabIndex={0}
+        className={`${styles.cellClickable} ${isDisabled ? styles.disabledCell : ''}`}
+    >
+        {children}
+    </div>
+);
 
 const RecommendationTable = ({
     tableData,
@@ -124,6 +147,10 @@ const RecommendationTable = ({
     // Get the full card data to check dismissed configurations count
     const fullCardData = useAppSelector(state => state.getWellOptimize.cardData);
     const isWad = (from === WLF_TABS.DASHBOARD ? dashboardInstanceData?.isWad : fullCardData?.isWad) || false;
+    const instanceStatus = useAppSelector(state => state.getWellOptimize.instanceStatus);
+    const currentInstanceStatus = from === WLF_TABS.DASHBOARD ? dashboardInstanceData?.status : instanceStatus;
+    const normalizedInstanceStatus = currentInstanceStatus?.toLowerCase();
+    const isInstanceOffline = !!normalizedInstanceStatus && !ONLINE_INSTANCE_STATUSES.has(normalizedInstanceStatus);
 
     const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
     const [optimizeOracleStorageConfig] = useOptimizeOracleStorageConfigMutation();
@@ -669,33 +696,6 @@ const RecommendationTable = ({
         );
     };
 
-    // Common cell wrapper component for consistent styling and click handling
-    const CellWrapper = ({
-        children,
-        rowData,
-        onMouseEnter = () => handleCardHoverMouseEnter(rowData),
-        onMouseLeave = () => handleCardHoverMouseLeave()
-    }: {
-        children: React.ReactNode;
-        rowData: any;
-        onMouseEnter?: (event?: React.MouseEvent) => void;
-        onMouseLeave?: (event?: React.MouseEvent) => void;
-    }) => {
-        const isDisabled = shouldApplyDisabledRowStyle(rowData);
-
-        return (
-            <div
-                onMouseEnter={isDisabled ? undefined : onMouseEnter}
-                onMouseLeave={isDisabled ? undefined : onMouseLeave}
-                role="button"
-                tabIndex={0}
-                className={`${styles.cellClickable} ${isDisabled ? styles.disabledCell : ''}`}
-            >
-                {children}
-            </div>
-        );
-    };
-
     // Function For Dismiss
     const handleSingleAction = (action: string, rowData: any) => {
         if (!rowData) return;
@@ -924,7 +924,13 @@ const RecommendationTable = ({
             width: from === WLF_TABS.DASHBOARD ? (windowSize.width > 1847 ? '15%' : '240px') : '15%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
-                <CellWrapper rowData={rowData}>{cellData || t('databases.general.not-available')}</CellWrapper>
+                <CellWrapper
+                    isDisabled={shouldApplyDisabledRowStyle(rowData)}
+                    onMouseEnter={() => handleCardHoverMouseEnter(rowData)}
+                    onMouseLeave={handleCardHoverMouseLeave}
+                >
+                    {cellData || t('databases.general.not-available')}
+                </CellWrapper>
             )
         },
         {
@@ -934,7 +940,11 @@ const RecommendationTable = ({
             width: from === WLF_TABS.DASHBOARD ? (windowSize.width > 1847 ? '13%' : '180px') : '13%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
-                <CellWrapper rowData={rowData}>
+                <CellWrapper
+                    isDisabled={shouldApplyDisabledRowStyle(rowData)}
+                    onMouseEnter={() => handleCardHoverMouseEnter(rowData)}
+                    onMouseLeave={handleCardHoverMouseLeave}
+                >
                     {/* Show "n/a" when viewing dismissed configurations or when the category is in Activating state */}
                     {showDismissedConfigurations === true ||
                     isRowConfigurationActivating(rowData) ||
@@ -974,12 +984,24 @@ const RecommendationTable = ({
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 if (rowData?.errorMessage) {
-                    return <CellWrapper rowData={rowData}>{showUnavailableWithTooltip(rowData)}</CellWrapper>;
+                    return (
+                        <CellWrapper
+                            isDisabled={shouldApplyDisabledRowStyle(rowData)}
+                            onMouseEnter={() => handleCardHoverMouseEnter(rowData)}
+                            onMouseLeave={handleCardHoverMouseLeave}
+                        >
+                            {showUnavailableWithTooltip(rowData)}
+                        </CellWrapper>
+                    );
                 }
 
                 if (!cellData || cellData === GENERAL.NOT_AVAILABLE) {
                     return (
-                        <CellWrapper rowData={rowData}>
+                        <CellWrapper
+                            isDisabled={shouldApplyDisabledRowStyle(rowData)}
+                            onMouseEnter={() => handleCardHoverMouseEnter(rowData)}
+                            onMouseLeave={handleCardHoverMouseLeave}
+                        >
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {t('databases.well-architect.unavailable')}
                             </DsTypography>
@@ -988,7 +1010,11 @@ const RecommendationTable = ({
                 }
 
                 return (
-                    <CellWrapper rowData={rowData}>
+                    <CellWrapper
+                        isDisabled={shouldApplyDisabledRowStyle(rowData)}
+                        onMouseEnter={() => handleCardHoverMouseEnter(rowData)}
+                        onMouseLeave={handleCardHoverMouseLeave}
+                    >
                         <div className={styles.statusCol}>
                             <div>
                                 {cellData === GETWELL_STATUS.OPTIMIZED && <Active className={styles.statusIcon} />}
@@ -1065,7 +1091,11 @@ const RecommendationTable = ({
                 }
 
                 return (
-                    <CellWrapper rowData={rowData}>
+                    <CellWrapper
+                        isDisabled={shouldApplyDisabledRowStyle(rowData)}
+                        onMouseEnter={() => handleCardHoverMouseEnter(rowData)}
+                        onMouseLeave={handleCardHoverMouseLeave}
+                    >
                         {/* Show "n/a" when viewing dismissed configurations or when the category is in Activating state */}
                         {showDismissedConfigurations === true ||
                         isRowConfigurationActivating(rowData) ||
@@ -1120,7 +1150,11 @@ const RecommendationTable = ({
             width: from === WLF_TABS.DASHBOARD ? (windowSize.width > 1847 ? '10%' : '140px') : '10%',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => (
-                <CellWrapper rowData={rowData}>
+                <CellWrapper
+                    isDisabled={shouldApplyDisabledRowStyle(rowData)}
+                    onMouseEnter={() => handleCardHoverMouseEnter(rowData)}
+                    onMouseLeave={handleCardHoverMouseLeave}
+                >
                     <div className={styles.tooltipContainer}>
                         {cellData?.length > 0 && (
                             <div className={styles.tooltip}>
@@ -1160,7 +1194,11 @@ const RecommendationTable = ({
             accessor: 'recommendation',
             width: from === WLF_TABS.DASHBOARD ? (windowSize.width > 1847 ? 'auto' : '232px') : 'auto',
             renderCell: (cellData: any, rowData: any) => (
-                <CellWrapper rowData={rowData}>
+                <CellWrapper
+                    isDisabled={shouldApplyDisabledRowStyle(rowData)}
+                    onMouseEnter={() => handleCardHoverMouseEnter(rowData)}
+                    onMouseLeave={handleCardHoverMouseLeave}
+                >
                     <div className={styles.recommendation}>
                         <div className={styles.tooltipContainer}>
                             {cellData?.length === 0 && (
@@ -1195,7 +1233,11 @@ const RecommendationTable = ({
             isSticky: true,
             width: lastColWidth(),
             renderCell: (cellData: any, rowData: any) => (
-                <CellWrapper rowData={rowData}>
+                <CellWrapper
+                    isDisabled={shouldApplyDisabledRowStyle(rowData)}
+                    onMouseEnter={() => handleCardHoverMouseEnter(rowData)}
+                    onMouseLeave={handleCardHoverMouseLeave}
+                >
                     <div className={styles.buttonGroup}>
                         {renderDismissButton(rowData)}
 
@@ -1271,6 +1313,19 @@ const RecommendationTable = ({
                                             placement="bottom"
                                             width="310px"
                                             height="50px"
+                                        >
+                                            <div>
+                                                <DsButton variant="secondary" isDisabled>
+                                                    {innerPageText(rowData?.name)}
+                                                </DsButton>
+                                            </div>
+                                        </TooltipComponent>
+                                    ) : isInstanceOffline && rowData?.status === GETWELL_STATUS.NOT_OPTIMIZED ? (
+                                        <TooltipComponent
+                                            title={t('databases.well-architect.only-online-resource-fix')}
+                                            placement="bottom"
+                                            width="260px"
+                                            height="30px"
                                         >
                                             <div>
                                                 <DsButton variant="secondary" isDisabled>

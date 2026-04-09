@@ -273,4 +273,5 @@ export interface GetWellSliceInterface {
     cloneIsOptimizedRows: any;
     inProgressStateData: any;
     isWad?: boolean; // Flag to indicate if the instance is from WAD (offline assessment)
+    instanceStatus?: string;
 }

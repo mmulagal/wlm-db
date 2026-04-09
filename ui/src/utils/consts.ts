@@ -734,6 +734,12 @@ export const INVENTORY_STATUS = {
     NOT_REGISTERED: 'Not registered'
 };
 
+export const ONLINE_INSTANCE_STATUSES = new Set([
+    INVENTORY_STATUS.UP,
+    INVENTORY_STATUS.RUNNING_LOWER,
+    INVENTORY_STATUS.SSM_ONLINE
+]);
+
 export const SNAPCENTER_STATUS = {
     ACTIVE: 'active',
     INACTIVE: 'inactive'

@@ -145,7 +145,8 @@ export const redirectToGetWellPage = (dispatch: any, selectedAssessmentRow: any)
             credId: selectedAssessmentRow?.credentialId,
             regionId: selectedAssessmentRow?.regionId,
             storageType: selectedAssessmentRow?.sqlServerDeploymentType,
-            isWad: selectedAssessmentRow?.isWad
+            isWad: selectedAssessmentRow?.isWad,
+            instanceStatus: selectedAssessmentRow?.status
         })
     );
 
