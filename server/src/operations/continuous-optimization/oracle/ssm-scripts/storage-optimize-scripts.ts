@@ -11,6 +11,25 @@ import {
 } from '../../../workloads/oracle/oracle-ssm-script-utils';
 import { UnOptimizedDiskGroups } from '../../assessment-utils';
 
+const DETECT_ASM_TOOL_PY = `
+def detect_asm_tool():
+    try:
+        lsmod_out = subprocess.run(
+            ["lsmod"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            check=False
+        ).stdout
+        if 'oracleafd' in lsmod_out:
+            return "afd"
+        if 'oracleasm' in lsmod_out:
+            return "asmlib"
+    except Exception:
+        pass
+    return "asmlib"
+`;
+
 const oracleStorageConfigurationPythonTemplate = (params: OptimizeStorageParams) => `
 ${getFsxCredentials}
 ${ontapRestApiScript}
@@ -61,6 +80,27 @@ else:
     smallest_size = min(rec["space"]["size"] for rec in response["records"])
 lunSize = smallest_size
 volSize = lunSize * 1.1
+
+# ONTAP may return 409 / "still being created" briefly after flexvol create; bounded retries with backoff.
+MAX_LUN_CREATE_ATTEMPTS = 6
+
+def retry_with_backoff(call_fn, max_attempts, sleep_for_attempt, should_retry, label=""):
+    """call_fn: () -> (result, error). sleep_for_attempt(attempt_index) for attempt_index >= 1. should_retry(err_str) -> continue retrying."""
+    last_res, last_err = None, None
+    for attempt in range(max_attempts):
+        if attempt > 0:
+            wait_secs = sleep_for_attempt(attempt)
+            suffix = f" {label}" if label else ""
+            log(f"Waiting {wait_secs}s for{suffix} to be ready (attempt {attempt + 1}/{max_attempts})")
+            time.sleep(wait_secs)
+        last_res, last_err = call_fn()
+        if not last_err:
+            return last_res, None
+        err_str = str(last_err)
+        if not should_retry(err_str):
+            break
+        log(f"Transient ONTAP error, will retry{(' ' + label) if label else ''}: {err_str}")
+    return last_res, last_err
 
 initiator = None
 with open('/etc/iscsi/initiatorname.iscsi') as f:
@@ -141,7 +181,14 @@ for diskGrp in unOptimizedDiskGroups:
         else:
             log(f"Successfully created volume {volName}: {response}")
             lunPayload['location']['volume']['name'] = volName
-            response, error = ontapRestApiRequest(fsxId, region, 'POST', '/storage/luns', lunPayload)
+            response, lun_error = retry_with_backoff(
+                lambda: ontapRestApiRequest(fsxId, region, 'POST', '/storage/luns', lunPayload),
+                MAX_LUN_CREATE_ATTEMPTS,
+                lambda attempt_idx: 10 * attempt_idx,
+                lambda err_str: '409' in err_str or 'still being created' in err_str,
+                label=f"volume {volName} in SVM {diskGrp['svmName']}"
+            )
+            error = lun_error
             
             if error:
                 log(f"Error creating LUN in volume {volName}: {error}")
@@ -281,6 +328,123 @@ def add_oracle_asm_disk(target, diskname, oracleasm_bin="/usr/sbin/oracleasm"):
 
     return {"device": target, "diskname": diskname, "status": "created"}
 
+${DETECT_ASM_TOOL_PY}
+
+def find_grid_home():
+    if os.path.exists('/etc/oratab'):
+        with open('/etc/oratab', 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                parts = line.split(':')
+                if len(parts) >= 2 and parts[0].strip().startswith('+ASM'):
+                    home = parts[1].strip()
+                    if os.path.exists(home):
+                        return home
+    return None
+
+def find_grid_oracle_base(grid_home):
+    params_file = os.path.join(grid_home, "crs", "install", "crsconfig_params")
+    if os.path.exists(params_file):
+        with open(params_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('ORACLE_BASE='):
+                    return line.split('=', 1)[1].strip()
+    return None
+
+def asmcmd_env(grid_home):
+    env = os.environ.copy()
+    env['ORACLE_HOME'] = grid_home
+    oracle_base = find_grid_oracle_base(grid_home)
+    if oracle_base:
+        env['ORACLE_BASE'] = oracle_base
+    else:
+        env['ORACLE_BASE'] = os.path.join(os.path.dirname(grid_home), 'grid')
+    return env
+
+def parse_afd_lsdsk_labels(stdout_text):
+    """Extract AFD disk label tokens from asmcmd afd_lsdsk output (exact match, not substring)."""
+    labels = set()
+    for line in stdout_text.splitlines():
+        s = line.strip()
+        if not s:
+            continue
+        dash_or_eq = s.replace(' ', '')
+        if dash_or_eq and all(c == '-' for c in dash_or_eq):
+            continue
+        if dash_or_eq and all(c == '=' for c in dash_or_eq):
+            continue
+        up = s.upper()
+        if up.startswith('LABEL') and 'PATH' in up:
+            continue
+        parts = s.split()
+        if not parts:
+            continue
+        token = parts[0]
+        if token.upper() == 'LABEL':
+            continue
+        labels.add(token)
+        ut = token.upper()
+        if ut.startswith('AFD:'):
+            rest = token[4:].lstrip(':')
+            if rest:
+                labels.add(rest)
+        else:
+            labels.add('AFD:' + token)
+    return labels
+
+def afd_disk_label_present(diskname, stdout_text):
+    labels = parse_afd_lsdsk_labels(stdout_text)
+    return diskname in labels or ('AFD:' + diskname) in labels
+
+def run_asmcmd(grid_home, *argv):
+    asmcmd_bin = os.path.join(grid_home, "bin", "asmcmd")
+    cmd = [asmcmd_bin] + list(argv)
+    env = asmcmd_env(grid_home)
+    proc = subprocess.run(
+        cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        universal_newlines=True, env=env
+    )
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or '').strip()
+        sub = argv[0] if argv else 'asmcmd'
+        raise RuntimeError(f"asmcmd {sub} failed (rc={proc.returncode}): {detail}")
+    return proc.stdout
+
+def add_oracle_afd_disk(target, diskname):
+    grid_home = find_grid_home()
+    if not grid_home:
+        raise RuntimeError("Grid Infrastructure home not found in /etc/oratab for AFD disk labeling.")
+    asmcmd_bin = os.path.join(grid_home, "bin", "asmcmd")
+    if not os.path.exists(asmcmd_bin):
+        raise FileNotFoundError(f"asmcmd not found at {asmcmd_bin}")
+
+    try:
+        list_out = run_asmcmd(grid_home, "afd_lsdsk")
+        if afd_disk_label_present(diskname, list_out):
+            log(f"AFD disk {diskname} already exists")
+            return {"device": target, "diskname": diskname, "status": "exists"}
+    except RuntimeError:
+        pass
+
+    try:
+        run_asmcmd(grid_home, "afd_label", diskname, target)
+    except RuntimeError:
+        log(f"afd_label without --init failed, retrying with --init")
+        run_asmcmd(grid_home, "afd_label", diskname, target, "--init")
+
+    list_out = run_asmcmd(grid_home, "afd_lsdsk")
+    log(f"AFD disks after labeling: {list_out}")
+    if not afd_disk_label_present(diskname, list_out):
+        raise RuntimeError(f"AFD disk {diskname} not visible after labeling.")
+
+    return {"device": target, "diskname": diskname, "status": "created"}
+
+asm_tool = detect_asm_tool()
+log(f"Detected ASM tool: {asm_tool}")
+
 for diskGrp in diskGroups:
     diskGrpName = diskGrp['diskGroupName']
     svmName = diskGrp['svmName']
@@ -349,9 +513,10 @@ for diskGrp in diskGroups:
 
     diskCount = 1
     for device in targetDevices:
+        diskName = f"WLMDB_{diskGrpName}_DISK{diskCount}"
+        diskCount += 1
         try:
-            log(f"Adding {device} as ASM disk {diskGrpName}_DISK{len(result[diskGrp['diskGroupName']]['disks']) + 1}")
-            diskName = f"WLMDB_{diskGrpName}_DISK{diskCount}"
+            log(f"Adding {device} as ASM disk {diskName}")
             if is_multipath_device(device):
                 log(f"Device {device} is a multipath device, using multipath path for ASM disk")
                 device = get_multipath_device_UUID(device)
@@ -360,10 +525,12 @@ for diskGrp in diskGroups:
             if not device:
                 raise RuntimeError(f"Could not resolve {device} path for LUN.")
 
-            asmResponse = add_oracle_asm_disk(device, diskName)
+            if asm_tool == "afd":
+                asmResponse = add_oracle_afd_disk(device, diskName)
+            else:
+                asmResponse = add_oracle_asm_disk(device, diskName)
 
             result[diskGrp['diskGroupName']]['disks'].append(diskName)
-            diskCount += 1
         except Exception as e:
             log(f"Error adding {device} to asm disk: {e}")
             result[diskGrp['diskGroupName']]['error'] += str(e)
@@ -377,6 +544,13 @@ oracle_home = os.environ.get("ORACLE_HOME")
 asmca_path = os.path.join(oracle_home, "bin", "asmca")
 result = {}
 asmca_path = shutil.which("asmca") or asmca_path
+
+${DETECT_ASM_TOOL_PY}
+
+asm_tool = detect_asm_tool()
+disk_prefix = "AFD" if asm_tool == "afd" else "ORCL"
+log(f"Detected ASM tool: {asm_tool}, using disk prefix: {disk_prefix}")
+
 for diskGrp in diskGroups:
     diskGroupName = diskGrp['diskGroupName']
     asmDisks = diskGrp.get('asmDisks', [])
@@ -384,7 +558,7 @@ for diskGrp in diskGroups:
     result[diskGrp['diskGroupName']]['error'] = ""
     result[diskGrp['diskGroupName']]['addedDisks'] = []
     for diskName in asmDisks:
-        cmd = [asmca_path, "-silent", "-addDisk", "-diskGroupName", diskGroupName, "-diskList", f"ORCL:{diskName}"]
+        cmd = [asmca_path, "-silent", "-addDisk", "-diskGroupName", diskGroupName, "-diskList", f"{disk_prefix}:{diskName}"]
         command_result = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
@@ -396,8 +570,8 @@ for diskGrp in diskGroups:
             log(f"Successfully added {diskName} to {diskGroupName}")
             result[diskGrp['diskGroupName']]['addedDisks'].append(diskName)
         else:
-            log(f"Error adding {diskName} to {diskGroupName}")
-            result[diskGrp['diskGroupName']]['error'] += f"Error adding {diskName} to {diskGroupName}"
+            log(f"Error adding {diskName} to {diskGroupName}: {command_result.stderr}")
+            result[diskGrp['diskGroupName']]['error'] += f"Error adding {diskName} to {diskGroupName}: {command_result.stderr}"
             continue
 `;
 

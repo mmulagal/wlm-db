@@ -1093,6 +1093,7 @@ async function getOracleDatabaseMappedVolumes(
                         comment: 'Get mapped volume details for Oracle db',
                         accountId,
                         executionTimeout: '300', // the more the # of pdbs in the setup the longer it takes to fetch the details
+                        shouldReadFromCloudWatchLogs: true,
                         documentName: SSM_RUN_SHELL_SCRIPT_DOC,
                         documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
                     });

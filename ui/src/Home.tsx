@@ -250,8 +250,8 @@ const Home = () => {
                                 element={<HeaderComponent tab={WLF_TABS.JOB_MONITORING} />}
                             />
                             <Route
-                            path="/fsxdb/well-architected/configName/:configName/engineType/:engineType"
-                            element={<WellArchitectedConfigDeepLink />}
+                                path="/fsxdb/well-architected/configName/:configName/engineType/:engineType"
+                                element={<WellArchitectedConfigDeepLink />}
                             />
                             <Route
                                 path="/fsxdb/well-architected"

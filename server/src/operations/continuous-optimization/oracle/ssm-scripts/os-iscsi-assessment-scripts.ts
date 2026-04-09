@@ -723,8 +723,13 @@ def check_iscsi_replacement_timeout():
             universal_newlines=True, timeout=10
         )
         if result.returncode != 0:
+            stderr_out = result.stderr
+            if isinstance(stderr_out, bytes):
+                stderr_out = stderr_out.decode('utf-8', errors='replace')
             raise Exception('Failed to read /etc/iscsi/iscsid.conf: {}'.format(result.stderr.strip()))
         config = result.stdout
+        if isinstance(config, bytes):
+            config = config.decode('utf-8', errors='replace')
         for line in config.split('\\n'):
             if 'node.session.timeo.replacement_timeout' in line and not line.strip().startswith('#'):
                 timeout_value = int(line.split('=')[1].strip())
@@ -1058,6 +1063,8 @@ print(json.dumps(all_results))
 
 PYTHON
 )
+# Base64 so combining Python never sees raw JSON (single quotes / newlines break json.loads('...'))
+export WLMDB_OS_RESULTS_B64=$(printf '%s' "$OS_RESULTS" | base64 | tr -d '\n')
 
 ${logFileCheck(true)}
 ORACLE_RESULTS=$(sudo -i -u oracle bash <<ORACLE_SHELL
@@ -1100,9 +1107,12 @@ print(json.dumps({"oracle-parameters": oracle_params_result, "oracle-init-parame
 PYTHON
 ORACLE_SHELL
 )
+export WLMDB_ORACLE_RESULTS_B64=$(printf '%s' "$ORACLE_RESULTS" | base64 | tr -d '\n')
+
 ${logFileCheck()}
 
 $PYTHON_LATEST <<PYTHON
+import base64
 import os
 import json
 import sys
@@ -1111,6 +1121,13 @@ import datetime
 ${pythonLogger('storageOsAssessment.log')}
 
 log('Combining OS and Oracle results')
+
+def _load_json_from_b64(env_name):
+    raw = os.environ.get(env_name, '') or ''
+    if not raw.strip():
+        return {}
+    decoded = base64.b64decode(raw.encode('ascii')).decode('utf-8')
+    return json.loads(decoded)
 
 try:
     os_results = json.loads("""$OS_RESULTS""")
