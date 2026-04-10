@@ -28,6 +28,7 @@ import { setSelectedHeaderTab } from './store/workloadFactory/inventoryV2Slice';
 import Marketing from './Marketing/Marketing';
 import ErrorAnalysisDeepLink from './workloadFactory/ErrorAnalysisDeepLink/ErrorAnalysisDeepLink';
 import WellArchitectedConfigDeepLink from './workloadFactory/WellArchitectedConfigDeepLink/WellArchitectedConfigDeepLink';
+import InventoryFsxDeepLink from './workloadFactory/GetWell/OptimizeInnerPage/CRRRedirectionContent/InventoryFsxDeepLink';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -149,7 +150,7 @@ const Home = () => {
                         />
                         <Route
                             path="/databases/inventory/:credId/:regionId/:fsxId/:tab"
-                            element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
+                            element={<InventoryFsxDeepLink />}
                         />
                         <Route path="/databases/inventory" element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
                         <Route path="/databases/sandboxes" element={<HeaderComponent tab={WLF_TABS.SANDBOXES} />} />
@@ -235,7 +236,7 @@ const Home = () => {
 
                             <Route
                                 path="/fsxdb/inventory/:credId/:regionId/:fsxId/:tab"
-                                element={<HeaderComponent tab={WLF_TABS.INVENTORY} />}
+                                element={<InventoryFsxDeepLink />}
                             />
                             <Route path="/databases/inventory" element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
                             <Route path="/fsxdb/inventory" element={<HeaderComponent tab={WLF_TABS.INVENTORY} />} />
