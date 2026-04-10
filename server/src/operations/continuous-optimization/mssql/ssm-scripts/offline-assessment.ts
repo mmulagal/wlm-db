@@ -458,6 +458,35 @@ Function Test-SqlConnection {
     }
 }
 
+Function Get-ExecutableInstances {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$InstanceName
+    )
+
+    # Default instance -> just COMPUTERNAME
+    if ($InstanceName -eq 'MSSQLSERVER') {
+        return @($env:COMPUTERNAME)
+    }
+
+    # Extract instance-name-only part (after backslash/slash if present)
+    $instanceNameOnly = if ($InstanceName -match '^[^\\\\/]+[\\\\/](.+)$') { $Matches[1] } else { $InstanceName }
+
+    # Always try user-entered value first
+    $instances = @($InstanceName)
+
+    # If COMPUTERNAME is NOT already the prefix, add a COMPUTERNAME-prefixed fallback.
+    # This handles both:
+    #   - FCI virtual-name prefix  (FCINAME\\INST -> strips FCINAME, prepends COMPUTERNAME -> COMPUTERNAME\\INST)
+    #   - No server prefix at all  (INST          -> prepends COMPUTERNAME              -> COMPUTERNAME\\INST)
+    $escaped = [regex]::Escape($env:COMPUTERNAME)
+    if ($InstanceName -notmatch "(?i)^\${escaped}[\\\\/]") {
+        $instances += "$env:COMPUTERNAME\\$instanceNameOnly"
+    }
+
+    return $instances
+}
+
 Function Get-SqlCredentials {
     param(
         [Parameter(Mandatory = $true)]
@@ -467,62 +496,33 @@ Function Get-SqlCredentials {
         [Parameter(Mandatory = $false)]
         [string]$Hostname = $env:COMPUTERNAME
     )
-    
-    $serverInstanceName = $InstanceName
-    $instanceNameOnly = if ($serverInstanceName -match '^[^\\\\]+\\\\(.+)$') { $Matches[1] } else { $serverInstanceName }
-    
-    # Determine initial executable instance based on serverInstanceName
-    if ($serverInstanceName -eq 'MSSQLSERVER') {
-        $executableInstance = $env:COMPUTERNAME
-    } else {
-        $executableInstance = $serverInstanceName
-    }
-    
-    Write-Log -Level "DEBUG" -Message "Starting credential resolution for SQL instance: $serverInstanceName, Initial ExecutableInstance: $executableInstance, Region: $Region, Hostname: $Hostname"
-    
-    # Test connection with initial executable instance
-    $windowsAuthResult = Test-SqlConnection -ExecutableInstance $executableInstance
-    Write-Log -Level "DEBUG" -Message "Windows Authentication test result: Success=$($windowsAuthResult.Success), ErrorMessage=$($windowsAuthResult.ErrorMessage)"
-    
-    # If test-connection fails and this is a named instance (not MSSQLSERVER), try with COMPUTERNAME\\serverInstanceName format
-    if (-not $windowsAuthResult.Success -and $serverInstanceName -ne 'MSSQLSERVER') {
-        Write-Log -Level "DEBUG" -Message "Initial connection test failed for named instance, trying with COMPUTERNAME\\serverInstanceName format"
-        $executableInstance = "$env:COMPUTERNAME\\$instanceNameOnly"
-        $windowsAuthResult = Test-SqlConnection -ExecutableInstance $executableInstance
-        Write-Log -Level "DEBUG" -Message "Retry Windows Authentication test result: Success=$($windowsAuthResult.Success), ErrorMessage=$($windowsAuthResult.ErrorMessage)"
-    }
-    
-    if ($windowsAuthResult.Success) {
-        Write-Log -Level "DEBUG" -Message "Windows Authentication successful, returning credentials"
-        return @{
-            UseWindowsAuth = $true
-            Username = $null
-            Password = $null
-            Source = "WindowsAuthentication"
-            ExecutableInstance = $executableInstance
+
+    $execInstancesToTry = Get-ExecutableInstances -InstanceName $InstanceName
+    Write-Log -Level "DEBUG" -Message "Starting credential resolution for '$InstanceName'. Instances to try: $($execInstancesToTry -join ', '), Region: $Region, Hostname: $Hostname"
+
+    # --- Windows Authentication: try each instance in order ---
+    foreach ($execInstance in $execInstancesToTry) {
+        $windowsAuthResult = Test-SqlConnection -ExecutableInstance $execInstance
+        Write-Log -Level "DEBUG" -Message "Windows Auth '$execInstance': Success=$($windowsAuthResult.Success), ErrorMessage=$($windowsAuthResult.ErrorMessage)"
+        if ($windowsAuthResult.Success) {
+            Write-Log -Level "DEBUG" -Message "Windows Authentication successful, returning credentials"
+            return @{
+                UseWindowsAuth = $true
+                Username = $null
+                Password = $null
+                Source = "WindowsAuthentication"
+                ExecutableInstance = $execInstance
+            }
         }
     }
-    
+
     Write-Log "Windows Authentication not available, trying SQL Authentication..."
-    
-    # Build array of executable instances to try for SQL auth
-    # For default instance: single entry with $env:COMPUTERNAME
-    # For named instance: $InstanceName first, then $env:COMPUTERNAME\\$InstanceName
-    $execInstancesToTry = @()
-    if ($InstanceName -eq 'MSSQLSERVER') {
-        $execInstancesToTry = @($env:COMPUTERNAME)
-    } else {
-        if ($InstanceName -match '\\\\') {
-            $execInstancesToTry = @($InstanceName, "$env:COMPUTERNAME\\$instanceNameOnly")
-        } else {
-            $execInstancesToTry = @($InstanceName, "$env:COMPUTERNAME\\$InstanceName")
-        }
-    }
-    
+
+    # --- SQL Authentication: shared validator reuses the same instance list ---
     $ValidateSqlCredentials = {
-        param($Credentials, $Source, $ExecInstances)
-        
-        foreach ($execInstance in $ExecInstances) {
+        param($Credentials, $Source)
+
+        foreach ($execInstance in $execInstancesToTry) {
             $testResult = Test-SqlConnection -ExecutableInstance $execInstance -Username $Credentials.Username -Password $Credentials.Password
             if ($testResult.Success) {
                 Write-Log "SQL Authentication validated successfully (source: $Source) with instance: $execInstance"
@@ -533,24 +533,23 @@ Function Get-SqlCredentials {
                     Source = $Source
                     ExecutableInstance = $execInstance
                 }
-            } else {
-                Write-Log -Level "DEBUG" -Message "SQL auth failed for instance: $execInstance - $($testResult.ErrorMessage)"
             }
+            Write-Log -Level "DEBUG" -Message "SQL auth failed for instance: $execInstance - $($testResult.ErrorMessage)"
         }
-        
+
         Write-Log -Level "WARNING" -Message "SQL credentials from $Source are invalid for all instance formats tried"
         return $null
     }
-    
+
     if (-not [string]::IsNullOrEmpty($Region)) {
         Write-Log -Level "DEBUG" -Message "Region available ($Region), attempting Secrets Manager lookup for SQL credentials"
         # Build secret names: try with hostname prefix, and also try with backslashes replaced by forward slashes
-        $secretNameWithSlashes = $serverInstanceName -replace '\\\\', '/'
-        $secretNames = @("$Hostname/$serverInstanceName", $secretNameWithSlashes)
+        $secretNameWithSlashes = $InstanceName -replace '\\\\', '/'
+        $secretNames = @("$Hostname/$InstanceName", $secretNameWithSlashes)
         $credentials = Get-CredentialFromSecretsManager -SecretNames $secretNames -Region $Region -CredentialType "SQL"
         if ($credentials) {
             Write-Log -Level "DEBUG" -Message "Credentials retrieved from Secrets Manager, validating..."
-            $validatedCreds = & $ValidateSqlCredentials $credentials "SecretsManager" $execInstancesToTry
+            $validatedCreds = & $ValidateSqlCredentials $credentials "SecretsManager"
             if ($validatedCreds) {
                 Write-Log -Level "DEBUG" -Message "Secrets Manager credentials validated successfully"
                 return $validatedCreds
@@ -564,12 +563,12 @@ Function Get-SqlCredentials {
         Write-Log -Level "WARNING" -Message "AWS region not available, skipping Secrets Manager lookup for SQL credentials"
         Write-Log -Level "DEBUG" -Message "Region is null or empty, skipping Secrets Manager lookup"
     }
-    
+
     Write-Log -Level "DEBUG" -Message "Attempting Windows Credential Manager lookup for SQL credentials"
-    $credentials = Get-CredentialFromWindowsCredentialManager -TargetNames @($serverInstanceName)
+    $credentials = Get-CredentialFromWindowsCredentialManager -TargetNames @($InstanceName)
     if ($credentials) {
         Write-Log -Level "DEBUG" -Message "Credentials retrieved from Windows Credential Manager, validating..."
-        $validatedCreds = & $ValidateSqlCredentials $credentials "WindowsCredentialManager" $execInstancesToTry
+        $validatedCreds = & $ValidateSqlCredentials $credentials "WindowsCredentialManager"
         if ($validatedCreds) {
             Write-Log -Level "DEBUG" -Message "Windows Credential Manager credentials validated successfully"
             return $validatedCreds
@@ -579,10 +578,10 @@ Function Get-SqlCredentials {
     } else {
         Write-Log -Level "DEBUG" -Message "No credentials found in Windows Credential Manager"
     }
-    
+
     $credentials = Get-CredentialInteractive -CredentialType "SQL" -UsernamePrompt "Enter SQL username (e.g., sa)" -AllowEmptyUsername $false
     if ($credentials) {
-        $validatedCreds = & $ValidateSqlCredentials $credentials "Interactive" $execInstancesToTry
+        $validatedCreds = & $ValidateSqlCredentials $credentials "Interactive"
         if ($validatedCreds) {
             return $validatedCreds
         } else {
