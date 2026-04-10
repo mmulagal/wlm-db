@@ -3,20 +3,20 @@ import { useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import HeaderComponent from '../../../DatabaseHomePage/HeaderComponent/HeaderComponent';
 import { WLF_TABS } from '../../../../utils/consts';
-import { useAssociateSelectedLinkMutation, useCheckExistingLinkMutation } from '../../../../utils/apiService';
+import { useAssociateSelectedLinkMutation, useGetExistingLinksMutation } from '../../../../utils/apiService';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 
 const InventoryFsxDeepLink = () => {
     const { credId, regionId, fsxId } = useParams();
     const dispatch = useDispatch();
-    const [checkExistingLinkApi] = useCheckExistingLinkMutation();
+    const [getExistingLinkApi] = useGetExistingLinksMutation();
     const [associateSelectedLinkApi] = useAssociateSelectedLinkMutation();
 
     useEffect(() => {
         let cancelled = false;
 
         const run = async () => {
-            const checkResult: any = await checkExistingLinkApi({ fsxId: fsxId as string });
+            const checkResult: any = await getExistingLinkApi({});
 
             if (cancelled) return;
 
@@ -51,7 +51,7 @@ const InventoryFsxDeepLink = () => {
         return () => {
             cancelled = true;
         };
-    }, [credId, regionId, fsxId, checkExistingLinkApi, associateSelectedLinkApi, dispatch]);
+    }, [credId, regionId, fsxId, getExistingLinkApi, associateSelectedLinkApi, dispatch]);
 
     return <HeaderComponent tab={WLF_TABS.INVENTORY} />;
 };
