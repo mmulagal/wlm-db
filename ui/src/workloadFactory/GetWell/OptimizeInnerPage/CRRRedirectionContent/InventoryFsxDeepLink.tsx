@@ -3,7 +3,12 @@ import { useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import HeaderComponent from '../../../DatabaseHomePage/HeaderComponent/HeaderComponent';
 import { WLF_TABS } from '../../../../utils/consts';
-import { useAssociateSelectedLinkMutation, useGetExistingLinksMutation } from '../../../../utils/apiService';
+import {
+    useAssociateSelectedLinkMutation,
+    useGetExistingLinksMutation,
+    useCheckExistingLinkMutation,
+    useDeleteExistingLinkMutation
+} from '../../../../utils/apiService';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 
 const InventoryFsxDeepLink = () => {
@@ -11,6 +16,8 @@ const InventoryFsxDeepLink = () => {
     const dispatch = useDispatch();
     const [getExistingLinkApi] = useGetExistingLinksMutation();
     const [associateSelectedLinkApi] = useAssociateSelectedLinkMutation();
+    const [checkExistingLinkApi] = useCheckExistingLinkMutation();
+    const [deleteExistingLinkApi] = useDeleteExistingLinkMutation();
 
     useEffect(() => {
         let cancelled = false;
@@ -28,6 +35,17 @@ const InventoryFsxDeepLink = () => {
             const latest = sorted[0];
 
             if (latest?.state?.status?.toLowerCase() === 'connected') {
+                const checkResult: any = await checkExistingLinkApi({ fsxId: fsxId });
+
+                if (checkResult?.data?.count > 0) {
+                    const existingLinkId = checkResult?.data?.items?.[0]?.id;
+                    await deleteExistingLinkApi({
+                        credentialId: credId,
+                        region: regionId,
+                        fsxId: fsxId,
+                        linkId: existingLinkId
+                    });
+                }
                 const associateResult: any = await associateSelectedLinkApi({
                     credentialId: credId as string,
                     region: regionId as string,
