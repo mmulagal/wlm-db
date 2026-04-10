@@ -149,7 +149,7 @@ const Home = () => {
                             element={<ErrorAnalysisDeepLink />}
                         />
                         <Route
-                            path="/databases/inventory/:credId/:regionId/:fsxId/:tab/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/target/:target"
+                            path="/databases/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/target/:target/*"
                             element={<InventoryFsxDeepLink />}
                         />
                         <Route
@@ -239,7 +239,7 @@ const Home = () => {
                             />
 
                             <Route
-                                path="/fsxdb/inventory/:credId/:regionId/:fsxId/:tab/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/target/:target"
+                                path="/fsxdb/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/target/:target/*"
                                 element={<InventoryFsxDeepLink />}
                             />
                             <Route

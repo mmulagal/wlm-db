@@ -77,7 +77,8 @@ const InventoryFsxDeepLink = () => {
         credId: string;
         regionId: string;
         fsxId: string;
-        tab: string;
+        /** Set only for `/inventory/.../:fsxId/:tab` (short FSx associate route), not for CRR `/.../:fsxId/resource/...`. */
+        tab?: string;
         resourceId?: string;
         instanceId?: string;
         hostname?: string;
