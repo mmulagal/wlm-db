@@ -2626,6 +2626,8 @@ export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
             return WLF_TABS.DASHBOARD;
         case WLF_TABS.SAVINGS_CALCULATOR:
             return WLF_TABS.SAVINGS_CALCULATOR;
+        case WLF_TABS.OPTIMIZE_INNER_PAGE:
+            return WLF_TABS.OPTIMIZE_INNER_PAGE;
         default:
             return selectedHeaderTab;
     }

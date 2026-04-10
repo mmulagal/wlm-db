@@ -35,6 +35,8 @@ const CRRLoadingDialogContent = ({ rowData }: CRRLoadingDialogContentProps) => {
     const { selectedGwInstanceCredId, selectedRowFsxId, selectedGwInstanceRegionId } = useAppSelector(
         state => state.getWellOptimize
     );
+    const { selectedResourceId, selectedDatabaseInstance, selectedHostname, selectedDatabaseInstanceName } =
+        useAppSelector(state => state.getWellOptimize);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
     const { setDialog, closeDialog } = useDialog();
     const [getAssociatedLinksApi] = useGetAssociatedLinksMutation();
@@ -59,7 +61,9 @@ const CRRLoadingDialogContent = ({ rowData }: CRRLoadingDialogContentProps) => {
                 payload: {
                     pathname: `../../administration/links/create?awsAccount=${fsxDetails?.awsAccountId}&from=${
                         isWorkloadFactory ? '/databases' : '/fsxdb'
-                    }/inventory/${selectedGwInstanceCredId}/${fsxDetails?.region}/${fsxDetails?.id}/overview&region=${
+                    }/inventory/${selectedGwInstanceCredId}/${fsxDetails?.region}/${
+                        fsxDetails?.id
+                    }/resource/${selectedResourceId}/instance/${selectedDatabaseInstance}/host/${selectedHostname}/db/${selectedDatabaseInstanceName}/target/crr/overview&region=${
                         fsxDetails?.region
                     }&securityGroupId=${fsxDetails?.securityGroups[0]?.id}&securityGroupName=${
                         fsxDetails?.securityGroups[0]?.name
