@@ -743,7 +743,8 @@ async function getFsxVolumeDetails(
     region: string,
     fsxId: string | string[],
     fsxVolumeIds: string[],
-    accountId?: string
+    accountId?: string,
+    cacheOptions?: { useCache?: boolean }
 ) {
     logger.info('Get FSx volume details', { credentialsId, region, fsxId, fsxVolumeIds, accountId });
 
@@ -753,7 +754,7 @@ async function getFsxVolumeDetails(
     };
 
     const { Volumes: fsxVolumes } = await describeFSxVolumes(credentialsId, region, { ...params }, accountId, {
-        useCache: true
+        useCache: cacheOptions?.useCache ?? true
     });
     if (!fsxVolumes) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get FSx volume details');
@@ -780,18 +781,31 @@ async function updateVolumeSizeAndWaitForUpdate(
 
     await updateFsxVolumeSize(credentialsId, region, accountId, fsxVolumeId, fsxVolumeSizeBytes);
 
-    let currentVolumeSizeBytes;
+    let currentVolumeSizeBytes: number | undefined;
     const maxRetries = 10;
     const intervalSeconds = '10s';
+    const sizeToleranceFraction = 0.01;
     let retries = 0;
     while (retries < maxRetries) {
         try {
+            // Bypass cache when polling so we get fresh size from API after resize
             // eslint-disable-next-line no-await-in-loop
-            const [volumeDetails] = await getFsxVolumeDetails(credentialsId, region, fsxId, [fsxVolumeId]);
+            const [volumeDetails] = await getFsxVolumeDetails(
+                credentialsId,
+                region,
+                fsxId,
+                [fsxVolumeId],
+                accountId,
+                { useCache: false }
+            );
             currentVolumeSizeBytes = volumeDetails?.OntapConfiguration?.SizeInBytes;
             logger.info(`Current size of volume ${fsxVolumeId}: ${currentVolumeSizeBytes} bytes`);
 
-            if (currentVolumeSizeBytes === fsxVolumeSizeBytes || IS_DEMO_FLOW) {
+            const exactMatch = currentVolumeSizeBytes === fsxVolumeSizeBytes;
+            const withinTolerance =
+                typeof currentVolumeSizeBytes === 'number' &&
+                currentVolumeSizeBytes >= fsxVolumeSizeBytes * (1 - sizeToleranceFraction);
+            if (exactMatch || withinTolerance || IS_DEMO_FLOW) {
                 logger.info(`Volume ${fsxVolumeId} has reached the desired size: ${fsxVolumeSizeBytes} bytes`);
                 return;
             }

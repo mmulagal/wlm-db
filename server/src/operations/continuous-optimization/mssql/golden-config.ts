@@ -345,6 +345,7 @@ const GOLDEN_CONFIG = {
                 'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.Use local snapshots as an additional backup mechanism for quick restores or for testing.'
         },
         awsBackup: {
+            name: 'backup-configuration',
             tags: [AwsWellArchitecturedPillars.RELIABILITY],
             category: 'resiliency',
             subCategory: 'resiliency',

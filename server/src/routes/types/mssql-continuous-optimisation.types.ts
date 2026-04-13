@@ -16,7 +16,8 @@ import {
     ErrorResponse,
     GenericAssessmentResponse,
     GenericParameterDriftResponse,
-    OntapVolume
+    OntapVolume,
+    FsxBackupOptimizationFields
 } from './continuous-optimization.types';
 import { CLONE_ACTION } from '../../utils/consts';
 
@@ -382,17 +383,6 @@ const OptimizeSizingRequestBody = Type.Object({
 
 type OptimizeSizingRequestBodyType = Static<typeof OptimizeSizingRequestBody>;
 
-const UpdateFSxNBackupRequestBody = Type.Object({
-    fsxFileSystemId: Type.Optional(Type.String()),
-    backupRetentionDays: Type.Optional(Type.Number({ minimum: 1, maximum: 90 })),
-    backupStartTime: Type.Optional(
-        Type.String({
-            description: '00:00 to 23:59 padded UTC timestamp',
-            pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$'
-        })
-    )
-});
-
 const BaseOptimizePerHostRequestBody = Type.Object({
     id: Type.String({ minLength: 1 }),
     sqlServerInstances: Type.Array(Type.String({ minLength: 1 })),
@@ -411,7 +401,7 @@ const MTUOptimizePerHostRequestBody = Type.Intersect([
 ]);
 
 // For AWS backup optimization - requires FSx/backup fields, no interfaceNames
-const BackupOptimizePerHostRequestBody = Type.Intersect([BaseOptimizePerHostRequestBody, UpdateFSxNBackupRequestBody]);
+const BackupOptimizePerHostRequestBody = Type.Intersect([BaseOptimizePerHostRequestBody, FsxBackupOptimizationFields]);
 
 // General type for other optimizations - includes all optional fields
 const OptimizePerHostRequestBody = Type.Intersect([
@@ -419,7 +409,7 @@ const OptimizePerHostRequestBody = Type.Intersect([
     Type.Object({
         interfaceNames: Type.Optional(Type.Array(Type.String()))
     }),
-    UpdateFSxNBackupRequestBody
+    FsxBackupOptimizationFields
 ]);
 
 type OptimizePerHostRequestBodyType = Static<typeof OptimizePerHostRequestBody>;

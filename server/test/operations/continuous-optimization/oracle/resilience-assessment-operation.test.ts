@@ -1,6 +1,8 @@
-import { WorkloadInstance, CrrAssessment } from '../../../../src/utils/common-types';
+import { WorkloadInstance, CrrAssessment, AWSBackupAssessment } from '../../../../src/utils/common-types';
 import { ORACLE_CRR_ASSESSMENT_SCRIPT } from '../../../../src/operations/continuous-optimization/oracle/ssm-scripts/resiliency-assessment-scripts';
 import { getCrrDriftData } from '../../../../src/operations/continuous-optimization/oracle/resilience-assessment-operation';
+import { getOracleAwsBackupDriftData } from '../../../../src/operations/continuous-optimization/oracle/resilience-awsBackup-assessment-operations';
+import { OracleGenericParameterDriftResponseType } from '../../../../src/routes/types/oracle-continuous-optimization.types';
 import {
     AssessmentStatus,
     ASSESSMENT_RESOURCE_TYPE,
@@ -316,7 +318,7 @@ describe('getCrrDriftData', () => {
         ]);
     });
 
-    describe('control file multiplexing exemption', () => {
+    describe('control-file multiplexing exemption', () => {
         it('should exempt control-file-only volumes when another control file volume has CRR', () => {
             const crrData: CrrAssessment = {
                 crrDetails: [
@@ -546,5 +548,151 @@ describe('getCrrDriftData', () => {
             ]);
             expect(result.totalObjectsInViolation).toBe(1);
         });
+    });
+});
+
+describe('getOracleAwsBackupDriftData', () => {
+    const accountId = 'test-account';
+    const credentialsId = 'test-creds';
+    const region = 'us-east-1';
+    const databaseHostId = 'host-1';
+    const databaseInstanceId = 'instance-1';
+
+    it('should return OPTIMIZED when all volumes have AWS backup enabled', () => {
+        const assessmentData: AWSBackupAssessment = {
+            fileSystemId: 'fs-0abc123',
+            isAWSBackupEnabled: true,
+            volumeBackupDetails: [
+                { uuid: 'uuid-data', name: 'data_vol', isAWSBackupEnabled: true },
+                { uuid: 'uuid-log', name: 'log_vol', isAWSBackupEnabled: true }
+            ]
+        };
+
+        const result = getOracleAwsBackupDriftData(
+            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+        ) as OracleGenericParameterDriftResponseType;
+        expect(result).not.toHaveProperty('errorMessage');
+        expect(result.status).toBe(AssessmentStatus.OPTIMIZED);
+        expect(result.objectsInViolation).toEqual([]);
+        expect(result.totalObjectsInViolation).toBe(0);
+        expect(result.totalObjectsAssessed).toBe(2);
+    });
+
+    it('should return NOT_OPTIMIZED when some volumes lack backup', () => {
+        const assessmentData: AWSBackupAssessment = {
+            fileSystemId: 'fs-0abc123',
+            isAWSBackupEnabled: false,
+            volumeBackupDetails: [
+                { uuid: 'uuid-data', name: 'data_vol', isAWSBackupEnabled: true },
+                { uuid: 'uuid-log', name: 'log_vol', isAWSBackupEnabled: false }
+            ]
+        };
+
+        const result = getOracleAwsBackupDriftData(
+            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+        ) as OracleGenericParameterDriftResponseType;
+        expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+        expect(result.objectsInViolation).toEqual([
+            { ontapVolumeUuid: 'uuid-log', ontapVolumeName: 'log_vol' }
+        ]);
+        expect(result.totalObjectsInViolation).toBe(1);
+        expect(result.totalObjectsAssessed).toBe(2);
+    });
+
+    it('should return NOT_OPTIMIZED when all volumes lack backup', () => {
+        const assessmentData: AWSBackupAssessment = {
+            fileSystemId: 'fs-0abc123',
+            isAWSBackupEnabled: false,
+            volumeBackupDetails: [
+                { uuid: 'uuid-data', name: 'data_vol', isAWSBackupEnabled: false },
+                { uuid: 'uuid-log', name: 'log_vol', isAWSBackupEnabled: false }
+            ]
+        };
+
+        const result = getOracleAwsBackupDriftData(
+            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+        ) as OracleGenericParameterDriftResponseType;
+        expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+        expect(result.objectsInViolation).toEqual([
+            { ontapVolumeUuid: 'uuid-data', ontapVolumeName: 'data_vol' },
+            { ontapVolumeUuid: 'uuid-log', ontapVolumeName: 'log_vol' }
+        ]);
+        expect(result.totalObjectsInViolation).toBe(2);
+        expect(result.totalObjectsAssessed).toBe(2);
+    });
+
+    it('should return correct metadata fields from golden config', () => {
+        const assessmentData: AWSBackupAssessment = {
+            fileSystemId: 'fs-0abc123',
+            isAWSBackupEnabled: true,
+            volumeBackupDetails: [{ uuid: 'uuid-data', name: 'data_vol', isAWSBackupEnabled: true }]
+        };
+
+        const result = getOracleAwsBackupDriftData(
+            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+        ) as OracleGenericParameterDriftResponseType;
+        expect(result.name).toBe('backup-configuration');
+        expect(result.severity).toBe(SEVERITY.WARNING);
+        expect(result.tags).toEqual([AwsWellArchitecturedPillars.RELIABILITY]);
+        expect(result.resourceType).toBe(ASSESSMENT_RESOURCE_TYPE.VOLUME);
+        expect(result.recommended).toBe('aws-backup-enabled');
+    });
+
+    it('should return error message when assessment data is empty', () => {
+        const result = getOracleAwsBackupDriftData(
+            accountId, credentialsId, region, databaseHostId, databaseInstanceId,
+            {} as AWSBackupAssessment
+        );
+        expect(result).toHaveProperty('errorMessage');
+        expect((result as { errorMessage: string }).errorMessage).toContain('aws-backup');
+    });
+
+    it('should propagate error message from assessment data', () => {
+        const assessmentData: AWSBackupAssessment = {
+            fileSystemId: 'fs-0abc123',
+            isAWSBackupEnabled: false,
+            errorMessage: 'Found no FSx for ONTAP volumes for the instance testdb.',
+            volumeBackupDetails: []
+        };
+
+        const result = getOracleAwsBackupDriftData(
+            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+        );
+        expect(result).toHaveProperty('errorMessage');
+        expect((result as { errorMessage: string }).errorMessage).toBe(
+            'Found no FSx for ONTAP volumes for the instance testdb.'
+        );
+    });
+
+    it('should handle single volume assessment', () => {
+        const assessmentData: AWSBackupAssessment = {
+            fileSystemId: 'fs-0abc123',
+            isAWSBackupEnabled: false,
+            volumeBackupDetails: [
+                { uuid: 'uuid-data', name: 'data_vol', isAWSBackupEnabled: false }
+            ]
+        };
+
+        const result = getOracleAwsBackupDriftData(
+            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+        ) as OracleGenericParameterDriftResponseType;
+        expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+        expect(result.totalObjectsAssessed).toBe(1);
+        expect(result.totalObjectsInViolation).toBe(1);
+    });
+
+    it('should return totalObjectsInViolation as 1 when backup is disabled and no volume details', () => {
+        const assessmentData: AWSBackupAssessment = {
+            fileSystemId: 'fs-0abc123',
+            isAWSBackupEnabled: false,
+            volumeBackupDetails: []
+        };
+
+        const result = getOracleAwsBackupDriftData(
+            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+        ) as OracleGenericParameterDriftResponseType;
+        expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+        expect(result.totalObjectsInViolation).toBe(1);
+        expect(result.totalObjectsAssessed).toBe(1);
     });
 });

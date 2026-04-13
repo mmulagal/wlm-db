@@ -10,6 +10,7 @@ import {
     updateDatabaseHostAssessmentData
 } from '../../database/database-operations';
 import {
+    AWSBackupAssessment,
     CrrAssessment,
     DatabaseInstance,
     DatabaseInstanceConfigurations,
@@ -21,7 +22,11 @@ import {
 } from '../../../utils/common-types';
 import { AuditStatus, HttpErrorCodes, RESOURCESTYPE, DatabaseTypes, STORAGE_PROTOCOLS } from '../../../utils/consts';
 import { IS_DEMO_FLOW, sleep, validateWithSchema } from '../../../utils/utils';
-import { AssessmentCategoriesOracle, AssessmentTriggeredBy } from '../../../utils/continous-optimization-consts';
+import {
+    AssessmentCategories,
+    AssessmentCategoriesOracle,
+    AssessmentTriggeredBy
+} from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getOracleDatabaseMappedVolumes } from '../../workloads/oracle/oracle-operations';
@@ -36,6 +41,10 @@ import { listDatabaseInstanceConfigData } from '../../../lib/database/database-i
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { calculateHostOsPatchDrift, managedHostOsPatchAssessment } from './hostOsPatch-assessment-operations';
 import {
+    initiateOracleAWSBackupAssessment,
+    getOracleAwsBackupDriftData
+} from './resilience-awsBackup-assessment-operations';
+import {
     calculateOracleSecurityPatchDrift,
     initiateOracleSecurityPatchAssessmentCollection
 } from './security-patch-assessment-operations';
@@ -48,6 +57,7 @@ import {
 import {
     DriftAssessmentResponsePerAccountType,
     DriftAssessmentResponsePerHostType,
+    GenericParameterDriftResponseType,
     HostOsPatchDriftResponseType,
     OracleDriftAssessmentResponse,
     OracleDriftAssessmentResponseType,
@@ -405,6 +415,15 @@ async function initiateInstanceLevelAssessmentDataCollection(
                 instanceLevelAssessmentJobId,
                 databaseInstanceRecord
             ),
+        [AssessmentCategoriesOracle.AWS_BACKUP]: async () =>
+            initiateOracleAWSBackupAssessment(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceLevelAssessmentJobId,
+                databaseInstanceRecord
+            ),
         [AssessmentCategoriesOracle.CRR]: async () =>
             initiateCrossRegionResiliencyAssessment(
                 accountId,
@@ -524,6 +543,7 @@ async function triggerOracleAssessment(
         const shouldRunInstanceLevelAssessment = fields.some(field =>
             [
                 AssessmentCategoriesOracle.STORAGE,
+                AssessmentCategoriesOracle.AWS_BACKUP,
                 AssessmentCategoriesOracle.CRR,
                 AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT,
                 AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH
@@ -826,10 +846,15 @@ async function fetchOracleDriftAssessment(
     const assessmentFlags = {
         storage: fieldsValues.includes(AssessmentCategoriesOracle.STORAGE.toLowerCase()),
         hostOsPatch: fieldsValues.includes(AssessmentCategoriesOracle.HOST_OS_PATCH.toLowerCase()),
+        awsBackup: fieldsValues.includes(AssessmentCategoriesOracle.AWS_BACKUP.toLowerCase()),
         crr: fieldsValues.includes(AssessmentCategoriesOracle.CRR.toLowerCase()),
         snapcenterSnapshot: fieldsValues.includes(AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT.toLowerCase()),
         oracleSecurityPatch: fieldsValues.includes(AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH.toLowerCase())
     };
+
+    const awsBackupAssessmentData = assessmentDataMap[AssessmentCategories.AWS_BACKUP] as
+        | AWSBackupAssessment
+        | undefined;
 
     const crrAssessmentData = assessmentDataMap[AssessmentCategoriesOracle.CRR] as unknown as CrrAssessment;
 
@@ -856,7 +881,8 @@ async function fetchOracleDriftAssessment(
     ]);
     const controlFileOnlyVolumeIds = controlFileVolumeIds.filter(id => !nonControlFileVolumeIds.has(id));
 
-    const [storageDriftData, hostLevelData, crrData, snapcenterDriftData, oracleSecurityPatchData] = await Promise.all([
+
+    const [storageDriftData, hostLevelData, awsBackupDriftData, crrData, snapcenterDriftData, oracleSecurityPatchData] = await Promise.all([
         assessmentFlags.storage
             ? calculateStorageDrift(
                   accountId,
@@ -886,6 +912,18 @@ async function fetchOracleDriftAssessment(
                   )
               )
             : Promise.resolve({ hostOsPatch: undefined }),
+        assessmentFlags.awsBackup && awsBackupAssessmentData
+            ? Promise.resolve(
+                  getOracleAwsBackupDriftData(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      databaseInstanceId,
+                      awsBackupAssessmentData
+                  )
+              )
+            : Promise.resolve(undefined),
         assessmentFlags.crr
             ? Promise.resolve(
                   getCrrDriftData(
@@ -921,6 +959,7 @@ async function fetchOracleDriftAssessment(
     let driftAssessmentData: OracleDriftAssessmentResponseType = {
         storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),
         hostOsPatch: isEmpty(hostLevelData.hostOsPatch) ? undefined : hostLevelData.hostOsPatch,
+        ...(awsBackupDriftData && { awsBackup: awsBackupDriftData as GenericParameterDriftResponseType }),
         oracleSecurityPatch: oracleSecurityPatchData,
         crr: crrData,
         snapcenterSnapshot: snapcenterDriftData || undefined,
@@ -1038,6 +1077,7 @@ async function fetchOracleDriftAssessmentPerHost(
     const assessmentFields = [
         AssessmentCategoriesOracle.STORAGE,
         AssessmentCategoriesOracle.HOST_OS_PATCH,
+        AssessmentCategoriesOracle.AWS_BACKUP,
         AssessmentCategoriesOracle.CRR,
         AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT,
         AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH

@@ -1464,6 +1464,9 @@ function camelCaseToHyphenated(str: string): string {
     return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
+function hyphenatedToCamelCase(str: string): string {
+    return str.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+}
 const UPPERCASE_ACRONYMS = new Set([
     'io',
     'nfs',
@@ -1708,6 +1711,7 @@ export {
     isRedisConnected,
     summarizeFirstLevel,
     camelCaseToHyphenated,
+    hyphenatedToCamelCase,
     hyphenatedToPascalCaseWithSpace,
     createStreamingZip,
     ASSESSMENT_SCRIPT_FILENAMES,

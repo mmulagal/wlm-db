@@ -31,7 +31,7 @@ const OracleOptimizeSchema = {
     ...resourceRequest,
     summary: 'Fix for an Oracle database',
     description:
-        'Fix storage configuration / OS configuration / asm layout optimizations as per best practices for the selected Oracle database instances.',
+        'Fix storage configuration / OS configuration / asm layout / AWS backup optimizations as per best practices for the selected Oracle database instances.',
     params: AccountIdParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
     body: OptimizeRequestBody,

@@ -151,6 +151,7 @@ async function processAccountInstancesBatch(
                             await triggerOracleAssessment(instance, parentJobId, [
                                 AssessmentCategoriesOracle.STORAGE,
                                 AssessmentCategoriesOracle.HOST_OS_PATCH,
+                                AssessmentCategoriesOracle.AWS_BACKUP,
                                 AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
                                 AssessmentCategoriesOracle.CRR
                             ]);

@@ -25,6 +25,7 @@ enum AssessmentCategoriesOracle {
     STORAGE = 'storage',
     MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes',
     HOST_OS_PATCH = 'host-os-patch',
+    AWS_BACKUP = 'aws-backup',
     CRR = 'crr',
     SNAPCENTER_SNAPSHOT = 'snapcenter-snapshot',
     ORACLE_SECURITY_PATCH = 'oracle-security-patch'
@@ -65,14 +66,16 @@ enum OptimizeOracleTypes {
     STORAGE_CONFIGURATION = 'storage-configuration',
     STORAGE_LAYOUT = 'storage-layout',
     STORAGE_OPERATING_SYSTEM = 'storage-operating-system',
-    STORAGE_SIZING = 'storage-sizing'
+    STORAGE_SIZING = 'storage-sizing',
+    AWS_BACKUP = 'aws-backup'
 }
 
 const OracleOptimizeJobDescriptions = {
     [OptimizeOracleTypes.STORAGE_CONFIGURATION]: 'Fix Oracle Storage Configuration',
     [OptimizeOracleTypes.STORAGE_LAYOUT]: 'Fix Oracle Storage Layout',
     [OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM]: 'Fix Oracle Storage Operating System',
-    [OptimizeOracleTypes.STORAGE_SIZING]: 'Fix Oracle Storage Sizing'
+    [OptimizeOracleTypes.STORAGE_SIZING]: 'Fix Oracle Storage Sizing',
+    [OptimizeOracleTypes.AWS_BACKUP]: 'Fix AWS FSx for ONTAP automatic backup configuration for Oracle'
 };
 
 enum OptimizeOracleiSCSIStorageOperatingSystem {

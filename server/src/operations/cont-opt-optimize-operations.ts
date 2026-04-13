@@ -16,7 +16,6 @@ import {
     OptimizeMpioIscsiSessionsParams,
     StorageTierParams,
     MaxDOPAssesment,
-    AwsFsxNBackupConfig,
     OptimizeMpioTimeoutParams,
     SSMDocument
 } from '../utils/common-types';
@@ -69,9 +68,9 @@ import {
     getFsxnVolIdsFromOntapVolIds,
     getIscsiTargetAddresses,
     getMappedOntapVolumes,
-    updateFsxBackup,
     updateVolumeSizeAndWaitForUpdate
 } from './aws/fsx-operations';
+import { handleFsxBackupOptimizeJob } from './continuous-optimization/resilience-awsBackup-optimize-operations';
 import { updateOptimizedConfigNameInInstanceTable } from './demo-operations';
 import {
     CHECK_IF_MPIO_INSTALLED,
@@ -3182,33 +3181,11 @@ async function handleUpdateAwsBackup(
     databaseHosts: OptimizePerHostRequestBodyType[],
     masterOptimizeParentId: string
 ) {
-    const fsxFilesystemIds: string[] = [];
-    const fsxBackupConfigMap = new Map<string, AwsFsxNBackupConfig>();
-    databaseHosts.forEach(host => {
-        if (
-            host.fsxFileSystemId &&
-            !fsxBackupConfigMap.get(host.fsxFileSystemId) &&
-            host.backupRetentionDays &&
-            host.backupStartTime
-        ) {
-            fsxBackupConfigMap.set(host.fsxFileSystemId, {
-                automaticBackupRetentionDays: host.backupRetentionDays,
-                dailyAutomaticBackupStartTime: host.backupStartTime
-            });
-            fsxFilesystemIds.push(host.fsxFileSystemId);
-        }
-    });
-
-    const jobDescription = `Enable AWS FSx for ONTAP automatic backup for filesystems ${fsxFilesystemIds.join(', ')}`;
-
-    const jobId = await handleOptimizeJobCreation(
+    const { jobStatus, errors: errMsg } = await handleFsxBackupOptimizeJob(
         accountId,
         credentialsId,
         region,
-        '',
-        JOBTYPE.WELL_ARCHITECTED,
-        'Update AWS FSx for ONTAP backup',
-        jobDescription,
+        databaseHosts,
         masterOptimizeParentId,
         {
             hostsToOptimize: [
@@ -3220,35 +3197,13 @@ async function handleUpdateAwsBackup(
             ]
         }
     );
-    let jobstatus: JOBSTATUS = JOBSTATUS.COMPLETED as JOBSTATUS;
-    const errMsg: string[] = [];
 
-    await Promise.all(
-        Array.from(fsxBackupConfigMap.entries()).map(
-            throat(2, async ([fsxFileSystemId, configuration]) => {
-                try {
-                    await updateFsxBackup(accountId, credentialsId, region, fsxFileSystemId, configuration);
-                } catch (err: any) {
-                    errMsg.push(
-                        `Error occurred while updating AWS FSx for ONTAP backup for fsxFileSystemId ${fsxFileSystemId}. Error: ${err}`
-                    );
-                    jobstatus = JOBSTATUS.FAILED;
-                }
-            })
-        )
-    );
-
-    if (errMsg.length !== 0) {
-        logger.error(errMsg);
-    }
-    await updateJobDetails(accountId, jobId, { status: jobstatus, endTime: new Date().getTime() });
     await updateLongRunningAuditGroup(
-        jobstatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
+        jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
         errMsg.join(', ')
     );
 
-    // Trigger on-demand assessment after successful fix
-    if (jobstatus === JOBSTATUS.COMPLETED) {
+    if (jobStatus === JOBSTATUS.COMPLETED) {
         const [
             {
                 id: databaseHostId,

@@ -36,6 +36,7 @@ import {
 import { listResources } from '../../lib/database/db';
 import { HttpErrorCodes, POSTPONE_AGE, DatabaseTypes, STORAGE_PROTOCOLS } from '../../utils/consts';
 import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
+import { hyphenatedToCamelCase } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -811,9 +812,16 @@ function updateFieldsBasedOnDismissedConfigurations(
             return false;
         }
 
+        const camelCaseFieldValue = hyphenatedToCamelCase(fieldValue);
+        const dismissKey = Object.keys(ASSESSMENT_CONFIGS).find(
+            key =>
+                ASSESSMENT_CONFIGS[key as keyof typeof ASSESSMENT_CONFIGS] === fieldValue ||
+                key === camelCaseFieldValue
+        );
         return !Object.entries(dismissedConfigurations).some(
             ([keyName, config]) =>
                 (keyName === fieldValue ||
+                    keyName === dismissKey ||
                     (config as { configurationName?: string }).configurationName === fieldValue) &&
                 isConfigDismissed(config.configState) &&
                 config.configurationType !== 'storage'

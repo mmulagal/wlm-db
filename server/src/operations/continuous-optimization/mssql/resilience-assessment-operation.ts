@@ -46,8 +46,9 @@ import { CROSS_REGION_REPLICATION_SCRIPT } from '../../workloads/mssql/resilienc
 import { FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS } from '../../workloads/mssql/storage-scripts';
 import { GET_SNAPSHOT_DETAILS } from '../../workloads/mssql/assessment-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import { isFsxnAwsBackupEnabled, getMZFsxnNodePreference } from '../../aws/fsx-operations';
+import { getMZFsxnNodePreference } from '../../aws/fsx-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { initiateAwsBackupAssessment as initiateSharedAwsBackupAssessment, getAwsBackupDriftData as getSharedAwsBackupDriftData } from '../resilience-awsBackup-operations';
 import {
     CLUSTER_QUORUM_TYPE,
     SQL_SERVER_SERVICES,
@@ -234,7 +235,7 @@ async function getResilienceDriftAssessment(
                   )
                 : Promise.resolve(undefined),
             shouldTriggerAwsBackupAssessment
-                ? getAwsBackupDriftData(
+                ? getAwsBackupDriftDataForMssql(
                       accountId,
                       credentialsId,
                       region,
@@ -371,7 +372,7 @@ async function initiateAWSBackupAssessment(
     instanceRecord: WorkloadInstance,
     instanceVolumeMapping: MappedOnTapVolumeResponse[]
 ) {
-    logger.info('Initiating Scheduled FSx for ONTAP backup assessment for:', {
+    logger.info('MSSQL: Initiating Scheduled FSx for ONTAP backup assessment', {
         accountId,
         credentialsId,
         region,
@@ -386,90 +387,29 @@ async function initiateAWSBackupAssessment(
         fsxFileSystem: fileSystemId
     } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
-    const jobName = 'Backup configuration assessment';
-    const jobDescription = `${jobName}`;
-    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let errorMessage = '';
-    const { id: awsBackupAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-        name: jobName,
-        description: jobDescription,
-        resourceName: resourceWithInstanceName,
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId
-    });
 
-    let isAWSBackupEnabled = false;
-    const volumeBackupDetails = [];
-    try {
-        const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, accountId, {
-            useCache: true
-        });
-        isAWSBackupEnabled = fsxnInfo?.FileSystems?.[0]?.OntapConfiguration?.AutomaticBackupRetentionDays !== undefined;
-        logger.debug('Is Scheduled FSx for ONTAP backup enabled:', isAWSBackupEnabled);
-        if (!isAWSBackupEnabled) {
-            if (isEmpty(instanceVolumeMapping)) {
-                errorMessage = `Found no FSx for ONTAP volumes for the instance ${instanceRecord.name}.`;
-                logger.error(errorMessage);
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
-            }
-            const { dataLogVolumeMap } = filterDataLogVolumes(
-                instanceVolumeMapping as unknown as MappedOnTapVolumeResponse
-            );
-            const dataLogVolumeUuids = Array.from(dataLogVolumeMap.keys());
+    const { dataLogVolumeMap } = filterDataLogVolumes(
+        instanceVolumeMapping as unknown as MappedOnTapVolumeResponse
+    );
+    const volumeUuids = Array.from(dataLogVolumeMap.keys());
+    const volumeNames = volumeUuids.map(uuid => dataLogVolumeMap.get(uuid) || uuid);
 
-            const { volumeUuidsInBackups } =
-                (await isFsxnAwsBackupEnabled(
-                    credentialsId,
-                    region,
-                    fileSystemId,
-                    dataLogVolumeUuids,
-                    undefined,
-                    undefined,
-                    accountId
-                )) || {};
-
-            logger.debug('Is on-demand backup enabled:', volumeUuidsInBackups);
-
-            const backupVolumeSet = new Set(volumeUuidsInBackups);
-            const allUuidsMatch = dataLogVolumeUuids.every(uuid => backupVolumeSet.has(uuid));
-            isAWSBackupEnabled = allUuidsMatch;
-
-            volumeBackupDetails.push(
-                ...dataLogVolumeUuids.map(uuid => ({
-                    name: dataLogVolumeMap.get(uuid),
-                    uuid,
-                    isAWSBackupEnabled: backupVolumeSet.has(uuid)
-                }))
-            );
-        }
-    } catch (error) {
-        errorMessage = `Error while assessing backup configuration: ${error}.`;
-        logger.error(errorMessage);
-        jobStatus = JOBSTATUS.FAILED;
-    } finally {
-        await createDatabaseInstanceConfigData([
-            {
-                account_id: accountId,
-                credentials_id: credentialsId,
-                region,
-                resource_id: databaseHostId,
-                database_instance_id: databaseInstanceId,
-                creation_time: new Date(Date.now()),
-                config_data_type: AssessmentCategories.AWS_BACKUP,
-                config_data: { fileSystemId, isAWSBackupEnabled, errorMessage, volumeBackupDetails }
-            }
-        ]);
-    }
-    await updateJobDetails(accountId, awsBackupAssessmentJobId, {
-        endTime: Date.now(),
-        status: jobStatus,
-        error: errorMessage
-    });
+    await initiateSharedAwsBackupAssessment(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        fileSystemId,
+        resourceWithInstanceName,
+        instanceRecord.name,
+        parentJobId,
+        volumeUuids,
+        volumeNames
+    );
 }
 
-async function getAwsBackupDriftData(
+function getAwsBackupDriftDataForMssql(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -477,7 +417,7 @@ async function getAwsBackupDriftData(
     databaseInstanceId: string,
     awsBackupAssessmentData: AWSBackupAssessment
 ) {
-    logger.info('Get Scheduled FSx for ONTAP backup assessment data', {
+    logger.info('MSSQL: Get Scheduled FSx for ONTAP backup drift data', {
         accountId,
         credentialsId,
         region,
@@ -485,31 +425,15 @@ async function getAwsBackupDriftData(
         databaseInstanceId
     });
 
-    if (isEmpty(awsBackupAssessmentData)) {
-        const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.AWS_BACKUP);
-        logger.error(errorMessage);
-        return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
-    }
-
-    const { fileSystemId, isAWSBackupEnabled, errorMessage, volumeBackupDetails } = awsBackupAssessmentData;
-    if (errorMessage) {
-        return { errorMessage };
-    }
-
-    const volumesWithoutBackup = volumeBackupDetails
-        ?.filter(volume => !volume.isAWSBackupEnabled)
-        .map(volume => ({ ontapVolumeUuid: volume.uuid, ontapVolumeName: volume.name }));
-
-    const awsBackupAssesmentData: ParameterDriftResponseType = {
-        ...storageGoldenConfigData.resiliency.awsBackup,
-        name: 'backup-configuration',
-        status: isAWSBackupEnabled ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-        totalObjectsInViolation: isAWSBackupEnabled ? 0 : volumesWithoutBackup?.length || 1,
-        recommended: 'aws-backup-enabled',
-        objectsInViolation: isAWSBackupEnabled ? [] : volumesWithoutBackup || [fileSystemId],
-        totalObjectsAssessed: volumeBackupDetails?.length || 1
-    };
-    return awsBackupAssesmentData;
+    return getSharedAwsBackupDriftData(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        awsBackupAssessmentData,
+        storageGoldenConfigData.resiliency.awsBackup
+    ) as ParameterDriftResponseType;
 }
 
 async function initiateCrossRegionResiliencyAssessment(

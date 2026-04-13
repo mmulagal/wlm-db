@@ -88,6 +88,18 @@ const GenericParameterDriftResponse = Type.Object({
 const GenericAssessmentResponse = Type.Union([GenericParameterDriftResponse, ErrorResponse]);
 type GenericAssessmentResponseType = Static<typeof GenericAssessmentResponse>;
 
+const FsxBackupOptimizationFields = Type.Object({
+    fsxFileSystemId: Type.Optional(Type.String()),
+    backupRetentionDays: Type.Optional(Type.Integer({ minimum: 1, maximum: 90, default: 7 })),
+    backupStartTime: Type.Optional(
+        Type.String({
+            description: '00:00 to 23:59 padded UTC timestamp',
+            pattern: '^([01]\\d|2[0-3]):[0-5]\\d$'
+        })
+    )
+});
+type FsxBackupOptimizationFieldsType = Static<typeof FsxBackupOptimizationFields>;
+
 const InstanceDismissResponse = Type.Object({
     configurationName: Type.String(),
     configState: Type.String(),
@@ -141,5 +153,7 @@ export {
     ErrorResponse,
     ErrorResponseType,
     DismissedConfigurationsResponse,
-    DismissedConfigurationsResponseType
+    DismissedConfigurationsResponseType,
+    FsxBackupOptimizationFields,
+    FsxBackupOptimizationFieldsType
 };

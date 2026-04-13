@@ -1,12 +1,17 @@
 import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import throat from 'throat';
-import { JOBTYPE } from '@prisma/client';
+import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import {
+    BackupOptimizePerHostRequestBodyType,
     HostsToOptimizeType,
     OptimizeRequestBodyType
 } from '../../../routes/types/oracle-continuous-optimization.types';
-import { OptimizeOracleTypes, OracleOptimizeJobDescriptions } from '../../../utils/continous-optimization-consts';
+import {
+    AssessmentCategoriesOracle,
+    OptimizeOracleTypes,
+    OracleOptimizeJobDescriptions
+} from '../../../utils/continous-optimization-consts';
 import getLogger from '../../../utils/logger';
 import { oracleOptimizeStorageOS } from './storage-os-optimize-operations';
 import { HttpErrorCodes } from '../../../utils/consts';
@@ -15,6 +20,8 @@ import { updateParentJobStatus } from '../../database/job-operations';
 import { validateAndFilterDatabaseHosts } from '../../bulk-cont-opt-operations';
 import { OracleJobMetadata } from './consts';
 import { oracleOptimizeStorageSizing } from './storage-optimize-operations';
+import { triggerOracleAssessmentAfterOptimization } from './assessment-operations';
+import { handleFsxBackupOptimizeJob } from '../resilience-awsBackup-optimize-operations';
 
 const logger = getLogger();
 
@@ -73,7 +80,11 @@ async function optimizeOracleDatabase(accountId: string, params: OptimizeRequest
         jobMetadata
     );
 
-    handleBulkOptimization(accountId, optimizationType, hostsToOptimize, masterJobId);
+    if (optimizationType === OptimizeOracleTypes.AWS_BACKUP) {
+        handleOracleAwsBackupOptimization(accountId, hostsToOptimize, masterJobId);
+    } else {
+        handleBulkOptimization(accountId, optimizationType, hostsToOptimize, masterJobId);
+    }
 
     return masterJobId;
 }
@@ -152,6 +163,84 @@ async function handleBulkOptimization(
         );
     } finally {
         await updateParentJobStatus(accountId, masterOptimizeParentId, false, jobError);
+    }
+}
+
+async function handleOracleAwsBackupOptimization(
+    accountId: string,
+    hostsToOptimize: HostsToOptimizeType,
+    masterOptimizeParentId: string
+) {
+    logger.info(
+        `Handle Oracle AWS backup optimization: ${accountId}, hostsToOptimize: ${hostsToOptimize?.length}, ${masterOptimizeParentId}`
+    );
+
+    const groupedHosts = hostsToOptimize.reduce(
+        (acc, { databaseHosts }) => {
+            databaseHosts.forEach(({ credentialsId, region, ...rest }) => {
+                const key = `${credentialsId}-${region}`;
+                acc[key] ??= { credentialsId, region, databaseHosts: [] };
+                acc[key].databaseHosts.push({ credentialsId, region, ...rest });
+            });
+            return acc;
+        },
+        {} as Record<string, { credentialsId: string; region: string; databaseHosts: BackupOptimizePerHostRequestBodyType[] }>
+    );
+
+    let jobError = '';
+    try {
+        await Promise.all(
+            Object.entries(groupedHosts).map(async ([, { credentialsId, region, databaseHosts }]) =>
+                handleOracleUpdateAwsBackup(accountId, credentialsId, region, databaseHosts, masterOptimizeParentId)
+            )
+        );
+    } catch (error: unknown) {
+        jobError = String(error);
+        logger.error('Error occurred while optimizing AWS backup', { accountId, error });
+    } finally {
+        await updateParentJobStatus(accountId, masterOptimizeParentId, false, jobError);
+    }
+}
+
+async function handleOracleUpdateAwsBackup(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHosts: BackupOptimizePerHostRequestBodyType[],
+    masterOptimizeParentId: string
+) {
+    const { jobId, jobStatus } = await handleFsxBackupOptimizeJob(
+        accountId,
+        credentialsId,
+        region,
+        databaseHosts,
+        masterOptimizeParentId,
+        {
+            hostsToOptimize: databaseHosts.map(({ id, databases }) => ({
+                optimizationType: 'aws-backup',
+                resourceId: id,
+                databases
+            }))
+        }
+    );
+
+    if (jobStatus === JOBSTATUS.COMPLETED) {
+        await Promise.all(
+            databaseHosts.flatMap(({ id: databaseHostId, databases }) =>
+                databases.map(databaseInstanceId =>
+                    triggerOracleAssessmentAfterOptimization(
+                        credentialsId,
+                        region,
+                        accountId,
+                        databaseHostId,
+                        databaseHostId,
+                        jobId,
+                        { id: databaseInstanceId },
+                        AssessmentCategoriesOracle.AWS_BACKUP
+                    )
+                )
+            )
+        );
     }
 }
 

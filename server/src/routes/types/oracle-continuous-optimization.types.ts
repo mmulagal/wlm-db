@@ -13,7 +13,8 @@ import {
     GenericViolationResponse,
     GenericParameterDriftResponse,
     ErrorResponse,
-    DismissedConfigurationsResponse
+    DismissedConfigurationsResponse,
+    FsxBackupOptimizationFields
 } from './continuous-optimization.types';
 
 const OracleGenericParameterDriftResponse = Type.Object({
@@ -103,6 +104,7 @@ type OracleSecurityPatchDriftResponseType = Static<typeof OracleSecurityPatchDri
 const OracleDriftAssessmentResponse = Type.Object({
     storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
+    awsBackup: Type.Optional(genericParameterDriftResponse),
     oracleSecurityPatch: Type.Optional(Type.Union([OracleSecurityPatchDriftResponse, ErrorResponse])),
     crr: Type.Optional(Type.Union([GenericParameterDriftResponse, ErrorResponse])),
     snapcenterSnapshot: Type.Optional(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse])),
@@ -149,13 +151,21 @@ const OptimizePerHostRequestBody = Type.Object({
     databases: Type.Array(Type.String({ minLength: 1, description: 'Oracle database sid' }))
 });
 
+const BackupOptimizePerHostRequestBody = Type.Intersect([
+    OptimizePerHostRequestBody,
+    FsxBackupOptimizationFields
+]);
+
+type BackupOptimizePerHostRequestBodyType = Static<typeof BackupOptimizePerHostRequestBody>;
+
 const HostsToOptimize = Type.Array(
     Type.Object({
         configurationName: Type.String({
             enum: [
                 ...Object.values(OptimizeOracleiSCSIStorageOperatingSystem),
                 ...Object.values(OptimizeOracleNFSStorageOperatingSystem),
-                ...Object.values(OptimizeOracleStorageSizing)
+                ...Object.values(OptimizeOracleStorageSizing),
+                'aws-backup'
             ],
             description:
                 'Optimization configuration name for the type specified.\n\n' +
@@ -169,9 +179,11 @@ const HostsToOptimize = Type.Array(
                 '- multipath-friendly-names\n' +
                 '- multiblock-readcount\n\n' +
                 'For nfs-storage-operating-system type, valid values are:\n' +
-                '- kernel-parameters\n'
+                '- kernel-parameters\n\n' +
+                'For aws-backup type, valid values are:\n' +
+                '- aws-backup\n'
         }),
-        databaseHosts: Type.Array(OptimizePerHostRequestBody)
+        databaseHosts: Type.Array(BackupOptimizePerHostRequestBody)
     })
 );
 
@@ -210,5 +222,6 @@ export {
     OptimizeRequestBody,
     OptimizeRequestBodyType,
     HostsToOptimizeType,
-    OptimizeStorageRequestBody
+    OptimizeStorageRequestBody,
+    BackupOptimizePerHostRequestBodyType
 };

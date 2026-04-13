@@ -801,6 +801,17 @@ const GOLDEN_CONFIG = {
             resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             recommendation:
                 'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.'
+        },
+        awsBackup: {
+            name: 'backup-configuration',
+            tags: [AwsWellArchitecturedPillars.RELIABILITY],
+            category: 'resiliency',
+            subCategory: 'resiliency',
+            focusWidgetName: 'Backup Configuration',
+            severity: SEVERITY.WARNING,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            recommendation:
+                'Backup Configuration recommendation: Enable FSx Backup or AWS Backup for Oracle database volumes to support data retention and compliance. If using both, consider removing redundant backups manually.'
         }
     },
     hostOsPatch: {
