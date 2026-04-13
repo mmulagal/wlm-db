@@ -159,7 +159,7 @@ const CRRLoadingDialogContent = ({ rowData }: CRRLoadingDialogContentProps) => {
                         payload: {
                             pathname: `../../wlmfsx/fsx/clusters/${selectedGwInstanceCredId}/${fsxDetails?.region}/${
                                 fsxDetails?.id
-                            }/replication/create?selectedSrcVolumeIds=${fsxVolumeId}&fromParent=/${
+                            }/replication/create?selectedSrcVolumeIds=${fsxVolumeId}&from=/${
                                 isWorkloadFactory ? 'databases' : 'fsxdb'
                             }/inventory`,
                             replace: true
