@@ -106,7 +106,7 @@ const CRRLoadingDialogContent = ({ rowData }: CRRLoadingDialogContentProps) => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: 'Link associated successfully.'
+                        message: t('databases.inventory.link-associate')
                     })
                 );
                 closeDialog();
