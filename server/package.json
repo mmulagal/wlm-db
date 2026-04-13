@@ -73,7 +73,7 @@
         "fflate": "^0.8.2",
         "flatted": "^3.3.3",
         "got": "^14.6.6",
-        "handlebars": "^4.7.8",
+        "handlebars": "^4.7.9",
         "ioredis": "5.9.2",
         "ip-cidr": "^4.0.2",
         "is-base64": "^1.1.0",
