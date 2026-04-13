@@ -8,6 +8,8 @@ See `AGENTS.md` at the repository root for project structure, commands, and deve
 
 Path-specific coding rules auto-load from `.github/instructions/` via `applyTo` metadata. No manual reading required — VS Code Copilot loads the applicable instruction files automatically when you edit matching files.
 
+**Copilot-only runbooks** (e.g. **`error-agent`** queue) live under `.github/copilot/`. They are intentionally **not** in `.github/instructions/` so local Cursor’s mandatory instruction pre-read (`.cursor/rules/main.mdc`) does not load them; cloud/GitHub Copilot agents are directed to read them explicitly below.
+
 ## Git Conventions
 
 For branch naming, commit messages, pull request titles, and pre-push validation, follow `.github/instructions/git-conventions.instructions.md`.
@@ -26,6 +28,6 @@ Specialized agents are available in `.github/agents/`:
 
 **MANDATORY — before doing any work on an issue labeled `error-agent`:**
 
-1. Read `.github/instructions/error-agent.instructions.md` in full.
+1. Use the **Read** tool to read `.github/copilot/error-agent.instructions.md` in full.
 2. Do **not** begin investigation, coding, or PR creation until that file has been read.
-3. For error-agent RCA and fix workflow, treat that file as the authoritative procedure for RCA flow, fix strategy, quality gates, PR/issue write-up format, and scope constraints. Apply it in addition to all repo-wide instructions (for example, `git-conventions.instructions.md`), not instead of them.
+3. That file is the **authoritative source** for RCA flow, fix strategy, quality gates, PR write-up format (for code fixes), and scope constraints. No-fix issue comments follow **`git-conventions.instructions.md`** → **Issue Comment Format (no-fix)**. Follow `.github/copilot/error-agent.instructions.md` exactly; do not substitute your own judgment for any step it defines.

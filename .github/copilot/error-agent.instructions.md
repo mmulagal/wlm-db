@@ -1,9 +1,10 @@
 ---
-description: Error-agent issue handling - RCA flow, fix strategy, and PR/issue write-up format
-applyTo: '**/*'
+description: Error-agent issue handling - RCA flow, fix strategy, PR write-up format (GitHub Copilot queue / cloud agents)
 ---
 
 # Error-Agent Issues
+
+**Scope:** This file lives under `.github/copilot/`, not `.github/instructions/`. It is **not** part of the mandatory pre-read for local Cursor sessions (see `.cursor/rules/main.mdc`). Read it when working on **`error-agent`** issues per `.github/copilot-instructions.md`.
 
 When working on issues labeled **`error-agent`**, follow these rules in addition to the rest of the project instructions.
 
@@ -25,7 +26,7 @@ Error-agent issues have a specific structure. Use these sections to guide your i
 -   Always trace the data flow from where the error is THROWN back to where the bad data ORIGINATES
 -   Distinguish between the SYMPTOM (crash site) and the ROOT CAUSE (where wrong data is produced/stored)
 -   If a variable has the wrong type or shape, find WHERE it was assigned — was it a database write, an API response mapper, a cache store?
--   If you have a code fix: explain your full analysis in the **PR description** before the diff stands on its own. If you have **no** fix: do **not** open a PR — put the analysis in an **issue comment** (see **No code change** under Git Conventions).
+-   If you have a code fix: explain your full analysis in the **PR description** before the diff stands on its own. If you have **no** fix: do **not** open a PR — comment on the issue instead (**When not to open a PR** and **Issue Comment Format (no-fix)** in `git-conventions.instructions.md`).
 
 ## Fix Strategy
 
@@ -43,8 +44,7 @@ Error-agent issues have a specific structure. Use these sections to guide your i
 5. Do not implement **competing** alternative fixes (e.g., several different producer-side changes or unrelated strategies in one PR). Pick **one** coherent fix strategy; steps 3-4 are still one strategy (producer correction plus the minimal guard from step 4).
 6. Add or update a unit test that covers the failure case (wrong type, shape, or missing data) to prevent regression.
 7. Run pre-push validation per `git-conventions.instructions.md` before opening the PR.
-8. Set the PR title to `GH-<issue-number>: <description>`, where `<issue-number>` is the number of the GitHub issue this session was triggered on. Never invent or infer the number from the PR or branch — read it from the current issue context.
-9. Before the final `report_progress` call, set `prTitle` to the same `GH-<issue-number>: <description>` value and replace the `prDescription` with the required 4-section PR description (Root Cause / Fix Approach / Changes / Alternatives). Do **not** leave a progress checklist as the PR body.
+8. When you open the PR, follow **`git-conventions.instructions.md`** → **Pull Requests** (title, branch, **Linking the PR to the issue**, and **Error-agent PR description**). Do that when the PR is first opened, not only in follow-up edits.
 
 ## Mandatory Quality Gates (before finalizing)
 

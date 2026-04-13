@@ -1,14 +1,17 @@
 ---
 alwaysApply: true
-description: Load coding instructions from .github/instructions/ before any code edits
+description: Load applicable .github/instructions/ files (by applyTo) before agent code edits or reviews
 ---
 
 # WLMDB Coding Instructions
 
-**MANDATORY — only when the task involves writing, editing, or reviewing code:**
+**MANDATORY — only when an agent task involves writing, editing, or reviewing code** (not for read-only questions or general chat):
 
-1. Use the **Glob** tool with pattern `*.md` in `.github/instructions/` to discover all instruction files.
-2. Use the **Read** tool to read every file returned by the Glob search.
-3. Do NOT start coding until every instruction file has been read. This applies to every new chat session.
+1. Determine the **edit scope**: repository paths of files to be created, changed, or reviewed (from the user request, attachments, or open editor context). If that set is unclear, infer from mentioned paths or ask before editing.
+2. Use the **Glob** tool with pattern `*.md` in `.github/instructions/` to list candidate instruction files (this folder only).
+3. For each candidate, inspect the YAML frontmatter **`applyTo`** field (comma-separated globs). Use the **Read** tool to read the **full** instruction file **only when** at least one of those globs matches a path in the edit scope. Treat patterns such as `**/*` as matching any in-repo file in scope.
+4. Do **not** start coding until every **applicable** instruction file from step 3 has been read in full.
 
-Skip this step for non-coding tasks such as answering questions, explaining concepts, or general conversation.
+Do **not** treat `.github/copilot/*.md` as part of this flow; those runbooks are for GitHub Copilot / cloud agents (see `.github/copilot-instructions.md`). Read a file under `.github/copilot/` only when the user’s task is an **`error-agent`** issue or they explicitly ask.
+
+Skip this entire block for non-coding tasks such as answering questions, explaining concepts, or general conversation.

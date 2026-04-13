@@ -4,18 +4,26 @@ on:
     issues:
         types: [labeled]
 
-permissions:
-    contents: read
-    issues: write
-
 jobs:
     find-owner:
         if: github.event.label.name == 'error-agent'
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            issues: write
+
         steps:
-            - name: Find owner from stack trace and assign (no checkout)
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 1
+                  sparse-checkout: |
+                      server/src
+                  sparse-checkout-cone-mode: true
+
+            - name: Find owner from stack trace or error text and assign
               env:
                   GH_TOKEN: ${{ github.token }}
+                  GH_PROJECT_TOKEN: ${{ secrets.FIND_OWNER_ORG_PROJECT_TOKEN || github.token }}
                   ISSUE_NUMBER: ${{ github.event.issue.number }}
                   ISSUE_BODY: ${{ github.event.issue.body }}
                   REPO: ${{ github.repository }}
@@ -24,82 +32,598 @@ jobs:
                   MAX_FRAMES: '30'
                   SKIP_ASSIGNEES: 'copilot-swe-agent'
                   FALLBACK_ASSIGNEE: 'mmulagal' # Murali Mulagalapati
+                  PROJECT_V2_TITLE: 'WF Database'
+                  SPRINT_FIELD_NAME: 'Sprint'
               run: |
-                  set -euo pipefail
-
-                  tmp_result="$(mktemp)"
-                  python3 - <<'PY' > "$tmp_result"
-                  import datetime as dt
-                  import json
-                  import os
-                  import re
-                  import subprocess
+                  python3 - <<'PY'
+                  import datetime as dt, json, os, re, subprocess, sys
                   from typing import Optional, Tuple
 
-                  body = os.environ.get("ISSUE_BODY", "") or ""
-                  repo_full = os.environ.get("REPO", "")
-                  runtime_prefix = os.environ.get("RUNTIME_PREFIX", "/opt/netapp/wlmdb/")
-                  repo_src_prefix = os.environ.get("REPO_SRC_PREFIX", "server/src/")
-                  max_frames = int(os.environ.get("MAX_FRAMES", "30"))
+                  _GQL_RAW = """query($owner: String!, $repo: String!, $expr: String!, $startLine: Int!, $endLine: Int!) {
+                    repository(owner: $owner, name: $repo) {
+                      object(expression: $expr) {
+                        ... on Blob {
+                          blame(range: {startLine: $startLine, endLine: $endLine}) {
+                            ranges {
+                              commit {
+                                committedDate
+                                author {
+                                  name
+                                  user { login }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  """
+                  _GQL = re.sub(r"\s+", " ", _GQL_RAW.strip())
 
-                  owner, repo = repo_full.split("/", 1)
 
-                  stack_pattern = re.compile(r"^\s*at\s+.*\(([^:\s)]+):(\d+):(\d+)\)\s*$")
-                  frames = []
-                  for line in body.splitlines():
-                      match = stack_pattern.match(line)
-                      if match:
-                          frames.append((match.group(1), int(match.group(2))))
-
-                  def normalize_path(runtime_path: str) -> Optional[str]:
+                  def normalize_path(runtime_path: str, runtime_prefix: str, repo_src_prefix: str) -> Optional[str]:
+                      if runtime_path.startswith("file://"):
+                          runtime_path = runtime_path[7:]
                       if runtime_path.startswith(runtime_prefix):
-                          trimmed = runtime_path[len(runtime_prefix):]
+                          t = runtime_path[len(runtime_prefix) :]
                       elif runtime_path.startswith(repo_src_prefix):
-                          trimmed = runtime_path[len(repo_src_prefix):]
+                          t = runtime_path[len(repo_src_prefix) :]
                       else:
                           return None
-
-                      trimmed = trimmed.lstrip("/")
-                      if not trimmed:
+                      t = t.lstrip("/")
+                      if not t or re.match(r"^[A-Za-z]:[\\/]", t):
                           return None
-                      if re.match(r"^[A-Za-z]:[\\/]", trimmed):
-                          return None
-
-                      # Strip any leading repo_src_prefix that may have survived inside the
-                      # runtime path (e.g. /opt/netapp/wlmdb/server/src/foo.js → after
-                      # runtime strip → server/src/foo.js) so we never double-prefix.
-                      if trimmed.startswith(repo_src_prefix):
-                          trimmed = trimmed[len(repo_src_prefix):]
-                          trimmed = trimmed.lstrip("/")
-                          if not trimmed:
+                      if t.startswith(repo_src_prefix):
+                          t = t[len(repo_src_prefix) :].lstrip("/")
+                          if not t:
                               return None
+                      if t.endswith(".js"):
+                          t = t[:-3] + ".ts"
+                      return f"{repo_src_prefix}{t}"
 
-                      if trimmed.endswith(".js"):
-                          trimmed = trimmed[:-3] + ".ts"
-                      return f"{repo_src_prefix}{trimmed}"
 
                   def to_epoch_seconds(iso_timestamp: str) -> int:
-                      normalized = iso_timestamp.replace("Z", "+00:00")
-                      return int(dt.datetime.fromisoformat(normalized).timestamp())
+                      return int(dt.datetime.fromisoformat(iso_timestamp.replace("Z", "+00:00")).timestamp())
+
 
                   def to_login(name: str) -> str:
                       return re.sub(r"\s+", "-", name.strip().lower())
 
-                  def query_blame(path: str, start_line: int, end_line: int) -> Optional[Tuple[str, str, int]]:
+
+                  def login_from_git_mail(mail: str) -> str:
+                      if not mail:
+                          return ""
+                      m = re.match(r"^(\d+)\+([^+@]+)@users\.noreply\.github\.com$", mail, re.I)
+                      if m:
+                          return m.group(2)
+                      return ""
+
+
+                  def author_login_from_commit_sha(repo_full: str, sha: str) -> str:
+                      if not repo_full or len(sha) < 7:
+                          return ""
+                      try:
+                          proc = subprocess.run(
+                              [
+                                  "gh",
+                                  "api",
+                                  f"repos/{repo_full}/commits/{sha}",
+                                  "--jq",
+                                  ".author.login",
+                              ],
+                              capture_output=True,
+                              text=True,
+                              check=False,
+                          )
+                      except Exception:
+                          return ""
+                      if proc.returncode != 0:
+                          return ""
+                      login = (proc.stdout or "").strip().strip('"')
+                      if not login or login == "null":
+                          return ""
+                      return login
+
+
+                  def query_blame_git(
+                      path: str, start_line: int, end_line: int, workspace: str, repo_full: str
+                  ) -> Optional[Tuple[str, str, int]]:
+                      if not workspace or not os.path.isdir(workspace):
+                          return None
+                      fp = os.path.join(workspace, path)
+                      if not os.path.isfile(fp):
+                          return None
+                      try:
+                          proc = subprocess.run(
+                              [
+                                  "git",
+                                  "blame",
+                                  "-L",
+                                  f"{start_line},{end_line}",
+                                  "-p",
+                                  "--no-progress",
+                                  "HEAD",
+                                  "--",
+                                  path,
+                              ],
+                              cwd=workspace,
+                              capture_output=True,
+                              text=True,
+                              check=False,
+                          )
+                      except Exception:
+                          return None
+                      if proc.returncode != 0:
+                          return None
+                      lines = proc.stdout.splitlines()
+                      best_time, best_name, best_login, best_sha = 0, "", "", ""
+                      for i, line in enumerate(lines):
+                          if not line.startswith("author-time "):
+                              continue
+                          try:
+                              t = int(line.split()[1])
+                          except (IndexError, ValueError):
+                              continue
+                          sha = ""
+                          for k in range(i - 1, max(-1, i - 40), -1):
+                              parts = lines[k].split()
+                              if not parts:
+                                  continue
+                              h = parts[0].lower()
+                              if len(h) == 40 and all(c in "0123456789abcdef" for c in h):
+                                  sha = parts[0]
+                                  break
+                          j = i - 1
+                          if j >= 0 and lines[j].startswith("author-tz "):
+                              j -= 1
+                          mail = ""
+                          if j >= 0 and lines[j].startswith("author-mail "):
+                              mail = lines[j][12:].strip().strip("<>")
+                              j -= 1
+                          else:
+                              continue
+                          name = ""
+                          if j >= 0 and lines[j].startswith("author ") and not lines[j].startswith("author-mail"):
+                              name = lines[j][7:].strip()
+                          if not name:
+                              continue
+                          if t > best_time:
+                              best_time = t
+                              best_name = name
+                              best_sha = sha
+                              best_login = login_from_git_mail(mail) or to_login(name)
+                      if not best_name:
+                          return None
+                      gh_login = author_login_from_commit_sha(repo_full, best_sha)
+                      return (best_name, gh_login or best_login, best_time)
+
+
+                  def query_blame(path: str, start_line: int, end_line: int, owner: str, repo: str) -> Optional[Tuple[str, str, int]]:
+                      ws = os.environ.get("GITHUB_WORKSPACE", ".")
+
+                      def git_fallback() -> Optional[Tuple[str, str, int]]:
+                          return query_blame_git(path, start_line, end_line, ws, f"{owner}/{repo}")
+
                       expr = f"HEAD:{path}"
-                      query = """
-                      query($owner: String!, $repo: String!, $expr: String!, $startLine: Int!, $endLine: Int!) {
-                        repository(owner: $owner, name: $repo) {
-                          object(expression: $expr) {
-                            ... on Blob {
-                              blame(range: {startLine: $startLine, endLine: $endLine}) {
-                                ranges {
-                                  commit {
-                                    committedDate
-                                    author {
-                                      name
-                                      user { login }
-                                    }
+                      cmd = [
+                          "gh",
+                          "api",
+                          "graphql",
+                          "-f",
+                          f"query={_GQL}",
+                          "-f",
+                          f"owner={owner}",
+                          "-f",
+                          f"repo={repo}",
+                          "-f",
+                          f"expr={expr}",
+                          "-F",
+                          f"startLine={start_line}",
+                          "-F",
+                          f"endLine={end_line}",
+                      ]
+                      try:
+                          proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
+                      except Exception:
+                          return git_fallback()
+                      if proc.returncode != 0:
+                          return git_fallback()
+                      try:
+                          payload = json.loads(proc.stdout)
+                      except json.JSONDecodeError:
+                          return git_fallback()
+                      if payload.get("errors"):
+                          return git_fallback()
+                      ranges = ((payload.get("data") or {}).get("repository", {}).get("object") or {}).get("blame", {}).get("ranges", [])
+                      if not ranges:
+                          return git_fallback()
+                      best, best_time = None, 0
+                      for br in ranges:
+                          c = br.get("commit") or {}
+                          cd = c.get("committedDate")
+                          if not cd:
+                              continue
+                          try:
+                              ct = to_epoch_seconds(cd)
+                          except Exception:
+                              continue
+                          au = c.get("author") or {}
+                          nm = (au.get("name") or "").strip()
+                          if not nm:
+                              continue
+                          lg = ((au.get("user") or {}).get("login") or "").strip() or to_login(nm)
+                          if ct > best_time:
+                              best_time, best = ct, (nm, lg, ct)
+                      return best if best is not None else git_fallback()
+
+
+                  def extract_error_literal_candidates(text: str) -> list[str]:
+                      """Pull strings to git-grep. Prefer inline `keywords` and Error: tails over fenced
+                      log/JSON lines: sorting all by length desc and keeping only 12 dropped high-signal
+                      short tokens (e.g. offline-assessment) when the issue body had long ``` samples."""
+                      lo, hi = 12, 180
+                      max_total = 36
+                      fenced: list[str] = []
+                      for block in re.findall(r"```[a-zA-Z0-9_-]*\s*\n(.*?)```", text, re.DOTALL | re.IGNORECASE):
+                          for raw in block.splitlines():
+                              s = raw.strip()
+                              if lo <= len(s) <= hi:
+                                  fenced.append(s)
+                      backticks: list[str] = []
+                      for m in re.finditer(r"`([^`\n]{12,180})`", text):
+                          s = m.group(1).strip().strip("`")
+                          if lo <= len(s) <= hi:
+                              backticks.append(s)
+                      err_tail: list[str] = []
+                      er = re.compile(r"(?i)\bError:\s*(.+)$")
+                      for line in text.splitlines():
+                          m = er.search(line.strip())
+                          if m:
+                              s = m.group(1).strip()
+                              if lo <= len(s) <= hi:
+                                  err_tail.append(s)
+
+                      def dedup_preserve(seq: list[str]) -> list[str]:
+                          out, seen = [], set()
+                          for s in seq:
+                              k = s.lower()
+                              if k not in seen:
+                                  seen.add(k)
+                                  out.append(s)
+                          return out
+
+                      def backtick_priority(s: str) -> tuple:
+                          # Prefer path/identifier-like tokens over prose (e.g. `fields (e.g.,`).
+                          if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.\/-]*", s):
+                              return (0, len(s), s.lower())
+                          return (1, len(s), s.lower())
+
+                      merged: list[str] = []
+                      seen_f: set[str] = set()
+                      bt_sorted = dedup_preserve(backticks)
+                      bt_sorted.sort(key=backtick_priority)
+                      for bucket in (
+                          bt_sorted,
+                          sorted(dedup_preserve(err_tail), key=len),
+                          sorted(dedup_preserve(fenced), key=len),
+                      ):
+                          for s in bucket:
+                              k = s.lower()
+                              if k in seen_f:
+                                  continue
+                              seen_f.add(k)
+                              merged.append(s)
+                              if len(merged) >= max_total:
+                                  return merged
+                      return merged
+
+
+                  def git_grep_matches(needle: str, path_prefix: str, workspace: str, max_total: int) -> list[tuple[str, int]]:
+                      if len(needle) < 12:
+                          return []
+                      try:
+                          proc = subprocess.run(
+                              ["git", "grep", "-n", "-I", "-F", needle, "HEAD", "--", path_prefix],
+                              capture_output=True,
+                              text=True,
+                              check=False,
+                              cwd=workspace,
+                          )
+                      except Exception:
+                          return []
+                      if proc.returncode != 0:
+                          return []
+                      hits: list[tuple[str, int]] = []
+                      for line in proc.stdout.splitlines():
+                          if line.startswith("HEAD:"):
+                              line = line[5:]
+                          a, _, rest = line.partition(":")
+                          b, _, _ = rest.partition(":")
+                          try:
+                              hits.append((a, int(b)))
+                          except ValueError:
+                              continue
+                          if len(hits) >= max_total:
+                              break
+                      return hits
+
+
+                  def resolve_best_author(
+                      body: str, repo_full: str, runtime_prefix: str, repo_src_prefix: str, max_frames: int
+                  ) -> tuple[str, str, int, str]:
+                      owner, repo = repo_full.split("/", 1)
+                      # Greedy path so file:///opt/.../foo.js:line:col works (not just first ":").
+                      sp = re.compile(r"^\s*at\s+.*\((.+):(\d+):(\d+)\)\s*$")
+                      frames = [(m.group(1), int(m.group(2))) for line in body.splitlines() if (m := sp.match(line))]
+                      filtered: list[tuple[str, int]] = []
+                      seen: set[tuple[str, int]] = set()
+                      for rf, rl in frames:
+                          if not rf or rl <= 0:
+                              continue
+                          pth = normalize_path(rf, runtime_prefix, repo_src_prefix)
+                          if not pth:
+                              continue
+                          k = (pth, rl)
+                          if k in seen:
+                              continue
+                          seen.add(k)
+                          filtered.append(k)
+                          if len(filtered) >= max_frames:
+                              break
+                      ban, bal, bt, bsrc = "", "", 0, ""
+                      for pth, rl in filtered:
+                          cand = query_blame(pth, max(1, rl - 5), rl + 5, owner, repo)
+                          if cand and cand[2] > bt:
+                              ban, bal, bt = cand[0], cand[1], cand[2]
+                              bsrc = f"{pth}:{rl}"
+                      if not bal:
+                          ws = os.environ.get("GITHUB_WORKSPACE", ".")
+                          prefix = repo_src_prefix.rstrip("/") + "/"
+                          mgh, bb, bu = 30, 45, 0
+                          for lit in extract_error_literal_candidates(body):
+                              if bu >= bb:
+                                  break
+                              ms = git_grep_matches(lit, prefix, ws, mgh + 1)
+                              if len(ms) > mgh:
+                                  continue
+                              for pth, rl in ms:
+                                  if bu >= bb:
+                                      break
+                                  hit = query_blame(pth, max(1, rl - 5), rl + 5, owner, repo)
+                                  bu += 1
+                                  if hit and hit[2] > bt:
+                                      ban, bal, bt = hit[0], hit[1], hit[2]
+                                      pv = lit if len(lit) <= 80 else lit[:77] + "..."
+                                      bsrc = f"{pth}:{rl} (error literal: {pv})"
+                      return ban, bal, bt, bsrc
+
+
+                  def parse_skip_assignee_tokens(raw: str) -> list[str]:
+                      return [x.strip().lower() for x in raw.split(",") if x.strip()]
+
+
+                  def should_skip_existing_assignee(lc: str, toks: list[str]) -> bool:
+                      return lc.startswith("copilot-") or any(lc == t for t in toks)
+
+
+                  def is_assignable_user(login: str, repo_full: str) -> bool:
+                      if not login:
+                          return False
+                      try:
+                          r = subprocess.run(
+                              ["gh", "api", f"repos/{repo_full}/assignees/{login}"],
+                              capture_output=True,
+                              text=True,
+                              check=False,
+                          )
+                          return r.returncode == 0
+                      except Exception:
+                          return False
+
+
+                  def add_assignee_rest(to_add: str, repo_full: str, issue_number: str, toks: list[str]) -> bool:
+                      try:
+                          proc = subprocess.run(
+                              ["gh", "api", f"repos/{repo_full}/issues/{issue_number}"],
+                              capture_output=True,
+                              text=True,
+                              check=False,
+                          )
+                      except Exception:
+                          return False
+                      if proc.returncode != 0:
+                          return False
+                      try:
+                          data = json.loads(proc.stdout)
+                      except json.JSONDecodeError:
+                          return False
+                      kept: list[str] = []
+                      seen_lc: set[str] = set()
+                      for a in data.get("assignees") or []:
+                          lg = a.get("login") or ""
+                          if not lg:
+                              continue
+                          lc = lg.lower()
+                          if should_skip_existing_assignee(lc, toks) or lc in seen_lc:
+                              continue
+                          seen_lc.add(lc)
+                          kept.append(lg)
+                      add_lc = to_add.lower()
+                      if add_lc not in seen_lc:
+                          seen_lc.add(add_lc)
+                          kept.append(to_add)
+                      pl = json.dumps({"assignees": kept})
+                      try:
+                          p = subprocess.run(
+                              ["gh", "api", "-X", "PATCH", f"repos/{repo_full}/issues/{issue_number}", "--input", "-"],
+                              input=pl,
+                              text=True,
+                              capture_output=True,
+                              check=False,
+                          )
+                      except Exception:
+                          p = None
+                      if p is not None and p.returncode == 0:
+                          return True
+                      try:
+                          u = subprocess.run(
+                              [
+                                  "gh",
+                                  "issue",
+                                  "edit",
+                                  issue_number,
+                                  "--repo",
+                                  repo_full,
+                                  "--add-assignee",
+                                  to_add,
+                              ],
+                              capture_output=True,
+                              text=True,
+                              check=False,
+                          )
+                      except Exception:
+                          return False
+                      return u.returncode == 0
+
+
+                  def _graphql(query: str, variables: dict) -> Optional[dict]:
+                      token = (os.environ.get("GH_PROJECT_TOKEN") or os.environ.get("GH_TOKEN") or "").strip()
+                      if not token:
+                          return None
+                      try:
+                          proc = subprocess.run(
+                              ["gh", "api", "graphql", "--input", "-"],
+                              input=json.dumps({"query": query, "variables": variables}),
+                              capture_output=True,
+                              text=True,
+                              check=False,
+                              env={**os.environ, "GH_TOKEN": token},
+                          )
+                      except Exception:
+                          return None
+                      if proc.returncode != 0:
+                          print(proc.stderr or proc.stdout, file=sys.stderr)
+                          return None
+                      try:
+                          payload = json.loads(proc.stdout)
+                      except json.JSONDecodeError:
+                          return None
+                      if payload.get("errors"):
+                          print(json.dumps(payload["errors"]), file=sys.stderr)
+                          return None
+                      return payload.get("data")
+
+
+                  def _iteration_is_current(it: dict) -> bool:
+                      sd, dur = it.get("startDate"), it.get("duration")
+                      if not sd or dur is None:
+                          return False
+                      try:
+                          start = dt.datetime.fromisoformat(str(sd).replace("Z", "+00:00"))
+                          if start.tzinfo is None:
+                              start = start.replace(tzinfo=dt.timezone.utc)
+                      except ValueError:
+                          return False
+                      end = start + dt.timedelta(days=int(dur))
+                      now = dt.datetime.now(dt.timezone.utc)
+                      return start <= now <= end
+
+
+                  def _pick_current_iteration(iterations: list, completed: list) -> Optional[dict]:
+                      """Prefer calendar-active iteration (same as test-item-defaults.js), then title match."""
+                      sub = (os.environ.get("CURRENT_SPRINT_TITLE_SUBSTRING") or "current").strip().lower()
+                      all_it = list(iterations or []) + list(completed or [])
+                      for it in all_it:
+                          if _iteration_is_current(it):
+                              return it
+                      if sub:
+                          for it in all_it:
+                              if sub in (it.get("title") or "").lower():
+                                  return it
+                      now = dt.datetime.now(dt.timezone.utc)
+                      future = []
+                      for it in iterations or []:
+                          sd = it.get("startDate")
+                          if not sd:
+                              continue
+                          try:
+                              st = dt.datetime.fromisoformat(str(sd).replace("Z", "+00:00"))
+                              if st.tzinfo is None:
+                                  st = st.replace(tzinfo=dt.timezone.utc)
+                          except ValueError:
+                              continue
+                          if st >= now:
+                              future.append((st, it))
+                      if future:
+                          future.sort(key=lambda x: x[0])
+                          return future[0][1]
+                      return None
+
+
+                  def apply_wf_database_project_and_sprint(repo_full: str, issue_number: str) -> None:
+                      """Add issue to org Project V2 'WF Database' and set Sprint to the current iteration."""
+                      proj_title = (os.environ.get("PROJECT_V2_TITLE") or "WF Database").strip()
+                      sprint_name = (os.environ.get("SPRINT_FIELD_NAME") or "Sprint").strip()
+                      if not repo_full or not issue_number or not proj_title:
+                          return
+                      try:
+                          inum = int(issue_number)
+                      except ValueError:
+                          return
+                      own, rname = repo_full.split("/", 1)
+
+                      q_projects = """
+                      query($login: String!) {
+                        organization(login: $login) {
+                          projectsV2(first: 50) { nodes { id title } }
+                        }
+                        user(login: $login) {
+                          projectsV2(first: 50) { nodes { id title } }
+                        }
+                      }
+                      """
+                      pdata = _graphql(q_projects, {"login": own})
+                      if not pdata:
+                          return
+                      orgn = (pdata.get("organization") or {}).get("projectsV2") or {}
+                      usr = (pdata.get("user") or {}).get("projectsV2") or {}
+                      nodes = (orgn.get("nodes") if orgn else None) or (usr.get("nodes") if usr else None) or []
+                      project_id = ""
+                      for n in nodes:
+                          if (n.get("title") or "").strip() == proj_title:
+                              project_id = n.get("id") or ""
+                              break
+                      if not project_id:
+                          print(f"find-owner: no project titled {proj_title!r} under {own}", file=sys.stderr)
+                          return
+
+                      q_issue = """
+                      query($owner: String!, $name: String!, $inum: Int!) {
+                        repository(owner: $owner, name: $name) {
+                          issue(number: $inum) { id }
+                        }
+                      }
+                      """
+                      idata = _graphql(q_issue, {"owner": own, "name": rname, "inum": inum})
+                      issue_node = ((idata or {}).get("repository") or {}).get("issue") or {}
+                      content_id = issue_node.get("id")
+                      if not content_id:
+                          print("find-owner: could not resolve issue node id", file=sys.stderr)
+                          return
+
+                      q_fields = """
+                      query($pid: ID!) {
+                        node(id: $pid) {
+                          ... on ProjectV2 {
+                            fields(first: 50) {
+                              nodes {
+                                ... on ProjectV2IterationField {
+                                  id
+                                  name
+                                  configuration {
+                                    iterations { id title startDate duration }
+                                    completedIterations { id title startDate duration }
                                   }
                                 }
                               }
@@ -108,163 +632,127 @@ jobs:
                         }
                       }
                       """
+                      fdata = _graphql(q_fields, {"pid": project_id})
+                      proj_node = (fdata or {}).get("node") or {}
+                      field_nodes = ((proj_node.get("fields") or {}).get("nodes")) or []
+                      iteration_field = None
+                      for fn in field_nodes:
+                          if not fn:
+                              continue
+                          nm = (fn.get("name") or "").strip()
+                          if nm.lower() == sprint_name.lower() and fn.get("configuration"):
+                              iteration_field = fn
+                              break
+                      if iteration_field is None:
+                          for fn in field_nodes:
+                              if fn and fn.get("configuration") and (
+                                  fn.get("configuration", {}).get("iterations")
+                                  or fn.get("configuration", {}).get("completedIterations")
+                              ):
+                                  iteration_field = fn
+                                  break
+                      if iteration_field is None:
+                          print("find-owner: no Sprint / iteration field on project", file=sys.stderr)
+                          return
 
-                      cmd = [
-                          "gh", "api", "graphql",
-                          "-f", f"query={query}",
-                          "-f", f"owner={owner}",
-                          "-f", f"repo={repo}",
-                          "-f", f"expr={expr}",
-                          "-F", f"startLine={start_line}",
-                          "-F", f"endLine={end_line}",
-                      ]
+                      cfg = iteration_field.get("configuration") or {}
+                      iters = cfg.get("iterations") or []
+                      done = cfg.get("completedIterations") or []
+                      chosen = _pick_current_iteration(iters, done)
+                      if not chosen or not chosen.get("id"):
+                          print("find-owner: could not pick current sprint iteration", file=sys.stderr)
+                          return
+                      iter_id = str(chosen["id"])
+
+                      m_add = """
+                      mutation($projectId: ID!, $contentId: ID!) {
+                        addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) {
+                          item { id }
+                        }
+                      }
+                      """
+                      adata = _graphql(m_add, {"projectId": project_id, "contentId": content_id})
+                      item = ((adata or {}).get("addProjectV2ItemById") or {}).get("item") or {}
+                      item_id = item.get("id")
+                      if not item_id:
+                          print("find-owner: addProjectV2ItemById did not return item id", file=sys.stderr)
+                          return
+
+                      m_set = """
+                      mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $iterationId: String!) {
+                        updateProjectV2ItemFieldValue(input: {
+                          projectId: $projectId,
+                          itemId: $itemId,
+                          fieldId: $fieldId,
+                          value: { iterationId: $iterationId }
+                        }) {
+                          projectV2Item { id }
+                        }
+                      }
+                      """
+                      fld_id = iteration_field.get("id")
+                      sdata = _graphql(
+                          m_set,
+                          {
+                              "projectId": project_id,
+                              "itemId": item_id,
+                              "fieldId": fld_id,
+                              "iterationId": iter_id,
+                          },
+                      )
+                      if not sdata:
+                          return
+                      print(
+                          f"find-owner: set project {proj_title!r} sprint to {chosen.get('title')!r} ({iter_id})",
+                          file=sys.stderr,
+                      )
+
+
+                  def _run_owner_assignment() -> int:
+                      body = os.environ.get("ISSUE_BODY", "") or ""
+                      rf = os.environ.get("REPO", "")
+                      rtp = os.environ.get("RUNTIME_PREFIX", "/opt/netapp/wlmdb/")
+                      rsp = os.environ.get("REPO_SRC_PREFIX", "server/src/")
+                      mf = int(os.environ.get("MAX_FRAMES", "30"))
+                      inum = os.environ.get("ISSUE_NUMBER", "")
+                      ska = os.environ.get("SKIP_ASSIGNEES", "")
+                      fb = os.environ.get("FALLBACK_ASSIGNEE", "")
+                      st = parse_skip_assignee_tokens(ska)
+                      _, bal, _, _ = resolve_best_author(body, rf, rtp, rsp, mf)
+                      if not bal:
+                          if not is_assignable_user(fb, rf):
+                              return 0
+                          if not add_assignee_rest(fb, rf, inum, st):
+                              return 0
+                          return 0
+                      clc = bal.lower()
+                      ch = bal
+                      if should_skip_existing_assignee(clc, st):
+                          ch = fb
+                      if not is_assignable_user(ch, rf):
+                          ch = fb
+                      if not is_assignable_user(ch, rf):
+                          return 0
+                      if not add_assignee_rest(ch, rf, inum, st):
+                          ch = fb
+                          if is_assignable_user(ch, rf):
+                              if not add_assignee_rest(ch, rf, inum, st):
+                                  return 0
+                          else:
+                              return 0
+                      return 0
+
+
+                  def main() -> int:
+                      rf = os.environ.get("REPO", "")
+                      inum = os.environ.get("ISSUE_NUMBER", "")
+                      rc = 0
                       try:
-                          proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
-                      except Exception:
-                          return None
+                          rc = _run_owner_assignment()
+                      finally:
+                          apply_wf_database_project_and_sprint(rf, inum)
+                      return rc
 
-                      if proc.returncode != 0:
-                          return None
 
-                      try:
-                          payload = json.loads(proc.stdout)
-                      except json.JSONDecodeError:
-                          return None
-
-                      ranges = (
-                          (payload.get("data") or {})
-                          .get("repository", {})
-                          .get("object") or {}
-                      ).get("blame", {}).get("ranges", [])
-                      if not ranges:
-                          return None
-
-                      best = None
-                      best_time = 0
-                      for blame_range in ranges:
-                          commit = blame_range.get("commit") or {}
-                          committed_date = commit.get("committedDate")
-                          if not committed_date:
-                              continue
-                          try:
-                              commit_time = to_epoch_seconds(committed_date)
-                          except Exception:
-                              continue
-
-                          author = commit.get("author") or {}
-                          name = (author.get("name") or "").strip()
-                          if not name:
-                              continue
-                          user = author.get("user") or {}
-                          login = (user.get("login") or "").strip() or to_login(name)
-                          if commit_time > best_time:
-                              best_time = commit_time
-                              best = (name, login, commit_time)
-
-                      return best
-
-                  filtered_frames = []
-                  seen = set()
-                  for runtime_file, runtime_line in frames:
-                      if not runtime_file or runtime_line <= 0:
-                          continue
-
-                      repo_file = normalize_path(runtime_file)
-                      if not repo_file:
-                          continue
-                      key = (repo_file, runtime_line)
-                      if key in seen:
-                          continue
-                      seen.add(key)
-                      filtered_frames.append(key)
-                      if len(filtered_frames) >= max_frames:
-                          break
-
-                  best_author_name = ""
-                  best_author_login = ""
-                  best_time = 0
-                  best_source = ""
-
-                  for repo_file, runtime_line in filtered_frames:
-                      start = max(1, runtime_line - 5)
-                      end = runtime_line + 5
-                      candidate = query_blame(repo_file, start, end)
-                      if candidate is None:
-                          continue
-
-                      author_name, author_login, author_time = candidate
-                      if author_time > best_time:
-                          best_author_name = author_name
-                          best_author_login = author_login
-                          best_time = author_time
-                          best_source = f"{repo_file}:{runtime_line}"
-
-                  print(json.dumps({
-                      "bestAuthorName": best_author_name,
-                      "bestAuthorLogin": best_author_login,
-                      "bestTime": best_time,
-                      "bestSource": best_source,
-                  }))
+                  sys.exit(main())
                   PY
-
-                  best_author_name="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("bestAuthorName",""))' "$tmp_result")"
-                  best_author_login="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("bestAuthorLogin",""))' "$tmp_result")"
-                  best_source="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("bestSource",""))' "$tmp_result")"
-
-                  is_assignable_user() {
-                    local login="$1"
-                    [ -n "$login" ] || return 1
-                    gh api "repos/$REPO/assignees/$login" >/dev/null 2>&1
-                  }
-
-                  if [ -z "$best_author_login" ]; then
-                    if ! is_assignable_user "$FALLBACK_ASSIGNEE"; then
-                      gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
-                        "Could not derive owner from stack frames via GitHub blame API; fallback \`${FALLBACK_ASSIGNEE}\` is not assignable. Please assign manually."
-                      exit 0
-                    fi
-                    if ! gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-assignee "$FALLBACK_ASSIGNEE"; then
-                      gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
-                        "Could not derive owner from stack frames via GitHub blame API; failed to assign fallback \`${FALLBACK_ASSIGNEE}\`. Please assign manually."
-                      exit 0
-                    fi
-                    gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
-                      "Could not derive owner from stack frames via GitHub blame API; assigned fallback @${FALLBACK_ASSIGNEE}."
-                    exit 0
-                  fi
-
-                  skip_csv="$(echo "$SKIP_ASSIGNEES" | tr '[:upper:]' '[:lower:]')"
-                  cand_lc="$(echo "$best_author_login" | tr '[:upper:]' '[:lower:]')"
-                  chosen="$best_author_login"
-
-                  if echo ",$skip_csv," | grep -q ",$cand_lc,"; then
-                    chosen="$FALLBACK_ASSIGNEE"
-                  fi
-
-                  if ! is_assignable_user "$chosen"; then
-                    chosen="$FALLBACK_ASSIGNEE"
-                  fi
-
-                  if ! is_assignable_user "$chosen"; then
-                    gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
-                      "Owner attribution failed: resolved login \`${best_author_login}\` is not assignable and fallback \`${FALLBACK_ASSIGNEE}\` is also not assignable. Please assign manually."
-                    exit 0
-                  fi
-
-                  if ! gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-assignee "$chosen"; then
-                    chosen="$FALLBACK_ASSIGNEE"
-                    if is_assignable_user "$chosen"; then
-                      if ! gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --add-assignee "$chosen"; then
-                        gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
-                          "Owner attribution failed: could not assign \`${best_author_login}\`, and fallback \`${FALLBACK_ASSIGNEE}\` also failed to be assigned. Please assign manually."
-                        exit 0
-                      fi
-                    else
-                      gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
-                        "Owner attribution failed: could not assign \`${best_author_login}\`, and fallback \`${FALLBACK_ASSIGNEE}\` is not assignable. Please assign manually."
-                      exit 0
-                    fi
-                  fi
-
-                  gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body \
-                    "Owner attribution: selected @${chosen} from GitHub blame API (most recent author: \`${best_author_name}\`, source: \`${best_source}\`)."

@@ -1,5 +1,5 @@
 ---
-applyTo: "**/server/src/**/*.ts,**/ui/src/**/*.ts,**/ui/src/**/*.tsx,**/logs-analyzer/src/**/*.ts"
+applyTo: '**/server/src/**/*.ts,**/ui/src/**/*.ts,**/ui/src/**/*.tsx,**/logs-analyzer/src/**/*.ts'
 ---
 
 # Code Style
@@ -30,10 +30,10 @@ import { registerJob } from '../../database/job-operations';
 
 ## Logger
 
-- Initialize at module scope after imports: `const logger = getLogger();`
-- `logger.info`: present participle ("Saving report...", "Deriving instance type...")
-- `logger.error`: past tense ("Failed to fetch...", "Error deleting report")
-- Always pass structured context with `accountId` first: `logger.info('Saving report', { accountId, resourceId })`
+-   Initialize at module scope after imports: `const logger = getLogger();`
+-   `logger.info`: present participle ("Saving report...", "Deriving instance type...")
+-   `logger.error`: past tense ("Failed to fetch...", "Error deleting report")
+-   Always pass structured context with `accountId` first: `logger.info('Saving report', { accountId, resourceId })`
 
 ## Destructuring
 
@@ -50,10 +50,10 @@ const hostConfig = onPremDatabaseResource.host_config;
 
 ## Naming
 
-- camelCase for variables/functions, PascalCase for types/interfaces/classes.
-- Boolean variables: prefix with `is`, `has`, `should`, `can`.
-- Functions: verb-first — `fetchPricing`, `buildMachineDetail`, `assembleResponse`.
-- For business/domain operation functions, prefer `accountId` as the first parameter. For low-level AWS/infra helpers (e.g. EC2/SSM operations), follow the established pattern in that module (often `credentialsId`, `region`, then `accountId`).
+-   camelCase for variables/functions, PascalCase for types/interfaces/classes.
+-   Boolean variables: prefix with `is`, `has`, `should`, `can`.
+-   Functions: verb-first — `fetchPricing`, `buildMachineDetail`, `assembleResponse`.
+-   For business/domain operation functions, prefer `accountId` as the first parameter. For low-level AWS/infra helpers (e.g. EC2/SSM operations), follow the established pattern in that module (often `credentialsId`, `region`, then `accountId`).
 
 ## No `continue` keyword
 
@@ -62,10 +62,17 @@ Never use `continue` in loops. Use `.filter()` / `.map()` or invert the conditio
 ```typescript
 // Good
 const active = resources.filter(r => r.status === 'active');
-for (const resource of active) { processResource(resource); }
+for (const resource of active) {
+    processResource(resource);
+}
 
 // Bad
-for (const r of resources) { if (r.status !== 'active') { continue; } processResource(r); }
+for (const r of resources) {
+    if (r.status !== 'active') {
+        continue;
+    }
+    processResource(r);
+}
 ```
 
 ## Thin Wrappers
@@ -78,9 +85,25 @@ Don't introduce thin wrappers that merely delegate with hardcoded arguments. Cal
 
 ## Precise error logs with stack traces
 
-- Pass the error object directly — never stringify: `logger.error('Failed to fetch pricing', { accountId, error })`
-- Error messages must name the exact operation that failed and include all relevant identifiers.
-- Never swallow errors silently.
+-   Pass the full `error` object directly — never `error.message`, `String(error)`, or `` `${error}` `` (all lose the stack).
+-   Error messages must name the exact operation that failed and include all relevant identifiers.
+-   Never swallow errors silently.
+-   **Include stack** (pass `error` object): unexpected runtime errors, external service failures (AWS/DB/HTTP), data-integrity issues, re-thrown errors with added context.
+-   **Stack not needed** (message-only is fine): expected business rejections ("not found", "duplicate"), user-input validation failures.
+
+```typescript
+// Good — full error object preserves stack
+try {
+    await fetchInstancePricing(accountId, regionCode);
+} catch (error) {
+    logger.error('Failed to fetch instance pricing', { accountId, regionCode, error });
+    throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to fetch instance pricing');
+}
+
+// Bad — loses stack
+logger.error(`Failed: ${error}`, { accountId }); // stringified
+logger.error('Failed', { accountId, error: (error as Error).message }); // message only
+```
 
 ## Guard clauses
 
@@ -95,17 +118,25 @@ if (isEmpty(resources)) {
 }
 
 // Bad — no isEmpty, no logging, bare Error
-if (resources.length === 0) { throw new Error('Not found'); }
+if (resources.length === 0) {
+    throw new Error('Not found');
+}
 ```
 
 ## No pointless catch blocks
 
 ```typescript
 // Bad — does nothing
-catch (error) { throw error; }
+try {
+    await computeSavings(accountId);
+} catch (error) {
+    throw error;
+}
 
 // Good — adds context
-catch (error) {
+try {
+    await computeSavings(accountId);
+} catch (error) {
     logger.error('Savings computation failed', { accountId, error });
     throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Savings computation failed');
 }
@@ -130,7 +161,10 @@ Use `Promise.all` with `.map()` for parallel processing:
 const results = await Promise.all(resources.map(r => fetchDetails(accountId, r.id)));
 
 // Bad — sequential awaits in loop
-for (const r of resources) { const d = await fetchDetails(accountId, r.id); results.push(d); }
+for (const r of resources) {
+    const d = await fetchDetails(accountId, r.id);
+    results.push(d);
+}
 ```
 
 ## Parallel execution
