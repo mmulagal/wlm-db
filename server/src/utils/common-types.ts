@@ -778,6 +778,12 @@ interface Clone {
     parent_volume?: ParentVolume;
 }
 
+interface VolumeSpace {
+    size?: number;
+    used?: number;
+    physical_used?: number;
+}
+
 interface VolumeRecord {
     uuid: string;
     create_time?: string;
@@ -786,6 +792,7 @@ interface VolumeRecord {
     clone?: Clone;
     svm?: SVM;
     fsxVolumeId?: string;
+    space?: VolumeSpace;
 }
 
 interface LunRecord {
@@ -996,6 +1003,7 @@ export {
     SsmSqlServerRunningStatus,
     CloneAssessment,
     CloneDetail,
+    VolumeSpace,
     VolumeRecord,
     MappedOnTapVolumeResponse,
     InstancesResponse,

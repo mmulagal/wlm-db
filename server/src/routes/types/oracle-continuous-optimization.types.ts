@@ -14,6 +14,8 @@ import {
     GenericParameterDriftResponse,
     ErrorResponse,
     DismissedConfigurationsResponse,
+    CloneDetailSchema,
+    ClonedVolumeDetailSchema,
     FsxBackupOptimizationFields
 } from './continuous-optimization.types';
 
@@ -101,6 +103,23 @@ const OracleSecurityPatchDriftResponse = Type.Intersect([
 ]);
 type OracleSecurityPatchDriftResponseType = Static<typeof OracleSecurityPatchDriftResponse>;
 
+const OracleCloneDetail = Type.Intersect([
+    CloneDetailSchema,
+    Type.Object({
+        clonedVolumeDetails: Type.Optional(Type.Array(ClonedVolumeDetailSchema))
+    })
+]);
+
+const OracleCloneDriftResponse = Type.Intersect([
+    OracleGenericParameterDriftResponse,
+    Type.Object({
+        cloneDetails: Type.Optional(Type.Array(OracleCloneDetail)),
+        oldCloneDetails: Type.Optional(Type.Array(OracleCloneDetail)),
+        cloneDriftMessage: Type.Optional(Type.String())
+    })
+]);
+type OracleCloneDriftResponseType = Static<typeof OracleCloneDriftResponse>;
+
 const OracleDriftAssessmentResponse = Type.Object({
     storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
@@ -108,6 +127,7 @@ const OracleDriftAssessmentResponse = Type.Object({
     oracleSecurityPatch: Type.Optional(Type.Union([OracleSecurityPatchDriftResponse, ErrorResponse])),
     crr: Type.Optional(Type.Union([GenericParameterDriftResponse, ErrorResponse])),
     snapcenterSnapshot: Type.Optional(Type.Union([OracleGenericParameterDriftResponse, ErrorResponse])),
+    clone: Type.Optional(Type.Union([OracleCloneDriftResponse, ErrorResponse])),
     dismissedConfigurations: Type.Optional(DismissedConfigurationsResponse),
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
     fileSystemId: Type.Optional(Type.String()),
@@ -215,6 +235,8 @@ export {
     HostOsPatchDriftResponseType,
     OracleSecurityPatchDriftResponse,
     OracleSecurityPatchDriftResponseType,
+    OracleCloneDriftResponse,
+    OracleCloneDriftResponseType,
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerHostType,
     DriftAssessmentResponsePerAccount,

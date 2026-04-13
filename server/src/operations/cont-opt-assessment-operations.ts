@@ -153,7 +153,8 @@ async function processAccountInstancesBatch(
                                 AssessmentCategoriesOracle.HOST_OS_PATCH,
                                 AssessmentCategoriesOracle.AWS_BACKUP,
                                 AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
-                                AssessmentCategoriesOracle.CRR
+                                AssessmentCategoriesOracle.CRR,
+                                AssessmentCategoriesOracle.CLONE
                             ]);
                             break;
                         default:

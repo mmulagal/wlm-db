@@ -138,6 +138,27 @@ const DismissedConfigurationsResponse = Type.Object({
 });
 type DismissedConfigurationsResponseType = Static<typeof DismissedConfigurationsResponse>;
 
+const ClonedVolumeDetailSchema = Type.Object({
+    cloneVolumeUuid: Type.Optional(Type.String()),
+    cloneVolumeName: Type.Optional(Type.String()),
+    cloneVolumeCreateTime: Type.Optional(Type.String()),
+    sourceVolumeName: Type.Optional(Type.String()),
+    cloneDatabaseName: Type.Optional(Type.String())
+});
+
+const CloneDetailSchema = Type.Object({
+    databaseHostName: Type.String(),
+    databaseHostId: Type.String(),
+    databaseInstanceName: Type.String(),
+    sourceDatabaseHostName: Type.Optional(Type.String()),
+    sourceDatabaseInstanceName: Type.Optional(Type.String()),
+    sourceDatabaseName: Type.Optional(Type.String()),
+    cloneDatabaseName: Type.Optional(Type.String()),
+    cloneSize: Type.Optional(Type.Number()),
+    cloneAge: Type.Optional(Type.Number()),
+    clonedBy: Type.Optional(Type.String())
+});
+
 export {
     OntapVolume,
     OntapVolumeType,
@@ -154,6 +175,8 @@ export {
     ErrorResponseType,
     DismissedConfigurationsResponse,
     DismissedConfigurationsResponseType,
+    CloneDetailSchema,
+    ClonedVolumeDetailSchema,
     FsxBackupOptimizationFields,
     FsxBackupOptimizationFieldsType
 };

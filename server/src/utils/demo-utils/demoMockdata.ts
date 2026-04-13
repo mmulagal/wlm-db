@@ -6817,6 +6817,70 @@ const ORACLE_DATAGUARD_INSTANCES = {
     standby: ['dataguard-standby']
 };
 
+const ORACLE_ASSESSMENT_CLONE_CONFIG_DATA = {
+    cloneDetails: [
+        {
+            cloneDatabaseName: 'oracle_data_vol_001_clone',
+            databaseHostName: 'demo-oracle-host',
+            databaseHostId: 'demo-oracle-host-id',
+            databaseInstanceName: 'demo-oracle-instance',
+            clonedBy: 'other',
+            cloneAge: 30,
+            cloneSize: 5368709120,
+            clonedVolumeDetails: [
+                {
+                    sourceVolumeName: 'oracle_data_vol_001',
+                    cloneVolumeName: 'oracle_data_vol_001_clone',
+                    cloneVolumeUuid: 'a1b2c3d4-1111-2222-3333-444455556666',
+                    cloneVolumeCreateTime: '2026-03-01T10:00:00+00:00',
+                    cloneDatabaseName: 'oracle_data_vol_001_clone'
+                }
+            ]
+        },
+        {
+            cloneDatabaseName: 'oracle_data_vol_002_clone',
+            databaseHostName: 'demo-oracle-host',
+            databaseHostId: 'demo-oracle-host-id',
+            databaseInstanceName: 'demo-oracle-instance',
+            clonedBy: 'other',
+            cloneAge: 90,
+            cloneSize: 21474836480,
+            clonedVolumeDetails: [
+                {
+                    sourceVolumeName: 'oracle_data_vol_002',
+                    cloneVolumeName: 'oracle_data_vol_002_clone',
+                    cloneVolumeUuid: 'e5f6a7b8-5555-6666-7777-888899990000',
+                    cloneVolumeCreateTime: '2025-12-15T08:30:00+00:00',
+                    cloneDatabaseName: 'oracle_data_vol_002_clone'
+                }
+            ]
+        }
+    ],
+    status: 'not-optimized',
+    oldClones: 1,
+    oldCloneDetails: [
+        {
+            cloneDatabaseName: 'oracle_data_vol_002_clone',
+            databaseHostName: 'demo-oracle-host',
+            databaseHostId: 'demo-oracle-host-id',
+            databaseInstanceName: 'demo-oracle-instance',
+            clonedBy: 'other',
+            cloneAge: 90,
+            cloneSize: 21474836480,
+            clonedVolumeDetails: [
+                {
+                    sourceVolumeName: 'oracle_data_vol_002',
+                    cloneVolumeName: 'oracle_data_vol_002_clone',
+                    cloneVolumeUuid: 'e5f6a7b8-5555-6666-7777-888899990000',
+                    cloneVolumeCreateTime: '2025-12-15T08:30:00+00:00',
+                    cloneDatabaseName: 'oracle_data_vol_002_clone'
+                }
+            ]
+        }
+    ],
+    oldCloneDatabaseNames: ['oracle_data_vol_002_clone']
+};
+
 const DEMO_FOCUS_EVENT_ITEMS = [
     {
         label: 'Error: 605, Severity: 21, State: 3.',
@@ -6949,6 +7013,7 @@ export {
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     ORACLE_SECURITY_PATCH_ASSESSMENT_DATA,
     ORACLE_SNAPCENTER_ASSESSMENT_DATA,
+    ORACLE_ASSESSMENT_CLONE_CONFIG_DATA,
     PDB_DETAILS,
     createAssessmentData,
     createAssessmentDataWithRetry,

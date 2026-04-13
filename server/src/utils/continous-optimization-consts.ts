@@ -28,7 +28,8 @@ enum AssessmentCategoriesOracle {
     AWS_BACKUP = 'aws-backup',
     CRR = 'crr',
     SNAPCENTER_SNAPSHOT = 'snapcenter-snapshot',
-    ORACLE_SECURITY_PATCH = 'oracle-security-patch'
+    ORACLE_SECURITY_PATCH = 'oracle-security-patch',
+    CLONE = 'clone'
 }
 
 enum AssessmentTriggeredBy {

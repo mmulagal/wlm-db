@@ -51,6 +51,7 @@ import {
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     ORACLE_SECURITY_PATCH_ASSESSMENT_DATA,
     ORACLE_SNAPCENTER_ASSESSMENT_DATA,
+    ORACLE_ASSESSMENT_CLONE_CONFIG_DATA,
     createAssessmentDataWithRetry,
     ORACLE_DATAGUARD_INSTANCES
 } from '../utils/demo-utils/demoMockdata';
@@ -90,6 +91,7 @@ import { OracleDeploymentTenacy, STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS } from './w
 import {
     OracleDriftAssessmentResponseType,
     OracleGenericParameterDriftResponseType,
+    OracleCloneDriftResponseType,
     HostOsPatchDriftResponseType as OracleHostOsPatchDriftResponseType
 } from '../routes/types/oracle-continuous-optimization.types';
 
@@ -1058,12 +1060,19 @@ async function createAssessmentDataForOracle(
         config_data: ORACLE_SNAPCENTER_ASSESSMENT_DATA
     };
 
+    const instanceCloneConfigDataRecord = {
+        ...baseConfig,
+        config_data_type: AssessmentCategoriesOracle.CLONE,
+        config_data: ORACLE_ASSESSMENT_CLONE_CONFIG_DATA
+    };
+
     const configDataRecords = [
         instanceConfigDataRecord,
         instanceConfigMappedOntapDataRecord,
         instanceCRRConfigDataRecord,
         instanceSecurityPatchConfigDataRecord,
-        instanceSnapcenterConfigDataRecord
+        instanceSnapcenterConfigDataRecord,
+        instanceCloneConfigDataRecord
     ];
 
     await createAssessmentDataWithRetry(
@@ -1397,6 +1406,40 @@ function handleGetOracleAssessmentForDemo(
                 'Your current Linux host is optimized with security best practices.';
             assessmentData.hostOsPatch = hostOsPatchAssessmentResponse;
         }
+    }
+
+    // Handle Oracle clone assessment (independent of storage)
+    const cloneResponse = assessmentData.clone as OracleCloneDriftResponseType;
+    if (!isEmpty(cloneResponse) && !('errorMessage' in cloneResponse)) {
+        const { oldCloneDetails = [], cloneDetails = [] } = cloneResponse;
+        const cloneConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.CLONE || [];
+
+        if (cloneConfigsOptimized.length > 0) {
+            const cloneDatabaseNamesToRemove = new Set(
+                (cloneConfigsOptimized as { cloneDatabaseName?: string }[])
+                    .map(({ cloneDatabaseName }) => cloneDatabaseName)
+                    .filter((name): name is string => typeof name === 'string' && name.trim() !== '')
+            );
+
+            const filteredOldCloneDetails = oldCloneDetails.filter(
+                ({ cloneDatabaseName }) =>
+                    typeof cloneDatabaseName === 'string' && !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
+            );
+
+            const totalObjectsInViolation = filteredOldCloneDetails.length;
+            const objectsInViolation = filteredOldCloneDetails
+                .map(({ cloneDatabaseName }) => cloneDatabaseName)
+                .filter((name): name is string => typeof name === 'string');
+            const status = totalObjectsInViolation === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+            const cloneDriftMessage = `${filteredOldCloneDetails.length} out of ${cloneDetails.length} clones are old and divergent`;
+
+            cloneResponse.oldCloneDetails = filteredOldCloneDetails;
+            cloneResponse.totalObjectsInViolation = totalObjectsInViolation;
+            cloneResponse.status = status;
+            cloneResponse.objectsInViolation = objectsInViolation;
+            cloneResponse.cloneDriftMessage = cloneDriftMessage;
+        }
+        assessmentData.clone = cloneResponse;
     }
 
     // Handle Oracle storage assessment

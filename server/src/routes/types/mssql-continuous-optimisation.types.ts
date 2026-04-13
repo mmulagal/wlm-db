@@ -17,35 +17,28 @@ import {
     GenericAssessmentResponse,
     GenericParameterDriftResponse,
     OntapVolume,
+    CloneDetailSchema,
+    ClonedVolumeDetailSchema,
     FsxBackupOptimizationFields
 } from './continuous-optimization.types';
 import { CLONE_ACTION } from '../../utils/consts';
 
-const CloneDetails = Type.Object({
-    databaseHostName: Type.String(),
-    databaseHostId: Type.String(),
-    databaseInstanceName: Type.String(),
-    sourceDatabaseHostName: Type.Optional(Type.String()),
-    sourceDatabaseInstanceName: Type.Optional(Type.String()),
-    sourceDatabaseName: Type.Optional(Type.String()),
-    cloneDatabaseName: Type.Optional(Type.String()),
-    cloneSize: Type.Optional(Type.Number()),
-    cloneAge: Type.Optional(Type.Number()),
-    clonedBy: Type.Optional(Type.String()),
-    tags: Type.Optional(Type.String()),
-    clonedVolumeDetails: Type.Optional(
-        Type.Array(
-            Type.Object({
-                cloneVolumeUuid: Type.Optional(Type.String()),
-                cloneVolumeName: Type.Optional(Type.String()),
-                cloneVolumeCreateTime: Type.Optional(Type.String()),
-                sourceVolumeName: Type.Optional(Type.String()),
-                cloneDatabaseName: Type.Optional(Type.String()),
-                cloneVolumeType: Type.Optional(Type.String())
-            })
+const CloneDetails = Type.Intersect([
+    CloneDetailSchema,
+    Type.Object({
+        tags: Type.Optional(Type.String()),
+        clonedVolumeDetails: Type.Optional(
+            Type.Array(
+                Type.Intersect([
+                    ClonedVolumeDetailSchema,
+                    Type.Object({
+                        cloneVolumeType: Type.Optional(Type.String())
+                    })
+                ])
+            )
         )
-    )
-});
+    })
+]);
 
 const SizingViolationResponse = Type.Object({
     databases: Type.Optional(Type.Array(Type.String())),

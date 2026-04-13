@@ -835,6 +835,14 @@ const GOLDEN_CONFIG = {
         resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
         recommendation:
             'Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.'
+    },
+    cloneManagement: {
+        name: 'clone-management',
+        tags: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
+        severity: SEVERITY.WARNING,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+        recommendation:
+            'Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses.'
     }
 };
 
