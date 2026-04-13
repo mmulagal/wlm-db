@@ -3,12 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import HeaderComponent from '../../../DatabaseHomePage/HeaderComponent/HeaderComponent';
 import ComponentLoader from '../../../../common/ComponentLoader/ComponentLoader';
-import {
-    ASSESSMENT_CONFIG_NAMES,
-    DBType,
-    GETWELL_STATUS,
-    WLF_TABS
-} from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, DBType, GETWELL_STATUS, WLF_TABS } from '../../../../utils/consts';
 import {
     useAssociateSelectedLinkMutation,
     useGetExistingLinksMutation,
@@ -39,8 +34,11 @@ import {
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
 import store from '../../../../store/store';
-import { formatOracleWellArchitectedData, oracleCardData } from '../../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
-import { generateDynamicOracleStorageMockData, updateAccountLevelAssessmentData } from '../../../GetWell/GetWellUtils';
+import {
+    formatOracleWellArchitectedData,
+    oracleCardData
+} from '../../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+import { generateDynamicOracleStorageMockData, updateAccountLevelAssessmentData } from '../../GetWellUtils';
 
 const INVENTORY_CRR_TARGET = 'crr';
 
@@ -104,10 +102,7 @@ const InventoryFsxDeepLink = () => {
     const [getOracleAssessmentDataApi] = useGetOracleAssessmentDataMutation();
 
     /** Oracle CRR optimize-inner deep link only; `target` === `crr` in the URL. */
-    const isCrrDeepLink = useMemo(
-        () => targetParam?.toLowerCase() === INVENTORY_CRR_TARGET,
-        [targetParam]
-    );
+    const isCrrDeepLink = useMemo(() => targetParam?.toLowerCase() === INVENTORY_CRR_TARGET, [targetParam]);
 
     const [crrPrepareDone, setCrrPrepareDone] = useState(!isCrrDeepLink);
 
@@ -127,14 +122,14 @@ const InventoryFsxDeepLink = () => {
             const latest = sorted[0];
 
             if (latest?.state?.status?.toLowerCase() === 'connected') {
-                const linkCheck: any = await checkExistingLinkApi({ fsxId: fsxId });
+                const linkCheck: any = await checkExistingLinkApi({ fsxId });
 
                 if (linkCheck?.data?.count > 0) {
                     const existingLinkId = linkCheck?.data?.items?.[0]?.id;
                     await deleteExistingLinkApi({
                         credentialId: credId,
                         region: regionId,
-                        fsxId: fsxId,
+                        fsxId,
                         linkId: existingLinkId
                     });
                 }
@@ -203,7 +198,7 @@ const InventoryFsxDeepLink = () => {
         const loadOracleAssessmentForCrr = async () => {
             dispatch(setOptimizePageLoading(true));
             try {
-                let result: any = await getOracleAssessmentDataApi({
+                const result: any = await getOracleAssessmentDataApi({
                     credentialId: credId as string,
                     regionId: regionId as string,
                     databaseHostId: resourceIdParam as string,
@@ -255,7 +250,8 @@ const InventoryFsxDeepLink = () => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: 'Could not load assessment data for Cross-Region Replication. Showing empty details.'
+                            message:
+                                'Could not load assessment data for Cross-Region Replication. Showing empty details.'
                         })
                     );
                 }

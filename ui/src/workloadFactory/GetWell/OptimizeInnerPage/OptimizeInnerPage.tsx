@@ -77,7 +77,7 @@ const OptimizeInnerPage = () => {
     });
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
-    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const { isWorkloadFactory, isDemoMode } = useAppSelector(state => state?.auth);
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
@@ -265,6 +265,24 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CRR &&
             selectedOptimizeConfig?.engineType === DBType.ORACLE
         ) {
+            if (isDemoMode) {
+                return (
+                    <Popover
+                        isAppendedToBody
+                        children={
+                            <DsTypography variant="Regular_14">
+                                {t('databases.inventory.fix-not-available')}
+                            </DsTypography>
+                        }
+                        trigger="hover"
+                        container={
+                            <DsButton variant="secondary" isDisabled isThin>
+                                {GENERAL.OPTIMIZE}
+                            </DsButton>
+                        }
+                    />
+                );
+            }
             return (
                 <DsButton
                     isThin
