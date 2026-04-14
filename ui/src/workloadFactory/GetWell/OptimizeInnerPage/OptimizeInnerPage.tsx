@@ -1,6 +1,7 @@
 import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useMatch, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useTranslation } from 'react-i18next';
 import styles from './OptimizeInnerPage.module.scss';
@@ -65,10 +66,24 @@ import StorageLayoutOracleTable from './InnerTables/StorageLayoutOracleTable';
 
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import CRRLoadingDialogContent from './CRRRedirectionContent/CRRLoadingDialogContent';
+import {
+    decodeVolumeParam,
+    findCrrRowDataByVolumeName,
+    INVENTORY_FSX_DEEP_LINK_PATH,
+    OPEN_FIX_VOLUME_QUERY,
+    pathnameWithoutTrailingSplat
+} from './CRRRedirectionContent/CRRUtils';
 
 const OptimizeInnerPage = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const params = useParams();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const matchInventoryFsxDeepLinkDatabases = useMatch({ path: `/databases${INVENTORY_FSX_DEEP_LINK_PATH}`, end: true });
+    const matchInventoryFsxDeepLinkFsxdb = useMatch({ path: `/fsxdb${INVENTORY_FSX_DEEP_LINK_PATH}`, end: true });
+    const isInventoryFsxDeepLinkRoute = Boolean(matchInventoryFsxDeepLinkDatabases ?? matchInventoryFsxDeepLinkFsxdb);
     const { setDialog, closeDialog } = useDialog();
     const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
     const [cardHeight, setCardHeight] = useState({
@@ -106,6 +121,7 @@ const OptimizeInnerPage = () => {
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const userNavigated = useRef(false);
+    const crrDeepLinkFixOpenedRef = useRef(false);
 
     useEffect(() => {
         if (selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT) {
@@ -259,10 +275,96 @@ const OptimizeInnerPage = () => {
                     }}
                 />
             );
-        }, 200)
-
-       
+        }, 200);
     };
+
+    const openOracleCrrFixDialogForRow = (rowData: any) => {
+        handleDialog(
+            setDialog,
+            selectedOptimizeConfig?.type,
+            handleCRRRedirectionDialog,
+            closeDialog,
+            selectedOptimizeConfig?.data,
+            'single',
+            rowData,
+            selectedOptimizeConfig?.engineType,
+            isWad
+        );
+    };
+
+    useEffect(() => {
+        if (!isInventoryFsxDeepLinkRoute) return;
+        if (crrDeepLinkFixOpenedRef.current) return;
+
+        const volumeFromQuery = searchParams.get(OPEN_FIX_VOLUME_QUERY)?.trim();
+        const splatVolume = (params as Record<string, string | undefined>)['*']?.trim();
+        const volumeToOpen = volumeFromQuery || splatVolume || '';
+
+        if (!volumeToOpen) return;
+        if (selectedOptimizeConfig?.type !== ASSESSMENT_CONFIG_NAMES.CRR) return;
+        if (selectedOptimizeConfig?.engineType !== DBType.ORACLE) return;
+        if (isDemoMode) return;
+
+        const objects = selectedOptimizeConfig?.data?.objectsInViolation;
+        if (objects === undefined) return;
+
+        const clearDeepLinkFromUrl = () => {
+            if (volumeFromQuery) {
+                const next = new URLSearchParams(searchParams);
+                next.delete(OPEN_FIX_VOLUME_QUERY);
+                setSearchParams(next, { replace: true });
+            } else if (splatVolume) {
+                const basePath = pathnameWithoutTrailingSplat(location.pathname, splatVolume);
+                navigate({ pathname: basePath, search: location.search }, { replace: true });
+            }
+        };
+
+        const rowData = findCrrRowDataByVolumeName(volumeToOpen, selectedOptimizeConfig?.data);
+        if (!rowData) {
+            crrDeepLinkFixOpenedRef.current = true;
+            if (objects.length > 0) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: `Could not find impacted volume "${decodeVolumeParam(
+                            volumeToOpen
+                        )}" for this link.`
+                    })
+                );
+            }
+            clearDeepLinkFromUrl();
+            return;
+        }
+
+        crrDeepLinkFixOpenedRef.current = true;
+        handleDialog(
+            setDialog,
+            selectedOptimizeConfig?.type,
+            handleCRRRedirectionDialog,
+            closeDialog,
+            selectedOptimizeConfig?.data,
+            'single',
+            rowData,
+            selectedOptimizeConfig?.engineType,
+            isWad
+        );
+
+        clearDeepLinkFromUrl();
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- CRR data / deep-link hints; omit dialog handlers to avoid re-running on each render
+    }, [
+        dispatch,
+        isDemoMode,
+        isInventoryFsxDeepLinkRoute,
+        navigate,
+        location.pathname,
+        location.search,
+        params,
+        searchParams,
+        selectedOptimizeConfig?.type,
+        selectedOptimizeConfig?.engineType,
+        selectedOptimizeConfig?.data,
+        setSearchParams
+    ]);
 
     const buttonComponent = (rowData: any) => {
         if (
@@ -292,17 +394,7 @@ const OptimizeInnerPage = () => {
                     isThin
                     variant="secondary"
                     onClick={() => {
-                        handleDialog(
-                            setDialog,
-                            selectedOptimizeConfig?.type,
-                            handleCRRRedirectionDialog,
-                            closeDialog,
-                            selectedOptimizeConfig?.data,
-                            'single',
-                            rowData,
-                            selectedOptimizeConfig?.engineType,
-                            isWad
-                        );
+                        openOracleCrrFixDialogForRow(rowData);
                     }}
                 >
                     {GENERAL.OPTIMIZE}
