@@ -81,6 +81,8 @@ const InventoryFsxDeepLink = () => {
         instanceId?: string;
         hostname?: string;
         dbInstanceName?: string;
+        /** Present when URL includes `/volumeName/:volumeName/` before `/target/`. */
+        volumeName?: string;
         target?: string;
     }>();
 

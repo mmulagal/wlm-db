@@ -70,8 +70,10 @@ import {
     decodeVolumeParam,
     findCrrRowDataByVolumeName,
     INVENTORY_FSX_DEEP_LINK_PATH,
+    INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME,
     OPEN_FIX_VOLUME_QUERY,
-    pathnameWithoutTrailingSplat
+    pathnameWithoutTrailingSplat,
+    pathnameWithoutVolumeNameSegment
 } from './CRRRedirectionContent/CRRUtils';
 
 const OptimizeInnerPage = () => {
@@ -81,9 +83,22 @@ const OptimizeInnerPage = () => {
     const params = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const matchInventoryFsxDeepLinkDatabasesVol = useMatch({
+        path: `/databases${INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME}`,
+        end: true
+    });
     const matchInventoryFsxDeepLinkDatabases = useMatch({ path: `/databases${INVENTORY_FSX_DEEP_LINK_PATH}`, end: true });
+    const matchInventoryFsxDeepLinkFsxdbVol = useMatch({
+        path: `/fsxdb${INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME}`,
+        end: true
+    });
     const matchInventoryFsxDeepLinkFsxdb = useMatch({ path: `/fsxdb${INVENTORY_FSX_DEEP_LINK_PATH}`, end: true });
-    const isInventoryFsxDeepLinkRoute = Boolean(matchInventoryFsxDeepLinkDatabases ?? matchInventoryFsxDeepLinkFsxdb);
+    const isInventoryFsxDeepLinkRoute = Boolean(
+        matchInventoryFsxDeepLinkDatabasesVol ??
+            matchInventoryFsxDeepLinkDatabases ??
+            matchInventoryFsxDeepLinkFsxdbVol ??
+            matchInventoryFsxDeepLinkFsxdb
+    );
     const { setDialog, closeDialog } = useDialog();
     const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
     const [cardHeight, setCardHeight] = useState({
@@ -297,8 +312,9 @@ const OptimizeInnerPage = () => {
         if (crrDeepLinkFixOpenedRef.current) return;
 
         const volumeFromQuery = searchParams.get(OPEN_FIX_VOLUME_QUERY)?.trim();
+        const volumeFromPath = params.volumeName?.trim();
         const splatVolume = (params as Record<string, string | undefined>)['*']?.trim();
-        const volumeToOpen = volumeFromQuery || splatVolume || '';
+        const volumeToOpen =volumeFromPath;
 
         if (!volumeToOpen) return;
         if (selectedOptimizeConfig?.type !== ASSESSMENT_CONFIG_NAMES.CRR) return;
@@ -313,6 +329,11 @@ const OptimizeInnerPage = () => {
                 const next = new URLSearchParams(searchParams);
                 next.delete(OPEN_FIX_VOLUME_QUERY);
                 setSearchParams(next, { replace: true });
+            } else if (volumeFromPath) {
+                navigate(
+                    { pathname: pathnameWithoutVolumeNameSegment(location.pathname), search: location.search },
+                    { replace: true }
+                );
             } else if (splatVolume) {
                 const basePath = pathnameWithoutTrailingSplat(location.pathname, splatVolume);
                 navigate({ pathname: basePath, search: location.search }, { replace: true });

@@ -63,7 +63,7 @@ const CRRLoadingDialogContent = ({ rowData }: CRRLoadingDialogContentProps) => {
                         isWorkloadFactory ? '/databases' : '/fsxdb'
                     }/inventory/${selectedGwInstanceCredId}/${fsxDetails?.region}/${
                         fsxDetails?.id
-                    }/resource/${selectedResourceId}/instance/${selectedDatabaseInstance}/host/${selectedHostname}/db/${selectedDatabaseInstanceName}/target/crr/overview&region=${
+                    }/resource/${selectedResourceId}/instance/${selectedDatabaseInstance}/host/${selectedHostname}/db/${selectedDatabaseInstanceName}/volumeName/${rowData?.volumeName}/target/crr/overview&region=${
                         fsxDetails?.region
                     }&securityGroupId=${fsxDetails?.securityGroups[0]?.id}&securityGroupName=${
                         fsxDetails?.securityGroups[0]?.name

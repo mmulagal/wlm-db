@@ -4,6 +4,10 @@ export const OPEN_FIX_VOLUME_QUERY = 'openFixVolume';
 export const INVENTORY_FSX_DEEP_LINK_PATH =
     '/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/target/:target/*';
 
+/** Includes `volumeName` before `target` (CRR navigation from BlueXP / Fix flow). */
+export const INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME =
+    '/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/volumeName/:volumeName/target/:target/*';
+
 export const decodeVolumeParam = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) return '';
@@ -37,3 +41,7 @@ export const pathnameWithoutTrailingSplat = (pathname: string, splat: string) =>
     const suffix = `/${splat}`;
     return pathname.endsWith(suffix) ? pathname.slice(0, -suffix.length) : pathname;
 };
+
+/** Strips `/volumeName/:volumeName` after clearing a CRR deep link from the URL. */
+export const pathnameWithoutVolumeNameSegment = (pathname: string) =>
+    pathname.replace(/\/volumeName\/[^/]+/, '');
