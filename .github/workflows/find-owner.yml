@@ -407,8 +407,30 @@ jobs:
                       return lc.startswith("copilot-") or any(lc == t for t in toks)
 
 
+                  def repo_owner_type(repo_full: str) -> str:
+                      """REST: 'Organization', 'User', or ''. Avoids GraphQL user(login:) on org owners."""
+                      if not repo_full or "/" not in repo_full:
+                          return ""
+                      try:
+                          r = subprocess.run(
+                              ["gh", "api", f"repos/{repo_full}", "--jq", ".owner.type"],
+                              capture_output=True,
+                              text=True,
+                              check=False,
+                          )
+                      except Exception:
+                          return ""
+                      if r.returncode != 0:
+                          return ""
+                      t = (r.stdout or "").strip().strip('"')
+                      return t if t in ("Organization", "User") else ""
+
+
                   def is_assignable_user(login: str, repo_full: str) -> bool:
                       if not login:
+                          return False
+                      own, _, _ = repo_full.partition("/")
+                      if own and login.lower() == own.lower() and repo_owner_type(repo_full) == "Organization":
                           return False
                       try:
                           r = subprocess.run(
@@ -573,22 +595,43 @@ jobs:
                           return
                       own, rname = repo_full.split("/", 1)
 
-                      q_projects = """
+                      q_org_projects = """
                       query($login: String!) {
                         organization(login: $login) {
                           projectsV2(first: 50) { nodes { id title } }
                         }
+                      }
+                      """
+                      q_user_projects = """
+                      query($login: String!) {
                         user(login: $login) {
                           projectsV2(first: 50) { nodes { id title } }
                         }
                       }
                       """
-                      pdata = _graphql(q_projects, {"login": own})
-                      if not pdata:
-                          return
-                      orgn = (pdata.get("organization") or {}).get("projectsV2") or {}
-                      usr = (pdata.get("user") or {}).get("projectsV2") or {}
-                      nodes = (orgn.get("nodes") if orgn else None) or (usr.get("nodes") if usr else None) or []
+
+                      def _nodes_from_org(pdata: Optional[dict]) -> list:
+                          if not pdata:
+                              return []
+                          orgn = (pdata.get("organization") or {}).get("projectsV2") or {}
+                          return (orgn.get("nodes") if orgn else None) or []
+
+                      def _nodes_from_user(pdata: Optional[dict]) -> list:
+                          if not pdata:
+                              return []
+                          usr = (pdata.get("user") or {}).get("projectsV2") or {}
+                          return (usr.get("nodes") if usr else None) or []
+
+                      ot = repo_owner_type(repo_full)
+                      nodes: list = []
+                      if ot == "Organization":
+                          nodes = _nodes_from_org(_graphql(q_org_projects, {"login": own}))
+                      elif ot == "User":
+                          nodes = _nodes_from_user(_graphql(q_user_projects, {"login": own}))
+                      else:
+                          nodes = _nodes_from_org(_graphql(q_org_projects, {"login": own}))
+                          if not nodes:
+                              nodes = _nodes_from_user(_graphql(q_user_projects, {"login": own}))
                       project_id = ""
                       for n in nodes:
                           if (n.get("title") or "").strip() == proj_title:

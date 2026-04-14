@@ -23,6 +23,9 @@ npm run apidoc                  # No OpenAPI violations
 -   **Pattern:** `copilot/GH-<issue-number>-<description>`
 -   **Regex:** `^copilot/GH-[0-9]+-[a-zA-Z0-9-_]+$`
 -   If no issue number is available, ask the user to create an issue first.
+-   **When (Copilot / cloud agents):** Create this branch **before** your first commit on the fix; do not accumulate commits on `master` (or another non-compliant branch) and plan to fix the branch name only at PR time.
+
+**Mandatory for Copilot / cloud agents:** The branch for issue-tracked work **must** match the pattern above: the literal segment `GH-<issue-number>-` after `copilot/` is required. Do **not** use generic names (e.g. `fix-login`, `patch-1`, `copilot/my-feature`) without that `GH-<issue-number>-` part. The issue number must be the same authoritative `N` as in **Pull Requests** → **Which issue number (single source of truth)** below, and must match commits and PR title.
 
 ## Commit Messages
 
@@ -38,7 +41,9 @@ When you open a PR for a GitHub issue, the **PR title must reference that issue*
 
 Do not use a title with no `GH-<issue-number>:` prefix; non-compliant titles are rejected by repository rules. See **Examples** below for valid and invalid titles (same format as commits).
 
-**Branch and title must agree:** Use the same `<issue-number>` in the branch ([branch naming](#branch-naming)), commits, and PR title.
+**Branch and title must agree:** Use the same `<issue-number>` in the branch ([branch naming](#branch-naming)), commits, and PR title. The branch name **must** include `copilot/GH-<issue-number>-` (not only a matching number somewhere in the name).
+
+**Which issue number (single source of truth):** Use only the GitHub issue **this PR is intended to close**—the one you were assigned or explicitly asked to fix. Do **not** copy numbers from linked or parent issues, duplicates, unrelated `#…` / `GH-…` mentions in the issue body or comments, or from logs and stack traces. If anything is ambiguous, take the number `N` from that target issue’s URL (`…/issues/N`) and use **that same `N`** in the branch name, commits, PR title, and `Fixes #N` / `Closes #N`.
 
 ### Linking the PR to the issue (body or title)
 

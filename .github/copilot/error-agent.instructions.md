@@ -35,6 +35,18 @@ Error-agent issues have a specific structure. Use these sections to guide your i
 -   Prefer runtime validation (e.g., Array.isArray) at trust boundaries over deep-in-the-stack guards
 -   If the root cause is outside the codebase (AWS SDK, OS syscall, infrastructure, transient environment), do not attempt an in-repo workaround. Comment on the issue with the analysis and classify it as external.
 
+## Branch naming
+
+The **`error-agent`** queue often runs with only this file in context. **Normative rules** (edge cases, repo policy): **`git-conventions.instructions.md`** → **Branch Naming**.
+
+Condensed requirements:
+
+-   **Pattern:** `copilot/GH-<issue-number>-<description>`
+-   **Regex:** `^copilot/GH-[0-9]+-[a-zA-Z0-9-_]+$`
+-   **Timing:** Create this branch **before** your first commit on the fix; do not stack commits on `master` (or another non-compliant branch) and fix naming only at PR time.
+-   **Issue number:** Same authoritative `N` as **`Fixes #N`**, commits, and the PR title `GH-<issue-number>: …`—not a number from linked/parent issues or stray `#…` / `GH-…` in the issue body or comments.
+-   **Do not** use `master`, a generic `copilot/<name>` without `GH-<issue-number>-`, or other names that omit the `GH-<issue-number>-` segment after `copilot/`.
+
 ## Process (follow this order)
 
 1. If a stack trace is available, use it to locate the crash site (file and function). If not, search for the exact error message text (or the variable name in it) to locate the code path.
@@ -73,6 +85,8 @@ You must complete all checks below before opening/updating a PR:
 7. **Review-thread closure check**
     - For every PR comment thread: either fix it in code or respond with a clear technical rationale.
     - Do not mark work complete while unresolved correctness comments remain.
+8. **Branch name check**
+    - Confirm the branch meets **Branch naming** (above) and **`git-conventions.instructions.md`** → **Branch Naming**; the issue number must match **`Fixes #…`** and the PR title. If not, rename or recreate the branch before opening or updating the PR.
 
 ## Scope and constraints (avoid)
 
@@ -107,6 +121,8 @@ Fixes #<issue-number>
 
 The `Fixes #<issue-number>` line must appear at the top of the description. Use the actual GitHub issue number (e.g., `Fixes #7990`). This creates an automatic link to the issue and closes it when the PR is merged.
 
+**Authoritative `<issue-number>`:** It must be the number of the **`error-agent` issue you are resolving in this session**—the same `N` as in `https://github.com/<org>/<repo>/issues/<N>` for that issue. Do **not** use a different `N` from related issues (parent epic, duplicate-of, “see also #…”), from scanning the issue body or comments for arbitrary `#…` / `GH-…` strings, or from tooling output that lists other issues. Wrong `N` breaks queue automation and mis-links the PR.
+
 **This is the required final content of the `prDescription` parameter in your last `report_progress` call. It must replace any progress checklist used earlier in the session.**
 
 ## PR Title Format
@@ -116,7 +132,7 @@ When opening a PR for an `error-agent` issue, use this exact title format:
 -   `GH-<issue-number>: <description>`
 -   Regex: `^GH-[0-9]+:\s.*$`
 
-Never open/update an `error-agent` PR with a title that does not include the matching issue ID in this format.
+Never open/update an `error-agent` PR with a title that does not include the matching issue ID in this format. The `<issue-number>` here is the **same** authoritative number as in **`Fixes #<issue-number>`** above—not any other issue mentioned in the ticket.
 
 ## Issue Comment Format (no-fix)
 
