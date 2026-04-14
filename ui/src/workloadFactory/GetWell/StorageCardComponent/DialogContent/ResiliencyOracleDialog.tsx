@@ -1,10 +1,15 @@
+import { DsButton } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
-import { createActionOptionSection, createSection } from './DialogContentHelper';
+import { createActionOptionSection, createContentWithBullets, createSection } from './DialogContentHelper';
 
 const ResiliencyOracleDialog = ({ type }: { type: string }) => {
     const { t } = useTranslation();
+    const openLinksDoc = () => {
+        window.open('https://docs.netapp.com/us-en/workload-fsx-ontap/links-overview.html', '_blank', 'noopener');
+    };
+
     const setContent = () => {
         switch (type) {
             case ASSESSMENT_CONFIG_NAMES.CRR:
@@ -16,7 +21,12 @@ const ResiliencyOracleDialog = ({ type }: { type: string }) => {
                         )}
                         {createSection(
                             t('databases.well-architect.oracle-crr-about-links'),
-                            t('databases.well-architect.oracle-crr-about-links-description')
+                            <span className={styles['paragraph-with-link']}>
+                                {t('databases.well-architect.oracle-crr-about-links-description')}{' '}
+                                <DsButton type="link" onClick={openLinksDoc}>
+                                    {t('databases.well-architect.oracle-crr-about-links-learn-more')}
+                                </DsButton>
+                            </span>
                         )}
                         {createActionOptionSection(t('databases.well-architect.what-will-happen'), [
                             t('databases.well-architect.oracle-crr-what-will-happen-step1'),
@@ -43,9 +53,13 @@ const ResiliencyOracleDialog = ({ type }: { type: string }) => {
                         ])}
                         {createSection(
                             t('databases.well-architect.notes'),
-                            t('databases.well-architect.oracle-crr-notes')
+                            createContentWithBullets([
+                                t('databases.well-architect.oracle-crr-notes-bullet1'),
+                                t('databases.well-architect.oracle-crr-notes-bullet2'),
+                                t('databases.well-architect.oracle-crr-notes-bullet3'),
+                                t('databases.well-architect.oracle-crr-select-continue')
+                            ])
                         )}
-                        {createSection('', t('databases.well-architect.oracle-crr-select-continue'))}
                     </>
                 );
             case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
