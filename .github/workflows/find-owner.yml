@@ -23,7 +23,10 @@ jobs:
             - name: Find owner from stack trace or error text and assign
               env:
                   GH_TOKEN: ${{ github.token }}
+                  # GraphQL for org Project V2: use secret FIND_OWNER_ORG_PROJECT_TOKEN (PAT or PAT-like); else github.token (cannot see org projects).
                   GH_PROJECT_TOKEN: ${{ secrets.FIND_OWNER_ORG_PROJECT_TOKEN || github.token }}
+                  # true when FIND_OWNER_ORG_PROJECT_TOKEN is set (for diagnostics only; never the secret value).
+                  FIND_OWNER_ORG_PROJECT_SECRET_SET: ${{ secrets.FIND_OWNER_ORG_PROJECT_TOKEN != '' }}
                   ISSUE_NUMBER: ${{ github.event.issue.number }}
                   ISSUE_BODY: ${{ github.event.issue.body }}
                   REPO: ${{ github.repository }}
@@ -33,10 +36,14 @@ jobs:
                   SKIP_ASSIGNEES: 'copilot-swe-agent'
                   FALLBACK_ASSIGNEE: 'mmulagal' # Murali Mulagalapati
                   PROJECT_V2_TITLE: 'WF Database'
+                  # Optional: Project V2 number from the URL …/orgs/<org>/projects/<N> (e.g. 41). Repo/org variable FIND_OWNER_PROJECT_V2_NUMBER.
+                  # Org-level projects still need secret FIND_OWNER_ORG_PROJECT_TOKEN — GITHUB_TOKEN cannot see them (GitHub limitation).
+                  PROJECT_V2_NUMBER: ${{ vars.FIND_OWNER_PROJECT_V2_NUMBER }}
                   SPRINT_FIELD_NAME: 'Sprint'
               run: |
                   python3 - <<'PY'
                   import datetime as dt, json, os, re, subprocess, sys
+                  from functools import lru_cache
                   from typing import Optional, Tuple
 
                   _GQL_RAW = """query($owner: String!, $repo: String!, $expr: String!, $startLine: Int!, $endLine: Int!) {
@@ -407,8 +414,9 @@ jobs:
                       return lc.startswith("copilot-") or any(lc == t for t in toks)
 
 
+                  @lru_cache(maxsize=None)
                   def repo_owner_type(repo_full: str) -> str:
-                      """REST: 'Organization', 'User', or ''. Avoids GraphQL user(login:) on org owners."""
+                      """REST: 'Organization', 'User', or ''. Avoids GraphQL user(login:) on org owners. Memoized per process."""
                       if not repo_full or "/" not in repo_full:
                           return ""
                       try:
@@ -598,14 +606,28 @@ jobs:
                       q_org_projects = """
                       query($login: String!) {
                         organization(login: $login) {
-                          projectsV2(first: 50) { nodes { id title } }
+                          projectsV2(first: 100) { nodes { id title } }
                         }
                       }
                       """
                       q_user_projects = """
                       query($login: String!) {
                         user(login: $login) {
-                          projectsV2(first: 50) { nodes { id title } }
+                          projectsV2(first: 100) { nodes { id title } }
+                        }
+                      }
+                      """
+                      q_org_project_by_number = """
+                      query($login: String!, $number: Int!) {
+                        organization(login: $login) {
+                          projectV2(number: $number) { id title }
+                        }
+                      }
+                      """
+                      q_user_project_by_number = """
+                      query($login: String!, $number: Int!) {
+                        user(login: $login) {
+                          projectV2(number: $number) { id title }
                         }
                       }
                       """
@@ -622,23 +644,92 @@ jobs:
                           usr = (pdata.get("user") or {}).get("projectsV2") or {}
                           return (usr.get("nodes") if usr else None) or []
 
+                      def _project_v2_by_number(login: str, number: int, as_org: bool) -> Optional[dict]:
+                          q = q_org_project_by_number if as_org else q_user_project_by_number
+                          d = _graphql(q, {"login": login, "number": number})
+                          if not d:
+                              return None
+                          key = "organization" if as_org else "user"
+                          return ((d.get(key) or {}).get("projectV2")) or None
+
                       ot = repo_owner_type(repo_full)
-                      nodes: list = []
-                      if ot == "Organization":
-                          nodes = _nodes_from_org(_graphql(q_org_projects, {"login": own}))
-                      elif ot == "User":
-                          nodes = _nodes_from_user(_graphql(q_user_projects, {"login": own}))
-                      else:
-                          nodes = _nodes_from_org(_graphql(q_org_projects, {"login": own}))
-                          if not nodes:
-                              nodes = _nodes_from_user(_graphql(q_user_projects, {"login": own}))
                       project_id = ""
-                      for n in nodes:
-                          if (n.get("title") or "").strip() == proj_title:
-                              project_id = n.get("id") or ""
-                              break
+                      pnum_raw = (os.environ.get("PROJECT_V2_NUMBER") or "").strip()
+                      pnum: Optional[int] = int(pnum_raw) if pnum_raw.isdigit() else None
+
+                      if pnum is not None:
+                          pv: Optional[dict] = None
+                          if ot == "Organization":
+                              pv = _project_v2_by_number(own, pnum, True)
+                          elif ot == "User":
+                              pv = _project_v2_by_number(own, pnum, False)
+                          else:
+                              pv = _project_v2_by_number(own, pnum, True) or _project_v2_by_number(
+                                  own, pnum, False
+                              )
+                          if pv and pv.get("id"):
+                              project_id = str(pv["id"])
+                              got = (pv.get("title") or "").strip()
+                              if got and got != proj_title:
+                                  print(
+                                      f"find-owner: PROJECT_V2_NUMBER={pnum} resolved to title {got!r} "
+                                      f"(PROJECT_V2_TITLE is {proj_title!r})",
+                                      file=sys.stderr,
+                                  )
+
+                      nodes: list = []
                       if not project_id:
-                          print(f"find-owner: no project titled {proj_title!r} under {own}", file=sys.stderr)
+                          if ot == "Organization":
+                              nodes = _nodes_from_org(_graphql(q_org_projects, {"login": own}))
+                          elif ot == "User":
+                              nodes = _nodes_from_user(_graphql(q_user_projects, {"login": own}))
+                          else:
+                              nodes = _nodes_from_org(_graphql(q_org_projects, {"login": own}))
+                              if not nodes:
+                                  nodes = _nodes_from_user(_graphql(q_user_projects, {"login": own}))
+                          for n in nodes:
+                              if (n.get("title") or "").strip() == proj_title:
+                                  project_id = n.get("id") or ""
+                                  break
+
+                      if not project_id:
+                          print(
+                              f"find-owner: no Project V2 titled {proj_title!r} under {own}"
+                              + (f" (PROJECT_V2_NUMBER={pnum} also failed)" if pnum is not None else ""),
+                              file=sys.stderr,
+                          )
+                          if not nodes:
+                              ot_disp = ot if ot else "(empty — owner-type REST lookup failed or inconclusive)"
+                              tok_custom = (os.environ.get("FIND_OWNER_ORG_PROJECT_SECRET_SET") or "").strip().lower() in (
+                                  "true",
+                                  "1",
+                                  "yes",
+                              )
+                              tok_disp = (
+                                  "FIND_OWNER_ORG_PROJECT_TOKEN is set (dedicated token for GraphQL)"
+                                  if tok_custom
+                                  else "FIND_OWNER_ORG_PROJECT_TOKEN is not set (GH_PROJECT_TOKEN is the default GITHUB_TOKEN)"
+                              )
+                              print(
+                                  f"find-owner: projectsV2 list is empty for {own!r} "
+                                  f"(detected owner type: {ot_disp}; {tok_disp}). "
+                                  "That can mean there are no Project V2 boards visible to this token, "
+                                  "the token lacks project/org scopes, the owner-type query failed, or "
+                                  "(for org-owned repos) organization-level projects are not exposed to GITHUB_TOKEN. "
+                                  "If you need org Project v2, configure secret FIND_OWNER_ORG_PROJECT_TOKEN "
+                                  "(classic PAT: `repo` + `project`, or fine-grained PAT with Organization projects) "
+                                  "or a GitHub App. Optional: repo/org variable FIND_OWNER_PROJECT_V2_NUMBER from "
+                                  "…/orgs/<org>/projects/<N>. "
+                                  "https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/automating-projects-using-actions",
+                                  file=sys.stderr,
+                              )
+                          else:
+                              titles = sorted({(x.get("title") or "").strip() for x in nodes if x})
+                              print(
+                                  f"find-owner: visible projects ({len(nodes)}): "
+                                  + (", ".join(titles[:20]) + ("…" if len(titles) > 20 else "")),
+                                  file=sys.stderr,
+                              )
                           return
 
                       q_issue = """
@@ -659,7 +750,7 @@ jobs:
                       query($pid: ID!) {
                         node(id: $pid) {
                           ... on ProjectV2 {
-                            fields(first: 50) {
+                            fields(first: 100) {
                               nodes {
                                 ... on ProjectV2IterationField {
                                   id
@@ -744,6 +835,18 @@ jobs:
                           },
                       )
                       if not sdata:
+                          print(
+                              "find-owner: updateProjectV2ItemFieldValue failed (GraphQL error or no data); "
+                              "check PAT scopes and project field permissions",
+                              file=sys.stderr,
+                          )
+                          return
+                      upd = (sdata.get("updateProjectV2ItemFieldValue") or {}).get("projectV2Item") or {}
+                      if not upd.get("id"):
+                          print(
+                              "find-owner: updateProjectV2ItemFieldValue returned no projectV2Item id",
+                              file=sys.stderr,
+                          )
                           return
                       print(
                           f"find-owner: set project {proj_title!r} sprint to {chosen.get('title')!r} ({iter_id})",
@@ -759,13 +862,28 @@ jobs:
                       mf = int(os.environ.get("MAX_FRAMES", "30"))
                       inum = os.environ.get("ISSUE_NUMBER", "")
                       ska = os.environ.get("SKIP_ASSIGNEES", "")
-                      fb = os.environ.get("FALLBACK_ASSIGNEE", "")
+                      fb = (os.environ.get("FALLBACK_ASSIGNEE", "") or "").strip()
                       st = parse_skip_assignee_tokens(ska)
                       _, bal, _, _ = resolve_best_author(body, rf, rtp, rsp, mf)
                       if not bal:
+                          if not fb:
+                              print(
+                                  "find-owner: no author from stack trace/literals and FALLBACK_ASSIGNEE is empty",
+                                  file=sys.stderr,
+                              )
+                              return 0
                           if not is_assignable_user(fb, rf):
+                              print(
+                                  f"find-owner: fallback {fb!r} is not assignable on {rf} "
+                                  "(needs repo permission / org membership for assignment)",
+                                  file=sys.stderr,
+                              )
                               return 0
                           if not add_assignee_rest(fb, rf, inum, st):
+                              print(
+                                  f"find-owner: could not assign fallback {fb!r} to issue #{inum}",
+                                  file=sys.stderr,
+                              )
                               return 0
                           return 0
                       clc = bal.lower()
@@ -775,13 +893,26 @@ jobs:
                       if not is_assignable_user(ch, rf):
                           ch = fb
                       if not is_assignable_user(ch, rf):
+                          print(
+                              "find-owner: neither resolved author nor fallback is assignable on "
+                              f"{rf} (resolved={bal!r}, fallback={fb or '(empty)'})",
+                              file=sys.stderr,
+                          )
                           return 0
                       if not add_assignee_rest(ch, rf, inum, st):
                           ch = fb
                           if is_assignable_user(ch, rf):
                               if not add_assignee_rest(ch, rf, inum, st):
+                                  print(
+                                      f"find-owner: assign failed for primary and fallback on issue #{inum}",
+                                      file=sys.stderr,
+                                  )
                                   return 0
                           else:
+                              print(
+                                  f"find-owner: assign failed; fallback {fb!r} not assignable on {rf}",
+                                  file=sys.stderr,
+                              )
                               return 0
                       return 0
 
@@ -793,7 +924,11 @@ jobs:
                       try:
                           rc = _run_owner_assignment()
                       finally:
-                          apply_wf_database_project_and_sprint(rf, inum)
+                          try:
+                              # Independent of assignee success above; runs after assignment attempt.
+                              apply_wf_database_project_and_sprint(rf, inum)
+                          except Exception as ex:
+                              print(f"find-owner: project/sprint step raised: {ex}", file=sys.stderr)
                       return rc
 
 
