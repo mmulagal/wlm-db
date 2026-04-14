@@ -36,6 +36,7 @@ const ResiliencyOracleDialog = ({ type }: { type: string }) => {
                                 </span>
                                 {t('databases.well-architect.oracle-crr-what-will-happen-step3-rest2')}
                             </span>,
+                            t('databases.well-architect.oracle-crr-what-will-happen-step4'),
                             t('databases.well-architect.oracle-crr-what-will-happen-step5'),
                             t('databases.well-architect.oracle-crr-what-will-happen-step6'),
                             t('databases.well-architect.oracle-crr-what-will-happen-step7')
