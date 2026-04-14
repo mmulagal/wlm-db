@@ -288,7 +288,18 @@ const OptimizeInnerPage = () => {
                     isThin
                     variant="secondary"
                     onClick={() => {
-                        handleCRRRedirectionDialog(rowData);
+                        handleDialog(
+                            setDialog,
+                            selectedOptimizeConfig?.type,
+                            callOptimizeApi,
+                            closeDialog,
+                            selectedOptimizeConfig?.data,
+                            'single',
+                            rowData,
+                            selectedOptimizeConfig?.engineType,
+                            isWad
+                        );
+                        // handleCRRRedirectionDialog(rowData);
                     }}
                 >
                     {GENERAL.OPTIMIZE}

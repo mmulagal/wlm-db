@@ -14,18 +14,37 @@ const ResiliencyOracleDialog = ({ type }: { type: string }) => {
                             t('databases.well-architect.action-summary'),
                             t('databases.well-architect.oracle-crr-action-summary')
                         )}
-                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
-                            t('databases.well-architect.oracle-crr-step1'),
-                            t('databases.well-architect.oracle-crr-step2'),
-                            t('databases.well-architect.oracle-crr-step3'),
-                            t('databases.well-architect.oracle-crr-step4'),
-                            t('databases.well-architect.oracle-crr-step5'),
-                            t('databases.well-architect.oracle-crr-step6')
+                        {createSection(
+                            t('databases.well-architect.oracle-crr-about-links'),
+                            t('databases.well-architect.oracle-crr-about-links-description')
+                        )}
+                        {createActionOptionSection(t('databases.well-architect.what-will-happen'), [
+                            t('databases.well-architect.oracle-crr-what-will-happen-step1'),
+                            <span>
+                                <span className={styles['medium-weight']}>
+                                    {t('databases.well-architect.oracle-crr-what-will-happen-step2-bold')}
+                                </span>
+                                {t('databases.well-architect.oracle-crr-what-will-happen-step2-rest')}
+                            </span>,
+                            <span>
+                                <span className={styles['medium-weight']}>
+                                    {t('databases.well-architect.oracle-crr-what-will-happen-step3-bold')}
+                                </span>
+                                {t('databases.well-architect.oracle-crr-what-will-happen-step3-rest1')}
+                                <span className={styles['medium-weight']}>
+                                    {t('databases.well-architect.oracle-crr-what-will-happen-step3-fix')}
+                                </span>
+                                {t('databases.well-architect.oracle-crr-what-will-happen-step3-rest2')}
+                            </span>,
+                            t('databases.well-architect.oracle-crr-what-will-happen-step5'),
+                            t('databases.well-architect.oracle-crr-what-will-happen-step6'),
+                            t('databases.well-architect.oracle-crr-what-will-happen-step7')
                         ])}
                         {createSection(
                             t('databases.well-architect.notes'),
                             t('databases.well-architect.oracle-crr-notes')
                         )}
+                        {createSection('', t('databases.well-architect.oracle-crr-select-continue'))}
                     </>
                 );
             case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
