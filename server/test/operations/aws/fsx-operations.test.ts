@@ -1,6 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { isEmpty } from 'lodash-es';
+import { beforeEach } from 'vitest';
 
+import { resetFsxSimulatorBackupRetention } from '../../simulator/scopes/aws/fsx-scope';
 import { DEFAULT_AWS_REGION, DEFAULT_INSTANCE_NAME } from '../../../src/utils/consts';
 import {
     getFSxFileSystemsList,
@@ -21,6 +23,11 @@ const credentialsId = `${faker.string.alpha(20)}`;
 const awsAccountId = `${faker.string.alpha(8)}`;
 
 describe('Testcases for Amazon FSx resources operations', () => {
+    // FSx simulator retains UpdateFileSystem state in a module Map; reset so tests stay isolated (incl. parallel workers).
+    beforeEach(() => {
+        resetFsxSimulatorBackupRetention();
+    });
+
     // Its not mocked, we are making actual api call to fsx inventory, so headers wont be present to make this test works
     it('List FSx filesystems and volume details', async () => {
         const response = await getFSxFileSystemsList(

@@ -1040,6 +1040,11 @@ ssmMock
     .resolves(getSampleCommandResponse('optimizeMultiblockReadcount'))
     .on(SendCommandCommand, params => params.Comment === 'Optimize Oracle filesystem I/O options parameter')
     .resolves(getSampleCommandResponse('optimizeFilesystemioOptions'))
+    .on(
+        SendCommandCommand,
+        params => params.Comment === 'Fix kernel TCP sunrpc slot table entries for Oracle NFS storage optimization'
+    )
+    .resolves(getSampleCommandResponse('optimizeOracleNfsKernelTcpSunrpcSlots'))
     .on(SendCommandCommand, params => params.Comment === 'Installing NetApp Host Utilities')
     .resolves(getSampleCommandResponse('installNetAppHostUtilities'))
     .on(SendCommandCommand, params => params.Comment === 'Enabling Multipath IO')
@@ -1710,6 +1715,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'optimizeOracleTcpOptions',
             JSON.stringify(getCommandInvocationResponse.oracleTcpOptionsOptimizationResponse)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-optimizeOracleNfsKernelTcpSunrpcSlots'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'optimizeOracleNfsKernelTcpSunrpcSlots',
+            JSON.stringify(getCommandInvocationResponse.oracleNfsKernelTcpSunrpcSlotsOptimizationResponse)
         )
     )
     .on(GetCommandInvocationCommand, {

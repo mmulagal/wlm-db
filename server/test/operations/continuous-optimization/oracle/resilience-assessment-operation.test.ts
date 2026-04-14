@@ -128,7 +128,9 @@ describe('ORACLE_CRR_ASSESSMENT_SCRIPT', () => {
 
     it('should match peer info from SnapMirror destination SVM, not all peers', () => {
         const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
+        // prettier-ignore
         expect(script).toContain('dest_svm = dest.get(\'destination\', {}).get(\'svm\', {}).get(\'name\', \'\')');
+        // prettier-ignore
         expect(script).toContain('if dest_svm in mapping[\'peerSvmNames\']');
     });
 
@@ -569,13 +571,41 @@ describe('getOracleAwsBackupDriftData', () => {
         };
 
         const result = getOracleAwsBackupDriftData(
-            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            assessmentData
         ) as OracleGenericParameterDriftResponseType;
         expect(result).not.toHaveProperty('errorMessage');
         expect(result.status).toBe(AssessmentStatus.OPTIMIZED);
         expect(result.objectsInViolation).toEqual([]);
         expect(result.totalObjectsInViolation).toBe(0);
         expect(result.totalObjectsAssessed).toBe(2);
+    });
+
+    it('should set totalObjectsAssessed to mapped volume count when optimized (e.g. scheduled FSx backup)', () => {
+        const assessmentData: AWSBackupAssessment = {
+            fileSystemId: 'fs-0abc123',
+            isAWSBackupEnabled: true,
+            volumeBackupDetails: [
+                { uuid: 'uuid-a', name: 'vol_a', isAWSBackupEnabled: true },
+                { uuid: 'uuid-b', name: 'vol_b', isAWSBackupEnabled: true },
+                { uuid: 'uuid-c', name: 'vol_c', isAWSBackupEnabled: true }
+            ]
+        };
+
+        const result = getOracleAwsBackupDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            assessmentData
+        ) as OracleGenericParameterDriftResponseType;
+        expect(result.status).toBe(AssessmentStatus.OPTIMIZED);
+        expect(result.totalObjectsAssessed).toBe(3);
     });
 
     it('should return NOT_OPTIMIZED when some volumes lack backup', () => {
@@ -589,12 +619,15 @@ describe('getOracleAwsBackupDriftData', () => {
         };
 
         const result = getOracleAwsBackupDriftData(
-            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            assessmentData
         ) as OracleGenericParameterDriftResponseType;
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
-        expect(result.objectsInViolation).toEqual([
-            { ontapVolumeUuid: 'uuid-log', ontapVolumeName: 'log_vol' }
-        ]);
+        expect(result.objectsInViolation).toEqual([{ ontapVolumeUuid: 'uuid-log', ontapVolumeName: 'log_vol' }]);
         expect(result.totalObjectsInViolation).toBe(1);
         expect(result.totalObjectsAssessed).toBe(2);
     });
@@ -610,7 +643,12 @@ describe('getOracleAwsBackupDriftData', () => {
         };
 
         const result = getOracleAwsBackupDriftData(
-            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            assessmentData
         ) as OracleGenericParameterDriftResponseType;
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
         expect(result.objectsInViolation).toEqual([
@@ -629,7 +667,12 @@ describe('getOracleAwsBackupDriftData', () => {
         };
 
         const result = getOracleAwsBackupDriftData(
-            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            assessmentData
         ) as OracleGenericParameterDriftResponseType;
         expect(result.name).toBe('backup-configuration');
         expect(result.severity).toBe(SEVERITY.WARNING);
@@ -640,7 +683,11 @@ describe('getOracleAwsBackupDriftData', () => {
 
     it('should return error message when assessment data is empty', () => {
         const result = getOracleAwsBackupDriftData(
-            accountId, credentialsId, region, databaseHostId, databaseInstanceId,
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
             {} as AWSBackupAssessment
         );
         expect(result).toHaveProperty('errorMessage');
@@ -656,7 +703,12 @@ describe('getOracleAwsBackupDriftData', () => {
         };
 
         const result = getOracleAwsBackupDriftData(
-            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            assessmentData
         );
         expect(result).toHaveProperty('errorMessage');
         expect((result as { errorMessage: string }).errorMessage).toBe(
@@ -668,13 +720,16 @@ describe('getOracleAwsBackupDriftData', () => {
         const assessmentData: AWSBackupAssessment = {
             fileSystemId: 'fs-0abc123',
             isAWSBackupEnabled: false,
-            volumeBackupDetails: [
-                { uuid: 'uuid-data', name: 'data_vol', isAWSBackupEnabled: false }
-            ]
+            volumeBackupDetails: [{ uuid: 'uuid-data', name: 'data_vol', isAWSBackupEnabled: false }]
         };
 
         const result = getOracleAwsBackupDriftData(
-            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            assessmentData
         ) as OracleGenericParameterDriftResponseType;
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
         expect(result.totalObjectsAssessed).toBe(1);
@@ -689,7 +744,12 @@ describe('getOracleAwsBackupDriftData', () => {
         };
 
         const result = getOracleAwsBackupDriftData(
-            accountId, credentialsId, region, databaseHostId, databaseInstanceId, assessmentData
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            assessmentData
         ) as OracleGenericParameterDriftResponseType;
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
         expect(result.totalObjectsInViolation).toBe(1);

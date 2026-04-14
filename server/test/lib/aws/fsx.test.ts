@@ -1,6 +1,10 @@
 import { faker } from '@faker-js/faker';
 import { ListTagsForResourceCommandInput } from '@aws-sdk/client-fsx';
-import { fsxnBackupWithModifiedCreationTime } from '../../simulator/scopes/aws/fsx-scope';
+import { beforeEach } from 'vitest';
+import {
+    fsxnBackupWithModifiedCreationTime,
+    resetFsxSimulatorBackupRetention
+} from '../../simulator/scopes/aws/fsx-scope';
 import fsxFilesystems from '../../simulator/responses/aws/list-fsx-filesystems.json';
 import fsxVolumes from '../../simulator/responses/aws/list-fsx-volumes.json';
 import fsxSvms from '../../simulator/responses/aws/list-fsx-svms.json';
@@ -25,6 +29,11 @@ const fsxArn = `arn:aws:res:${DEFAULT_AWS_REGION}:${faker.number.int(8)}:res/${F
 const tag = [{ Key: 'key', Value: 'value' }];
 
 describe('Testcases for Amazon FSx resources', () => {
+    // FSx simulator retains UpdateFileSystem state in a module Map; reset so tests stay isolated (incl. parallel workers).
+    beforeEach(() => {
+        resetFsxSimulatorBackupRetention();
+    });
+
     it('List FSx Filesystems', async () => {
         const response = await describeFSxFileSystems(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
             useCache: true
@@ -96,7 +105,8 @@ describe('Testcases for Amazon FSx resources', () => {
             { useCache: true }
         );
 
-        expect(response).toEqual(fsxFilesystems.FileSystems[0]);
+        expect(response.FileSystems).toHaveLength(1);
+        expect(response.FileSystems?.[0]).toMatchObject(fsxFilesystems.FileSystems[0]);
     });
 
     it('List Fsx resource tags', async () => {

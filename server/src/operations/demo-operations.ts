@@ -49,6 +49,7 @@ import {
     ORACLE_STORAGE_ASSESSMENT_DATA,
     ORACLE_ASSESSMENT_CRR_CONFIG_DATA,
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
+    buildOracleDemoAwsBackupAssessmentSeed,
     ORACLE_SECURITY_PATCH_ASSESSMENT_DATA,
     ORACLE_SNAPCENTER_ASSESSMENT_DATA,
     ORACLE_ASSESSMENT_CLONE_CONFIG_DATA,
@@ -1066,10 +1067,17 @@ async function createAssessmentDataForOracle(
         config_data: ORACLE_ASSESSMENT_CLONE_CONFIG_DATA
     };
 
+    const instanceAwsBackupConfigDataRecord = {
+        ...baseConfig,
+        config_data_type: AssessmentCategories.AWS_BACKUP,
+        config_data: buildOracleDemoAwsBackupAssessmentSeed(fsxId)
+    };
+
     const configDataRecords = [
         instanceConfigDataRecord,
         instanceConfigMappedOntapDataRecord,
         instanceCRRConfigDataRecord,
+        instanceAwsBackupConfigDataRecord,
         instanceSecurityPatchConfigDataRecord,
         instanceSnapcenterConfigDataRecord,
         instanceCloneConfigDataRecord

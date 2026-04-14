@@ -3615,6 +3615,7 @@
                     "name": "oracleredo2",
                     "uuid": "db3ed9f2-eee7-11ef-8fbb-837e18df6f7a",
                     "svmName": "wlmdb_sqlsvm_1735809893269",
+                    "junctionPath": "/oracleredo2",
                     "autosize": "off",
                     "compaction": "inline",
                     "compression": "inline",
@@ -3637,6 +3638,7 @@
                     "name": "oraclearch2",
                     "uuid": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a",
                     "svmName": "wlmdb_sqlsvm_1735809893269",
+                    "junctionPath": "/oraclearch2",
                     "autosize": "off",
                     "compaction": "inline",
                     "compression": "inline",
@@ -3659,6 +3661,7 @@
                     "name": "oracledata2",
                     "uuid": "db1ed9f2-eee7-11ef-8fbb-837e18df6f7a",
                     "svmName": "wlmdb_sqlsvm_1735809893269",
+                    "junctionPath": "/oracledata2",
                     "autosize": "off",
                     "compaction": "inline",
                     "compression": "inline",
@@ -3946,6 +3949,33 @@
                             "acregmin": "0",
                             "noac": true
                         },
+                        "mount-point": "/mnt/oradata_secondary",
+                        "remote-path": "/oracledata2",
+                        "filesystem-type": "nfs4"
+                    },
+                    {
+                        "server": "172.31.255.231",
+                        "options": {
+                            "rw": true,
+                            "sec": "sys",
+                            "addr": "172.31.255.231",
+                            "hard": true,
+                            "vers": "4.2",
+                            "proto": "tcp",
+                            "rsize": "65536",
+                            "timeo": "600",
+                            "wsize": "65536",
+                            "namlen": "255",
+                            "retrans": "2",
+                            "relatime": true,
+                            "clientaddr": "172.31.48.99",
+                            "local_lock": "none",
+                            "acdirmax": "0",
+                            "acdirmin": "0",
+                            "acregmax": "0",
+                            "acregmin": "0",
+                            "noac": true
+                        },
                         "mount-point": "/mnt/oraarch",
                         "remote-path": "/oraclearch2",
                         "filesystem-type": "nfs4"
@@ -4136,6 +4166,19 @@
                 "persisted": true,
                 "error": null,
                 "already-optimal": true
+            }
+        }
+    },
+    "oracleNfsKernelTcpSunrpcSlotsOptimizationResponse": {
+        "status": "optimized",
+        "sunrpc-options": {
+            "sunrpc.tcp_max_slot_table_entries": {
+                "expected": "128",
+                "actual": "128"
+            },
+            "sunrpc.tcp_slot_table_entries": {
+                "expected": "128",
+                "actual": "128"
             }
         }
     },

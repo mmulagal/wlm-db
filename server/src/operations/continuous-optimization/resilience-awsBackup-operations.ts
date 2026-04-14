@@ -58,9 +58,24 @@ async function assessAwsBackupForVolumes(
     const fsxnInfo = await describeFSx(credentialsId, region, { FileSystemIds: [fileSystemId] }, accountId, {
         useCache: true
     });
-    const retentionDays = fsxnInfo?.FileSystems?.[0]?.OntapConfiguration?.AutomaticBackupRetentionDays;
+    const fsSystems = fsxnInfo?.FileSystems ?? [];
+    const fsRecord = fsSystems.find(fs => fs.FileSystemId === fileSystemId);
+    if (!fsRecord && fsSystems.length > 0) {
+        logger.warn('DescribeFileSystems returned no filesystem matching requested FileSystemId', {
+            accountId,
+            credentialsId,
+            region,
+            fileSystemId,
+            returnedFileSystemIds: fsSystems.map(fs => fs.FileSystemId).filter((id): id is string => id != null)
+        });
+    }
+    const retentionDays = fsRecord?.OntapConfiguration?.AutomaticBackupRetentionDays;
     isAWSBackupEnabled = retentionDays !== undefined && retentionDays > 0;
     logger.debug('Is Scheduled FSx for ONTAP backup enabled:', isAWSBackupEnabled);
+
+    const volumeUuidToName = !isEmpty(volumeUuids)
+        ? new Map(volumeUuids.map((uuid, index) => [uuid, volumeNames[index] || uuid]))
+        : undefined;
 
     if (!isAWSBackupEnabled) {
         if (isEmpty(volumeUuids)) {
@@ -68,8 +83,6 @@ async function assessAwsBackupForVolumes(
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
-
-        const volumeUuidToName = new Map(volumeUuids.map((uuid, index) => [uuid, volumeNames[index] || uuid]));
 
         const { volumeUuidsInBackups } =
             (await isFsxnAwsBackupEnabled(
@@ -89,9 +102,17 @@ async function assessAwsBackupForVolumes(
 
         volumeBackupDetails.push(
             ...volumeUuids.map(uuid => ({
-                name: volumeUuidToName.get(uuid) || uuid,
+                name: volumeUuidToName?.get(uuid) || uuid,
                 uuid,
                 isAWSBackupEnabled: backupVolumeSet.has(uuid)
+            }))
+        );
+    } else if (!isEmpty(volumeUuids) && volumeUuidToName) {
+        volumeBackupDetails.push(
+            ...volumeUuids.map(uuid => ({
+                name: volumeUuidToName.get(uuid) || uuid,
+                uuid,
+                isAWSBackupEnabled: true
             }))
         );
     }

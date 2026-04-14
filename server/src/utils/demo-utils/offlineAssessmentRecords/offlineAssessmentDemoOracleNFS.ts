@@ -212,7 +212,18 @@ export const offlineAssessmentDemoOracleNFS = {
                     errors: {},
                     dnfsServers: {
                         error: null,
-                        data: []
+                        data: [
+                            {
+                                dirname: '/wlmdb_oracle_data_demo',
+                                svrname: '10.0.0.100',
+                                nfsversion: 'NFSv3.0'
+                            },
+                            {
+                                dirname: '/wlmdb_oracle_redo_demo',
+                                svrname: '10.0.0.100',
+                                nfsversion: 'NFSv3.0'
+                            }
+                        ]
                     },
                     nfsv4DomainData: {
                         error: null,
@@ -250,6 +261,33 @@ export const offlineAssessmentDemoOracleNFS = {
                                 server: '10.0.0.100',
                                 'remote-path': '/wlmdb_oracle_data_demo',
                                 'mount-point': '/mnt/oradata',
+                                'filesystem-type': 'nfs',
+                                options: {
+                                    rw: true,
+                                    relatime: true,
+                                    vers: '3',
+                                    rsize: '262144',
+                                    wsize: '262144',
+                                    namlen: '255',
+                                    hard: true,
+                                    proto: 'tcp',
+                                    timeo: '600',
+                                    retrans: '2',
+                                    sec: 'sys',
+                                    mountaddr: '10.0.0.100',
+                                    mountvers: '3',
+                                    mountport: '635',
+                                    mountproto: 'udp',
+                                    local_lock: 'none',
+                                    addr: '10.0.0.100',
+                                    bg: false,
+                                    nointr: false
+                                }
+                            },
+                            {
+                                server: '10.0.0.100',
+                                'remote-path': '/wlmdb_oracle_data_demo',
+                                'mount-point': '/mnt/oradata_clone',
                                 'filesystem-type': 'nfs',
                                 options: {
                                     rw: true,
@@ -351,11 +389,30 @@ export const offlineAssessmentDemoOracleNFS = {
                         error: null
                     },
                     'dnfs-oranfstab': {
-                        oranfstab_servers: [],
-                        error: 'File not found: /etc/oranfstab'
+                        oranfstab_servers: [
+                            {
+                                server: 'demo-fs',
+                                paths: ['10.0.0.100'],
+                                exports: [
+                                    { export: '/wlmdb_oracle_data_demo', mount: '/mnt/oradata' },
+                                    { export: '/wlmdb_oracle_archive_demo', mount: '/mnt/oraarch' },
+                                    { export: '/wlmdb_oracle_redo_demo', mount: '/mnt/oraredoctl' }
+                                ],
+                                nfs_version: 'NFSv3',
+                                options: {
+                                    rsize: '262144',
+                                    wsize: '262144',
+                                    tcp_nodelay: true
+                                }
+                            }
+                        ],
+                        error: null
                     },
                     'dnfs-ip-resolution': {
-                        dns_resolution: {},
+                        dns_resolution: {
+                            '10.0.0.100': ['10.0.0.100'],
+                            'demo-fs': ['10.0.0.100']
+                        },
                         error: null
                     }
                 },

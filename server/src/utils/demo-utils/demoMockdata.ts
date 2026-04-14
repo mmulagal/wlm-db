@@ -3579,6 +3579,32 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
     return mappedVolData;
 };
 
+/** FSx AWS Backup assessment row for Oracle demo; volume UUIDs align with `ORACLE_MAPPED_ONTAP_VOLUMES_DATA`. */
+function buildOracleDemoAwsBackupAssessmentSeed(fsxId: string) {
+    return {
+        fileSystemId: fsxId,
+        isAWSBackupEnabled: false,
+        errorMessage: '',
+        volumeBackupDetails: [
+            {
+                uuid: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                name: 'oracledata2',
+                isAWSBackupEnabled: false
+            },
+            {
+                uuid: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
+                name: 'oraclearch2',
+                isAWSBackupEnabled: false
+            },
+            {
+                uuid: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                name: 'oracleredo2',
+                isAWSBackupEnabled: false
+            }
+        ]
+    };
+}
+
 const ASSESMENT_CONFIG_DATA = {
     os: {
         'mpio-enabled': false,
@@ -7017,6 +7043,7 @@ export {
     ORACLE_STORAGE_ASSESSMENT_DATA,
     ORACLE_ASSESSMENT_CRR_CONFIG_DATA,
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
+    buildOracleDemoAwsBackupAssessmentSeed,
     ORACLE_SECURITY_PATCH_ASSESSMENT_DATA,
     ORACLE_SNAPCENTER_ASSESSMENT_DATA,
     ORACLE_ASSESSMENT_CLONE_CONFIG_DATA,
