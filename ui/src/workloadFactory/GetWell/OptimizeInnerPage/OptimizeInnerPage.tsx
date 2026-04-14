@@ -237,7 +237,7 @@ const OptimizeInnerPage = () => {
         }
     }, [selectedOptimizeConfig]);
 
-    const handleCRRRedirectionDialog = (rowData: any) => {
+    const handleCRRRedirectionDialog = (_type: any, _operation: string, rowData: any) => {
         const dialogHeader = (
             <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <DsTypography variant="Regular_16">{t('databases.well-architect.associate-link')}</DsTypography>
@@ -247,17 +247,21 @@ const OptimizeInnerPage = () => {
             </div>
         );
 
-        setDialog(
-            <DialogComponent
-                header={dialogHeader}
-                content={<CRRLoadingDialogContent rowData={rowData} />}
-                secondaryButton={t('databases.general.close')}
-                hidePrimaryButton
-                closeCallback={() => {
-                    closeDialog();
-                }}
-            />
-        );
+        setTimeout(() => {
+            setDialog(
+                <DialogComponent
+                    header={dialogHeader}
+                    content={<CRRLoadingDialogContent rowData={rowData} />}
+                    secondaryButton={t('databases.general.close')}
+                    hidePrimaryButton
+                    closeCallback={() => {
+                        closeDialog();
+                    }}
+                />
+            );
+        }, 200)
+
+       
     };
 
     const buttonComponent = (rowData: any) => {
@@ -291,7 +295,7 @@ const OptimizeInnerPage = () => {
                         handleDialog(
                             setDialog,
                             selectedOptimizeConfig?.type,
-                            callOptimizeApi,
+                            handleCRRRedirectionDialog,
                             closeDialog,
                             selectedOptimizeConfig?.data,
                             'single',
@@ -299,7 +303,6 @@ const OptimizeInnerPage = () => {
                             selectedOptimizeConfig?.engineType,
                             isWad
                         );
-                        // handleCRRRedirectionDialog(rowData);
                     }}
                 >
                     {GENERAL.OPTIMIZE}
