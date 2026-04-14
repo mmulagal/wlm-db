@@ -422,7 +422,8 @@ function getTempDbVolumeDrift(
         tempdbDriveTotalSizeMB,
         sizePercentToDataDrive: Number.isNaN(tempdbPercent) ? 0 : tempdbPercent,
         lunPath: lunUuid && lunUuidToLunPathMap ? lunUuidToLunPathMap.get(lunUuid) : undefined,
-        tempdbAccessPath: tempdbDriveLetter
+        tempdbAccessPath: tempdbDriveLetter,
+        databases: ['tempdb']
     };
 
     if (defaultDataDriveLetter === tempdbDriveLetter) {
