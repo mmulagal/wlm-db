@@ -218,9 +218,4 @@ function getAwsBackupDriftData(
     };
 }
 
-export {
-    assessAwsBackupForVolumes,
-    initiateAwsBackupAssessment,
-    getAwsBackupDriftData,
-    AwsBackupGoldenConfig
-};
+export { assessAwsBackupForVolumes, initiateAwsBackupAssessment, getAwsBackupDriftData, AwsBackupGoldenConfig };

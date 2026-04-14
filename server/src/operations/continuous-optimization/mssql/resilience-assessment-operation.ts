@@ -48,7 +48,10 @@ import { GET_SNAPSHOT_DETAILS } from '../../workloads/mssql/assessment-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { getMZFsxnNodePreference } from '../../aws/fsx-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
-import { initiateAwsBackupAssessment as initiateSharedAwsBackupAssessment, getAwsBackupDriftData as getSharedAwsBackupDriftData } from '../resilience-awsBackup-operations';
+import {
+    initiateAwsBackupAssessment as initiateSharedAwsBackupAssessment,
+    getAwsBackupDriftData as getSharedAwsBackupDriftData
+} from '../resilience-awsBackup-operations';
 import {
     CLUSTER_QUORUM_TYPE,
     SQL_SERVER_SERVICES,
@@ -388,9 +391,7 @@ async function initiateAWSBackupAssessment(
     } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
 
-    const { dataLogVolumeMap } = filterDataLogVolumes(
-        instanceVolumeMapping as unknown as MappedOnTapVolumeResponse
-    );
+    const { dataLogVolumeMap } = filterDataLogVolumes(instanceVolumeMapping as unknown as MappedOnTapVolumeResponse);
     const volumeUuids = Array.from(dataLogVolumeMap.keys());
     const volumeNames = volumeUuids.map(uuid => dataLogVolumeMap.get(uuid) || uuid);
 

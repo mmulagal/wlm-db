@@ -894,92 +894,99 @@ async function fetchOracleDriftAssessment(
     ]);
     const controlFileOnlyVolumeIds = controlFileVolumeIds.filter(id => !nonControlFileVolumeIds.has(id));
 
-    const [storageDriftData, hostLevelData, awsBackupDriftData, crrData, snapcenterDriftData, oracleSecurityPatchData, cloneDriftData] =
-        await Promise.all([
-            assessmentFlags.storage
-                ? calculateStorageDrift(
+    const [
+        storageDriftData,
+        hostLevelData,
+        awsBackupDriftData,
+        crrData,
+        snapcenterDriftData,
+        oracleSecurityPatchData,
+        cloneDriftData
+    ] = await Promise.all([
+        assessmentFlags.storage
+            ? calculateStorageDrift(
+                  accountId,
+                  credentialsId,
+                  region,
+                  databaseHostId,
+                  node1InstanceId,
+                  databaseInstanceId,
+                  databaseInstanceName,
+                  databaseDeploymentType || '',
+                  fileSystemId,
+                  mappedOntapVolumes,
+                  assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessment
+              )
+            : Promise.resolve({}),
+        assessmentFlags.hostOsPatch
+            ? Promise.resolve(
+                  hostLevelDriftData(
                       accountId,
                       credentialsId,
                       region,
                       databaseHostId,
-                      node1InstanceId,
                       databaseInstanceId,
-                      databaseInstanceName,
-                      databaseDeploymentType || '',
-                      fileSystemId,
-                      mappedOntapVolumes,
-                      assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessment
+                      resourceMetadata as Metadata,
+                      hostLevelAssessmentData as ResourceAssessmentData,
+                      fieldsValues
                   )
-                : Promise.resolve({}),
-            assessmentFlags.hostOsPatch
-                ? Promise.resolve(
-                      hostLevelDriftData(
-                          accountId,
-                          credentialsId,
-                          region,
-                          databaseHostId,
-                          databaseInstanceId,
-                          resourceMetadata as Metadata,
-                          hostLevelAssessmentData as ResourceAssessmentData,
-                          fieldsValues
-                      )
+              )
+            : Promise.resolve({ hostOsPatch: undefined }),
+        assessmentFlags.awsBackup && awsBackupAssessmentData
+            ? Promise.resolve(
+                  getOracleAwsBackupDriftData(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      databaseInstanceId,
+                      awsBackupAssessmentData
                   )
-                : Promise.resolve({ hostOsPatch: undefined }),
-            assessmentFlags.awsBackup && awsBackupAssessmentData
-                ? Promise.resolve(
-                      getOracleAwsBackupDriftData(
-                          accountId,
-                          credentialsId,
-                          region,
-                          databaseHostId,
-                          databaseInstanceId,
-                          awsBackupAssessmentData
-                      )
+              )
+            : Promise.resolve(undefined),
+        assessmentFlags.crr
+            ? Promise.resolve(
+                  getCrrDriftData(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      databaseInstanceId,
+                      crrAssessmentData,
+                      controlFileVolumeIds,
+                      controlFileOnlyVolumeIds
                   )
-                : Promise.resolve(undefined),
-            assessmentFlags.crr
-                ? Promise.resolve(
-                      getCrrDriftData(
-                          accountId,
-                          credentialsId,
-                          region,
-                          databaseHostId,
-                          databaseInstanceId,
-                          crrAssessmentData,
-                          controlFileVolumeIds,
-                          controlFileOnlyVolumeIds
-                      )
+              )
+            : Promise.resolve(undefined),
+        assessmentFlags.snapcenterSnapshot
+            ? Promise.resolve(
+                  calculateSnapCenterDrift(
+                      assessmentDataMap[AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT] as SnapcenterAssessmentData,
+                      { dataFileVolumeIds, controlFileVolumeIds, archiveLogVolumeIds }
                   )
-                : Promise.resolve(undefined),
-            assessmentFlags.snapcenterSnapshot
-                ? Promise.resolve(
-                      calculateSnapCenterDrift(
-                          assessmentDataMap[AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT] as SnapcenterAssessmentData,
-                          { dataFileVolumeIds, controlFileVolumeIds, archiveLogVolumeIds }
-                      )
+              )
+            : Promise.resolve(undefined),
+        assessmentFlags.oracleSecurityPatch
+            ? calculateOracleSecurityPatchDrift(
+                  databaseInstanceName,
+                  assessmentDataMap[AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH] as
+                      | OracleSecurityPatchSsmResponse
+                      | undefined
+              )
+            : Promise.resolve(undefined),
+        assessmentFlags.clone
+            ? Promise.resolve(
+                  calculateOracleCloneDrift(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      databaseInstanceId,
+                      assessmentDataMap[AssessmentCategoriesOracle.CLONE] as CloneAssessment
                   )
-                : Promise.resolve(undefined),
-            assessmentFlags.oracleSecurityPatch
-                ? calculateOracleSecurityPatchDrift(
-                      databaseInstanceName,
-                      assessmentDataMap[AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH] as
-                          | OracleSecurityPatchSsmResponse
-                          | undefined
-                  )
-                : Promise.resolve(undefined),
-            assessmentFlags.clone
-                ? Promise.resolve(
-                      calculateOracleCloneDrift(
-                          accountId,
-                          credentialsId,
-                          region,
-                          databaseHostId,
-                          databaseInstanceId,
-                          assessmentDataMap[AssessmentCategoriesOracle.CLONE] as CloneAssessment
-                      )
-                  )
-                : Promise.resolve(undefined)
-        ]);
+              )
+            : Promise.resolve(undefined)
+    ]);
 
     let driftAssessmentData: OracleDriftAssessmentResponseType = {
         storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),

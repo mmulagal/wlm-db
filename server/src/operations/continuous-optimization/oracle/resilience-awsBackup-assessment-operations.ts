@@ -1,8 +1,5 @@
 import { AWSBackupAssessment, WorkloadInstance } from '../../../utils/common-types';
-import {
-    initiateAwsBackupAssessment,
-    getAwsBackupDriftData
-} from '../resilience-awsBackup-operations';
+import { initiateAwsBackupAssessment, getAwsBackupDriftData } from '../resilience-awsBackup-operations';
 import { GenericParameterDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
 import GOLDEN_CONFIG from './golden-config';
 

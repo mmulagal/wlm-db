@@ -63,10 +63,7 @@ ${checkCommandStatus}
 filesystemid="${fsxnId}"
 region="${region}"
 
-cloneResults=$(${pythonScriptInit(
-        cloneAssessmentPythonTemplate(fsxnId, region, svmName),
-        CLONE_LOG_FILE_NAME
-    )})
+cloneResults=$(${pythonScriptInit(cloneAssessmentPythonTemplate(fsxnId, region, svmName), CLONE_LOG_FILE_NAME)})
 
 echo "$cloneResults" >&3
 `;

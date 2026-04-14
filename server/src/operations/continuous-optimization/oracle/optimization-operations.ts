@@ -175,17 +175,14 @@ async function handleOracleAwsBackupOptimization(
         `Handle Oracle AWS backup optimization: ${accountId}, hostsToOptimize: ${hostsToOptimize?.length}, ${masterOptimizeParentId}`
     );
 
-    const groupedHosts = hostsToOptimize.reduce(
-        (acc, { databaseHosts }) => {
-            databaseHosts.forEach(({ credentialsId, region, ...rest }) => {
-                const key = `${credentialsId}-${region}`;
-                acc[key] ??= { credentialsId, region, databaseHosts: [] };
-                acc[key].databaseHosts.push({ credentialsId, region, ...rest });
-            });
-            return acc;
-        },
-        {} as Record<string, { credentialsId: string; region: string; databaseHosts: BackupOptimizePerHostRequestBodyType[] }>
-    );
+    const groupedHosts = hostsToOptimize.reduce((acc, { databaseHosts }) => {
+        databaseHosts.forEach(({ credentialsId, region, ...rest }) => {
+            const key = `${credentialsId}-${region}`;
+            acc[key] ??= { credentialsId, region, databaseHosts: [] };
+            acc[key].databaseHosts.push({ credentialsId, region, ...rest });
+        });
+        return acc;
+    }, {} as Record<string, { credentialsId: string; region: string; databaseHosts: BackupOptimizePerHostRequestBodyType[] }>);
 
     let jobError = '';
     try {

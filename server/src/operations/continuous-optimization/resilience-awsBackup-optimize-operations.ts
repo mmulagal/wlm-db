@@ -54,7 +54,9 @@ async function executeFsxBackupUpdates(
                     await updateFsxBackup(accountId, credentialsId, region, fsxFileSystemId, configuration);
                 } catch (err: unknown) {
                     errors.push(
-                        `Error occurred while updating AWS FSx for ONTAP backup for fsxFileSystemId ${fsxFileSystemId}. Error: ${String(err)}`
+                        `Error occurred while updating AWS FSx for ONTAP backup for fsxFileSystemId ${fsxFileSystemId}. Error: ${String(
+                            err
+                        )}`
                     );
                     jobStatus = JOBSTATUS.FAILED;
                 }
@@ -100,12 +102,7 @@ async function handleFsxBackupOptimizeJob(
         jobMetadata
     );
 
-    const { jobStatus, errors } = await executeFsxBackupUpdates(
-        accountId,
-        credentialsId,
-        region,
-        fsxBackupConfigMap
-    );
+    const { jobStatus, errors } = await executeFsxBackupUpdates(accountId, credentialsId, region, fsxBackupConfigMap);
 
     if (errors.length > 0) {
         logger.error('Failed to update AWS FSx for ONTAP backup', {

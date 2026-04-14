@@ -790,14 +790,9 @@ async function updateVolumeSizeAndWaitForUpdate(
         try {
             // Bypass cache when polling so we get fresh size from API after resize
             // eslint-disable-next-line no-await-in-loop
-            const [volumeDetails] = await getFsxVolumeDetails(
-                credentialsId,
-                region,
-                fsxId,
-                [fsxVolumeId],
-                accountId,
-                { useCache: false }
-            );
+            const [volumeDetails] = await getFsxVolumeDetails(credentialsId, region, fsxId, [fsxVolumeId], accountId, {
+                useCache: false
+            });
             currentVolumeSizeBytes = volumeDetails?.OntapConfiguration?.SizeInBytes;
             logger.info(`Current size of volume ${fsxVolumeId}: ${currentVolumeSizeBytes} bytes`);
 

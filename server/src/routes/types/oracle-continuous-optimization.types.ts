@@ -171,10 +171,7 @@ const OptimizePerHostRequestBody = Type.Object({
     databases: Type.Array(Type.String({ minLength: 1, description: 'Oracle database sid' }))
 });
 
-const BackupOptimizePerHostRequestBody = Type.Intersect([
-    OptimizePerHostRequestBody,
-    FsxBackupOptimizationFields
-]);
+const BackupOptimizePerHostRequestBody = Type.Intersect([OptimizePerHostRequestBody, FsxBackupOptimizationFields]);
 
 type BackupOptimizePerHostRequestBodyType = Static<typeof BackupOptimizePerHostRequestBody>;
 

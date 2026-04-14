@@ -815,8 +815,7 @@ function updateFieldsBasedOnDismissedConfigurations(
         const camelCaseFieldValue = hyphenatedToCamelCase(fieldValue);
         const dismissKey = Object.keys(ASSESSMENT_CONFIGS).find(
             key =>
-                ASSESSMENT_CONFIGS[key as keyof typeof ASSESSMENT_CONFIGS] === fieldValue ||
-                key === camelCaseFieldValue
+                ASSESSMENT_CONFIGS[key as keyof typeof ASSESSMENT_CONFIGS] === fieldValue || key === camelCaseFieldValue
         );
         return !Object.entries(dismissedConfigurations).some(
             ([keyName, config]) =>
