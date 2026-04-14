@@ -537,6 +537,50 @@ const HOST_AND_SQL_INFO_PS1 = [
     }
   }
 
+  Function Execute-SqlDiscoveryQueries {
+    param(
+      [Parameter(Mandatory = $true)][string]$AuthMode,
+      [Parameter(Mandatory = $true)][string]$ServerInstance,
+      [Parameter(Mandatory = $true)][string]$DeploymentTypeCheckQuery,
+      [Parameter(Mandatory = $false)]$Credential
+    )
+
+    $result = @{}
+    $editionQuery = "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';"
+    $permissionsQuery = "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH"
+
+    switch ($AuthMode) {
+      'domain' {
+        # Set $sqlCredential in this scope so Invoke-CommandWithCredSSP can access it via scope chain
+        $sqlCredential = $Credential
+        $result['editionDBCountMachineInfoGuid'] = Invoke-CommandWithCredSSP -sqlquery $editionQuery -instanceName $ServerInstance -IsMultiQuery $True 2> $null
+        $result['deploymentTypeCheck'] = Invoke-CommandWithCredSSP -sqlquery $DeploymentTypeCheckQuery -instanceName $ServerInstance 2> $null
+        $result['existingPermissions'] = Invoke-CommandWithCredSSP -sqlquery $permissionsQuery -instanceName $ServerInstance 2> $null
+        $result['sqlInstanceDriveLetterOrPathList'] = GetSQLInstanceDriveDetails $ServerInstance $Credential.username $Credential.password 'domain'
+      }
+      'sql' {
+        $result['editionDBCountMachineInfoGuid'] = sqlcmd -U $Credential.username -P $Credential.password -h -1 -C -W -l 3 -S $ServerInstance -Q $editionQuery 2> $null
+        if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+          throw "SQL auth failed for instance '$ServerInstance' (sqlcmd exit code $LASTEXITCODE)"
+        }
+        $result['deploymentTypeCheck'] = sqlcmd -U $Credential.username -P $Credential.password -h -1 -C -W -l 3 -S $ServerInstance -Q $DeploymentTypeCheckQuery 2> $null
+        $result['existingPermissions'] = sqlcmd -U $Credential.username -P $Credential.password -S $ServerInstance -Q $permissionsQuery -y 0 2> $null
+        $result['sqlInstanceDriveLetterOrPathList'] = GetSQLInstanceDriveDetails $ServerInstance $Credential.username $Credential.password
+      }
+      'windows' {
+        $result['editionDBCountMachineInfoGuid'] = sqlcmd -h -1 -C -W -l 3 -S $ServerInstance -Q $editionQuery 2> $null
+        if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+          throw "Windows integrated auth failed for instance '$ServerInstance' (sqlcmd exit code $LASTEXITCODE)"
+        }
+        $result['existingPermissions'] = sqlcmd -S $ServerInstance -Q $permissionsQuery -y 0 2> $null
+        $result['deploymentTypeCheck'] = sqlcmd -h -1 -C -W -l 3 -S $ServerInstance -Q $DeploymentTypeCheckQuery 2> $null
+        $result['sqlInstanceDriveLetterOrPathList'] = GetSQLInstanceDriveDetails $ServerInstance
+      }
+    }
+
+    return $result
+  }
+
   Function FetchAllSQLInstancesFromRegistry {
     $sqlInstances = @()
     $registryPath = "HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\Instance Names\\SQL"
@@ -874,6 +918,8 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
 
       $editionDBCountMachineInfoGuid = @($null, $null, $null, $null, $null)
       $responseObject['windowsAuthentication'] = $False
+      $responseObject['sqlServerAuthentication'] = $False
+      $responseObject['windowsDomainUserAuthentication'] = $False
       $sqlServerInstanceStorageInfo = $null
 
       $sqlServerInfoFromRegistry = FetchSqlServerInfoFromRegistry $allSqlInstanceNamesFromRegistry $instanceName
@@ -922,37 +968,64 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
               $sqlServerHost = $sqlServerInfoFromRegistry['clusterName']
           }
           $serverInstance = If ($isDefaultInstance) { $sqlServerHost } Else { "$sqlServerHost\\$instanceName" } 
-          try {
-            $editionDBCountMachineInfoGuid = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';"  2> $null
-            $responseObject['windowsAuthentication'] = $?
-            $existingPermissions = sqlcmd -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0 2> $null
-            $deploymentTypeCheck = sqlcmd -h -1 -C -W -l 3 -S $serverInstance -Q $deploymentTypeCheckQuery 2> $null
-            $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance
-            $deploymentTypeCheckParsed = $deploymentTypeCheck | ConvertFrom-Json
-          } catch {
-            $responseObject['windowsAuthentication'] = $False
-            try {           
-              # Although this is 'domain', we are assigning to 'sqlCredential', as Invoke-CommandWithCredSSP will use this variable to run the query
-              $sqlCredential = $credsFromParameterStore.domain.Where({$_.sqlInstanceName -eq $instanceName -or $_.sqlInstanceName -eq 'MSSQLSERVER'})[0]
-              if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-                  $editionDBCountMachineInfoGuid = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" -instanceName $serverInstance -IsMultiQuery $True 2> $null
-                  $deploymentTypeCheck = Invoke-CommandWithCredSSP -sqlquery $deploymentTypeCheckQuery -instanceName $serverInstance 2> $null
-                  $existingPermissions = Invoke-CommandWithCredSSP -sqlquery "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -instanceName $serverInstance 2> $null
-                  $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password 'domain'
-              } else {
-                $sqlCredential = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
-                if (-Not [string]::IsNullOrEmpty($sqlCredential) -And -Not [string]::IsNullOrEmpty($sqlCredential.username) -And -Not [string]::IsNullOrEmpty($sqlCredential.password)) {
-                    $editionDBCountMachineInfoGuid = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q "SET NOCOUNT ON; SELECT SERVERPROPERTY('Edition');SELECT SERVERPROPERTY('EngineEdition'); SELECT count(name) FROM sys.databases; SELECT SERVERPROPERTY('MachineName'); SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb';" 2> $null
-                    $deploymentTypeCheck = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -h -1 -C -W -l 3 -S $serverInstance -Q $deploymentTypeCheckQuery  2> $null
-                    $existingPermissions = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $serverInstance -Q "SET NOCOUNT ON; SELECT permission_name FROM fn_my_permissions(NULL, 'SERVER') FOR JSON PATH" -y 0 2> $null
-                    $sqlInstanceDriveLetterOrPathList = GetSQLInstanceDriveDetails $serverInstance $sqlCredential.username $sqlCredential.password
-                    }
-                  }
-                }
-                catch {
-                  $responseObject['failureInfo'] += $_
-                }
+          # Resolve credentials for this instance from parameter store
+          $domainCred = $null
+          $hasDomainCred = $False
+          $sqlCred = $null
+          $hasSqlCred = $False
+          if ($credsFromParameterStore) {
+            $domainCred = $credsFromParameterStore.domain.Where({$_.sqlInstanceName -eq $instanceName -or $_.sqlInstanceName -eq 'MSSQLSERVER'})[0]
+            $hasDomainCred = (-Not [string]::IsNullOrEmpty($domainCred)) -And (-Not [string]::IsNullOrEmpty($domainCred.username)) -And (-Not [string]::IsNullOrEmpty($domainCred.password))
+            $sqlCred = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
+            $hasSqlCred = (-Not [string]::IsNullOrEmpty($sqlCred)) -And (-Not [string]::IsNullOrEmpty($sqlCred.username)) -And (-Not [string]::IsNullOrEmpty($sqlCred.password))
+          }
+
+          $authSucceeded = $False
+          $discoveryResult = $null
+
+          if ($credsFromParameterStore) {
+            # Try domain auth first
+            if ($hasDomainCred -and $authSucceeded -eq $False) {
+              try {
+                $discoveryResult = Execute-SqlDiscoveryQueries -AuthMode 'domain' -ServerInstance $serverInstance -DeploymentTypeCheckQuery $deploymentTypeCheckQuery -Credential $domainCred
+                $authSucceeded = $True
+                $responseObject['windowsDomainUserAuthentication'] = $True
+              } catch {
+                $responseObject['failureInfo'] += "Domain auth failed: $_\`n"
+              }
             }
+
+            # If domain auth failed and SQL creds available, try SQL auth
+            if ($hasSqlCred -and $authSucceeded -eq $False) {
+              try {
+                $discoveryResult = Execute-SqlDiscoveryQueries -AuthMode 'sql' -ServerInstance $serverInstance -DeploymentTypeCheckQuery $deploymentTypeCheckQuery -Credential $sqlCred
+                $authSucceeded = $True
+                $responseObject['sqlServerAuthentication'] = $True
+              } catch {
+                $responseObject['failureInfo'] += "SQL auth failed: $_\`n"
+              }
+            }
+          }
+
+          # Last resort: try Windows integrated auth (sqlcmd without credentials)
+          # This runs when: no creds in parameter store, or all credential-based auth attempts failed
+          if ($authSucceeded -eq $False) {
+            try {
+              $discoveryResult = Execute-SqlDiscoveryQueries -AuthMode 'windows' -ServerInstance $serverInstance -DeploymentTypeCheckQuery $deploymentTypeCheckQuery
+              $authSucceeded = $True
+              $responseObject['windowsAuthentication'] = $True
+            } catch {
+              $responseObject['failureInfo'] += "Windows integrated auth failed: $_\`n"
+            }
+          }
+
+          # Extract results from discovery
+          if ($authSucceeded -and $discoveryResult) {
+            $editionDBCountMachineInfoGuid = $discoveryResult['editionDBCountMachineInfoGuid']
+            $existingPermissions = $discoveryResult['existingPermissions']
+            $deploymentTypeCheck = $discoveryResult['deploymentTypeCheck']
+            $sqlInstanceDriveLetterOrPathList = $discoveryResult['sqlInstanceDriveLetterOrPathList']
+          }
           
           if ($editionDBCountMachineInfoGuid -or $sqlServerInfoFromRegistry) {
 

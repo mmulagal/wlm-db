@@ -65,7 +65,6 @@ import {
     HA,
     PGSQL_DEFAULT_INSTANCE_NAME,
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
-    DEFAULT_INSTANCE_NAME,
     STANDALONE,
     ORACLE_INSTANCE_STATE,
     SSM_COMMAND_RUNTIMES,
@@ -411,14 +410,14 @@ async function getHostAndSqlInfoFromPsOutput(
 
     api1StartTime = performance.now();
 
-    const [ssmResponse, ec2SqlParametersInfo] = await Promise.all([
-        pollCommandStatus(credentialsId, region, commandInvocationParam).catch(error => {
-            const errorMessage = `Error fetching command status: ${error} on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
-            logger.error(errorMessage);
-            throw createError(errorMessage);
-        }),
-        getEc2SqlParameters(credentialsId, region, ssmTarget.ec2InstanceId)
-    ]);
+    let ssmResponse;
+    try {
+        ssmResponse = await pollCommandStatus(credentialsId, region, commandInvocationParam);
+    } catch (error) {
+        const errorMessage = `Error fetching command status: ${error} on node ${ssmTarget.ec2InstanceId} for command Id ${commandId}`;
+        logger.error(errorMessage);
+        throw createError(errorMessage);
+    }
 
     if (ssmResponse?.StandardErrorContent) {
         logger.error('Failed to collect info using SSM. Reason: ', ssmResponse?.StandardErrorContent);
@@ -655,6 +654,8 @@ async function getHostAndSqlInfoFromPsOutput(
                         sqlServerState,
                         isDefaultInstance,
                         windowsAuthentication,
+                        sqlServerAuthentication,
+                        windowsDomainUserAuthentication,
                         scriptExecutionTime,
                         databaseCount,
                         failureInfo,
@@ -676,17 +677,6 @@ async function getHostAndSqlInfoFromPsOutput(
                     if (!Array.isArray(sqlServerNodes)) {
                         sqlServerNodes = [sqlServerNodes];
                     }
-
-                    const sqlServerAuthentication = ec2SqlParametersInfo?.sql?.some(
-                        (elem: { sqlinstancename: string }) =>
-                            elem.sqlinstancename.toUpperCase() === sqlServerInstance.toUpperCase()
-                    );
-
-                    const windowsDomainUserAuthentication = ec2SqlParametersInfo?.domain?.some(
-                        (elem: { sqlinstancename: string }) =>
-                            elem.sqlinstancename.toUpperCase() === sqlServerInstance.toUpperCase() ||
-                            elem.sqlinstancename.toUpperCase() === DEFAULT_INSTANCE_NAME
-                    );
 
                     const featureReadiness = Object.entries(FEATURE_PREPREQUISITES).reduce((acc, [key, value]) => {
                         acc[key.toLowerCase()] = {
