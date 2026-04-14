@@ -42,7 +42,7 @@ import {
     fetchSqlServerInstanceConfiguration
 } from './recommendation-operations';
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
-import cronAssessmentCollection from './cont-opt-assessment-operations';
+import { cronAssessmentCollection } from './cont-opt-assessment-operations';
 import { Metadata } from '../utils/common-types';
 import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import { triggerInstancePerformanceAssessment } from './database-hosts-operations';

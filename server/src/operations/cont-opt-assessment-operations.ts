@@ -150,7 +150,6 @@ async function processAccountInstancesBatch(
                         case DatabaseTypes.ORACLE:
                             await triggerOracleAssessment(instance, parentJobId, [
                                 AssessmentCategoriesOracle.STORAGE,
-                                AssessmentCategoriesOracle.HOST_OS_PATCH,
                                 AssessmentCategoriesOracle.AWS_BACKUP,
                                 AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
                                 AssessmentCategoriesOracle.CRR,
@@ -187,23 +186,35 @@ async function processAccountInstancesBatch(
         );
 
         // Host-level assessments for unique resources
-        await Promise.all(
+        await Promise.allSettled(
             uniqueResources.map(
-                throat(3, ({ resource, details }) =>
-                    triggerMssqlAssessment(
-                        { ...details, resource } as DatabaseInstancesIncludingResource,
-                        parentJobId,
-                        [
-                            AssessmentCategories.LICENSE,
-                            AssessmentCategories.COMPUTE,
-                            AssessmentCategories.HOST_OS_PATCH,
-                            AssessmentCategories.RSS_CONFIG,
-                            AssessmentCategories.MSSQL_PATCH,
-                            AssessmentCategories.HIGH_AVAILABILITY, // Cluster-quorum and heartbeat-settings
-                            AssessmentCategories.MTU_ALIGNMENT
-                        ]
-                    )
-                )
+                throat(3, ({ resource, details }) => {
+                    const instance = { ...details, resource } as DatabaseInstancesIncludingResource;
+                    switch (details.database_type) {
+                        case DatabaseTypes.MS_SQL_SERVER:
+                            return triggerMssqlAssessment(instance, parentJobId, [
+                                AssessmentCategories.LICENSE,
+                                AssessmentCategories.COMPUTE,
+                                AssessmentCategories.HOST_OS_PATCH,
+                                AssessmentCategories.RSS_CONFIG,
+                                AssessmentCategories.MSSQL_PATCH,
+                                AssessmentCategories.HIGH_AVAILABILITY, // Cluster-quorum and heartbeat-settings
+                                AssessmentCategories.MTU_ALIGNMENT
+                            ]);
+                        case DatabaseTypes.ORACLE:
+                            return triggerOracleAssessment(instance, parentJobId, [
+                                AssessmentCategoriesOracle.HOST_OS_PATCH
+                            ]);
+                        default:
+                            logger.warn('Skipping host-level assessment for unsupported database type', {
+                                accountId,
+                                resourceId: resource.id,
+                                databaseType: details.database_type,
+                                parentJobId
+                            });
+                            return Promise.resolve();
+                    }
+                })
             )
         );
 
@@ -383,4 +394,4 @@ async function cronAssessmentCollection(initiatedBy: string) {
     }
 }
 
-export default cronAssessmentCollection;
+export { cronAssessmentCollection, processAccountInstancesBatch };
