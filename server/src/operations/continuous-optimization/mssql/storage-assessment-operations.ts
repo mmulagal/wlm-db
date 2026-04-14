@@ -13,7 +13,13 @@ import getLogger from '../../../utils/logger';
 
 import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
 import storageGoldenConfigData from './golden-config';
-import { LogDriveDetails, StorageAssessment, TempDbDriveDetails, WorkloadInstance } from '../../../utils/common-types';
+import {
+    LogDriveDetails,
+    StorageAssessment,
+    TempDbDriveDetails,
+    WorkloadInstance,
+    UserDatabaseLayout
+} from '../../../utils/common-types';
 import { sqlResponseParsing, IS_DEMO_FLOW } from '../../../utils/utils';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import {
@@ -48,11 +54,13 @@ interface DatabaseVolumeRecord {
     name: string;
     // fileName: string;
     lunPath: string;
+    driveLetter?: string;
     volumeUuid: string;
     sizeInMb: number;
     fileType: number;
     logVolume?: string;
     logLunPath?: string;
+    logDriveLetter?: string;
     // logFileName?: string;
     logSize?: number;
     logVolumeUuid?: string;
@@ -252,7 +260,8 @@ function getLogVolumeDrift(
     logVolumes: LogDriveDetails[],
     status: AssessmentStatus,
     key: string,
-    databaseRoles?: Array<{ databaseName: string; agName: string; replicaRole: string }>
+    databaseRoles?: Array<{ databaseName: string; agName: string; replicaRole: string }>,
+    lunUuidToLunPathMap?: Map<string, string>
 ) {
     logger.info('Getting log volume drift', { logVolumesLength: logVolumes.length, hasDatabaseRoles: !!databaseRoles });
     const primaryDatabases = new Set(
@@ -316,7 +325,8 @@ function getLogVolumeDrift(
             logDriveTotalSizeMB,
             dataAccessPath: dataAccessPath ? [...new Set(dataAccessPath.split(','))] : [],
             databases: [...new Set(drive.databaseName.split(','))],
-            sizePercentToDataDrive: Number.isNaN(sizePercentToDataDrive) ? 0 : sizePercentToDataDrive
+            sizePercentToDataDrive: Number.isNaN(sizePercentToDataDrive) ? 0 : sizePercentToDataDrive,
+            lunPath: drive.lunUuid && lunUuidToLunPathMap ? lunUuidToLunPathMap.get(drive.lunUuid) : undefined
         };
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
@@ -377,7 +387,12 @@ function getLogVolumeDrift(
     };
 }
 
-function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatus, key: string) {
+function getTempDbVolumeDrift(
+    value: TempDbDriveDetails,
+    status: AssessmentStatus,
+    key: string,
+    lunUuidToLunPathMap?: Map<string, string>
+) {
     logger.info('Getting tempdb volume drift');
 
     const overProvisionedDrives: SizingViolationResponseType[] = [];
@@ -386,25 +401,34 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
     const currentSizePercentForAllVolumes: number[] = [];
 
     let tempdbPercent = 0;
-    let { dataDriveTotalSizeMB, tempdbDriveTotalSizeMB, defaultDataDriveLetter, tempdbDriveLetter, ontapVolumeUuid } =
-        value;
+    let {
+        dataDriveTotalSizeMB,
+        tempdbDriveTotalSizeMB,
+        defaultDataDriveLetter,
+        tempdbDriveLetter,
+        ontapVolumeUuid,
+        lunUuid
+    } = value;
 
     if (isNull(tempdbDriveTotalSizeMB) || isNull(dataDriveTotalSizeMB)) {
         tempdbDriveTotalSizeMB = 0;
         dataDriveTotalSizeMB = 0;
     }
     tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
-    value = {
+
+    const details: SizingViolationResponseType = {
         ...value,
         dataDriveTotalSizeMB,
         tempdbDriveTotalSizeMB,
-        sizePercentToDataDrive: Number.isNaN(tempdbPercent) ? 0 : tempdbPercent
+        sizePercentToDataDrive: Number.isNaN(tempdbPercent) ? 0 : tempdbPercent,
+        lunPath: lunUuid && lunUuidToLunPathMap ? lunUuidToLunPathMap.get(lunUuid) : undefined,
+        tempdbAccessPath: tempdbDriveLetter
     };
 
     if (defaultDataDriveLetter === tempdbDriveLetter) {
         status = AssessmentStatus.NOT_OPTIMIZED;
 
-        ignoredDrives.push(value);
+        ignoredDrives.push(details);
     } else {
         tempdbPercent = Math.ceil((tempdbDriveTotalSizeMB / dataDriveTotalSizeMB) * 100);
         currentSizePercentForAllVolumes.push(tempdbPercent);
@@ -415,9 +439,9 @@ function getTempDbVolumeDrift(value: TempDbDriveDetails, status: AssessmentStatu
                 ? AssessmentStatus.UNDER_PROVISIONED
                 : AssessmentStatus.OPTIMIZED;
         if (status === AssessmentStatus.OVER_PROVISIONED) {
-            overProvisionedDrives.push(value);
+            overProvisionedDrives.push(details);
         } else if (status === AssessmentStatus.UNDER_PROVISIONED) {
-            underProvisionedDrives.push(value);
+            underProvisionedDrives.push(details);
         }
     }
     const totalObjectsInViolation = [...new Set(overProvisionedDrives.concat(underProvisionedDrives, ignoredDrives))]
@@ -619,6 +643,7 @@ async function calculateStorageDrift(
     });
 
     // Complete layout and sizing assessment failure
+    let userDatabaseLayoutAssessment = { data: [], log: [], tempDb: [] };
     if (errors && errors.layout) {
         driftAssessmentData.layout.push(
             { name: 'data-files-location', errorMessage: errors.layout },
@@ -626,7 +651,6 @@ async function calculateStorageDrift(
             { name: 'tempdb-files-location', errorMessage: errors.layout }
         );
     } else {
-        let userDatabaseLayoutAssessment = { data: [], log: [] };
         let tempdbFilesLocationAssessment;
         Object.entries(layout).forEach(([key, value]) => {
             if (key === 'user-database-layout') {
@@ -647,6 +671,21 @@ async function calculateStorageDrift(
                 goldenData?.value === tempdbFilesLocationAssessment
                     ? AssessmentStatus.OPTIMIZED
                     : AssessmentStatus.NOT_OPTIMIZED;
+            const tempDbRecord = (userDatabaseLayoutAssessment.tempDb || [])[0] as DatabaseVolumeRecord | undefined;
+            const tempdbViolationDetails: GenericViolationResponseType[] =
+                status === AssessmentStatus.NOT_OPTIMIZED && tempDbRecord
+                    ? [
+                          {
+                              objectName: 'placement',
+                              value: 'tempdb',
+                              objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+                              additionalInfo: {
+                                  lunPath: tempDbRecord.lunPath,
+                                  driveLetter: tempDbRecord.driveLetter
+                              }
+                          }
+                      ]
+                    : [];
             driftAssessmentData.layout.push({
                 name: 'tempdb-files-location',
                 recommended: goldenData.value.toString(),
@@ -658,7 +697,8 @@ async function calculateStorageDrift(
                 objectsInViolation: status === AssessmentStatus.OPTIMIZED ? [] : ['tempdb'],
                 totalObjectsAssessed: 1,
                 totalObjectsInViolation: status === AssessmentStatus.OPTIMIZED ? 0 : 1,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+                violationDetails: tempdbViolationDetails.length > 0 ? tempdbViolationDetails : undefined
             });
         }
 
@@ -686,6 +726,7 @@ async function calculateStorageDrift(
                     const volDetails = data as DatabaseVolumeRecord;
                     volDetails.logVolume = log.volumeName;
                     volDetails.logLunPath = log.lunPath;
+                    volDetails.logDriveLetter = log.driveLetter;
                     volDetails.logSizeInMb = log.sizeInMb;
                     volDetails.logVolumeUuid = log.ontapVolumeUuid;
                     volDetails.databaseSizeInGb = Math.ceil((data.sizeInMb! + log.sizeInMb!) / 1024);
@@ -775,6 +816,33 @@ async function calculateStorageDrift(
         }
 
         databasesInViolation = [...new Set(databasesInViolation)];
+
+        const dataViolationDetails: GenericViolationResponseType[] = databasesInViolation.map(dbName => {
+            const db = dataLogVolumeDetails.find(d => d.name === dbName);
+            return {
+                objectName: 'placement',
+                value: dbName,
+                objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+                additionalInfo: {
+                    lunPath: db?.lunPath,
+                    driveLetter: db?.driveLetter
+                }
+            };
+        });
+
+        const logViolationDetails: GenericViolationResponseType[] = databasesInViolation.map(dbName => {
+            const db = dataLogVolumeDetails.find(d => d.name === dbName);
+            return {
+                objectName: 'placement',
+                value: dbName,
+                objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+                additionalInfo: {
+                    lunPath: db?.logLunPath,
+                    driveLetter: db?.logDriveLetter
+                }
+            };
+        });
+
         driftAssessmentData.layout.push(
             {
                 name: 'data-files-location',
@@ -790,7 +858,8 @@ async function calculateStorageDrift(
                 objectsInViolation: databasesInViolation,
                 totalObjectsAssessed: dataLogVolumeDetails.length,
                 totalObjectsInViolation: databasesInViolation.length,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+                violationDetails: dataViolationDetails.length > 0 ? dataViolationDetails : undefined
             },
 
             {
@@ -807,10 +876,20 @@ async function calculateStorageDrift(
                 objectsInViolation: databasesInViolation,
                 totalObjectsAssessed: dataLogVolumeDetails.length,
                 totalObjectsInViolation: databasesInViolation.length,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
+                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+                violationDetails: logViolationDetails.length > 0 ? logViolationDetails : undefined
             }
         );
     }
+
+    const lunUuidToLunPathMap = new Map<string, string>(
+        [
+            ...(userDatabaseLayoutAssessment.log as UserDatabaseLayout[]),
+            ...(userDatabaseLayoutAssessment.tempDb as UserDatabaseLayout[])
+        ]
+            .filter(entry => entry.lunUuid && entry.lunPath)
+            .map(entry => [entry.lunUuid, entry.lunPath])
+    );
 
     if (errors && (errors.sizing || errors['volumes-footprint'])) {
         const errorMessage = errors.sizing || errors['volumes-footprint'];
@@ -899,7 +978,7 @@ async function calculateStorageDrift(
                         drivesCount: totalObjectsAssessed,
                         totalObjectsInViolation,
                         hasPrimaryDatabases
-                    } = getLogVolumeDrift(value, status, key, aoagContext?.databaseRoles));
+                    } = getLogVolumeDrift(value, status, key, aoagContext?.databaseRoles, lunUuidToLunPathMap));
                     resourceType = ASSESSMENT_RESOURCE_TYPE.DRIVE;
 
                     // For AOAG primary databases, use 30% recommended (25% base + 20% of 25%)
@@ -920,7 +999,7 @@ async function calculateStorageDrift(
                         ignoredDrives,
                         currentSizePercentForAllVolumes,
                         totalObjectsInViolation
-                    } = getTempDbVolumeDrift(tempdbValue, status, key));
+                    } = getTempDbVolumeDrift(tempdbValue, status, key, lunUuidToLunPathMap));
                     resourceType = ASSESSMENT_RESOURCE_TYPE.DRIVE;
                 }
 

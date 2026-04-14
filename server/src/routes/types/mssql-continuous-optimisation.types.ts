@@ -50,6 +50,7 @@ const SizingViolationResponse = Type.Object({
     ontapVolumeName: Type.Optional(Type.String()),
     ontapVolumeUuid: Type.Optional(Type.String()),
     lunUuid: Type.Optional(Type.String()),
+    lunPath: Type.Optional(Type.String()),
     tempdbAccessPath: Type.Optional(Type.String()),
     tempdbDriveTotalSizeMB: Type.Optional(Type.Number()),
     diskSerialNumber: Type.Optional(Type.String()),

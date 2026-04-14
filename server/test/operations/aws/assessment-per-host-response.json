@@ -285,6 +285,7 @@
                                         "ontapVolumeName": "wlmdb_sqllog_1731988070",
                                         "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "ce0cca99-e9fd-42af-9daa-50039625d44d",
+                                        "lunPath": "/vol/wlmdb_sqllog_1731988070/log",
                                         "diskSerialNumber": "lWB4c$XRevTA",
                                         "sizePercentToDataDrive": 10
                                     },
@@ -297,6 +298,7 @@
                                         "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                         "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "74897647-0db1-4e4c-934a-8faa6cae7087",
+                                        "lunPath": "/vol/wlmdb_sqllog_1731987160/log",
                                         "diskSerialNumber": "lWB4c$XRevT9",
                                         "sizePercentToDataDrive": 10
                                     }
@@ -701,6 +703,7 @@
                                         "ontapVolumeName": "wlmdb_sqllog_1731988070",
                                         "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "ce0cca99-e9fd-42af-9daa-50039625d44d",
+                                        "lunPath": "/vol/wlmdb_sqllog_1731988070/log",
                                         "diskSerialNumber": "lWB4c$XRevTA"
                                     },
                                     {
@@ -712,6 +715,7 @@
                                         "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                         "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "74897647-0db1-4e4c-934a-8faa6cae7087",
+                                        "lunPath": "/vol/wlmdb_sqllog_1731987160/log",
                                         "diskSerialNumber": "lWB4c$XRevT9"
                                     }
                                 ],
@@ -1113,6 +1117,7 @@
                                         "ontapVolumeName": "wlmdb_sqllog_1731988070",
                                         "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "ce0cca99-e9fd-42af-9daa-50039625d44d",
+                                        "lunPath": "/vol/wlmdb_sqllog_1731988070/log",
                                         "diskSerialNumber": "lWB4c$XRevTA"
                                     },
                                     {
@@ -1124,6 +1129,7 @@
                                         "ontapVolumeName": "wlmdb_sqllog_1731987160",
                                         "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f",
                                         "lunUuid": "74897647-0db1-4e4c-934a-8faa6cae7087",
+                                        "lunPath": "/vol/wlmdb_sqllog_1731987160/log",
                                         "diskSerialNumber": "lWB4c$XRevT9"
                                     }
                                 ],

@@ -3634,7 +3634,7 @@ const ASSESMENT_CONFIG_DATA = {
             log: [
                 {
                     name: 'RetailBanking',
-                    lunPath: '/vol/wlmdb_sqldata_1750140716368/sqldata',
+                    lunPath: '/vol/wlmdb_sqllog_1750140716368/sqllog',
                     lunUuid: '00fd15a5-ff14-4ad2-a9a5-b5c66d0a3381',
                     svmName: 'wlmdb_sqlsvm_1750140716368',
                     sizeInMb: 23.8125,
@@ -3648,7 +3648,8 @@ const ASSESMENT_CONFIG_DATA = {
                     ],
                     lunSerialNumber: 'lWB5g?XW76m/',
                     ontapVolumeName: 'wlmdb_sqldata_1750140716368',
-                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620'
+                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620',
+                    driveLetter: 'L:'
                 }
             ],
             data: [
@@ -3668,7 +3669,8 @@ const ASSESMENT_CONFIG_DATA = {
                     ],
                     lunSerialNumber: 'lWB5g?XW76m/',
                     ontapVolumeName: 'wlmdb_sqldata_1750140716368',
-                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620'
+                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620',
+                    driveLetter: 'S:'
                 }
             ],
             tempDb: [
@@ -3682,7 +3684,8 @@ const ASSESMENT_CONFIG_DATA = {
                     accessPaths: ['T:\\', '\\\\?\\Volume{f3a06d64-ba64-40e9-af09-123ca22ac071}\\'],
                     lunSerialNumber: 'lWB5g?XW76mb',
                     ontapVolumeName: 'wlmdb_sqltemp_1750140716368',
-                    ontapVolumeUuid: 'b50523e3-4b44-11f0-a105-fda4bda8e620'
+                    ontapVolumeUuid: 'b50523e3-4b44-11f0-a105-fda4bda8e620',
+                    driveLetter: 'T:'
                 }
             ]
         },
@@ -3718,7 +3721,7 @@ const ASSESMENT_CONFIG_DATA = {
                 dataDriveTotalSizeMB: 3071820
             },
             {
-                lunUuid: 'ce0cca99-e9fd-42af-9daa-50039625d44d',
+                lunUuid: '00fd15a5-ff14-4ad2-a9a5-b5c66d0a3381',
                 svmName: 'wlmdb_sqlsvm_1731915150431',
                 diskNumber: 8,
                 databaseName: 'Nachos',
@@ -3735,7 +3738,7 @@ const ASSESMENT_CONFIG_DATA = {
                 dataDriveTotalSizeMB: 429420
             },
             {
-                lunUuid: '74897647-0db1-4e4c-934a-8faa6cae7087',
+                lunUuid: '00fd15a5-ff14-4ad2-a9a5-b5c66d0a3381',
                 svmName: 'wlmdb_sqlsvm_1731915150431',
                 diskNumber: 6,
                 databaseName: 'Primordial',
@@ -3753,7 +3756,7 @@ const ASSESMENT_CONFIG_DATA = {
             }
         ],
         'data-tempdb-drive-details': {
-            lunUuid: 'ab3fd3b5-b2e2-4c97-b026-52ba19accc41',
+            lunUuid: 'c8bcdf6e-060c-4cb9-b07e-d8036108379f',
             svmName: 'wlmdb_sqlsvm_1731915150431',
             diskNumber: 6,
             ontapVolumeName: 'wlmdb_sqltemp_1731915150431',
@@ -5646,7 +5649,8 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
                     ],
                     lunSerialNumber: 'lWB5g?XW76m/',
                     ontapVolumeName: 'wlmdb_sqllog_1750140716368',
-                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e621'
+                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e621',
+                    driveLetter: 'L:'
                 }
             ],
             data: [
@@ -5666,7 +5670,8 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
                     ],
                     lunSerialNumber: 'lWB5g?XW76m/',
                     ontapVolumeName: 'wlmdb_sqldata_1750140716368',
-                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620'
+                    ontapVolumeUuid: 'af03a358-4b44-11f0-a105-fda4bda8e620',
+                    driveLetter: 'S:'
                 }
             ],
             tempDb: [
@@ -5680,7 +5685,8 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
                     accessPaths: ['T:\\', '\\\\?\\Volume{f3a06d64-ba64-40e9-af09-123ca22ac071}\\'],
                     lunSerialNumber: 'lWB5g?XW76mb',
                     ontapVolumeName: 'wlmdb_sqltemp_1750140716368',
-                    ontapVolumeUuid: 'b50523e3-4b44-11f0-a105-fda4bda8e620'
+                    ontapVolumeUuid: 'b50523e3-4b44-11f0-a105-fda4bda8e620',
+                    driveLetter: 'T:'
                 }
             ]
         },

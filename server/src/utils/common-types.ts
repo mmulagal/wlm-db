@@ -597,6 +597,7 @@ interface TempDbDriveDetails {
     tempdbDriveTotalSizeMB: number;
     sizePercentToDataDrive: number;
 }
+
 interface Sizing {
     'performance-tier': boolean | Array<number> | Array<{ volumeName: string; performanceTierPercent: number }>;
     'data-log-drive-details': LogDriveDetails[];
@@ -614,6 +615,7 @@ interface UserDatabaseLayout {
     ontapVolumeName: string;
     ontapVolumeUuid: string;
 }
+
 interface StorageLayout {
     'user-database-layout:': { log: [UserDatabaseLayout]; data: [UserDatabaseLayout] };
     'tempdb-files-location': string;
@@ -629,6 +631,7 @@ interface OSAssessment {
     'ntfs-allocation-unit-size': number;
     'mpio-timeout': number;
 }
+
 interface StorageAssessment {
     filesystemId: string;
     volumes: Array<{ Key?: string; Value?: string }>;
@@ -1028,6 +1031,7 @@ export {
     HighAvailabilityAssessment,
     IgroupMissingInitiators,
     HighAvailabilitySharedStorage,
+    UserDatabaseLayout,
     DismissConfigItem,
     DismissBaseGroup,
     DismissHostGroup,

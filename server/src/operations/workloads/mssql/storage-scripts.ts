@@ -710,9 +710,9 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         } catch {$DriftAssessmentData['errors']['iscsi-sessions'] = $_.Exception.Message}
     
     try{
-        $filteredDataDrives = $instanceAllDataDrivesSizes | ForEach-Object -MemberName dataDriveLetter
-        $filteredLogDrives =  $instanceAllLogDrivesSizes | ForEach-Object -MemberName logDriveLetter
-        $filteredTempDbDrives =  $defaultTempDBDriveDetails | ForEach-Object -MemberName tempdbDriveLetter
+        $filteredDataDrives = $instanceAllDataDrivesSizes | Where-Object { $netappDataDrives -contains $_.dataDriveLetter } | ForEach-Object -MemberName dataDriveLetter
+        $filteredLogDrives =  $instanceAllLogDrivesSizes | Where-Object { $netappLogDrives -contains $_.logDriveLetter } | ForEach-Object -MemberName logDriveLetter
+        $filteredTempDbDrives =  $defaultTempDBDriveDetails | Where-Object { $netappDataDrives -contains $_.tempdbDriveLetter } | ForEach-Object -MemberName tempdbDriveLetter
         $AllDrives = $($filteredDataDrives; $filteredLogDrives;  $filteredTempDbDrives)
         $AllDrives = $AllDrives | select -Unique
         $ntfsAllocationUnit = Get-CimInstance -ClassName Win32_Volume | Where {$AllDrives -contains $_.DriveLetter}  | Select-Object DriveLetter, BlockSize 
