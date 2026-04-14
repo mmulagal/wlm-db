@@ -22,6 +22,8 @@ jobs:
 
             - name: Find owner from stack trace or error text and assign
               env:
+                  # Workflow token for repo REST / blame GraphQL (`gh` reads `GH_TOKEN`; many tools read `GITHUB_TOKEN`).
+                  GITHUB_TOKEN: ${{ github.token }}
                   GH_TOKEN: ${{ github.token }}
                   # GraphQL for org Project V2: use secret FIND_OWNER_ORG_PROJECT_TOKEN (PAT or PAT-like); else github.token (cannot see org projects).
                   GH_PROJECT_TOKEN: ${{ secrets.FIND_OWNER_ORG_PROJECT_TOKEN || github.token }}
@@ -67,6 +69,27 @@ jobs:
                   }
                   """
                   _GQL = re.sub(r"\s+", " ", _GQL_RAW.strip())
+
+
+                  def _env_gh_repo() -> dict:
+                      """Subprocess env for repo `gh api` / blame: `gh` authenticates via `GH_TOKEN` only.
+
+                      Copy the workflow token from `GITHUB_TOKEN` or `GH_TOKEN` onto `GH_TOKEN`, and omit
+                      `GH_PROJECT_TOKEN` so org project credentials are not present in that env (not used
+                      by `gh` for auth; avoids passing the org PAT to these child processes unnecessarily).
+                      """
+                      env = dict(os.environ)
+                      tok = (env.get("GITHUB_TOKEN") or env.get("GH_TOKEN") or "").strip()
+                      if tok:
+                          env["GH_TOKEN"] = tok
+                      env.pop("GH_PROJECT_TOKEN", None)
+                      return env
+
+
+                  def _gh_err(proc: subprocess.CompletedProcess, label: str) -> None:
+                      msg = ((proc.stderr or "") + (proc.stdout or "")).strip()
+                      if msg:
+                          print(f"find-owner: {label}: {msg[:2000]}", file=sys.stderr)
 
 
                   def normalize_path(runtime_path: str, runtime_prefix: str, repo_src_prefix: str) -> Optional[str]:
@@ -122,6 +145,7 @@ jobs:
                               capture_output=True,
                               text=True,
                               check=False,
+                              env=_env_gh_repo(),
                           )
                       except Exception:
                           return ""
@@ -231,7 +255,9 @@ jobs:
                           f"endLine={end_line}",
                       ]
                       try:
-                          proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
+                          proc = subprocess.run(
+                              cmd, check=False, capture_output=True, text=True, env=_env_gh_repo()
+                          )
                       except Exception:
                           return git_fallback()
                       if proc.returncode != 0:
@@ -425,6 +451,7 @@ jobs:
                               capture_output=True,
                               text=True,
                               check=False,
+                              env=_env_gh_repo(),
                           )
                       except Exception:
                           return ""
@@ -446,6 +473,7 @@ jobs:
                               capture_output=True,
                               text=True,
                               check=False,
+                              env=_env_gh_repo(),
                           )
                           return r.returncode == 0
                       except Exception:
@@ -459,10 +487,12 @@ jobs:
                               capture_output=True,
                               text=True,
                               check=False,
+                              env=_env_gh_repo(),
                           )
                       except Exception:
                           return False
                       if proc.returncode != 0:
+                          _gh_err(proc, f"gh api GET issues/{issue_number}")
                           return False
                       try:
                           data = json.loads(proc.stdout)
@@ -491,11 +521,14 @@ jobs:
                               text=True,
                               capture_output=True,
                               check=False,
+                              env=_env_gh_repo(),
                           )
                       except Exception:
                           p = None
                       if p is not None and p.returncode == 0:
                           return True
+                      if p is not None and p.returncode != 0:
+                          _gh_err(p, f"gh api PATCH issues/{issue_number} assignees")
                       try:
                           u = subprocess.run(
                               [
@@ -511,9 +544,12 @@ jobs:
                               capture_output=True,
                               text=True,
                               check=False,
+                              env=_env_gh_repo(),
                           )
                       except Exception:
                           return False
+                      if u.returncode != 0:
+                          _gh_err(u, f"gh issue edit add-assignee {to_add!r}")
                       return u.returncode == 0
 
 
