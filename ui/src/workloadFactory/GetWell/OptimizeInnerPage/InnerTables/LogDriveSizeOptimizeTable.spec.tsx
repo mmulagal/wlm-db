@@ -6,6 +6,7 @@ vi.mock('react-redux', () => ({ useDispatch: () => vi.fn() }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
 
 vi.mock('../../../../store/storeHooks', () => ({
+    useAppDispatch: vi.fn(() => vi.fn()),
     useAppSelector: vi.fn((selector: any) =>
         selector({
             getWellOptimize: { inProgressOptimizationData: {} },
@@ -29,7 +30,15 @@ vi.mock('../../../../store/workloadFactory/databaseHomeSlice', () => ({
 }));
 
 vi.mock('../../../../utils/consts', () => ({
-    ASSESSMENT_CONFIG_NAMES: { LOG_DRIVE_SIZE: 'LogDriveSize' }
+    ASSESSMENT_CONFIG_NAMES: { LOG_DRIVE_SIZE: 'LogDriveSize' },
+    GETWELL_STATUS: {
+        OPTIMIZED: 'Optimized',
+        NOT_OPTIMIZED: 'Not optimized',
+        UNDER_PROVISIONED: 'Under-provisioned',
+        OVER_PROVISIONED: 'Over-provisioned',
+        SHARED_DRIVE: 'Shared drive',
+        OPTIMIZING: 'Optimizing'
+    }
 }));
 
 vi.mock('../../../../utils/CommonStyles.module.scss', () => ({ default: {} }));

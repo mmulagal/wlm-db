@@ -535,10 +535,7 @@ export const bulkFixDisableCheck = (
         fixDisableMsg = t('databases.well-architect.bulk-fix-disable-for-asm');
     } else if (isFixNotSupported) {
         isFixDisabled = true;
-        fixDisableMsg =
-            configType === ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT
-                ? t('databases.well-architect.coming-soon')
-                : t('databases.well-architect.fix-disabled');
+        fixDisableMsg = t('databases.well-architect.fix-disabled');
     } else if (!checkIfAnyRowNotOptimized(selectedRowsForOptimize)) {
         isFixDisabled = true;
         fixDisableMsg = t('databases.well-architect.bulk-fix-disabled');

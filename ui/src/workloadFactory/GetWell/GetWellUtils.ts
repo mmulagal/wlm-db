@@ -386,7 +386,7 @@ export const cardDataDefault: any = {
             value: ''
         },
         block_six: {
-            type: 'TempDB drive size',
+            type: 'Impacted drives',
             value: ''
         },
         recommendation: {
@@ -498,7 +498,7 @@ export const cardDataDefault: any = {
             value: ''
         },
         block_six: {
-            type: 'TempDB placement',
+            type: 'Impacted databases',
             value: '',
             smallFont: true
         },
@@ -1820,19 +1820,17 @@ export const formatIndividualCardMainConfig = (
             if (
                 itemName === 'storage_tier' ||
                 itemName === 'transaction_log_drive_size' ||
+                itemName === 'tempdb_drive_size' ||
                 itemName === 'user_data_files' ||
-                itemName === 'transaction_log_files'
+                itemName === 'transaction_log_files' ||
+                itemName === 'tempdb_files'
             ) {
                 blockSixValue = `${item?.totalObjectsInViolation || 0} out of ${item?.totalObjectsAssessed || 0}`;
                 blockSixCountObject = {
                     totalObjectsInViolation: item?.totalObjectsInViolation || 0,
                     totalObjectsAssessed: item?.totalObjectsAssessed || 0
                 };
-            } else if (
-                itemName === 'file_system_headroom' ||
-                itemName === 'tempdb_drive_size' ||
-                itemName === 'tempdb_files'
-            ) {
+            } else if (itemName === 'file_system_headroom') {
                 blockSixValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
             } else if (categoryVal === 'storage') {
                 blockSixValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;

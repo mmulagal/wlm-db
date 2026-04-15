@@ -857,8 +857,10 @@ const StorageCardComponent = ({
         !(
             type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
             type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT ||
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
             type === ASSESSMENT_CONFIG_NAMES.CRR ||
@@ -889,6 +891,7 @@ const StorageCardComponent = ({
         if (
             type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
             type === GENERAL.RSS_CONFIGURATION ||
             type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
             type === GENERAL.CLONE_MANAGEMENT ||
@@ -901,6 +904,7 @@ const StorageCardComponent = ({
         if (
             type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF ||
+            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT ||
             type === GENERAL.OPERATING_SYSTEM_PATCH ||
             type === GENERAL.MICROSOFT_SQL_PATCH ||
             type === ASSESSMENT_CONFIG_NAMES.CRR ||

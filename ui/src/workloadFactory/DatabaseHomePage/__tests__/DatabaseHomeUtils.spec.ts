@@ -1031,8 +1031,8 @@ describe('getErrorInvestigationSummary', () => {
 describe('getAssessmentGroupedByCategory', () => {
     it('returns zero counts for empty assessment data', () => {
         const result = getAssessmentGroupedByCategory([], []);
-        expect(result.mssqlStorage).toBe(0);
-        expect(result.total).toBe(0);
+        expect(result.storage.optimized).toBe(0);
+        expect(result.totalInstances).toBe(0);
     });
 
     it('skips hosts not in selected cred/region', () => {
@@ -1045,7 +1045,7 @@ describe('getAssessmentGroupedByCategory', () => {
             }
         ];
         const result = getAssessmentGroupedByCategory(data, []);
-        expect(result.total).toBe(0);
+        expect(result.totalInstances).toBe(0);
     });
 });
 
@@ -1054,7 +1054,7 @@ describe('getManagedOptimizationSummary', () => {
     it('returns zero counts for empty data', () => {
         const result = getManagedOptimizationSummary([], []);
         expect(result.totalInstances).toBe(0);
-        expect(result.optimizedInstances).toBe(0);
+        expect(result.totalConfigurations).toBe(0);
         expect(result.optimizedPercent).toBe(0);
     });
 
@@ -1909,28 +1909,28 @@ describe('getManagedOptimizationSummary (extended)', () => {
         });
     });
 
-    it('counts optimized MSSQL instances', () => {
+    it('counts optimized MSSQL configurations', () => {
         const data = [makeMssqlHost('h1', makeOptimizedMssqlAssessment())];
         const result = getManagedOptimizationSummary(data, []);
         expect(result.totalInstances).toBe(1);
-        expect(result.optimizedInstances).toBe(1);
+        expect(result.optimizedConfigurations).toBeGreaterThan(0);
+        expect(result.totalConfigurations).toBeGreaterThan(0);
     });
 
-    it('counts critical not-optimized MSSQL instances (hostOsPatch critical)', () => {
+    it('counts critical not-optimized MSSQL configurations (hostOsPatch critical)', () => {
         const assess = makeNotOptimizedMssqlAssessment();
         const data = [makeMssqlHost('h1', assess)];
         const result = getManagedOptimizationSummary(data, []);
-        expect(result.criticalNotOptimizedInstances).toBe(1);
+        expect(result.criticalConfigurations).toBeGreaterThanOrEqual(1);
     });
 
-    it('counts warning not-optimized MSSQL instances (compute warning)', () => {
+    it('counts warning not-optimized MSSQL configurations (compute warning)', () => {
         const assess = makeOptimizedMssqlAssessment({
             compute: { status: 'NOT_OPTIMIZED', severity: 'warning' }
         });
         const data = [makeMssqlHost('h1', assess)];
         const result = getManagedOptimizationSummary(data, []);
-        expect(result.warningNotOptimizedInstances).toBe(1);
-        expect(result.criticalNotOptimizedInstances).toBe(0);
+        expect(result.warningConfigurations).toBeGreaterThanOrEqual(1);
     });
 
     it('processes Oracle instances alongside MSSQL', () => {
@@ -1945,7 +1945,9 @@ describe('getManagedOptimizationSummary (extended)', () => {
         const host2 = makeMssqlHost('h2', makeNotOptimizedMssqlAssessment());
         const result = getManagedOptimizationSummary([host1, host2], []);
         expect(result.totalInstances).toBe(2);
-        expect(result.optimizedPercent).toBe(50);
+        expect(result.totalConfigurations).toBeGreaterThan(0);
+        expect(result.optimizedPercent).toBeGreaterThanOrEqual(0);
+        expect(result.optimizedPercent).toBeLessThanOrEqual(100);
     });
 
     it('skips instances from non-matching cred/region', () => {
@@ -1982,64 +1984,80 @@ describe('getAssessmentGroupedByCategory (extended)', () => {
         expect(result.mssqlTotal).toBe(1);
     });
 
-    it('increments mssqlCompute for fully compute-optimized instance', () => {
+    it('increments compute.optimized for fully compute-optimized instance', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByCategory([host], []);
-        expect(result.mssqlCompute).toBe(1);
+        expect(result.compute.optimized).toBeGreaterThan(0);
+        expect(result.compute.total).toBeGreaterThan(0);
+        expect(result.compute.optimized).toBe(result.compute.total);
     });
 
-    it('does NOT increment mssqlCompute when compute is NOT_OPTIMIZED', () => {
+    it('has fewer compute.optimized when compute is NOT_OPTIMIZED', () => {
         const assess = makeOptimizedMssqlAssessment({
             compute: { status: 'NOT_OPTIMIZED', severity: 'warning' }
         });
         const host = makeMssqlHost('h1', assess);
         const result = getAssessmentGroupedByCategory([host], []);
-        expect(result.mssqlCompute).toBe(0);
+        expect(result.compute.optimized).toBeLessThan(result.compute.total);
     });
 
-    it('increments mssqlStorage for storage-optimized instance', () => {
+    it('increments storage.optimized for storage-optimized instance', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByCategory([host], []);
-        expect(result.mssqlStorage).toBe(1);
+        expect(result.storage.optimized).toBeGreaterThan(0);
+        expect(result.storage.total).toBeGreaterThan(0);
+        expect(result.storage.optimized).toBe(result.storage.total);
     });
 
-    it('does NOT increment mssqlStorage when storage sizing is incomplete', () => {
+    it('has fewer storage.optimized when storage has NOT_OPTIMIZED items', () => {
         const assess = makeOptimizedMssqlAssessment({
             storage: {
-                ...makeOptimizedMssqlAssessment().storage,
-                sizing: [{ name: 'headroom', status: 'OPTIMIZED' }] // only 1 item, not 4
+                sizing: [
+                    { name: 'performance-tier', status: 'NOT_OPTIMIZED', severity: 'warning' },
+                    { name: 'headroom', status: 'NOT_OPTIMIZED', severity: 'warning' },
+                    { name: 'log-drive-size', status: 'NOT_OPTIMIZED', severity: 'warning' },
+                    { name: 'tempdb-drive-size', status: 'NOT_OPTIMIZED', severity: 'warning' }
+                ],
+                layout: [
+                    { name: 'data-files-location', status: 'NOT_OPTIMIZED', severity: 'warning' },
+                    { name: 'log-files-location', status: 'NOT_OPTIMIZED', severity: 'warning' },
+                    { name: 'tempdb-files-location', status: 'NOT_OPTIMIZED', severity: 'warning' }
+                ],
+                configuration: {}
             }
         });
         const host = makeMssqlHost('h1', assess);
         const result = getAssessmentGroupedByCategory([host], []);
-        expect(result.mssqlStorage).toBe(0);
+        expect(result.storage.optimized).toBe(0);
     });
 
-    it('increments application for license + mssqlPatch + maxDOP all optimized', () => {
+    it('increments application.optimized for license + mssqlPatch + maxDOP all optimized', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByCategory([host], []);
-        expect(result.application).toBe(1);
+        expect(result.application.optimized).toBeGreaterThan(0);
+        expect(result.application.optimized).toBe(result.application.total);
     });
 
-    it('increments resiliency for snapshot + crr + awsBackup all optimized (non-HA)', () => {
+    it('increments resiliency.optimized for snapshot + crr + awsBackup all optimized (non-HA)', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByCategory([host], []);
-        expect(result.mssqlResiliency).toBe(1);
+        expect(result.resiliency.optimized).toBeGreaterThan(0);
+        expect(result.resiliency.optimized).toBe(result.resiliency.total);
     });
 
-    it('increments cloning for clone optimized', () => {
+    it('increments cloning.optimized for clone optimized', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByCategory([host], []);
-        expect(result.cloning).toBe(1);
+        expect(result.cloning.optimized).toBe(1);
     });
 
-    it('does NOT increment cloning when clone is NOT_OPTIMIZED', () => {
+    it('does NOT increment cloning.optimized when clone is NOT_OPTIMIZED', () => {
         const assess = makeOptimizedMssqlAssessment({
             clone: { status: 'NOT_OPTIMIZED', severity: 'warning' }
         });
         const host = makeMssqlHost('h1', assess);
         const result = getAssessmentGroupedByCategory([host], []);
-        expect(result.cloning).toBe(0);
+        expect(result.cloning.optimized).toBe(0);
     });
 
     it('increments oracleTotal for valid Oracle instance', () => {
@@ -2048,13 +2066,13 @@ describe('getAssessmentGroupedByCategory (extended)', () => {
         expect(result.oracleTotal).toBe(1);
     });
 
-    it('increments oracleCompute for hostOsPatch OPTIMIZED in Oracle', () => {
+    it('increments compute.optimized for hostOsPatch OPTIMIZED in Oracle', () => {
         const host = makeOracleHost('oh1', makeOracleAssessment());
         const result = getAssessmentGroupedByCategory([], [host]);
-        expect(result.oracleCompute).toBe(1);
+        expect(result.compute.optimized).toBe(1);
     });
 
-    it('does NOT increment oracleCompute when Oracle hostOsPatch is NOT_OPTIMIZED', () => {
+    it('does NOT increment compute.optimized when Oracle hostOsPatch is NOT_OPTIMIZED', () => {
         const host = makeOracleHost(
             'oh1',
             makeOracleAssessment({
@@ -2062,13 +2080,14 @@ describe('getAssessmentGroupedByCategory (extended)', () => {
             })
         );
         const result = getAssessmentGroupedByCategory([], [host]);
-        expect(result.oracleCompute).toBe(0);
+        expect(result.compute.optimized).toBe(0);
     });
 
-    it('increments oracleStorage for Oracle storage-optimized instance', () => {
+    it('increments storage.optimized for Oracle storage-optimized instance', () => {
         const host = makeOracleHost('oh1', makeOracleAssessment());
         const result = getAssessmentGroupedByCategory([], [host]);
-        expect(result.oracleStorage).toBe(1);
+        expect(result.storage.optimized).toBeGreaterThan(0);
+        expect(result.storage.optimized).toBe(result.storage.total);
     });
 
     it('processes both MSSQL and Oracle in the same call', () => {

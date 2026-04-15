@@ -88,12 +88,23 @@ vi.mock('./Marketing/Marketing', () => ({
     default: () => <div data-testid="marketing">Marketing</div>
 }));
 
+vi.mock('./store/store', () => ({
+    default: {
+        getState: vi.fn(() => ({})),
+        dispatch: vi.fn(),
+        subscribe: vi.fn(),
+        replaceReducer: vi.fn()
+    }
+}));
+
 vi.mock('./store/notificationSlice', () => ({
+    default: { name: 'notification', reducer: (state: any = {}) => state },
     clearNotifications: vi.fn(() => ({ type: 'clearNotifications' })),
     removeNotification: vi.fn((index: number) => ({ type: 'removeNotification', payload: index }))
 }));
 
 vi.mock('./store/workloadFactory/inventoryV2Slice', () => ({
+    default: { name: 'inventoryV2', reducer: (state: any = {}) => state },
     setSelectedHeaderTab: vi.fn((tab: any) => ({ type: 'setSelectedHeaderTab', payload: tab }))
 }));
 

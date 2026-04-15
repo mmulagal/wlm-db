@@ -12,13 +12,13 @@ import {
     DBType,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    GETWELL_STATUS,
     WLF_TABS
 } from '../../../utils/consts';
 import OptimizeCard from './OptimizeCard/OptimizeCard';
 import { useAppSelector } from '../../../store/storeHooks';
 import StorageTierOptimizeTable from './InnerTables/StorageTierOptimizeTable';
 import store from '../../../store/store';
-import { GENERAL } from '../../../utils/appConstants';
 import {
     setCloneDashboardData,
     setInProgressHostData,
@@ -55,8 +55,10 @@ import {
 import LinkedConfigBanner from '../../../common/LinkedConfigBanner/LinkedConfigBanner';
 import FileSystemHeadroomOptimizeTable from './InnerTables/FileSystemHeaderoomOptimizeTable';
 import LogDriveSizeOptimizeTable from './InnerTables/LogDriveSizeOptimizeTable';
+import TempDbDriveSizeOptimizeTable from './InnerTables/TempDbDriveSizeOptimizeTable';
 import DataFilesOptimizeTable from './InnerTables/DataFilesOptimizeTable';
 import LogFilesOptimizeTable from './InnerTables/LogFilesOptimizeTable';
+import TempDbFilesOptimizeTable from './InnerTables/TempDbFilesOptimizeTable';
 import RSSOptimizeTable from './InnerTables/RSSOptimizeTable';
 import ScheduledLocalSnapshotOptimizeTable from './InnerTables/ScheduledLocalSnapshotTable';
 import CRROptimizeTable from './InnerTables/CRROptimizeTable';
@@ -147,7 +149,7 @@ const OptimizeInnerPage = () => {
     const crrDeepLinkFixOpenedRef = useRef(false);
 
     useEffect(() => {
-        if (selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT) {
+        if (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
             const cloneViolationsList =
                 selectedOptimizeConfig?.data?.cloneDetails
                     ?.filter((clone: any) =>
@@ -221,21 +223,26 @@ const OptimizeInnerPage = () => {
                 });
                 break;
             case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
                 setCardHeight({
                     recommendationSection: '228px',
                     tagSection: '324px'
                 });
                 break;
 
-            case 'Data files':
             case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 setCardHeight({
                     recommendationSection: '208px',
                     tagSection: '304px'
                 });
                 break;
-            case 'Log files':
             case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
+                setCardHeight({
+                    recommendationSection: '208px',
+                    tagSection: '304px'
+                });
+                break;
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
                 setCardHeight({
                     recommendationSection: '208px',
                     tagSection: '304px'
@@ -261,7 +268,7 @@ const OptimizeInnerPage = () => {
                 });
 
                 break;
-            case GENERAL.CLONE_MANAGEMENT:
+            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
                 setCardHeight({
                     recommendationSection: '120px',
                     tagSection: '216px'
@@ -400,7 +407,7 @@ const OptimizeInnerPage = () => {
                         trigger="hover"
                         container={
                             <DsButton variant="secondary" isDisabled isThin>
-                                {GENERAL.OPTIMIZE}
+                                {t('databases.well-architect.fix')}
                             </DsButton>
                         }
                     />
@@ -414,26 +421,25 @@ const OptimizeInnerPage = () => {
                         openOracleCrrFixDialogForRow(rowData);
                     }}
                 >
-                    {GENERAL.OPTIMIZE}
+                    {t('databases.well-architect.fix')}
                 </DsButton>
             );
         }
         if (
-            selectedOptimizeConfig?.type === 'Data files' ||
-            selectedOptimizeConfig?.type === 'Log files' ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF ||
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT
         ) {
             return (
                 <Popover
                     isAppendedToBody
-                    children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
+                    children={
+                        <DsTypography variant="Regular_14">{t('databases.well-architect.fix-disabled')}</DsTypography>
+                    }
                     trigger="hover"
-                    delayHide={200}
-                    interactive
                     container={
                         <DsButton variant="secondary" isDisabled isThin>
-                            {GENERAL.OPTIMIZE}
+                            {t('databases.well-architect.fix')}
                         </DsButton>
                     }
                 />
@@ -445,22 +451,26 @@ const OptimizeInnerPage = () => {
         ) {
             return (
                 <DsButton isThin variant="secondary" isDisabled>
-                    {GENERAL.OPTIMIZE}
+                    {t('databases.well-architect.fix')}
                 </DsButton>
             );
         }
         if (
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE &&
-            (rowData?.status === 'Over-provisioned' || rowData?.status === 'Shared drive')
+            (rowData?.status === GETWELL_STATUS.OVER_PROVISIONED || rowData?.status === GETWELL_STATUS.SHARED_DRIVE)
         ) {
             return (
                 <Popover
                     isAppendedToBody
                     children={
-                        rowData?.status === 'Over-provisioned' ? (
-                            <DsTypography variant="Regular_14">{GENERAL.LOG_DRIVE_OVER_PROVISIONED_ERROR}</DsTypography>
+                        rowData?.status === GETWELL_STATUS.OVER_PROVISIONED ? (
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.log-drive-over-provisioned-error')}
+                            </DsTypography>
                         ) : (
-                            <DsTypography variant="Regular_14">{GENERAL.NOT_OPTIMIZED_SHARED_DRIVES}</DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.not-optimized-shared-drive')}
+                            </DsTypography>
                         )
                     }
                     trigger="hover"
@@ -468,7 +478,36 @@ const OptimizeInnerPage = () => {
                     interactive
                     container={
                         <DsButton variant="secondary" isDisabled isThin>
-                            {GENERAL.OPTIMIZE}
+                            {t('databases.well-architect.fix')}
+                        </DsButton>
+                    }
+                />
+            );
+        }
+        if (
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE &&
+            (rowData?.status === GETWELL_STATUS.OVER_PROVISIONED || rowData?.status === GETWELL_STATUS.SHARED_DRIVE)
+        ) {
+            return (
+                <Popover
+                    isAppendedToBody
+                    children={
+                        rowData?.status === GETWELL_STATUS.OVER_PROVISIONED ? (
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.tempdb-drive-over-provisioned-error')}
+                            </DsTypography>
+                        ) : (
+                            <DsTypography variant="Regular_14">
+                                {t('databases.well-architect.not-optimized-shared-drive')}
+                            </DsTypography>
+                        )
+                    }
+                    trigger="hover"
+                    delayHide={200}
+                    interactive
+                    container={
+                        <DsButton variant="secondary" isDisabled isThin>
+                            {t('databases.well-architect.fix')}
                         </DsButton>
                     }
                 />
@@ -478,13 +517,17 @@ const OptimizeInnerPage = () => {
             return (
                 <Popover
                     isAppendedToBody
-                    children={<DsTypography variant="Regular_14">Bulk action is enabled on selected rows</DsTypography>}
+                    children={
+                        <DsTypography variant="Regular_14">
+                            {t('databases.well-architect.bulk-action-enabled-on-selected')}
+                        </DsTypography>
+                    }
                     trigger="hover"
                     delayHide={200}
                     interactive
                     container={
                         <DsButton variant="secondary" isDisabled isThin>
-                            {GENERAL.OPTIMIZE}
+                            {t('databases.well-architect.fix')}
                         </DsButton>
                     }
                 />
@@ -498,7 +541,7 @@ const OptimizeInnerPage = () => {
                 <Popover
                     isAppendedToBody
                     children={
-                        <DsTypography variant="Regular_14">{t('databases.well-architect.coming-soon')}</DsTypography>
+                        <DsTypography variant="Regular_14">{t('databases.well-architect.fix-disabled')}</DsTypography>
                     }
                     trigger="hover"
                     container={
@@ -513,7 +556,8 @@ const OptimizeInnerPage = () => {
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
-            selectedOptimizeConfig?.type === GENERAL.RSS_CONFIGURATION ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.MTU ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
             selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
@@ -522,7 +566,10 @@ const OptimizeInnerPage = () => {
                 <DsButton
                     isThin
                     variant="secondary"
-                    isDisabled={rowData?.status === 'Over-provisioned' || rowData?.status === 'Shared drive'}
+                    isDisabled={
+                        rowData?.status === GETWELL_STATUS.OVER_PROVISIONED ||
+                        rowData?.status === GETWELL_STATUS.SHARED_DRIVE
+                    }
                     onClick={() => {
                         // optimizeAction(rowData);
                         handleDialog(
@@ -538,7 +585,7 @@ const OptimizeInnerPage = () => {
                         );
                     }}
                 >
-                    {GENERAL.OPTIMIZE}
+                    {t('databases.well-architect.fix')}
                 </DsButton>
             );
         }
@@ -574,20 +621,22 @@ const OptimizeInnerPage = () => {
                         );
                     }}
                 >
-                    {GENERAL.OPTIMIZE}
+                    {t('databases.well-architect.fix')}
                 </DsButton>
             );
         }
         return (
             <Popover
                 isAppendedToBody
-                children={<DsTypography variant="Regular_14">Coming soon</DsTypography>}
+                children={
+                    <DsTypography variant="Regular_14">{t('databases.well-architect.fix-disabled')}</DsTypography>
+                }
                 trigger="hover"
                 delayHide={200}
                 interactive
                 container={
                     <DsButton variant="secondary" isDisabled isThin>
-                        {GENERAL.OPTIMIZE}
+                        {t('databases.well-architect.fix')}
                     </DsButton>
                 }
             />
@@ -638,13 +687,13 @@ const OptimizeInnerPage = () => {
         let apiCall = null;
 
         const state = store.getState();
-        if (type === GENERAL.COMPUTE_RIGHTSIZING) {
+        if (type === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
             apiCall = optimizeComputeConfig;
             const { selectedRecommendedInstance } = state.getWellOptimize;
             payload = {
                 instanceType: selectedRecommendedInstance?.value
             };
-        } else if (type === GENERAL.RSS_CONFIGURATION) {
+        } else if (type === ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION) {
             apiCall = optimizeComputeConfigForBulk;
             if (operation === 'bulk') {
                 payload = {
@@ -722,14 +771,25 @@ const OptimizeInnerPage = () => {
                     ]
                 };
             }
-        } else if (
-            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
-            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
-        ) {
+        } else if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
             apiCall = optimizeStorageSizing;
             payload = {
                 configurationName: selectedOptimizeConfig?.data?.id
             };
+        } else if (type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE) {
+            apiCall = optimizeStorageSizing;
+
+            if (operation === 'bulk') {
+                payload = {
+                    configurationName: 'tempdb-drive-size',
+                    objectsToOptimize: selectedRowsForOptimizeInnerPage.map((item: any) => item?.tempdbAccessPath)
+                };
+            } else {
+                payload = {
+                    configurationName: 'tempdb-drive-size',
+                    objectsToOptimize: [singleRowData?.tempdbAccessPath]
+                };
+            }
         } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE) {
             apiCall = optimizeStorageSizing;
 
@@ -850,7 +910,9 @@ const OptimizeInnerPage = () => {
                 notificationType: NOTIFICATION_TYPES.INFO,
                 message: (
                     <div>
-                        {`Fixing process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
+                        {`${t('databases.well-architect.fixing-process-initiated-for')} ${type}. ${t(
+                            'databases.well-architect.process-can-take-min'
+                        )}`}
                         <Button
                             Component="button"
                             variant="text"
@@ -869,7 +931,7 @@ const OptimizeInnerPage = () => {
                                 dispatch(clearNotifications());
                             }}
                         >
-                            {GENERAL.JOB_MONITORING}.
+                            {t('databases.general.job-monitoring')}.
                         </Button>
                     </div>
                 )
@@ -885,7 +947,7 @@ const OptimizeInnerPage = () => {
         }).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
-                    {type} failed to optimize.
+                    {type} {t('databases.well-architect.failed-to-optimize')}
                     <Button
                         Component="button"
                         variant="text"
@@ -904,7 +966,7 @@ const OptimizeInnerPage = () => {
                             dispatch(clearNotifications());
                         }}
                     >
-                        {GENERAL.VIEW_JOB_MONITORING}.
+                        {t('databases.general.view-job-monitoring')}.
                     </Button>
                 </div>
             );
@@ -991,7 +1053,7 @@ const OptimizeInnerPage = () => {
                 );
 
             // MSSQL assessment
-            case 'Storage tier':
+            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 return (
                     <StorageTierOptimizeTable
                         type={selectedOptimizeConfig?.type}
@@ -1001,7 +1063,7 @@ const OptimizeInnerPage = () => {
                         isWad={isWad}
                     />
                 );
-            case 'File system headroom':
+            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
                 return (
                     <FileSystemHeadroomOptimizeTable
                         type={selectedOptimizeConfig?.type}
@@ -1010,7 +1072,7 @@ const OptimizeInnerPage = () => {
                         isWad={isWad}
                     />
                 );
-            case 'Log drive size':
+            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
                 return (
                     <LogDriveSizeOptimizeTable
                         type={selectedOptimizeConfig?.type}
@@ -1020,29 +1082,44 @@ const OptimizeInnerPage = () => {
                         isWad={isWad}
                     />
                 );
-            case 'Data files':
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
+                return (
+                    <TempDbDriveSizeOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        handleBulkAction={handleBulkAction}
+                        isWad={isWad}
+                    />
+                );
             case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 return (
                     <DataFilesOptimizeTable
                         type={selectedOptimizeConfig?.type}
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
-                        handleBulkAction={handleBulkAction}
                         isWad={isWad}
                     />
                 );
-            case 'Log files':
             case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 return (
                     <LogFilesOptimizeTable
                         type={selectedOptimizeConfig?.type}
                         data={selectedOptimizeConfig?.data}
                         lastColDetails={lastColDetails}
-                        handleBulkAction={handleBulkAction}
                         isWad={isWad}
                     />
                 );
-            case GENERAL.RSS_CONFIGURATION:
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
+                return (
+                    <TempDbFilesOptimizeTable
+                        type={selectedOptimizeConfig?.type}
+                        data={selectedOptimizeConfig?.data}
+                        lastColDetails={lastColDetails}
+                        isWad={isWad}
+                    />
+                );
+            case ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION:
                 return (
                     <RSSOptimizeTable
                         type={selectedOptimizeConfig?.type}
@@ -1063,7 +1140,7 @@ const OptimizeInnerPage = () => {
                         hostname={selectedHostname}
                     />
                 );
-            case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
+            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
                 return (
                     <ScheduledLocalSnapshotOptimizeTable
                         type={selectedOptimizeConfig?.type}
@@ -1097,21 +1174,7 @@ const OptimizeInnerPage = () => {
         return [];
     }, [selectedOptimizeConfig?.type, selectedOptimizeConfig?.engineType]);
 
-    const setHeading = () => {
-        if (
-            selectedOptimizeConfig?.type === 'Data files' ||
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF
-        ) {
-            return 'Data files (.mdf) placement';
-        }
-        if (
-            selectedOptimizeConfig?.type === 'Log files' ||
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF
-        ) {
-            return 'Log files (.ldf) placement';
-        }
-        return selectedOptimizeConfig?.type;
-    };
+    const setHeading = () => selectedOptimizeConfig?.type;
 
     return (
         <div className={styles['optimize-inner-page']}>
@@ -1128,7 +1191,7 @@ const OptimizeInnerPage = () => {
                             {
                                 title:
                                     `${selectedHostname} / ${selectedDatabaseInstanceName}` ||
-                                    'Host name/instance name',
+                                    t('databases.well-architect.host-name-instance-name'),
                                 dataTestId: 'wlm-db-optimize-configuration',
                                 onClick: () => {
                                     if (selectedOptimizeConfig?.engineType === DBType.ORACLE) {
@@ -1180,7 +1243,7 @@ const OptimizeInnerPage = () => {
                     />
                 )}
 
-                {selectedOptimizeConfig?.type === GENERAL.CLONE_MANAGEMENT && <CloneTabs />}
+                {selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT && <CloneTabs />}
 
                 <div className={styles.tableSection}>{renderTable()}</div>
             </div>

@@ -169,10 +169,12 @@ describe('WellArchitectedScore', () => {
         vi.clearAllMocks();
         mockedGetManagedOptimizationSummary.mockReturnValue({
             optimizedPercent: 75,
-            optimizedInstances: 15,
-            criticalNotOptimizedInstances: 3,
-            warningNotOptimizedInstances: 2,
-            totalInstances: 20
+            optimizedConfigurations: 15,
+            criticalConfigurations: 3,
+            warningConfigurations: 2,
+            totalConfigurations: 20,
+            totalInstances: 20,
+            hasDismissedOrPostponed: false
         });
         mockedGetAssessmentHostListGroupedByCategory.mockReturnValue([{ id: '1', status: 'Up', type: 'MSSQL' }]);
     });
@@ -264,6 +266,15 @@ describe('WellArchitectedScore', () => {
 
     // ── showNA ──
     it('renders N/A when showNA is true', () => {
+        mockedGetManagedOptimizationSummary.mockReturnValue({
+            optimizedPercent: 0,
+            optimizedConfigurations: 0,
+            criticalConfigurations: 0,
+            warningConfigurations: 0,
+            totalConfigurations: 0,
+            totalInstances: 0,
+            hasDismissedOrPostponed: false
+        });
         render(
             <Provider
                 store={makeStore({

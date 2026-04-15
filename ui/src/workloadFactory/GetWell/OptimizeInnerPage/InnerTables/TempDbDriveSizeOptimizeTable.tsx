@@ -1,15 +1,15 @@
-import { Table, useTable, TableTopBar, Typography, Popover, DsButton, DsTypography } from '@netapp/design-system';
+import { Table, useTable, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './InnerTable.module.scss';
-import { checkBoxHandle, getSelectedFromSelectionState, getTruncatedItems } from '../../../../utils/utilityFunctions';
+import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { ASSESSMENT_CONFIG_NAMES, GETWELL_STATUS } from '../../../../utils/consts';
 import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
 
-const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: any) => {
+const TempDbDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAction, isWad = false }: any) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const { inProgressOptimizationData } = useAppSelector(state => state.getWellOptimize);
@@ -23,8 +23,8 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
         const uniqueViolatedList: any = [];
 
         data?.sizingViolations?.overProvisionedDrives?.forEach((row: any) => {
-            if (!uniqueViolatedList.includes(row.logAccessPath)) {
-                uniqueViolatedList.push(row.logAccessPath);
+            if (!uniqueViolatedList.includes(row.tempdbAccessPath)) {
+                uniqueViolatedList.push(row.tempdbAccessPath);
                 uniqueViolatedRows.push({
                     ...row,
                     status: GETWELL_STATUS.OVER_PROVISIONED
@@ -32,8 +32,8 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             }
         });
         data?.sizingViolations?.underProvisionedDrives?.forEach((row: any) => {
-            if (!uniqueViolatedList.includes(row.logAccessPath)) {
-                uniqueViolatedList.push(row.logAccessPath);
+            if (!uniqueViolatedList.includes(row.tempdbAccessPath)) {
+                uniqueViolatedList.push(row.tempdbAccessPath);
                 uniqueViolatedRows.push({
                     ...row,
                     status: GETWELL_STATUS.UNDER_PROVISIONED
@@ -41,8 +41,8 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             }
         });
         data?.sizingViolations?.ignoredDrives?.forEach((row: any) => {
-            if (!uniqueViolatedList.includes(row.logAccessPath)) {
-                uniqueViolatedList.push(row.logAccessPath);
+            if (!uniqueViolatedList.includes(row.tempdbAccessPath)) {
+                uniqueViolatedList.push(row.tempdbAccessPath);
                 uniqueViolatedRows.push({
                     ...row,
                     status: GETWELL_STATUS.SHARED_DRIVE
@@ -58,7 +58,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
                 selectionProps: {
                     title:
                         row?.status === GETWELL_STATUS.OVER_PROVISIONED
-                            ? t('databases.well-architect.log-drive-over-provisioned-error')
+                            ? t('databases.well-architect.tempdb-drive-over-provisioned-error')
                             : row?.status === GETWELL_STATUS.SHARED_DRIVE
                             ? t('databases.well-architect.not-optimized-shared-drive')
                             : ''
@@ -70,13 +70,13 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
     const TableColDefs: ColumnProps[] = [
         {
             Header: t('databases.well-architect.drive-name'),
-            accessor: 'logAccessPath',
+            accessor: 'tempdbAccessPath',
             id: '2',
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
             width: '224px',
-            renderCell: (cellData: any, rowData: any) => cellData || na
+            renderCell: (cellData: any) => cellData || na
         },
         {
             Header: t('databases.well-architect.lun-path'),
@@ -87,56 +87,15 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             width: 'auto',
             renderCell: (cellData: any) => cellData || na
         },
-
         {
             Header: t('databases.well-architect.databases'),
             accessor: 'databases',
             id: '7',
             isSortable: false,
             filterOptions: 'auto',
-            isSticky: true,
             width: '284px',
-            renderCell: (cellData: any, rowData: any) => {
-                const truncatedItems = getTruncatedItems(cellData);
-
-                return (
-                    <div>
-                        {cellData && Number(cellData) !== 0 ? (
-                            <div className={styles.container}>
-                                <Typography
-                                    title={truncatedItems?.maxItemsToShow.join(', ')}
-                                    variant="Regular_14"
-                                    className={styles.sqlServerInstance}
-                                >
-                                    {truncatedItems?.maxItemsToShow.join(', ')}
-                                </Typography>
-                                {truncatedItems?.remaining.length > 0 && (
-                                    <Popover
-                                        popoverClass={styles['log-drive-size-popover']}
-                                        children={truncatedItems?.remaining.map((item: any) => (
-                                            <Typography variant="Regular_14">{item}</Typography>
-                                        ))}
-                                        trigger="click"
-                                        interactive
-                                        isAppendedToBody
-                                        delayHide={200}
-                                        container={
-                                            <Typography variant="Regular_14" className={styles.colorText}>
-                                                {`+ ${truncatedItems?.remaining.length}`}
-                                            </Typography>
-                                        }
-                                    />
-                                )}
-                            </div>
-                        ) : (
-                            ''
-                        )}
-                        {!cellData ? na : ''}
-                    </div>
-                );
-            }
+            renderCell: (cellData: any) => (Array.isArray(cellData) && cellData.length > 0 ? cellData.join(', ') : na)
         },
-
         {
             Header: t('databases.well-architect.status'),
             accessor: 'status',
@@ -146,14 +105,14 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             renderCell: (cellData: string) => cellData || na
         },
         {
-            Header: t('databases.well-architect.log-drive-size-percentage'),
+            Header: t('databases.well-architect.tempdb-drive-size-percentage'),
             accessor: 'sizePercentToDataDrive',
             id: '4',
             width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: string) => (cellData ? `${cellData}%` : na)
         },
-        lastColDetails(type, {}, '240px') // 230
+        lastColDetails(type, {}, '240px')
     ];
 
     const tableProps = useTable({
@@ -173,7 +132,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
 
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
 
-        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]?.length) {
+        if (rowsData.length > 0 && inProgressOptimizationData?.[ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
         }
     }, [tableProps.selectionState]);
@@ -198,4 +157,4 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
     );
 };
 
-export default LogDriveSizeOptimizeTable;
+export default TempDbDriveSizeOptimizeTable;

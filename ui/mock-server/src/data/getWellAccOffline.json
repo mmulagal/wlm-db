@@ -392,29 +392,39 @@
                           }
                       },
                       {
-                          "name": "tempdb-drive-size",
-                          "status": "not-optimized",
-                          "recommended": "10%",
-                          "severity": "warning",
-                          "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                          "tags": [
-                              "Operational excellence"
+                        "name": "tempdb-drive-size",
+                        "status": "under-provisioned",
+                        "recommended": "10%",
+                        "severity": "warning",
+                        "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
+                        "tags": [
+                          "Operational excellence"
+                        ],
+                        "missingPermissions": [],
+                        "current": "1%",
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
+                        "resourceType": "Drive",
+                        "sizingViolations": {
+                          "overProvisionedDrives": [],
+                          "underProvisionedDrives": [
+                            {
+                              "databases": ["tempDB"],
+                              "dataDriveTotalSizeMB": 9731000,
+                              "svmName": "wlmdb_sqlsvm_1731915150431",
+                              "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                              "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                              "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                              "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                              "tempdbAccessPath": "T:",
+                              "tempdbDriveTotalSizeMB": 42,
+                              "diskSerialNumber": "lWB4c$XRevT9",
+                              "sizePercentToDataDrive": 1
+                            }
                           ],
-                          "missingPermissions": [],
-                          "current": "",
-                          "totalObjectsAssessed": 1,
-                          "totalObjectsInViolation": 1,
-                          "resourceType": "Drive",
-                          "sizingViolations": {
-                              "overProvisionedDrives": [],
-                              "underProvisionedDrives": [],
-                              "ignoredDrives": [
-                                  {
-                                      "sizePercentToDataDrive": 0
-                                  }
-                              ]
-                          }
-                      },
+                          "ignoredDrives": []
+                        }
+                    },
                       {
                           "name": "headroom",
                           "status": "optimized",
@@ -458,13 +468,30 @@
                               "Performance efficiency",
                               "Operational excellence"
                           ],
-                          "objectsInViolation": [
-                              "Refresh_x9a2t"
-                          ],
                           "current": "shared drive",
-                          "totalObjectsAssessed": 4,
-                          "totalObjectsInViolation": 1,
-                          "resourceType": "Database"
+                          "totalObjectsAssessed": 2,
+                            "totalObjectsInViolation": 1,
+                            "objectsInViolation": ["RetailBanking"],
+                            "violationDetails": [
+                                {
+                                "objectName": "placement",
+                                "value": "RetailBanking",
+                                "objectType": "Database",
+                                "additionalInfo": {
+                                    "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
+                                    "driveLetter": "S:"
+                                }
+                                },
+                                {
+                                    "objectName": "placement",
+                                    "value": "RetailBanking",
+                                    "objectType": "Database",
+                                    "additionalInfo": {
+                                    "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
+                                    "driveLetter": "D:"
+                                    }
+                                }
+                            ]
                       },
                       {
                           "name": "log-files-location",
@@ -478,6 +505,26 @@
                           ],
                           "objectsInViolation": [
                               "Refresh_x9a2t"
+                          ],
+                          "violationDetails": [
+                              {
+                                  "objectName": "placement",
+                                  "value": "Refresh_x9a2t",
+                                  "objectType": "Database",
+                                  "additionalInfo": {
+                                      "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog",
+                                      "driveLetter": "L:"
+                                  }
+                              },
+                              {
+                                  "objectName": "placement",
+                                  "value": "Refresh_x9a2t",
+                                  "objectType": "Database",
+                                  "additionalInfo": {
+                                      "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog1",
+                                      "driveLetter": "E:"
+                                  }
+                              }
                           ],
                           "current": "shared drive",
                           "totalObjectsAssessed": 4,
@@ -869,6 +916,7 @@
                                       "ontapVolumeName": "wlmdb_sqldata_1771289701800",
                                       "ontapVolumeUuid": "cbbb1422-0ba0-11f1-a1c7-3d11eb454048",
                                       "lunUuid": "abe28392-1493-4b75-beb1-09406f702741",
+                                      "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog",
                                       "diskSerialNumber": "lWB08+Zfv2Zo",
                                       "sizePercentToDataDrive": 81
                                   }
@@ -888,6 +936,7 @@
                                       "ontapVolumeName": "wlmdb_sqllog_1771306118",
                                       "ontapVolumeUuid": "8966702d-0bc1-11f1-a1c7-3d11eb454048",
                                       "lunUuid": "4d1f7ffe-20bb-4900-82cd-40908e54d488",
+                                      "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog",
                                       "diskSerialNumber": "lWB08+Zfv2Zt",
                                       "sizePercentToDataDrive": 10
                                   }
@@ -896,29 +945,39 @@
                           }
                       },
                       {
-                          "name": "tempdb-drive-size",
-                          "status": "not-optimized",
-                          "recommended": "10%",
-                          "severity": "warning",
-                          "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                          "tags": [
-                              "Operational excellence"
+                        "name": "tempdb-drive-size",
+                        "status": "under-provisioned",
+                        "recommended": "10%",
+                        "severity": "warning",
+                        "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
+                        "tags": [
+                          "Operational excellence"
+                        ],
+                        "missingPermissions": [],
+                        "current": "1%",
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
+                        "resourceType": "Drive",
+                        "sizingViolations": {
+                          "overProvisionedDrives": [],
+                          "underProvisionedDrives": [
+                            {
+                              "databases": ["tempDB"],
+                              "dataDriveTotalSizeMB": 9731000,
+                              "svmName": "wlmdb_sqlsvm_1731915150431",
+                              "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                              "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                              "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                              "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                              "tempdbAccessPath": "T:",
+                              "tempdbDriveTotalSizeMB": 42,
+                              "diskSerialNumber": "lWB4c$XRevT9",
+                              "sizePercentToDataDrive": 1
+                            }
                           ],
-                          "missingPermissions": [],
-                          "current": "",
-                          "totalObjectsAssessed": 1,
-                          "totalObjectsInViolation": 1,
-                          "resourceType": "Drive",
-                          "sizingViolations": {
-                              "overProvisionedDrives": [],
-                              "underProvisionedDrives": [],
-                              "ignoredDrives": [
-                                  {
-                                      "sizePercentToDataDrive": 0
-                                  }
-                              ]
-                          }
-                      },
+                          "ignoredDrives": []
+                        }
+                    },
                       {
                           "name": "headroom",
                           "status": "optimized",
@@ -1441,6 +1500,7 @@
                                       "ontapVolumeName": "wlmdb_sqldata_1771289631228",
                                       "ontapVolumeUuid": "9bbaab34-0ba0-11f1-8e18-e304e40d1e07",
                                       "lunUuid": "14793137-e180-4392-b377-b390e42883ad",
+                                      "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog",
                                       "diskSerialNumber": "lWB1g+Zfvsly",
                                       "sizePercentToDataDrive": 91
                                   }
@@ -1460,6 +1520,7 @@
                                       "ontapVolumeName": "wlmdb_sqllog_1771305432",
                                       "ontapVolumeUuid": "f2934020-0bbf-11f1-8e18-e304e40d1e07",
                                       "lunUuid": "f091acaf-77c5-42c4-9b7a-6a7abefdf854",
+                                      "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog",
                                       "diskSerialNumber": "lWB1g+Zfvsm3",
                                       "sizePercentToDataDrive": 10
                                   }
@@ -1468,29 +1529,39 @@
                           }
                       },
                       {
-                          "name": "tempdb-drive-size",
-                          "status": "not-optimized",
-                          "recommended": "10%",
-                          "severity": "warning",
-                          "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                          "tags": [
-                              "Operational excellence"
+                        "name": "tempdb-drive-size",
+                        "status": "under-provisioned",
+                        "recommended": "10%",
+                        "severity": "warning",
+                        "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
+                        "tags": [
+                          "Operational excellence"
+                        ],
+                        "missingPermissions": [],
+                        "current": "1%",
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
+                        "resourceType": "Drive",
+                        "sizingViolations": {
+                          "overProvisionedDrives": [],
+                          "underProvisionedDrives": [
+                            {
+                              "databases": ["tempDB"],
+                              "dataDriveTotalSizeMB": 9731000,
+                              "svmName": "wlmdb_sqlsvm_1731915150431",
+                              "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                              "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                              "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                              "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                              "tempdbAccessPath": "T:",
+                              "tempdbDriveTotalSizeMB": 42,
+                              "diskSerialNumber": "lWB4c$XRevT9",
+                              "sizePercentToDataDrive": 1
+                            }
                           ],
-                          "missingPermissions": [],
-                          "current": "",
-                          "totalObjectsAssessed": 1,
-                          "totalObjectsInViolation": 1,
-                          "resourceType": "Drive",
-                          "sizingViolations": {
-                              "overProvisionedDrives": [],
-                              "underProvisionedDrives": [],
-                              "ignoredDrives": [
-                                  {
-                                      "sizePercentToDataDrive": 0
-                                  }
-                              ]
-                          }
-                      },
+                          "ignoredDrives": []
+                        }
+                    },
                       {
                           "name": "headroom",
                           "status": "optimized",
@@ -1991,29 +2062,39 @@
                           }
                       },
                       {
-                          "name": "tempdb-drive-size",
-                          "status": "not-optimized",
-                          "recommended": "10%",
-                          "severity": "warning",
-                          "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                          "tags": [
-                              "Operational excellence"
+                        "name": "tempdb-drive-size",
+                        "status": "under-provisioned",
+                        "recommended": "10%",
+                        "severity": "warning",
+                        "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
+                        "tags": [
+                          "Operational excellence"
+                        ],
+                        "missingPermissions": [],
+                        "current": "1%",
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
+                        "resourceType": "Drive",
+                        "sizingViolations": {
+                          "overProvisionedDrives": [],
+                          "underProvisionedDrives": [
+                            {
+                              "databases": ["tempDB"],
+                              "dataDriveTotalSizeMB": 9731000,
+                              "svmName": "wlmdb_sqlsvm_1731915150431",
+                              "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                              "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                              "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                              "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                              "tempdbAccessPath": "T:",
+                              "tempdbDriveTotalSizeMB": 42,
+                              "diskSerialNumber": "lWB4c$XRevT9",
+                              "sizePercentToDataDrive": 1
+                            }
                           ],
-                          "missingPermissions": [],
-                          "current": "",
-                          "totalObjectsAssessed": 1,
-                          "totalObjectsInViolation": 1,
-                          "resourceType": "Drive",
-                          "sizingViolations": {
-                              "overProvisionedDrives": [],
-                              "underProvisionedDrives": [],
-                              "ignoredDrives": [
-                                  {
-                                      "sizePercentToDataDrive": 0
-                                  }
-                              ]
-                          }
-                      },
+                          "ignoredDrives": []
+                        }
+                    },
                       {
                           "name": "headroom",
                           "status": "optimized",
@@ -2637,6 +2718,7 @@
                                       "ontapVolumeName": "wlmdb_sqllog_1769669439",
                                       "ontapVolumeUuid": "da4d2a15-fcde-11f0-b718-ad9684659b8c",
                                       "lunUuid": "48f76122-31fe-4fde-b962-67a3d1ef9a5f",
+                                      "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog",
                                       "diskSerialNumber": "lWB23]VAYB75",
                                       "sizePercentToDataDrive": 100
                                   },
@@ -2654,6 +2736,7 @@
                                       "ontapVolumeName": "feb25vol1",
                                       "ontapVolumeUuid": "435469ed-1161-11f1-b26d-9b3aeab3272f",
                                       "lunUuid": "168fcc6c-4cb0-46fc-b45b-49f98c2da6d5",
+                                      "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog",
                                       "diskSerialNumber": "lWB23]VAYBDW",
                                       "sizePercentToDataDrive": 100
                                   },

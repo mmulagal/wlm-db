@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import DataFilesOptimizeTable from './DataFilesOptimizeTable';
+import TempDbFilesOptimizeTable from './TempDbFilesOptimizeTable';
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
 
@@ -32,34 +32,57 @@ const mockLastColDetails = vi.fn(() => ({
     renderCell: () => <div>Action</div>
 }));
 
-describe('DataFilesOptimizeTable', () => {
+describe('TempDbFilesOptimizeTable', () => {
     const defaultProps = {
-        type: 'dataFiles',
+        type: 'tempDbFiles',
         data: {
-            objectsInViolation: ['db1', 'db2', 'db3']
+            objectsInViolation: ['tempdb']
         },
         lastColDetails: mockLastColDetails,
         isWad: false
     };
 
     it('renders table', () => {
-        render(<DataFilesOptimizeTable {...defaultProps} />);
+        render(<TempDbFilesOptimizeTable {...defaultProps} />);
         expect(screen.getByTestId('table')).toBeTruthy();
     });
 
-    it('renders table top bar', () => {
-        render(<DataFilesOptimizeTable {...defaultProps} />);
+    it('renders table top bar with i18n titles', () => {
+        render(<TempDbFilesOptimizeTable {...defaultProps} />);
         expect(screen.getByTestId('table-top-bar')).toBeTruthy();
         expect(screen.getByText('databases.well-architect.impacted-databases')).toBeTruthy();
+        expect(screen.getByText('databases.well-architect.impacted-database')).toBeTruthy();
     });
 
     it('renders with empty violations', () => {
-        render(<DataFilesOptimizeTable {...defaultProps} data={{ objectsInViolation: [] }} />);
+        render(<TempDbFilesOptimizeTable {...defaultProps} data={{ objectsInViolation: [] }} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('renders with violationDetails containing additionalInfo', () => {
+        const data = {
+            objectsInViolation: ['tempdb'],
+            violationDetails: [
+                {
+                    objectName: 'placement',
+                    value: 'tempdb',
+                    objectType: 'Database',
+                    additionalInfo: { lunPath: '/vol/tempdb/lun1', driveLetter: 'T:' }
+                },
+                {
+                    objectName: 'placement',
+                    value: 'tempdb',
+                    objectType: 'Database',
+                    additionalInfo: { lunPath: '/vol/tempdb/lun2', driveLetter: 'U:' }
+                }
+            ]
+        };
+        render(<TempDbFilesOptimizeTable {...defaultProps} data={data} />);
         expect(screen.getByTestId('table')).toBeTruthy();
     });
 
     it('renders with isWad true', () => {
-        render(<DataFilesOptimizeTable {...defaultProps} isWad />);
+        render(<TempDbFilesOptimizeTable {...defaultProps} isWad />);
         expect(screen.getByTestId('table')).toBeTruthy();
     });
 });

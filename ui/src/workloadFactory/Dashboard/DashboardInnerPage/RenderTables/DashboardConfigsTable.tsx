@@ -251,16 +251,31 @@ const CONFIG_MAPPING: Record<string, any> = {
         dataMapping: (obj: any) => ({
             percentDataDriveSize: obj?.current,
             totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation
+            totalObjectsInViolation: obj?.totalObjectsInViolation,
+            sizingViolations: obj?.sizingViolations || {},
+            configurationName: 'tempdb-drive-size'
         }),
         customColumns: [
             {
-                Header: 'databases.well-architect.dashboard-table-headers.percentage-of-data-drive-size',
-                accessor: 'percentDataDriveSize',
+                Header: 'databases.well-architect.dashboard-table-headers.impacted-drives',
+                accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    cellData || t('databases.general.not-available-table-columns')
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
+                ) => (
+                    <div className={CommonStyles.impactedDrivesCell}>
+                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
+                                {t('databases.dashboard.view')}
+                            </Button>
+                        )}
+                    </div>
+                )
             }
         ]
     },
@@ -273,9 +288,10 @@ const CONFIG_MAPPING: Record<string, any> = {
             totalObjectsAssessed: obj?.totalObjectsAssessed,
             totalObjectsInViolation: obj?.totalObjectsInViolation,
             objectsInViolation: obj?.objectsInViolation || [],
+            violationDetails: obj?.violationDetails || [],
             configurationName: 'data-files-location'
         }),
-        isFixSupported: false, // Fix is not supported for OS patch configurations
+        isFixSupported: false,
         customColumns: [
             {
                 Header: 'databases.well-architect.dashboard-table-headers.impacted-databases',
@@ -289,7 +305,8 @@ const CONFIG_MAPPING: Record<string, any> = {
                     handleImpactedResourceDialog: HandleImpactedResourceDialog
                 ) => (
                     <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {rowData?.totalObjectsInViolation || 0} {t('databases.general.out-of')}{' '}
+                        {rowData?.totalObjectsAssessed || 0}
                         {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
                             <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
                                 {t('databases.dashboard.view')}
@@ -309,9 +326,10 @@ const CONFIG_MAPPING: Record<string, any> = {
             totalObjectsAssessed: obj?.totalObjectsAssessed,
             totalObjectsInViolation: obj?.totalObjectsInViolation,
             objectsInViolation: obj?.objectsInViolation || [],
+            violationDetails: obj?.violationDetails || [],
             configurationName: 'log-files-location'
         }),
-        isFixSupported: false, // Fix is not supported for OS patch configurations
+        isFixSupported: false,
         customColumns: [
             {
                 Header: 'databases.well-architect.dashboard-table-headers.impacted-databases',
@@ -325,7 +343,8 @@ const CONFIG_MAPPING: Record<string, any> = {
                     handleImpactedResourceDialog: HandleImpactedResourceDialog
                 ) => (
                     <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {rowData?.totalObjectsInViolation || 0} {t('databases.general.out-of')}{' '}
+                        {rowData?.totalObjectsAssessed || 0}
                         {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
                             <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
                                 {t('databases.dashboard.view')}
@@ -343,17 +362,34 @@ const CONFIG_MAPPING: Record<string, any> = {
         dataMapping: (obj: any) => ({
             tempDBPlacement: obj?.current,
             totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation
+            totalObjectsInViolation: obj?.totalObjectsInViolation,
+            objectsInViolation: obj?.objectsInViolation || [],
+            violationDetails: obj?.violationDetails || [],
+            configurationName: 'tempdb-files-location'
         }),
-        isFixSupported: false, // Fix is not supported for OS patch configurations
+        isFixSupported: false,
         customColumns: [
             {
-                Header: 'databases.well-architect.dashboard-table-headers.tempdb-placement',
-                accessor: 'tempDBPlacement',
+                Header: 'databases.well-architect.dashboard-table-headers.impacted-databases',
+                accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    cellData || t('databases.general.not-available-table-columns')
+                renderCell: (
+                    cellData: string,
+                    rowData: ConfigTableRowData,
+                    t: TFunction,
+                    handleImpactedResourceDialog: HandleImpactedResourceDialog
+                ) => (
+                    <div className={CommonStyles.impactedDrivesCell}>
+                        {rowData?.totalObjectsInViolation || 0} {t('databases.general.out-of')}{' '}
+                        {rowData?.totalObjectsAssessed || 0}
+                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
+                                {t('databases.dashboard.view')}
+                            </Button>
+                        )}
+                    </div>
+                )
             }
         ]
     },

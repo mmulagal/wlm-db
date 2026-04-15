@@ -783,6 +783,7 @@
                             "ontapVolumeName": "wlmdb_sqllog_1731987160",
                             "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f",
                             "lunUuid": "74897647-0db1-4e4c-934a-8faa6cae7087",
+                            "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog",
                             "diskSerialNumber": "lWB4c$XRevT9",
                             "sizePercentToDataDrive": 50
                         }
@@ -798,6 +799,7 @@
                             "ontapVolumeName": "wlmdb_sqllog_1731988070",
                             "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f",
                             "lunUuid": "ce0cca99-e9fd-42af-9daa-50039625d44d",
+                            "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog",
                             "diskSerialNumber": "lWB4c$XRevTA",
                             "sizePercentToDataDrive": 30
                         },
@@ -811,6 +813,7 @@
                             "ontapVolumeName": "wlmdb_sqllog_1731987160",
                             "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f",
                             "lunUuid": "74897647-0db1-4e4c-934a-8faa6cae7087",
+                            "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog",
                             "diskSerialNumber": "lWB4c$XRevT9",
                             "sizePercentToDataDrive": 50
                         }
@@ -833,36 +836,37 @@
             },
             {
                 "name": "tempdb-drive-size",
-                "recommended": "10-20%",
-                "current": "5%",
-                "status": "over-provisioned",
+                "status": "under-provisioned",
+                "recommended": "10%",
                 "severity": "warning",
                 "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                "tags": ["Operational excellence"],
+                "tags": [
+                  "Operational excellence"
+                ],
+                "missingPermissions": [],
+                "current": "1%",
+                "totalObjectsAssessed": 1,
+                "totalObjectsInViolation": 1,
+                "resourceType": "Drive",
                 "sizingViolations": {
-                    "overProvisionedDrives": [
-                        {
-                            "databaseName": "hammer",
-                            "logDriveLetter": "F:",
-                            "dataDriveLetter": "E:",
-                            "logDrivePercent": 74.99420031501447,
-                            "logDriveTotalSizeMB": 61421,
-                            "dataDriveTotalSizeMB": 81901
-                        },
-                        {
-                            "databaseName": "Test",
-                            "logDriveLetter": "F:",
-                            "dataDriveLetter": "E:",
-                            "logDrivePercent": 74.99420031501447,
-                            "logDriveTotalSizeMB": 61421,
-                            "dataDriveTotalSizeMB": 81901
-                        }
-                    ],
-                    "underProvisionedDrives": [],
-                    "ignoredDrives": []
-                },
-                "missingPermissions": ["fsx:UpdateVolume"],
-                "resourceType": "Database"
+                  "overProvisionedDrives": [],
+                  "underProvisionedDrives": [
+                    {
+                      "databases": ["tempDB"],
+                      "dataDriveTotalSizeMB": 9731000,
+                      "svmName": "wlmdb_sqlsvm_1731915150431",
+                      "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                      "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                      "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                      "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                      "tempdbAccessPath": "T:",
+                      "tempdbDriveTotalSizeMB": 42,
+                      "diskSerialNumber": "lWB4c$XRevT9",
+                      "sizePercentToDataDrive": 1
+                    }
+                  ],
+                  "ignoredDrives": []
+                }
             },
             {
                 "name": "headroom",
@@ -885,7 +889,30 @@
                 "severity": "critical",
                 "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
                 "tags": ["Performance efficiency", "Operational excellence"],
-                "resourceType": "Database"
+                "resourceType": "Database",
+                "totalObjectsAssessed": 2,
+                "totalObjectsInViolation": 1,
+                "objectsInViolation": ["tempdb"],
+                "violationDetails": [
+                    {
+                        "objectName": "placement",
+                        "value": "tempdb",
+                        "objectType": "Database",
+                        "additionalInfo": {
+                            "lunPath": "/vol/wlmdb_sqltempdb_1750140716368/sqltempdb",
+                            "driveLetter": "T:"
+                        }
+                    },
+                    {
+                        "objectName": "placement",
+                        "value": "tempdb",
+                        "objectType": "Database",
+                        "additionalInfo": {
+                            "lunPath": "/vol/wlmdb_sqltempdb_1750140716368/sqltempdb1",
+                            "driveLetter": "U:"
+                        }
+                    }
+                ]
             },
             {
                 "name": "log-files-location",
@@ -896,9 +923,29 @@
                 "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                 "tags": ["Performance efficiency", "Operational excellence"],
                 "resourceType": "Database",
-                "totalObjectsAssessed": 10,
-                "totalObjectsInViolation": 5,
-                "objectsInViolation": ["msdb"]
+                "totalObjectsAssessed": 2,
+                "totalObjectsInViolation": 1,
+                "objectsInViolation": ["msdb"],
+                "violationDetails": [
+                    {
+                        "objectName": "placement",
+                        "value": "msdb",
+                        "objectType": "Database",
+                        "additionalInfo": {
+                            "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog",
+                            "driveLetter": "L:"
+                        }
+                    },
+                    {
+                        "objectName": "placement",
+                        "value": "msdb",
+                        "objectType": "Database",
+                        "additionalInfo": {
+                            "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog1",
+                            "driveLetter": "E:"
+                        }
+                    }
+                ]
             },
             {
                 "name": "data-files-location",
@@ -909,9 +956,29 @@
                 "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                 "tags": ["Performance efficiency", "Operational excellence"],
                 "resourceType": "Database",
-                "totalObjectsAssessed": 10,
-                "totalObjectsInViolation": 5,
-                "objectsInViolation": ["msdb"]
+                "totalObjectsAssessed": 2,
+                "totalObjectsInViolation": 1,
+                "objectsInViolation": ["RetailBanking"],
+                "violationDetails": [
+                    {
+                      "objectName": "placement",
+                      "value": "RetailBanking",
+                      "objectType": "Database",
+                      "additionalInfo": {
+                        "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
+                        "driveLetter": "S:"
+                      }
+                    },
+                    {
+                        "objectName": "placement",
+                        "value": "RetailBanking",
+                        "objectType": "Database",
+                        "additionalInfo": {
+                          "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
+                          "driveLetter": "D:"
+                        }
+                    }
+                ]
             }
         ]
     },

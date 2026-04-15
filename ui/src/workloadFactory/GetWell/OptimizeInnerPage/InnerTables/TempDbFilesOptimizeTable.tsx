@@ -6,7 +6,7 @@ import styles from './InnerTable.module.scss';
 
 import { getWadCellProps } from '../../GetWellUtils';
 
-const LogFilesOptimizeTable = ({ type, data, lastColDetails, isWad = false }: any) => {
+const TempDbFilesOptimizeTable = ({ type, data, lastColDetails, isWad = false }: any) => {
     const { t } = useTranslation();
     const na = t('databases.general.not-available-table-columns');
     const hasViolationDetails = data?.violationDetails?.some((d: any) => d.additionalInfo);
@@ -124,4 +124,4 @@ const LogFilesOptimizeTable = ({ type, data, lastColDetails, isWad = false }: an
     );
 };
 
-export default LogFilesOptimizeTable;
+export default TempDbFilesOptimizeTable;

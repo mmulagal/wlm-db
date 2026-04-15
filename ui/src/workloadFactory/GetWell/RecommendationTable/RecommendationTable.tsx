@@ -1297,7 +1297,7 @@ const RecommendationTable = ({
                                     ) : GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
                                       rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
                                         <TooltipComponent
-                                            title={t('databases.general.coming-soon')}
+                                            title={t('databases.well-architect.fix-disabled')}
                                             placement="bottom"
                                             width="120px"
                                             height="30px"

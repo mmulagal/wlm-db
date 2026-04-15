@@ -12,6 +12,10 @@ interface ViolationDetail {
     recommendedValue?: string;
     nfsMount?: string;
     dataCategory?: string;
+    additionalInfo?: {
+        lunPath?: string;
+        driveLetter?: string;
+    };
 }
 
 interface ViolationVolume {
@@ -26,6 +30,8 @@ type ObjectInViolation = string | ViolationVolume;
 
 interface SizingDrive {
     logAccessPath?: string;
+    tempdbAccessPath?: string;
+    lunPath?: string;
     databases?: string[];
     sizePercentToDataDrive?: number;
     ontapVolumeName?: string;
@@ -113,14 +119,19 @@ const mapObjectsToVolumeName = (objects: ObjectInViolation[], na: string): Impac
  * - RecommendationTable passes display names matching ASSESSMENT_CONFIG_NAMES values.
  * Both formats are handled here.
  */
-const getMssqlImpactedResources = (configName: string, data: AssessmentData, na: string): ImpactedResourcesResult => {
+const getMssqlImpactedResources = (
+    configName: string,
+    data: AssessmentData,
+    na: string,
+    t: (key: string) => string
+): ImpactedResourcesResult => {
     const details: ViolationDetail[] = data?.violationDetails || [];
     const objects: ObjectInViolation[] = data?.objectsInViolation || [];
     const sizing: SizingViolations = data?.sizingViolations || {};
 
     switch (configName) {
         case 'performance-tier': {
-            const columns = ['Volume name', 'SSD storage tier'];
+            const columns = [t('databases.well-architect.volume-name'), t('databases.well-architect.ssd-storage-tier')];
             const rows = details.map(detail => [
                 detail?.objectName || na,
                 detail?.value != null ? `${detail.value}%` : na
@@ -129,25 +140,82 @@ const getMssqlImpactedResources = (configName: string, data: AssessmentData, na:
         }
 
         case 'log-drive-size': {
-            const columns = ['Drive name', 'Databases', 'Status', 'Log drive size percentage'];
+            const columns = [
+                t('databases.well-architect.drive-name'),
+                t('databases.well-architect.lun-path'),
+                t('databases.well-architect.databases'),
+                t('databases.well-architect.status'),
+                t('databases.well-architect.log-drive-size-percentage')
+            ];
             const overDrives = (sizing?.overProvisionedDrives || []).map((drive: SizingDrive) => [
                 drive?.logAccessPath || na,
+                drive?.lunPath || na,
                 (drive?.databases || []).join(', ') || na,
-                'Over provisioned',
+                t('databases.well-architect.over-provisioned'),
                 drive?.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : na
             ]);
             const underDrives = (sizing?.underProvisionedDrives || []).map((drive: SizingDrive) => [
                 drive?.logAccessPath || na,
+                drive?.lunPath || na,
                 (drive?.databases || []).join(', ') || na,
-                'Under provisioned',
+                t('databases.well-architect.under-provisioned'),
+                drive?.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : na
+            ]);
+            return ensureRows(columns, [...overDrives, ...underDrives], na);
+        }
+
+        case 'tempdb-drive-size': {
+            const columns = [
+                t('databases.well-architect.drive-name'),
+                t('databases.well-architect.lun-path'),
+                t('databases.well-architect.databases'),
+                t('databases.well-architect.status'),
+                t('databases.well-architect.tempdb-drive-size-percentage')
+            ];
+            const overDrives = (sizing?.overProvisionedDrives || []).map((drive: SizingDrive) => [
+                drive?.tempdbAccessPath || na,
+                drive?.lunPath || na,
+                (drive?.databases || []).join(', ') || na,
+                t('databases.well-architect.over-provisioned'),
+                drive?.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : na
+            ]);
+            const underDrives = (sizing?.underProvisionedDrives || []).map((drive: SizingDrive) => [
+                drive?.tempdbAccessPath || na,
+                drive?.lunPath || na,
+                (drive?.databases || []).join(', ') || na,
+                t('databases.well-architect.under-provisioned'),
                 drive?.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : na
             ]);
             return ensureRows(columns, [...overDrives, ...underDrives], na);
         }
 
         case 'data-files-location':
-        case 'log-files-location': {
-            const columns = ['Database name'];
+        case 'log-files-location':
+        case 'tempdb-files-location': {
+            if (details.length > 0 && details.some(d => d.additionalInfo)) {
+                const columns = [
+                    t('databases.well-architect.database-name'),
+                    t('databases.well-architect.drive'),
+                    t('databases.well-architect.lun-path')
+                ];
+                const grouped = new Map<string, { drives: string[]; lunPaths: string[] }>();
+                for (const detail of details) {
+                    const dbName = String(detail?.value ?? na);
+                    if (!grouped.has(dbName)) {
+                        grouped.set(dbName, { drives: [], lunPaths: [] });
+                    }
+                    const entry = grouped.get(dbName)!;
+                    if (detail?.additionalInfo?.driveLetter) entry.drives.push(detail.additionalInfo.driveLetter);
+                    if (detail?.additionalInfo?.lunPath) entry.lunPaths.push(detail.additionalInfo.lunPath);
+                }
+                const rows = Array.from(grouped.entries()).map(([dbName, { drives, lunPaths }]) => [
+                    dbName,
+                    drives.length > 0 ? drives.join('\n') : na,
+                    lunPaths.length > 0 ? lunPaths.join('\n') : na
+                ]);
+                return ensureRows(columns, rows, na);
+            }
+            const columns = [t('databases.well-architect.database-name')];
             const rows = objects.map((item: ObjectInViolation) => [
                 typeof item === 'string' ? item : item?.databaseName || na
             ]);
@@ -160,7 +228,7 @@ const getMssqlImpactedResources = (configName: string, data: AssessmentData, na:
             return mapObjectsToVolumeName(objects, na);
 
         case ASSESSMENT_CONFIG_NAMES.OS_TYPE: {
-            const columns = ['LUN name', 'OS type'];
+            const columns = [t('databases.well-architect.lun-name'), t('databases.well-architect.os-type')];
             const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
             return ensureRows(columns, rows, na);
         }
@@ -170,16 +238,16 @@ const getMssqlImpactedResources = (configName: string, data: AssessmentData, na:
         case ASSESSMENT_CONFIG_NAMES.FRACTIONAL_RESERVE:
         case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_AUTODELETE:
         case ASSESSMENT_CONFIG_NAMES.SPACE_MANAGEMENT:
-            return mapDetailsToSingleCol(details, objects, 'Volume name', na);
+            return mapDetailsToSingleCol(details, objects, t('databases.well-architect.volume-name'), na);
 
         case ASSESSMENT_CONFIG_NAMES.AUTOSIZE_MODE: {
-            const columns = ['Volume name', ASSESSMENT_CONFIG_NAMES.AUTOSIZE_MODE];
+            const columns = [t('databases.well-architect.volume-name'), ASSESSMENT_CONFIG_NAMES.AUTOSIZE_MODE];
             const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
             return ensureRows(columns, rows, na);
         }
 
         case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE: {
-            const columns = ['Volume name', ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE];
+            const columns = [t('databases.well-architect.volume-name'), ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE];
             const rows = details.map(detail => [
                 detail?.objectName || na,
                 detail?.value != null ? `${detail.value}%` : na
@@ -188,48 +256,59 @@ const getMssqlImpactedResources = (configName: string, data: AssessmentData, na:
         }
 
         case ASSESSMENT_CONFIG_NAMES.TIERING_POLICY: {
-            const columns = ['Volume name', ASSESSMENT_CONFIG_NAMES.TIERING_POLICY];
+            const columns = [t('databases.well-architect.volume-name'), ASSESSMENT_CONFIG_NAMES.TIERING_POLICY];
             const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
             return ensureRows(columns, rows, na);
         }
 
         case ASSESSMENT_CONFIG_NAMES.TIERING_MINIMUM_COOLING_DAYS: {
-            const columns = ['Volume name', ASSESSMENT_CONFIG_NAMES.TIERING_MINIMUM_COOLING_DAYS];
+            const columns = [
+                t('databases.well-architect.volume-name'),
+                ASSESSMENT_CONFIG_NAMES.TIERING_MINIMUM_COOLING_DAYS
+            ];
             const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
             return ensureRows(columns, rows, na);
         }
 
         case ASSESSMENT_CONFIG_NAMES.SPACE_RESERVATION:
         case ASSESSMENT_CONFIG_NAMES.SPACE_ALLOCATION:
-            return mapDetailsToSingleCol(details, objects, 'LUN name', na);
+            return mapDetailsToSingleCol(details, objects, t('databases.well-architect.lun-name'), na);
 
         case ASSESSMENT_CONFIG_NAMES.NTFS_ALLOCATION_UNIT_SIZE: {
-            const columns = ['Drive name', ASSESSMENT_CONFIG_NAMES.NTFS_ALLOCATION_UNIT_SIZE];
+            const columns = [
+                t('databases.well-architect.drive-name'),
+                ASSESSMENT_CONFIG_NAMES.NTFS_ALLOCATION_UNIT_SIZE
+            ];
             const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
             return ensureRows(columns, rows, na);
         }
 
         case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_POLICY: {
-            const columns = ['Drive name', 'Policy'];
+            const columns = [t('databases.well-architect.drive-name'), t('databases.well-architect.policy')];
             const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
             return ensureRows(columns, rows, na);
         }
 
         case ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER: {
-            const columns = ['LUN name'];
+            const columns = [t('databases.well-architect.lun-name')];
             const rows = details.map(detail => [detail?.objectName || na]);
             return ensureRows(columns, rows, na);
         }
 
         case ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE: {
-            const columns = ['LUN name'];
+            const columns = [t('databases.well-architect.lun-name')];
             const rows = objects.map((item: ObjectInViolation) => [typeof item === 'string' ? item : na]);
             return ensureRows(columns, rows, na);
         }
 
         case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
         case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH: {
-            const columns = ['KB', 'Name', 'Classification', 'Severity'];
+            const columns = [
+                t('databases.well-architect.kb-id'),
+                t('databases.well-architect.name'),
+                t('databases.well-architect.classification'),
+                t('databases.well-architect.severity')
+            ];
             const rows: string[][] = [];
             data?.missingPatchList?.forEach(instance => {
                 (instance as PatchInstance)?.missingPatchDetails?.forEach(patch => {
@@ -394,7 +473,7 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
 
     const { columns, rows } =
         configEngineType === DBType.MSSQL
-            ? getMssqlImpactedResources(configName || '', data, na)
+            ? getMssqlImpactedResources(configName || '', data, na, t)
             : getOracleImpactedResources(configName || '', data, na);
 
     if (columns.length === 0) {
@@ -402,35 +481,62 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
     }
 
     const colCount = columns.length;
-    const colStyle: React.CSSProperties = {
-        minWidth: colCount === 1 ? '500px' : '180px'
+
+    const COL_WIDTH_MAP: Record<string, React.CSSProperties> = {
+        [t('databases.well-architect.drive')]: { flex: '0 0 80px', maxWidth: '80px' },
+        [t('databases.well-architect.drive-name')]: { flex: '0 0 120px', maxWidth: '120px' },
+        [t('databases.well-architect.lun-path')]: { flex: '2 1 0', maxWidth: 'none' }
     };
+    const defaultColStyle: React.CSSProperties = {
+        minWidth: colCount === 1 ? '500px' : '140px'
+    };
+    const getColStyle = (colName: string): React.CSSProperties => ({
+        ...defaultColStyle,
+        ...COL_WIDTH_MAP[colName]
+    });
 
     return (
         <div className={styles.tableWrapper}>
             <div className={styles.tableRow}>
                 {columns.map(name => (
-                    <DsTypography key={name} variant="Semibold_14" className={styles.tableCell} style={colStyle}>
+                    <DsTypography
+                        key={name}
+                        variant="Semibold_14"
+                        className={styles.tableCell}
+                        style={getColStyle(name)}
+                    >
                         {name}
                     </DsTypography>
                 ))}
             </div>
             <div className={styles.tableBody}>
-                {rows.map((row, rowIdx) => (
-                    <div key={rowIdx} className={styles.tableRow}>
-                        {row.map((value, colIdx) => (
-                            <DsTypography
-                                key={colIdx}
-                                variant="Regular_14"
-                                className={styles.tableCell}
-                                style={colStyle}
-                                title={value}
-                            >
-                                {value}
-                            </DsTypography>
-                        ))}
-                    </div>
-                ))}
+                {rows.map((row, rowIdx) => {
+                    const isMultiLine = row.some(v => v.includes('\n'));
+                    return (
+                        <div key={rowIdx} className={`${styles.tableRow} ${isMultiLine ? styles.multiLineRow : ''}`}>
+                            {row.map((value, colIdx) => {
+                                const hasNewlines = value.includes('\n');
+                                return (
+                                    <DsTypography
+                                        key={colIdx}
+                                        variant="Regular_14"
+                                        className={`${styles.tableCell} ${hasNewlines ? styles.multiLineCell : ''}`}
+                                        style={getColStyle(columns[colIdx])}
+                                        title={value}
+                                    >
+                                        {hasNewlines
+                                            ? value.split('\n').map((line, i) => (
+                                                  <div key={i} className={styles.multiLineCellItem} title={line}>
+                                                      {line}
+                                                  </div>
+                                              ))
+                                            : value}
+                                    </DsTypography>
+                                );
+                            })}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

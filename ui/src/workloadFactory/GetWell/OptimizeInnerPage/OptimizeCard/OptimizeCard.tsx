@@ -1,5 +1,6 @@
 import { DsTypography } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../../store/storeHooks';
 import styles from './OptimizeCard.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -7,6 +8,7 @@ import { WLF_TABS, ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 import RecommendationText from '../../RecommendationText/RecommendationText';
 
 const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
+    const { t } = useTranslation();
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
     const { cloneDashboardData } = useAppSelector(state => state.getWellOptimize);
     const [setCardData, setSetCardData] = useState<any>({});
@@ -154,7 +156,8 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                     block_three: { type: 'Tags', value: data.tags },
                     recommendationText: { type: 'View recommendation', value: data?.recommendationText }
                 };
-            case 'Log drive size':
+            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
                 return {
                     block_one: { type: 'Impacted drives', value: data.impactedCount || '0' },
                     block_two: { type: 'Severity', value: data.severity || 'Warning' },
@@ -167,23 +170,44 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                     },
                     data: data?.recommendation
                 };
-            case 'Data files':
             case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 return {
-                    block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation?.description },
+                    block_one: {
+                        type: t('databases.well-architect.impacted-databases'),
+                        value: data.impactedCount || '0'
+                    },
+                    block_two: { type: t('databases.well-architect.severity'), value: data.severity || 'Warning' },
+                    block_three: { type: t('databases.well-architect.tags.title'), value: data.tags },
+                    recommendationText: {
+                        type: t('databases.well-architect.view-recommendation'),
+                        value: data?.recommendation?.description
+                    },
                     data: data?.recommendation
                 };
-            case 'Log files':
             case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 return {
-                    block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
+                    block_one: {
+                        type: t('databases.well-architect.impacted-databases'),
+                        value: data.impactedCount || '0'
+                    },
+                    block_two: { type: t('databases.well-architect.severity'), value: data.severity || 'Warning' },
+                    block_three: { type: t('databases.well-architect.tags.title'), value: data.tags },
                     recommendationText: {
-                        type: 'View recommendation',
+                        type: t('databases.well-architect.view-recommendation'),
+                        value: data?.recommendation?.description
+                    },
+                    data: data?.recommendation
+                };
+            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
+                return {
+                    block_one: {
+                        type: t('databases.well-architect.impacted-databases'),
+                        value: data.impactedCount || '0'
+                    },
+                    block_two: { type: t('databases.well-architect.severity'), value: data.severity || 'Warning' },
+                    block_three: { type: t('databases.well-architect.tags.title'), value: data.tags },
+                    recommendationText: {
+                        type: t('databases.well-architect.view-recommendation'),
                         value: data?.recommendation?.description
                     },
                     data: data?.recommendation

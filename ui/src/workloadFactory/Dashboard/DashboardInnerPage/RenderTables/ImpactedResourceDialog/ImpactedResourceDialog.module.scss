@@ -9,6 +9,11 @@
         height: 56px;
     }
 
+    .multiLineRow {
+        height: auto;
+        min-height: 56px;
+    }
+
     .tableCell {
         flex: 1;
         min-width: 0;
@@ -16,6 +21,22 @@
         border-bottom: 1px solid var(--border);
         padding: 0 8px;
         line-height: 56px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .multiLineCell {
+        white-space: normal;
+        line-height: 24px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .multiLineCellItem {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;

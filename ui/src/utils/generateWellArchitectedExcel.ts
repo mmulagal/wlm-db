@@ -319,11 +319,10 @@ const SINGLE_COLUMN_CONFIGS = [
     'space-mgmt-try-first',
     'space-reservation-enabled',
     'space-allocation-allocated',
-    'shared-storage',
-    'tempdb-files-location',
-    'data-files-location',
-    'log-files-location'
+    'shared-storage'
 ];
+
+const FILE_LOCATION_CONFIGS = ['tempdb-files-location', 'data-files-location', 'log-files-location'];
 
 const getAllItems = (data: ComprehensiveAssessmentData): AssessmentItem[] => {
     const allItems: AssessmentItem[] = [];
@@ -783,7 +782,13 @@ const createRSSConfigData = (config: AssessmentItem, details: any[]) => {
     }
 };
 
-const createDriveSizeData = (config: AssessmentItem, details: any[], columns: any, isLogDrive = false) => {
+const createDriveSizeData = (
+    config: AssessmentItem,
+    details: any[],
+    columns: any,
+    isLogDrive = false,
+    isTempDbDrive = false
+) => {
     if (!config.sizingViolations) return;
 
     details.push({}, {});
@@ -805,8 +810,17 @@ const createDriveSizeData = (config: AssessmentItem, details: any[], columns: an
             if (isLogDrive) {
                 dataObj.Databases = (drive.databases || []).join(', ');
                 dataObj['Drive name'] = drive.logAccessPath || '';
+                dataObj['LUN path'] = drive.lunPath || '';
                 dataObj['Data Drive Total Size MB'] = drive.dataDriveTotalSizeMB?.toString() || '';
                 dataObj['Log Drive Total Size MB'] = drive.logDriveTotalSizeMB?.toString() || '';
+                dataObj['ONTAP Volume Name'] = drive.ontapVolumeName || '';
+                dataObj['Size Percent To Data Drive'] = drive.sizePercentToDataDrive?.toString() || '';
+            } else if (isTempDbDrive) {
+                dataObj.Databases = (drive.databases || []).join(', ');
+                dataObj['Drive name'] = drive.tempdbAccessPath || '';
+                dataObj['LUN path'] = drive.lunPath || '';
+                dataObj['Data Drive Total Size MB'] = drive.dataDriveTotalSizeMB?.toString() || '';
+                dataObj['TempDB Drive Total Size MB'] = drive.tempdbDriveTotalSizeMB?.toString() || '';
                 dataObj['ONTAP Volume Name'] = drive.ontapVolumeName || '';
                 dataObj['Size Percent To Data Drive'] = drive.sizePercentToDataDrive?.toString() || '';
             } else {
@@ -1056,6 +1070,46 @@ const createObjectsInViolationData = (config: AssessmentItem, details: any[], he
     });
 };
 
+const createFileLocationData = (config: AssessmentItem, details: any[]) => {
+    const hasViolationDetails = config.violationDetails?.some((d: any) => d.additionalInfo);
+
+    if (hasViolationDetails) {
+        details.push({}, {});
+        details.push({
+            'Configuration name': 'Impacted resources',
+            Status: '',
+            Severity: ''
+        });
+
+        details.push({
+            'Configuration name': 'Database name',
+            Status: 'Drive',
+            Severity: 'LUN path'
+        });
+
+        const grouped = new Map<string, { drives: string[]; lunPaths: string[] }>();
+        for (const detail of config.violationDetails!) {
+            const dbName = String(detail?.value ?? '');
+            if (!grouped.has(dbName)) {
+                grouped.set(dbName, { drives: [], lunPaths: [] });
+            }
+            const entry = grouped.get(dbName)!;
+            if (detail?.additionalInfo?.driveLetter) entry.drives.push(detail.additionalInfo.driveLetter);
+            if (detail?.additionalInfo?.lunPath) entry.lunPaths.push(detail.additionalInfo.lunPath);
+        }
+
+        grouped.forEach(({ drives, lunPaths }, dbName) => {
+            details.push({
+                'Configuration name': dbName,
+                Status: drives.join('\n'),
+                Severity: lunPaths.join('\n')
+            });
+        });
+    } else if (config.objectsInViolation?.length) {
+        createObjectsInViolationData(config, details, 'Databases');
+    }
+};
+
 function generateDetailedConfigurationData(
     data: ComprehensiveAssessmentData,
     configName: string,
@@ -1104,6 +1158,7 @@ function generateDetailedConfigurationData(
                 {
                     Databases: 'Databases',
                     'Drive name': 'Drive name',
+                    'LUN path': 'LUN path',
                     'Data Drive Total Size MB': 'Data Drive Total Size MB',
                     'Log Drive Total Size MB': 'Log Drive Total Size MB',
                     'ONTAP Volume Name': 'ONTAP Volume Name',
@@ -1113,18 +1168,28 @@ function generateDetailedConfigurationData(
                 true
             ),
         'tempdb-drive-size': () =>
-            createDriveSizeData(config, details, {
-                'ONTAP Volume Name': 'ONTAP Volume Name',
-                'Data Drive Total Size MB': 'Data Drive Total Size MB',
-                'Size Percent To Data Drive': 'Size Percent To Data Drive',
-                'Violation Type': 'Violation Type'
-            }),
+            createDriveSizeData(
+                config,
+                details,
+                {
+                    Databases: 'Databases',
+                    'Drive name': 'Drive name',
+                    'LUN path': 'LUN path',
+                    'Data Drive Total Size MB': 'Data Drive Total Size MB',
+                    'TempDB Drive Total Size MB': 'TempDB Drive Total Size MB',
+                    'ONTAP Volume Name': 'ONTAP Volume Name',
+                    'Size Percent To Data Drive': 'Size Percent To Data Drive',
+                    'Violation Type': 'Violation Type'
+                },
+                false,
+                true
+            ),
         'compute-rightsizing': () => createComputeRightsizingData(config, details),
         'clone-management': () => createCloneManagementData(config, details),
         'shared-storage': () => createObjectsInViolationData(config, details, 'LUN Names'),
-        'tempdb-files-location': () => createObjectsInViolationData(config, details, 'Databases'),
-        'data-files-location': () => createObjectsInViolationData(config, details, 'Databases'),
-        'log-files-location': () => createObjectsInViolationData(config, details, 'Databases'),
+        'tempdb-files-location': () => createFileLocationData(config, details),
+        'data-files-location': () => createFileLocationData(config, details),
+        'log-files-location': () => createFileLocationData(config, details),
         crr: () => createObjectsInViolationData(config, details, 'Volume Names')
     };
 
@@ -1768,6 +1833,20 @@ const applySpecialConfigurationStyling = (
         styleDataRows(worksheet, filterHeaderRowIndex + 1, violationTableEndRow, 1, 1);
         styleImpactedResourcesHeader(worksheet, impactedResourcesRowIndex, 1);
         styleFilterHeaders(worksheet, filterHeaderRowIndex, 1);
+    } else if (FILE_LOCATION_CONFIGS.includes(configName)) {
+        const hasMultipleColumns = configDetails[4] && configDetails[4].Status && configDetails[4].Status === 'Drive';
+        if (hasMultipleColumns) {
+            worksheet.mergeCells(`A${impactedResourcesRowIndex}:C${impactedResourcesRowIndex}`);
+            styleTableBorders(worksheet, impactedResourcesRowIndex, violationTableEndRow, 1, 3);
+            styleDataRows(worksheet, filterHeaderRowIndex + 1, violationTableEndRow, 1, 3);
+            styleImpactedResourcesHeader(worksheet, impactedResourcesRowIndex, 3);
+            styleFilterHeaders(worksheet, filterHeaderRowIndex, 3);
+        } else {
+            styleTableBorders(worksheet, impactedResourcesRowIndex, violationTableEndRow, 1, 1);
+            styleDataRows(worksheet, filterHeaderRowIndex + 1, violationTableEndRow, 1, 1);
+            styleImpactedResourcesHeader(worksheet, impactedResourcesRowIndex, 1);
+            styleFilterHeaders(worksheet, filterHeaderRowIndex, 1);
+        }
     } else {
         // Handle special multi-column configurations
         const specialConfigs = {
@@ -1777,8 +1856,8 @@ const applySpecialConfigurationStyling = (
             'oracle-security-patch': 4,
             'sql-license': 6,
             'rss-config': 2,
-            'log-drive-size': 7,
-            'tempdb-drive-size': 4
+            'log-drive-size': 8,
+            'tempdb-drive-size': 8
         };
 
         const columnCount = specialConfigs[configName as keyof typeof specialConfigs];
@@ -1786,8 +1865,7 @@ const applySpecialConfigurationStyling = (
             const columnLetter = String.fromCharCode(64 + columnCount);
             worksheet.mergeCells(`A${impactedResourcesRowIndex}:${columnLetter}${impactedResourcesRowIndex}`);
 
-            if (configName === 'log-drive-size') {
-                // Special handling for log-drive-size
+            if (configName === 'log-drive-size' || configName === 'tempdb-drive-size') {
                 styleTableBorders(worksheet, impactedResourcesRowIndex, violationTableEndRow, 1, columnCount);
                 styleImpactedResourcesHeader(worksheet, impactedResourcesRowIndex, columnCount);
                 styleFilterHeaders(worksheet, filterHeaderRowIndex, columnCount);
@@ -1869,8 +1947,8 @@ const addConfigurationAutoFilter = (
         'cluster-quorum': { range: 'B', condition: 'Configuration Name' },
         'drive-letter': { range: 'B', condition: 'Configuration Name' },
         'backup-configuration': { range: 'B', condition: 'ONTAP Volume Name' },
-        'log-drive-size': { range: 'G', condition: 'Databases' },
-        'tempdb-drive-size': { range: 'D', condition: 'ONTAP Volume Name' }
+        'log-drive-size': { range: 'H', condition: 'Databases' },
+        'tempdb-drive-size': { range: 'H', condition: 'Databases' }
     };
 
     const config = autoFilterConfigs[configName as keyof typeof autoFilterConfigs];
@@ -1894,8 +1972,29 @@ const addConfigurationAutoFilter = (
         }
     }
 
+    // File location configs (tempdb/data/log files placement)
+    if (FILE_LOCATION_CONFIGS.includes(configName)) {
+        const hasMultipleColumns = configDetails[4] && configDetails[4].Status && configDetails[4].Status === 'Drive';
+        if (hasMultipleColumns) {
+            worksheet.autoFilter = {
+                from: `A${filterHeaderRowIndex}`,
+                to: `C${dataEndRow}`
+            };
+        } else {
+            worksheet.autoFilter = {
+                from: `A${filterHeaderRowIndex}`,
+                to: `A${dataEndRow}`
+            };
+        }
+    }
+
     // Fallback: auto-filter for unknown configurations with violation details (treat as two-column)
-    const allKnownConfigs = [...TWO_COLUMN_CONFIGS, ...SINGLE_COLUMN_CONFIGS, ...MULTI_TABLE_CONFIGS];
+    const allKnownConfigs = [
+        ...TWO_COLUMN_CONFIGS,
+        ...SINGLE_COLUMN_CONFIGS,
+        ...FILE_LOCATION_CONFIGS,
+        ...MULTI_TABLE_CONFIGS
+    ];
     if (
         !allKnownConfigs.includes(configName) &&
         configDetails[4] &&
@@ -2028,7 +2127,12 @@ async function generateProperXlsxWorkbook(
             }
         }
 
-        const allSpecialConfigs = [...TWO_COLUMN_CONFIGS, ...SINGLE_COLUMN_CONFIGS, ...MULTI_TABLE_CONFIGS];
+        const allSpecialConfigs = [
+            ...TWO_COLUMN_CONFIGS,
+            ...SINGLE_COLUMN_CONFIGS,
+            ...FILE_LOCATION_CONFIGS,
+            ...MULTI_TABLE_CONFIGS
+        ];
 
         // Check if configuration has impacted resources (either known config or unknown with violation details)
         const hasImpactedResources = allSpecialConfigs.includes(internalName) || impactedResourcesStartRow > 0;

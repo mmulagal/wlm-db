@@ -37,7 +37,6 @@ describe('LogFilesOptimizeTable', () => {
         type: 'logFiles',
         data: { objectsInViolation: ['db1', 'db2'] },
         lastColDetails: mockLastColDetails,
-        handleBulkAction: vi.fn(),
         isWad: false
     };
 

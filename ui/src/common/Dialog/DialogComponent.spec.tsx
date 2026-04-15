@@ -80,6 +80,7 @@ let mockState = {
         sqlServerUserName: '',
         passwordResetLoading: false
     },
+    crrRedirection: { associateLinkLoading: false, crrPrefetchLoading: false },
     snapCenter: { credentials: { username: '', password: '' }, authVerification: false },
     exploreSavingsBulk: {
         bulkAuthCredentials: {},
@@ -126,7 +127,8 @@ vi.mock('../../utils/consts', () => ({
         OPTIMIZE: 'optimize',
         SANDBOX_REFRESH: 'sandbox_refresh',
         LOADER: 'loader',
-        CUSTOM_TIMEFRAME: 'custom_timeframe'
+        CUSTOM_TIMEFRAME: 'custom_timeframe',
+        CRR_REDIRECTION: 'crrRedirection'
     }
 }));
 

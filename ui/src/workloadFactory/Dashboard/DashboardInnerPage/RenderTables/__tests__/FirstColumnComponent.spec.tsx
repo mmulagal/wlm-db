@@ -27,6 +27,16 @@ vi.mock('./RenderTables.module.scss', () => ({
     }
 }));
 
+vi.mock('../../../../../common/InventoryStatusIndicator/InventoryStatusIndicator', () => ({
+    default: ({ status, loading }: any) => {
+        if (loading) return <div data-testid="flashing-dots-loader" />;
+        if (status === 'Up' || status === 'Running') return <span>Online</span>;
+        if (status === 'Stopped' || status === 'Down') return <span>Offline</span>;
+        if (status === 'UNKNOWN') return <span>UNKNOWN</span>;
+        return <span>Unknown</span>;
+    }
+}));
+
 describe('FirstColumnComponent', () => {
     it('renders server instance name', () => {
         const rowData = { serverInstanceName: 'MyServer', status: 'Up' };

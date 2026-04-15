@@ -228,7 +228,8 @@ vi.mock('../../../GetWell/GetWellUtils', () => ({
 vi.mock('../../../DatabaseHomePage/DatabaseHomeUtils', () => ({
     categorizeStateInstances: vi.fn(() => ({ successList: [], failedList: [] })),
     getAssessmentGroupedByConfigurations: vi.fn(() => ({})),
-    mapHostStatusToAssessmentData: vi.fn((_inv, data) => data)
+    mapHostStatusToAssessmentData: vi.fn((_inv, data) => data),
+    shouldSkipDatabaseHost: vi.fn(() => false)
 }));
 
 vi.mock('../../../InventoryV2/InventoryUtilsV2', () => ({

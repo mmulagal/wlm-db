@@ -201,7 +201,8 @@ vi.mock('../../../../../utils/utilityFunctions', () => ({
 
 vi.mock('../../../../DatabaseHomePage/DatabaseHomeUtils', () => ({
     filterDatabaseRowsForNonAsm: vi.fn(() => true),
-    mapHostStatusToAssessmentData: vi.fn((_, data) => data)
+    mapHostStatusToAssessmentData: vi.fn((_, data) => data),
+    shouldSkipDatabaseHost: vi.fn(() => false)
 }));
 
 vi.mock('../../../../GetWell/GetWellUtils', () => ({
@@ -453,8 +454,8 @@ describe('DashboardConfigsTable', () => {
         'File system headroom',
         'Log drive size',
         'TempDB drive size',
-        'Data files (.mdf)',
-        'Log files (.ldf)',
+        'Data files (.mdf) placement',
+        'Log files (.ldf) placement',
         'TempDB placement',
         'Compute rightsizing',
         'Operating system patch',

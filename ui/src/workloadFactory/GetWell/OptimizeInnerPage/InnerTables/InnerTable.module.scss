@@ -128,6 +128,12 @@
         }
     }
 
+    .cellList {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
     [class*='Table-module_high-row'] {
         background-color: var(--content-background) !important;
     }

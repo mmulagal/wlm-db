@@ -495,7 +495,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
                 <div className={styles.buttonContainer}>
                     {isDisabled && (
-                        <DsPopover trigger="hover" title={t('databases.general.coming-soon')} placement="bottom">
+                        <DsPopover
+                            trigger="hover"
+                            title={t('databases.well-architect.fix-disabled')}
+                            placement="bottom"
+                        >
                             <DsButton
                                 variant="secondary"
                                 isThin
@@ -768,7 +772,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     <div className={styles.tile}>
                         {renderOptimizationBar(
                             ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
-                            'Data files (.mdf)',
+                            ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF,
                             'userDataFiles'
                         )}
 
@@ -794,7 +798,11 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 )}
                 {configEngineType === DBType.MSSQL && shouldShowTile(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF) && (
                     <div className={styles.tile}>
-                        {renderOptimizationBar(ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF, 'Log files (.ldf)', 'logFiles')}
+                        {renderOptimizationBar(
+                            ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
+                            ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF,
+                            'logFiles'
+                        )}
 
                         <SeparatorComponent variant="vertical" height="60px" />
 

@@ -231,13 +231,13 @@ describe('TagComponent', () => {
     });
 
     it('renders DATA_FILES_MDF for MSSQL', () => {
-        renderWithStore({ tagHeight: '100px', type: 'Data files (.mdf)', engineType: 'MSSQL' });
+        renderWithStore({ tagHeight: '100px', type: 'Data files (.mdf) placement', engineType: 'MSSQL' });
         expect(screen.getByText('databases.well-architect.tags.performanceEfficiency')).toBeTruthy();
         expect(screen.getByText('databases.well-architect.tags.operationalExcellence')).toBeTruthy();
     });
 
     it('renders LOG_FILES_LDF for MSSQL', () => {
-        renderWithStore({ tagHeight: '100px', type: 'Log files (.ldf)', engineType: 'MSSQL' });
+        renderWithStore({ tagHeight: '100px', type: 'Log files (.ldf) placement', engineType: 'MSSQL' });
         expect(screen.getByText('databases.well-architect.tags.performanceEfficiency')).toBeTruthy();
         expect(screen.getByText('databases.well-architect.tags.operationalExcellence')).toBeTruthy();
     });
@@ -249,12 +249,12 @@ describe('TagComponent', () => {
 
     it('renders Data files string for MSSQL', () => {
         renderWithStore({ tagHeight: '100px', type: 'Data files', engineType: 'MSSQL' });
-        expect(screen.getByText('databases.well-architect.tags.performanceEfficiency')).toBeTruthy();
+        expect(screen.getByText('databases.well-architect.tags.noTagsAvailable')).toBeTruthy();
     });
 
     it('renders Log files string for MSSQL', () => {
         renderWithStore({ tagHeight: '100px', type: 'Log files', engineType: 'MSSQL' });
-        expect(screen.getByText('databases.well-architect.tags.performanceEfficiency')).toBeTruthy();
+        expect(screen.getByText('databases.well-architect.tags.noTagsAvailable')).toBeTruthy();
     });
 
     it('renders Microsoft SQL Server patch for MSSQL', () => {

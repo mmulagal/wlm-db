@@ -213,7 +213,8 @@ vi.mock('../../../../DatabaseHomePage/DatabaseHomeUtils', () => ({
             data?.map((d: any) => ({ ...d, configState: 'ACTIVE', status: d.status || 'NOT_OPTIMIZED' })) || []
     ),
     getConfigStateList: vi.fn(() => ['ACTIVE']),
-    mapHostStatusToAssessmentData: vi.fn((_, data) => data)
+    mapHostStatusToAssessmentData: vi.fn((_, data) => data),
+    shouldSkipDatabaseHost: vi.fn(() => false)
 }));
 
 vi.mock('../../../../GetWell/GetWellUtils', () => ({

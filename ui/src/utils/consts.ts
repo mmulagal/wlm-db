@@ -851,7 +851,8 @@ export const GETWELL_STATUS = {
     NOT_APPLICABLE: GENERAL.UNAVAILABLE,
     ANALYZING: 'Analyzing',
     CRITICAL: 'Critical',
-    WARNING: 'Warning'
+    WARNING: 'Warning',
+    SHARED_DRIVE: 'Shared drive'
 };
 
 export const WELL_ARCHITECTED_TABS = {
@@ -1003,8 +1004,8 @@ export const ASSESSMENT_CONFIG_NAMES = {
     FILE_SYSTEM_HEADROOM: 'File system headroom',
     LOG_DRIVE_SIZE: 'Log drive size',
     TEMPDB_DRIVE_SIZE: 'TempDB drive size',
-    DATA_FILES_MDF: 'Data files (.mdf)',
-    LOG_FILES_LDF: 'Log files (.ldf)',
+    DATA_FILES_MDF: 'Data files (.mdf) placement',
+    LOG_FILES_LDF: 'Log files (.ldf) placement',
     TEMPDB_PLACEMENT: 'TempDB placement',
     COMPUTE_RIGHTSIZING: 'Compute rightsizing',
     MAXDOP: 'MAXDOP',
@@ -1276,7 +1277,6 @@ export const CONFIG_NAMES = {
 };
 
 export const GW_CONFIG_OPTIMIZE_NA = [
-    'TempDB placement',
     GENERAL.LICENSE_SQL_SERVER,
     ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME,
     ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION

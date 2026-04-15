@@ -218,8 +218,6 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                 case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
                 case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
                 case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
-                case 'Data files':
-                case 'Log files':
                     setTagData([
                         {
                             label: t('databases.well-architect.tags.performanceEfficiency'),
