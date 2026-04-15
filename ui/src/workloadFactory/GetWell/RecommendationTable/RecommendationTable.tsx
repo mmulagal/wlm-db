@@ -645,7 +645,10 @@ const RecommendationTable = ({
     // This is for inner page
     const handleDifferentNavigation = (rowData: any) => {
         if (
-            (selectedHeaderTab === WLF_TABS.OPTIMIZE || selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED) &&
+            (selectedHeaderTab === WLF_TABS.OPTIMIZE ||
+                selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED ||
+                selectedHeaderTab === WLF_TABS.OPTIMIZE_FROM_WELL_ARCHITECTED_TAB ||
+                selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED_FROM_WELL_ARCHITECTED_TAB) &&
             innerPageOracleCheck(rowData?.name) &&
             innerPageCheck(rowData?.name)
         ) {
