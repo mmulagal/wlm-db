@@ -110,6 +110,7 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     break;
                 case ASSESSMENT_CONFIG_NAMES.CRR:
                 case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
+                case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
                     setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
                     break;
                 case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:

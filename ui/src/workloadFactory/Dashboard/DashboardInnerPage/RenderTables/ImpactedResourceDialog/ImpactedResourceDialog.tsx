@@ -362,6 +362,7 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
         // placement configs use internal API names, not ASSESSMENT_CONFIG_NAMES display names
         case 'crr':
         case 'snapcenter-snapshot':
+        case 'backup-configuration':
         case 'oracle-binary-placement':
         case 'datafiles-placement':
         case 'controlfiles-placement':

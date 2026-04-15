@@ -290,6 +290,29 @@ const DashboardInnerPage = () => {
                         ]
                     };
                 }
+            } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+                apiCall = optimizeOracleOs;
+                const { selectedAWSBackup } = state.getWellOptimize;
+
+                payload = {
+                    type: 'aws-backup',
+                    hostsToOptimize: [
+                        {
+                            configurationName: 'aws-backup',
+                            databaseHosts: [
+                                {
+                                    id: rowData?.databaseHostId,
+                                    region: rowData?.regionId,
+                                    credentialsId: rowData?.credentialId,
+                                    fsxFileSystemId: rowData?.data?.assessments?.fileSystemId,
+                                    databases: [rowData?.instanceId],
+                                    backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                                    backupStartTime: backupStartTime(selectedAWSBackup)
+                                }
+                            ]
+                        }
+                    ]
+                };
             } else {
                 // ToDo - More type will come like optimize for sizing and layout here
                 apiCall = optimizeStorageConfig;
@@ -1457,7 +1480,10 @@ const DashboardInnerPage = () => {
                     tagHeight: prev.tagHeight || '233px',
                     data: {
                         title: 'Recommendations',
-                        description: cardDataDefault?.scheduled_fsx_for_ontap_backups?.recommendation?.description
+                        description:
+                            configEngineType === DBType.ORACLE
+                                ? oracleCardData?.aws_backup?.recommendation?.description
+                                : cardDataDefault?.scheduled_fsx_for_ontap_backups?.recommendation?.description
                     }
                 }));
                 break;
@@ -1508,7 +1534,7 @@ const DashboardInnerPage = () => {
                     tagHeight: prev.tagHeight || '233px',
                     data: {
                         title: 'Recommendations',
-                        description: oracleCardData?.snapcenterSnapshot?.recommendation?.description
+                        description: oracleCardData?.snapcenter_snapshot?.recommendation?.description
                     }
                 }));
                 break;

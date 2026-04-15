@@ -94,6 +94,7 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }:
             type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT ||
+            type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
             (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && status === GETWELL_STATUS.UNDER_PROVISIONED)
         ) {
             return t('databases.oracle-inner-page.view-and-fix');

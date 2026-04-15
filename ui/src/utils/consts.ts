@@ -1364,6 +1364,7 @@ export const WAD_EXCLUDED_CONFIGS_ORACLE = [
     ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
     ASSESSMENT_CONFIG_NAMES.CRR,
     ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
+    ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
     ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH
 ];
 
@@ -1386,6 +1387,7 @@ export const CONFIG_KEY_TO_DISPLAY_NAME: Record<string, string> = {
     oracleOperatingSystemPatch: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
     oracleCrr: ASSESSMENT_CONFIG_NAMES.CRR,
     oracleSnapcenterSnapshot: ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
+    oracleAwsBackup: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
     oracleSecurityPatch: ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH
 };
 
@@ -1425,7 +1427,8 @@ export const WAD_EXCLUDED_API_FIELDS_ORACLE = new Set([
     'hostOsPatch',
     'crr',
     'oracleSecurityPatch',
-    'snapcenterSnapshot'
+    'snapcenterSnapshot',
+    'awsBackup'
 ]);
 
 /**
@@ -1453,7 +1456,8 @@ export const ORACLE_API_FIELD_TO_CATEGORY: Record<string, WellArchitectedCategor
     hostOsPatch: 'compute',
     oracleSecurityPatch: 'application',
     crr: 'resiliency',
-    snapcenterSnapshot: 'resiliency'
+    snapcenterSnapshot: 'resiliency',
+    awsBackup: 'resiliency'
 };
 
 export const categoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];

@@ -27,7 +27,7 @@ const ResiliencySection = ({
     const { renderPostponeActivatingInfo } = useOraclePostponeInfo();
 
     const resiliencyCardStates = useMemo(
-        () => getOracleCardStates(oracleCardData, ['crr', 'snapcenterSnapshot']),
+        () => getOracleCardStates(oracleCardData, ['crr', 'snapcenter_snapshot', 'aws_backup']),
         [oracleCardData]
     );
 
@@ -104,26 +104,26 @@ const ResiliencySection = ({
                         />
                     </div>
                 )}
-                {oracleCardData?.snapcenterSnapshot && (
+                {oracleCardData?.snapcenter_snapshot && (
                     <div>
                         <OracleCardComponent
-                            cardData={oracleCardData.snapcenterSnapshot}
+                            cardData={oracleCardData.snapcenter_snapshot}
                             showDismissedConfigurations={showDismissedConfigurations}
                             setShowDismissedConfigurations={setShowDismissedConfigurations}
                             driftAssessmentData={driftAssessmentData}
                         />
                         <DsAccordion
-                            id="snapcenterSnapshot-1"
+                            id="snapcenter_snapshot-1"
                             variant="Default"
                             isDisabled={loading || showDismissedConfigurations}
-                            isExpanded={isAccordionExpanded('snapcenterSnapshot-1', optimizePrintState)}
+                            isExpanded={isAccordionExpanded('snapcenter_snapshot-1', optimizePrintState)}
                             onExpandChange={isExpanded => {
-                                handleAccordionExpanded('snapcenterSnapshot-1', isExpanded);
+                                handleAccordionExpanded('snapcenter_snapshot-1', isExpanded);
                             }}
-                            onClick={() => setClickedAccordionId('snapcenterSnapshot-1')}
+                            onClick={() => setClickedAccordionId('snapcenter_snapshot-1')}
                             title={
                                 <div className={styles.tagPlacement}>
-                                    {oracleCardData.snapcenterSnapshot?.tags?.map((perTag: string, index: number) => (
+                                    {oracleCardData.snapcenter_snapshot?.tags?.map((perTag: string, index: number) => (
                                         <div
                                             key={index}
                                             className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
@@ -135,7 +135,7 @@ const ResiliencySection = ({
                             }
                             headerActions={[
                                 <div className={styles.headerAction}>
-                                    {renderPostponeActivatingInfo('snapcenterSnapshot', showDismissedConfigurations)}
+                                    {renderPostponeActivatingInfo('snapcenter_snapshot', showDismissedConfigurations)}
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
                                         {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
                                     </div>
@@ -151,7 +151,58 @@ const ResiliencySection = ({
                                     </div>
                                 </div>
                             ]}
-                            children={<RecommendationText data={oracleCardData?.snapcenterSnapshot?.recommendation} />}
+                            children={<RecommendationText data={oracleCardData?.snapcenter_snapshot?.recommendation} />}
+                        />
+                    </div>
+                )}
+                {oracleCardData?.aws_backup && (
+                    <div>
+                        <OracleCardComponent
+                            cardData={oracleCardData.aws_backup}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
+                        <DsAccordion
+                            id="aws_backup-1"
+                            variant="Default"
+                            isDisabled={loading || showDismissedConfigurations}
+                            isExpanded={isAccordionExpanded('aws_backup-1', optimizePrintState)}
+                            onExpandChange={isExpanded => {
+                                handleAccordionExpanded('aws_backup-1', isExpanded);
+                            }}
+                            onClick={() => setClickedAccordionId('aws_backup-1')}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData.aws_backup?.tags?.map((perTag: string, index: number) => (
+                                        <div
+                                            key={index}
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                        >
+                                            <Tag text={perTag} />
+                                        </div>
+                                    ))}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo('aws_backup', showDismissedConfigurations)}
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
+                                    </div>
+                                    <div
+                                        style={{
+                                            color:
+                                                loading || showDismissedConfigurations
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
+                                </div>
+                            ]}
+                            children={<RecommendationText data={oracleCardData?.aws_backup?.recommendation} />}
                         />
                     </div>
                 )}

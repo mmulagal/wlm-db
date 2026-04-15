@@ -292,6 +292,9 @@ const DialogContent = ({
                 // oracle resiliency cards
                 case ASSESSMENT_CONFIG_NAMES.CRR:
                     return <ResiliencyOracleDialog type={type} />;
+
+                case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+                    return <ScheduledAWSBackupDialog type={type} engineType={DBType.ORACLE} />;
             }
         }
         switch (type) {

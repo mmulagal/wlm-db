@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, DsTypography, TextField } from '@netapp/design-system';
+import { DsTypography, TextField } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import styles from './DialogContent.module.scss';
@@ -9,8 +9,9 @@ import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedAWSBackup } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { DBType } from '../../../../utils/consts';
 
-const ScheduledAWSBackupDialog = ({ type }: any) => {
+const ScheduledAWSBackupDialog = ({ type, engineType = DBType.MSSQL }: any) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { selectedAWSBackup } = useAppSelector(state => state.getWellOptimize);
@@ -49,14 +50,26 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
         }
     };
 
+    const isOracle = engineType === DBType.ORACLE;
+
     return (
         <div className={styles['storage-tier-block']}>
             <div className={styles['first-section']}>
                 <DsTypography variant="Semibold_14">{t('databases.well-architect.action-summary')}</DsTypography>
                 <DsTypography variant="Regular_14">
-                    {t('databases.well-architect.aws-backup-action-summary-content')}
+                    {isOracle
+                        ? t('databases.well-architect.oracle-aws-backup-action-summary')
+                        : t('databases.well-architect.aws-backup-action-summary-content')}
                 </DsTypography>
             </div>
+
+            {isOracle && (
+                <div className={styles['first-section']}>
+                    <DsTypography variant="Semibold_14">
+                        {t('databases.well-architect.oracle-aws-backup-option1-title')}
+                    </DsTypography>
+                </div>
+            )}
 
             <div className={styles['first-section']}>
                 <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
@@ -213,6 +226,24 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                     </div>
                 </div>
 
+                {isOracle && (
+                    <div className={styles['first-section']}>
+                        <DsTypography variant="Semibold_14">
+                            {t('databases.well-architect.oracle-aws-backup-option2-title')}
+                        </DsTypography>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.well-architect.oracle-aws-backup-option2-desc')}{' '}
+                            <a
+                                href="https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/using-backups.html#aws-backup-and-fsx"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {t('databases.well-architect.oracle-aws-backup-option2-link')}
+                            </a>
+                        </DsTypography>
+                    </div>
+                )}
+
                 <div className={styles['first-section']}>
                     <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
                         {t('databases.well-architect.note')}
@@ -223,7 +254,9 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                {t('databases.well-architect.aws-backup-note1')}
+                                {isOracle
+                                    ? t('databases.well-architect.oracle-aws-backup-note1')
+                                    : t('databases.well-architect.aws-backup-note1')}
                             </DsTypography>
                         </div>
 
@@ -232,7 +265,9 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                {t('databases.well-architect.aws-backup-note2')}
+                                {isOracle
+                                    ? t('databases.well-architect.oracle-aws-backup-note2')
+                                    : t('databases.well-architect.aws-backup-note2')}
                             </DsTypography>
                         </div>
                         <div className={styles.row}>
@@ -240,7 +275,9 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                {t('databases.well-architect.aws-backup-note3')}
+                                {isOracle
+                                    ? t('databases.well-architect.oracle-aws-backup-note3')
+                                    : t('databases.well-architect.aws-backup-note3')}
                             </DsTypography>
                         </div>
 
@@ -249,9 +286,32 @@ const ScheduledAWSBackupDialog = ({ type }: any) => {
                                 <Bullet />
                             </div>
                             <DsTypography variant="Regular_14">
-                                {t('databases.well-architect.aws-backup-note4')}
+                                {isOracle
+                                    ? t('databases.well-architect.oracle-aws-backup-note4')
+                                    : t('databases.well-architect.aws-backup-note4')}
                             </DsTypography>
                         </div>
+
+                        {isOracle && (
+                            <>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.oracle-aws-backup-note5')}
+                                    </DsTypography>
+                                </div>
+                                <div className={styles.row}>
+                                    <div>
+                                        <Bullet />
+                                    </div>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.well-architect.oracle-aws-backup-note6')}
+                                    </DsTypography>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

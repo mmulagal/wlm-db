@@ -29,6 +29,7 @@ import {
 import { groupByType, mapDismissedValues } from '../../../../utils/resourceUtils';
 import { AssessmentResponseInterface, PerConfigInterface } from '../../../../utils/types/getWellTypes';
 import {
+    backupStartTime,
     formatDateWithTime,
     formatNumberWithCustomComma,
     getCurrentDateTime
@@ -531,8 +532,8 @@ export const oracleCardData: any = {
         },
         tags: ['Security', 'Reliability']
     },
-    snapcenterSnapshot: {
-        id: 'snapcenterSnapshot',
+    snapcenter_snapshot: {
+        id: 'snapcenter-snapshot',
         category: 'resiliency',
         mapName: ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
         block_one: {
@@ -592,6 +593,38 @@ export const oracleCardData: any = {
             title: 'Cross-Region Replication (CRR) recommendation',
             description:
                 'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.'
+        },
+        tags: ['Reliability']
+    },
+    aws_backup: {
+        id: 'backup-configuration',
+        category: 'resiliency',
+        mapName: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+        block_one: {
+            value: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+            type: 'Resiliency'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted volumes',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Backup Configuration recommendation',
+            description:
+                'Backup Configuration recommendation: Enable FSx Backup or AWS Backup for Oracle volumes to support data retention and compliance. Avoid redundant backups to optimize costs.'
         },
         tags: ['Reliability']
     },
@@ -804,21 +837,21 @@ export const formatOracleSnapCenterConfig = (
     const severity = snapcenterItem?.severity || '';
 
     return {
-        ...oracleCardData.snapcenterSnapshot,
+        ...oracleCardData.snapcenter_snapshot,
         block_two: {
-            ...oracleCardData.snapcenterSnapshot?.block_two,
+            ...oracleCardData.snapcenter_snapshot?.block_two,
             value: formatValue(status)
         },
         block_four: {
-            ...oracleCardData.snapcenterSnapshot?.block_four,
+            ...oracleCardData.snapcenter_snapshot?.block_four,
             value: formatValue(severity)
         },
         block_five: {
-            ...oracleCardData.snapcenterSnapshot?.block_five,
+            ...oracleCardData.snapcenter_snapshot?.block_five,
             value: snapcenterItem?.resourceType || ''
         },
         block_six: {
-            ...oracleCardData.snapcenterSnapshot?.block_six,
+            ...oracleCardData.snapcenter_snapshot?.block_six,
             value: `${snapcenterItem?.totalObjectsInViolation || 0} out of ${
                 snapcenterItem?.totalObjectsAssessed || 0
             }`,
@@ -833,7 +866,7 @@ export const formatOracleSnapCenterConfig = (
         category: 'resiliency',
         errorMessage: snapcenterItem?.errorMessage,
         recommendationText:
-            snapcenterItem?.recommendation || oracleCardData.snapcenterSnapshot?.recommendation?.description,
+            snapcenterItem?.recommendation || oracleCardData.snapcenter_snapshot?.recommendation?.description,
         objectsInViolation: snapcenterItem?.objectsInViolation,
         dismissedObj: data?.dismissedConfigurations?.snapcenterSnapshot
     };
@@ -879,6 +912,49 @@ export const formatOracleCRRConfig = (
         recommendationText: crrItem?.recommendation || oracleCardData.crr?.recommendation?.description,
         objectsInViolation: crrItem?.objectsInViolation,
         dismissedObj: data?.dismissedConfigurations?.crr
+    };
+};
+
+export const formatOracleAWSBackupConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>
+): any => {
+    const awsBackupItem = (data as any)?.awsBackup;
+
+    const originalName = awsBackupItem?.name || 'backup-configuration';
+    const status = optimizingData?.[originalName] || awsBackupItem?.status || '';
+    const severity = awsBackupItem?.severity || '';
+
+    return {
+        ...oracleCardData.aws_backup,
+        block_two: {
+            ...oracleCardData.aws_backup?.block_two,
+            value: formatValue(status)
+        },
+        block_four: {
+            ...oracleCardData.aws_backup?.block_four,
+            value: formatValue(severity)
+        },
+        block_five: {
+            ...oracleCardData.aws_backup?.block_five,
+            value: awsBackupItem?.resourceType || ''
+        },
+        block_six: {
+            ...oracleCardData.aws_backup?.block_six,
+            value: `${awsBackupItem?.totalObjectsInViolation || 0} out of ${awsBackupItem?.totalObjectsAssessed || 0}`,
+            count: {
+                totalObjectsAssessed: awsBackupItem?.totalObjectsAssessed,
+                totalObjectsInViolation: awsBackupItem?.totalObjectsInViolation
+            }
+        },
+        tags: awsBackupItem?.tags,
+        id: awsBackupItem?.name || 'backup-configuration',
+        mapName: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+        category: 'resiliency',
+        errorMessage: awsBackupItem?.errorMessage,
+        recommendationText: awsBackupItem?.recommendation || oracleCardData.aws_backup?.recommendation?.description,
+        objectsInViolation: awsBackupItem?.objectsInViolation,
+        dismissedObj: data?.dismissedConfigurations?.awsBackup
     };
 };
 
@@ -1349,7 +1425,8 @@ export const getOracleCardsData = (
         ),
         host_os_patch: formatOracleHostOsPatchConfig(data, optimizingData),
         crr: formatOracleCRRConfig(data, optimizingData),
-        snapcenterSnapshot: formatOracleSnapCenterConfig(data, optimizingData),
+        snapcenter_snapshot: formatOracleSnapCenterConfig(data, optimizingData),
+        aws_backup: formatOracleAWSBackupConfig(data, optimizingData),
         oracle_security_patch: formatOracleSecurityPatchConfig(data, optimizingData),
         isWad: data?.isWad || false
     };
@@ -1885,7 +1962,8 @@ export const getOracleCategoryData = () => ({
     oracle_security_patch: { category: 'Application', subCategory: 'Application' },
     // Resiliency cards
     crr: { category: 'Resiliency', subCategory: 'Protection' },
-    snapcenterSnapshot: { category: 'Resiliency', subCategory: 'Protection' }
+    snapcenter_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
+    aws_backup: { category: 'Resiliency', subCategory: 'Protection' }
 });
 
 // Helper function to convert assessment configuration names to technical keys
@@ -1915,9 +1993,10 @@ export const getDynamicOracleCategoryData = (assessmentData?: any) => {
     // Always include Oracle Security Patch (Application) so it appears in filters
     categoryMapping.oracle_security_patch = { category: 'Application', subCategory: 'Application' };
 
-    // Always include CRR and SnapCenter Snapshot (Resiliency) so they appear in filters
+    // Always include CRR, SnapCenter Snapshot, and AWS Backup (Resiliency) so they appear in filters
     categoryMapping.crr = { category: 'Resiliency', subCategory: 'Protection' };
-    categoryMapping.snapcenterSnapshot = { category: 'Resiliency', subCategory: 'Protection' };
+    categoryMapping.snapcenter_snapshot = { category: 'Resiliency', subCategory: 'Protection' };
+    categoryMapping.aws_backup = { category: 'Resiliency', subCategory: 'Protection' };
 
     if (!assessmentData?.storage) {
         // If no assessment data, return static mapping as fallback
@@ -2465,6 +2544,28 @@ export const callOptimizeOracleApi = ({
                 }
             ]
         };
+    } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+        const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
+        apiCall = optimizeOracleOs;
+        payload = {
+            type: 'aws-backup',
+            hostsToOptimize: [
+                {
+                    configurationName: 'aws-backup',
+                    databaseHosts: [
+                        {
+                            id: selectedResourceId,
+                            region: selectedGwInstanceRegionId,
+                            credentialsId: selectedGwInstanceCredId,
+                            databases: [selectedDatabaseInstance],
+                            fsxFileSystemId: selectedRowFsxId,
+                            backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                            backupStartTime: backupStartTime(selectedAWSBackup)
+                        }
+                    ]
+                }
+            ]
+        };
     }
 
     // call optimize api
@@ -2500,6 +2601,8 @@ export const callOptimizeOracleApi = ({
             instanceId: selectedDatabaseInstance,
             payload
         };
+    } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+        apiCallObj = { payload };
     }
 
     apiCall(apiCallObj).then((res: any) => {

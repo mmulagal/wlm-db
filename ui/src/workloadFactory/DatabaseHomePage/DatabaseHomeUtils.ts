@@ -999,6 +999,7 @@ const countOracleInstanceConfigs = (instanceAssessment: any, counters: ConfigCou
         excluded,
         categoryMap
     );
+    countTopLevelConfig('awsBackup', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
 
     // Storage - layout
     instanceAssessment?.storage?.layout?.forEach((item: any) => {
@@ -1734,6 +1735,34 @@ const processOracleConfigurationData = (
                         GETWELL_VALUES[instanceAssessmentData?.snapcenterSnapshot?.severity] ||
                         getAssessmentGroupedByConfigurations?.severityObj?.oracleSnapcenterSnapshot;
                 }
+
+                // Skip oracleAwsBackup counting for WAD instances (WAD-excluded config for Oracle)
+                if (!databaseHost?.isWad) {
+                    const isAwsBackupOptimized = isOptimizedDashInner(
+                        instanceAssessmentData?.awsBackup?.status,
+                        instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
+                    );
+                    setConfigState(
+                        configState,
+                        'oracleAwsBackup',
+                        instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
+                    );
+                    getAssessmentGroupedByConfigurations.oracleAwsBackup.total++;
+                    getAssessmentGroupedByConfigurations.oracleAwsBackup.optimized += isAwsBackupOptimized ? 1 : 0;
+                    getAssessmentGroupedByConfigurations.oracleAwsBackup.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.oracleAwsBackup.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.awsBackup?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.oracleAwsBackup =
+                        GETWELL_VALUES[instanceAssessmentData?.awsBackup?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.oracleAwsBackup;
+                }
             }
         });
     });
@@ -1944,6 +1973,12 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             dismissed: 0,
             activating: 0
         },
+        oracleAwsBackup: {
+            total: 0,
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
         oracleBinaryPlacement: {
             optimized: 0,
             dismissed: 0,
@@ -2074,7 +2109,8 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         oracleSwapSpace: [],
         oracleSecurityPatch: [],
         oracleCrr: [],
-        oracleSnapcenterSnapshot: []
+        oracleSnapcenterSnapshot: [],
+        oracleAwsBackup: []
     };
 
     const state = store.getState();

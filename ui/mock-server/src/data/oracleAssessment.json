@@ -1163,6 +1163,27 @@
         "tags": ["Reliability"],
         "objectsInViolation": ["vol_data_01", "vol_log_01"]
     },
+    "awsBackup": {
+        "name": "backup-configuration",
+        "status": "not-optimized",
+        "recommended": "To have the AWS Backup enabled",
+        "severity": "warning",
+        "recommendation": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for Oracle volumes to support data retention and compliance. Avoid redundant backups to optimize costs.",
+        "tags": ["Reliability"],
+        "objectsInViolation": [
+            {
+                "ontapVolumeName": "oracledata2",
+                "ontapVolumeUuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            },
+            {
+                "ontapVolumeName": "oraclearch2",
+                "ontapVolumeUuid": "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+            }
+        ],
+        "totalObjectsAssessed": 4,
+        "totalObjectsInViolation": 2,
+        "resourceType": "Volume"
+    },
     "oracleSecurityPatch": {
         "name": "oracle-security-patch",
         "status": "not-optimized",

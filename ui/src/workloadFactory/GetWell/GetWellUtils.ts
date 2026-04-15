@@ -5863,7 +5863,7 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             configKey = 'oracleSnapcenterSnapshot';
             break;
         case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-            configKey = 'scheduledawsBackup';
+            configKey = dbType === DBType.ORACLE ? 'oracleAwsBackup' : 'scheduledawsBackup';
             break;
 
         case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:

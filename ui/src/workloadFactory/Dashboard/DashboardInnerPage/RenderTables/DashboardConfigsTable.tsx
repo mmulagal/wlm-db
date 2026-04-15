@@ -686,7 +686,7 @@ const CONFIG_MAPPING: Record<string, any> = {
         isFixSupported: true,
         customColumns: [
             {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-file-systems',
+                Header: 'databases.well-architect.dashboard-table-headers.impacted-volumes',
                 accessor: 'totalObjectsInViolation',
                 id: '4',
                 width: '200px',

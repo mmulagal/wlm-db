@@ -1412,6 +1412,15 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
                         false
                     )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                        'oracleAwsBackup',
+                        'wlm-db-optimize-oracle-aws-backup',
+                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                        ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                        false
+                    )}
             </div>
         </div>
     );
