@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import HeaderComponent from '../../../DatabaseHomePage/HeaderComponent/HeaderComponent';
@@ -102,6 +103,7 @@ const InventoryFsxDeepLink = () => {
     const [checkExistingLinkApi] = useCheckExistingLinkMutation();
     const [deleteExistingLinkApi] = useDeleteExistingLinkMutation();
     const [getOracleAssessmentDataApi] = useGetOracleAssessmentDataMutation();
+    const { t } = useTranslation();
 
     /** Oracle CRR optimize-inner deep link only; `target` === `crr` in the URL. */
     const isCrrDeepLink = useMemo(() => targetParam?.toLowerCase() === INVENTORY_CRR_TARGET, [targetParam]);
@@ -146,7 +148,7 @@ const InventoryFsxDeepLink = () => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.SUCCESS,
-                            message: 'Link associated successfully.'
+                            message: t('databases.inventory.link-associate')
                         })
                     );
                 }

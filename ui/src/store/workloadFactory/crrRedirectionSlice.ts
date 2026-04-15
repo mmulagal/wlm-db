@@ -23,6 +23,8 @@ interface CRRRedirectionState {
     existingLinksLoading: boolean;
     selectedExistingLink: any;
     associateLinkLoading: boolean;
+    /** True while fetching associated links / FSx details after Continue on CRR optimize dialog */
+    crrPrefetchLoading: boolean;
     showLinkError: boolean;
 }
 
@@ -45,6 +47,7 @@ const initialState: CRRRedirectionState = {
     existingLinksLoading: false,
     selectedExistingLink: null,
     associateLinkLoading: false,
+    crrPrefetchLoading: false,
     showLinkError: false
 };
 
@@ -77,6 +80,9 @@ const crrRedirectionSlice = createSlice({
         setAssociateLinkLoading: (state, action: PayloadAction<boolean>) => {
             state.associateLinkLoading = action.payload;
         },
+        setCrrPrefetchLoading: (state, action: PayloadAction<boolean>) => {
+            state.crrPrefetchLoading = action.payload;
+        },
         setShowLinkError: (state, action: PayloadAction<boolean>) => {
             state.showLinkError = action.payload;
         }
@@ -93,6 +99,7 @@ export const {
     setExistingLinks,
     setSelectedExistingLink,
     setAssociateLinkLoading,
+    setCrrPrefetchLoading,
     setShowLinkError
 } = crrRedirectionSlice.actions;
 

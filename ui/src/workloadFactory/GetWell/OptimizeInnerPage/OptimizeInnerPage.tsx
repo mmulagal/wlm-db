@@ -1,6 +1,6 @@
 import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useMatch, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +29,7 @@ import {
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
+import { setCrrPrefetchLoading } from '../../../store/workloadFactory/crrRedirectionSlice';
 import {
     formatAssessmentData,
     handleOptimizeStorageJob,
@@ -64,8 +65,7 @@ import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagCom
 import MTUOptimizeTable from './InnerTables/MTUOptimizeTable';
 import StorageLayoutOracleTable from './InnerTables/StorageLayoutOracleTable';
 
-import DialogComponent from '../../../common/Dialog/DialogComponent';
-import CRRLoadingDialogContent from './CRRRedirectionContent/CRRLoadingDialogContent';
+import { useAssociateCrrLinkPrefetch } from './CRRRedirectionContent/associateCrrLinkPrefetch';
 import {
     decodeVolumeParam,
     findCrrRowDataByVolumeName,
@@ -87,7 +87,10 @@ const OptimizeInnerPage = () => {
         path: `/databases${INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME}`,
         end: true
     });
-    const matchInventoryFsxDeepLinkDatabases = useMatch({ path: `/databases${INVENTORY_FSX_DEEP_LINK_PATH}`, end: true });
+    const matchInventoryFsxDeepLinkDatabases = useMatch({
+        path: `/databases${INVENTORY_FSX_DEEP_LINK_PATH}`,
+        end: true
+    });
     const matchInventoryFsxDeepLinkFsxdbVol = useMatch({
         path: `/fsxdb${INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME}`,
         end: true
@@ -100,6 +103,11 @@ const OptimizeInnerPage = () => {
             matchInventoryFsxDeepLinkFsxdb
     );
     const { setDialog, closeDialog } = useDialog();
+    const { runAssociateLinkPrefetch } = useAssociateCrrLinkPrefetch(setDialog, closeDialog);
+    const closeOptimizeDialog = () => {
+        dispatch(setCrrPrefetchLoading(false));
+        closeDialog();
+    };
     const [notificationTimeout, setNotificationTimeout] = useState<NodeJS.Timeout | null>(null);
     const [cardHeight, setCardHeight] = useState({
         recommendationSection: '',
@@ -268,37 +276,27 @@ const OptimizeInnerPage = () => {
         }
     }, [selectedOptimizeConfig]);
 
-    const handleCRRRedirectionDialog = (_type: any, _operation: string, rowData: any) => {
-        const dialogHeader = (
-            <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <DsTypography variant="Regular_16">{t('databases.well-architect.associate-link')}</DsTypography>
-                <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                    {t('databases.inventory.step-1-out-of')}
-                </DsTypography>
-            </div>
-        );
-
-        setTimeout(() => {
-            setDialog(
-                <DialogComponent
-                    header={dialogHeader}
-                    content={<CRRLoadingDialogContent rowData={rowData} />}
-                    secondaryButton={t('databases.general.close')}
-                    hidePrimaryButton
-                    closeCallback={() => {
-                        closeDialog();
-                    }}
-                />
+    const handleCRRRedirectionDialog = useCallback(
+        (_type: any, _operation: string, rowData: any) => {
+            const dialogHeader = (
+                <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <DsTypography variant="Regular_16">{t('databases.well-architect.associate-link')}</DsTypography>
+                    <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
+                        {t('databases.inventory.step-1-out-of')}
+                    </DsTypography>
+                </div>
             );
-        }, 200);
-    };
+            void runAssociateLinkPrefetch(rowData, dialogHeader);
+        },
+        [runAssociateLinkPrefetch, t]
+    );
 
     const openOracleCrrFixDialogForRow = (rowData: any) => {
         handleDialog(
             setDialog,
             selectedOptimizeConfig?.type,
             handleCRRRedirectionDialog,
-            closeDialog,
+            closeOptimizeDialog,
             selectedOptimizeConfig?.data,
             'single',
             rowData,
@@ -314,7 +312,7 @@ const OptimizeInnerPage = () => {
         const volumeFromQuery = searchParams.get(OPEN_FIX_VOLUME_QUERY)?.trim();
         const volumeFromPath = params.volumeName?.trim();
         const splatVolume = (params as Record<string, string | undefined>)['*']?.trim();
-        const volumeToOpen =volumeFromPath;
+        const volumeToOpen = volumeFromPath;
 
         if (!volumeToOpen) return;
         if (selectedOptimizeConfig?.type !== ASSESSMENT_CONFIG_NAMES.CRR) return;
@@ -347,9 +345,7 @@ const OptimizeInnerPage = () => {
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.ERROR,
-                        message: `Could not find impacted volume "${decodeVolumeParam(
-                            volumeToOpen
-                        )}" for this link.`
+                        message: `Could not find impacted volume "${decodeVolumeParam(volumeToOpen)}" for this link.`
                     })
                 );
             }
@@ -362,7 +358,7 @@ const OptimizeInnerPage = () => {
             setDialog,
             selectedOptimizeConfig?.type,
             handleCRRRedirectionDialog,
-            closeDialog,
+            closeOptimizeDialog,
             selectedOptimizeConfig?.data,
             'single',
             rowData,
@@ -533,7 +529,7 @@ const OptimizeInnerPage = () => {
                             setDialog,
                             selectedOptimizeConfig?.type,
                             callOptimizeApi,
-                            closeDialog,
+                            closeOptimizeDialog,
                             selectedOptimizeConfig?.data,
                             'single',
                             rowData,
@@ -569,7 +565,7 @@ const OptimizeInnerPage = () => {
                             setDialog,
                             selectedOptimizeConfig?.type,
                             callOptimizeApi,
-                            closeDialog,
+                            closeOptimizeDialog,
                             selectedOptimizeConfig?.data,
                             'single',
                             rowData,
@@ -962,7 +958,7 @@ const OptimizeInnerPage = () => {
             setDialog,
             selectedOptimizeConfig?.type,
             callOptimizeApi,
-            closeDialog,
+            closeOptimizeDialog,
             selectedOptimizeConfig?.data,
             'bulk',
             {},

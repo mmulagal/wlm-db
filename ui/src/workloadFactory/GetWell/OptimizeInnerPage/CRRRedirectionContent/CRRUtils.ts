@@ -43,5 +43,4 @@ export const pathnameWithoutTrailingSplat = (pathname: string, splat: string) =>
 };
 
 /** Strips `/volumeName/:volumeName` after clearing a CRR deep link from the URL. */
-export const pathnameWithoutVolumeNameSegment = (pathname: string) =>
-    pathname.replace(/\/volumeName\/[^/]+/, '');
+export const pathnameWithoutVolumeNameSegment = (pathname: string) => pathname.replace(/\/volumeName\/[^/]+/, '');
