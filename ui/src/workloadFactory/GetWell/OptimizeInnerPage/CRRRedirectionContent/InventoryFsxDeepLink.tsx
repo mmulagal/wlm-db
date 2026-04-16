@@ -48,6 +48,7 @@ import {
 import { generateDynamicOracleStorageMockData, updateAccountLevelAssessmentData } from '../../GetWellUtils';
 
 const INVENTORY_CRR_TARGET = 'crr';
+const COMING_FROM_REPLICATE_WIZARD = 'replicateWizard';
 
 const safeDecode = (value: string | undefined) => {
     if (value == null || value === '') return '';
@@ -74,9 +75,11 @@ const buildOracleCrrFallbackCard = () => ({
 
 const InventoryFsxDeepLink = () => {
     const dispatch = useDispatch();
-    const [searchParams] = useSearchParams();   
+    const [searchParams] = useSearchParams();
     const ec2InstanceIdFromQuery = searchParams.get('ec2InstanceId') || '';
     const asmManagedFromQuery = searchParams.get('asmManaged') === 'true';
+    const comingFromQuery = searchParams.get('comingFrom') || '';
+    const isFromReplicateWizard = comingFromQuery === COMING_FROM_REPLICATE_WIZARD;
 
     const params = useParams<{
         credId: string;
@@ -289,7 +292,9 @@ const InventoryFsxDeepLink = () => {
         const run = async () => {
             if (!credId || !regionId || !fsxId) return;
 
-            await runAssociateFsxLink();
+            if (!isFromReplicateWizard) {
+                await runAssociateFsxLink();
+            }
 
             if (cancelled) return;
 
@@ -329,6 +334,7 @@ const InventoryFsxDeepLink = () => {
         fsxId,
         ec2InstanceIdFromQuery,
         asmManagedFromQuery,
+        isFromReplicateWizard,
         isCrrDeepLink,
         resourceIdParam,
         instanceIdParam,

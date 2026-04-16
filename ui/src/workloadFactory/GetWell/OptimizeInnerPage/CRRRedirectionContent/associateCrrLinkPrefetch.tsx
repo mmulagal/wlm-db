@@ -183,7 +183,7 @@ export function useAssociateCrrLinkPrefetch(
                                     fsxDetails?.id
                                 }/resource/${selectedResourceId}/instance/${selectedDatabaseInstance}/host/${selectedHostname}/db/${selectedDatabaseInstanceName}/volumeName/${
                                     rowData?.volumeName
-                                }/target/crr`,
+                                }/target/crr?comingFrom=replicateWizard`,
                                 replace: true
                             }
                         });
