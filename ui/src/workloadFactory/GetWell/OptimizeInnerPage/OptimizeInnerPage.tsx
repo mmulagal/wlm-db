@@ -323,7 +323,7 @@ const OptimizeInnerPage = () => {
                 setSearchParams(next, { replace: true });
             } else if (volumeFromPath) {
                 navigate(
-                    { pathname: pathnameWithoutVolumeNameSegment(location.pathname), search: location.search },
+                    { pathname: location.pathname, search: location.search },
                     { replace: true }
                 );
             } else if (splatVolume) {
