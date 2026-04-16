@@ -1,0 +1,453 @@
+# First iteration — Jira epic → GitHub (manual workflow_dispatch). Fetches one Jira epic by key and mirrors it as a
+# GitHub epic plus two user stories (API, UI), each with five children: implementation, demo support, testcase design,
+# functional testing, automation. Epic / user-story / child titles append the Jira epic summary after " - ".
+#
+# This iteration’s shape is encoded in STANDARD_STORY_DEFINITIONS and USER_STORY_SUB_DEFINITIONS in the script below;
+# later iterations may change counts, names, or mappings. Labels used here: Epic, Story, Task, Test Plan (no jira-sync-*
+# labels). Native GitHub issue types set when the org supports them: Epic, User Story, Task, Test Plan — strings must
+# match enabled org types or `type` may be ignored.
+#
+# Default run creates/updates the full tree. skip_standard_stories mirrors only the epic (no stories or children).
+# Assignee: GITHUB_DEFAULT_ASSIGNEE (default shaswatinetapp). Read-only toward Jira.
+#
+# Config: JIRA_BASE_URL is inline in this workflow (not a secret). Secrets: JIRA_TOKEN; optional JIRA_EMAIL for Basic
+# auth (omit for Bearer). Optional repo variable: JIRA_REST_PATH (e.g. rest/api/2).
+
+name: Jira epic to GitHub (manual)
+
+# GitHub → Actions → this workflow → Run workflow → enter Jira epic key.
+
+run-name: "Jira epic ${{ inputs.jira_epic_key }} → GitHub"
+
+on:
+    workflow_dispatch:
+        inputs:
+            jira_epic_key:
+                description: "Jira epic issue key (e.g. PROJ-123)"
+                required: true
+                type: string
+            skip_standard_stories:
+                description: "Exception only: epic-only sync (no user stories or sub-tasks). Leave false for the standard run."
+                required: false
+                type: boolean
+                default: false
+
+permissions:
+    issues: write
+
+concurrency:
+    group: jira-epic-to-github-${{ github.repository }}-${{ inputs.jira_epic_key }}
+    cancel-in-progress: false
+
+jobs:
+    sync:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 23.9.0
+
+            - name: Sync Jira epic to GitHub (inline script)
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_REPOSITORY: ${{ github.repository }}
+                  JIRA_EPIC_KEY: ${{ inputs.jira_epic_key }}
+                  SKIP_STANDARD_STORIES: ${{ inputs.skip_standard_stories }}
+                  JIRA_BASE_URL: https://jira.ngage.netapp.com
+                  JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+                  JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+                  JIRA_REST_PATH: ${{ vars.JIRA_REST_PATH }}
+                  GITHUB_DEFAULT_ASSIGNEE: shaswatinetapp
+              run: |
+                  npm install --no-save @octokit/rest@21.1.1
+                  node <<'SYNC_SCRIPT_EOF'
+                  const { Octokit } = require("@octokit/rest");
+
+                  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+                  const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+                  const JIRA_KEY = (process.env.JIRA_EPIC_KEY || "").trim();
+                  const SKIP_STANDARD_STORIES = process.env.SKIP_STANDARD_STORIES === "true";
+                  const JIRA_BASE_URL = (process.env.JIRA_BASE_URL || "").replace(/\/$/, "");
+                  const JIRA_EMAIL = (process.env.JIRA_EMAIL || "").trim();
+                  const JIRA_TOKEN = process.env.JIRA_TOKEN || "";
+                  const JIRA_REST_PATH = (process.env.JIRA_REST_PATH || "rest/api/3").replace(/^\/+|\/+$/g, "");
+                  const GITHUB_ASSIGNEE = (process.env.GITHUB_DEFAULT_ASSIGNEE || "shaswatinetapp").trim();
+
+                  const STANDARD_STORY_DEFINITIONS = [
+                      { slug: "api-backend", title: "API" },
+                      { slug: "ui", title: "UI" },
+                  ];
+
+                  /** Sub-tasks created under each user story (parent = user story issue). Edit this list to add/remove rows. */
+                  const USER_STORY_SUB_DEFINITIONS = [
+                      { slug: "implementation", title: "Implementation" },
+                      { slug: "demo-support", title: "Demo support" },
+                      { slug: "testcase-design", title: "Testcase design" },
+                      { slug: "functional-testing", title: "Functional testing" },
+                      { slug: "automation", title: "Automation" },
+                  ];
+
+                  /** GitHub org Issue Type names (must exist and be enabled for the repo). */
+                  const GITHUB_ISSUE_TYPE = {
+                      EPIC: "Epic",
+                      USER_STORY: "User Story",
+                      TASK: "Task",
+                      TEST_PLAN: "Test Plan",
+                  };
+
+                  function jiraBrowseUrl(base, key) {
+                      return `${base}/browse/${encodeURIComponent(key)}`;
+                  }
+
+                  function jiraAuthHeader() {
+                      if (!JIRA_TOKEN) {
+                          throw new Error("JIRA_TOKEN is required");
+                      }
+                      if (JIRA_EMAIL) {
+                          const raw = `${JIRA_EMAIL}:${JIRA_TOKEN}`;
+                          return `Basic ${Buffer.from(raw, "utf8").toString("base64")}`;
+                      }
+                      return `Bearer ${JIRA_TOKEN}`;
+                  }
+
+                  function adfToPlain(node) {
+                      if (!node) return "";
+                      if (typeof node === "string") return node;
+                      if (node.type === "text" && node.text) return node.text;
+                      if (Array.isArray(node)) return node.map(adfToPlain).join("");
+                      if (node.content && Array.isArray(node.content)) {
+                          return node.content.map(adfToPlain).join("\n");
+                      }
+                      return "";
+                  }
+
+                  function assertJiraKey(key) {
+                      if (!/^[A-Za-z][A-Za-z0-9_]*-\d+$/.test(key)) {
+                          throw new Error(
+                              `Invalid JIRA_EPIC_KEY "${key}" (expected form like PROJ-123)`
+                          );
+                      }
+                  }
+
+                  async function fetchJiraIssue(key) {
+                      const url = `${JIRA_BASE_URL}/${JIRA_REST_PATH}/issue/${encodeURIComponent(key)}?fields=summary,description,issuetype`;
+                      const res = await fetch(url, {
+                          headers: {
+                              Authorization: jiraAuthHeader(),
+                              Accept: "application/json",
+                          },
+                      });
+                      const text = await res.text();
+                      if (!res.ok) {
+                          throw new Error(`Jira GET issue failed ${res.status}: ${text.slice(0, 500)}`);
+                      }
+                      return JSON.parse(text);
+                  }
+
+                  function assertJiraEpicType(fields) {
+                      const name = (fields.issuetype && fields.issuetype.name) || "";
+                      if (!/epic/i.test(name)) {
+                          throw new Error(
+                              `Jira issue ${JIRA_KEY} is not an Epic (issuetype="${name}"). Refusing to sync.`
+                          );
+                      }
+                  }
+
+                  function buildEpicBody({ key, summary, descriptionPlain, browseUrl }) {
+                      const desc = descriptionPlain.trim()
+                          ? `\n\n## Description (from Jira)\n\n${descriptionPlain.trim()}`
+                          : "";
+                      return (
+                          `Mirrored from Jira epic **${key}**.\n\n` +
+                          `## Summary\n\n${summary}${desc}\n\n` +
+                          `---\n\n` +
+                          `🔗 [Open in Jira](${browseUrl})\n\n` +
+                          `<!-- jira-sync:epic:${key} -->`
+                      );
+                  }
+
+                  function buildChildBody({ key, slug, epicNumber, title }) {
+                      return (
+                          `User story created by \`jira-epic-to-github\` (GitHub only; not written to Jira).\n\n` +
+                          `**User story:** ${title}\n\n` +
+                          `**Parent epic:** #${epicNumber}\n\n` +
+                          `<!-- jira-sync:child:${key}:${slug} -->`
+                      );
+                  }
+
+                  function buildNestedBody({ key, storySlug, nestedSlug, storyTitle, userStoryNumber, epicNumber }) {
+                      const kind =
+                          nestedSlug === "testcase-design"
+                              ? "Test plan"
+                              : "Task";
+                      return (
+                          `${kind} under user story **${storyTitle}** (issue #${userStoryNumber}), epic #${epicNumber}.\n\n` +
+                          `<!-- jira-sync:nested:${key}:${storySlug}:${nestedSlug} -->`
+                      );
+                  }
+
+                  /** Locate synced epic by hidden body marker (no Jira-specific labels on issues). */
+                  async function findIssueByEpicMarker(octokit, jiraKey) {
+                      const fragment = `jira-sync:epic:${jiraKey}`;
+                      const q = `repo:${owner}/${repo} is:issue in:body "${fragment}"`;
+                      const { data } = await octokit.rest.search.issuesAndPullRequests({
+                          q,
+                          per_page: 5,
+                          sort: "updated",
+                          order: "desc",
+                      });
+                      return data.items.length ? data.items[0] : null;
+                  }
+
+                  async function listSubIssues(octokit, issueNumber) {
+                      const { data } = await octokit.rest.issues.listSubIssues({
+                          owner,
+                          repo,
+                          issue_number: issueNumber,
+                          per_page: 100,
+                      });
+                      return data;
+                  }
+
+                  function userStoryIssueTitle(defTitle, epicSummary) {
+                      return `[USER STORY]: ${defTitle} - ${epicSummary}`;
+                  }
+
+                  function nestedIssueTitlePrefix(nestedSlug) {
+                      return nestedSlug === "testcase-design" ? "[Test Plan]" : "[TASK]";
+                  }
+
+                  function nestedIssueTitle(nestedSlug, nestTitle, defTitle, epicSummary) {
+                      return `${nestedIssueTitlePrefix(nestedSlug)}: ${nestTitle} (${defTitle}) - ${epicSummary}`;
+                  }
+
+                  function nestedIssueLabels(nestedSlug) {
+                      return nestedSlug === "testcase-design" ? ["Test Plan"] : ["Task"];
+                  }
+
+                  /** GitHub REST `type` (native Issue Type); names must match org-enabled types or API may drop them. */
+                  function nestedIssueType(nestedSlug) {
+                      return nestedSlug === "testcase-design"
+                          ? GITHUB_ISSUE_TYPE.TEST_PLAN
+                          : GITHUB_ISSUE_TYPE.TASK;
+                  }
+
+                  function findUserStoryIssue(subIssues, { key, slug, title, summary }) {
+                      const wantMarker = `<!-- jira-sync:child:${key}:${slug} -->`;
+                      const withEpic = userStoryIssueTitle(title, summary).trim().toLowerCase();
+                      const titleUserNoEpic = `[USER STORY]: ${title}`.trim().toLowerCase();
+                      const titleLegacy = `[STORY]: ${title}`.trim().toLowerCase();
+                      const titleNorm = title.trim().toLowerCase();
+                      return (
+                          subIssues.find((issue) => {
+                              if (issue.body && issue.body.includes(wantMarker)) return true;
+                              const it = (issue.title || "").trim().toLowerCase();
+                              if (it === withEpic || it === titleUserNoEpic || it === titleLegacy || it === titleNorm)
+                                  return true;
+                              if (it.startsWith(`[user story]: ${title}`.trim().toLowerCase())) return true;
+                              return false;
+                          }) || null
+                      );
+                  }
+
+                  function findNestedIssue(nestedSubs, { key, storySlug, nestedSlug }) {
+                      const wantMarker = `<!-- jira-sync:nested:${key}:${storySlug}:${nestedSlug} -->`;
+                      return (
+                          nestedSubs.find(
+                              (issue) => issue.body && issue.body.includes(wantMarker)
+                          ) || null
+                      );
+                  }
+
+                  function assigneesPayload() {
+                      return GITHUB_ASSIGNEE ? { assignees: [GITHUB_ASSIGNEE] } : {};
+                  }
+
+                  (async () => {
+                      if (!GITHUB_TOKEN) throw new Error("GITHUB_TOKEN is required");
+                      if (!JIRA_BASE_URL) throw new Error("JIRA_BASE_URL is required");
+                      assertJiraKey(JIRA_KEY);
+
+                      const octokit = new Octokit({ auth: GITHUB_TOKEN });
+                      const jiraJson = await fetchJiraIssue(JIRA_KEY);
+                      const fields = jiraJson.fields || {};
+                      assertJiraEpicType(fields);
+
+                      const summary = fields.summary || JIRA_KEY;
+                      const descriptionPlain = adfToPlain(fields.description);
+                      const browseUrl = jiraBrowseUrl(JIRA_BASE_URL, JIRA_KEY);
+                      const epicTitle = `[EPIC]: ${summary}`;
+                      const epicBody = buildEpicBody({
+                          key: JIRA_KEY,
+                          summary,
+                          descriptionPlain,
+                          browseUrl,
+                      });
+                      let existing = await findIssueByEpicMarker(octokit, JIRA_KEY);
+                      let epicNumber;
+
+                      if (existing) {
+                          epicNumber = existing.number;
+                          await octokit.request("PATCH /repos/{owner}/{repo}/issues/{issue_number}", {
+                              owner,
+                              repo,
+                              issue_number: epicNumber,
+                              title: epicTitle,
+                              body: epicBody,
+                              labels: ["Epic"],
+                              type: GITHUB_ISSUE_TYPE.EPIC,
+                              ...assigneesPayload(),
+                          });
+                          console.log(`Updated existing GitHub epic issue #${epicNumber}`);
+                      } else {
+                          const { data: created } = await octokit.request("POST /repos/{owner}/{repo}/issues", {
+                              owner,
+                              repo,
+                              title: epicTitle,
+                              body: epicBody,
+                              labels: ["Epic"],
+                              type: GITHUB_ISSUE_TYPE.EPIC,
+                              ...assigneesPayload(),
+                          });
+                          epicNumber = created.number;
+                          console.log(`Created GitHub epic issue #${epicNumber}`);
+                      }
+
+                      if (SKIP_STANDARD_STORIES) {
+                          console.log(
+                              "SKIP_STANDARD_STORIES=true — epic-only mode; skipping user stories and sub-tasks."
+                          );
+                          return;
+                      }
+
+                      const subIssues = await listSubIssues(octokit, epicNumber);
+                      console.log(`Epic #${epicNumber} has ${subIssues.length} sub-issue(s) before sync.`);
+
+                      for (const def of STANDARD_STORY_DEFINITIONS) {
+                          const storyTitle = userStoryIssueTitle(def.title, summary);
+                          let storyIssue = findUserStoryIssue(subIssues, {
+                              key: JIRA_KEY,
+                              slug: def.slug,
+                              title: def.title,
+                              summary,
+                          });
+
+                          if (!storyIssue) {
+                              const { data: story } = await octokit.request("POST /repos/{owner}/{repo}/issues", {
+                                  owner,
+                                  repo,
+                                  title: storyTitle,
+                                  body: buildChildBody({
+                                      key: JIRA_KEY,
+                                      slug: def.slug,
+                                      epicNumber,
+                                      title: def.title,
+                                  }),
+                                  labels: ["Story"],
+                                  type: GITHUB_ISSUE_TYPE.USER_STORY,
+                                  ...assigneesPayload(),
+                              });
+                              storyIssue = story;
+                              try {
+                                  await octokit.rest.issues.addSubIssue({
+                                      owner,
+                                      repo,
+                                      issue_number: epicNumber,
+                                      sub_issue_id: story.id,
+                                  });
+                                  console.log(`Created and linked user story #${story.number}: ${storyTitle}`);
+                              } catch (e) {
+                                  console.error(
+                                      `Created user story #${story.number} but failed to link under epic: ${e.message}`
+                                  );
+                                  throw e;
+                              }
+                              subIssues.push(story);
+                          } else {
+                              await octokit.request("PATCH /repos/{owner}/{repo}/issues/{issue_number}", {
+                                  owner,
+                                  repo,
+                                  issue_number: storyIssue.number,
+                                  title: storyTitle,
+                                  body: buildChildBody({
+                                      key: JIRA_KEY,
+                                      slug: def.slug,
+                                      epicNumber,
+                                      title: def.title,
+                                  }),
+                                  labels: ["Story"],
+                                  type: GITHUB_ISSUE_TYPE.USER_STORY,
+                                  ...assigneesPayload(),
+                              });
+                              console.log(`Updated user story #${storyIssue.number}: ${storyTitle}`);
+                          }
+
+                          const nestedSubs = await listSubIssues(octokit, storyIssue.number);
+                          for (const nest of USER_STORY_SUB_DEFINITIONS) {
+                              const nestedTitle = nestedIssueTitle(nest.slug, nest.title, def.title, summary);
+                              const existingNested = findNestedIssue(nestedSubs, {
+                                  key: JIRA_KEY,
+                                  storySlug: def.slug,
+                                  nestedSlug: nest.slug,
+                              });
+                              if (existingNested) {
+                                  await octokit.request("PATCH /repos/{owner}/{repo}/issues/{issue_number}", {
+                                      owner,
+                                      repo,
+                                      issue_number: existingNested.number,
+                                      title: nestedTitle,
+                                      labels: nestedIssueLabels(nest.slug),
+                                      type: nestedIssueType(nest.slug),
+                                      ...assigneesPayload(),
+                                  });
+                                  console.log(
+                                      `Child issue #${existingNested.number} already present under user story #${storyIssue.number}; title, labels, type, and assignee updated.`
+                                  );
+                                  continue;
+                              }
+                              const { data: nestedIssue } = await octokit.request(
+                                  "POST /repos/{owner}/{repo}/issues",
+                                  {
+                                      owner,
+                                      repo,
+                                      title: nestedTitle,
+                                      body: buildNestedBody({
+                                          key: JIRA_KEY,
+                                          storySlug: def.slug,
+                                          nestedSlug: nest.slug,
+                                          storyTitle: def.title,
+                                          userStoryNumber: storyIssue.number,
+                                          epicNumber,
+                                      }),
+                                      labels: nestedIssueLabels(nest.slug),
+                                      type: nestedIssueType(nest.slug),
+                                      ...assigneesPayload(),
+                                  }
+                              );
+                              try {
+                                  await octokit.rest.issues.addSubIssue({
+                                      owner,
+                                      repo,
+                                      issue_number: storyIssue.number,
+                                      sub_issue_id: nestedIssue.id,
+                                  });
+                                  console.log(
+                                      `Created and linked child issue #${nestedIssue.number} under user story #${storyIssue.number}: ${nestedTitle}`
+                                  );
+                              } catch (e) {
+                                  console.error(
+                                      `Created child issue #${nestedIssue.number} but failed to link under user story: ${e.message}`
+                                  );
+                                  throw e;
+                              }
+                              nestedSubs.push(nestedIssue);
+                          }
+                      }
+
+                      console.log("Done.");
+                  })().catch((err) => {
+                      console.error(err);
+                      process.exit(1);
+                  });
+                  SYNC_SCRIPT_EOF

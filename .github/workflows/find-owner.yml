@@ -22,9 +22,9 @@ jobs:
 
             - name: Find owner from stack trace or error text and assign
               env:
-                  # Workflow token for repo REST / blame GraphQL (`gh` reads `GH_TOKEN`; many tools read `GITHUB_TOKEN`).
-                  GITHUB_TOKEN: ${{ github.token }}
-                  GH_TOKEN: ${{ github.token }}
+                  # Repo REST / blame / issue assignees: default `github.token`, or set secret FIND_OWNER_REPO_TOKEN (PAT with issues:write, etc.) if the workflow token is insufficient.
+                  GITHUB_TOKEN: ${{ secrets.FIND_OWNER_REPO_TOKEN || github.token }}
+                  GH_TOKEN: ${{ secrets.FIND_OWNER_REPO_TOKEN || github.token }}
                   # GraphQL for org Project V2: use secret FIND_OWNER_ORG_PROJECT_TOKEN (PAT or PAT-like); else github.token (cannot see org projects).
                   GH_PROJECT_TOKEN: ${{ secrets.FIND_OWNER_ORG_PROJECT_TOKEN || github.token }}
                   # true when FIND_OWNER_ORG_PROJECT_TOKEN is set (for diagnostics only; never the secret value).
@@ -437,7 +437,10 @@ jobs:
 
 
                   def should_skip_existing_assignee(lc: str, toks: list[str]) -> bool:
-                      return lc.startswith("copilot-") or any(lc == t for t in toks)
+                      # GitHub may assign the Copilot actor as login "Copilot" (not only copilot-* bots).
+                      if lc == "copilot" or lc.startswith("copilot-"):
+                          return True
+                      return any(lc == t for t in toks)
 
 
                   @lru_cache(maxsize=None)
@@ -481,6 +484,12 @@ jobs:
 
 
                   def add_assignee_rest(to_add: str, repo_full: str, issue_number: str, toks: list[str]) -> bool:
+                      """Add one assignee without replacing the full list (avoids PATCH 422 when e.g. Copilot is on the issue).
+
+                      Prefer POST …/issues/{n}/assignees (additive). Fall back to PATCH with only assignable logins
+                      (drops bots/non-assignable actors). Do not use `gh issue edit --add-assignee` (GraphQL path can
+                      fail with 'Copilot agent is not enabled in this repository' when Copilot is disabled).
+                      """
                       try:
                           proc = subprocess.run(
                               ["gh", "api", f"repos/{repo_full}/issues/{issue_number}"],
@@ -498,18 +507,48 @@ jobs:
                           data = json.loads(proc.stdout)
                       except json.JSONDecodeError:
                           return False
+                      add_lc = to_add.lower()
+                      for a in data.get("assignees") or []:
+                          lg = (a.get("login") or "").strip()
+                          if lg.lower() == add_lc:
+                              return True
+                      pl_add = json.dumps({"assignees": [to_add]})
+                      try:
+                          post = subprocess.run(
+                              [
+                                  "gh",
+                                  "api",
+                                  "-X",
+                                  "POST",
+                                  f"repos/{repo_full}/issues/{issue_number}/assignees",
+                                  "--input",
+                                  "-",
+                              ],
+                              input=pl_add,
+                              text=True,
+                              capture_output=True,
+                              check=False,
+                              env=_env_gh_repo(),
+                          )
+                      except Exception:
+                          post = None
+                      if post is not None and post.returncode == 0:
+                          return True
+                      if post is not None and post.returncode != 0:
+                          _gh_err(post, f"gh api POST issues/{issue_number}/assignees")
                       kept: list[str] = []
                       seen_lc: set[str] = set()
                       for a in data.get("assignees") or []:
-                          lg = a.get("login") or ""
+                          lg = (a.get("login") or "").strip()
                           if not lg:
                               continue
                           lc = lg.lower()
                           if should_skip_existing_assignee(lc, toks) or lc in seen_lc:
                               continue
+                          if not is_assignable_user(lg, repo_full):
+                              continue
                           seen_lc.add(lc)
                           kept.append(lg)
-                      add_lc = to_add.lower()
                       if add_lc not in seen_lc:
                           seen_lc.add(add_lc)
                           kept.append(to_add)
@@ -524,33 +563,10 @@ jobs:
                               env=_env_gh_repo(),
                           )
                       except Exception:
-                          p = None
-                      if p is not None and p.returncode == 0:
-                          return True
-                      if p is not None and p.returncode != 0:
-                          _gh_err(p, f"gh api PATCH issues/{issue_number} assignees")
-                      try:
-                          u = subprocess.run(
-                              [
-                                  "gh",
-                                  "issue",
-                                  "edit",
-                                  issue_number,
-                                  "--repo",
-                                  repo_full,
-                                  "--add-assignee",
-                                  to_add,
-                              ],
-                              capture_output=True,
-                              text=True,
-                              check=False,
-                              env=_env_gh_repo(),
-                          )
-                      except Exception:
                           return False
-                      if u.returncode != 0:
-                          _gh_err(u, f"gh issue edit add-assignee {to_add!r}")
-                      return u.returncode == 0
+                      if p.returncode != 0:
+                          _gh_err(p, f"gh api PATCH issues/{issue_number} assignees")
+                      return p.returncode == 0
 
 
                   def _graphql(query: str, variables: dict) -> Optional[dict]:
