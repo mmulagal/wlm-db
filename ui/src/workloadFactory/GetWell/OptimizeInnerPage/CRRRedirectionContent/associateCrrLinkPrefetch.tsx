@@ -160,16 +160,30 @@ export function useAssociateCrrLinkPrefetch(
                     if (associatedLinksResponse.data.count === 0) {
                         openCRRDataDialog();
                     } else {
-                        const { fsxDetails } = store.getState().crrRedirection;
+                        const state = store.getState();
+                        const { fsxDetails } = state.crrRedirection;
+                        const {
+                            selectedGwInstanceCredId: credId,
+                            selectedResourceId,
+                            selectedDatabaseInstance,
+                            selectedHostname,
+                            selectedDatabaseInstanceName
+                        } = state.getWellOptimize;
                         const fsxVolumeId = btoa(JSON.stringify([rowData?.volumeId]));
                         postBlueXPMessage({
                             type: BlueXPListeners.navigate,
                             payload: {
                                 pathname: `../../wlmfsx/fsx/clusters/${selectedGwInstanceCredId}/${
                                     fsxDetails?.region
-                                }/${fsxDetails?.id}/replication/create?selectedSrcVolumeIds=${fsxVolumeId}&fromParent=/${
+                                }/${
+                                    fsxDetails?.id
+                                }/replication/create?selectedSrcVolumeIds=${fsxVolumeId}&fromParent=/${
                                     isWorkloadFactory ? 'databases' : 'fsxdb'
-                                }/inventory`,
+                                }/inventory/${credId}/${fsxDetails?.region}/${
+                                    fsxDetails?.id
+                                }/resource/${selectedResourceId}/instance/${selectedDatabaseInstance}/host/${selectedHostname}/db/${selectedDatabaseInstanceName}/volumeName/${
+                                    rowData?.volumeName
+                                }/target/crr`,
                                 replace: true
                             }
                         });
