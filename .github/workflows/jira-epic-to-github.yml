@@ -10,24 +10,35 @@
 # Default run creates/updates the full tree. skip_standard_stories mirrors only the epic (no stories or children).
 # Assignee: GITHUB_DEFAULT_ASSIGNEE (default shaswatinetapp). Read-only toward Jira.
 #
+# HTTP diagnostics: by default only status, headers, and lengths are logged (GitHub: every request; Jira: one line per
+# request, body omitted when the response is OK JSON). Set workflow input verbose_http_logs (or env SYNC_VERBOSE_HTTP=1)
+# to log truncated bodies/data (may include Jira/GitHub issue text — use only when debugging). When verbose,
+# optional env SYNC_RESPONSE_LOG_MAX (default 20000) caps body/data length per log line.
+#
 # Config: JIRA_BASE_URL is inline in this workflow (not a secret). Secrets: JIRA_TOKEN; optional JIRA_EMAIL for Basic
-# auth (omit for Bearer). Optional repo variable: JIRA_REST_PATH (e.g. rest/api/2).
+# auth (Jira username or email + API token — typical for on-prem / Data Center; omit only when Bearer is valid). Optional
+# repo variable: JIRA_REST_PATH (e.g. rest/api/2). If the API returns HTML, auth is wrong or SSO intercepted the request.
 
 name: Jira epic to GitHub (manual)
 
 # GitHub → Actions → this workflow → Run workflow → enter Jira epic key.
 
-run-name: "Jira epic ${{ inputs.jira_epic_key }} → GitHub"
+run-name: 'Jira epic ${{ inputs.jira_epic_key }} → GitHub'
 
 on:
     workflow_dispatch:
         inputs:
             jira_epic_key:
-                description: "Jira epic issue key (e.g. PROJ-123)"
+                description: 'Jira epic issue key (e.g. PROJ-123)'
                 required: true
                 type: string
             skip_standard_stories:
-                description: "Exception only: epic-only sync (no user stories or sub-tasks). Leave false for the standard run."
+                description: 'Exception only: epic-only sync (no user stories or sub-tasks). Leave false for the standard run.'
+                required: false
+                type: boolean
+                default: false
+            verbose_http_logs:
+                description: 'If true, log truncated HTTP response bodies (Jira/GitHub). Sensitive; use only for debugging.'
                 required: false
                 type: boolean
                 default: false
@@ -59,6 +70,7 @@ jobs:
                   JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
                   JIRA_REST_PATH: ${{ vars.JIRA_REST_PATH }}
                   GITHUB_DEFAULT_ASSIGNEE: shaswatinetapp
+                  SYNC_VERBOSE_HTTP: ${{ inputs.verbose_http_logs }}
               run: |
                   npm install --no-save @octokit/rest@21.1.1
                   node <<'SYNC_SCRIPT_EOF'
@@ -73,6 +85,155 @@ jobs:
                   const JIRA_TOKEN = process.env.JIRA_TOKEN || "";
                   const JIRA_REST_PATH = (process.env.JIRA_REST_PATH || "rest/api/3").replace(/^\/+|\/+$/g, "");
                   const GITHUB_ASSIGNEE = (process.env.GITHUB_DEFAULT_ASSIGNEE || "shaswatinetapp").trim();
+                  const VERBOSE_HTTP = /^(1|true|yes)$/i.test(
+                      String(process.env.SYNC_VERBOSE_HTTP || "").trim()
+                  );
+                  const RESPONSE_LOG_MAX = VERBOSE_HTTP
+                      ? Math.max(1000, Number(process.env.SYNC_RESPONSE_LOG_MAX || 20000) || 20000)
+                      : 800;
+
+                  function truncateForLog(s, max = RESPONSE_LOG_MAX) {
+                      const str = typeof s === "string" ? s : JSON.stringify(s);
+                      if (str.length <= max) return str;
+                      return `${str.slice(0, max)}\n… truncated (${str.length - max} chars omitted; increase SYNC_RESPONSE_LOG_MAX)`;
+                  }
+
+                  function getHeader(headers, name) {
+                      if (!headers) return;
+                      const lc = name.toLowerCase();
+                      if (typeof headers.get === "function") {
+                          return headers.get(name) || headers.get(lc);
+                      }
+                      return headers[lc] ?? headers[name];
+                  }
+
+                  function snapshotHeaders(headers, names) {
+                      const out = {};
+                      for (const n of names) {
+                          const v = getHeader(headers, n);
+                          if (v) out[n] = v;
+                      }
+                      return out;
+                  }
+
+                  function looksLikeJsonBody(text) {
+                      const t = (text || "").trim();
+                      return t.startsWith("{") || t.startsWith("[");
+                  }
+
+                  function looksLikeHtmlOrSsoPage(text) {
+                      const t = (text || "").trim();
+                      return (
+                          /<html[\s>]/i.test(t) ||
+                          /<!doctype\s+html/i.test(t) ||
+                          /<title[^>]*>\s*log\s*in/i.test(t)
+                      );
+                  }
+
+                  function jiraBodyForLog(res, textBody) {
+                      if (VERBOSE_HTTP) {
+                          return truncateForLog(textBody);
+                      }
+                      const ct = (getHeader(res.headers, "content-type") || "").toLowerCase();
+                      if (res.ok && looksLikeJsonBody(textBody)) {
+                          return undefined;
+                      }
+                      if (ct.includes("text/html") || looksLikeHtmlOrSsoPage(textBody)) {
+                          return `[HTML/SSO-like body omitted (${textBody.length} chars); enable verbose_http_logs for a truncated trace]`;
+                      }
+                      return truncateForLog(textBody);
+                  }
+
+                  function logJiraResponse(label, url, res, textBody) {
+                      const entry = {
+                          kind: "jira-response",
+                          label,
+                          url,
+                          status: res.status,
+                          statusText: res.statusText,
+                          ok: res.ok,
+                          headers: snapshotHeaders(res.headers, [
+                              "content-type",
+                              "content-length",
+                              "location",
+                              "www-authenticate",
+                          ]),
+                          bodyLength: textBody.length,
+                      };
+                      const body = jiraBodyForLog(res, textBody);
+                      if (body !== undefined) {
+                          entry.body = body;
+                      } else {
+                          entry.bodyOmitted =
+                              "OK JSON (enable verbose_http_logs or SYNC_VERBOSE_HTTP=1 to log response body)";
+                      }
+                      console.log(JSON.stringify(entry));
+                  }
+
+                  function registerGithubResponseLogging(octokit) {
+                      octokit.hook.wrap("request", async (request, options) => {
+                          try {
+                              const response = await request(options);
+                              const { status, url, headers, data } = response;
+                              let dataStr;
+                              let dataLen = 0;
+                              try {
+                                  if (data === undefined) dataStr = "";
+                                  else if (data === null) dataStr = "null";
+                                  else dataStr = typeof data === "string" ? data : JSON.stringify(data);
+                                  dataLen = dataStr.length;
+                              } catch {
+                                  dataStr = "[unserializable response data]";
+                                  dataLen = dataStr.length;
+                              }
+                              const base = {
+                                  kind: "github-response",
+                                  method: options.method,
+                                  url: url || options.url,
+                                  status,
+                                  headers: snapshotHeaders(headers, [
+                                      "content-type",
+                                      "x-ratelimit-remaining",
+                                      "x-ratelimit-limit",
+                                      "x-github-request-id",
+                                      "link",
+                                  ]),
+                                  dataLength: dataLen,
+                              };
+                              if (VERBOSE_HTTP) {
+                                  base.data = truncateForLog(dataStr);
+                              }
+                              console.log(JSON.stringify(base));
+                              return response;
+                          } catch (err) {
+                              const errData = err.response?.data;
+                              let errStr;
+                              try {
+                                  if (errData === undefined) errStr = undefined;
+                                  else errStr = typeof errData === "string" ? errData : JSON.stringify(errData);
+                              } catch {
+                                  errStr = "[unserializable error response data]";
+                              }
+                              const errEntry = {
+                                  kind: "github-response-error",
+                                  method: options.method,
+                                  url: options.url,
+                                  status: err.status,
+                                  message: err.message,
+                                  headers: snapshotHeaders(err.response?.headers, [
+                                      "content-type",
+                                      "x-github-request-id",
+                                  ]),
+                                  responseDataLength: errStr ? errStr.length : 0,
+                              };
+                              if (errStr) {
+                                  errEntry.responseData = truncateForLog(errStr);
+                              }
+                              console.log(JSON.stringify(errEntry));
+                              throw err;
+                          }
+                      });
+                  }
 
                   const STANDARD_STORY_DEFINITIONS = [
                       { slug: "api-backend", title: "API" },
@@ -136,13 +297,38 @@ jobs:
                           headers: {
                               Authorization: jiraAuthHeader(),
                               Accept: "application/json",
+                              "User-Agent": "jira-epic-to-github-workflow",
                           },
+                          redirect: "manual",
                       });
                       const text = await res.text();
+                      logJiraResponse("GET issue", url, res, text);
+                      if (res.status >= 300 && res.status < 400) {
+                          const loc = (res.headers.get("location") || "").trim();
+                          throw new Error(
+                              `Jira GET issue HTTP ${res.status} redirect (not followed). Location: ${loc.slice(0, 400) || "(missing)"}. ` +
+                                  `This usually means SSO or login instead of API auth. Set secrets JIRA_EMAIL (Jira username or email) and JIRA_TOKEN (API token) for Basic auth, or fix the token type your site expects. Request URL: ${url}`
+                          );
+                      }
                       if (!res.ok) {
                           throw new Error(`Jira GET issue failed ${res.status}: ${text.slice(0, 500)}`);
                       }
-                      return JSON.parse(text);
+                      const trimmed = text.trim();
+                      if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+                          const hint =
+                              !JIRA_EMAIL
+                                  ? " JIRA_EMAIL is unset, so Authorization is Bearer; on-prem Jira (Data Center/Server) almost always needs Basic with JIRA_EMAIL + JIRA_TOKEN."
+                                  : "";
+                          throw new Error(
+                              `Jira GET issue returned non-JSON (status ${res.status}, Content-Type: ${res.headers.get("content-type") || "unknown"}). ` +
+                                  `First 240 chars: ${trimmed.slice(0, 240).replace(/\s+/g, " ")}${hint} Request URL: ${url}`
+                          );
+                      }
+                      try {
+                          return JSON.parse(text);
+                      } catch (e) {
+                          throw new Error(`Jira JSON parse failed for ${url}: ${e.message}`);
+                      }
                   }
 
                   function assertJiraEpicType(fields) {
@@ -270,6 +456,7 @@ jobs:
                       assertJiraKey(JIRA_KEY);
 
                       const octokit = new Octokit({ auth: GITHUB_TOKEN });
+                      registerGithubResponseLogging(octokit);
                       const jiraJson = await fetchJiraIssue(JIRA_KEY);
                       const fields = jiraJson.fields || {};
                       assertJiraEpicType(fields);
