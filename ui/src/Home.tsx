@@ -149,9 +149,10 @@ const Home = () => {
                             element={<ErrorAnalysisDeepLink />}
                         />
                         <Route
-                            path="/databases/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/volumeName/:volumeName/target/:target/*"
+                            path="/databases/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/volumeName/:volumeName/target/:target/comingFrom/:comingFrom/*"
                             element={<InventoryFsxDeepLink />}
                         />
+
                         <Route
                             path="/databases/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/target/:target/*"
                             element={<InventoryFsxDeepLink />}
@@ -243,9 +244,10 @@ const Home = () => {
                             />
 
                             <Route
-                                path="/fsxdb/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/volumeName/:volumeName/target/:target/*"
+                                path="/fsxdb/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/volumeName/:volumeName/target/:target/comingFrom/:comingFrom/*"
                                 element={<InventoryFsxDeepLink />}
                             />
+
                             <Route
                                 path="/fsxdb/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/target/:target/*"
                                 element={<InventoryFsxDeepLink />}

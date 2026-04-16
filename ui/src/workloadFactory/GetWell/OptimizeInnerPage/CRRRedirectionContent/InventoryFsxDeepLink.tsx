@@ -4,13 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import HeaderComponent from '../../../DatabaseHomePage/HeaderComponent/HeaderComponent';
 import ComponentLoader from '../../../../common/ComponentLoader/ComponentLoader';
-import {
-    ASSESSMENT_CONFIG_NAMES,
-    DBType,
-    FIVE_MINUTES_MS,
-    GETWELL_STATUS,
-    WLF_TABS
-} from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, DBType, FIVE_MINUTES_MS, GETWELL_STATUS, WLF_TABS } from '../../../../utils/consts';
 import {
     useAssociateSelectedLinkMutation,
     useGetExistingLinksMutation,
@@ -78,8 +72,6 @@ const InventoryFsxDeepLink = () => {
     const [searchParams] = useSearchParams();
     const ec2InstanceIdFromQuery = searchParams.get('ec2InstanceId') || '';
     const asmManagedFromQuery = searchParams.get('asmManaged') === 'true';
-    const comingFromQuery = searchParams.get('comingFrom') || '';
-    const isFromReplicateWizard = comingFromQuery === COMING_FROM_REPLICATE_WIZARD;
 
     const params = useParams<{
         credId: string;
@@ -94,6 +86,8 @@ const InventoryFsxDeepLink = () => {
         /** Present when URL includes `/volumeName/:volumeName/` before `/target/`. */
         volumeName?: string;
         target?: string;
+        /** Set when URL matches `.../target/:target/comingFrom/:comingFrom` (e.g. replicate wizard return). */
+        comingFrom?: string;
     }>();
 
     const {
@@ -104,8 +98,10 @@ const InventoryFsxDeepLink = () => {
         instanceId: instanceIdParam,
         hostname: hostnameParam,
         dbInstanceName: dbInstanceParam,
-        target: targetParam
+        target: targetParam,
+        comingFrom: comingFromParam
     } = params;
+    const isFromReplicateWizard = comingFromParam === COMING_FROM_REPLICATE_WIZARD;
 
     const [getExistingLinkApi] = useGetExistingLinksMutation();
     const [associateSelectedLinkApi] = useAssociateSelectedLinkMutation();
@@ -123,7 +119,6 @@ const InventoryFsxDeepLink = () => {
         let cancelled = false;
 
         const runAssociateFsxLink = async () => {
-           
             const checkResult: any = await getExistingLinkApi({});
 
             if (cancelled) return;
@@ -140,8 +135,7 @@ const InventoryFsxDeepLink = () => {
 
                 const creationTime = latest?.creationTime;
                 const isLatestWithinFiveMinutes =
-                    typeof creationTime === 'number' &&
-                    Math.abs(Date.now() - creationTime) <= FIVE_MINUTES_MS;
+                    typeof creationTime === 'number' && Math.abs(Date.now() - creationTime) <= FIVE_MINUTES_MS;
 
                 if (linkCheck?.data?.count > 0 && isLatestWithinFiveMinutes) {
                     const existingLinkId = linkCheck?.data?.items?.[0]?.id;
@@ -334,7 +328,7 @@ const InventoryFsxDeepLink = () => {
         fsxId,
         ec2InstanceIdFromQuery,
         asmManagedFromQuery,
-        isFromReplicateWizard,
+        comingFromParam,
         isCrrDeepLink,
         resourceIdParam,
         instanceIdParam,

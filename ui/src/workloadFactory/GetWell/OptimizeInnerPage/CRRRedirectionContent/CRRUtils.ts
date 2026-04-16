@@ -1,12 +1,20 @@
 export const OPEN_FIX_VOLUME_QUERY = 'openFixVolume';
 
-/** Same pattern as `Home.tsx` inventory FSx deep link (`InventoryFsxDeepLink`). */
+/** Same pattern as `Home.tsx` inventory FSx deep link (`InventoryFsxDeepLink`) — `target/:target/*` (no `volumeName` segment). */
 export const INVENTORY_FSX_DEEP_LINK_PATH =
     '/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/target/:target/*';
 
-/** Includes `volumeName` before `target` (CRR navigation from BlueXP / Fix flow). */
-export const INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME =
-    '/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/volumeName/:volumeName/target/:target/*';
+/** `volumeName` + `target` + `comingFrom` (e.g. replicate wizard); must stay in sync with `Home.tsx` routes. */
+export const INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME_AND_COMING_FROM =
+    '/inventory/:credId/:regionId/:fsxId/resource/:resourceId/instance/:instanceId/host/:hostname/db/:dbInstanceName/volumeName/:volumeName/target/:target/comingFrom/:comingFrom';
+
+/** Full path patterns for `OptimizeInnerPage` / CRR deep-link detection (`/databases` and `/fsxdb` prefixes). */
+export const INVENTORY_FSX_DEEP_LINK_MATCH_PATTERNS = [
+    `/databases${INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME_AND_COMING_FROM}`,
+    `/databases${INVENTORY_FSX_DEEP_LINK_PATH}`,
+    `/fsxdb${INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME_AND_COMING_FROM}`,
+    `/fsxdb${INVENTORY_FSX_DEEP_LINK_PATH}`
+] as const;
 
 export const decodeVolumeParam = (value: string) => {
     const trimmed = value.trim();

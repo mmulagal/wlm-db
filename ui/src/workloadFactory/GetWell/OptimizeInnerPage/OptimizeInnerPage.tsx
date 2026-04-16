@@ -1,7 +1,7 @@
 import { Button, DsButton, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useMatch, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { matchPath, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useTranslation } from 'react-i18next';
 import styles from './OptimizeInnerPage.module.scss';
@@ -71,8 +71,7 @@ import { useAssociateCrrLinkPrefetch } from './CRRRedirectionContent/associateCr
 import {
     decodeVolumeParam,
     findCrrRowDataByVolumeName,
-    INVENTORY_FSX_DEEP_LINK_PATH,
-    INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME,
+    INVENTORY_FSX_DEEP_LINK_MATCH_PATTERNS,
     OPEN_FIX_VOLUME_QUERY,
     pathnameWithoutTrailingSplat,
     pathnameWithoutVolumeNameSegment
@@ -85,24 +84,12 @@ const OptimizeInnerPage = () => {
     const params = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const matchInventoryFsxDeepLinkDatabasesVol = useMatch({
-        path: `/databases${INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME}`,
-        end: true
-    });
-    const matchInventoryFsxDeepLinkDatabases = useMatch({
-        path: `/databases${INVENTORY_FSX_DEEP_LINK_PATH}`,
-        end: true
-    });
-    const matchInventoryFsxDeepLinkFsxdbVol = useMatch({
-        path: `/fsxdb${INVENTORY_FSX_DEEP_LINK_PATH_WITH_VOLUME}`,
-        end: true
-    });
-    const matchInventoryFsxDeepLinkFsxdb = useMatch({ path: `/fsxdb${INVENTORY_FSX_DEEP_LINK_PATH}`, end: true });
-    const isInventoryFsxDeepLinkRoute = Boolean(
-        matchInventoryFsxDeepLinkDatabasesVol ??
-            matchInventoryFsxDeepLinkDatabases ??
-            matchInventoryFsxDeepLinkFsxdbVol ??
-            matchInventoryFsxDeepLinkFsxdb
+    const isInventoryFsxDeepLinkRoute = useMemo(
+        () =>
+            INVENTORY_FSX_DEEP_LINK_MATCH_PATTERNS.some(
+                pattern => matchPath({ path: pattern, end: true }, location.pathname) != null
+            ),
+        [location.pathname]
     );
     const { setDialog, closeDialog } = useDialog();
     const { runAssociateLinkPrefetch } = useAssociateCrrLinkPrefetch(setDialog, closeDialog);

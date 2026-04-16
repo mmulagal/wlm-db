@@ -85,13 +85,15 @@ export function useAssociateCrrLinkPrefetch(
                                     fsxDetails?.id
                                 }/resource/${selectedResourceId}/instance/${selectedDatabaseInstance}/host/${selectedHostname}/db/${selectedDatabaseInstanceName}/volumeName/${
                                     rowData?.volumeName
-                                }/target/crr/overview&region=${fsxDetails?.region}&securityGroupId=${
-                                    fsxDetails?.securityGroups[0]?.id
-                                }&securityGroupName=${fsxDetails?.securityGroups[0]?.name}&subnetCidr=${
-                                    fsxDetails?.subnets[0]?.cidrBlock
-                                }&subnetId=${fsxDetails?.subnets[0]?.id}&vpcCidr=${
-                                    fsxDetails?.vpcInfo?.vpcCidr
-                                }&vpcId=${fsxDetails?.subnets[0]?.vpcId}&vpcName=${fsxDetails?.vpcInfo?.vpcName}`,
+                                }/target/crr/comingFrom/createNewLink/overview&region=${
+                                    fsxDetails?.region
+                                }&securityGroupId=${fsxDetails?.securityGroups[0]?.id}&securityGroupName=${
+                                    fsxDetails?.securityGroups[0]?.name
+                                }&subnetCidr=${fsxDetails?.subnets[0]?.cidrBlock}&subnetId=${
+                                    fsxDetails?.subnets[0]?.id
+                                }&vpcCidr=${fsxDetails?.vpcInfo?.vpcCidr}&vpcId=${
+                                    fsxDetails?.subnets[0]?.vpcId
+                                }&vpcName=${fsxDetails?.vpcInfo?.vpcName}`,
                                 replace: true
                             }
                         });
@@ -183,7 +185,7 @@ export function useAssociateCrrLinkPrefetch(
                                     fsxDetails?.id
                                 }/resource/${selectedResourceId}/instance/${selectedDatabaseInstance}/host/${selectedHostname}/db/${selectedDatabaseInstanceName}/volumeName/${
                                     rowData?.volumeName
-                                }/target/crr?comingFrom=replicateWizard`,
+                                }/target/crr/comingFrom/replicateWizard`,
                                 replace: true
                             }
                         });
