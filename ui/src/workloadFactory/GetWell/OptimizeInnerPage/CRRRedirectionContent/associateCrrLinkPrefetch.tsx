@@ -167,7 +167,7 @@ export function useAssociateCrrLinkPrefetch(
                             payload: {
                                 pathname: `../../wlmfsx/fsx/clusters/${selectedGwInstanceCredId}/${
                                     fsxDetails?.region
-                                }/${fsxDetails?.id}/replication/create?selectedSrcVolumeIds=${fsxVolumeId}&from=/${
+                                }/${fsxDetails?.id}/replication/create?selectedSrcVolumeIds=${fsxVolumeId}&fromParent=/${
                                     isWorkloadFactory ? 'databases' : 'fsxdb'
                                 }/inventory`,
                                 replace: true

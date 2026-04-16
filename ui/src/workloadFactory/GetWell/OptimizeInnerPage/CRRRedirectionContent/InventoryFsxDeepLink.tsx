@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import HeaderComponent from '../../../DatabaseHomePage/HeaderComponent/HeaderComponent';
 import ComponentLoader from '../../../../common/ComponentLoader/ComponentLoader';
@@ -75,6 +75,7 @@ const buildOracleCrrFallbackCard = () => ({
 const InventoryFsxDeepLink = () => {
     const dispatch = useDispatch();
     const [searchParams] = useSearchParams();
+    const location = useLocation();
     const ec2InstanceIdFromQuery = searchParams.get('ec2InstanceId') || '';
     const asmManagedFromQuery = searchParams.get('asmManaged') === 'true';
 
@@ -120,6 +121,7 @@ const InventoryFsxDeepLink = () => {
         let cancelled = false;
 
         const runAssociateFsxLink = async () => {
+            console.log('printing location object', location?.state)
             const checkResult: any = await getExistingLinkApi({});
 
             if (cancelled) return;
