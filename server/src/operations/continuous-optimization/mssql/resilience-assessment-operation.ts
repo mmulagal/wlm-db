@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import moment from 'moment';
-import { compact, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import {
     ErrorResponseType,
@@ -41,13 +41,13 @@ import {
     VolumeDBMapEntry
 } from '../../../utils/common-types';
 import { getInstanceInfo } from '../../database/database-operations';
-import { describeFSx } from '../../../lib/aws/fsx';
 import { CROSS_REGION_REPLICATION_SCRIPT } from '../../workloads/mssql/resiliency-scripts';
 import { FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS } from '../../workloads/mssql/storage-scripts';
 import { GET_SNAPSHOT_DETAILS } from '../../workloads/mssql/assessment-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { getMZFsxnNodePreference } from '../../aws/fsx-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { resolveCrossRegionPeerIds, updateCrrDetailsWithCrossRegionStatus } from '../crr-assessment-utils';
 import {
     initiateAwsBackupAssessment as initiateSharedAwsBackupAssessment,
     getAwsBackupDriftData as getSharedAwsBackupDriftData
@@ -501,60 +501,8 @@ async function initiateCrossRegionResiliencyAssessment(
             ? sqlResponseParsing(response)
             : { crrDetails: [], errorMessage: '' };
 
-        const peerFileSystemIds = [
-            ...new Set(
-                compact(
-                    crrDetails
-                        .map((crrDetail: { peerClusterFsxId: string | string[] }) => crrDetail.peerClusterFsxId)
-                        .flat()
-                ) as string[]
-            )
-        ];
-
-        // Check if PeerFileSystemIds are NOT deployed in the same region as source fsx
-        // 1. No two fsx in any region can have same id.
-        // 2. On describe-file-system call with region as source fsx  → If error says "File system 'fs-0e39d51dc9d0468ca' does not exist.", then fsx is deployed in a region different from source fsx
-        // 3. With vpc peering or transit gateway, if describe-file-system call with region as source fsx does not result in an error, extract region from ResourceArn (example:ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-00e6530a84ccd0a01")
-
-        if (!isEmpty(peerFileSystemIds)) {
-            await Promise.all(
-                peerFileSystemIds.map(async (peerFileSystemId: string) => {
-                    try {
-                        const fsxInfo = await describeFSx(
-                            credentialsId,
-                            region,
-                            { FileSystemIds: [peerFileSystemId] },
-                            accountId,
-                            { useCache: true }
-                        );
-                        const resourceArn = fsxInfo?.FileSystems?.[0]?.ResourceARN;
-
-                        crrDetails.forEach(
-                            (crrDetail: { peerClusterFsxId: string | string[]; isCRREnabled: boolean }) => {
-                                crrDetail.isCRREnabled =
-                                    crrDetail.isCRREnabled ||
-                                    ((crrDetail.peerClusterFsxId === peerFileSystemId ||
-                                        crrDetail.peerClusterFsxId?.includes(peerFileSystemId)) &&
-                                        !resourceArn?.includes(region)) ||
-                                    false;
-                            }
-                        );
-                    } catch (error: any) {
-                        if (error?.name && error.name === 'FileSystemNotFound') {
-                            crrDetails.forEach(
-                                (crrDetail: { peerClusterFsxId: string | string[]; isCRREnabled: boolean }) => {
-                                    crrDetail.isCRREnabled =
-                                        crrDetail.isCRREnabled ||
-                                        crrDetail.peerClusterFsxId === peerFileSystemId ||
-                                        crrDetail.peerClusterFsxId?.includes(peerFileSystemId) ||
-                                        false;
-                                }
-                            );
-                        }
-                    }
-                })
-            );
-        }
+        const crossRegionPeerIds = await resolveCrossRegionPeerIds(crrDetails, credentialsId, region, accountId);
+        updateCrrDetailsWithCrossRegionStatus(crrDetails, crossRegionPeerIds, true);
 
         await createDatabaseInstanceConfigData([
             {

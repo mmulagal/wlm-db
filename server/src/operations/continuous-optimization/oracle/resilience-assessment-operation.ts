@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { compact, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
@@ -13,8 +13,8 @@ import {
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes } from '../../../utils/consts';
 import { sqlResponseParsing } from '../../../utils/utils';
 import { CrrAssessment, CrrDetails, WorkloadInstance } from '../../../utils/common-types';
-import { describeFSx } from '../../../lib/aws/fsx';
 import { getFsxnVolIdsFromOntapVolIds } from '../../aws/fsx-operations';
+import { resolveCrossRegionPeerIds, updateCrrDetailsWithCrossRegionStatus } from '../crr-assessment-utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { ORACLE_CRR_ASSESSMENT_SCRIPT } from './ssm-scripts/resiliency-assessment-scripts';
@@ -86,41 +86,15 @@ async function initiateCrossRegionResiliencyAssessment(
             errorMessage = parsedResponse?.errorMessage || '';
         }
 
-        // Determine cross-region status at the instance level (once per peer FSx ID),
-        // then apply to all volumes that reference that peer.
-        // Exclude peer IDs that match the source FSx — same file system with a different
-        // vserver is NOT cross-region replication.
         const sourceFsxIds = new Set(instanceRecord.fsxFileSystem.split(',').map(id => id.trim()));
-        const peerFileSystemIds = [
-            ...new Set(compact(crrDetails.map(d => d.peerClusterFsxId).flat()) as string[])
-        ].filter(id => !sourceFsxIds.has(id));
-        const crossRegionPeerIds = new Set<string>();
-
-        if (!isEmpty(peerFileSystemIds)) {
-            await Promise.all(
-                peerFileSystemIds.map(async (peerFileSystemId: string) => {
-                    try {
-                        const fsxInfo = await describeFSx(
-                            credentialsId,
-                            region,
-                            { FileSystemIds: [peerFileSystemId] },
-                            accountId,
-                            { useCache: true }
-                        );
-                        const peerRegion = fsxInfo?.FileSystems?.[0]?.ResourceARN?.split(':')[3];
-                        if (peerRegion && peerRegion !== region) {
-                            crossRegionPeerIds.add(peerFileSystemId);
-                        }
-                    } catch (error: any) {
-                        if (error?.name === 'FileSystemNotFound') {
-                            crossRegionPeerIds.add(peerFileSystemId);
-                        } else {
-                            logger.error(`Error describing peer FSx ${peerFileSystemId}:`, error);
-                        }
-                    }
-                })
-            );
-        }
+        const crossRegionPeerIds = await resolveCrossRegionPeerIds(
+            crrDetails,
+            credentialsId,
+            region,
+            accountId,
+            sourceFsxIds
+        );
+        updateCrrDetailsWithCrossRegionStatus(crrDetails, crossRegionPeerIds);
 
         const volumeNameToUuid = new Map<string, string>();
         const { mappedVolumeNames = [], mappedVolumesUuids = [] } = instanceRecord;
@@ -130,7 +104,6 @@ async function initiateCrossRegionResiliencyAssessment(
             }
         });
 
-        // Resolve ONTAP volume UUIDs → FSx volume IDs via AWS DescribeVolumes
         let ontapUuidToFsxVolId = new Map<string, string>();
         if (!isEmpty(mappedVolumesUuids)) {
             try {
@@ -149,10 +122,6 @@ async function initiateCrossRegionResiliencyAssessment(
         }
 
         crrDetails.forEach(crrDetail => {
-            const peerIds = (
-                Array.isArray(crrDetail.peerClusterFsxId) ? crrDetail.peerClusterFsxId : [crrDetail.peerClusterFsxId]
-            ).filter((id): id is string => !!id);
-            crrDetail.isCRREnabled = peerIds.some(id => crossRegionPeerIds.has(id));
             crrDetail.volumeUuid = volumeNameToUuid.get(crrDetail.volumeName);
             crrDetail.fsxVolumeId = crrDetail.volumeUuid ? ontapUuidToFsxVolId.get(crrDetail.volumeUuid) : undefined;
         });
