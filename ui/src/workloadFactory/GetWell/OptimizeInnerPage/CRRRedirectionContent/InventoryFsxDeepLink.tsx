@@ -4,7 +4,13 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import HeaderComponent from '../../../DatabaseHomePage/HeaderComponent/HeaderComponent';
 import ComponentLoader from '../../../../common/ComponentLoader/ComponentLoader';
-import { ASSESSMENT_CONFIG_NAMES, DBType, GETWELL_STATUS, WLF_TABS } from '../../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    DBType,
+    FIVE_MINUTES_MS,
+    GETWELL_STATUS,
+    WLF_TABS
+} from '../../../../utils/consts';
 import {
     useAssociateSelectedLinkMutation,
     useGetExistingLinksMutation,
@@ -128,7 +134,12 @@ const InventoryFsxDeepLink = () => {
             if (latest?.state?.status?.toLowerCase() === 'connected') {
                 const linkCheck: any = await checkExistingLinkApi({ fsxId });
 
-                if (linkCheck?.data?.count > 0) {
+                const creationTime = latest?.creationTime;
+                const isLatestWithinFiveMinutes =
+                    typeof creationTime === 'number' &&
+                    Math.abs(Date.now() - creationTime) <= FIVE_MINUTES_MS;
+
+                if (linkCheck?.data?.count > 0 && isLatestWithinFiveMinutes) {
                     const existingLinkId = linkCheck?.data?.items?.[0]?.id;
                     await deleteExistingLinkApi({
                         credentialId: credId,

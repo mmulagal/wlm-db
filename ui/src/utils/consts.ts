@@ -73,6 +73,9 @@ export const WLMDB_POLICIES_PROD_LINK = 'https://console.workloads.netapp.com';
 export const API_MAX_RETRIES = 3;
 export const MIN_RETRY_DELAY = 5000;
 
+/** Five minutes in milliseconds (e.g. creationTime vs now checks). */
+export const FIVE_MINUTES_MS = 5 * 60 * 1000;
+
 // License URL
 export const LICENSE_URL =
     'https://docs.aws.amazon.com/launchwizard/latest/userguide/launch-wizard-getting-started.html#launch-wizard-amis';
