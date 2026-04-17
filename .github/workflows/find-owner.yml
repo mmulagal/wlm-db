@@ -291,65 +291,47 @@ jobs:
                       return best if best is not None else git_fallback()
 
 
-                  def extract_error_literal_candidates(text: str) -> list[str]:
-                      """Pull strings to git-grep. Prefer inline `keywords` and Error: tails over fenced
-                      log/JSON lines: sorting all by length desc and keeping only 12 dropped high-signal
-                      short tokens (e.g. offline-assessment) when the issue body had long ``` samples."""
-                      lo, hi = 12, 180
-                      max_total = 36
-                      fenced: list[str] = []
-                      for block in re.findall(r"```[a-zA-Z0-9_-]*\s*\n(.*?)```", text, re.DOTALL | re.IGNORECASE):
-                          for raw in block.splitlines():
-                              s = raw.strip()
-                              if lo <= len(s) <= hi:
-                                  fenced.append(s)
-                      backticks: list[str] = []
-                      for m in re.finditer(r"`([^`\n]{12,180})`", text):
+                  def extract_where_to_look_literals(text: str) -> list[str]:
+                      """Return backtick literals from the `### Where to Look` section bullets, in order.
+
+                      These are the investigator-curated high-signal strings (e.g. `Failed to clean up`)
+                      the error-agent puts in the issue body. This is the only literal source the
+                      resolver trusts — a broad sweep over fenced log blocks was prone to picking up
+                      generic log prose (timestamps, correlation ids, "Resetting cache", …) and
+                      assigning the most-recent committer of any matching file.
+                      """
+                      if not text:
+                          return []
+                      lines = text.splitlines()
+                      start = -1
+                      for i, line in enumerate(lines):
+                          if re.match(r"^\s*#{1,6}\s+where\s+to\s+look\b", line, re.I):
+                              start = i + 1
+                              break
+                      if start < 0:
+                          return []
+                      out: list[str] = []
+                      seen: set[str] = set()
+                      for j in range(start, len(lines)):
+                          raw = lines[j]
+                          # Stop at the next markdown heading.
+                          if re.match(r"^\s*#{1,6}\s+\S", raw):
+                              break
+                          ls = raw.lstrip()
+                          if not (ls.startswith("- ") or ls.startswith("* ") or re.match(r"^\d+[.)]\s", ls)):
+                              continue
+                          m = re.search(r"`([^`\n]{12,180})`", raw)
+                          if not m:
+                              continue
                           s = m.group(1).strip().strip("`")
-                          if lo <= len(s) <= hi:
-                              backticks.append(s)
-                      err_tail: list[str] = []
-                      er = re.compile(r"(?i)\bError:\s*(.+)$")
-                      for line in text.splitlines():
-                          m = er.search(line.strip())
-                          if m:
-                              s = m.group(1).strip()
-                              if lo <= len(s) <= hi:
-                                  err_tail.append(s)
-
-                      def dedup_preserve(seq: list[str]) -> list[str]:
-                          out, seen = [], set()
-                          for s in seq:
-                              k = s.lower()
-                              if k not in seen:
-                                  seen.add(k)
-                                  out.append(s)
-                          return out
-
-                      def backtick_priority(s: str) -> tuple:
-                          # Prefer path/identifier-like tokens over prose (e.g. `fields (e.g.,`).
-                          if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.\/-]*", s):
-                              return (0, len(s), s.lower())
-                          return (1, len(s), s.lower())
-
-                      merged: list[str] = []
-                      seen_f: set[str] = set()
-                      bt_sorted = dedup_preserve(backticks)
-                      bt_sorted.sort(key=backtick_priority)
-                      for bucket in (
-                          bt_sorted,
-                          sorted(dedup_preserve(err_tail), key=len),
-                          sorted(dedup_preserve(fenced), key=len),
-                      ):
-                          for s in bucket:
-                              k = s.lower()
-                              if k in seen_f:
-                                  continue
-                              seen_f.add(k)
-                              merged.append(s)
-                              if len(merged) >= max_total:
-                                  return merged
-                      return merged
+                          if not (12 <= len(s) <= 180):
+                              continue
+                          k = s.lower()
+                          if k in seen:
+                              continue
+                          seen.add(k)
+                          out.append(s)
+                      return out
 
 
                   def git_grep_matches(needle: str, path_prefix: str, workspace: str, max_total: int) -> list[tuple[str, int]]:
@@ -382,9 +364,34 @@ jobs:
                       return hits
 
 
+                  def _iso_utc(epoch: int) -> str:
+                      try:
+                          return dt.datetime.fromtimestamp(int(epoch), tz=dt.timezone.utc).strftime(
+                              "%Y-%m-%dT%H:%M:%SZ"
+                          )
+                      except Exception:
+                          return "?"
+
+
                   def resolve_best_author(
                       body: str, repo_full: str, runtime_prefix: str, repo_src_prefix: str, max_frames: int
-                  ) -> tuple[str, str, int, str]:
+                  ) -> tuple[str, str, int, str, str]:
+                      """Return (author_name, author_login, author_time_epoch, source_desc, reason).
+
+                      `reason` is one of: "stack", "where-to-look", or "" when nothing was resolved.
+                      Only two resolution paths are trusted:
+
+                      1. Stack frames in the issue body (normalized back to `server/src/…`).
+                      2. Backtick literals under a `### Where to Look` heading.
+
+                      If neither yields a blame author we return empty and the caller routes to
+                      `FALLBACK_ASSIGNEE`. The old "broad sweep" over every backtick / fenced-log line
+                      was removed because it regularly picked the most-recent unrelated committer to
+                      `server/src/` on issues with no high-signal input.
+
+                      Emits `find-owner:`-prefixed stderr traces for every decision so the workflow log
+                      explains why a particular author was chosen.
+                      """
                       owner, repo = repo_full.split("/", 1)
                       # Greedy path so file:///opt/.../foo.js:line:col works (not just first ":").
                       sp = re.compile(r"^\s*at\s+.*\((.+):(\d+):(\d+)\)\s*$")
@@ -404,32 +411,88 @@ jobs:
                           filtered.append(k)
                           if len(filtered) >= max_frames:
                               break
-                      ban, bal, bt, bsrc = "", "", 0, ""
+
+                      wtl_lits = extract_where_to_look_literals(body)
+                      inum = os.environ.get("ISSUE_NUMBER", "?")
+                      print(
+                          f"find-owner: issue=#{inum} repo={repo_full} frames={len(filtered)} "
+                          f"where_to_look={len(wtl_lits)}",
+                          file=sys.stderr,
+                      )
+
+                      ban, bal, bt, bsrc, reason = "", "", 0, "", ""
                       for pth, rl in filtered:
                           cand = query_blame(pth, max(1, rl - 5), rl + 5, owner, repo)
-                          if cand and cand[2] > bt:
-                              ban, bal, bt = cand[0], cand[1], cand[2]
-                              bsrc = f"{pth}:{rl}"
-                      if not bal:
+                          if cand:
+                              cn, cl, ce = cand
+                              new_best = ce > bt
+                              print(
+                                  f"find-owner: frame {pth}:{rl} -> blame {cn!r} {cl} {_iso_utc(ce)}"
+                                  + (" [new best]" if new_best else ""),
+                                  file=sys.stderr,
+                              )
+                              if new_best:
+                                  ban, bal, bt = cn, cl, ce
+                                  bsrc = f"{pth}:{rl}"
+                                  reason = "stack"
+                          else:
+                              print(f"find-owner: frame {pth}:{rl} -> no blame", file=sys.stderr)
+
+                      def _try_literals(lits: list[str], tag: str) -> None:
+                          """Grep each literal under server/src, blame each hit, keep the newest author."""
+                          nonlocal ban, bal, bt, bsrc, reason
+                          if not lits:
+                              return
                           ws = os.environ.get("GITHUB_WORKSPACE", ".")
                           prefix = repo_src_prefix.rstrip("/") + "/"
                           mgh, bb, bu = 30, 45, 0
-                          for lit in extract_error_literal_candidates(body):
+                          for lit in lits:
                               if bu >= bb:
+                                  print(
+                                      f"find-owner: blame-budget {bb} reached; stopping {tag} loop",
+                                      file=sys.stderr,
+                                  )
                                   break
+                              pv = lit if len(lit) <= 80 else lit[:77] + "..."
                               ms = git_grep_matches(lit, prefix, ws, mgh + 1)
                               if len(ms) > mgh:
+                                  print(
+                                      f"find-owner: literal {pv!r} hits={len(ms)} >mgh={mgh} ({tag}, skip)",
+                                      file=sys.stderr,
+                                  )
                                   continue
+                              print(
+                                  f"find-owner: literal {pv!r} hits={len(ms)} ({tag})",
+                                  file=sys.stderr,
+                              )
                               for pth, rl in ms:
                                   if bu >= bb:
                                       break
                                   hit = query_blame(pth, max(1, rl - 5), rl + 5, owner, repo)
                                   bu += 1
-                                  if hit and hit[2] > bt:
-                                      ban, bal, bt = hit[0], hit[1], hit[2]
-                                      pv = lit if len(lit) <= 80 else lit[:77] + "..."
-                                      bsrc = f"{pth}:{rl} (error literal: {pv})"
-                      return ban, bal, bt, bsrc
+                                  if not hit:
+                                      print(f"find-owner:   -> {pth}:{rl} no blame", file=sys.stderr)
+                                      continue
+                                  hn, hl, he = hit
+                                  new_best = he > bt
+                                  print(
+                                      f"find-owner:   -> {pth}:{rl} blame={hl}@{_iso_utc(he)}"
+                                      + (" [new best]" if new_best else ""),
+                                      file=sys.stderr,
+                                  )
+                                  if new_best:
+                                      ban, bal, bt = hn, hl, he
+                                      bsrc = f"{pth}:{rl} (literal: {pv})"
+                                      reason = tag
+
+                      if not bal and wtl_lits:
+                          _try_literals(wtl_lits, "where-to-look")
+                      if not bal and not filtered and not wtl_lits:
+                          print(
+                              "find-owner: no frames and no where-to-look literals; -> fallback",
+                              file=sys.stderr,
+                          )
+                      return ban, bal, bt, bsrc, reason
 
 
                   def parse_skip_assignee_tokens(raw: str) -> list[str]:
@@ -916,11 +979,19 @@ jobs:
                       ska = os.environ.get("SKIP_ASSIGNEES", "")
                       fb = (os.environ.get("FALLBACK_ASSIGNEE", "") or "").strip()
                       st = parse_skip_assignee_tokens(ska)
-                      _, bal, _, _ = resolve_best_author(body, rf, rtp, rsp, mf)
+                      _, bal, _, bsrc, reason = resolve_best_author(body, rf, rtp, rsp, mf)
                       if not bal:
+                          print(
+                              f"find-owner: chosen=(none) source=(none) reason=fallback",
+                              file=sys.stderr,
+                          )
                           if not fb:
                               print(
                                   "find-owner: no author from stack trace/literals and FALLBACK_ASSIGNEE is empty",
+                                  file=sys.stderr,
+                              )
+                              print(
+                                  f"find-owner: assign via POST /issues/{inum}/assignees -> (none) status=skipped",
                                   file=sys.stderr,
                               )
                               return 0
@@ -930,19 +1001,41 @@ jobs:
                                   "(needs repo permission / org membership for assignment)",
                                   file=sys.stderr,
                               )
+                              print(
+                                  f"find-owner: assign via POST /issues/{inum}/assignees -> (none) status=skipped",
+                                  file=sys.stderr,
+                              )
                               return 0
-                          if not add_assignee_rest(fb, rf, inum, st):
+                          ok = add_assignee_rest(fb, rf, inum, st)
+                          print(
+                              f"find-owner: assign via POST /issues/{inum}/assignees -> {fb} "
+                              f"status={'ok' if ok else 'failed'}",
+                              file=sys.stderr,
+                          )
+                          if not ok:
                               print(
                                   f"find-owner: could not assign fallback {fb!r} to issue #{inum}",
                                   file=sys.stderr,
                               )
-                              return 0
                           return 0
+                      print(
+                          f"find-owner: chosen={bal} source={bsrc or '(n/a)'} reason={reason or 'unknown'}",
+                          file=sys.stderr,
+                      )
                       clc = bal.lower()
                       ch = bal
                       if should_skip_existing_assignee(clc, st):
+                          print(
+                              f"find-owner: skip {bal!r} (SKIP_ASSIGNEES/Copilot); falling back to {fb or '(empty)'}",
+                              file=sys.stderr,
+                          )
                           ch = fb
                       if not is_assignable_user(ch, rf):
+                          if ch and ch != fb:
+                              print(
+                                  f"find-owner: {ch!r} not assignable on {rf}; falling back to {fb or '(empty)'}",
+                                  file=sys.stderr,
+                              )
                           ch = fb
                       if not is_assignable_user(ch, rf):
                           print(
@@ -950,22 +1043,42 @@ jobs:
                               f"{rf} (resolved={bal!r}, fallback={fb or '(empty)'})",
                               file=sys.stderr,
                           )
+                          print(
+                              f"find-owner: assign via POST /issues/{inum}/assignees -> (none) status=skipped",
+                              file=sys.stderr,
+                          )
                           return 0
-                      if not add_assignee_rest(ch, rf, inum, st):
-                          ch = fb
-                          if is_assignable_user(ch, rf):
-                              if not add_assignee_rest(ch, rf, inum, st):
-                                  print(
-                                      f"find-owner: assign failed for primary and fallback on issue #{inum}",
-                                      file=sys.stderr,
-                                  )
-                                  return 0
-                          else:
+                      if add_assignee_rest(ch, rf, inum, st):
+                          print(
+                              f"find-owner: assign via POST /issues/{inum}/assignees -> {ch} status=ok",
+                              file=sys.stderr,
+                          )
+                          return 0
+                      print(
+                          f"find-owner: assign via POST /issues/{inum}/assignees -> {ch} status=failed",
+                          file=sys.stderr,
+                      )
+                      if ch != fb and fb and is_assignable_user(fb, rf):
+                          if add_assignee_rest(fb, rf, inum, st):
                               print(
-                                  f"find-owner: assign failed; fallback {fb!r} not assignable on {rf}",
+                                  f"find-owner: assign retry POST /issues/{inum}/assignees -> {fb} status=ok "
+                                  f"(fallback=<FALLBACK_ASSIGNEE>)",
                                   file=sys.stderr,
                               )
                               return 0
+                          print(
+                              f"find-owner: assign retry POST /issues/{inum}/assignees -> {fb} status=failed",
+                              file=sys.stderr,
+                          )
+                          print(
+                              f"find-owner: assign failed for primary and fallback on issue #{inum}",
+                              file=sys.stderr,
+                          )
+                          return 0
+                      print(
+                          f"find-owner: assign failed; fallback {fb!r} not assignable on {rf}",
+                          file=sys.stderr,
+                      )
                       return 0
 
 

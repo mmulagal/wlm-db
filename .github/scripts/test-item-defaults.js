@@ -11,6 +11,10 @@ const PROJECT_NUMBER = 41;
 
 const STATUS_DEFAULT = "To Do";
 
+// Default codeowner auto-assigned by repo settings. We replace this with the
+// actual issue creator, but we never overwrite a real human assignee.
+const DEFAULT_CODEOWNER = "shaswatinetapp";
+
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 const graphqlWithAuth = graphql.defaults({
   headers: { authorization: `token ${GITHUB_TOKEN}` },
@@ -28,19 +32,40 @@ async function fetchIssue() {
 }
 
 // ── 1. Set Assignee to Issue Creator ────────────────────────────────────────
+// Only act when the issue has no assignees, or when the sole assignee is the
+// default codeowner (`shaswatinetapp`). Any other state — creator already
+// assigned, a different human assigned, or multiple assignees — is left alone
+// so we do not overwrite manual choices or produce spurious unassign/assign
+// events.
 
 async function setAssignee(issue) {
-  console.log(`Setting assignee to issue creator: ${ISSUE_CREATOR}`);
-  const existingAssignees = issue.assignees.map((a) => a.login);
-  if (existingAssignees.length > 0) {
+  const existing = issue.assignees.map((a) => a.login);
+  const shouldAct =
+    existing.length === 0 ||
+    (existing.length === 1 && existing[0] === DEFAULT_CODEOWNER);
+
+  if (!shouldAct) {
+    console.log(
+      `Assignee already set to [${existing.join(", ")}] — leaving alone.`
+    );
+    return;
+  }
+
+  if (existing.includes(DEFAULT_CODEOWNER)) {
     await octokit.issues.removeAssignees({
       owner,
       repo,
       issue_number: ISSUE_NUMBER,
-      assignees: existingAssignees,
+      assignees: [DEFAULT_CODEOWNER],
     });
   }
-  // Add the creator as assignee
+
+  if (existing.includes(ISSUE_CREATOR)) {
+    console.log(`Creator ${ISSUE_CREATOR} already assigned — nothing to add.`);
+    return;
+  }
+
+  console.log(`Setting assignee to issue creator: ${ISSUE_CREATOR}`);
   await octokit.issues.addAssignees({
     owner,
     repo,
@@ -52,7 +77,14 @@ async function setAssignee(issue) {
 
 // ── 2. Set Milestone to Current Open Milestone ─────────────────────────────
 
-async function setMilestone() {
+async function setMilestone(issue) {
+  if (issue.milestone) {
+    console.log(
+      `Milestone already set to "${issue.milestone.title}" — leaving alone.`
+    );
+    return;
+  }
+
   console.log("Fetching open milestones...");
   const { data: milestones } = await octokit.issues.listMilestones({
     owner,
@@ -159,12 +191,69 @@ async function getProjectAndAddIssue(issueNodeId) {
   const itemId = addResult.addProjectV2ItemById.item.id;
   console.log(`Issue is in project as item: ${itemId}`);
 
-  return { project, itemId };
+  const currentFieldValues = await fetchItemFieldValues(itemId);
+  return { project, itemId, currentFieldValues };
+}
+
+// Returns a map of { [fieldName]: displayValue } for single-select and
+// iteration fields already populated on this project item. Newly-added items
+// return an empty object, so downstream skip-logic only fires when a value
+// was previously set (manually or by a prior run).
+
+async function fetchItemFieldValues(itemId) {
+  const query = `
+    query($itemId: ID!) {
+      node(id: $itemId) {
+        ... on ProjectV2Item {
+          fieldValues(first: 50) {
+            nodes {
+              __typename
+              ... on ProjectV2ItemFieldSingleSelectValue {
+                name
+                field { ... on ProjectV2SingleSelectField { name } }
+              }
+              ... on ProjectV2ItemFieldIterationValue {
+                title
+                field { ... on ProjectV2IterationField { name } }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const result = await graphqlWithAuth(query, { itemId });
+  const nodes = (result.node && result.node.fieldValues && result.node.fieldValues.nodes) || [];
+
+  const values = {};
+  for (const node of nodes) {
+    if (!node || !node.field || !node.field.name) continue;
+    if (node.__typename === "ProjectV2ItemFieldSingleSelectValue" && node.name) {
+      values[node.field.name] = node.name;
+    } else if (node.__typename === "ProjectV2ItemFieldIterationValue" && node.title) {
+      values[node.field.name] = node.title;
+    }
+  }
+  return values;
 }
 
 // ── 4. Set a Single-Select Field ────────────────────────────────────────────
 
-async function setSingleSelectField(project, itemId, fieldName, optionName) {
+async function setSingleSelectField(
+  project,
+  itemId,
+  fieldName,
+  optionName,
+  currentFieldValues = {}
+) {
+  if (currentFieldValues[fieldName]) {
+    console.log(
+      `${fieldName} already set to "${currentFieldValues[fieldName]}" — leaving alone.`
+    );
+    return;
+  }
+
   const field = project.fields.nodes.find(
     (f) => f.name === fieldName && f.options
   );
@@ -207,12 +296,19 @@ async function setSingleSelectField(project, itemId, fieldName, optionName) {
 
 // ── 5. Set Sprint to Current Iteration ──────────────────────────────────────
 
-async function setCurrentSprint(project, itemId) {
+async function setCurrentSprint(project, itemId, currentFieldValues = {}) {
   const iterationField = project.fields.nodes.find(
     (f) => f.configuration && f.configuration.iterations
   );
   if (!iterationField) {
     console.warn("No iteration/sprint field found in project — skipping.");
+    return;
+  }
+
+  if (currentFieldValues[iterationField.name]) {
+    console.log(
+      `${iterationField.name} already set to "${currentFieldValues[iterationField.name]}" — leaving alone.`
+    );
     return;
   }
 
@@ -356,16 +452,24 @@ async function linkParentIssue(issue) {
     await setAssignee(issue);
 
     // Step 2: Set milestone
-    await setMilestone();
+    await setMilestone(issue);
 
-    // Step 3: Get project, add issue, fetch fields
-    const { project, itemId } = await getProjectAndAddIssue(issue.node_id);
+    // Step 3: Get project, add issue, fetch fields and current values
+    const { project, itemId, currentFieldValues } = await getProjectAndAddIssue(
+      issue.node_id
+    );
 
     // Step 4: Set Status to "To Do"
-    await setSingleSelectField(project, itemId, "Status", STATUS_DEFAULT);
+    await setSingleSelectField(
+      project,
+      itemId,
+      "Status",
+      STATUS_DEFAULT,
+      currentFieldValues
+    );
 
     // Step 5: Set Sprint to current iteration
-    await setCurrentSprint(project, itemId);
+    await setCurrentSprint(project, itemId, currentFieldValues);
 
     // Step 6: Link parent issue if specified in the issue body
     await linkParentIssue(issue);

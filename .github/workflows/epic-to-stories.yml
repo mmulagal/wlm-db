@@ -5,7 +5,10 @@
 # Shape is encoded in STANDARD_STORY_DEFINITIONS and USER_STORY_SUB_DEFINITIONS below. Labels: Epic, Story, Task,
 # Test Plan. Native GitHub issue types when enabled: Epic, User Story, Task, Test Plan.
 #
-# Auto: issue opened with type Epic or label Epic. Manual: workflow_dispatch with epic_issue_number.
+# Auto: issue opened as Epic with a milestone, OR existing Epic milestoned. Manual: workflow_dispatch for sprint-only
+# assignments or re-syncs. Re-runs (e.g. after a milestone change) resync milestone and project/sprint fields onto
+# existing children; no duplicate sub-issues are created because `findUserStoryIssue` / `findNestedIssue` match by
+# hidden markers.
 # Assignee: GITHUB_DEFAULT_ASSIGNEE (default shaswatinetapp).
 #
 # Milestone: copied from the epic to every created/updated child (REST). Omitted (not sent) when the epic has no
@@ -20,15 +23,15 @@
 
 name: Expand epic into user stories and tasks
 
-run-name: "Expand epic #${{ inputs.epic_issue_number || github.event.issue.number }}"
+run-name: 'Expand epic #${{ inputs.epic_issue_number || github.event.issue.number }}'
 
 on:
     issues:
-        types: [opened]
+        types: [opened, milestoned]
     workflow_dispatch:
         inputs:
             epic_issue_number:
-                description: "GitHub epic issue number (e.g. 1234)"
+                description: 'GitHub epic issue number (e.g. 1234)'
                 required: true
                 type: number
 
@@ -44,8 +47,10 @@ jobs:
         if: >-
             github.event_name == 'workflow_dispatch'
             || (github.event_name == 'issues'
-                && (github.event.issue.type.name == 'Epic'
-                    || contains(github.event.issue.labels.*.name, 'Epic')))
+                && (fromJSON(toJSON(github.event.issue)).type.name == 'Epic'
+                    || contains(github.event.issue.labels.*.name, 'Epic'))
+                && (github.event.action == 'milestoned'
+                    || (github.event.action == 'opened' && github.event.issue.milestone != null)))
         runs-on: ubuntu-latest
         steps:
             - name: Setup Node
@@ -61,10 +66,7 @@ jobs:
                   GITHUB_DEFAULT_ASSIGNEE: shaswatinetapp
                   PROJECTS_SYNC_PAT: ${{ secrets.PROJECTS_SYNC_PAT }}
               run: |
-                  npm install --no-save @octokit/rest@21.1.1
                   node <<'SYNC_SCRIPT_EOF'
-                  const { Octokit } = require("@octokit/rest");
-
                   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
                   const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
                   const GITHUB_ASSIGNEE = (process.env.GITHUB_DEFAULT_ASSIGNEE || "shaswatinetapp").trim();
@@ -107,13 +109,13 @@ jobs:
                       return labels.some((l) => labelName(l) === "Epic");
                   }
 
-                  async function fetchEpicIssue(octokit, issueNumber) {
-                      const { data } = await octokit.rest.issues.get({
-                          owner,
-                          repo,
-                          issue_number: issueNumber,
-                      });
-                      return data;
+                  async function fetchEpicIssue(issueNumber) {
+                      return await restWithRetry(
+                          "GET",
+                          `/repos/${owner}/${repo}/issues/${issueNumber}`,
+                          null,
+                          "issues.get"
+                      );
                   }
 
                   function buildChildBody({ epicNumber, slug, title }) {
@@ -136,14 +138,13 @@ jobs:
                       );
                   }
 
-                  async function listSubIssues(octokit, issueNumber) {
-                      const { data } = await octokit.rest.issues.listSubIssues({
-                          owner,
-                          repo,
-                          issue_number: issueNumber,
-                          per_page: 100,
-                      });
-                      return data;
+                  async function listSubIssues(issueNumber) {
+                      return await restWithRetry(
+                          "GET",
+                          `/repos/${owner}/${repo}/issues/${issueNumber}/sub_issues?per_page=100`,
+                          null,
+                          "listSubIssues"
+                      );
                   }
 
                   function userStoryIssueTitle(defTitle, epicSummary) {
@@ -246,6 +247,65 @@ jobs:
                           return {};
                       }
                       return { milestone: m.number };
+                  }
+
+                  // Pin REST API version so requests do not fall back to the legacy 2022-11-28 version,
+                  // which is scheduled for removal on 2028-03-10. All fields used below (assignees array,
+                  // labels, type, milestone, node_id) are supported in 2026-03-10. If additional breaking
+                  // changes land in a future REST API version, bump this string after verifying compatibility
+                  // against https://docs.github.com/rest/about-the-rest-api/breaking-changes.
+                  async function rest(method, pathname, body) {
+                      const url = `https://api.github.com${pathname}`;
+                      const init = {
+                          method,
+                          headers: {
+                              Authorization: `Bearer ${GITHUB_TOKEN}`,
+                              Accept: "application/vnd.github+json",
+                              "User-Agent": "epic-to-stories",
+                              "X-GitHub-Api-Version": "2026-03-10",
+                          },
+                      };
+                      if (body !== undefined && body !== null) {
+                          init.headers["Content-Type"] = "application/json";
+                          init.body = JSON.stringify(body);
+                      }
+                      const res = await fetch(url, init);
+                      const text = await res.text();
+                      let json = null;
+                      if (text) {
+                          try { json = JSON.parse(text); } catch { /* non-JSON error body */ }
+                      }
+                      if (!res.ok) {
+                          const msg = (json && json.message) || text.slice(0, 200);
+                          const err = new Error(`REST ${method} ${pathname} -> HTTP ${res.status}: ${msg}`);
+                          err.status = res.status;
+                          err.response = json;
+                          throw err;
+                      }
+                      return json;
+                  }
+
+                  async function restWithRetry(method, pathname, body, label) {
+                      const maxAttempts = 4;
+                      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                          try {
+                              return await rest(method, pathname, body);
+                          } catch (err) {
+                              const msg = String((err && err.message) || "");
+                              const status = err && err.status;
+                              const transient =
+                                  (status >= 500 && status < 600) ||
+                                  (status === 403 && /secondary rate limit|abuse/i.test(msg)) ||
+                                  status === 429 ||
+                                  /ECONNRESET|ETIMEDOUT|EAI_AGAIN|fetch failed/i.test(msg);
+                              if (!transient || attempt === maxAttempts) throw err;
+                              const delay = 1000 * Math.pow(2, attempt - 1);
+                              console.warn(
+                                  `REST ${label || pathname} attempt ${attempt}/${maxAttempts} failed: ${msg}. Retrying in ${delay}ms.`
+                              );
+                              await sleep(delay);
+                          }
+                      }
                   }
 
                   async function graphql(token, query, variables) {
@@ -457,20 +517,20 @@ jobs:
                       }
                   }
 
-                  async function ensureIssueWithNodeId(octokit, issue) {
+                  async function ensureIssueWithNodeId(issue) {
                       if (issue.node_id) return issue;
-                      const { data } = await octokit.rest.issues.get({
-                          owner,
-                          repo,
-                          issue_number: issue.number,
-                      });
-                      return data;
+                      return await restWithRetry(
+                          "GET",
+                          `/repos/${owner}/${repo}/issues/${issue.number}`,
+                          null,
+                          "issues.get"
+                      );
                   }
 
-                  async function propagateProjectsToIssue(octokit, projectToken, projectPlans, issue) {
+                  async function propagateProjectsToIssue(projectToken, projectPlans, issue) {
                       if (!projectToken || !projectPlans.length) return;
                       try {
-                          const full = await ensureIssueWithNodeId(octokit, issue);
+                          const full = await ensureIssueWithNodeId(issue);
                           await applyProjectPlans(projectToken, full.node_id, projectPlans);
                       } catch (e) {
                           const num = issue && issue.number;
@@ -489,9 +549,7 @@ jobs:
                           );
                       }
 
-                      const octokit = new Octokit({ auth: GITHUB_TOKEN });
-
-                      const epic = await fetchEpicIssue(octokit, epicNumber);
+                      const epic = await fetchEpicIssue(epicNumber);
                       if (!isEpicIssue(epic)) {
                           console.log(`Issue #${epicNumber} is not an Epic; skipping.`);
                           return;
@@ -523,7 +581,7 @@ jobs:
                           );
                       }
 
-                      const subIssues = await listSubIssues(octokit, epicNumber);
+                      const subIssues = await listSubIssues(epicNumber);
                       console.log(`Epic #${epicNumber} has ${subIssues.length} sub-issue(s) before sync.`);
 
                       for (const def of STANDARD_STORY_DEFINITIONS) {
@@ -536,28 +594,31 @@ jobs:
                           });
 
                           if (!storyIssue) {
-                              const { data: story } = await octokit.request("POST /repos/{owner}/{repo}/issues", {
-                                  owner,
-                                  repo,
-                                  title: storyTitle,
-                                  body: buildChildBody({
-                                      epicNumber,
-                                      slug: def.slug,
-                                      title: def.title,
-                                  }),
-                                  labels: ["Story", ...extraLabelsFromEpic(epic)],
-                                  type: GITHUB_ISSUE_TYPE.USER_STORY,
-                                  ...milestoneFromEpic(epic),
-                                  ...assigneesPayload(),
-                              });
+                              const story = await restWithRetry(
+                                  "POST",
+                                  `/repos/${owner}/${repo}/issues`,
+                                  {
+                                      title: storyTitle,
+                                      body: buildChildBody({
+                                          epicNumber,
+                                          slug: def.slug,
+                                          title: def.title,
+                                      }),
+                                      labels: ["Story", ...extraLabelsFromEpic(epic)],
+                                      type: GITHUB_ISSUE_TYPE.USER_STORY,
+                                      ...milestoneFromEpic(epic),
+                                      ...assigneesPayload(),
+                                  },
+                                  "createIssue"
+                              );
                               storyIssue = story;
                               try {
-                                  await octokit.rest.issues.addSubIssue({
-                                      owner,
-                                      repo,
-                                      issue_number: epicNumber,
-                                      sub_issue_id: story.id,
-                                  });
+                                  await restWithRetry(
+                                      "POST",
+                                      `/repos/${owner}/${repo}/issues/${epicNumber}/sub_issues`,
+                                      { sub_issue_id: story.id },
+                                      "addSubIssue"
+                                  );
                                   console.log(`Created and linked user story #${story.number}: ${storyTitle}`);
                               } catch (e) {
                                   console.error(
@@ -567,32 +628,33 @@ jobs:
                               }
                               subIssues.push(story);
                           } else {
-                              await octokit.request("PATCH /repos/{owner}/{repo}/issues/{issue_number}", {
-                                  owner,
-                                  repo,
-                                  issue_number: storyIssue.number,
-                                  title: storyTitle,
-                                  body: buildChildBody({
-                                      epicNumber,
-                                      slug: def.slug,
-                                      title: def.title,
-                                  }),
-                                  labels: ["Story", ...extraLabelsFromEpic(epic)],
-                                  type: GITHUB_ISSUE_TYPE.USER_STORY,
-                                  ...milestoneFromEpic(epic),
-                                  ...assigneesPayload(),
-                              });
+                              await restWithRetry(
+                                  "PATCH",
+                                  `/repos/${owner}/${repo}/issues/${storyIssue.number}`,
+                                  {
+                                      title: storyTitle,
+                                      body: buildChildBody({
+                                          epicNumber,
+                                          slug: def.slug,
+                                          title: def.title,
+                                      }),
+                                      labels: ["Story", ...extraLabelsFromEpic(epic)],
+                                      type: GITHUB_ISSUE_TYPE.USER_STORY,
+                                      ...milestoneFromEpic(epic),
+                                      ...assigneesPayload(),
+                                  },
+                                  "updateIssue"
+                              );
                               console.log(`Updated user story #${storyIssue.number}: ${storyTitle}`);
                           }
 
                           await propagateProjectsToIssue(
-                              octokit,
                               projectToken,
                               projectPlans,
                               storyIssue
                           );
 
-                          const nestedSubs = await listSubIssues(octokit, storyIssue.number);
+                          const nestedSubs = await listSubIssues(storyIssue.number);
                           for (const nest of USER_STORY_SUB_DEFINITIONS) {
                               const nestedTitle = nestedIssueTitle(nest.slug, nest.title, def.title, summary);
                               const existingNested = findNestedIssue(nestedSubs, {
@@ -604,32 +666,32 @@ jobs:
                                   summary,
                               });
                               if (existingNested) {
-                                  await octokit.request("PATCH /repos/{owner}/{repo}/issues/{issue_number}", {
-                                      owner,
-                                      repo,
-                                      issue_number: existingNested.number,
-                                      title: nestedTitle,
-                                      labels: [...nestedIssueLabels(nest.slug), ...extraLabelsFromEpic(epic)],
-                                      type: nestedIssueType(nest.slug),
-                                      ...milestoneFromEpic(epic),
-                                      ...assigneesPayload(),
-                                  });
+                                  await restWithRetry(
+                                      "PATCH",
+                                      `/repos/${owner}/${repo}/issues/${existingNested.number}`,
+                                      {
+                                          title: nestedTitle,
+                                          labels: [...nestedIssueLabels(nest.slug), ...extraLabelsFromEpic(epic)],
+                                          type: nestedIssueType(nest.slug),
+                                          ...milestoneFromEpic(epic),
+                                          ...assigneesPayload(),
+                                      },
+                                      "updateIssue"
+                                  );
                                   console.log(
                                       `Child issue #${existingNested.number} already present under user story #${storyIssue.number}; title, labels, type, and assignee updated.`
                                   );
                                   await propagateProjectsToIssue(
-                                      octokit,
                                       projectToken,
                                       projectPlans,
                                       existingNested
                                   );
                                   continue;
                               }
-                              const { data: nestedIssue } = await octokit.request(
-                                  "POST /repos/{owner}/{repo}/issues",
+                              const nestedIssue = await restWithRetry(
+                                  "POST",
+                                  `/repos/${owner}/${repo}/issues`,
                                   {
-                                      owner,
-                                      repo,
                                       title: nestedTitle,
                                       body: buildNestedBody({
                                           epicNumber,
@@ -642,15 +704,16 @@ jobs:
                                       type: nestedIssueType(nest.slug),
                                       ...milestoneFromEpic(epic),
                                       ...assigneesPayload(),
-                                  }
+                                  },
+                                  "createIssue"
                               );
                               try {
-                                  await octokit.rest.issues.addSubIssue({
-                                      owner,
-                                      repo,
-                                      issue_number: storyIssue.number,
-                                      sub_issue_id: nestedIssue.id,
-                                  });
+                                  await restWithRetry(
+                                      "POST",
+                                      `/repos/${owner}/${repo}/issues/${storyIssue.number}/sub_issues`,
+                                      { sub_issue_id: nestedIssue.id },
+                                      "addSubIssue"
+                                  );
                                   console.log(
                                       `Created and linked child issue #${nestedIssue.number} under user story #${storyIssue.number}: ${nestedTitle}`
                                   );
@@ -661,7 +724,6 @@ jobs:
                                   throw e;
                               }
                               await propagateProjectsToIssue(
-                                  octokit,
                                   projectToken,
                                   projectPlans,
                                   nestedIssue
