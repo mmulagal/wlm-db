@@ -1,0 +1,678 @@
+# Reads a GitHub epic issue and creates/updates two user stories (API, UI), each with five children:
+# implementation, demo support, testcase design, functional testing, automation. Child titles use the epic title
+# with a leading `[EPIC]:` prefix stripped from the epic title for readability.
+#
+# Shape is encoded in STANDARD_STORY_DEFINITIONS and USER_STORY_SUB_DEFINITIONS below. Labels: Epic, Story, Task,
+# Test Plan. Native GitHub issue types when enabled: Epic, User Story, Task, Test Plan.
+#
+# Auto: issue opened with type Epic or label Epic. Manual: workflow_dispatch with epic_issue_number.
+# Assignee: GITHUB_DEFAULT_ASSIGNEE (default shaswatinetapp).
+#
+# Milestone: copied from the epic to every created/updated child (REST). Omitted (not sent) when the epic has no
+# milestone so the REST API does not receive milestone: null on create.
+# Labels: the canonical Story/Task/Test Plan labels plus the epic's non-type labels are propagated to every child.
+# GitHub Project + Sprint (Iteration): copied from the epic's Project fields via GraphQL. The default GITHUB_TOKEN
+# cannot access organization/user Projects — set secret PROJECTS_SYNC_PAT (PAT with `project` + `repo`, or fine-grained
+# equivalent with Projects read/write). If unset, milestone + labels still apply; Project/Sprint propagation is
+# skipped. Status is intentionally overridden to the project's "Todo" option on children rather than mirroring the
+# epic's status (avoids resetting in-progress children on re-runs); other single-select fields copy as-is.
+# GraphQL calls retry on 5xx / secondary rate limit / network errors with exponential backoff.
+
+name: Expand epic into user stories and tasks
+
+run-name: "Expand epic #${{ inputs.epic_issue_number || github.event.issue.number }}"
+
+on:
+    issues:
+        types: [opened]
+    workflow_dispatch:
+        inputs:
+            epic_issue_number:
+                description: "GitHub epic issue number (e.g. 1234)"
+                required: true
+                type: number
+
+permissions:
+    issues: write
+
+concurrency:
+    group: epic-to-stories-${{ github.repository }}-${{ inputs.epic_issue_number || github.event.issue.number }}
+    cancel-in-progress: false
+
+jobs:
+    sync:
+        if: >-
+            github.event_name == 'workflow_dispatch'
+            || (github.event_name == 'issues'
+                && (github.event.issue.type.name == 'Epic'
+                    || contains(github.event.issue.labels.*.name, 'Epic')))
+        runs-on: ubuntu-latest
+        steps:
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 23.9.0
+
+            - name: Expand epic into user stories and tasks (inline script)
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_REPOSITORY: ${{ github.repository }}
+                  EPIC_ISSUE_NUMBER: ${{ inputs.epic_issue_number || github.event.issue.number }}
+                  GITHUB_DEFAULT_ASSIGNEE: shaswatinetapp
+                  PROJECTS_SYNC_PAT: ${{ secrets.PROJECTS_SYNC_PAT }}
+              run: |
+                  npm install --no-save @octokit/rest@21.1.1
+                  node <<'SYNC_SCRIPT_EOF'
+                  const { Octokit } = require("@octokit/rest");
+
+                  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+                  const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+                  const GITHUB_ASSIGNEE = (process.env.GITHUB_DEFAULT_ASSIGNEE || "shaswatinetapp").trim();
+
+                  const STANDARD_STORY_DEFINITIONS = [
+                      { slug: "api-backend", title: "API" },
+                      { slug: "ui", title: "UI" },
+                  ];
+
+                  /** Sub-tasks created under each user story (parent = user story issue). */
+                  const USER_STORY_SUB_DEFINITIONS = [
+                      { slug: "implementation", title: "Implementation" },
+                      { slug: "demo-support", title: "Demo support" },
+                      { slug: "testcase-design", title: "Testcase design" },
+                      { slug: "functional-testing", title: "Functional testing" },
+                      { slug: "automation", title: "Automation" },
+                  ];
+
+                  const GITHUB_ISSUE_TYPE = {
+                      EPIC: "Epic",
+                      USER_STORY: "User Story",
+                      TASK: "Task",
+                      TEST_PLAN: "Test Plan",
+                  };
+
+                  function stripEpicPrefix(title) {
+                      const t = (title || "").trim();
+                      const stripped = t.replace(/^\[EPIC\]:\s*/i, "").trim();
+                      return stripped || t;
+                  }
+
+                  function labelName(label) {
+                      if (!label) return "";
+                      return typeof label === "string" ? label : label.name || "";
+                  }
+
+                  function isEpicIssue(issue) {
+                      if (issue.type && issue.type.name === "Epic") return true;
+                      const labels = issue.labels || [];
+                      return labels.some((l) => labelName(l) === "Epic");
+                  }
+
+                  async function fetchEpicIssue(octokit, issueNumber) {
+                      const { data } = await octokit.rest.issues.get({
+                          owner,
+                          repo,
+                          issue_number: issueNumber,
+                      });
+                      return data;
+                  }
+
+                  function buildChildBody({ epicNumber, slug, title }) {
+                      return (
+                          `User story created by \`epic-to-stories\` (GitHub only).\n\n` +
+                          `**User story:** ${title}\n\n` +
+                          `**Parent epic:** #${epicNumber}\n\n` +
+                          `<!-- epic-sync:child:${epicNumber}:${slug} -->`
+                      );
+                  }
+
+                  function buildNestedBody({ epicNumber, storySlug, nestedSlug, storyTitle, userStoryNumber }) {
+                      const kind =
+                          nestedSlug === "testcase-design"
+                              ? "Test plan"
+                              : "Task";
+                      return (
+                          `${kind} under user story **${storyTitle}** (issue #${userStoryNumber}), epic #${epicNumber}.\n\n` +
+                          `<!-- epic-sync:nested:${epicNumber}:${storySlug}:${nestedSlug} -->`
+                      );
+                  }
+
+                  async function listSubIssues(octokit, issueNumber) {
+                      const { data } = await octokit.rest.issues.listSubIssues({
+                          owner,
+                          repo,
+                          issue_number: issueNumber,
+                          per_page: 100,
+                      });
+                      return data;
+                  }
+
+                  function userStoryIssueTitle(defTitle, epicSummary) {
+                      return `[USER STORY]: ${defTitle} - ${epicSummary}`;
+                  }
+
+                  function nestedIssueTitlePrefix(nestedSlug) {
+                      return nestedSlug === "testcase-design" ? "[Test Plan]" : "[TASK]";
+                  }
+
+                  function nestedIssueTitle(nestedSlug, nestTitle, defTitle, epicSummary) {
+                      return `${nestedIssueTitlePrefix(nestedSlug)}: ${nestTitle} (${defTitle}) - ${epicSummary}`;
+                  }
+
+                  function nestedIssueLabels(nestedSlug) {
+                      return nestedSlug === "testcase-design" ? ["Test Plan"] : ["Task"];
+                  }
+
+                  const TYPE_LABEL_NAMES = new Set([
+                      "Epic",
+                      "User Story",
+                      "Story",
+                      "Task",
+                      "Test Plan",
+                  ]);
+
+                  function extraLabelsFromEpic(epic) {
+                      const raw = Array.isArray(epic.labels) ? epic.labels : [];
+                      const names = raw.map(labelName).filter(Boolean);
+                      return names.filter((n) => !TYPE_LABEL_NAMES.has(n));
+                  }
+
+                  function nestedIssueType(nestedSlug) {
+                      return nestedSlug === "testcase-design"
+                          ? GITHUB_ISSUE_TYPE.TEST_PLAN
+                          : GITHUB_ISSUE_TYPE.TASK;
+                  }
+
+                  function findUserStoryIssue(subIssues, { epicNumber, slug, title, summary }) {
+                      const wantMarker = `<!-- epic-sync:child:${epicNumber}:${slug} -->`;
+                      const withEpic = userStoryIssueTitle(title, summary).trim().toLowerCase();
+                      const titleUserNoEpic = `[USER STORY]: ${title}`.trim().toLowerCase();
+                      const titleLegacy = `[STORY]: ${title}`.trim().toLowerCase();
+                      const titleNorm = title.trim().toLowerCase();
+                      return (
+                          subIssues.find((issue) => {
+                              if (issue.body && issue.body.includes(wantMarker)) return true;
+                              const it = (issue.title || "").trim().toLowerCase();
+                              if (it === withEpic || it === titleUserNoEpic || it === titleLegacy || it === titleNorm)
+                                  return true;
+                              if (it.startsWith(`[user story]: ${title}`.trim().toLowerCase())) return true;
+                              return false;
+                          }) || null
+                      );
+                  }
+
+                  function findNestedIssue(nestedSubs, {
+                      epicNumber,
+                      storySlug,
+                      nestedSlug,
+                      nestTitle,
+                      defTitle,
+                      summary,
+                  }) {
+                      const wantMarker = `<!-- epic-sync:nested:${epicNumber}:${storySlug}:${nestedSlug} -->`;
+                      const full = nestedIssueTitle(nestedSlug, nestTitle, defTitle, summary)
+                          .trim()
+                          .toLowerCase();
+                      const noSummary = `${nestedIssueTitlePrefix(nestedSlug)}: ${nestTitle} (${defTitle})`
+                          .trim()
+                          .toLowerCase();
+                      return (
+                          nestedSubs.find((issue) => {
+                              if (issue.body && issue.body.includes(wantMarker)) return true;
+                              const it = (issue.title || "").trim().toLowerCase();
+                              if (it === full || it === noSummary) return true;
+                              if (it.startsWith(noSummary)) return true;
+                              return false;
+                          }) || null
+                      );
+                  }
+
+                  function assigneesPayload() {
+                      return GITHUB_ASSIGNEE ? { assignees: [GITHUB_ASSIGNEE] } : {};
+                  }
+
+                  /** Project fields that mirror native issue fields — set via REST on the issue, not ProjectV2 mutations. */
+                  const SKIP_PROJECT_FIELD_NAMES = new Set([
+                      "Title",
+                      "Assignees",
+                      "Labels",
+                      "Milestone",
+                      "Repository",
+                      "Repositories",
+                  ]);
+
+                  function milestoneFromEpic(epic) {
+                      const m = epic.milestone;
+                      if (m == null || m.number == null) {
+                          return {};
+                      }
+                      return { milestone: m.number };
+                  }
+
+                  async function graphql(token, query, variables) {
+                      const res = await fetch("https://api.github.com/graphql", {
+                          method: "POST",
+                          headers: {
+                              Authorization: `Bearer ${token}`,
+                              "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({ query, variables }),
+                      });
+                      const text = await res.text();
+                      let json;
+                      try {
+                          json = text ? JSON.parse(text) : {};
+                      } catch (parseErr) {
+                          const snippet = text.slice(0, 200).replace(/\s+/g, " ").trim();
+                          throw new Error(
+                              `GraphQL HTTP ${res.status}: non-JSON response (${parseErr.message}). Body: ${snippet}`
+                          );
+                      }
+                      if (!res.ok) {
+                          throw new Error(`GraphQL HTTP ${res.status}: ${JSON.stringify(json)}`);
+                      }
+                      if (json.errors && json.errors.length) {
+                          throw new Error(json.errors.map((e) => e.message).join("; "));
+                      }
+                      return json.data;
+                  }
+
+                  async function sleep(ms) {
+                      return new Promise((r) => setTimeout(r, ms));
+                  }
+
+                  async function graphqlWithRetry(token, query, variables, label) {
+                      const maxAttempts = 4;
+                      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                          try {
+                              return await graphql(token, query, variables);
+                          } catch (err) {
+                              const msg = String((err && err.message) || "");
+                              const transient =
+                                  /HTTP 5\d\d/.test(msg) ||
+                                  /secondary rate limit/i.test(msg) ||
+                                  /abuse detection/i.test(msg) ||
+                                  /rate limit/i.test(msg) ||
+                                  /ECONNRESET|ETIMEDOUT|EAI_AGAIN|fetch failed/i.test(msg);
+                              if (!transient || attempt === maxAttempts) throw err;
+                              const delay = 1000 * Math.pow(2, attempt - 1);
+                              console.warn(
+                                  `GraphQL ${label || ""} attempt ${attempt}/${maxAttempts} failed: ${msg}. Retrying in ${delay}ms.`
+                              );
+                              await sleep(delay);
+                          }
+                      }
+                  }
+
+                  function buildFieldUpdate(fv) {
+                      const field = fv.field;
+                      const fname = field && field.name;
+                      if (!field || !fname || SKIP_PROJECT_FIELD_NAMES.has(fname)) {
+                          return null;
+                      }
+                      switch (fv.__typename) {
+                          case "ProjectV2ItemFieldSingleSelectValue": {
+                              if (fname.toLowerCase() === "status") {
+                                  const options = (field.options || []);
+                                  const todoOption = options.find(
+                                      (o) => o && o.name && o.name.toLowerCase() === "todo"
+                                  );
+                                  if (todoOption && todoOption.id) {
+                                      return {
+                                          fieldId: field.id,
+                                          value: { singleSelectOptionId: todoOption.id },
+                                      };
+                                  }
+                                  return null;
+                              }
+                              if (!fv.optionId) return null;
+                              return {
+                                  fieldId: field.id,
+                                  value: { singleSelectOptionId: fv.optionId },
+                              };
+                          }
+                          case "ProjectV2ItemFieldIterationValue": {
+                              if (!fv.iterationId) return null;
+                              return {
+                                  fieldId: field.id,
+                                  value: { iterationId: fv.iterationId },
+                              };
+                          }
+                          case "ProjectV2ItemFieldNumberValue": {
+                              if (fv.number == null) return null;
+                              return { fieldId: field.id, value: { number: fv.number } };
+                          }
+                          case "ProjectV2ItemFieldTextValue": {
+                              return {
+                                  fieldId: field.id,
+                                  value: { text: fv.text != null ? String(fv.text) : "" },
+                              };
+                          }
+                          case "ProjectV2ItemFieldDateValue": {
+                              if (!fv.date) return null;
+                              return { fieldId: field.id, value: { date: fv.date } };
+                          }
+                          default:
+                              return null;
+                      }
+                  }
+
+                  async function fetchEpicProjectPlans(token, owner, repo, epicNumber) {
+                      const query = `
+                        query EpicIssueForSync($owner: String!, $name: String!, $number: Int!) {
+                          repository(owner: $owner, name: $name) {
+                            issue(number: $number) {
+                              id
+                              projectItems(first: 25) {
+                                nodes {
+                                  project { id title }
+                                  fieldValues(first: 50) {
+                                    nodes {
+                                      __typename
+                                      ... on ProjectV2ItemFieldSingleSelectValue {
+                                        optionId
+                                        field {
+                                          ... on ProjectV2FieldCommon { id name }
+                                          ... on ProjectV2SingleSelectField { options { id name } }
+                                        }
+                                      }
+                                      ... on ProjectV2ItemFieldIterationValue {
+                                        iterationId
+                                        field { ... on ProjectV2FieldCommon { id name } }
+                                      }
+                                      ... on ProjectV2ItemFieldNumberValue {
+                                        number
+                                        field { ... on ProjectV2FieldCommon { id name } }
+                                      }
+                                      ... on ProjectV2ItemFieldTextValue {
+                                        text
+                                        field { ... on ProjectV2FieldCommon { id name } }
+                                      }
+                                      ... on ProjectV2ItemFieldDateValue {
+                                        date
+                                        field { ... on ProjectV2FieldCommon { id name } }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      `;
+                      const data = await graphqlWithRetry(token, query, {
+                          owner,
+                          name: repo,
+                          number: epicNumber,
+                      }, "EpicIssueForSync");
+                      const issue = data.repository && data.repository.issue;
+                      if (!issue) return [];
+                      const nodes = (issue.projectItems && issue.projectItems.nodes) || [];
+                      const plans = [];
+                      for (const pi of nodes) {
+                          if (!pi || !pi.project) continue;
+                          const projectId = pi.project.id;
+                          const updates = [];
+                          const fvs = (pi.fieldValues && pi.fieldValues.nodes) || [];
+                          for (const fv of fvs) {
+                              const u = buildFieldUpdate(fv);
+                              if (u) updates.push(u);
+                          }
+                          plans.push({ projectId, updates });
+                      }
+                      return plans;
+                  }
+
+                  async function applyProjectPlans(token, issueNodeId, plans) {
+                      if (!plans || !plans.length) return;
+                      const addMutation = `
+                        mutation($projectId: ID!, $contentId: ID!) {
+                          addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) {
+                            item { id }
+                          }
+                        }
+                      `;
+                      const updateMutation = `
+                        mutation($input: UpdateProjectV2ItemFieldValueInput!) {
+                          updateProjectV2ItemFieldValue(input: $input) {
+                            projectV2Item { id }
+                          }
+                        }
+                      `;
+                      for (const plan of plans) {
+                          const addData = await graphqlWithRetry(token, addMutation, {
+                              projectId: plan.projectId,
+                              contentId: issueNodeId,
+                          }, "addProjectV2ItemById");
+                          const itemId = addData.addProjectV2ItemById.item.id;
+                          for (const u of plan.updates) {
+                              await graphqlWithRetry(token, updateMutation, {
+                                  input: {
+                                      projectId: plan.projectId,
+                                      itemId,
+                                      fieldId: u.fieldId,
+                                      value: u.value,
+                                  },
+                              }, "updateProjectV2ItemFieldValue");
+                          }
+                      }
+                  }
+
+                  async function ensureIssueWithNodeId(octokit, issue) {
+                      if (issue.node_id) return issue;
+                      const { data } = await octokit.rest.issues.get({
+                          owner,
+                          repo,
+                          issue_number: issue.number,
+                      });
+                      return data;
+                  }
+
+                  async function propagateProjectsToIssue(octokit, projectToken, projectPlans, issue) {
+                      if (!projectToken || !projectPlans.length) return;
+                      try {
+                          const full = await ensureIssueWithNodeId(octokit, issue);
+                          await applyProjectPlans(projectToken, full.node_id, projectPlans);
+                      } catch (e) {
+                          const num = issue && issue.number;
+                          console.warn(
+                              `Project/Sprint propagation failed for issue #${num}: ${e && e.message ? e.message : e}. Continuing (milestone + labels already applied).`
+                          );
+                      }
+                  }
+
+                  (async () => {
+                      if (!GITHUB_TOKEN) throw new Error("GITHUB_TOKEN is required");
+                      const epicNumber = Number(process.env.EPIC_ISSUE_NUMBER);
+                      if (!Number.isInteger(epicNumber) || epicNumber <= 0) {
+                          throw new Error(
+                              `Invalid EPIC_ISSUE_NUMBER: ${process.env.EPIC_ISSUE_NUMBER}`,
+                          );
+                      }
+
+                      const octokit = new Octokit({ auth: GITHUB_TOKEN });
+
+                      const epic = await fetchEpicIssue(octokit, epicNumber);
+                      if (!isEpicIssue(epic)) {
+                          console.log(`Issue #${epicNumber} is not an Epic; skipping.`);
+                          return;
+                      }
+
+                      const summary = stripEpicPrefix(epic.title);
+
+                      const projectToken = (process.env.PROJECTS_SYNC_PAT || "").trim();
+                      let projectPlans = [];
+                      if (projectToken) {
+                          try {
+                              projectPlans = await fetchEpicProjectPlans(
+                                  projectToken,
+                                  owner,
+                                  repo,
+                                  epicNumber
+                              );
+                              console.log(
+                                  `Loaded ${projectPlans.length} project row(s) from epic #${epicNumber} to propagate.`
+                              );
+                          } catch (e) {
+                              console.warn(
+                                  `PROJECTS_SYNC_PAT: could not read epic projects (${e.message}). Skipping Project/Sprint copy.`
+                              );
+                          }
+                      } else {
+                          console.log(
+                              "PROJECTS_SYNC_PAT not set; skipping GitHub Project / Iteration propagation (milestone still applied)."
+                          );
+                      }
+
+                      const subIssues = await listSubIssues(octokit, epicNumber);
+                      console.log(`Epic #${epicNumber} has ${subIssues.length} sub-issue(s) before sync.`);
+
+                      for (const def of STANDARD_STORY_DEFINITIONS) {
+                          const storyTitle = userStoryIssueTitle(def.title, summary);
+                          let storyIssue = findUserStoryIssue(subIssues, {
+                              epicNumber,
+                              slug: def.slug,
+                              title: def.title,
+                              summary,
+                          });
+
+                          if (!storyIssue) {
+                              const { data: story } = await octokit.request("POST /repos/{owner}/{repo}/issues", {
+                                  owner,
+                                  repo,
+                                  title: storyTitle,
+                                  body: buildChildBody({
+                                      epicNumber,
+                                      slug: def.slug,
+                                      title: def.title,
+                                  }),
+                                  labels: ["Story", ...extraLabelsFromEpic(epic)],
+                                  type: GITHUB_ISSUE_TYPE.USER_STORY,
+                                  ...milestoneFromEpic(epic),
+                                  ...assigneesPayload(),
+                              });
+                              storyIssue = story;
+                              try {
+                                  await octokit.rest.issues.addSubIssue({
+                                      owner,
+                                      repo,
+                                      issue_number: epicNumber,
+                                      sub_issue_id: story.id,
+                                  });
+                                  console.log(`Created and linked user story #${story.number}: ${storyTitle}`);
+                              } catch (e) {
+                                  console.error(
+                                      `Created user story #${story.number} but failed to link under epic: ${e.message}`
+                                  );
+                                  throw e;
+                              }
+                              subIssues.push(story);
+                          } else {
+                              await octokit.request("PATCH /repos/{owner}/{repo}/issues/{issue_number}", {
+                                  owner,
+                                  repo,
+                                  issue_number: storyIssue.number,
+                                  title: storyTitle,
+                                  body: buildChildBody({
+                                      epicNumber,
+                                      slug: def.slug,
+                                      title: def.title,
+                                  }),
+                                  labels: ["Story", ...extraLabelsFromEpic(epic)],
+                                  type: GITHUB_ISSUE_TYPE.USER_STORY,
+                                  ...milestoneFromEpic(epic),
+                                  ...assigneesPayload(),
+                              });
+                              console.log(`Updated user story #${storyIssue.number}: ${storyTitle}`);
+                          }
+
+                          await propagateProjectsToIssue(
+                              octokit,
+                              projectToken,
+                              projectPlans,
+                              storyIssue
+                          );
+
+                          const nestedSubs = await listSubIssues(octokit, storyIssue.number);
+                          for (const nest of USER_STORY_SUB_DEFINITIONS) {
+                              const nestedTitle = nestedIssueTitle(nest.slug, nest.title, def.title, summary);
+                              const existingNested = findNestedIssue(nestedSubs, {
+                                  epicNumber,
+                                  storySlug: def.slug,
+                                  nestedSlug: nest.slug,
+                                  nestTitle: nest.title,
+                                  defTitle: def.title,
+                                  summary,
+                              });
+                              if (existingNested) {
+                                  await octokit.request("PATCH /repos/{owner}/{repo}/issues/{issue_number}", {
+                                      owner,
+                                      repo,
+                                      issue_number: existingNested.number,
+                                      title: nestedTitle,
+                                      labels: [...nestedIssueLabels(nest.slug), ...extraLabelsFromEpic(epic)],
+                                      type: nestedIssueType(nest.slug),
+                                      ...milestoneFromEpic(epic),
+                                      ...assigneesPayload(),
+                                  });
+                                  console.log(
+                                      `Child issue #${existingNested.number} already present under user story #${storyIssue.number}; title, labels, type, and assignee updated.`
+                                  );
+                                  await propagateProjectsToIssue(
+                                      octokit,
+                                      projectToken,
+                                      projectPlans,
+                                      existingNested
+                                  );
+                                  continue;
+                              }
+                              const { data: nestedIssue } = await octokit.request(
+                                  "POST /repos/{owner}/{repo}/issues",
+                                  {
+                                      owner,
+                                      repo,
+                                      title: nestedTitle,
+                                      body: buildNestedBody({
+                                          epicNumber,
+                                          storySlug: def.slug,
+                                          nestedSlug: nest.slug,
+                                          storyTitle: def.title,
+                                          userStoryNumber: storyIssue.number,
+                                      }),
+                                      labels: [...nestedIssueLabels(nest.slug), ...extraLabelsFromEpic(epic)],
+                                      type: nestedIssueType(nest.slug),
+                                      ...milestoneFromEpic(epic),
+                                      ...assigneesPayload(),
+                                  }
+                              );
+                              try {
+                                  await octokit.rest.issues.addSubIssue({
+                                      owner,
+                                      repo,
+                                      issue_number: storyIssue.number,
+                                      sub_issue_id: nestedIssue.id,
+                                  });
+                                  console.log(
+                                      `Created and linked child issue #${nestedIssue.number} under user story #${storyIssue.number}: ${nestedTitle}`
+                                  );
+                              } catch (e) {
+                                  console.error(
+                                      `Created child issue #${nestedIssue.number} but failed to link under user story: ${e.message}`
+                                  );
+                                  throw e;
+                              }
+                              await propagateProjectsToIssue(
+                                  octokit,
+                                  projectToken,
+                                  projectPlans,
+                                  nestedIssue
+                              );
+                              nestedSubs.push(nestedIssue);
+                          }
+                      }
+
+                      console.log("Done.");
+                  })().catch((err) => {
+                      console.error(err);
+                      process.exit(1);
+                  });
+                  SYNC_SCRIPT_EOF
