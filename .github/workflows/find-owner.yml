@@ -15,7 +15,11 @@ jobs:
         steps:
             - uses: actions/checkout@v4
               with:
-                  fetch-depth: 1
+                  # Full commit graph is required so `git blame` can resolve authors
+                  # beyond the HEAD commit. `filter: blob:none` keeps the clone cheap:
+                  # blobs are fetched lazily only for the files blame actually walks.
+                  fetch-depth: 0
+                  filter: blob:none
                   sparse-checkout: |
                       server/src
                   sparse-checkout-cone-mode: true
@@ -47,28 +51,6 @@ jobs:
                   import datetime as dt, json, os, re, subprocess, sys
                   from functools import lru_cache
                   from typing import Optional, Tuple
-
-                  _GQL_RAW = """query($owner: String!, $repo: String!, $expr: String!, $startLine: Int!, $endLine: Int!) {
-                    repository(owner: $owner, name: $repo) {
-                      object(expression: $expr) {
-                        ... on Blob {
-                          blame(range: {startLine: $startLine, endLine: $endLine}) {
-                            ranges {
-                              commit {
-                                committedDate
-                                author {
-                                  name
-                                  user { login }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                  """
-                  _GQL = re.sub(r"\s+", " ", _GQL_RAW.strip())
 
 
                   def _env_gh_repo() -> dict:
@@ -111,10 +93,6 @@ jobs:
                       if t.endswith(".js"):
                           t = t[:-3] + ".ts"
                       return f"{repo_src_prefix}{t}"
-
-
-                  def to_epoch_seconds(iso_timestamp: str) -> int:
-                      return int(dt.datetime.fromisoformat(iso_timestamp.replace("Z", "+00:00")).timestamp())
 
 
                   def to_login(name: str) -> str:
@@ -231,64 +209,23 @@ jobs:
 
 
                   def query_blame(path: str, start_line: int, end_line: int, owner: str, repo: str) -> Optional[Tuple[str, str, int]]:
+                      """Resolve (author_name, author_login, author_epoch) for a line range.
+
+                      Uses local `git blame` against the checked-out working copy. The workflow's
+                      `actions/checkout@v4` step fetches full history (`fetch-depth: 0`) with
+                      `filter: blob:none`, so blame sees every commit and can return the real
+                      author of each line (not just whoever last merged to HEAD).
+
+                      Previously this function first tried GitHub's GraphQL `Blob.blame` field,
+                      but that field is not part of the public GraphQL schema — the query always
+                      errored with `Field 'blame' doesn't exist on type 'Blob'` and the code
+                      silently fell through to the git path. With a shallow (`fetch-depth: 1`)
+                      clone the git fallback then attributed every line to the single boundary
+                      commit at HEAD, which is why every candidate file was being blamed on the
+                      latest master merger.
+                      """
                       ws = os.environ.get("GITHUB_WORKSPACE", ".")
-
-                      def git_fallback() -> Optional[Tuple[str, str, int]]:
-                          return query_blame_git(path, start_line, end_line, ws, f"{owner}/{repo}")
-
-                      expr = f"HEAD:{path}"
-                      cmd = [
-                          "gh",
-                          "api",
-                          "graphql",
-                          "-f",
-                          f"query={_GQL}",
-                          "-f",
-                          f"owner={owner}",
-                          "-f",
-                          f"repo={repo}",
-                          "-f",
-                          f"expr={expr}",
-                          "-F",
-                          f"startLine={start_line}",
-                          "-F",
-                          f"endLine={end_line}",
-                      ]
-                      try:
-                          proc = subprocess.run(
-                              cmd, check=False, capture_output=True, text=True, env=_env_gh_repo()
-                          )
-                      except Exception:
-                          return git_fallback()
-                      if proc.returncode != 0:
-                          return git_fallback()
-                      try:
-                          payload = json.loads(proc.stdout)
-                      except json.JSONDecodeError:
-                          return git_fallback()
-                      if payload.get("errors"):
-                          return git_fallback()
-                      ranges = ((payload.get("data") or {}).get("repository", {}).get("object") or {}).get("blame", {}).get("ranges", [])
-                      if not ranges:
-                          return git_fallback()
-                      best, best_time = None, 0
-                      for br in ranges:
-                          c = br.get("commit") or {}
-                          cd = c.get("committedDate")
-                          if not cd:
-                              continue
-                          try:
-                              ct = to_epoch_seconds(cd)
-                          except Exception:
-                              continue
-                          au = c.get("author") or {}
-                          nm = (au.get("name") or "").strip()
-                          if not nm:
-                              continue
-                          lg = ((au.get("user") or {}).get("login") or "").strip() or to_login(nm)
-                          if ct > best_time:
-                              best_time, best = ct, (nm, lg, ct)
-                      return best if best is not None else git_fallback()
+                      return query_blame_git(path, start_line, end_line, ws, f"{owner}/{repo}")
 
 
                   def extract_where_to_look_literals(text: str) -> list[str]:

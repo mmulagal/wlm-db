@@ -51,6 +51,16 @@ async function setAssignee(issue) {
     return;
   }
 
+  // If the creator is the default codeowner, the auto-assignment already
+  // produced the correct result. Removing and re-adding would briefly leave
+  // the issue with no assignees and create noisy unassign/assign events.
+  if (ISSUE_CREATOR === DEFAULT_CODEOWNER) {
+    console.log(
+      `Issue creator is the default codeowner (${DEFAULT_CODEOWNER}) — leaving assignee alone.`
+    );
+    return;
+  }
+
   if (existing.includes(DEFAULT_CODEOWNER)) {
     await octokit.issues.removeAssignees({
       owner,
