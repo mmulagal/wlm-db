@@ -906,6 +906,122 @@ jobs:
                       )
 
 
+                  def apply_current_milestone(repo_full: str, issue_number: str) -> None:
+                      """Set the issue's milestone to the currently active open milestone, if unset.
+
+                      Mirrors `setMilestone` in `.github/scripts/test-item-defaults.js`:
+                      - If the issue already has a milestone, leave it alone.
+                      - Otherwise list open milestones (sorted by due_on asc) and pick the first
+                        milestone whose `due_on` is today-or-later. If none qualify, fall back to
+                        the last open milestone returned by the API in that ordering.
+                      - Apply via REST `PATCH /repos/{owner}/{repo}/issues/{n}`.
+
+                      Uses the repo-scoped `GITHUB_TOKEN` (no org project token required): milestones
+                      live on the repository, not on the Project V2 board.
+                      """
+                      if not repo_full or not issue_number:
+                          return
+                      try:
+                          proc = subprocess.run(
+                              ["gh", "api", f"repos/{repo_full}/issues/{issue_number}"],
+                              capture_output=True,
+                              text=True,
+                              check=False,
+                              env=_env_gh_repo(),
+                          )
+                      except Exception:
+                          return
+                      if proc.returncode != 0:
+                          _gh_err(proc, f"gh api GET issues/{issue_number} (milestone)")
+                          return
+                      try:
+                          issue = json.loads(proc.stdout)
+                      except json.JSONDecodeError:
+                          return
+                      existing = issue.get("milestone") or {}
+                      if existing.get("number"):
+                          print(
+                              f"find-owner: milestone already set to {existing.get('title')!r}; leaving alone",
+                              file=sys.stderr,
+                          )
+                          return
+                      try:
+                          ml = subprocess.run(
+                              [
+                                  "gh",
+                                  "api",
+                                  f"repos/{repo_full}/milestones?state=open&sort=due_on&direction=asc&per_page=100",
+                              ],
+                              capture_output=True,
+                              text=True,
+                              check=False,
+                              env=_env_gh_repo(),
+                          )
+                      except Exception:
+                          return
+                      if ml.returncode != 0:
+                          _gh_err(ml, f"gh api GET repos/{repo_full}/milestones")
+                          return
+                      try:
+                          milestones = json.loads(ml.stdout) or []
+                      except json.JSONDecodeError:
+                          return
+                      if not milestones:
+                          print(
+                              "find-owner: no open milestones; skipping milestone assignment",
+                              file=sys.stderr,
+                          )
+                          return
+                      today = dt.datetime.now(dt.timezone.utc).date()
+                      chosen: Optional[dict] = None
+                      for m in milestones:
+                          due = m.get("due_on")
+                          if not due:
+                              continue
+                          try:
+                              d = dt.datetime.fromisoformat(str(due).replace("Z", "+00:00"))
+                              if d.tzinfo is None:
+                                  d = d.replace(tzinfo=dt.timezone.utc)
+                          except ValueError:
+                              continue
+                          if d.date() >= today:
+                              chosen = m
+                              break
+                      if chosen is None:
+                          chosen = milestones[-1]
+                      num = chosen.get("number")
+                      title = chosen.get("title") or ""
+                      if not num:
+                          return
+                      payload = json.dumps({"milestone": int(num)})
+                      try:
+                          up = subprocess.run(
+                              [
+                                  "gh",
+                                  "api",
+                                  "-X",
+                                  "PATCH",
+                                  f"repos/{repo_full}/issues/{issue_number}",
+                                  "--input",
+                                  "-",
+                              ],
+                              input=payload,
+                              text=True,
+                              capture_output=True,
+                              check=False,
+                              env=_env_gh_repo(),
+                          )
+                      except Exception:
+                          return
+                      if up.returncode != 0:
+                          _gh_err(up, f"gh api PATCH issues/{issue_number} (milestone)")
+                          return
+                      print(
+                          f"find-owner: set milestone to {title!r} (#{num})",
+                          file=sys.stderr,
+                      )
+
+
                   def _run_owner_assignment() -> int:
                       body = os.environ.get("ISSUE_BODY", "") or ""
                       rf = os.environ.get("REPO", "")
@@ -1026,8 +1142,12 @@ jobs:
                       try:
                           rc = _run_owner_assignment()
                       finally:
+                          # Each follow-up step is independent: a failure in one must not block the others.
                           try:
-                              # Independent of assignee success above; runs after assignment attempt.
+                              apply_current_milestone(rf, inum)
+                          except Exception as ex:
+                              print(f"find-owner: milestone step raised: {ex}", file=sys.stderr)
+                          try:
                               apply_wf_database_project_and_sprint(rf, inum)
                           except Exception as ex:
                               print(f"find-owner: project/sprint step raised: {ex}", file=sys.stderr)
