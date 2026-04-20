@@ -51,6 +51,7 @@ import {
     setSelectedAgent
 } from '../../../../store/workloadFactory/snapcenterSlice';
 import { addHostHandlerSc, determineProtectionStatusMssql, mssqlDatabaseMenuOptions } from '../../InventoryUtilsV2';
+import { getLunFilterOptions, getUniqueLunNames } from '../../../WellArchitectedTab/WellArchitectedTabUtils';
 import { getDatabaseTableColumns } from './DatabaseTableColumns';
 import { mssqlPgsqlDatabaseColumnFilterMap } from './MssqlPgsqlDatabaseTableColumns';
 import { oraclePDBColumnFilterMap } from './OraclePDBTableColumns';
@@ -103,15 +104,19 @@ const DatabasesTable = () => {
 
     const updatedTableData = useMemo(
         () =>
-            databaseTableRows?.filter((row: any) => {
-                // Exclude AOAG standby instances from the table
-                if (selectedHostType === DBType.MSSQL && row?.isReplica) {
-                    return false;
-                }
-                return true;
-            }),
+            databaseTableRows
+                ?.filter((row: any) => {
+                    // Exclude AOAG standby instances from the table
+                    if (selectedHostType === DBType.MSSQL && row?.isReplica) {
+                        return false;
+                    }
+                    return true;
+                })
+                .map((row: any) => ({ ...row, lunPaths: getUniqueLunNames(row?.luns) })),
         [databaseTableRows, selectedHostType]
     );
+
+    const lunFilterOptions = useMemo(() => getLunFilterOptions(updatedTableData), [updatedTableData]);
 
     useEffect(() => {
         setLoading(
@@ -483,7 +488,8 @@ const DatabasesTable = () => {
         );
     };
 
-    const getTableColDefsPerEngineType = () => getDatabaseTableColumns({ t, databaseTableRows, selectedHostType });
+    const getTableColDefsPerEngineType = () =>
+        getDatabaseTableColumns({ t, databaseTableRows, selectedHostType, setDialog, lunFilterOptions });
 
     // Prefetch SnapCenter databases per host
     const prefetchRun = useRef(false);
@@ -625,6 +631,7 @@ const DatabasesTable = () => {
         isHorizontalScroll: true,
         isManagedColumns: true,
         isLazyLoading: loading,
+        additionalSearchKeys: ['lunPaths'],
         // @ts-ignore
         initialFilterState: getInitialFilter(),
         initialColumnState: Object.fromEntries(

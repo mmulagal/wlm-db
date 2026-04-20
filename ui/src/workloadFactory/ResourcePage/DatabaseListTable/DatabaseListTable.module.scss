@@ -4,22 +4,17 @@
     min-width: 1082px;
     margin-bottom: 80px;
 
-    .statusCell {
+    .firstColText {
         display: flex;
-        gap: 16px;
-        flex-direction: row;
+        gap: 8px;
         align-items: center;
-        .statusIcon {
-            width: 10px;
-            height: 10px;
-            border-radius: 5px;
-        }
-        .onIcon {
-            background-color: var(--notification-success);
-        }
-        .offIcon {
-            background-color: var(--notification-error);
-        }
+        margin-top: 2px;
+    }
+
+    .lunsCell {
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
 
     .colText {

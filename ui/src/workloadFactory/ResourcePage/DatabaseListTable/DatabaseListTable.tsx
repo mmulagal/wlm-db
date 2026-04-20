@@ -1,16 +1,18 @@
-import { Button, TooltipInfo } from '@netapp/design-system';
-import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import classNames from 'classnames';
+import { Button, TooltipInfo, useDialog } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './DatabaseListTable.module.scss';
 import { WorkloadFactoryDatabaseItem } from '../../../utils/types/workloadFactoryResourceTypes';
-import { useAppSelector } from '../../../store/storeHooks';
+import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { formatSize, expandTableRow, isAoagDeploymentType, hasAoagReplicas } from '../../../utils/utilityFunctions';
 import { getProtectionText } from '../../InventoryV2/InventoryUtilsV2';
-import { PROTECTION_TEXT_STATUS, DATABASE_STATUS, REPLICA_ROLES } from '../../../utils/consts';
+import { getLunFilterOptions, getUniqueLunNames } from '../../WellArchitectedTab/WellArchitectedTabUtils';
+import { PROTECTION_TEXT_STATUS, REPLICA_ROLES } from '../../../utils/consts';
+import InventoryStatusIndicator from '../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 import DatabaseHostOverviewApiV2 from '../ResourceHomePage/DatabaseHostOverviewApiV2';
 import {
     addInitialDBCreateData,
@@ -24,6 +26,8 @@ import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
 import { Table, ColumnProps } from '../../../common/Lib/Table/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import ResourcePageReplicaTable from './ResourcePageReplicaTable';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import AssociatedLunsDialogContent from './AssociatedLunsDialogContent';
 
 const DatabaseListTable = () => {
     const { t } = useTranslation();
@@ -42,22 +46,27 @@ const DatabaseListTable = () => {
         selectedResourceCredId,
         selectedResourceRegionId
     } = useAppSelector(state => state.workloadFactoryResource);
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     DatabaseHostOverviewApiV2();
     const navigate = useNavigate();
+    const { setDialog } = useDialog();
     const databaseTableRef = useRef<HTMLDivElement>(null);
     const [tableWidth, setTableWidth] = useState(0);
 
     useEffect(() => {
         const element = databaseTableRef.current;
-        if (!element) return;
+        if (!element) {
+            return undefined;
+        }
         setTableWidth(element.offsetWidth);
         const observer = new ResizeObserver(entries => {
             const newWidth = entries[0]?.contentRect.width ?? 0;
             setTableWidth(prev => (prev !== newWidth ? newWidth : prev));
         });
         observer.observe(element);
-        return () => observer.disconnect();
+        return () => {
+            observer.disconnect();
+        };
     }, []);
 
     const enrichedData = useMemo(() => {
@@ -96,9 +105,14 @@ const DatabaseListTable = () => {
             }
             return {
                 ...perRow,
-                isProtected: protectionVal
+                isProtected: protectionVal,
+                lunPaths: getUniqueLunNames(perRow?.luns)
             };
         });
+
+    const formattedRows = useMemo(() => formatData(enrichedData) || [], [enrichedData, t]);
+
+    const lunFilterOptions = useMemo(() => getLunFilterOptions(formattedRows), [formattedRows]);
 
     const notAvailable = () => (
         <DsTypography variant="Regular_13" className={styles.colText}>
@@ -116,95 +130,77 @@ const DatabaseListTable = () => {
             accessor: 'name',
             isSortable: true,
             id: '1',
-            width: isAoag ? '16%' : '19.3%'
+            width: '15%',
+            renderCell: (_cellData: any, rowData: any) => {
+                const name = rowData?.name;
+                return (
+                    <div>
+                        <DsTypography variant="Semibold_14">
+                            {name || t('databases.general.not-available-table-columns')}
+                        </DsTypography>
+                        <div className={styles.firstColText}>
+                            <InventoryStatusIndicator status={rowData?.status} loading={rowData?.loading} />
+                        </div>
+                    </div>
+                );
+            }
         },
-        {
-            Header: t('databases.general.status'),
-            accessor: 'status',
-            filterOptions: 'auto',
-            id: '2',
-            width: isAoag ? '10%' : '11.2%',
-            renderCell: (cellData: any) => (
-                <div className={styles.statusCell}>
-                    <div
-                        className={`${styles.statusIcon} ${
-                            cellData === DATABASE_STATUS.ONLINE
-                                ? styles.onIcon
-                                : cellData === DATABASE_STATUS.OFFLINE
-                                ? styles.offIcon
-                                : ''
-                        }`}
-                    />
-                    <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                </div>
-            )
-        },
-        ...(isAoag
-            ? [
-                  {
-                      Header: t('databases.general.availability-group'),
-                      accessor: 'availabilityGroup',
-                      filterOptions: 'auto' as const,
-                      id: '7',
-                      width: '16%',
-                      renderCell: (cellData: any, rowData: any) => {
-                          if (!cellData)
-                              return (
-                                  <div className={styles.naWithTooltip}>
-                                      <TooltipInfo trigger="hover">
-                                          <div>
-                                              <DsTypography variant="Regular_13">
-                                                  {t('databases.general.availability-group-na-tooltip')}
-                                              </DsTypography>
-                                          </div>
-                                      </TooltipInfo>
-                                      <DsTypography variant="Regular_14">
-                                          {t('databases.general.not-available')}
-                                      </DsTypography>
-                                  </div>
-                              );
-                          const role = rowData?.replicaRole?.toUpperCase();
-                          const roleText =
-                              role === REPLICA_ROLES.PRIMARY
-                                  ? t('databases.general.primary')
-                                  : role === REPLICA_ROLES.SECONDARY
-                                  ? t('databases.general.secondary')
-                                  : '';
-                          const replicaCount = rowData?.replicaDatabases?.length || 0;
-                          const replicaLabel = `${replicaCount} ${
-                              replicaCount !== 1
-                                  ? t('databases.general.replicas').toLowerCase()
-                                  : t('databases.general.replica').toLowerCase()
-                          }`;
-                          return (
-                              <div>
-                                  <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                                  {roleText && (
-                                      <DsTypography variant="Regular_12" className={styles.colText}>
-                                          {`${roleText} | `}
-                                          {replicaDatabasesLoading ? <DsFlashingDotsLoader /> : replicaLabel}
-                                      </DsTypography>
-                                  )}
-                              </div>
-                          );
-                      }
-                  }
-              ]
-            : []),
         {
             Header: t('databases.general.size'),
             accessor: 'size',
             isSortable: true,
             id: '3',
-            width: isAoag ? '10%' : '15%',
-            renderCell: (cellData: any) => formatSize(cellData)
+            width: 'auto',
+            renderCell: (cellData: any) => (
+                <DsTypography variant="Regular_13" className={styles.colText}>
+                    {formatSize(cellData)}
+                </DsTypography>
+            )
+        },
+        {
+            Header: t('databases.resource-overview.associated_luns'),
+            accessor: 'luns',
+            customAccessor: 'lunPaths',
+            accessorForTextFilter: 'lunPaths',
+            filterOptions: lunFilterOptions.length > 0 ? lunFilterOptions : undefined,
+            id: '8',
+            width: 'auto',
+            renderCell: (_cellData: any, rowData: any) => {
+                if (!rowData?.luns) {
+                    return notAvailable();
+                }
+                const count = (rowData?.lunPaths || []).length;
+                return (
+                    <div className={styles.lunsCell}>
+                        <DsTypography variant="Regular_14">{count}</DsTypography>
+                        {count > 0 && (
+                            <Button
+                                variant="text"
+                                onClick={e => {
+                                    e.stopPropagation();
+                                    setDialog(
+                                        <DialogComponent
+                                            header={t('databases.resource-overview.associated_luns')}
+                                            content={<AssociatedLunsDialogContent luns={rowData?.luns} />}
+                                            primaryButton={t('databases.general.close')}
+                                            callback={() => {}}
+                                        />
+                                    );
+                                }}
+                            >
+                                {t('databases.general.view')}
+                            </Button>
+                        )}
+                    </div>
+                );
+            }
         },
         {
             Header: t('databases.general.protection-type'),
             accessor: 'isProtected',
             filterOptions: 'auto',
             id: '4',
-            width: isAoag ? '15%' : '18%',
+            width: '20%',
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
 
@@ -224,19 +220,71 @@ const DatabaseListTable = () => {
                 );
             }
         },
+        ...(isAoag
+            ? [
+                  {
+                      Header: t('databases.general.availability-group'),
+                      accessor: 'availabilityGroup',
+                      filterOptions: 'auto' as const,
+                      id: '7',
+                      width: 'auto',
+                      renderCell: (cellData: any, rowData: any) => {
+                          if (!cellData)
+                              return (
+                                  <div className={styles.naWithTooltip}>
+                                      <TooltipInfo trigger="hover">
+                                          <div>
+                                              <DsTypography variant="Regular_13">
+                                                  {t('databases.general.availability-group-na-tooltip')}
+                                              </DsTypography>
+                                          </div>
+                                      </TooltipInfo>
+                                      <DsTypography variant="Regular_14">
+                                          {t('databases.general.not-available')}
+                                      </DsTypography>
+                                  </div>
+                              );
+                          const role = rowData?.replicaRole?.toUpperCase();
+                          let roleText = '';
+                          if (role === REPLICA_ROLES.PRIMARY) {
+                              roleText = t('databases.general.primary');
+                          } else if (role === REPLICA_ROLES.SECONDARY) {
+                              roleText = t('databases.general.secondary');
+                          }
+                          const replicaCount = rowData?.replicaDatabases?.length || 0;
+                          const replicaWord =
+                              replicaCount !== 1
+                                  ? t('databases.general.replicas').toLowerCase()
+                                  : t('databases.general.replica').toLowerCase();
+                          const replicaLabel = `${replicaCount} ${replicaWord}`;
+                          return (
+                              <div>
+                                  <DsTypography variant="Regular_14">{cellData}</DsTypography>
+                                  {roleText && (
+                                      <DsTypography variant="Regular_12" className={styles.colText}>
+                                          {`${roleText} | `}
+                                          {replicaDatabasesLoading ? <DsFlashingDotsLoader /> : replicaLabel}
+                                      </DsTypography>
+                                  )}
+                              </div>
+                          );
+                      }
+                  }
+              ]
+            : []),
         {
             Header: t('databases.general.type'),
             accessor: 'type',
             filterOptions: 'auto',
             id: '5',
-            width: isAoag ? '12%' : '15%'
+            width: 'auto'
         },
         {
             Header: t('databases.general.collation'),
             accessor: 'collation',
             isSortable: true,
             id: '6',
-            width: isAoag ? '14%' : '24.6%',
+            width: 'auto',
             renderCell: (cellData: any) => cellData || t('databases.general.not-available')
         }
     ];
@@ -261,14 +309,15 @@ const DatabaseListTable = () => {
         selectionType: 'none',
         isSorting: false,
         columns: EncryptionColDefs,
-        rows: formatData(enrichedData),
+        rows: formattedRows,
         pageSize: 50,
         isLazyLoading: databaseListLoading,
         isHorizontalScroll: true,
+        additionalSearchKeys: ['lunPaths'],
         isManagedColumns: isAoag,
         ...(isAoag && {
             manageColumnsProps: {
-                Header: () => null,
+                Header: null,
                 width: '56px',
                 renderCell: (_cellData: any, rowData: any, { updateRowState, rowsState }: any) => {
                     const currentRowState = rowsState[rowData.id];
@@ -276,7 +325,7 @@ const DatabaseListTable = () => {
                     return (
                         <div className={styles.arrowContainer}>
                             <ArrowIcon
-                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                className={classNames({ [styles['arrow-down']]: currentRowState?.isExpanded })}
                                 onClick={(e: any) => {
                                     e.stopPropagation();
                                     expandTableRow(updateRowState, rowData, currentRowState, rowsState);

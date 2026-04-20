@@ -10,6 +10,7 @@ import { formatSize } from '../../../utils/utilityFunctions';
 
 // --- Mock @netapp/design-system ---
 const mockUseTable = vi.fn(() => ({ rows: [], columns: [] }));
+const mockSetDialog = vi.fn();
 
 vi.mock('@netapp/design-system', () => ({
     Button: ({ children, onClick, isDisabled, 'data-testid': testId, variant, isThin, className }: any) => (
@@ -17,6 +18,7 @@ vi.mock('@netapp/design-system', () => ({
             {children}
         </button>
     ),
+    useDialog: () => ({ setDialog: mockSetDialog, closeDialog: vi.fn() }),
     TooltipInfo: ({ children }: any) => <div data-testid="tooltip-info">{children}</div>,
     SearchInput: (props: any) => <input data-testid="search-input" />,
     DsFlashingDotsLoader: () => <div data-testid="loader" />,
@@ -71,15 +73,11 @@ vi.mock('react-router-dom', () => ({
     useNavigate: () => mockNavigate
 }));
 
-// --- Mock react-redux ---
-const mockDispatch = vi.fn();
-vi.mock('react-redux', () => ({
-    useDispatch: () => mockDispatch
-}));
-
 // --- Mock storeHooks ---
+const mockDispatch = vi.fn();
 vi.mock('../../../store/storeHooks', () => ({
-    useAppSelector: vi.fn()
+    useAppSelector: vi.fn(),
+    useAppDispatch: () => mockDispatch
 }));
 
 // --- Mock utility functions ---
@@ -91,21 +89,21 @@ vi.mock('../../../utils/utilityFunctions', () => ({
     getStickyClass: vi.fn(() => '')
 }));
 
-// --- Mock appConstants ---
-vi.mock('../../../utils/appConstants', () => ({
-    GENERAL: {
-        DATABASE_NAME: 'Database Name',
-        STATUS: 'Status',
-        SIZE: 'Size',
-        DB_HOST_PROTECTION_TYPE: 'Protection Type',
-        DB_HOST_TYPE: 'Type',
-        DB_HOST_COLLATION: 'Collation',
-        NOT_AVAILABLE: 'N/A',
-        PROTECTED: 'Protected',
-        NOT_PROTECTED: 'Not Protected',
-        JM_TYPE_CREATE_RESOURCE: 'Create New Database',
-        FSX_FOR_ONTAP: 'fsxn'
-    }
+vi.mock('../../../common/Dialog/DialogComponent', () => ({
+    default: ({ header, content }: any) => (
+        <div data-testid="associated-luns-dialog">
+            <div data-testid="dialog-header">{header}</div>
+            <div data-testid="dialog-content">{content}</div>
+        </div>
+    )
+}));
+
+vi.mock('./AssociatedLunsDialogContent', () => ({
+    default: ({ luns }: any) => <div data-testid="associated-luns-dialog-content">{JSON.stringify(luns ?? null)}</div>
+}));
+
+vi.mock('../../../common/InventoryStatusIndicator/InventoryStatusIndicator', () => ({
+    default: ({ status }: any) => <span data-testid="inventory-status-indicator">{status}</span>
 }));
 
 // --- Mock consts ---
@@ -113,10 +111,6 @@ vi.mock('../../../utils/consts', () => ({
     PROTECTION_TEXT_STATUS: {
         YES: 'Yes',
         NO: 'No'
-    },
-    DATABASE_STATUS: {
-        ONLINE: 'ONLINE',
-        OFFLINE: 'OFFLINE'
     },
     REPLICA_ROLES: {
         PRIMARY: 'PRIMARY',
@@ -133,6 +127,25 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../InventoryV2/InventoryUtilsV2', () => ({
     getProtectionText: vi.fn(() => 'Yes'),
     isAwsBackupEnabledText: vi.fn(() => 'Yes')
+}));
+
+// --- Mock WellArchitectedTabUtils (isolate from heavy store/apiService imports) ---
+vi.mock('../../WellArchitectedTab/WellArchitectedTabUtils', () => ({
+    getUniqueLunNames: vi.fn((luns?: any) => {
+        if (!luns) return [];
+        const dataNames = (luns.dataFiles ?? []).map((f: any) => f?.name).filter(Boolean) as string[];
+        const logNames = (luns.logFiles ?? []).map((f: any) => f?.name).filter(Boolean) as string[];
+        return Array.from(new Set([...dataNames, ...logNames]));
+    }),
+    getLunFilterOptions: vi.fn((rows?: any[]) => {
+        const unique = new Set<string>();
+        (rows || []).forEach((row: any) => {
+            (row?.lunPaths || []).forEach((path: string) => unique.add(path));
+        });
+        return Array.from(unique)
+            .sort((a, b) => a.localeCompare(b))
+            .map(path => ({ value: path, label: path }));
+    })
 }));
 
 // --- Mock DatabaseHostOverviewApiV2 (called as hook) ---
@@ -162,12 +175,11 @@ vi.mock('./DatabaseListTable.module.scss', () => ({
     default: {
         databaseListTable: 'databaseListTable',
         databaseButton: 'databaseButton',
-        statusCell: 'statusCell',
-        statusIcon: 'statusIcon',
-        onIcon: 'onIcon',
-        offIcon: 'offIcon',
+        firstColText: 'firstColText',
+        lunsCell: 'lunsCell',
         colText: 'colText',
-        protection: 'protection'
+        protection: 'protection',
+        'arrow-down': 'arrow-down'
     }
 }));
 
@@ -222,6 +234,7 @@ const setupSelectors = (overrides: Record<string, any> = {}) => {
 describe('DatabaseListTable', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockSetDialog.mockClear();
         mockUseTable.mockReturnValue({ rows: [], columns: [] });
         setupSelectors();
     });
@@ -397,24 +410,116 @@ describe('DatabaseListTable', () => {
         unmount();
     });
 
-    it('should render status icon ONLINE in renderCell for status column', () => {
+    it('should render database name and status via InventoryStatusIndicator for first column', () => {
         render(<DatabaseListTable />);
         const callArgs = mockUseTable.mock.calls[0][0];
-        const statusColDef = callArgs.columns.find((c: any) => c.id === '2');
+        const nameColDef = callArgs.columns.find((c: any) => c.id === '1');
         const { render: localRender, screen: localScreen } = require('@testing-library/react');
-        const { unmount } = localRender(<div>{statusColDef.renderCell('ONLINE')}</div>);
-        expect(localScreen.getByText('ONLINE')).toBeTruthy();
+        const { unmount } = localRender(<div>{nameColDef.renderCell(null, { name: 'MyDb', status: 'online' })}</div>);
+        expect(localScreen.getByText('MyDb')).toBeTruthy();
+        const indicator = localScreen.getByTestId('inventory-status-indicator');
+        expect(indicator.textContent).toBe('online');
         unmount();
     });
 
-    it('should render status icon OFFLINE in renderCell for status column', () => {
+    it('should show unique LUN count and View for associated LUNs column when luns are present', () => {
         render(<DatabaseListTable />);
         const callArgs = mockUseTable.mock.calls[0][0];
-        const statusColDef = callArgs.columns.find((c: any) => c.id === '2');
+        const lunsCol = callArgs.columns.find((c: any) => c.id === '8');
         const { render: localRender, screen: localScreen } = require('@testing-library/react');
-        const { unmount } = localRender(<div>{statusColDef.renderCell('OFFLINE')}</div>);
-        expect(localScreen.getByText('OFFLINE')).toBeTruthy();
+        const row = {
+            lunPaths: ['/vol/a/lun1', '/vol/b/lun2'],
+            luns: {
+                dataFiles: [{ name: '/vol/a/lun1', driveLetter: 'E:\\' }],
+                logFiles: [
+                    { name: '/vol/a/lun1', driveLetter: 'E:\\' },
+                    { name: '/vol/b/lun2', driveLetter: 'F:\\' }
+                ]
+            }
+        };
+        const { unmount } = localRender(<div>{lunsCol.renderCell(null, row)}</div>);
+        expect(localScreen.getByText('2')).toBeTruthy();
+        expect(localScreen.getByText('databases.general.view')).toBeTruthy();
         unmount();
+    });
+
+    it('should open dialog when View is clicked for associated LUNs', () => {
+        render(<DatabaseListTable />);
+        const callArgs = mockUseTable.mock.calls[0][0];
+        const lunsCol = callArgs.columns.find((c: any) => c.id === '8');
+        const { render: localRender, screen: localScreen } = require('@testing-library/react');
+        const row = {
+            lunPaths: ['/vol/x/lun1', '/vol/y/lun2'],
+            luns: {
+                dataFiles: [{ name: '/vol/x/lun1' }],
+                logFiles: [{ name: '/vol/y/lun2' }]
+            }
+        };
+        const { unmount } = localRender(<div>{lunsCol.renderCell(null, row)}</div>);
+        fireEvent.click(localScreen.getByText('databases.general.view'));
+        expect(mockSetDialog).toHaveBeenCalledTimes(1);
+        unmount();
+    });
+
+    it('should pass lunPaths as additional search key to useTable', () => {
+        render(<DatabaseListTable />);
+        const callArgs = mockUseTable.mock.calls[0][0];
+        expect(callArgs.additionalSearchKeys).toEqual(['lunPaths']);
+    });
+
+    it('should compute lunPaths for each formatted row based on LUN dataFiles and logFiles', () => {
+        const dbList = [
+            {
+                name: 'DB-A',
+                status: 'ONLINE',
+                size: 100,
+                type: 'MSSQL',
+                luns: {
+                    dataFiles: [{ name: '/vol/a/lun1' }],
+                    logFiles: [{ name: '/vol/a/lun1' }, { name: '/vol/b/lun2' }]
+                }
+            }
+        ];
+        setupSelectors({ 'state.workloadFactoryResource.databaseList': dbList });
+        render(<DatabaseListTable />);
+        const callArgs = mockUseTable.mock.calls[0][0];
+        expect(callArgs.rows[0].lunPaths).toEqual(['/vol/a/lun1', '/vol/b/lun2']);
+    });
+
+    it('should build unique LUN filter options on the associated LUNs column', () => {
+        const dbList = [
+            {
+                name: 'DB-A',
+                status: 'ONLINE',
+                size: 100,
+                type: 'MSSQL',
+                luns: {
+                    dataFiles: [{ name: '/vol/a/lun1' }],
+                    logFiles: [{ name: '/vol/b/lun2' }]
+                }
+            },
+            {
+                name: 'DB-B',
+                status: 'ONLINE',
+                size: 200,
+                type: 'MSSQL',
+                luns: {
+                    dataFiles: [{ name: '/vol/b/lun2' }],
+                    logFiles: [{ name: '/vol/c/lun3' }]
+                }
+            }
+        ];
+        setupSelectors({ 'state.workloadFactoryResource.databaseList': dbList });
+        render(<DatabaseListTable />);
+        const callArgs = mockUseTable.mock.calls[0][0];
+        const lunsCol = callArgs.columns.find((c: any) => c.id === '8');
+        expect(lunsCol.customAccessor).toBe('lunPaths');
+        expect(lunsCol.accessorForTextFilter).toBe('lunPaths');
+        expect(lunsCol.filterOptions).toEqual([
+            { value: '/vol/a/lun1', label: '/vol/a/lun1' },
+            { value: '/vol/b/lun2', label: '/vol/b/lun2' },
+            { value: '/vol/c/lun3', label: '/vol/c/lun3' }
+        ]);
     });
 
     it('should render formatted size using renderCell for size column', () => {

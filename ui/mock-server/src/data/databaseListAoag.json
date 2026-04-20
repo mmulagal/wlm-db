@@ -13,10 +13,28 @@
             "replicaRole": "PRIMARY",
             "synchronizationState": "SYNCHRONIZED",
             "protection": {
-                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {
+                    "fsxn": true,
+                    "fsxw": false,
+                    "ebs": false
+                },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false,
                 "isCRREnabled": false
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             }
         },
         {
@@ -31,10 +49,28 @@
             "replicaRole": "PRIMARY",
             "synchronizationState": "SYNCHRONIZED",
             "protection": {
-                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {
+                    "fsxn": true,
+                    "fsxw": false,
+                    "ebs": false
+                },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true,
                 "isCRREnabled": true
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             }
         },
         {
@@ -49,10 +85,28 @@
             "replicaRole": "PRIMARY",
             "synchronizationState": "SYNCHRONIZED",
             "protection": {
-                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {
+                    "fsxn": false,
+                    "fsxw": false,
+                    "ebs": false
+                },
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true,
                 "isCRREnabled": false
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             }
         },
         {
@@ -67,10 +121,28 @@
             "replicaRole": null,
             "synchronizationState": null,
             "protection": {
-                "isAwsBackupEnabled": { "fsxn": true, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {
+                    "fsxn": true,
+                    "fsxw": false,
+                    "ebs": false
+                },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true,
                 "isCRREnabled": true
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             }
         },
         {
@@ -85,10 +157,28 @@
             "replicaRole": null,
             "synchronizationState": null,
             "protection": {
-                "isAwsBackupEnabled": { "fsxn": false, "fsxw": false, "ebs": false },
+                "isAwsBackupEnabled": {
+                    "fsxn": false,
+                    "fsxw": false,
+                    "ebs": false
+                },
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false,
                 "isCRREnabled": false
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             }
         }
     ]

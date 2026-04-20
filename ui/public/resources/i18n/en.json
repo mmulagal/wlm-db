@@ -1321,6 +1321,8 @@
             "associated_lun": "Associated LUN",
             "associated_luns": "Associated LUNs",
             "associated_volumes_2": "Associated Volumes",
+            "drive-letter": "Drive letter",
+            "lun-path": "LUN path",
             "fsx-for-ontap:": "FSx for ONTAP",
             "latency": "Latency",
             "iops": "IOPS",

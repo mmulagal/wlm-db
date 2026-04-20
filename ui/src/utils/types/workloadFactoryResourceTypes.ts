@@ -236,6 +236,7 @@ export interface WorkloadFactoryDatabaseItem {
         isFsxOntapSnapshotsEnabled: boolean;
         isSqlNativeEnabled: boolean;
     };
+    luns?: LunFilesMap;
     collation?: string;
     availabilityGroup?: string;
     replicaRole?: string;
@@ -254,4 +255,19 @@ export interface AoagClusterNode {
     ec2InstanceName?: string;
     databaseHostId?: string;
     databaseInstanceId?: string;
+}
+
+export interface LunFile {
+    name?: string;
+    driveLetter?: string;
+}
+
+export interface LunFilesMap {
+    dataFiles?: LunFile[];
+    logFiles?: LunFile[];
+}
+
+export interface LunFilterOption {
+    value: string;
+    label: string;
 }

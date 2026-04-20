@@ -205,6 +205,24 @@ vi.mock('../../InventoryUtilsV2', () => ({
     addHostHandlerSc: vi.fn()
 }));
 
+vi.mock('../../../WellArchitectedTab/WellArchitectedTabUtils', () => ({
+    getUniqueLunNames: vi.fn((luns?: any) => {
+        if (!luns) return [];
+        const dataNames = (luns.dataFiles ?? []).map((f: any) => f?.name).filter(Boolean) as string[];
+        const logNames = (luns.logFiles ?? []).map((f: any) => f?.name).filter(Boolean) as string[];
+        return Array.from(new Set([...dataNames, ...logNames]));
+    }),
+    getLunFilterOptions: vi.fn((rows?: any[]) => {
+        const unique = new Set<string>();
+        (rows || []).forEach((row: any) => {
+            (row?.lunPaths || []).forEach((path: string) => unique.add(path));
+        });
+        return Array.from(unique)
+            .sort((a, b) => a.localeCompare(b))
+            .map(path => ({ value: path, label: path }));
+    })
+}));
+
 vi.mock('../../../../store/store', () => ({
     default: {
         getState: () => mockState,

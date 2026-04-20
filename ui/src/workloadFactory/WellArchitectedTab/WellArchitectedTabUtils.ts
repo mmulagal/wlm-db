@@ -13,6 +13,7 @@ import {
     setSelectedResourcePageHostData
 } from '../../store/workloadFactory/workloadFactoryResourceSlice';
 import { DBType, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
+import { LunFilesMap, LunFilterOption } from '../../utils/types/workloadFactoryResourceTypes';
 import {
     dashboardRedirection,
     dashboardRedirectionToWellArchitected,
@@ -25,6 +26,36 @@ import {
     formatOracleOptimizationBreakDown,
     getOracleCardsData
 } from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+
+/**
+ * Returns the unique, non-empty LUN path names across a database's dataFiles and logFiles,
+ * preserving first-seen order (dataFiles first, then logFiles).
+ *
+ * Centralized so table/filter/dialog components share identical dedupe, sort, and
+ * missing-name handling rules.
+ */
+export const getUniqueLunNames = (luns?: LunFilesMap | null): string[] => {
+    if (!luns) return [];
+    const dataNames = (luns.dataFiles ?? []).map(f => f?.name).filter(Boolean) as string[];
+    const logNames = (luns.logFiles ?? []).map(f => f?.name).filter(Boolean) as string[];
+    return Array.from(new Set([...dataNames, ...logNames]));
+};
+
+/**
+ * Builds the de-duplicated, alphabetically sorted `{ value, label }` list used by the
+ * associated-LUNs column filter. Accepts any row shape that already exposes a `lunPaths`
+ * array (populated via `getUniqueLunNames`). Shared across resource-page and inventory
+ * tables so the filter options stay consistent.
+ */
+export const getLunFilterOptions = (rows?: ReadonlyArray<{ lunPaths?: string[] | null }>): LunFilterOption[] => {
+    const unique = new Set<string>();
+    (rows || []).forEach(row => {
+        (row?.lunPaths || []).forEach(path => unique.add(path));
+    });
+    return Array.from(unique)
+        .sort((a, b) => a.localeCompare(b))
+        .map(path => ({ value: path, label: path }));
+};
 
 export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentData: any) => {
     let tableData: any = [];

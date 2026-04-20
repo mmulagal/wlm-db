@@ -98,7 +98,10 @@ export const getInitialDatabaseTableColState = (selectedHostType: string) => {
             7: { isHidden: false },
             8: { isHidden: false },
             9: { isHidden: false },
-            10: { isHidden: false }
+            10: { isHidden: false },
+            11: { isHidden: false },
+            12: { isHidden: false },
+            13: { isHidden: false }
         };
     }
 };

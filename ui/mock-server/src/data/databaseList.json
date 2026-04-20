@@ -13,6 +13,20 @@
                 "isSqlNativeEnabled": true,
                 "isCRREnabled": true
             },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
+            },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
@@ -26,6 +40,20 @@
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false,
                 "isCRREnabled": false
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -41,6 +69,20 @@
                 "isSqlNativeEnabled": true,
                 "isCRREnabled": true
             },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
+            },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
@@ -54,6 +96,20 @@
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true,
                 "isCRREnabled": false
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -69,6 +125,20 @@
                 "isSqlNativeEnabled": true,
                 "isCRREnabled": true
             },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
+            },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
@@ -82,6 +152,20 @@
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false,
                 "isCRREnabled": false
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -97,6 +181,20 @@
                 "isSqlNativeEnabled": false,
                 "isCRREnabled": true
             },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
+            },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
@@ -110,6 +208,20 @@
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true,
                 "isCRREnabled": true
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -125,6 +237,20 @@
                 "isSqlNativeEnabled": false,
                 "isCRREnabled": true
             },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
+            },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
@@ -138,6 +264,20 @@
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true,
                 "isCRREnabled": false
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -153,6 +293,20 @@
                 "isSqlNativeEnabled": false,
                 "isCRREnabled": true
             },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
+            },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
@@ -166,6 +320,20 @@
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false,
                 "isCRREnabled": true
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
@@ -181,6 +349,20 @@
                 "isSqlNativeEnabled": true,
                 "isCRREnabled": false
             },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
+            },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
@@ -195,6 +377,20 @@
                 "isSqlNativeEnabled": false,
                 "isCRREnabled": true
             },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
+            },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         },
         {
@@ -208,6 +404,20 @@
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true,
                 "isCRREnabled": true
+            },
+            "luns": {
+                "dataFiles": [
+                    {
+                        "name": "/vol/sql_data_vol/lun1",
+                        "driveLetter": "E:\\"
+                    }
+                ],
+                "logFiles": [
+                    {
+                        "name": "/vol/sql_log_vol/lun2",
+                        "driveLetter": "F:\\"
+                    }
+                ]
             },
             "collation": "SQL_Latin1_General_CP1_CI_AS"
         }

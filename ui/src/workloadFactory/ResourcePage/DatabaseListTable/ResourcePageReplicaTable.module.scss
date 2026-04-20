@@ -8,22 +8,17 @@
         box-shadow: unset !important;
     }
 
-    .statusCell {
+    .firstColText {
         display: flex;
         gap: 8px;
-        flex-direction: row;
         align-items: center;
-        .statusIcon {
-            width: 10px;
-            height: 10px;
-            border-radius: 5px;
-        }
-        .onIcon {
-            background-color: var(--notification-success);
-        }
-        .offIcon {
-            background-color: var(--notification-error);
-        }
+        margin-top: 2px;
+    }
+
+    .lunsCell {
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
 
     .colText {
