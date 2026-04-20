@@ -23,6 +23,7 @@ enum AssessmentCategories {
 
 enum AssessmentCategoriesOracle {
     STORAGE = 'storage',
+    COMPUTE = 'compute',
     MAPPED_ONTAP_VOLUMES = 'mapped-ontap-volumes',
     HOST_OS_PATCH = 'host-os-patch',
     AWS_BACKUP = 'aws-backup',
@@ -67,6 +68,7 @@ enum OptimizeOracleTypes {
     STORAGE_CONFIGURATION = 'storage-configuration',
     STORAGE_LAYOUT = 'storage-layout',
     STORAGE_OPERATING_SYSTEM = 'storage-operating-system',
+    COMPUTE_HOST_OS = 'compute-host-os',
     STORAGE_SIZING = 'storage-sizing',
     AWS_BACKUP = 'aws-backup'
 }
@@ -75,6 +77,7 @@ const OracleOptimizeJobDescriptions = {
     [OptimizeOracleTypes.STORAGE_CONFIGURATION]: 'Fix Oracle Storage Configuration',
     [OptimizeOracleTypes.STORAGE_LAYOUT]: 'Fix Oracle Storage Layout',
     [OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM]: 'Fix Oracle Storage Operating System',
+    [OptimizeOracleTypes.COMPUTE_HOST_OS]: 'Fix Oracle compute host OS parameters',
     [OptimizeOracleTypes.STORAGE_SIZING]: 'Fix Oracle Storage Sizing',
     [OptimizeOracleTypes.AWS_BACKUP]: 'Fix AWS FSx for ONTAP automatic backup configuration for Oracle'
 };
@@ -100,6 +103,14 @@ enum OptimizeOracleNFSStorageOperatingSystem {
     NFS_MOUNT_OPTIONS_ADRHOME = 'nfs-mount-options-adrhome',
     NFSV4_DOMAIN_NAME = 'nfsv4-domain-name',
     NFS_CACHING_OPTIONS = 'nfs-caching-options'
+}
+
+/** `configurationName` values allowed when `type` is `compute-host-os` (GH-8882-1). */
+enum OptimizeOracleComputeHostOs {
+    TCP_OPTIONS = 'tcp-advanced-options',
+    THP_DISABLE = 'transparent-hugepages',
+    FILESYSTEM_IO_OPTIONS = 'filesystems-io-options',
+    MULTIBLOCK_READCOUNT = 'multiblock-readcount'
 }
 
 enum OptimizeOracleStorageSizing {
@@ -426,6 +437,14 @@ const MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP = {
     layout: ['tempdb-files-location', 'data-files-location', 'log-files-location']
 };
 
+/** Oracle iSCSI host/OS checks stored under assessment category `compute` (GH-8882-1). */
+const ORACLE_COMPUTE_HOST_OS_ASSESSMENT_CONFIGS = [
+    'transparent-hugepages',
+    'tcp-advanced-options',
+    'filesystems-io-options',
+    'multiblock-readcount'
+];
+
 const ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP = {
     sizing: ['headroom', 'swap-space'],
     layout: [
@@ -504,12 +523,8 @@ const ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'multipath-io',
         'host-utilities',
         'multipath-io-sessions',
-        'transparent-hugepages',
         'iscsi-replacement-timeout',
         'multipath-friendly-names',
-        'tcp-advanced-options',
-        'filesystems-io-options',
-        'multiblock-readcount',
         'multipath-configuration'
     ]
 };
@@ -541,6 +556,10 @@ const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
 
 const ASSESSMENT_CONFIGS = {
     compute: 'compute-rightsizing',
+    transparentHugepages: 'transparent-hugepages',
+    tcpAdvancedOptions: 'tcp-advanced-options',
+    filesystemsIoOptions: 'filesystems-io-options',
+    multiblockReadcount: 'multiblock-readcount',
     license: 'sql-license',
     hostOsPatch: 'host-os-patch',
     maxDOP: 'maxdop',
@@ -604,6 +623,8 @@ const INSTANCE_LEVEL_CONFIGURATIONS = [
     ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
     // Expand Oracle storage assessment configs map
     ...ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP.sizing,
+    // Oracle compute host/OS assessment configs (independent of storage)
+    ...ORACLE_COMPUTE_HOST_OS_ASSESSMENT_CONFIGS,
     'clone-management',
     'snapcenter-snapshot',
     'oracle-security-patch',
@@ -691,6 +712,7 @@ export {
     DEFAULT_MPIO_TIMEOUT,
     OptimizeHighAvailabilityParams,
     AssessmentCategoriesOracle,
+    ORACLE_COMPUTE_HOST_OS_ASSESSMENT_CONFIGS,
     DEFAULT_FSX_MTU_VALUE,
     OptimizeStorageApiData,
     ORACLE_STORAGE_LAYOUT_CONFIGS_MAP,
@@ -700,6 +722,7 @@ export {
     OptimizeStorageRequestParamsType,
     OptimizeStorageRequestParams,
     OptimizeOracleTypes,
+    OptimizeOracleComputeHostOs,
     OptimizeOracleiSCSIStorageOperatingSystem,
     OracleOptimizeJobDescriptions,
     ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP,

@@ -330,7 +330,7 @@ function getOSConfigDrift(
     databaseInstanceName: string,
     storageAssessmentData: StorageIscsiAssessment
 ) {
-    logger.info('Fetching OS configuration drift', { ec2InstanceId, databaseInstanceName });
+    logger.info('Fetching iSCSI OS configuration drift', { ec2InstanceId, databaseInstanceName });
     const { os } = storageAssessmentData;
     const osDrift: StorageParameterDriftResponseType['configuration']['os'] = [];
 
@@ -396,28 +396,11 @@ function getOSConfigDrift(
                 break;
             }
 
-            case 'transparent-hugepages': {
-                const thpData = os?.['transparent-hugepages'];
-                if (thpData?.['thp-disabled'] === false) {
-                    violationDetails.push(
-                        createViolationDetail(
-                            'transparent-hugepages',
-                            'configuration',
-                            `${thpData?.['thp-value'] || 'enabled'}`,
-                            'always madvise [never]'
-                        )
-                    );
-                }
-                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
-                break;
-            }
-
             case 'multipath-friendly-names': {
                 const multipathConfigData = os?.['multipath-configuration'];
                 const defaultsFriendlyNames = multipathConfigData?.defaults?.user_friendly_names;
                 const netappFriendlyNames = multipathConfigData?.['netapp-device']?.user_friendly_names;
                 violationDetails = [];
-                // If netapp-device section exists, it takes precedence over defaults section
                 const friendlyNamesValue = netappFriendlyNames ?? defaultsFriendlyNames;
                 if (friendlyNamesValue !== 'yes') {
                     const isNetappConfig = netappFriendlyNames != null;
@@ -441,7 +424,6 @@ function getOSConfigDrift(
                 const netappDeviceData = multipathConfigData?.['netapp-device'];
                 violationDetails = [];
 
-                // Check defaults configuration
                 Object.entries(defaultMultipathExpected).forEach(([key, expectedValue]) => {
                     const actualValue = defaultsData?.[key];
                     const isViolated = Array.isArray(expectedValue)
@@ -462,7 +444,6 @@ function getOSConfigDrift(
                     }
                 });
 
-                // Check netapp device configuration
                 Object.entries(netappMultipathExpected).forEach(([key, expectedValue]) => {
                     const actualValue = netappDeviceData?.[key];
                     const isViolated = Array.isArray(expectedValue)
@@ -502,53 +483,6 @@ function getOSConfigDrift(
                 break;
             }
 
-            case 'tcp-advanced-options': {
-                const tcpData = os?.['tcp-advanced-options'];
-                const tcpFeatures = tcpData?.['tcp-features'] || {};
-                const requiredFeatures = ['tcp-sack-enabled', 'tcp-window-scaling-enabled', 'tcp-timestamps-enabled'];
-                const disabledFeatures = requiredFeatures.filter(
-                    feature => !tcpFeatures[feature as keyof typeof tcpFeatures]
-                );
-                violationDetails = disabledFeatures.map(feature =>
-                    createViolationDetail(feature.replace('-enabled', ''), 'configuration', '0', '1')
-                );
-                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
-                break;
-            }
-
-            case 'filesystems-io-options': {
-                const oracleParamsData = os?.['oracle-parameters']?.['filesystemio-options'];
-                if (oracleParamsData?.found === false || oracleParamsData?.value?.toLowerCase() !== 'setall') {
-                    violationDetails = [
-                        createViolationDetail(
-                            'filesystemio_options',
-                            'oracle parameter',
-                            `${oracleParamsData?.value || 'unknown'}`,
-                            'SETALL'
-                        )
-                    ];
-                }
-                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
-                break;
-            }
-
-            case 'multiblock-readcount': {
-                const oracleParamsData =
-                    os?.['oracle-parameters-from-init']?.['db-file-multiblock-read-count-in-init'] || [];
-                violationDetails = oracleParamsData
-                    .filter(paramRecord => paramRecord['parameter-found'])
-                    .map(paramRecord =>
-                        createViolationDetail(
-                            'db_file_multiblock_read_count',
-                            'oracle parameter',
-                            `${paramRecord['parameter-value']}`,
-                            'db_file_multiblock_read_count should not be set'
-                        )
-                    );
-                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
-                break;
-            }
-
             case 'multipath-io-sessions': {
                 const iscsiTargetSessions = os?.['iscsi-targets-sessions'];
                 if (iscsiTargetSessions?.error) {
@@ -569,10 +503,12 @@ function getOSConfigDrift(
                 break;
         }
     });
+
     const asmOSConfigDrift = getAsmOSConfigDrift(os, databaseInstanceName);
     if (!isEmpty(asmOSConfigDrift)) {
         osDrift.push(...asmOSConfigDrift);
     }
+
     return osDrift;
 }
 
@@ -2220,6 +2156,13 @@ async function initiateStorageAssessmentCollection(
 
         const [osAssessment] = parseMultipleCommandResponse(osAssessmentResponse);
 
+        const merged = {
+            ...storageAssessment,
+            ...osAssessment,
+            ...storageSizingAssessment
+        } as StorageIscsiAssessment;
+        const creationTime = new Date(Date.now());
+
         await createDatabaseInstanceConfigData([
             {
                 account_id: accountId,
@@ -2227,9 +2170,9 @@ async function initiateStorageAssessmentCollection(
                 region,
                 resource_id: databaseHostId,
                 database_instance_id: databaseInstanceId,
-                creation_time: new Date(Date.now()),
+                creation_time: creationTime,
                 config_data_type: AssessmentCategories.STORAGE,
-                config_data: { ...storageAssessment, ...osAssessment, ...storageSizingAssessment }
+                config_data: merged
             }
         ]);
     } catch (error) {
@@ -2262,5 +2205,7 @@ export {
     calculateStorageDrift,
     getVolumeConfigDrift,
     mapVolumeTypesToIdName,
-    getBaseVolume
+    getBaseVolume,
+    createAssessment,
+    createViolationDetail
 };

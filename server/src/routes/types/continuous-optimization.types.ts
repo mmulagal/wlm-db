@@ -125,6 +125,11 @@ const DismissedConfigurationsResponse = Type.Object({
     license: Type.Optional(InstanceDismissResponse),
     hostOsPatch: Type.Optional(InstanceDismissResponse),
     oracleSecurityPatch: Type.Optional(InstanceDismissResponse),
+    // Oracle compute host/OS dismiss configs (GH-8882-1)
+    transparentHugepages: Type.Optional(InstanceDismissResponse),
+    tcpAdvancedOptions: Type.Optional(InstanceDismissResponse),
+    filesystemsIoOptions: Type.Optional(InstanceDismissResponse),
+    multiblockReadcount: Type.Optional(InstanceDismissResponse),
     rssConfig: Type.Optional(InstanceDismissResponse),
     maxDOP: Type.Optional(InstanceDismissResponse),
     mssqlPatch: Type.Optional(InstanceDismissResponse),

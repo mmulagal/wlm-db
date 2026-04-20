@@ -14,8 +14,10 @@ import {
     ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP,
     ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS,
     ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
-    ORACLE_ASM_STORAGE_CONFIGURATION_ASSESSMENT_MAP
+    ORACLE_ASM_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
+    AssessmentCategoriesOracle
 } from '../../utils/continous-optimization-consts';
+import { ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS } from './oracle/consts';
 import getLogger from '../../utils/logger';
 import {
     getInstanceInfo,
@@ -790,6 +792,14 @@ function updateFieldsBasedOnDismissedConfigurations(
                 return config && isConfigDismissed(config.configState);
             });
             return !allHAConfigsDismissed;
+        }
+
+        if (fieldValue === AssessmentCategoriesOracle.COMPUTE && databaseType === DatabaseTypes.ORACLE) {
+            const allDismissed = ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS.every(key => {
+                const config = dismissedConfigurations[key];
+                return config && isConfigDismissed(config.configState);
+            });
+            return !allDismissed;
         }
 
         if (fieldValue === 'storage' && dismissedConfigurations.storage) {

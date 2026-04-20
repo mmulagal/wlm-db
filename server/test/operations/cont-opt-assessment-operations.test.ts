@@ -59,17 +59,22 @@ describe('processAccountInstancesBatch', () => {
         );
         expect(mssqlCallsWithOracleResource).toHaveLength(0);
 
-        // triggerOracleAssessment must be called for the Oracle resource with only HOST_OS_PATCH
-        // — once for instance-level, once for host-level (both use HOST_OS_PATCH)
+        // triggerOracleAssessment must be called for the Oracle resource
+        // — once for instance-level (skipHostLevel), once for host-level (skipInstanceLevel)
         const oracleCalls = triggerOracleAssessmentMock.mock.calls.filter(
             call => (call[0] as DatabaseInstancesIncludingResource).resource_id === 'resource-oracle'
         );
         expect(oracleCalls.length).toBeGreaterThanOrEqual(1);
 
-        // Host-level Oracle call passes exactly [HOST_OS_PATCH]
+        // Host-level Oracle call carries HOST_OS_PATCH + COMPUTE with skipInstanceLevel
         const hostLevelOracleCall = oracleCalls.find(call => {
             const fields = call[2] as string[];
-            return fields.length === 1 && fields[0] === AssessmentCategoriesOracle.HOST_OS_PATCH;
+            const options = call[5] as { skipInstanceLevel?: boolean } | undefined;
+            return (
+                fields.includes(AssessmentCategoriesOracle.HOST_OS_PATCH) &&
+                fields.includes(AssessmentCategoriesOracle.COMPUTE) &&
+                options?.skipInstanceLevel === true
+            );
         });
         expect(hostLevelOracleCall).toBeTruthy();
     });
@@ -104,10 +109,15 @@ describe('processAccountInstancesBatch', () => {
         // triggerOracleAssessment is called: 2 instance-level + 2 host-level
         expect(triggerOracleAssessmentMock).toHaveBeenCalled();
 
-        // Every host-level call must carry exactly [HOST_OS_PATCH]
+        // Host-level calls carry HOST_OS_PATCH + COMPUTE with skipInstanceLevel
         const hostLevelCalls = triggerOracleAssessmentMock.mock.calls.filter(call => {
             const fields = call[2] as string[];
-            return fields.length === 1 && fields[0] === AssessmentCategoriesOracle.HOST_OS_PATCH;
+            const options = call[5] as { skipInstanceLevel?: boolean } | undefined;
+            return (
+                fields.includes(AssessmentCategoriesOracle.HOST_OS_PATCH) &&
+                fields.includes(AssessmentCategoriesOracle.COMPUTE) &&
+                options?.skipInstanceLevel === true
+            );
         });
         expect(hostLevelCalls.length).toBeGreaterThanOrEqual(2);
     });

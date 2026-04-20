@@ -249,9 +249,15 @@ interface MtuAlignmentAssessment {
     };
 }
 
+interface ComputeHostOsAssessment {
+    transparentHugepages?: Record<string, unknown>;
+    tcpAdvancedOptions?: Record<string, unknown>;
+}
+
 interface ResourceAssessmentData {
     license?: LicenseAssessment;
     compute?: ComputeAssessment;
+    computeHostOs?: ComputeHostOsAssessment;
     hostOsPatch?: HostOsPatchAssessmentObject[];
     rssConfig?: RssConfigAssesment;
     maxDOP?: MaxDOPAssesment;
@@ -279,6 +285,7 @@ interface ResourceAssessmentData {
     lastAssessedDate?: string;
     errors?: {
         compute?: string;
+        computeHostOs?: string;
         hostOsPatch?: string;
         rssConfig?: string;
         mssqlPatch?: string;
@@ -851,6 +858,10 @@ interface DatabaseInstanceDismissConfigs {
     oracleSecurityPatch?: InstanceDismissParams;
     mtuAlignment?: InstanceDismissParams;
     snapcenterSnapshot?: InstanceDismissParams;
+    transparentHugepages?: InstanceDismissParams;
+    tcpAdvancedOptions?: InstanceDismissParams;
+    filesystemsIoOptions?: InstanceDismissParams;
+    multiblockReadcount?: InstanceDismissParams;
     highAvailability?: InstanceDismissParams[];
 }
 
@@ -1040,5 +1051,6 @@ export {
     PerHostJobMetadata,
     JobMetadata,
     StorageDismissConfigs,
-    SSMDocument
+    SSMDocument,
+    ComputeHostOsAssessment
 };

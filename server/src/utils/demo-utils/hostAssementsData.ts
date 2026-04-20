@@ -775,6 +775,24 @@ const mockOracleHostOsPatchAssessmentData = {
             securityNonCompliantCount: 4
         }
     ],
+    computeHostOs: {
+        transparentHugepages: {
+            error: null,
+            'thp-status': 'enabled',
+            'thp-disabled': false
+        },
+        tcpAdvancedOptions: {
+            error: null,
+            'tcp-features': {
+                'tcp-sack-value': '0',
+                'tcp-sack-enabled': false,
+                'tcp-timestamps-value': '0',
+                'tcp-timestamps-enabled': false,
+                'tcp-window-scaling-value': '0',
+                'tcp-window-scaling-enabled': false
+            }
+        }
+    },
     lastAssessedDate: new Date().getTime().toString()
 };
 

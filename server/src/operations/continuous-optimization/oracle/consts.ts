@@ -63,6 +63,13 @@ const oracleSpecialStorageConfigNames = [
     OptimizeStorageConfigs.EXPORT_POLICY
 ];
 
+const ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS = [
+    'transparentHugepages',
+    'tcpAdvancedOptions',
+    'filesystemsIoOptions',
+    'multiblockReadcount'
+] as const;
+
 export {
     NETAPP_HOST_UTILITIES_RELATIVE_PATH,
     OracleJobMetadata,
@@ -72,5 +79,6 @@ export {
     KernelTcpSlotOptimiseResponse,
     GenericOptimizationResponse,
     LINUX_LOG_DIRECTORY,
-    oracleSpecialStorageConfigNames
+    oracleSpecialStorageConfigNames,
+    ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS
 };

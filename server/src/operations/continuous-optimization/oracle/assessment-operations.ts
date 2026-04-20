@@ -40,6 +40,11 @@ import {
 } from '../../workloads/oracle/common-types';
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
+import {
+    calculateComputeHostOsDrift,
+    initiateComputeHostLevelAssessmentCollection,
+    initiateComputeInstanceLevelAssessmentCollection
+} from './compute-assessment-operations';
 import { calculateHostOsPatchDrift, managedHostOsPatchAssessment } from './hostOsPatch-assessment-operations';
 import {
     initiateOracleAWSBackupAssessment,
@@ -171,18 +176,40 @@ async function initiateHostLevelAssessmentDataCollection(
     let hostOsPatchAssessment;
     let hostOsPatchErrorMessage;
 
+    const hostLevelTasks: Promise<void>[] = [];
+
     if (fields?.includes(AssessmentCategoriesOracle.HOST_OS_PATCH)) {
-        ({ hostOsPatchAssessment, errorMessage: hostOsPatchErrorMessage } =
-            (await managedHostOsPatchAssessment(
+        hostLevelTasks.push(
+            (async () => {
+                ({ hostOsPatchAssessment, errorMessage: hostOsPatchErrorMessage } =
+                    (await managedHostOsPatchAssessment(
+                        accountId,
+                        credentialsId,
+                        region,
+                        databaseHostId,
+                        activeNodeInstanceId,
+                        resourceName,
+                        jobId
+                    )) || {});
+            })()
+        );
+    }
+
+    if (fields?.includes(AssessmentCategoriesOracle.COMPUTE)) {
+        hostLevelTasks.push(
+            initiateComputeHostLevelAssessmentCollection(
                 accountId,
                 credentialsId,
                 region,
                 databaseHostId,
+                jobId,
                 activeNodeInstanceId,
-                resourceName,
-                jobId
-            )) || {});
+                resourceName
+            )
+        );
     }
+
+    await Promise.all(hostLevelTasks);
 
     const hasAssessmentOrError = [hostOsPatchAssessment, hostOsPatchErrorMessage].some(item => !isEmpty(item));
 
@@ -417,6 +444,15 @@ async function initiateInstanceLevelAssessmentDataCollection(
                 instanceLevelAssessmentJobId,
                 databaseInstanceRecord
             ),
+        [AssessmentCategoriesOracle.COMPUTE]: async () =>
+            initiateComputeInstanceLevelAssessmentCollection(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceLevelAssessmentJobId,
+                databaseInstanceRecord
+            ),
         [AssessmentCategoriesOracle.AWS_BACKUP]: async () =>
             initiateOracleAWSBackupAssessment(
                 accountId,
@@ -471,8 +507,10 @@ async function triggerOracleAssessment(
     parentJobId: string,
     fields: string[],
     isOnDemandAssessment = false,
-    initiatedBy = AssessmentTriggeredBy.SYSTEM
+    initiatedBy = AssessmentTriggeredBy.SYSTEM,
+    options: { skipHostLevel?: boolean; skipInstanceLevel?: boolean } = {}
 ) {
+    const { skipHostLevel = false, skipInstanceLevel = false } = options;
     const {
         account_id: accountId,
         credentials_id: credentialsId,
@@ -551,26 +589,35 @@ async function triggerOracleAssessment(
             storageProtocol: storageProtocol ?? STORAGE_PROTOCOLS.ISCSI
         };
 
-        const shouldRunInstanceLevelAssessment = fields.some(field =>
-            [
-                AssessmentCategoriesOracle.STORAGE,
-                AssessmentCategoriesOracle.AWS_BACKUP,
-                AssessmentCategoriesOracle.CRR,
-                AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT,
-                AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
-                AssessmentCategoriesOracle.CLONE
-            ].includes(field.toLowerCase() as AssessmentCategoriesOracle)
-        );
+        const shouldRunInstanceLevelAssessment =
+            !skipInstanceLevel &&
+            fields.some(field =>
+                [
+                    AssessmentCategoriesOracle.STORAGE,
+                    AssessmentCategoriesOracle.COMPUTE,
+                    AssessmentCategoriesOracle.AWS_BACKUP,
+                    AssessmentCategoriesOracle.CRR,
+                    AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT,
+                    AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
+                    AssessmentCategoriesOracle.CLONE
+                ].includes(field.toLowerCase() as AssessmentCategoriesOracle)
+            );
 
-        const shouldRunHostLevelAssessment = fields.some(field =>
-            [AssessmentCategoriesOracle.HOST_OS_PATCH].includes(field.toLowerCase() as AssessmentCategoriesOracle)
-        );
+        const shouldRunHostLevelAssessment =
+            !skipHostLevel &&
+            fields.some(field =>
+                [AssessmentCategoriesOracle.HOST_OS_PATCH, AssessmentCategoriesOracle.COMPUTE].includes(
+                    field.toLowerCase() as AssessmentCategoriesOracle
+                )
+            );
 
-        const shouldRunOracleSecurityPatchAssessment = fields.some(field =>
-            [AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH].includes(
-                field.toLowerCase() as AssessmentCategoriesOracle
-            )
-        );
+        const shouldRunOracleSecurityPatchAssessment =
+            !skipInstanceLevel &&
+            fields.some(field =>
+                [AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH].includes(
+                    field.toLowerCase() as AssessmentCategoriesOracle
+                )
+            );
 
         // Run host-level and instance-level assessments concurrently
         const assessmentPromises: Promise<void>[] = [];
@@ -857,6 +904,7 @@ async function fetchOracleDriftAssessment(
 
     const assessmentFlags = {
         storage: fieldsValues.includes(AssessmentCategoriesOracle.STORAGE.toLowerCase()),
+        compute: fieldsValues.includes(AssessmentCategoriesOracle.COMPUTE.toLowerCase()),
         hostOsPatch: fieldsValues.includes(AssessmentCategoriesOracle.HOST_OS_PATCH.toLowerCase()),
         awsBackup: fieldsValues.includes(AssessmentCategoriesOracle.AWS_BACKUP.toLowerCase()),
         crr: fieldsValues.includes(AssessmentCategoriesOracle.CRR.toLowerCase()),
@@ -901,7 +949,8 @@ async function fetchOracleDriftAssessment(
         crrData,
         snapcenterDriftData,
         oracleSecurityPatchData,
-        cloneDriftData
+        cloneDriftData,
+        hostLevelComputeDriftData
     ] = await Promise.all([
         assessmentFlags.storage
             ? calculateStorageDrift(
@@ -985,11 +1034,22 @@ async function fetchOracleDriftAssessment(
                       assessmentDataMap[AssessmentCategoriesOracle.CLONE] as CloneAssessment
                   )
               )
-            : Promise.resolve(undefined)
+            : Promise.resolve(undefined),
+        assessmentFlags.compute && storageProtocol === STORAGE_PROTOCOLS.ISCSI
+            ? Promise.resolve(
+                  calculateComputeHostOsDrift(
+                      node1InstanceId,
+                      databaseInstanceName,
+                      (hostLevelAssessmentData as ResourceAssessmentData)?.computeHostOs,
+                      assessmentDataMap[AssessmentCategoriesOracle.COMPUTE]
+                  )
+              )
+            : Promise.resolve({})
     ]);
 
     let driftAssessmentData: OracleDriftAssessmentResponseType = {
         storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),
+        ...hostLevelComputeDriftData,
         hostOsPatch: isEmpty(hostLevelData.hostOsPatch) ? undefined : hostLevelData.hostOsPatch,
         ...(awsBackupDriftData && { awsBackup: awsBackupDriftData as GenericParameterDriftResponseType }),
         oracleSecurityPatch: oracleSecurityPatchData,
@@ -1109,6 +1169,7 @@ async function fetchOracleDriftAssessmentPerHost(
 
     const assessmentFields = [
         AssessmentCategoriesOracle.STORAGE,
+        AssessmentCategoriesOracle.COMPUTE,
         AssessmentCategoriesOracle.HOST_OS_PATCH,
         AssessmentCategoriesOracle.AWS_BACKUP,
         AssessmentCategoriesOracle.CRR,

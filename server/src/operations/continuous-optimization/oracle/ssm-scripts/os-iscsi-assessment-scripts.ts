@@ -1033,13 +1033,9 @@ ${CHECK_SANLUN}
 
 ${CHECK_ISCSI_TARGETS_SESSIONS}
 
-${CHECK_TRANSPARENT_HUGEPAGE}
-
 ${CHECK_SELINUX}
 
 ${CHECK_ISCSI_REPLACEMENT_TIMEOUT}
-
-${CHECK_TCP_FEATURES}
 
 ${CHECK_MULTIPATH_CONFIGURATION}
 
@@ -1050,10 +1046,8 @@ def run_all_checks():
     results["os"]["multipath-io"] = check_multipath_io()
     results["os"]["host-utilities"] = check_sanlun()
     results["os"]["iscsi-targets-sessions"] = check_iscsi_targets_sessions()
-    results["os"]["transparent-hugepages"] = check_thp()
     results["os"]["selinux"] = check_selinux()
     results["os"]["iscsi-replacement-timeout"] = check_iscsi_replacement_timeout()
-    results["os"]["tcp-advanced-options"] = check_tcp_features()
     results["os"]["multipath-configuration"] = check_multipath_configuration()
     return results
 
@@ -1081,19 +1075,7 @@ import datetime
 
 ${pythonLogger('storageOsIscsiAssessment.log')}
 
-${CHECK_ORACLE_PARAMETERS}
-
-${ORACLE_HOME}
-
-${CHECK_INIT_ORA_PARAMETERS}
-
 ${ASM_OS_CONFIG_ASSESSMENTS(diskGroups || [])}
-
-# Run Oracle parameters check
-oracle_params_result = get_oracle_parameters()
-
-# Run init.ora/spfile check
-oracle_init_params = check_init_ora_parameters()
 
 # ASM OS config checks (only if ASM managed and iSCSI)
 protocol = '${protocol.toLowerCase()}'
@@ -1102,7 +1084,7 @@ isIscsi = 'true' if protocol == 'iscsi' else 'false'
 asm_os_config = check_asm_os_config(isAsmManaged, isIscsi)
 
 
-print(json.dumps({"oracle-parameters": oracle_params_result, "oracle-init-parameters": oracle_init_params, "asm_os_config": asm_os_config}))
+print(json.dumps({"asm_os_config": asm_os_config}))
 
 PYTHON
 ORACLE_SHELL
@@ -1133,9 +1115,6 @@ try:
     os_results = json.loads("""$OS_RESULTS""")
     oracle_results = json.loads("""$ORACLE_RESULTS""")
     
-    # Add oracle-parameters to the os section
-    os_results["os"]["oracle-parameters"] = oracle_results.get("oracle-parameters", {})
-    os_results["os"]["oracle-parameters-from-init"] = oracle_results.get("oracle-init-parameters", {})
     os_results["os"]["asm-os-config"] = oracle_results.get("asm_os_config", {})
 
     print(json.dumps(os_results))
@@ -1158,6 +1137,7 @@ export {
     CHECK_MULTIPATH_IO_STATUS,
     CHECK_MULTIPATH_CONFIGURATION,
     CHECK_SELINUX,
+    CHECK_ORACLE_PARAMETERS,
     CHECK_INIT_ORA_PARAMETERS,
     GET_ORACLE_SPFILE,
     ORACLE_HOME,

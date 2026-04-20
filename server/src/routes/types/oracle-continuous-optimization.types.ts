@@ -122,6 +122,10 @@ type OracleCloneDriftResponseType = Static<typeof OracleCloneDriftResponse>;
 
 const OracleDriftAssessmentResponse = Type.Object({
     storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
+    transparentHugepages: Type.Optional(genericParameterDriftResponse),
+    tcpAdvancedOptions: Type.Optional(genericParameterDriftResponse),
+    filesystemsIoOptions: Type.Optional(genericParameterDriftResponse),
+    multiblockReadcount: Type.Optional(genericParameterDriftResponse),
     hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
     awsBackup: Type.Optional(genericParameterDriftResponse),
     oracleSecurityPatch: Type.Optional(Type.Union([OracleSecurityPatchDriftResponse, ErrorResponse])),
@@ -186,6 +190,11 @@ const HostsToOptimize = Type.Array(
             ],
             description:
                 'Optimization configuration name for the type specified.\n\n' +
+                'For compute-host-os type, valid values are:\n' +
+                '- transparent-hugepages\n' +
+                '- tcp-advanced-options\n' +
+                '- filesystems-io-options\n' +
+                '- multiblock-readcount\n\n' +
                 'For iscsi-storage-operating-system type, valid values are:\n' +
                 '- tcp-advanced-options\n' +
                 '- host-utilities\n' +

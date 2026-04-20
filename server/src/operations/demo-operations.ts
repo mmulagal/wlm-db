@@ -66,6 +66,7 @@ import {
     AssessmentCategoriesOracle,
     AssessmentStatus
 } from '../utils/continous-optimization-consts';
+import { ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS } from './continuous-optimization/oracle/consts';
 import { offlineAssessmentDemoFCI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoFCI';
 import { offlineAssessmentDemoOracleISCSI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoOracleISCSI';
 import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
@@ -1033,11 +1034,33 @@ async function createAssessmentDataForOracle(
         database_instance_id: databaseInstanceId,
         creation_time: new Date(Date.now())
     };
+    const creationTime = baseConfig.creation_time;
     const instanceConfigDataRecord = {
         ...baseConfig,
+        creation_time: creationTime,
         config_data_type: AssessmentCategories.STORAGE,
         config_data: ORACLE_STORAGE_ASSESSMENT_DATA
     };
+    const oracleParams = (ORACLE_STORAGE_ASSESSMENT_DATA as Record<string, unknown>).os as
+        | Record<string, unknown>
+        | undefined;
+    const computePayload =
+        storageProtocol === STORAGE_PROTOCOLS.ISCSI && oracleParams
+            ? {
+                  os: {
+                      'oracle-parameters': oracleParams['oracle-parameters'],
+                      'oracle-parameters-from-init': oracleParams['oracle-parameters-from-init']
+                  }
+              }
+            : null;
+    const instanceComputeConfigDataRecord = computePayload
+        ? {
+              ...baseConfig,
+              creation_time: creationTime,
+              config_data_type: AssessmentCategoriesOracle.COMPUTE,
+              config_data: computePayload
+          }
+        : null;
     const instanceConfigMappedOntapDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
@@ -1075,6 +1098,7 @@ async function createAssessmentDataForOracle(
 
     const configDataRecords = [
         instanceConfigDataRecord,
+        ...(instanceComputeConfigDataRecord ? [instanceComputeConfigDataRecord] : []),
         instanceConfigMappedOntapDataRecord,
         instanceCRRConfigDataRecord,
         instanceAwsBackupConfigDataRecord,
@@ -1494,6 +1518,13 @@ function handleGetOracleAssessmentForDemo(
                 os.status = AssessmentStatus.OPTIMIZED;
             }
             return os;
+        });
+
+        ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS.forEach(topKey => {
+            const drift = assessmentData[topKey] as ParameterDriftResponseType | undefined;
+            if (drift && typeof drift === 'object' && 'name' in drift && osConfigsOptimized.includes(drift.name)) {
+                drift.status = AssessmentStatus.OPTIMIZED;
+            }
         });
     }
 

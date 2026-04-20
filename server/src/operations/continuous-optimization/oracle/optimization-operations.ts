@@ -9,6 +9,7 @@ import {
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import {
     AssessmentCategoriesOracle,
+    OptimizeOracleComputeHostOs,
     OptimizeOracleTypes,
     OracleOptimizeJobDescriptions
 } from '../../../utils/continous-optimization-consts';
@@ -24,6 +25,8 @@ import { triggerOracleAssessmentAfterOptimization } from './assessment-operation
 import { handleFsxBackupOptimizeJob } from '../resilience-awsBackup-optimize-operations';
 
 const logger = getLogger();
+
+const ORACLE_COMPUTE_HOST_OS_OPTIMIZE_NAMES = new Set<string>(Object.values(OptimizeOracleComputeHostOs));
 
 function formatJobMetadata(hostsToOptimize: HostsToOptimizeType) {
     return hostsToOptimize.flatMap(({ configurationName, databaseHosts }) =>
@@ -63,6 +66,18 @@ async function optimizeOracleDatabase(accountId: string, params: OptimizeRequest
         const errorMessage = 'No valid database hosts found. Please provide at least one valid host.';
         logger.warn(errorMessage);
         throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+    }
+
+    if (optimizationType === OptimizeOracleTypes.COMPUTE_HOST_OS) {
+        const invalid = hostsToOptimize.some(
+            host => !ORACLE_COMPUTE_HOST_OS_OPTIMIZE_NAMES.has(host.configurationName)
+        );
+        if (invalid) {
+            const errorMessage =
+                'Invalid configurationName for compute-host-os. Allowed: transparent-hugepages, tcp-advanced-options, filesystems-io-options, multiblock-readcount.';
+            logger.error(errorMessage);
+            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+        }
     }
 
     const jobMetadata: OracleJobMetadata = { hostsToOptimize: formatJobMetadata(hostsToOptimize) };
@@ -120,6 +135,19 @@ async function handleBulkOptimization(
                         try {
                             switch (optimizationCategory) {
                                 case OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM: {
+                                    await oracleOptimizeStorageOS(
+                                        accountId,
+                                        credentialsId,
+                                        region,
+                                        databaseHostId,
+                                        databaseInstanceId,
+                                        optimizationSubcategory,
+                                        masterOptimizeParentId
+                                    );
+                                    break;
+                                }
+
+                                case OptimizeOracleTypes.COMPUTE_HOST_OS: {
                                     await oracleOptimizeStorageOS(
                                         accountId,
                                         credentialsId,

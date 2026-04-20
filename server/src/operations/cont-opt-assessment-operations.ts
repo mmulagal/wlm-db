@@ -7,7 +7,11 @@ import { ACCOUNT_ID, DatabaseTypes } from '../utils/consts';
 import { setAsyncLocalStorageResource, getLocalStorage } from '../utils/async-local-storage';
 import { IS_DEMO_FLOW, formatDuration, sleep } from '../utils/utils';
 import { registerJob, updateParentJobStatus } from './database/job-operations';
-import { AssessmentCategories, AssessmentCategoriesOracle } from '../utils/continous-optimization-consts';
+import {
+    AssessmentCategories,
+    AssessmentCategoriesOracle,
+    AssessmentTriggeredBy
+} from '../utils/continous-optimization-consts';
 import { getPaginatedDatabaseInstances } from './database/database-operations';
 import {
     triggerMssqlAssessment,
@@ -148,13 +152,21 @@ async function processAccountInstancesBatch(
                             ]);
                             break;
                         case DatabaseTypes.ORACLE:
-                            await triggerOracleAssessment(instance, parentJobId, [
-                                AssessmentCategoriesOracle.STORAGE,
-                                AssessmentCategoriesOracle.AWS_BACKUP,
-                                AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
-                                AssessmentCategoriesOracle.CRR,
-                                AssessmentCategoriesOracle.CLONE
-                            ]);
+                            await triggerOracleAssessment(
+                                instance,
+                                parentJobId,
+                                [
+                                    AssessmentCategoriesOracle.STORAGE,
+                                    AssessmentCategoriesOracle.COMPUTE,
+                                    AssessmentCategoriesOracle.AWS_BACKUP,
+                                    AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
+                                    AssessmentCategoriesOracle.CRR,
+                                    AssessmentCategoriesOracle.CLONE
+                                ],
+                                false,
+                                AssessmentTriggeredBy.SYSTEM,
+                                { skipHostLevel: true }
+                            );
                             break;
                         default:
                             logger.error(
@@ -202,9 +214,14 @@ async function processAccountInstancesBatch(
                                 AssessmentCategories.MTU_ALIGNMENT
                             ]);
                         case DatabaseTypes.ORACLE:
-                            return triggerOracleAssessment(instance, parentJobId, [
-                                AssessmentCategoriesOracle.HOST_OS_PATCH
-                            ]);
+                            return triggerOracleAssessment(
+                                instance,
+                                parentJobId,
+                                [AssessmentCategoriesOracle.HOST_OS_PATCH, AssessmentCategoriesOracle.COMPUTE],
+                                false,
+                                AssessmentTriggeredBy.SYSTEM,
+                                { skipInstanceLevel: true }
+                            );
                         default:
                             logger.warn('Skipping host-level assessment for unsupported database type', {
                                 accountId,
