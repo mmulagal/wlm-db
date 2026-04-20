@@ -224,8 +224,8 @@ describe('refreshOracleCpuCatalog', () => {
         // Existing entry preserved
         const cveIds = written.patches.map((p: { cveId: string }) => p.cveId);
         expect(cveIds).toContain('CVE-2025-00001');
-        // New entries added
-        expect(cveIds).toContain('CVE-2025-11111');
+        // New entries added (Oracle Database Core is allowed; Java VM / RDBMS are not in the component filter)
+        expect(cveIds).toContain('CVE-2025-33333');
         expect(written.patches.length).toBeGreaterThan(existingCatalog.patches.length);
     });
 

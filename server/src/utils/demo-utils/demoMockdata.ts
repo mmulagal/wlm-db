@@ -6747,21 +6747,16 @@ async function createAssessmentDataWithRetry(
     }
 }
 
-// Oracle 21c with RU 17 applied (Oct 2024).
+// Oracle 21c with RU 17 (Oct 2024). VERSION_FULL reports 21.17.
 // Against DEMO_ORACLE_CPU_CATALOG this produces exactly one missing patch: CVE-2026-21975
-// (affects 21.3-21.20, released 2026-01-20, which is after the RU 17 date of 2024-10-15).
+// (affects 21.3-21.20, released 2026-01-20, which is after the database RU date of 2024-10-15).
 const ORACLE_SECURITY_PATCH_ASSESSMENT_DATA = {
-    version: '21.0.0.0.0',
-    appliedPatches: [
-        {
-            patchId: '36586749',
-            description: 'Database Release Update : 21.17.0.0.241015 (36586749)'
-        },
-        {
-            patchId: '29585399',
-            description: 'OCW RELEASE UPDATE 21.3.0.0.0 (29585399)'
-        }
-    ]
+    version: '21.17.0.0.0',
+    appliedPatches: {
+        'java vm': '2024-10-15',
+        database: '2024-10-15',
+        clusterware: '2021-03-01'
+    }
 };
 
 const ORACLE_SNAPCENTER_ASSESSMENT_DATA = {

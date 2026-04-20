@@ -55,6 +55,8 @@
  *
  * Key logic:
  *   - Filter vulnerabilities to only those with known_affected products in "Oracle Database Server"
+ *   - Restrict product_tree components: prefix "Oracle Database" (excluding names containing "cluster"), or an
+ *     exact-match allowlist (XML Database, Multilingual Engine, JDBC, Oracle Spatial and Graph (libcurl2), Unified Auditing)
  *   - Group CVEs sharing the same Oracle Bug ID (same patch fixes multiple CVEs)
  *   - Pick primary CVE per group (highest CVSS, then most recent CVE ID); rest go to additionalCvesAddressed
  *   - Delta-aware: reads lastMonthExtracted to only fetch new quarterly releases
@@ -75,16 +77,17 @@ const logger = getLogger();
 
 const CSAF_BASE_URL = 'https://www.oracle.com/a/tech/docs/security-alerts';
 const DB_FAMILY = 'Oracle Database Server';
-const ALLOWED_COMPONENTS = [
-    'Oracle Database',
-    'RDBMS',
-    'Java VM',
-    'OJVM',
-    'XML DB',
-    'XDB',
-    'Database Security',
-    'Oracle Text'
-];
+/** Lowercase; component name must start with this (after trim). Cluster / clusterware excluded separately. */
+const ORACLE_DATABASE_COMPONENT_PREFIX = 'oracle database';
+/** Case-insensitive exact match for standalone product names in the CSAF tree. */
+const EXACT_MATCH_COMPONENTS = [
+    'XML Database',
+    'Multilingual Engine',
+    'JDBC',
+    'Oracle Spatial and Graph (libcurl2)',
+    'Unified Auditing'
+] as const;
+const EXACT_MATCH_COMPONENTS_LOWER = new Set(EXACT_MATCH_COMPONENTS.map(c => c.toLowerCase()));
 const MAX_CONCURRENT_FETCHES = 4;
 
 const CPU_QUARTERS = [
@@ -171,11 +174,14 @@ function componentNameFromBranch(name: string): string {
 }
 
 function isAllowedComponent(name: string): boolean {
-    const lower = name.toLowerCase();
+    const lower = name.trim().toLowerCase();
     if (lower.includes('cluster')) {
         return false;
     }
-    return ALLOWED_COMPONENTS.some(kw => lower.includes(kw.toLowerCase()));
+    if (EXACT_MATCH_COMPONENTS_LOWER.has(lower)) {
+        return true;
+    }
+    return lower.startsWith(ORACLE_DATABASE_COMPONENT_PREFIX);
 }
 
 // Product-tree: map product_ids → component names for allowed Oracle Database Server components

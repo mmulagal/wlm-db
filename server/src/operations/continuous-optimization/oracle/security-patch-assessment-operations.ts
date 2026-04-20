@@ -12,7 +12,7 @@ import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../.
 import ORACLE_SECURITY_PATCH_ASSESSMENT from './ssm-scripts/security-patch-assessment-scripts';
 import { loadCpuCatalog, type CPUCatalogEntry } from './oracle-cpu-catalog-operations';
 import GOLDEN_CONFIG from './golden-config';
-import { AppliedPatch, OracleSecurityPatchSsmResponse } from './common-types';
+import { OracleSecurityPatchSsmResponse } from './common-types';
 import { OracleSecurityPatchDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
 
 const logger = getLogger();
@@ -65,56 +65,22 @@ function isVersionAffected(majorVersion: number, minorVersion: number, entry: st
     return true;
 }
 
-/**
- * Parse the latest "Database Release Update" from applied patches to extract:
- * - patchLevel: the effective minor version (e.g. 23 from "19.23.0.0.240416")
- * - releaseDate: the RU release date decoded from yymmdd (e.g. "2024-04-16")
- *
- * Oracle reports the base version (e.g. "19.0.0.0.0") regardless of patch level,
- * so both values must be derived from the opatch output.
- */
-function parseLatestReleaseUpdate(appliedPatches: AppliedPatch[]): { patchLevel: number; releaseDate?: string } {
-    return appliedPatches.reduce<{ patchLevel: number; releaseDate?: string }>(
-        (result, patch) => {
-            if (!patch.description?.toLowerCase().includes('database release update')) {
-                return result;
-            }
-            const match = patch.description.match(/\b\d+\.(\d+)\.\d+\.\d+\.(\d{2})(\d{2})(\d{2})\s*\(/);
-            if (!match) {
-                return result;
-            }
-            const minor = parseInt(match[1], 10);
-            const dateStr = `20${match[2]}-${match[3]}-${match[4]}`;
-
-            if (minor > result.patchLevel) {
-                return { patchLevel: minor, releaseDate: dateStr };
-            }
-            return result;
-        },
-        { patchLevel: 0 }
-    );
-}
-
 function findMissingPatches(
     oracleVersion: string,
-    appliedPatches: AppliedPatch[],
+    appliedPatches: Record<string, string>,
     catalog: CPUCatalogEntry[]
 ): Array<Omit<CPUCatalogEntry, 'affectedVersions' | 'additionalCvesAddressed'>> {
-    const majorVersion = parseInt(oracleVersion.split('.')?.[0], 10);
+    const versionParts = oracleVersion.split('.');
+    const majorVersion = parseInt(versionParts[0], 10);
+    const minorVersion = parseInt(versionParts[1] ?? '0', 10);
 
     if (Number.isNaN(majorVersion)) {
         logger.error('Could not parse Oracle version for Critical Patch Updates assessment', { oracleVersion });
         return [];
     }
 
-    const { patchLevel: ruPatchLevel, releaseDate: lastRUDate } = parseLatestReleaseUpdate(appliedPatches);
-    // Prefer the minor version from applied patches (patchLevel > 0 means a real RU was found).
-    // Fall back to the minor from the version string when no RU patch is present
-    const versionStringMinor = parseInt(oracleVersion.split('.')?.[1] ?? '0', 10);
-    const patchLevel = ruPatchLevel > 0 ? ruPatchLevel : Number.isNaN(versionStringMinor) ? 0 : versionStringMinor;
-
     const applicableCves = catalog.filter(entry =>
-        entry.affectedVersions.some(av => isVersionAffected(majorVersion, patchLevel, av))
+        entry.affectedVersions.some(av => isVersionAffected(majorVersion, minorVersion, av))
     );
 
     if (isEmpty(applicableCves)) {
@@ -123,9 +89,18 @@ function findMissingPatches(
 
     const additionalCveExclusions = new Set(applicableCves.flatMap(cve => cve.additionalCvesAddressed || []));
 
+    // The "database" key in appliedPatches serves as the general Release Update date of oracle db server
+    const fallbackDate = appliedPatches.database;
+
     return applicableCves
         .filter(cve => !additionalCveExclusions.has(cve.cveId))
-        .filter(cve => !lastRUDate || cve.releaseDate > lastRUDate)
+        .filter(cve => {
+            const cveComponentLower = cve.component.toLowerCase();
+            const matchedEntry = Object.entries(appliedPatches).find(([comp]) => cveComponentLower.startsWith(comp));
+            const effectiveDate = matchedEntry?.[1] ?? fallbackDate;
+            // If effectiveDate is defined, the CVE must be released after that date to be considered missing
+            return !effectiveDate || cve.releaseDate > effectiveDate;
+        })
         .map(({ cveId, component, description, releaseDate, releaseName }) => ({
             cveId,
             component,
