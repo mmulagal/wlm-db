@@ -10,17 +10,32 @@ import { getSelectedFromSelectionState } from '../../../../utils/utilityFunction
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkCloneContainer from '../../../../common/BulkAction/BulkCloneContainer';
-import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, DBType, WLF_TABS } from '../../../../utils/consts';
 import { disableOptimizeResourceCheckBoxForOptimizeCase } from '../../GetWellUtils';
 
-const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
+const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage, engineType = DBType.MSSQL }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const { inProgressResourceOptimizeData } = useAppSelector(state => state.getWellOptimize);
 
+    const isOracle = engineType === DBType.ORACLE;
+
     // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
+        if (isOracle) {
+            return data?.map((row: any) => ({
+                ...row,
+                cellProps: {
+                    ...row.cellProps,
+                    isDisabled: true,
+                    selectionProps: {
+                        title: t('databases.well-architect.coming-soon'),
+                        titleProps: { placement: 'bottom' }
+                    }
+                }
+            }));
+        }
         if (inProgressResourceOptimizeData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length) {
             return disableOptimizeResourceCheckBoxForOptimizeCase(
                 data,
@@ -29,7 +44,14 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             );
         }
         return data;
-    }, [selectedRowsForOptimizeInnerPage, data, inProgressResourceOptimizeData]);
+    }, [selectedRowsForOptimizeInnerPage, data, inProgressResourceOptimizeData, isOracle, t]);
+
+    const instanceLabel = isOracle
+        ? t('databases.well-architect.dashboard-table-headers.oracle-instance-name')
+        : t('databases.well-architect.dashboard-table-headers.sql-instance-name-clone');
+    const hostLabel = isOracle
+        ? t('databases.well-architect.dashboard-table-headers.oracle-host-name')
+        : t('databases.well-architect.dashboard-table-headers.sql-host-name-clone');
 
     const TableColDefs: ColumnProps[] = [
         {
@@ -43,7 +65,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             renderCell: (cellData: any) => cellData || GENERAL.NOT_AVAILABLE
         },
         {
-            Header: 'SQL instance name',
+            Header: instanceLabel,
             accessor: 'serverInstanceName',
             id: '2',
             isSortable: false,
@@ -52,7 +74,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
             width: fromPage === WLF_TABS.DASHBOARD ? '194px' : '210px'
         },
         {
-            Header: 'SQL host name',
+            Header: hostLabel,
             accessor: 'hostName',
             id: '3',
             isSortable: false,
@@ -104,7 +126,23 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                         ) : (
                             <div className={styles.buttonContainer}>
                                 <div />
-                                {selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
+                                {isOracle ? (
+                                    // Oracle clone delete API not yet available
+                                    <Popover
+                                        isAppendedToBody
+                                        children={
+                                            <DsTypography variant="Regular_14">
+                                                {t('databases.well-architect.coming-soon')}
+                                            </DsTypography>
+                                        }
+                                        trigger="hover"
+                                        container={
+                                            <DsButton variant="secondary" isDisabled isThin>
+                                                Delete
+                                            </DsButton>
+                                        }
+                                    />
+                                ) : selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
                                     <Popover
                                         isAppendedToBody
                                         children={
@@ -149,7 +187,14 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
         columns: fromPage === WLF_TABS.DASHBOARD ? TableColDefs : colDefsForInstance,
         rows: updatedTableData || [],
         pageSize: 50,
-        selectionType: 'multiple'
+        selectionType: 'multiple',
+        ...(isOracle && {
+            selectAllProps: {
+                isDisabled: true,
+                isChecked: false,
+                title: t('databases.well-architect.coming-soon')
+            }
+        })
     });
 
     useEffect(() => {
@@ -165,9 +210,11 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                 tableProps={tableProps}
                 pluralTitle="Impacted databases"
                 singularTitle="Impacted database"
-                subTitle="Clone refreshing is supported only for clones created in Workload Factory."
+                subTitle={
+                    isOracle ? undefined : 'Clone refreshing is supported only for clones created in Workload Factory.'
+                }
             />
-            {selectedRowsForOptimizeInnerPage.length > 0 && (
+            {selectedRowsForOptimizeInnerPage.length > 0 && !isOracle && (
                 <BulkCloneContainer
                     action1="Delete"
                     onClick={(val: any) => handleBulkActionForClone(val, 'bulk', selectedRowsForOptimizeInnerPage)}

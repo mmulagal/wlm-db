@@ -322,10 +322,7 @@ const OptimizeInnerPage = () => {
                 next.delete(OPEN_FIX_VOLUME_QUERY);
                 setSearchParams(next, { replace: true });
             } else if (volumeFromPath) {
-                navigate(
-                    { pathname: location.pathname, search: location.search },
-                    { replace: true }
-                );
+                navigate({ pathname: location.pathname, search: location.search }, { replace: true });
             } else if (splatVolume) {
                 const basePath = pathnameWithoutTrailingSplat(location.pathname, splatVolume);
                 navigate({ pathname: basePath, search: location.search }, { replace: true });
@@ -1219,7 +1216,11 @@ const OptimizeInnerPage = () => {
                     </div>
 
                     <div className={styles.tagSection}>
-                        <TagComponent tagHeight={cardHeight.tagSection} type={selectedOptimizeConfig?.type} />
+                        <TagComponent
+                            tagHeight={cardHeight.tagSection}
+                            type={selectedOptimizeConfig?.type}
+                            engineType={selectedOptimizeConfig?.engineType}
+                        />
                     </div>
                 </div>
 
@@ -1230,7 +1231,9 @@ const OptimizeInnerPage = () => {
                     />
                 )}
 
-                {selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT && <CloneTabs />}
+                {selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT && (
+                    <CloneTabs engineType={selectedOptimizeConfig?.engineType} />
+                )}
 
                 <div className={styles.tableSection}>{renderTable()}</div>
             </div>

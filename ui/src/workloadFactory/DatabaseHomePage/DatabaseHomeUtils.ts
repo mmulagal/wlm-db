@@ -1001,6 +1001,9 @@ const countOracleInstanceConfigs = (instanceAssessment: any, counters: ConfigCou
     );
     countTopLevelConfig('awsBackup', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
 
+    // Cloning category
+    countTopLevelConfig('clone', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
+
     // Storage - layout
     instanceAssessment?.storage?.layout?.forEach((item: any) => {
         if (!item?.name) return;
@@ -1763,6 +1766,33 @@ const processOracleConfigurationData = (
                         GETWELL_VALUES[instanceAssessmentData?.awsBackup?.severity] ||
                         getAssessmentGroupedByConfigurations?.severityObj?.oracleAwsBackup;
                 }
+
+                if (instanceAssessmentData?.clone) {
+                    const isCloneOptimized = isOptimizedDashInner(
+                        instanceAssessmentData?.clone?.status,
+                        instanceAssessmentData?.dismissedConfigurations?.clone?.configState
+                    );
+                    setConfigState(
+                        configState,
+                        'oracleCloneManagement',
+                        instanceAssessmentData?.dismissedConfigurations?.clone?.configState
+                    );
+                    getAssessmentGroupedByConfigurations.oracleCloneManagement.total++;
+                    getAssessmentGroupedByConfigurations.oracleCloneManagement.optimized += isCloneOptimized ? 1 : 0;
+                    getAssessmentGroupedByConfigurations.oracleCloneManagement.dismissed += isDismissed(
+                        instanceAssessmentData?.dismissedConfigurations?.clone?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.oracleCloneManagement.activating += isActivating(
+                        instanceAssessmentData?.dismissedConfigurations?.clone?.configState
+                    )
+                        ? 1
+                        : 0;
+                    getAssessmentGroupedByConfigurations.severityObj.oracleCloneManagement =
+                        GETWELL_VALUES[instanceAssessmentData?.clone?.severity] ||
+                        getAssessmentGroupedByConfigurations?.severityObj?.oracleCloneManagement;
+                }
             }
         });
     });
@@ -1974,6 +2004,12 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             activating: 0
         },
         oracleAwsBackup: {
+            total: 0,
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        oracleCloneManagement: {
             total: 0,
             optimized: 0,
             dismissed: 0,

@@ -462,6 +462,9 @@
             "storage-sizing": "Storage sizing",
             "compute": "Compute",
             "resiliency": "Resiliency",
+            "cloning": "Cloning",
+            "clone-delete-action-summary": "Workload Factory recommends managing old and costly clones by deleting them.",
+            "clone-delete-what-will-happen": "Workload Factory will delete the selected clones. Deleting a clone will remove it permanently, freeing up storage space and reducing costs.",
             "single-tenant": "Single-tenant",
             "multi-tenant": "Multitenant",
             "view-recommendation": "View recommendation",
@@ -993,7 +996,11 @@
                 "network-interface": "Network Interface",
                 "license-edition": "License edition",
                 "maxdop-value": "MAXDOP value",
-                "impacted-file-systems": "Impacted file systems"
+                "impacted-file-systems": "Impacted file systems",
+                "oracle-instance-name": "Oracle instance name",
+                "oracle-host-name": "Oracle host name",
+                "sql-instance-name-clone": "SQL instance name",
+                "sql-host-name-clone": "SQL host name"
             },
             "unavailable": "Unavailable",
             "application-oracle-server": "Application (Oracle Server)",

@@ -153,7 +153,6 @@ const Home = () => {
                             element={<InventoryFsxDeepLink />}
                         />
 
-                     
                         <Route
                             path="/databases/inventory/:credId/:regionId/:fsxId/:tab"
                             element={<InventoryFsxDeepLink />}
@@ -245,7 +244,6 @@ const Home = () => {
                                 element={<InventoryFsxDeepLink />}
                             />
 
-                          
                             <Route
                                 path="/fsxdb/inventory/:credId/:regionId/:fsxId/:tab"
                                 element={<InventoryFsxDeepLink />}

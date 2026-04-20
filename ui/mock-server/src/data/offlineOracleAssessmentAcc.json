@@ -1383,6 +1383,114 @@
                         }
                     ]
                 },
+                "clone": {
+                    "name": "clone-management",
+                    "status": "not-optimized",
+                    "recommended": "optimized",
+                    "severity": "warning",
+                    "recommendation": "Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses.",
+                    "tags": ["Cost efficiency"],
+                    "resourceType": "Database",
+                    "totalObjectsAssessed": 3,
+                    "totalObjectsInViolation": 2,
+                    "cloneDetails": [
+                        {
+                            "databaseHostName": "STVYUXW-Oracle",
+                            "databaseHostId": "8bdb4cf5e5b36f5a1",
+                            "databaseInstanceName": "ORACLESEREVR",
+                            "cloneDatabaseName": "oracle_data_vol_001_clone",
+                            "cloneAge": 95,
+                            "cloneSize": 1073741824,
+                            "clonedBy": "other",
+                            "clonedVolumeDetails": [
+                                {
+                                    "cloneVolumeUuid": "aa111122-3344-5566-7788-99aabbcc0001",
+                                    "cloneVolumeName": "oracle_data_vol_001_clone",
+                                    "cloneVolumeCreateTime": "2026-01-12T10:30:00+00:00",
+                                    "sourceVolumeName": "oracle_data_vol_001",
+                                    "cloneDatabaseName": "oracle_data_vol_001_clone"
+                                }
+                            ]
+                        },
+                        {
+                            "databaseHostName": "STVYUXW-Oracle",
+                            "databaseHostId": "8bdb4cf5e5b36f5a1",
+                            "databaseInstanceName": "ORACLESEREVR",
+                            "cloneDatabaseName": "oracle_redo_vol_002_clone",
+                            "cloneAge": 110,
+                            "cloneSize": 536870912,
+                            "clonedBy": "other",
+                            "clonedVolumeDetails": [
+                                {
+                                    "cloneVolumeUuid": "bb222233-4455-6677-8899-aabbccddeef1",
+                                    "cloneVolumeName": "oracle_redo_vol_002_clone",
+                                    "cloneVolumeCreateTime": "2025-12-28T08:15:00+00:00",
+                                    "sourceVolumeName": "oracle_redo_vol_002",
+                                    "cloneDatabaseName": "oracle_redo_vol_002_clone"
+                                }
+                            ]
+                        },
+                        {
+                            "databaseHostName": "STVYUXW-Oracle",
+                            "databaseHostId": "8bdb4cf5e5b36f5a1",
+                            "databaseInstanceName": "ORACLESEREVR",
+                            "cloneDatabaseName": "oracle_arch_vol_001_clone",
+                            "cloneAge": 25,
+                            "cloneSize": 268435456,
+                            "clonedBy": "other",
+                            "clonedVolumeDetails": [
+                                {
+                                    "cloneVolumeUuid": "cc333344-5566-7788-99aa-bbccddeeff02",
+                                    "cloneVolumeName": "oracle_arch_vol_001_clone",
+                                    "cloneVolumeCreateTime": "2026-03-22T14:45:00+00:00",
+                                    "sourceVolumeName": "oracle_arch_vol_001",
+                                    "cloneDatabaseName": "oracle_arch_vol_001_clone"
+                                }
+                            ]
+                        }
+                    ],
+                    "oldCloneDetails": [
+                        {
+                            "databaseHostName": "STVYUXW-Oracle",
+                            "databaseHostId": "8bdb4cf5e5b36f5a1",
+                            "databaseInstanceName": "ORACLESEREVR",
+                            "cloneDatabaseName": "oracle_data_vol_001_clone",
+                            "cloneAge": 95,
+                            "cloneSize": 1073741824,
+                            "clonedBy": "other",
+                            "clonedVolumeDetails": [
+                                {
+                                    "cloneVolumeUuid": "aa111122-3344-5566-7788-99aabbcc0001",
+                                    "cloneVolumeName": "oracle_data_vol_001_clone",
+                                    "cloneVolumeCreateTime": "2026-01-12T10:30:00+00:00",
+                                    "sourceVolumeName": "oracle_data_vol_001",
+                                    "cloneDatabaseName": "oracle_data_vol_001_clone"
+                                }
+                            ]
+                        },
+                        {
+                            "databaseHostName": "STVYUXW-Oracle",
+                            "databaseHostId": "8bdb4cf5e5b36f5a1",
+                            "databaseInstanceName": "ORACLESEREVR",
+                            "cloneDatabaseName": "oracle_redo_vol_002_clone",
+                            "cloneAge": 110,
+                            "cloneSize": 536870912,
+                            "clonedBy": "other",
+                            "clonedVolumeDetails": [
+                                {
+                                    "cloneVolumeUuid": "bb222233-4455-6677-8899-aabbccddeef1",
+                                    "cloneVolumeName": "oracle_redo_vol_002_clone",
+                                    "cloneVolumeCreateTime": "2025-12-28T08:15:00+00:00",
+                                    "sourceVolumeName": "oracle_redo_vol_002",
+                                    "cloneDatabaseName": "oracle_redo_vol_002_clone"
+                                }
+                            ]
+                        }
+                    ],
+                    "oldCloneDatabaseNames": ["oracle_data_vol_001_clone", "oracle_redo_vol_002_clone"],
+                    "objectsInViolation": ["oracle_data_vol_001_clone", "oracle_redo_vol_002_clone"],
+                    "cloneDriftMessage": "2 out of 3 clones are old and divergent"
+                },
                 "lastAssessmentTimestamp": 1771391185000,
                 "fileSystemId": "fs-0c9e2cbc20c2b06f8",
                 "ec2InstanceId": "i-0eb9f9ef5f436ab8b-oracle",
@@ -2817,6 +2925,78 @@
                         }
                     ]
                 },
+                "clone": {
+                    "name": "clone-management",
+                    "status": "not-optimized",
+                    "recommended": "optimized",
+                    "severity": "warning",
+                    "recommendation": "Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses.",
+                    "tags": ["Cost efficiency"],
+                    "resourceType": "Database",
+                    "totalObjectsAssessed": 2,
+                    "totalObjectsInViolation": 1,
+                    "cloneDetails": [
+                        {
+                            "databaseHostName": "SQLNODE1-56065-Oracle",
+                            "databaseHostId": "c2bf47268670ccc71",
+                            "databaseInstanceName": "ORACLESEREVR",
+                            "cloneDatabaseName": "oracle_data_vol_003_clone",
+                            "cloneAge": 85,
+                            "cloneSize": 1610612736,
+                            "clonedBy": "other",
+                            "clonedVolumeDetails": [
+                                {
+                                    "cloneVolumeUuid": "dd444455-6677-8899-aabb-ccddeeff0003",
+                                    "cloneVolumeName": "oracle_data_vol_003_clone",
+                                    "cloneVolumeCreateTime": "2026-01-22T11:00:00+00:00",
+                                    "sourceVolumeName": "oracle_data_vol_003",
+                                    "cloneDatabaseName": "oracle_data_vol_003_clone"
+                                }
+                            ]
+                        },
+                        {
+                            "databaseHostName": "SQLNODE1-56065-Oracle",
+                            "databaseHostId": "c2bf47268670ccc71",
+                            "databaseInstanceName": "ORACLESEREVR",
+                            "cloneDatabaseName": "oracle_arch_vol_002_clone",
+                            "cloneAge": 40,
+                            "cloneSize": 536870912,
+                            "clonedBy": "other",
+                            "clonedVolumeDetails": [
+                                {
+                                    "cloneVolumeUuid": "ee555566-7788-99aa-bbcc-ddeeff110004",
+                                    "cloneVolumeName": "oracle_arch_vol_002_clone",
+                                    "cloneVolumeCreateTime": "2026-03-07T09:30:00+00:00",
+                                    "sourceVolumeName": "oracle_arch_vol_002",
+                                    "cloneDatabaseName": "oracle_arch_vol_002_clone"
+                                }
+                            ]
+                        }
+                    ],
+                    "oldCloneDetails": [
+                        {
+                            "databaseHostName": "SQLNODE1-56065-Oracle",
+                            "databaseHostId": "c2bf47268670ccc71",
+                            "databaseInstanceName": "ORACLESEREVR",
+                            "cloneDatabaseName": "oracle_data_vol_003_clone",
+                            "cloneAge": 85,
+                            "cloneSize": 1610612736,
+                            "clonedBy": "other",
+                            "clonedVolumeDetails": [
+                                {
+                                    "cloneVolumeUuid": "dd444455-6677-8899-aabb-ccddeeff0003",
+                                    "cloneVolumeName": "oracle_data_vol_003_clone",
+                                    "cloneVolumeCreateTime": "2026-01-22T11:00:00+00:00",
+                                    "sourceVolumeName": "oracle_data_vol_003",
+                                    "cloneDatabaseName": "oracle_data_vol_003_clone"
+                                }
+                            ]
+                        }
+                    ],
+                    "oldCloneDatabaseNames": ["oracle_data_vol_003_clone"],
+                    "objectsInViolation": ["oracle_data_vol_003_clone"],
+                    "cloneDriftMessage": "1 out of 2 clones are old and divergent"
+                },
                 "lastAssessmentTimestamp": 1771310268000,
                 "fileSystemId": "fs-0c9e2cbc20c2b06f8",
                 "ec2InstanceId": "i-0d6abe8f18172c509-oracle",
@@ -4203,6 +4383,41 @@
                             "totalObjectsInViolation": 1
                         }
                     ]
+                },
+                "clone": {
+                    "name": "clone-management",
+                    "status": "optimized",
+                    "recommended": "optimized",
+                    "severity": "info",
+                    "recommendation": "All clones are up to date. No action needed.",
+                    "tags": ["Cost efficiency"],
+                    "resourceType": "Database",
+                    "totalObjectsAssessed": 1,
+                    "totalObjectsInViolation": 0,
+                    "cloneDetails": [
+                        {
+                            "databaseHostName": "SQLNODE1-85079-Oracle",
+                            "databaseHostId": "a1c9382b5d6e7f091",
+                            "databaseInstanceName": "ORACLESEREVR",
+                            "cloneDatabaseName": "oracle_data_vol_004_clone",
+                            "cloneAge": 15,
+                            "cloneSize": 1073741824,
+                            "clonedBy": "other",
+                            "clonedVolumeDetails": [
+                                {
+                                    "cloneVolumeUuid": "ff666677-8899-aabb-ccdd-eeff00112205",
+                                    "cloneVolumeName": "oracle_data_vol_004_clone",
+                                    "cloneVolumeCreateTime": "2026-04-01T12:00:00+00:00",
+                                    "sourceVolumeName": "oracle_data_vol_004",
+                                    "cloneDatabaseName": "oracle_data_vol_004_clone"
+                                }
+                            ]
+                        }
+                    ],
+                    "oldCloneDetails": [],
+                    "oldCloneDatabaseNames": [],
+                    "objectsInViolation": [],
+                    "cloneDriftMessage": "All clones are up to date"
                 },
                 "lastAssessmentTimestamp": 1771309357000,
                 "fileSystemId": "fs-0510a24e02a9a24c2",
@@ -5629,6 +5844,22 @@
                             "totalObjectsInViolation": 1
                         }
                     ]
+                },
+                "clone": {
+                    "name": "clone-management",
+                    "status": "optimized",
+                    "recommended": "optimized",
+                    "severity": "info",
+                    "recommendation": "No clones found for this instance.",
+                    "tags": ["Cost efficiency"],
+                    "resourceType": "Database",
+                    "totalObjectsAssessed": 0,
+                    "totalObjectsInViolation": 0,
+                    "cloneDetails": [],
+                    "oldCloneDetails": [],
+                    "oldCloneDatabaseNames": [],
+                    "objectsInViolation": [],
+                    "cloneDriftMessage": ""
                 },
                 "lastAssessmentTimestamp": 1771305416000,
                 "fileSystemId": "fs-076f556394acf7beb",

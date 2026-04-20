@@ -49,7 +49,8 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }:
             type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
             type === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
             type === ASSESSMENT_CONFIG_NAMES.CRR ||
-            type === ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT
+            type === ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT ||
+            type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
         ) {
             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
             dispatch(setSelectedOptimizeConfig({ type, data: cardData, engineType: DBType.ORACLE }));
@@ -89,6 +90,9 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }:
         ) {
             return t('databases.oracle-inner-page.view');
         }
+        if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+            return t('databases.oracle-inner-page.view-and-fix');
+        }
         if (
             type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
             type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||
@@ -109,6 +113,13 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }:
         // Check if card is in ACTIVATING state - disable button if true
         if (cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING) {
             return { isDisable: true, reason: '' };
+        }
+
+        if (isWad && type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+            return {
+                isDisable: true,
+                reason: t('databases.wad.tab-disabled-message-oracle')
+            };
         }
 
         if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {

@@ -61,8 +61,8 @@ const DashboardOptimizeInnerPage = () => {
                     >
                         {engineTypeBasedResourceStr(
                             configEngineType,
-                            t('databases.well-architect.register-database-fixing'),
-                            t('databases.well-architect.register-instance-fixing')
+                            t('databases.well-architect.register-instance-fixing'),
+                            t('databases.well-architect.register-database-fixing')
                         )}
                     </DsTypography>
                 </div>
@@ -74,12 +74,12 @@ const DashboardOptimizeInnerPage = () => {
                     </div>
 
                     <div className={styles.tagSection} style={{ width: '20%' }}>
-                        <TagComponent tagHeight="236px" type={selectedConfig} />
+                        <TagComponent tagHeight="236px" type={selectedConfig} engineType={configEngineType} />
                     </div>
                 </div>
 
                 {selectedConfig === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT && (
-                    <CloneTabs fromPage={WLF_TABS.DASHBOARD} />
+                    <CloneTabs fromPage={WLF_TABS.DASHBOARD} engineType={configEngineType} />
                 )}
             </div>
         </div>

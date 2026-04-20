@@ -1460,13 +1460,14 @@ export const ORACLE_API_FIELD_TO_CATEGORY: Record<string, WellArchitectedCategor
     oracleSecurityPatch: 'application',
     crr: 'resiliency',
     snapcenterSnapshot: 'resiliency',
-    awsBackup: 'resiliency'
+    awsBackup: 'resiliency',
+    clone: 'cloning'
 };
 
 export const categoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];
 export const severityOptions = ['Critical', 'Warning'];
 
-export const oracleCategoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency'];
+export const oracleCategoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];
 
 export const oracleSeverityOptions = ['Critical', 'Warning'];
 

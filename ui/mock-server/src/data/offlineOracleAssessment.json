@@ -1341,6 +1341,150 @@
             }
         ]
     },
+    "clone": {
+        "name": "clone-management",
+        "status": "not-optimized",
+        "recommended": "optimized",
+        "severity": "warning",
+        "recommendation": "Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses.",
+        "tags": ["Cost efficiency"],
+        "resourceType": "Database",
+        "totalObjectsAssessed": 4,
+        "totalObjectsInViolation": 3,
+        "cloneDetails": [
+            {
+                "databaseHostName": "SQLNODE1-57329",
+                "databaseHostId": "8bdb4cf5e5b36f5a1",
+                "databaseInstanceName": "ORACLESEREVR",
+                "cloneDatabaseName": "oracle_data_vol_002_clone",
+                "cloneAge": 90,
+                "cloneSize": 1073741824,
+                "clonedBy": "other",
+                "clonedVolumeDetails": [
+                    {
+                        "cloneVolumeUuid": "aabb1122-3344-5566-7788-99aabbccddee",
+                        "cloneVolumeName": "oracle_data_vol_002_clone",
+                        "cloneVolumeCreateTime": "2026-01-15T10:30:00+00:00",
+                        "sourceVolumeName": "oracle_data_vol_002",
+                        "cloneDatabaseName": "oracle_data_vol_002_clone"
+                    }
+                ]
+            },
+            {
+                "databaseHostName": "SQLNODE1-57329",
+                "databaseHostId": "8bdb4cf5e5b36f5a1",
+                "databaseInstanceName": "ORACLESEREVR",
+                "cloneDatabaseName": "oracle_redo_vol_001_clone",
+                "cloneAge": 120,
+                "cloneSize": 536870912,
+                "clonedBy": "other",
+                "clonedVolumeDetails": [
+                    {
+                        "cloneVolumeUuid": "ccdd3344-5566-7788-99aa-bbccddeeff00",
+                        "cloneVolumeName": "oracle_redo_vol_001_clone",
+                        "cloneVolumeCreateTime": "2025-12-16T08:15:00+00:00",
+                        "sourceVolumeName": "oracle_redo_vol_001",
+                        "cloneDatabaseName": "oracle_redo_vol_001_clone"
+                    }
+                ]
+            },
+            {
+                "databaseHostName": "SQLNODE1-57329",
+                "databaseHostId": "8bdb4cf5e5b36f5a1",
+                "databaseInstanceName": "ORACLESEREVR",
+                "cloneDatabaseName": "oracle_arch_vol_003_clone",
+                "cloneAge": 75,
+                "cloneSize": 268435456,
+                "clonedBy": "other",
+                "clonedVolumeDetails": [
+                    {
+                        "cloneVolumeUuid": "eeff5566-7788-99aa-bbcc-ddeeff001122",
+                        "cloneVolumeName": "oracle_arch_vol_003_clone",
+                        "cloneVolumeCreateTime": "2026-01-30T14:45:00+00:00",
+                        "sourceVolumeName": "oracle_arch_vol_003",
+                        "cloneDatabaseName": "oracle_arch_vol_003_clone"
+                    }
+                ]
+            },
+            {
+                "databaseHostName": "SQLNODE1-57329",
+                "databaseHostId": "8bdb4cf5e5b36f5a1",
+                "databaseInstanceName": "ORACLESEREVR",
+                "cloneDatabaseName": "oracle_data_vol_001_clone",
+                "cloneAge": 30,
+                "cloneSize": 2147483648,
+                "clonedBy": "other",
+                "clonedVolumeDetails": [
+                    {
+                        "cloneVolumeUuid": "11223344-5566-7788-99aa-bbccddeeff33",
+                        "cloneVolumeName": "oracle_data_vol_001_clone",
+                        "cloneVolumeCreateTime": "2026-03-16T09:00:00+00:00",
+                        "sourceVolumeName": "oracle_data_vol_001",
+                        "cloneDatabaseName": "oracle_data_vol_001_clone"
+                    }
+                ]
+            }
+        ],
+        "oldCloneDetails": [
+            {
+                "databaseHostName": "SQLNODE1-57329",
+                "databaseHostId": "8bdb4cf5e5b36f5a1",
+                "databaseInstanceName": "ORACLESEREVR",
+                "cloneDatabaseName": "oracle_data_vol_002_clone",
+                "cloneAge": 90,
+                "cloneSize": 1073741824,
+                "clonedBy": "other",
+                "clonedVolumeDetails": [
+                    {
+                        "cloneVolumeUuid": "aabb1122-3344-5566-7788-99aabbccddee",
+                        "cloneVolumeName": "oracle_data_vol_002_clone",
+                        "cloneVolumeCreateTime": "2026-01-15T10:30:00+00:00",
+                        "sourceVolumeName": "oracle_data_vol_002",
+                        "cloneDatabaseName": "oracle_data_vol_002_clone"
+                    }
+                ]
+            },
+            {
+                "databaseHostName": "SQLNODE1-57329",
+                "databaseHostId": "8bdb4cf5e5b36f5a1",
+                "databaseInstanceName": "ORACLESEREVR",
+                "cloneDatabaseName": "oracle_redo_vol_001_clone",
+                "cloneAge": 120,
+                "cloneSize": 536870912,
+                "clonedBy": "other",
+                "clonedVolumeDetails": [
+                    {
+                        "cloneVolumeUuid": "ccdd3344-5566-7788-99aa-bbccddeeff00",
+                        "cloneVolumeName": "oracle_redo_vol_001_clone",
+                        "cloneVolumeCreateTime": "2025-12-16T08:15:00+00:00",
+                        "sourceVolumeName": "oracle_redo_vol_001",
+                        "cloneDatabaseName": "oracle_redo_vol_001_clone"
+                    }
+                ]
+            },
+            {
+                "databaseHostName": "SQLNODE1-57329",
+                "databaseHostId": "8bdb4cf5e5b36f5a1",
+                "databaseInstanceName": "ORACLESEREVR",
+                "cloneDatabaseName": "oracle_arch_vol_003_clone",
+                "cloneAge": 75,
+                "cloneSize": 268435456,
+                "clonedBy": "other",
+                "clonedVolumeDetails": [
+                    {
+                        "cloneVolumeUuid": "eeff5566-7788-99aa-bbcc-ddeeff001122",
+                        "cloneVolumeName": "oracle_arch_vol_003_clone",
+                        "cloneVolumeCreateTime": "2026-01-30T14:45:00+00:00",
+                        "sourceVolumeName": "oracle_arch_vol_003",
+                        "cloneDatabaseName": "oracle_arch_vol_003_clone"
+                    }
+                ]
+            }
+        ],
+        "oldCloneDatabaseNames": ["oracle_data_vol_002_clone", "oracle_redo_vol_001_clone", "oracle_arch_vol_003_clone"],
+        "objectsInViolation": ["oracle_data_vol_002_clone", "oracle_redo_vol_001_clone", "oracle_arch_vol_003_clone"],
+        "cloneDriftMessage": "3 out of 4 clones are old and divergent"
+    },
     "lastAssessmentTimestamp": 1770653885000,
     "storageEndpoint": "fs-030a8e61dd0631815",
     "databaseInstanceName": "ORACLESEREVR",

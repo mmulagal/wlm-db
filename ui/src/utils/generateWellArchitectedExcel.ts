@@ -66,19 +66,22 @@ const MSSQL_CONFIG_ORDER = [
 ];
 
 const ORACLE_CONFIG_ORDER = [
+    // Storage sizing
     'headroom',
     'swap-space',
+    // Storage layout
     'oracle-binary-placement',
     'datafiles-placement',
     'controlfiles-placement',
     'redologs-placement',
     'templogs-placement',
     'archive-placement',
-
+    // Storage layout - ASM disk groups
     'data-dg-lun-layout',
-    'log-dg-lun-layout',
+    'redolog-dg-lun-layout',
     'fra-dg-lun-layout',
     'archivelog-dg-lun-layout',
+    // Storage configuration - volumes
     'thin-provision',
     'autosize',
     'autosize-mode',
@@ -94,10 +97,12 @@ const ORACLE_CONFIG_ORDER = [
     'compaction',
     'nfs-rootonly',
     'export-policy',
+    // Storage configuration - luns
     'os-type',
     'space-reservation-enabled',
     'space-allocation-allocated',
     'snapshot-policy-vol',
+    // Storage configuration - os
     'multipath-io',
     'host-utilities',
     'transparent-hugepages',
@@ -118,8 +123,22 @@ const ORACLE_CONFIG_ORDER = [
     'asm-external-redundancy',
     'afd-logical-block-size',
     'asmlib-logical-block-size',
+    'dnfs-consistent-ip-resolution',
+    'dnfs-enabled',
+    'dnfs-configuration-file',
+    'dnfs-no-shared-cache',
     'ontap-configuration',
-    'os-configuration'
+    'os-configuration',
+    // Compute
+    'host-os-patch',
+    // Application
+    'oracle-security-patch',
+    // Resiliency
+    'backup-configuration',
+    'crr',
+    'snapcenter-snapshot',
+    // Cloning (must be last)
+    'clone-management'
 ];
 
 function getOrderedConfigurationKeys(data: ComprehensiveAssessmentData, databaseType: string): string[] {

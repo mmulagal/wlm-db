@@ -99,7 +99,8 @@ export const getOracleDisplayNameToTechnicalKeyMapping = () => ({
     [ASSESSMENT_CONFIG_NAMES.CRR]: 'crr',
     [ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT]: 'snapcenter_snapshot',
     [ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH]: 'oracle_security_patch',
-    [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: 'aws_backup'
+    [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: 'aws_backup',
+    [ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]: 'clone_management'
 });
 
 // Helper function to get technical key to display name mapping for MSSQL

@@ -11,6 +11,7 @@ import StorageSizingSection from './Categories/StorageSizingSection';
 import ComputeSection from './Categories/ComputeSection';
 import ApplicationSection from './Categories/ApplicationSection';
 import ResiliencySection from './Categories/ResiliencySection';
+import CloningSection from './Categories/CloningSection';
 import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import StorageConfigurationSection from './Categories/StorageConfigurationSection';
@@ -397,6 +398,26 @@ const OracleWellArchitectDashboard = () => {
                             <div className={styles.sectionTwo}>
                                 <div className={styles.sectionClass}>
                                     <ResiliencySection
+                                        styles={styles}
+                                        isAccordionExpanded={isAccordionExpanded}
+                                        setClickedAccordionId={setClickedAccordionId}
+                                        loading={loading}
+                                        handleAccordionExpanded={handleAccordionExpanded}
+                                        isDarkTheme={isDarkTheme}
+                                        optimizePrintState={optimizePrintState}
+                                        oracleCardData={filteredCardData}
+                                        showDismissedConfigurations={showDismissedConfigurations}
+                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
+                                        driftAssessmentData={driftAssessmentData}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {filteredCardData?.clone_management && (
+                            <div className={styles.sectionTwo}>
+                                <div className={styles.sectionClass}>
+                                    <CloningSection
                                         styles={styles}
                                         isAccordionExpanded={isAccordionExpanded}
                                         setClickedAccordionId={setClickedAccordionId}

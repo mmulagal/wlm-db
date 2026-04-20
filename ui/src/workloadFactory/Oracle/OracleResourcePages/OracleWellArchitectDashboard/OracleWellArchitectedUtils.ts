@@ -24,7 +24,8 @@ import {
     GETWELL_CONFIG,
     GETWELL_STATUS,
     GETWELL_VALUES,
-    WA_FLAG_SKIP
+    WA_FLAG_SKIP,
+    oracleCategoryOptions
 } from '../../../../utils/consts';
 import { groupByType, mapDismissedValues } from '../../../../utils/resourceUtils';
 import { AssessmentResponseInterface, PerConfigInterface } from '../../../../utils/types/getWellTypes';
@@ -628,6 +629,38 @@ export const oracleCardData: any = {
         },
         tags: ['Reliability']
     },
+    clone_management: {
+        id: 'clone',
+        category: 'cloning',
+        mapName: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+        block_one: {
+            value: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+            type: 'Cloning'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted databases',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Clone cleanup recommendation',
+            description:
+                'Old clones can incur significant costs.\nConsider deleting these clones to optimize your storage expenses.'
+        },
+        tags: ['Cost efficiency']
+    },
     oracle_security_patch: {
         id: 'oracle-security-patch',
         category: 'application',
@@ -955,6 +988,54 @@ export const formatOracleAWSBackupConfig = (
         recommendationText: awsBackupItem?.recommendation || oracleCardData.aws_backup?.recommendation?.description,
         objectsInViolation: awsBackupItem?.objectsInViolation,
         dismissedObj: data?.dismissedConfigurations?.awsBackup
+    };
+};
+
+export const formatOracleCloneConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>
+): any => {
+    const cloneItem = data?.clone;
+
+    if (!cloneItem) {
+        return null;
+    }
+
+    const originalName = cloneItem?.name || 'clone-management';
+    const status = optimizingData?.[originalName] || cloneItem?.status || '';
+    const severity = cloneItem?.severity || '';
+
+    return {
+        ...oracleCardData.clone_management,
+        block_two: {
+            ...oracleCardData.clone_management?.block_two,
+            value: formatValue(status)
+        },
+        block_four: {
+            ...oracleCardData.clone_management?.block_four,
+            value: formatValue(severity)
+        },
+        block_five: {
+            ...oracleCardData.clone_management?.block_five,
+            value: cloneItem?.resourceType || ''
+        },
+        block_six: {
+            ...oracleCardData.clone_management?.block_six,
+            value: `${cloneItem?.totalObjectsInViolation || 0} out of ${cloneItem?.totalObjectsAssessed || 0}`,
+            count: {
+                totalObjectsAssessed: cloneItem?.totalObjectsAssessed,
+                totalObjectsInViolation: cloneItem?.totalObjectsInViolation
+            }
+        },
+        tags: cloneItem?.tags,
+        id: cloneItem?.name || 'clone-management',
+        mapName: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+        category: 'cloning',
+        errorMessage: cloneItem?.errorMessage,
+        recommendationText: cloneItem?.recommendation || oracleCardData.clone_management?.recommendation?.description,
+        cloneDetails: cloneItem?.cloneDetails,
+        objectsInViolation: cloneItem?.objectsInViolation,
+        dismissedObj: data?.dismissedConfigurations?.clone
     };
 };
 
@@ -1428,6 +1509,7 @@ export const getOracleCardsData = (
         snapcenter_snapshot: formatOracleSnapCenterConfig(data, optimizingData),
         aws_backup: formatOracleAWSBackupConfig(data, optimizingData),
         oracle_security_patch: formatOracleSecurityPatchConfig(data, optimizingData),
+        clone_management: formatOracleCloneConfig(data, optimizingData),
         isWad: data?.isWad || false
     };
 
@@ -1499,6 +1581,18 @@ export const formatOracleOptimizationBreakDown = (
     };
 
     const resiliencyCount = {
+        hasDismissedOrPostponed: false,
+        total: 0,
+        critical: 0,
+        warning: 0,
+        optimized: 0,
+        notOptimized: 0,
+        dismissedOrPostponed: 0,
+        dismissedIds: [] as string[],
+        percent: 0
+    };
+
+    const cloningCount = {
         hasDismissedOrPostponed: false,
         total: 0,
         critical: 0,
@@ -1646,6 +1740,31 @@ export const formatOracleOptimizationBreakDown = (
                 else if (isWarning) resiliencyCount.warning++;
             }
         }
+
+        if (cardItem?.category === 'cloning') {
+            if (!cardItem?.block_two?.value) {
+                cloningCount.notOptimized++;
+                return;
+            }
+
+            const { isDismissed, isPostponed, isOptimizedViaDismissal, isOptimized, isCritical, isWarning } =
+                processStorageCardItem(cardItem);
+
+            if (isDismissed || isPostponed) {
+                cloningCount.dismissedOrPostponed++;
+                cloningCount.hasDismissedOrPostponed = true;
+                cloningCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+            } else if (isOptimized) {
+                cloningCount.optimized++;
+                if (isOptimizedViaDismissal) {
+                    cloningCount.hasDismissedOrPostponed = true;
+                }
+            } else {
+                cloningCount.notOptimized++;
+                if (isCritical) cloningCount.critical++;
+                else if (isWarning) cloningCount.warning++;
+            }
+        }
     });
 
     // Count sub-configurations from assessment data
@@ -1722,41 +1841,66 @@ export const formatOracleOptimizationBreakDown = (
             ? formatNumberWithCustomComma((applicationCount.optimized / applicationCount.total) * 100)
             : 0;
 
+    cloningCount.total = cloningCount.optimized + cloningCount.notOptimized;
+    cloningCount.percent =
+        cloningCount.optimized && cloningCount.total > 0
+            ? formatNumberWithCustomComma((cloningCount.optimized / cloningCount.total) * 100)
+            : 0;
+
     const totalOptimized =
-        storageCount.optimized + computeCount.optimized + applicationCount.optimized + resiliencyCount.optimized;
-    const totalAll = storageCount.total + computeCount.total + applicationCount.total + resiliencyCount.total;
+        storageCount.optimized +
+        computeCount.optimized +
+        applicationCount.optimized +
+        resiliencyCount.optimized +
+        cloningCount.optimized;
+    const totalAll =
+        storageCount.total + computeCount.total + applicationCount.total + resiliencyCount.total + cloningCount.total;
 
     return {
         storage: storageCount,
         compute: computeCount,
         application: applicationCount,
         resiliency: resiliencyCount,
+        cloning: cloningCount,
         total: {
             hasDismissedOrPostponed:
                 storageCount.hasDismissedOrPostponed ||
                 computeCount.hasDismissedOrPostponed ||
                 applicationCount.hasDismissedOrPostponed ||
-                resiliencyCount.hasDismissedOrPostponed,
+                resiliencyCount.hasDismissedOrPostponed ||
+                cloningCount.hasDismissedOrPostponed,
             total: totalAll,
             critical:
-                storageCount.critical + computeCount.critical + applicationCount.critical + resiliencyCount.critical,
-            warning: storageCount.warning + computeCount.warning + applicationCount.warning + resiliencyCount.warning,
+                storageCount.critical +
+                computeCount.critical +
+                applicationCount.critical +
+                resiliencyCount.critical +
+                cloningCount.critical,
+            warning:
+                storageCount.warning +
+                computeCount.warning +
+                applicationCount.warning +
+                resiliencyCount.warning +
+                cloningCount.warning,
             optimized: totalOptimized,
             notOptimized:
                 storageCount.notOptimized +
                 computeCount.notOptimized +
                 applicationCount.notOptimized +
-                resiliencyCount.notOptimized,
+                resiliencyCount.notOptimized +
+                cloningCount.notOptimized,
             dismissedOrPostponed:
                 storageCount.dismissedOrPostponed +
                 computeCount.dismissedOrPostponed +
                 applicationCount.dismissedOrPostponed +
-                resiliencyCount.dismissedOrPostponed,
+                resiliencyCount.dismissedOrPostponed +
+                cloningCount.dismissedOrPostponed,
             dismissedIds: [
                 ...storageCount.dismissedIds,
                 ...computeCount.dismissedIds,
                 ...applicationCount.dismissedIds,
-                ...resiliencyCount.dismissedIds
+                ...resiliencyCount.dismissedIds,
+                ...cloningCount.dismissedIds
             ],
             percent: totalAll > 0 ? Math.round((totalOptimized / totalAll) * 100) : 0
         }
@@ -1963,7 +2107,8 @@ export const getOracleCategoryData = () => ({
     // Resiliency cards
     crr: { category: 'Resiliency', subCategory: 'Protection' },
     snapcenter_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
-    aws_backup: { category: 'Resiliency', subCategory: 'Protection' }
+    aws_backup: { category: 'Resiliency', subCategory: 'Protection' },
+    clone_management: { category: 'Cloning', subCategory: 'Cloning' }
 });
 
 // Helper function to convert assessment configuration names to technical keys
@@ -1997,6 +2142,9 @@ export const getDynamicOracleCategoryData = (assessmentData?: any) => {
     categoryMapping.crr = { category: 'Resiliency', subCategory: 'Protection' };
     categoryMapping.snapcenter_snapshot = { category: 'Resiliency', subCategory: 'Protection' };
     categoryMapping.aws_backup = { category: 'Resiliency', subCategory: 'Protection' };
+
+    // Include Clone Management (Cloning) so it appears in filters
+    categoryMapping.clone_management = { category: 'Cloning', subCategory: 'Cloning' };
 
     if (!assessmentData?.storage) {
         // If no assessment data, return static mapping as fallback
@@ -2114,8 +2262,12 @@ export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploy
         availableStatuses.add(isOptimizedStatus ? GETWELL_STATUS.OPTIMIZED : GETWELL_STATUS.NOT_OPTIMIZED);
     });
 
+    const sortedCategories = Array.from(availableCategories).sort(
+        (a, b) => oracleCategoryOptions.indexOf(a as string) - oracleCategoryOptions.indexOf(b as string)
+    );
+
     return {
-        categories: Array.from(availableCategories).map(category => ({
+        categories: sortedCategories.map(category => ({
             id: category as string,
             label: category as string,
             value: category as string

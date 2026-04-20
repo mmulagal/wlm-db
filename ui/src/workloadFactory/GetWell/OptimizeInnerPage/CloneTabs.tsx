@@ -20,7 +20,11 @@ import { GENERAL } from '../../../utils/appConstants';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../StorageCardComponent/DialogContent/DialogContent';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
-import { useLazyGetSubTaskListQuery, useOptimizeCloneCleanupMutation } from '../../../utils/apiService';
+import {
+    useLazyGetSubTaskListQuery,
+    useOptimizeCloneCleanupMutation,
+    useOptimizeOracleOperatingSystemMutation
+} from '../../../utils/apiService';
 import {
     ASSESSMENT_CONFIG_NAMES,
     DBType,
@@ -34,7 +38,7 @@ import { handleOptimizeResourceJob, nameToIdConfigMapping } from '../GetWellUtil
 import store from '../../../store/store';
 import { cloneAgeRange } from '../../../utils/utilityFunctions';
 
-const CloneTabs = ({ fromPage = '' }: any) => {
+const CloneTabs = ({ fromPage = '', engineType = DBType.MSSQL }: any) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { selectedCloneTab, cardData: fullCardData } = useAppSelector(state => state.getWellOptimize);
@@ -43,12 +47,14 @@ const CloneTabs = ({ fromPage = '' }: any) => {
     const { inProgressOptimizationData, inProgressHostData, inProgressResourceOptimizeData } = useAppSelector(
         state => state.getWellOptimize
     );
+    const isOracle = engineType === DBType.ORACLE;
     // Check if this is a WAD (offline assessment) instance
     const isWad = fullCardData?.isWad || false;
     const [wfDatabase, setWfDatabase] = useState<any>(null);
     const [otherDatabase, setOtherDatabase] = useState<any>(null);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const [cloneCleanupOptimizeApi] = useOptimizeCloneCleanupMutation();
+    const [oracleCloneCleanupOptimizeApi] = useOptimizeOracleOperatingSystemMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     const { setDialog, closeDialog } = useDialog();
@@ -84,10 +90,11 @@ const CloneTabs = ({ fromPage = '' }: any) => {
     // Function to get unique instance row
     const getBulkInstanceList = (jobData: any[], name: string) => {
         const instanceList: any = [];
+        const instancesKey = isOracle ? 'oracleInstances' : 'sqlServerInstances';
 
         jobData.forEach(({ configurationName, databaseHosts }) => {
             databaseHosts.forEach((host: any) => {
-                host.sqlServerInstances.forEach((instance: any) => {
+                (host[instancesKey] || []).forEach((instance: any) => {
                     instanceList.push({
                         id: configurationName,
                         name,
@@ -104,8 +111,49 @@ const CloneTabs = ({ fromPage = '' }: any) => {
         return instanceList;
     };
 
-    const callCloneOptimizeApi = (actionType: string, operation: any, rowData: any) => {
-        // Group data by unique combination of databaseHostId, regionId, and credentialId
+    const buildOracleClonePayload = (actionType: string, rowData: any) => {
+        const groupedData = rowData?.reduce((acc: any, data: any) => {
+            const hostKey = uniqueHostRow(data?.resourceId, data?.credentialId, data?.regionId);
+            if (!acc[hostKey]) {
+                acc[hostKey] = {
+                    id: data?.resourceId,
+                    region: data?.regionId,
+                    credentialsId: data?.credentialId,
+                    oracleInstances: {}
+                };
+            }
+
+            const instanceKey = data?.instanceId;
+            if (!acc[hostKey]?.oracleInstances[instanceKey]) {
+                acc[hostKey].oracleInstances[instanceKey] = {
+                    instanceId: data?.instanceId,
+                    clones: []
+                };
+            }
+
+            acc[hostKey].oracleInstances[instanceKey].clones.push({
+                cloneDatabaseName: data?.cloneDatabaseName,
+                clonedBy: data?.clonedBy,
+                action: actionType.toLowerCase()
+            });
+
+            return acc;
+        }, {});
+
+        return {
+            hostsToOptimize: [
+                {
+                    configurationName: 'clone',
+                    databaseHosts: Object.values(groupedData).map((host: any) => ({
+                        ...host,
+                        oracleInstances: Object.values(host?.oracleInstances)
+                    }))
+                }
+            ]
+        };
+    };
+
+    const buildMssqlClonePayload = (actionType: string, rowData: any) => {
         const groupedData = rowData?.reduce((acc: any, data: any) => {
             const hostKey = uniqueHostRow(data?.resourceId, data?.credentialId, data?.regionId);
             if (!acc[hostKey]) {
@@ -117,7 +165,6 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 };
             }
 
-            // Group clones by instanceId
             const instanceKey = data?.instanceId;
             if (!acc[hostKey]?.sqlServerInstances[instanceKey]) {
                 acc[hostKey].sqlServerInstances[instanceKey] = {
@@ -135,8 +182,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
             return acc;
         }, {});
 
-        // Convert grouped data into the desired payload structure
-        const payload = {
+        return {
             hostsToOptimize: [
                 {
                     configurationName: 'clone',
@@ -147,8 +193,35 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 }
             ]
         };
+    };
 
-        // call optimize api
+    const getInstancesFromPayload = (payload: any) => {
+        const instancesKey = isOracle ? 'oracleInstances' : 'sqlServerInstances';
+        return payload?.hostsToOptimize?.flatMap((host: any) =>
+            host?.databaseHosts?.flatMap((databaseHost: any) =>
+                databaseHost?.[instancesKey].map((instance: any) => `${databaseHost?.id}_${instance?.instanceId}`)
+            )
+        );
+    };
+
+    const getResourceInstancesFromPayload = (payload: any) => {
+        const instancesKey = isOracle ? 'oracleInstances' : 'sqlServerInstances';
+        return payload?.hostsToOptimize?.flatMap((host: any) =>
+            host?.databaseHosts?.flatMap((databaseHost: any) =>
+                databaseHost?.[instancesKey]?.flatMap((instance: any) =>
+                    instance?.clones?.map(
+                        (clone: any) => `${databaseHost?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`
+                    )
+                )
+            )
+        );
+    };
+
+    const callCloneOptimizeApi = (actionType: string, operation: any, rowData: any) => {
+        const payload = isOracle
+            ? buildOracleClonePayload(actionType, rowData)
+            : buildMssqlClonePayload(actionType, rowData);
+
         dispatch(setOptimizingInstanceData(true));
 
         dispatch(
@@ -168,11 +241,8 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 ]
             })
         );
-        const hostinstances = payload?.hostsToOptimize?.flatMap((host: any) =>
-            host?.databaseHosts?.flatMap((databaseHost: any) =>
-                databaseHost?.sqlServerInstances.map((instance: any) => `${databaseHost?.id}_${instance?.instanceId}`)
-            )
-        );
+
+        const hostinstances = getInstancesFromPayload(payload);
         dispatch(
             setInProgressOptimizationData({
                 ...inProgressOptimizationData,
@@ -182,15 +252,8 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 ]
             })
         );
-        const resourceInstances = payload?.hostsToOptimize?.flatMap((host: any) =>
-            host?.databaseHosts?.flatMap((databaseHost: any) =>
-                databaseHost?.sqlServerInstances?.flatMap((instance: any) =>
-                    instance?.clones?.map(
-                        (clone: any) => `${databaseHost?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`
-                    )
-                )
-            )
-        );
+
+        const resourceInstances = getResourceInstancesFromPayload(payload);
         dispatch(
             setInProgressResourceOptimizeData({
                 ...inProgressResourceOptimizeData,
@@ -231,8 +294,9 @@ const CloneTabs = ({ fromPage = '' }: any) => {
             })
         );
 
-        // Call the API with the payload
-        cloneCleanupOptimizeApi({ payload }).then((res: any) => {
+        const optimizeApiFn = isOracle ? oracleCloneCleanupOptimizeApi : cloneCleanupOptimizeApi;
+
+        optimizeApiFn({ payload }).then((res: any) => {
             const failedMsgData = (
                 <div className={styles.notification}>
                     {ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT} failed to optimize.
@@ -272,7 +336,7 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 dispatch,
                 ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
                 getBulkInstanceList(payload?.hostsToOptimize, ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT),
-                DBType.MSSQL
+                engineType
             );
         });
     };
@@ -283,10 +347,13 @@ const CloneTabs = ({ fromPage = '' }: any) => {
     };
 
     const handleBulkActionForClone = (actionType: string, operation?: string, rowData?: any) => {
+        const wadTooltipKey = isOracle
+            ? 'databases.wad.tab-disabled-message-oracle'
+            : 'databases.wad.tab-disabled-message';
         setDialog(
             <DialogComponent
                 header={`${actionType} clone`}
-                content={<DialogContent type={`${GENERAL.CLONE_MANAGEMENT} ${actionType}`} />}
+                content={<DialogContent type={`${GENERAL.CLONE_MANAGEMENT} ${actionType}`} engineType={engineType} />}
                 primaryButton={GENERAL.CONTINUE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
@@ -297,10 +364,23 @@ const CloneTabs = ({ fromPage = '' }: any) => {
                 }}
                 customClass="innerPage"
                 primaryButtonDisabled={isWad}
-                primaryButtonTooltip={isWad ? t('databases.wad.tab-disabled-message') : ''}
+                primaryButtonTooltip={isWad ? t(wadTooltipKey) : ''}
             />
         );
     };
+
+    if (isOracle) {
+        return (
+            <div className={styles.tableSection}>
+                <CloneOutsideWF
+                    data={otherDatabase}
+                    handleBulkActionForClone={handleBulkActionForClone}
+                    fromPage={fromPage}
+                    engineType={engineType}
+                />
+            </div>
+        );
+    }
 
     return (
         <>

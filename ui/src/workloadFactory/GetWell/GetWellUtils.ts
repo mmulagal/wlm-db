@@ -5869,7 +5869,7 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             break;
 
         case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
-            configKey = 'clone';
+            configKey = dbType === DBType.ORACLE ? 'oracleCloneManagement' : 'clone';
             break;
         case ASSESSMENT_CONFIG_NAMES.MTU:
             configKey = 'mtuConfiguration';

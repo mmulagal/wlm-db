@@ -5,7 +5,6 @@ import { ReactComponent as Applications } from '../../../assets/Application.svg'
 import { ReactComponent as Resiliency } from '../../../assets/Resiliency.svg';
 import { ReactComponent as Cloning } from '../../../assets/Cloning.svg';
 import { ReactComponent as Compute } from '../../../assets/Compute.svg';
-import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import styles from './OptimizationBreakdown.module.scss';
 import OptimizeComponent from '../OptimizeComponent/OptimizeComponent';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -249,17 +248,13 @@ const OptimizationBreakdown = ({
                         isDisabled={(optimizationBreakDown?.resiliency?.total ?? 0) === 0}
                     />
                     <OptimizeComponent
-                        value={
-                            engineType === DBType.ORACLE ? <ComingSoon /> : optimizationBreakDown?.cloning?.percent || 0
-                        }
-                        data={engineType === DBType.ORACLE ? undefined : optimizationBreakDown?.cloning}
+                        value={optimizationBreakDown?.cloning?.percent || 0}
+                        data={optimizationBreakDown?.cloning}
                         text="Cloning"
                         image={<Cloning />}
-                        isComingSoon={engineType === DBType.ORACLE}
-                        allConfigurationsDismissed={
-                            engineType === DBType.ORACLE ? undefined : allConfigurationsDismissed
-                        }
-                        isDisabled={engineType !== DBType.ORACLE && (optimizationBreakDown?.cloning?.total ?? 0) === 0}
+                        isComingSoon={false}
+                        allConfigurationsDismissed={allConfigurationsDismissed}
+                        isDisabled={(optimizationBreakDown?.cloning?.total ?? 0) === 0}
                     />
                 </div>
             </div>

@@ -57,7 +57,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
     // Maintain separate category selections/applied filters for MSSQL and Oracle
     const [selectedCategoriesMssql, setSelectedCategoriesMssql] = useState<string[]>(categoryOptions);
     const [appliedCategoriesMssql, setAppliedCategoriesMssql] = useState<string[]>(categoryOptions);
-    const ORACLE_DEFAULT_SELECTED = ['Storage', 'Compute', 'Application', 'Resiliency'];
+    const ORACLE_DEFAULT_SELECTED = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];
     const [selectedCategoriesOracle, setSelectedCategoriesOracle] = useState<string[]>(ORACLE_DEFAULT_SELECTED);
     const [appliedCategoriesOracle, setAppliedCategoriesOracle] = useState<string[]>(ORACLE_DEFAULT_SELECTED);
     // Separate severity selections per engine so severity filtering affects only that engine
@@ -1427,6 +1427,15 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         'wlm-db-optimize-oracle-aws-backup',
                         ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
                         ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+                        false
+                    )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        'oracleCloneManagement',
+                        'wlm-db-optimize-oracle-clone-management',
+                        ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
                         false
                     )}
             </div>

@@ -1194,6 +1194,41 @@
                                 }
                             ]
                         },
+                        "clone": {
+                            "name": "clone-management",
+                            "status": "optimized",
+                            "recommended": "optimized",
+                            "severity": "warning",
+                            "recommendation": "All clones are up-to-date. No old FlexClone volumes detected.",
+                            "tags": ["Cost efficiency"],
+                            "resourceType": "Database",
+                            "totalObjectsAssessed": 1,
+                            "totalObjectsInViolation": 0,
+                            "cloneDetails": [
+                                {
+                                    "databaseHostName": "apeksha-oracle19c-pdb-sles15-iscsi-250825234438",
+                                    "databaseHostId": "9c07489e2ed62123",
+                                    "databaseInstanceName": "pdbnas1",
+                                    "cloneDatabaseName": "oracle_data_pdb_clone",
+                                    "cloneAge": 30,
+                                    "cloneSize": 1073741824,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "ff001122-3344-5566-7788-aabbccddeeff",
+                                            "cloneVolumeName": "oracle_data_pdb_clone",
+                                            "cloneVolumeCreateTime": "2026-03-16T10:00:00+00:00",
+                                            "sourceVolumeName": "oracle_data_pdb",
+                                            "cloneDatabaseName": "oracle_data_pdb_clone"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "oldCloneDetails": [],
+                            "oldCloneDatabaseNames": [],
+                            "objectsInViolation": [],
+                            "cloneDriftMessage": "0 out of 1 clones are old and divergent"
+                        },
                         "snapcenterSnapshot": {
                             "name": "snapcenter-snapshot",
                             "severity": "warning",
@@ -2450,6 +2485,150 @@
                                     "ontapVolumeUuid": "d4e5f6a7-b8c9-0123-defa-234567890123"
                                 }
                             ]
+                        },
+                        "clone": {
+                            "name": "clone-management",
+                            "status": "not-optimized",
+                            "recommended": "optimized",
+                            "severity": "warning",
+                            "recommendation": "Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses.",
+                            "tags": ["Cost efficiency"],
+                            "resourceType": "Database",
+                            "totalObjectsAssessed": 4,
+                            "totalObjectsInViolation": 3,
+                            "cloneDetails": [
+                                {
+                                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                                    "databaseHostId": "a4d6aaa59ae0fba9",
+                                    "databaseInstanceName": "pdb21cnas1",
+                                    "cloneDatabaseName": "oracle_data_vol_002_clone",
+                                    "cloneAge": 90,
+                                    "cloneSize": 1073741824,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "aabb1122-3344-5566-7788-99aabbccddee",
+                                            "cloneVolumeName": "oracle_data_vol_002_clone",
+                                            "cloneVolumeCreateTime": "2026-01-15T10:30:00+00:00",
+                                            "sourceVolumeName": "oracle_data_vol_002",
+                                            "cloneDatabaseName": "oracle_data_vol_002_clone"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                                    "databaseHostId": "a4d6aaa59ae0fba9",
+                                    "databaseInstanceName": "pdb21cnas1",
+                                    "cloneDatabaseName": "oracle_redo_vol_001_clone",
+                                    "cloneAge": 120,
+                                    "cloneSize": 536870912,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "ccdd3344-5566-7788-99aa-bbccddeeff00",
+                                            "cloneVolumeName": "oracle_redo_vol_001_clone",
+                                            "cloneVolumeCreateTime": "2025-12-16T08:15:00+00:00",
+                                            "sourceVolumeName": "oracle_redo_vol_001",
+                                            "cloneDatabaseName": "oracle_redo_vol_001_clone"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                                    "databaseHostId": "a4d6aaa59ae0fba9",
+                                    "databaseInstanceName": "pdb21cnas1",
+                                    "cloneDatabaseName": "oracle_arch_vol_003_clone",
+                                    "cloneAge": 75,
+                                    "cloneSize": 268435456,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "eeff5566-7788-99aa-bbcc-ddeeff001122",
+                                            "cloneVolumeName": "oracle_arch_vol_003_clone",
+                                            "cloneVolumeCreateTime": "2026-01-30T14:45:00+00:00",
+                                            "sourceVolumeName": "oracle_arch_vol_003",
+                                            "cloneDatabaseName": "oracle_arch_vol_003_clone"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                                    "databaseHostId": "a4d6aaa59ae0fba9",
+                                    "databaseInstanceName": "pdb21cnas1",
+                                    "cloneDatabaseName": "oracle_data_vol_001_clone",
+                                    "cloneAge": 30,
+                                    "cloneSize": 2147483648,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "11223344-5566-7788-99aa-bbccddeeff33",
+                                            "cloneVolumeName": "oracle_data_vol_001_clone",
+                                            "cloneVolumeCreateTime": "2026-03-16T09:00:00+00:00",
+                                            "sourceVolumeName": "oracle_data_vol_001",
+                                            "cloneDatabaseName": "oracle_data_vol_001_clone"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "oldCloneDetails": [
+                                {
+                                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                                    "databaseHostId": "a4d6aaa59ae0fba9",
+                                    "databaseInstanceName": "pdb21cnas1",
+                                    "cloneDatabaseName": "oracle_data_vol_002_clone",
+                                    "cloneAge": 90,
+                                    "cloneSize": 1073741824,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "aabb1122-3344-5566-7788-99aabbccddee",
+                                            "cloneVolumeName": "oracle_data_vol_002_clone",
+                                            "cloneVolumeCreateTime": "2026-01-15T10:30:00+00:00",
+                                            "sourceVolumeName": "oracle_data_vol_002",
+                                            "cloneDatabaseName": "oracle_data_vol_002_clone"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                                    "databaseHostId": "a4d6aaa59ae0fba9",
+                                    "databaseInstanceName": "pdb21cnas1",
+                                    "cloneDatabaseName": "oracle_redo_vol_001_clone",
+                                    "cloneAge": 120,
+                                    "cloneSize": 536870912,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "ccdd3344-5566-7788-99aa-bbccddeeff00",
+                                            "cloneVolumeName": "oracle_redo_vol_001_clone",
+                                            "cloneVolumeCreateTime": "2025-12-16T08:15:00+00:00",
+                                            "sourceVolumeName": "oracle_redo_vol_001",
+                                            "cloneDatabaseName": "oracle_redo_vol_001_clone"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                                    "databaseHostId": "a4d6aaa59ae0fba9",
+                                    "databaseInstanceName": "pdb21cnas1",
+                                    "cloneDatabaseName": "oracle_arch_vol_003_clone",
+                                    "cloneAge": 75,
+                                    "cloneSize": 268435456,
+                                    "clonedBy": "other",
+                                    "clonedVolumeDetails": [
+                                        {
+                                            "cloneVolumeUuid": "eeff5566-7788-99aa-bbcc-ddeeff001122",
+                                            "cloneVolumeName": "oracle_arch_vol_003_clone",
+                                            "cloneVolumeCreateTime": "2026-01-30T14:45:00+00:00",
+                                            "sourceVolumeName": "oracle_arch_vol_003",
+                                            "cloneDatabaseName": "oracle_arch_vol_003_clone"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "oldCloneDatabaseNames": ["oracle_data_vol_002_clone", "oracle_redo_vol_001_clone", "oracle_arch_vol_003_clone"],
+                            "objectsInViolation": ["oracle_data_vol_002_clone", "oracle_redo_vol_001_clone", "oracle_arch_vol_003_clone"],
+                            "cloneDriftMessage": "3 out of 4 clones are old and divergent"
                         },
                         "snapcenterSnapshot": {
                             "name": "snapcenter-snapshot",
