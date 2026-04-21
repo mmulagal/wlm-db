@@ -128,10 +128,8 @@ const OptimizeOntapInnerPage = () => {
                     });
                     break;
                 case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
-                case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
                 case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
-                case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
                 case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
                 case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
@@ -141,13 +139,6 @@ const OptimizeOntapInnerPage = () => {
                     setCardHeight({
                         recommendationSection: '170px',
                         tagSection: '266px'
-                    });
-                    break;
-                case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
-                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
-                    setCardHeight({
-                        recommendationSection: '140px',
-                        tagSection: '236px'
                     });
                     break;
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
@@ -539,13 +530,9 @@ const OptimizeOntapInnerPage = () => {
             switch (selectedOptimizeConfig?.type) {
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
                 case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
-                case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
                 case ASSESSMENT_CONFIG_NAMES.SELINUX:
                 case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
-                case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
-                case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
-                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
                 case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:

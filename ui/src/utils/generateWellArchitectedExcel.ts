@@ -105,13 +105,9 @@ const ORACLE_CONFIG_ORDER = [
     // Storage configuration - os
     'multipath-io',
     'host-utilities',
-    'transparent-hugepages',
     'selinux',
     'iscsi-replacement-timeout',
     'multipath-friendly-names',
-    'tcp-advanced-options',
-    'filesystems-io-options',
-    'multiblock-readcount',
     'multipath-io-sessions',
     'multipath-configuration',
     'kernel-parameters',
@@ -131,6 +127,10 @@ const ORACLE_CONFIG_ORDER = [
     'os-configuration',
     // Compute
     'host-os-patch',
+    'transparent-hugepages',
+    'tcp-advanced-options',
+    'filesystems-io-options',
+    'multiblock-readcount',
     // Application
     'oracle-security-patch',
     // Resiliency
@@ -167,6 +167,10 @@ function getOrderedConfigurationKeys(data: ComprehensiveAssessmentData, database
     const topLevelConfigs = [
         { data: data.compute, name: 'compute-rightsizing' },
         { data: data.hostOsPatch, name: 'host-os-patch' },
+        { data: data.transparentHugepages, name: 'transparent-hugepages' },
+        { data: data.tcpAdvancedOptions, name: 'tcp-advanced-options' },
+        { data: data.filesystemsIoOptions, name: 'filesystems-io-options' },
+        { data: data.multiblockReadcount, name: 'multiblock-readcount' },
         { data: data.oracleSecurityPatch, name: 'oracle-security-patch' },
         { data: data.rssConfig, name: 'rss-config' },
         { data: data.mtuAlignment, name: 'mtu-alignment' },
@@ -267,6 +271,10 @@ interface ComprehensiveAssessmentData {
     awsBackup?: AssessmentItem;
     license?: AssessmentItem;
     hostOsPatch?: AssessmentItem;
+    transparentHugepages?: AssessmentItem;
+    tcpAdvancedOptions?: AssessmentItem;
+    filesystemsIoOptions?: AssessmentItem;
+    multiblockReadcount?: AssessmentItem;
     oracleSecurityPatch?: AssessmentItem;
     rssConfig?: AssessmentItem;
     mssqlPatch?: AssessmentItem;
@@ -537,6 +545,18 @@ function generateConfigurationStatusData(data: ComprehensiveAssessmentData, data
                     break;
                 case 'host-os-patch':
                     if (data.hostOsPatch) processItems([data.hostOsPatch], 'Compute', 'Compute');
+                    break;
+                case 'transparent-hugepages':
+                    if (data.transparentHugepages) processItems([data.transparentHugepages], 'Compute', 'Compute');
+                    break;
+                case 'tcp-advanced-options':
+                    if (data.tcpAdvancedOptions) processItems([data.tcpAdvancedOptions], 'Compute', 'Compute');
+                    break;
+                case 'filesystems-io-options':
+                    if (data.filesystemsIoOptions) processItems([data.filesystemsIoOptions], 'Compute', 'Compute');
+                    break;
+                case 'multiblock-readcount':
+                    if (data.multiblockReadcount) processItems([data.multiblockReadcount], 'Compute', 'Compute');
                     break;
                 case 'oracle-security-patch':
                     if (data.oracleSecurityPatch)

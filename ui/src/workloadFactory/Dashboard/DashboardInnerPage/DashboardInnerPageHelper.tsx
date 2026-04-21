@@ -525,6 +525,15 @@ export const bulkFixDisableCheck = (
     if (configType === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
         isFixDisabled = true;
         fixDisableMsg = t('databases.well-architect.bulk-fix-disable-for-fsx-for-ontap-backup');
+    } else if (configType === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES) {
+        isFixDisabled = true;
+        fixDisableMsg = t('databases.well-architect.bulk-fix-disable-for-transparent-hugepages');
+    } else if (configType === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS) {
+        isFixDisabled = true;
+        fixDisableMsg = t('databases.well-architect.bulk-fix-disable-for-tcp-advanced-options');
+    } else if (configType === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) {
+        isFixDisabled = true;
+        fixDisableMsg = t('databases.well-architect.bulk-fix-disable-for-multiblock-readcount');
     } else if (
         configType === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT ||
         configType === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT ||

@@ -131,6 +131,25 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                         }
                     ]);
                     break;
+                case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+                case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+                    setTagData([
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        }
+                    ]);
+                    break;
+                case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+                    setTagData([
+                        { label: t('databases.well-architect.tags.reliability'), value: 'reliability' },
+                        {
+                            label: t('databases.well-architect.tags.performanceEfficiency'),
+                            value: 'performanceEfficiency'
+                        }
+                    ]);
+                    break;
                 default:
                     // Default oracle has all 3 tags. Once we get different configs for oracle, we can update the tags accordingly using switch case.
                     setTagData([

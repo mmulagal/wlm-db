@@ -224,12 +224,7 @@ const RecommendationTable = ({
         let apiCall = null;
         let statusType = '';
 
-        if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS) {
-            statusType = ASSESSMENT_CONFIG_NAMES.OS;
-            apiCall = optimizeOracleOs;
-            payload = getOracleOsPayload('tcp-advanced-options');
-            apiInput = { payload };
-        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO) {
+        if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO) {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOracleOs;
             payload = getOracleOsPayload('multipath-io');
@@ -238,11 +233,6 @@ const RecommendationTable = ({
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOracleOs;
             payload = getOracleOsPayload('host-utilities');
-            apiInput = { payload };
-        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES) {
-            statusType = ASSESSMENT_CONFIG_NAMES.OS;
-            apiCall = optimizeOracleOs;
-            payload = getOracleOsPayload('transparent-hugepages');
             apiInput = { payload };
         } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.SELINUX) {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
@@ -262,11 +252,6 @@ const RecommendationTable = ({
             apiCall = optimizeOracleOs;
             payload = getOracleOsPayload('multipath-io-sessions');
             apiInput = { payload };
-        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS) {
-            statusType = ASSESSMENT_CONFIG_NAMES.OS;
-            apiCall = optimizeOracleOs;
-            payload = getOracleOsPayload('filesystems-io-options');
-            apiInput = { payload };
         } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION) {
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOracleOs;
@@ -276,11 +261,6 @@ const RecommendationTable = ({
             statusType = ASSESSMENT_CONFIG_NAMES.OS;
             apiCall = optimizeOracleOs;
             payload = getOracleOsPayload('multipath-friendly-names');
-            apiInput = { payload };
-        } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) {
-            statusType = ASSESSMENT_CONFIG_NAMES.OS;
-            apiCall = optimizeOracleOs;
-            payload = getOracleOsPayload('multiblock-readcount');
             apiInput = { payload };
         } else if (engineType === DBType.ORACLE && rowData?.name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE) {
             statusType = ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE;
@@ -1052,13 +1032,9 @@ const RecommendationTable = ({
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION ||
-                            rowData?.name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.SELINUX ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES ||
-                            rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
-                            rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
-                            rowData?.name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
                             rowData?.name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||

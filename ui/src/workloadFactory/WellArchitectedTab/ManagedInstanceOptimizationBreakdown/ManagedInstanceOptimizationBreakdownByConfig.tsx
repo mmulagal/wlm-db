@@ -1395,6 +1395,42 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     )}
                 {configEngineType === DBType.ORACLE &&
                     renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES,
+                        'oracleTransparentHugepages',
+                        'wlm-db-optimize-oracle-transparent-hugepages',
+                        ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES,
+                        ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES,
+                        false
+                    )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS,
+                        'oracleTcpAdvancedOptions',
+                        'wlm-db-optimize-oracle-tcp-advanced-options',
+                        ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS,
+                        ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS,
+                        false
+                    )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS,
+                        'oracleFilesystemsIoOptions',
+                        'wlm-db-optimize-oracle-filesystems-io-options',
+                        ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS,
+                        ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS,
+                        false
+                    )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
+                        ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT,
+                        'oracleMultipathReadcount',
+                        'wlm-db-optimize-oracle-multipath-readcount',
+                        ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT,
+                        ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT,
+                        false
+                    )}
+                {configEngineType === DBType.ORACLE &&
+                    renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH,
                         'oracleSecurityPatch',
                         'wlm-db-optimize-oracle-security-patch',

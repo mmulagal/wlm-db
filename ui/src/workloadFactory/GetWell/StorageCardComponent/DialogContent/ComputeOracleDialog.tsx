@@ -1,14 +1,23 @@
-import { DsTypography, Table, useTable } from '@netapp/design-system';
+import { Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
+import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import {
+    createStandardDialog,
+    createStandardNotesSection,
+    createSection,
+    createActionOptionSection
+} from './DialogContentHelper';
 
 type ComputeOracleDialogProps = {
+    type?: string;
     missingPatchList?: Array<any>;
+    createComputeConfigSection?: () => React.ReactNode;
 };
 
-function ComputeOracleDialog({ missingPatchList = [] }: ComputeOracleDialogProps) {
+function ComputeOracleDialog({ type, missingPatchList = [], createComputeConfigSection }: ComputeOracleDialogProps) {
     const { t } = useTranslation();
     const tableData = useMemo(
         () =>
@@ -59,180 +68,101 @@ function ComputeOracleDialog({ missingPatchList = [] }: ComputeOracleDialogProps
         pageSize: 50
     });
 
-    return (
-        <div className={styles['storage-tier-block']}>
-            <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14">{t('databases.well-architect.action-summary')}</DsTypography>
-                <DsTypography variant="Regular_14">
-                    {t('databases.well-architect.oracle-os-patch-action-summary')}
-                </DsTypography>
-            </div>
-
-            <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
-                    {t('databases.well-architect.oracle-os-patch-missing-patches')}
-                </DsTypography>
-                <div className={styles.table}>
-                    {/* @ts-ignore */}
-                    <Table tableProps={tableProps} variant="innerTable" />
+    switch (type) {
+        case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+            return createStandardDialog(
+                t,
+                t('databases.well-architect.oracle-transparent-hugepages-action-summary'),
+                t('databases.well-architect.oracle-transparent-hugepages-what-will-happen'),
+                createStandardNotesSection(),
+                createComputeConfigSection?.()
+            );
+        case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+            return createStandardDialog(
+                t,
+                t('databases.well-architect.oracle-tcp-action-summary'),
+                t('databases.well-architect.oracle-tcp-what-will-happen'),
+                createStandardNotesSection(),
+                createComputeConfigSection?.()
+            );
+        case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+            return (
+                <div className={styles['storage-tier-block']}>
+                    {createSection(
+                        t('databases.well-architect.action-summary'),
+                        t('databases.well-architect.oracle-filesystem-io-options-action-summary')
+                    )}
+                    {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
+                        t('databases.well-architect.oracle-filesystem-io-options-optimization-step1'),
+                        t('databases.well-architect.oracle-filesystem-io-options-optimization-step2'),
+                        t('databases.well-architect.oracle-filesystem-io-options-optimization-step3')
+                    ])}
+                    {createSection(
+                        t('databases.well-architect.notes'),
+                        t('databases.well-architect.oracle-multipath-io-note')
+                    )}
                 </div>
-            </div>
+            );
+        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+            return createStandardDialog(
+                t,
+                t('databases.well-architect.oracle-multiblock-readcount-action-summary'),
+                t('databases.well-architect.oracle-multiblock-readcount-what-will-happen'),
+                createStandardNotesSection(),
+                createComputeConfigSection?.()
+            );
+        case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
+        default:
+            return (
+                <div className={styles['storage-tier-block']}>
+                    {createSection(
+                        t('databases.well-architect.action-summary'),
+                        t('databases.well-architect.oracle-os-patch-action-summary')
+                    )}
 
-            <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
-                    {t('databases.well-architect.oracle-os-patch-action-required')}
-                </DsTypography>
-                <div className={styles.content}>
-                    <div className={styles.row}>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-line1')}
-                        </DsTypography>
-                    </div>
+                    {createSection(
+                        t('databases.well-architect.oracle-os-patch-missing-patches'),
+                        <div className={styles.table}>
+                            {/* @ts-ignore */}
+                            <Table tableProps={tableProps} variant="innerTable" />
+                        </div>
+                    )}
+
+                    {createSection(
+                        t('databases.well-architect.oracle-os-patch-action-required'),
+                        t('databases.well-architect.oracle-os-patch-line1')
+                    )}
+
+                    {createActionOptionSection(t('databases.well-architect.oracle-os-patch-option1'), [
+                        t('databases.well-architect.oracle-os-patch-option1-content1'),
+                        t('databases.well-architect.oracle-os-patch-option1-content2'),
+                        t('databases.well-architect.oracle-os-patch-option1-content3'),
+                        t('databases.well-architect.oracle-os-patch-option1-content4'),
+                        t('databases.well-architect.oracle-os-patch-option1-content5')
+                    ])}
+
+                    {createSection(t('databases.well-architect.oracle-os-patch-option2'))}
+                    {createActionOptionSection(t('databases.well-architect.oracle-os-patch-option2-for-rhel'), [
+                        t('databases.well-architect.oracle-os-patch-option2-for-rhel-content1'),
+                        t('databases.well-architect.oracle-os-patch-option2-for-rhel-content2'),
+                        t('databases.well-architect.oracle-os-patch-option2-for-rhel-content3'),
+                        t('databases.well-architect.oracle-os-patch-option2-for-rhel-content4')
+                    ])}
+
+                    {createActionOptionSection(t('databases.well-architect.oracle-os-patch-option2-for-sles'), [
+                        t('databases.well-architect.oracle-os-patch-option2-for-sles-content1'),
+                        t('databases.well-architect.oracle-os-patch-option2-for-sles-content2'),
+                        t('databases.well-architect.oracle-os-patch-option2-for-sles-content3'),
+                        t('databases.well-architect.oracle-os-patch-option2-for-sles-content4')
+                    ])}
+
+                    {createSection(
+                        t('databases.well-architect.note'),
+                        t('databases.well-architect.oracle-os-patch-note')
+                    )}
                 </div>
-            </div>
-
-            <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
-                    {t('databases.well-architect.oracle-os-patch-option1')}
-                </DsTypography>
-                <div className={styles['action-section']}>
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">1</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option1-content1')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">2</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option1-content2')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">3</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option1-content3')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">4</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option1-content4')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">5</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option1-content5')}
-                        </DsTypography>
-                    </div>
-                </div>
-            </div>
-
-            <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
-                    {t('databases.well-architect.oracle-os-patch-option2')}
-                </DsTypography>
-                <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
-                    {t('databases.well-architect.oracle-os-patch-option2-for-rhel')}
-                </DsTypography>
-                <div className={styles['action-section']}>
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">1</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option2-for-rhel-content1')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">2</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option2-for-rhel-content2')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">3</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option2-for-rhel-content3')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">4</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option2-for-rhel-content4')}
-                        </DsTypography>
-                    </div>
-                </div>
-            </div>
-
-            <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
-                    {t('databases.well-architect.oracle-os-patch-option2-for-sles')}
-                </DsTypography>
-                <div className={styles['action-section']}>
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">1</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option2-for-sles-content1')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">2</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option2-for-sles-content2')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">3</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option2-for-sles-content3')}
-                        </DsTypography>
-                    </div>
-
-                    <div className={styles.row}>
-                        <DsTypography variant="Semibold_14">4</DsTypography>
-                        <DsTypography variant="Regular_14">|</DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-option2-for-sles-content4')}
-                        </DsTypography>
-                    </div>
-                </div>
-            </div>
-
-            <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
-                    {t('databases.well-architect.note')}
-                </DsTypography>
-                <div className={styles.content}>
-                    <div className={styles.row}>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-os-patch-note')}
-                        </DsTypography>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+            );
+    }
 }
 
 export default ComputeOracleDialog;

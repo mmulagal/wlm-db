@@ -976,7 +976,42 @@ const countOracleInstanceConfigs = (instanceAssessment: any, counters: ConfigCou
 
     // Compute category
     countTopLevelConfig('hostOsPatch', instanceAssessment, dismissedConfigs, counters, isWad, excluded, categoryMap);
-
+    countTopLevelConfig(
+        'transparentHugepages',
+        instanceAssessment,
+        dismissedConfigs,
+        counters,
+        isWad,
+        excluded,
+        categoryMap
+    );
+    countTopLevelConfig(
+        'tcpAdvancedOptions',
+        instanceAssessment,
+        dismissedConfigs,
+        counters,
+        isWad,
+        excluded,
+        categoryMap
+    );
+    countTopLevelConfig(
+        'filesystemsIoOptions',
+        instanceAssessment,
+        dismissedConfigs,
+        counters,
+        isWad,
+        excluded,
+        categoryMap
+    );
+    countTopLevelConfig(
+        'multiblockReadcount',
+        instanceAssessment,
+        dismissedConfigs,
+        counters,
+        isWad,
+        excluded,
+        categoryMap
+    );
     // Application category
     countTopLevelConfig(
         'oracleSecurityPatch',
@@ -1553,6 +1588,107 @@ const processOracleConfigurationData = (
                         getAssessmentGroupedByConfigurations?.severityObj?.oracleOperatingSystemPatch;
                 }
 
+                const isTransparentHugepagesOptimized = isOptimizedDashInner(
+                    instanceAssessmentData?.transparentHugepages?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.transparentHugepages?.configState
+                );
+                setConfigState(
+                    configState,
+                    'oracleTransparentHugepages',
+                    instanceAssessmentData?.dismissedConfigurations?.transparentHugepages?.configState
+                );
+                getAssessmentGroupedByConfigurations.oracleTransparentHugepages.optimized +=
+                    isTransparentHugepagesOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.oracleTransparentHugepages.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.transparentHugepages?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleTransparentHugepages.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.transparentHugepages?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleTransparentHugepages =
+                    GETWELL_VALUES[instanceAssessmentData?.transparentHugepages?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.oracleTransparentHugepages;
+
+                const isTcpAdvancedOptionsOptimized = isOptimizedDashInner(
+                    instanceAssessmentData?.tcpAdvancedOptions?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.tcpAdvancedOptions?.configState
+                );
+                setConfigState(
+                    configState,
+                    'oracleTcpAdvancedOptions',
+                    instanceAssessmentData?.dismissedConfigurations?.tcpAdvancedOptions?.configState
+                );
+                getAssessmentGroupedByConfigurations.oracleTcpAdvancedOptions.optimized += isTcpAdvancedOptionsOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleTcpAdvancedOptions.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.tcpAdvancedOptions?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleTcpAdvancedOptions.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.tcpAdvancedOptions?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleTcpAdvancedOptions =
+                    GETWELL_VALUES[instanceAssessmentData?.tcpAdvancedOptions?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.oracleTcpAdvancedOptions;
+
+                const isFilesystemsIoOptionsOptimized = isOptimizedDashInner(
+                    instanceAssessmentData?.filesystemsIoOptions?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.filesystemsIoOptions?.configState
+                );
+                setConfigState(
+                    configState,
+                    'oracleFilesystemsIoOptions',
+                    instanceAssessmentData?.dismissedConfigurations?.filesystemsIoOptions?.configState
+                );
+                getAssessmentGroupedByConfigurations.oracleFilesystemsIoOptions.optimized +=
+                    isFilesystemsIoOptionsOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.oracleFilesystemsIoOptions.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.filesystemsIoOptions?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleFilesystemsIoOptions.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.filesystemsIoOptions?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleFilesystemsIoOptions =
+                    GETWELL_VALUES[instanceAssessmentData?.filesystemsIoOptions?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.oracleFilesystemsIoOptions;
+
+                const isMultiblockReadcountOptimized = isOptimizedDashInner(
+                    instanceAssessmentData?.multiblockReadcount?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.multiblockReadcount?.configState
+                );
+                setConfigState(
+                    configState,
+                    'oracleMultipathReadcount',
+                    instanceAssessmentData?.dismissedConfigurations?.multiblockReadcount?.configState
+                );
+                getAssessmentGroupedByConfigurations.oracleMultipathReadcount.optimized +=
+                    isMultiblockReadcountOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.oracleMultipathReadcount.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.multiblockReadcount?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleMultipathReadcount.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.multiblockReadcount?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleMultipathReadcount =
+                    GETWELL_VALUES[instanceAssessmentData?.multiblockReadcount?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.oracleMultipathReadcount;
+
                 const isOntapConfigurationOptimized =
                     instanceAssessmentData?.storage &&
                     instanceAssessmentData?.storage?.configuration &&
@@ -2092,6 +2228,26 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
             dismissed: 0,
             activating: 0
         },
+        oracleTransparentHugepages: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        oracleTcpAdvancedOptions: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        oracleFilesystemsIoOptions: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
+        oracleMultipathReadcount: {
+            optimized: 0,
+            dismissed: 0,
+            activating: 0
+        },
         oracleSwapSpace: {
             optimized: 0,
             dismissed: 0,
@@ -2142,6 +2298,10 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
         oracleOperatingSystem: [],
         oracleFileSystemHeadroom: [],
         oracleOperatingSystemPatch: [],
+        oracleTransparentHugepages: [],
+        oracleTcpAdvancedOptions: [],
+        oracleFilesystemsIoOptions: [],
+        oracleMultipathReadcount: [],
         oracleSwapSpace: [],
         oracleSecurityPatch: [],
         oracleCrr: [],

@@ -110,7 +110,11 @@ vi.mock('../../../../utils/consts', () => ({
         SWAP_SPACE: 'Swap space',
         DATA_FILES_MDF: 'Data files (.mdf)',
         LOG_FILES_LDF: 'Log files (.ldf)',
-        TEMPDB_PLACEMENT: 'TempDB placement'
+        TEMPDB_PLACEMENT: 'TempDB placement',
+        TRANSPARENT_HUGEPAGES: 'Transparent hugepages',
+        TCP_ADVANCED_OPTIONS: 'TCP advanced options',
+        FILESYSTEMS_IO_OPTIONS: 'Filesystem I/O options',
+        MULTIPATH_READCOUNT: 'Multiblock read count'
     },
     CONFIG_STATE_ACTIONS: {
         DISMISS: 'DISMISSED',
@@ -493,6 +497,30 @@ describe('DashboardInnerPageHelper', () => {
         it('returns isFixDisabled=true for ARCHIVELOG_DG_LUN_LAYOUT', () => {
             const result = bulkFixDisableCheck('ASM archive log disk group LUNs', false, [], mockT);
             expect(result.isFixDisabled).toBe(true);
+        });
+
+        it('returns isFixDisabled=true for TRANSPARENT_HUGEPAGES with correct disable message', () => {
+            const result = bulkFixDisableCheck('Transparent hugepages', false, [], mockT);
+            expect(result.isFixDisabled).toBe(true);
+            expect(result.fixDisableMsg).toBe('databases.well-architect.bulk-fix-disable-for-transparent-hugepages');
+        });
+
+        it('returns isFixDisabled=true for TCP_ADVANCED_OPTIONS with correct disable message', () => {
+            const result = bulkFixDisableCheck('TCP advanced options', false, [], mockT);
+            expect(result.isFixDisabled).toBe(true);
+            expect(result.fixDisableMsg).toBe('databases.well-architect.bulk-fix-disable-for-tcp-advanced-options');
+        });
+
+        it('returns isFixDisabled=true for MULTIPATH_READCOUNT with correct disable message', () => {
+            const result = bulkFixDisableCheck('Multiblock read count', false, [], mockT);
+            expect(result.isFixDisabled).toBe(true);
+            expect(result.fixDisableMsg).toBe('databases.well-architect.bulk-fix-disable-for-multiblock-readcount');
+        });
+
+        it('returns isFixDisabled=true for FILESYSTEMS_IO_OPTIONS when isFixNotSupported is true', () => {
+            const result = bulkFixDisableCheck('Filesystem I/O options', true, [], mockT);
+            expect(result.isFixDisabled).toBe(true);
+            expect(result.fixDisableMsg).toBe('databases.well-architect.fix-disabled');
         });
 
         it('returns isFixDisabled=true when isFixNotSupported=true', () => {
@@ -1326,6 +1354,10 @@ describe('DashboardInnerPageHelper', () => {
                 'ASM logs disk group LUNs',
                 'ASM FRA disk group LUNs',
                 'ASM archive log disk group LUNs',
+                'Transparent hugepages',
+                'TCP advanced options',
+                'Filesystem I/O options',
+                'Multiblock read count',
                 'UNKNOWN_TYPE'
             ];
 

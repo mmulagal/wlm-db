@@ -352,7 +352,11 @@ const OracleWellArchitectDashboard = () => {
                             </div>
                         )}
 
-                        {filteredCardData?.host_os_patch && (
+                        {(filteredCardData?.host_os_patch ||
+                            filteredCardData?.transparent_hugepages ||
+                            filteredCardData?.tcp_advanced_options ||
+                            filteredCardData?.filesystems_io_options ||
+                            filteredCardData?.multiblock_readcount) && (
                             <div className={styles.sectionTwo}>
                                 <div className={styles.sectionClass}>
                                     <ComputeSection

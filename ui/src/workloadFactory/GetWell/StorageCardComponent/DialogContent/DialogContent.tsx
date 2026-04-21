@@ -245,13 +245,9 @@ const DialogContent = ({
                 // Oracle storage config OS dialogs -
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
                 case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
-                case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
                 case ASSESSMENT_CONFIG_NAMES.SELINUX:
                 case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
-                case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
-                case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
-                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
                 case ASSESSMENT_CONFIG_NAMES.ASM_SETUP:
@@ -283,7 +279,17 @@ const DialogContent = ({
 
                 // oracle compute cards
                 case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
-                    return <ComputeOracleDialog missingPatchList={missingPatchList} />;
+                case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+                case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+                    return (
+                        <ComputeOracleDialog
+                            type={type}
+                            missingPatchList={missingPatchList}
+                            createComputeConfigSection={createONTAPConfigSection}
+                        />
+                    );
 
                 // oracle application cards
                 case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:

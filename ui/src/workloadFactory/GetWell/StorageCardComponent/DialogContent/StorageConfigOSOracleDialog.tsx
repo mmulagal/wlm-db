@@ -42,14 +42,6 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                     createStandardNotesSection(),
                     createOSConfigSection()
                 );
-            case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
-                return createStandardDialog(
-                    t,
-                    t('databases.well-architect.oracle-transparent-hugepages-action-summary'),
-                    t('databases.well-architect.oracle-transparent-hugepages-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
-                );
             case ASSESSMENT_CONFIG_NAMES.SELINUX:
                 return createStandardDialog(
                     t,
@@ -71,40 +63,6 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                     t,
                     t('databases.well-architect.oracle-multipath-friendly-action-summary'),
                     t('databases.well-architect.oracle-multipath-friendly-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
-                );
-            case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
-                return createStandardDialog(
-                    t,
-                    t('databases.well-architect.oracle-tcp-action-summary'),
-                    t('databases.well-architect.oracle-tcp-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
-                );
-            case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
-                return (
-                    <>
-                        {createSection(
-                            t('databases.well-architect.action-summary'),
-                            t('databases.well-architect.oracle-filesystem-io-options-action-summary')
-                        )}
-                        {createActionOptionSection(t('databases.well-architect.optimization-steps'), [
-                            t('databases.well-architect.oracle-filesystem-io-options-optimization-step1'),
-                            t('databases.well-architect.oracle-filesystem-io-options-optimization-step2'),
-                            t('databases.well-architect.oracle-filesystem-io-options-optimization-step3')
-                        ])}
-                        {createSection(
-                            t('databases.well-architect.notes'),
-                            t('databases.well-architect.oracle-multipath-io-note')
-                        )}
-                    </>
-                );
-            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
-                return createStandardDialog(
-                    t,
-                    t('databases.well-architect.oracle-multiblock-readcount-action-summary'),
-                    t('databases.well-architect.oracle-multiblock-readcount-what-will-happen'),
                     createStandardNotesSection(),
                     createOSConfigSection()
                 );

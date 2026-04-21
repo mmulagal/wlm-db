@@ -194,6 +194,23 @@ const DashboardInnerPage = () => {
         ]
     });
 
+    const computeHostOsPayload = (configurationName: string, rowData: any) => ({
+        type: 'compute-host-os',
+        hostsToOptimize: [
+            {
+                configurationName,
+                databaseHosts: [
+                    {
+                        id: rowData?.databaseHostId,
+                        credentialsId: rowData?.credentialId,
+                        region: rowData?.regionId,
+                        databases: [rowData?.instanceId]
+                    }
+                ]
+            }
+        ]
+    });
+
     const callOptimizeApi = (type: any, fullRowData?: any, operation?: string) => {
         // Filter rows to only include those with "Not optimized" status if fullRowData is an array
         const rowData = Array.isArray(fullRowData) ? filterNotOptimizedRows(fullRowData) : fullRowData;
@@ -313,6 +330,15 @@ const DashboardInnerPage = () => {
                         }
                     ]
                 };
+            } else if (type === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES) {
+                apiCall = optimizeOracleOs;
+                payload = computeHostOsPayload('transparent-hugepages', rowData);
+            } else if (type === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS) {
+                apiCall = optimizeOracleOs;
+                payload = computeHostOsPayload('tcp-advanced-options', rowData);
+            } else if (type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) {
+                apiCall = optimizeOracleOs;
+                payload = computeHostOsPayload('multiblock-readcount', rowData);
             } else {
                 // ToDo - More type will come like optimize for sizing and layout here
                 apiCall = optimizeStorageConfig;
@@ -1204,7 +1230,11 @@ const DashboardInnerPage = () => {
                             type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
                             type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
                             type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
-                            type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE) &&
+                            type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
+                            type === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
+                            type === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
+                            type === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
+                            type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) &&
                         rowData?.missingPermissions &&
                         rowData?.missingPermissions.length > 0
                     }
@@ -1508,6 +1538,54 @@ const DashboardInnerPage = () => {
                     data: {
                         title: 'Recommendations',
                         description: oracleCardData?.oracle_security_patch?.recommendation?.description
+                    }
+                }));
+                break;
+            case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+                setValueCardData((prev: any) => ({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.transparent_hugepages?.recommendation?.description
+                    }
+                }));
+                break;
+            case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+                setValueCardData((prev: any) => ({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.tcp_advanced_options?.recommendation?.description
+                    }
+                }));
+                break;
+            case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+                setValueCardData((prev: any) => ({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.filesystems_io_options?.recommendation?.description
+                    }
+                }));
+                break;
+            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+                setValueCardData((prev: any) => ({
+                    ...selectedConfigSummary,
+                    configurationState: selectedConfigSummary.configState,
+                    cardHeight: prev.cardHeight || '136px',
+                    tagHeight: prev.tagHeight || '233px',
+                    data: {
+                        title: 'Recommendations',
+                        description: oracleCardData?.multiblock_readcount?.recommendation?.description
                     }
                 }));
                 break;
@@ -1930,6 +2008,10 @@ const DashboardInnerPage = () => {
             case ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION:
             case ASSESSMENT_CONFIG_NAMES.MTU:
             case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
+            case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+            case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+            case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
             case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:

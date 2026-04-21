@@ -110,6 +110,10 @@ export const getCategoryData = () => ({
     os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
     compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
     host_os_patch: { category: 'Compute', subCategory: 'Compute_sub' },
+    transparent_hugepages: { category: 'Compute', subCategory: 'Compute_sub' },
+    tcp_advanced_options: { category: 'Compute', subCategory: 'Compute_sub' },
+    filesystems_io_options: { category: 'Compute', subCategory: 'Compute_sub' },
+    multiblock_readcount: { category: 'Compute', subCategory: 'Compute_sub' },
     rss_config: { category: 'Compute', subCategory: 'Compute_sub' },
     mtu: { category: 'Compute', subCategory: 'Compute_sub' },
     sql_licenses: { category: 'Application', subCategory: 'Application_sub' },
@@ -4654,6 +4658,39 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any, engineType
                             }
                         };
                     }
+                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                transparentHugepages: {
+                                    ...instance.assessments.transparentHugepages,
+                                    status: 'optimized'
+                                }
+                            }
+                        };
+                    }
+                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                tcpAdvancedOptions: { ...instance.assessments.tcpAdvancedOptions, status: 'optimized' }
+                            }
+                        };
+                    }
+                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) {
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance?.assessments,
+                                multiblockReadcount: {
+                                    ...instance.assessments.multiblockReadcount,
+                                    status: 'optimized'
+                                }
+                            }
+                        };
+                    }
                     if (newStorageConfigurationMap[rowData?.id]) {
                         const key = newStorageConfigurationMap[rowData?.id];
                         return {
@@ -5228,6 +5265,10 @@ export const updateConfigStatePerInstance = (
         'backup-configuration': 'awsBackup',
         'mssql-patch': 'mssqlPatch',
         'host-os-patch': 'hostOsPatch',
+        'transparent-hugepages': 'transparentHugepages',
+        'tcp-advanced-options': 'tcpAdvancedOptions',
+        'filesystems-io-options': 'filesystemsIoOptions',
+        'multiblock-readcount': 'multiblockReadcount',
         crr: 'crr',
         'snapcenter-snapshot': 'snapcenterSnapshot',
         'oracle-security-patch': 'oracleSecurityPatch',
@@ -5793,6 +5834,12 @@ export const nameToIdConfigMapping = (name: string) =>
         ? 'fra-dg-lun-layout'
         : name === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
         ? 'archivelog-dg-lun-layout'
+        : name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES
+        ? 'transparent-hugepages'
+        : name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS
+        ? 'tcp-advanced-options'
+        : name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT
+        ? 'multiblock-readcount'
         : '';
 
 export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any, dbType?: string) => {
@@ -5910,6 +5957,18 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             break;
         case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
             configKey = 'oracleSecurityPatch';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+            configKey = 'oracleTransparentHugepages';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+            configKey = 'oracleTcpAdvancedOptions';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+            configKey = 'oracleFilesystemsIoOptions';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+            configKey = 'oracleMultipathReadcount';
             break;
     }
     const optimizedInstances = configData?.[configKey]?.optimized || 0;
@@ -6135,9 +6194,6 @@ export const storageMockOracleData = {
                     name: 'host-utilities'
                 },
                 {
-                    name: 'transparent-hugepages'
-                },
-                {
                     name: 'selinux'
                 },
                 {
@@ -6145,15 +6201,6 @@ export const storageMockOracleData = {
                 },
                 {
                     name: 'multipath-friendly-names'
-                },
-                {
-                    name: 'tcp-advanced-options'
-                },
-                {
-                    name: 'filesystems-io-options'
-                },
-                {
-                    name: 'multiblock-readcount'
                 },
                 {
                     name: 'multipath-io-sessions'

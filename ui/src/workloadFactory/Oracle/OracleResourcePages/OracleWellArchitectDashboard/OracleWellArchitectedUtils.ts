@@ -533,6 +533,134 @@ export const oracleCardData: any = {
         },
         tags: ['Security', 'Reliability']
     },
+    transparent_hugepages: {
+        id: 'transparent-hugepages',
+        category: 'compute',
+        mapName: ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES,
+        block_one: {
+            value: ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES,
+            type: 'Compute'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted EC2 instances',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Transparent hugePages recommendation',
+            description:
+                'Workload Factory recommends disabling Transparent HugePages (THP) on database hosts running Oracle databases. \nDisabling THP is an Oracle best practice to prevent potential performance issues and ensure optimal database stability.'
+        },
+        tags: ['Performance efficiency']
+    },
+    tcp_advanced_options: {
+        id: 'tcp-advanced-options',
+        category: 'compute',
+        mapName: ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS,
+        block_one: {
+            value: ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS,
+            type: 'Compute'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted EC2 instances',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'TCP advanced options recommendation',
+            description:
+                'Workload Factory recommends enabling TCP features such as TCP window scaling, timestamps, and selective acknowledgments on Oracle database hosts.'
+        },
+        tags: ['Reliability', 'Performance efficiency']
+    },
+    filesystems_io_options: {
+        id: 'filesystems-io-options',
+        category: 'compute',
+        mapName: ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS,
+        block_one: {
+            value: ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS,
+            type: 'Compute'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted EC2 instances',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Filesystem I/O options recommendation',
+            description:
+                'Workload Factory recommends setting filesystemio_options = setall for optimal I/O performance. \nAdjust SGA size if needed when moving away from buffered I/O.'
+        },
+        tags: ['Performance efficiency']
+    },
+    multiblock_readcount: {
+        id: 'multiblock-readcount',
+        category: 'compute',
+        mapName: ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT,
+        block_one: {
+            value: ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT,
+            type: 'Compute'
+        },
+        block_two: {
+            type: 'Status',
+            value: ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: ''
+        },
+        block_five: {
+            type: 'Resource type',
+            value: ''
+        },
+        block_six: {
+            type: 'Impacted EC2 instances',
+            value: '',
+            smallFont: true
+        },
+        recommendation: {
+            title: 'Multiblock read count recommendation',
+            description:
+                'Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.'
+        },
+        tags: ['Performance efficiency']
+    },
     snapcenter_snapshot: {
         id: 'snapcenter-snapshot',
         category: 'resiliency',
@@ -856,6 +984,130 @@ export const formatOracleHostOsPatchConfig = (
         missingPatchList,
         objectsInViolation: hostOsPatchItem?.ec2InstancesToPatch?.map((instance: any) => instance.ec2InstanceId),
         dismissedObj: data?.dismissedConfigurations?.hostOsPatch
+    };
+};
+
+export const formatOracleTransparentHugepagesConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>
+): any => {
+    const item = data?.transparentHugepages;
+    const originalName = item?.name || 'transparent-hugepages';
+    const status = optimizingData?.[originalName] || item?.status || '';
+    const severity = item?.severity || '';
+    return {
+        ...oracleCardData.transparent_hugepages,
+        block_two: { ...oracleCardData.transparent_hugepages?.block_two, value: formatValue(status) },
+        block_four: { ...oracleCardData.transparent_hugepages?.block_four, value: formatValue(severity) },
+        block_five: { ...oracleCardData.transparent_hugepages?.block_five, value: item?.resourceType || '' },
+        block_six: {
+            ...oracleCardData.transparent_hugepages?.block_six,
+            value: `${item?.totalObjectsInViolation || 0} out of ${item?.totalObjectsAssessed || 0}`,
+            count: {
+                totalObjectsAssessed: item?.totalObjectsAssessed,
+                totalObjectsInViolation: item?.totalObjectsInViolation
+            }
+        },
+        tags: item?.tags,
+        id: item?.name || 'transparent-hugepages',
+        category: 'compute',
+        errorMessage: item?.errorMessage,
+        recommendationText: item?.recommendation || oracleCardData.transparent_hugepages?.recommendation?.description,
+        objectsInViolation: item?.objectsInViolation,
+        dismissedObj: data?.dismissedConfigurations?.transparentHugepages
+    };
+};
+
+export const formatOracleTcpAdvancedOptionsConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>
+): any => {
+    const item = data?.tcpAdvancedOptions;
+    const originalName = item?.name || 'tcp-advanced-options';
+    const status = optimizingData?.[originalName] || item?.status || '';
+    const severity = item?.severity || '';
+    return {
+        ...oracleCardData.tcp_advanced_options,
+        block_two: { ...oracleCardData.tcp_advanced_options?.block_two, value: formatValue(status) },
+        block_four: { ...oracleCardData.tcp_advanced_options?.block_four, value: formatValue(severity) },
+        block_five: { ...oracleCardData.tcp_advanced_options?.block_five, value: item?.resourceType || '' },
+        block_six: {
+            ...oracleCardData.tcp_advanced_options?.block_six,
+            value: `${item?.totalObjectsInViolation || 0} out of ${item?.totalObjectsAssessed || 0}`,
+            count: {
+                totalObjectsAssessed: item?.totalObjectsAssessed,
+                totalObjectsInViolation: item?.totalObjectsInViolation
+            }
+        },
+        tags: item?.tags,
+        id: item?.name || 'tcp-advanced-options',
+        category: 'compute',
+        errorMessage: item?.errorMessage,
+        recommendationText: item?.recommendation || oracleCardData.tcp_advanced_options?.recommendation?.description,
+        objectsInViolation: item?.objectsInViolation,
+        dismissedObj: data?.dismissedConfigurations?.tcpAdvancedOptions
+    };
+};
+
+export const formatOracleFilesystemsIoOptionsConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>
+): any => {
+    const item = data?.filesystemsIoOptions;
+    const originalName = item?.name || 'filesystems-io-options';
+    const status = optimizingData?.[originalName] || item?.status || '';
+    const severity = item?.severity || '';
+    return {
+        ...oracleCardData.filesystems_io_options,
+        block_two: { ...oracleCardData.filesystems_io_options?.block_two, value: formatValue(status) },
+        block_four: { ...oracleCardData.filesystems_io_options?.block_four, value: formatValue(severity) },
+        block_five: { ...oracleCardData.filesystems_io_options?.block_five, value: item?.resourceType || '' },
+        block_six: {
+            ...oracleCardData.filesystems_io_options?.block_six,
+            value: `${item?.totalObjectsInViolation || 0} out of ${item?.totalObjectsAssessed || 0}`,
+            count: {
+                totalObjectsAssessed: item?.totalObjectsAssessed,
+                totalObjectsInViolation: item?.totalObjectsInViolation
+            }
+        },
+        tags: item?.tags,
+        id: item?.name || 'filesystems-io-options',
+        category: 'compute',
+        errorMessage: item?.errorMessage,
+        recommendationText: item?.recommendation || oracleCardData.filesystems_io_options?.recommendation?.description,
+        objectsInViolation: item?.objectsInViolation,
+        dismissedObj: data?.dismissedConfigurations?.filesystemsIoOptions
+    };
+};
+
+export const formatOracleMultiblockReadcountConfig = (
+    data: AssessmentResponseInterface,
+    optimizingData: Record<string, string>
+): any => {
+    const item = data?.multiblockReadcount;
+    const originalName = item?.name || 'multiblock-readcount';
+    const status = optimizingData?.[originalName] || item?.status || '';
+    const severity = item?.severity || '';
+    return {
+        ...oracleCardData.multiblock_readcount,
+        block_two: { ...oracleCardData.multiblock_readcount?.block_two, value: formatValue(status) },
+        block_four: { ...oracleCardData.multiblock_readcount?.block_four, value: formatValue(severity) },
+        block_five: { ...oracleCardData.multiblock_readcount?.block_five, value: item?.resourceType || '' },
+        block_six: {
+            ...oracleCardData.multiblock_readcount?.block_six,
+            value: `${item?.totalObjectsInViolation || 0} out of ${item?.totalObjectsAssessed || 0}`,
+            count: {
+                totalObjectsAssessed: item?.totalObjectsAssessed,
+                totalObjectsInViolation: item?.totalObjectsInViolation
+            }
+        },
+        tags: item?.tags,
+        id: item?.name || 'multiblock-readcount',
+        category: 'compute',
+        errorMessage: item?.errorMessage,
+        recommendationText: item?.recommendation || oracleCardData.multiblock_readcount?.recommendation?.description,
+        objectsInViolation: item?.objectsInViolation,
+        dismissedObj: data?.dismissedConfigurations?.multiblockReadcount
     };
 };
 
@@ -1505,6 +1757,10 @@ export const getOracleCardsData = (
             osDismissedObj
         ),
         host_os_patch: formatOracleHostOsPatchConfig(data, optimizingData),
+        transparent_hugepages: formatOracleTransparentHugepagesConfig(data, optimizingData),
+        tcp_advanced_options: formatOracleTcpAdvancedOptionsConfig(data, optimizingData),
+        filesystems_io_options: formatOracleFilesystemsIoOptionsConfig(data, optimizingData),
+        multiblock_readcount: formatOracleMultiblockReadcountConfig(data, optimizingData),
         crr: formatOracleCRRConfig(data, optimizingData),
         snapcenter_snapshot: formatOracleSnapCenterConfig(data, optimizingData),
         aws_backup: formatOracleAWSBackupConfig(data, optimizingData),
@@ -2102,6 +2358,10 @@ export const getOracleCategoryData = () => ({
     os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
     // Compute Configuration cards
     host_os_patch: { category: 'Compute', subCategory: 'Compute' },
+    transparent_hugepages: { category: 'Compute', subCategory: 'Compute' },
+    tcp_advanced_options: { category: 'Compute', subCategory: 'Compute' },
+    filesystems_io_options: { category: 'Compute', subCategory: 'Compute' },
+    multiblock_readcount: { category: 'Compute', subCategory: 'Compute' },
     // Application cards
     oracle_security_patch: { category: 'Application', subCategory: 'Application' },
     // Resiliency cards
@@ -2134,6 +2394,10 @@ export const getDynamicOracleCategoryData = (assessmentData?: any) => {
 
     // Always include host OS patch (Compute) so it appears in filters even when Unavailable
     categoryMapping.host_os_patch = { category: 'Compute', subCategory: 'Compute' };
+    categoryMapping.transparent_hugepages = { category: 'Compute', subCategory: 'Compute' };
+    categoryMapping.tcp_advanced_options = { category: 'Compute', subCategory: 'Compute' };
+    categoryMapping.filesystems_io_options = { category: 'Compute', subCategory: 'Compute' };
+    categoryMapping.multiblock_readcount = { category: 'Compute', subCategory: 'Compute' };
 
     // Always include Oracle Security Patch (Application) so it appears in filters
     categoryMapping.oracle_security_patch = { category: 'Application', subCategory: 'Application' };
@@ -2642,6 +2906,53 @@ export const checkAllOracleConfigurationsDismissed = (cardData: any, assessmentD
                 dismissedConfigs++;
             }
         }
+        // Check compute configurations (transparent hugepages)
+        const transparentHugepagesConfig = dismissedConfigurationsData.transparentHugepages;
+        if (transparentHugepagesConfig) {
+            totalConfigs++;
+            if (
+                transparentHugepagesConfig.configState === CONFIG_STATES.DISMISSED ||
+                transparentHugepagesConfig.configState === CONFIG_STATES.POSTPONED
+            ) {
+                dismissedConfigs++;
+            }
+        }
+
+        // Check compute configurations (TCP advanced options)
+        const tcpAdvancedOptionsConfig = dismissedConfigurationsData.tcpAdvancedOptions;
+        if (tcpAdvancedOptionsConfig) {
+            totalConfigs++;
+            if (
+                tcpAdvancedOptionsConfig.configState === CONFIG_STATES.DISMISSED ||
+                tcpAdvancedOptionsConfig.configState === CONFIG_STATES.POSTPONED
+            ) {
+                dismissedConfigs++;
+            }
+        }
+
+        // Check compute configurations (filesystem I/O options)
+        const filesystemsIoOptionsConfig = dismissedConfigurationsData.filesystemsIoOptions;
+        if (filesystemsIoOptionsConfig) {
+            totalConfigs++;
+            if (
+                filesystemsIoOptionsConfig.configState === CONFIG_STATES.DISMISSED ||
+                filesystemsIoOptionsConfig.configState === CONFIG_STATES.POSTPONED
+            ) {
+                dismissedConfigs++;
+            }
+        }
+
+        // Check compute configurations (multiblock read count)
+        const multiblockReadcountConfig = dismissedConfigurationsData.multiblockReadcount;
+        if (multiblockReadcountConfig) {
+            totalConfigs++;
+            if (
+                multiblockReadcountConfig.configState === CONFIG_STATES.DISMISSED ||
+                multiblockReadcountConfig.configState === CONFIG_STATES.POSTPONED
+            ) {
+                dismissedConfigs++;
+            }
+        }
     }
 
     // Return true only if there are configurations and ALL of them are dismissed
@@ -2678,6 +2989,24 @@ export const callOptimizeOracleApi = ({
         inProgressOptimizationData,
         inProgressHostData
     } = state.getWellOptimize;
+
+    const computeHostOsPayload = (configurationName: string) => ({
+        type: 'compute-host-os',
+        hostsToOptimize: [
+            {
+                configurationName,
+                databaseHosts: [
+                    {
+                        id: selectedResourceId,
+                        databases: [selectedDatabaseInstance],
+                        credentialsId: selectedGwInstanceCredId,
+                        region: selectedGwInstanceRegionId
+                    }
+                ]
+            }
+        ]
+    });
+
     if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
         apiCall = optimizeOracleOs;
         payload = {
@@ -2718,6 +3047,15 @@ export const callOptimizeOracleApi = ({
                 }
             ]
         };
+    } else if (type === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES) {
+        apiCall = optimizeOracleOs;
+        payload = computeHostOsPayload('transparent-hugepages');
+    } else if (type === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS) {
+        apiCall = optimizeOracleOs;
+        payload = computeHostOsPayload('tcp-advanced-options');
+    } else if (type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) {
+        apiCall = optimizeOracleOs;
+        payload = computeHostOsPayload('multiblock-readcount');
     }
 
     // call optimize api
@@ -2754,6 +3092,12 @@ export const callOptimizeOracleApi = ({
             payload
         };
     } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+        apiCallObj = { payload };
+    } else if (
+        type === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
+        type === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
+        type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT
+    ) {
         apiCallObj = { payload };
     }
 

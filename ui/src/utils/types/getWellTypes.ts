@@ -143,6 +143,10 @@ export interface AssessmentResponseInterface {
     crr?: PerConfigInterface;
     snapcenterSnapshot?: PerConfigInterface;
     oracleSecurityPatch?: PerConfigInterface;
+    transparentHugepages?: PerConfigInterface;
+    tcpAdvancedOptions?: PerConfigInterface;
+    filesystemsIoOptions?: PerConfigInterface;
+    multiblockReadcount?: PerConfigInterface;
     clone?: PerConfigInterface;
     isWad?: boolean;
 }

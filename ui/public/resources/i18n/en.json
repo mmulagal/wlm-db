@@ -545,6 +545,9 @@
             "fixing": "Fixing",
             "view": "View",
             "bulk-fix-disable-for-fsx-for-ontap-backup": "Bulk fix is not supported for Scheduled FSx for ONTAP Backups.",
+            "bulk-fix-disable-for-transparent-hugepages": "Bulk fix is not supported for Transparent hugepages.",
+            "bulk-fix-disable-for-tcp-advanced-options": "Bulk fix is not supported for TCP advanced options.",
+            "bulk-fix-disable-for-multiblock-readcount": "Bulk fix is not supported for Multiblock read count.",
             "bulk-fix-disable-for-asm": "Bulk fix is not supported for ASM configurations.",
             "coming-soon": "Coming soon",
             "fix-disabled": "Fix is not supported for this configuration.",
@@ -1000,7 +1003,8 @@
                 "oracle-instance-name": "Oracle instance name",
                 "oracle-host-name": "Oracle host name",
                 "sql-instance-name-clone": "SQL instance name",
-                "sql-host-name-clone": "SQL host name"
+                "sql-host-name-clone": "SQL host name",
+                "impacted-ec2-instances": "Impacted EC2 instances"
             },
             "unavailable": "Unavailable",
             "application-oracle-server": "Application (Oracle Server)",

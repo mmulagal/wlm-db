@@ -458,7 +458,14 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
             ]);
             return ensureRows(columns, rows, na);
         }
-
+        case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+        case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+        case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT: {
+            const columns = ['Instance ID'];
+            const rows = objects.map((item: ObjectInViolation) => [typeof item === 'string' ? item : na]);
+            return ensureRows(columns, rows, na);
+        }
         default:
             return { columns: [], rows: [] };
     }

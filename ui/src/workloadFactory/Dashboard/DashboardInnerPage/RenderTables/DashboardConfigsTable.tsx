@@ -920,9 +920,74 @@ const createOracleHostOsPatchConfig = () => ({
     ]
 });
 
+// Helper function to create Oracle compute assessment configuration (violation count + view)
+// assessmentKey: camelCase key used to look up data in the assessment API response (e.g. 'transparentHugepages')
+// displayName: display name constant used for dialog switch-case matching (e.g. ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES)
+const createOracleComputeAssessmentConfig = (
+    assessmentKey: string,
+    displayName: string,
+    isFixSupported: boolean = false
+) => ({
+    assessmentPath: [],
+    configName: assessmentKey,
+    dismissConfigName: assessmentKey,
+    isFixSupported,
+    dataMapping: (obj: any) => ({
+        totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
+        totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
+        objectsInViolation: obj?.objectsInViolation || [],
+        violationDetails: obj?.violationDetails || []
+    }),
+    customColumns: [
+        {
+            Header: 'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
+            accessor: 'totalObjectsInViolation',
+            id: '4',
+            width: '200px',
+            renderCell: (
+                cellData: string,
+                rowData: ConfigTableRowData,
+                t: TFunction,
+                handleImpactedResourceDialog: HandleImpactedResourceDialog
+            ) => {
+                const newObj = { ...rowData, name: displayName };
+                return (
+                    <div className={CommonStyles.impactedDrivesCell}>
+                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
+                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                            <Button variant="text" onClick={() => handleImpactedResourceDialog(newObj)}>
+                                {t('databases.dashboard.view')}
+                            </Button>
+                        )}
+                    </div>
+                );
+            }
+        }
+    ]
+});
+
 // Oracle COMPUTE configurations mapping
 const oracleComputeConfigs = {
-    [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: createOracleHostOsPatchConfig()
+    [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: createOracleHostOsPatchConfig(),
+    [ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES]: createOracleComputeAssessmentConfig(
+        'transparentHugepages',
+        ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES,
+        true
+    ),
+    [ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS]: createOracleComputeAssessmentConfig(
+        'tcpAdvancedOptions',
+        ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS,
+        true
+    ),
+    [ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS]: createOracleComputeAssessmentConfig(
+        'filesystemsIoOptions',
+        ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS
+    ),
+    [ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT]: createOracleComputeAssessmentConfig(
+        'multiblockReadcount',
+        ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT,
+        true
+    )
 };
 
 const createOracleSecurityPatchConfig = () => ({

@@ -490,24 +490,6 @@
                     "totalObjectsInViolation": 1
                 },
                 {
-                    "name": "transparent-hugepages",
-                    "status": "not-optimized",
-                    "recommended": "disabled",
-                    "severity": "warning",
-                    "recommendation": "Workload Factory recommends disabling Transparent HugePages (THP) on database hosts running Oracle databases. Disabling THP is an Oracle best practice to prevent potential performance issues and ensure optimal database stability.",
-                    "tags": ["Performance efficiency"],
-                    "objectsInViolation": ["i-08b88d1026a035b68"],
-                    "violationDetails": [
-                        {
-                            "objectName": "i-08b88d1026a035b68",
-                            "value": "false",
-                            "objectType": "EC2 instance"
-                        }
-                    ],
-                    "totalObjectsAssessed": 1,
-                    "totalObjectsInViolation": 1
-                },
-                {
                     "name": "selinux",
                     "status": "not-optimized",
                     "recommended": "disabled",
@@ -560,62 +542,6 @@
                     ],
                     "totalObjectsAssessed": 1,
                     "totalObjectsInViolation": 1
-                },
-                {
-                    "name": "tcp-advanced-options",
-                    "status": "not-optimized",
-                    "recommended": "enabled",
-                    "severity": "warning",
-                    "recommendation": "Workload Factory recommends enabling TCP features such as TCP window scaling, timestamps, and selective acknowledgments on Oracle database hosts. These features enhance network performance and reliability, which are critical for database operations that require efficient data transfer and low latency.",
-                    "tags": ["Reliability", "Performance efficiency"],
-                    "objectsInViolation": ["i-08b88d1026a035b68"],
-                    "violationDetails": [
-                        {
-                            "objectName": "i-08b88d1026a035b68",
-                            "value": "120",
-                            "objectType": "EC2 instance"
-                        }
-                    ],
-                    "totalObjectsAssessed": 1,
-                    "totalObjectsInViolation": 1
-                },
-                {
-                    "name": "filesystems-io-options",
-                    "status": "not-optimized",
-                    "recommended": "setall",
-                    "severity": "warning",
-                    "recommendation": "Workload Factory recommends setting filesystemio_options = setall for optimal I/O performance. Adjust SGA size if needed when moving away from buffered I/O..",
-                    "tags": ["Performance efficiency"],
-                    "objectsInViolation": ["pdb21cnas1"],
-                    "violationDetails": [
-                        {
-                            "objectName": "pdb21cnas1",
-                            "value": "none",
-                            "objectType": "Database"
-                        }
-                    ],
-                    "totalObjectsAssessed": 1,
-                    "totalObjectsInViolation": 1,
-                    "resourceType": "Database"
-                },
-                {
-                    "name": "multiblock-readcount",
-                    "status": "not-optimized",
-                    "recommended": "disabled",
-                    "severity": "warning",
-                    "recommendation": "Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.",
-                    "tags": ["Performance efficiency"],
-                    "objectsInViolation": ["pdb21cnas1"],
-                    "violationDetails": [
-                        {
-                            "objectName": "pdb21cnas1",
-                            "value": "128",
-                            "objectType": "Database"
-                        }
-                    ],
-                    "totalObjectsAssessed": 1,
-                    "totalObjectsInViolation": 1,
-                    "resourceType": "Database"
                 },
                 {
                     "name": "multipath-io-sessions",
@@ -1130,6 +1056,98 @@
             }
         ]
     },
+    "transparentHugepages": {
+        "name": "transparent-hugepages",
+        "status": "not-optimized",
+        "recommended": "disabled",
+        "severity": "warning",
+        "recommendation": "Workload Factory recommends disabling Transparent HugePages (THP) on database hosts running Oracle databases. Disabling THP is an Oracle best practice to prevent potential performance issues and ensure optimal database stability.",
+        "tags": ["Performance efficiency"],
+        "objectsInViolation": ["i-031858c121f213fb7"],
+        "violationDetails": [
+            {
+                "objectName": "transparent-hugepages",
+                "value": "enabled",
+                "objectType": "configuration",
+                "recommended": "always madvise [never]"
+            }
+        ],
+        "totalObjectsAssessed": 1,
+        "totalObjectsInViolation": 1,
+        "resourceType": "EC2 Instance"
+    },
+    "tcpAdvancedOptions": {
+        "name": "tcp-advanced-options",
+        "status": "not-optimized",
+        "recommended": "enabled",
+        "severity": "warning",
+        "recommendation": "Workload Factory recommends enabling TCP timestamps, SACK, and window scaling for best network performance and reliability.",
+        "tags": ["Reliability", "Performance efficiency"],
+        "objectsInViolation": ["i-031858c121f213fb7"],
+        "violationDetails": [
+            {
+                "objectName": "net.ipv4.tcp_timestamps",
+                "value": "0",
+                "objectType": "kernel parameter",
+                "recommended": "1"
+            },
+            {
+                "objectName": "net.ipv4.tcp_sack",
+                "value": "0",
+                "objectType": "kernel parameter",
+                "recommended": "1"
+            },
+            {
+                "objectName": "net.ipv4.tcp_window_scaling",
+                "value": "0",
+                "objectType": "kernel parameter",
+                "recommended": "1"
+            }
+        ],
+        "totalObjectsAssessed": 1,
+        "totalObjectsInViolation": 1,
+        "resourceType": "EC2 Instance"
+    },
+    "filesystemsIoOptions": {
+        "name": "filesystems-io-options",
+        "status": "not-optimized",
+        "recommended": "setall",
+        "severity": "warning",
+        "recommendation": "Workload Factory recommends setting filesystemio_options = setall for optimal I/O performance. Adjust SGA size if needed when moving away from buffered I/O.",
+        "tags": ["Performance efficiency"],
+        "objectsInViolation": ["i-06d58265235cd42df"],
+        "violationDetails": [
+            {
+                "objectName": "filesystemio_options",
+                "value": "none",
+                "objectType": "oracle parameter",
+                "recommended": "SETALL"
+            }
+        ],
+        "totalObjectsAssessed": 1,
+        "totalObjectsInViolation": 1,
+        "resourceType": "EC2 Instance"
+    },
+    "multiblockReadcount": {
+        "name": "multiblock-readcount",
+        "status": "not-optimized",
+        "recommended": "disabled",
+        "severity": "warning",
+        "recommendation": "Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.",
+        "tags": ["Performance efficiency"],
+        "objectsInViolation": ["i-031858c121f213fb7"],
+        "violationDetails": [
+            {
+                "objectName": "db_file_multiblock_read_count",
+                "value": "128",
+                "objectType": "oracle parameter",
+                "recommended": "not set"
+            }
+        ],
+        "totalObjectsAssessed": 1,
+        "totalObjectsInViolation": 1,
+        "resourceType": "EC2 Instance"
+    },
     "crr": {
         "name": "crr",
         "severity": "warning",
@@ -1292,7 +1310,11 @@
                 ]
             }
         ],
-        "oldCloneDatabaseNames": ["oracle_data_vol_002_clone", "oracle_redo_vol_001_clone", "oracle_arch_vol_003_clone"],
+        "oldCloneDatabaseNames": [
+            "oracle_data_vol_002_clone",
+            "oracle_redo_vol_001_clone",
+            "oracle_arch_vol_003_clone"
+        ],
         "objectsInViolation": ["oracle_data_vol_002_clone", "oracle_redo_vol_001_clone", "oracle_arch_vol_003_clone"],
         "cloneDriftMessage": "3 out of 4 clones are old and divergent"
     },

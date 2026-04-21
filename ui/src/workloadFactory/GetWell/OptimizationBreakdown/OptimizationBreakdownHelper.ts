@@ -47,6 +47,10 @@ export const getOracleDisplayNameToTechnicalKeyMapping = () => ({
     [ASSESSMENT_CONFIG_NAMES.SWAP_SPACE]: 'swap_space',
     // compute configurations
     [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: 'host_os_patch',
+    [ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES]: 'transparent_hugepages',
+    [ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS]: 'tcp_advanced_options',
+    [ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS]: 'filesystems_io_options',
+    [ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT]: 'multiblock_readcount',
     // Placement configurations
     [ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]: 'storage_tier',
     // Storage Layout configurations
@@ -74,13 +78,9 @@ export const getOracleDisplayNameToTechnicalKeyMapping = () => ({
     // Oracle OS configurations
     [ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO]: 'multipath-io',
     [ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES]: 'host-utilities',
-    [ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES]: 'transparent-hugepages',
     [ASSESSMENT_CONFIG_NAMES.SELINUX]: 'selinux',
     [ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT]: 'iscsi-replacement-timeout',
     [ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES]: 'multipath-friendly-names',
-    [ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS]: 'tcp-advanced-options',
-    [ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS]: 'filesystems-io-options',
-    [ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT]: 'multiblock-readcount',
     [ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS]: 'multipath-io-sessions',
     [ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION]: 'multipath-configuration',
     [ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS]: 'kernel-parameters',
