@@ -126,6 +126,8 @@ Please provide example responses, or confirm if I should generate realistic mock
 -   API references specific demo instances/databases
 -   User explicitly requests demo data modifications
 
+**Naming:** Invented EC2/VPC/host labels in `demo-utils` must look production-like—do not put literal `demo` in user-visible strings; mirror patterns in existing fixtures. Details: [resources/seed-data.md](./resources/seed-data.md#invented-labels-production-like-naming) and `.github/instructions/server-patterns.instructions.md` (Demo inventory fixtures).
+
 > **Complete guide**: See [resources/seed-data.md](./resources/seed-data.md)
 
 **Quick reference - Files to update:**

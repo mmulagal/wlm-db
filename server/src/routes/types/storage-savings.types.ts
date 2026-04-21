@@ -57,12 +57,11 @@ const BulkStorageSavingsRequestBody = Type.Object({
 });
 
 const OracleBulkStorageSavingsRequestBody = Type.Intersect([
-    Type.Pick(StorageSavingsRequestBody, [
-        'snapshotFrequency',
-        'clonedCopiesCount',
-        'cloneRefreshFrequency',
-        'monthlyChangeRatePercentage'
-    ]),
+    Type.Pick(StorageSavingsRequestBody, ['clonedCopiesCount', 'cloneRefreshFrequency', 'monthlyChangeRatePercentage']),
+    // `snapshotFrequency` is optional for Oracle bulk: downstream marketing helpers treat
+    // undefined the same as `NoSnapShotStorage` (no snapshot block), so direct API callers
+    // can omit it. The UI continues to send a value via its shared default.
+    Type.Partial(Type.Pick(StorageSavingsRequestBody, ['snapshotFrequency'])),
     Type.Object({
         hosts: Type.Array(BulkStorageSavingsHostEc2IdOnly, bulkStorageSavingsHostsArray)
     })
@@ -568,8 +567,11 @@ type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
 /** Fields passed to the marketing storage API for automatic EBS/FSx savings (MSSQL and Oracle). */
 type AutomaticModeStorageSavingsMarketingParams = Pick<
     StorageSavingsRequestBodyType,
-    'snapshotFrequency' | 'cloneRefreshFrequency' | 'clonedCopiesCount' | 'monthlyChangeRatePercentage'
->;
+    'cloneRefreshFrequency' | 'clonedCopiesCount' | 'monthlyChangeRatePercentage'
+> & {
+    /** Optional: Oracle bulk callers may omit it; downstream helpers treat undefined as no snapshots. */
+    snapshotFrequency?: StorageSavingsRequestBodyType['snapshotFrequency'];
+};
 
 type ManualStorageSavingsRequestBodyType = Static<typeof ManualStorageSavingsRequestBody>;
 

@@ -17,6 +17,18 @@
 
 ---
 
+## Invented labels (production-like naming)
+
+Simulator inventory is fake but **should read like production** in the UI:
+
+- Do **not** use the word `demo` in surfaced strings (`ec2InstanceName`, `ec2HostName`, VPC **name**, etc.).
+- Copy patterns from existing rows in `demoInventoryData.ts` (e.g. `oracle-node-*`, `DATAGUARD-PRIMARY-*`, shared VPC ids/names). Prefer neutral DNS-style hostnames (`ip-10-0-*…compute.internal`).
+- Internal code names (`const`, helpers) may stay technical; prefer `seed` / `fixture` over `demo` when naming new symbols.
+
+See also `.github/instructions/server-patterns.instructions.md` → **Demo inventory fixtures**.
+
+---
+
 ## Adding New Inventory Item
 
 ```typescript

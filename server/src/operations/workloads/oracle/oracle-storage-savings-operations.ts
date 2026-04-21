@@ -235,7 +235,9 @@ async function retrieveOracleComputeCost(
         if (co.finding === FINDING.NOT_OPTIMIZED && co.instanceRecommendations?.length) {
             const [{ instanceType: coType = '' } = {}] = co.instanceRecommendations;
             recommendedInstanceType = coType || ec2InstanceType;
-            recommendationOptions = co.instanceRecommendations;
+            // Intentionally empty: CO items lack `hoursInMonth` required by `MachinePriceDetails`.
+            // Surface the chosen instance type only; revisit with a proper mapper when the UI renders alternates.
+            recommendationOptions = [];
         } else {
             recommendedInstanceType = ec2InstanceType;
             computeMessage = co.message;

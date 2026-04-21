@@ -49,6 +49,16 @@ const NextTokenQueryString = Type.Object({
 - Use `config` package with `config/` folder: `default.json`, `production.json`, `demo.json`.
 - Access via `import config from 'config'`. Never store secrets in config files.
 
+## Demo inventory fixtures (`demo-utils`)
+
+When adding or editing seed data under `server/src/utils/demo-utils/` (inventory, discovery mocks, fake EC2/Oracle hosts):
+
+- Do **not** put the substring `demo` (any case) in **user-visible strings** (`ec2InstanceName`, `ec2HostName`, VPC display **name**, labels shown in Discover/inventory tables). Discovery flows surface these fields.
+- **Do** mirror naming already used in the same file or skill assets: for example instance names such as `oracle-node-5717`, `DATAGUARD-PRIMARY-oracle19c-*`, `DATAGUARD-STANDBY-*`; plausible VPC ids and names like other rows; private DNS forms like `ip-10-0-*.*.compute.internal`.
+- For internal **identifiers** (`const`, helpers), neutral terms (`seed`, `fixture`, `tco`) are fine; avoid `demo` in new symbol names when it adds confusion.
+
+For mock/seed workflows and file map, see `server/.cursor/skills/demo-environment-dev/` (especially `resources/seed-data.md`).
+
 ## Shell & PowerShell Scripts
 
 Scripts are embedded as template literals and executed via AWS SSM.

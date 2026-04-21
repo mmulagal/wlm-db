@@ -1,6 +1,7 @@
 import { isEmpty } from 'lodash-es';
 import {
     DiscoverMsSqlResponseBodyType,
+    DiscoverOracleInstanceType,
     DiscoverOracleResponseBodyType,
     DiscoverOracleResponseType
 } from '../../routes/types/discover.types';
@@ -1520,6 +1521,88 @@ async function discoverDemoDataOracle(
     fsxIdStandby?: string
 ) {
     if (isEmpty(ORACLE_DISCOVERY_RES.items)) {
+        const oracleEbsDemoAttachTime = '2025-03-07T03:34:27.000Z';
+        const mkOracleDemoEbsVolumes = (volumeIds: string[]) =>
+            volumeIds.map((VolumeId, index) => ({
+                DeviceName: `/dev/xvd${String.fromCharCode(97 + index)}`,
+                Ebs: {
+                    AttachTime: oracleEbsDemoAttachTime,
+                    DeleteOnTermination: true,
+                    Status: 'attached',
+                    VolumeId
+                }
+            }));
+        const mkOracleDemoEbsStorageEntries = (volumeIds: string[]) =>
+            volumeIds.map(id => ({
+                type: 'EBS',
+                id
+            }));
+
+        const mkOracleDemoDeploymentTypes = (zones: string[]) => [
+            {
+                type: 'SINGLE_AZ_1',
+                zones
+            }
+        ];
+
+        const oracleEbsTcoDemoSa1Vols = [
+            'vol-0a1b2c3d4e5f00001',
+            'vol-0a1b2c3d4e5f00002',
+            'vol-0a1b2c3d4e5f00003',
+            'vol-0a1b2c3d4e5f00004',
+            'vol-0a1b2c3d4e5f00005',
+            'vol-0a1b2c3d4e5f00006',
+            'vol-0a1b2c3d4e5f00007',
+            'vol-0a1b2c3d4e5f00008'
+        ];
+        const oracleEbsTcoDemoSa2Vols = [
+            'vol-0b2c3d4e5f6a70001',
+            'vol-0b2c3d4e5f6a70002',
+            'vol-0b2c3d4e5f6a70003',
+            'vol-0b2c3d4e5f6a70004',
+            'vol-0b2c3d4e5f6a70005',
+            'vol-0b2c3d4e5f6a70006',
+            'vol-0b2c3d4e5f6a70007',
+            'vol-0b2c3d4e5f6a70008'
+        ];
+        const oracleEbsTcoDemoDgPrimaryVols = [
+            'vol-0c4d5e6f7a8b00001',
+            'vol-0c4d5e6f7a8b00002',
+            'vol-0c4d5e6f7a8b00003',
+            'vol-0c4d5e6f7a8b00004',
+            'vol-0c4d5e6f7a8b00005',
+            'vol-0c4d5e6f7a8b00006',
+            'vol-0c4d5e6f7a8b00007',
+            'vol-0c4d5e6f7a8b00008'
+        ];
+        const oracleEbsTcoDemoDgStandbyVols = [
+            'vol-0d5e6f7a8b9c00001',
+            'vol-0d5e6f7a8b9c00002',
+            'vol-0d5e6f7a8b9c00003',
+            'vol-0d5e6f7a8b9c00004',
+            'vol-0d5e6f7a8b9c00005',
+            'vol-0d5e6f7a8b9c00006',
+            'vol-0d5e6f7a8b9c00007',
+            'vol-0d5e6f7a8b9c00008'
+        ];
+        const oracleEbsTcoDemoMixedStdVols = [
+            'vol-0e6f7a8b9c0d00001',
+            'vol-0e6f7a8b9c0d00002',
+            'vol-0e6f7a8b9c0d00003',
+            'vol-0e6f7a8b9c0d00004',
+            'vol-0e6f7a8b9c0d00005',
+            'vol-0e6f7a8b9c0d00006'
+        ];
+        const oracleEbsTcoDemoMixedDgVols = [
+            'vol-0f7a8b9c0d1e00001',
+            'vol-0f7a8b9c0d1e00002',
+            'vol-0f7a8b9c0d1e00003',
+            'vol-0f7a8b9c0d1e00004',
+            'vol-0f7a8b9c0d1e00005',
+            'vol-0f7a8b9c0d1e00006'
+        ];
+        const oracleEbsTcoDemoMixedHostAllVols = [...oracleEbsTcoDemoMixedStdVols, ...oracleEbsTcoDemoMixedDgVols];
+
         const discoveryRes = [
             {
                 ec2InstanceId: 'i-25694686',
@@ -1817,8 +1900,12 @@ async function discoverDemoDataOracle(
                         storage: [
                             {
                                 type: 'EBS',
-                                id: 'vol-094b644283b4fd16a',
-                                deploymentType: 'SINGLE_AZ_1',
+                                id: 'vol-094b644283b4fd16a'
+                            }
+                        ],
+                        deploymentTypes: [
+                            {
+                                type: 'SINGLE_AZ_1',
                                 zones: ['ap-south-1c']
                             }
                         ],
@@ -2032,6 +2119,333 @@ async function discoverDemoDataOracle(
                         }
                     }
                 ]
+            },
+            {
+                ec2InstanceId: 'i-02a8c7e5d4b3f12a9',
+                ec2InstanceType: 'm5.large',
+                ec2InstanceName: 'oracle-node-5718',
+                ec2HostName: 'ip-10-0-141-134.ap-south-1.compute.internal',
+                ec2UsageOperation: 'RunInstances',
+                ssmState: 'connected',
+                ebsVolumeIDs: oracleEbsTcoDemoSa1Vols,
+                ebsVolumes: mkOracleDemoEbsVolumes(oracleEbsTcoDemoSa1Vols),
+                vpc: {
+                    id: 'vpc-075ecf35aaafc2a4f',
+                    name: 'VPC-5',
+                    cidrBlock: '10.0.0.0/16'
+                },
+                error: undefined,
+                platform: 'Linux/UNIX',
+                oracleServerDeploymentType: 'Standalone',
+                databaseInstanceDetails: [
+                    {
+                        instanceId: 'orclstd1',
+                        instanceName: 'orclstd1',
+                        version: '19.0.0.0.0',
+                        instanceState: 'OPEN',
+                        instanceType: 'SINGLE_TENANT',
+                        databaseCount: 1,
+                        databaseDetails: {
+                            databaseId: '3578044226',
+                            openMode: 'READ WRITE'
+                        },
+                        storage: mkOracleDemoEbsStorageEntries(oracleEbsTcoDemoSa1Vols),
+                        deploymentTypes: mkOracleDemoDeploymentTypes(['ap-south-1a']),
+                        isInstanceStorageAsmManaged: false,
+                        isDefaultAuthentication: true,
+                        oracleServerAuthentication: false,
+                        asmAuthentication: false,
+                        manageReadiness: {
+                            assessment: {
+                                missingModules: [],
+                                missingSqlPermissions: []
+                            },
+                            remediation: {
+                                missingModules: [],
+                                missingSqlPermissions: []
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-03b9d6f4c5e2a8b71',
+                ec2InstanceType: 'm5.large',
+                ec2InstanceName: 'oracle-node-5719',
+                ec2HostName: 'ip-10-0-141-135.ap-south-1.compute.internal',
+                ec2UsageOperation: 'RunInstances',
+                ssmState: 'connected',
+                ebsVolumeIDs: oracleEbsTcoDemoSa2Vols,
+                ebsVolumes: mkOracleDemoEbsVolumes(oracleEbsTcoDemoSa2Vols),
+                vpc: {
+                    id: 'vpc-075ecf35aaafc2a4f',
+                    name: 'VPC-5',
+                    cidrBlock: '10.0.0.0/16'
+                },
+                error: undefined,
+                platform: 'Linux/UNIX',
+                oracleServerDeploymentType: 'Standalone',
+                databaseInstanceDetails: [
+                    {
+                        instanceId: 'orclstd2',
+                        instanceName: 'orclstd2',
+                        version: '19.0.0.0.0',
+                        instanceState: 'OPEN',
+                        instanceType: 'SINGLE_TENANT',
+                        databaseCount: 1,
+                        databaseDetails: {
+                            databaseId: '3578044227',
+                            openMode: 'READ WRITE'
+                        },
+                        storage: mkOracleDemoEbsStorageEntries(oracleEbsTcoDemoSa2Vols),
+                        deploymentTypes: mkOracleDemoDeploymentTypes(['ap-south-1a']),
+                        isInstanceStorageAsmManaged: false,
+                        isDefaultAuthentication: true,
+                        oracleServerAuthentication: false,
+                        asmAuthentication: false,
+                        manageReadiness: {
+                            assessment: {
+                                missingModules: [],
+                                missingSqlPermissions: []
+                            },
+                            remediation: {
+                                missingModules: [],
+                                missingSqlPermissions: []
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-04c8e5b3d6a9f12c4',
+                ec2InstanceType: 'm5.large',
+                ec2InstanceName: 'DATAGUARD-PRIMARY-oracle19c-ebs',
+                ec2HostName: 'ip-10-0-142-10.ap-south-1.compute.internal',
+                ec2UsageOperation: 'RunInstances',
+                ssmState: 'connected',
+                ebsVolumeIDs: oracleEbsTcoDemoDgPrimaryVols,
+                ebsVolumes: mkOracleDemoEbsVolumes(oracleEbsTcoDemoDgPrimaryVols),
+                vpc: {
+                    id: 'vpc-075ecf35aaafc2a4f',
+                    name: 'VPC-5',
+                    cidrBlock: '10.0.0.0/16'
+                },
+                error: undefined,
+                platform: 'Linux/UNIX',
+                oracleServerDeploymentType: 'Standalone',
+                databaseInstanceDetails: [
+                    {
+                        instanceName: 'orclebs_pri',
+                        instanceId: 'orclebs_pri',
+                        instanceState: 'OPEN',
+                        version: '19.0.0.0.0',
+                        instanceType: 'SINGLE_TENANT',
+                        databaseCount: 1,
+                        databaseDetails: {
+                            databaseId: '3578044228',
+                            openMode: 'READ WRITE'
+                        },
+                        oracleServerAuthentication: false,
+                        isDefaultAuthentication: true,
+                        isInstanceStorageAsmManaged: false,
+                        asmAuthentication: false,
+                        storage: mkOracleDemoEbsStorageEntries(oracleEbsTcoDemoDgPrimaryVols),
+                        deploymentTypes: mkOracleDemoDeploymentTypes(['ap-south-1a']),
+                        manageReadiness: {
+                            assessment: {
+                                missingSqlPermissions: [],
+                                missingModules: []
+                            },
+                            remediation: {
+                                missingSqlPermissions: [],
+                                missingModules: []
+                            }
+                        },
+                        isDataGuardDeployed: true,
+                        dataguardDetails: {
+                            dbUniqueName: 'orclebs_pri',
+                            dbName: 'orclebsdg',
+                            associatedHosts: [
+                                {
+                                    serviceName: 'orclebs_pri',
+                                    hostIp: '10.0.142.10',
+                                    ec2InstanceId: 'i-04c8e5b3d6a9f12c4',
+                                    listenerPort: '1521',
+                                    sidName: 'orclebs_pri'
+                                },
+                                {
+                                    serviceName: 'orclebs_stdby',
+                                    hostIp: '10.0.142.11',
+                                    ec2InstanceId: 'i-05d7f6c4e3b8a9d52',
+                                    listenerPort: '1521',
+                                    sidName: 'orclebs_stdby'
+                                }
+                            ],
+                            isPrimaryNode: true
+                        }
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-05d7f6c4e3b8a9d52',
+                ec2InstanceType: 'm5.large',
+                ec2InstanceName: 'DATAGUARD-STANDBY-oracle19c-ebs',
+                ec2HostName: 'ip-10-0-142-11.ap-south-1.compute.internal',
+                ec2UsageOperation: 'RunInstances',
+                ssmState: 'connected',
+                ebsVolumeIDs: oracleEbsTcoDemoDgStandbyVols,
+                ebsVolumes: mkOracleDemoEbsVolumes(oracleEbsTcoDemoDgStandbyVols),
+                vpc: {
+                    id: 'vpc-075ecf35aaafc2a4f',
+                    name: 'VPC-5',
+                    cidrBlock: '10.0.0.0/16'
+                },
+                error: undefined,
+                platform: 'Linux/UNIX',
+                oracleServerDeploymentType: 'Standalone',
+                databaseInstanceDetails: [
+                    {
+                        instanceName: 'orclebs_stdby',
+                        instanceId: 'orclebs_stdby',
+                        instanceState: 'OPEN',
+                        version: '19.0.0.0.0',
+                        instanceType: 'SINGLE_TENANT',
+                        databaseCount: 1,
+                        databaseDetails: {
+                            databaseId: '3578044228',
+                            openMode: 'READ WRITE'
+                        },
+                        oracleServerAuthentication: false,
+                        isDefaultAuthentication: true,
+                        isInstanceStorageAsmManaged: false,
+                        asmAuthentication: false,
+                        storage: mkOracleDemoEbsStorageEntries(oracleEbsTcoDemoDgStandbyVols),
+                        deploymentTypes: mkOracleDemoDeploymentTypes(['ap-south-1a']),
+                        manageReadiness: {
+                            assessment: {
+                                missingSqlPermissions: [],
+                                missingModules: []
+                            },
+                            remediation: {
+                                missingSqlPermissions: [],
+                                missingModules: []
+                            }
+                        },
+                        isDataGuardDeployed: true,
+                        dataguardDetails: {
+                            dbUniqueName: 'orclebs_stdby',
+                            dbName: 'orclebsdg',
+                            associatedHosts: [
+                                {
+                                    serviceName: 'orclebs_pri',
+                                    hostIp: '10.0.142.10',
+                                    ec2InstanceId: 'i-04c8e5b3d6a9f12c4',
+                                    listenerPort: '1521',
+                                    sidName: 'orclebs_pri'
+                                },
+                                {
+                                    serviceName: 'orclebs_stdby',
+                                    hostIp: '10.0.142.11',
+                                    ec2InstanceId: 'i-05d7f6c4e3b8a9d52',
+                                    listenerPort: '1521',
+                                    sidName: 'orclebs_stdby'
+                                }
+                            ],
+                            isPrimaryNode: false
+                        }
+                    }
+                ]
+            },
+            {
+                ec2InstanceId: 'i-06e9a7b5c8d4f3e12',
+                ec2InstanceType: 'm5.large',
+                ec2InstanceName: 'oracle-node-5720',
+                ec2HostName: 'ip-10-0-141-200.ap-south-1.compute.internal',
+                ec2UsageOperation: 'RunInstances',
+                ssmState: 'connected',
+                ebsVolumeIDs: oracleEbsTcoDemoMixedHostAllVols,
+                ebsVolumes: mkOracleDemoEbsVolumes(oracleEbsTcoDemoMixedHostAllVols),
+                vpc: {
+                    id: 'vpc-075ecf35aaafc2a4f',
+                    name: 'VPC-5',
+                    cidrBlock: '10.0.0.0/16'
+                },
+                error: undefined,
+                platform: 'Linux/UNIX',
+                oracleServerDeploymentType: 'Standalone',
+                databaseInstanceDetails: [
+                    {
+                        instanceId: 'orclmix_std',
+                        instanceName: 'orclmix_std',
+                        version: '19.0.0.0.0',
+                        instanceState: 'OPEN',
+                        instanceType: 'SINGLE_TENANT',
+                        databaseCount: 1,
+                        databaseDetails: {
+                            databaseId: '3578044229',
+                            openMode: 'READ WRITE'
+                        },
+                        storage: mkOracleDemoEbsStorageEntries(oracleEbsTcoDemoMixedStdVols),
+                        deploymentTypes: mkOracleDemoDeploymentTypes(['ap-south-1a']),
+                        isInstanceStorageAsmManaged: false,
+                        isDefaultAuthentication: true,
+                        oracleServerAuthentication: false,
+                        asmAuthentication: false,
+                        manageReadiness: {
+                            assessment: {
+                                missingModules: [],
+                                missingSqlPermissions: []
+                            },
+                            remediation: {
+                                missingModules: [],
+                                missingSqlPermissions: []
+                            }
+                        }
+                    },
+                    {
+                        instanceId: 'orclmix_dg',
+                        instanceName: 'orclmix_dg',
+                        version: '19.0.0.0.0',
+                        instanceState: 'OPEN',
+                        instanceType: 'SINGLE_TENANT',
+                        databaseCount: 1,
+                        databaseDetails: {
+                            databaseId: '3578044230',
+                            openMode: 'READ WRITE'
+                        },
+                        storage: mkOracleDemoEbsStorageEntries(oracleEbsTcoDemoMixedDgVols),
+                        deploymentTypes: mkOracleDemoDeploymentTypes(['ap-south-1a']),
+                        isInstanceStorageAsmManaged: false,
+                        isDefaultAuthentication: true,
+                        oracleServerAuthentication: false,
+                        asmAuthentication: false,
+                        manageReadiness: {
+                            assessment: {
+                                missingModules: [],
+                                missingSqlPermissions: []
+                            },
+                            remediation: {
+                                missingModules: [],
+                                missingSqlPermissions: []
+                            }
+                        },
+                        isDataGuardDeployed: true,
+                        dataguardDetails: {
+                            dbUniqueName: 'orclmix_dg',
+                            dbName: 'orclmixdg',
+                            associatedHosts: [
+                                {
+                                    serviceName: 'orclmix_dg',
+                                    hostIp: '10.0.141.200',
+                                    ec2InstanceId: 'i-06e9a7b5c8d4f3e12',
+                                    listenerPort: '1521',
+                                    sidName: 'orclmix_dg'
+                                }
+                            ],
+                            isPrimaryNode: true
+                        }
+                    }
+                ]
             }
         ] as unknown as DiscoverOracleResponseType[];
         ORACLE_DISCOVERY_RES.items = discoveryRes;
@@ -2123,7 +2537,7 @@ async function discoverDemoDataOracle(
                                             missingSqlPermissions: []
                                         }
                                     }
-                                } as any)
+                                } as unknown as DiscoverOracleInstanceType)
                         )
                     } as unknown as DiscoverOracleResponseType;
                     ORACLE_DISCOVERY_RES.items.push(newDiscoveredHost);

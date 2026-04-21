@@ -675,7 +675,6 @@ const PgSqlDbHostSummaryListResponse = Type.Object({
 });
 
 const OracleDbHostsSummaryResponse = Type.Omit(DatabaseHostSummaryForMultiInstanceResponse, [
-    'ebsResourceInfo',
     'sqlLicenseIncluded',
     'fsxwResourceInfo'
 ]);

@@ -2356,11 +2356,17 @@ async function getOracleResourceDetails(
         for (const oracleDbInstance of ec2Instance?.databaseInstanceDetails || []) {
             const { storage } = oracleDbInstance;
             let fsxnId: string | undefined;
+            const ebsVolumeIds: string[] = [];
             storage?.forEach(({ type, id }: { type: string; id: string }) => {
                 // if there are multiple entries in storage for the same type then only the last entry will be considered. For eg: if the same sql instance has fsxn-1 and fsxn-2, then only fsxn-2 will be considered. Such a scenario occurs when system dbs use one storage and user dbs use another storage. The reason for this limitation currently is wlmdb resources are not expecting multiple co-relation ids for the same resource.
                 // If the storage is of different type, then both will be considered while calculating protection and storage savings details.
+                if (type === STORAGE_TYPE.EBS) {
+                    ebsVolumeIds.push(id);
+                }
                 fsxnId = type === STORAGE_TYPE.FSXN ? id : fsxnId;
             });
+
+            resourceDetails.ebsVolumeIds = (resourceDetails.ebsVolumeIds ?? []).concat(ebsVolumeIds);
 
             const [mountPointDetails] = storage?.[storage.length - 1]?.mountDetails || [];
             const dbInstanceState =
@@ -2380,8 +2386,9 @@ async function getOracleResourceDetails(
                     ? { mountPointDetails: { protocol: 'NFS', mountPoint: '/oracleData', mountIp: '0.0.0.0' } }
                     : { mountPointDetails },
                 fsxn_ids: fsxnId || '',
+                ebsVolumeIds,
                 database_deployment_type: STANDALONE,
-                storage_type: fsxnId ? STORAGE_TYPE.FSXN : NOT_AVAILABLE,
+                storage_type: fsxnId ? STORAGE_TYPE.FSXN : ebsVolumeIds.length > 0 ? STORAGE_TYPE.EBS : NOT_AVAILABLE,
                 resource: clonedResourceDetails
             });
         }
