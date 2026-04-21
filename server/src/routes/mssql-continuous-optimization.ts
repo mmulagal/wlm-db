@@ -71,7 +71,9 @@ import { SSMDocument } from '../utils/common-types';
 import {
     fetchMssqlOfflineAssessmentPerAccount,
     fetchMssqlOfflineAssessment,
-    deleteOfflineAssessmentRecord
+    listMssqlOfflineAssessmentDatabases,
+    deleteOfflineAssessmentRecord,
+    listMssqlOfflineAssessmentDatabasesPerAccount
 } from '../operations/continuous-optimization/mssql/offline-assessment-operations';
 import { uploadOfflineAssessment, downloadOfflineAssessmentScript } from '../operations/offline-assessment-operations';
 import {
@@ -79,7 +81,9 @@ import {
     OfflineAssessmentUploadSchema,
     OfflineAssessmentGetByIdSchema,
     OfflineAssessmentDownloadSchema,
-    DeleteOfflineAssessment
+    DeleteOfflineAssessment,
+    OfflineAssessmentDatabasesSchema,
+    OfflineAssessmentDatabasesPerAccountSchema
 } from './schemas/offline-assessment-schema';
 import getLogger from '../utils/logger';
 
@@ -536,6 +540,25 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                 return reply.send(response);
             }
         )
+        // List all databases across all offline assessments for an account (paginated)
+        .get(
+            '/v1/mssql/offline-assessment/databases',
+            { schema: OfflineAssessmentDatabasesPerAccountSchema(DatabaseTypes.MS_SQL_SERVER) },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    query: { pageSize, nextToken, credentialsId, region }
+                } = castRequest(request);
+
+                const response = await listMssqlOfflineAssessmentDatabasesPerAccount(accountId, {
+                    pageSize,
+                    credentialsId,
+                    region,
+                    nextToken
+                });
+                return reply.send(response);
+            }
+        )
         // Upload offline assessment data from JSON file (supports multiple database instances)
         .post(
             '/v1/mssql/offline-assessment/upload',
@@ -582,6 +605,23 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                     fields
                 );
                 return reply.send(response);
+            }
+        )
+        // Get list of databases for a specific offline assessment record
+        .get(
+            '/v1/mssql/database-hosts/:resourceId/database-instances/:databaseInstanceId/offline-assessment/databases',
+            { schema: OfflineAssessmentDatabasesSchema(DatabaseTypes.MS_SQL_SERVER) },
+            async (request, reply) => {
+                const {
+                    params: { accountId, resourceId, databaseInstanceId },
+                    query: { credentialsId, region }
+                } = castRequest(request);
+
+                const result = await listMssqlOfflineAssessmentDatabases(accountId, resourceId, databaseInstanceId, {
+                    credentialsId,
+                    region
+                });
+                return reply.send(result);
             }
         )
         // Download offline assessment script as zip

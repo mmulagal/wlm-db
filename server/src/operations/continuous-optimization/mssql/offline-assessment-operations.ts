@@ -28,7 +28,7 @@ import {
     validateWithSchema
 } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
-import { AWS_REGIONS, HttpErrorCodes } from '../../../utils/consts';
+import { AWS_REGIONS, HttpErrorCodes, MSSQL_DATABASE_TYPES, MSSQL_SYSTEM_DATABASES } from '../../../utils/consts';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentStatus,
@@ -774,6 +774,167 @@ async function fetchMssqlOfflineAssessmentPerAccount(
     };
 }
 
+interface UserDatabaseLayoutEntry {
+    lunPath: string;
+    driveLetter?: string;
+    databaseDetails?: Array<{ name: string; sizeInMb: number; collationName?: string }>;
+}
+
+interface UserDatabaseLayout {
+    data?: UserDatabaseLayoutEntry[];
+    log?: UserDatabaseLayoutEntry[];
+    tempDb?: UserDatabaseLayoutEntry[];
+}
+
+type DbMapEntry = {
+    totalSizeBytes: number;
+    collationName?: string;
+    dataLuns: { name: string; driveLetter?: string }[];
+    logLuns: { name: string; driveLetter?: string }[];
+};
+
+function accumulateLunEntries(
+    dbMap: Map<string, DbMapEntry>,
+    entries: UserDatabaseLayoutEntry[],
+    lunKey: 'dataLuns' | 'logLuns'
+) {
+    for (const entry of entries) {
+        for (const db of entry.databaseDetails || []) {
+            if (!dbMap.has(db.name)) {
+                dbMap.set(db.name, { totalSizeBytes: 0, dataLuns: [], logLuns: [] });
+            }
+            const rec = dbMap.get(db.name)!;
+            rec.totalSizeBytes += (db.sizeInMb || 0) * 1024 * 1024;
+            if (!rec.collationName && db.collationName) {
+                rec.collationName = db.collationName;
+            }
+            rec[lunKey].push({ name: entry.lunPath, driveLetter: entry.driveLetter });
+        }
+    }
+}
+
+function mapOfflineAssessmentRecord(record: OfflineAssessmentDBSchema) {
+    const { instanceLevelAssessment = {} } = (record.rawdata as MSSQLOfflineAssessmentRawData) || {};
+    const { databaseInstanceName, fsxId, storageEndpoint, deploymentType, baseDeploymentType, agName, hostname } =
+        (record.metadata as unknown as MSSQLOfflineAssessmentMetadataType) || {};
+
+    const fileSystemId =
+        (instanceLevelAssessment as MSSQLInstanceLevelAssessment).filesystemId || fsxId || storageEndpoint;
+    const { data = [], log = [] } = ((instanceLevelAssessment as MSSQLInstanceLevelAssessment).layout?.[
+        'user-database-layout'
+    ] ?? {}) as UserDatabaseLayout;
+
+    const dbMap = new Map<string, DbMapEntry>();
+    accumulateLunEntries(dbMap, data, 'dataLuns');
+    accumulateLunEntries(dbMap, log, 'logLuns');
+
+    const databases = Array.from(dbMap.entries()).map(
+        ([name, { totalSizeBytes, collationName, dataLuns, logLuns }]) => ({
+            name,
+            type: MSSQL_SYSTEM_DATABASES.includes(name.toLowerCase())
+                ? MSSQL_DATABASE_TYPES.SYSTEM
+                : MSSQL_DATABASE_TYPES.USER,
+            size: totalSizeBytes,
+            collation: collationName || '',
+            luns: { dataFiles: dataLuns, logFiles: logLuns }
+        })
+    );
+
+    return {
+        resourceId: record.resource_id,
+        databaseInstanceId: record.database_instance_id,
+        databases,
+        count: databases.length,
+        ...(databaseInstanceName && { databaseInstanceName }),
+        ...(fileSystemId && { fileSystemId }),
+        ...(hostname && { hostname }),
+        ...(deploymentType && { deploymentType }),
+        ...(baseDeploymentType && { baseDeploymentType }),
+        ...(agName && { agName })
+    };
+}
+
+async function listMssqlOfflineAssessmentDatabasesPerAccount(
+    accountId: string,
+    options: {
+        pageSize?: number;
+        credentialsId?: string;
+        region?: string;
+        nextToken?: string;
+    } = {}
+) {
+    const { pageSize = 50, credentialsId, region, nextToken } = options;
+
+    logger.info('Listing MSSQL offline assessment databases', {
+        accountId,
+        credentialsId,
+        region,
+        pageSize,
+        nextToken
+    });
+
+    const records = await dbListOfflineAssessments({
+        accountId,
+        credentialsId,
+        region,
+        databaseType: DATABASE_TYPE.mssql,
+        pageSize,
+        nextToken
+    });
+
+    if (isEmpty(records)) {
+        logger.info(`No one-time assessment found for account ${accountId}.`);
+        return { items: [], count: 0 };
+    }
+
+    const items = records.map(mapOfflineAssessmentRecord);
+    const responseNextToken = records.length >= pageSize ? records[records.length - 1]?.id : undefined;
+
+    return {
+        items,
+        count: items.length,
+        ...(responseNextToken && { nextToken: responseNextToken })
+    };
+}
+
+async function listMssqlOfflineAssessmentDatabases(
+    accountId: string,
+    resourceId: string,
+    databaseInstanceId: string,
+    options: {
+        credentialsId?: string;
+        region?: string;
+    } = {}
+) {
+    const { credentialsId, region } = options;
+
+    logger.info('Getting MSSQL offline assessment databases for instance', {
+        accountId,
+        resourceId,
+        databaseInstanceId,
+        credentialsId,
+        region
+    });
+
+    const [records] = await dbListOfflineAssessments({
+        accountId,
+        credentialsId,
+        region,
+        databaseType: DATABASE_TYPE.mssql,
+        resourceId,
+        databaseInstanceId
+    });
+
+    if (isEmpty(records)) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `One-time assessment not found for resource ${resourceId} and instance ${databaseInstanceId}`
+        );
+    }
+
+    return mapOfflineAssessmentRecord(records);
+}
+
 async function deleteOfflineAssessmentRecord(
     accountId: string,
     databaseHostIds: string,
@@ -805,5 +966,7 @@ export {
     uploadMssqlOfflineAssessment,
     fetchMssqlOfflineAssessment,
     fetchMssqlOfflineAssessmentPerAccount,
+    listMssqlOfflineAssessmentDatabasesPerAccount,
+    listMssqlOfflineAssessmentDatabases,
     deleteOfflineAssessmentRecord
 };

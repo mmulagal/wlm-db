@@ -3,7 +3,9 @@ import { DATABASE_TYPE } from '@prisma/client';
 import {
     uploadMssqlOfflineAssessment,
     fetchMssqlOfflineAssessment,
-    fetchMssqlOfflineAssessmentPerAccount
+    fetchMssqlOfflineAssessmentPerAccount,
+    listMssqlOfflineAssessmentDatabasesPerAccount,
+    listMssqlOfflineAssessmentDatabases
 } from '../../../../src/operations/continuous-optimization/mssql/offline-assessment-operations';
 import { bulkUpsertOfflineAssessments, getOfflineAssessment } from '../../../../src/lib/database/offline-assessment';
 import { ACCOUNT_ID } from '../../../utils/consts';
@@ -12,6 +14,7 @@ import {
     AssessmentStatus,
     MIN_OPTIMIZED_HEADROOM_PERCENTAGE
 } from '../../../../src/utils/continous-optimization-consts';
+import { MSSQL_DATABASE_TYPES } from '../../../../src/utils/consts';
 // import { generateSqlResourceId, sleep } from '../../../../src/utils/utils'; // Commented out: only used in commented tests
 
 // Test constants
@@ -518,6 +521,228 @@ describe('MSSQL Offline Assessment Operations', () => {
             const result = await fetchMssqlOfflineAssessmentPerAccount(ACCOUNT_ID, 50, 'cred-123', 'us-east-1');
 
             expect(result).toBeDefined();
+        });
+    });
+
+    describe('listMssqlOfflineAssessmentDatabases', () => {
+        const DB_RESOURCE_ID = 'databases-layout-resource';
+        const DB_INSTANCE_ID = 'databases-layout-instance';
+        const ACCT_DB_RESOURCE_1 = 'acct-db-resource-1';
+        const ACCT_DB_INSTANCE_1 = 'acct-db-instance-1';
+        const ACCT_DB_RESOURCE_2 = 'acct-db-resource-2';
+        const ACCT_DB_INSTANCE_2 = 'acct-db-instance-2';
+
+        beforeAll(async () => {
+            await bulkUpsertOfflineAssessments([
+                // Single-instance test data: has LUN layout with user + system databases
+                {
+                    accountId: ACCOUNT_ID,
+                    resourceId: DB_RESOURCE_ID,
+                    databaseInstanceId: DB_INSTANCE_ID,
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: {
+                        instanceLevelAssessment: {
+                            layout: {
+                                'user-database-layout': {
+                                    data: [
+                                        {
+                                            lunPath: '/vol/data_lun',
+                                            driveLetter: 'E',
+                                            databaseDetails: [
+                                                { name: 'AdventureWorks', sizeInMb: 512 },
+                                                { name: 'master', sizeInMb: 8 }
+                                            ]
+                                        }
+                                    ],
+                                    log: [
+                                        {
+                                            lunPath: '/vol/log_lun',
+                                            driveLetter: 'L',
+                                            databaseDetails: [{ name: 'AdventureWorks', sizeInMb: 64 }]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    metadata: {
+                        databaseInstanceName: 'MSSQLSERVER',
+                        fsxId: 'fs-databases-test',
+                        hostname: 'sql-databases-host',
+                        deploymentType: 'Standalone'
+                    }
+                },
+                // Single-instance test data: no layout
+                {
+                    accountId: ACCOUNT_ID,
+                    resourceId: 'databases-empty-layout-resource',
+                    databaseInstanceId: 'databases-empty-layout-instance',
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: { instanceLevelAssessment: {} },
+                    metadata: { databaseInstanceName: 'MSSQLSERVER', hostname: 'sql-empty-host' }
+                },
+                // Account-level test data
+                {
+                    accountId: ACCOUNT_ID,
+                    resourceId: ACCT_DB_RESOURCE_1,
+                    databaseInstanceId: ACCT_DB_INSTANCE_1,
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: {
+                        instanceLevelAssessment: {
+                            layout: {
+                                'user-database-layout': {
+                                    data: [
+                                        {
+                                            lunPath: '/vol/acct_data_1',
+                                            databaseDetails: [{ name: 'SalesDB', sizeInMb: 256 }]
+                                        }
+                                    ],
+                                    log: []
+                                }
+                            }
+                        }
+                    },
+                    metadata: {
+                        databaseInstanceName: 'INSTANCE1',
+                        fsxId: 'fs-acct-db-1',
+                        hostname: 'acct-sql-host-1',
+                        deploymentType: 'Standalone'
+                    }
+                },
+                {
+                    accountId: ACCOUNT_ID,
+                    resourceId: ACCT_DB_RESOURCE_2,
+                    databaseInstanceId: ACCT_DB_INSTANCE_2,
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: {
+                        instanceLevelAssessment: {
+                            layout: {
+                                'user-database-layout': {
+                                    data: [
+                                        {
+                                            lunPath: '/vol/acct_data_2',
+                                            databaseDetails: [{ name: 'HRSystem', sizeInMb: 128 }]
+                                        }
+                                    ],
+                                    log: []
+                                }
+                            }
+                        }
+                    },
+                    metadata: {
+                        databaseInstanceName: 'INSTANCE2',
+                        fsxId: 'fs-acct-db-2',
+                        hostname: 'acct-sql-host-2',
+                        deploymentType: 'Standalone'
+                    }
+                }
+            ]);
+        });
+
+        describe('single-instance mode (resourceId + databaseInstanceId provided)', () => {
+            it('should return databases with correct structure', async () => {
+                const items = await listMssqlOfflineAssessmentDatabases(ACCOUNT_ID, DB_RESOURCE_ID, DB_INSTANCE_ID);
+
+                expect(items).toBeDefined();
+                expect(items.databases).toBeDefined();
+                expect(items.databases.length).toBeGreaterThan(0);
+            });
+
+            it('should correctly categorise user vs system databases', async () => {
+                const items = await listMssqlOfflineAssessmentDatabases(ACCOUNT_ID, DB_RESOURCE_ID, DB_INSTANCE_ID);
+
+                expect(items.databases.find(db => db.name === 'AdventureWorks')?.type).toBe(MSSQL_DATABASE_TYPES.USER);
+                expect(items.databases.find(db => db.name === 'master')?.type).toBe(MSSQL_DATABASE_TYPES.SYSTEM);
+            });
+
+            it('should accumulate size and LUN entries across data and log volumes', async () => {
+                const items = await listMssqlOfflineAssessmentDatabases(ACCOUNT_ID, DB_RESOURCE_ID, DB_INSTANCE_ID);
+
+                const adventureWorks = items.databases.find(db => db.name === 'AdventureWorks');
+                expect(adventureWorks?.size).toBe((512 + 64) * 1024 * 1024);
+                expect(adventureWorks?.luns.dataFiles[0].name).toBe('/vol/data_lun');
+                expect(adventureWorks?.luns.dataFiles[0].driveLetter).toBe('E');
+                expect(adventureWorks?.luns.logFiles[0].name).toBe('/vol/log_lun');
+            });
+
+            it('should include instance metadata', async () => {
+                const items = await listMssqlOfflineAssessmentDatabases(ACCOUNT_ID, DB_RESOURCE_ID, DB_INSTANCE_ID);
+
+                expect(items.databaseInstanceName).toBe('MSSQLSERVER');
+                expect(items.fileSystemId).toBe('fs-databases-test');
+                expect(items.hostname).toBe('sql-databases-host');
+                expect(items.deploymentType).toBe('Standalone');
+            });
+        });
+
+        describe('account-level mode (no resourceId / databaseInstanceId)', () => {
+            it('should return databases for all assessments in the account', async () => {
+                const result = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID);
+
+                expect(Array.isArray(result.items)).toBe(true);
+                expect(result.count).toBe(result.items.length);
+                expect(result.count).toBeGreaterThan(0);
+            });
+
+            it('should include resourceId and databaseInstanceId on every item', async () => {
+                const result = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID);
+
+                for (const item of result.items) {
+                    expect(item.resourceId).toBeDefined();
+                    expect(item.databaseInstanceId).toBeDefined();
+                }
+
+                const item1 = result.items.find(
+                    i => i.resourceId === ACCT_DB_RESOURCE_1 && i.databaseInstanceId === ACCT_DB_INSTANCE_1
+                );
+                expect(item1).toBeDefined();
+            });
+
+            it('should include databases array on each item', async () => {
+                const result = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID);
+
+                const item1 = result.items.find(i => i.resourceId === ACCT_DB_RESOURCE_1);
+                expect(Array.isArray(item1?.databases)).toBe(true);
+                expect(item1?.databases.find(db => db.name === 'SalesDB')).toBeDefined();
+            });
+
+            it('should return empty array when no assessments exist for account', async () => {
+                const result = await listMssqlOfflineAssessmentDatabasesPerAccount('no-such-account-xyz');
+
+                expect(result.items).toEqual([]);
+                expect(result.count).toBe(0);
+                expect(result.nextToken).toBeUndefined();
+            });
+
+            it('should respect pageSize and set nextToken when more records remain', async () => {
+                const result = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID, { pageSize: 1 });
+
+                expect(result.items.length).toBeLessThanOrEqual(1);
+                expect(result.nextToken).toBeDefined();
+            });
+
+            it('should paginate correctly using nextToken', async () => {
+                const firstPage = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID, { pageSize: 1 });
+                expect(firstPage.items).toHaveLength(1);
+                expect(firstPage.nextToken).toBeDefined();
+
+                const secondPage = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID, {
+                    pageSize: 1,
+                    nextToken: firstPage.nextToken
+                });
+
+                expect(secondPage.items).toHaveLength(1);
+                expect(secondPage.items[0].resourceId).not.toBe(firstPage.items[0].resourceId);
+            });
+
+            it('should accept optional credentialsId and region parameters', async () => {
+                const result = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID, {
+                    credentialsId: 'cred-123',
+                    region: 'us-east-1'
+                });
+
+                expect(Array.isArray(result.items)).toBe(true);
+            });
         });
     });
 });

@@ -728,6 +728,7 @@ const storageLayoutAssessmentTemplate = `
 SET NOCOUNT ON;
 SELECT (SELECT 
     d.name AS databaseName,
+    d.collation_name AS collationName,
     LEFT(mf.physical_name, 2) AS dataDriveLetter,
     mf.size * 8.0 / 1024.0 AS sizeInMb,
     vs.total_bytes / 1048576.0 AS driveTotalSizeMB,
@@ -757,6 +758,7 @@ ORDER BY
 SET NOCOUNT ON;
 SELECT (SELECT 
     d.name AS databaseName,
+    d.collation_name AS collationName,
     LEFT(mf.physical_name, 2) AS logDriveLetter,
     mf.physical_name AS logDrivePath,
     mf.size * 8.0 / 1024.0 AS sizeInMb,
@@ -1048,6 +1050,7 @@ ORDER BY
             
             $enrichedDrive = [PSCustomObject]@{
                 name = $dataDb.databaseName
+                collationName = $dataDb.collationName
                 driveLetter = $dataDb.dataDriveLetter
                 sizeInMb = $dataDb.sizeInMb
                 accessPaths = $accessPaths
@@ -1090,6 +1093,7 @@ ORDER BY
                 $dbObject = @{
                     "name" = $drive.name
                     "sizeInMb" = $drive.sizeInMb
+                    "collationName" = $drive.collationName
                 }
                 [void]$dataGroupByDisk[$key].databaseDetails.Add($dbObject)
             }
@@ -1108,6 +1112,7 @@ ORDER BY
             
             $enrichedDrive = [PSCustomObject]@{
                 name = $logDb.databaseName
+                collationName = $logDb.collationName
                 driveLetter = $logDb.logDriveLetter
                 sizeInMb = $logDb.sizeInMb
                 accessPaths = $accessPaths
@@ -1150,6 +1155,7 @@ ORDER BY
                 $dbObject = @{
                     "name" = $drive.name
                     "sizeInMb" = $drive.sizeInMb
+                    "collationName" = $drive.collationName
                 }
                 [void]$logGroupByDisk[$key].databaseDetails.Add($dbObject)
             }

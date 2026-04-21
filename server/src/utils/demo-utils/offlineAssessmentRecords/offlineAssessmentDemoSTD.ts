@@ -213,15 +213,18 @@ export const offlineAssessmentDemoSTD = {
                                     databaseDetails: [
                                         {
                                             sizeInMb: 102400,
-                                            name: 'CustomerDB'
+                                            name: 'CustomerDB',
+                                            collationName: 'SQL_Latin1_General_CP1_CI_AS'
                                         },
                                         {
                                             sizeInMb: 81920,
-                                            name: 'ProductDB'
+                                            name: 'ProductDB',
+                                            collationName: 'SQL_Latin1_General_CP1_CI_AS'
                                         },
                                         {
                                             sizeInMb: 204782,
-                                            name: 'msdb'
+                                            name: 'msdb',
+                                            collationName: 'SQL_Latin1_General_CP1_CI_AS'
                                         }
                                     ]
                                 }
@@ -240,15 +243,18 @@ export const offlineAssessmentDemoSTD = {
                                     databaseDetails: [
                                         {
                                             sizeInMb: 25600,
-                                            name: 'CustomerDB'
+                                            name: 'CustomerDB',
+                                            collationName: 'SQL_Latin1_General_CP1_CI_AS'
                                         },
                                         {
                                             sizeInMb: 20480,
-                                            name: 'ProductDB'
+                                            name: 'ProductDB',
+                                            collationName: 'SQL_Latin1_General_CP1_CI_AS'
                                         },
                                         {
                                             sizeInMb: 51182,
-                                            name: 'msdb'
+                                            name: 'msdb',
+                                            collationName: 'SQL_Latin1_General_CP1_CI_AS'
                                         }
                                     ]
                                 }

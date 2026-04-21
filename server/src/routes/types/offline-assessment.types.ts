@@ -147,6 +147,60 @@ const OfflineAssessmentDownloadPathParams = Type.Object({
 
 type OfflineAssessmentDownloadPathParamsType = Static<typeof OfflineAssessmentDownloadPathParams>;
 
+// Databases list response
+const OfflineAssessmentDatabasesResponse = Type.Object({
+    databases: Type.Array(
+        Type.Object({
+            name: Type.String({ description: 'Database name' }),
+            type: Type.String({ description: 'Database type' }),
+            size: Type.Number({ description: 'Total database size in bytes' }),
+            collation: Type.Optional(Type.String({ description: 'Database collation' })),
+            luns: Type.Object({
+                dataFiles: Type.Array(
+                    Type.Object({
+                        name: Type.String({ description: 'LUN path' }),
+                        driveLetter: Type.Optional(Type.String({ description: 'Windows drive letter' }))
+                    })
+                ),
+                logFiles: Type.Array(
+                    Type.Object({
+                        name: Type.String({ description: 'LUN path' }),
+                        driveLetter: Type.Optional(Type.String({ description: 'Windows drive letter' }))
+                    })
+                )
+            })
+        })
+    ),
+    count: Type.Number(),
+    databaseInstanceName: Type.Optional(Type.String({ description: 'SQL Server instance name' })),
+    fileSystemId: Type.Optional(Type.String({ description: 'FSx file system ID' })),
+    hostname: Type.Optional(Type.String({ description: 'Host name of the SQL Server instance' })),
+    deploymentType: Type.Optional(Type.String({ description: 'SQL Server deployment type (FCI, AOAG, Standalone)' })),
+    baseDeploymentType: Type.Optional(Type.String({ description: 'Base deployment type' })),
+    agName: Type.Optional(Type.String({ description: 'Availability group name' }))
+});
+
+type OfflineAssessmentDatabasesResponseType = Static<typeof OfflineAssessmentDatabasesResponse>;
+
+const OfflineAssessmentDatabasesPerAccountResponse = Type.Object({
+    items: Type.Array(
+        Type.Intersect([
+            Type.Object({
+                resourceId: Type.String(),
+                databaseInstanceId: Type.String(),
+                error: Type.Optional(
+                    Type.String({ description: 'Error message if databases could not be fetched for this instance' })
+                )
+            }),
+            OfflineAssessmentDatabasesResponse
+        ])
+    ),
+    count: Type.Number(),
+    nextToken: Type.Optional(Type.String())
+});
+
+type OfflineAssessmentDatabasesPerAccountResponseType = Static<typeof OfflineAssessmentDatabasesPerAccountResponse>;
+
 export {
     OfflineAssessmentUploadPathParams,
     OfflineAssessmentUploadPathParamsType,
@@ -166,6 +220,10 @@ export {
     OfflineAssessmentGetByIdQueryParamsType,
     OfflineAssessmentDownloadPathParams,
     OfflineAssessmentDownloadPathParamsType,
+    OfflineAssessmentDatabasesResponse,
+    OfflineAssessmentDatabasesResponseType,
+    OfflineAssessmentDatabasesPerAccountResponse,
+    OfflineAssessmentDatabasesPerAccountResponseType,
     UploadOfflineAssessmentFileBody,
     UploadOfflineAssessmentFileBodyType,
     DataGuardDetails,
