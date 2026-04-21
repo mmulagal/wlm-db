@@ -22,21 +22,22 @@ import {
     paginatedDescribeVpcs
 } from '../lib/aws/ec2';
 import {
-    getResourceNameFromTags,
-    sleep,
-    getArtifactsRegionBucketName,
+    compressSsmCommand,
+    coerceBooleanFromLooseTrue,
     decompressSSMResponse,
-    retryWithDelay,
-    sqlResponseParsing,
-    isValidProp,
+    generateHash,
+    getArtifactsRegionBucketName,
     getEc2Hostname,
     getFsxNameFromTags,
-    IS_DEMO_FLOW,
     getRedisConnection,
-    generateHash,
+    getResourceNameFromTags,
+    IS_DEMO_FLOW,
     isRedisConnected,
-    summarizeFirstLevel,
-    compressSsmCommand
+    isValidProp,
+    retryWithDelay,
+    sleep,
+    sqlResponseParsing,
+    summarizeFirstLevel
 } from '../utils/utils';
 import {
     getEc2SqlParameters,
@@ -1431,6 +1432,7 @@ async function discoverEc2Instances(
             ec2InstanceId: IS_DEMO_FLOW ? `i-${randomize('0', 8)}` : ec2Instance?.InstanceId || '',
             ec2InstanceType: ec2Instance?.InstanceType || '',
             ec2InstanceName: name || '',
+            ...(ec2Instance?.PrivateIpAddress ? { ec2InstancePrivateIpAddress: ec2Instance.PrivateIpAddress } : {}),
             ec2HostName: ec2Instance?.PrivateDnsName || '',
             ec2UsageOperation: ec2Instance?.UsageOperation || '',
             ssmState: ssmConnectionMap.get(ec2Instance?.InstanceId) || ConnectionStatus.NOT_CONNECTED,
@@ -2029,7 +2031,8 @@ async function discoverOracleResources(
                                     instance_id: instanceId,
                                     instance_name: instanceName,
                                     version,
-                                    instance_state: instanceState
+                                    instance_state: instanceState,
+                                    is_rac_enabled: isRacEnabledRaw
                                 },
                                 database_details: databaseDetails,
                                 storage_details: instanceStorageDetails,
@@ -2141,6 +2144,8 @@ async function discoverOracleResources(
                                 }
                             }
 
+                            const isRacEnabled = coerceBooleanFromLooseTrue(isRacEnabledRaw);
+
                             databaseInstanceDetails.push({
                                 instanceId,
                                 instanceName,
@@ -2170,6 +2175,7 @@ async function discoverOracleResources(
                                     }
                                 },
                                 isDataGuardDeployed,
+                                isRacEnabled,
                                 dataguardDetails: isDataGuardDeployed ? dataguardDetails : undefined,
                                 error: dbInstanceError
                             });

@@ -359,6 +359,7 @@ function oracleInstanceDemoData(fsxId: string, ec2InstanceId: string) {
                 ec2InstanceId,
                 ec2InstanceType: 'm5.large',
                 ec2InstanceName: 'oracle-node-8916',
+                ec2InstancePrivateIpAddress: '172.31.48.86',
                 ec2UsageOperation: 'RunInstances',
                 ssmState: 'connected',
                 ebsVolumeIDs: ['vol-0e23df37c6089b3c7'],

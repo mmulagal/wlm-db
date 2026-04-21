@@ -63,7 +63,7 @@ import {
 import {
     getManualModeStorageSavingsCalculationMetrics,
     performManualModeStorageSavingsCalculations
-} from '../../storage-savings-operations';
+} from './mssql-storage-savings-operations';
 import {
     parseCpuUtilization,
     parseMemoryUtilization,

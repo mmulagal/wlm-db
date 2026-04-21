@@ -2,13 +2,13 @@ import { isEmpty } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { getEbsManualModeStorageSavings, getFsxwManualModeStorageSavings } from '../../../lib/cloud-manager/marketing';
 import {
+    AutomaticModeStorageSavingsMarketingParams,
     EbsCloneCalculationType,
     EBSCostCalculationRespType,
     EbsCostCalculationType,
     EbsSnapshotCalculationType,
     ManualStorageSavingsRequestBodyType,
-    StorageSavingsCalculationsMetricsType,
-    StorageSavingsRequestBodyType
+    StorageSavingsCalculationsMetricsType
 } from '../../../routes/types/storage-savings.types';
 import { camelizeKeys, convertToBytes, isMultiAzDeployment } from '../../../utils/utils';
 import {
@@ -31,6 +31,17 @@ import {
 } from './marketing-request-utils';
 
 const logger = getLogger();
+
+/** Order matches the `capacities` array in `handleMarketingApiFsxCalculationObject` (for integrity logs). */
+const FSX_MARKETING_CAPACITY_SLOT_LABELS = [
+    'totalStorageCapacity',
+    'effectiveCapacity',
+    'ssdTierReqCapacity',
+    'capacityPoolTier',
+    'monthlySnapshotCapacity',
+    'desiredStorageCapacity',
+    'ebsCapacity'
+] as const;
 
 /* eslint-disable camelcase */
 
@@ -56,11 +67,33 @@ function handleMarketingApiFsxCalculationObject(
         { ebsCapacity }
     ];
 
-    capacities.forEach(capacity => {
-        const [key] = Object.keys(capacity);
-        const { size, unit } = (capacity as any)[key] as { size: number; unit: string };
-        fsxCalculationObject[`${key}`] = convertToBytes(size, unit);
+    const invalidCapacitySlots: { capacityIndex: number; slot: string }[] = [];
+
+    capacities.forEach((capacity, capacityIndex) => {
+        const keys = Object.keys(capacity);
+        if (keys.length === 0) {
+            invalidCapacitySlots.push({
+                capacityIndex,
+                slot: FSX_MARKETING_CAPACITY_SLOT_LABELS[capacityIndex] ?? `capacityIndex_${capacityIndex}`
+            });
+            return;
+        }
+        const key = keys[0];
+        const raw = (capacity as Record<string, { size: number; unit: string } | undefined>)[key];
+        if (raw && typeof raw === 'object' && 'size' in raw && 'unit' in raw) {
+            const { size, unit } = raw;
+            fsxCalculationObject[`${key}`] = convertToBytes(size, unit);
+        } else if (raw !== undefined) {
+            logger.warn('Unexpected FSx capacity structure', { key, capacityIndex, raw });
+        }
     });
+
+    if (invalidCapacitySlots.length > 0) {
+        logger.error(
+            'Failed to convert FSx marketing capacity values to bytes — capacity objects had no keys; check upstream FSx calculation payload',
+            { invalidCapacitySlots, invalidCount: invalidCapacitySlots.length }
+        );
+    }
 
     return fsxCalculationObject;
 }
@@ -242,21 +275,26 @@ async function formatManualStorageSavingsCalculationMetrics(
         };
 
         const allVolumesEbsCalculation: EBSCostCalculationRespType = {
-            ...(!isEmpty(ebsCalculationBreakdown.gp2?.ebsCostCalculation) && {
-                gp2: ebsCalculationBreakdown.gp2.ebsCostCalculation
-            }),
-            ...(!isEmpty(ebsCalculationBreakdown.gp3?.ebsCostCalculation) && {
-                gp3: ebsCalculationBreakdown.gp3.ebsCostCalculation
-            }),
-            ...(!isEmpty(ebsCalculationBreakdown.io2?.ebsCostCalculation) && {
-                io2: ebsCalculationBreakdown.io2.ebsCostCalculation
-            }),
-            ...(!isEmpty(ebsCalculationBreakdown.st1?.ebsCostCalculation) && {
-                st1: ebsCalculationBreakdown.st1.ebsCostCalculation
-            }),
-            ...(!isEmpty(ebsCalculationBreakdown.io1?.ebsCostCalculation) && {
-                io1: ebsCalculationBreakdown.io1.ebsCostCalculation
-            })
+            ...(ebsCalculationBreakdown.gp2 &&
+                !isEmpty(ebsCalculationBreakdown.gp2.ebsCostCalculation) && {
+                    gp2: ebsCalculationBreakdown.gp2.ebsCostCalculation
+                }),
+            ...(ebsCalculationBreakdown.gp3 &&
+                !isEmpty(ebsCalculationBreakdown.gp3.ebsCostCalculation) && {
+                    gp3: ebsCalculationBreakdown.gp3.ebsCostCalculation
+                }),
+            ...(ebsCalculationBreakdown.io2 &&
+                !isEmpty(ebsCalculationBreakdown.io2.ebsCostCalculation) && {
+                    io2: ebsCalculationBreakdown.io2.ebsCostCalculation
+                }),
+            ...(ebsCalculationBreakdown.st1 &&
+                !isEmpty(ebsCalculationBreakdown.st1.ebsCostCalculation) && {
+                    st1: ebsCalculationBreakdown.st1.ebsCostCalculation
+                }),
+            ...(ebsCalculationBreakdown.io1 &&
+                !isEmpty(ebsCalculationBreakdown.io1.ebsCostCalculation) && {
+                    io1: ebsCalculationBreakdown.io1.ebsCostCalculation
+                })
         };
 
         const reqObject = {
@@ -361,8 +399,8 @@ async function formatStorageSavingsCalculationMetrics(
     credentialsId: string,
     region: string,
     ebsVolumeIds: string[],
-    params: StorageSavingsRequestBodyType,
-    sqlServerDeploymentType: string,
+    params: AutomaticModeStorageSavingsMarketingParams,
+    marketingApiDeploymentType: string,
     instanceIds?: string[],
     fileSystemsIds?: string[]
 ): Promise<StorageSavingsCalculationsMetricsType> {
@@ -388,7 +426,7 @@ async function formatStorageSavingsCalculationMetrics(
         accountId,
         credentialsId,
         region,
-        sqlServerDeploymentType,
+        marketingApiDeploymentType,
         ebsVolumeIds,
         params,
         instanceIds,

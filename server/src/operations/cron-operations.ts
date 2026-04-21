@@ -2,11 +2,25 @@
 import config from 'config';
 import throat from 'throat';
 import ms from 'ms';
-import { STORAGE_TYPE, database_instances as DatabaseInstances, resource as Resource } from '@prisma/client';
+import {
+    DATABASE_TYPE,
+    STORAGE_TYPE,
+    database_instances as DatabaseInstances,
+    resource as Resource
+} from '@prisma/client';
 import { compact } from 'lodash-es';
 import { Queue, Worker } from 'bullmq';
 import IORedis from 'ioredis';
 import { deleteOlderJobs } from '../lib/database/job';
+import {
+    deleteOlderDeployments,
+    deleteResource,
+    removeTrackedEc2Record,
+    updateTrackedEc2Record,
+    weeklyDemoDatabaseCleanup
+} from '../lib/database/db';
+import { deleteAllButLatestRecordPerConfigDataType } from '../lib/database/database-instance-config';
+
 import {
     ACCOUNT_ID,
     CONTINUOUS_ASSESSMENT_FEATURE,
@@ -21,35 +35,33 @@ import {
     WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_QUEUE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
-import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './database/job-operations';
+import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
+import { getEc2Arn, getRedisConnection, sleep, IS_DEMO_FLOW } from '../utils/utils';
+import { Metadata } from '../utils/common-types';
+import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 
-import {
-    deleteOlderDeployments,
-    deleteResource,
-    removeTrackedEc2Record,
-    updateTrackedEc2Record,
-    weeklyDemoDatabaseCleanup
-} from '../lib/database/db';
-import { getHostAndSqlServerInfo } from './discover-operations';
+import { updateLongRunningJobs, updateLongRunningResourcePrepareJobs } from './database/job-operations';
+import { discoverOracleResources, getHostAndSqlServerInfo } from './discover-operations';
 import {
     manageInstanceRecommendationPreReqs,
-    manageInstanceRecommendationPreReqsForManagedInstances
+    manageInstanceRecommendationPreReqsForManagedInstances,
+    manageOracleInstanceRecommendationPreReqs
 } from './aws/compute-optimizer-operations';
-import { getEc2Arn, getRedisConnection, sleep, IS_DEMO_FLOW } from '../utils/utils';
-import { getAoagPartnerNodesDetails } from './storage-savings-operations';
+import { getAoagPartnerNodesDetails } from './workloads/mssql/mssql-storage-savings-operations';
 import {
     checkComputeOptimizerEnrollmentStatus,
     fetchSqlServerInstanceConfiguration
 } from './recommendation-operations';
-import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { cronAssessmentCollection } from './cont-opt-assessment-operations';
-import { Metadata } from '../utils/common-types';
-import { DRIFT_ASSESSMENT_QUEUE, AssessmentTriggeredBy } from '../utils/continous-optimization-consts';
 import { triggerInstancePerformanceAssessment } from './database-hosts-operations';
 import processWellArchitectedAssessmentNotifications from './continuous-optimization/notification';
 import { refreshOracleCpuCatalog } from './continuous-optimization/oracle/oracle-cpu-catalog-operations';
-import { deleteAllButLatestRecordPerConfigDataType } from '../lib/database/database-instance-config';
 import { listAllManagedInstances, listTrackedEc2Operation } from './database/database-operations';
+import {
+    extractOracleEbsVolumeIdsForHost,
+    getOracleAutomaticTcoComputeDeploymentTypeForHost,
+    isOracleHostIneligibleForAutomaticEbsSavings
+} from './workloads/oracle/oracle-storage-savings-operations';
 
 const logger = getLogger();
 
@@ -99,6 +111,68 @@ function purgeOlderJobs() {
     }, Number(purgeInterval));
 }
 
+/**
+ * Refreshes Compute Optimizer recommendation preferences for a tracked Oracle-on-EBS host.
+ * No-op if the instance is not in Oracle discover results, or lacks EBS / is RAC / ASM-managed (same exclusions as bulk Oracle TCO).
+ * `tracked_ec2.last_updated` is updated inside `manageOracleInstanceRecommendationPreReqs` when applicable (not here).
+ */
+async function refreshOracleTcoInstanceRecommendationPreferences(params: {
+    accountId: string;
+    credentialsId: string;
+    region: string;
+    awsAccountId: string;
+    instanceId: string;
+    resourceArn: string;
+}): Promise<void> {
+    const { accountId, credentialsId, region, awsAccountId, instanceId, resourceArn } = params;
+
+    const { items: oracleHostItems = [] } = await discoverOracleResources(
+        accountId,
+        credentialsId,
+        region,
+        undefined,
+        undefined,
+        [instanceId]
+    );
+    const oracleHost = oracleHostItems.find(h => h.ec2InstanceId === instanceId) ?? oracleHostItems[0];
+
+    if (!oracleHost || oracleHost.ec2InstanceId !== instanceId) {
+        return;
+    }
+
+    if (isOracleHostIneligibleForAutomaticEbsSavings(oracleHost)) {
+        logger.info('Omitting Oracle TCO recommendation preference refresh (unsupported host configuration)', {
+            accountId,
+            instanceId,
+            region
+        });
+        return;
+    }
+
+    const ebsVolumeIds = extractOracleEbsVolumeIdsForHost(oracleHost);
+    if (!ebsVolumeIds.length) {
+        logger.info('Omitting Oracle TCO recommendation preference refresh (no EBS volumes on host)', {
+            accountId,
+            instanceId,
+            region
+        });
+        return;
+    }
+
+    const deploymentType = getOracleAutomaticTcoComputeDeploymentTypeForHost(oracleHost);
+
+    await manageOracleInstanceRecommendationPreReqs(
+        awsAccountId,
+        region,
+        credentialsId,
+        resourceArn,
+        accountId,
+        [instanceId],
+        ebsVolumeIds,
+        deploymentType
+    );
+}
+
 // Scheduled task to update and manage EC2 instance recommendation preferences based on recent usage, and remove entries for instances no longer available in AWS."
 function updateTcoInstanceRecommendationPreferences() {
     setInterval(async () => {
@@ -134,64 +208,80 @@ async function updateTcoInstRecPrefs() {
                         } = instance;
                         setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                         try {
-                            const {
-                                items: [ec2HostDetails]
-                            } = await getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, [
-                                instanceId
-                            ]);
                             const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
+                            if (instance.database_type === DATABASE_TYPE.oracle) {
+                                await refreshOracleTcoInstanceRecommendationPreferences({
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    awsAccountId,
+                                    instanceId,
+                                    resourceArn
+                                });
+                            } else {
+                                const { items: mssqlHostItems = [] } = await getHostAndSqlServerInfo(
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    undefined,
+                                    undefined,
+                                    [instanceId]
+                                );
+                                const ec2HostDetails = mssqlHostItems[0];
 
-                            let { sqlServerInstances } = ec2HostDetails;
-                            if (sqlServerInstances !== undefined) {
-                                const { sqlServerDeploymentType, nodeIps } =
-                                    fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
-                                const instanceIds = [instanceId];
-                                if (nodeIps && nodeIps.length > 0) {
-                                    const { items: partnerNodeDetails } = await getAoagPartnerNodesDetails(
-                                        accountId,
-                                        credentialsId,
-                                        region,
-                                        instanceId,
-                                        nodeIps
+                                let sqlServerInstances = ec2HostDetails?.sqlServerInstances;
+                                if (sqlServerInstances !== undefined) {
+                                    const { sqlServerDeploymentType, nodeIps } =
+                                        fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
+                                    const instanceIds = [instanceId];
+                                    if (nodeIps && nodeIps.length > 0) {
+                                        const { items: partnerNodeDetails } = await getAoagPartnerNodesDetails(
+                                            accountId,
+                                            credentialsId,
+                                            region,
+                                            instanceId,
+                                            nodeIps
+                                        );
+
+                                        partnerNodeDetails?.forEach(partnerNode => {
+                                            const { sqlServerInstances: partnerSqlServerInstances, ec2InstanceId } =
+                                                partnerNode;
+                                            if (partnerSqlServerInstances && partnerSqlServerInstances?.length > 0) {
+                                                sqlServerInstances =
+                                                    sqlServerInstances?.concat(partnerSqlServerInstances);
+                                            }
+                                            instanceIds.push(ec2InstanceId);
+                                        });
+                                    }
+                                    const ebsVolumeIds = compact(
+                                        sqlServerInstances?.flatMap(server =>
+                                            server?.storage
+                                                ?.filter(storage => storage.type === STORAGE_TYPE.EBS)
+                                                .map(storage => storage.id)
+                                        )
                                     );
 
-                                    partnerNodeDetails?.forEach(partnerNode => {
-                                        const { sqlServerInstances: partnerSqlServerInstances, ec2InstanceId } =
-                                            partnerNode;
-                                        if (partnerSqlServerInstances && partnerSqlServerInstances?.length > 0) {
-                                            sqlServerInstances = sqlServerInstances?.concat(partnerSqlServerInstances);
+                                    await manageInstanceRecommendationPreReqs(
+                                        awsAccountId,
+                                        region,
+                                        credentialsId,
+                                        resourceArn,
+                                        accountId,
+                                        instanceIds,
+                                        ebsVolumeIds,
+                                        sqlServerDeploymentType!
+                                    );
+                                    await updateTrackedEc2Record(
+                                        accountId,
+                                        region,
+                                        credentialsId,
+                                        instanceId,
+                                        TCO_FEATURE,
+                                        {
+                                            last_updated: new Date()
                                         }
-                                        instanceIds.push(ec2InstanceId);
-                                    });
+                                    );
                                 }
-                                const ebsVolumeIds = compact(
-                                    sqlServerInstances?.flatMap(server =>
-                                        server?.storage
-                                            ?.filter(storage => storage.type === STORAGE_TYPE.EBS)
-                                            .map(storage => storage.id)
-                                    )
-                                );
-
-                                await manageInstanceRecommendationPreReqs(
-                                    awsAccountId,
-                                    region,
-                                    credentialsId,
-                                    resourceArn,
-                                    accountId,
-                                    instanceIds,
-                                    ebsVolumeIds,
-                                    sqlServerDeploymentType!
-                                );
-                                await updateTrackedEc2Record(
-                                    accountId,
-                                    region,
-                                    credentialsId,
-                                    instanceId,
-                                    TCO_FEATURE,
-                                    {
-                                        last_updated: new Date()
-                                    }
-                                );
                             }
                         } catch (error: any) {
                             if (error?.Code && error.Code === 'InvalidInstanceID.NotFound') {
@@ -203,8 +293,22 @@ async function updateTcoInstRecPrefs() {
                                     TCO_FEATURE
                                 );
                             }
+                            const workloadLabel =
+                                instance.database_type === DATABASE_TYPE.oracle
+                                    ? 'Oracle'
+                                    : instance.database_type === DATABASE_TYPE.mssql
+                                    ? 'MSSQL'
+                                    : instance.database_type;
                             logger.error(
-                                `Error while updating instance recommendation preferences for instance ${instanceId}: ${error}`
+                                `Failed to update TCO instance recommendation preferences for ${workloadLabel} workload (instance ${instanceId})`,
+                                {
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    instanceId,
+                                    databaseType: instance.database_type,
+                                    error
+                                }
                             );
                         }
                     })

@@ -24,6 +24,9 @@ import {
     EBS_DEFAULT_VOLUME_SIZE,
     ENDPOINTS_DEPLOYMENT,
     HttpErrorCodes,
+    ORACLE_ALLOWED_INSTANCE_TYPES,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
     SqlServerDeploymentModel,
     WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
@@ -903,6 +906,178 @@ async function getInstanceTypesFromInstanceRequirementsForManagedInstances(
         return requiredInstanceTypes;
     }
 }
+
+/** MSSQL AOAG: 10% vCPU headroom; Standard/FCI/others: 20% (matches prior SqlServerDeploymentModel branch). */
+const MSSQL_AOAG_CPU_HEADROOM_PERCENT = 0.1;
+const MSSQL_NON_AOAG_CPU_HEADROOM_PERCENT = 0.2;
+
+/**
+ * Oracle Linux capacity buffer used when recommending replacement instance types.
+ *
+ * Data Guard deployments keep a smaller 10% vCPU headroom because the standby topology
+ * already provides failover capacity, so only modest extra room is required for normal
+ * operational growth during resize recommendations.
+ *
+ * Standalone deployments keep a larger 20% vCPU headroom because there is no secondary
+ * node to absorb spikes, failover events, or maintenance-related load, so a larger
+ * safety margin is required.
+ */
+const ORACLE_DG_CPU_HEADROOM_PERCENT = 0.1;
+const ORACLE_STANDALONE_CPU_HEADROOM_PERCENT = 0.2;
+
+type AutomaticTcoInstanceRequirementsEngine = 'mssql' | 'oracle';
+
+interface AutomaticTcoInstanceRequirementsProfile {
+    engine: AutomaticTcoInstanceRequirementsEngine;
+    allowedInstanceTypes: readonly string[];
+    cpuManufacturers?: CpuManufacturer[];
+    /** When true, required network bandwidth uses EBS utilization + measured network vs instance baseline (MSSQL standalone, Oracle standalone). */
+    shouldAggregateEbsWithNetwork: (deploymentType: string) => boolean;
+    /** Fraction applied to peak vCPU count to derive headroom (e.g. 0.1 = 10%). */
+    headroomFractionForDeployment: (deploymentType: string) => number;
+    getMemoryRetryWarnMessage: () => string;
+    getResolveTypesErrorLogMessage: () => string;
+}
+
+const MSSQL_AUTOMATIC_TCO_INSTANCE_REQUIREMENTS_PROFILE: AutomaticTcoInstanceRequirementsProfile = {
+    engine: 'mssql',
+    allowedInstanceTypes: ['m*', 'c*', 'r*'],
+    cpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES],
+    shouldAggregateEbsWithNetwork: deploymentType => deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT,
+    headroomFractionForDeployment: deploymentType =>
+        deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
+            ? MSSQL_AOAG_CPU_HEADROOM_PERCENT
+            : MSSQL_NON_AOAG_CPU_HEADROOM_PERCENT,
+    getMemoryRetryWarnMessage: () =>
+        'No instance types found for the given requirements, so compromising on the memory requirement and retrying',
+    getResolveTypesErrorLogMessage: () => 'Failed to get instance types from instance requirements'
+};
+
+const ORACLE_AUTOMATIC_TCO_INSTANCE_REQUIREMENTS_PROFILE: AutomaticTcoInstanceRequirementsProfile = {
+    engine: 'oracle',
+    allowedInstanceTypes: ORACLE_ALLOWED_INSTANCE_TYPES,
+    shouldAggregateEbsWithNetwork: deploymentType => deploymentType === ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
+    headroomFractionForDeployment: deploymentType =>
+        deploymentType === ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG
+            ? ORACLE_DG_CPU_HEADROOM_PERCENT
+            : ORACLE_STANDALONE_CPU_HEADROOM_PERCENT,
+    getMemoryRetryWarnMessage: () =>
+        'No Oracle instance types found for the given requirements, compromising on memory and retrying',
+    getResolveTypesErrorLogMessage: () => 'Failed to get Oracle instance types from instance requirements'
+};
+
+async function getInstanceTypesFromInstanceRequirementsWithProfile(
+    credentialsId: string,
+    region: string,
+    instanceIds: string[],
+    ebsVolumeIds: string[],
+    deploymentType: string,
+    profile: AutomaticTcoInstanceRequirementsProfile
+) {
+    logger.info(`Getting ${profile.engine} instance types from instance requirements`, {
+        credentialsId,
+        region,
+        instanceIds,
+        ebsVolumeIds,
+        deploymentType
+    });
+
+    const { Reservations = [] } = await describeInstance(credentialsId, region!, {
+        InstanceIds: instanceIds
+    });
+    const instances = Reservations.map(reservation => reservation.Instances || []).flat();
+    if (isEmpty(instances)) {
+        return;
+    }
+
+    const firstInstance = instances[0];
+    const currentInstanceTypes = compact(instances.map(instance => instance.InstanceType));
+    const architecture = firstInstance?.Architecture;
+    const virtualizationType = firstInstance?.VirtualizationType;
+    if (!architecture || !virtualizationType || isEmpty(currentInstanceTypes)) {
+        return;
+    }
+
+    const { peakCpuUtilizationPercentage, averageNetworkBandwidthGbps } = await getInstanceUtilization(
+        region,
+        credentialsId,
+        instanceIds
+    );
+
+    const { MemoryInfo, VCpuInfo, NetworkInfo } = await determineBiggerInstance(region, currentInstanceTypes);
+
+    let requiredNetworkBandwidth = averageNetworkBandwidthGbps;
+    if (profile.shouldAggregateEbsWithNetwork(deploymentType)) {
+        /*
+        MSSQL: relevant for Standard SQL host (single EC2). AOAG path skips this aggregate.
+        Oracle: standalone only; Data Guard skips.
+        */
+        const totalEbsBandwidthGbps = await getEbsVolumeUtilization(region, credentialsId, ebsVolumeIds);
+        const { BaselineBandwidthInGbps } =
+            NetworkInfo?.NetworkCards?.find(
+                networkCard => networkCard.NetworkCardIndex === NetworkInfo?.DefaultNetworkCardIndex
+            ) || {};
+        requiredNetworkBandwidth = Math.max(
+            totalEbsBandwidthGbps + averageNetworkBandwidthGbps,
+            BaselineBandwidthInGbps || 0
+        );
+    }
+
+    const vcpuCountForPeakCpuUtilization = Math.round(
+        (VCpuInfo?.DefaultVCpus || 0) * (peakCpuUtilizationPercentage / 100)
+    );
+
+    const headroom = vcpuCountForPeakCpuUtilization * profile.headroomFractionForDeployment(deploymentType);
+    const totalMinCpu = 4;
+    const totalMaxCpu = Math.round(
+        vcpuCountForPeakCpuUtilization + headroom <= totalMinCpu
+            ? totalMinCpu
+            : vcpuCountForPeakCpuUtilization + headroom
+    );
+
+    try {
+        const instanceRequirements = {
+            ...(profile.cpuManufacturers && profile.cpuManufacturers.length > 0
+                ? {
+                      CpuManufacturers: profile.cpuManufacturers
+                  }
+                : {}),
+            AllowedInstanceTypes: [...profile.allowedInstanceTypes],
+            VCpuCount: { Min: totalMinCpu, Max: totalMaxCpu },
+            MemoryMiB: { Min: MemoryInfo?.SizeInMiB },
+            NetworkBandwidthGbps: { Min: requiredNetworkBandwidth }
+        };
+
+        const params = {
+            ArchitectureTypes: [architecture],
+            VirtualizationTypes: [virtualizationType],
+            InstanceRequirements: instanceRequirements
+        };
+
+        let { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
+            region,
+            params,
+            credentialsId
+        );
+        if (isEmpty(instanceTypes)) {
+            logger.warn(profile.getMemoryRetryWarnMessage());
+            params.InstanceRequirements.MemoryMiB = { Min: 1024 };
+            ({ InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
+                region,
+                params,
+                credentialsId
+            ));
+        }
+        const requiredInstanceTypes = compact(
+            instanceTypes?.map(requiredInstanceType => requiredInstanceType.InstanceType)
+        );
+
+        return requiredInstanceTypes;
+    } catch (err) {
+        logger.error(profile.getResolveTypesErrorLogMessage(), err);
+    }
+}
+
 async function getInstanceTypesFromInstanceRequirements(
     credentialsId: string,
     region: string,
@@ -910,112 +1085,31 @@ async function getInstanceTypesFromInstanceRequirements(
     ebsVolumeIds: string[],
     deploymentType: string
 ) {
-    logger.info('Getting instance types from instance requirements', credentialsId, region, instanceIds, ebsVolumeIds);
+    return getInstanceTypesFromInstanceRequirementsWithProfile(
+        credentialsId,
+        region,
+        instanceIds,
+        ebsVolumeIds,
+        deploymentType,
+        MSSQL_AUTOMATIC_TCO_INSTANCE_REQUIREMENTS_PROFILE
+    );
+}
 
-    const { Reservations = [] } = await describeInstance(credentialsId, region!, {
-        InstanceIds: instanceIds
-    });
-    const instances = Reservations.map(reservation => reservation.Instances || []).flat();
-    const currentInstanceTypes = compact(instances.map(instance => instance.InstanceType));
-
-    const [{ Architecture, VirtualizationType }] = instances; // assuming that both the nodes in AOAG/FCI have the same architecture and virtualization type.
-    if (
-        !isEmpty(instances) &&
-        Architecture &&
-        VirtualizationType &&
-        currentInstanceTypes &&
-        currentInstanceTypes?.length > 0
-    ) {
-        const { peakCpuUtilizationPercentage, averageNetworkBandwidthGbps } = await getInstanceUtilization(
-            region,
-            credentialsId,
-            instanceIds
-        );
-
-        const { MemoryInfo, VCpuInfo, NetworkInfo } = await determineBiggerInstance(region, currentInstanceTypes);
-
-        let requiredNetworkBandwidth = averageNetworkBandwidthGbps;
-        if (deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
-            /*
-            This calculation is relevant only in case of Standard SQL host ( 1 ec2 instance).
-            In case the Src env is AOAG SQL over EBS, can we assume that the future FCI SQL over FSXN suggested, remains with the same src instance type's network bandwidth,
-            since FCI do not need to handle the AOAG replication's network bandwidth.
-            */
-
-            const totalEbsBandwidthGbps = await getEbsVolumeUtilization(region, credentialsId, ebsVolumeIds);
-            const { BaselineBandwidthInGbps } =
-                NetworkInfo?.NetworkCards?.find(
-                    networkCard => networkCard.NetworkCardIndex === NetworkInfo?.DefaultNetworkCardIndex
-                ) || {};
-            requiredNetworkBandwidth = Math.max(
-                totalEbsBandwidthGbps + averageNetworkBandwidthGbps,
-                BaselineBandwidthInGbps || 0
-            );
-            // future network bandwidth = Max{ max (sum) EBS Bandwidth measured + current max network bandwidth measured, src instance type's network }
-        }
-
-        const vcpuCountForPeakCpuUtilization = Math.round(
-            (VCpuInfo?.DefaultVCpus || 0) * (peakCpuUtilizationPercentage / 100)
-        ); // calculates the vCPU count for peak CPU utilization; (default vCPU count * peak CPU utilization fraction) calculates the vCPU count required for peak CPU utilization. So, if VCpuInfo?.DefaultVCpus is 4 and peakCpuUtilizationPercentage is 50, vcpuCountForPeakCpuUtilization will be 2.
-
-        const headroom = SqlServerDeploymentModel.SQL_AOAG_SHORT
-            ? vcpuCountForPeakCpuUtilization * 0.1
-            : vcpuCountForPeakCpuUtilization * 0.2; // for Standard- headroom=20%, for AOAG, headroom = 10%
-        const totalMinCpu = 4; // As per req; min vcpus = 4
-        const totalMaxCpu = Math.round(
-            vcpuCountForPeakCpuUtilization + headroom <= totalMinCpu
-                ? totalMinCpu
-                : vcpuCountForPeakCpuUtilization + headroom
-        );
-
-        try {
-            const params = {
-                ArchitectureTypes: [Architecture],
-                VirtualizationTypes: [VirtualizationType],
-                InstanceRequirements: {
-                    CpuManufacturers: [CpuManufacturer.INTEL, CpuManufacturer.AMAZON_WEB_SERVICES], // Filtering AMD based instances; That's a recommendation we've got from the Microsoft specialists in AWS. It is better that across the board we will filter it. Product Management thinks that in general OLTP workloads are associated with Intel processors because of hyper threading technology or something like that.
-                    AllowedInstanceTypes: ['m*', 'c*', 'r*'],
-                    VCpuCount: { Min: totalMinCpu, Max: totalMaxCpu }, // As per req, Reduced #vcpus - according to #vcpus in use.(for Standard- headroom=20%, for AOAG, headroom = 10%).
-                    MemoryMiB: { Min: MemoryInfo?.SizeInMiB }, // As per req, Memory should be the same.
-                    NetworkBandwidthGbps: { Min: requiredNetworkBandwidth } // As per req, New Instance's network throughput >= Old Instance's network throughput; in AOAG future network bandwidth = Max{ max (sum) EBS Bandwidth measured + current max network bandwidth measured, src instance type's network }
-                }
-            };
-            let { InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
-                region,
-                params,
-                credentialsId
-            );
-            if (isEmpty(instanceTypes)) {
-                /* As the CPU reduces, memory required also reduces. Network configuration remains the same for a wide range of cpu-memory configurations.
-                FOR EXAMPLE:(https://aws.amazon.com/ec2/instance-types/)
-                    Instance size	vCPU	Memory (GiB)	Instance storage (GB)	Network bandwidth (Gbps)	Amazon EBS bandwidth (Gbps)
-                    m8g.medium         1              4                 EBS-only                  Up to 12.5                       Up to 10
-
-                    m8g.large          2              8                 EBS-only                  Up to 12.5                       Up to 10
-
-                    m8g.xlarge         4             16                 EBS-only                  Up to 12.5                       Up to 10
-                The network bandwidth is the same for all the instance types. So, if the instance type is not found for the given requirements, we can compromise on the memory requirement and retry.
-                */
-
-                logger.warn(
-                    'No instance types found for the given requirements, so compromising on the memory requirement and retrying'
-                );
-                params.InstanceRequirements.MemoryMiB = { Min: 1024 }; // changing the min memory requirement to 1GB as MemoryMiB is a required field in SDK request
-                ({ InstanceTypes: instanceTypes } = await getInstanceTypesFromInstanceRequirementsCommand(
-                    region,
-                    params,
-                    credentialsId
-                ));
-            }
-            const requiredInstanceTypes = compact(
-                instanceTypes?.map(requiredInstanceType => requiredInstanceType.InstanceType)
-            );
-
-            return requiredInstanceTypes;
-        } catch (err) {
-            logger.error('Failed to get instance types from instance requirements', err);
-        }
-    }
+async function getInstanceTypesFromInstanceRequirementsForOracle(
+    credentialsId: string,
+    region: string,
+    instanceIds: string[],
+    ebsVolumeIds: string[],
+    deploymentType: string
+) {
+    return getInstanceTypesFromInstanceRequirementsWithProfile(
+        credentialsId,
+        region,
+        instanceIds,
+        ebsVolumeIds,
+        deploymentType,
+        ORACLE_AUTOMATIC_TCO_INSTANCE_REQUIREMENTS_PROFILE
+    );
 }
 
 async function getInstanceDetailsByPrivateIp(
@@ -1223,6 +1317,7 @@ export {
     isEbsAwsBackupEnabled,
     getInstanceTypesFromInstanceRequirementsForManagedInstances,
     getInstanceTypesFromInstanceRequirements,
+    getInstanceTypesFromInstanceRequirementsForOracle,
     getInstanceDetailsByPrivateIp,
     determineBiggerInstance,
     determineSmallerInstance,

@@ -13,13 +13,18 @@ import {
     getInstanceDetailsByPrivateIp,
     getInstanceTypesFromInstanceRequirementsForManagedInstances,
     getInstanceTypesFromInstanceRequirements,
+    getInstanceTypesFromInstanceRequirementsForOracle,
     waitForInstanceToBeStopped,
     instanceTypeChangePreReqs,
     getAmazonLinux2023AmiList,
     validateVpcEndpoints
 } from '../../../src/operations/aws/ec2-operations';
 import * as ec2Lib from '../../../src/lib/aws/ec2';
-import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
+import {
+    DEFAULT_AWS_REGION,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE
+} from '../../../src/utils/consts';
 import {
     DEFAULT_AWS_CREDENTIALS_ID,
     DEFAULT_AWS_CREDENTIALS_TYPE,
@@ -149,6 +154,28 @@ describe('EC2 Operations', () => {
             ['i-12345'],
             ['vol-1234s'],
             'AOAG'
+        );
+        expect(response).toBeDefined();
+    });
+
+    it('should resolve Oracle instance types from instance requirements for Data Guard deployment', async () => {
+        const response = await getInstanceTypesFromInstanceRequirementsForOracle(
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            ['i-12345'],
+            ['vol-1234s'],
+            ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG
+        );
+        expect(response).toBeDefined();
+    });
+
+    it('should resolve Oracle instance types from instance requirements for standalone deployment', async () => {
+        const response = await getInstanceTypesFromInstanceRequirementsForOracle(
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            ['i-12345'],
+            ['vol-1234s'],
+            ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE
         );
         expect(response).toBeDefined();
     });

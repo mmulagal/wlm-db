@@ -1,11 +1,3 @@
-import '../../simulator/scopes/opentelemetry-scope';
-import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
-import '../../simulator/scopes/cloud-manager/marketing-scope';
-import '../../simulator/scopes/aws/ec2-scope';
-import '../../simulator/scopes/aws/compute-optimizer-scope';
-import '../../simulator/scopes/aws/ssm-scope';
 import {
     fsxwAutomaticDemoModeCallingManualApi,
     ebsAutomaticDemoModeCallingManualApi
@@ -231,6 +223,82 @@ describe('Marketing Operations Demo', () => {
             if ('multi' in result) {
                 expect(result.multi).toBeDefined();
             }
+        });
+    });
+
+    describe('Oracle deployment types', () => {
+        describe('fsxwAutomaticDemoModeCallingManualApi', () => {
+            it('should return multi key for Oracle Data Guard deployment', async () => {
+                const result = await fsxwAutomaticDemoModeCallingManualApi(
+                    'us-east-1',
+                    1,
+                    'DG',
+                    30,
+                    ACCOUNT_ID
+                );
+
+                expect(result).toBeDefined();
+                expect(result.fsxw).toBeDefined();
+                expect(result.fsx).toBeDefined();
+                expect(result.multi).toBeDefined();
+                expect('single' in result).toBe(false);
+            });
+
+            it('should return single key for Oracle Standalone deployment', async () => {
+                const result = await fsxwAutomaticDemoModeCallingManualApi(
+                    'us-east-1',
+                    1,
+                    'Standalone',
+                    30,
+                    ACCOUNT_ID
+                );
+
+                expect(result).toBeDefined();
+                expect(result.fsxw).toBeDefined();
+                expect(result.fsx).toBeDefined();
+                expect(result.single).toBeDefined();
+                expect('multi' in result).toBe(false);
+            });
+        });
+
+        describe('ebsAutomaticDemoModeCallingManualApi', () => {
+            it('should return multi key for Oracle Data Guard deployment', async () => {
+                const result = await ebsAutomaticDemoModeCallingManualApi(
+                    'DG',
+                    ['i-1234567890abcdef0', 'i-0987654321fedcba0'],
+                    'us-east-1',
+                    1,
+                    30,
+                    ACCOUNT_ID
+                );
+
+                expect(result).toBeDefined();
+                expect(result.ebs).toBeDefined();
+                expect(result.fsx).toBeDefined();
+                if ('multi' in result) {
+                    expect(result.multi).toBeDefined();
+                }
+                expect('single' in result).toBe(false);
+            });
+
+            it('should return single key for Oracle Standalone deployment', async () => {
+                const result = await ebsAutomaticDemoModeCallingManualApi(
+                    'Standalone',
+                    ['i-1234567890abcdef0'],
+                    'us-east-1',
+                    1,
+                    30,
+                    ACCOUNT_ID
+                );
+
+                expect(result).toBeDefined();
+                expect(result.ebs).toBeDefined();
+                expect(result.fsx).toBeDefined();
+                if ('single' in result) {
+                    expect(result.single).toBeDefined();
+                }
+                expect('multi' in result).toBe(false);
+            });
         });
     });
 });

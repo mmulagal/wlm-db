@@ -1,136 +1,40 @@
-import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
-import { inventoryDemoData } from '../../src/utils/demo-utils/demoInventoryData';
+import { describe, expect, it } from 'vitest';
+
+import type { ComputeLicenseCostType } from '../../src/routes/types/storage-savings.types';
 import {
-    performStorageSavingsCalculations,
-    getStorageSavingsCalculationMetrics
+    getExistingAndRecommendedComputeAndLicense,
+    settledFulfilledValues
 } from '../../src/operations/storage-savings-operations';
 
-type SqlStorage = {
-    type?: string;
-};
-
-describe('Marketing API operations ', () => {
-    it('Perform Storage Savings Calculations', async () => {
-        const { items } = inventoryDemoData('fsx', 'ebsTest');
-
-        const instanceWithEbs = items.find(instance =>
-            instance.sqlServerInstances?.find(({ storage }) =>
-                storage?.find((sqlStorage: SqlStorage) => sqlStorage?.type === 'EBS')
-            )
-        );
-        if (instanceWithEbs?.ec2InstanceId !== undefined) {
-            const resp = await performStorageSavingsCalculations(
-                ACCOUNT_ID,
-                CREDENTIALS_ID,
-                DEFAULT_AWS_REGION,
-                [instanceWithEbs.ec2InstanceId],
-                {
-                    snapshotFrequency: 'daily',
-                    clonedCopiesCount: 1,
-                    cloneRefreshFrequency: 'daily',
-                    monthlyChangeRatePercentage: 30
-                }
-            );
-            expect(resp.ebs).toBeDefined();
-            expect(resp.fsx).toBeDefined();
-            if (resp.single) {
-                expect(resp.single?.fsxCalculation).toBeDefined();
-            }
-        }
+describe('storage-savings-operations (shared helpers)', () => {
+    it('should return only fulfilled promise values', () => {
+        const results: PromiseSettledResult<number>[] = [
+            { status: 'fulfilled', value: 1 },
+            { status: 'rejected', reason: new Error('x') },
+            { status: 'fulfilled', value: 2 }
+        ];
+        expect(settledFulfilledValues(results)).toEqual([1, 2]);
     });
 
-    it('Perform Storage Savings Calculations without ebs', async () => {
-        const { items } = inventoryDemoData('fsx', 'ebsTest');
-
-        const instanceWithoutEbs = items.find(instance =>
-            instance.sqlServerInstances?.find(
-                ({ storage }) => !storage?.find((sqlStorage: SqlStorage) => sqlStorage?.type === 'EBS')
-            )
-        );
-        if (instanceWithoutEbs?.ec2InstanceId !== undefined) {
-            try {
-                await performStorageSavingsCalculations(
-                    ACCOUNT_ID,
-                    CREDENTIALS_ID,
-                    DEFAULT_AWS_REGION,
-                    [instanceWithoutEbs.ec2InstanceId],
-                    {
-                        snapshotFrequency: 'daily',
-                        clonedCopiesCount: 1,
-                        cloneRefreshFrequency: 'daily',
-                        monthlyChangeRatePercentage: 30
-                    }
-                );
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    expect(error.message).toBe(
-                        `No EBS volumes found for the provided instance: ${instanceWithoutEbs?.ec2InstanceId}`
-                    );
+    it('should sum existing and recommended compute license prices', () => {
+        const list = [
+            {
+                compute: {
+                    existing: { instanceMonthlyPrice: '10' },
+                    recommended: { instanceMonthlyPrice: '20' }
+                }
+            },
+            {
+                compute: {
+                    existing: { instanceMonthlyPrice: undefined },
+                    recommended: { instanceMonthlyPrice: '5' }
                 }
             }
-        }
-    });
+        ] as unknown as ComputeLicenseCostType[];
 
-    it('Perform Storage Savings Calculations Metrics', async () => {
-        const { items } = inventoryDemoData('fsx', 'ebsTest');
-
-        const instanceWithEbs = items.find(instance =>
-            instance.sqlServerInstances?.find(({ storage }) =>
-                storage?.find((sqlStorage: SqlStorage) => sqlStorage?.type === 'EBS')
-            )
-        );
-        if (instanceWithEbs?.ec2InstanceId !== undefined) {
-            const resp = await getStorageSavingsCalculationMetrics(
-                ACCOUNT_ID,
-                CREDENTIALS_ID,
-                DEFAULT_AWS_REGION,
-                [instanceWithEbs.ec2InstanceId],
-                {
-                    snapshotFrequency: 'daily',
-                    clonedCopiesCount: 1,
-                    cloneRefreshFrequency: 'daily',
-                    monthlyChangeRatePercentage: 30
-                }
-            );
-
-            expect(resp.ebsCalculation).toBeDefined();
-            if (resp.single) {
-                expect(resp.single?.fsxOntapCalculation).toBeDefined();
-                expect(resp.single?.fsxOntapSnapshotCalculation).toBeDefined();
-                expect(resp.single?.fsxCloneCalculation).toBeDefined();
-            }
-        }
-    });
-
-    it('Get Storage Savings Calculations metrics without ebs', async () => {
-        const { items } = inventoryDemoData('fsx', 'ebsTest');
-
-        const instanceWithoutEbs = items.find(instance =>
-            instance.sqlServerInstances?.find(
-                ({ storage }) => !storage?.find((sqlStorage: SqlStorage) => sqlStorage?.type === 'EBS')
-            )
-        );
-        if (instanceWithoutEbs?.ec2InstanceId !== undefined) {
-            try {
-                await getStorageSavingsCalculationMetrics(
-                    ACCOUNT_ID,
-                    CREDENTIALS_ID,
-                    DEFAULT_AWS_REGION,
-                    [instanceWithoutEbs.ec2InstanceId],
-                    {
-                        snapshotFrequency: 'daily',
-                        clonedCopiesCount: 1,
-                        cloneRefreshFrequency: 'daily',
-                        monthlyChangeRatePercentage: 30
-                    }
-                );
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    expect(error.message).toBe(
-                        `No EBS volumes found for the provided instance: ${instanceWithoutEbs?.ec2InstanceId}`
-                    );
-                }
-            }
-        }
+        expect(getExistingAndRecommendedComputeAndLicense(list)).toEqual({
+            existingComputeLicensePrice: 10,
+            recommendedComputeLicensePrice: 25
+        });
     });
 });

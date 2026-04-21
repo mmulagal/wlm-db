@@ -1,5 +1,5 @@
 import getLogger from '../../../utils/logger';
-import { StorageSavingsRequestBodyType } from '../../../routes/types/storage-savings.types';
+import { AutomaticModeStorageSavingsMarketingParams } from '../../../routes/types/storage-savings.types';
 import { convertToBytes, sizeInGigaBytes, IS_DEMO_FLOW } from '../../../utils/utils';
 import {
     AutomaticModeMarketingRequestBody,
@@ -14,7 +14,11 @@ import {
     fsxwAutomaticDemoModeCallingManualApi
 } from './marketing-operations-demo';
 
-import { HOURS_IN_MONTH, STORAGE_SERVICE_DEFAULT_REGION } from '../../../utils/consts';
+import {
+    HOURS_IN_MONTH,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
+    STORAGE_SERVICE_DEFAULT_REGION
+} from '../../../utils/consts';
 
 const logger = getLogger();
 
@@ -81,7 +85,7 @@ function formatFsxwCalculationObject(fsxwSummary: StorageSummary, fsxwCostCalcul
 
 function derivePropertiesBasedOnDeploymentType(
     fsxCostCalculations: FsxCostCalculations,
-    params: StorageSavingsRequestBodyType
+    params: AutomaticModeStorageSavingsMarketingParams
 ) {
     const {
         fsx_cost_calculation_no_snapshot: {
@@ -477,10 +481,15 @@ function getMonthlyCloneCountFromFrequency(cloneRefreshFrequency: string) {
     return cloneRefreshFrequencyLowerCase === 'daily' ? 30 : cloneRefreshFrequencyLowerCase === 'weekly' ? 3 : 1;
 }
 
+/**
+ * Builds the automatic-mode marketing request body. `marketingApiDeploymentType` is the workload-specific
+ * deployment label used only to set `deploymentType` to Multi vs Single for the storage marketing service:
+ * Multi when SQL Server is `SQL_AOAG_SHORT` or Oracle is `DG`; otherwise Single (including Oracle `Standalone`).
+ */
 function getMarketingApiRequestBody(
     ebsVolumeIds: string[],
-    params: StorageSavingsRequestBodyType,
-    sqlServerDeploymentType: string,
+    params: AutomaticModeStorageSavingsMarketingParams,
+    marketingApiDeploymentType: string,
     fileSystemsIds?: string[]
 ) {
     const { snapshotFrequency, cloneRefreshFrequency, clonedCopiesCount, monthlyChangeRatePercentage } = params || {};
@@ -500,7 +509,11 @@ function getMarketingApiRequestBody(
         useCase: 'Low-latency',
         volumeIds: ebsVolumeIds,
         includeSnapshots: false,
-        deploymentType: sqlServerDeploymentType === 'SQL_AOAG_SHORT' ? 'Multi' : 'Single',
+        deploymentType:
+            marketingApiDeploymentType === 'SQL_AOAG_SHORT' ||
+            marketingApiDeploymentType === ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG
+                ? 'Multi'
+                : 'Single',
         snapshots: {
             snapshotFreq: snapshotFrequency,
             snapshotPercentageChange: monthlyChangeRatePercentage
@@ -515,13 +528,18 @@ function getMarketingApiRequestBody(
     };
 }
 
+/**
+ * Calls the storage marketing API for automatic-mode savings. `marketingApiDeploymentType` is not SQL-Server–specific:
+ * pass the same deployment label used elsewhere for that workload (e.g. SQL Server `SqlServerDeploymentModel` values,
+ * or Oracle `DG` / `Standalone` for Data Guard vs single instance). See `getMarketingApiRequestBody` for Multi/Single mapping.
+ */
 async function invokeMarketingApi(
     accountId: string,
     credentialsId: string,
     region: string,
-    sqlServerDeploymentType: string,
+    marketingApiDeploymentType: string,
     ebsVolumeIds: string[],
-    params: StorageSavingsRequestBodyType,
+    params: AutomaticModeStorageSavingsMarketingParams,
     instanceIds?: string[],
     fileSystemsIds?: string[]
 ): Promise<MarketingApiResponse> {
@@ -538,13 +556,13 @@ async function invokeMarketingApi(
             return fsxwAutomaticDemoModeCallingManualApi(
                 region,
                 clonedCopiesCount,
-                sqlServerDeploymentType,
+                marketingApiDeploymentType,
                 monthlyChangeRatePercentage,
                 accountId
             );
         }
         return ebsAutomaticDemoModeCallingManualApi(
-            sqlServerDeploymentType,
+            marketingApiDeploymentType,
             instanceIds,
             region,
             clonedCopiesCount,
@@ -561,7 +579,7 @@ async function invokeMarketingApi(
             getMarketingApiRequestBody(
                 ebsVolumeIds,
                 params,
-                sqlServerDeploymentType,
+                marketingApiDeploymentType,
                 fileSystemsIds
             ) as AutomaticModeMarketingRequestBody
         );

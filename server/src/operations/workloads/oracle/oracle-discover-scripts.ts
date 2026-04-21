@@ -1241,7 +1241,12 @@ const loadDatabaseDetectionModules = `
                                 'instance_name' value i.INSTANCE_NAME,
                                 'host_name' value i.HOST_NAME,
                                 'version' value i.VERSION,
-                                'instance_state' value d.OPEN_MODE
+                                'instance_state' value d.OPEN_MODE,
+                                'is_rac_enabled' value (
+                                    SELECT CASE WHEN UPPER(p.VALUE) = 'TRUE' THEN 'true' ELSE 'false' END
+                                    FROM v\\$parameter p
+                                    WHERE p.NAME = 'cluster_database' AND ROWNUM = 1
+                                )
                             ) AS instance_info
                         FROM v\\$instance i, v\\$database d;
 EOSQL
@@ -1260,7 +1265,12 @@ EOF
                                 'instance_name' value INSTANCE_NAME,
                                 'host_name' value HOST_NAME,
                                 'version' value VERSION,
-                                'instance_state' value STATUS
+                                'instance_state' value STATUS,
+                                'is_rac_enabled' value (
+                                    SELECT CASE WHEN UPPER(p.VALUE) = 'TRUE' THEN 'true' ELSE 'false' END
+                                    FROM v\\$parameter p
+                                    WHERE p.NAME = 'cluster_database' AND ROWNUM = 1
+                                )
                             ) AS instance_info
                         FROM V\\$INSTANCE;
 EOSQL
@@ -1288,7 +1298,7 @@ EOF
                 fi
             fi
 
-            local result="{\\"instance_name\\": \\"$ORACLE_SID\\", \\"instance_state\\": \\"$open_mode\\", \\"version\\": \\"undefined\\", \\"instance_id\\": \\"$ORACLE_SID\\", \\"hostname\\": \\"undefined\\"}"
+            local result="{\\"instance_name\\": \\"$ORACLE_SID\\", \\"instance_state\\": \\"$open_mode\\", \\"version\\": \\"undefined\\", \\"instance_id\\": \\"$ORACLE_SID\\", \\"hostname\\": \\"undefined\\", \\"is_rac_enabled\\": \\"false\\"}"
             echo $result
         fi
     }

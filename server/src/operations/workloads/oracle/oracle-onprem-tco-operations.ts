@@ -66,9 +66,9 @@ import {
     isSavedAssessmentData
 } from '../../onprem-tco-operations';
 import {
-    performManualModeStorageSavingsCalculations,
-    getManualModeStorageSavingsCalculationMetrics
-} from '../../storage-savings-operations';
+    getManualModeStorageSavingsCalculationMetrics,
+    performManualModeStorageSavingsCalculations
+} from '../mssql/mssql-storage-savings-operations';
 
 const logger = getLogger();
 const ORACLE_ALLOWED_INSTANCE_TYPES = ['r*', 'm*', 'x*'];
@@ -1095,7 +1095,9 @@ async function getOracleBulkResourceExploreSavings(
         const hasMultiAzDeployment = validResourceDataList.some(
             data => data.deploymentType !== DATABASE_DEPLOYMENT_TYPE.Standalone
         );
-        const marketingApiDeploymentType = hasMultiAzDeployment ? DATABASE_DEPLOYMENT_TYPE.DG : 'Standalone';
+        const marketingApiDeploymentType = hasMultiAzDeployment
+            ? DATABASE_DEPLOYMENT_TYPE.DG
+            : DATABASE_DEPLOYMENT_TYPE.Standalone;
 
         const baseParams = {
             clonedCopiesCount,

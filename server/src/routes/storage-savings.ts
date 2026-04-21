@@ -12,27 +12,36 @@ import {
     getEbsManualStorageSavingsCalculationMetricsSchema,
     getFsxwManualStorageSavingsCalculationMetricsSchema,
     getEbsBulkStorageSavingsSchema,
-    getEbsBulkStorageSavingsCalculationMetricsSchema
+    getEbsBulkStorageSavingsCalculationMetricsSchema,
+    getOracleEbsBulkStorageSavingsSchema,
+    getOracleEbsBulkStorageSavingsCalculationMetricsSchema
 } from './schemas/storage-savings-schema';
 import {
-    getStorageSavingsCalculationMetrics,
-    performStorageSavingsCalculations,
     getManualModeStorageSavingsCalculationMetrics,
-    performManualModeStorageSavingsCalculations
-} from '../operations/storage-savings-operations';
+    getStorageSavingsCalculationMetrics,
+    performManualModeStorageSavingsCalculations,
+    performStorageSavingsCalculations
+} from '../operations/workloads/mssql/mssql-storage-savings-operations';
 import { updateManagedInstRecPrefs, updateTcoInstRecPrefs } from '../operations/cron-operations';
 import castRequest from './utils';
 import {
     BulkStorageSavingsRequestBodyType,
     ManualStorageSavingsRequestBodyType,
+    OracleBulkStorageSavingsRequestBodyType,
     StorageSavingsRequestBodyType
 } from './types/storage-savings.types';
+import {
+    getOracleBulkStorageSavingsCalculationMetrics,
+    performOracleBulkStorageSavingsCalculations
+} from '../operations/workloads/oracle/oracle-storage-savings-operations';
 
 export default function storageSavingsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
     const API_PATH_STORAGE_SAVINGS =
         '/v1/mssql/credentials/:credentialsId/regions/:region/instances/:instanceId/storage-savings';
     const API_PATH_BULK_STORAGE_SAVINGS = '/v1/mssql/credentials/:credentialsId/regions/:region/storage-savings';
+    const API_PATH_ORACLE_BULK_STORAGE_SAVINGS =
+        '/v1/oracle/credentials/:credentialsId/regions/:region/storage-savings';
 
     const API_PATH_MANUAL_STORAGE_SAVINGS = '/v1/mssql/regions/:region/manual-storage-savings';
 
@@ -237,6 +246,48 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
                 ...body,
                 bulk: true
             } as BulkStorageSavingsRequestBodyType);
+            return reply.send(response);
+        }
+    );
+
+    server.post(
+        `${API_PATH_ORACLE_BULK_STORAGE_SAVINGS}/ebs`,
+        { schema: getOracleEbsBulkStorageSavingsSchema },
+        async (request: FastifyRequest, reply) => {
+            const {
+                params: { accountId, credentialsId, region },
+                body,
+                body: { hosts }
+            } = castRequest(request);
+            const instanceIds = hosts.map(({ ec2InstanceId }: { ec2InstanceId: string }) => ec2InstanceId);
+            const response = await performOracleBulkStorageSavingsCalculations(
+                accountId,
+                credentialsId,
+                region,
+                instanceIds,
+                { ...body, bulk: true } as OracleBulkStorageSavingsRequestBodyType
+            );
+            return reply.send(response);
+        }
+    );
+
+    server.post(
+        `${API_PATH_ORACLE_BULK_STORAGE_SAVINGS}/ebs/calculations`,
+        { schema: getOracleEbsBulkStorageSavingsCalculationMetricsSchema },
+        async (request: FastifyRequest, reply) => {
+            const {
+                params: { accountId, credentialsId, region },
+                body,
+                body: { hosts }
+            } = castRequest(request);
+            const instanceIds = hosts.map(({ ec2InstanceId }: { ec2InstanceId: string }) => ec2InstanceId);
+            const response = await getOracleBulkStorageSavingsCalculationMetrics(
+                accountId,
+                credentialsId,
+                region,
+                instanceIds,
+                { ...body, bulk: true } as OracleBulkStorageSavingsRequestBodyType
+            );
             return reply.send(response);
         }
     );

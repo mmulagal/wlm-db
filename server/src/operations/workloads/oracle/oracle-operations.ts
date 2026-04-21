@@ -1331,7 +1331,16 @@ async function getDataguardDetailsForAllInstances(
             ]);
 
             if (ec2DetailsResult.status === 'fulfilled') {
-                ec2DetailsResult.value.forEach(ec2 => ec2DetailsByIp.set(ec2.ec2InstancePrivateIpAddress, ec2));
+                ec2DetailsResult.value.forEach(ec2 => {
+                    const privateIp = ec2.ec2InstancePrivateIpAddress;
+                    if (privateIp) {
+                        ec2DetailsByIp.set(privateIp, {
+                            ec2InstanceId: ec2.ec2InstanceId,
+                            ec2InstancePrivateIpAddress: privateIp,
+                            ec2InstancePrivateDnsName: ec2.ec2InstancePrivateDnsName
+                        });
+                    }
+                });
             }
 
             if (

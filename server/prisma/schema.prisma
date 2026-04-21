@@ -162,7 +162,8 @@ model tracked_ec2 {
   credentials_id            String   @db.VarChar(80)
   region                    String   @db.VarChar(30)
   feature                   String   @db.VarChar(255)
-  cloud_provider_account_id String  @db.VarChar(80)
+  cloud_provider_account_id String        @db.VarChar(80)
+  database_type             DATABASE_TYPE @default(mssql)
   last_updated              DateTime @default(now())
 
   @@unique([instance_id, credentials_id, account_id], name: "uk_wlmdb_tracked_ec2", map: "uk_wlmdb_tracked_ec2")

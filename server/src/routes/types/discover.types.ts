@@ -208,6 +208,9 @@ const DiscoverResponseInfo = Type.Object({
     ec2InstanceId: Type.String({ description: 'AWS EC2 instance ID' }),
     ec2InstanceType: Type.String({ description: 'EC2 instance type' }),
     ec2InstanceName: Type.Optional(Type.String({ description: 'EC2 tag with key "Name".' })),
+    ec2InstancePrivateIpAddress: Type.Optional(
+        Type.String({ description: 'Primary network interface private IPv4 address of the EC2 instance' })
+    ),
     ec2HostName: Type.Optional(Type.String({ description: 'EC2 private DNS name' })),
     ec2UsageOperation: Type.Optional(Type.String({ description: 'EC2 usage operation details' })),
     ssmState: Type.String({ description: 'SSM connection status', enum: ['connected', 'notconnected'] }),
@@ -260,7 +263,7 @@ const SqlInstancesRequestQuery = Type.Object({
 const pgSqlServerNode = Type.Object({
     ec2InstanceName: Type.Optional(Type.String({ description: 'Primary node name' })),
     ec2InstanceId: Type.String({ description: 'Primary node ID' }),
-    ec2InstancePrivateIpAddress: Type.String({ description: 'Primary node IP address' }),
+    ec2InstancePrivateIpAddress: Type.Optional(Type.String({ description: 'Primary node IP address' })),
     ec2InstanceType: Type.String({ description: 'Primary node type' }),
     ec2UsageOperation: Type.Optional(Type.String({ description: 'EC2 usage operation details' }))
 });
@@ -434,6 +437,11 @@ const OracleDatabaseInstance = Type.Object({
     isDataGuardDeployed: Type.Optional(
         Type.Boolean({
             description: 'Is Data Guard deployed for Oracle instance?'
+        })
+    ),
+    isRacEnabled: Type.Optional(
+        Type.Boolean({
+            description: 'Whether Oracle Real Application Clusters (RAC) is enabled for this database instance.'
         })
     ),
     dataguardDetails: Type.Optional(OracleDataguardDiscoveryDetails),

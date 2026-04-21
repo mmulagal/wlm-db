@@ -28,20 +28,45 @@ const StorageSavingsRequestBody = Type.Object({
     monthlySqlByolCost: Type.Optional(Type.Number())
 });
 
+/**
+ * Shared between MSSQL bulk and Oracle bulk host lists.
+ * Minimum 1 host ensures the request targets at least one instance.
+ * Maximum 5 hosts keeps bulk estimation requests intentionally small so they remain
+ * predictable for API consumers and avoid oversized multi-instance calculations in a
+ * single call.
+ */
+const bulkStorageSavingsHostsArray = { minItems: 1, maxItems: 5, uniqueItems: true } as const;
+
+const Ec2InstanceIdForBulkStorageSavings = Type.String({
+    pattern: '^i-[0-9a-f]{8,17}$',
+    description: 'AWS EC2 instance IDs'
+});
+
+const BulkStorageSavingsHostWithOptionalByol = Type.Object({
+    ec2InstanceId: Ec2InstanceIdForBulkStorageSavings,
+    monthlySqlByolCost: Type.Optional(Type.Number())
+});
+
+const BulkStorageSavingsHostEc2IdOnly = Type.Object({
+    ec2InstanceId: Ec2InstanceIdForBulkStorageSavings
+});
+
 const BulkStorageSavingsRequestBody = Type.Object({
     ...StorageSavingsRequestBody.properties,
-    hosts: Type.Array(
-        Type.Object({
-            ec2InstanceId: Type.String({ pattern: '^i-[0-9a-f]{8,17}$', description: 'AWS EC2 instance IDs' }),
-            monthlySqlByolCost: Type.Optional(Type.Number())
-        }),
-        {
-            minItems: 1,
-            maxItems: 5,
-            uniqueItems: true
-        }
-    )
+    hosts: Type.Array(BulkStorageSavingsHostWithOptionalByol, bulkStorageSavingsHostsArray)
 });
+
+const OracleBulkStorageSavingsRequestBody = Type.Intersect([
+    Type.Pick(StorageSavingsRequestBody, [
+        'snapshotFrequency',
+        'clonedCopiesCount',
+        'cloneRefreshFrequency',
+        'monthlyChangeRatePercentage'
+    ]),
+    Type.Object({
+        hosts: Type.Array(BulkStorageSavingsHostEc2IdOnly, bulkStorageSavingsHostsArray)
+    })
+]);
 
 const ManualStorageSavingsRequestParams = Type.Object({
     accountId: Type.String({ minLength: 1 }),
@@ -140,6 +165,11 @@ const MachinePriceDetails = Type.Array(
         licenseMonthlyPrice: Type.Optional(Type.Number())
     })
 );
+
+const RecommendationOption = Type.Object({
+    instanceType: Type.Optional(Type.String()),
+    pricingDetails: Type.Optional(Type.Unknown())
+});
 
 const StorageSavingsCompute = Type.Object({
     instanceType: Type.String(),
@@ -261,8 +291,8 @@ const ComputeCalculationObject = Type.Object({
     hoursInMonth: Type.Number(),
     instanceMonthlyPrice: Type.Optional(Type.Number()),
     computeMonthlyPrice: Type.Optional(Type.Number()),
-    machineDetails: Type.Optional(Type.Any()),
-    recommendationOptions: Type.Optional(Type.Any())
+    machineDetails: Type.Optional(MachinePriceDetails),
+    recommendationOptions: Type.Optional(Type.Array(RecommendationOption))
 });
 const LicenseCalculationObject = Type.Object({
     sqlServerEdition: Type.Optional(Type.String()),
@@ -534,6 +564,13 @@ type EbsCostCalculationType = Static<typeof EbsCostCalculation>;
 
 type StorageSavingsResponseType = Static<typeof StorageSavingsResponse>;
 type StorageSavingsRequestBodyType = Static<typeof StorageSavingsRequestBody>;
+
+/** Fields passed to the marketing storage API for automatic EBS/FSx savings (MSSQL and Oracle). */
+type AutomaticModeStorageSavingsMarketingParams = Pick<
+    StorageSavingsRequestBodyType,
+    'snapshotFrequency' | 'cloneRefreshFrequency' | 'clonedCopiesCount' | 'monthlyChangeRatePercentage'
+>;
+
 type ManualStorageSavingsRequestBodyType = Static<typeof ManualStorageSavingsRequestBody>;
 
 const ComputeDetails = Type.Object({
@@ -546,8 +583,8 @@ const ComputeDetails = Type.Object({
     hoursInMonth: Type.Number(),
     message: Type.Optional(Type.String()),
     finding: Type.Optional(Type.String()),
-    machineDetails: Type.Optional(Type.Any()),
-    recommendationOptions: Type.Optional(Type.Any())
+    machineDetails: Type.Optional(MachinePriceDetails),
+    recommendationOptions: Type.Optional(Type.Array(RecommendationOption))
 });
 
 const LicenseDetails = Type.Object({
@@ -599,8 +636,16 @@ type EBSSnapshotCalculationRespType = Static<typeof EBSSnapshotCalculationResp>;
 type ManualModeInstancesType = Static<typeof ManualModeInstances>;
 
 type BulkStorageSavingsRequestBodyType = Static<typeof BulkStorageSavingsRequestBody> & { bulk?: boolean };
+type OracleBulkStorageSavingsRequestBodyType = Static<typeof OracleBulkStorageSavingsRequestBody> & {
+    bulk?: boolean;
+};
 type BulkStorageSavingsCalculationsMetricsResponseType = Static<typeof BulkStorageSavingsCalculationsMetricsResponse>;
 type BulkStorageSavingsResponseType = Static<typeof BulkStorageSavingsResponse>;
+
+/** Union of single-host vs bulk SQL Server EBS/FSxW metrics responses from `getStorageSavingsCalculationMetrics`. */
+type StorageSavingsCalculationMetricsOperationResultType =
+    | StorageSavingsMetricsCalculationsResponseType
+    | BulkStorageSavingsCalculationsMetricsResponseType;
 
 export {
     InternalUpdateInstRecQueryString,
@@ -613,6 +658,7 @@ export {
     ManualStorageSavingsRequestBody,
     ManualModeInstances,
     StorageSavingsRequestBodyType,
+    AutomaticModeStorageSavingsMarketingParams,
     ManualStorageSavingsRequestBodyType,
     StorageSavingsResponse,
     StorageSavingsResponseType,
@@ -632,8 +678,11 @@ export {
     ManualModeInstancesType,
     BulkStorageSavingsRequestBody,
     BulkStorageSavingsRequestBodyType,
+    OracleBulkStorageSavingsRequestBody,
+    OracleBulkStorageSavingsRequestBodyType,
     BulkStorageSavingsCalculationsMetricsResponse,
     BulkStorageSavingsResponse,
     BulkStorageSavingsCalculationsMetricsResponseType,
-    BulkStorageSavingsResponseType
+    BulkStorageSavingsResponseType,
+    StorageSavingsCalculationMetricsOperationResultType
 };

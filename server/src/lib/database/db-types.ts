@@ -1,4 +1,4 @@
-import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, Prisma, STORAGE_TYPE } from '@prisma/client';
+import { DATABASE_TYPE, DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, Prisma, STORAGE_TYPE } from '@prisma/client';
 import { JsonValue } from '@prisma/client/runtime/binary';
 import {
     CrrDetails,
@@ -191,6 +191,7 @@ interface ListTrackedEc2Params {
     credentialsId?: string;
     instanceId?: string;
     awsAccountId?: string;
+    databaseType?: DATABASE_TYPE;
     pageSize?: number;
     nextToken?: string;
 }
@@ -202,6 +203,7 @@ interface TrackedEc2Record {
     instance_id: string;
     feature: string;
     cloud_provider_account_id: string;
+    database_type?: DATABASE_TYPE;
     last_updated?: Date;
 }
 

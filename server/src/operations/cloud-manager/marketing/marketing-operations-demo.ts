@@ -1,5 +1,9 @@
 import { isEmpty } from 'lodash-es';
-import { SqlServerDeploymentModel, DEMO_STANDALONE_INSTANCE_ID } from '../../../utils/consts';
+import {
+    DEMO_STANDALONE_INSTANCE_ID,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
+    SqlServerDeploymentModel
+} from '../../../utils/consts';
 import { getEbsManualModeStorageSavings, getFsxwManualModeStorageSavings } from '../../../lib/cloud-manager/marketing';
 import { convertToBytes } from '../../../utils/utils';
 import {
@@ -56,7 +60,9 @@ async function fsxwAutomaticDemoModeCallingManualApi(
     return {
         fsxw,
         fsx,
-        [sqlServerDeploymentType === 'FCI' ? 'multi' : 'single']: {
+        [sqlServerDeploymentType === 'FCI' || sqlServerDeploymentType === ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG
+            ? 'multi'
+            : 'single']: {
             fsxw_cost_calculation,
             fsx_calculation,
             fsx_cost_calculation_no_snapshot,
@@ -151,7 +157,10 @@ async function ebsAutomaticDemoModeCallingManualApi(
     });
 
     let fsxData;
-    if (sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+    if (
+        sqlServerDeploymentType !== SqlServerDeploymentModel.SQL_AOAG_SHORT &&
+        sqlServerDeploymentType !== ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG
+    ) {
         fsxData = {
             single: {
                 fsx_calculation,

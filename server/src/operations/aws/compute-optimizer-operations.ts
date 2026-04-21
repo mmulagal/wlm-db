@@ -7,6 +7,7 @@ import {
     CpuVendorArchitecture
 } from '@aws-sdk/client-compute-optimizer';
 import { compact, isEmpty } from 'lodash-es';
+import { DATABASE_TYPE } from '@prisma/client';
 import {
     getEC2InstanceRecommendations,
     getEffectiveRecommendationPreferences,
@@ -17,7 +18,8 @@ import getLogger from '../../utils/logger';
 import { getCredentialsDetails } from '../cloud-manager/credentials-operations';
 import {
     getInstanceTypesFromInstanceRequirements,
-    getInstanceTypesFromInstanceRequirementsForManagedInstances
+    getInstanceTypesFromInstanceRequirementsForManagedInstances,
+    getInstanceTypesFromInstanceRequirementsForOracle
 } from './ec2-operations';
 import { getSqlInstancePricingDetails } from './pricing-operations';
 import { CONTINUOUS_ASSESSMENT_FEATURE, FINDING, TCO_FEATURE } from '../../utils/consts';
@@ -26,6 +28,41 @@ import { NodeDetails } from '../../utils/common-types';
 import { listTrackedEc2Operation } from '../database/database-operations';
 
 const logger = getLogger();
+
+type SqlPricingOs = 'windows' | 'Linux';
+
+interface AutomaticTcoInstanceRecommendationProfile {
+    databaseType: Extract<DATABASE_TYPE, 'mssql' | 'oracle'>;
+    pricingOperatingSystem: SqlPricingOs;
+    resolveInstanceTypes: (
+        credentialsId: string,
+        region: string,
+        instanceIds: string[],
+        ebsVolumeIds: string[],
+        deploymentType: string
+    ) => Promise<string[] | undefined>;
+    managePreReqsLogAction: string;
+    getRecommendationsLogAction: string;
+    computeOptimizerDebugMessage: string;
+}
+
+const MSSQL_AUTOMATIC_TCO_RECOMMENDATION_PROFILE: AutomaticTcoInstanceRecommendationProfile = {
+    databaseType: DATABASE_TYPE.mssql,
+    pricingOperatingSystem: 'windows',
+    resolveInstanceTypes: getInstanceTypesFromInstanceRequirements,
+    managePreReqsLogAction: 'Managing instance recommendation prerequisites',
+    getRecommendationsLogAction: 'Getting instance recommendations',
+    computeOptimizerDebugMessage: 'computeOptimizerInstanceRecommendations response:'
+};
+
+const ORACLE_AUTOMATIC_TCO_RECOMMENDATION_PROFILE: AutomaticTcoInstanceRecommendationProfile = {
+    databaseType: DATABASE_TYPE.oracle,
+    pricingOperatingSystem: 'Linux',
+    resolveInstanceTypes: getInstanceTypesFromInstanceRequirementsForOracle,
+    managePreReqsLogAction: 'Managing Oracle instance recommendation prerequisites',
+    getRecommendationsLogAction: 'Getting Oracle instance recommendations',
+    computeOptimizerDebugMessage: 'Oracle computeOptimizerInstanceRecommendations response:'
+};
 
 async function createRecommendationForResource(
     region: string,
@@ -71,6 +108,7 @@ async function identifyComputeOptimizerRecommendationOptions(
     accountId: string,
     region: string,
     credentialsId: string,
+    operatingSystem: string,
     currentInstanceType: string,
     instanceRecommendationOptions: InstanceRecommendationOption[]
 ) {
@@ -78,6 +116,7 @@ async function identifyComputeOptimizerRecommendationOptions(
         accountId,
         region,
         credentialsId,
+        operatingSystem,
         currentInstanceType,
         instanceRecommendationOptions
     });
@@ -93,8 +132,8 @@ async function identifyComputeOptimizerRecommendationOptions(
             const { [instanceType]: pricingDetails } = await getSqlInstancePricingDetails(
                 region,
                 instanceType,
-                'windows'
-            ); // Assuming this function returns pricing details for a specific instance type
+                operatingSystem
+            );
             if (pricingDetails?.NA?.pricePerUnit) {
                 recommendationOptionsWithPrices.push({
                     recommendationOption,
@@ -137,7 +176,7 @@ async function manageInstanceRecommendationPreReqsForManagedInstances(
                     instanceId
                 )) || [];
 
-            if (instanceTypes && instanceTypes.length <= 0) {
+            if (isEmpty(instanceTypes)) {
                 throw new Error(
                     'Instance types not found for the instance requirements, unable to create recommendation preference'
                 );
@@ -172,14 +211,15 @@ async function manageInstanceRecommendationPreReqsForManagedInstances(
                     credentialsId,
                     awsAccountId,
                     instanceIds,
-                    CONTINUOUS_ASSESSMENT_FEATURE
+                    CONTINUOUS_ASSESSMENT_FEATURE,
+                    DATABASE_TYPE.mssql
                 );
             }
         })
     );
 }
 
-async function manageInstanceRecommendationPreReqs(
+async function manageInstanceRecommendationPreReqsForProfile(
     awsAccountId: string,
     region: string,
     credentialsId: string,
@@ -187,28 +227,29 @@ async function manageInstanceRecommendationPreReqs(
     accountId: string,
     instanceIds: string[],
     ebsVolumeIds: string[],
-    sqlServerDeploymentType: string
+    deploymentType: string,
+    profile: AutomaticTcoInstanceRecommendationProfile
 ) {
-    logger.info('Managing instance recommendation prerequisites', {
+    logger.info(profile.managePreReqsLogAction, {
+        accountId,
         awsAccountId,
         region,
         credentialsId,
         resourceArn,
-        accountId,
         instanceIds,
         ebsVolumeIds,
-        sqlServerDeploymentType
+        deploymentType
     });
 
-    const instanceTypes = await getInstanceTypesFromInstanceRequirements(
+    const instanceTypes = await profile.resolveInstanceTypes(
         credentialsId,
         region,
         instanceIds,
         ebsVolumeIds,
-        sqlServerDeploymentType
+        deploymentType
     );
 
-    if (instanceTypes && instanceTypes.length <= 0) {
+    if (isEmpty(instanceTypes)) {
         throw new Error(
             'Instance types not found for the instance requirements, unable to create recommendation preference'
         );
@@ -236,7 +277,15 @@ async function manageInstanceRecommendationPreReqs(
         );
     } else {
         logger.info('Recommendation preference created for the instance, adding the instance to the tracked list');
-        await addEc2InstancesToTrackedList(accountId, region, credentialsId, awsAccountId, instanceIds, TCO_FEATURE);
+        await addEc2InstancesToTrackedList(
+            accountId,
+            region,
+            credentialsId,
+            awsAccountId,
+            instanceIds,
+            TCO_FEATURE,
+            profile.databaseType
+        );
         throw new Error(
             'Recommendation preference created for the instance; it takes about 24hours for compute optimizer to recommend an instance; skipping recommendations'
         );
@@ -245,13 +294,60 @@ async function manageInstanceRecommendationPreReqs(
     return instanceTypes;
 }
 
+async function manageInstanceRecommendationPreReqs(
+    awsAccountId: string,
+    region: string,
+    credentialsId: string,
+    resourceArn: string,
+    accountId: string,
+    instanceIds: string[],
+    ebsVolumeIds: string[],
+    sqlServerDeploymentType: string
+) {
+    return manageInstanceRecommendationPreReqsForProfile(
+        awsAccountId,
+        region,
+        credentialsId,
+        resourceArn,
+        accountId,
+        instanceIds,
+        ebsVolumeIds,
+        sqlServerDeploymentType,
+        MSSQL_AUTOMATIC_TCO_RECOMMENDATION_PROFILE
+    );
+}
+
+async function manageOracleInstanceRecommendationPreReqs(
+    awsAccountId: string,
+    region: string,
+    credentialsId: string,
+    resourceArn: string,
+    accountId: string,
+    instanceIds: string[],
+    ebsVolumeIds: string[],
+    deploymentType: string
+) {
+    return manageInstanceRecommendationPreReqsForProfile(
+        awsAccountId,
+        region,
+        credentialsId,
+        resourceArn,
+        accountId,
+        instanceIds,
+        ebsVolumeIds,
+        deploymentType,
+        ORACLE_AUTOMATIC_TCO_RECOMMENDATION_PROFILE
+    );
+}
+
 async function addEc2InstancesToTrackedList(
     accountId: string,
     region: string,
     credentialsId: string,
     awsAccountId: string,
     instanceIds: string[],
-    feature: string
+    feature: string,
+    databaseType: DATABASE_TYPE = DATABASE_TYPE.mssql
 ) {
     logger.info('Adding instance to tracked list', {
         accountId,
@@ -259,7 +355,8 @@ async function addEc2InstancesToTrackedList(
         credentialsId,
         awsAccountId,
         instanceIds,
-        feature
+        feature,
+        databaseType
     });
     const { items: trackedEc2Instances } = await listTrackedEc2Operation({ feature, accountId, region, credentialsId });
     const records = instanceIds
@@ -269,7 +366,8 @@ async function addEc2InstancesToTrackedList(
             credentials_id: credentialsId,
             instance_id: instanceId,
             feature,
-            cloud_provider_account_id: awsAccountId
+            cloud_provider_account_id: awsAccountId,
+            database_type: databaseType
         }))
         .filter(
             record => !trackedEc2Instances?.some(trackedInstance => trackedInstance.instance_id === record.instance_id)
@@ -299,22 +397,23 @@ function getFindingMapping(finding: string) {
     }
 }
 
-async function getInstanceRecommendations(
+async function getInstanceRecommendationsForProfile(
     region: string,
     credentialsId: string,
     accountId: string,
     instanceId: string,
     nodeInstances: NodeDetails[],
     ebsVolumeIds: string[],
-    sqlServerDeploymentType: string
+    deploymentType: string,
+    profile: AutomaticTcoInstanceRecommendationProfile
 ) {
-    logger.info('Getting instance recommendations', {
+    logger.info(profile.getRecommendationsLogAction, {
+        accountId,
         region,
         credentialsId,
-        accountId,
         instanceId,
         ebsVolumeIds,
-        sqlServerDeploymentType
+        deploymentType
     });
 
     const { metadata: { arn } = {} } = await getCredentialsDetails(credentialsId, accountId);
@@ -325,7 +424,7 @@ async function getInstanceRecommendations(
         const instanceIds = nodeInstances.map(({ ec2InstanceId }) => ec2InstanceId);
         let message: string | undefined;
         const instanceTypes: string[] =
-            (await manageInstanceRecommendationPreReqs(
+            (await manageInstanceRecommendationPreReqsForProfile(
                 awsAccountId,
                 region,
                 credentialsId,
@@ -333,7 +432,8 @@ async function getInstanceRecommendations(
                 accountId,
                 instanceIds,
                 ebsVolumeIds,
-                sqlServerDeploymentType
+                deploymentType,
+                profile
             )) || [];
 
         const coParams = {
@@ -369,10 +469,7 @@ async function getInstanceRecommendations(
             ? getFindingMapping(computeOptimizerInstanceRecommendations.instanceRecommendations[0].finding)
             : FINDING.INSUFFICIENT_DATA;
 
-        logger.debug(
-            'computeOptimizerInstanceRecommendations response:',
-            JSON.stringify(computeOptimizerInstanceRecommendations)
-        );
+        logger.debug(profile.computeOptimizerDebugMessage, JSON.stringify(computeOptimizerInstanceRecommendations));
 
         if (isEmpty(computeOptimizerInstanceRecommendations?.instanceRecommendations)) {
             throw new Error('No instance recommendations available for the instance');
@@ -384,6 +481,7 @@ async function getInstanceRecommendations(
                 accountId,
                 region,
                 credentialsId,
+                profile.pricingOperatingSystem,
                 currentInstanceType,
                 recommendationOptions
             );
@@ -406,11 +504,53 @@ async function getInstanceRecommendations(
             if (isEmpty(recommendedInstanceTypes)) {
                 throw new Error('We are unable to recommend an instance type for the instance.');
             }
-            return { finding, instanceRecommendations: allRecommendedInstanceDetails, message };
+            return { finding, instanceRecommendations: recommendedInstanceTypes, message };
         }
         return { finding, message: 'Instance is already optimized or under provisioned. No recommendations available' };
     }
     throw new Error('AWS Account ID details associated with the Database host not found');
+}
+
+async function getInstanceRecommendations(
+    region: string,
+    credentialsId: string,
+    accountId: string,
+    instanceId: string,
+    nodeInstances: NodeDetails[],
+    ebsVolumeIds: string[],
+    sqlServerDeploymentType: string
+) {
+    return getInstanceRecommendationsForProfile(
+        region,
+        credentialsId,
+        accountId,
+        instanceId,
+        nodeInstances,
+        ebsVolumeIds,
+        sqlServerDeploymentType,
+        MSSQL_AUTOMATIC_TCO_RECOMMENDATION_PROFILE
+    );
+}
+
+async function getOracleInstanceRecommendations(
+    region: string,
+    credentialsId: string,
+    accountId: string,
+    instanceId: string,
+    nodeInstances: NodeDetails[],
+    ebsVolumeIds: string[],
+    deploymentType: string
+) {
+    return getInstanceRecommendationsForProfile(
+        region,
+        credentialsId,
+        accountId,
+        instanceId,
+        nodeInstances,
+        ebsVolumeIds,
+        deploymentType,
+        ORACLE_AUTOMATIC_TCO_RECOMMENDATION_PROFILE
+    );
 }
 
 const translationMap: { [key: string]: string } = {
@@ -444,7 +584,9 @@ function translateFindingReasonCode(key: string): string {
 export {
     createRecommendationForResource,
     getInstanceRecommendations,
+    getOracleInstanceRecommendations,
     manageInstanceRecommendationPreReqs,
     manageInstanceRecommendationPreReqsForManagedInstances,
+    manageOracleInstanceRecommendationPreReqs,
     translateFindingReasonCode
 };

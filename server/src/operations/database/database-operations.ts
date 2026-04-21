@@ -614,10 +614,18 @@ async function listTrackedEc2Operation({
     region,
     credentialsId,
     instanceId,
+    databaseType,
     pageSize,
     nextToken
 }: ListTrackedEc2Params) {
-    logger.info('Listing tracked EC2 instances', { feature, accountId, region, credentialsId, instanceId });
+    logger.info('Listing tracked EC2 instances', {
+        feature,
+        accountId,
+        region,
+        credentialsId,
+        instanceId,
+        databaseType
+    });
 
     feature = feature || TCO_FEATURE;
     const filters = {
@@ -625,7 +633,8 @@ async function listTrackedEc2Operation({
         ...(accountId && { account_id: accountId }),
         ...(region && { region }),
         ...(credentialsId && { credentials_id: credentialsId }),
-        ...(instanceId && { instance_id: instanceId })
+        ...(instanceId && { instance_id: instanceId }),
+        ...(databaseType && { database_type: databaseType })
     };
 
     const [records, count] = await Promise.all([

@@ -388,7 +388,7 @@ interface Sandbox {
 
 interface NodeDetails {
     ec2InstanceId: string;
-    ec2InstancePrivateIpAddress: string;
+    ec2InstancePrivateIpAddress?: string;
     ec2InstanceName?: string;
     ec2InstanceType: string;
     ec2UsageOperation?: string;

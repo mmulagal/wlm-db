@@ -794,9 +794,7 @@ async function getSqlInstanceLicenseRecommendations(
         const { sqlServerEngineEdition, sqlServerEdition, sqlServerVersion, sqlServerDeploymentType, nodeIps } =
             fetchSqlServerInstanceConfiguration(sqlServerInstances) || {};
         if (ec2UsageOperation && sqlServerEngineEdition && sqlServerEdition && sqlServerDeploymentType) {
-            let nodeInstances = [
-                { ec2InstanceType, ec2InstanceId: instanceId, ec2UsageOperation, ec2InstancePrivateIpAddress: '' }
-            ];
+            let nodeInstances: NodeDetails[] = [{ ec2InstanceType, ec2InstanceId: instanceId, ec2UsageOperation }];
 
             if (!isFsxwCalcs && !ebsVolumeIds.length) {
                 throw createError(

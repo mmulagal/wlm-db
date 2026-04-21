@@ -30,9 +30,9 @@ import {
 } from '../utils/continous-optimization-consts';
 import { getSqlInstancePricingDetails } from './aws/pricing-operations';
 import {
-    performManualModeStorageSavingsCalculations,
-    getManualModeStorageSavingsCalculationMetrics
-} from './storage-savings-operations';
+    getManualModeStorageSavingsCalculationMetrics,
+    performManualModeStorageSavingsCalculations
+} from './workloads/mssql/mssql-storage-savings-operations';
 import { ManualModeInstancesType, StorageSavingsRequestBodyType } from '../routes/types/storage-savings.types';
 
 const { getPreSignedUrl } = preSignedUrl;

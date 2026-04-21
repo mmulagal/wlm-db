@@ -1525,6 +1525,7 @@ async function discoverDemoDataOracle(
                 ec2InstanceId: 'i-25694686',
                 ec2InstanceType: 'm5.large',
                 ec2InstanceName: 'oracle-node-64789',
+                ec2InstancePrivateIpAddress: '172.31.48.86',
                 ec2HostName: 'ip-172-31-48-86.ap-southeast-1.compute.internal',
                 ec2UsageOperation: 'RunInstances',
                 ssmState: 'connected',

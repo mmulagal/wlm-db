@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import config from 'config';
 import { join } from 'path';
 import moment from 'moment';
-import { DEPLOYMENT_STATUS } from '@prisma/client';
+import { DATABASE_DEPLOYMENT_TYPE, DEPLOYMENT_STATUS } from '@prisma/client';
 import { MissingPermission } from './common-types';
 
 // General
@@ -1886,6 +1886,16 @@ const ORACLE_CPU_CATALOG_QUEUE = 'WLMDB-OracleCpuCatalogQueue';
 // runs at 3:00 AM on the 24th of January, April, July, and October. That's ~2-10 days after each CPU release (3rd Tuesday).
 const ORACLE_CPU_CATALOG_CRON_PATTERN = '0 3 24 1,4,7,10 *';
 
+/** EC2 instance type family prefixes allowed for Oracle Linux sizing (AWS API prefix match). */
+const ORACLE_ALLOWED_INSTANCE_TYPES = ['r*', 'm*', 'x*'] as const;
+
+/**
+ * Oracle automatic EBS TCO: marketing API and Compute Optimizer deployment labels.
+ * Aliases Prisma `DATABASE_DEPLOYMENT_TYPE` so Oracle TCO shares one case-sensitive source with the DB model.
+ */
+const ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG = DATABASE_DEPLOYMENT_TYPE.DG;
+const ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE = DATABASE_DEPLOYMENT_TYPE.Standalone;
+
 export {
     TEMP_DIRECTORY,
     WLMDB,
@@ -2202,6 +2212,9 @@ export {
     INITIALIZER,
     MSSQL,
     ORACLE,
+    ORACLE_ALLOWED_INSTANCE_TYPES,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
     AL2023_AMI_NAME,
     DEMO_AWS_ACCOUNT_ID,
     DEMO_DEFAULT_REGION,

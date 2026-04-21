@@ -1,4 +1,4 @@
-import { STORAGE_TYPE } from '@prisma/client';
+import { DATABASE_TYPE, STORAGE_TYPE } from '@prisma/client';
 import {
     listDeployments,
     createDeployment,
@@ -278,7 +278,8 @@ describe('Tracked EC2 operations', () => {
                 account_id: ACCOUNT_ID,
                 credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                 region: 'us-east-1',
-                feature: 'TCO'
+                feature: 'TCO',
+                database_type: DATABASE_TYPE.mssql
             },
             {
                 cloud_provider_account_id: '464262061435',
@@ -286,7 +287,8 @@ describe('Tracked EC2 operations', () => {
                 account_id: ACCOUNT_ID,
                 credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                 region: 'us-east-1',
-                feature: 'TCO'
+                feature: 'TCO',
+                database_type: DATABASE_TYPE.mssql
             }
         ];
         const resp = await createTrackedEc2Records(trackedEc2Records);
@@ -303,11 +305,12 @@ describe('Tracked EC2 operations', () => {
                 account_id: ACCOUNT_ID,
                 credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                 region: 'us-east-1',
-                feature: 'TCO'
+                feature: 'TCO',
+                database_type: DATABASE_TYPE.mssql
             }
         ];
         await createTrackedEc2Records(trackedEc2Records);
-        const resp = await listTrackedEc2({ filters: { feature: 'TCO' } });
+        const resp = await listTrackedEc2({ filters: { feature: 'TCO', database_type: DATABASE_TYPE.mssql } });
         expect(resp.length).toEqual(1);
         await removeTrackedEc2Record(ACCOUNT_ID, 'us-east-1', DEFAULT_AWS_CREDENTIALS_ID, 'i-1234567890abcdef0', 'TCO');
     });
@@ -320,7 +323,8 @@ describe('Tracked EC2 operations', () => {
                 account_id: ACCOUNT_ID,
                 credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
                 region: 'us-east-1',
-                feature: 'TCO'
+                feature: 'TCO',
+                database_type: DATABASE_TYPE.mssql
             }
         ];
         await createTrackedEc2Records(trackedEc2Records);
@@ -1413,7 +1417,8 @@ describe('weeklyDemoDatabaseCleanup', () => {
                 credentials_id: credentialsId,
                 instance_id: 'test_instance_id',
                 feature: 'TCO',
-                cloud_provider_account_id: '123456789012'
+                cloud_provider_account_id: '123456789012',
+                database_type: 'mssql'
             }
         });
 

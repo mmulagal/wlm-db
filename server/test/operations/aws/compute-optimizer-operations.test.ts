@@ -2,7 +2,9 @@ import { faker } from '@faker-js/faker';
 import {
     createRecommendationForResource,
     getInstanceRecommendations,
+    getOracleInstanceRecommendations,
     manageInstanceRecommendationPreReqs,
+    manageOracleInstanceRecommendationPreReqs,
     translateFindingReasonCode
 } from '../../../src/operations/aws/compute-optimizer-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
@@ -77,6 +79,43 @@ describe('Compute optimizer operations', () => {
             ['i-test'],
             [],
             'Standalone'
+        );
+        expect(instanceTypes).toBeDefined();
+    });
+
+    it('Get Oracle instance recommendations', async () => {
+        const CREDENTIALS_ID = `${faker.string.alpha(20)}`;
+        const resp = await getOracleInstanceRecommendations(
+            DEFAULT_AWS_REGION,
+            CREDENTIALS_ID,
+            ACCOUNT_ID,
+            'i-1234567890abcdef0',
+            [
+                {
+                    ec2InstanceId: 'i-1234567890abcdef0',
+                    ec2InstanceType: 't2.micro',
+                    ec2InstancePrivateIpAddress: '10.0.0.1',
+                    ec2InstanceName: 'oracle-node-1',
+                    ec2UsageOperation: 'RunInstances:0000'
+                }
+            ],
+            ['ebs-01234567890'],
+            'Standalone'
+        );
+
+        expect(resp).toBeDefined();
+    });
+
+    it('Manage Oracle instance recommendation prerequisites', async () => {
+        const instanceTypes = await manageOracleInstanceRecommendationPreReqs(
+            '464262061435',
+            DEFAULT_AWS_REGION,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            getEc2Arn('464262061435', 'ap-southeast-1', 'i-test'),
+            ACCOUNT_ID,
+            ['i-partner-1', 'i-test'],
+            ['vol-123456789'],
+            'DG'
         );
         expect(instanceTypes).toBeDefined();
     });

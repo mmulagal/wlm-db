@@ -346,7 +346,7 @@ const DatabaseHostSummaryPerStorageTypeResponse = Type.Object({
         Type.Array(
             Type.Object({
                 ec2InstanceId: Type.String(),
-                ec2InstancePrivateIpAddress: Type.String(),
+                ec2InstancePrivateIpAddress: Type.Optional(Type.String()),
                 ec2InstanceType: Type.String(),
                 ec2InstanceName: Type.Optional(Type.String())
             })
@@ -653,7 +653,7 @@ const DatabaseHostSummaryForMultiInstanceResponse = Type.Object({
         Type.Array(
             Type.Object({
                 ec2InstanceId: Type.String(),
-                ec2InstancePrivateIpAddress: Type.String(),
+                ec2InstancePrivateIpAddress: Type.Optional(Type.String()),
                 ec2InstanceType: Type.String(),
                 ec2InstanceName: Type.Optional(Type.String())
             })

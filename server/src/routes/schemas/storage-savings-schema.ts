@@ -10,7 +10,8 @@ import {
     InternalUpdateInstRecQueryString,
     BulkStorageSavingsRequestBody,
     BulkStorageSavingsResponse,
-    BulkStorageSavingsCalculationsMetricsResponse
+    BulkStorageSavingsCalculationsMetricsResponse,
+    OracleBulkStorageSavingsRequestBody
 } from '../types/storage-savings.types';
 
 const internalUpdateRecommendationPreferenceSchema = {
@@ -138,6 +139,29 @@ const getEbsBulkStorageSavingsCalculationMetricsSchema = {
     }
 };
 
+const getOracleEbsBulkStorageSavingsSchema = {
+    tags: [RouteTags.STORAGE_SAVINGS],
+    summary: 'Bulk EBS storage savings calculations for Oracle on EC2',
+    description:
+        'Calculates storage savings for Oracle database workloads on EC2 with EBS when using FSx for ONTAP instead.',
+    params: CredentialsIdParams,
+    body: OracleBulkStorageSavingsRequestBody,
+    response: {
+        200: BulkStorageSavingsResponse
+    }
+};
+
+const getOracleEbsBulkStorageSavingsCalculationMetricsSchema = {
+    tags: [RouteTags.STORAGE_SAVINGS],
+    summary: 'Bulk EBS storage savings calculation metrics for Oracle on EC2',
+    description: 'Returns detailed calculation metrics for Oracle bulk EBS versus FSx for ONTAP savings.',
+    params: CredentialsIdParams,
+    body: OracleBulkStorageSavingsRequestBody,
+    response: {
+        200: BulkStorageSavingsCalculationsMetricsResponse
+    }
+};
+
 export {
     internalUpdateRecommendationPreferenceSchema,
     getEbsStorageSavingsSchema,
@@ -149,5 +173,7 @@ export {
     getFsxwManualStorageSavingsSchema,
     getFsxwManualStorageSavingsCalculationMetricsSchema,
     getEbsBulkStorageSavingsSchema,
-    getEbsBulkStorageSavingsCalculationMetricsSchema
+    getEbsBulkStorageSavingsCalculationMetricsSchema,
+    getOracleEbsBulkStorageSavingsSchema,
+    getOracleEbsBulkStorageSavingsCalculationMetricsSchema
 };

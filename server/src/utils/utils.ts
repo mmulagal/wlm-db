@@ -34,6 +34,7 @@ import {
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
     SqlServerDeploymentModel,
     ARTIFACT_BUCKET_NAME,
     HttpErrorCodes,
@@ -1403,9 +1404,11 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 const isDemoFlow = () => process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator';
 
 function isMultiAzDeployment(deploymentType: string) {
-    return [SqlServerDeploymentModel.SQL_AOAG_SHORT, SqlServerDeploymentModel.SQL_FCI_SHORT, 'DG'].includes(
-        deploymentType as SqlServerDeploymentModel
-    );
+    return [
+        SqlServerDeploymentModel.SQL_AOAG_SHORT,
+        SqlServerDeploymentModel.SQL_FCI_SHORT,
+        ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG
+    ].includes(deploymentType as SqlServerDeploymentModel);
 }
 
 type SummaryInner = string | number | boolean | null | undefined | '[Object]';
@@ -1627,6 +1630,11 @@ function validateWithSchema(
     return { isValid, errors: validate.errors || [] };
 }
 
+/** True when value is boolean true, string 'true', or any string equal to 'true' case-insensitively. */
+function coerceBooleanFromLooseTrue(value: unknown): boolean {
+    return value === true || value === 'true' || String(value).toLowerCase() === 'true';
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1634,6 +1642,7 @@ export {
     hideSecretsValues,
     isNetworkConfigurationViolated,
     checkAndRetrieveJsonObject,
+    coerceBooleanFromLooseTrue,
     getQueueArn,
     getQueueUrl,
     derivePropertiesFromARN,
